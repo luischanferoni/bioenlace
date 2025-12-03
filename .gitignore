@@ -1,0 +1,78 @@
+# Web - Vendor y dependencias
+web/vendor/
+web/yii
+web/yii.bat
+web/yii_test
+web/composer.lock
+
+# Web - Archivos de configuración sensibles
+web/frontend/web/index.php
+web/frontend/web/index-test.php
+web/frontend/web/robots.txt
+web/backend/web/index.php
+web/backend/web/index-test.php
+web/backend/web/robots.txt
+
+# Web - Uploads y runtime
+web/frontend/web/uploads/*
+web/frontend/runtime/*
+web/backend/web/assets
+web/backend/web/uploads/*
+web/console/runtime/*
+
+# Web - Otros
+web/BD backup
+web/nbproject/private/
+web/produccion/sisse-56/*.csv
+web/produccion/sisse-56/*.sql
+web/.php-cs-fixer.cache
+web/frontend/web/react/node_modules/*
+web/frontend/runtime/logs/analisis-consultas/*.log
+
+# Mobile - Flutter/Dart
+mobile/**/.dart_tool/
+mobile/**/.flutter-plugins
+mobile/**/.flutter-plugins-dependencies
+mobile/**/generated_plugin_registrant.dart
+mobile/**/.packages
+mobile/**/.pub-preload-cache/
+mobile/**/.pub/
+mobile/**/build/
+mobile/**/.packages.generated
+
+# Mobile - Android
+mobile/**/android/.gradle/
+mobile/**/android/captures/
+mobile/**/android/local.properties
+mobile/**/android/**/GeneratedPluginRegistrant.java
+mobile/**/android/key.properties
+mobile/**/*.jks
+
+# Mobile - iOS
+mobile/**/ios/**/Pods/
+mobile/**/ios/**/.symlinks/
+mobile/**/ios/**/xcuserdata
+mobile/**/ios/.generated/
+mobile/**/ios/Flutter/.last_build_id
+mobile/**/ios/Flutter/App.framework
+mobile/**/ios/Flutter/Flutter.framework
+mobile/**/ios/Flutter/ephemeral
+mobile/**/ios/Flutter/flutter_assets/
+mobile/**/ios/Flutter/flutter_export_environment.sh
+mobile/**/xcuserdata/
+
+# Mobile - Otros
+mobile/**/*.class
+mobile/**/*.lock
+mobile/**/*.log
+mobile/**/*.pyc
+mobile/**/*.swp
+mobile/**/.buildlog/
+mobile/**/.history
+mobile/**/coverage/
+mobile/**/app.*.symbols
+
+# Archivos temporales y scripts de ayuda
+reiniciar_git.bat
+reiniciar_git.ps1
+

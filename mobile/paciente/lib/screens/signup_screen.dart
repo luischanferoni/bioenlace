@@ -2,11 +2,10 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
-import '../theme/theme.dart';
 import 'chat_screen.dart';
-import '../styles/button_styles.dart';
 import '../components/camera_overlay.dart';
 
 class SignupScreen extends StatefulWidget {

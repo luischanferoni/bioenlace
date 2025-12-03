@@ -8,6 +8,7 @@ use yii\filters\auth\HttpBearerAuth;
 use yii\filters\Cors;
 use yii\filters\ContentNegotiator;
 use yii\web\Response;
+use frontend\modules\api\v1\components\JsonHttpBearerAuth;
 
 class BaseController extends ActiveController
 {
@@ -24,7 +25,7 @@ class BaseController extends ActiveController
         $behaviors['corsFilter'] = [
             'class' => Cors::class,
             'cors' => [
-                'Origin' => ['http://localhost:3000', 'http://127.0.0.1:3000'],
+                'Origin' => ['http://localhost:3000', 'http://127.0.0.1:3000', '*'], // Incluir * para mobile
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
@@ -32,9 +33,9 @@ class BaseController extends ActiveController
             ],
         ];
 
-        // Configurar autenticación
+        // Configurar autenticación con componente personalizado que siempre devuelve JSON
         $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::class,
+            'class' => JsonHttpBearerAuth::class,
             'except' => ['options', 'login', 'register'],
         ];
 

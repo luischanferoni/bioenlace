@@ -104,6 +104,90 @@ class ApiUser extends User
 		return $efectores;
 	}
 
+	public function setIdRecursoHumano($idRecursoHumano)
+	{
+		$session = Yii::$app->session;
+		$session->set('idRecursoHumano', $idRecursoHumano);
+	}
+
+	public function getIdRecursoHumano()
+	{
+		$session = Yii::$app->session;
+		return $session->get('idRecursoHumano');
+	}
+
+	public function setIdEfector($idEfector)
+	{
+		$session = Yii::$app->session;
+		$session->set('idEfector', $idEfector);
+	}
+
+	public function getIdEfector()
+	{
+		$session = Yii::$app->session;
+		return $session->get('idEfector');
+	}
+
+	public function setNombreEfector($nombreEfector)
+	{
+		$session = Yii::$app->session;
+		$session->set('nombreEfector', $nombreEfector);
+	}
+
+	public function getNombreEfector()
+	{
+		$session = Yii::$app->session;
+		return $session->get('nombreEfector');
+	}
+
+	public function setServicios($servicios)
+	{
+		$session = Yii::$app->session;
+		$session->set('servicios', $servicios);
+	}
+
+	public function getServicios()
+	{
+		$session = Yii::$app->session;
+		return $session->get('servicios');
+	}
+
+	public function setServicioActual($servicio)
+	{
+		$session = Yii::$app->session;
+		$session->set('servicio_actual', $servicio);
+	}
+
+	public function getServicioActual()
+	{
+		$session = Yii::$app->session;
+		return $session->get('servicio_actual');
+	}
+
+	public function setIdRrhhServicio($idRrhhServicio)
+	{
+		$session = Yii::$app->session;
+		$session->set('id_rrhh_servicio', $idRrhhServicio);
+	}
+
+	public function getIdRrhhServicio()
+	{
+		$session = Yii::$app->session;
+		return $session->get('id_rrhh_servicio');
+	}
+
+	public function setEncounterClass($encounterClass)
+	{
+		$session = Yii::$app->session;
+		$session->set('encounterClass', $encounterClass);
+	}
+
+	public function getEncounterClass()
+	{
+		$session = Yii::$app->session;
+		return $session->get('encounterClass');
+	}
+
 	/**
 	 * @inheritdoc
 	 */

@@ -107,6 +107,30 @@ return [
                 'OPTIONS api/<version:\w+>/consulta-chat/send' => '<version>/consulta-chat/send',
                 'GET api/<version:\w+>/consulta-chat/status/<id:\d+>' => '<version>/consulta-chat/status',
                 'OPTIONS api/<version:\w+>/consulta-chat/status/<id:\d+>' => '<version>/consulta-chat/status',
+                
+                // Turnos API
+                'GET api/<version:\w+>/turnos' => '<version>/turnos/index',
+                'OPTIONS api/<version:\w+>/turnos' => '<version>/turnos/index',
+                'GET api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/view',
+                'OPTIONS api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/view',
+                'POST api/<version:\w+>/turnos' => '<version>/turnos/create',
+                'OPTIONS api/<version:\w+>/turnos' => '<version>/turnos/create',
+                'PUT api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',
+                'OPTIONS api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',
+                
+                // Personas Timeline API
+                'GET api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
+                'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
+                
+                // Config API
+                'GET api/<version:\w+>/config/efectores' => '<version>/config/efectores',
+                'OPTIONS api/<version:\w+>/config/efectores' => '<version>/config/efectores',
+                'GET api/<version:\w+>/config/servicios' => '<version>/config/servicios',
+                'OPTIONS api/<version:\w+>/config/servicios' => '<version>/config/servicios',
+                'GET api/<version:\w+>/config/encounter-classes' => '<version>/config/encounter-classes',
+                'OPTIONS api/<version:\w+>/config/encounter-classes' => '<version>/config/encounter-classes',
+                'POST api/<version:\w+>/config/set-session' => '<version>/config/set-session',
+                'OPTIONS api/<version:\w+>/config/set-session' => '<version>/config/set-session',
             ],            
         ],
         'snowstorm' => [

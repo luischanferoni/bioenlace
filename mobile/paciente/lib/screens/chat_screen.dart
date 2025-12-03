@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
+
 import '../models/message.dart';
 import '../services/chat_service.dart';
-import '../theme/theme.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -114,7 +115,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'VitaMind Chat',
+          'BioEnlace Chat',
           style: AppTheme.h2Style.copyWith(color: Colors.white),
         ),
         backgroundColor: Theme.of(context).primaryColor,

@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final didAuthenticate = await auth.authenticate(
-        localizedReason: 'Autenticación con $_biometricType para ingresar a VitaMind',
+        localizedReason: 'Autenticación con $_biometricType para ingresar a BioEnlace',
         options: const AuthenticationOptions(
           biometricOnly: true,
           stickyAuth: true,
@@ -151,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
               
               // Título principal
               Text(
-                'Bienvenido a VitaMind',
+                'Bienvenido a BioEnlace',
                 style: AppTheme.h1Style.copyWith(
                   color: AppTheme.dark,
                   fontSize: 28,

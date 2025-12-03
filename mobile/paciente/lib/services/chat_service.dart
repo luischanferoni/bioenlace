@@ -1,8 +1,8 @@
 // lib/services/chat_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared/shared.dart';
 
-import 'package:vitamind/config.dart';
 import '../models/message.dart';
 
 class ChatService {  

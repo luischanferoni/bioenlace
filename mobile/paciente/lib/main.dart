@@ -1,12 +1,11 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'theme/theme.dart';
+import 'package:shared/shared.dart';
 
 import 'services/chat_service.dart';
 import 'screens/chat_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +50,28 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       home: isLoggedIn
           ? ChatScreen(chatService: chatService!)
-          : LoginScreen(), // Redirige si no está logueado
+          : LoginScreen(
+              appTitle: 'Bienvenido a BioEnlace',
+              appSubtitle: 'Tu asistente de salud personal',
+              onLoginSuccess: (userId, userName) {
+                // Crear servicio de chat
+                final newChatService = ChatService(
+                  currentUserId: userId,
+                  currentUserName: userName,
+                );
+                // Navegar a la pantalla de chat
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => ChatScreen(chatService: newChatService)),
+                );
+              },
+              onNavigateToSignup: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => SignupScreen()),
+                );
+              },
+            ), // Redirige si no está logueado
     );
   }
 }

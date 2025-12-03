@@ -1,4 +1,4 @@
-name: vitamind
+name: bioenlace_paciente
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,14 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  shared:
+    path: ../packages/shared
   image_picker: ^1.1.1        # Para capturar imágenes
   camera: ^0.10.5             # Para usar la cámara directamente
   path_provider: ^2.1.1       # Guardar imágenes temporalmente
   http: ^1.2.1                # Subir imágenes a la API
   provider: ^6.1.2            # Manejo de estado
-  local_auth: ^2.1.7
-  shared_preferences: ^2.2.2
-  google_fonts: ^6.2.1
   image: ^4.1.7               # Para procesar y corregir orientación de imágenes
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

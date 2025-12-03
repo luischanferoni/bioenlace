@@ -1,0 +1,39 @@
+       
+{
+   "where": {
+      "createdFor": "#PERSONAID",
+      "deletedAt": null
+   },
+   "fields": {
+      "id": true,
+      "tipoInstanciaId": true,
+      "createdAt": true,
+      "updatedAt": true,
+      "deletedAt": true,
+      "createdBy": true,
+      "updatedBy": true,
+      "deletedBy": true,
+      "createdFor": true,
+      "formId": true
+   },
+   "include": [
+      {
+         "relation": "form",
+         "scope": {
+               "fields": {
+                  "logo": false,
+                  "formEstadoId": false,
+                  "formTipoId": false,
+                  "creaatedAt": false,
+                  "updatedAt": false,
+                  "deletedAt": false,
+                  "createdBy": false,
+                  "updatedBy": false,
+                  "deletedBy": false,
+                  "dominioId": false
+                        }
+         
+         }
+      }
+   ]
+   }

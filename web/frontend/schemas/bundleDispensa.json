@@ -1,0 +1,16 @@
+{
+    "resourceType" : "Bundle",
+    "id" : "SisseRegistroDispensa",
+    "meta" : {
+      "lastUpdated" : "2023-07-06T15:00:03.788+00:00",
+      "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/recetaDigitalRegistroDispensaAR"]
+    },
+    "language" : "es",
+    "identifier" : {
+      "system" : "http://hsi.lamansys.com.ar/Bundle",
+      "value" : "50191a27-0d35-4f3a-984d-8c2b4e5aeaf0"
+    },
+    "type" : "transaction",
+    "timestamp" : "2023-07-06T15:00:03.790+00:00",
+    "entry" : []
+  }

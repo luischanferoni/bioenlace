@@ -1,0 +1,11 @@
+{
+    "title": "Peticion Paciente",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "type": "object",
+    "properties": {
+        "identificador": { "type": "string" },
+        "fuente": { "type": "string", "enum": ["local", "mpi", "dni"] }
+    },
+    "required": ["identificador", "fuente"]
+}

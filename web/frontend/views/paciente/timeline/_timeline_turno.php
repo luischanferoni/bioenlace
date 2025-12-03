@@ -1,0 +1,27 @@
+
+<?php
+
+use yii\helpers\Html;
+
+use common\models\Turno;
+
+?>
+
+<div class="timeline-dots1 border-info text-info">
+    <svg width="20" height="20" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M20,15.5C18.8,15.5 17.5,15.3 16.4,14.9C16.3,14.9 16.2,14.9 16.1,14.9C15.8,14.9 15.6,15 15.4,15.2L13.2,17.4C10.4,15.9 8,13.6 6.6,10.8L8.8,8.6C9.1,8.3 9.2,7.9 9,7.6C8.7,6.5 8.5,5.2 8.5,4C8.5,3.5 8,3 7.5,3H4C3.5,3 3,3.5 3,4C3,13.4 10.6,21 20,21C20.5,21 21,20.5 21,20V16.5C21,16 20.5,15.5 20,15.5M5,5H6.5C6.6,5.9 6.8,6.8 7,7.6L5.8,8.8C5.4,7.6 5.1,6.3 5,5M19,19C17.7,18.9 16.4,18.6 15.2,18.2L16.4,17C17.2,17.2 18.1,17.4 19,17.4V19Z"></path>
+    </svg>
+</div>
+
+<h5 class="mb-2">Turno</h5>
+
+<div class="d-inline-block w-100">
+    <div class="d-flex align-items-center">        
+        <p>Servicio: <?=$historia['servicio']?></p>        
+    </div>
+</div>
+<?php //var_dump($historia);die;?>
+<div class="iq-media-group iq-media-group-1 timeline_footer mt-2 pb-3 border-bottom">
+    <?= Turno::footerTimeline($historia['tipo'], $historia['parent_id'], $historia['id_servicio'], $pase_previo, $persona->id_persona, $historia['fecha']);?>
+</div>
+

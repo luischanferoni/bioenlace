@@ -1,0 +1,31 @@
+{
+    "fullUrl" : "urn:uuid:065c6f50-28de-4224-b950-a764396d4a25",
+    "resource": {
+        "resourceType" : "Practitioner",
+        "id" : "EjemploDatosPrescriptor",
+        "meta" : {
+            "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/datosPrescriptorAR"]
+        },
+        "text" : {
+            "status" : "additional",
+            "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">Prueba Medico</div>"
+        },
+        "identifier" : [{
+            "use" : "official",
+            "system" : "http://www.renaper.gob.ar/dni",
+            "value" : "99999999"
+        },
+        {
+        "use" : "usual",
+            "system" : "https://sisa.msal.gov.ar/REFEPS",
+            "value" : "103029302"
+        }],
+        "name" : [{
+            "text" : "Prueba Medico"
+        }],
+        "telecom" : [{
+            "system" : "phone",
+            "value" : "1199994444"
+        }]
+    }
+}

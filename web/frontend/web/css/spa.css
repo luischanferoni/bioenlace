@@ -1,0 +1,193 @@
+/**
+ * Estilos mínimos para la SPA - Solo funcionalidades específicas
+ * El resto usa clases de Bootstrap
+ */
+
+/* Navegación Stack - Transiciones de páginas */
+.spa-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #ffffff;
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    z-index: 1;
+    overflow-y: auto;
+}
+
+.spa-page-active {
+    transform: translateX(0);
+    opacity: 1;
+    z-index: 10002;
+}
+
+.spa-page-hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.spa-pages-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+}
+
+/* Asegurar que el contenedor principal no limite el espacio */
+#spa-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Las páginas del stack deben estar fuera del contenedor del layout */
+#spa-pages-container .spa-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Animación de entrada para respuesta */
+.spa-response-section {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cards clickeables con expansión */
+.spa-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.spa-card:hover {
+    transform: translateY(-2px);
+}
+
+.spa-card-expanding {
+    border-color: #0d6efd !important;
+}
+
+.spa-card-expanded {
+    border-color: #0d6efd !important;
+}
+
+/* Contenido expandido del card */
+.spa-card-expand-content {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+    animation: expandContent 0.3s ease;
+}
+
+@keyframes expandContent {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 1000px;
+    }
+}
+
+/* Header de página con botón volver */
+.spa-page-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* Contenido de página - ocupa todo el espacio disponible */
+.spa-page-content {
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    padding: 1.5rem;
+}
+
+/* Asegurar que las páginas del stack estén por encima de todo */
+#spa-pages-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10001;
+    pointer-events: none;
+}
+
+#spa-pages-container .spa-page-active {
+    pointer-events: auto;
+}
+
+/* Menú vertical lateral - Desktop */
+.sidebar-menu {
+    width: 120px;
+    height: 500px; /* Altura fija definible - ajustar según necesidad */
+    position: sticky;
+    top: 20px;
+    z-index: 10000;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+.sidebar-menu .nav {
+    height: 100%;
+}
+
+.sidebar-menu .nav-link {
+    min-height: 80px;
+    padding: 1rem 0.5rem;
+}
+
+/* Menú horizontal al bottom - Mobile */
+@media (max-width: 768px) {
+    .sidebar-menu {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        width: 100%;
+        height: auto;
+        max-height: 80px;
+        border-radius: 20px 20px 0 0 !important;
+        margin: 0 !important;
+        z-index: 10000;
+    }
+    
+    .sidebar-menu .nav {
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        height: 100%;
+    }
+    
+    .sidebar-menu .nav-link {
+        min-height: auto;
+        padding: 0.75rem 0.5rem;
+        flex: 1;
+    }
+    
+    /* Ajustar el contenido principal para que no quede oculto detrás del menú */
+    #page_layout {
+        padding-bottom: 100px !important;
+    }
+}

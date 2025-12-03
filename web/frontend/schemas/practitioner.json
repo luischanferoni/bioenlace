@@ -1,0 +1,33 @@
+{
+    "fullUrl" : "urn:uuid:065c6f50-28de-4224-b950-a764396d4a25",
+    "resource": {
+        "resourceType" : "Practitioner",
+        "id" : "EjemploDatosDispensador",
+        "meta" : {
+            "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/datosDispensadorAR"]
+        },
+        "text" : {
+            "status" : "additional",
+            "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">Prueba Farmacéutico</div>"
+        },
+        "identifier" : [{
+            "system" : "http://www.renaper.gob.ar/dni",
+            "value" : "99999998"
+        },
+        {
+            "system" : "https://sisa.msal.gov.ar/REFEPS",
+            "value" : "103029344"
+        }],
+        "active" : true,
+        "name" : [{
+            "use" : "official",
+            "text" : "Prueba Farmaceutico",
+            "family" : "Prueba",
+            "given" : ["Farmaceutico"]
+        }],
+        "telecom" : [{
+            "system" : "phone",
+            "value" : "1199984445"
+        }]
+    }
+}

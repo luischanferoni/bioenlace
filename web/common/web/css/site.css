@@ -1,0 +1,22 @@
+.num-hc{
+    font-size:  17px;
+    font-weight:bolder;
+    color:#337ab7;
+}
+
+#cover-spin {
+    position:fixed;
+    width:100%;
+    left:0;right:0;top:45%;
+    z-index:9999;
+    display: none;
+}
+.iq-loader-box {height: auto !important}
+.sisse-floating-alert{text-align: center;position: relative;opacity: 0.9 !important;z-index: 99999;left: 34%;top: 15%;width: 450px;}
+
+.form-wizard > fieldset:not(:first-of-type){display:none}
+
+/* override a Qompac UI */
+
+.select2-container--default .select2-selection--single .select2-selection__arrow{right: 0.5rem}
+.select2-container--default .select2-selection--single .select2-selection__clear{position: relative;right:30px;margin-right: 0;}

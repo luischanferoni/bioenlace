@@ -1,0 +1,25 @@
+{
+    "fullUrl" : "urn:uuid:065c6f50-28de-4224-b950-a764396d4a25",
+    "resource": {
+        "resourceType" : "Location",
+        "id" : "EjemploDatosLugar",
+        "meta" : {
+            "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/datosLugarAR"]
+        },
+        "text" : {
+            "status" : "additional",
+            "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">Hospital De La Plata - Sector 5</div>"
+        },
+        "identifier" : [{
+            "system" : "http://refes.msal.gob.ar",
+            "value" : "1234567890"
+        }],
+        "name" : "Hospital De La Plata - Sector 5",
+        "address" : {
+            "line" : ["CALLE 34 NRO 2023"],
+            "city" : "LA PLATA",
+            "state" : "BUENOS AIRES",
+            "postalCode" : "2000"
+        }
+    }
+}

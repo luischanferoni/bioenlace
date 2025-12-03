@@ -1,0 +1,12 @@
+<svg cursor="pointer" pointerEvents="all" class="svg_pieza_completa" id="<?=$id?>" width="85px" height="90px">
+    <path class="pieza_parte" data-parte="left" 
+        stroke="rgb(0, 0, 0)" fill="rgb(255, 255, 255)" stroke-width="0.5px" style="transform-origin: 412.22px 301.78px;" transform="matrix(2.756088972092, 2.66152715683, -2.605391979218, 2.697963237762, -340.833059961603, -258.80341564815)" d="M 407 296.56 A 10.44 10.44 0 0 1 417.44 307 L 413.011 307 A 6.011 6.011 0 0 0 407 300.989 Z" bx:shape="pie 407 307 6.011 10.44 0 90 1@80c69b43"/>
+    <path class="pieza_parte" data-parte="internal" 
+        stroke="rgb(0, 0, 0)" fill="rgb(255, 255, 255)" stroke-width="0.5px" style="transform-origin: 412.22px 312.22px;" transform="matrix(2.756091117859, 2.661525011063, -2.605392932892, 2.697964191437, -368.23305867873, -241.243399767955)" d="M 417.44 307 A 10.44 10.44 0 0 1 407 317.44 L 407 313.011 A 6.011 6.011 0 0 0 413.011 307 Z" bx:shape="pie 407 307 6.011 10.44 90 180 1@158268b1"/>
+    <path class="pieza_parte" data-parte="right" 
+        stroke="rgb(0, 0, 0)" fill="rgb(255, 255, 255)" stroke-width="0.5px" style="transform-origin: 401.78px 312.22px;" transform="matrix(2.756089925766, 2.66152715683, -2.605391025543, 2.697963237762, -386.792990155397, -269.243448226996)" d="M 407 317.44 A 10.44 10.44 0 0 1 396.56 307 L 400.989 307 A 6.011 6.011 0 0 0 407 313.011 Z" bx:shape="pie 407 307 6.011 10.44 180 270 1@22bfc712"/>
+    <path class="pieza_parte" data-parte="external" 
+        stroke="rgb(0, 0, 0)" fill="rgb(255, 255, 255)" stroke-width="0.5px" style="transform-origin: 401.78px 301.78px;" transform="matrix(2.756088972092, 2.661527156829, -2.605389118195, 2.697962284089, -359.393064639937, -287.003383541312)" d="M 396.56 307 A 10.44 10.44 0 0 1 407 296.56 L 407 300.989 A 6.011 6.011 0 0 0 400.989 307 Z" bx:shape="pie 407 307 6.011 10.44 270 360 1@19797b45"/>
+    <ellipse class="pieza_parte" data-parte="central" 
+    stroke="rgb(0, 0, 0)" fill="rgb(255, 255, 255)" style="stroke-width: 2px; transform-origin: 20px 23px;" cx="20" cy="23" rx="15.5" ry="15.5" transform="matrix(0.71933889389, 0.694659113884, -0.694659113884, 0.71933889389, 22.917160704609, 19.316783857956)"/>
+</svg>

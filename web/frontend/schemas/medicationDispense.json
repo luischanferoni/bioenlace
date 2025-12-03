@@ -1,0 +1,54 @@
+{
+    "resourceType" : "MedicationDispense",
+    "id" : "EjemploDatosDispensa",
+    "meta" : {
+      "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/datosDispensaAr"]
+    },
+    "text" : {
+      "status" : "additional",
+      "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">Medicamento: ibuprofeno 400 mg por cada comprimido para administración oral. Paciente: LEOTTA MARIA LAURA</div>"
+    },
+    "status" : "completed",
+    "medicationCodeableConcept" : {
+      "coding" : [{
+        "system" : "http://snomed.info/sct",
+        "code" : "329653008",
+        "display" : "ibuprofeno 400 mg por cada comprimido para administración oral"
+      }]
+    },
+    "subject" : {
+      "reference" : "Patient/EjemploDatosPaciente"
+    },
+    "performer" : [{
+      "actor" : {
+        "reference" : "Practitioner/EjemploDatosDispensador"
+      }
+    }],
+    "location" : {
+      "reference" : "Location/EjemploDatosLugarFarmacia"
+    },
+    "authorizingPrescription" : [{
+      "reference" : "MedicationRequest/EjemploDatosPrescripcion"
+    }],
+    "quantity" : {
+      "value" : 1,
+      "system" : "CSUnidadAsistencial",
+      "code" : "comprimido"
+    },
+    "whenHandedOver" : "2023-05-10T10:20:00Z",
+    "receiver" : [{
+      "reference" : "Patient/EjemploDatosPaciente"
+    }],
+    "note" : [{
+      "text" : "Informacion sobre la Dispensa"
+    }],
+    "dosageInstruction" : [{
+      "timing" : {
+        "repeat" : {
+          "duration" : 8,
+          "durationUnit" : "d"
+        }
+      },
+      "asNeededBoolean" : true
+    }]
+  }

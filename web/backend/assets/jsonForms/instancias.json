@@ -1,0 +1,18 @@
+{
+    "fields": {
+        "id": true,
+        "formId": false,
+        "tipoInstanciaId": false,
+        "createdFor": true,
+        "createdAt": true,
+        "updatedAt": false,
+        "deletedAt": false,
+        "createdBy": false,
+        "updatedBy": false,
+        "deletedBy": false
+    },
+    "where": {
+        "formId": "#ID"        
+    },
+    "order": "createdAt DESC"
+}

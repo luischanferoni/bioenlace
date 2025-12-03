@@ -1,0 +1,46 @@
+{"fields": {
+    "id": true,
+    "formId": false,
+    "tipoInstanciaId": false,
+    "createdFor": true,
+    "createdAt": true,
+    "updatedAt": false,
+    "deletedAt": false,
+    "createdBy": false,
+    "updatedBy": false,
+    "deletedBy": false
+  },
+ "where":{"formId": "#FORMID"},
+ "include":[
+    {
+       "relation":"valores",
+       "scope":{
+          "fields":{
+
+          },
+          "include":[
+             {
+                "relation":"pregunta",
+                "scope":{
+                   "fields":{
+
+                   },
+                   
+                   "include":[
+                      {
+                         "relation":"campos",
+                         "scope":{
+                            "fields":{
+
+                            }
+
+                         }
+                      }
+                   ]
+                }
+             }
+          ]
+       }
+    }
+ ]
+}

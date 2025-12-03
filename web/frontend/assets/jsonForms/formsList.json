@@ -1,0 +1,10 @@
+{
+    "fields": {
+        "id": true,
+        "nombre": true,
+        "descripcion": true,
+        "formTipoId": true,
+        "formEstadoId": true
+    },
+    "where": {"deletedAt": null}
+}

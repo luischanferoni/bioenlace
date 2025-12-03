@@ -1,0 +1,111 @@
+{
+    "title": "Paciente",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+
+    "definitions": {
+
+        "common": {
+            "type": "object",
+            "oneOf": [
+                { "required": ["id"] },
+                { "required": ["texto"] }
+            ],
+            "properties": {
+                "id": { "type": "string" },
+                "texto": { "type": "string" }
+            }
+        },
+
+        "contact": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 2,
+            "items": { "type": "string" }
+        }
+
+    },
+
+    "type": "object",
+    "properties": {
+        "paciente": {
+            "type": "object",
+            "properties": {
+                "set_minimo": {
+                    "type": "object",
+                    "properties": {
+                        "identificador": { "type": "string" },
+                        "tipo_documento": { "type": "integer" },
+                        "nro_documento": { "type": "string" },
+                        "apellido": { "type": "string" },
+                        "otro_apellido": { "type": "string" },
+                        "apellido_materno": { "type": "string" },
+                        "apellido_paterno": { "type": "string" },
+                        "nombre": { "type": "string" },
+                        "otros_nombres": { "type": "string" },
+                        "sexo_biologico": { "type": "integer", "enum": [1, 2] },
+                        "genero": { "type": "integer" },
+                        "fecha_nacimiento": { "type": "string" },
+                        "acredita_identidad": { "type": "boolean" },
+                        "fecha_fallecimiento": { "type": "string" },
+                        "foto": { "type": "string" }
+                    },
+                    "required": ["identificador", "tipo_documento", "nro_documento", "apellido", "nombre", "sexo_biologico", "genero", "fecha_nacimiento", "acredita_identidad"]
+                },
+
+                "set_ampliado": {
+                    "type": "object",
+                    "anyOf": [
+                        { "required": ["contacto"] },
+                        { "required": ["residencia"] }
+                    ],
+                    "properties": {
+                        "contacto": {
+                            "type": "object",
+                            "anyOf": [
+                                { "required": ["telefono"] },
+                                { "required": ["email"] }
+                            ],
+                            "properties": {
+                                "telefono": {
+                                    "type": "object",
+                                    "anyOf": [
+                                        { "required": ["fijo"] },
+                                        { "required": ["celular"] }
+                                    ],
+                                    "properties": {
+                                        "fijo": { "$ref": "#/definitions/contact" },
+                                        "celular": { "$ref": "#/definitions/contact" }
+                                    }
+                                },
+                                "email": { "$ref": "#/definitions/contact" }
+                            }
+                        },
+                        "residencia": {
+                            "type": "object",
+                            "properties": {
+                                "provincia": { "$ref": "#/definitions/common" },
+                                "departamento": { "$ref": "#/definitions/common" },
+                                "localidad": { "$ref": "#/definitions/common" },
+                                "calle": { "type": "string" },
+                                "numero": { "type": "string" },
+                                "piso": { "type": "string" },
+                                "depto": { "type": "string" },
+                                "geoposicion": {
+                                    "type": "object",
+                                    "properties": {
+                                        "latitud": { "type": "number" },
+                                        "longitud": { "type": "number" }
+                                    },
+                                    "required": ["latitud", "longitud"]
+                                }
+                            },
+                            "required": ["provincia", "departamento", "localidad", "calle", "numero"]
+                        }
+                    }
+                }
+            },
+            "required": ["set_minimo"]
+        }
+    },
+    "required": ["paciente"]
+}

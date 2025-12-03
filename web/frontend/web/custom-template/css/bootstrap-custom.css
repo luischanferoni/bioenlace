@@ -1,0 +1,498 @@
+/* Bootstrap 5 Custom Overrides */
+
+/* Variables personalizadas de VitaMind */
+:root {
+    /* Colores principales de VitaMind */
+    --vitamind-primary: #0085db;
+    --vitamind-secondary: #707a82;
+    --vitamind-warning: #f8c076;
+    --vitamind-danger: #fb977d;
+    --vitamind-success: #4bd08b;
+    --vitamind-info: #46CAEB;
+    
+    /* Colores derivados para mantener coherencia */
+    --vitamind-light: #f8f9ff;
+    --vitamind-dark: #555d64;
+    --vitamind-muted: #878d92;
+    
+    /* Sobrescribir variables de Bootstrap con colores VitaMind */
+    --bs-primary: var(--vitamind-primary);
+    --bs-secondary: var(--vitamind-secondary);
+    --bs-success: var(--vitamind-success);
+    --bs-info: var(--vitamind-info);
+    --bs-warning: var(--vitamind-warning);
+    --bs-danger: var(--vitamind-danger);
+    --bs-light: var(--vitamind-light);
+    --bs-dark: var(--vitamind-dark);
+    --bs-muted: var(--vitamind-muted);
+    
+    /* Variables de texto */
+    --bs-body-color: #212529;
+    --bs-body-color-rgb: 33, 37, 41;
+    --bs-body-bg: #fff;
+    --bs-body-bg-rgb: 255, 255, 255;
+    --bs-emphasis-color: #000;
+    --bs-emphasis-color-rgb: 0, 0, 0;
+    --bs-secondary-color: rgba(33, 37, 41, 0.75);
+    --bs-secondary-color-rgb: 33, 37, 41;
+    --bs-tertiary-color: rgba(33, 37, 41, 0.5);
+    --bs-tertiary-color-rgb: 33, 37, 41;
+    
+    /* Variables de enlaces */
+    --bs-link-color: var(--vitamind-primary);
+    --bs-link-color-rgb: 0, 133, 219;
+    --bs-link-hover-color: var(--vitamind-primary-hover);
+    --bs-link-hover-color-rgb: 0, 107, 179;
+    
+    /* Variables de código */
+    --bs-code-color: #d63384;
+    --bs-code-color-rgb: 214, 51, 132;
+    
+    /* Variables de highlights */
+    --bs-highlight-bg: #fff3cd;
+    --bs-highlight-bg-rgb: 255, 243, 205;
+    
+    /* Variables específicas de botones Bootstrap */
+    /* Botones Primary */
+    --bs-btn-color: #fff;
+    --bs-btn-bg: var(--vitamind-primary);
+    --bs-btn-border-color: var(--vitamind-primary);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--vitamind-primary-hover);
+    --bs-btn-hover-border-color: var(--vitamind-primary-hover);
+    --bs-btn-focus-shadow-rgb: 0, 133, 219;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--vitamind-primary-active);
+    --bs-btn-active-border-color: var(--vitamind-primary-active);
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 133, 219, 0.125);
+    --bs-btn-disabled-color: var(--vitamind-primary);
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: var(--vitamind-primary);    
+
+    /* Colores sutiles y variaciones */
+    --bs-primary-rgb: 0, 133, 219;
+    --bs-secondary-rgb: 112, 122, 130;
+    --bs-success-rgb: 75, 208, 139;
+    --bs-info-rgb: 70, 202, 235;
+    --bs-warning-rgb: 248, 192, 118;
+    --bs-danger-rgb: 251, 151, 125;
+    --bs-light-rgb: 248, 249, 255;
+    --bs-dark-rgb: 85, 93, 100;
+    --bs-muted-rgb: 135, 141, 146;
+    
+    /* Colores de fondo sutiles */
+    --bs-primary-bg-subtle: rgba(0, 133, 219, 0.1);
+    --bs-secondary-bg-subtle: rgba(112, 122, 130, 0.1);
+    --bs-success-bg-subtle: rgba(75, 208, 139, 0.1);
+    --bs-info-bg-subtle: rgba(70, 202, 235, 0.1);
+    --bs-warning-bg-subtle: rgba(248, 192, 118, 0.1);
+    --bs-danger-bg-subtle: rgba(251, 151, 125, 0.1);
+    --bs-light-bg-subtle: rgba(248, 249, 255, 0.1);
+    --bs-dark-bg-subtle: rgba(85, 93, 100, 0.1);
+    --bs-muted-bg-subtle: rgba(135, 141, 146, 0.1);
+    
+    /* Colores de borde sutiles */
+    --bs-primary-border-subtle: rgba(0, 133, 219, 0.2);
+    --bs-secondary-border-subtle: rgba(112, 122, 130, 0.2);
+    --bs-success-border-subtle: rgba(75, 208, 139, 0.2);
+    --bs-info-border-subtle: rgba(70, 202, 235, 0.2);
+    --bs-warning-border-subtle: rgba(248, 192, 118, 0.2);
+    --bs-danger-border-subtle: rgba(251, 151, 125, 0.2);
+    --bs-light-border-subtle: rgba(248, 249, 255, 0.2);
+    --bs-dark-border-subtle: rgba(85, 93, 100, 0.2);
+    --bs-muted-border-subtle: rgba(135, 141, 146, 0.2);
+    
+    /* Colores de hover para botones */
+    --vitamind-primary-hover: #006bb3;
+    --vitamind-primary-active: #005a9c;
+    --vitamind-secondary-hover: #5a6268;
+    --vitamind-success-hover: #3ba870;
+    --vitamind-info-hover: #3bb8d1;
+    --vitamind-warning-hover: #f5b85a;
+    --vitamind-danger-hover: #f9825a;
+
+    --bs-border-radius: 0.175rem;
+}
+
+.btn {
+    border-radius: 0.975rem !important;
+}
+/* Los botones estándar de Bootstrap ahora usan automáticamente las variables CSS personalizadas */
+
+/* Estilos específicos para todos los botones con colores VitaMind */
+
+/* Botones Primary */
+.btn-primary {
+    background-color: var(--vitamind-primary) !important;
+    border-color: var(--vitamind-primary) !important;
+    color: #fff !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--vitamind-primary-hover) !important;
+    border-color: var(--vitamind-primary-hover) !important;
+    color: #fff !important;
+}
+
+.btn-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 133, 219, 0.25) !important;
+}
+
+.btn-primary:active {
+    background-color: var(--vitamind-primary-active) !important;
+    border-color: var(--vitamind-primary-active) !important;
+    color: #fff !important;
+}
+
+/* Botones Outline Primary */
+.btn-outline-primary {
+    color: var(--vitamind-primary) !important;
+    border-color: var(--vitamind-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    color: #fff !important;
+    background-color: var(--vitamind-primary) !important;
+    border-color: var(--vitamind-primary) !important;
+}
+
+.btn-outline-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 133, 219, 0.25) !important;
+}
+
+.btn-outline-primary:active {
+    color: #fff !important;
+    background-color: var(--vitamind-primary) !important;
+    border-color: var(--vitamind-primary) !important;
+}
+
+/* Botones Secondary */
+.btn-secondary {
+    background-color: var(--vitamind-secondary) !important;
+    border-color: var(--vitamind-secondary) !important;
+    color: #495057 !important;
+}
+
+.btn-secondary:hover {
+    background-color: var(--vitamind-secondary-hover) !important;
+    border-color: var(--vitamind-secondary-hover) !important;
+    color: #495057 !important;
+}
+
+.btn-outline-secondary {
+    color: var(--vitamind-secondary) !important;
+    border-color: var(--vitamind-secondary) !important;
+}
+
+.btn-outline-secondary:hover {
+    color: #495057 !important;
+    background-color: var(--vitamind-secondary) !important;
+    border-color: var(--vitamind-secondary) !important;
+}
+
+/* Botones Success */
+.btn-success {
+    background-color: var(--vitamind-success) !important;
+    border-color: var(--vitamind-success) !important;
+    color: #fff !important;
+}
+
+.btn-success:hover {
+    background-color: var(--vitamind-success-hover) !important;
+    border-color: var(--vitamind-success-hover) !important;
+    color: #fff !important;
+}
+
+.btn-outline-success {
+    color: var(--vitamind-success) !important;
+    border-color: var(--vitamind-success) !important;
+}
+
+.btn-outline-success:hover {
+    color: #fff !important;
+    background-color: var(--vitamind-success) !important;
+    border-color: var(--vitamind-success) !important;
+}
+
+/* Botones Info */
+.btn-info {
+    background-color: var(--vitamind-info) !important;
+    border-color: var(--vitamind-info) !important;
+    color: #fff !important;
+}
+
+.btn-info:hover {
+    background-color: var(--vitamind-info-hover) !important;
+    border-color: var(--vitamind-info-hover) !important;
+    color: #fff !important;
+}
+
+.btn-outline-info {
+    color: var(--vitamind-info) !important;
+    border-color: var(--vitamind-info) !important;
+}
+
+.btn-outline-info:hover {
+    color: #fff !important;
+    background-color: var(--vitamind-info) !important;
+    border-color: var(--vitamind-info) !important;
+}
+
+/* Botones Warning */
+.btn-warning {
+    background-color: var(--vitamind-warning) !important;
+    border-color: var(--vitamind-warning) !important;
+    color: #495057 !important;
+}
+
+.btn-warning:hover {
+    background-color: var(--vitamind-warning-hover) !important;
+    border-color: var(--vitamind-warning-hover) !important;
+    color: #495057 !important;
+}
+
+.btn-outline-warning {
+    color: var(--vitamind-warning) !important;
+    border-color: var(--vitamind-warning) !important;
+}
+
+.btn-outline-warning:hover {
+    color: #495057 !important;
+    background-color: var(--vitamind-warning) !important;
+    border-color: var(--vitamind-warning) !important;
+}
+
+/* Botones Danger */
+.btn-danger {
+    background-color: var(--vitamind-danger) !important;
+    border-color: var(--vitamind-danger) !important;
+    color: #fff !important;
+}
+
+.btn-danger:hover {
+    background-color: var(--vitamind-danger-hover) !important;
+    border-color: var(--vitamind-danger-hover) !important;
+    color: #fff !important;
+}
+
+.btn-outline-danger {
+    color: var(--vitamind-danger) !important;
+    border-color: var(--vitamind-danger) !important;
+}
+
+.btn-outline-danger:hover {
+    color: #fff !important;
+    background-color: var(--vitamind-danger) !important;
+    border-color: var(--vitamind-danger) !important;
+}
+
+/* Botones de diferentes tamaños con colores VitaMind */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+}
+
+.btn-lg {
+    padding: 0.5rem 1rem;
+    font-size: 1.25rem;
+    border-radius: 0.5rem;
+}
+
+/* Estados especiales de botones */
+.btn:disabled,
+.btn.disabled {
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+/* Botones con gradientes sutiles */
+.btn-primary-gradient {
+    background: linear-gradient(135deg, var(--vitamind-primary) 0%, var(--vitamind-primary-hover) 100%);
+    border: none;
+    color: white;
+}
+
+.btn-primary-gradient:hover {
+    background: linear-gradient(135deg, var(--vitamind-primary-hover) 0%, var(--vitamind-primary-active) 100%);
+    color: white;
+}
+
+/* Botones con sombras personalizadas */
+.btn-shadow {
+    box-shadow: 0 2px 4px rgba(0, 133, 219, 0.2);
+    transition: all 0.2s ease;
+}
+
+.btn-shadow:hover {
+    box-shadow: 0 4px 8px rgba(0, 133, 219, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Focus personalizado para formularios */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--vitamind-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 133, 219, 0.25);
+}
+
+/* Utilidades personalizadas de VitaMind */
+.text-vitamind-primary { color: var(--vitamind-primary) !important; }
+.text-vitamind-secondary { color: var(--vitamind-secondary) !important; }
+.text-vitamind-success { color: var(--vitamind-success) !important; }
+.text-vitamind-info { color: var(--vitamind-info) !important; }
+.text-vitamind-warning { color: var(--vitamind-warning) !important; }
+.text-vitamind-danger { color: var(--vitamind-danger) !important; }
+
+.bg-vitamind-primary { background-color: var(--vitamind-primary) !important; }
+.bg-vitamind-secondary { background-color: var(--vitamind-secondary) !important; }
+.bg-vitamind-success { background-color: var(--vitamind-success) !important; }
+.bg-vitamind-info { background-color: var(--vitamind-info) !important; }
+.bg-vitamind-warning { background-color: var(--vitamind-warning) !important; }
+.bg-vitamind-danger { background-color: var(--vitamind-danger) !important; }
+
+.border-vitamind-primary { border-color: var(--vitamind-primary) !important; }
+.border-vitamind-secondary { border-color: var(--vitamind-secondary) !important; }
+.border-vitamind-success { border-color: var(--vitamind-success) !important; }
+.border-vitamind-info { border-color: var(--vitamind-info) !important; }
+.border-vitamind-warning { border-color: var(--vitamind-warning) !important; }
+.border-vitamind-danger { border-color: var(--vitamind-danger) !important; }
+
+/* Fondos sutiles */
+.bg-vitamind-primary-subtle { background-color: var(--bs-primary-bg-subtle) !important; }
+.bg-vitamind-secondary-subtle { background-color: var(--bs-secondary-bg-subtle) !important; }
+.bg-vitamind-success-subtle { background-color: var(--bs-success-bg-subtle) !important; }
+.bg-vitamind-info-subtle { background-color: var(--bs-info-bg-subtle) !important; }
+.bg-vitamind-warning-subtle { background-color: var(--bs-warning-bg-subtle) !important; }
+.bg-vitamind-danger-subtle { background-color: var(--bs-danger-bg-subtle) !important; }
+
+/* Botones específicos de VitaMind */
+.btn-vitamind-primary {
+    background-color: var(--vitamind-primary);
+    border-color: var(--vitamind-primary);
+    color: white;
+}
+
+.btn-vitamind-primary:hover {
+    background-color: var(--vitamind-primary-hover);
+    border-color: var(--vitamind-primary-hover);
+    color: white;
+}
+
+.btn-vitamind-secondary {
+    background-color: var(--vitamind-secondary);
+    border-color: var(--vitamind-secondary);
+    color: #495057;
+}
+
+.btn-vitamind-secondary:hover {
+    background-color: var(--vitamind-secondary-hover);
+    border-color: var(--vitamind-secondary-hover);
+    color: #495057;
+}
+
+.btn-vitamind-success {
+    background-color: var(--vitamind-success);
+    border-color: var(--vitamind-success);
+    color: white;
+}
+
+.btn-vitamind-success:hover {
+    background-color: var(--vitamind-success-hover);
+    border-color: var(--vitamind-success-hover);
+    color: white;
+}
+
+.btn-vitamind-info {
+    background-color: var(--vitamind-info);
+    border-color: var(--vitamind-info);
+    color: white;
+}
+
+.btn-vitamind-info:hover {
+    background-color: var(--vitamind-info-hover);
+    border-color: var(--vitamind-info-hover);
+    color: white;
+}
+
+.btn-vitamind-warning {
+    background-color: var(--vitamind-warning);
+    border-color: var(--vitamind-warning);
+    color: #495057;
+}
+
+.btn-vitamind-warning:hover {
+    background-color: var(--vitamind-warning-hover);
+    border-color: var(--vitamind-warning-hover);
+    color: #495057;
+}
+
+.btn-vitamind-danger {
+    background-color: var(--vitamind-danger);
+    border-color: var(--vitamind-danger);
+    color: white;
+}
+
+.btn-vitamind-danger:hover {
+    background-color: var(--vitamind-danger-hover);
+    border-color: var(--vitamind-danger-hover);
+    color: white;
+}
+
+/* Bootstrap maneja responsive por defecto */
+
+/* Estilos del sidebar eliminados - ya no se usa */
+
+/* Navbar personalizado - solo estilos específicos de VitaMind */
+.navbar {
+    /* Solo agregamos sombra sutil y sticky positioning */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+}
+
+/* Colores personalizados de VitaMind */
+.navbar-brand {
+    color: var(--vitamind-primary) !important;
+    font-weight: 600;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--vitamind-primary) !important;
+}
+
+.navbar-nav .dropdown-item:hover {
+    background-color: var(--vitamind-primary);
+    color: white;
+}
+
+/* Main content sin sidebar */
+.main-content {
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+}
+
+/* Bootstrap maneja el navbar-toggler y collapse por defecto */
+
+/* Page header personalizado */
+.page-header {
+    background: linear-gradient(135deg, var(--vitamind-primary) 0%, #6b8cff 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Footer personalizado */
+.footer a {
+    color: var(--vitamind-primary);
+}
+
+/* Chat específico */
+.chat-message {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

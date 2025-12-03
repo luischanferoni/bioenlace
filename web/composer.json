@@ -1,0 +1,96 @@
+{
+  "name": "saluddigitalsgo/sisse",
+  "description": "Sistema Integral de Salud de Santiago del Estero",
+  "type": "project",
+  "license": "BSD-3-Clause",
+  "minimum-stability": "stable",
+  "require": {
+    "php": ">=5.6.0",
+    "yiisoft/yii2": "~2.0.14",
+    "yiisoft/yii2-bootstrap5": "*",
+    "yiisoft/yii2-swiftmailer": "~2.0.0 || ~2.1.0",
+    "yiisoft/yii2-jui": "~2.0.0",
+    "webvimark/module-user-management": "*",
+    "phpoffice/phpexcel": "dev-develop",
+    "kartik-v/yii2-widget-select2": "@dev",
+    "kartik-v/yii2-widget-datepicker": "@dev",
+    "kartik-v/yii2-widget-timepicker": "dev-master",
+    "kartik-v/yii2-checkbox-x": "@dev",
+    "kartik-v/yii2-widget-activeform": "@dev",
+    "kartik-v/yii2-widget-depdrop": "@dev",
+    "wbraganca/yii2-dynamicform": "dev-master",
+    "reportico/yii2-reportico": "dev-master",
+    "kartik-v/yii2-widget-switchinput": "1.3.0",
+    "sizeg/yii2-jwt": "v2.0.1.1",
+    "philippfrenzel/yii2fullcalendar": "*",
+    "twbs/bootstrap-icons": "^1.10",
+    "kartik-v/yii2-bootstrap5-dropdown": "@dev",
+    "kartik-v/yii2-mpdf": "dev-master",
+    "thamtech/yii2-ratelimiter-advanced": "*",
+    "kartik-v/yii2-export": "@dev",
+    "kartik-v/yii2-dynagrid": "dev-master",
+    "yiisoft/yii2-httpclient": "~2.0.0",
+    "kartik-v/yii2-date-range": "dev-master",
+    "buttflattery/yii2-formwizard": "@dev",
+    "yiisoft/yii2-bootstrap4": "^2.0",
+    "kartik-v/yii2-builder": "dev-master",
+    "2amigos/yii2-chartjs-widget" : "~2.0",
+    "kartik-v/yii2-field-range": "dev-master",
+    "yiisoft/yii2-authclient": "~2.1.0",
+    "kartik-v/yii2-widget-fileinput": "dev-master",
+    "stitchua/yii2-dynamicform": "dev-master",
+    "firebase/php-jwt": "^6.0"
+  },
+  "require-dev": {
+    "codeception/codeception": "^4.0",
+    "yiisoft/yii2-debug": "~2.1.0",
+    "yiisoft/yii2-gii": "~2.1.0",
+    "yiisoft/yii2-faker": "~2.0.0"
+  },
+  "config": {
+    "fxp-asset": {
+      "installer-paths": {
+        "npm-asset-library": "vendor/npm",
+        "bower-asset-library": "vendor/bower"
+      }
+    },
+    "process-timeout": 1800,
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    },
+    "platform": {
+      "php": "7.0.33"
+    }
+  },
+  "scripts": {
+    "post-create-project-cmd": [
+      "yii\\composer\\Installer::postCreateProject"
+    ]
+  },
+  "extra": {
+    "yii\\composer\\Installer::postCreateProject": {
+      "setPermission": [
+        {
+          "runtime": "0777",
+          "web/assets": "0777",
+          "yii": "0755"
+        }
+      ],
+      "generateCookieValidationKey": [
+        "config/web.php"
+      ]
+    },
+    "asset-installer-paths": {
+      "npm-asset-library": "vendor/npm",
+      "bower-asset-library": "vendor/bower"
+    }
+  },
+
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }    
+  ]
+ 
+}

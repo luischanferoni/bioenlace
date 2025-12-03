@@ -1,0 +1,41 @@
+{
+    "fields": {
+        "id": true,
+        "nombre": true,
+        "descripcion": true,
+        "logo": true,
+        "formEstadoId": true,
+        "formTipoId": true,
+        "dominioId": true
+    },    
+    "include": [
+        {
+            "relation": "secciones",
+            "scope": {
+                "fields": {},
+                "include": [
+                    {
+                        "relation": "preguntas",
+                        "scope": {
+                            "fields": {},
+                            "include": [
+                                {
+                                    "relation": "campos",
+                                    "scope": {
+                                        "fields": {
+                                            "id": true,
+                                            "nombre": true,
+                                            "orden": true,
+                                            "tipoCampoId": true,
+                                            "preguntaId": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

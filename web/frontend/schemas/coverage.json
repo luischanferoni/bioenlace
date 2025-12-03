@@ -1,0 +1,40 @@
+{
+    "fullUrl" : "urn:uuid:065c6f50-28de-4224-b950-a764396d4a25",
+    "resource": {
+        "resourceType" : "Coverage",
+        "id" : "EjemploDatosCobertura",
+        "meta" : {
+            "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/datosCoberturaAR"]
+        },
+        "text" : {
+            "status" : "additional",
+            "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">OBRA SOCIAL DE EJEMPLO - PLAN JOVEN - 206850/01</div>"
+        },
+        "identifier" : [{
+            "system" : "http://ssalud.gob.ar/coberturas-13566-carnet",
+            "value" : "206850-01"
+        }],
+        "status" : "active",
+        "beneficiary" : {
+            "reference" : "urn:uuid:015c6f50-28de-4224-b950-a764396d4a25"
+        },
+        "payor" : [{
+            "identifier" : {
+                "system" : "http://ssalud.gob.ar/coberturas",
+                "value" : "13566"
+            },
+            "display" : "OBRA SOCIAL DE EJEMPLO"
+        }],
+        "class" : [{
+        "type" : {
+            "coding" : [{
+            "system" : "http://terminology.hl7.org/CodeSystem/coverage-class",
+            "code" : "plan",
+            "display" : "Plan"
+            }]
+        },
+        "value" : "13566_3",
+        "name" : "Plan Joven"
+        }]
+    }
+}

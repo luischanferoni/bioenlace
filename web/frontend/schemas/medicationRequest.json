@@ -1,0 +1,79 @@
+{
+    "fullUrl" : "urn:uuid:065c6f50-28de-4224-b950-a764396d4a25",
+    "resource": {
+        "resourceType" : "MedicationRequest",
+        "id" : "EjemploDatosPrescripcion",
+        "meta" : {
+            "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/datosPrescripcionAR"]
+        },
+        "text" : {
+            "status" : "additional",
+            "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">Medicamento: ibuprofeno 400 mg por cada comprimido para administración oral</div>"
+        },
+        "identifier" : [{
+            "system" : "https://www.HospitalDeLaPlata.com.ar/HIS",
+            "value" : "7cdea8dc-aaf1-483f-81f3-41619d853c6a"
+        }],
+        "status" : "active",
+        "intent" : "order",
+        "medicationCodeableConcept" : {
+        "coding" : [{
+            "system" : "http://fhir.msal.gob.ar/RDI/CodeSystem/CSMedicamentosGenericosSCT",
+            "code" : "329653008",
+            "display" : "ibuprofeno 400 mg por cada comprimido para administración oral"
+        },
+        {
+            "system" : "http://fhir.msal.gob.ar/RDI/CodeSystem/CSMedicamentosComercialesSCT",
+            "code" : "138041000221108",
+            "display" : "DOLORSYN [IBUPROFENO 400 MG] COMPRIMIDO"
+        }]
+        },
+        "subject" : {
+            "reference" : "urn:uuid:015c6f50-28de-4224-b950-a764396d4a25",
+            "display" : "LEOTTA, Maria"
+        },
+        "supportingInformation" : [{
+            "reference" : "urn:uuid:035c6f50-28de-4224-b950-a764396d4a25"
+        }],
+        "authoredOn" : "2023-07-14T00:00:00+00:00",
+        "requester" : {
+            "reference" : "urn:uuid:045c6f50-28de-4224-b950-a764396d4a25",
+            "display" : "Prueba Medico"
+        },
+        "reasonCode" : [{
+        "coding" : [{
+            "system" : "http://fhir.msal.gob.ar/RDI/CodeSystem/csproblemas-salud",
+            "code" : "25064002",
+            "display" : "cefalea"
+        }]
+        }],
+        "groupIdentifier" : {
+            "system" : "https://repositorio5555.com.ar/fhir",
+            "value" : "7cdea8dc-81f3-483f-aaf1-41619d853c6e"
+        },
+        "insurance" : [{
+            "reference" : "urn:uuid:075c6f50-28de-4224-b950-a764396d4a25"
+        }],
+        "dosageInstruction" : [{
+        "text" : "1 comp cada 6 horas si dolor. Máximo 7 días seguidos",
+        "timing" : {
+            "repeat" : {
+            "duration" : 7,
+            "durationMax" : 7,
+            "durationUnit" : "d",
+            "frequency" : 4,
+            "period" : 1,
+            "periodUnit" : "d"
+            }
+        }
+        }],
+        "dispenseRequest" : {
+            "validityPeriod" : {
+                "start" : "2023-09-04T00:00:00+00:00"
+            },
+            "quantity" : {
+                "value" : 1
+            }
+        }
+    }
+}

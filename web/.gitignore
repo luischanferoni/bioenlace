@@ -1,0 +1,24 @@
+/vendor
+/yii
+/BD backup
+frontend/web/index.php
+frontend/web/index-test.php
+frontend/web/robots.txt
+frontend/web/uploads/*
+frontend/runtime/*
+backend/web/index.php
+backend/web/index-test.php
+backend/web/robots.txt
+backend/runtime/*
+backend/web/assets
+backend/web/uploads/*
+composer.lock
+yii
+/nbproject/private/
+/produccion/sisse-56/*.csv
+/produccion/sisse-56/*.sql
+.php-cs-fixer.cache
+frontend/web/react/node_modules/*
+console/runtime/*
+# Logs de análisis de consultas individuales
+frontend/runtime/logs/analisis-consultas/*.log

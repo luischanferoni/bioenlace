@@ -1,0 +1,37 @@
+{
+    "fullUrl" : "urn:uuid:065c6f50-28de-4224-b950-a764396d4a25",
+    "resource": {
+        "resourceType" : "Patient",
+        "id" : "EjemploDatosPaciente",
+        "meta" : {
+            "profile" : ["http://fhir.msal.gob.ar/RDI/StructureDefinition/datosPacienteAR"]
+        },
+        "text" : {
+            "status" : "additional",
+            "div" : "<div xmlns=\"http://www.w3.org/1999/xhtml\">LEOTTA, MARIA LAURA DNI: 99999999</div>"
+        },
+        "identifier" : [{
+            "use" : "official",
+            "system" : "http://www.renaper.gob.ar/dni",
+            "value" : "999999999"
+        },
+        {
+            "use" : "secondary",
+            "system" : "http://sistemadesalud.com.ar/Patient",
+            "value" : "9999"
+        }],
+        "name" : [{
+            "text" : "LEOTTA MARIA LAURA",
+            "family" : "LEOTTA",
+            "_family" : {
+                "extension" : [{
+                "url" : "http://hl7.org/fhir/StructureDefinition/humanname-fathers-family",
+                "valueString" : "LEOTTA"
+                }]
+            },
+            "given" : ["MARIA","LAURA"]
+        }],
+        "gender" : "female",
+        "birthDate" : "1980-07-29"
+  }
+}

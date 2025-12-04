@@ -88,6 +88,17 @@ class TimelineResponse {
   });
 
   factory TimelineResponse.fromJson(Map<String, dynamic> json) {
+    // Helper para convertir String o int a int de forma segura
+    int _parseInt(dynamic value, {int defaultValue = 0}) {
+      if (value == null) return defaultValue;
+      if (value is int) return value;
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        return parsed ?? defaultValue;
+      }
+      return defaultValue;
+    }
+
     return TimelineResponse(
       persona: PersonaData.fromJson(json['persona'] as Map<String, dynamic>),
       informacionMedica: InformacionMedica.fromJson(
@@ -97,7 +108,7 @@ class TimelineResponse {
               ?.map((e) => TimelineEvent.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      totalEventos: json['total_eventos'] as int? ?? 0,
+      totalEventos: _parseInt(json['total_eventos'], defaultValue: 0),
     );
   }
 }
@@ -121,12 +132,29 @@ class PersonaData {
   });
 
   factory PersonaData.fromJson(Map<String, dynamic> json) {
+    // Helper para convertir String o int a int de forma segura
+    int? _parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      return null;
+    }
+
+    int _parseIntRequired(dynamic value) {
+      if (value is int) return value;
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) return parsed;
+      }
+      throw FormatException('Expected int or String representation of int, got: $value');
+    }
+
     return PersonaData(
-      id: json['id'] as int,
+      id: _parseIntRequired(json['id']),
       nombreCompleto: json['nombre_completo'] as String? ?? 'Sin nombre',
       documento: json['documento'] as String?,
       fechaNacimiento: json['fecha_nacimiento'] as String?,
-      edad: json['edad'] as int?,
+      edad: _parseInt(json['edad']),
       sexo: json['sexo'] as String?,
     );
   }

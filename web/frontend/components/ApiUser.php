@@ -188,6 +188,20 @@ class ApiUser extends User
 		return $session->get('encounterClass');
 	}
 
+	public function setServicioYhorarioDeTurno($servicios)
+	{
+		$session = Yii::$app->session;
+		$session->set('servicioYhorarioDeTurno', $servicios);
+	}
+
+	public function getServicioYhorarioDeTurno()
+	{
+		$session = Yii::$app->session;
+		$servicios = $session->get('servicioYhorarioDeTurno');
+
+		return $servicios == null || $servicios == "" ? [] : $servicios;
+	}
+
 	/**
 	 * @inheritdoc
 	 */

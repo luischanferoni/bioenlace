@@ -28,19 +28,42 @@ class TimelineEvent {
     this.tipoDetalle,
   });
 
+  // Helper para convertir String o int a int de forma segura
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      return parsed;
+    }
+    return null;
+  }
+
+  // Helper para convertir String o int a int (no nullable)
+  static int _parseIntRequired(dynamic value) {
+    if (value is int) return value;
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+    throw FormatException('Expected int or String representation of int, got: $value');
+  }
+
   // Crear desde JSON de la API
   factory TimelineEvent.fromJson(Map<String, dynamic> json) {
     return TimelineEvent(
-      id: json['id'] as int,
+      id: _parseIntRequired(json['id']),
       tipo: json['tipo'] as String? ?? 'Desconocido',
       fecha: json['fecha'] as String,
       resumen: json['resumen'] as String?,
       servicio: json['servicio'] as String?,
-      idServicio: json['id_servicio'] as String?,
+      idServicio: json['id_servicio'] is String 
+          ? json['id_servicio'] as String
+          : json['id_servicio']?.toString(),
       parentClass: json['parent_class'] as String?,
-      parentId: json['parent_id'] as int?,
+      parentId: _parseInt(json['parent_id']),
       profesional: json['profesional'] as String?,
-      idRrHh: json['id_rr_hh'] as int?,
+      idRrHh: _parseInt(json['id_rr_hh']),
       efector: json['efector'] as String?,
       tipoDetalle: json['tipo_detalle'] as String?,
     );
@@ -188,7 +211,7 @@ class Hallazgo {
 
   factory Hallazgo.fromJson(Map<String, dynamic> json) {
     return Hallazgo(
-      id: json['id'] as int?,
+      id: TimelineEvent._parseInt(json['id']),
       codigo: json['codigo'] as String?,
       termino: json['termino'] as String?,
     );
@@ -203,7 +226,7 @@ class Antecedente {
 
   factory Antecedente.fromJson(Map<String, dynamic> json) {
     return Antecedente(
-      id: json['id'] as int?,
+      id: TimelineEvent._parseInt(json['id']),
       situacion: json['situacion'] as String?,
     );
   }

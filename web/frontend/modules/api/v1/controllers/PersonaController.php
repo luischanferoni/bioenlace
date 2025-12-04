@@ -13,6 +13,37 @@ class PersonaController extends BaseController
     public $modelClass = 'common\models\Persona';
 
     /**
+     * Sobrescribir behaviors para permitir acceso sin autenticación a index (se manejará manualmente)
+     */
+    public function behaviors()
+    {
+        $behaviors = parent::behaviors();
+        
+        // Excluir index de autenticación obligatoria (se manejará manualmente con user_id)
+        $except = $behaviors['authenticator']['except'] ?? [];
+        if (!in_array('index', $except)) {
+            $except[] = 'timeline';
+        }
+        $behaviors['authenticator']['except'] = $except;
+        
+        return $behaviors;
+    }
+
+    /**
+     * Deshabilitar las acciones por defecto de ActiveController para usar nuestros métodos personalizados
+     */
+    public function actions()
+    {
+        $actions = parent::actions();
+        
+        // Deshabilitar las acciones por defecto que tenemos personalizadas
+        // Esto asegura que se usen nuestros métodos actionIndex(), actionView(), actionTimeline()
+        unset($actions['index'], $actions['view']);
+        
+        return $actions;
+    }
+
+    /**
      * Obtener personas
      */
     public function actionIndex()

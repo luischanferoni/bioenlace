@@ -127,12 +127,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Turno? _obtenerSiguienteTurno() {
     if (_turnos.isEmpty) return null;
     final ahora = DateTime.now();
-    return _turnos.firstWhere(
+    // Excluir el turno simulado (id=999999) del cálculo del siguiente turno
+    final turnosReales = _turnos.where((turno) => turno.id != 999999).toList();
+    if (turnosReales.isEmpty) return null;
+    return turnosReales.firstWhere(
       (turno) {
         final fechaHora = turno.fechaHora;
         return fechaHora != null && fechaHora.isAfter(ahora);
       },
-      orElse: () => _turnos.first,
+      orElse: () => turnosReales.first,
     );
   }
 
@@ -269,6 +272,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               LayoutBuilder(
                                 builder: (context, constraints) {
                                   final crossAxisCount = constraints.maxWidth > 600 ? 2 : 1;
+                                  // Excluir el siguiente turno de la lista si existe (para evitar duplicados)
+                                  final siguienteId = siguienteTurno?.id;
+                                  final turnosParaLista = siguienteId != null
+                                      ? _turnos.where((turno) => turno.id != siguienteId).toList()
+                                      : _turnos;
                                   return GridView.builder(
                                     shrinkWrap: true,
                                     physics: const NeverScrollableScrollPhysics(),
@@ -278,9 +286,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                       crossAxisSpacing: 16,
                                       mainAxisSpacing: 12,
                                     ),
-                                    itemCount: _turnos.length,
+                                    itemCount: turnosParaLista.length,
                                     itemBuilder: (context, index) {
-                                      return _buildTurnoCard(_turnos[index]);
+                                      return _buildTurnoCard(turnosParaLista[index]);
                                     },
                                   );
                                 },
@@ -437,7 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
-                    child: const Text('Ver Historia Clínica'),
+                    child: const Text('Cargar consulta'),
                   ),
                 ],
               ),

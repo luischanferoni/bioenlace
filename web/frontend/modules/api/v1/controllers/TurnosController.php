@@ -35,12 +35,25 @@ class TurnosController extends BaseController
     }
 
     /**
+     * Deshabilitar las acciones por defecto de ActiveController para usar nuestros métodos personalizados
+     */
+    public function actions()
+    {
+        $actions = parent::actions();
+        
+        // Deshabilitar las acciones por defecto que tenemos personalizadas
+        // Esto asegura que se usen nuestros métodos actionIndex(), actionView(), actionCreate(), actionUpdate()
+        unset($actions['index'], $actions['view'], $actions['create'], $actions['update']);
+        
+        return $actions;
+    }
+
+    /**
      * Listar turnos con filtros
      * GET /api/v1/turnos?fecha=2024-01-01&rrhh_id=123&user_id=5748 (user_id opcional para desarrollo)
      */
     public function actionIndex()
-    {
-        // Forzar formato JSON
+    {   // Forzar formato JSON
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         
         $request = Yii::$app->request;
@@ -101,6 +114,57 @@ class TurnosController extends BaseController
                 'atendido' => $turno->atendido,
                 'created_at' => $turno->created_at,
             ];
+        }
+        
+        // Agregar turno de prueba para el paciente con id=920779 (solo si es hoy)
+        $esHoy = ($fecha == date('Y-m-d'));
+        if ($esHoy) {
+            $pacientePrueba = Persona::findOne(920779);
+            if ($pacientePrueba) {
+                // Obtener el primer servicio disponible del efector o usar uno por defecto
+                $servicioPrueba = null;
+                $idServicioAsignado = null;
+                
+                if ($rrhhId) {
+                    $rrhhEfector = RrhhEfector::findOne($rrhhId);
+                    if ($rrhhEfector && $rrhhEfector->id_efector) {
+                        $servicioEfector = ServiciosEfector::find()
+                            ->where(['id_efector' => $rrhhEfector->id_efector])
+                            ->one();
+                        if ($servicioEfector) {
+                            $servicioPrueba = $servicioEfector->servicio ? $servicioEfector->servicio->nombre : 'Consulta General';
+                            $idServicioAsignado = $servicioEfector->id_servicio;
+                        }
+                    }
+                }
+                
+                if (!$servicioPrueba) {
+                    $servicioPrueba = 'Consulta General';
+                }
+                
+                // Crear turno simulado
+                $turnoPrueba = [
+                    'id' => 999999, // ID simulado para distinguirlo
+                    'id_persona' => 920779,
+                    'paciente' => [
+                        'id' => $pacientePrueba->id_persona,
+                        'nombre_completo' => $pacientePrueba->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
+                        'documento' => $pacientePrueba->documento,
+                    ],
+                    'fecha' => $fecha,
+                    'hora' => '10:00', // Hora de prueba
+                    'servicio' => $servicioPrueba,
+                    'id_servicio_asignado' => $idServicioAsignado,
+                    'estado' => Turno::ESTADO_PENDIENTE,
+                    'estado_label' => Turno::ESTADOS[Turno::ESTADO_PENDIENTE] ?? 'Pendiente',
+                    'observaciones' => 'Turno de prueba',
+                    'atendido' => null,
+                    'created_at' => date('Y-m-d H:i:s'),
+                ];
+                
+                // Agregar al inicio de la lista para que aparezca primero
+                array_unshift($formattedTurnos, $turnoPrueba);
+            }
         }
         
         return $this->success([

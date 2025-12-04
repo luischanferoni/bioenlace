@@ -73,22 +73,37 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (result['success'] == true) {
+        print('[DEBUG] _loginWithBiometrics - Autenticación exitosa');
         // Obtener datos del usuario registrado
         final prefs = await SharedPreferences.getInstance();
         // Usar valores simulados si existen, sino usar valores por defecto
         final userId = prefs.getString('user_id') ?? '5748';
         final userName = prefs.getString('user_name') ?? prefs.getString('provided_name') ?? 'Usuario Médico';
         
+        print('[DEBUG] _loginWithBiometrics - userId: $userId, userName: $userName');
+        
         // Asegurar que rrhh_id esté guardado para el usuario simulado
         if (!prefs.containsKey('rrhh_id')) {
           await prefs.setString('rrhh_id', '7830');
+          print('[DEBUG] _loginWithBiometrics - rrhh_id guardado: 7830');
         }
         
         // Simular token de autenticación (en producción esto vendría del servidor)
         // Para el usuario simulado 5748, usar un token simulado
-        if (!prefs.containsKey('auth_token')) {
-          await prefs.setString('auth_token', 'simulated_token_${userId}_${DateTime.now().millisecondsSinceEpoch}');
+        final authTokenExists = prefs.containsKey('auth_token');
+        if (!authTokenExists) {
+          final newToken = 'simulated_token_${userId}_${DateTime.now().millisecondsSinceEpoch}';
+          await prefs.setString('auth_token', newToken);
+          print('[DEBUG] _loginWithBiometrics - auth_token creado: ${newToken.substring(0, newToken.length > 30 ? 30 : newToken.length)}...');
+        } else {
+          final existingToken = prefs.getString('auth_token');
+          print('[DEBUG] _loginWithBiometrics - auth_token ya existe: ${existingToken != null ? existingToken.substring(0, existingToken.length > 30 ? 30 : existingToken.length) : "null"}...');
         }
+        
+        // Asegurar que el auth_token se haya guardado completamente
+        await prefs.reload();
+        print('[DEBUG] _loginWithBiometrics - SharedPreferences recargado');
+        print('[DEBUG] _loginWithBiometrics - config_completed: ${prefs.getBool('config_completed') ?? false}');
 
         // Mostrar mensaje de éxito
         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,8 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
         );
 
         // Llamar al callback de éxito después de un pequeño delay para asegurar que el contexto esté listo
-        await Future.delayed(const Duration(milliseconds: 100));
+        print('[DEBUG] _loginWithBiometrics - Esperando delay antes de llamar onLoginSuccess...');
+        await Future.delayed(const Duration(milliseconds: 200));
+        print('[DEBUG] _loginWithBiometrics - Llamando onLoginSuccess...');
         widget.onLoginSuccess(userId, userName);
+        print('[DEBUG] _loginWithBiometrics - onLoginSuccess llamado');
       } else {
         // Solo mostrar mensaje si no fue cancelación del usuario
         final isUserCancel = result['isUserCancel'] == true;

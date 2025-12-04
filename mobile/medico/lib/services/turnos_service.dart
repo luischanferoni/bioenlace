@@ -78,17 +78,58 @@ class TurnosService {
       if (response.statusCode == 200) {
         try {
           final data = json.decode(response.body);
+          print('[DEBUG] getTurnosPorFecha - Respuesta parseada. Keys: ${data.keys.toList()}');
+          
+          // Manejar diferentes estructuras de respuesta
+          List<dynamic> jsonTurnos = [];
+          
+          // Estructura 1: { success: true, data: { turnos: [...] } }
           if (data['success'] == true && data['data'] != null) {
-            // La estructura es: { success: true, data: { turnos: [...] } }
+            print('[DEBUG] getTurnosPorFecha - Estructura 1 detectada (success + data)');
             final dataObj = data['data'] as Map<String, dynamic>;
-            final List<dynamic> jsonTurnos = dataObj['turnos'] as List<dynamic>;
-            return jsonTurnos
-                .map((json) => Turno.fromJson(json as Map<String, dynamic>))
-                .toList();
-          } else {
-            throw Exception(data['message'] ?? 'Error al obtener turnos');
+            if (dataObj['turnos'] != null) {
+              jsonTurnos = dataObj['turnos'] as List<dynamic>;
+              print('[DEBUG] getTurnosPorFecha - Turnos encontrados en data.turnos: ${jsonTurnos.length}');
+            }
           }
+          // Estructura 2: { items: [...], _links: {...}, _meta: {...} } (Yii REST serializer)
+          else if (data['items'] != null) {
+            print('[DEBUG] getTurnosPorFecha - Estructura 2 detectada (items)');
+            jsonTurnos = data['items'] as List<dynamic>;
+            print('[DEBUG] getTurnosPorFecha - Turnos encontrados en items: ${jsonTurnos.length}');
+          }
+          // Estructura 3: Array directo (poco probable pero posible)
+          else if (data is List) {
+            print('[DEBUG] getTurnosPorFecha - Estructura 3 detectada (array directo)');
+            jsonTurnos = data;
+            print('[DEBUG] getTurnosPorFecha - Turnos encontrados en array: ${jsonTurnos.length}');
+          }
+          // Si no hay turnos pero la respuesta es válida, retornar lista vacía
+          else {
+            print('[DEBUG] getTurnosPorFecha - No se encontró estructura conocida. Retornando lista vacía.');
+            print('[DEBUG] getTurnosPorFecha - Data completo: $data');
+            return [];
+          }
+          
+          print('[DEBUG] getTurnosPorFecha - Procesando ${jsonTurnos.length} turnos...');
+          
+          // Convertir los turnos a objetos Turno
+          final turnos = jsonTurnos
+              .map((json) {
+                try {
+                  return Turno.fromJson(json as Map<String, dynamic>);
+                } catch (e) {
+                  print('[ERROR] getTurnosPorFecha - Error al parsear turno: $e');
+                  print('[ERROR] getTurnosPorFecha - JSON del turno: $json');
+                  rethrow;
+                }
+              })
+              .toList();
+          
+          print('[DEBUG] getTurnosPorFecha - ${turnos.length} turnos procesados exitosamente');
+          return turnos;
         } catch (e) {
+          print('[ERROR] getTurnosPorFecha - Error en el procesamiento: $e');
           if (e is FormatException) {
             final bodyPreview = response.body.length > 200 
                 ? response.body.substring(0, 200) 

@@ -21,11 +21,14 @@ class BaseController extends ActiveController
     {
         $behaviors = parent::behaviors();
         
-        // Configurar CORS
+        // Configurar CORS usando la configuración centralizada del módulo
+        $allowedOrigins = \frontend\modules\api\v1\Module::getAllowedOrigins();
+        // Agregar * para mobile si es necesario (pero solo si no se requiere credentials)
+        // Si se requiere credentials, no se puede usar *
         $behaviors['corsFilter'] = [
             'class' => Cors::class,
             'cors' => [
-                'Origin' => ['http://localhost:3000', 'http://127.0.0.1:3000', '*'], // Incluir * para mobile
+                'Origin' => $allowedOrigins,
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,

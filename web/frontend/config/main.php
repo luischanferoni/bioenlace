@@ -131,6 +131,10 @@ return [
                 'OPTIONS api/<version:\w+>/config/encounter-classes' => '<version>/config/encounter-classes',
                 'POST api/<version:\w+>/config/set-session' => '<version>/config/set-session',
                 'OPTIONS api/<version:\w+>/config/set-session' => '<version>/config/set-session',
+                
+                // CRUD API
+                'POST api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
+                'OPTIONS api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
             ],            
         ],
         'snowstorm' => [

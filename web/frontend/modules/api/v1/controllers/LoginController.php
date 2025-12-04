@@ -4,11 +4,6 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use Exception;
-use yii\filters\Cors;
-use sizeg\jwt\Jwt;
-use sizeg\jwt\JwtHttpBearerAuth;
-use yii\filters\auth\HttpHeaderAuth;
-use yii\filters\auth\HttpBearerAuth;
 use yii\web\UnauthorizedHttpException;
 
 use common\models\Persona;
@@ -19,8 +14,9 @@ use common\models\Barrios;
 use common\models\LoginForm;
 use common\models\RrhhEfector;
 
-class LoginController extends \yii\rest\Controller
+class LoginController extends BaseController
 {
+	public $modelClass = '';
 	public $enableCsrfValidation = false;
   	// Add more verbs here if needed
   	protected $_verbs = ['POST','OPTIONS'];
@@ -28,34 +24,9 @@ class LoginController extends \yii\rest\Controller
   	public function behaviors()
   	{
 		$behaviors = parent::behaviors();
-
-      // remove auth filter before cors if you are using it
-      unset($behaviors['authenticator']);
-
-      // add CORS filter
-      $behaviors['corsFilter'] = [
-          'class' => Cors::class,
-          'cors' => [
-			 'Origin' => ['http://localhost:3000', 'https://riesgo-dbt.msalsgo.gob.ar', 'http://riesgo-dbt.msalsgo.gob.ar'], // restrict access to
-              'Access-Control-Request-Method' => $this->_verbs,
-              // Not sure if you are using authorization filter
-              'Access-Control-Allow-Headers' => ['content-type','authorization'], 
-              // Try '*' first, once it works, make it more restrictive
-              'Access-Control-Request-Headers' => ['*'],
-              'Access-Control-Allow-Credentials' => true,
-              'Access-Control-Max-Age' => 3600,
-              'Access-Control-Expose-Headers' => ['X-Pagination-Current-Page'],
-          ],
-      ];
-
-      // re-add authentication filter if you are using it.
-      $behaviors['authenticator'] = [
-          'class' => HttpBearerAuth::class,
-      ];
-      // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method) if using authentication filter.
-      $behaviors['authenticator']['except'] = ['options', 'login'];
-
-      return $behaviors;
+        // No requerir autenticación para login
+        $behaviors['authenticator']['except'] = ['options', 'login'];
+        return $behaviors;
   	}
 
   // I do not think you need this method, 

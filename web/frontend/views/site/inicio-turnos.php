@@ -121,13 +121,5 @@ $this->registerJsFile('@web/js/spa-navigation.js', ['depends' => [\yii\web\Jquer
 $this->registerJsFile('@web/js/spa-home.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
-
-<script>
-// Inicializar variables globales para la SPA
-window.spaConfig = {
-    baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
-    csrfToken: '<?= Yii::$app->request->csrfToken ?>'
-};
-</script>
 <?php endif; ?>
 

@@ -11,9 +11,17 @@ use common\components\CodificadorSnomedIA;
 use common\components\IAManager;
 use common\components\ConsultaLogger;
 
-class ConsultaController extends \yii\rest\Controller
+class ConsultaController extends BaseController
 {
     public $modelClass = 'common\models\Consulta';
+
+    public function behaviors()
+    {
+        $behaviors = parent::behaviors();
+        // Ajustar autenticación según necesidades específicas
+        // Por defecto BaseController requiere autenticación excepto para 'options'
+        return $behaviors;
+    }
 
 
     public function actionAnalizar()

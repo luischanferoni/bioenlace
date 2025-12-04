@@ -12,18 +12,13 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10">
-            <!-- Header -->
-            <div class="text-center mb-5">
-                <h1 class="display-5 fw-light text-dark mb-2">VitaMind</h1>
-                <p class="lead text-muted">¿En qué puedo ayudarte?</p>
-            </div>
 
             <!-- Textarea estilo ChatGPT -->
             <div class="mb-4">
                 <textarea 
                     id="spa-query-input" 
                     class="form-control form-control-lg" 
-                    rows="4" 
+                    rows="3" 
                     placeholder="Escribe tu consulta aquí... Ejemplo: 'Necesito buscar una persona' o 'Quiero ver los reportes disponibles'"
                     style="resize: none;"
                 ></textarea>
@@ -63,12 +58,4 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
 <div id="spa-pages-container" class="spa-pages-container">
     <!-- Las páginas se agregarán dinámicamente aquí -->
 </div>
-
-<script>
-// Inicializar variables globales para la SPA
-window.spaConfig = {
-    baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
-    csrfToken: '<?= Yii::$app->request->csrfToken ?>'
-};
-</script>
 

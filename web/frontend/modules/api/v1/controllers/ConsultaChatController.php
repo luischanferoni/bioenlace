@@ -3,37 +3,21 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\filters\Cors;
 use yii\web\Response;
 use common\models\ConsultaChatMessage;
 use common\models\Consulta;
 
-class ConsultaChatController extends \yii\rest\Controller
+class ConsultaChatController extends BaseController
 {
+    public $modelClass = '';
     public $enableCsrfValidation = false;
     protected $_verbs = ['GET', 'POST', 'OPTIONS'];
 
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-
-        // remove auth filter before cors
-        unset($behaviors['authenticator']);
-
-        // add CORS filter
-        $behaviors['corsFilter'] = [
-            'class' => Cors::class,
-            'cors' => [
-                'Origin' => ['http://localhost:3000', 'http://localhost:52294', 'https://riesgo-dbt.msalsgo.gob.ar'],
-                'Access-Control-Request-Method' => $this->_verbs,
-                'Access-Control-Allow-Headers' => ['content-type', 'authorization'],
-                'Access-Control-Request-Headers' => ['*'],
-                'Access-Control-Allow-Credentials' => true,
-                'Access-Control-Max-Age' => 3600,
-                'Access-Control-Expose-Headers' => ['X-Pagination-Current-Page'],
-            ],
-        ];
-
+        // Ajustar autenticación según necesidades específicas
+        // Por defecto BaseController requiere autenticación excepto para 'options'
         return $behaviors;
     }
 

@@ -137,15 +137,22 @@
     pointer-events: auto;
 }
 
+/* Navbar debe estar por encima del sidebar */
+.iq-navbar {
+    position: relative;
+    z-index: 10001;
+}
+
 /* Menú vertical lateral - Desktop */
 .sidebar-menu {
     width: 120px;
     height: 500px; /* Altura fija definible - ajustar según necesidad */
     position: sticky;
-    top: 20px;
-    z-index: 10000;
+    top: calc(var(--navbar-height, 80px) + 16px); /* Altura del navbar + margen */
+    z-index: 100; /* Reducido para que esté por debajo del navbar */
     flex-shrink: 0;
     overflow-y: auto;
+    max-height: calc(100vh - var(--navbar-height, 80px) - 32px); /* Altura máxima para que no se salga de la pantalla */
 }
 
 .sidebar-menu .nav {
@@ -170,7 +177,7 @@
         max-height: 80px;
         border-radius: 20px 20px 0 0 !important;
         margin: 0 !important;
-        z-index: 10000;
+        z-index: 100; /* Reducido para que esté por debajo del navbar */
     }
     
     .sidebar-menu .nav {

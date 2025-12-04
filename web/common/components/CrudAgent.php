@@ -416,22 +416,57 @@ PROMPT;
      */
     private static function validatePermission($model, $operation, $userId)
     {
+        // Si no hay controlador asociado, no podemos validar permisos
+        // Pero permitimos continuar para que el usuario vea el error apropiado
         if (!$model['controller']) {
+            Yii::warning("Modelo {$model['name']} no tiene controlador asociado", 'crud-agent');
+            return false;
+        }
+
+        // Si no hay userId, no podemos validar permisos
+        if (!$userId) {
+            Yii::warning("No se pudo obtener el ID del usuario para validar permisos", 'crud-agent');
             return false;
         }
 
         $availableActions = ActionMappingService::getAvailableActionsForUser($userId);
         
+        // Si no hay acciones disponibles, el usuario no tiene permisos
+        if (empty($availableActions)) {
+            Yii::warning("Usuario {$userId} no tiene acciones disponibles", 'crud-agent');
+            return false;
+        }
+        
         // Buscar acción correspondiente
         $actionName = $operation === 'read' ? 'index' : $operation;
         $route = self::getRouteForOperation($model, $actionName);
 
+        // Buscar coincidencia exacta
         foreach ($availableActions as $action) {
             if ($action['route'] === $route) {
                 return true;
             }
         }
 
+        // Si no hay coincidencia exacta, intentar coincidencia parcial
+        // (por ejemplo, si la ruta es /site/index y tenemos /site/*)
+        foreach ($availableActions as $action) {
+            $actionRoute = $action['route'];
+            // Verificar si la ruta de la acción es un patrón que incluye nuestra ruta
+            if (strpos($actionRoute, '*') !== false) {
+                $pattern = str_replace('*', '.*', preg_quote($actionRoute, '/'));
+                if (preg_match('/^' . $pattern . '$/', $route)) {
+                    return true;
+                }
+            }
+            // Verificar si nuestra ruta comienza con la ruta de la acción
+            // (por ejemplo, /site/index coincide con /site)
+            if (strpos($route, $actionRoute) === 0) {
+                return true;
+            }
+        }
+
+        Yii::warning("Usuario {$userId} no tiene permiso para {$route} (operación: {$operation})", 'crud-agent');
         return false;
     }
 

@@ -53,21 +53,40 @@
         setLoadingState(true);
         hideResponse();
 
-        // Intentar primero con CRUD, luego con admin query normal
-        const crudUrl = window.spaConfig.baseUrl + '/site/process-crud-query';
+        // Usar endpoint de la API
+        const crudUrl = window.spaConfig.baseUrl + '/api/v1/crud/process-query';
         fetch(crudUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             },
-            body: new URLSearchParams({
-                query: query,
-                _csrf: window.spaConfig.csrfToken
+            credentials: 'same-origin', // Incluir cookies de sesión
+            body: JSON.stringify({
+                query: query
             })
         })
         .then(response => {
+            // Si la respuesta no es exitosa, manejar el error
+            if (!response.ok) {
+                return response.text().then(text => {
+                    // Intentar parsear como JSON si es posible
+                    try {
+                        const jsonData = JSON.parse(text);
+                        throw new Error(jsonData.message || jsonData.error || `Error ${response.status}: ${response.statusText}`);
+                    } catch (e) {
+                        // Si no es JSON, es probablemente un error de validación
+                        if (response.status === 400) {
+                            throw new Error('Error de validación. Por favor, verifica tu consulta e intenta nuevamente.');
+                        } else if (response.status === 401) {
+                            throw new Error('Debes estar autenticado para usar esta funcionalidad.');
+                        }
+                        throw new Error(`Error ${response.status}: ${response.statusText}`);
+                    }
+                });
+            }
+            
             // Verificar que la respuesta sea JSON
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
@@ -79,69 +98,34 @@
             return response.json();
         })
         .then(data => {
-            if (data.success) {
+            // Verificar formato de respuesta (puede venir como {success: true, data: {...}} o directamente {...})
+            const result = data.data || data;
+            
+            if (data.success !== false && (result.success !== false)) {
                 // Verificar si es respuesta CRUD con formulario
-                if (data.form) {
-                    displayCrudResponse(data);
-                } else if (data.intention) {
+                if (result.form) {
+                    displayCrudResponse(result);
+                } else if (result.intention) {
                     // Es respuesta CRUD pero sin formulario (read, delete, etc)
-                    displayCrudResponse(data);
+                    displayCrudResponse(result);
                 } else {
-                    // Respuesta normal de admin query
-                    displayResponse(data.explanation, data.actions);
+                    // Respuesta normal
+                    displayResponse(result.explanation, result.actions);
                 }
             } else {
-                // Si CRUD falla, intentar con admin query normal
-                return tryAdminQuery(query);
+                // Error en la respuesta
+                showError(result.error || result.message || data.message || 'Error al procesar la consulta');
             }
         })
         .catch(error => {
-            console.warn('Error en CRUD, intentando admin query:', error);
-            return tryAdminQuery(query);
-        })
-        .catch(error => {
             console.error('Error:', error);
-            showError('Error de conexión. Por favor, intente nuevamente.');
+            showError(error.message || 'Error de conexión. Por favor, intente nuevamente.');
         })
         .finally(() => {
             setLoadingState(false);
         });
     }
 
-    /**
-     * Intentar con admin query normal como fallback
-     */
-    function tryAdminQuery(query) {
-        const url = window.spaConfig.baseUrl + '/site/process-admin-query';
-        return fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            },
-            body: new URLSearchParams({
-                query: query,
-                _csrf: window.spaConfig.csrfToken
-            })
-        })
-        .then(response => {
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                return response.text().then(text => {
-                    throw new Error('Respuesta no válida del servidor');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                displayResponse(data.explanation, data.actions);
-            } else {
-                showError(data.error || 'Error al procesar la consulta');
-            }
-        });
-    }
 
     /**
      * Mostrar respuesta CRUD

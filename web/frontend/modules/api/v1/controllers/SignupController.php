@@ -3,7 +3,6 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\Controller;
 use yii\web\Response;
 use yii\web\UploadedFile;
 use yii\web\BadRequestHttpException;
@@ -13,9 +12,18 @@ use yii\base\Exception;
 use Imagick;
 use ImagickPixel;
 
-class SignupController extends Controller
+class SignupController extends BaseController
 {
+    public $modelClass = ''; // No usamos ActiveController para este endpoint
     public $enableCsrfValidation = false; // Importante para API
+
+    public function behaviors()
+    {
+        $behaviors = parent::behaviors();
+        // No requerir autenticación para signup
+        $behaviors['authenticator']['except'] = ['options', 'index'];
+        return $behaviors;
+    }
 
     public function actionIndex()
     {

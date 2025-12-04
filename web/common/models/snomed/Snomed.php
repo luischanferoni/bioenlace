@@ -10,15 +10,6 @@ use Yii;
  */
 abstract class Snomed extends \yii\db\ActiveRecord
 {   
-    public static function crearSiNoExiste($codigo, $termino)
-    {
-        $snoMed = self::findOne(['conceptId' => $codigo]);
-        if (!$snoMed) {
-            $snoMed = new self();
-            $snoMed->conceptId = $codigo;
-            
-            $snoMed->term = $termino;
-            $snoMed->save();
-        }
-    }
+    // Este método debe ser implementado en las clases hijas
+    // No se puede instanciar una clase abstracta
 }

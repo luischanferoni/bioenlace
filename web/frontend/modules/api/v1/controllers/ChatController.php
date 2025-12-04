@@ -4,15 +4,14 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 
-use yii\filters\Cors;
-
 use common\models\Dialogo;
 use common\models\Mensaje;
 use common\models\Servicio;
 use common\models\Turno;
 
-class ChatController extends \yii\rest\Controller
+class ChatController extends BaseController
 {
+    public $modelClass = '';
     public $enableCsrfValidation = false;
     // Add more verbs here if needed
     protected $_verbs = ['POST','OPTIONS'];
@@ -20,37 +19,10 @@ class ChatController extends \yii\rest\Controller
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-
-        // remove auth filter before cors if you are using it
-        unset($behaviors['authenticator']);
-
-        // add CORS filter
-        $behaviors['corsFilter'] = [
-            'class' => Cors::class,
-            'cors' => [
-                'Origin' => ['http://localhost:3000', 'http://localhost:52294', 'https://riesgo-dbt.msalsgo.gob.ar'], // restrict access to
-                'Access-Control-Request-Method' => $this->_verbs,
-                // Not sure if you are using authorization filter
-                'Access-Control-Allow-Headers' => ['content-type','authorization'], 
-                // Try '*' first, once it works, make it more restrictive
-                'Access-Control-Request-Headers' => ['*'],
-                'Access-Control-Allow-Credentials' => true,
-                'Access-Control-Max-Age' => 3600,
-                'Access-Control-Expose-Headers' => ['X-Pagination-Current-Page'],
-            ],
-        ];
-
-        // comento la AUTENTICACION solo para prueba, sino da unauthorized
-
-        /*
-        // re-add authentication filter if you are using it.
-        $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::class,
-        ];
-        // avoid authentication on CORS-pre-flight requests (HTTP OPTIONS method) if using authentication filter.
-        $behaviors['authenticator']['except'] = ['options', 'login'];
-        */
-       return $behaviors;
+        // Ajustar autenticación según necesidades específicas
+        // Si no se requiere autenticación, descomentar la siguiente línea:
+        // $behaviors['authenticator']['except'] = ['options', 'index', 'recibir'];
+        return $behaviors;
     }
 
   // I do not think you need this method, 

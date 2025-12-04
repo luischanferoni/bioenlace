@@ -5,6 +5,7 @@ namespace common\components;
 use Yii;
 use yii\helpers\FileHelper;
 use ReflectionClass;
+use ReflectionMethod;
 use yii\db\ActiveRecord;
 
 /**
@@ -174,29 +175,43 @@ class ModelDiscoveryService
 
             // Obtener atributos desde un modelo de ejemplo
             if (method_exists($className, 'tableName')) {
-                $model = new $className();
-                $metadata['table_name'] = $model::tableName();
-                
-                // Obtener atributos del modelo
-                $schema = $model::getTableSchema();
-                if ($schema) {
-                    foreach ($schema->columns as $column) {
-                        $metadata['attributes'][] = [
-                            'name' => $column->name,
-                            'type' => $column->type,
-                            'phpType' => $column->phpType,
-                            'size' => $column->size,
-                            'allowNull' => $column->allowNull,
-                            'defaultValue' => $column->defaultValue,
-                            'isPrimaryKey' => $column->isPrimaryKey,
-                            'autoIncrement' => $column->autoIncrement,
-                        ];
+                // Verificar si la clase es abstracta antes de instanciar
+                if ($reflection->isAbstract()) {
+                    // Si es abstracta, usar métodos estáticos para obtener información
+                    if ($reflection->hasMethod('tableName')) {
+                        $method = $reflection->getMethod('tableName');
+                        if ($method->isStatic()) {
+                            $metadata['table_name'] = $method->invoke(null);
+                        }
+                    }
+                    // No podemos obtener atributos de una clase abstracta sin instanciarla
+                    // Saltar la obtención de atributos
+                } else {
+                    // La clase no es abstracta, podemos instanciarla
+                    $model = new $className();
+                    $metadata['table_name'] = $model::tableName();
+                    
+                    // Obtener atributos del modelo
+                    $schema = $model::getTableSchema();
+                    if ($schema) {
+                        foreach ($schema->columns as $column) {
+                            $metadata['attributes'][] = [
+                                'name' => $column->name,
+                                'type' => $column->type,
+                                'phpType' => $column->phpType,
+                                'size' => $column->size,
+                                'allowNull' => $column->allowNull,
+                                'defaultValue' => $column->defaultValue,
+                                'isPrimaryKey' => $column->isPrimaryKey,
+                                'autoIncrement' => $column->autoIncrement,
+                            ];
+                        }
                     }
                 }
             }
 
             // Obtener reglas de validación
-            if ($reflection->hasMethod('rules')) {
+            if ($reflection->hasMethod('rules') && !$reflection->isAbstract()) {
                 $method = $reflection->getMethod('rules');
                 if ($method->isPublic()) {
                     try {
@@ -209,7 +224,7 @@ class ModelDiscoveryService
             }
 
             // Obtener labels
-            if ($reflection->hasMethod('attributeLabels')) {
+            if ($reflection->hasMethod('attributeLabels') && !$reflection->isAbstract()) {
                 $method = $reflection->getMethod('attributeLabels');
                 if ($method->isPublic()) {
                     try {

@@ -189,6 +189,31 @@ if (Yii::$app->user->username) {
     </script>
     <?php endif; ?>
     
+    <script>
+    // Inicializar variables globales para la SPA
+    window.spaConfig = {
+        baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
+        csrfToken: '<?= Yii::$app->request->csrfToken ?>'
+    };
+    
+    // Calcular y establecer la altura del navbar para el posicionamiento del sidebar
+    function updateNavbarHeight() {
+        const navbar = document.querySelector('.iq-navbar');
+        if (navbar) {
+            const height = navbar.offsetHeight;
+            document.documentElement.style.setProperty('--navbar-height', height + 'px');
+        }
+    }
+    
+    // Ejecutar al cargar y al redimensionar
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateNavbarHeight);
+    } else {
+        updateNavbarHeight();
+    }
+    window.addEventListener('resize', updateNavbarHeight);
+    </script>
+    
     <?php if (!empty($listaEfectores) && count($listaEfectores) > 1): ?>
     <script>
     function cambiarEfector(idEfector) {

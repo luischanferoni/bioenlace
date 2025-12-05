@@ -231,6 +231,9 @@ class ActionDiscoveryService
             $description = ucfirst(str_replace('-', ' ', $actionName));
         }
 
+        // NUEVO: Extraer metadatos personalizados del docblock
+        $customMetadata = self::extractCustomMetadata($docComment, $controllerName, $actionName);
+
         // Extraer parámetros
         $parameters = [];
         foreach ($method->getParameters() as $param) {
@@ -261,6 +264,11 @@ class ActionDiscoveryService
             'description' => $description,
             'parameters' => $parameters,
             'method' => $method->getName(),
+            // NUEVO: Agregar metadatos extraídos
+            'category' => $customMetadata['category'],
+            'tags' => $customMetadata['tags'],
+            'keywords' => $customMetadata['keywords'],
+            'synonyms' => $customMetadata['synonyms'],
         ];
     }
 
@@ -362,6 +370,220 @@ class ActionDiscoveryService
         }
 
         return $actions;
+    }
+
+    /**
+     * Extraer metadatos personalizados del docblock
+     * Soporta: @category, @tags, @keywords, @synonyms
+     * 
+     * @param string|false $docComment
+     * @param string $controllerName
+     * @param string $actionName
+     * @return array
+     */
+    private static function extractCustomMetadata($docComment, $controllerName, $actionName)
+    {
+        $metadata = [
+            'category' => null,
+            'tags' => [],
+            'keywords' => [],
+            'synonyms' => [],
+        ];
+        
+        if (!$docComment) {
+            // Si no hay docblock, inferir desde el nombre del controlador
+            $metadata['category'] = self::inferCategory($controllerName);
+            $metadata['tags'] = self::inferTags($controllerName, $actionName);
+            $metadata['keywords'] = self::inferKeywords($actionName);
+            return $metadata;
+        }
+        
+        $lines = explode("\n", $docComment);
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            // @category Licencias
+            if (preg_match('/@category\s+(.+)/i', $line, $matches)) {
+                $metadata['category'] = trim($matches[1]);
+            }
+            
+            // @tags licencia,permiso,vacaciones
+            if (preg_match('/@tags\s+(.+)/i', $line, $matches)) {
+                $tags = array_map('trim', explode(',', $matches[1]));
+                $metadata['tags'] = array_filter($tags, function($tag) {
+                    return !empty($tag);
+                });
+            }
+            
+            // @keywords buscar,listar,filtrar
+            if (preg_match('/@keywords\s+(.+)/i', $line, $matches)) {
+                $keywords = array_map('trim', explode(',', $matches[1]));
+                $metadata['keywords'] = array_filter($keywords, function($keyword) {
+                    return !empty($keyword);
+                });
+            }
+            
+            // @synonyms permisos,licencias médicas
+            if (preg_match('/@synonyms\s+(.+)/i', $line, $matches)) {
+                $synonyms = array_map('trim', explode(',', $matches[1]));
+                $metadata['synonyms'] = array_filter($synonyms, function($synonym) {
+                    return !empty($synonym);
+                });
+            }
+        }
+        
+        // Si no se encontraron metadatos en docblock, inferir
+        if (empty($metadata['category'])) {
+            $metadata['category'] = self::inferCategory($controllerName);
+        }
+        if (empty($metadata['tags'])) {
+            $metadata['tags'] = self::inferTags($controllerName, $actionName);
+        }
+        if (empty($metadata['keywords'])) {
+            $metadata['keywords'] = self::inferKeywords($actionName);
+        }
+        
+        return $metadata;
+    }
+
+    /**
+     * Inferir categoría desde el nombre del controlador si no está especificada
+     * @param string $controllerName
+     * @return string
+     */
+    private static function inferCategory($controllerName)
+    {
+        $categoryMapping = [
+            'persona' => 'Pacientes',
+            'personas' => 'Pacientes',
+            'paciente' => 'Pacientes',
+            'consulta' => 'Consultas',
+            'consultas' => 'Consultas',
+            'turno' => 'Turnos',
+            'turnos' => 'Turnos',
+            'licencia' => 'Licencias',
+            'licencias' => 'Licencias',
+            'efector' => 'Efectores',
+            'efectores' => 'Efectores',
+            'servicio' => 'Servicios',
+            'servicios' => 'Servicios',
+            'usuario' => 'Usuarios',
+            'usuarios' => 'Usuarios',
+            'reporte' => 'Reportes',
+            'reportes' => 'Reportes',
+            'guardia' => 'Guardias',
+            'internacion' => 'Internaciones',
+            'medicamento' => 'Medicamentos',
+            'medicamentos' => 'Medicamentos',
+            'rrhh' => 'Recursos Humanos',
+            'agenda' => 'Agendas',
+            'domicilio' => 'Domicilios',
+            'laboratorio' => 'Laboratorios',
+            'novedad' => 'Novedades',
+            'programa' => 'Programas',
+            'referencia' => 'Referencias',
+            'receta' => 'Recetas',
+        ];
+        
+        $controllerLower = strtolower($controllerName);
+        
+        foreach ($categoryMapping as $key => $category) {
+            if (stripos($controllerLower, $key) !== false) {
+                return $category;
+            }
+        }
+        
+        return 'General';
+    }
+
+    /**
+     * Inferir tags desde el nombre del controlador y acción
+     * @param string $controllerName
+     * @param string $actionName
+     * @return array
+     */
+    private static function inferTags($controllerName, $actionName)
+    {
+        $tags = [];
+        
+        // Tags desde controlador
+        $controllerLower = strtolower($controllerName);
+        if (stripos($controllerLower, 'persona') !== false) {
+            $tags[] = 'persona';
+            $tags[] = 'paciente';
+        }
+        if (stripos($controllerLower, 'consulta') !== false) {
+            $tags[] = 'consulta';
+            $tags[] = 'atencion';
+        }
+        if (stripos($controllerLower, 'turno') !== false) {
+            $tags[] = 'turno';
+            $tags[] = 'cita';
+        }
+        if (stripos($controllerLower, 'licencia') !== false) {
+            $tags[] = 'licencia';
+            $tags[] = 'permiso';
+        }
+        
+        // Tags desde acción
+        $actionLower = strtolower($actionName);
+        if (stripos($actionLower, 'buscar') !== false || stripos($actionLower, 'search') !== false) {
+            $tags[] = 'buscar';
+            $tags[] = 'busqueda';
+        }
+        if (stripos($actionLower, 'listar') !== false || stripos($actionLower, 'index') !== false) {
+            $tags[] = 'listar';
+            $tags[] = 'lista';
+        }
+        if (stripos($actionLower, 'crear') !== false || stripos($actionLower, 'create') !== false) {
+            $tags[] = 'crear';
+            $tags[] = 'nuevo';
+        }
+        if (stripos($actionLower, 'editar') !== false || stripos($actionLower, 'update') !== false) {
+            $tags[] = 'editar';
+            $tags[] = 'modificar';
+        }
+        if (stripos($actionLower, 'ver') !== false || stripos($actionLower, 'view') !== false) {
+            $tags[] = 'ver';
+            $tags[] = 'detalle';
+        }
+        
+        return array_unique($tags);
+    }
+
+    /**
+     * Inferir keywords desde el nombre de la acción
+     * @param string $actionName
+     * @return array
+     */
+    private static function inferKeywords($actionName)
+    {
+        $keywords = [];
+        $actionLower = strtolower($actionName);
+        
+        // Mapeo de acciones comunes a keywords
+        $actionKeywords = [
+            'index' => ['listar', 'ver todos', 'mostrar'],
+            'view' => ['ver', 'mostrar', 'detalle'],
+            'create' => ['crear', 'nuevo', 'agregar'],
+            'update' => ['editar', 'modificar', 'actualizar'],
+            'delete' => ['eliminar', 'borrar'],
+            'search' => ['buscar', 'encontrar', 'filtrar'],
+            'buscar' => ['buscar', 'encontrar', 'filtrar'],
+            'listar' => ['listar', 'ver todos'],
+        ];
+        
+        foreach ($actionKeywords as $action => $kw) {
+            if (stripos($actionLower, $action) !== false) {
+                $keywords = array_merge($keywords, $kw);
+            }
+        }
+        
+        // Agregar el nombre de la acción como keyword
+        $keywords[] = $actionName;
+        
+        return array_unique($keywords);
     }
 
     /**

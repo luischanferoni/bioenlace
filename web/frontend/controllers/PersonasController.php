@@ -148,6 +148,10 @@ class PersonasController extends Controller
 
     /**
      * Lists all persona models.
+     * @category Pacientes
+     * @tags persona,paciente,listar,ver todos
+     * @keywords listar,ver todos,mostrar,personas,pacientes
+     * @synonyms paciente,persona,listado
      * @return mixed
      */
     public function actionIndex()
@@ -184,6 +188,10 @@ class PersonasController extends Controller
 
     /**
      * Busca personas.
+     * @category Pacientes
+     * @tags persona,paciente,buscar,dni,documento
+     * @keywords buscar,encontrar,localizar,dni,documento,persona
+     * @synonyms paciente,persona,documento,cedula,identificación
      * @return mixed
      */
     public function actionBuscarPersona()
@@ -271,6 +279,14 @@ class PersonasController extends Controller
         }
     }
 
+    /**
+     * Ver detalles de una persona
+     * @category Pacientes
+     * @tags persona,paciente,ver,detalle,historia
+     * @keywords ver,mostrar,detalle,historia clínica
+     * @synonyms paciente,persona,historia clínica
+     * @param int $id ID de la persona
+     */
     public function actionView($id)
     {
         //$this->layout = 'dos_columnas';

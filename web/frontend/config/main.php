@@ -10,7 +10,7 @@ use \yii\web\Request;
 $baseUrl = str_replace('/frontend/web', '', (new Request)->getBaseUrl());
 
 return [
-    'id' => 'vitamind-frontend',
+    'id' => 'bioenlace-frontend',
     'language' => 'es',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],

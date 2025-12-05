@@ -38,8 +38,18 @@ class CrudController extends BaseController
     }
 
     /**
-     * Procesar consulta CRUD
-     * @return array
+     * Procesar consulta en lenguaje natural usando UniversalQueryAgent
+     * 
+     * Este endpoint procesa consultas en lenguaje natural y devuelve acciones relevantes
+     * del sistema que el usuario tiene permitido realizar.
+     * 
+     * Ejemplos de consultas:
+     * - "listame mis licencias"
+     * - "29486884" (búsqueda por DNI)
+     * - "cuántos consultas voy atendiendo este mes?"
+     * - "qué puedo hacer?"
+     * 
+     * @return array Respuesta con acciones encontradas o error
      */
     public function actionProcessQuery()
     {
@@ -116,8 +126,8 @@ class CrudController extends BaseController
         }
 
         try {
-            // Procesar consulta CRUD pasando el ID del usuario
-            $result = \common\components\CrudAgent::processCrudQuery($query, $userId);
+            // Procesar consulta usando UniversalQueryAgent (implementación genérica y mejorada)
+            $result = \common\components\UniversalQueryAgent::processQuery($query, $userId);
             
             // Asegurar que el resultado tenga el formato correcto
             if (isset($result['success'])) {
@@ -127,7 +137,7 @@ class CrudController extends BaseController
             // Si no tiene formato estándar, envolverlo
             return $this->success($result);
         } catch (\Exception $e) {
-            Yii::error("Error procesando consulta CRUD: " . $e->getMessage(), 'api-crud-controller');
+            Yii::error("Error procesando consulta: " . $e->getMessage(), 'api-crud-controller');
             return $this->error('Error al procesar la consulta. Por favor, intente nuevamente.', null, 500);
         }
     }

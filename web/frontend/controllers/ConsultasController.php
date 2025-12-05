@@ -50,6 +50,10 @@ class ConsultasController extends Controller
 
     /**
      * Lists all Consulta models.
+     * @category Consultas
+     * @tags consulta,atencion,listar,ver todos
+     * @keywords listar,ver todos,mostrar,consultas,atenciones
+     * @synonyms consulta,atencion,visita,cita médica
      * @return mixed
      */
     public function actionIndex()
@@ -64,6 +68,13 @@ class ConsultasController extends Controller
         ]);
     }
 
+    /**
+     * Crear una nueva consulta
+     * @category Consultas
+     * @tags consulta,atencion,crear,nuevo
+     * @keywords crear,nuevo,agregar,consulta,atencion
+     * @synonyms consulta,atencion,visita
+     */
     public function actionCreate()
     {
 
@@ -79,6 +90,13 @@ class ConsultasController extends Controller
         Yii::$app->request->get('id_servicio');
     }
 
+    /**
+     * Actualizar una consulta existente
+     * @category Consultas
+     * @tags consulta,atencion,editar,modificar,actualizar
+     * @keywords editar,modificar,actualizar,consulta
+     * @synonyms consulta,atencion
+     */
     public function actionUpdate()
     {
         $idConsulta = Yii::$app->request->get('id_consulta');

@@ -50,6 +50,13 @@ class TurnosController extends Controller
         ];
     }
 
+    /**
+     * Listar turnos de un paciente
+     * @category Turnos
+     * @tags turno,cita,listar,ver,agenda
+     * @keywords listar,ver turnos,citas,agenda
+     * @synonyms turno,cita,agenda,reserva
+     */
     public function actionIndex()
     {
         $session = Yii::$app->getSession();

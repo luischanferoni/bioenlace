@@ -98,10 +98,20 @@
             return response.json();
         })
         .then(data => {
-            // Verificar formato de respuesta (puede venir como {success: true, data: {...}} o directamente {...})
-            const result = data.data || data;
+            // La respuesta puede venir de dos formas:
+            // 1. Directamente: {success: true, explanation: "...", action: {...}, data: {...}}
+            // 2. Envuelta: {success: true, data: {success: true, explanation: "...", ...}}
+            // 
+            // Si data.data existe Y tiene success/explanation/action, entonces data.data es el resultado real
+            // Si no, entonces data es el resultado directamente
+            let result = data;
+            if (data.data && typeof data.data === 'object' && (data.data.success !== undefined || data.data.explanation !== undefined || data.data.action !== undefined)) {
+                // data.data contiene el resultado real
+                result = data.data;
+            }
             
-            if (data.success !== false && (result.success !== false)) {
+            // Si tiene explicación, mostrar respuesta (incluso si success es false)
+            if (result.explanation !== undefined) {
                 // Verificar si es respuesta CRUD con formulario
                 if (result.form) {
                     displayCrudResponse(result);
@@ -109,12 +119,47 @@
                     // Es respuesta CRUD pero sin formulario (read, delete, etc)
                     displayCrudResponse(result);
                 } else {
-                    // Respuesta normal
-                    displayResponse(result.explanation, result.actions);
+                    // Respuesta normal - manejar tanto 'action' (singular) como 'actions' (plural)
+                    let actionsToDisplay = result.actions || [];
+                    
+                    // Si hay 'action' singular (ej: búsqueda por DNI), convertirla a array
+                    if (result.action && !result.actions) {
+                        actionsToDisplay = [result.action];
+                        
+                        // Si hay alternative_actions, agregarlas también
+                        if (result.alternative_actions && Array.isArray(result.alternative_actions) && result.alternative_actions.length > 0) {
+                            actionsToDisplay = actionsToDisplay.concat(result.alternative_actions);
+                        }
+                    }
+                    
+                    // Mostrar datos adicionales si existen (ej: datos de persona encontrada)
+                    let explanation = result.explanation || '';
+                    if (result.data && typeof result.data === 'object') {
+                        const dataInfo = [];
+                        if (result.data.nombre) {
+                            dataInfo.push(`<strong>Nombre:</strong> ${escapeHtml(result.data.nombre)}`);
+                        }
+                        if (result.data.dni) {
+                            dataInfo.push(`<strong>DNI:</strong> ${escapeHtml(result.data.dni)}`);
+                        }
+                        if (dataInfo.length > 0) {
+                            explanation += '<div class="mt-2 p-2 bg-light rounded"><small>' + dataInfo.join(' | ') + '</small></div>';
+                        }
+                    }
+                    
+                    // Si success es false pero hay explicación, mostrar como información (no error)
+                    if (result.success === false) {
+                        displayInfoResponse(explanation, actionsToDisplay, result.suggested_query);
+                    } else {
+                        displayResponse(explanation, actionsToDisplay);
+                    }
                 }
+            } else if (result.success !== false) {
+                // Sin explicación pero success es true - mostrar error genérico
+                showError(result.error || result.message || 'Error al procesar la consulta');
             } else {
-                // Error en la respuesta
-                showError(result.error || result.message || data.message || 'Error al procesar la consulta');
+                // Error sin explicación
+                showError(result.error || result.message || 'Error al procesar la consulta');
             }
         })
         .catch(error => {
@@ -509,10 +554,51 @@
      * Mostrar respuesta de la IA
      */
     function displayResponse(explanation, actions) {
-        // Mostrar explicación
-        explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(explanation) + '</p>';
+        // Mostrar explicación - si contiene HTML, no escapar, solo escapar el texto plano
+        // Detectar si explanation ya contiene HTML (tags)
+        let explanationHtml = explanation;
+        if (explanation && !/<[a-z][\s\S]*>/i.test(explanation)) {
+            // No contiene HTML, escapar el texto
+            explanationHtml = escapeHtml(explanation);
+        }
+        explanationDiv.innerHTML = '<p class="mb-0">' + explanationHtml + '</p>';
         
         // Mostrar acciones
+        if (actions && actions.length > 0) {
+            actionsDiv.innerHTML = renderActionCards(actions);
+            attachCardListeners();
+        } else {
+            actionsDiv.innerHTML = '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
+        }
+
+        // Mostrar sección de respuesta
+        responseSection.classList.remove('d-none');
+        
+        // Scroll suave a la respuesta
+        setTimeout(() => {
+            responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+
+    /**
+     * Mostrar respuesta informativa (cuando success es false pero hay explicación útil)
+     */
+    function displayInfoResponse(explanation, actions, suggestedQuery) {
+        // Mostrar explicación - si contiene HTML, no escapar
+        let explanationHtml = explanation;
+        if (explanation && !/<[a-z][\s\S]*>/i.test(explanation)) {
+            explanationHtml = escapeHtml(explanation);
+        }
+        
+        // Mostrar como información (no error)
+        explanationDiv.innerHTML = '<div class="alert alert-info mb-0">' + explanationHtml + '</div>';
+        
+        // Si hay consulta sugerida, agregarla
+        if (suggestedQuery) {
+            explanationDiv.innerHTML += '<div class="mt-2"><small class="text-muted">Sugerencia: <a href="#" class="text-primary" onclick="document.getElementById(\'spa-query-input\').value=\'' + escapeHtml(suggestedQuery) + '\'; handleSendQuery(); return false;">' + escapeHtml(suggestedQuery) + '</a></small></div>';
+        }
+        
+        // Mostrar acciones si existen
         if (actions && actions.length > 0) {
             actionsDiv.innerHTML = renderActionCards(actions);
             attachCardListeners();
@@ -564,6 +650,17 @@
             const cardId = `action-card-${Date.now()}-${index}`;
             const route = action.route || action.url || '';
             
+            // Generar nombre y descripción si no existen
+            const actionName = action.name || action.display_name || 'Ver detalles';
+            const actionDescription = action.description || '';
+            
+            // Si hay params, construir la ruta completa
+            let fullRoute = route;
+            if (action.params && Object.keys(action.params).length > 0) {
+                const params = new URLSearchParams(action.params);
+                fullRoute = route + '?' + params.toString();
+            }
+            
             // Determinar si debe ser expandable o fullPage
             // Por defecto, las acciones son expandables a menos que se especifique lo contrario
             const fullPage = action.fullPage === true || shouldBeFullPage(route);
@@ -572,10 +669,10 @@
             
             html += `
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-action-type="${actionType}" data-action-url="${escapeHtml(route)}">
+                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-action-type="${actionType}" data-action-url="${escapeHtml(fullRoute)}">
                         <div class="card-body">
-                            <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(action.name)}</h6>
-                            <p class="card-text text-muted small mb-0">${escapeHtml(action.description || '')}</p>
+                            <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(actionName)}</h6>
+                            <p class="card-text text-muted small mb-0">${escapeHtml(actionDescription)}</p>
                             <div class="spa-card-expand-content d-none mt-3"></div>
                         </div>
                     </div>

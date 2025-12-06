@@ -248,7 +248,7 @@ class ConsultaController extends BaseController
         return $resultado;
     }
 
-    private function analizarConsultaConIA($texto, $servicio, $categorias)
+    public function analizarConsultaConIA($texto, $servicio, $categorias)
     {
         // Intentar primero con el prompt especializado
         $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias);

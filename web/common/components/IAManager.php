@@ -122,13 +122,24 @@ class IAManager
 
     /**
      * Configuración para Hugging Face
+     * Modelos optimizados para español y costo reducido
+     * @param string $tipoModelo Tipo de modelo: 'text-generation', 'text-correction', 'analysis'
      * @return array
      */
-    private static function getConfiguracionHuggingFace()
+    private static function getConfiguracionHuggingFace($tipoModelo = 'text-generation')
     {
+        // Seleccionar modelo según el tipo de tarea
+        $modelos = [
+            'text-generation' => Yii::$app->params['hf_model_text_gen'] ?? 'HuggingFaceH4/zephyr-7b-beta',
+            'text-correction' => Yii::$app->params['hf_model_correction'] ?? 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es',
+            'analysis' => Yii::$app->params['hf_model_analysis'] ?? 'microsoft/DialoGPT-small',
+        ];
+        
+        $modelo = $modelos[$tipoModelo] ?? $modelos['text-generation'];
+        
         return [
             'tipo' => 'huggingface',
-            'endpoint' => 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium',
+            'endpoint' => "https://api-inference.huggingface.co/models/{$modelo}",
             'headers' => [
                 'Authorization' => 'Bearer ' . (Yii::$app->params['hf_api_key'] ?? ''),
                 'Content-Type' => 'application/json'
@@ -136,10 +147,14 @@ class IAManager
             'payload' => [
                 'inputs' => '',
                 'parameters' => [
-                    'max_length' => 500,
-                    'temperature' => 0.7
+                    'max_length' => (int)(Yii::$app->params['hf_max_length'] ?? 500),
+                    'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.2), // Más bajo para tareas determinísticas
+                    'return_full_text' => false,
+                    'wait_for_model' => false // Evitar cold starts costosos
                 ]
-            ]
+            ],
+            'modelo' => $modelo,
+            'tipo_modelo' => $tipoModelo
         ];
     }
 
@@ -223,15 +238,49 @@ class IAManager
      * Enviar consulta a IA y obtener respuesta
      * @param string $prompt
      * @param string $contexto (opcional, para logging)
+     * @param string $tipoModelo Tipo de modelo para HuggingFace: 'text-generation', 'text-correction', 'analysis'
      * @return array|null
      */
-    public static function consultarIA($prompt, $contexto = 'consulta-general')
+    public static function consultarIA($prompt, $contexto = 'consulta-general', $tipoModelo = 'text-generation')
     {
         $logger = ConsultaLogger::obtenerInstancia();
         
         try {
-            // Obtener configuración del proveedor
+            // Verificar deduplicación primero
+            $deduplicado = \common\components\RequestDeduplicator::buscarSimilar($prompt, $contexto);
+            if ($deduplicado !== null) {
+                \Yii::info("Request duplicado encontrado para: {$contexto}", 'ia-manager');
+                return $deduplicado;
+            }
+            
+            // Verificar cache
+            $cacheKey = 'ia_response_' . md5($prompt . $contexto . $tipoModelo);
+            $yiiCache = Yii::$app->cache;
+            if ($yiiCache) {
+                $cached = $yiiCache->get($cacheKey);
+                if ($cached !== false) {
+                    \Yii::info("Respuesta de IA obtenida desde cache para: {$contexto}", 'ia-manager');
+                    // Guardar en deduplicador también
+                    \common\components\RequestDeduplicator::guardar($prompt, $cached, $contexto);
+                    return $cached;
+                }
+            }
+            
+            // Verificar rate limiter
+            $endpoint = '';
             $proveedorIA = self::getProveedorIA();
+            
+            // Si es HuggingFace, usar el tipo de modelo específico
+            if ($proveedorIA['tipo'] === 'huggingface') {
+                $proveedorIA = self::getConfiguracionHuggingFace($tipoModelo);
+                $endpoint = $proveedorIA['endpoint'];
+                
+                // Verificar rate limiter
+                if (!\common\components\HuggingFaceRateLimiter::puedeHacerRequest($endpoint, false)) {
+                    \Yii::warning("Rate limit alcanzado para: {$endpoint}", 'ia-manager');
+                    return null;
+                }
+            }
             
             // Asignar el prompt
             self::asignarPromptAConfiguracion($proveedorIA, $prompt);
@@ -266,6 +315,21 @@ class IAManager
                 if ($responseData) {
                     $resultado = self::validarYLimpiarRespuestaJSON($responseData);
                     
+                    // Registrar éxito en rate limiter
+                    if ($proveedorIA['tipo'] === 'huggingface' && !empty($endpoint)) {
+                        \common\components\HuggingFaceRateLimiter::registrarExito($endpoint);
+                    }
+                    
+                    // Guardar en cache y deduplicador si es válido
+                    if ($resultado) {
+                        if ($yiiCache) {
+                            $ttl = (int)(Yii::$app->params['ia_cache_ttl'] ?? 3600);
+                            $yiiCache->set($cacheKey, $resultado, $ttl);
+                        }
+                        // Guardar en deduplicador
+                        \common\components\RequestDeduplicator::guardar($prompt, $resultado, $contexto);
+                    }
+                    
                     // Registrar respuesta recibida
                     if ($logger) {
                         $logger->registrar(
@@ -283,6 +347,11 @@ class IAManager
                     return $resultado;
                 }
             } else {
+                // Registrar error en rate limiter
+                if ($proveedorIA['tipo'] === 'huggingface' && !empty($endpoint)) {
+                    \common\components\HuggingFaceRateLimiter::registrarError($endpoint, $response->getStatusCode());
+                }
+                
                 \Yii::error("Error en la respuesta de la IA para {$contexto}: " . $response->getStatusCode() . ' - ' . $response->getContent(), 'ia-manager');
                 
                 // Registrar error
@@ -627,32 +696,31 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
         $inicio = microtime(true);
         
         try {
+            // Verificar cache primero
+            $cacheKey = 'correccion_texto_' . md5($texto . ($especialidad ?? ''));
+            $yiiCache = Yii::$app->cache;
+            if ($yiiCache) {
+                $cached = $yiiCache->get($cacheKey);
+                if ($cached !== false && is_array($cached)) {
+                    \Yii::info("Corrección de texto obtenida desde cache", 'ia-manager');
+                    return $cached;
+                }
+            }
+            
             // Obtener configuración del proveedor (Ollama por defecto)
             $proveedorIA = $this->getProveedorIAInstance();
             
-            // Crear prompt optimizado para corrección completa y expansión de abreviaturas con máxima precisión
-            $prompt = "Eres un corrector ortográfico y gramatical especializado en textos médicos en español con máxima precisión. Tu tarea es corregir errores ortográficos y expandir abreviaturas médicas.
+            // Crear prompt optimizado (más corto para reducir costos)
+            $prompt = "Corrige errores ortográficos y expande abreviaturas médicas en español. Responde SOLO con el texto corregido, sin explicaciones.
 
-REGLAS ESTRICTAS:
-1. Corrige TODOS los errores ortográficos y gramaticales reales con precisión
-2. EXPANDE todas las abreviaturas médicas comunes a su forma completa (ej: OI → ojo izquierdo, OD → ojo derecho, Bmc → buen movimiento corporal, Tyndall → signo de Tyndall, Caf → cuenta y forma, etc.)
-3. Para correcciones ortográficas, mantén la palabra más similar fonéticamente (ej: 'laseración' debe corregirse a 'laceración', NO a 'lesión')
-4. MANTÉN exactamente el formato, estructura y puntuación original
-5. Respeta mayúsculas y minúsculas originales
-6. NO agregues ni elimines palabras innecesariamente
-7. Responde SOLO con el texto corregido y con abreviaturas expandidas, sin explicaciones, comentarios ni metadatos
+Reglas:
+- Corrige errores ortográficos reales
+- Expande abreviaturas médicas (OI→ojo izquierdo, OD→ojo derecho)
+- Mantén formato y puntuación original
 
-IMPORTANTE - Ejemplos de correcciones correctas:
-- 'laseración' → 'laceración' (NO 'lesión')
-- 'diabetis' → 'diabetes'
-- 'hipertencion' → 'hipertensión'
-- 'OI' → 'ojo izquierdo'
-- 'OD' → 'ojo derecho'
+Texto: {$texto}
 
-Texto médico a corregir y expandir:
-{$texto}
-
-Texto corregido y con abreviaturas expandidas (solo el texto, sin explicaciones):";
+Corregido:";
 
             // Asignar prompt según el tipo de proveedor
             $this->asignarPromptAConfiguracionInstance($proveedorIA, $prompt);
@@ -717,7 +785,7 @@ Texto corregido y con abreviaturas expandidas (solo el texto, sin explicaciones)
                         );
                     }
                     
-                    return [
+                    $resultado = [
                         'texto_corregido' => $textoCorregido,
                         'cambios' => $cambios,
                         'confidence' => $confidence,
@@ -725,6 +793,14 @@ Texto corregido y con abreviaturas expandidas (solo el texto, sin explicaciones)
                         'processing_time' => $tiempoProcesamiento,
                         'metodo' => 'ia_local'
                     ];
+                    
+                    // Guardar en cache
+                    if ($yiiCache) {
+                        $ttl = (int)(Yii::$app->params['correccion_cache_ttl'] ?? 7200); // 2 horas para correcciones
+                        $yiiCache->set($cacheKey, $resultado, $ttl);
+                    }
+                    
+                    return $resultado;
                 }
             }
             

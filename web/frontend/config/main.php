@@ -135,6 +135,10 @@ return [
                 // CRUD API
                 'POST api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
                 'OPTIONS api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
+                
+                // Audio API (Speech-to-Text)
+                'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
+                'OPTIONS api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
             ],            
         ],
         'snowstorm' => [

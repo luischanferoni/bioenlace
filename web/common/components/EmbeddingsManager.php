@@ -16,49 +16,140 @@ class EmbeddingsManager
     private const SIMILITUD_MINIMA = 0.7; // Umbral mínimo de similitud
     
     /**
-     * Generar embedding para un texto usando OpenAI
+     * Generar embedding para un texto usando HuggingFace o OpenAI
      * @param string $texto
+     * @param bool $useHuggingFace Si true, usa modelos de HuggingFace (más económico)
      * @return array|null
      */
-    public static function generarEmbedding($texto)
+    public static function generarEmbedding($texto, $useHuggingFace = true)
     {
-        // Verificar cache primero
+        // Verificar cache en memoria primero
         $cacheKey = 'embedding_' . md5($texto);
         if (isset(self::$cache[$cacheKey])) {
             return self::$cache[$cacheKey];
         }
         
+        // Verificar cache en Yii (FileCache/Redis)
+        $yiiCache = Yii::$app->cache;
+        if ($yiiCache) {
+            $cached = $yiiCache->get($cacheKey);
+            if ($cached !== false) {
+                // Guardar también en cache de memoria para acceso rápido
+                self::$cache[$cacheKey] = $cached;
+                return $cached;
+            }
+        }
+        
+        try {
+            $embedding = null;
+            
+            if ($useHuggingFace && !empty(Yii::$app->params['hf_api_key'])) {
+                // Usar HuggingFace (más económico, especialmente para español)
+                $embedding = self::generarEmbeddingHuggingFace($texto);
+            }
+            
+            // Fallback a OpenAI si HuggingFace falla o no está configurado
+            if (!$embedding && !empty(Yii::$app->params['openai_api_key'])) {
+                $embedding = self::generarEmbeddingOpenAI($texto);
+            }
+            
+            if ($embedding) {
+                // Guardar en cache de memoria
+                self::$cache[$cacheKey] = $embedding;
+                
+                // Guardar en cache de Yii (persistente)
+                if ($yiiCache) {
+                    $yiiCache->set($cacheKey, $embedding, self::CACHE_TTL);
+                }
+                
+                \Yii::info("Embedding generado para: " . substr($texto, 0, 50), 'embeddings');
+                return $embedding;
+            }
+            
+        } catch (\Exception $e) {
+            \Yii::error("Error en generación de embedding: " . $e->getMessage(), 'embeddings');
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Generar embedding usando HuggingFace (más económico)
+     * @param string $texto
+     * @return array|null
+     */
+    private static function generarEmbeddingHuggingFace($texto)
+    {
+        try {
+            // Usar modelo de embeddings multilingüe optimizado
+            // sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 es gratuito en Inference API
+            $modelo = Yii::$app->params['hf_embedding_model'] ?? 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2';
+            
+            $client = new Client();
+            $response = $client->createRequest()
+                ->setMethod('POST')
+                ->setUrl("https://api-inference.huggingface.co/pipeline/feature-extraction/{$modelo}")
+                ->addHeaders([
+                    'Authorization' => 'Bearer ' . Yii::$app->params['hf_api_key'],
+                    'Content-Type' => 'application/json'
+                ])
+                ->setContent(json_encode([
+                    'inputs' => $texto,
+                    'options' => [
+                        'wait_for_model' => false // No esperar si el modelo está cargando (evita timeouts costosos)
+                    ]
+                ]))
+                ->send();
+
+            if ($response->isOk) {
+                $embedding = json_decode($response->content, true);
+                if (is_array($embedding) && !empty($embedding)) {
+                    // Si es un array anidado, tomar el primer elemento
+                    if (isset($embedding[0]) && is_array($embedding[0])) {
+                        $embedding = $embedding[0];
+                    }
+                    return $embedding;
+                }
+            } else {
+                \Yii::warning('Error generando embedding con HuggingFace: ' . $response->getStatusCode(), 'embeddings');
+            }
+        } catch (\Exception $e) {
+            \Yii::error("Error en generación de embedding HuggingFace: " . $e->getMessage(), 'embeddings');
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Generar embedding usando OpenAI (fallback)
+     * @param string $texto
+     * @return array|null
+     */
+    private static function generarEmbeddingOpenAI($texto)
+    {
         try {
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
                 ->setUrl('https://api.openai.com/v1/embeddings')
                 ->addHeaders([
-                    'Authorization' => 'Bearer ' . (Yii::$app->params['openai_api_key'] ?? ''),
+                    'Authorization' => 'Bearer ' . Yii::$app->params['openai_api_key'],
                     'Content-Type' => 'application/json'
                 ])
                 ->setContent(json_encode([
-                    'model' => 'text-embedding-3-small', // Modelo optimizado para embeddings
+                    'model' => 'text-embedding-3-small',
                     'input' => $texto
                 ]))
                 ->send();
 
             if ($response->isOk) {
                 $responseData = json_decode($response->content, true);
-                $embedding = $responseData['data'][0]['embedding'] ?? null;
-                
-                if ($embedding) {
-                    // Guardar en cache
-                    self::$cache[$cacheKey] = $embedding;
-                    \Yii::info("Embedding generado para: " . substr($texto, 0, 50), 'embeddings');
-                    return $embedding;
-                }
+                return $responseData['data'][0]['embedding'] ?? null;
             } else {
-                \Yii::error('Error generando embedding: ' . $response->getStatusCode() . ' - ' . $response->getContent(), 'embeddings');
+                \Yii::error('Error generando embedding OpenAI: ' . $response->getStatusCode(), 'embeddings');
             }
-            
         } catch (\Exception $e) {
-            \Yii::error("Error en generación de embedding: " . $e->getMessage(), 'embeddings');
+            \Yii::error("Error en generación de embedding OpenAI: " . $e->getMessage(), 'embeddings');
         }
         
         return null;
@@ -149,39 +240,123 @@ class EmbeddingsManager
     /**
      * Generar embeddings en lote para optimizar rendimiento
      * @param array $textos
+     * @param bool $useHuggingFace Si true, usa modelos de HuggingFace
      * @return array
      */
-    public static function generarEmbeddingsBatch($textos)
+    public static function generarEmbeddingsBatch($textos, $useHuggingFace = true)
     {
         $embeddings = [];
         
+        // Verificar cache primero para cada texto
+        foreach ($textos as $texto) {
+            $cacheKey = 'embedding_' . md5($texto);
+            $yiiCache = Yii::$app->cache;
+            
+            if (isset(self::$cache[$cacheKey])) {
+                $embeddings[$texto] = self::$cache[$cacheKey];
+            } elseif ($yiiCache) {
+                $cached = $yiiCache->get($cacheKey);
+                if ($cached !== false) {
+                    $embeddings[$texto] = $cached;
+                    self::$cache[$cacheKey] = $cached;
+                }
+            }
+        }
+        
+        // Filtrar textos que ya están en cache
+        $textosSinCache = array_filter($textos, function($texto) use ($embeddings) {
+            return !isset($embeddings[$texto]);
+        });
+        
+        if (empty($textosSinCache)) {
+            return $embeddings;
+        }
+        
         try {
+            if ($useHuggingFace && !empty(Yii::$app->params['hf_api_key'])) {
+                // HuggingFace puede procesar múltiples textos
+                $modelo = Yii::$app->params['hf_embedding_model'] ?? 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2';
+                
+                $client = new Client();
+                $response = $client->createRequest()
+                    ->setMethod('POST')
+                    ->setUrl("https://api-inference.huggingface.co/pipeline/feature-extraction/{$modelo}")
+                    ->addHeaders([
+                        'Authorization' => 'Bearer ' . Yii::$app->params['hf_api_key'],
+                        'Content-Type' => 'application/json'
+                    ])
+                    ->setContent(json_encode([
+                        'inputs' => array_values($textosSinCache),
+                        'options' => [
+                            'wait_for_model' => false
+                        ]
+                    ]))
+                    ->send();
+
+                if ($response->isOk) {
+                    $responseData = json_decode($response->content, true);
+                    if (is_array($responseData)) {
+                        $textosArray = array_values($textosSinCache);
+                        foreach ($responseData as $index => $embedding) {
+                            if (isset($textosArray[$index])) {
+                                $texto = $textosArray[$index];
+                                // Si es array anidado, tomar el primer elemento
+                                if (isset($embedding[0]) && is_array($embedding[0])) {
+                                    $embedding = $embedding[0];
+                                }
+                                $embeddings[$texto] = $embedding;
+                                
+                                // Guardar en cache
+                                $cacheKey = 'embedding_' . md5($texto);
+                                self::$cache[$cacheKey] = $embedding;
+                                if ($yiiCache) {
+                                    $yiiCache->set($cacheKey, $embedding, self::CACHE_TTL);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Fallback a OpenAI batch
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
                 ->setUrl('https://api.openai.com/v1/embeddings')
                 ->addHeaders([
-                    'Authorization' => 'Bearer ' . (Yii::$app->params['openai_api_key'] ?? ''),
+                        'Authorization' => 'Bearer ' . Yii::$app->params['openai_api_key'],
                     'Content-Type' => 'application/json'
                 ])
                 ->setContent(json_encode([
                     'model' => 'text-embedding-3-small',
-                    'input' => $textos
+                        'input' => array_values($textosSinCache)
                 ]))
                 ->send();
 
             if ($response->isOk) {
                 $responseData = json_decode($response->content, true);
                 $data = $responseData['data'] ?? [];
+                    $textosArray = array_values($textosSinCache);
                 
                 foreach ($data as $index => $item) {
-                    $embeddings[$textos[$index]] = $item['embedding'] ?? null;
+                        if (isset($textosArray[$index])) {
+                            $texto = $textosArray[$index];
+                            $embedding = $item['embedding'] ?? null;
+                            if ($embedding) {
+                                $embeddings[$texto] = $embedding;
+                                
+                                // Guardar en cache
+                                $cacheKey = 'embedding_' . md5($texto);
+                                self::$cache[$cacheKey] = $embedding;
+                                if ($yiiCache) {
+                                    $yiiCache->set($cacheKey, $embedding, self::CACHE_TTL);
+                                }
+                            }
+                        }
+                    }
+                }
                 }
                 
                 \Yii::info("Embeddings generados en lote: " . count($embeddings) . " términos", 'embeddings');
-            } else {
-                \Yii::error('Error generando embeddings en lote: ' . $response->getStatusCode(), 'embeddings');
-            }
             
         } catch (\Exception $e) {
             \Yii::error("Error en generación batch de embeddings: " . $e->getMessage(), 'embeddings');

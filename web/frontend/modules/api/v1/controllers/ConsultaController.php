@@ -284,20 +284,16 @@ class ConsultaController extends BaseController
      */
     private function intentarAnalisisConIA($prompt, $texto, $categorias = [])
     {
-        return Yii::$app->iamanager->consultar($prompt, 'analisis-consulta');
+        // Usar tipo de modelo 'analysis' para HuggingFace
+        return Yii::$app->iamanager->consultar($prompt, 'analisis-consulta', 'analysis');
     }
 
     private function obtenerSugerenciasConIA($texto, $servicio)
     {
-        $prompt = <<<EOT
-        Analizá el siguiente texto de una consulta de $servicio y devolvé un JSON con sugerencias adicionales:
-        - sugerencias_diagnosticas: array con diagnósticos diferenciales sugeridos.
-        - sugerencias_practicas: array con prácticas complementarias sugeridas.
-        - sugerencias_seguimiento: array con recomendaciones de seguimiento.
-        - alertas: array con alertas o precauciones especiales.
+        // Prompt optimizado (más corto)
+        $prompt = "Analiza consulta de $servicio y devuelve JSON con: sugerencias_diagnosticas, sugerencias_practicas, sugerencias_seguimiento, alertas (arrays).
 
-        Texto: "$texto"
-        EOT;
+Texto: \"$texto\"";
 
         $endpointIA = 'http://192.168.1.11:11434/api/generate';
 
@@ -415,24 +411,17 @@ class ConsultaController extends BaseController
             return null; // Retornar null para indicar error
         }
 
-        $prompt = "Eres un asistente médico especializado en " . $servicio . ". Tu tarea es analizar el texto clínico que se te proporciona y extraer información estructurada siguiendo la tabla de categorías indicada.  
-Pasos a seguir:
+        // Prompt optimizado (más corto para reducir costos)
+        $prompt = "Analiza el texto clínico y extrae información estructurada en JSON. Categorías: " . $categoriasTexto . ". Si no hay información para una categoría, usa [].
 
-1. **Extracción**
-- Para cada categoría (" . $categoriasTexto . ") extrae el contenido relevante del texto corregido.
-- Si no hay información para una categoría, devuelve un array vacío (`[]`).
-
-2. **Formato del respuesta** 
-- Responder solo con JSON válido, sin razonamiento:
+Formato JSON:
 {
     \"datosExtraidos\": {
-        \"categoria\": [\"valor\"],
-        \"categoria con subdatos\": [{\"subdato\": \"valor\"}],
+        \"categoria\": [\"valor\"]
     }
 }
 
-TEXTO CLÍNICO: \"" . $texto . "\"    
-";
+Texto: \"" . $texto . "\"";
 //var_dump($prompt);die;
         return [
             'prompt' => $prompt,

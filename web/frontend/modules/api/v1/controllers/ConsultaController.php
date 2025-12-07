@@ -10,6 +10,9 @@ use common\components\ProcesadorTextoMedico;
 use common\components\CodificadorSnomedIA;
 use common\components\IAManager;
 use common\components\ConsultaLogger;
+use common\components\ConsultaClassifier;
+use common\components\RespuestaPredefinidaManager;
+use common\components\DeferredSnomedProcessor;
 
 class ConsultaController extends BaseController
 {
@@ -86,15 +89,39 @@ class ConsultaController extends BaseController
         // Obtener categorías para el HTML genérico
         $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
         
-        // Llamada a la IA para analizar la consulta con texto expandido
-        $logger->registrar(
-            'ANÁLISIS IA',
-            $textoProcesado,
-            null,
-            ['metodo' => 'ConsultaController::analizarConsultaConIA']
-        );
+        // Verificar si es consulta simple (procesamiento selectivo)
+        $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
         
-        $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
+        if ($esSimple) {
+            // Procesar con reglas predefinidas (sin GPU)
+            $logger->registrar(
+                'ANÁLISIS SIMPLE',
+                $textoProcesado,
+                null,
+                ['metodo' => 'ConsultaClassifier::procesarConsultaSimple']
+            );
+            
+            $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
+            
+            $logger->registrar(
+                'ANÁLISIS SIMPLE',
+                null,
+                'Consulta simple procesada sin GPU',
+                [
+                    'metodo' => 'ConsultaClassifier::procesarConsultaSimple',
+                    'categorias_extraidas' => isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0
+                ]
+            );
+        } else {
+            // Llamada a la IA para analizar la consulta con texto expandido (con GPU)
+            $logger->registrar(
+                'ANÁLISIS IA',
+                $textoProcesado,
+                null,
+                ['metodo' => 'ConsultaController::analizarConsultaConIA']
+            );
+            
+            $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
         
         $logger->registrar(
             'ANÁLISIS IA',
@@ -106,19 +133,20 @@ class ConsultaController extends BaseController
             ]
         );
         
-        // NUEVO: Codificar automáticamente con SNOMED
+        // NUEVO: Codificar automáticamente con SNOMED (procesamiento diferido)
         $datosConSnomed = null;
         $estadisticasSnomed = null;
         $requiereValidacionSnomed = false;
         
-        /*if ($resultadoIA && isset($resultadoIA['datosExtraidos'])) {
-            $codificador = new CodificadorSnomedIA();
-            $datosConSnomed = $codificador->codificarDatos($resultadoIA, $categorias);
-            $estadisticasSnomed = $codificador->getEstadisticasCodificacion();
-            $requiereValidacionSnomed = $codificador->hayBajaConfianza();
-            
-            // Los logs de SNOMED ya se manejan en ConsultaLogger
-        }*/
+        // Procesar SNOMED de forma diferida (no bloquea al médico)
+        if ($resultadoIA && isset($resultadoIA['datosExtraidos'])) {
+            DeferredSnomedProcessor::procesarDiferido(
+                null, // consulta_id se asignará cuando se guarde la consulta
+                $resultadoIA,
+                $categorias
+            );
+            \Yii::info("SNOMED agregado a cola de procesamiento diferido", 'snomed-codificador');
+        }
         
         // Usar datos con SNOMED si están disponibles, sino usar datos originales
         if ($datosConSnomed) {
@@ -250,6 +278,17 @@ class ConsultaController extends BaseController
 
     public function analizarConsultaConIA($texto, $servicio, $categorias)
     {
+        // Buscar respuesta predefinida antes de usar GPU
+        $similitudMinima = Yii::$app->params['similitud_minima_respuestas'] ?? 0.85;
+        $respuestaPredefinida = \common\components\RespuestaPredefinidaManager::obtenerRespuesta($texto, $servicio, $similitudMinima);
+        
+        if ($respuestaPredefinida) {
+            \Yii::info("Respuesta predefinida encontrada para consulta similar (sin GPU)", 'consulta-ia');
+            // Incrementar contador de usos
+            \common\components\RespuestaPredefinidaManager::incrementarUsos($respuestaPredefinida['id']);
+            return $respuestaPredefinida['respuesta_json'];
+        }
+        
         // Intentar primero con el prompt especializado
         $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias);
         //var_dump($promptData['prompt']);die;
@@ -264,6 +303,8 @@ class ConsultaController extends BaseController
         $resultado = $this->intentarAnalisisConIA($promptData['prompt'], $texto, $categorias);
 
         if ($resultado) {
+            // Guardar respuesta para futuro uso (respuestas predefinidas)
+            \common\components\RespuestaPredefinidaManager::guardarRespuesta($texto, $resultado, $servicio);
             return $resultado;
         }
 
@@ -481,6 +522,78 @@ Texto: \"" . $texto . "\"";
         return substr($texto, 0, -2);
     }
 
+    /**
+     * Pipeline optimizado que evita procesamiento redundante
+     * @param string $textoConsulta
+     * @param \common\models\Servicio $servicio
+     * @param int $idConfiguracion
+     * @param string $tabId
+     * @param array $contextoLogger
+     * @return array
+     */
+    private function procesarPipelineOptimizado($textoConsulta, $servicio, $idConfiguracion, $tabId, $contextoLogger = [])
+    {
+        $logger = ConsultaLogger::obtenerInstancia();
+        
+        // Cache key para evitar procesamiento redundante (mismo texto, mismo servicio)
+        $cacheKey = 'pipeline_' . md5($textoConsulta . $servicio->id . $idConfiguracion);
+        $cache = Yii::$app->cache;
+        
+        // Verificar cache primero (TTL corto para evitar datos obsoletos)
+        if ($cache) {
+            $cached = $cache->get($cacheKey);
+            if ($cached !== false) {
+                \Yii::info("Pipeline optimizado: resultado desde cache", 'consulta-pipeline');
+                return $cached;
+            }
+        }
+        
+        // Verificar si el texto ya está procesado (evitar procesamiento redundante)
+        $necesitaProcesamiento = true;
+        if (strlen($textoConsulta) < 200 && preg_match('/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ\s,\.]+$/', $textoConsulta)) {
+            // Texto corto y bien formateado, puede no necesitar procesamiento completo
+            $necesitaProcesamiento = false;
+        }
+        
+        // Procesamiento de texto (solo si es necesario)
+        $textoProcesado = $textoConsulta;
+        if ($necesitaProcesamiento) {
+            $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA($textoConsulta, $servicio->nombre, $tabId);
+            $textoProcesado = is_array($resultadoProcesamiento) ? $resultadoProcesamiento['texto_procesado'] : $resultadoProcesamiento;
+        }
+        
+        // Obtener categorías una sola vez
+        $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
+        
+        // Verificar si es consulta simple (procesamiento selectivo)
+        $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
+        
+        if ($esSimple) {
+            $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
+        } else {
+            $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
+        }
+        
+        // SNOMED diferido (no bloquea)
+        if ($resultadoIA && isset($resultadoIA['datosExtraidos'])) {
+            DeferredSnomedProcessor::procesarDiferido(null, $resultadoIA, $categorias);
+        }
+        
+        $resultado = [
+            'texto_procesado' => $textoProcesado,
+            'resultado_ia' => $resultadoIA,
+            'es_simple' => $esSimple,
+            'necesito_procesamiento' => $necesitaProcesamiento
+        ];
+        
+        // Guardar en cache (TTL corto)
+        if ($cache) {
+            $cache->set($cacheKey, $resultado, 300); // 5 minutos
+        }
+        
+        return $resultado;
+    }
+    
     /**
      * Construir campos faltantes para el prompt
      * @param array $categorias

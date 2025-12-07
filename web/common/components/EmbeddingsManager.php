@@ -274,7 +274,7 @@ class EmbeddingsManager
         
         try {
             if ($useHuggingFace && !empty(Yii::$app->params['hf_api_key'])) {
-                // HuggingFace puede procesar múltiples textos
+                // HuggingFace puede procesar múltiples textos en un solo request (batch nativo)
                 $modelo = Yii::$app->params['hf_embedding_model'] ?? 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2';
                 
                 $client = new Client();

@@ -30,8 +30,13 @@ class ProcesadorTextoMedico
     {
         $inicio = microtime(true);
         
-        // Paso 1: Limpiar y normalizar el texto
-        $textoLimpio = TextoMedicoHelper::limpiarTexto($textoOriginal);
+        // Paso 1: Limpiar y normalizar el texto (usar CPUProcessor si está disponible)
+        $usarCPU = Yii::$app->params['usar_cpu_tareas_simples'] ?? true;
+        if ($usarCPU && CPUProcessor::puedeProcesarConCPU('limpieza_texto')) {
+            $textoLimpio = CPUProcessor::procesar('limpieza_texto', $textoOriginal);
+        } else {
+            $textoLimpio = TextoMedicoHelper::limpiarTexto($textoOriginal);
+        }
         
         $logger = ConsultaLogger::obtenerInstancia();
         if ($logger) {
@@ -51,9 +56,21 @@ class ProcesadorTextoMedico
             );
         }
         
-        // Paso 2: Expandir abreviaturas médicas con lógica de médico
+        // Paso 2: Expandir abreviaturas médicas (intentar CPU primero para abreviaturas simples)
+        $usarCPU = Yii::$app->params['usar_cpu_tareas_simples'] ?? true;
+        $textoExpandido = $textoLimpio;
+        $abreviaturasEncontradas = [];
+        
+        if ($usarCPU && CPUProcessor::puedeProcesarConCPU('expansion_abreviaturas_simple')) {
+            $textoExpandido = CPUProcessor::procesar('expansion_abreviaturas_simple', $textoLimpio, ['especialidad' => $especialidad]);
+            if ($textoExpandido !== $textoLimpio) {
+                \Yii::info("Abreviaturas expandidas con CPU", 'procesador-texto');
+            }
+        }
+        
+        // Si hay médico, usar lógica específica del médico (puede requerir BD)
         if ($idRrHh) {
-            $resultadoExpansion = AbreviaturasMedicas::expandirAbreviaturasConMedico($textoLimpio, $especialidad, $idRrHh);
+            $resultadoExpansion = AbreviaturasMedicas::expandirAbreviaturasConMedico($textoExpandido, $especialidad, $idRrHh);
             $textoExpandido = $resultadoExpansion['texto_procesado'];
             $abreviaturasEncontradas = $resultadoExpansion['abreviaturas_encontradas'];
             

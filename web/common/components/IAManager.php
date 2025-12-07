@@ -13,6 +13,42 @@ use common\components\ConsultaLogger;
 class IAManager
 {
     /**
+     * Extraer ID del modelo desde endpoint
+     * @param string $endpoint
+     * @return string
+     */
+    private static function extraerModeloId($endpoint)
+    {
+        // Extraer nombre del modelo del endpoint
+        // Ejemplo: https://api-inference.huggingface.co/models/llama3.1:8b -> llama3.1:8b
+        if (preg_match('/models\/([^\/]+)/', $endpoint, $matches)) {
+            return $matches[1];
+        }
+        return md5($endpoint);
+    }
+    
+    /**
+     * Comprimir datos en tránsito (gzip)
+     * @param string $data Datos a comprimir
+     * @return array ['data' => string, 'headers' => array]
+     */
+    private static function comprimirDatos($data)
+    {
+        $usarCompresion = Yii::$app->params['comprimir_datos_transito'] ?? true;
+        $headers = [];
+        
+        if ($usarCompresion && function_exists('gzencode') && strlen($data) > 500) {
+            // Solo comprimir si los datos son grandes (>500 bytes)
+            $dataComprimida = gzencode($data, 6); // Nivel 6 (balance entre velocidad y compresión)
+            $headers['Content-Encoding'] = 'gzip';
+            \Yii::info("Datos comprimidos: " . strlen($data) . " -> " . strlen($dataComprimida) . " bytes", 'ia-manager');
+            return ['data' => $dataComprimida, 'headers' => $headers];
+        }
+        
+        return ['data' => $data, 'headers' => $headers];
+    }
+    
+    /**
      * Obtener configuración del proveedor de IA
      * @return array
      */
@@ -275,6 +311,16 @@ class IAManager
                 $proveedorIA = self::getConfiguracionHuggingFace($tipoModelo);
                 $endpoint = $proveedorIA['endpoint'];
                 
+                // Registrar uso del modelo para gestión de memoria
+                $modeloId = self::extraerModeloId($endpoint);
+                ModelManager::registrarUso($modeloId, $tipoModelo);
+                
+                // Verificar si el modelo debe estar cargado
+                if (!ModelManager::debeEstarCargado($modeloId, $tipoModelo)) {
+                    \Yii::warning("Modelo no disponible en memoria: {$modeloId}. Cargando...", 'ia-manager');
+                    // En un sistema real, aquí se cargaría el modelo
+                }
+                
                 // Verificar rate limiter
                 if (!\common\components\HuggingFaceRateLimiter::puedeHacerRequest($endpoint, false)) {
                     \Yii::warning("Rate limit alcanzado para: {$endpoint}", 'ia-manager');
@@ -300,12 +346,17 @@ class IAManager
             
             // Los logs detallados ya se manejan en ConsultaLogger
 
+            // Comprimir datos en tránsito (gzip) para reducir ancho de banda
+            $payloadJson = json_encode($proveedorIA['payload']);
+            $compresion = self::comprimirDatos($payloadJson);
+            $headersConCompresion = array_merge($proveedorIA['headers'], $compresion['headers']);
+            
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
                 ->setUrl($proveedorIA['endpoint'])
-                ->addHeaders($proveedorIA['headers'])
-                ->setContent(json_encode($proveedorIA['payload']))
+                ->addHeaders($headersConCompresion)
+                ->setContent($compresion['data'])
                 ->send();
 
             if ($response->isOk) {
@@ -458,13 +509,40 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
     }
 
     /**
-     * Corregir una palabra usando LLM (mismo comportamiento que en ProcesadorTextoMedico)
+     * Corregir una palabra (intenta CPU primero, luego LLM si es necesario)
      * @param string $palabra
      * @param string $contexto
      * @param string|null $especialidad
      * @return array|null
      */
     public function corregirPalabraConLLM($palabra, $contexto, $especialidad = null)
+    {
+        // Intentar corrección básica con CPU primero
+        $usarCPU = Yii::$app->params['usar_cpu_tareas_simples'] ?? true;
+        if ($usarCPU && CPUProcessor::puedeProcesarConCPU('correccion_ortografica_basica')) {
+            $corregidaCPU = CPUProcessor::procesar('correccion_ortografica_basica', $palabra);
+            if ($corregidaCPU !== $palabra) {
+                \Yii::info("Corrección CPU aplicada: '{$palabra}' -> '{$corregidaCPU}'", 'ia-manager');
+                return [
+                    'suggestion' => $corregidaCPU,
+                    'confidence' => 0.7,
+                    'metodo' => 'cpu'
+                ];
+            }
+        }
+        
+        // Si CPU no corrigió, usar LLM
+        return $this->corregirPalabraConLLMReal($palabra, $contexto, $especialidad);
+    }
+    
+    /**
+     * Corregir una palabra usando LLM (mismo comportamiento que en ProcesadorTextoMedico)
+     * @param string $palabra
+     * @param string $contexto
+     * @param string|null $especialidad
+     * @return array|null
+     */
+    private function corregirPalabraConLLMReal($palabra, $contexto, $especialidad = null)
     {
         try {
             // Mejor prompt que enfatiza el contexto
@@ -489,15 +567,21 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 ]
             ];
 
+            // Comprimir datos en tránsito
+            $payloadJson = json_encode($payload);
+            $compresion = self::comprimirDatos($payloadJson);
+            $headers = [
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json'
+            ];
+            $headers = array_merge($headers, $compresion['headers']);
+            
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
                 ->setUrl($endpoint)
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json'
-                ])
-                ->setContent(json_encode($payload))
+                ->addHeaders($headers)
+                ->setContent($compresion['data'])
                 ->send();
 
             if ($response->isOk) {
@@ -570,15 +654,21 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 );
             }
 
+            // Comprimir datos en tránsito
+            $payloadJson = json_encode($payload);
+            $compresion = self::comprimirDatos($payloadJson);
+            $headers = [
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json'
+            ];
+            $headers = array_merge($headers, $compresion['headers']);
+            
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
                 ->setUrl($endpoint)
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json'
-                ])
-                ->setContent(json_encode($payload))
+                ->addHeaders($headers)
+                ->setContent($compresion['data'])
                 ->send();
 
             if ($response->isOk) {

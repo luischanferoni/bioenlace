@@ -229,11 +229,25 @@ class CodificadorSnomedIA
             $mejorMatch = null;
             $mejorSimilitud = 0;
             
+            // Usar batch processing para generar embeddings de todos los candidatos a la vez
+            $textosCandidatos = array_map(function($candidato) {
+                return $candidato['text'];
+            }, $candidatos);
+            
+            // Generar embeddings en batch (más eficiente)
+            $embeddingsBatch = EmbeddingsManager::generarEmbeddingsBatch($textosCandidatos, true);
+            
             foreach ($candidatos as $candidato) {
                 $textoCandidato = $candidato['text'];
                 
-                // Generar embedding del candidato
-                $embeddingCandidato = EmbeddingsManager::generarEmbedding($textoCandidato);
+                // Obtener embedding del batch
+                $embeddingCandidato = $embeddingsBatch[$textoCandidato] ?? null;
+                
+                // Si no está en batch, generar individualmente
+                if (!$embeddingCandidato) {
+                    $embeddingCandidato = EmbeddingsManager::generarEmbedding($textoCandidato);
+                }
+                
                 if (!$embeddingCandidato) {
                     continue;
                 }

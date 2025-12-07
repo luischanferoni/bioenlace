@@ -49,6 +49,125 @@ class HuggingFaceBatchProcessor
         
         $resultados = [];
         
+        // Si hay múltiples requests para el mismo endpoint, intentar procesarlos juntos
+        // (aunque HuggingFace API no soporta batch nativo, agrupamos para optimizar conexiones)
+        if (count($requests) > 1 && self::puedeProcesarEnBatch($requests)) {
+            $resultados = self::procesarBatchNativo($endpoint, $requests);
+        } else {
+            // Procesar individualmente
+            foreach ($requests as $request) {
+                try {
+                    $resultado = self::procesarRequest($request);
+                    $resultados[$request['id']] = $resultado;
+                    
+                    if ($request['callback'] && is_callable($request['callback'])) {
+                        call_user_func($request['callback'], $resultado);
+                    }
+                } catch (\Exception $e) {
+                    \Yii::error("Error procesando request en batch: " . $e->getMessage(), 'hf-batch');
+                    $resultados[$request['id']] = ['error' => $e->getMessage()];
+                }
+            }
+        }
+        
+        return $resultados;
+    }
+    
+    /**
+     * Verificar si los requests pueden procesarse en batch nativo
+     */
+    private static function puedeProcesarEnBatch($requests)
+    {
+        // Solo para embeddings que soportan batch nativo
+        if (strpos($requests[0]['endpoint'], 'feature-extraction') !== false) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Procesar batch nativo (para embeddings que lo soportan)
+     */
+    private static function procesarBatchNativo($endpoint, $requests)
+    {
+        $resultados = [];
+        
+        try {
+            // Agrupar inputs de todos los requests
+            $inputs = [];
+            $requestMap = [];
+            
+            foreach ($requests as $request) {
+                if (isset($request['payload']['inputs'])) {
+                    if (is_array($request['payload']['inputs'])) {
+                        $inputs = array_merge($inputs, $request['payload']['inputs']);
+                    } else {
+                        $inputs[] = $request['payload']['inputs'];
+                    }
+                    $requestMap[] = $request;
+                }
+            }
+            
+            if (empty($inputs)) {
+                return self::procesarIndividual($requests);
+            }
+            
+            // Procesar batch nativo
+            $apiKey = Yii::$app->params['hf_api_key'] ?? '';
+            if (empty($apiKey)) {
+                return self::procesarIndividual($requests);
+            }
+            
+            $client = new Client();
+            $response = $client->createRequest()
+                ->setMethod('POST')
+                ->setUrl($endpoint)
+                ->addHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Content-Type' => 'application/json'
+                ])
+                ->setContent(json_encode([
+                    'inputs' => $inputs,
+                    'options' => [
+                        'wait_for_model' => false
+                    ]
+                ]))
+                ->send();
+            
+            if ($response->isOk) {
+                $responseData = json_decode($response->content, true);
+                $index = 0;
+                
+                foreach ($requestMap as $request) {
+                    if (isset($responseData[$index])) {
+                        $resultado = [
+                            'success' => true,
+                            'data' => $responseData[$index]
+                        ];
+                        $resultados[$request['id']] = $resultado;
+                        
+                        if ($request['callback'] && is_callable($request['callback'])) {
+                            call_user_func($request['callback'], $resultado);
+                        }
+                        $index++;
+                    }
+                }
+            }
+            
+        } catch (\Exception $e) {
+            \Yii::error("Error procesando batch nativo: " . $e->getMessage(), 'hf-batch');
+            return self::procesarIndividual($requests);
+        }
+        
+        return $resultados;
+    }
+    
+    /**
+     * Procesar requests individualmente
+     */
+    private static function procesarIndividual($requests)
+    {
+        $resultados = [];
         foreach ($requests as $request) {
             try {
                 $resultado = self::procesarRequest($request);
@@ -58,11 +177,10 @@ class HuggingFaceBatchProcessor
                     call_user_func($request['callback'], $resultado);
                 }
             } catch (\Exception $e) {
-                \Yii::error("Error procesando request en batch: " . $e->getMessage(), 'hf-batch');
+                \Yii::error("Error procesando request: " . $e->getMessage(), 'hf-batch');
                 $resultados[$request['id']] = ['error' => $e->getMessage()];
             }
         }
-        
         return $resultados;
     }
     

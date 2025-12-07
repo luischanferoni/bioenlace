@@ -25,4 +25,13 @@ return [
     'hf_temperature' => 0.2, // Temperature baja para tareas determinísticas
     'ia_cache_ttl' => 3600, // TTL de cache para respuestas de IA (1 hora)
     'correccion_cache_ttl' => 7200, // TTL de cache para correcciones (2 horas)
+    
+    // Optimizaciones de procesamiento
+    'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito
+    'usar_cpu_tareas_simples' => true, // Usar CPU para tareas simples (sin GPU)
+    'max_modelos_memoria' => 3, // Máximo de modelos cargados simultáneamente en memoria
+    'chunk_audio_duration' => 10, // Duración de chunks de audio en segundos
+    'similitud_minima_respuestas' => 0.85, // Umbral mínimo de similitud para reutilizar respuestas predefinidas
+    'optimizar_audio' => true, // Activar optimizaciones de audio (compresión, eliminación de silencios)
+    'ffmpeg_path' => 'ffmpeg', // Ruta al ejecutable de FFmpeg
 ];

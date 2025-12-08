@@ -70,47 +70,27 @@ class UniversalQueryAgent
         $categories = self::getAvailableCategories();
         $categoriesText = !empty($categories) ? implode(', ', $categories) : 'Ninguna categoría específica';
         
+        // Prompt optimizado (reducido 35% para reducir costos)
         $prompt = <<<PROMPT
-Eres un asistente para un sistema de gestión hospitalaria. Analiza la siguiente consulta del usuario y determina qué está buscando.
+Analiza consulta y genera criterios de búsqueda.
 
-CONTEXTO:
-- Usuario: {$userContext['name']}
-- Fecha actual: {$userContext['current_date']}
-- Categorías disponibles en el sistema: {$categoriesText}
+Contexto: Usuario: {$userContext['name']}, Fecha: {$userContext['current_date']}, Categorías: {$categoriesText}
 
-CONSULTA DEL USUARIO: "{$userQuery}"
+Consulta: "{$userQuery}"
 
-Tu tarea es entender la intención y generar criterios de búsqueda para encontrar acciones relevantes en el sistema.
-
-Responde ÚNICAMENTE con un JSON válido:
+Responde JSON:
 {
-  "intent": "descripción breve de lo que el usuario quiere hacer",
-  "search_keywords": ["palabra1", "palabra2", "palabra3"],
-  "entity_types": ["tipo1", "tipo2"],
-  "category": "categoría_más_relevante_o_null",
-  "operation_hints": ["operación1", "operación2"],
-  "extracted_data": {
-    "dni": "valor_si_existe_o_null",
-    "fecha": "valor_si_existe_o_null",
-    "nombre": "valor_si_existe_o_null",
-    "numero": "valor_si_existe_o_null"
-  },
-  "filters": {
-    "user_owned": true/false,
-    "date_range": "mes|año|día|null",
-    "date_value": "valor_ISO_o_null"
-  },
+  "intent": "descripción breve",
+  "search_keywords": ["palabra1", "palabra2"],
+  "entity_types": ["tipo1"],
+  "category": "categoría_o_null",
+  "operation_hints": ["operación"],
+  "extracted_data": {"dni": "valor_o_null", "fecha": "valor_o_null", "nombre": "valor_o_null"},
+  "filters": {"user_owned": true/false, "date_range": "mes|año|día|null"},
   "query_type": "list_all|search|create|update|delete|count|view|unknown"
 }
 
-INSTRUCCIONES:
-- "search_keywords": palabras clave relevantes para buscar acciones (mínimo 3, máximo 10)
-- "entity_types": tipos de entidades mencionadas (ej: "persona", "consulta", "licencia", "turno")
-- "category": si puedes identificar una categoría de la lista, úsala
-- Si la consulta es solo un número de 7-8 dígitos, es búsqueda por DNI
-- Si menciona "mis", "mías", "del usuario", "voy atendiendo" → user_owned: true
-- Si menciona "cuántos", "cantidad", "total", "contar" → query_type: "count"
-- Si pregunta qué puede hacer o qué tiene permitido → query_type: "list_all"
+Reglas: 7-8 dígitos=DNI, "mis"/"mías"=user_owned:true, "cuántos"/"cantidad"=count, "qué puedo"=list_all
 PROMPT;
 
         $iaResponse = self::callIA($prompt);

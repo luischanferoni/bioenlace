@@ -11,7 +11,10 @@ use yii\httpclient\Client;
 class HuggingFaceBatchProcessor
 {
     private static $batchQueue = [];
-    private const BATCH_SIZE = 10;
+    // Tamaño de batch optimizado: más grande para embeddings (50), más pequeño para text-generation (20)
+    private const BATCH_SIZE_EMBEDDINGS = 50; // Embeddings soportan batches grandes
+    private const BATCH_SIZE_TEXT_GEN = 20; // Text generation más conservador
+    private const BATCH_SIZE_DEFAULT = 20; // Default
     
     public static function agregarABatch($endpoint, $payload, $callback = null, $inmediato = false)
     {
@@ -31,11 +34,34 @@ class HuggingFaceBatchProcessor
         
         self::$batchQueue[$endpoint][] = $request;
         
-        if ($inmediato || count(self::$batchQueue[$endpoint]) >= self::BATCH_SIZE) {
+        // Determinar tamaño de batch según el tipo de endpoint
+        $batchSize = self::obtenerBatchSize($endpoint);
+        
+        if ($inmediato || count(self::$batchQueue[$endpoint]) >= $batchSize) {
             self::procesarBatch($endpoint);
         }
         
         return $requestId;
+    }
+    
+    /**
+     * Obtener tamaño de batch según el tipo de endpoint
+     * @param string $endpoint
+     * @return int
+     */
+    private static function obtenerBatchSize($endpoint)
+    {
+        // Embeddings soportan batches más grandes
+        if (strpos($endpoint, 'feature-extraction') !== false || strpos($endpoint, 'pipeline/feature-extraction') !== false) {
+            return self::BATCH_SIZE_EMBEDDINGS;
+        }
+        
+        // Text generation más conservador
+        if (strpos($endpoint, 'text-generation') !== false || strpos($endpoint, 'generate') !== false) {
+            return self::BATCH_SIZE_TEXT_GEN;
+        }
+        
+        return self::BATCH_SIZE_DEFAULT;
     }
     
     public static function procesarBatch($endpoint)

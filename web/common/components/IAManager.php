@@ -64,26 +64,32 @@ class IAManager
      */
     public function getProveedorIAInstance()
     {
-        // Configuración por defecto - Ollama local
-        $proveedor = Yii::$app->params['ia_proveedor'] ?? 'ollama';
+        // Configuración por defecto - HuggingFace (Ollama no disponible sin infraestructura)
+        $proveedor = Yii::$app->params['ia_proveedor'] ?? 'huggingface';
         
         switch ($proveedor) {
             case 'openai':
                 return self::getConfiguracionOpenAI();
             case 'groq':
                 return self::getConfiguracionGroq();
-            case 'huggingface':
-                return self::getConfiguracionHuggingFace();
             case 'ollama':
+                // NOTA: Ollama requiere infraestructura/hardware local no disponible
+                // Si se intenta usar, se hace fallback a HuggingFace
+                \Yii::warning('Ollama no está disponible (requiere infraestructura local). Usando HuggingFace como fallback.', 'ia-manager');
+                return self::getConfiguracionHuggingFace();
+            case 'huggingface':
             default:
-                return self::getConfiguracionOllama();
+                return self::getConfiguracionHuggingFace();
         }
     }
 
     /**
      * Configuración para Ollama (local)
+     * NOTA: Esta configuración no está disponible actualmente - requiere infraestructura/hardware local
+     * (servidores con GPU, Ollama instalado). El código se mantiene para uso futuro.
      * Usa Llama 3.1 70B Instruct para máxima precisión en corrección ortográfica
      * @return array
+     * @deprecated No disponible sin infraestructura local
      */
     private static function getConfiguracionOllama()
     {
@@ -186,7 +192,8 @@ class IAManager
                     'max_length' => (int)(Yii::$app->params['hf_max_length'] ?? 500),
                     'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.2), // Más bajo para tareas determinísticas
                     'return_full_text' => false,
-                    'wait_for_model' => false // Evitar cold starts costosos
+                    'wait_for_model' => false, // Evitar cold starts costosos
+                    'timeout' => 30 // Timeout más corto para requests no críticos (reduce costos de timeouts)
                 ]
             ],
             'modelo' => $modelo,
@@ -282,6 +289,13 @@ class IAManager
         $logger = ConsultaLogger::obtenerInstancia();
         
         try {
+            // Validación previa: prompt vacío o muy corto
+            $prompt = trim($prompt);
+            if (empty($prompt) || strlen($prompt) < 3) {
+                \Yii::warning("Prompt vacío o muy corto, saltando request de IA", 'ia-manager');
+                return null;
+            }
+            
             // Verificar deduplicación primero
             $deduplicado = \common\components\RequestDeduplicator::buscarSimilar($prompt, $contexto);
             if ($deduplicado !== null) {
@@ -310,6 +324,25 @@ class IAManager
             if ($proveedorIA['tipo'] === 'huggingface') {
                 $proveedorIA = self::getConfiguracionHuggingFace($tipoModelo);
                 $endpoint = $proveedorIA['endpoint'];
+                
+                // Optimización: Ajustar max_length dinámicamente según longitud del prompt
+                $longitudPrompt = strlen($prompt);
+                $maxLengthBase = (int)(Yii::$app->params['hf_max_length'] ?? 500);
+                
+                // Reducir max_length para prompts cortos (respuestas más cortas = menos tokens)
+                if ($longitudPrompt < 100) {
+                    $maxLengthOptimizado = min(300, $maxLengthBase);
+                } elseif ($longitudPrompt < 200) {
+                    $maxLengthOptimizado = min(400, $maxLengthBase);
+                } else {
+                    $maxLengthOptimizado = $maxLengthBase;
+                }
+                
+                if (isset($proveedorIA['payload']['parameters'])) {
+                    $proveedorIA['payload']['parameters']['max_length'] = $maxLengthOptimizado;
+                } elseif (isset($proveedorIA['payload']['options'])) {
+                    $proveedorIA['payload']['options']['max_length'] = $maxLengthOptimizado;
+                }
                 
                 // Registrar uso del modelo para gestión de memoria
                 $modeloId = self::extraerModeloId($endpoint);
@@ -774,8 +807,9 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
     }
 
     /**
-     * Corregir texto médico completo usando modelo de IA local (Ollama)
-     * Usa Llama 3.1 70B Instruct para máxima precisión
+     * Corregir texto médico completo usando modelo de IA
+     * NOTA: Ollama no está disponible (requiere infraestructura local)
+     * Usa el proveedor configurado (HuggingFace por defecto)
      * @param string $texto Texto original a corregir
      * @param string|null $especialidad Especialidad médica
      * @return array ['texto_corregido' => string, 'cambios' => array, 'confidence' => float]
@@ -797,16 +831,13 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 }
             }
             
-            // Obtener configuración del proveedor (Ollama por defecto)
+            // Obtener configuración del proveedor (HuggingFace por defecto, Ollama no disponible)
             $proveedorIA = $this->getProveedorIAInstance();
             
-            // Crear prompt optimizado (más corto para reducir costos)
-            $prompt = "Corrige errores ortográficos y expande abreviaturas médicas en español. Responde SOLO con el texto corregido, sin explicaciones.
+            // Prompt optimizado (reducido 40% para reducir costos)
+            $prompt = "Corrige ortografía y expande abreviaturas médicas. Solo texto corregido.
 
-Reglas:
-- Corrige errores ortográficos reales
-- Expande abreviaturas médicas (OI→ojo izquierdo, OD→ojo derecho)
-- Mantén formato y puntuación original
+Reglas: errores reales, abreviaturas (OI→ojo izq, OD→ojo der), mantener formato.
 
 Texto: {$texto}
 
@@ -819,11 +850,11 @@ Corregido:";
                 $logger->registrar(
                     'PROCESAMIENTO',
                     'Enviando texto completo para corrección con IA',
-                    'Procesando texto completo con modelo local (Llama 3.1 70B Instruct)',
+                    'Procesando texto completo con modelo de IA',
                     [
                         'metodo' => 'IAManager::corregirTextoCompletoConIA',
-                        'proveedor' => $proveedorIA['tipo'] ?? 'ollama',
-                        'modelo' => $proveedorIA['payload']['model'] ?? 'llama3.1:70b-instruct',
+                        'proveedor' => $proveedorIA['tipo'] ?? 'huggingface',
+                        'modelo' => $proveedorIA['payload']['model'] ?? $proveedorIA['payload']['inputs'] ?? 'desconocido',
                         'longitud_texto' => strlen($texto),
                         'especialidad' => $especialidad
                     ]

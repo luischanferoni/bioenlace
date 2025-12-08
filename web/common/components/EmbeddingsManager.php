@@ -12,7 +12,8 @@ use yii\httpclient\Client;
 class EmbeddingsManager
 {
     private static $cache = [];
-    private const CACHE_TTL = 3600; // 1 hora
+    // TTL extendido a 30 días para reducir costos (optimización agresiva)
+    private const CACHE_TTL = 2592000; // 30 días
     private const SIMILITUD_MINIMA = 0.7; // Umbral mínimo de similitud
     
     /**
@@ -23,6 +24,21 @@ class EmbeddingsManager
      */
     public static function generarEmbedding($texto, $useHuggingFace = true)
     {
+        // Validación previa: texto vacío
+        $texto = trim($texto);
+        if (empty($texto) || strlen($texto) < 2) {
+            \Yii::warning("Texto vacío o muy corto para generar embedding", 'embeddings');
+            return null;
+        }
+        
+        // OPTIMIZACIÓN: Verificar cache de términos SNOMED comunes primero (más rápido)
+        if (class_exists('\common\components\SnomedCommonTermsCache')) {
+            $embeddingComun = \common\components\SnomedCommonTermsCache::obtenerEmbedding($texto);
+            if ($embeddingComun !== null) {
+                return $embeddingComun;
+            }
+        }
+        
         // Verificar cache en memoria primero
         $cacheKey = 'embedding_' . md5($texto);
         if (isset(self::$cache[$cacheKey])) {
@@ -36,6 +52,12 @@ class EmbeddingsManager
             if ($cached !== false) {
                 // Guardar también en cache de memoria para acceso rápido
                 self::$cache[$cacheKey] = $cached;
+                
+                // Si es término común, guardar en cache permanente también
+                if (class_exists('\common\components\SnomedCommonTermsCache')) {
+                    \common\components\SnomedCommonTermsCache::guardarEmbedding($texto, $cached);
+                }
+                
                 return $cached;
             }
         }
@@ -60,6 +82,11 @@ class EmbeddingsManager
                 // Guardar en cache de Yii (persistente)
                 if ($yiiCache) {
                     $yiiCache->set($cacheKey, $embedding, self::CACHE_TTL);
+                }
+                
+                // Si es término SNOMED común, guardar en cache permanente
+                if (class_exists('\common\components\SnomedCommonTermsCache')) {
+                    \common\components\SnomedCommonTermsCache::guardarEmbedding($texto, $embedding);
                 }
                 
                 \Yii::info("Embedding generado para: " . substr($texto, 0, 50), 'embeddings');
@@ -195,19 +222,42 @@ class EmbeddingsManager
     public static function encontrarTerminoSimilar($textoUsuario, $terminosSnomed)
     {
         try {
+            // Validación previa: texto vacío o sin términos
+            if (empty($textoUsuario) || empty($terminosSnomed)) {
+                return null;
+            }
+            
+            // Pre-filtrar términos SNOMED por palabras clave antes de generar embeddings (optimización)
+            $terminosFiltrados = self::prefiltrarTerminosSnomed($textoUsuario, $terminosSnomed);
+            
+            // Si después del pre-filtrado no hay términos, retornar null
+            if (empty($terminosFiltrados)) {
+                \Yii::info("No se encontraron términos SNOMED después del pre-filtrado", 'embeddings');
+                return null;
+            }
+            
             // Generar embedding del texto del usuario
             $embeddingUsuario = self::generarEmbedding($textoUsuario);
             if (!$embeddingUsuario) {
                 return null;
             }
             
+            // OPTIMIZACIÓN CRÍTICA: Generar embeddings en batch en lugar de uno por uno
+            $embeddingsBatch = self::generarEmbeddingsBatch($terminosFiltrados, true);
+            
             $mejorMatch = null;
             $mejorSimilitud = 0;
             
-            foreach ($terminosSnomed as $termino) {
-                $embeddingSnomed = self::generarEmbedding($termino);
+            foreach ($terminosFiltrados as $termino) {
+                // Obtener embedding del batch (ya generado)
+                $embeddingSnomed = $embeddingsBatch[$termino] ?? null;
+                
+                // Si no está en batch (debería estar), intentar generar individualmente como fallback
                 if (!$embeddingSnomed) {
-                    continue;
+                    $embeddingSnomed = self::generarEmbedding($termino);
+                    if (!$embeddingSnomed) {
+                        continue;
+                    }
                 }
                 
                 $similitud = self::calcularSimilitudCoseno($embeddingUsuario, $embeddingSnomed);
@@ -235,6 +285,79 @@ class EmbeddingsManager
             \Yii::error("Error en búsqueda semántica: " . $e->getMessage(), 'embeddings');
             return null;
         }
+    }
+    
+    /**
+     * Pre-filtrar términos SNOMED por palabras clave antes de generar embeddings
+     * Reduce significativamente el número de embeddings a generar
+     * @param string $textoUsuario
+     * @param array $terminosSnomed
+     * @return array Términos filtrados
+     */
+    private static function prefiltrarTerminosSnomed($textoUsuario, $terminosSnomed)
+    {
+        // Si hay pocos términos, no filtrar (overhead no vale la pena)
+        if (count($terminosSnomed) <= 10) {
+            return $terminosSnomed;
+        }
+        
+        $textoLower = mb_strtolower($textoUsuario, 'UTF-8');
+        $palabrasClave = self::extraerPalabrasClave($textoLower);
+        
+        if (empty($palabrasClave)) {
+            // Si no hay palabras clave, retornar primeros 50 términos (límite razonable)
+            return array_slice($terminosSnomed, 0, 50);
+        }
+        
+        $terminosFiltrados = [];
+        foreach ($terminosSnomed as $termino) {
+            $terminoLower = mb_strtolower($termino, 'UTF-8');
+            
+            // Verificar si alguna palabra clave está en el término
+            foreach ($palabrasClave as $palabra) {
+                if (stripos($terminoLower, $palabra) !== false) {
+                    $terminosFiltrados[] = $termino;
+                    break; // Ya encontramos match, no necesitamos seguir
+                }
+            }
+            
+            // Límite de términos filtrados para evitar demasiados embeddings
+            if (count($terminosFiltrados) >= 100) {
+                break;
+            }
+        }
+        
+        // Si el filtrado resultó en muy pocos términos, retornar primeros 30 sin filtrar
+        if (count($terminosFiltrados) < 5) {
+            return array_slice($terminosSnomed, 0, 30);
+        }
+        
+        \Yii::info("Pre-filtrado SNOMED: " . count($terminosSnomed) . " → " . count($terminosFiltrados) . " términos", 'embeddings');
+        return $terminosFiltrados;
+    }
+    
+    /**
+     * Extraer palabras clave relevantes del texto (sin stopwords)
+     * @param string $texto
+     * @return array
+     */
+    private static function extraerPalabrasClave($texto)
+    {
+        $stopwords = ['el', 'la', 'de', 'que', 'y', 'a', 'en', 'un', 'es', 'se', 'no', 'te', 'lo', 'le', 'da', 'su', 'por', 'son', 'con', 'para', 'al', 'del', 'los', 'las', 'le', 'les', 'del', 'las', 'una', 'unos', 'unas'];
+        
+        // Tokenizar y filtrar stopwords
+        $palabras = preg_split('/\s+/', $texto);
+        $palabrasClave = [];
+        
+        foreach ($palabras as $palabra) {
+            $palabra = trim($palabra, '.,;:!?()[]{}');
+            if (strlen($palabra) > 3 && !in_array($palabra, $stopwords)) {
+                $palabrasClave[] = $palabra;
+            }
+        }
+        
+        // Retornar máximo 5 palabras clave más relevantes
+        return array_slice(array_unique($palabrasClave), 0, 5);
     }
     
     /**

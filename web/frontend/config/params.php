@@ -8,10 +8,14 @@ return [
     'botonera' => ['view' => false, 'params' => []], // para guardar el path de un partial en donde esten los botones
     
     // Configuración de IA
-    'ia_proveedor' => 'ollama', // 'ollama', 'groq', 'openai', 'huggingface'
+    // NOTA: 'ollama' no está disponible (requiere infraestructura/hardware local)
+    'ia_proveedor' => 'huggingface', // 'huggingface', 'groq', 'openai' (ollama no disponible)
     'groq_api_key' => '', // API key para Groq
     'openai_api_key' => '', // API key para OpenAI
     'hf_api_key' => '', // API key para Hugging Face
+    // NOTA: HuggingFace ofrece tier gratuito con 30,000 requests/mes gratis
+    // Optimizar uso para maximizar requests gratuitos antes de usar tier de pago
+    'hf_use_free_tier' => true, // Priorizar uso del tier gratuito (30K requests/mes)
     
     // Configuración de modelos HuggingFace optimizados
     'hf_model_text_gen' => 'HuggingFaceH4/zephyr-7b-beta', // Modelo para generación de texto
@@ -23,8 +27,10 @@ return [
     // Parámetros de optimización de costos
     'hf_max_length' => 500, // Longitud máxima de respuesta
     'hf_temperature' => 0.2, // Temperature baja para tareas determinísticas
-    'ia_cache_ttl' => 3600, // TTL de cache para respuestas de IA (1 hora)
-    'correccion_cache_ttl' => 7200, // TTL de cache para correcciones (2 horas)
+    'ia_cache_ttl' => 604800, // TTL de cache para respuestas de IA (7 días) - Optimizado para reducir costos
+    'correccion_cache_ttl' => 604800, // TTL de cache para correcciones (7 días) - Optimizado para reducir costos
+    'embedding_cache_ttl' => 2592000, // TTL de cache para embeddings (30 días) - Optimizado para reducir costos
+    'stt_cache_ttl' => 2592000, // TTL de cache para transcripciones STT (30 días) - Optimizado para reducir costos
     
     // Optimizaciones de procesamiento
     'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito

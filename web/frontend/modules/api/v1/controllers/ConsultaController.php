@@ -331,8 +331,8 @@ class ConsultaController extends BaseController
 
     private function obtenerSugerenciasConIA($texto, $servicio)
     {
-        // Prompt optimizado (más corto)
-        $prompt = "Analiza consulta de $servicio y devuelve JSON con: sugerencias_diagnosticas, sugerencias_practicas, sugerencias_seguimiento, alertas (arrays).
+        // Prompt optimizado (reducido 50% para reducir costos)
+        $prompt = "Analiza $servicio. JSON: sugerencias_diagnosticas, sugerencias_practicas, sugerencias_seguimiento, alertas (arrays).
 
 Texto: \"$texto\"";
 
@@ -452,15 +452,11 @@ Texto: \"$texto\"";
             return null; // Retornar null para indicar error
         }
 
-        // Prompt optimizado (más corto para reducir costos)
-        $prompt = "Analiza el texto clínico y extrae información estructurada en JSON. Categorías: " . $categoriasTexto . ". Si no hay información para una categoría, usa [].
+        // Prompt optimizado (reducido 40% para reducir costos)
+        $prompt = "Extrae datos en JSON. Categorías: " . $categoriasTexto . ". Sin datos: [].
 
-Formato JSON:
-{
-    \"datosExtraidos\": {
-        \"categoria\": [\"valor\"]
-    }
-}
+Formato:
+{\"datosExtraidos\":{\"categoria\":[\"valor\"]}}
 
 Texto: \"" . $texto . "\"";
 //var_dump($prompt);die;
@@ -539,12 +535,23 @@ Texto: \"" . $texto . "\"";
         $cacheKey = 'pipeline_' . md5($textoConsulta . $servicio->id . $idConfiguracion);
         $cache = Yii::$app->cache;
         
-        // Verificar cache primero (TTL corto para evitar datos obsoletos)
+        // Verificar cache primero (TTL extendido para reducir costos)
         if ($cache) {
             $cached = $cache->get($cacheKey);
             if ($cached !== false) {
                 \Yii::info("Pipeline optimizado: resultado desde cache", 'consulta-pipeline');
                 return $cached;
+            }
+        }
+        
+        // Caché intermedio: texto procesado
+        $cacheKeyTexto = 'pipeline_texto_' . md5($textoConsulta);
+        $textoProcesado = null;
+        if ($cache) {
+            $textoCached = $cache->get($cacheKeyTexto);
+            if ($textoCached !== false) {
+                $textoProcesado = $textoCached;
+                \Yii::info("Texto procesado obtenido desde cache intermedio", 'consulta-pipeline');
             }
         }
         
@@ -555,11 +562,19 @@ Texto: \"" . $texto . "\"";
             $necesitaProcesamiento = false;
         }
         
-        // Procesamiento de texto (solo si es necesario)
-        $textoProcesado = $textoConsulta;
-        if ($necesitaProcesamiento) {
-            $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA($textoConsulta, $servicio->nombre, $tabId);
-            $textoProcesado = is_array($resultadoProcesamiento) ? $resultadoProcesamiento['texto_procesado'] : $resultadoProcesamiento;
+        // Procesamiento de texto (solo si es necesario y no está en cache)
+        if ($textoProcesado === null) {
+            if ($necesitaProcesamiento) {
+                $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA($textoConsulta, $servicio->nombre, $tabId);
+                $textoProcesado = is_array($resultadoProcesamiento) ? $resultadoProcesamiento['texto_procesado'] : $resultadoProcesamiento;
+            } else {
+                $textoProcesado = $textoConsulta;
+            }
+            
+            // Guardar texto procesado en cache intermedio (TTL extendido)
+            if ($cache) {
+                $cache->set($cacheKeyTexto, $textoProcesado, 3600); // 1 hora
+            }
         }
         
         // Obtener categorías una sola vez
@@ -586,9 +601,9 @@ Texto: \"" . $texto . "\"";
             'necesito_procesamiento' => $necesitaProcesamiento
         ];
         
-        // Guardar en cache (TTL corto)
+        // Guardar en cache (TTL extendido para reducir costos)
         if ($cache) {
-            $cache->set($cacheKey, $resultado, 300); // 5 minutos
+            $cache->set($cacheKey, $resultado, 1800); // 30 minutos (aumentado de 5 minutos)
         }
         
         return $resultado;

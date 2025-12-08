@@ -11,7 +11,8 @@ class RequestDeduplicator
 {
     private static $requestCache = [];
     private const CACHE_TTL = 300;
-    private const SIMILITUD_MINIMA = 0.95;
+    // Umbral reducido de 0.95 a 0.85 para mayor agresividad en deduplicación (reduce costos)
+    private const SIMILITUD_MINIMA = 0.85;
     
     public static function buscarSimilar($prompt, $tipo = 'general')
     {

@@ -68,35 +68,21 @@ class AdminQueryIAManager
     {
         $actionsJSON = json_encode(ActionMappingService::generateActionsJSONForIA($availableActions), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         
+        // Prompt optimizado (reducido 40% para reducir costos)
         $prompt = <<<PROMPT
-Eres un asistente virtual para un sistema de gestión hospitalaria. Tu tarea es ayudar a usuarios administrativos a encontrar las acciones correctas según sus consultas.
+Asistente sistema hospitalario. Encuentra acciones según consulta.
 
 {$actionsDescription}
 
-Consulta del usuario: "{$userQuery}"
+Consulta: "{$userQuery}"
 
-Instrucciones:
-1. Analiza la consulta del usuario y determina qué acción(es) del sistema sería(n) más apropiada(s) para resolver su necesidad.
-2. Proporciona una explicación breve y clara (2-3 oraciones) de cómo proceder.
-3. Identifica las acciones relevantes de la lista anterior y proporciona sus rutas exactas.
-
-Responde ÚNICAMENTE con un JSON válido en el siguiente formato:
+Responde JSON:
 {
-  "explanation": "Explicación breve de cómo proceder",
-  "actions": [
-    {
-      "route": "ruta/exacta/de/la/accion",
-      "name": "Nombre descriptivo de la acción",
-      "description": "Por qué esta acción es relevante"
-    }
-  ]
+  "explanation": "Explicación breve (2-3 oraciones)",
+  "actions": [{"route": "ruta/exacta", "name": "Nombre", "description": "Por qué relevante"}]
 }
 
-IMPORTANTE:
-- Solo incluye acciones que estén en la lista de acciones disponibles.
-- Usa las rutas exactas como aparecen en la lista.
-- Si ninguna acción es relevante, devuelve un array vacío en "actions".
-- La explicación debe ser clara y en español.
+Reglas: Solo acciones disponibles, rutas exactas, sin acciones=array vacío
 PROMPT;
 
         return $prompt;

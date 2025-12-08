@@ -11,7 +11,8 @@ use yii\httpclient\Client;
  */
 class SpeechToTextManager
 {
-    private const CACHE_TTL = 86400; // 24 horas para transcripciones
+    // TTL extendido a 30 días para reducir costos (optimización agresiva)
+    private const CACHE_TTL = 2592000; // 30 días para transcripciones
     private const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB máximo
     
     /**
@@ -31,6 +32,16 @@ class SpeechToTextManager
         $inicio = microtime(true);
         
         try {
+            // Validación previa: audio path vacío
+            if (empty($audioPath)) {
+                \Yii::warning("Audio path vacío, saltando transcripción", 'speech-to-text');
+                return [
+                    'texto' => '',
+                    'confidence' => 0,
+                    'error' => 'Audio path vacío'
+                ];
+            }
+            
             // Verificar cache
             $cacheKey = 'stt_' . md5($audioPath . $modelo);
             $yiiCache = Yii::$app->cache;
@@ -44,6 +55,16 @@ class SpeechToTextManager
             
             // Cargar y pre-procesar audio (puede lanzar excepción si falla optimización)
             $audioData = self::preprocesarAudio($audioPath, $opciones);
+            
+            // Validación: audio muy corto después de procesamiento (skip si < 1 segundo estimado)
+            if (strlen($audioData) < 1000) { // ~1 segundo de audio comprimido
+                \Yii::info("Audio muy corto después de procesamiento, saltando STT", 'speech-to-text');
+                return [
+                    'texto' => '',
+                    'confidence' => 0,
+                    'error' => 'Audio demasiado corto para procesar'
+                ];
+            }
             
             // Seleccionar modelo
             $modeloSeleccionado = self::MODELOS[$modelo] ?? self::MODELOS['economico'];

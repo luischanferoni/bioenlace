@@ -73,10 +73,7 @@ class IAManager
             case 'groq':
                 return self::getConfiguracionGroq();
             case 'ollama':
-                // NOTA: Ollama requiere infraestructura/hardware local no disponible
-                // Si se intenta usar, se hace fallback a HuggingFace
-                \Yii::warning('Ollama no está disponible (requiere infraestructura local). Usando HuggingFace como fallback.', 'ia-manager');
-                return self::getConfiguracionHuggingFace();
+                return self::getConfiguracionOllama();
             case 'huggingface':
             default:
                 return self::getConfiguracionHuggingFace();
@@ -89,7 +86,6 @@ class IAManager
      * (servidores con GPU, Ollama instalado). El código se mantiene para uso futuro.
      * Usa Llama 3.1 70B Instruct para máxima precisión en corrección ortográfica
      * @return array
-     * @deprecated No disponible sin infraestructura local
      */
     private static function getConfiguracionOllama()
     {

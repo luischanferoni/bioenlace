@@ -9,7 +9,7 @@ return [
     
     // Configuración de IA
     // NOTA: 'ollama' no está disponible (requiere infraestructura/hardware local)
-    'ia_proveedor' => 'huggingface', // 'huggingface', 'groq', 'openai' (ollama no disponible)
+    'ia_proveedor' => 'ollama', // 'huggingface', 'groq', 'openai' (ollama no disponible)
     'groq_api_key' => '', // API key para Groq
     'openai_api_key' => '', // API key para OpenAI
     'hf_api_key' => '', // API key para Hugging Face

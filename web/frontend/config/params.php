@@ -40,4 +40,14 @@ return [
     'similitud_minima_respuestas' => 0.85, // Umbral mínimo de similitud para reutilizar respuestas predefinidas
     'optimizar_audio' => true, // Activar optimizaciones de audio (compresión, eliminación de silencios)
     'ffmpeg_path' => 'ffmpeg', // Ruta al ejecutable de FFmpeg
+    
+    // Configuración de reconocimiento facial
+    'face_verification_provider' => 'azure', // 'azure', 'google', 'simple'
+    'google_vision_api_key' => '', // API key para Google Vision API
+    'google_vision_project_id' => '', // Project ID (opcional)
+    'azure_face_api_key' => '', // API key para Azure Face API
+    'azure_face_endpoint' => '', // Endpoint de Azure Face API (ej: https://<resource>.cognitiveservices.azure.com)
+    'azure_face_min_quality' => 0.35, // Umbral mínimo de qualityForRecognition (0.0 - 1.0)
+    'azure_face_fail_on_occlusion' => true, // Rechazar si hay oclusiones (ojos/boca)
+    'face_match_threshold' => 0.7, // Umbral de similitud (0.0 - 1.0)
 ];

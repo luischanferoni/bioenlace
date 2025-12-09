@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
+import '../services/registration_service.dart';
 import 'chat_screen.dart';
 import '../components/camera_overlay.dart';
 
@@ -61,52 +62,76 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      // Simular procesamiento
-      await Future.delayed(Duration(seconds: 2));
-      
-      // Simular datos de respuesta exitosa
-      final simulatedData = {
-        'success': true,
-        'user_id': 'user_${DateTime.now().millisecondsSinceEpoch}',
-        'provided_name': 'Usuario Registrado',
-        'dni_detected': '12345678',
-        'name_detected': 'Usuario Registrado',
-        'message': 'Registro completado exitosamente'
-      };
+      final registrationService = RegistrationService();
+      final result = await registrationService.submitRegistration(_dniImage!, _selfieImage!);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Registro completado exitosamente'),
-          backgroundColor: AppTheme.successColor,
-        ),
-      );
+      if (result['success'] == true) {
+        final data = result['data'];
+        final userId = data['user_id'] ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+        final dniData = data['dni_data'] ?? {};
+        final faceMatch = data['face_match'] ?? {};
+        
+        // Verificar si la verificación facial fue exitosa
+        final faceMatchSuccess = faceMatch['match'] ?? false;
+        final faceMatchScore = faceMatch['score'] ?? 0.0;
+        
+        if (!faceMatchSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('La verificación facial falló. Por favor, intenta nuevamente con fotos más claras.'),
+              backgroundColor: AppTheme.warningColor,
+              duration: Duration(seconds: 5),
+            ),
+          );
+          setState(() {
+            _isSubmitting = false;
+          });
+          return;
+        }
 
-      // Guardar datos en SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setString('user_id', simulatedData['user_id'] as String);
-      await prefs.setString('provided_name', simulatedData['provided_name'] as String);
-      await prefs.setString('dni_detected', simulatedData['dni_detected'] as String);
-      await prefs.setString('name_detected', simulatedData['name_detected'] as String);
-      await prefs.setBool('biometric_enabled', true); // Habilitar biometría
+        // Guardar datos en SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('is_logged_in', true);
+        await prefs.setString('user_id', userId);
+        await prefs.setString('user_name', '${dniData['nombre'] ?? ''} ${dniData['apellido'] ?? ''}'.trim());
+        await prefs.setString('dni_detected', dniData['dni'] ?? '');
+        await prefs.setString('name_detected', '${dniData['nombre'] ?? ''} ${dniData['apellido'] ?? ''}'.trim());
+        await prefs.setBool('biometric_enabled', true);
+        await prefs.setDouble('face_match_score', faceMatchScore);
 
-      // Crear servicio de chat
-      final chatService = ChatService(
-        currentUserId: simulatedData['user_id'] as String,
-        currentUserName: simulatedData['provided_name'] as String,
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registro completado exitosamente'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
 
-      // Navegar a la pantalla de chat
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => ChatScreen(chatService: chatService)),
-      );
+        // Crear servicio de chat
+        final chatService = ChatService(
+          currentUserId: userId,
+          currentUserName: prefs.getString('user_name') ?? 'Usuario',
+        );
 
+        // Navegar a la pantalla de chat
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => ChatScreen(chatService: chatService)),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Error en el registro'),
+            backgroundColor: AppTheme.dangerColor,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error inesperado. Intenta nuevamente más tarde.'),
+          content: Text('Error inesperado: ${e.toString()}'),
           backgroundColor: AppTheme.dangerColor,
+          duration: Duration(seconds: 5),
         ),
       );
     } finally {

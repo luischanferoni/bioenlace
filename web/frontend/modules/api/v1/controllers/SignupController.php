@@ -8,6 +8,7 @@ use yii\web\UploadedFile;
 use yii\web\BadRequestHttpException;
 use yii\helpers\FileHelper;
 use yii\base\Exception;
+use common\components\FaceVerificationManager;
 
 use Imagick;
 use ImagickPixel;
@@ -74,23 +75,32 @@ class SignupController extends BaseController
             ]);
         }
 
-        /*$parsed = [
-            'dni' => $data[0],
-            'apellido' => $data[1],
-            'nombre' => $data[2],
-            'sexo' => $data[3],
-            'nacionalidad' => $data[4],
-            'fecha_nacimiento' => $data[6],
-            'fecha_emision' => $data[7],
-            'fecha_vencimiento' => $data[8] ?? null,
-            'ejemplar' => $data[9] ?? null,
-        ];*/
+        // Verificar coincidencia facial entre selfie y foto del DNI
+        $faceMatch = $this->verifyFaceMatch($dniPath, $selfiePath);
+        
+        if (!$faceMatch['success']) {
+            return $this->asJson([
+                'success' => false,
+                'message' => $faceMatch['message'] ?? 'Error en verificación facial',
+                'face_match' => $faceMatch,
+            ]);
+        }
+
+        if (!$faceMatch['match']) {
+            return $this->asJson([
+                'success' => false,
+                'message' => 'La verificación facial falló. Las caras no coinciden.',
+                'face_match' => $faceMatch,
+                'dni_data' => $dniData,
+            ]);
+        }
 
         return [
             'success' => true,
-            'message' => 'Usuario registrado',
+            'message' => 'Usuario registrado exitosamente',
             'user_id' => $userId,
             'dni_data' => $dniData,
+            'face_match' => $faceMatch,
         ];
     }
 
@@ -336,6 +346,28 @@ print('Imagen procesada')
         $r = $image->writeImage($filePath);
         $image->clear();
         $image->destroy();
+    }
+
+    /**
+     * Verifica si la cara de la selfie coincide con la del DNI
+     * Usa FaceVerificationManager que soporta múltiples proveedores
+     * @param string $dniPath Ruta de la imagen del DNI
+     * @param string $selfiePath Ruta de la imagen de la selfie
+     * @return array Resultado de la verificación
+     */
+    private function verifyFaceMatch($dniPath, $selfiePath)
+    {
+        try {
+            return FaceVerificationManager::verifyFaces($dniPath, $selfiePath);
+        } catch (Exception $e) {
+            Yii::error("Error en verificación facial: " . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Error en verificación facial: ' . $e->getMessage(),
+                'match' => false,
+                'score' => 0.0,
+            ];
+        }
     }
     
 

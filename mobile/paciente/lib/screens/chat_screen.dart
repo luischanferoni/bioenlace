@@ -3,6 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../models/message.dart';
 import '../services/chat_service.dart';
+import '../services/acciones_service.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -16,29 +17,23 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  List<Message> _messages = [];
-  bool _isLoading = true;
+  final AccionesService _accionesService = AccionesService(userId: '');
+  List<Map<String, dynamic>> _chatHistory = [];
   bool _isSending = false;
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();
-  }
-
-  Future<void> _loadMessages() async {
-    setState(() => _isLoading = true);
-    try {
-      final messages = await widget.chatService.getMessages();
-      setState(() {
-        _messages = messages;
-        _isLoading = false;
-      });
-      _scrollToBottom();
-    } catch (e) {
-      setState(() => _isLoading = false);
-      _showErrorSnackbar('Error al cargar mensajes: $e');
-    }
+    // Inicializar con mensaje de bienvenida
+    _chatHistory = [
+      {
+        'type': 'bot',
+        'content': '¡Hola! Soy tu asistente de BioEnlace. ¿En qué puedo ayudarte?',
+        'timestamp': DateTime.now(),
+      }
+    ];
+    // Inicializar servicio con el userId correcto
+    _accionesService.userId = widget.chatService.currentUserId;
   }
 
   void _scrollToBottom() {
@@ -60,44 +55,79 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _isSending = true;
 
-      // Mostrar mensaje del usuario inmediatamente
-      _messages.add(Message(
-        senderId: 'user', // O el ID del usuario actual
-        senderName: 'Tú',
-        content: text,
-        timestamp: DateTime.now(),
-      ));
+      // Agregar mensaje del usuario al historial
+      _chatHistory.add({
+        'type': 'user',
+        'content': text,
+        'timestamp': DateTime.now(),
+      });
       _messageController.clear();
     });
 
     _scrollToBottom();
 
     try {
-      final botMessage = await widget.chatService.sendMessage(text);
-      setState(() {
-        _messages.add(botMessage);
-        _isSending = false;
-      });
+      // Procesar consulta con el servicio de acciones
+      final result = await _accionesService.processQuery(text);
+
+      if (result['success'] == true) {
+        final data = result['data'];
+        final explanation = data['explanation'] ?? 'Consulta procesada';
+        final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
+
+        setState(() {
+          _isSending = false;
+
+          // Agregar respuesta del bot al historial
+          _chatHistory.add({
+            'type': 'bot',
+            'content': explanation,
+            'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
+            'timestamp': DateTime.now(),
+          });
+        });
+      } else {
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': result['message'] ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.',
+            'timestamp': DateTime.now(),
+          });
+        });
+      }
       _scrollToBottom();
     } catch (e) {
-      setState(() => _isSending = false);
-      _showErrorSnackbar('Error al enviar mensaje: $e');
+      setState(() {
+        _isSending = false;
+        _chatHistory.add({
+          'type': 'bot',
+          'content': 'Error al procesar tu consulta. Por favor, intenta nuevamente.',
+          'timestamp': DateTime.now(),
+        });
+      });
+      _showErrorSnackbar('Error: ${e.toString()}');
+      _scrollToBottom();
     }
   }
 
-  Future<void> _resendMessage(String messageId) async {
-    try {
-      setState(() => _isSending = true);
-      final message = await widget.chatService.resendMessage(messageId);
-      setState(() {
-        _messages.add(message);
-        _isSending = false;
-      });
-      _scrollToBottom();
-    } catch (e) {
-      setState(() => _isSending = false);
-      _showErrorSnackbar('Error al reenviar mensaje: $e');
-    }
+  void _executeAction(Map<String, dynamic> action) {
+    // Ejecutar acción según el tipo
+    final actionType = action['type'] ?? action['action_type'] ?? '';
+    final actionUrl = action['url'] ?? '';
+    final actionTitle = action['title'] ?? action['label'] ?? 'Acción';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Ejecutando: $actionTitle'),
+        backgroundColor: AppTheme.infoColor,
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    // TODO: Implementar navegación a acciones específicas
+    // Por ahora solo mostramos un mensaje
+    print('Ejecutando acción: $actionType - $actionUrl');
   }
 
   void _showErrorSnackbar(String message) {
@@ -115,136 +145,124 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'BioEnlace Chat',
+          'BioEnlace',
           style: AppTheme.h2Style.copyWith(color: Colors.white),
         ),
         backgroundColor: Theme.of(context).primaryColor,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: _loadMessages,
-          ),
-        ],
       ),
       body: Column(
         children: [
           Expanded(
-            child: _isLoading
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          color: Theme.of(context).primaryColor,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Cargando mensajes...',
-                          style: AppTheme.subTitleStyle,
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      final isCurrentUser =
-                          message.senderId == widget.chatService.currentUserId;
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              itemCount: _chatHistory.length,
+              itemBuilder: (context, index) {
+                final message = _chatHistory[index];
+                final isUser = message['type'] == 'user';
+                final content = message['content'] as String;
+                final actions = message['actions'] as List<Map<String, dynamic>>?;
+                final timestamp = message['timestamp'] as DateTime;
 
-                      return Align(
-                        alignment: isCurrentUser
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 4.0, horizontal: 16.0),
-                          padding: const EdgeInsets.all(16.0),
-                          decoration: BoxDecoration(
-                            color: isCurrentUser
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey[200],
-                            borderRadius: BorderRadius.circular(16.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (!isCurrentUser)
-                                Text(
-                                  message.senderName,
-                                  style: AppTheme.h6Style.copyWith(
-                                    fontWeight: FontWeight.bold,
+                return Column(
+                  children: [
+                    // Mensaje
+                    Align(
+                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 4.0,
+                          horizontal: 16.0,
+                        ),
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: isUser
+                              ? Theme.of(context).primaryColor
+                              : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(16.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!isUser)
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.smart_toy,
+                                    size: 16,
                                     color: Theme.of(context).primaryColor,
                                   ),
-                                ),
-                              const SizedBox(height: 4),
-                              Text(
-                                message.content,
-                                style: AppTheme.subTitleStyle.copyWith(
-                                  color: isCurrentUser ? Colors.white : Colors.black87,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
+                                  const SizedBox(width: 4),
                                   Text(
-                                    '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
-                                    style: TextStyle(
-                                      fontSize: 10, 
-                                      color: isCurrentUser ? Colors.white70 : Colors.grey[600],
+                                    'BioEnlace',
+                                    style: AppTheme.h6Style.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).primaryColor,
+                                      fontSize: 12,
                                     ),
                                   ),
-                                  if (message.isResent)
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 4.0),
-                                      child: Text(
-                                        '(Reenviado)',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontStyle: FontStyle.italic,
-                                          color: isCurrentUser ? Colors.white70 : Colors.grey[600],
-                                        ),
-                                      ),
-                                    ),
                                 ],
                               ),
-                              if (isCurrentUser)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: TextButton(
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    ),
-                                    onPressed: _isSending
-                                        ? null
-                                        : () => _resendMessage(message.id),
-                                    child: Text(
-                                      'Reenviar',
-                                      style: AppTheme.h6Style.copyWith(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
+                            if (!isUser) const SizedBox(height: 4),
+                            Text(
+                              content,
+                              style: AppTheme.subTitleStyle.copyWith(
+                                color: isUser ? Colors.white : Colors.black87,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isUser ? Colors.white70 : Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                    // Acciones si existen
+                    if (!isUser && actions != null && actions.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: actions.map((action) {
+                            return ActionChip(
+                              label: Text(
+                                action['title'] ?? action['label'] ?? 'Acción',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              avatar: Icon(
+                                Icons.touch_app,
+                                size: 16,
+                              ),
+                              onPressed: () => _executeAction(action),
+                              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                              labelStyle: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
+            ),
           ),
           Container(
             padding: const EdgeInsets.all(16.0),
@@ -264,7 +282,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: TextField(
                     controller: _messageController,
                     decoration: InputDecoration(
-                      hintText: 'Escribe un mensaje...',
+                      hintText: 'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"',
                       hintStyle: AppTheme.subTitleStyle,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),

@@ -306,11 +306,86 @@ class _SignupScreenState extends State<SignupScreen> {
                       : Text('Completar Registro'),
                 ),
               ),
+              
+              const SizedBox(height: 24),
+              
+              // Botón de prueba para saltar registro (solo desarrollo)
+              Center(
+                child: TextButton(
+                  onPressed: _isSubmitting ? null : _skipRegistration,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.flash_on,
+                        size: 16,
+                        color: AppTheme.warningColor,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Saltar registro (solo pruebas)',
+                        style: TextStyle(
+                          color: AppTheme.warningColor,
+                          fontSize: 14,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         ),
       ),
     );
+  }
+
+  /// Método para saltar el registro y navegar directamente al chat (solo pruebas)
+  Future<void> _skipRegistration() async {
+    try {
+      // Crear datos de usuario de prueba
+      final prefs = await SharedPreferences.getInstance();
+      final testUserId = 'test_user_${DateTime.now().millisecondsSinceEpoch}';
+      final testUserName = 'Usuario de Prueba';
+
+      // Guardar datos de prueba en SharedPreferences
+      await prefs.setBool('is_logged_in', true);
+      await prefs.setString('user_id', testUserId);
+      await prefs.setString('user_name', testUserName);
+      await prefs.setString('dni_detected', '12345678');
+      await prefs.setString('name_detected', testUserName);
+      await prefs.setBool('biometric_enabled', false); // Deshabilitado para pruebas
+      await prefs.setDouble('face_match_score', 0.95);
+
+      // Crear servicio de chat
+      final chatService = ChatService(
+        currentUserId: testUserId,
+        currentUserName: testUserName,
+      );
+
+      // Mostrar mensaje informativo
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Modo de prueba activado - Registro omitido'),
+          backgroundColor: AppTheme.warningColor,
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Navegar a la pantalla de chat
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => ChatScreen(chatService: chatService)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al saltar registro: ${e.toString()}'),
+          backgroundColor: AppTheme.dangerColor,
+        ),
+      );
+    }
   }
 }

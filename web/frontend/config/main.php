@@ -98,6 +98,9 @@ return [
                 //'OPTIONS api/<version:\w+>/signup' => '<version>/signup/recibir',
                 // login
                 'POST api/<version:\w+>/login' => '<version>/login/login',
+                // generar token de prueba para paciente por DNI
+                'POST api/<version:\w+>/auth/generate-test-token' => '<version>/auth/generate-test-token',
+                'GET api/<version:\w+>/auth/generate-test-token' => '<version>/auth/generate-test-token',
                 'OPTIONS api/<version:\w+>/login' => '<version>/login/login',
 
                 // consulta-chat - chat médico

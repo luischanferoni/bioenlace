@@ -21,299 +21,438 @@ class ConsultaController extends BaseController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        // Ajustar autenticación según necesidades específicas
-        // Por defecto BaseController requiere autenticación excepto para 'options'
+        
+        // Permitir acceso sin autenticación Bearer si hay sesión activa (para web)
+        // El método actionAnalizar verificará manualmente la autenticación
+        $behaviors['authenticator']['except'] = ['options', 'analizar'];
+        
         return $behaviors;
     }
-
 
     public function actionAnalizar()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $body = Yii::$app->request->getBodyParams();
-        $userPerTabConfig = $body['userPerTabConfig'] ?? [];
-        $idRrHhServicio = $userPerTabConfig['id_rrhh_servicio'] ?? null;        
-        $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
-        $textoConsulta = $body['consulta'] ?? null;
-        $idConfiguracion = $body['id_configuracion'] ?? null;
-        
-        if (!$idRrHhServicio || !$textoConsulta) {
-            return ['success' => false, 'msj' => 'Faltan datos obligatorios: idRrHh y consulta.'];
-        }        
+        try {
+            // Verificar autenticación: Bearer token o sesión web
+            $isAuthenticated = false;
+            $userId = null;
+            
+            // Intentar autenticación por Bearer token primero
+            $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
+            if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
+                $token = $matches[1];
+                try {
+                    $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(Yii::$app->params['jwtSecret'], 'HS256'));
+                    $userId = $decoded->user_id;
+                    $isAuthenticated = true;
+                } catch (\Exception $e) {
+                    // Token inválido, continuar con verificación de sesión
+                }
+            }
+            
+            // Si no hay Bearer token, verificar sesión web de frontend
+            if (!$isAuthenticated) {
+                $session = Yii::$app->session;
+                
+                // Asegurar que la sesión esté iniciada
+                if (!$session->isActive) {
+                    $session->open();
+                }
+                
+                // Verificar si hay identidad de usuario en la sesión
+                $identityId = $session->get('__id');
+                $identity = $session->get('__identity');
+                
+                if ($identity !== null || !empty($identityId)) {
+                    if (is_object($identity) && method_exists($identity, 'getId')) {
+                        $userId = $identity->getId();
+                    } elseif (is_object($identity) && isset($identity->id)) {
+                        $userId = $identity->id;
+                    } elseif (!empty($identityId)) {
+                        $userId = $identityId;
+                    }
+                    
+                    if (!empty($userId)) {
+                        $isAuthenticated = true;
+                    }
+                } elseif ($session->has('idPersona')) {
+                    // Si hay idPersona en sesión, el usuario está autenticado
+                    $isAuthenticated = true;
+                    // Intentar obtener userId desde la persona
+                    $idPersona = $session->get('idPersona');
+                    $persona = \common\models\Persona::findOne(['id_persona' => $idPersona]);
+                    if ($persona && $persona->id_user) {
+                        $userId = $persona->id_user;
+                    }
+                }
+            }
+            
+            // Si no está autenticado, retornar error 401
+            if (!$isAuthenticated) {
+                Yii::$app->response->statusCode = 401;
+                return [
+                    'success' => false,
+                    'message' => 'Usuario no autenticado. Debe iniciar sesión o proporcionar un token válido.',
+                    'errors' => null,
+                ];
+            }
 
-        // Obtener o generar tabId para esta pestaña
-        $tabId = $body['tab_id'] ?? null;
-        if (!$tabId) {
-            $tabId = 'tab_' . uniqid() . '_' . time();
-        }
-        
-        // Inicializar logger para esta consulta
-        $servicio = \common\models\Servicio::findOne($idServicio);
-        $contextoLogger = [
-            'idRrHhServicio' => $idRrHhServicio,
-            'servicio' => $servicio ? $servicio->nombre : 'Desconocido',
-            'tabId' => $tabId
-        ];
-        $logger = ConsultaLogger::iniciar($textoConsulta, $contextoLogger);
-        
-        // 1. Corrección ortográfica y expansión de abreviaturas con IA local (Llama 3.1 70B Instruct)
-        $logger->registrar(
-            'PROCESAMIENTO',
-            $textoConsulta,
-            null,
-            ['metodo' => 'ProcesadorTextoMedico::prepararParaIA']
-        );
-        
-        $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA($textoConsulta, $servicio->nombre, $tabId);
-        
-        // Extraer el texto procesado
-        $textoProcesado = is_array($resultadoProcesamiento) ? $resultadoProcesamiento['texto_procesado'] : $resultadoProcesamiento;
-        
-        $logger->registrar(
-            'PROCESAMIENTO',
-            null,
-            $textoProcesado,
-            [
-                'metodo' => 'ProcesadorTextoMedico::prepararParaIA'
-            ]
-        );
-        
-        // Los logs detallados ya se manejan en ConsultaLogger
-        
-        // Obtener información de correcciones por tabId
-        $correccionesInfo = ProcesadorTextoMedico::obtenerInfoCorrecciones($tabId);
-        
-        // Los logs de correcciones ya se manejan en ConsultaLogger
+            $body = Yii::$app->request->getBodyParams();
+            $userPerTabConfig = $body['userPerTabConfig'] ?? [];
+            $idRrHhServicio = $userPerTabConfig['id_rrhh_servicio'] ?? null;        
+            $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
+            $textoConsulta = $body['consulta'] ?? null;
+            $idConfiguracion = $body['id_configuracion'] ?? null;
+            
+            if (!$idRrHhServicio || !$textoConsulta) {
+                Yii::$app->response->statusCode = 400;
+                return [
+                    'success' => false,
+                    'message' => 'Faltan datos obligatorios. Por favor, verifique que haya proporcionado el ID de recurso humano y el texto de la consulta.',
+                    'errors' => null,
+                ];
+            }        
 
-        // Obtener categorías para el HTML genérico
-        $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
-        
-        // Verificar si es consulta simple (procesamiento selectivo)
-        $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
-        
-        if ($esSimple) {
-            // Procesar con reglas predefinidas (sin GPU)
+            // Obtener o generar tabId para esta pestaña
+            $tabId = $body['tab_id'] ?? null;
+            if (!$tabId) {
+                $tabId = 'tab_' . uniqid() . '_' . time();
+            }
+            
+            // Inicializar logger para esta consulta
+            $servicio = \common\models\Servicio::findOne($idServicio);
+            if (!$servicio) {
+                Yii::$app->response->statusCode = 400;
+                return [
+                    'success' => false,
+                    'message' => 'Servicio no encontrado. Por favor, verifique la configuración.',
+                    'errors' => null,
+                ];
+            }
+            
+            $contextoLogger = [
+                'idRrHhServicio' => $idRrHhServicio,
+                'servicio' => $servicio->nombre,
+                'tabId' => $tabId
+            ];
+            $logger = ConsultaLogger::iniciar($textoConsulta, $contextoLogger);
+            
+            // 1. Corrección ortográfica y expansión de abreviaturas con IA local (Llama 3.1 70B Instruct)
             $logger->registrar(
-                'ANÁLISIS SIMPLE',
-                $textoProcesado,
+                'PROCESAMIENTO',
+                $textoConsulta,
                 null,
-                ['metodo' => 'ConsultaClassifier::procesarConsultaSimple']
+                ['metodo' => 'ProcesadorTextoMedico::prepararParaIA']
             );
             
-            $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
+            $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA($textoConsulta, $servicio->nombre, $tabId);
+            
+            // Extraer el texto procesado
+            $textoProcesado = is_array($resultadoProcesamiento) ? $resultadoProcesamiento['texto_procesado'] : $resultadoProcesamiento;
             
             $logger->registrar(
-                'ANÁLISIS SIMPLE',
+                'PROCESAMIENTO',
                 null,
-                'Consulta simple procesada sin GPU',
+                $textoProcesado,
                 [
-                    'metodo' => 'ConsultaClassifier::procesarConsultaSimple',
-                    'categorias_extraidas' => isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0
+                    'metodo' => 'ProcesadorTextoMedico::prepararParaIA'
                 ]
             );
-        } else {
-            // Llamada a la IA para analizar la consulta con texto expandido (con GPU)
-            $logger->registrar(
-                'ANÁLISIS IA',
-                $textoProcesado,
-                null,
-                ['metodo' => 'ConsultaController::analizarConsultaConIA']
-            );
             
-            $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
-        
-        $logger->registrar(
-            'ANÁLISIS IA',
-            null,
-            $resultadoIA ? 'Análisis completado' : 'Error en análisis',
-            [
-                'metodo' => 'ConsultaController::analizarConsultaConIA',
-                'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0
-            ]
-        );
-        
-        // NUEVO: Codificar automáticamente con SNOMED (procesamiento diferido)
-        $datosConSnomed = null;
-        $estadisticasSnomed = null;
-        $requiereValidacionSnomed = false;
-        
-        // Procesar SNOMED de forma diferida (no bloquea al médico)
-        if ($resultadoIA && isset($resultadoIA['datosExtraidos'])) {
-            DeferredSnomedProcessor::procesarDiferido(
-                null, // consulta_id se asignará cuando se guarde la consulta
-                $resultadoIA,
-                $categorias
-            );
-            \Yii::info("SNOMED agregado a cola de procesamiento diferido", 'snomed-codificador');
+            // Los logs detallados ya se manejan en ConsultaLogger
+            
+            // Obtener información de correcciones por tabId
+            $correccionesInfo = ProcesadorTextoMedico::obtenerInfoCorrecciones($tabId);
+            
+            // Los logs de correcciones ya se manejan en ConsultaLogger
+
+            // Obtener categorías para el HTML genérico
+            $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
+            
+            // Verificar si es consulta simple (procesamiento selectivo)
+            $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
+            
+            if ($esSimple) {
+                // Procesar con reglas predefinidas (sin GPU)
+                $logger->registrar(
+                    'ANÁLISIS SIMPLE',
+                    $textoProcesado,
+                    null,
+                    ['metodo' => 'ConsultaClassifier::procesarConsultaSimple']
+                );
+                
+                $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
+                
+                $logger->registrar(
+                    'ANÁLISIS SIMPLE',
+                    null,
+                    'Consulta simple procesada sin GPU',
+                    [
+                        'metodo' => 'ConsultaClassifier::procesarConsultaSimple',
+                        'categorias_extraidas' => isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0
+                    ]
+                );
+            } else {
+                // Llamada a la IA para analizar la consulta con texto expandido (con GPU)
+                $logger->registrar(
+                    'ANÁLISIS IA',
+                    $textoProcesado,
+                    null,
+                    ['metodo' => 'ConsultaController::analizarConsultaConIA']
+                );
+                
+                $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
+                
+                $logger->registrar(
+                    'ANÁLISIS IA',
+                    null,
+                    $resultadoIA ? 'Análisis completado' : 'Error en análisis',
+                    [
+                        'metodo' => 'ConsultaController::analizarConsultaConIA',
+                        'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0
+                    ]
+                );
+            }
+            
+            // NUEVO: Codificar automáticamente con SNOMED (procesamiento diferido)
+            $datosConSnomed = null;
+            $estadisticasSnomed = null;
+            $requiereValidacionSnomed = false;
+            
+            // Procesar SNOMED de forma diferida (no bloquea al médico)
+            if ($resultadoIA && isset($resultadoIA['datosExtraidos'])) {
+                DeferredSnomedProcessor::procesarDiferido(
+                    null, // consulta_id se asignará cuando se guarde la consulta
+                    $resultadoIA,
+                    $categorias
+                );
+                \Yii::info("SNOMED agregado a cola de procesamiento diferido", 'snomed-codificador');
+            }
+            
+            // Usar datos con SNOMED si están disponibles, sino usar datos originales
+            if ($datosConSnomed) {
+                $datos = $datosConSnomed;
+            } elseif ($resultadoIA) {
+                $datos = $resultadoIA;
+            } else {
+                // Si la IA falla, usar estructura vacía con mensaje de error
+                $datos = [
+                    'datosExtraidos' => [
+                        'Error' => [
+                            'texto' => 'No se pudo procesar la consulta con IA',
+                            'detalle' => 'Revisar manualmente la consulta',
+                            'tipo' => 'error_sistema'
+                        ]
+                    ]
+                ];
+            }
+            
+            // Datos de prueba para testing
+            /*$datos = [
+                'datosExtraidos' => [
+                    'Motivos de Consulta / Síntomas' => [
+                        'dolor',
+                        'laceracion',
+                        'inflamacion'
+                    ],
+                    'Evaluación / Prácticas' => [
+                        'dolor',
+                        'laceracion'
+                    ],
+                    'Medicamentos' => [
+                        [
+                            'Nombre del medicamento' => 'Ibuprofeno 400mg',
+                            'Cantidad del medicamento' => '20 comprimidos',
+                            'Frecuencia de administracion' => 'Cada 8 horas',
+                            'Tipo de frecuencia' => 'Tres veces al día',
+                            'Duracion del tratamiento' => '7 días',
+                            'Tipo de duracion' => 'Una semana'
+                        ],
+                        [
+                            'Nombre del medicamento' => 'Amoxicilina 500mg',
+                            'Cantidad del medicamento' => '21 cápsulas',
+                            'Frecuencia de administracion' => 'Cada 8 horas',
+                            'Tipo de frecuencia' => 'Tres veces al día',
+                            'Duracion del tratamiento' => '7 días',
+                            'Tipo de duracion' => 'Una semana'
+                        ],
+                        [
+                            'Nombre del medicamento' => 'Paracetamol 500mg',
+                            'Cantidad del medicamento' => '10 comprimidos',
+                            'Frecuencia de administracion' => 'Cada 6 horas',
+                            'Tipo de frecuencia' => 'Cuatro veces al día',
+                            'Duracion del tratamiento' => '3 días',
+                            'Tipo de duracion' => 'Tres días'
+                        ]
+                    ]
+                ]
+            ];*/
+            
+            // Sugerencias de prueba (comentadas para usar datos reales de IA)
+            $sugerencias = [/*
+                'sugerencias_diagnosticas' => [
+                    'Considerar glaucoma de ángulo abierto',
+                    'Evaluar catarata incipiente',
+                    'Descartar retinopatía diabética'
+                ],
+                'sugerencias_practicas' => [
+                    'Campo visual automatizado',
+                    'Paquimetría corneal',
+                    'Biomicroscopía con lámpara de hendidura'
+                ],
+                'sugerencias_seguimiento' => [
+                    'Control en 3 meses si hay cambios',
+                    'Evaluación anual de fondo de ojo',
+                    'Monitoreo de presión intraocular'
+                ],
+                'alertas' => [
+                    'Paciente con antecedentes familiares de glaucoma',
+                    'Considerar derivación a especialista si empeora',
+                    'Vigilar síntomas de cefalea asociada'
+                ]*/
+            ];
+            
+            // Generar HTML formateado desde PHP con sugerencias integradas
+            $htmlResult = $this->generateAnalysisHtml($datos["datosExtraidos"], $sugerencias, $categorias);
+            $html = $htmlResult['html'];
+            $tieneDatosFaltantesHTML = $htmlResult['tieneDatosFaltantes'];
+            
+            // Usar información de correcciones desde sesión
+            if (!$correccionesInfo) {
+                $correccionesInfo = [
+                    'total_cambios' => 0,
+                    'cambios_automaticos' => [],
+                ];
+            }
+            
+            // Determinar si tiene datos faltantes basado en la respuesta de la IA y el HTML generado
+            $tieneDatosFaltantes = false;
+            if ($resultadoIA && isset($resultadoIA['informacionFaltante'])) {
+                $tieneDatosFaltantes = $resultadoIA['informacionFaltante']['tieneDatosFaltantes'] ?? false;
+            }
+            // También considerar los datos faltantes detectados en el HTML
+            if ($tieneDatosFaltantesHTML) {
+                $tieneDatosFaltantes = true;
+            }
+            
+            $resultado = [
+                'success' => true,
+                'datos' => $datos,
+                'html' => $html,
+                'correcciones' => $correccionesInfo,
+                'texto_original' => $textoConsulta,
+                'texto_procesado' => $textoProcesado,
+                'tab_id' => $tabId,
+                'sugerencias' => $sugerencias,
+                'tiene_datos_faltantes' => $tieneDatosFaltantes,
+                // NUEVO: Información de codificación SNOMED
+                'codigos_snomed' => $estadisticasSnomed,
+                'requiere_validacion_snomed' => $requiereValidacionSnomed,
+                'datos_con_snomed' => $datosConSnomed ? true : false
+            ];
+            
+            // Finalizar logger antes del return
+            $logger->finalizar($resultado);
+            
+            return $resultado;
+            
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            Yii::error("Error en actionAnalizar: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'consulta-ia');
+            
+            // Intentar finalizar logger si existe
+            if (isset($logger)) {
+                try {
+                    $logger->finalizar([
+                        'success' => false,
+                        'error' => $e->getMessage(),
+                    ]);
+                } catch (\Exception $logError) {
+                    // Ignorar errores al finalizar logger
+                }
+            }
+            
+            // Retornar mensaje amigable al usuario
+            Yii::$app->response->statusCode = 500;
+            return [
+                'success' => false,
+                'message' => 'Ocurrió un error al procesar la consulta. Por favor, intente nuevamente en unos momentos. Si el problema persiste, contacte al soporte técnico.',
+                'errors' => YII_DEBUG ? [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ] : null,
+            ];
         }
-        
-        // Usar datos con SNOMED si están disponibles, sino usar datos originales
-        if ($datosConSnomed) {
-            $datos = $datosConSnomed;
-        } elseif ($resultadoIA) {
-            $datos = $resultadoIA;
-        } else {
-            // Si la IA falla, usar estructura vacía con mensaje de error
-            $datos = [
+    }
+
+    public function analizarConsultaConIA($texto, $servicio, $categorias)
+    {
+        try {
+            // Buscar respuesta predefinida antes de usar GPU
+            $similitudMinima = Yii::$app->params['similitud_minima_respuestas'] ?? 0.85;
+            $respuestaPredefinida = \common\components\RespuestaPredefinidaManager::obtenerRespuesta($texto, $servicio, $similitudMinima);
+            
+            if ($respuestaPredefinida) {
+                \Yii::info("Respuesta predefinida encontrada para consulta similar (sin GPU)", 'consulta-ia');
+                // Incrementar contador de usos
+                \common\components\RespuestaPredefinidaManager::incrementarUsos($respuestaPredefinida['id']);
+                return $respuestaPredefinida['respuesta_json'];
+            }
+            
+            // Intentar primero con el prompt especializado
+            $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias);
+            
+            // Si hay error en la generación del prompt, retornar error inmediatamente
+            if ($promptData === null) {
+                \Yii::error('No se pudo generar el prompt debido a errores en el JSON de ejemplo', 'consulta-ia');
+                return [
+                    'datosExtraidos' => [
+                        'Error' => [
+                            'texto' => 'Error en la configuración del sistema. Por favor, contacte al administrador.',
+                            'detalle' => 'No se pudo procesar la consulta debido a un error en la configuración.',
+                            'tipo' => 'error_configuracion'
+                        ]
+                    ]
+                ];
+            }
+            
+            $resultado = $this->intentarAnalisisConIA($promptData['prompt'], $texto, $categorias);
+
+            if ($resultado && !isset($resultado['error'])) {
+                // Guardar respuesta para futuro uso (respuestas predefinidas)
+                try {
+                    \common\components\RespuestaPredefinidaManager::guardarRespuesta($texto, $resultado, $servicio);
+                } catch (\Exception $e) {
+                    // Si falla guardar la respuesta predefinida, continuar de todas formas
+                    \Yii::warning("No se pudo guardar respuesta predefinida: " . $e->getMessage(), 'respuestas-predefinidas');
+                }
+                return $resultado;
+            }
+
+            // Retornar datos por defecto en caso de error
+            return [
                 'datosExtraidos' => [
                     'Error' => [
-                        'texto' => 'No se pudo procesar la consulta con IA',
-                        'detalle' => 'Revisar manualmente la consulta',
+                        'texto' => 'No se pudo procesar la consulta con inteligencia artificial en este momento.',
+                        'detalle' => 'Por favor, intente nuevamente en unos momentos o revise la consulta manualmente.',
+                        'tipo' => 'error_ia'
+                    ]
+                ]
+            ];
+        } catch (\Exception $e) {
+            \Yii::error("Error en analizarConsultaConIA: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'consulta-ia');
+            return [
+                'datosExtraidos' => [
+                    'Error' => [
+                        'texto' => 'Ocurrió un error al procesar la consulta.',
+                        'detalle' => 'Por favor, intente nuevamente. Si el problema persiste, contacte al soporte técnico.',
                         'tipo' => 'error_sistema'
                     ]
                 ]
             ];
         }
-        
-        // Datos de prueba para testing
-        /*$datos = [
-            'datosExtraidos' => [
-                'Motivos de Consulta / Síntomas' => [
-                    'dolor',
-                    'laceracion',
-                    'inflamacion'
-                ],
-                'Evaluación / Prácticas' => [
-                    'dolor',
-                    'laceracion'
-                ],
-                'Medicamentos' => [
-                    [
-                        'Nombre del medicamento' => 'Ibuprofeno 400mg',
-                        'Cantidad del medicamento' => '20 comprimidos',
-                        'Frecuencia de administracion' => 'Cada 8 horas',
-                        'Tipo de frecuencia' => 'Tres veces al día',
-                        'Duracion del tratamiento' => '7 días',
-                        'Tipo de duracion' => 'Una semana'
-                    ],
-                    [
-                        'Nombre del medicamento' => 'Amoxicilina 500mg',
-                        'Cantidad del medicamento' => '21 cápsulas',
-                        'Frecuencia de administracion' => 'Cada 8 horas',
-                        'Tipo de frecuencia' => 'Tres veces al día',
-                        'Duracion del tratamiento' => '7 días',
-                        'Tipo de duracion' => 'Una semana'
-                    ],
-                    [
-                        'Nombre del medicamento' => 'Paracetamol 500mg',
-                        'Cantidad del medicamento' => '10 comprimidos',
-                        'Frecuencia de administracion' => 'Cada 6 horas',
-                        'Tipo de frecuencia' => 'Cuatro veces al día',
-                        'Duracion del tratamiento' => '3 días',
-                        'Tipo de duracion' => 'Tres días'
-                    ]
-                ]
-            ]
-        ];*/
-        
-        // Sugerencias de prueba (comentadas para usar datos reales de IA)
-        $sugerencias = [/*
-            'sugerencias_diagnosticas' => [
-                'Considerar glaucoma de ángulo abierto',
-                'Evaluar catarata incipiente',
-                'Descartar retinopatía diabética'
-            ],
-            'sugerencias_practicas' => [
-                'Campo visual automatizado',
-                'Paquimetría corneal',
-                'Biomicroscopía con lámpara de hendidura'
-            ],
-            'sugerencias_seguimiento' => [
-                'Control en 3 meses si hay cambios',
-                'Evaluación anual de fondo de ojo',
-                'Monitoreo de presión intraocular'
-            ],
-            'alertas' => [
-                'Paciente con antecedentes familiares de glaucoma',
-                'Considerar derivación a especialista si empeora',
-                'Vigilar síntomas de cefalea asociada'
-            ]*/
-        ];
-        
-        // Generar HTML formateado desde PHP con sugerencias integradas
-        $htmlResult = $this->generateAnalysisHtml($datos["datosExtraidos"], $sugerencias, $categorias);
-        $html = $htmlResult['html'];
-        $tieneDatosFaltantesHTML = $htmlResult['tieneDatosFaltantes'];
-        
-        // Usar información de correcciones desde sesión
-        if (!$correccionesInfo) {
-            $correccionesInfo = [
-                'total_cambios' => 0,
-                'cambios_automaticos' => [],
-            ];
-        }
-        
-        // Determinar si tiene datos faltantes basado en la respuesta de la IA y el HTML generado
-        $tieneDatosFaltantes = false;
-        if ($resultadoIA && isset($resultadoIA['informacionFaltante'])) {
-            $tieneDatosFaltantes = $resultadoIA['informacionFaltante']['tieneDatosFaltantes'] ?? false;
-        }
-        // También considerar los datos faltantes detectados en el HTML
-        if ($tieneDatosFaltantesHTML) {
-            $tieneDatosFaltantes = true;
-        }
-        
-        $resultado = [
-            'success' => true,
-            'datos' => $datos,
-            'html' => $html,
-            'correcciones' => $correccionesInfo,
-            'texto_original' => $textoConsulta,
-            'texto_procesado' => $textoProcesado,
-            'tab_id' => $tabId,
-            'sugerencias' => $sugerencias,
-            'tiene_datos_faltantes' => $tieneDatosFaltantes,
-            // NUEVO: Información de codificación SNOMED
-            'codigos_snomed' => $estadisticasSnomed,
-            'requiere_validacion_snomed' => $requiereValidacionSnomed,
-            'datos_con_snomed' => $datosConSnomed ? true : false
-        ];
-        
-        // Finalizar logger antes del return
-        $logger->finalizar($resultado);
-        
-        return $resultado;
-    }
-
-    public function analizarConsultaConIA($texto, $servicio, $categorias)
-    {
-        // Buscar respuesta predefinida antes de usar GPU
-        $similitudMinima = Yii::$app->params['similitud_minima_respuestas'] ?? 0.85;
-        $respuestaPredefinida = \common\components\RespuestaPredefinidaManager::obtenerRespuesta($texto, $servicio, $similitudMinima);
-        
-        if ($respuestaPredefinida) {
-            \Yii::info("Respuesta predefinida encontrada para consulta similar (sin GPU)", 'consulta-ia');
-            // Incrementar contador de usos
-            \common\components\RespuestaPredefinidaManager::incrementarUsos($respuestaPredefinida['id']);
-            return $respuestaPredefinida['respuesta_json'];
-        }
-        
-        // Intentar primero con el prompt especializado
-        $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias);
-        //var_dump($promptData['prompt']);die;
-        // Si hay error en la generación del prompt, retornar error inmediatamente
-        if ($promptData === null) {
-            \Yii::error('No se pudo generar el prompt debido a errores en el JSON de ejemplo', 'consulta-ia');
-            return [
-                'error' => 'Contactar administrador',
-            ];
-        }
-        
-        $resultado = $this->intentarAnalisisConIA($promptData['prompt'], $texto, $categorias);
-
-        if ($resultado) {
-            // Guardar respuesta para futuro uso (respuestas predefinidas)
-            \common\components\RespuestaPredefinidaManager::guardarRespuesta($texto, $resultado, $servicio);
-            return $resultado;
-        }
-
-        // Retornar datos por defecto en caso de error
-        return [
-            'diagnostico' => 'Error al analizar con IA',
-            'practicas' => ['Revisar manualmente'],
-            'prescripciones' => ['Consultar con especialista']
-        ];
     }
 
     /**

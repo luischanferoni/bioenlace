@@ -130,14 +130,57 @@ $('#btn-analizar').on('click', function(e) {
                 }
                 html += '</div>';
             } else {
-                html = '<div class="alert alert-warning">No se pudo analizar la información.</div>';
+                // Mostrar mensaje de error del servidor si está disponible
+                var errorMsg = response.message || 'No se pudo analizar la información.';
+                html = '<div class="alert alert-warning">' + errorMsg + '</div>';
             }
             $('#analisis-resultado').html(html);
         },
-        error: function() {
-            $('#analisis-resultado').html('<div class="alert alert-danger">Error al analizar</div>');
+        error: function(xhr, status, error) {
+            var errorMessage = 'Error al analizar la consulta.';
+            var alertClass = 'alert-danger';
+            
+            // Manejar diferentes códigos de estado HTTP
+            if (xhr.status === 401) {
+                errorMessage = 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.';
+                alertClass = 'alert-warning';
+                // Opcional: redirigir al login después de unos segundos
+                setTimeout(function() {
+                    if (window.location.pathname.indexOf('/site/login') === -1) {
+                        window.location.href = '/site/login';
+                    }
+                }, 3000);
+            } else if (xhr.status === 400) {
+                try {
+                    var errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || 'Los datos enviados no son válidos. Por favor, verifique la información.';
+                } catch(e) {
+                    errorMessage = 'Los datos enviados no son válidos. Por favor, verifique la información.';
+                }
+                alertClass = 'alert-warning';
+            } else if (xhr.status === 500) {
+                try {
+                    var errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || 'Ocurrió un error en el servidor. Por favor, intente nuevamente en unos momentos.';
+                } catch(e) {
+                    errorMessage = 'Ocurrió un error en el servidor. Por favor, intente nuevamente en unos momentos.';
+                }
+            } else if (xhr.status === 0 || status === 'timeout') {
+                errorMessage = 'Error de conexión. Verifique su conexión a internet e intente nuevamente.';
+                alertClass = 'alert-warning';
+            } else if (xhr.responseText) {
+                try {
+                    var errorData = JSON.parse(xhr.responseText);
+                    errorMessage = errorData.message || errorMessage;
+                } catch(e) {
+                    // Si no se puede parsear, usar mensaje genérico
+                }
+            }
+            
+            $('#analisis-resultado').html('<div class="alert ' + alertClass + '">' + errorMessage + '</div>');
         },
         complete: function() {
+            // Siempre restaurar el estado del botón
             btn.prop('disabled', false);
             btn.html(originalHtml);
         }

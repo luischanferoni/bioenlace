@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
-import '../models/message.dart';
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 
@@ -17,13 +17,14 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final AccionesService _accionesService = AccionesService(userId: '');
+  late AccionesService _accionesService;
   List<Map<String, dynamic>> _chatHistory = [];
   bool _isSending = false;
 
   @override
   void initState() {
     super.initState();
+    _initializeService();
     // Inicializar con mensaje de bienvenida
     _chatHistory = [
       {
@@ -32,8 +33,18 @@ class _ChatScreenState extends State<ChatScreen> {
         'timestamp': DateTime.now(),
       }
     ];
-    // Inicializar servicio con el userId correcto
-    _accionesService.userId = widget.chatService.currentUserId;
+  }
+
+  Future<void> _initializeService() async {
+    // Cargar token desde SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final authToken = prefs.getString('auth_token');
+    
+    // Inicializar servicio con el userId y token
+    _accionesService = AccionesService(
+      userId: widget.chatService.currentUserId,
+      authToken: authToken,
+    );
   }
 
   void _scrollToBottom() {

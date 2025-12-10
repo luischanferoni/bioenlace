@@ -65,9 +65,59 @@
             this.processAnalysisResponse(response);
         } catch (error) {
             console.error('Error al analizar consulta:', error);
-            this.showAlert('Error al analizar la consulta. Intente nuevamente.', 'danger');
+            
+            // Determinar mensaje de error según el código de estado HTTP
+            let errorMessage = 'Error al analizar la consulta. Intente nuevamente.';
+            let errorType = 'danger';
+            
+            if (error.status) {
+                switch (error.status) {
+                    case 401:
+                        errorMessage = 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.';
+                        errorType = 'warning';
+                        // Opcional: redirigir al login después de unos segundos
+                        setTimeout(() => {
+                            if (window.location.pathname !== '/site/login') {
+                                window.location.href = '/site/login';
+                            }
+                        }, 3000);
+                        break;
+                    case 400:
+                        errorMessage = error.message || 'Los datos enviados no son válidos. Por favor, verifique la información e intente nuevamente.';
+                        errorType = 'warning';
+                        break;
+                    case 500:
+                        errorMessage = error.message || 'Ocurrió un error en el servidor. Por favor, intente nuevamente en unos momentos. Si el problema persiste, contacte al soporte técnico.';
+                        errorType = 'danger';
+                        break;
+                    case 0:
+                        errorMessage = 'Error de conexión. Verifique su conexión a internet e intente nuevamente.';
+                        errorType = 'warning';
+                        break;
+                    default:
+                        errorMessage = error.message || `Error ${error.status}: ${errorMessage}`;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            this.showAlert(errorMessage, errorType);
+            
+            // Limpiar el contenido de respuesta en caso de error
+            const responseContent = document.getElementById('response-content');
+            if (responseContent) {
+                responseContent.innerHTML = '';
+            }
         } finally {
+            // Siempre restaurar el estado del botón y quitar el loading
             this.isAnalyzing = false;
+            this.resetAnalyzeButton();
+            
+            // Ocultar spinner de carga si existe
+            const responseContent = document.getElementById('response-content');
+            if (responseContent && responseContent.querySelector('.spinner-border')) {
+                responseContent.innerHTML = '';
+            }
         }
     }
 
@@ -123,14 +173,43 @@
             data.tab_id = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
         
-        // Usar VitaMindAjax.fetchPost que automáticamente añade userPerTabConfig
-        const response = await window.VitaMindAjax.fetchPost(url, data);
+        try {
+            // Usar VitaMindAjax.fetchPost que automáticamente añade userPerTabConfig
+            const response = await window.VitaMindAjax.fetchPost(url, data);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            // Manejar diferentes códigos de estado HTTP
+            if (!response.ok) {
+                let errorMessage = 'Ocurrió un error al procesar la consulta.';
+                let errorData = null;
+                
+                // Intentar obtener el mensaje de error del cuerpo de la respuesta
+                try {
+                    errorData = await response.json();
+                    if (errorData && errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (e) {
+                    // Si no se puede parsear JSON, usar mensaje por defecto según código de estado
+                }
+                
+                // Crear error con información del código de estado y mensaje
+                const error = new Error(errorMessage);
+                error.status = response.status;
+                error.data = errorData;
+                throw error;
+            }
+
+            return await response.json();
+        } catch (error) {
+            // Si es un error de red o timeout
+            if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                const networkError = new Error('Error de conexión. Verifique su conexión a internet e intente nuevamente.');
+                networkError.status = 0;
+                throw networkError;
+            }
+            // Re-lanzar el error para que sea manejado por analyzeConsultation
+            throw error;
         }
-
-        return await response.json();
     }
 
     processAnalysisResponse(response) {

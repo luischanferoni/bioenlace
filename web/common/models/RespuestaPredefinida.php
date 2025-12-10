@@ -6,47 +6,6 @@ use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 use common\components\EmbeddingsManager;
 
-class TerminoContextoMedico extends ActiveRecord
-{
-    public static function tableName()
-    {
-        return 'terminos_contexto_medico';
-    }
-
-    public function behaviors()
-    {
-        return [TimestampBehavior::class];
-    }
-
-    public function rules()
-    {
-        return [
-            [['termino'], 'required'],
-            [['termino'], 'string', 'max' => 150],
-            [['tipo'], 'string', 'max' => 20],
-            [['categoria', 'especialidad', 'fuente'], 'string', 'max' => 100],
-            [['peso'], 'number'],
-            [['frecuencia_uso'], 'integer'],
-            [['metadata'], 'safe'],
-            [['activo'], 'boolean'],
-        ];
-    }
-
-    public function attributeLabels()
-    {
-        return [
-            'termino' => 'Término',
-            'tipo' => 'Tipo',
-            'categoria' => 'Categoría',
-            'especialidad' => 'Especialidad',
-            'peso' => 'Peso',
-            'frecuencia_uso' => 'Frecuencia de Uso',
-            'fuente' => 'Fuente',
-            'activo' => 'Activo',
-        ];
-    }
-}
-
 /**
  * Modelo para respuestas predefinidas de IA
  * Reutiliza respuestas cuando hay alta similitud (sin GPU)
@@ -75,6 +34,22 @@ class RespuestaPredefinida extends ActiveRecord
         ];
     }
 
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'texto_original' => 'Texto Original',
+            'texto_hash' => 'Hash del Texto',
+            'respuesta_json' => 'Respuesta JSON',
+            'categoria' => 'Categoría',
+            'servicio' => 'Servicio',
+            'similitud_promedio' => 'Similitud Promedio',
+            'usos' => 'Usos',
+            'created_at' => 'Creado En',
+            'updated_at' => 'Actualizado En',
+        ];
+    }
+
     /**
      * Buscar respuesta similar
      * @param string $texto Texto de la consulta
@@ -96,35 +71,40 @@ class RespuestaPredefinida extends ActiveRecord
         }
         
         // Buscar por similitud usando embeddings
-        $embeddingTexto = EmbeddingsManager::generarEmbedding($texto);
-        if (!$embeddingTexto) {
+        try {
+            $embeddingTexto = EmbeddingsManager::generarEmbedding($texto);
+            if (!$embeddingTexto) {
+                return null;
+            }
+            
+            $respuestas = self::find()
+                ->where(['servicio' => $servicio])
+                ->orderBy(['usos' => SORT_DESC])
+                ->limit(100) // Limitar búsqueda a las más usadas
+                ->all();
+            
+            $mejorMatch = null;
+            $mejorSimilitud = 0;
+            
+            foreach ($respuestas as $respuesta) {
+                $embeddingRespuesta = EmbeddingsManager::generarEmbedding($respuesta->texto_original);
+                if (!$embeddingRespuesta) {
+                    continue;
+                }
+                
+                $similitud = EmbeddingsManager::calcularSimilitudCoseno($embeddingTexto, $embeddingRespuesta);
+                
+                if ($similitud > $mejorSimilitud && $similitud >= $similitudMinima) {
+                    $mejorSimilitud = $similitud;
+                    $mejorMatch = $respuesta;
+                }
+            }
+            
+            return $mejorMatch;
+        } catch (\Exception $e) {
+            \Yii::error("Error buscando respuesta similar: " . $e->getMessage(), 'respuestas-predefinidas');
             return null;
         }
-        
-        $respuestas = self::find()
-            ->where(['servicio' => $servicio])
-            ->orderBy(['usos' => SORT_DESC])
-            ->limit(100) // Limitar búsqueda a las más usadas
-            ->all();
-        
-        $mejorMatch = null;
-        $mejorSimilitud = 0;
-        
-        foreach ($respuestas as $respuesta) {
-            $embeddingRespuesta = EmbeddingsManager::generarEmbedding($respuesta->texto_original);
-            if (!$embeddingRespuesta) {
-                continue;
-            }
-            
-            $similitud = EmbeddingsManager::calcularSimilitudCoseno($embeddingTexto, $embeddingRespuesta);
-            
-            if ($similitud > $mejorSimilitud && $similitud >= $similitudMinima) {
-                $mejorSimilitud = $similitud;
-                $mejorMatch = $respuesta;
-            }
-        }
-        
-        return $mejorMatch;
     }
 
     /**

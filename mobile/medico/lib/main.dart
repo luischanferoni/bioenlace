@@ -167,7 +167,9 @@ class MyApp extends StatelessWidget {
                   return LoginScreen(
                     appTitle: 'Bienvenido a BioEnlace Médico',
                     appSubtitle: 'Tu plataforma de gestión médica',
-                    onLoginSuccess: (_, __) {},
+                    // Textos personalizados para la app del médico
+                    welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
+                    onLoginSuccess: (_, __, ___) {},
                   );
                 }
                 
@@ -184,7 +186,9 @@ class MyApp extends StatelessWidget {
                   return LoginScreen(
                     appTitle: 'Bienvenido a BioEnlace Médico',
                     appSubtitle: 'Tu plataforma de gestión médica',
-                    onLoginSuccess: (userId, userName) async {
+                    // Textos personalizados para la app del médico
+                    welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
+                    onLoginSuccess: (userId, userName, loginContext) async {
                       print('[DEBUG] onLoginSuccess (dentro FutureBuilder) - userId: $userId, userName: $userName');
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setBool('is_logged_in', true);
@@ -235,7 +239,9 @@ class MyApp extends StatelessWidget {
           : LoginScreen(
               appTitle: 'Bienvenido a BioEnlace Médico',
               appSubtitle: 'Tu plataforma de gestión médica',
-              onLoginSuccess: (userId, userName) async {
+              // Textos personalizados para la app del médico
+              welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
+              onLoginSuccess: (userId, userName, loginContext) async {
                 print('[DEBUG] onLoginSuccess (LoginScreen inicial) - userId: $userId, userName: $userName');
                 // Guardar estado de login
                 final prefs = await SharedPreferences.getInstance();

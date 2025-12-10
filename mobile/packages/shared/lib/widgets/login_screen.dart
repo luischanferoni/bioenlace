@@ -12,11 +12,38 @@ class LoginScreen extends StatefulWidget {
   final String appSubtitle;
   
   /// Callback cuando el login es exitoso
-  /// Recibe userId y userName del usuario autenticado
-  final Function(String userId, String userName) onLoginSuccess;
+  /// Recibe userId, userName y BuildContext del LoginScreen
+  final Function(String userId, String userName, BuildContext context) onLoginSuccess;
   
   /// Callback para navegar a la pantalla de registro
-  final VoidCallback? onNavigateToSignup;
+  /// Recibe BuildContext del LoginScreen
+  final Function(BuildContext context)? onNavigateToSignup;
+  
+  /// Callback para navegar al inicio de la app sin registrarse (modo visitante)
+  /// Recibe BuildContext del LoginScreen
+  final Function(BuildContext context)? onNavigateToHome;
+  
+  // Textos personalizables
+  /// Mensaje cuando la biometría no está disponible
+  final String? biometricNotAvailableMessage;
+  
+  /// Mensaje de bienvenida después del login (se puede usar {userName} como placeholder)
+  final String? welcomeMessage;
+  
+  /// Texto del botón mientras se autentica
+  final String? authenticatingText;
+  
+  /// Texto del botón cuando la biometría no está disponible
+  final String? biometricUnavailableButtonText;
+  
+  /// Texto del botón de registro
+  final String? signupButtonText;
+  
+  /// Texto del botón para ir al inicio
+  final String? goToHomeButtonText;
+  
+  /// Texto cuando la biometría está disponible
+  final String? biometricAvailableText;
 
   const LoginScreen({
     Key? key,
@@ -24,6 +51,14 @@ class LoginScreen extends StatefulWidget {
     this.appSubtitle = 'Tu asistente de salud personal',
     required this.onLoginSuccess,
     this.onNavigateToSignup,
+    this.onNavigateToHome,
+    this.biometricNotAvailableMessage,
+    this.welcomeMessage,
+    this.authenticatingText,
+    this.biometricUnavailableButtonText,
+    this.signupButtonText,
+    this.goToHomeButtonText,
+    this.biometricAvailableText,
   }) : super(key: key);
 
   @override
@@ -56,7 +91,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_biometricAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('La autenticación biométrica no está disponible en este dispositivo'),
+          content: Text(widget.biometricNotAvailableMessage ?? 
+              'La autenticación biométrica no está disponible en este dispositivo'),
           backgroundColor: AppTheme.warningColor,
         ),
       );
@@ -106,9 +142,10 @@ class _LoginScreenState extends State<LoginScreen> {
         print('[DEBUG] _loginWithBiometrics - config_completed: ${prefs.getBool('config_completed') ?? false}');
 
         // Mostrar mensaje de éxito
+        final welcomeMsg = widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('¡Bienvenido de vuelta, $userName!'),
+            content: Text(welcomeMsg.replaceAll('{userName}', userName)),
             backgroundColor: AppTheme.successColor,
           ),
         );
@@ -117,8 +154,10 @@ class _LoginScreenState extends State<LoginScreen> {
         print('[DEBUG] _loginWithBiometrics - Esperando delay antes de llamar onLoginSuccess...');
         await Future.delayed(const Duration(milliseconds: 200));
         print('[DEBUG] _loginWithBiometrics - Llamando onLoginSuccess...');
-        widget.onLoginSuccess(userId, userName);
-        print('[DEBUG] _loginWithBiometrics - onLoginSuccess llamado');
+        if (mounted) {
+          widget.onLoginSuccess(userId, userName, context);
+          print('[DEBUG] _loginWithBiometrics - onLoginSuccess llamado');
+        }
       } else {
         // Solo mostrar mensaje si no fue cancelación del usuario
         final isUserCancel = result['isUserCancel'] == true;
@@ -222,7 +261,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '$_biometricType configurada y lista para usar',
+                          widget.biometricAvailableText ?? 
+                              '$_biometricType configurada y lista para usar',
                           style: AppTheme.h6Style.copyWith(
                             color: AppTheme.successColor,
                           ),
@@ -266,7 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             SizedBox(width: 12),
                             Text(
-                              'Autenticando...',
+                              widget.authenticatingText ?? 'Autenticando...',
                               style: AppTheme.h5Style.copyWith(color: Colors.white),
                             ),
                           ],
@@ -279,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Text(
                               _biometricAvailable 
                                   ? 'Ingresar con $_biometricType'
-                                  : 'Biometría no disponible',
+                                  : (widget.biometricUnavailableButtonText ?? 'Biometría no disponible'),
                               style: AppTheme.h5Style.copyWith(color: Colors.white),
                             ),
                           ],
@@ -296,15 +336,48 @@ class _LoginScreenState extends State<LoginScreen> {
                     foregroundColor: AppTheme.primaryColor,
                   ),
                   child: Text(
-                    '¿No tienes cuenta? Regístrate aquí',
+                    widget.signupButtonText ?? '¿No tienes cuenta? Regístrate aquí',
                     style: AppTheme.subTitleStyle.copyWith(
                       color: AppTheme.primaryColor,
                       fontSize: 14,
                       decoration: TextDecoration.underline,
                     ),
                   ),
-                  onPressed: widget.onNavigateToSignup,
+                  onPressed: () {
+                    if (widget.onNavigateToSignup != null) {
+                      widget.onNavigateToSignup!(context);
+                    }
+                  },
                 ),
+              
+              // Botón para ir al inicio sin registrarse (solo si se proporciona callback)
+              if (widget.onNavigateToHome != null) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      if (widget.onNavigateToHome != null) {
+                        widget.onNavigateToHome!(context);
+                      }
+                    },
+                    icon: Icon(Icons.home, size: 22),
+                    label: Text(
+                      widget.goToHomeButtonText ?? 'Ir al inicio de la app',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.infoColor,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 3,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

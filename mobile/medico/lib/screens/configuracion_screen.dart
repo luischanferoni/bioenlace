@@ -171,7 +171,7 @@ class ConfiguracionScreen extends StatelessWidget {
                         builder: (_) => LoginScreen(
                           appTitle: 'Bienvenido a BioEnlace Médico',
                           appSubtitle: 'Tu plataforma de gestión médica',
-                          onLoginSuccess: (userId, userName) async {
+                          onLoginSuccess: (userId, userName, loginContext) async {
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.setBool('is_logged_in', true);
                             await prefs.setString('user_id', userId);

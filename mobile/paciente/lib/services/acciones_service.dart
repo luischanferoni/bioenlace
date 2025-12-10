@@ -3,6 +3,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
+/// Servicio para procesar consultas en lenguaje natural y obtener acciones
+/// 
+/// Este servicio se conecta al mismo endpoint que usa:
+/// - La web (site/acciones.php) 
+/// - La app móvil del médico
+/// - El chatbot del paciente
+/// 
+/// Endpoint: /api/v1/crud/process-query
+/// El backend procesa la consulta usando UniversalQueryAgent y devuelve
+/// acciones relevantes que el usuario puede realizar (solicitar turnos, 
+/// ver historia clínica, etc.)
 class AccionesService {
   String userId;
   final String? authToken;
@@ -13,8 +24,17 @@ class AccionesService {
   });
 
   /// Procesa una consulta en lenguaje natural y devuelve acciones
+  /// 
+  /// Ejemplos de consultas:
+  /// - "Necesito solicitar un turno"
+  /// - "Quiero ver mi historia clínica"
+  /// - "¿Cuándo es mi próxima consulta?"
+  /// 
+  /// El endpoint es el mismo que usa la web y la app del médico:
+  /// ${AppConfig.apiUrl}/crud/process-query
   Future<Map<String, dynamic>> processQuery(String query) async {
     try {
+      // Mismo endpoint que usa site/acciones.php en la web y la app del médico
       final uri = Uri.parse('${AppConfig.apiUrl}/crud/process-query');
       
       final headers = {

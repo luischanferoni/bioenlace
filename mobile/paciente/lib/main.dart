@@ -1,7 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared/shared.dart';
+import 'package:shared/shared.dart'; // Usar LoginScreen del paquete compartido
 
 import 'services/chat_service.dart';
 import 'screens/chat_screen.dart';
@@ -53,25 +53,43 @@ class MyApp extends StatelessWidget {
           : LoginScreen(
               appTitle: 'Bienvenido a BioEnlace',
               appSubtitle: 'Tu asistente de salud personal',
-              onLoginSuccess: (userId, userName) {
+              // Textos personalizados para la app del paciente
+              welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
+              signupButtonText: '¿No tienes cuenta? Regístrate aquí',
+              goToHomeButtonText: 'Ir al inicio de la app',
+              onLoginSuccess: (userId, userName, loginContext) {
                 // Crear servicio de chat
                 final newChatService = ChatService(
                   currentUserId: userId,
                   currentUserName: userName,
                 );
-                // Navegar a la pantalla de chat
+                // Navegar a la pantalla de chat usando el contexto del LoginScreen
                 Navigator.pushReplacement(
-                  context,
+                  loginContext,
                   MaterialPageRoute(builder: (_) => ChatScreen(chatService: newChatService)),
                 );
               },
-              onNavigateToSignup: () {
+              onNavigateToSignup: (loginContext) {
                 Navigator.push(
-                  context,
+                  loginContext,
                   MaterialPageRoute(builder: (_) => SignupScreen()),
                 );
               },
-            ), // Redirige si no está logueado
+              onNavigateToHome: (loginContext) {
+                // Crear servicio de chat en modo visitante/demo
+                final demoChatService = ChatService(
+                  currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
+                  currentUserName: 'Visitante',
+                );
+                // Navegar directamente al ChatScreen (inicio de la app) usando el contexto del LoginScreen
+                Navigator.pushReplacement(
+                  loginContext,
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(chatService: demoChatService),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

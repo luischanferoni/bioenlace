@@ -7,9 +7,8 @@ return [
     'vaCartelPaciente' => true,  // Para mostrar el cartel de que se esta trabajando con cierto paciente
     'botonera' => ['view' => false, 'params' => []], // para guardar el path de un partial en donde esten los botones
     
-    // Configuración de IA
-    // NOTA: 'ollama' no está disponible (requiere infraestructura/hardware local)
-    'ia_proveedor' => 'ollama', // 'huggingface', 'groq', 'openai' (ollama no disponible)
+    // Configuración de IA    
+    'ia_proveedor' => 'huggingface', // 'huggingface', 'groq', 'openai' , ollama
     'groq_api_key' => '', // API key para Groq
     'openai_api_key' => '', // API key para OpenAI
     'hf_api_key' => '', // API key para Hugging Face

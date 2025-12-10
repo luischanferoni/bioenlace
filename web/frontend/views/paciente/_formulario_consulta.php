@@ -16,22 +16,7 @@
         rows="4" 
         placeholder="Escriba aquí los detalles de la consulta. El asistente verificará que tenga todos los datos necesarios: motivos de consulta, evolución, diagnóstico, prácticas, etc."
         style="border-width: 2px; resize: vertical;"
-    ></textarea>
-</div>
-
-<!-- Contenedor para mostrar el texto procesado -->
-<div id="texto-procesado-container" class="mt-2 mb-3" style="display: none;">
-    <div class="card border-info">
-        <div class="card-header bg-info text-white py-2">
-            <small class="mb-0">
-                <i class="bi bi-check-circle me-2"></i>
-                <strong>Texto Procesado</strong>
-            </small>
-        </div>
-        <div class="card-body p-2">
-            <p id="texto-procesado-content" class="mb-0 small text-muted" style="white-space: pre-wrap;"></p>
-        </div>
-    </div>
+    >    </textarea>
 </div>
 
 <!-- Boton analysis de consulta -->

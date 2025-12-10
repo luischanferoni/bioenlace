@@ -214,9 +214,6 @@
 
     processAnalysisResponse(response) {
         if (response.success) {
-            // Mostrar siempre el texto procesado si está disponible
-            this.mostrarTextoProcesado(response.texto_procesado, response.texto_original);
-            
             // Las correcciones se procesan automáticamente por el backend
             // Ya no se requiere validación manual del médico
             
@@ -227,42 +224,6 @@
         
         // Habilitar el botón nuevamente después de procesar la respuesta
         this.resetAnalyzeButton();
-    }
-    
-    /**
-     * Mostrar el texto procesado debajo del textarea
-     * @param {string} textoProcesado Texto procesado por SymSpell/LLM
-     * @param {string} textoOriginal Texto original del usuario
-     */
-    mostrarTextoProcesado(textoProcesado, textoOriginal) {
-        const container = document.getElementById('texto-procesado-container');
-        const content = document.getElementById('texto-procesado-content');
-        
-        if (!container || !content) {
-            console.warn('No se encontró el contenedor para texto procesado');
-            return;
-        }
-        
-        // Si hay texto procesado y es diferente al original, mostrarlo
-        if (textoProcesado && textoProcesado.trim()) {
-            // Mostrar el contenedor
-            container.style.display = 'block';
-            
-            // Mostrar el texto procesado
-            content.textContent = textoProcesado;
-            
-            // Si el texto procesado es diferente al original, resaltarlo
-            if (textoOriginal && textoProcesado !== textoOriginal) {
-                content.classList.remove('text-muted');
-                content.classList.add('text-success');
-            } else {
-                content.classList.remove('text-success');
-                content.classList.add('text-muted');
-            }
-        } else {
-            // Ocultar el contenedor si no hay texto procesado
-            container.style.display = 'none';
-        }
     }
 
     showAnalysisResults(response) {

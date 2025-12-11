@@ -52,17 +52,18 @@ class IAManager
      * Obtener configuración del proveedor de IA
      * @return array
      */
-    public static function getProveedorIA()
+    public static function getProveedorIA($tipoModelo = null)
     {
         // Delegar a la instancia registrada para compatibilidad
-        return Yii::$app->iamanager->getProveedorIAInstance();
+        return Yii::$app->iamanager->getProveedorIAInstance($tipoModelo);
     }
 
     /**
      * Implementación de instancia para obtener la configuración del proveedor de IA
+     * @param string|null $tipoModelo Tipo de modelo para HuggingFace: 'text-generation', 'text-correction', 'analysis'
      * @return array
      */
-    public function getProveedorIAInstance()
+    public function getProveedorIAInstance($tipoModelo = null)
     {
         // Configuración por defecto - HuggingFace (Ollama no disponible sin infraestructura)
         $proveedor = Yii::$app->params['ia_proveedor'] ?? 'huggingface';
@@ -76,7 +77,7 @@ class IAManager
                 return self::getConfiguracionOllama();
             case 'huggingface':
             default:
-                return self::getConfiguracionHuggingFace();
+                return self::getConfiguracionHuggingFace($tipoModelo);
         }
     }
 
@@ -650,10 +651,14 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
 
             // Crear prompt para corregir todas las palabras de una vez
             $palabrasLista = implode(', ', array_unique($palabras));
-            $prompt = "Eres un especialista médico en {$especialidad}. Analiza el siguiente texto médico y corrige SOLO las palabras que tienen errores ortográficos. Si una palabra está correcta, repite la misma palabra.\n\n";
+            $prompt = "Corrige SOLO errores ortográficos en las palabras indicadas. NO cambies abreviaturas. NO agregues texto.\n\n";
             $prompt .= "Texto: {$contexto}\n";
-            $prompt .= "Palabras a revisar: {$palabrasLista}\n";
-            $prompt .= "Para cada palabra, escribe: palabra_original -> palabra_corregida (o palabra_original si está correcta)\n";
+            $prompt .= "Palabras a revisar: {$palabrasLista}\n\n";
+            $prompt .= "Reglas estrictas:\n";
+            $prompt .= "- Si la palabra tiene error ortográfico, escribe: palabra_original -> palabra_corregida\n";
+            $prompt .= "- Si la palabra está correcta (incluyendo abreviaturas), escribe: palabra_original -> palabra_original\n";
+            $prompt .= "- NO cambies abreviaturas médicas (OI, OD, Bmc, Caf, etc.)\n";
+            $prompt .= "- NO interpretes ni completes el texto\n\n";
             $prompt .= "Correcciones:\n";
 
             $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://api-inference.huggingface.co/models/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
@@ -827,13 +832,20 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 }
             }
             
-            // Obtener configuración del proveedor (HuggingFace por defecto, Ollama no disponible)
-            $proveedorIA = $this->getProveedorIAInstance();
+            // Obtener configuración del proveedor con modelo específico para corrección
+            // Usar 'text-correction' para obtener el modelo optimizado para corrección ortográfica
+            $proveedorIA = $this->getProveedorIAInstance('text-correction');
             
-            // Prompt optimizado (reducido 40% para reducir costos)
-            $prompt = "Corrige ortografía y expande abreviaturas médicas. Solo texto corregido.
+            // Prompt optimizado para SOLO corrección ortográfica (sin expansión de abreviaturas)
+            $prompt = "Corrige SOLO errores ortográficos. NO expandas abreviaturas. NO agregues texto nuevo. NO cambies la estructura.
 
-Reglas: errores reales, abreviaturas (OI→ojo izq, OD→ojo der), mantener formato.
+Reglas estrictas:
+- Corrige únicamente palabras con errores ortográficos (ej: laseracion→laceración, isocorica→isocórica)
+- MANTÉN todas las abreviaturas como están (OI, OD, Bmc, Caf, etc.)
+- MANTÉN la estructura y formato exactos
+- NO agregues palabras que no estaban en el texto original
+- NO cambies el orden de las palabras
+- NO interpretes ni completes el texto
 
 Texto: {$texto}
 

@@ -128,21 +128,74 @@ class ProcesadorTextoMedico
         
         // ============================================
         // PASO 5: Corrección con IA (solo si es necesario)
+        // Usar corrección palabra por palabra en lugar de texto completo para mayor precisión
         // ============================================
         if ($necesitaIA) {
             $iam = Yii::$app->iamanager;
-            $resultadoIA = $iam->corregirTextoCompletoConIA($textoCorregidoRapido, $especialidad);
-            $textoCorregido = $resultadoIA['texto_corregido'];
+            
+            // Obtener palabras que necesitan corrección
+            $palabrasSinSugerencias = $resultadoSymSpell['words_without_suggestions'] ?? [];
+            $cambiosProblematicos = $resultadoSymSpell['cambios_problematicos'] ?? [];
+            
+            // Recolectar palabras únicas que necesitan corrección
+            $palabrasACorregir = [];
+            foreach ($palabrasSinSugerencias as $item) {
+                $palabra = $item['word'] ?? $item['clean_word'] ?? '';
+                if (!empty($palabra) && !in_array($palabra, $palabrasACorregir)) {
+                    $palabrasACorregir[] = $palabra;
+                }
+            }
+            foreach ($cambiosProblematicos as $cambio) {
+                $palabra = $cambio['original'] ?? '';
+                if (!empty($palabra) && !in_array($palabra, $palabrasACorregir)) {
+                    $palabrasACorregir[] = $palabra;
+                }
+            }
+            
+            // Aplicar corrección palabra por palabra solo si hay palabras específicas
+            $textoCorregido = $textoCorregidoRapido;
+            $cambiosIA = [];
+            
+            if (!empty($palabrasACorregir)) {
+                // Usar corrección palabra por palabra (más seguro que texto completo)
+                $correccionesLLM = $iam->corregirPalabrasConLLM($palabrasACorregir, $textoCorregidoRapido, $especialidad);
+                
+                // Aplicar correcciones al texto
+                foreach ($correccionesLLM as $palabraOriginal => $correccion) {
+                    $palabraCorregida = $correccion['suggestion'] ?? '';
+                    $confidence = $correccion['confidence'] ?? 0.0;
+                    
+                    if (!empty($palabraCorregida) && $palabraCorregida !== $palabraOriginal && $confidence >= 0.7) {
+                        // Reemplazar solo palabras completas
+                        $patron = '/\b' . preg_quote($palabraOriginal, '/') . '\b/iu';
+                        $textoCorregido = preg_replace($patron, $palabraCorregida, $textoCorregido);
+                        
+                        $cambiosIA[] = [
+                            'original' => $palabraOriginal,
+                            'corrected' => $palabraCorregida,
+                            'confidence' => $confidence,
+                            'method' => 'ia_local'
+                        ];
+                    }
+                }
+            }
+            
+            $resultadoIA = [
+                'texto_corregido' => $textoCorregido,
+                'cambios' => $cambiosIA,
+                'confidence' => !empty($cambiosIA) ? array_sum(array_column($cambiosIA, 'confidence')) / count($cambiosIA) : 1.0,
+                'total_changes' => count($cambiosIA)
+            ];
             
             if ($logger) {
-                $cambiosIA = count($resultadoIA['cambios'] ?? []);
                 $logger->registrar(
                     'PROCESAMIENTO',
-                    'Corrección IA',
-                    "Correcciones IA: {$cambiosIA}",
+                    'Corrección IA palabra por palabra',
+                    "Correcciones IA: " . count($cambiosIA) . " de " . count($palabrasACorregir) . " palabras",
                     [
-                        'metodo' => 'IAManager::corregirTextoCompletoConIA',
-                        'total_cambios' => $cambiosIA
+                        'metodo' => 'IAManager::corregirPalabrasConLLM',
+                        'total_cambios' => count($cambiosIA),
+                        'palabras_procesadas' => count($palabrasACorregir)
                     ]
                 );
             }
@@ -299,14 +352,9 @@ class ProcesadorTextoMedico
             // Buscar solo palabras completas
             $patron = '/\b' . $palabraEscapada . '\b/iu';
             
-            // Crear título usando valores limpios (sin HTML) y escapando solo para el atributo HTML
-            //$tituloTexto = "Corregido de '{$cambio['original_clean']}' a '{$cambio['corrected_clean']}'";
-            $tituloTexto = "";
-            $titulo = htmlspecialchars($tituloTexto, ENT_QUOTES, 'UTF-8');
-            
             // Usar solo clases de Bootstrap: text-decoration-underline para subrayado
             // Estilo inline mínimo solo para el color del subrayado (limitación de Bootstrap, no tiene clase para esto)
-            $reemplazo = '<span class="text-decoration-underline" style="text-decoration-color: var(--bs-success);" title="' . $titulo . '">' . $cambio['corrected'] . '</span>';
+            $reemplazo = '<span class="text-decoration-underline" style="text-decoration-color: var(--bs-success);">' . $cambio['corrected'] . '</span>';
             
             // Aplicar reemplazo solo en partes que no son tags HTML
             for ($i = 0; $i < count($partes); $i++) {

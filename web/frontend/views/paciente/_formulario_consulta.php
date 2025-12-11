@@ -15,8 +15,7 @@
         id="chat-input" 
         rows="4" 
         placeholder="Escriba aquí los detalles de la consulta. El asistente verificará que tenga todos los datos necesarios: motivos de consulta, evolución, diagnóstico, prácticas, etc."
-        style="border-width: 2px; resize: vertical;"
-    >    </textarea>
+        style="border-width: 2px; resize: vertical;"></textarea>
 </div>
 
 <!-- Boton analysis de consulta -->

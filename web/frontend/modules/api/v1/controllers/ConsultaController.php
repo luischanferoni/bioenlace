@@ -336,7 +336,7 @@ class ConsultaController extends BaseController
                     <div class="mt-2">
                         <small class="text-muted">
                             <i class="bi bi-info-circle me-1"></i>
-                            Las palabras subrayadas en verde han sido corregidas automáticamente
+                            Las palabras subrayadas han sido corregidas automáticamente
                         </small>
                     </div>
                 </div>

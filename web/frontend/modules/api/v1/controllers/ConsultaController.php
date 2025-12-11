@@ -143,29 +143,31 @@ class ConsultaController extends BaseController
                 'PROCESAMIENTO',
                 $textoConsulta,
                 null,
-                ['metodo' => 'ProcesadorTextoMedico::prepararParaIA']
+                ['metodo' => 'ProcesadorTextoMedico::prepararParaIAConFormato']
             );
             
-            $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA($textoConsulta, $servicio->nombre, $tabId);
-            
-            // Extraer el texto procesado
-            $textoProcesado = is_array($resultadoProcesamiento) ? $resultadoProcesamiento['texto_procesado'] : $resultadoProcesamiento;
+            // Obtener texto procesado y formateado con subrayado
+            $resultadoFormato = ProcesadorTextoMedico::prepararParaIAConFormato(
+                $textoConsulta,
+                $servicio->nombre,
+                $tabId,
+                $idRrHhServicio
+            );
+            $textoProcesado = $resultadoFormato['texto_procesado'];
+            $textoFormateado = $resultadoFormato['texto_formateado'];
+            $totalCambios = $resultadoFormato['total_cambios'];
             
             $logger->registrar(
                 'PROCESAMIENTO',
                 null,
                 $textoProcesado,
                 [
-                    'metodo' => 'ProcesadorTextoMedico::prepararParaIA'
+                    'metodo' => 'ProcesadorTextoMedico::prepararParaIAConFormato',
+                    'total_cambios' => $totalCambios
                 ]
             );
             
             // Los logs detallados ya se manejan en ConsultaLogger
-            
-            // Obtener información de correcciones por tabId
-            $correccionesInfo = ProcesadorTextoMedico::obtenerInfoCorrecciones($tabId);
-            
-            // Los logs de correcciones ya se manejan en ConsultaLogger
 
             // Obtener categorías para el HTML genérico
             $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
@@ -318,12 +320,28 @@ class ConsultaController extends BaseController
             $html = $htmlResult['html'];
             $tieneDatosFaltantesHTML = $htmlResult['tieneDatosFaltantes'];
             
-            // Usar información de correcciones desde sesión
-            if (!$correccionesInfo) {
-                $correccionesInfo = [
-                    'total_cambios' => 0,
-                    'cambios_automaticos' => [],
-                ];
+            // Agregar sección de texto formateado con correcciones si hay cambios
+            if ($totalCambios > 0) {
+                // Usar heredoc para evitar problemas de escape con comillas
+                $textoFormateadoHtml = <<<HTML
+                <div class="alert alert-light border mt-3">
+                    <h6><i class="bi bi-file-text me-2"></i>Texto Formateado</h6>
+                    <div class="mt-3">
+                        <div class="bg-light p-3 rounded border">
+                            <div class="texto-formateado">
+                                {$textoFormateado}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Las palabras subrayadas en verde han sido corregidas automáticamente
+                        </small>
+                    </div>
+                </div>
+HTML;
+                $html = $textoFormateadoHtml . $html;
             }
             
             // Determinar si tiene datos faltantes basado en la respuesta de la IA y el HTML generado
@@ -340,9 +358,9 @@ class ConsultaController extends BaseController
                 'success' => true,
                 'datos' => $datos,
                 'html' => $html,
-                'correcciones' => $correccionesInfo,
                 'texto_original' => $textoConsulta,
                 'texto_procesado' => $textoProcesado,
+                'texto_formateado' => $textoFormateado ?? null, // HTML formateado con correcciones
                 'tab_id' => $tabId,
                 'sugerencias' => $sugerencias,
                 'tiene_datos_faltantes' => $tieneDatosFaltantes,

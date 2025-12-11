@@ -245,20 +245,10 @@
                 }
             }
             
-            // Usar el HTML generado desde PHP (ya incluye sugerencias)
+            // Usar el HTML generado desde PHP (ya incluye sugerencias y texto formateado con subrayado)
             let html = response.html || '<p class="text-muted">No se pudo generar el análisis</p>';
             
-            // Agregar información de correcciones si están disponibles
-            if (response.correcciones && response.correcciones.total_cambios > 0) {
-                console.log('Datos de correcciones recibidos:', response.correcciones);
-                console.log('Texto original:', response.texto_original);
-                console.log('Texto procesado:', response.texto_procesado);
-                html = this.agregarInfoCorrecciones(html, response.correcciones, response.texto_original, response.texto_procesado);
-            }
-            
             responseContent.innerHTML = html;
-            
-            // El resaltado de correcciones ya no es necesario
             
             // Inicializar los hidden inputs y eventos de sugerencias
             this.initializeSugerencias();
@@ -548,110 +538,6 @@
         return 'bg-danger';
     }
 
-    /**
-     * Agregar texto formateado con palabras modificadas subrayadas
-     * @param {string} html - HTML original
-     * @param {Object} correcciones - Datos de correcciones
-     * @param {string} textoOriginal - Texto original del usuario
-     * @param {string} textoProcesado - Texto procesado con correcciones
-     * @returns {string} - HTML con texto formateado
-     */
-    agregarInfoCorrecciones(html, correcciones, textoOriginal, textoProcesado) {
-        // Validar parámetros de entrada
-        if (!correcciones || 
-            !correcciones.total_cambios || 
-            correcciones.total_cambios === 0) {
-            return html;
-        }
-
-        // Validar que tengamos texto procesado
-        if (!textoProcesado || typeof textoProcesado !== 'string') {
-            console.warn('Texto procesado no disponible, usando texto original');
-            textoProcesado = textoOriginal || '';
-        }
-
-        try {
-            // Generar texto formateado con palabras modificadas subrayadas
-            const textoFormateado = this.generarTextoFormateado(textoOriginal, textoProcesado, correcciones);
-
-            const correccionesHtml = `
-                <div class="alert alert-light border mt-3">
-                    <h6><i class="bi bi-file-text me-2"></i>Texto Formateado</h6>
-                    <div class="mt-3">
-                        <div class="bg-light p-3 rounded border">
-                            <div class="texto-formateado">
-                                ${textoFormateado}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Las palabras subrayadas en verde han sido corregidas automáticamente
-                        </small>
-                    </div>
-                </div>
-            `;
-
-            return correccionesHtml + html;
-        } catch (error) {
-            console.error('Error generando texto formateado:', error);
-            return html;
-        }
-    }
-
-    /**
-     * Generar texto formateado con palabras modificadas subrayadas
-     * @param {string} textoOriginal - Texto original
-     * @param {string} textoProcesado - Texto procesado
-     * @param {Object} correcciones - Datos de correcciones
-     * @returns {string} - HTML del texto formateado
-     */
-    generarTextoFormateado(textoOriginal, textoProcesado, correcciones) {
-        // Validar parámetros de entrada
-        if (!textoProcesado || typeof textoProcesado !== 'string') {
-            console.warn('Texto procesado no válido:', textoProcesado);
-            return textoOriginal || '';
-        }
-
-        // Escapar HTML y preservar saltos de línea
-        let textoFormateado = textoProcesado
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/\n/g, '<br>');
-
-        // Aplicar subrayado amarillo a las palabras modificadas
-        if (correcciones && 
-            correcciones.cambios_automaticos && 
-            Array.isArray(correcciones.cambios_automaticos) && 
-            correcciones.cambios_automaticos.length > 0) {
-            
-            correcciones.cambios_automaticos.forEach(cambio => {
-                // Validar que el cambio tenga las propiedades necesarias
-                if (cambio && 
-                    typeof cambio.original === 'string' && 
-                    typeof cambio.corrected === 'string' && 
-                    cambio.original !== cambio.corrected) {
-                    
-                    try {
-                        // Escapar caracteres especiales para regex
-                        const palabraEscapada = cambio.corrected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        // Crear regex para encontrar la palabra corregida (solo palabras completas)
-                        const regex = new RegExp(`\\b${palabraEscapada}\\b`, 'gi');
-                        
-                        textoFormateado = textoFormateado.replace(regex, (match) => {
-                            return `<span class="palabra-modificada" title="Corregido de '${cambio.original}' a '${cambio.corrected}'">${match}</span>`;
-                        });
-                    } catch (error) {
-                        console.warn('Error procesando cambio:', cambio, error);
-                    }
-                }
-            });
-        }
-
-        return textoFormateado;
-    }
     } // Cierre de la clase ChatInteligente
     
     // Exponer la clase globalmente

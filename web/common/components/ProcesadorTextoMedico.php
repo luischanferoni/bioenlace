@@ -213,6 +213,170 @@ class ProcesadorTextoMedico
     }
 
     /**
+     * Formatear texto procesado con HTML subrayado para palabras corregidas
+     * 
+     * @param string $textoProcesado Texto ya corregido
+     * @param array $iaChanges Cambios realizados por IA
+     * @param array $symspellChanges Cambios realizados por SymSpell
+     * @return string Texto formateado con HTML
+     */
+    public static function formatearTextoConSubrayado($textoProcesado, $iaChanges = [], $symspellChanges = [])
+    {
+        // Escapar HTML primero
+        $textoFormateado = htmlspecialchars($textoProcesado, ENT_QUOTES, 'UTF-8');
+        
+        // Preservar saltos de línea
+        $textoFormateado = nl2br($textoFormateado);
+        
+        // Combinar todos los cambios
+        $todosLosCambios = [];
+        
+        // Agregar cambios de IA
+        foreach ($iaChanges as $cambio) {
+            if (isset($cambio['original']) && isset($cambio['corrected']) && 
+                $cambio['original'] !== $cambio['corrected']) {
+                // Guardar valores originales (sin escapar) para el título
+                $originalRaw = $cambio['original'];
+                $correctedRaw = $cambio['corrected'];
+                // Limpiar cualquier HTML que pueda haber en los valores originales
+                $originalClean = strip_tags($originalRaw);
+                $correctedClean = strip_tags($correctedRaw);
+                
+                $todosLosCambios[] = [
+                    'original' => htmlspecialchars($originalRaw, ENT_QUOTES, 'UTF-8'), // Para reemplazo en texto
+                    'corrected' => htmlspecialchars($correctedRaw, ENT_QUOTES, 'UTF-8'), // Para reemplazo en texto
+                    'original_clean' => $originalClean, // Para título (sin HTML)
+                    'corrected_clean' => $correctedClean // Para título (sin HTML)
+                ];
+            }
+        }
+        
+        // Agregar cambios de SymSpell
+        foreach ($symspellChanges as $cambio) {
+            if (isset($cambio['original']) && isset($cambio['corrected']) && 
+                $cambio['original'] !== $cambio['corrected']) {
+                // Guardar valores originales (sin escapar) para el título
+                $originalRaw = $cambio['original'];
+                $correctedRaw = $cambio['corrected'];
+                // Limpiar cualquier HTML que pueda haber en los valores originales
+                $originalClean = strip_tags($originalRaw);
+                $correctedClean = strip_tags($correctedRaw);
+                
+                // Evitar duplicados
+                $existe = false;
+                foreach ($todosLosCambios as $existente) {
+                    if ($existente['original'] === htmlspecialchars($originalRaw, ENT_QUOTES, 'UTF-8') && 
+                        $existente['corrected'] === htmlspecialchars($correctedRaw, ENT_QUOTES, 'UTF-8')) {
+                        $existe = true;
+                        break;
+                    }
+                }
+                if (!$existe) {
+                    $todosLosCambios[] = [
+                        'original' => htmlspecialchars($originalRaw, ENT_QUOTES, 'UTF-8'), // Para reemplazo en texto
+                        'corrected' => htmlspecialchars($correctedRaw, ENT_QUOTES, 'UTF-8'), // Para reemplazo en texto
+                        'original_clean' => $originalClean, // Para título (sin HTML)
+                        'corrected_clean' => $correctedClean // Para título (sin HTML)
+                    ];
+                }
+            }
+        }
+        
+        // Aplicar subrayado a las palabras corregidas
+        // Ordenar por longitud descendente para evitar reemplazos parciales
+        usort($todosLosCambios, function($a, $b) {
+            return strlen($b['corrected']) - strlen($a['corrected']);
+        });
+        
+        // Dividir el texto en partes: texto normal y tags HTML
+        // Esto evita reemplazar dentro de tags HTML
+        $partes = preg_split('/(<[^>]+>)/', $textoFormateado, -1, PREG_SPLIT_DELIM_CAPTURE);
+        
+        foreach ($todosLosCambios as $cambio) {
+            // Escapar caracteres especiales para regex
+            $palabraEscapada = preg_quote($cambio['corrected'], '/');
+            
+            // Buscar solo palabras completas
+            $patron = '/\b' . $palabraEscapada . '\b/iu';
+            
+            // Crear título usando valores limpios (sin HTML) y escapando solo para el atributo HTML
+            //$tituloTexto = "Corregido de '{$cambio['original_clean']}' a '{$cambio['corrected_clean']}'";
+            $tituloTexto = "";
+            $titulo = htmlspecialchars($tituloTexto, ENT_QUOTES, 'UTF-8');
+            
+            // Usar solo clases de Bootstrap: text-decoration-underline para subrayado
+            // Estilo inline mínimo solo para el color del subrayado (limitación de Bootstrap, no tiene clase para esto)
+            $reemplazo = '<span class="text-decoration-underline" style="text-decoration-color: var(--bs-success);" title="' . $titulo . '">' . $cambio['corrected'] . '</span>';
+            
+            // Aplicar reemplazo solo en partes que no son tags HTML
+            for ($i = 0; $i < count($partes); $i++) {
+                // Si la parte no empieza con <, es texto normal
+                if (!preg_match('/^</', $partes[$i])) {
+                    $partes[$i] = preg_replace($patron, $reemplazo, $partes[$i]);
+                }
+            }
+        }
+        
+        // Reconstruir el texto
+        $textoFormateado = implode('', $partes);
+        
+        return $textoFormateado;
+    }
+
+    /**
+     * Procesar texto y devolver tanto el texto corregido como el formateado con HTML
+     * 
+     * @param string $textoConsulta
+     * @param string $especialidad
+     * @param string $tabId
+     * @param int $idRrHh
+     * @return array ['texto_procesado' => string, 'texto_formateado' => string, 'total_cambios' => int]
+     */
+    public static function prepararParaIAConFormato($textoConsulta, $especialidad = null, $tabId = null, $idRrHh = null)
+    {
+        $inicio = microtime(true);
+        $logger = ConsultaLogger::obtenerInstancia();
+        
+        // Obtener el texto procesado usando el método existente
+        $textoProcesado = self::prepararParaIA($textoConsulta, $especialidad, $tabId, $idRrHh);
+        
+        // Obtener información de correcciones para formatear
+        $correccionesInfo = self::obtenerInfoCorrecciones($tabId);
+        
+        $iaChanges = [];
+        $symspellChanges = [];
+        $totalCambios = 0;
+        
+        if ($correccionesInfo && isset($correccionesInfo['cambios_automaticos'])) {
+            $totalCambios = $correccionesInfo['total_cambios'] ?? 0;
+            foreach ($correccionesInfo['cambios_automaticos'] as $cambio) {
+                if (isset($cambio['original']) && isset($cambio['corregido'])) {
+                    if (($cambio['metodo'] ?? '') === 'symspell') {
+                        $symspellChanges[] = [
+                            'original' => $cambio['original'],
+                            'corrected' => $cambio['corregido']
+                        ];
+                    } else {
+                        $iaChanges[] = [
+                            'original' => $cambio['original'],
+                            'corrected' => $cambio['corregido']
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Formatear texto con subrayado
+        $textoFormateado = self::formatearTextoConSubrayado($textoProcesado, $iaChanges, $symspellChanges);
+        
+        return [
+            'texto_procesado' => $textoProcesado,
+            'texto_formateado' => $textoFormateado,
+            'total_cambios' => $totalCambios
+        ];
+    }
+
+    /**
      * Identificar elementos médicos que deben preservarse (sin hard-coding)
      * Usa base de datos: terminos_contexto_medico con tipo='regex' y categoria='preservar'
      * 

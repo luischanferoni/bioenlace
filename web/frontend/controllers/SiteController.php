@@ -29,6 +29,7 @@ use common\models\Guardia;
 use common\models\Novedad;
 use common\models\InfraestructuraPiso;
 use common\models\InfraestructuraCama;
+use common\models\busquedas\EfectorBusqueda;
 
 class SiteController extends Controller
 {
@@ -73,6 +74,27 @@ class SiteController extends Controller
 
     public function actionInicio()
     {
+        // Verificar si el usuario tiene configurado el efector, servicio y encounter class
+        $idEfector = Yii::$app->user->getIdEfector();
+        $servicioActual = Yii::$app->user->getServicioActual();
+        $encounterClass = Yii::$app->user->getEncounterClass();
+
+        // Si no tiene la configuración completa, mostrar la pantalla de selección
+        if (!$idEfector || !$servicioActual || !$encounterClass) {
+            $this->layout = 'main_sinmenuizquierda';
+            
+            // Preparar datos para la vista de selección
+            $searchEfectores = new EfectorBusqueda();
+            $array_efectores = Yii::$app->user->getEfectores() ?? [];
+            $dataProviderEfectores = $searchEfectores->search(['EfectorBusqueda' => ['efectores' => array_keys($array_efectores)]]);
+
+            return $this->render('despuesdelogin/inicio', [
+                'searchEfectores' => $searchEfectores,
+                'dataProviderEfectores' => $dataProviderEfectores,
+            ]);
+        }
+
+        // Si tiene la configuración completa, mostrar los turnos
         $this->layout = 'main';
 
         // Obtener fecha desde parámetro o usar hoy

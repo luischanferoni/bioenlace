@@ -62,10 +62,10 @@ class User extends webvimarkUser {
         }
     }
 
-	public static function canRoute($route, $superAdminAllowed = true)
+	/*public static function canRoute($route, $superAdminAllowed = true)
 	{
         $route[0] = Yii::$app->params['path'].$route[0];
         //var_dump(parent::canRoute($route));var_dump($route);
         return parent::canRoute($route);
-    }    
+    }*/
 }

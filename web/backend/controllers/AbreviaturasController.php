@@ -10,7 +10,6 @@ use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use yii\data\Pagination;
 use common\models\AbreviaturasMedicas;
-use common\models\AbreviaturasSugeridas;
 use common\components\ProcesadorTextoMedico;
 
 /**
@@ -28,7 +27,7 @@ class AbreviaturasController extends Controller
                 'class' => AccessControl::class,
                 'rules' => [
                     [
-                        'actions' => ['index', 'mas-reportadas', 'estadisticas', 'sugerencias-pendientes', 'agregar-expansion', 'aprobar', 'rechazar'],
+                        'actions' => ['index', 'sugerencias-pendientes', 'aprobar', 'rechazar'],
                         'allow' => true,
                         'roles' => ['@'], // Solo usuarios autenticados
                     ],
@@ -37,7 +36,6 @@ class AbreviaturasController extends Controller
             'verbs' => [
                 'class' => VerbFilter::class,
                 'actions' => [
-                    'agregar-expansion' => ['GET','POST'],
                     'aprobar' => ['POST'],
                     'rechazar' => ['POST'],
                 ],
@@ -99,38 +97,18 @@ class AbreviaturasController extends Controller
     }
 
     /**
-     * Obtener abreviaturas más reportadas
-     */
-    public function actionMasReportadas()
-    {
-        $limite = Yii::$app->request->get('limite', 20);
-        $abreviaturas = ProcesadorTextoMedico::getAbreviaturasMasReportadas($limite);
-
-        return $this->render('mas-reportadas', [
-            'abreviaturas' => $abreviaturas,
-            'limite' => $limite,
-        ]);
-    }
-
-    /**
-     * Obtener estadísticas de sugerencias
-     */
-    public function actionEstadisticas()
-    {
-        $estadisticas = ProcesadorTextoMedico::getEstadisticasSugerencias();
-
-        return $this->render('estadisticas', [
-            'estadisticas' => $estadisticas,
-        ]);
-    }
-
-    /**
-     * Obtener sugerencias pendientes
+     * Obtener abreviaturas pendientes de aprobación (activo=0)
      */
     public function actionSugerenciasPendientes()
     {
         $limite = Yii::$app->request->get('limite', 50);
-        $sugerencias = ProcesadorTextoMedico::getSugerenciasPendientes($limite);
+        
+        $query = AbreviaturasMedicas::find()
+            ->where(['activo' => 0])
+            ->orderBy(['fecha_creacion' => SORT_DESC])
+            ->limit($limite);
+        
+        $sugerencias = $query->all();
 
         return $this->render('sugerencias-pendientes', [
             'sugerencias' => $sugerencias,
@@ -139,122 +117,61 @@ class AbreviaturasController extends Controller
     }
 
     /**
-     * Aprobar una abreviatura sugerida
+     * Aprobar una abreviatura pendiente (activarla)
      */
     public function actionAprobar()
     {
-        // Esta acción sólo cambia el estado a 'aprobada'. Requiere que exista 'expansion_propuesta'.
         if (!Yii::$app->request->isPost) {
             throw new MethodNotAllowedHttpException('Este endpoint acepta sólo solicitudes POST.');
         }
 
-        $id = Yii::$app->request->get('id');
+        $id = Yii::$app->request->post('id');
 
         if (!$id) {
-            Yii::$app->session->setFlash('error', 'ID de sugerencia requerido');
+            Yii::$app->session->setFlash('error', 'ID de abreviatura requerido');
             return $this->redirect(['sugerencias-pendientes']);
         }
 
-        $sugerencia = AbreviaturasSugeridas::findOne($id);
+        $abreviatura = AbreviaturasMedicas::findOne($id);
 
-        if (!$sugerencia) {
-            Yii::$app->session->setFlash('error', 'Sugerencia no encontrada');
+        if (!$abreviatura) {
+            Yii::$app->session->setFlash('error', 'Abreviatura no encontrada');
             return $this->redirect(['sugerencias-pendientes']);
         }
 
-        if (empty($sugerencia->expansion_propuesta)) {
-            Yii::$app->session->setFlash('error', 'Debe cargar una expansión antes de aprobar la sugerencia');
-            return $this->redirect(['sugerencias-pendientes']);
-        }
-
-        $usuarioId = Yii::$app->user->id ?? 1;
-
-        if ($sugerencia->aprobar($usuarioId, '')) {
-            Yii::$app->session->setFlash('success', 'Abreviatura aprobada y agregada a la base de datos');
+        $abreviatura->activo = 1;
+        
+        if ($abreviatura->save(false)) {
+            Yii::$app->session->setFlash('success', 'Abreviatura aprobada y activada');
         } else {
-            $errores = $sugerencia->getErrors();
-            if (!empty($errores)) {
-                $mensajeError = 'Error de validación: ';
-                foreach ($errores as $campo => $erroresCampo) {
-                    $mensajeError .= implode(', ', $erroresCampo) . ' ';
-                }
-                Yii::$app->session->setFlash('error', trim($mensajeError));
-            } else {
-                Yii::$app->session->setFlash('error', 'Error al aprobar abreviatura');
-            }
+            Yii::$app->session->setFlash('error', 'Error al aprobar abreviatura');
         }
 
         return $this->redirect(['sugerencias-pendientes']);
     }
 
     /**
-     * Cargar/editar expansión y comentarios para una sugerencia
-     */
-    public function actionAgregarExpansion()
-    {
-        if (Yii::$app->request->isGet) {
-            $id = Yii::$app->request->get('id');
-            $sugerencia = AbreviaturasSugeridas::findOne($id);
-
-            return $this->render('agregar-expansion', [
-                'sugerencia' => $sugerencia,
-            ]);
-        }
-
-        if (Yii::$app->request->isPost) {
-            $body = Yii::$app->request->getBodyParams();
-            $id = $body['id'] ?? null;
-            $expansion = $body['expansion'] ?? null;
-            $comentarios = $body['comentarios'] ?? null;
-
-            if (!$id) {
-                Yii::$app->session->setFlash('error', 'ID de sugerencia requerido');
-                return $this->redirect(['sugerencias-pendientes']);
-            }
-
-            $sugerencia = AbreviaturasSugeridas::findOne($id);
-            if (!$sugerencia) {
-                Yii::$app->session->setFlash('error', 'Sugerencia no encontrada');
-                return $this->redirect(['sugerencias-pendientes']);
-            }
-
-            $sugerencia->expansion_propuesta = $expansion;
-            $sugerencia->comentarios = $comentarios;
-            $sugerencia->save(false);
-
-            Yii::$app->session->setFlash('success', 'Expansión guardada. Ahora puede aprobar la sugerencia.');
-            return $this->redirect(['sugerencias-pendientes']);
-        }
-
-        throw new MethodNotAllowedHttpException('Método no permitido.');
-    }
-
-    /**
-     * Rechazar una abreviatura sugerida
+     * Rechazar una abreviatura pendiente (eliminarla)
      */
     public function actionRechazar()
     {
         if (Yii::$app->request->isPost) {
-            $body = Yii::$app->request->getBodyParams();
-            $id = $body['id'] ?? null;
-            $comentarios = $body['comentarios'] ?? '';
+            $id = Yii::$app->request->post('id');
 
             if (!$id) {
-                Yii::$app->session->setFlash('error', 'ID de sugerencia requerido');
+                Yii::$app->session->setFlash('error', 'ID de abreviatura requerido');
                 return $this->redirect(['sugerencias-pendientes']);
             }
 
-            $sugerencia = AbreviaturasSugeridas::findOne($id);
+            $abreviatura = AbreviaturasMedicas::findOne($id);
 
-            if (!$sugerencia) {
-                Yii::$app->session->setFlash('error', 'Sugerencia no encontrada');
+            if (!$abreviatura) {
+                Yii::$app->session->setFlash('error', 'Abreviatura no encontrada');
                 return $this->redirect(['sugerencias-pendientes']);
             }
 
-            $usuarioId = Yii::$app->user->id ?? 1;
-
-            if ($sugerencia->rechazar($usuarioId, $comentarios)) {
-                Yii::$app->session->setFlash('success', 'Abreviatura rechazada');
+            if ($abreviatura->delete()) {
+                Yii::$app->session->setFlash('success', 'Abreviatura rechazada y eliminada');
             } else {
                 Yii::$app->session->setFlash('error', 'Error al rechazar abreviatura');
             }
@@ -263,10 +180,10 @@ class AbreviaturasController extends Controller
         }
 
         $id = Yii::$app->request->get('id');
-        $sugerencia = AbreviaturasSugeridas::findOne($id);
+        $abreviatura = AbreviaturasMedicas::findOne($id);
 
         return $this->render('rechazar', [
-            'sugerencia' => $sugerencia,
+            'abreviatura' => $abreviatura,
         ]);
     }
 

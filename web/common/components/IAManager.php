@@ -1007,16 +1007,34 @@ Corregido:";
             
             if (strtolower($originalLimpia) !== strtolower($corregidaLimpia) && 
                 !empty($originalLimpia) && !empty($corregidaLimpia)) {
+                // Calcular confianza individual para cada cambio
+                $confidence = self::calcularConfianzaCambioIndividual($originalLimpia, $corregidaLimpia);
+                
                 $cambios[] = [
                     'original' => $palabraOriginal,
                     'corrected' => $palabraCorregida,
-                    'confidence' => 0.95, // Alta confianza para correcciones de IA
+                    'confidence' => $confidence,
                     'method' => 'ia_local'
                 ];
             }
         }
         
         return $cambios;
+    }
+
+    /**
+     * Calcular confianza individual para un cambio específico
+     * Si la IA corrigió el texto completo, asumimos 100% de confianza para cada cambio
+     * 
+     * @param string $original
+     * @param string $corrected
+     * @return float
+     */
+    private function calcularConfianzaCambioIndividual($original, $corrected)
+    {
+        // Si la IA corrigió el texto completo, confiamos 100% en cada cambio
+        // La IA tiene contexto completo del texto médico
+        return 1.0;
     }
 
     /**

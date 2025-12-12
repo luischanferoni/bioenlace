@@ -353,17 +353,51 @@ class IAManager
                 return $deduplicado;
             }
             
-            // Verificar cache
+            // Verificar cache (solo si no está desactivado)
+            $cacheDesactivado = Yii::$app->params['ia_cache_desactivado'] ?? false;
             $cacheKey = 'ia_response_' . md5($prompt . $contexto . $tipoModelo);
             $yiiCache = Yii::$app->cache;
-            if ($yiiCache) {
+            
+            if ($cacheDesactivado) {
+                \Yii::info("⚠️ ESTRUCTURACIÓN: Cache DESACTIVADO - Forzando llamada a IA (contexto: {$contexto})", 'ia-manager');
+            } elseif ($yiiCache) {
                 $cached = $yiiCache->get($cacheKey);
                 if ($cached !== false) {
-                    \Yii::info("Respuesta de IA obtenida desde cache para: {$contexto}", 'ia-manager');
+                    \Yii::info("✅ ESTRUCTURACIÓN: Obtenida desde CACHE para contexto: {$contexto}", 'ia-manager');
+                    if ($logger) {
+                        $logger->registrar(
+                            'CACHE',
+                            'Análisis obtenido desde cache',
+                            'No se realizó llamada a IA',
+                            [
+                                'metodo' => 'IAManager::consultarIA',
+                                'fuente' => 'cache',
+                                'contexto' => $contexto,
+                                'tipo_modelo' => $tipoModelo
+                            ]
+                        );
+                    }
                     // Guardar en deduplicador también
                     \common\components\RequestDeduplicator::guardar($prompt, $cached, $contexto);
                     return $cached;
                 }
+            }
+            
+            // No está en cache, hacer llamada real a la IA
+            \Yii::info("🔄 ESTRUCTURACIÓN: Realizando llamada a IA para contexto: {$contexto}", 'ia-manager');
+            if ($logger) {
+                $logger->registrar(
+                    'IA',
+                    'Realizando análisis con IA',
+                    'Llamada a proveedor de IA',
+                    [
+                        'metodo' => 'IAManager::consultarIA',
+                        'fuente' => 'ia',
+                        'contexto' => $contexto,
+                        'tipo_modelo' => $tipoModelo,
+                        'prompt_preview' => substr($prompt, 0, 100)
+                    ]
+                );
             }
             
             // Verificar rate limiter
@@ -467,11 +501,15 @@ class IAManager
                         \common\components\HuggingFaceRateLimiter::registrarExito($endpoint);
                     }
                     
-                    // Guardar en cache y deduplicador si es válido
+                    // Guardar en cache y deduplicador si es válido (solo si el cache no está desactivado)
                     if ($resultado) {
-                        if ($yiiCache) {
+                        $cacheDesactivado = Yii::$app->params['ia_cache_desactivado'] ?? false;
+                        if (!$cacheDesactivado && $yiiCache) {
                             $ttl = (int)(Yii::$app->params['ia_cache_ttl'] ?? 3600);
                             $yiiCache->set($cacheKey, $resultado, $ttl);
+                            \Yii::info("💾 ESTRUCTURACIÓN: Guardada en CACHE (TTL: {$ttl}s, contexto: {$contexto})", 'ia-manager');
+                        } elseif ($cacheDesactivado) {
+                            \Yii::info("⚠️ ESTRUCTURACIÓN: Cache DESACTIVADO - No se guardó en cache", 'ia-manager');
                         }
                         // Guardar en deduplicador
                         \common\components\RequestDeduplicator::guardar($prompt, $resultado, $contexto);
@@ -885,15 +923,61 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
         $inicio = microtime(true);
         
         try {
-            // Verificar cache primero
+            // Verificar cache primero (solo si no está desactivado)
+            $cacheDesactivado = Yii::$app->params['correccion_cache_desactivado'] ?? false;
             $cacheKey = 'correccion_texto_' . md5($texto . ($especialidad ?? ''));
             $yiiCache = Yii::$app->cache;
-            if ($yiiCache) {
+            
+            if ($cacheDesactivado) {
+                \Yii::info("⚠️ CORRECCIÓN: Cache DESACTIVADO - Forzando llamada a IA (texto: " . substr($texto, 0, 50) . "...)", 'ia-manager');
+            } elseif ($yiiCache) {
                 $cached = $yiiCache->get($cacheKey);
                 if ($cached !== false && is_array($cached)) {
-                    \Yii::info("Corrección de texto obtenida desde cache", 'ia-manager');
+                    // Validar que los cambios en el cache tengan el formato correcto
+                    if (isset($cached['cambios']) && is_array($cached['cambios'])) {
+                        $cambiosValidos = [];
+                        foreach ($cached['cambios'] as $cambio) {
+                            if (is_array($cambio) && isset($cambio['original']) && isset($cambio['corrected'])) {
+                                // Asegurar que original y corrected sean strings
+                                $cambio['original'] = is_array($cambio['original']) ? implode(' ', $cambio['original']) : (string)$cambio['original'];
+                                $cambio['corrected'] = is_array($cambio['corrected']) ? implode(' ', $cambio['corrected']) : (string)$cambio['corrected'];
+                                $cambiosValidos[] = $cambio;
+                            }
+                        }
+                        $cached['cambios'] = $cambiosValidos;
+                    }
+                    \Yii::info("✅ CORRECCIÓN: Obtenida desde CACHE (texto: " . substr($texto, 0, 50) . "...)", 'ia-manager');
+                    if ($logger) {
+                        $logger->registrar(
+                            'CACHE',
+                            'Corrección obtenida desde cache',
+                            'No se realizó llamada a IA',
+                            [
+                                'metodo' => 'IAManager::corregirTextoCompletoConIA',
+                                'fuente' => 'cache',
+                                'longitud_texto' => strlen($texto),
+                                'total_cambios' => count($cached['cambios'] ?? [])
+                            ]
+                        );
+                    }
                     return $cached;
                 }
+            }
+            
+            // No está en cache, hacer llamada real a la IA
+            \Yii::info("🔄 CORRECCIÓN: Realizando llamada a IA (texto: " . substr($texto, 0, 50) . "...)", 'ia-manager');
+            if ($logger) {
+                $logger->registrar(
+                    'IA',
+                    'Realizando corrección con IA',
+                    'Llamada a proveedor de IA',
+                    [
+                        'metodo' => 'IAManager::corregirTextoCompletoConIA',
+                        'fuente' => 'ia',
+                        'longitud_texto' => strlen($texto),
+                        'especialidad' => $especialidad
+                    ]
+                );
             }
             
             // Obtener configuración del proveedor con modelo específico para corrección
@@ -901,15 +985,27 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
             $proveedorIA = $this->getProveedorIAInstance('text-correction');
             
             // Prompt optimizado para SOLO corrección ortográfica (sin expansión de abreviaturas)
-            $prompt = "Corrige SOLO errores ortográficos.
+            $prompt = "Corrige y mejora el texto médico manteniendo el significado exacto.
 
-Reglas estrictas:
-- Corrige únicamente palabras con errores ortográficos (ej: laseracion→laceración, isocorica→isocórica)
-- NO cambies el orden de las palabras
+Tareas permitidas:
+1. Corregir errores ortográficos (ej: laseracion→laceración, isocorica→isocórica)
+2. Expandir abreviaturas médicas comunes cuando mejore la claridad:
+   - h → horizontal (cuando se refiere a posición)
+   - aprox. → aproximadamente
+   - para central → paracentral (cuando tiene sentido médico)
+   - OI → ojo izquierdo, OD → ojo derecho
+   - Bmc → biomicroscopía
+   - Caf → cámara anterior
+3. Mejorar puntuación y estructura cuando sea necesario para claridad médica
 
-Texto: {$texto}
+Reglas importantes:
+- MANTÉN el significado médico exacto
+- NO agregues información que no esté implícita en el texto original
+- NO cambies términos médicos técnicos correctos
+- Puedes ajustar el orden de palabras SOLO si mejora la claridad médica sin cambiar el significado
+- Devuelve solo el texto corregido, sin ningún otro texto ni explicación.
 
-Corregido:";
+Texto: {$texto}";
 
             // Asignar prompt según el tipo de proveedor
             $this->asignarPromptAConfiguracionInstance($proveedorIA, $prompt);
@@ -958,11 +1054,31 @@ Corregido:";
                     $textoCorregido = trim($textoCorregido);
                     
                     // CRÍTICO: Filtrar contenido de reasoning de modelos como DeepSeek-R1
-                    // Eliminar tags de reasoning (<think>, <think>, etc.)
+                    // Guardar respuesta original para logging ANTES de cualquier filtrado
+                    $respuestaOriginal = $textoCorregido;
+                    
+                    // Log de la respuesta cruda para debugging
+                    \Yii::info(
+                        "Respuesta cruda de IA (antes de filtrado): " . 
+                        substr($respuestaOriginal, 0, 500) . 
+                        (strlen($respuestaOriginal) > 500 ? "..." : "") . 
+                        " (Total: " . strlen($respuestaOriginal) . " chars)",
+                        'ia-manager'
+                    );
+                    
+                    // Eliminar tags de reasoning completos (con contenido entre tags)
                     $textoCorregido = preg_replace('/<think>.*?<\/think>/is', '', $textoCorregido);
                     $textoCorregido = preg_replace('/<think>.*?<\/redacted_reasoning>/is', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<think>.*?<\/redacted_reasoning>/is', '', $textoCorregido);
                     $textoCorregido = preg_replace('/<reasoning>.*?<\/reasoning>/is', '', $textoCorregido);
-                    $textoCorregido = preg_replace('/<think>/i', '', $textoCorregido);
+                    
+                    // Eliminar tags sueltos (sin cierre)
+                    $textoCorregido = preg_replace('/<think[^>]*>/i', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<redacted_reasoning[^>]*>/i', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<reasoning[^>]*>/i', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<\/think>/i', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<\/redacted_reasoning>/i', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<\/reasoning>/i', '', $textoCorregido);
                     
                     // Eliminar líneas que contengan instrucciones o reasoning
                     $lineas = explode("\n", $textoCorregido);
@@ -970,8 +1086,13 @@ Corregido:";
                     foreach ($lineas as $linea) {
                         $lineaLimpia = trim($linea);
                         
+                        // Saltar líneas vacías
+                        if (empty($lineaLimpia)) {
+                            continue;
+                        }
+                        
                         // Omitir líneas que sean instrucciones o reasoning
-                        if (preg_match('/^(Vale|El usuario|Las reglas|debo|Debo|Las son|son estrictas|únicamente|Solo|solo|corregir|Corregir|ortográficos|ortograficos)/i', $lineaLimpia)) {
+                        if (preg_match('/^(Vale|El usuario|Las reglas|debo|Debo|Las son|son estrictas|únicamente|Solo|solo|corregir|Corregir|ortográficos|ortograficos|me pide|debo cambiar)/i', $lineaLimpia)) {
                             continue;
                         }
                         
@@ -985,9 +1106,24 @@ Corregido:";
                             continue;
                         }
                         
+                        // Omitir líneas que sean claramente instrucciones
+                        if (preg_match('/(Tareas permitidas|Reglas importantes|MANTÉN el|NO agregues|NO cambies)/i', $lineaLimpia)) {
+                            continue;
+                        }
+                        
                         $lineasLimpias[] = $linea;
                     }
                     $textoCorregido = implode("\n", $lineasLimpias);
+                    
+                    // Log si se filtró contenido significativo
+                    if (strlen($respuestaOriginal) > strlen($textoCorregido) + 50) {
+                        \Yii::info(
+                            "Contenido de reasoning filtrado: " . 
+                            (strlen($respuestaOriginal) - strlen($textoCorregido)) . " caracteres eliminados. " .
+                            "Original: " . substr($respuestaOriginal, 0, 200) . "...",
+                            'ia-manager'
+                        );
+                    }
                     
                     // Limpiar posibles prefijos que el modelo pueda agregar al inicio
                     $textoCorregido = preg_replace('/^(Texto corregido|Corrección|Corregido):\s*/i', '', $textoCorregido);
@@ -1000,7 +1136,13 @@ Corregido:";
                     // VALIDACIÓN CRÍTICA: Si el texto corregido parece ser instrucciones en lugar de texto médico,
                     // rechazar la respuesta y usar el texto original
                     if (self::esRespuestaInvalida($textoCorregido, $texto)) {
-                        \Yii::warning("La IA devolvió una respuesta inválida (parece ser instrucciones). Usando texto original.", 'ia-manager');
+                        // Log detallado de la respuesta completa para debugging
+                        \Yii::warning(
+                            "La IA devolvió una respuesta inválida (parece ser instrucciones). " .
+                            "Respuesta completa (" . strlen($textoCorregido) . " chars): " . 
+                            substr($textoCorregido, 0, 500),
+                            'ia-manager'
+                        );
                         if ($logger) {
                             $logger->registrar(
                                 'ERROR',
@@ -1008,7 +1150,10 @@ Corregido:";
                                 'La respuesta parece contener instrucciones en lugar de texto corregido',
                                 [
                                     'metodo' => 'IAManager::corregirTextoCompletoConIA',
-                                    'respuesta_preview' => substr($textoCorregido, 0, 200)
+                                    'respuesta_completa' => $textoCorregido,
+                                    'longitud_respuesta' => strlen($textoCorregido),
+                                    'longitud_original' => strlen($texto),
+                                    'primeras_lineas' => array_slice(explode("\n", $textoCorregido), 0, 5)
                                 ]
                             );
                         }
@@ -1059,10 +1204,14 @@ Corregido:";
                         'metodo' => 'ia_local'
                     ];
                     
-                    // Guardar en cache
-                    if ($yiiCache) {
+                    // Guardar en cache (solo si el cache no está desactivado)
+                    $cacheDesactivado = Yii::$app->params['correccion_cache_desactivado'] ?? false;
+                    if (!$cacheDesactivado && $yiiCache) {
                         $ttl = (int)(Yii::$app->params['correccion_cache_ttl'] ?? 7200); // 2 horas para correcciones
                         $yiiCache->set($cacheKey, $resultado, $ttl);
+                        \Yii::info("💾 CORRECCIÓN: Guardada en CACHE (TTL: {$ttl}s, cambios: " . count($cambios) . ")", 'ia-manager');
+                    } elseif ($cacheDesactivado) {
+                        \Yii::info("⚠️ CORRECCIÓN: Cache DESACTIVADO - No se guardó en cache", 'ia-manager');
                     }
                     
                     return $resultado;
@@ -1371,6 +1520,88 @@ Corregido:";
         }
         
         return null;
+    }
+
+    /**
+     * Validar si una respuesta de la IA es inválida (contiene instrucciones en lugar de texto corregido)
+     * @param string $respuesta
+     * @param string $textoOriginal
+     * @return bool true si la respuesta es inválida
+     */
+    private static function esRespuestaInvalida($respuesta, $textoOriginal)
+    {
+        // Si la respuesta está vacía, es inválida
+        if (empty(trim($respuesta))) {
+            return true;
+        }
+        
+        // Si la respuesta contiene tags de reasoning que no fueron filtrados, es inválida
+        if (preg_match('/<(think|reasoning|redacted_reasoning)/i', $respuesta)) {
+            return true;
+        }
+        
+        // Detectar si la respuesta parece ser instrucciones en lugar de texto médico
+        // Solo revisar las primeras líneas para evitar falsos positivos
+        $primerasLineas = explode("\n", $respuesta);
+        $primerasLineas = array_slice($primerasLineas, 0, 2); // Revisar solo primeras 2 líneas
+        
+        $contadorInstrucciones = 0;
+        foreach ($primerasLineas as $linea) {
+            $lineaLimpia = trim($linea);
+            if (empty($lineaLimpia)) {
+                continue;
+            }
+            
+            // Patrones más específicos que indican claramente instrucciones
+            $patronesInstrucciones = [
+                '/^(Vale|El usuario me pide|Las reglas son|debo|Debo|Las son estrictas|son estrictas:|únicamente|Solo debo|solo corregir|Corregir ortográficos|ortograficos)/i',
+                '/me pide corregir/i',
+                '/debo cambiar únicamente/i',
+                '/las reglas son estrictas/i',
+                '/Tareas permitidas:/i',
+                '/Reglas importantes:/i',
+                '/MANTÉN el significado/i',
+                '/NO agregues información/i',
+                '/NO cambies términos/i'
+            ];
+            
+            foreach ($patronesInstrucciones as $patron) {
+                if (preg_match($patron, $lineaLimpia)) {
+                    $contadorInstrucciones++;
+                }
+            }
+        }
+        
+        // Solo considerar inválida si hay múltiples indicadores de instrucciones
+        // Y la respuesta es muy corta (menos del 50% del original)
+        if ($contadorInstrucciones >= 2) {
+            $longitudRespuesta = strlen($respuesta);
+            $longitudOriginal = strlen($textoOriginal);
+            
+            // Si la respuesta es muy corta comparada con el original, probablemente son solo instrucciones
+            if ($longitudOriginal > 0 && ($longitudRespuesta / $longitudOriginal) < 0.5) {
+                return true;
+            }
+        }
+        
+        // Si la respuesta es muy diferente en longitud (más del 200% de diferencia), puede ser inválida
+        // Pero solo si también contiene palabras de instrucciones
+        $diferenciaLongitud = abs(strlen($respuesta) - strlen($textoOriginal));
+        $porcentajeDiferencia = strlen($textoOriginal) > 0 
+            ? ($diferenciaLongitud / strlen($textoOriginal)) * 100 
+            : 0;
+        
+        // Si la diferencia es muy grande Y la respuesta contiene palabras de instrucciones, es inválida
+        if ($porcentajeDiferencia > 50) {
+            $palabrasInstrucciones = ['usuario', 'reglas', 'debo', 'debes', 'debe', 'corregir', 'ortográficos', 'estrictas'];
+            foreach ($palabrasInstrucciones as $palabra) {
+                if (stripos($respuesta, $palabra) !== false) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
     }
 
     /**

@@ -747,7 +747,13 @@ class ProcesadorTextoMedico
                     $metadata['fuente_ia'] = true;
                     $metadata['confianza_promedio'] = 1.0;
                     $metadata['ultima_correccion'] = date('Y-m-d H:i:s');
-                    $metadata['modelo_ia'] = $cambio['modelo'] ?? 'llama3.1:70b-instruct';
+                    
+                    // Asegurar que modelo_ia sea string
+                    $modeloIA = $cambio['modelo'] ?? 'llama3.1:70b-instruct';
+                    if (is_array($modeloIA)) {
+                        $modeloIA = 'llama3.1:70b-instruct';
+                    }
+                    $metadata['modelo_ia'] = (string)$modeloIA;
                     
                     $diccionario->metadata = $metadata;
                     $diccionario->peso = min(10.0, ($diccionario->peso ?? 5.0) + 0.1);
@@ -772,16 +778,33 @@ class ProcesadorTextoMedico
                     $diccionario->termino = $original;
                     $diccionario->correccion = $corrected;
                     $diccionario->tipo = DiccionarioOrtografico::TIPO_ERROR;
-                    $diccionario->categoria = self::detectarCategoriaMedica($original, $corrected);
-                    $diccionario->especialidad = $especialidad;
+                    
+                    // Asegurar que categoria sea string
+                    $categoria = self::detectarCategoriaMedica($original, $corrected);
+                    $diccionario->categoria = is_array($categoria) ? null : (string)$categoria;
+                    
+                    // Asegurar que especialidad sea string o null
+                    if (is_array($especialidad)) {
+                        \Yii::warning("Especialidad es un array: " . print_r($especialidad, true), 'procesador-texto');
+                        $especialidad = null;
+                    }
+                    $diccionario->especialidad = $especialidad ? (string)$especialidad : null;
+                    
                     $diccionario->frecuencia = 1;
                     $diccionario->peso = 10.0;
+                    
+                    // Asegurar que modelo_ia sea string
+                    $modeloIA = $cambio['modelo'] ?? 'llama3.1:70b-instruct';
+                    if (is_array($modeloIA)) {
+                        $modeloIA = 'llama3.1:70b-instruct';
+                    }
+                    
                     $diccionario->metadata = [
                         'fuente_ia' => true,
                         'confianza_promedio' => 1.0,
                         'primera_deteccion' => date('Y-m-d H:i:s'),
                         'ultima_correccion' => date('Y-m-d H:i:s'),
-                        'modelo_ia' => $cambio['modelo'] ?? 'llama3.1:70b-instruct',
+                        'modelo_ia' => (string)$modeloIA,
                         'aprobacion_automatica' => true
                     ];
                     $diccionario->activo = 1;
@@ -802,7 +825,17 @@ class ProcesadorTextoMedico
                     }
                 }
             } catch (\Exception $e) {
-                \Yii::error("Error guardando corrección IA en diccionario: " . $e->getMessage(), 'procesador-texto');
+                // Log detallado del error para debugging
+                $errorDetails = [
+                    'mensaje' => $e->getMessage(),
+                    'archivo' => $e->getFile(),
+                    'linea' => $e->getLine(),
+                    'original' => is_array($original) ? 'ARRAY' : (string)$original,
+                    'corrected' => is_array($corrected) ? 'ARRAY' : (string)$corrected,
+                    'especialidad' => is_array($especialidad) ? 'ARRAY' : (string)($especialidad ?? 'null'),
+                    'cambio_completo' => print_r($cambio, true)
+                ];
+                \Yii::error("Error guardando corrección IA en diccionario: " . json_encode($errorDetails, JSON_UNESCAPED_UNICODE), 'procesador-texto');
             }
         }
     }
@@ -823,7 +856,12 @@ class ProcesadorTextoMedico
                 ->one();
             
             if ($termino) {
-                return $termino->categoria;
+                $categoria = $termino->categoria;
+                // Asegurar que categoria sea string o null, nunca array
+                if (is_array($categoria)) {
+                    return null;
+                }
+                return $categoria ? (string)$categoria : null;
             }
         }
         
@@ -1188,19 +1226,21 @@ class ProcesadorTextoMedico
         $palabrasOriginal = str_word_count($normalizadoOriginal, 0, 'áéíóúüñÁÉÍÓÚÜÑ');
         $palabrasCorregido = str_word_count($normalizadoCorregido, 0, 'áéíóúüñÁÉÍÓÚÜÑ');
         
-        // Si se agregaron más del 10% de palabras nuevas, rechazar
-        if ($palabrasCorregido > $palabrasOriginal * 1.1) {
+        // Permitir hasta 30% más palabras para permitir expansión de abreviaturas médicas
+        // Ejemplo: "h 5" → "horizontal de 5" agrega palabras pero es válido
+        if ($palabrasCorregido > $palabrasOriginal * 1.3) {
             \Yii::warning("Corrección IA rechazada: se agregaron demasiadas palabras nuevas ({$palabrasCorregido} vs {$palabrasOriginal})", 'procesador-texto');
             return $textoOriginal;
         }
         
-        // Si la longitud es muy diferente (más del 20% de diferencia), rechazar
+        // Permitir hasta 40% de diferencia en longitud para permitir expansión de abreviaturas
+        // Ejemplo: "aprox." → "aproximadamente" aumenta la longitud
         $diferenciaLongitud = abs(strlen($normalizadoCorregido) - strlen($normalizadoOriginal));
         $porcentajeDiferencia = strlen($normalizadoOriginal) > 0 
             ? ($diferenciaLongitud / strlen($normalizadoOriginal)) * 100 
             : 0;
         
-        if ($porcentajeDiferencia > 20) {
+        if ($porcentajeDiferencia > 40) {
             \Yii::warning("Corrección IA rechazada: diferencia de longitud muy grande ({$porcentajeDiferencia}%)", 'procesador-texto');
             return $textoOriginal;
         }

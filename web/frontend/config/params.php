@@ -29,6 +29,10 @@ return [
     'embedding_cache_ttl' => 2592000, // TTL de cache para embeddings (30 días) - Optimizado para reducir costos
     'stt_cache_ttl' => 2592000, // TTL de cache para transcripciones STT (30 días) - Optimizado para reducir costos
     
+    // Control de cache para pruebas (desactivar para forzar llamadas a IA)
+    'ia_cache_desactivado' => true, // true = desactiva cache de estructuración/análisis (fuerza llamadas a IA)
+    'correccion_cache_desactivado' => true, // true = desactiva cache de corrección (fuerza llamadas a IA)
+    
     // Optimizaciones de procesamiento
     'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito
     'usar_cpu_tareas_simples' => true, // Usar CPU para tareas simples (sin GPU)

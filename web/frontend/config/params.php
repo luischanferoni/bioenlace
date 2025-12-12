@@ -9,10 +9,7 @@ return [
     
     // Configuración de IA    
     'ia_proveedor' => 'huggingface', // 'huggingface', 'groq', 'openai' , ollama
-    // API Keys - Reemplazar con tus keys reales
-    'groq_api_key' => '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', // Obtener de https://console.groq.com/
-    'openai_api_key' => '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', // Obtener de https://platform.openai.com/
-    'hf_api_key' => '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', // Obtener de https://huggingface.co/settings/tokens
+    
     // NOTA: HuggingFace ofrece tier gratuito con 30,000 requests/mes gratis
     // Optimizar uso para maximizar requests gratuitos antes de usar tier de pago
     'hf_use_free_tier' => true, // Priorizar uso del tier gratuito (30K requests/mes)

@@ -71,7 +71,10 @@ class EmbeddingsManager
             }
             
             // Fallback a OpenAI si HuggingFace falla o no está configurado
-            if (!$embedding && !empty(Yii::$app->params['openai_api_key'])) {
+            // Solo intentar si la API key está configurada y parece válida (no vacía y tiene formato correcto)
+            if (!$embedding && !empty(Yii::$app->params['openai_api_key']) && 
+                strlen(trim(Yii::$app->params['openai_api_key'])) > 10 && 
+                strpos(Yii::$app->params['openai_api_key'], 'sk-') === 0) {
                 $embedding = self::generarEmbeddingOpenAI($texto);
             }
             
@@ -173,7 +176,12 @@ class EmbeddingsManager
                 $responseData = json_decode($response->content, true);
                 return $responseData['data'][0]['embedding'] ?? null;
             } else {
-                \Yii::error('Error generando embedding OpenAI: ' . $response->getStatusCode(), 'embeddings');
+                $statusCode = $response->getStatusCode();
+                $errorMsg = 'Error generando embedding OpenAI: ' . $statusCode;
+                if ($statusCode === 401) {
+                    $errorMsg .= ' - API key inválida o expirada. Verifica tu configuración en params-local.php';
+                }
+                \Yii::error($errorMsg, 'embeddings');
             }
         } catch (\Exception $e) {
             \Yii::error("Error en generación de embedding OpenAI: " . $e->getMessage(), 'embeddings');
@@ -440,44 +448,55 @@ class EmbeddingsManager
                     }
                 }
             } else {
-                // Fallback a OpenAI batch
-            $client = new Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl('https://api.openai.com/v1/embeddings')
-                ->addHeaders([
-                        'Authorization' => 'Bearer ' . Yii::$app->params['openai_api_key'],
-                    'Content-Type' => 'application/json'
-                ])
-                ->setContent(json_encode([
-                    'model' => 'text-embedding-3-small',
-                        'input' => array_values($textosSinCache)
-                ]))
-                ->send();
+                // Fallback a OpenAI batch solo si la API key es válida
+                if (!empty(Yii::$app->params['openai_api_key']) && 
+                    strlen(trim(Yii::$app->params['openai_api_key'])) > 10 && 
+                    strpos(Yii::$app->params['openai_api_key'], 'sk-') === 0) {
+                    $client = new Client();
+                    $response = $client->createRequest()
+                        ->setMethod('POST')
+                        ->setUrl('https://api.openai.com/v1/embeddings')
+                        ->addHeaders([
+                            'Authorization' => 'Bearer ' . Yii::$app->params['openai_api_key'],
+                            'Content-Type' => 'application/json'
+                        ])
+                        ->setContent(json_encode([
+                            'model' => 'text-embedding-3-small',
+                            'input' => array_values($textosSinCache)
+                        ]))
+                        ->send();
 
-            if ($response->isOk) {
-                $responseData = json_decode($response->content, true);
-                $data = $responseData['data'] ?? [];
-                    $textosArray = array_values($textosSinCache);
-                
-                foreach ($data as $index => $item) {
-                        if (isset($textosArray[$index])) {
-                            $texto = $textosArray[$index];
-                            $embedding = $item['embedding'] ?? null;
-                            if ($embedding) {
-                                $embeddings[$texto] = $embedding;
-                                
-                                // Guardar en cache
-                                $cacheKey = 'embedding_' . md5($texto);
-                                self::$cache[$cacheKey] = $embedding;
-                                if ($yiiCache) {
-                                    $yiiCache->set($cacheKey, $embedding, self::CACHE_TTL);
+                    if ($response->isOk) {
+                        $responseData = json_decode($response->content, true);
+                        $data = $responseData['data'] ?? [];
+                        $textosArray = array_values($textosSinCache);
+                        
+                        foreach ($data as $index => $item) {
+                            if (isset($textosArray[$index])) {
+                                $texto = $textosArray[$index];
+                                $embedding = $item['embedding'] ?? null;
+                                if ($embedding) {
+                                    $embeddings[$texto] = $embedding;
+                                    
+                                    // Guardar en cache
+                                    $cacheKey = 'embedding_' . md5($texto);
+                                    self::$cache[$cacheKey] = $embedding;
+                                    if ($yiiCache) {
+                                        $yiiCache->set($cacheKey, $embedding, self::CACHE_TTL);
+                                    }
                                 }
                             }
                         }
+                    } else {
+                        $statusCode = $response->getStatusCode();
+                        $errorMsg = 'Error generando embeddings OpenAI (batch): ' . $statusCode;
+                        if ($statusCode === 401) {
+                            $errorMsg .= ' - API key inválida o expirada. Verifica tu configuración en params-local.php';
+                        }
+                        \Yii::error($errorMsg, 'embeddings');
                     }
                 }
-                }
+            }
                 
                 \Yii::info("Embeddings generados en lote: " . count($embeddings) . " términos", 'embeddings');
             

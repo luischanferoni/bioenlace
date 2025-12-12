@@ -231,17 +231,19 @@ class IAManager
         
         return [
             'tipo' => 'huggingface',
-            'endpoint' => "https://router.huggingface.co/hf-inference/{$modelo}",
+            // Usar router.huggingface.co con formato compatible OpenAI
+            'endpoint' => "https://router.huggingface.co/v1/chat/completions",
             'headers' => [
                 'Authorization' => 'Bearer ' . (Yii::$app->params['hf_api_key'] ?? ''),
                 'Content-Type' => 'application/json'
             ],
             'payload' => [
-                'inputs' => '',
-                'parameters' => [
-                    'max_new_tokens' => (int)(Yii::$app->params['hf_max_length'] ?? 500),
-                    'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.2) // Más bajo para tareas determinísticas
-                ]
+                'model' => $modelo,
+                'messages' => [], // Se llenará con el prompt
+                'stream' => false,
+                // Aumentar max_tokens para evitar respuestas JSON truncadas
+                'max_tokens' => (int)(Yii::$app->params['hf_max_length'] ?? 2000),
+                'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.2) // Más bajo para tareas determinísticas
             ],
             'modelo' => $modelo,
             'tipo_modelo' => $tipoModelo
@@ -271,10 +273,9 @@ class IAManager
                 break;
             case 'openai':
             case 'groq':
-                $proveedorIA['payload']['messages'][] = ['role' => 'user', 'content' => $prompt];
-                break;
             case 'huggingface':
-                $proveedorIA['payload']['inputs'] = $prompt;
+                // Hugging Face ahora usa el mismo formato que OpenAI/Groq
+                $proveedorIA['payload']['messages'][] = ['role' => 'user', 'content' => $prompt];
                 break;
         }
     }
@@ -315,10 +316,9 @@ class IAManager
                 break;
             case 'openai':
             case 'groq':
-                $contenido = $responseData['choices'][0]['message']['content'] ?? null;
-                break;
             case 'huggingface':
-                $contenido = $responseData[0]['generated_text'] ?? null;
+                // Hugging Face ahora usa el mismo formato de respuesta que OpenAI/Groq
+                $contenido = $responseData['choices'][0]['message']['content'] ?? null;
                 break;
             default:
                 $contenido = $responseData;
@@ -718,14 +718,10 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
 
             // Crear prompt para corregir todas las palabras de una vez
             $palabrasLista = implode(', ', array_unique($palabras));
-            $prompt = "Corrige SOLO errores ortográficos en las palabras indicadas. NO cambies abreviaturas. NO agregues texto.\n\n";
+            $prompt = "Corrige SOLO errores ortográficos en las palabras indicadas. NO agregues texto.\n\n";
             $prompt .= "Texto: {$contexto}\n";
-            $prompt .= "Palabras a revisar: {$palabrasLista}\n\n";
             $prompt .= "Reglas estrictas:\n";
             $prompt .= "- Si la palabra tiene error ortográfico, escribe: palabra_original -> palabra_corregida\n";
-            $prompt .= "- Si la palabra está correcta (incluyendo abreviaturas), escribe: palabra_original -> palabra_original\n";
-            $prompt .= "- NO cambies abreviaturas médicas (OI, OD, Bmc, Caf, etc.)\n";
-            $prompt .= "- NO interpretes ni completes el texto\n\n";
             $prompt .= "Correcciones:\n";
 
             $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://router.huggingface.co/hf-inference/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
@@ -905,15 +901,11 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
             $proveedorIA = $this->getProveedorIAInstance('text-correction');
             
             // Prompt optimizado para SOLO corrección ortográfica (sin expansión de abreviaturas)
-            $prompt = "Corrige SOLO errores ortográficos. NO expandas abreviaturas. NO agregues texto nuevo. NO cambies la estructura.
+            $prompt = "Corrige SOLO errores ortográficos.
 
 Reglas estrictas:
 - Corrige únicamente palabras con errores ortográficos (ej: laseracion→laceración, isocorica→isocórica)
-- MANTÉN todas las abreviaturas como están (OI, OD, Bmc, Caf, etc.)
-- MANTÉN la estructura y formato exactos
-- NO agregues palabras que no estaban en el texto original
 - NO cambies el orden de las palabras
-- NO interpretes ni completes el texto
 
 Texto: {$texto}
 
@@ -922,6 +914,7 @@ Corregido:";
             // Asignar prompt según el tipo de proveedor
             $this->asignarPromptAConfiguracionInstance($proveedorIA, $prompt);
             
+            // Registrar en logger si está disponible
             if ($logger) {
                 $logger->registrar(
                     'PROCESAMIENTO',
@@ -936,6 +929,18 @@ Corregido:";
                     ]
                 );
             }
+            
+            // Fallback: Registrar también en log de Yii para asegurar que siempre se vea
+            \Yii::info(
+                sprintf(
+                    'IAManager::corregirTextoCompletoConIA - Proveedor: %s, Modelo: %s, Longitud: %d, Especialidad: %s',
+                    $proveedorIA['tipo'] ?? 'huggingface',
+                    $proveedorIA['payload']['model'] ?? $proveedorIA['payload']['inputs'] ?? 'desconocido',
+                    strlen($texto),
+                    $especialidad ?? 'N/A'
+                ),
+                'ia-manager'
+            );
             
             // Realizar petición
             $client = new Client();
@@ -952,25 +957,72 @@ Corregido:";
                 if ($textoCorregido) {
                     $textoCorregido = trim($textoCorregido);
                     
+                    // CRÍTICO: Filtrar contenido de reasoning de modelos como DeepSeek-R1
+                    // Eliminar tags de reasoning (<think>, <think>, etc.)
+                    $textoCorregido = preg_replace('/<think>.*?<\/think>/is', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<think>.*?<\/redacted_reasoning>/is', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<reasoning>.*?<\/reasoning>/is', '', $textoCorregido);
+                    $textoCorregido = preg_replace('/<think>/i', '', $textoCorregido);
+                    
+                    // Eliminar líneas que contengan instrucciones o reasoning
+                    $lineas = explode("\n", $textoCorregido);
+                    $lineasLimpias = [];
+                    foreach ($lineas as $linea) {
+                        $lineaLimpia = trim($linea);
+                        
+                        // Omitir líneas que sean instrucciones o reasoning
+                        if (preg_match('/^(Vale|El usuario|Las reglas|debo|Debo|Las son|son estrictas|únicamente|Solo|solo|corregir|Corregir|ortográficos|ortograficos)/i', $lineaLimpia)) {
+                            continue;
+                        }
+                        
+                        // Omitir líneas que contengan reasoning tags
+                        if (preg_match('/<(think|reasoning|redacted_reasoning)/i', $lineaLimpia)) {
+                            continue;
+                        }
+                        
+                        // Omitir líneas que solo contengan "Corregido:" o variaciones
+                        if (preg_match('/^(Corregido|Texto corregido|Corrección):?\s*$/i', $lineaLimpia)) {
+                            continue;
+                        }
+                        
+                        $lineasLimpias[] = $linea;
+                    }
+                    $textoCorregido = implode("\n", $lineasLimpias);
+                    
                     // Limpiar posibles prefijos que el modelo pueda agregar al inicio
                     $textoCorregido = preg_replace('/^(Texto corregido|Corrección|Corregido):\s*/i', '', $textoCorregido);
                     
                     // Limpiar posibles sufijos que el modelo pueda agregar al final
                     $textoCorregido = preg_replace('/\s*(Texto corregido|Corrección|Corregido):?\s*$/i', '', $textoCorregido);
                     
-                    // Limpiar líneas que solo contengan "Corregido:" o variaciones
-                    $lineas = explode("\n", $textoCorregido);
-                    $lineasLimpias = [];
-                    foreach ($lineas as $linea) {
-                        $lineaLimpia = trim($linea);
-                        // Si la línea es solo "Corregido:" o variaciones, omitirla
-                        if (!preg_match('/^(Corregido|Texto corregido|Corrección):?\s*$/i', $lineaLimpia)) {
-                            $lineasLimpias[] = $linea;
-                        }
-                    }
-                    $textoCorregido = implode("\n", $lineasLimpias);
-                    
                     $textoCorregido = trim($textoCorregido);
+                    
+                    // VALIDACIÓN CRÍTICA: Si el texto corregido parece ser instrucciones en lugar de texto médico,
+                    // rechazar la respuesta y usar el texto original
+                    if (self::esRespuestaInvalida($textoCorregido, $texto)) {
+                        \Yii::warning("La IA devolvió una respuesta inválida (parece ser instrucciones). Usando texto original.", 'ia-manager');
+                        if ($logger) {
+                            $logger->registrar(
+                                'ERROR',
+                                'Respuesta IA inválida detectada',
+                                'La respuesta parece contener instrucciones en lugar de texto corregido',
+                                [
+                                    'metodo' => 'IAManager::corregirTextoCompletoConIA',
+                                    'respuesta_preview' => substr($textoCorregido, 0, 200)
+                                ]
+                            );
+                        }
+                        // Retornar texto original sin cambios
+                        return [
+                            'texto_corregido' => $texto,
+                            'cambios' => [],
+                            'confidence' => 0.0,
+                            'total_changes' => 0,
+                            'processing_time' => microtime(true) - $inicio,
+                            'metodo' => 'ia_local',
+                            'error' => 'respuesta_invalida'
+                        ];
+                    }
                     
                     // Detectar cambios comparando texto original y corregido
                     $cambios = $this->detectarCambios($texto, $textoCorregido);
@@ -1103,12 +1155,25 @@ Corregido:";
             
             if (strtolower($originalLimpia) !== strtolower($corregidaLimpia) && 
                 !empty($originalLimpia) && !empty($corregidaLimpia)) {
+                // Asegurar que sean strings válidos
+                $palabraOriginalStr = is_array($palabraOriginal) ? implode(' ', $palabraOriginal) : (string)$palabraOriginal;
+                $palabraCorregidaStr = is_array($palabraCorregida) ? implode(' ', $palabraCorregida) : (string)$palabraCorregida;
+                
+                // Limpiar caracteres problemáticos
+                $palabraOriginalStr = trim($palabraOriginalStr);
+                $palabraCorregidaStr = trim($palabraCorregidaStr);
+                
+                // Validar que no estén vacíos después de limpiar
+                if (empty($palabraOriginalStr) || empty($palabraCorregidaStr)) {
+                    continue;
+                }
+                
                 // Calcular confianza individual para cada cambio
                 $confidence = self::calcularConfianzaCambioIndividual($originalLimpia, $corregidaLimpia);
                 
                 $cambios[] = [
-                    'original' => $palabraOriginal,
-                    'corrected' => $palabraCorregida,
+                    'original' => $palabraOriginalStr,
+                    'corrected' => $palabraCorregidaStr,
                     'confidence' => $confidence,
                     'method' => 'ia_local'
                 ];
@@ -1202,7 +1267,8 @@ Corregido:";
         $respuesta = trim($respuesta);
 
         // Buscar JSON en la respuesta (por si hay texto adicional)
-        if (preg_match('/\{.*\}/s', $respuesta, $matches)) {
+        // Usar regex más robusto que maneje JSON anidado
+        if (preg_match('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $respuesta, $matches)) {
             $respuesta = $matches[0];
         }
 
@@ -1223,7 +1289,19 @@ Corregido:";
             return $jsonData;
         }
 
-        \Yii::error('No se pudo decodificar JSON de la IA: ' . json_last_error_msg() . ' - Respuesta: ' . substr($respuesta, 0, 200), 'ia-manager');
+        // Intentar reparar JSON truncado (cerrar strings y objetos abiertos)
+        $respuestaReparada = $this->intentarRepararJSONTruncado($respuesta);
+        if ($respuestaReparada) {
+            $jsonData = json_decode($respuestaReparada, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                \Yii::warning('JSON reparado exitosamente después de estar truncado', 'ia-manager');
+                return $jsonData;
+            }
+        }
+
+        // Log completo de la respuesta para debugging (más de 200 caracteres)
+        $respuestaPreview = strlen($respuesta) > 500 ? substr($respuesta, 0, 500) . '...' : $respuesta;
+        \Yii::error('No se pudo decodificar JSON de la IA: ' . json_last_error_msg() . ' - Respuesta (' . strlen($respuesta) . ' chars): ' . $respuestaPreview, 'ia-manager');
         return null;
     }
 
@@ -1248,6 +1326,51 @@ Corregido:";
         }
 
         return trim($respuesta);
+    }
+
+    /**
+     * Intentar reparar JSON truncado
+     * @param string $json
+     * @return string|null JSON reparado o null si no se pudo reparar
+     */
+    private function intentarRepararJSONTruncado($json)
+    {
+        // Contar llaves abiertas y cerradas
+        $abiertas = substr_count($json, '{');
+        $cerradas = substr_count($json, '}');
+        $abiertasCorchetes = substr_count($json, '[');
+        $cerradasCorchetes = substr_count($json, ']');
+        
+        // Si hay más llaves abiertas que cerradas, intentar cerrarlas
+        if ($abiertas > $cerradas) {
+            $json .= str_repeat('}', $abiertas - $cerradas);
+        }
+        
+        // Si hay más corchetes abiertos que cerrados, intentar cerrarlos
+        if ($abiertasCorchetes > $cerradasCorchetes) {
+            $json .= str_repeat(']', $abiertasCorchetes - $cerradasCorchetes);
+        }
+        
+        // Buscar strings sin cerrar (comillas dobles sin pareja)
+        // Esto es más complejo, pero podemos intentar cerrar el último string abierto
+        $ultimaComilla = strrpos($json, '"');
+        if ($ultimaComilla !== false) {
+            // Contar comillas antes de la última
+            $comillasAntes = substr_count(substr($json, 0, $ultimaComilla), '"');
+            // Si hay un número impar de comillas, la última está abierta
+            if ($comillasAntes % 2 === 0) {
+                // La última comilla está abierta, cerrarla
+                $json .= '"';
+            }
+        }
+        
+        // Validar que el JSON reparado sea válido
+        $test = json_decode($json, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $json;
+        }
+        
+        return null;
     }
 
     /**

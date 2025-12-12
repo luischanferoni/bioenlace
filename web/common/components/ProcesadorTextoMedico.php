@@ -678,8 +678,28 @@ class ProcesadorTextoMedico
         $logger = ConsultaLogger::obtenerInstancia();
         
         foreach ($cambiosIA as $cambio) {
-            $original = trim($cambio['original'] ?? '');
-            $corrected = trim($cambio['corrected'] ?? '');
+            // Validar que $cambio sea un array
+            if (!is_array($cambio)) {
+                \Yii::warning("Cambio no es un array: " . print_r($cambio, true), 'procesador-texto');
+                continue;
+            }
+            
+            // Extraer valores y asegurar que sean strings
+            $originalRaw = $cambio['original'] ?? '';
+            $correctedRaw = $cambio['corrected'] ?? '';
+            
+            // Convertir a string si es array (no debería pasar, pero por seguridad)
+            if (is_array($originalRaw)) {
+                \Yii::warning("Original es un array: " . print_r($originalRaw, true), 'procesador-texto');
+                $originalRaw = implode(' ', $originalRaw);
+            }
+            if (is_array($correctedRaw)) {
+                \Yii::warning("Corrected es un array: " . print_r($correctedRaw, true), 'procesador-texto');
+                $correctedRaw = implode(' ', $correctedRaw);
+            }
+            
+            $original = trim((string)$originalRaw);
+            $corrected = trim((string)$correctedRaw);
             $confidence = floatval($cambio['confidence'] ?? 0.0);
             
             // Validar que sean palabras válidas

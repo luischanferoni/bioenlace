@@ -143,6 +143,32 @@ class ConsultaLogger
                 $linea .= "    - " . $abreviatura . "\n";
             }
         }
+        
+        // Metadata adicional para corrección IA
+        if (!empty($metadata['proveedor'])) {
+            $linea .= "  Proveedor: " . $metadata['proveedor'] . "\n";
+        }
+        if (!empty($metadata['modelo'])) {
+            $linea .= "  Modelo: " . $metadata['modelo'] . "\n";
+        }
+        if (isset($metadata['longitud_texto'])) {
+            $linea .= "  Longitud texto: " . $metadata['longitud_texto'] . " caracteres\n";
+        }
+        if (!empty($metadata['especialidad'])) {
+            $linea .= "  Especialidad: " . $metadata['especialidad'] . "\n";
+        }
+        if (isset($metadata['confidence'])) {
+            $linea .= "  Confianza: " . $metadata['confidence'] . "\n";
+        }
+        if (isset($metadata['tiempo'])) {
+            $linea .= "  Tiempo procesamiento: " . $metadata['tiempo'] . " segundos\n";
+        }
+        if (isset($metadata['status_code'])) {
+            $linea .= "  Status code: " . $metadata['status_code'] . "\n";
+        }
+        if (isset($metadata['respuesta_length'])) {
+            $linea .= "  Longitud respuesta: " . $metadata['respuesta_length'] . " caracteres\n";
+        }
 
         $this->escribir($linea . "\n");
     }

@@ -609,13 +609,17 @@ Texto: \"$texto\"";
             return null; // Retornar null para indicar error
         }
 
-        // Prompt optimizado (reducido 40% para reducir costos)
+        // Prompt optimizado con instrucciones claras para generar JSON completo
         $prompt = "Extrae datos en JSON. Categorías: " . $categoriasTexto . ". Sin datos: [].
+
+IMPORTANTE: Genera un JSON completo y válido. Asegúrate de cerrar todas las llaves, corchetes y comillas.
 
 Formato:
 {\"datosExtraidos\":{\"categoria\":[\"valor\"]}}
 
-Texto: \"" . $texto . "\"";
+Texto: \"" . $texto . "\"
+
+Responde SOLO con el JSON, sin texto adicional antes o después.";
 //var_dump($prompt);die;
         return [
             'prompt' => $prompt,

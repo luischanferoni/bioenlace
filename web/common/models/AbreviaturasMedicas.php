@@ -92,37 +92,112 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
         
         // Ordenar por longitud descendente para evitar que abreviaturas cortas
         // se reemplacen dentro de abreviaturas más largas
-        $abreviaturas = $query->orderBy([
-            new \yii\db\Expression('LENGTH(abreviatura) DESC'),
-            'frecuencia_uso' => SORT_DESC
-        ])->all();
+        try {
+            $abreviaturas = $query->orderBy([
+                new \yii\db\Expression('LENGTH(abreviatura) DESC'),
+                'frecuencia_uso' => SORT_DESC
+            ])->all();
+        } catch (\Exception $e) {
+            \Yii::error("Error cargando abreviaturas: " . $e->getMessage(), 'abreviaturas');
+            $abreviaturas = [];
+        }
+        
+        // Asegurar que $abreviaturas sea siempre un array
+        if (!is_array($abreviaturas) && !($abreviaturas instanceof \Countable)) {
+            $abreviaturas = [];
+        }
+        
+        // Crear mapa de abreviaturas para búsqueda rápida (case-insensitive)
+        $mapaAbreviaturas = [];
+        foreach ($abreviaturas as $abreviatura) {
+            $clave = mb_strtolower($abreviatura->abreviatura, 'UTF-8');
+            $mapaAbreviaturas[$clave] = $abreviatura;
+        }
+        
+        // Logging usando ConsultaLogger si está disponible
+        $logger = \common\components\ConsultaLogger::obtenerInstancia();
+        
+        // Listar abreviaturas cargadas para debugging
+        $listaAbreviaturas = [];
+        foreach ($abreviaturas as $abrev) {
+            $listaAbreviaturas[] = $abrev->abreviatura . ' → ' . $abrev->expansion_completa;
+        }
+        
+        $totalAbreviaturas = is_countable($abreviaturas) ? count($abreviaturas) : 0;
+        
+        if ($logger) {
+            $logger->registrar(
+                'PROCESAMIENTO',
+                'Carga de abreviaturas',
+                'Total abreviaturas cargadas: ' . $totalAbreviaturas,
+                [
+                    'metodo' => 'AbreviaturasMedicas::expandirAbreviaturas',
+                    'total_abreviaturas' => $totalAbreviaturas,
+                    'texto_preview' => substr($texto, 0, 100),
+                    'abreviaturas' => $listaAbreviaturas
+                ]
+            );
+        } else {
+            // Fallback a Yii::info si no hay logger
+            \Yii::info("Abreviaturas cargadas ({$totalAbreviaturas}): " . implode(', ', $listaAbreviaturas), 'abreviaturas');
+        }
         
         $textoProcesado = $texto;
         $abreviaturasAplicadas = [];
         
+        // Ordenar abreviaturas por longitud descendente para evitar reemplazos parciales
+        // Asegurar que $abreviaturas sea un array antes de ordenar
+        if (is_array($abreviaturas) && is_countable($abreviaturas) && count($abreviaturas) > 0) {
+            usort($abreviaturas, function($a, $b) {
+                return strlen($b->abreviatura) - strlen($a->abreviatura);
+            });
+        }
+        
+        // Asegurar que $abreviaturas sea iterable antes del foreach
+        if (!is_array($abreviaturas) && !($abreviaturas instanceof \Traversable)) {
+            $abreviaturas = [];
+        }
+        
+        // Procesar cada abreviatura
         foreach ($abreviaturas as $abreviatura) {
-            // Crear patrón para buscar la abreviatura como palabra completa
-            // Debe funcionar con: "Bmc:", ":Bmc:", "Bmc.", "Bmc ", etc.
-            $abrevEscapada = preg_quote($abreviatura->abreviatura, '/');
+            $abrevOriginal = $abreviatura->abreviatura;
             
-            // Patrón mejorado que permite:
-            // - Inicio de línea o carácter no-palabra antes (incluyendo :)
-            // - La abreviatura exacta
-            // - Fin de línea o carácter no-palabra después (incluyendo :)
-            $patron = '/(?<=^|\W)' . $abrevEscapada . '(?=\W|$)/iu';
+            // Buscar todas las ocurrencias de la abreviatura en el texto (case-insensitive)
+            // Patrón que permite puntuación después (:, ., etc.) pero no dentro de otra palabra
+            // Usar lookahead negativo para asegurar que no sea parte de otra palabra
+            $abrevEscapada = preg_quote($abrevOriginal, '/');
+            // Permitir: inicio de línea/palabra, la abreviatura, y luego espacio/puntuación/fin
+            $patron = '/(?<=^|\s|[:.,;!?])' . $abrevEscapada . '(?=\s|[:.,;!?]|$)/iu';
             
-            // Verificar si la abreviatura existe en el texto antes de reemplazar
-            if (preg_match($patron, $textoProcesado)) {
-                $textoProcesado = preg_replace(
-                    $patron, 
-                    $abreviatura->expansion_completa, 
-                    $textoProcesado
-                );
+            if (preg_match_all($patron, $textoProcesado, $matches, PREG_OFFSET_CAPTURE)) {
+                // Validar que $matches[0] sea un array antes de contar
+                $ocurrencias = 0;
+                if (isset($matches[0]) && (is_array($matches[0]) || ($matches[0] instanceof \Countable))) {
+                    $ocurrencias = is_countable($matches[0]) ? count($matches[0]) : 0;
+                }
+                
+                // Reemplazar todas las ocurrencias encontradas
+                $textoProcesado = preg_replace($patron, $abreviatura->expansion_completa, $textoProcesado);
                 
                 $abreviaturasAplicadas[] = [
-                    'abreviatura' => $abreviatura->abreviatura,
-                    'expansion' => $abreviatura->expansion_completa
+                    'abreviatura' => $abrevOriginal,
+                    'expansion' => $abreviatura->expansion_completa,
+                    'ocurrencias' => $ocurrencias
                 ];
+                
+                if ($logger) {
+                    $logger->registrar(
+                        'PROCESAMIENTO',
+                        "Abreviatura encontrada: {$abrevOriginal}",
+                        "Expandida a: {$abreviatura->expansion_completa}",
+                        [
+                            'metodo' => 'AbreviaturasMedicas::expandirAbreviaturas',
+                            'abreviatura' => $abrevOriginal,
+                            'expansion' => $abreviatura->expansion_completa,
+                            'ocurrencias' => $ocurrencias
+                        ]
+                    );
+                }
             }
         }
         
@@ -143,17 +218,19 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
      */
     public static function expandirAbreviaturasConMedico($texto, $especialidad = null, $idRrHh = null)
     {
+        // Inicializar variables asegurando que sean arrays
         $abreviaturasEncontradas = [];
         $textoProcesado = $texto;
         
         // Obtener todas las abreviaturas activas con información de médicos
+        // La tabla de relación se llama 'abreviaturas_rrhh', no 'abreviaturas_medicos'
         $query = self::find()
             ->select([
                 'abreviaturas_medicas.*',
                 'GROUP_CONCAT(am.id_rr_hh) as medicos_ids',
                 'MAX(am.frecuencia_uso) as max_frecuencia_medico'
             ])
-            ->leftJoin('abreviaturas_medicos am', 'abreviaturas_medicas.id = am.abreviatura_id AND am.activo = 1')
+            ->leftJoin('abreviaturas_rrhh am', 'abreviaturas_medicas.id = am.abreviatura_id AND am.activo = 1')
             ->where(['abreviaturas_medicas.activo' => 1])
             ->groupBy('abreviaturas_medicas.id');
         
@@ -166,38 +243,122 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
         
         // Ordenar por longitud descendente para evitar que abreviaturas cortas
         // se reemplacen dentro de abreviaturas más largas
-        $abreviaturas = $query->orderBy([
-            new \yii\db\Expression('LENGTH(abreviaturas_medicas.abreviatura) DESC'),
-            'abreviaturas_medicas.frecuencia_uso' => SORT_DESC
-        ])->all();
+        try {
+            $abreviaturas = $query->orderBy([
+                new \yii\db\Expression('LENGTH(abreviaturas_medicas.abreviatura) DESC'),
+                'abreviaturas_medicas.frecuencia_uso' => SORT_DESC
+            ])->all();
+        } catch (\Exception $e) {
+            // Si hay error en la consulta, usar método simple sin JOIN
+            \Yii::error("Error en consulta con JOIN, usando método simple: " . $e->getMessage(), 'abreviaturas');
+            $abreviaturas = self::find()
+                ->where(['activo' => 1])
+                ->orderBy([
+                    new \yii\db\Expression('LENGTH(abreviatura) DESC'),
+                    'frecuencia_uso' => SORT_DESC
+                ])
+                ->all();
+        }
         
+        // Asegurar que $abreviaturas sea siempre un array
+        if (!is_array($abreviaturas) && !($abreviaturas instanceof \Countable)) {
+            $abreviaturas = [];
+        }
+        
+        // Logging usando ConsultaLogger si está disponible
+        $logger = \common\components\ConsultaLogger::obtenerInstancia();
+        
+        // Listar abreviaturas cargadas para debugging
+        $listaAbreviaturas = [];
+        foreach ($abreviaturas as $abrev) {
+            $listaAbreviaturas[] = $abrev->abreviatura . ' → ' . $abrev->expansion_completa;
+        }
+        
+        $totalAbreviaturas = is_countable($abreviaturas) ? count($abreviaturas) : 0;
+        
+        if ($logger) {
+            $logger->registrar(
+                'PROCESAMIENTO',
+                'Carga de abreviaturas (con médico)',
+                'Total abreviaturas cargadas: ' . $totalAbreviaturas,
+                [
+                    'metodo' => 'AbreviaturasMedicas::expandirAbreviaturasConMedico',
+                    'total_abreviaturas' => $totalAbreviaturas,
+                    'id_rr_hh' => $idRrHh,
+                    'especialidad' => $especialidad,
+                    'abreviaturas' => $listaAbreviaturas
+                ]
+            );
+        } else {
+            // Fallback a Yii::info si no hay logger
+            \Yii::info("Abreviaturas cargadas (con médico) ({$totalAbreviaturas}): " . implode(', ', $listaAbreviaturas), 'abreviaturas');
+        }
+        
+        // Ordenar abreviaturas por longitud descendente para evitar reemplazos parciales
+        // Asegurar que $abreviaturas sea un array antes de ordenar
+        if (is_array($abreviaturas) && is_countable($abreviaturas) && count($abreviaturas) > 0) {
+            usort($abreviaturas, function($a, $b) {
+                return strlen($b->abreviatura) - strlen($a->abreviatura);
+            });
+        }
+        
+        // Asegurar que $abreviaturas sea iterable antes del foreach
+        if (!is_array($abreviaturas) && !($abreviaturas instanceof \Traversable)) {
+            $abreviaturas = [];
+        }
+        
+        // Procesar cada abreviatura
         foreach ($abreviaturas as $abreviatura) {
-            // Patrón mejorado que permite:
-            // - Inicio de línea o carácter no-palabra antes (incluyendo :)
-            // - La abreviatura exacta
-            // - Fin de línea o carácter no-palabra después (incluyendo :)
-            $abrevEscapada = preg_quote($abreviatura->abreviatura, '/');
-            $patron = '/(?<=^|\W)' . $abrevEscapada . '(?=\W|$)/iu';
+            $abrevOriginal = $abreviatura->abreviatura;
             
-            if (preg_match($patron, $textoProcesado)) {
+            // Buscar todas las ocurrencias de la abreviatura en el texto (case-insensitive)
+            // Patrón que permite puntuación después (:, ., etc.) pero no dentro de otra palabra
+            $abrevEscapada = preg_quote($abrevOriginal, '/');
+            // Permitir: inicio de línea/palabra, la abreviatura, y luego espacio/puntuación/fin
+            $patron = '/(?<=^|\s|[:.,;!?])' . $abrevEscapada . '(?=\s|[:.,;!?]|$)/iu';
+            
+            if (preg_match_all($patron, $textoProcesado, $matches, PREG_OFFSET_CAPTURE)) {
+                // Validar que $matches[0] sea un array antes de contar
+                $ocurrencias = 0;
+                if (isset($matches[0]) && (is_array($matches[0]) || ($matches[0] instanceof \Countable))) {
+                    $ocurrencias = is_countable($matches[0]) ? count($matches[0]) : 0;
+                }
+                
                 $expansionElegida = self::elegirExpansionPorMedico($abreviatura, $idRrHh);
                 
                 if ($expansionElegida) {
-                    $textoProcesado = preg_replace(
-                        $patron, 
-                        $expansionElegida, 
-                        $textoProcesado
-                    );
+                    // Reemplazar todas las ocurrencias encontradas
+                    $textoProcesado = preg_replace($patron, $expansionElegida, $textoProcesado);
                     
                     $abreviaturasEncontradas[] = [
-                        'abreviatura' => $abreviatura->abreviatura,
+                        'abreviatura' => $abrevOriginal,
                         'expansion' => $expansionElegida,
                         'categoria' => $abreviatura->categoria,
                         'contexto' => $abreviatura->contexto,
-                        'metodo_seleccion' => $expansionElegida === $abreviatura->expansion_completa ? 'frecuencia_general' : 'medico_especifico'
+                        'metodo_seleccion' => $expansionElegida === $abreviatura->expansion_completa ? 'frecuencia_general' : 'medico_especifico',
+                        'ocurrencias' => $ocurrencias
                     ];
+                    
+                    if ($logger) {
+                        $logger->registrar(
+                            'PROCESAMIENTO',
+                            "Abreviatura encontrada: {$abrevOriginal}",
+                            "Expandida a: {$expansionElegida}",
+                            [
+                                'metodo' => 'AbreviaturasMedicas::expandirAbreviaturasConMedico',
+                                'abreviatura' => $abrevOriginal,
+                                'expansion' => $expansionElegida,
+                                'ocurrencias' => $ocurrencias
+                            ]
+                        );
+                    }
                 }
             }
+        }
+        
+        // Asegurar que $abreviaturasEncontradas sea siempre un array
+        if (!is_array($abreviaturasEncontradas)) {
+            $abreviaturasEncontradas = [];
         }
         
         return [
@@ -235,7 +396,12 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
             ->andWhere(['!=', 'id', $abreviatura->id])
             ->all();
         
-        if (count($abreviaturasSimilares) > 0) {
+        // Asegurar que sea un array antes de contar
+        if (!is_array($abreviaturasSimilares) && !($abreviaturasSimilares instanceof \Countable)) {
+            $abreviaturasSimilares = [];
+        }
+        
+        if (is_countable($abreviaturasSimilares) && count($abreviaturasSimilares) > 0) {
             // Hay ambigüedad, usar LLM para desambiguar
             return self::desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idRrHh);
         }
@@ -254,6 +420,10 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
      */
     private static function desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idRrHh)
     {
+        // Asegurar que $abreviaturasSimilares sea un array
+        if (!is_array($abreviaturasSimilares)) {
+            $abreviaturasSimilares = [];
+        }
         try {
             // Crear prompt para el LLM
             $opciones = [$abreviatura->expansion_completa];
@@ -272,7 +442,8 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
             // Usar IAManager para consultar LLM
             $respuesta = \Yii::$app->iamanager->consultarLLM($prompt);
             
-            if (is_numeric($respuesta) && $respuesta >= 1 && $respuesta <= count($opciones)) {
+            $opcionesCount = is_countable($opciones) ? count($opciones) : 0;
+            if (is_numeric($respuesta) && $respuesta >= 1 && $respuesta <= $opcionesCount) {
                 $expansionElegida = $opciones[$respuesta - 1];
                 
                 // Guardar la elección del LLM para futuras referencias

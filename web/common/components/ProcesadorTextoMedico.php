@@ -97,7 +97,8 @@ class ProcesadorTextoMedico
         $textoCorregidoRapido = $resultadoSymSpell['corrected_text'] ?? $textoConAbreviaturas;
         
         if ($logger) {
-            $cambiosSymSpell = count($resultadoSymSpell['corrections'] ?? []);
+            $corrections = $resultadoSymSpell['corrections'] ?? [];
+            $cambiosSymSpell = is_countable($corrections) ? count($corrections) : 0;
             $logger->registrar(
                 'PROCESAMIENTO',
                 'Corrección SymSpell',
@@ -147,7 +148,10 @@ class ProcesadorTextoMedico
                 $textoCorregido = self::validarCorreccionIA($textoCorregido, $textoCorregidoRapido);
                 
                 if ($logger) {
-                    $cambiosIA = count($resultadoIA['cambios'] ?? []);
+                    $cambiosIAArray = $resultadoIA['cambios'] ?? [];
+                    $cambiosIA = is_countable($cambiosIAArray) ? count($cambiosIAArray) : 0;
+                    $palabrasSinSugerenciasCount = is_countable($palabrasSinSugerencias) ? count($palabrasSinSugerencias) : 0;
+                    
                     $logger->registrar(
                         'PROCESAMIENTO',
                         'Corrección IA texto completo',
@@ -155,7 +159,7 @@ class ProcesadorTextoMedico
                         [
                             'metodo' => 'IAManager::corregirTextoCompletoConIA',
                             'total_cambios' => $cambiosIA,
-                            'palabras_no_encontradas' => count($palabrasSinSugerencias)
+                            'palabras_no_encontradas' => $palabrasSinSugerenciasCount
                         ]
                     );
                 }
@@ -227,7 +231,7 @@ class ProcesadorTextoMedico
                 'Texto procesado exitosamente',
                 [
                     'metodo' => 'ProcesadorTextoMedico::prepararParaIA',
-                    'total_cambios' => count($resultadoIA['cambios'] ?? []),
+                    'total_cambios' => is_countable($resultadoIA['cambios'] ?? []) ? count($resultadoIA['cambios'] ?? []) : 0,
                     'tiempo_total' => round(microtime(true) - $inicio, 3)
                 ]
             );
@@ -359,6 +363,39 @@ class ProcesadorTextoMedico
         // Obtener el texto procesado usando el método existente
         $textoProcesado = self::prepararParaIA($textoConsulta, $especialidad, $tabId, $idRrHh);
         
+        // Limpiar cualquier "Corregido:" que la IA pueda haber agregado al final
+        $textoProcesado = preg_replace('/\s*(Corregido|Texto corregido|Corrección):?\s*$/i', '', $textoProcesado);
+        $textoProcesado = trim($textoProcesado);
+        
+        // Limpiar líneas que solo contengan "Corregido:" o variaciones
+        $lineas = explode("\n", $textoProcesado);
+        $lineasLimpias = [];
+        foreach ($lineas as $linea) {
+            $lineaLimpia = trim($linea);
+            // Si la línea es solo "Corregido:" o variaciones, omitirla
+            if (!preg_match('/^(Corregido|Texto corregido|Corrección):?\s*$/i', $lineaLimpia)) {
+                $lineasLimpias[] = $linea;
+            }
+        }
+        $textoProcesado = implode("\n", $lineasLimpias);
+        $textoProcesado = trim($textoProcesado);
+        
+        // Si después de limpiar el texto está vacío o solo tiene "Corregido:", usar el texto original
+        if (empty($textoProcesado) || preg_match('/^(Corregido|Texto corregido|Corrección):?\s*$/i', $textoProcesado)) {
+            if ($logger) {
+                $logger->registrar(
+                    'ADVERTENCIA',
+                    'Texto procesado vacío después de limpieza',
+                    'Usando texto original',
+                    [
+                        'metodo' => 'ProcesadorTextoMedico::prepararParaIAConFormato',
+                        'texto_original_length' => strlen($textoConsulta)
+                    ]
+                );
+            }
+            $textoProcesado = $textoConsulta;
+        }
+        
         // Obtener información de correcciones para formatear
         $correccionesInfo = self::obtenerInfoCorrecciones($tabId);
         
@@ -387,6 +424,23 @@ class ProcesadorTextoMedico
         
         // Formatear texto con subrayado
         $textoFormateado = self::formatearTextoConSubrayado($textoProcesado, $iaChanges, $symspellChanges);
+        
+        if ($logger) {
+            $logger->registrar(
+                'PROCESAMIENTO',
+                'Formateo de texto completado',
+                'Texto formateado generado',
+                [
+                    'metodo' => 'ProcesadorTextoMedico::prepararParaIAConFormato',
+                    'texto_procesado_length' => strlen($textoProcesado),
+                    'texto_formateado_length' => strlen($textoFormateado),
+                    'total_cambios' => $totalCambios,
+                    'ia_changes' => count($iaChanges),
+                    'symspell_changes' => count($symspellChanges),
+                    'texto_formateado_preview' => substr($textoFormateado, 0, 200)
+                ]
+            );
+        }
         
         return [
             'texto_procesado' => $textoProcesado,
@@ -466,19 +520,94 @@ class ProcesadorTextoMedico
      */
     private static function expandirAbreviaturasConocidas($texto, $especialidad = null, $idRrHh = null)
     {
+        $logger = ConsultaLogger::obtenerInstancia();
+        
         if (!class_exists('\common\models\AbreviaturasMedicas')) {
+            if ($logger) {
+                $logger->registrar(
+                    'ERROR',
+                    'Clase AbreviaturasMedicas no existe',
+                    'No se pueden expandir abreviaturas',
+                    ['metodo' => 'ProcesadorTextoMedico::expandirAbreviaturasConocidas']
+                );
+            }
             return $texto;
         }
         
         try {
+            if ($logger) {
+                $logger->registrar(
+                    'PROCESAMIENTO',
+                    'Iniciando expansión de abreviaturas',
+                    'Método: ' . ($idRrHh ? 'expandirAbreviaturasConMedico' : 'expandirAbreviaturas'),
+                    [
+                        'metodo' => 'ProcesadorTextoMedico::expandirAbreviaturasConocidas',
+                        'id_rr_hh' => $idRrHh,
+                        'especialidad' => $especialidad,
+                        'texto_length' => strlen($texto)
+                    ]
+                );
+            }
+            
             if ($idRrHh) {
                 $resultado = AbreviaturasMedicas::expandirAbreviaturasConMedico($texto, $especialidad, $idRrHh);
-                return $resultado['texto_procesado'] ?? $texto;
+                
+                $textoResultado = $resultado['texto_procesado'] ?? $texto;
+                
+                if ($logger) {
+                    $abreviaturasEncontradas = $resultado['abreviaturas_encontradas'] ?? [];
+                    // Asegurar que sea un array antes de contar
+                    if (!is_array($abreviaturasEncontradas) && !($abreviaturasEncontradas instanceof \Countable)) {
+                        $abreviaturasEncontradas = [];
+                    }
+                    $totalEncontradas = is_countable($abreviaturasEncontradas) ? count($abreviaturasEncontradas) : 0;
+                        
+                    $logger->registrar(
+                        'PROCESAMIENTO',
+                        'Expansión de abreviaturas completada (con médico)',
+                        "Abreviaturas encontradas: {$totalEncontradas}",
+                        [
+                            'metodo' => 'ProcesadorTextoMedico::expandirAbreviaturasConocidas',
+                            'abreviaturas_encontradas' => $abreviaturasEncontradas
+                        ]
+                    );
+                }
+                
+                return $textoResultado;
             } else {
-                return AbreviaturasMedicas::expandirAbreviaturas($texto, $especialidad);
+                $textoResultado = AbreviaturasMedicas::expandirAbreviaturas($texto, $especialidad);
+                
+                if ($logger) {
+                    $logger->registrar(
+                        'PROCESAMIENTO',
+                        'Expansión de abreviaturas completada',
+                        'Texto procesado',
+                        [
+                            'metodo' => 'ProcesadorTextoMedico::expandirAbreviaturasConocidas',
+                            'texto_original_length' => strlen($texto),
+                            'texto_procesado_length' => strlen($textoResultado)
+                        ]
+                    );
+                }
+                
+                return $textoResultado;
             }
         } catch (\Exception $e) {
             \Yii::error("Error expandiendo abreviaturas: " . $e->getMessage(), 'procesador-texto');
+            
+            if ($logger) {
+                $logger->registrar(
+                    'ERROR',
+                    'Error expandiendo abreviaturas',
+                    $e->getMessage(),
+                    [
+                        'metodo' => 'ProcesadorTextoMedico::expandirAbreviaturasConocidas',
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]
+                );
+            }
+            
             return $texto;
         }
     }
@@ -1062,7 +1191,8 @@ class ProcesadorTextoMedico
             'control médico',
             'documento',
             'texto corregido',
-            'corrección'
+            'corrección',
+            'corregido:'
         ];
         
         foreach ($frasesProhibidas as $frase) {
@@ -1071,6 +1201,15 @@ class ProcesadorTextoMedico
                 \Yii::warning("Corrección IA rechazada: se agregó frase no deseada: '{$frase}'", 'procesador-texto');
                 return $textoOriginal;
             }
+        }
+        
+        // Verificar específicamente si termina con "Corregido:" o variaciones
+        if (preg_match('/\s*(Corregido|Texto corregido|Corrección):?\s*$/i', $normalizadoCorregido) &&
+            !preg_match('/\s*(Corregido|Texto corregido|Corrección):?\s*$/i', $normalizadoOriginal)) {
+            \Yii::warning("Corrección IA rechazada: texto termina con 'Corregido:'", 'procesador-texto');
+            // Limpiar el sufijo y retornar
+            $textoCorregido = preg_replace('/\s*(Corregido|Texto corregido|Corrección):?\s*$/i', '', $normalizadoCorregido);
+            return trim($textoCorregido);
         }
         
         return $textoCorregido;

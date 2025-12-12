@@ -70,52 +70,16 @@ class SymSpellCorrector
     
     /**
      * Cargar abreviaturas desde la base de datos
+     * NOTA: Las abreviaturas NO se cargan en el diccionario de SymSpell
+     * porque deben expandirse ANTES de la corrección ortográfica.
+     * SymSpell solo debe trabajar con errores ortográficos, no con abreviaturas.
      */
     private function loadAbreviaturasFromDB()
     {
-        try {
-            $abreviaturas = \common\models\AbreviaturasMedicas::find()
-                ->where(['activo' => 1])
-                ->all();
-            
-            foreach ($abreviaturas as $abreviatura) {
-                // Agregar abreviatura con alta frecuencia
-                $this->dictionary[$abreviatura->abreviatura] = [
-                    'frequency' => 1000 + $abreviatura->frecuencia_uso,
-                    'expansion' => $abreviatura->expansion_completa,
-                    'type' => 'abreviatura',
-                    'category' => $abreviatura->categoria,
-                    'specialty' => $abreviatura->especialidad
-                ];
-                
-                // También agregar la expansión completa
-                $this->dictionary[$abreviatura->expansion_completa] = [
-                    'frequency' => 500 + $abreviatura->frecuencia_uso,
-                    'expansion' => $abreviatura->expansion_completa,
-                    'type' => 'expansion',
-                    'category' => $abreviatura->categoria,
-                    'specialty' => $abreviatura->especialidad
-                ];
-            }
-            
-            $logger = ConsultaLogger::obtenerInstancia();
-            if ($logger) {
-                $logger->registrar(
-                    'PROCESAMIENTO',
-                    'Carga de abreviaturas',
-                    'Abreviaturas cargadas desde BD',
-                [
-                    'metodo' => 'SymSpellCorrector::loadAbreviaturasFromDB',
-                    'abreviaturas_cargadas' => count($abreviaturas)
-                ]
-                );
-            } else {
-                \Yii::info("Cargadas " . count($abreviaturas) . " abreviaturas desde BD", 'symspell');
-            }
-            
-        } catch (\Exception $e) {
-            \Yii::error("Error cargando abreviaturas desde BD: " . $e->getMessage(), 'symspell');
-        }
+        // Las abreviaturas ya se expanden en ProcesadorTextoMedico antes de llegar a SymSpell
+        // No necesitamos cargarlas aquí
+        // Este método se mantiene por compatibilidad pero no hace nada
+        return;
     }
     
     /**
@@ -287,18 +251,6 @@ class SymSpellCorrector
         // 3. Buscar correcciones por distancia de edición (solo para palabras normales, NO abreviaturas)
         $suggestions = $this->lookup($cleanWord);
         
-        if ($logger) {
-            $logger->registrar(
-                'PROCESAMIENTO',
-                $cleanWord,
-                'Buscando sugerencias',
-                [
-                    'metodo' => 'SymSpellCorrector::correct - Búsqueda SymSpell',
-                    'sugerencias_encontradas' => count($suggestions)
-                ]
-            );
-        }
-        
         if (empty($suggestions)) {
             if ($logger) {
                 $logger->registrar(
@@ -327,7 +279,10 @@ class SymSpellCorrector
             $requiereValidacion = false;
             $razonesValidacion = [];
             
-            foreach (array_slice($suggestions, 0, 3) as $i => $sug) {
+            // Construir lista de sugerencias encontradas para el log
+            $sugerenciasTexto = [];
+            foreach (array_slice($suggestions, 0, 5) as $i => $sug) {
+                $sugerenciasTexto[] = ($i + 1) . '. ' . $sug['term'] . ' (dist: ' . $sug['distance'] . ', freq: ' . $sug['count'] . ')';
                 $cambiosDetallados[] = ($i + 1) . '. ' . $cleanWord . ' → ' . $sug['term'] . ' (distancia: ' . $sug['distance'] . ', frecuencia: ' . $sug['count'] . ')';
                 
                 // Detectar casos problemáticos
@@ -352,6 +307,20 @@ class SymSpellCorrector
                 $requiereValidacion = true;
                 $razonesValidacion[] = 'Palabra muy corta (' . strlen($cleanWord) . ' caracteres)';
             }
+            
+            // Mostrar las sugerencias encontradas en el log
+            $salidaLog = "Sugerencias encontradas (" . count($suggestions) . "):\n" . implode("\n", $sugerenciasTexto);
+            
+            $logger->registrar(
+                'PROCESAMIENTO',
+                $cleanWord,
+                $salidaLog,
+                [
+                    'metodo' => 'SymSpellCorrector::correct - Búsqueda SymSpell',
+                    'sugerencias_encontradas' => count($suggestions),
+                    'mejor_sugerencia' => $bestSuggestion['term']
+                ]
+            );
             
             $logger->registrar(
                 'PROCESAMIENTO',

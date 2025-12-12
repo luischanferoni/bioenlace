@@ -30,10 +30,19 @@ class IAManager
     /**
      * Comprimir datos en tránsito (gzip)
      * @param string $data Datos a comprimir
+     * @param string|null $tipoProveedor Tipo de proveedor ('huggingface', 'openai', 'groq', 'ollama')
      * @return array ['data' => string, 'headers' => array]
      */
-    private static function comprimirDatos($data)
+    private static function comprimirDatos($data, $tipoProveedor = null)
     {
+        // Solo comprimir para HuggingFace - otros proveedores no aceptan compresión en request
+        $proveedoresQueAceptanCompresion = ['huggingface'];
+        
+        if ($tipoProveedor && !in_array($tipoProveedor, $proveedoresQueAceptanCompresion)) {
+            // No comprimir para OpenAI, Groq, Ollama, etc.
+            return ['data' => $data, 'headers' => []];
+        }
+        
         $usarCompresion = Yii::$app->params['comprimir_datos_transito'] ?? true;
         $headers = [];
         
@@ -46,6 +55,44 @@ class IAManager
         }
         
         return ['data' => $data, 'headers' => $headers];
+    }
+    
+    /**
+     * Descomprimir respuesta HTTP si está comprimida
+     * @param \yii\httpclient\Response $response
+     * @return string Contenido descomprimido
+     */
+    private static function descomprimirRespuesta($response)
+    {
+        $content = $response->content;
+        
+        // Verificar si la respuesta está comprimida
+        $contentEncoding = $response->headers->get('Content-Encoding', '');
+        
+        if (strtolower($contentEncoding) === 'gzip' || 
+            (substr($content, 0, 2) === "\x1f\x8b")) { // Firma gzip
+            if (function_exists('gzdecode')) {
+                $descomprimido = @gzdecode($content);
+                if ($descomprimido !== false) {
+                    \Yii::info("Respuesta descomprimida: " . strlen($content) . " -> " . strlen($descomprimido) . " bytes", 'ia-manager');
+                    return $descomprimido;
+                } else {
+                    \Yii::warning("Error descomprimiendo respuesta gzip", 'ia-manager');
+                }
+            }
+        } elseif (strtolower($contentEncoding) === 'deflate') {
+            if (function_exists('gzinflate')) {
+                $descomprimido = @gzinflate($content);
+                if ($descomprimido !== false) {
+                    \Yii::info("Respuesta descomprimida (deflate): " . strlen($content) . " -> " . strlen($descomprimido) . " bytes", 'ia-manager');
+                    return $descomprimido;
+                } else {
+                    \Yii::warning("Error descomprimiendo respuesta deflate", 'ia-manager');
+                }
+            }
+        }
+        
+        return $content;
     }
     
     /**
@@ -248,10 +295,13 @@ class IAManager
      */
     public function procesarRespuestaProveedorInstance($response, $tipo)
     {
-        $responseData = json_decode($response->content, true);
+        // Descomprimir respuesta si está comprimida
+        $content = self::descomprimirRespuesta($response);
+        
+        $responseData = json_decode($content, true);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            \Yii::error('Error decodificando JSON de IA: ' . json_last_error_msg(), 'ia-manager');
+            \Yii::error('Error decodificando JSON de IA: ' . json_last_error_msg() . ' - Contenido preview: ' . substr($content, 0, 200), 'ia-manager');
             return null;
         }
 
@@ -377,8 +427,9 @@ class IAManager
             // Los logs detallados ya se manejan en ConsultaLogger
 
             // Comprimir datos en tránsito (gzip) para reducir ancho de banda
+            // Solo para proveedores que lo aceptan (HuggingFace)
             $payloadJson = json_encode($proveedorIA['payload']);
-            $compresion = self::comprimirDatos($payloadJson);
+            $compresion = self::comprimirDatos($payloadJson, $proveedorIA['tipo'] ?? null);
             $headersConCompresion = array_merge($proveedorIA['headers'], $compresion['headers']);
             
             $client = new Client();
@@ -597,9 +648,9 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 ]
             ];
 
-            // Comprimir datos en tránsito
+            // Comprimir datos en tránsito (solo para HuggingFace)
             $payloadJson = json_encode($payload);
-            $compresion = self::comprimirDatos($payloadJson);
+            $compresion = self::comprimirDatos($payloadJson, 'huggingface');
             $headers = [
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json'
@@ -615,7 +666,8 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 ->send();
 
             if ($response->isOk) {
-                $data = json_decode($response->content, true);
+                $content = self::descomprimirRespuesta($response);
+                $data = json_decode($content, true);
                 $suggestion = trim($data[0]['generated_text'] ?? '');
 
                 if (!empty($suggestion) && $suggestion !== $palabra) {
@@ -688,9 +740,9 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 );
             }
 
-            // Comprimir datos en tránsito
+            // Comprimir datos en tránsito (solo para HuggingFace)
             $payloadJson = json_encode($payload);
-            $compresion = self::comprimirDatos($payloadJson);
+            $compresion = self::comprimirDatos($payloadJson, 'huggingface');
             $headers = [
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json'
@@ -706,7 +758,8 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 ->send();
 
             if ($response->isOk) {
-                $data = json_decode($response->content, true);
+                $content = self::descomprimirRespuesta($response);
+                $data = json_decode($content, true);
                 $respuesta = trim($data[0]['generated_text'] ?? '');
                 
                 if ($logger) {
@@ -884,8 +937,24 @@ Corregido:";
                 if ($textoCorregido) {
                     $textoCorregido = trim($textoCorregido);
                     
-                    // Limpiar posibles prefijos/sufijos que el modelo pueda agregar
+                    // Limpiar posibles prefijos que el modelo pueda agregar al inicio
                     $textoCorregido = preg_replace('/^(Texto corregido|Corrección|Corregido):\s*/i', '', $textoCorregido);
+                    
+                    // Limpiar posibles sufijos que el modelo pueda agregar al final
+                    $textoCorregido = preg_replace('/\s*(Texto corregido|Corrección|Corregido):?\s*$/i', '', $textoCorregido);
+                    
+                    // Limpiar líneas que solo contengan "Corregido:" o variaciones
+                    $lineas = explode("\n", $textoCorregido);
+                    $lineasLimpias = [];
+                    foreach ($lineas as $linea) {
+                        $lineaLimpia = trim($linea);
+                        // Si la línea es solo "Corregido:" o variaciones, omitirla
+                        if (!preg_match('/^(Corregido|Texto corregido|Corrección):?\s*$/i', $lineaLimpia)) {
+                            $lineasLimpias[] = $linea;
+                        }
+                    }
+                    $textoCorregido = implode("\n", $lineasLimpias);
+                    
                     $textoCorregido = trim($textoCorregido);
                     
                     // Detectar cambios comparando texto original y corregido

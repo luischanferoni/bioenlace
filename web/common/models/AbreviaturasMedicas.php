@@ -90,20 +90,45 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
             ]);
         }
         
-        $abreviaturas = $query->orderBy(['frecuencia_uso' => SORT_DESC])->all();
+        // Ordenar por longitud descendente para evitar que abreviaturas cortas
+        // se reemplacen dentro de abreviaturas más largas
+        $abreviaturas = $query->orderBy([
+            new \yii\db\Expression('LENGTH(abreviatura) DESC'),
+            'frecuencia_uso' => SORT_DESC
+        ])->all();
         
         $textoProcesado = $texto;
+        $abreviaturasAplicadas = [];
         
         foreach ($abreviaturas as $abreviatura) {
             // Crear patrón para buscar la abreviatura como palabra completa
-            $patron = '/\b' . preg_quote($abreviatura->abreviatura, '/') . '\b/i';
+            // Debe funcionar con: "Bmc:", ":Bmc:", "Bmc.", "Bmc ", etc.
+            $abrevEscapada = preg_quote($abreviatura->abreviatura, '/');
             
-            // Reemplazar con expansión completa
-            $textoProcesado = preg_replace(
-                $patron, 
-                $abreviatura->expansion_completa, 
-                $textoProcesado
-            );
+            // Patrón mejorado que permite:
+            // - Inicio de línea o carácter no-palabra antes (incluyendo :)
+            // - La abreviatura exacta
+            // - Fin de línea o carácter no-palabra después (incluyendo :)
+            $patron = '/(?<=^|\W)' . $abrevEscapada . '(?=\W|$)/iu';
+            
+            // Verificar si la abreviatura existe en el texto antes de reemplazar
+            if (preg_match($patron, $textoProcesado)) {
+                $textoProcesado = preg_replace(
+                    $patron, 
+                    $abreviatura->expansion_completa, 
+                    $textoProcesado
+                );
+                
+                $abreviaturasAplicadas[] = [
+                    'abreviatura' => $abreviatura->abreviatura,
+                    'expansion' => $abreviatura->expansion_completa
+                ];
+            }
+        }
+        
+        // Log para debugging
+        if (!empty($abreviaturasAplicadas)) {
+            \Yii::info("Abreviaturas expandidas: " . json_encode($abreviaturasAplicadas), 'abreviaturas');
         }
         
         return $textoProcesado;
@@ -139,10 +164,20 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
             ]);
         }
         
-        $abreviaturas = $query->orderBy(['abreviaturas_medicas.frecuencia_uso' => SORT_DESC])->all();
+        // Ordenar por longitud descendente para evitar que abreviaturas cortas
+        // se reemplacen dentro de abreviaturas más largas
+        $abreviaturas = $query->orderBy([
+            new \yii\db\Expression('LENGTH(abreviaturas_medicas.abreviatura) DESC'),
+            'abreviaturas_medicas.frecuencia_uso' => SORT_DESC
+        ])->all();
         
         foreach ($abreviaturas as $abreviatura) {
-            $patron = '/\b' . preg_quote($abreviatura->abreviatura, '/') . '\b/i';
+            // Patrón mejorado que permite:
+            // - Inicio de línea o carácter no-palabra antes (incluyendo :)
+            // - La abreviatura exacta
+            // - Fin de línea o carácter no-palabra después (incluyendo :)
+            $abrevEscapada = preg_quote($abreviatura->abreviatura, '/');
+            $patron = '/(?<=^|\W)' . $abrevEscapada . '(?=\W|$)/iu';
             
             if (preg_match($patron, $textoProcesado)) {
                 $expansionElegida = self::elegirExpansionPorMedico($abreviatura, $idRrHh);

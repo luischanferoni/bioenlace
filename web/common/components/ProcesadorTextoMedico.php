@@ -128,76 +128,47 @@ class ProcesadorTextoMedico
         
         // ============================================
         // PASO 5: Corrección con IA (solo si es necesario)
-        // Usar corrección palabra por palabra en lugar de texto completo para mayor precisión
+        // Si hay al menos una palabra no encontrada en el diccionario, 
+        // enviar TODO el texto a la IA para que tenga contexto completo
         // ============================================
         if ($necesitaIA) {
             $iam = Yii::$app->iamanager;
             
-            // Obtener palabras que necesitan corrección
+            // Verificar si hay palabras sin sugerencias (no encontradas en diccionario)
             $palabrasSinSugerencias = $resultadoSymSpell['words_without_suggestions'] ?? [];
-            $cambiosProblematicos = $resultadoSymSpell['cambios_problematicos'] ?? [];
             
-            // Recolectar palabras únicas que necesitan corrección
-            $palabrasACorregir = [];
-            foreach ($palabrasSinSugerencias as $item) {
-                $palabra = $item['word'] ?? $item['clean_word'] ?? '';
-                if (!empty($palabra) && !in_array($palabra, $palabrasACorregir)) {
-                    $palabrasACorregir[] = $palabra;
-                }
-            }
-            foreach ($cambiosProblematicos as $cambio) {
-                $palabra = $cambio['original'] ?? '';
-                if (!empty($palabra) && !in_array($palabra, $palabrasACorregir)) {
-                    $palabrasACorregir[] = $palabra;
-                }
-            }
-            
-            // Aplicar corrección palabra por palabra solo si hay palabras específicas
-            $textoCorregido = $textoCorregidoRapido;
-            $cambiosIA = [];
-            
-            if (!empty($palabrasACorregir)) {
-                // Usar corrección palabra por palabra (más seguro que texto completo)
-                $correccionesLLM = $iam->corregirPalabrasConLLM($palabrasACorregir, $textoCorregidoRapido, $especialidad);
+            // Si hay al menos una palabra no encontrada, usar corrección de texto completo
+            // para que la IA tenga contexto completo
+            if (!empty($palabrasSinSugerencias)) {
+                $resultadoIA = $iam->corregirTextoCompletoConIA($textoCorregidoRapido, $especialidad);
+                $textoCorregido = $resultadoIA['texto_corregido'];
                 
-                // Aplicar correcciones al texto
-                foreach ($correccionesLLM as $palabraOriginal => $correccion) {
-                    $palabraCorregida = $correccion['suggestion'] ?? '';
-                    $confidence = $correccion['confidence'] ?? 0.0;
-                    
-                    if (!empty($palabraCorregida) && $palabraCorregida !== $palabraOriginal && $confidence >= 0.7) {
-                        // Reemplazar solo palabras completas
-                        $patron = '/\b' . preg_quote($palabraOriginal, '/') . '\b/iu';
-                        $textoCorregido = preg_replace($patron, $palabraCorregida, $textoCorregido);
-                        
-                        $cambiosIA[] = [
-                            'original' => $palabraOriginal,
-                            'corrected' => $palabraCorregida,
-                            'confidence' => $confidence,
-                            'method' => 'ia_local'
-                        ];
-                    }
+                // VALIDACIÓN CRÍTICA: Verificar que no se haya agregado texto nuevo
+                $textoCorregido = self::validarCorreccionIA($textoCorregido, $textoCorregidoRapido);
+                
+                if ($logger) {
+                    $cambiosIA = count($resultadoIA['cambios'] ?? []);
+                    $logger->registrar(
+                        'PROCESAMIENTO',
+                        'Corrección IA texto completo',
+                        "Correcciones IA: {$cambiosIA}",
+                        [
+                            'metodo' => 'IAManager::corregirTextoCompletoConIA',
+                            'total_cambios' => $cambiosIA,
+                            'palabras_no_encontradas' => count($palabrasSinSugerencias)
+                        ]
+                    );
                 }
-            }
-            
-            $resultadoIA = [
-                'texto_corregido' => $textoCorregido,
-                'cambios' => $cambiosIA,
-                'confidence' => !empty($cambiosIA) ? array_sum(array_column($cambiosIA, 'confidence')) / count($cambiosIA) : 1.0,
-                'total_changes' => count($cambiosIA)
-            ];
-            
-            if ($logger) {
-                $logger->registrar(
-                    'PROCESAMIENTO',
-                    'Corrección IA palabra por palabra',
-                    "Correcciones IA: " . count($cambiosIA) . " de " . count($palabrasACorregir) . " palabras",
-                    [
-                        'metodo' => 'IAManager::corregirPalabrasConLLM',
-                        'total_cambios' => count($cambiosIA),
-                        'palabras_procesadas' => count($palabrasACorregir)
-                    ]
-                );
+            } else {
+                // Solo hay cambios problemáticos pero todas las palabras están en el diccionario
+                // Usar resultado de SymSpell (ya es suficientemente bueno)
+                $textoCorregido = $textoCorregidoRapido;
+                $resultadoIA = [
+                    'texto_corregido' => $textoCorregido,
+                    'cambios' => [],
+                    'confidence' => 1.0,
+                    'total_changes' => 0
+                ];
             }
         } else {
             // No necesita IA, usar resultado de SymSpell
@@ -436,14 +407,15 @@ class ProcesadorTextoMedico
     {
         $elementosPreservar = [];
         
-        if (!class_exists('\common\models\TerminoContextoMedico')) {
+        if (!class_exists('\common\models\DiccionarioOrtografico')) {
             return $elementosPreservar;
         }
         
         try {
-            // Cargar patrones regex desde base de datos
-            $query = TerminoContextoMedico::find()
-                ->where(['tipo' => 'regex', 'activo' => 1])
+            // Cargar patrones regex desde base de datos (nueva tabla unificada)
+            // Usar DiccionarioOrtografico que ahora apunta a diccionario_medico
+            $query = DiccionarioOrtografico::find()
+                ->where(['tipo' => DiccionarioOrtografico::TIPO_REGEX_PRESERVAR, 'activo' => 1])
                 ->andWhere(['or', 
                     ['categoria' => 'preservar'],
                     ['categoria' => 'notacion_medica']
@@ -695,9 +667,9 @@ class ProcesadorTextoMedico
      */
     private static function detectarCategoriaMedica($original, $corrected)
     {
-        // Buscar en términos de contexto médico para inferir categoría
-        if (class_exists('\common\models\TerminoContextoMedico')) {
-            $termino = TerminoContextoMedico::find()
+        // Buscar en diccionario médico para inferir categoría
+        if (class_exists('\common\models\DiccionarioOrtografico')) {
+            $termino = DiccionarioOrtografico::find()
                 ->where(['termino' => strtolower($corrected), 'activo' => 1])
                 ->one();
             
@@ -1047,6 +1019,61 @@ class ProcesadorTextoMedico
         }
         
         return null;
+    }
+
+    /**
+     * Validar corrección de IA para evitar cambios no deseados
+     * Rechaza correcciones que agreguen texto nuevo o cambien la estructura
+     * 
+     * @param string $textoCorregido Texto corregido por IA
+     * @param string $textoOriginal Texto original antes de IA
+     * @return string Texto validado (puede revertir a original si hay problemas)
+     */
+    private static function validarCorreccionIA($textoCorregido, $textoOriginal)
+    {
+        // Normalizar espacios y saltos de línea para comparación
+        $normalizadoOriginal = preg_replace('/\s+/', ' ', trim($textoOriginal));
+        $normalizadoCorregido = preg_replace('/\s+/', ' ', trim($textoCorregido));
+        
+        // Contar palabras en original y corregido
+        $palabrasOriginal = str_word_count($normalizadoOriginal, 0, 'áéíóúüñÁÉÍÓÚÜÑ');
+        $palabrasCorregido = str_word_count($normalizadoCorregido, 0, 'áéíóúüñÁÉÍÓÚÜÑ');
+        
+        // Si se agregaron más del 10% de palabras nuevas, rechazar
+        if ($palabrasCorregido > $palabrasOriginal * 1.1) {
+            \Yii::warning("Corrección IA rechazada: se agregaron demasiadas palabras nuevas ({$palabrasCorregido} vs {$palabrasOriginal})", 'procesador-texto');
+            return $textoOriginal;
+        }
+        
+        // Si la longitud es muy diferente (más del 20% de diferencia), rechazar
+        $diferenciaLongitud = abs(strlen($normalizadoCorregido) - strlen($normalizadoOriginal));
+        $porcentajeDiferencia = strlen($normalizadoOriginal) > 0 
+            ? ($diferenciaLongitud / strlen($normalizadoOriginal)) * 100 
+            : 0;
+        
+        if ($porcentajeDiferencia > 20) {
+            \Yii::warning("Corrección IA rechazada: diferencia de longitud muy grande ({$porcentajeDiferencia}%)", 'procesador-texto');
+            return $textoOriginal;
+        }
+        
+        // Verificar que no se hayan agregado frases comunes que indican interpretación
+        $frasesProhibidas = [
+            'cita médica',
+            'control médico',
+            'documento',
+            'texto corregido',
+            'corrección'
+        ];
+        
+        foreach ($frasesProhibidas as $frase) {
+            if (stripos($normalizadoCorregido, $frase) !== false && 
+                stripos($normalizadoOriginal, $frase) === false) {
+                \Yii::warning("Corrección IA rechazada: se agregó frase no deseada: '{$frase}'", 'procesador-texto');
+                return $textoOriginal;
+            }
+        }
+        
+        return $textoCorregido;
     }
 
     /**

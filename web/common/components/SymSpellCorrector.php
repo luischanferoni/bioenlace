@@ -17,6 +17,7 @@ class SymSpellCorrector
     private $maxEditDistance = 2;
     private $prefixLength = 7;
     private $countThreshold = 1;
+    private const CONFIANZA_MINIMA_APLICAR = 1.0; // Solo aplicar correcciones con 100% de confianza
     
     /**
      * Constructor
@@ -254,7 +255,36 @@ class SymSpellCorrector
             ];
         }
         
-        // 2. Buscar correcciones por distancia de edición
+        // 2. Verificar si es una posible abreviatura (mayúsculas, corta)
+        // Las abreviaturas SOLO deben coincidir exactamente, NO por distancia de edición
+        $esPosibleAbreviatura = $this->esPosibleAbreviatura($cleanWord);
+        
+        if ($esPosibleAbreviatura) {
+            // Para abreviaturas, NO buscar por distancia de edición
+            // Si no hay coincidencia exacta, no es una abreviatura válida
+            if ($logger) {
+                $logger->registrar(
+                    'PROCESAMIENTO',
+                    $cleanWord,
+                    'Posible abreviatura sin coincidencia exacta',
+                    [
+                        'metodo' => 'SymSpellCorrector::correct - Abreviatura no encontrada',
+                        'cambios' => 'No se corregirá (solo coincidencias exactas para abreviaturas)'
+                    ]
+                );
+            }
+            
+            return [
+                'original' => $word,
+                'corrected' => $word,
+                'confidence' => 0.0,
+                'method' => 'no_suggestions',
+                'suggestions' => [],
+                'processing_time' => microtime(true) - $inicio
+            ];
+        }
+        
+        // 3. Buscar correcciones por distancia de edición (solo para palabras normales, NO abreviaturas)
         $suggestions = $this->lookup($cleanWord);
         
         if ($logger) {
@@ -371,7 +401,15 @@ class SymSpellCorrector
         }
         
         // Buscar en el diccionario
+        // EXCLUIR abreviaturas de la búsqueda por distancia de edición
+        // Las abreviaturas solo deben coincidir exactamente
         foreach ($this->dictionary as $dictWord => $entry) {
+            // NO buscar sugerencias para abreviaturas por distancia de edición
+            // Las abreviaturas deben coincidir exactamente (ya se verificó arriba)
+            if (isset($entry['type']) && $entry['type'] === 'abreviatura') {
+                continue; // Saltar abreviaturas en búsqueda por distancia
+            }
+            
             $distance = $this->levenshteinDistance($word, $dictWord);
             
             if ($distance <= $this->maxEditDistance) {
@@ -399,6 +437,43 @@ class SymSpellCorrector
         return $suggestions;
     }
     
+    /**
+     * Detectar si una palabra es una posible abreviatura médica
+     * Las abreviaturas típicamente son cortas (2-5 caracteres) y en mayúsculas
+     * 
+     * @param string $word
+     * @return bool
+     */
+    private function esPosibleAbreviatura($word)
+    {
+        $length = strlen($word);
+        
+        // Abreviaturas típicamente tienen 2-5 caracteres
+        if ($length < 2 || $length > 5) {
+            return false;
+        }
+        
+        // Si la palabra está completamente en mayúsculas, es probablemente una abreviatura
+        if (strtoupper($word) === $word && $word !== strtolower($word)) {
+            return true;
+        }
+        
+        // Si tiene mayoría de mayúsculas, también podría ser abreviatura
+        $uppercaseCount = 0;
+        for ($i = 0; $i < $length; $i++) {
+            if (ctype_upper($word[$i])) {
+                $uppercaseCount++;
+            }
+        }
+        
+        // Si más del 50% son mayúsculas, probablemente es abreviatura
+        if ($uppercaseCount > ($length / 2)) {
+            return true;
+        }
+        
+        return false;
+    }
+
     /**
      * Lista de palabras de parada que nunca deben ser expandidas
      * Carga desde la base de datos, con cache estático para mejor rendimiento
@@ -548,13 +623,36 @@ class SymSpellCorrector
      */
     private function calculateConfidence($suggestion, $context = '')
     {
+        // Si es una corrección de tipo 'error' del diccionario con alta frecuencia, confianza máxima
+        if (isset($suggestion['type']) && $suggestion['type'] === 'error_ortografico' && 
+            $suggestion['distance'] <= 1 && $suggestion['frequency'] >= 100) {
+            return 1.0;
+        }
+        
         $baseConfidence = 0.5;
         
-        // Ajustar por distancia
-        $distanceBonus = max(0, (3 - $suggestion['distance']) / 3) * 0.3;
+        // Ajustar por distancia (distance 0 = exacta, distance 1 = muy cercana, distance 2 = aceptable)
+        // Para distance 1 con alta frecuencia, dar confianza alta
+        if ($suggestion['distance'] == 0) {
+            $distanceBonus = 0.5; // Coincidencia exacta
+        } elseif ($suggestion['distance'] == 1 && $suggestion['frequency'] >= 500) {
+            $distanceBonus = 0.4; // Muy cercana con alta frecuencia
+        } elseif ($suggestion['distance'] == 1) {
+            $distanceBonus = 0.3; // Muy cercana
+        } else {
+            $distanceBonus = max(0, (3 - $suggestion['distance']) / 3) * 0.2; // Aceptable
+        }
         
-        // Ajustar por frecuencia
-        $frequencyBonus = min(0.2, $suggestion['frequency'] / 1000) * 0.2;
+        // Ajustar por frecuencia (más peso para frecuencias altas)
+        if ($suggestion['frequency'] >= 1000) {
+            $frequencyBonus = 0.3; // Frecuencia muy alta
+        } elseif ($suggestion['frequency'] >= 500) {
+            $frequencyBonus = 0.2; // Frecuencia alta
+        } elseif ($suggestion['frequency'] >= 100) {
+            $frequencyBonus = 0.1; // Frecuencia media
+        } else {
+            $frequencyBonus = min(0.05, $suggestion['frequency'] / 2000); // Frecuencia baja
+        }
         
         // Ajustar por contexto médico
         $contextBonus = 0;
@@ -563,8 +661,9 @@ class SymSpellCorrector
             static $terminosContextoCache = null;
             
             if ($terminosContextoCache === null) {
-                $terminosContextoCache = \common\models\TerminoContextoMedico::find()
+                $terminosContextoCache = \common\models\DiccionarioOrtografico::find()
                     ->select(['termino'])
+                    ->where(['activo' => 1])
                     ->asArray()
                     ->column();
             }
@@ -602,12 +701,14 @@ class SymSpellCorrector
             $lengthPenalty = -0.3;
         }
         
-        // Penalizar si la diferencia de longitud es muy grande
+        // Penalizar si la diferencia de longitud es muy grande (indica posible error)
         $lengthDifferencePenalty = 0;
         if (isset($suggestion['original_length']) && isset($suggestion['term_length'])) {
             $lengthDiff = abs($suggestion['original_length'] - $suggestion['term_length']);
             if ($lengthDiff > 5) {
-                $lengthDifferencePenalty = -0.2;
+                $lengthDifferencePenalty = -0.3; // Penalización mayor para diferencias grandes
+            } elseif ($lengthDiff > 3) {
+                $lengthDifferencePenalty = -0.1; // Penalización menor
             }
         }
         
@@ -670,43 +771,74 @@ class SymSpellCorrector
                 $result = $this->correct($word, $context);
                 
                 if ($result['corrected'] !== $result['original']) {
-                    // Verificar si requiere validación
+                    // Verificar confianza mínima para aplicar corrección
+                    $confianzaSuficiente = $result['confidence'] >= self::CONFIANZA_MINIMA_APLICAR;
+                    
+                    // Verificar si requiere validación (confianza baja o otros factores)
                     $esProblematico = $result['confidence'] < 0.7 || 
                                      (isset($result['metadata']['distance']) && $result['metadata']['distance'] > 2) ||
                                      (isset($result['metadata']['count']) && $result['metadata']['count'] < 50) ||
                                      strlen($result['original']) < 4;
 
-                    if ($esProblematico) {
+                    // Si la confianza no es suficiente, marcar como problemático y NO aplicar
+                    if (!$confianzaSuficiente) {
                         $cambiosProblematicos[] = [
                             'original' => $result['original'],
                             'corrected' => $result['corrected'],
                             'confidence' => $result['confidence'],
                             'method' => $result['method'],
-                            'metadata' => $result['metadata'] ?? []
+                            'metadata' => $result['metadata'] ?? [],
+                            'razon_rechazo' => 'Confianza insuficiente (' . $result['confidence'] . ' < ' . self::CONFIANZA_MINIMA_APLICAR . ')'
                         ];
                         $requiereValidacion = true;
+                        
+                        $logger->registrar(
+                            'PROCESAMIENTO',
+                            $word,
+                            'Corrección rechazada por confianza insuficiente',
+                            [
+                                'metodo' => 'SymSpellCorrector::correct',
+                                'confianza' => $result['confidence'],
+                                'umbral_minimo' => self::CONFIANZA_MINIMA_APLICAR,
+                                'cambios_propuestos' => $result['original'] . ' → ' . $result['corrected'],
+                                'aplicado' => false
+                            ]
+                        );
+                    } else {
+                        // Confianza suficiente, aplicar la corrección
+                        if ($esProblematico) {
+                            $cambiosProblematicos[] = [
+                                'original' => $result['original'],
+                                'corrected' => $result['corrected'],
+                                'confidence' => $result['confidence'],
+                                'method' => $result['method'],
+                                'metadata' => $result['metadata'] ?? []
+                            ];
+                            $requiereValidacion = true;
+                        }
+
+                        $logger->registrar(
+                            'PROCESAMIENTO',
+                            $word,
+                            $result['corrected'],
+                            [
+                                'metodo' => 'SymSpellCorrector::correct',
+                                'confianza' => $result['confidence'],
+                                'cambios' => $result['original'] . ' → ' . $result['corrected'],
+                                'requiere_validacion' => $esProblematico,
+                                'aplicado' => true
+                            ]
+                        );
+
+                        $corrections[] = $result;
+                        $correctedText = str_replace($result['original'], $result['corrected'], $correctedText);
+                        $changes[] = [
+                            'original' => $result['original'],
+                            'corrected' => $result['corrected'],
+                            'confidence' => $result['confidence'],
+                            'method' => $result['method']
+                        ];
                     }
-
-                    $logger->registrar(
-                        'PROCESAMIENTO',
-                        $word,
-                        $result['corrected'],
-                        [
-                            'metodo' => 'SymSpellCorrector::correct',
-                            'confianza' => $result['confidence'],
-                            'cambios' => $result['original'] . ' → ' . $result['corrected'],
-                            'requiere_validacion' => $esProblematico
-                        ]
-                    );
-
-                    $corrections[] = $result;
-                    $correctedText = str_replace($result['original'], $result['corrected'], $correctedText);
-                    $changes[] = [
-                        'original' => $result['original'],
-                        'corrected' => $result['corrected'],
-                        'confidence' => $result['confidence'],
-                        'method' => $result['method']
-                    ];
                 } else {
                     // NUEVO: Capturar palabras sin sugerencias con su contexto
                     if ($result['method'] === 'no_suggestions' && $result['confidence'] == 0.0) {

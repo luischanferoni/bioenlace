@@ -10,7 +10,9 @@ class TerminoContextoMedico extends ActiveRecord
 {
     public static function tableName()
     {
-        return 'terminos_contexto_medico';
+        // Usar la nueva tabla unificada si existe, sino la antigua (para compatibilidad)
+        $tableExists = \Yii::$app->db->schema->getTableSchema('{{%diccionario_medico}}') !== null;
+        return $tableExists ? 'diccionario_medico' : 'terminos_contexto_medico';
     }
 
     public function behaviors()

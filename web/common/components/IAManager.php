@@ -20,7 +20,7 @@ class IAManager
     private static function extraerModeloId($endpoint)
     {
         // Extraer nombre del modelo del endpoint
-        // Ejemplo: https://api-inference.huggingface.co/models/llama3.1:8b -> llama3.1:8b
+        // Ejemplo: https://router.huggingface.co/models/llama3.1:8b -> llama3.1:8b
         if (preg_match('/models\/([^\/]+)/', $endpoint, $matches)) {
             return $matches[1];
         }
@@ -35,8 +35,14 @@ class IAManager
      */
     private static function comprimirDatos($data, $tipoProveedor = null)
     {
-        // Solo comprimir para HuggingFace - otros proveedores no aceptan compresión en request
-        $proveedoresQueAceptanCompresion = ['huggingface'];
+        // La nueva API router.huggingface.co podría no aceptar compresión gzip
+        // Desactivar compresión temporalmente para evitar errores 422
+        if ($tipoProveedor === 'huggingface') {
+            return ['data' => $data, 'headers' => []];
+        }
+        
+        // Solo comprimir para otros proveedores si lo aceptan
+        $proveedoresQueAceptanCompresion = [];
         
         if ($tipoProveedor && !in_array($tipoProveedor, $proveedoresQueAceptanCompresion)) {
             // No comprimir para OpenAI, Groq, Ollama, etc.
@@ -170,13 +176,13 @@ class IAManager
                 'Content-Type' => 'application/json'
             ],
             'payload' => [
-                'model' => 'openai/gpt-oss-120b',
+                'model' => 'llama3-70b-8192',
                 'messages' => [
                     ['role' => 'user', 'content' => '']
                 ],
                 'max_completion_tokens' => 8192,
-                'temperature' => 1,
-                'top_p' => 1
+                'temperature' => 0.3,
+                'top_p' => 0.9
             ]
         ];
     }
@@ -225,7 +231,7 @@ class IAManager
         
         return [
             'tipo' => 'huggingface',
-            'endpoint' => "https://api-inference.huggingface.co/models/{$modelo}",
+            'endpoint' => "https://router.huggingface.co/hf-inference/{$modelo}",
             'headers' => [
                 'Authorization' => 'Bearer ' . (Yii::$app->params['hf_api_key'] ?? ''),
                 'Content-Type' => 'application/json'
@@ -233,11 +239,8 @@ class IAManager
             'payload' => [
                 'inputs' => '',
                 'parameters' => [
-                    'max_length' => (int)(Yii::$app->params['hf_max_length'] ?? 500),
-                    'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.2), // Más bajo para tareas determinísticas
-                    'return_full_text' => false,
-                    'wait_for_model' => false, // Evitar cold starts costosos
-                    'timeout' => 30 // Timeout más corto para requests no críticos (reduce costos de timeouts)
+                    'max_new_tokens' => (int)(Yii::$app->params['hf_max_length'] ?? 500),
+                    'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.2) // Más bajo para tareas determinísticas
                 ]
             ],
             'modelo' => $modelo,
@@ -426,11 +429,23 @@ class IAManager
             
             // Los logs detallados ya se manejan en ConsultaLogger
 
+            // Preparar payload JSON
+            $payloadJson = json_encode($proveedorIA['payload']);
+            
+            // Validar JSON antes de enviar
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                \Yii::error("Error codificando JSON para IA: " . json_last_error_msg() . " - Payload: " . print_r($proveedorIA['payload'], true), 'ia-manager');
+                return null;
+            }
+            
             // Comprimir datos en tránsito (gzip) para reducir ancho de banda
             // Solo para proveedores que lo aceptan (HuggingFace)
-            $payloadJson = json_encode($proveedorIA['payload']);
+            // NOTA: La nueva API router.huggingface.co podría no aceptar compresión gzip
             $compresion = self::comprimirDatos($payloadJson, $proveedorIA['tipo'] ?? null);
             $headersConCompresion = array_merge($proveedorIA['headers'], $compresion['headers']);
+            
+            // Log del payload para debugging (solo primeros 500 caracteres)
+            \Yii::info("Enviando request a: {$proveedorIA['endpoint']} - Payload preview: " . substr($payloadJson, 0, 500), 'ia-manager');
             
             $client = new Client();
             $response = $client->createRequest()
@@ -636,7 +651,7 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
             $prompt .= "- Considera el contexto médico de la oración\n";
             $prompt .= "Corrección:";
 
-            $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://api-inference.huggingface.co/models/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
+            $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://router.huggingface.co/hf-inference/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
             $apiKey = \Yii::$app->params['hf_api_key'] ?? '';
 
             $payload = [
@@ -713,7 +728,7 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
             $prompt .= "- NO interpretes ni completes el texto\n\n";
             $prompt .= "Correcciones:\n";
 
-            $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://api-inference.huggingface.co/models/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
+            $endpoint = \Yii::$app->params['hf_endpoint'] ?? 'https://router.huggingface.co/hf-inference/PlanTL-GOB-ES/roberta-base-biomedical-clinical-es';
             $apiKey = \Yii::$app->params['hf_api_key'] ?? '';
 
             $payload = [

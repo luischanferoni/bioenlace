@@ -442,7 +442,7 @@ class SpeechToTextManager
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
-                ->setUrl("https://api-inference.huggingface.co/models/{$modelo}")
+                ->setUrl("https://router.huggingface.co/hf-inference/{$modelo}")
                 ->addHeaders([
                     'Authorization' => 'Bearer ' . $apiKey,
                     'Content-Type' => 'application/json'

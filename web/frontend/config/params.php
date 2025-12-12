@@ -9,23 +9,24 @@ return [
     
     // Configuración de IA    
     'ia_proveedor' => 'huggingface', // 'huggingface', 'groq', 'openai' , ollama
-    'groq_api_key' => '', // API key para Groq
-    'openai_api_key' => '', // API key para OpenAI
-    'hf_api_key' => '', // API key para Hugging Face
+    // API Keys - Reemplazar con tus keys reales
+    'groq_api_key' => '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', // Obtener de https://console.groq.com/
+    'openai_api_key' => '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', // Obtener de https://platform.openai.com/
+    'hf_api_key' => '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', // Obtener de https://huggingface.co/settings/tokens
     // NOTA: HuggingFace ofrece tier gratuito con 30,000 requests/mes gratis
     // Optimizar uso para maximizar requests gratuitos antes de usar tier de pago
     'hf_use_free_tier' => true, // Priorizar uso del tier gratuito (30K requests/mes)
     
     // Configuración de modelos HuggingFace optimizados
-    'hf_model_text_gen' => 'HuggingFaceH4/zephyr-7b-beta', // Modelo para generación de texto
+    'hf_model_text_gen' => 'deepseek-ai/DeepSeek-R1', // Modelo para generación de texto (DeepSeek R1)
     'hf_model_correction' => 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es', // Modelo para corrección
-    'hf_model_analysis' => 'microsoft/DialoGPT-small', // Modelo para análisis
+    'hf_model_analysis' => 'deepseek-ai/DeepSeek-R1', // Modelo para análisis (DeepSeek R1)
     'hf_embedding_model' => 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', // Modelo de embeddings
     'hf_stt_model' => 'jonatasgrosman/wav2vec2-xlsr-53-spanish', // Modelo Speech-to-Text (economico por defecto)
     
     // Parámetros de optimización de costos
-    'hf_max_length' => 500, // Longitud máxima de respuesta
-    'hf_temperature' => 0.2, // Temperature baja para tareas determinísticas
+    'hf_max_length' => 1000, // Longitud máxima de respuesta (aumentado para DeepSeek R1)
+    'hf_temperature' => 0.3, // Temperature para análisis médico con DeepSeek R1
     'ia_cache_ttl' => 604800, // TTL de cache para respuestas de IA (7 días) - Optimizado para reducir costos
     'correccion_cache_ttl' => 604800, // TTL de cache para correcciones (7 días) - Optimizado para reducir costos
     'embedding_cache_ttl' => 2592000, // TTL de cache para embeddings (30 días) - Optimizado para reducir costos

@@ -115,7 +115,7 @@ class EmbeddingsManager
             $client = new Client();
             $response = $client->createRequest()
                 ->setMethod('POST')
-                ->setUrl("https://api-inference.huggingface.co/pipeline/feature-extraction/{$modelo}")
+                ->setUrl("https://router.huggingface.co/hf-inference/pipeline/feature-extraction/{$modelo}")
                 ->addHeaders([
                     'Authorization' => 'Bearer ' . Yii::$app->params['hf_api_key'],
                     'Content-Type' => 'application/json'
@@ -403,7 +403,7 @@ class EmbeddingsManager
                 $client = new Client();
                 $response = $client->createRequest()
                     ->setMethod('POST')
-                    ->setUrl("https://api-inference.huggingface.co/pipeline/feature-extraction/{$modelo}")
+                    ->setUrl("https://router.huggingface.co/hf-inference/pipeline/feature-extraction/{$modelo}")
                     ->addHeaders([
                         'Authorization' => 'Bearer ' . Yii::$app->params['hf_api_key'],
                         'Content-Type' => 'application/json'

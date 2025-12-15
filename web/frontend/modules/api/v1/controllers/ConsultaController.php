@@ -13,6 +13,7 @@ use common\components\ConsultaLogger;
 use common\components\ConsultaClassifier;
 use common\components\RespuestaPredefinidaManager;
 use common\components\DeferredSnomedProcessor;
+use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 
 class ConsultaController extends BaseController
 {
@@ -536,24 +537,61 @@ Texto: \"$texto\"";
         // Bandera para detectar datos faltantes
         $tieneDatosFaltantes = false;
         
+        // Obtener logger para registrar validación
+        $logger = ConsultaLogger::obtenerInstancia();
+        
         // Definimos una bandera que indica si hay datos faltantes, sirve para no dejar guardar la consulta
         if (!empty($categorias)) {
+            $categoriasFaltantes = [];
+            $camposFaltantes = [];
+            
             foreach ($categorias as $categoria) {
                 $esRequerida = $categoria['requerido'] ?? false;
-
+                
                 // si la categoria es requerida y no tiene datos break
                 if ($esRequerida) {
                     if (!isset($datos[$categoria['titulo']]) || empty($datos[$categoria['titulo']])) {
                         $tieneDatosFaltantes = true;
+                        $categoriasFaltantes[] = $categoria['titulo'];
+                        
+                        if ($logger) {
+                            $logger->registrar(
+                                'VALIDACIÓN',
+                                null,
+                                "Categoría requerida faltante: {$categoria['titulo']}",
+                                [
+                                    'metodo' => 'ConsultaController::generateAnalysisHtml',
+                                    'tipo' => 'categoria_requerida_faltante',
+                                    'categoria' => $categoria['titulo']
+                                ]
+                            );
+                        }
                         break;
                     }
                 }
+
+                continue;
 
                 $camposRequeridos = $categoria['campos_requeridos'] ?? [];
                 if (!empty($camposRequeridos)) {
                     foreach ($camposRequeridos as $campo) {
                         if (!isset($datos[$categoria['titulo']][$campo]) || empty($datos[$categoria['titulo']][$campo])) {
                             $tieneDatosFaltantes = true;
+                            $camposFaltantes[] = "{$categoria['titulo']}::{$campo}";
+                            
+                            if ($logger) {
+                                $logger->registrar(
+                                    'VALIDACIÓN',
+                                    null,
+                                    "Campo requerido faltante: {$categoria['titulo']}::{$campo}",
+                                    [
+                                        'metodo' => 'ConsultaController::generateAnalysisHtml',
+                                        'tipo' => 'campo_requerido_faltante',
+                                        'categoria' => $categoria['titulo'],
+                                        'campo' => $campo
+                                    ]
+                                );
+                            }
                             break;
                         }
                     }
@@ -562,6 +600,22 @@ Texto: \"$texto\"";
                 if ($tieneDatosFaltantes) {
                     break;
                 }
+            }
+            
+            // Registrar resultado final de la validación
+            if ($logger) {
+                $logger->registrar(
+                    'VALIDACIÓN',
+                    null,
+                    $tieneDatosFaltantes ? 'Se detectaron datos faltantes' : 'Validación completada sin datos faltantes',
+                    [
+                        'metodo' => 'ConsultaController::generateAnalysisHtml',
+                        'tiene_datos_faltantes' => $tieneDatosFaltantes,
+                        'categorias_faltantes' => $categoriasFaltantes,
+                        'campos_faltantes' => $camposFaltantes,
+                        'total_categorias' => count($categorias)
+                    ]
+                );
             }
         }
         
@@ -678,133 +732,6 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
         
         return substr($texto, 0, -2);
     }
-
-    /**
-     * Pipeline optimizado que evita procesamiento redundante
-     * @param string $textoConsulta
-     * @param \common\models\Servicio $servicio
-     * @param int $idConfiguracion
-     * @param string $tabId
-     * @param array $contextoLogger
-     * @return array
-     */
-    private function procesarPipelineOptimizado($textoConsulta, $servicio, $idConfiguracion, $tabId, $contextoLogger = [])
-    {
-        $logger = ConsultaLogger::obtenerInstancia();
-        
-        // Cache key para evitar procesamiento redundante (mismo texto, mismo servicio)
-        $cacheKey = 'pipeline_' . md5($textoConsulta . $servicio->id . $idConfiguracion);
-        $cache = Yii::$app->cache;
-        
-        // Verificar cache primero (TTL extendido para reducir costos)
-        if ($cache) {
-            $cached = $cache->get($cacheKey);
-            if ($cached !== false) {
-                \Yii::info("Pipeline optimizado: resultado desde cache", 'consulta-pipeline');
-                return $cached;
-            }
-        }
-        
-        // Caché intermedio: texto procesado
-        $cacheKeyTexto = 'pipeline_texto_' . md5($textoConsulta);
-        $textoProcesado = null;
-        if ($cache) {
-            $textoCached = $cache->get($cacheKeyTexto);
-            if ($textoCached !== false) {
-                $textoProcesado = $textoCached;
-                \Yii::info("Texto procesado obtenido desde cache intermedio", 'consulta-pipeline');
-            }
-        }
-        
-        // Verificar si el texto ya está procesado (evitar procesamiento redundante)
-        $necesitaProcesamiento = true;
-        if (strlen($textoConsulta) < 200 && preg_match('/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ\s,\.]+$/', $textoConsulta)) {
-            // Texto corto y bien formateado, puede no necesitar procesamiento completo
-            $necesitaProcesamiento = false;
-        }
-        
-        // Procesamiento de texto (solo si es necesario y no está en cache)
-        if ($textoProcesado === null) {
-            if ($necesitaProcesamiento) {
-                $resultadoProcesamiento = ProcesadorTextoMedico::prepararParaIA($textoConsulta, $servicio->nombre, $tabId);
-                $textoProcesado = is_array($resultadoProcesamiento) ? $resultadoProcesamiento['texto_procesado'] : $resultadoProcesamiento;
-            } else {
-                $textoProcesado = $textoConsulta;
-            }
-            
-            // Guardar texto procesado en cache intermedio (TTL extendido)
-            if ($cache) {
-                $cache->set($cacheKeyTexto, $textoProcesado, 3600); // 1 hora
-            }
-        }
-        
-        // Obtener categorías una sola vez
-        $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
-        
-        // Verificar si es consulta simple (procesamiento selectivo)
-        $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
-        
-        if ($esSimple) {
-            $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
-        } else {
-            $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
-        }
-        
-        // SNOMED diferido (no bloquea)
-        if ($resultadoIA && isset($resultadoIA['datosExtraidos'])) {
-            DeferredSnomedProcessor::procesarDiferido(null, $resultadoIA, $categorias);
-        }
-        
-        $resultado = [
-            'texto_procesado' => $textoProcesado,
-            'resultado_ia' => $resultadoIA,
-            'es_simple' => $esSimple,
-            'necesito_procesamiento' => $necesitaProcesamiento
-        ];
-        
-        // Guardar en cache (TTL extendido para reducir costos)
-        if ($cache) {
-            $cache->set($cacheKey, $resultado, 1800); // 30 minutos (aumentado de 5 minutos)
-        }
-        
-        return $resultado;
-    }
-    
-    /**
-     * Construir campos faltantes para el prompt
-     * @param array $categorias
-     * @return string
-     */
-    private function construirCamposFaltantes($categorias)
-    {
-        $campos = [];
-        
-        foreach ($categorias as $categoria) {
-            if (!empty($categoria['campos_requeridos'])) {
-                $campos[] = "\nCAMPOS REQUERIDOS para {$categoria['titulo']}:";
-                foreach ($categoria['campos_requeridos'] as $campo) {
-                    $campos[] = "- {$campo}";
-                }
-            }
-        }
-
-        // Campos generales que siempre se verifican
-        $camposGenerales = [
-            "\nINFORMACIÓN CLÍNICA GENERAL:",
-            "- Lateralidad (si aplica, como ojos, oídos, extremidades)",
-            "- Duración (desde cuándo)",
-            "- Intensidad (leve, moderado, severo)",
-            "- Localización anatómica específica",
-            "- Frecuencia o contexto (en reposo, al esfuerzo, nocturno, etc)",
-            "- Síntomas asociados",
-            "- Factores desencadenantes o agravantes"
-        ];
-
-        return implode("\n", array_merge($camposGenerales, $campos));
-    }
-
-
-
 
 
 }

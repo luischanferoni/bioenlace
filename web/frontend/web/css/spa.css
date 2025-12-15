@@ -145,7 +145,7 @@
 
 /* Menú vertical lateral - Desktop */
 .sidebar-menu {
-    width: 120px;
+    width: 90px;
     height: 500px; /* Altura fija definible - ajustar según necesidad */
     position: sticky;
     top: calc(var(--navbar-height, 80px) + 16px); /* Altura del navbar + margen */
@@ -161,7 +161,6 @@
 
 .sidebar-menu .nav-link {
     min-height: 80px;
-    padding: 1rem 0.5rem;
 }
 
 /* Menú horizontal al bottom - Mobile */

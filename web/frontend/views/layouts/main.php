@@ -162,14 +162,22 @@ if (Yii::$app->user->username) {
 
             <div class="content-inner pb-0 d-flex" id="page_layout" style="min-height: calc(100vh - 60px); align-items: flex-start;">
                 <!-- Menú vertical izquierdo -->
-                <aside class="sidebar-menu bg-white rounded-5 border-1 border-dark border-end border-start border-top border-bottom m-4 mt-2 p-0 d-flex">
-                    <nav class="nav flex-column w-100 justify-content-center">
-                        <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= (Yii::$app->controller->action->id == 'index' || Yii::$app->controller->action->id == 'inicio') ? 'active' : '' ?>" href="<?= Url::to(['/site/index']) ?>">
-                            <i class="bi bi-house-door fs-2"></i> Inicio
-                        </a>
-                        <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= Yii::$app->controller->action->id == 'acciones' ? 'active' : '' ?>" href="<?= Url::to(['/site/acciones']) ?>">
-                            <i class="bi bi-lightning-charge fs-2"></i> Acciones
-                        </a>
+                <aside class="sidebar-menu bg-white rounded-4 border-1 border-dark border-end border-start border-top border-bottom m-4 mt-2 p-0 d-flex">
+                    <nav class="navbar bg- flex-column w-100 justify-content-center">
+                        <div class="container-fluid">
+                            <ul class="navbar-nav">
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= (Yii::$app->controller->action->id == 'index' || Yii::$app->controller->action->id == 'inicio') ? 'active' : '' ?>" href="<?= Url::to(['/site/index']) ?>">
+                                        <i class="bi bi-house-door fs-2"></i> Inicio
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= Yii::$app->controller->action->id == 'acciones' ? 'active' : '' ?>" href="<?= Url::to(['/site/acciones']) ?>">
+                                        <i class="bi bi-lightning-charge fs-2"></i> Acciones
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </nav>
                 </aside>
                 

@@ -91,7 +91,7 @@ use yii\helpers\Html;
                             <i class="bi bi-exclamation-triangle"></i> Esta información es requerida
                         </p>
                     <?php else: ?>
-                        <p class="text-warning fw-bolder">No se especificó información para esta categoría</p>
+                        <p class="text-warning fw-bolder ps-3">No se especificó información para esta categoría</p>
                     <?php endif; ?>
                 <?php endif; ?>
                 

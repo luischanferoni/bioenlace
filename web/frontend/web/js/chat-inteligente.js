@@ -587,32 +587,16 @@
                 throw new Error('No se encontró el modal de consulta.');
             }
 
-            // Buscar el campo de detalle directamente por su atributo name
-            // El campo tiene name="ConsultaIa[detalle]" según el formulario _form_ia.php
-            const detalleField = modalConsulta.querySelector('textarea[name="ConsultaIa[detalle]"]');
-            
-            if (!detalleField) {
-                throw new Error('No se encontró el campo de detalle de la consulta. Asegúrese de que el formulario esté cargado correctamente.');
+            // Buscar el formulario directamente por su ID
+            const form = document.getElementById('form-consulta-chat');
+            if (!form) {
+                throw new Error('No se encontró el formulario de la consulta (ID: form-consulta-chat). Asegúrese de que el formulario esté cargado correctamente.');
             }
 
-            // Si aún no se encuentra, actualizar el chat-input con el texto procesado
-            // y mostrar un mensaje informativo
+            // Buscar el campo de detalle directamente por su ID
+            const detalleField = document.getElementById('chat-input');
             if (!detalleField) {
-                const chatInput = document.getElementById('chat-input');
-                if (chatInput) {
-                    // Actualizar el chat-input con el texto procesado
-                    chatInput.value = textoProcesado;
-                    this.showAlert('El texto procesado se ha copiado al campo de consulta. Puede continuar con el flujo normal de guardado.', 'info');
-                    
-                    // Restaurar el botón
-                    if (confirmButton) {
-                        confirmButton.disabled = false;
-                        confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
-                    }
-                    return; // Salir sin intentar guardar automáticamente
-                } else {
-                    throw new Error('No se encontró ningún campo para guardar el texto de la consulta.');
-                }
+                throw new Error('No se encontró el campo de detalle de la consulta (ID: chat-input). Asegúrese de que el formulario esté cargado correctamente.');
             }
 
             // Guardar el texto procesado en el campo encontrado
@@ -626,35 +610,17 @@
                 const sugerenciasArray = sugerencias[categoria];
                 if (sugerenciasArray && sugerenciasArray.length > 0) {
                     // Buscar campo hidden para esta categoría
-                    const hiddenInput = modalConsulta.querySelector(`input[name="sugerencias_${categoria}"]`);
+                    const hiddenInput = form.querySelector(`input[name="sugerencias_${categoria}"]`);
                     if (hiddenInput) {
                         hiddenInput.value = JSON.stringify(sugerenciasArray);
                     }
                 }
             });
 
-            // Buscar el formulario y enviarlo
-            const form = detalleField.closest('form');
-            if (!form) {
-                // Si no hay formulario pero encontramos un campo, actualizar el chat-input también
-                const chatInput = document.getElementById('chat-input');
-                if (chatInput) {
-                    chatInput.value = textoProcesado;
-                }
-                this.showAlert('El texto procesado se ha guardado en el campo correspondiente. Si necesita guardar la consulta, use el botón de guardar del formulario.', 'info');
-                
-                // Restaurar el botón
-                if (confirmButton) {
-                    confirmButton.disabled = false;
-                    confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
-                }
-                return; // Salir sin intentar guardar automáticamente
-            }
-
             // Enviar el formulario usando fetch para manejar la respuesta
             const formData = new FormData(form);
-            const formAction = form.action || window.location.href;
-            const formMethod = form.method || 'POST';
+            const formAction = form.action
+            const formMethod = form.method;
 
             const response = await fetch(formAction, {
                 method: formMethod,
@@ -698,27 +664,18 @@
             } else {
                 // Error: mostrar mensaje pero NO cerrar el modal ni redirigir
                 const errorMsg = result.msg || result.message || 'Error al guardar la consulta. Por favor, intente nuevamente.';
-                this.showAlert(errorMsg, 'danger');
-                
-                // Restaurar el botón
-                if (confirmButton) {
-                    confirmButton.disabled = false;
-                    confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
-                }
+                this.showAlert(errorMsg, 'danger');                
             }
 
         } catch (error) {
             console.error('Error al confirmar consulta:', error);
             
             // Mostrar error pero NO cerrar el modal ni redirigir
-            this.showAlert(error.message || 'Error al guardar la consulta. Por favor, intente nuevamente.', 'danger');
-            
-            // Restaurar el botón
-            if (confirmButton) {
-                confirmButton.disabled = false;
-                confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
-            }
+            this.showAlert(error.message || 'Error al guardar la consulta. Por favor, intente nuevamente.', 'danger');            
         }
+
+        confirmButton.disabled = false;
+        confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
     }
 
     /**

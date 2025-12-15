@@ -25,6 +25,7 @@
     class ChatInteligente {
         constructor() {
             this.isAnalyzing = false;
+            this.lastAnalysisResponse = null; // Guardar la última respuesta del análisis
             this.init();
         }
 
@@ -38,6 +39,11 @@
             // Analizar consulta
             if (e.target && e.target.id === 'analyze-consultation') {
                 this.analyzeConsultation();
+            }
+            // Confirmar consulta
+            if (e.target && e.target.id === 'send-message') {
+                e.preventDefault();
+                this.confirmarConsulta();
             }
         });
     }
@@ -132,15 +138,15 @@
         this.showAgentResponse();
         const responseContent = document.getElementById('response-content');
         if (responseContent) {
-        responseContent.innerHTML = `
-            <div class="text-center">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Analizando...</span>
+            responseContent.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Analizando...</span>
+                    </div>
+                    <p class="mt-2 text-muted">El asistente está analizando la consulta...</p>
                 </div>
-                <p class="mt-2 text-muted">El asistente está analizando la consulta...</p>
-            </div>
-        `;
-    }
+            `;
+        }
     }
 
     resetAnalyzeButton() {
@@ -229,6 +235,9 @@
     showAnalysisResults(response) {
         const responseContent = document.getElementById('response-content');
         if (responseContent) {
+            // Guardar la respuesta del análisis para usarla al confirmar
+            this.lastAnalysisResponse = response;
+            
             let tieneDatosFaltantes = false;
             
             // Obtener datos faltantes desde la respuesta del backend
@@ -336,7 +345,8 @@
         const selectedValues = [];
 
         selectedButtons.forEach(btn => {
-            if (btn.classList.contains('btn-warning') || btn.classList.contains('btn-danger')) {
+            // Los botones seleccionados tienen btn-info o btn-danger (no btn-outline-*)
+            if (btn.classList.contains('btn-info') || btn.classList.contains('btn-danger')) {
                 selectedValues.push(btn.getAttribute('data-valor'));
             }
         });
@@ -536,6 +546,238 @@
         if (porcentaje >= 80) return 'bg-success';
         if (porcentaje >= 60) return 'bg-warning';
         return 'bg-danger';
+    }
+
+    /**
+     * Confirmar consulta - Guarda la consulta y cierra el modal solo si fue exitoso
+     */
+    async confirmarConsulta() {
+        const confirmButton = document.getElementById('send-message');
+        
+        // Verificar que el botón no esté deshabilitado
+        if (confirmButton && confirmButton.disabled) {
+            this.showAlert('No se puede confirmar la consulta. Revise la información antes de continuar.', 'warning');
+            return;
+        }
+
+        // Verificar que haya una respuesta de análisis previa
+        if (!this.lastAnalysisResponse) {
+            this.showAlert('Debe analizar la consulta antes de confirmarla.', 'warning');
+            return;
+        }
+
+        // Deshabilitar botón mientras se procesa
+        if (confirmButton) {
+            confirmButton.disabled = true;
+            const originalText = confirmButton.innerHTML;
+            confirmButton.innerHTML = '<i class="bi bi-hourglass-split"></i>&nbsp;&nbsp;Guardando...';
+        }
+
+        try {
+            // Obtener el texto procesado de la respuesta del análisis
+            const textoProcesado = this.lastAnalysisResponse.texto_procesado || this.lastAnalysisResponse.texto_original || '';
+            
+            if (!textoProcesado) {
+                throw new Error('No hay texto de consulta para guardar.');
+            }
+
+            // Buscar el formulario de consulta en el modal
+            const modalConsulta = document.getElementById('modal-consulta');
+            if (!modalConsulta) {
+                throw new Error('No se encontró el modal de consulta.');
+            }
+
+            // Buscar el campo de detalle directamente por su atributo name
+            // El campo tiene name="ConsultaIa[detalle]" según el formulario _form_ia.php
+            const detalleField = modalConsulta.querySelector('textarea[name="ConsultaIa[detalle]"]');
+            
+            if (!detalleField) {
+                throw new Error('No se encontró el campo de detalle de la consulta. Asegúrese de que el formulario esté cargado correctamente.');
+            }
+
+            // Si aún no se encuentra, actualizar el chat-input con el texto procesado
+            // y mostrar un mensaje informativo
+            if (!detalleField) {
+                const chatInput = document.getElementById('chat-input');
+                if (chatInput) {
+                    // Actualizar el chat-input con el texto procesado
+                    chatInput.value = textoProcesado;
+                    this.showAlert('El texto procesado se ha copiado al campo de consulta. Puede continuar con el flujo normal de guardado.', 'info');
+                    
+                    // Restaurar el botón
+                    if (confirmButton) {
+                        confirmButton.disabled = false;
+                        confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
+                    }
+                    return; // Salir sin intentar guardar automáticamente
+                } else {
+                    throw new Error('No se encontró ningún campo para guardar el texto de la consulta.');
+                }
+            }
+
+            // Guardar el texto procesado en el campo encontrado
+            detalleField.value = textoProcesado;
+
+            // Obtener sugerencias seleccionadas y guardarlas si hay campos para ellas
+            const sugerencias = this.obtenerSugerenciasSeleccionadas();
+            
+            // Buscar y llenar campos de sugerencias si existen
+            Object.keys(sugerencias).forEach(categoria => {
+                const sugerenciasArray = sugerencias[categoria];
+                if (sugerenciasArray && sugerenciasArray.length > 0) {
+                    // Buscar campo hidden para esta categoría
+                    const hiddenInput = modalConsulta.querySelector(`input[name="sugerencias_${categoria}"]`);
+                    if (hiddenInput) {
+                        hiddenInput.value = JSON.stringify(sugerenciasArray);
+                    }
+                }
+            });
+
+            // Buscar el formulario y enviarlo
+            const form = detalleField.closest('form');
+            if (!form) {
+                // Si no hay formulario pero encontramos un campo, actualizar el chat-input también
+                const chatInput = document.getElementById('chat-input');
+                if (chatInput) {
+                    chatInput.value = textoProcesado;
+                }
+                this.showAlert('El texto procesado se ha guardado en el campo correspondiente. Si necesita guardar la consulta, use el botón de guardar del formulario.', 'info');
+                
+                // Restaurar el botón
+                if (confirmButton) {
+                    confirmButton.disabled = false;
+                    confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
+                }
+                return; // Salir sin intentar guardar automáticamente
+            }
+
+            // Enviar el formulario usando fetch para manejar la respuesta
+            const formData = new FormData(form);
+            const formAction = form.action || window.location.href;
+            const formMethod = form.method || 'POST';
+
+            const response = await fetch(formAction, {
+                method: formMethod,
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            let result;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
+            } else {
+                const text = await response.text();
+                // Intentar parsear como JSON si es posible
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    // Si no es JSON, asumir que es HTML (éxito) o error
+                    if (response.ok) {
+                        result = { success: true, msg: 'Consulta guardada correctamente' };
+                    } else {
+                        result = { success: false, msg: 'Error al guardar la consulta' };
+                    }
+                }
+            }
+
+            if (result.success !== false && response.ok) {
+                // Éxito: mostrar mensaje y cerrar el modal
+                this.showAlert(result.msg || 'Consulta guardada correctamente.', 'success');
+                
+                // Cerrar el modal después de un breve delay
+                setTimeout(() => {
+                    this.cerrarModalConsulta();
+                    // Recargar la página después de cerrar el modal
+                    setTimeout(() => {
+                        location.reload();
+                    }, 300);
+                }, 1000);
+            } else {
+                // Error: mostrar mensaje pero NO cerrar el modal ni redirigir
+                const errorMsg = result.msg || result.message || 'Error al guardar la consulta. Por favor, intente nuevamente.';
+                this.showAlert(errorMsg, 'danger');
+                
+                // Restaurar el botón
+                if (confirmButton) {
+                    confirmButton.disabled = false;
+                    confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
+                }
+            }
+
+        } catch (error) {
+            console.error('Error al confirmar consulta:', error);
+            
+            // Mostrar error pero NO cerrar el modal ni redirigir
+            this.showAlert(error.message || 'Error al guardar la consulta. Por favor, intente nuevamente.', 'danger');
+            
+            // Restaurar el botón
+            if (confirmButton) {
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = '<i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta';
+            }
+        }
+    }
+
+    /**
+     * Cerrar el modal de consulta de forma segura
+     */
+    cerrarModalConsulta() {
+        const modalConsulta = document.getElementById('modal-consulta');
+        if (!modalConsulta) return;
+
+        // Usar Bootstrap modal para cerrar
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modalInstance = bootstrap.Modal.getInstance(modalConsulta);
+            if (modalInstance) {
+                modalInstance.hide();
+            } else {
+                // Fallback: usar jQuery si está disponible
+                if (typeof $ !== 'undefined' && $.fn.modal) {
+                    $('#modal-consulta').modal('hide');
+                } else {
+                    // Fallback final: ocultar manualmente
+                    modalConsulta.style.display = 'none';
+                    modalConsulta.classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                }
+            }
+        } else if (typeof $ !== 'undefined' && $.fn.modal) {
+            $('#modal-consulta').modal('hide');
+        }
+    }
+
+    /**
+     * Obtener sugerencias seleccionadas de los hidden inputs
+     * @returns {Object} - Objeto con las sugerencias seleccionadas por categoría
+     */
+    obtenerSugerenciasSeleccionadas() {
+        const sugerencias = {
+            diagnostico: [],
+            practicas: [],
+            seguimiento: [],
+            alertas: []
+        };
+
+        const categorias = ['diagnostico', 'practicas', 'seguimiento', 'alertas'];
+        categorias.forEach(categoria => {
+            const input = document.querySelector(`input[name="sugerencias_${categoria}"]`);
+            if (input && input.value) {
+                try {
+                    sugerencias[categoria] = JSON.parse(input.value);
+                } catch (e) {
+                    console.error(`Error al parsear sugerencias de ${categoria}:`, e);
+                }
+            }
+        });
+
+        return sugerencias;
     }
 
     } // Cierre de la clase ChatInteligente

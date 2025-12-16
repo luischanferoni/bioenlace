@@ -574,13 +574,6 @@
         }
 
         try {
-            // Obtener el texto procesado de la respuesta del análisis
-            const textoProcesado = this.lastAnalysisResponse.texto_procesado || this.lastAnalysisResponse.texto_original || '';
-            
-            if (!textoProcesado) {
-                throw new Error('No hay texto de consulta para guardar.');
-            }
-
             // Buscar el formulario de consulta en el modal
             const modalConsulta = document.getElementById('modal-consulta');
             if (!modalConsulta) {
@@ -599,8 +592,87 @@
                 throw new Error('No se encontró el campo de detalle de la consulta (ID: chat-input). Asegúrese de que el formulario esté cargado correctamente.');
             }
 
-            // Guardar el texto procesado en el campo encontrado
-            detalleField.value = textoProcesado;
+            // NO reemplazar el contenido del textarea - mantener lo que el usuario escribió
+            // Pero sí agregar campos hidden con ambos textos para guardarlos en BD
+            
+            // Obtener textos original y procesado de la respuesta
+            const textoOriginal = this.lastAnalysisResponse.texto_original || detalleField.value || '';
+            const textoProcesado = this.lastAnalysisResponse.texto_procesado || textoOriginal || '';
+            
+            if (!textoOriginal && !textoProcesado) {
+                throw new Error('No hay texto de consulta para guardar.');
+            }
+            
+            // Crear o actualizar campos hidden para texto original y procesado
+            let hiddenOriginal = form.querySelector('input[name="texto_original"]');
+            if (!hiddenOriginal) {
+                hiddenOriginal = document.createElement('input');
+                hiddenOriginal.type = 'hidden';
+                hiddenOriginal.name = 'texto_original';
+                form.appendChild(hiddenOriginal);
+            }
+            hiddenOriginal.value = textoOriginal;
+            
+            let hiddenProcesado = form.querySelector('input[name="texto_procesado"]');
+            if (!hiddenProcesado) {
+                hiddenProcesado = document.createElement('input');
+                hiddenProcesado.type = 'hidden';
+                hiddenProcesado.name = 'texto_procesado';
+                form.appendChild(hiddenProcesado);
+            }
+            hiddenProcesado.value = textoProcesado;
+
+            // Reestructurar datosExtraidos usando nombres de modelos como claves
+            // Esto hace más fiable la asociación con los modelos al guardar
+            if (this.lastAnalysisResponse.datos && this.lastAnalysisResponse.datos.datosExtraidos) {
+                const datosExtraidosOriginales = this.lastAnalysisResponse.datos.datosExtraidos;
+                const categorias = this.lastAnalysisResponse.categorias || [];
+                
+                // Crear mapa de título a nombre de modelo
+                const mapaTituloAModelo = {};
+                categorias.forEach(categoria => {
+                    if (categoria.titulo && categoria.modelo) {
+                        mapaTituloAModelo[categoria.titulo] = categoria.modelo;
+                    }
+                });
+                
+                // Reestructurar datosExtraidos usando nombres de modelos como claves
+                const datosExtraidosPorModelo = {};
+                Object.keys(datosExtraidosOriginales).forEach(titulo => {
+                    const nombreModelo = mapaTituloAModelo[titulo];
+                    if (nombreModelo) {
+                        // Usar nombre del modelo como clave
+                        datosExtraidosPorModelo[nombreModelo] = datosExtraidosOriginales[titulo];
+                    } else {
+                        // Si no hay mapeo, mantener el título original como fallback
+                        datosExtraidosPorModelo[titulo] = datosExtraidosOriginales[titulo];
+                    }
+                });
+                
+                // Agregar campo hidden con datosExtraidos reestructurados
+                let hiddenDatosExtraidos = form.querySelector('input[name="datosExtraidos"]');
+                if (!hiddenDatosExtraidos) {
+                    hiddenDatosExtraidos = document.createElement('input');
+                    hiddenDatosExtraidos.type = 'hidden';
+                    hiddenDatosExtraidos.name = 'datosExtraidos';
+                    form.appendChild(hiddenDatosExtraidos);
+                }
+                hiddenDatosExtraidos.value = JSON.stringify(datosExtraidosPorModelo);
+            }
+
+            // Agregar id_configuracion al formulario si no está presente
+            // Se obtiene de window.idConfiguracionActual (establecido cuando se carga el formulario)
+            let hiddenIdConfiguracion = form.querySelector('input[name="id_configuracion"]');
+            if (!hiddenIdConfiguracion) {
+                hiddenIdConfiguracion = document.createElement('input');
+                hiddenIdConfiguracion.type = 'hidden';
+                hiddenIdConfiguracion.name = 'id_configuracion';
+                form.appendChild(hiddenIdConfiguracion);
+            }
+            // Obtener id_configuracion de window.idConfiguracionActual
+            if (!hiddenIdConfiguracion.value && window.idConfiguracionActual) {
+                hiddenIdConfiguracion.value = window.idConfiguracionActual;
+            }
 
             // Obtener sugerencias seleccionadas y guardarlas si hay campos para ellas
             const sugerencias = this.obtenerSugerenciasSeleccionadas();

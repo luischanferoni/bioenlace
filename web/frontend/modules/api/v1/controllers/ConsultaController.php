@@ -25,7 +25,7 @@ class ConsultaController extends BaseController
         
         // Permitir acceso sin autenticación Bearer si hay sesión activa (para web)
         // El método actionAnalizar verificará manualmente la autenticación
-        $behaviors['authenticator']['except'] = ['options', 'analizar'];
+        $behaviors['authenticator']['except'] = ['options', 'analizar', 'guardar'];
         
         return $behaviors;
     }
@@ -35,68 +35,10 @@ class ConsultaController extends BaseController
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            // Verificar autenticación: Bearer token o sesión web
-            $isAuthenticated = false;
-            $userId = null;
-            
-            // Intentar autenticación por Bearer token primero
-            $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
-            if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
-                $token = $matches[1];
-                try {
-                    $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(Yii::$app->params['jwtSecret'], 'HS256'));
-                    $userId = $decoded->user_id;
-                    $isAuthenticated = true;
-                } catch (\Exception $e) {
-                    // Token inválido, continuar con verificación de sesión
-                }
-            }
-            
-            // Si no hay Bearer token, verificar sesión web de frontend
-            if (!$isAuthenticated) {
-                $session = Yii::$app->session;
-                
-                // Asegurar que la sesión esté iniciada
-                if (!$session->isActive) {
-                    $session->open();
-                }
-                
-                // Verificar si hay identidad de usuario en la sesión
-                $identityId = $session->get('__id');
-                $identity = $session->get('__identity');
-                
-                if ($identity !== null || !empty($identityId)) {
-                    if (is_object($identity) && method_exists($identity, 'getId')) {
-                        $userId = $identity->getId();
-                    } elseif (is_object($identity) && isset($identity->id)) {
-                        $userId = $identity->id;
-                    } elseif (!empty($identityId)) {
-                        $userId = $identityId;
-                    }
-                    
-                    if (!empty($userId)) {
-                        $isAuthenticated = true;
-                    }
-                } elseif ($session->has('idPersona')) {
-                    // Si hay idPersona en sesión, el usuario está autenticado
-                    $isAuthenticated = true;
-                    // Intentar obtener userId desde la persona
-                    $idPersona = $session->get('idPersona');
-                    $persona = \common\models\Persona::findOne(['id_persona' => $idPersona]);
-                    if ($persona && $persona->id_user) {
-                        $userId = $persona->id_user;
-                    }
-                }
-            }
-            
-            // Si no está autenticado, retornar error 401
-            if (!$isAuthenticated) {
-                Yii::$app->response->statusCode = 401;
-                return [
-                    'success' => false,
-                    'message' => 'Usuario no autenticado. Debe iniciar sesión o proporcionar un token válido.',
-                    'errors' => null,
-                ];
+            // Verificar autenticación usando método centralizado
+            $errorAuth = $this->requerirAutenticacion();
+            if ($errorAuth !== null) {
+                return $errorAuth;
             }
 
             $body = Yii::$app->request->getBodyParams();
@@ -368,7 +310,9 @@ HTML;
                 // NUEVO: Información de codificación SNOMED
                 'codigos_snomed' => $estadisticasSnomed,
                 'requiere_validacion_snomed' => $requiereValidacionSnomed,
-                'datos_con_snomed' => $datosConSnomed ? true : false
+                'datos_con_snomed' => $datosConSnomed ? true : false,
+                // Incluir categorías con mapeo título->modelo para el frontend
+                'categorias' => $categorias
             ];
             
             // Finalizar logger antes del return
@@ -733,5 +677,695 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
         return substr($texto, 0, -2);
     }
 
+    /**
+     * Guardar consulta completa con todos sus datos relacionados
+     * Recibe todos los datos en un solo POST en lugar de paso a paso
+     */
+    public function actionGuardar()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            // Verificar autenticación usando método centralizado
+            $errorAuth = $this->requerirAutenticacion();
+            if ($errorAuth !== null) {
+                return $errorAuth;
+            }
+
+            // Obtener datos del POST - intentar múltiples fuentes
+            $body = Yii::$app->request->getBodyParams();
+            $post = Yii::$app->request->post();
+            
+            // Si getBodyParams está vacío, intentar con post
+            if (empty($body)) {
+                $body = $post;
+            }
+            
+            // Si aún está vacío, intentar leer el raw body como JSON
+            if (empty($body)) {
+                $rawBody = Yii::$app->request->getRawBody();
+                if (!empty($rawBody)) {
+                    $decoded = json_decode($rawBody, true);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        $body = $decoded;
+                    }
+                }
+            }
+            
+            // Log para debugging (solo en modo debug)
+            if (YII_DEBUG) {
+                Yii::info('Datos recibidos en actionGuardar: ' . json_encode([
+                    'bodyParams' => Yii::$app->request->getBodyParams(),
+                    'post' => $post,
+                    'rawBody' => substr(Yii::$app->request->getRawBody(), 0, 500),
+                    'mergedBody' => $body
+                ]), 'consulta-guardar');
+            }
+            
+            // Validar datos básicos requeridos
+            $idConfiguracion = $body['id_configuracion'] ?? null;
+            $idPersona = $body['id_persona'] ?? null;
+            $datosExtraidos = $body['datosExtraidos'] ?? [];
+            $idConsulta = $body['id_consulta'] ?? null;
+            
+            // Si no viene id_persona en el body, intentar obtenerlo de la sesión
+            if (!$idPersona) {
+                $session = Yii::$app->session;
+                if ($session->isActive && $session->has('idPersona')) {
+                    $idPersona = $session->get('idPersona');
+                }
+            }
+            
+            // Si no viene id_configuracion, intentar obtenerlo desde servicio y encounter class
+            if (!$idConfiguracion) {
+                $idServicio = Yii::$app->user->getServicioActual();
+                $encounterClass = Yii::$app->user->getEncounterClass();
+                
+                if ($idServicio && $encounterClass) {
+                    list($urlAnterior, $urlActual, $urlSiguiente, $idConfiguracionObtenido) = 
+                        \common\models\ConsultasConfiguracion::getUrlPorServicioYEncounterClass($idServicio, $encounterClass);
+                    
+                    if ($idConfiguracionObtenido) {
+                        $idConfiguracion = $idConfiguracionObtenido;
+                    }
+                }
+            }
+            
+            if (!$idConfiguracion || !$idPersona) {
+                Yii::$app->response->statusCode = 400;
+                return [
+                    'success' => false,
+                    'message' => 'Faltan datos obligatorios: id_configuracion e id_persona son requeridos.',
+                    'errors' => [
+                        'id_configuracion' => $idConfiguracion ? 'presente' : 'faltante',
+                        'id_persona' => $idPersona ? 'presente' : 'faltante',
+                        'body_keys' => array_keys($body ?? []),
+                    ],
+                ];
+            }
+
+            // Obtener configuración
+            $configuracion = \common\models\ConsultasConfiguracion::findOne($idConfiguracion);
+            if (!$configuracion) {
+                Yii::$app->response->statusCode = 400;
+                return [
+                    'success' => false,
+                    'message' => 'Configuración de consulta no encontrada.',
+                    'errors' => null,
+                ];
+            }
+
+            // Obtener categorías de la configuración
+            $categorias = \common\models\ConsultasConfiguracion::getCategoriasParaPrompt($configuracion);
+            
+            // Obtener o crear consulta
+            $paciente = \common\models\Persona::findOne($idPersona);
+            if (!$paciente) {
+                Yii::$app->response->statusCode = 400;
+                return [
+                    'success' => false,
+                    'message' => 'Paciente no encontrado.',
+                    'errors' => null,
+                ];
+            }
+
+            // Obtener userId de la autenticación para asignar created_by
+            $auth = $this->verificarAutenticacion();
+            $userId = $auth['userId'] ?? null;
+            
+            $transaction = \Yii::$app->db->beginTransaction();
+            
+            try {
+                // Obtener o crear la consulta
+                if ($idConsulta) {
+                    $modelConsulta = \common\models\Consulta::findOne($idConsulta);
+                    if (!$modelConsulta) {
+                        throw new \Exception('Consulta no encontrada');
+                    }
+                    
+                    // Si es actualización, también guardar textos si vienen
+                    if (isset($body['texto_original']) && !isset($body['consulta_inicial'])) {
+                        $modelConsulta->consulta_inicial = $body['texto_original'];
+                    }
+                    
+                    if (isset($body['texto_procesado']) && !isset($body['observacion'])) {
+                        $modelConsulta->observacion = $body['texto_procesado'];
+                    }
+                } else {
+                    // Crear nueva consulta
+                    $parent = $body['parent'] ?? null;
+                    $parentId = $body['parent_id'] ?? null;
+                    
+                    // Validar permiso de atención si hay parent
+                    if ($parent && $parentId) {
+                        $resultadoValidacion = \common\models\ConsultasConfiguracion::validarPermisoAtencion($parent, $parentId, $paciente);
+                        if (!$resultadoValidacion['success']) {
+                            throw new \Exception($resultadoValidacion['msg']);
+                        }
+                        
+                        list($urlAnterior, $urlActual, $urlSiguiente, $idConfiguracionValidado) = 
+                            \common\models\ConsultasConfiguracion::getUrlPorServicioYEncounterClass(
+                                $resultadoValidacion['idServicio'], 
+                                $resultadoValidacion['encounterClass']
+                            );
+                        
+                        if ($idConfiguracionValidado && $idConfiguracionValidado != $idConfiguracion) {
+                            $idConfiguracion = $idConfiguracionValidado;
+                        }
+                    } else {
+                        // Sin parent, usar configuración del usuario actual
+                        $idServicio = Yii::$app->user->getServicioActual();
+                        $encounterClass = Yii::$app->user->getEncounterClass();
+                        list($urlAnterior, $urlActual, $urlSiguiente, $idConfiguracionValidado) = 
+                            \common\models\ConsultasConfiguracion::getUrlPorServicioYEncounterClass($idServicio, $encounterClass);
+                        
+                        if ($idConfiguracionValidado) {
+                            $idConfiguracion = $idConfiguracionValidado;
+                        }
+                    }
+                    
+                    $modelConsulta = new \common\models\Consulta();
+                    $modelConsulta->id_configuracion = $idConfiguracion;
+                    $modelConsulta->id_persona = $idPersona;
+                    $modelConsulta->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+                    $modelConsulta->id_servicio = Yii::$app->user->getServicioActual();
+                    $modelConsulta->id_efector = Yii::$app->user->getIdEfector();
+                    $modelConsulta->estado = \common\models\Consulta::ESTADO_EN_PROGRESO;
+                    $modelConsulta->paso_completado = 0;
+                    $modelConsulta->editando = 0;
+                    
+                    // Asignar parent_class y parent_id
+                    if ($parent && $parentId) {
+                        $modelConsulta->parent_class = \common\models\Consulta::PARENT_CLASSES[$parent] ?? '';
+                        $modelConsulta->parent_id = $parentId;
+                    } else {
+                        // Si no hay parent, usar GENERICO_AMB o GENERICO_EMER según encounter class
+                        $encounterClass = Yii::$app->user->getEncounterClass();
+                        if ($encounterClass == \common\models\Consulta::ENCOUNTER_CLASS_AMB) {
+                            $parent = \common\models\Consulta::PARENT_GENERICO_AMB;
+                        } else {
+                            // Por defecto usar GENERICO_EMER para emergencias
+                            $parent = \common\models\Consulta::PARENT_GENERICO_EMER;
+                        }
+                        
+                        // Para GENERICO_AMB y GENERICO_EMER, usar parent_id = 0
+                        $parentId = 0;
+                        
+                        $modelConsulta->parent_class = \common\models\Consulta::PARENT_CLASSES[$parent] ?? '';
+                        $modelConsulta->parent_id = $parentId;
+                    }
+                    
+                    // Campos adicionales de la consulta
+                    // Guardar texto original en consulta_inicial (lo que el usuario escribió)
+                    if (isset($body['consulta_inicial'])) {
+                        $modelConsulta->consulta_inicial = $body['consulta_inicial'];
+                    } elseif (isset($body['texto_original'])) {
+                        // Si viene texto_original, guardarlo en consulta_inicial
+                        $modelConsulta->consulta_inicial = $body['texto_original'];
+                    }
+                    
+                    // Guardar texto procesado en observacion
+                    if (isset($body['texto_procesado'])) {
+                        $modelConsulta->observacion = $body['texto_procesado'];
+                    } elseif (isset($body['observacion'])) {
+                        $modelConsulta->observacion = $body['observacion'];
+                    }
+                    
+                    if (isset($body['motivo_consulta'])) {
+                        $modelConsulta->motivo_consulta = $body['motivo_consulta'];
+                    }
+                    
+                    // Asignar created_by explícitamente si tenemos userId
+                    if ($userId !== null) {
+                        $modelConsulta->created_by = $userId;
+                    } elseif (Yii::$app->user && !Yii::$app->user->isGuest) {
+                        // Fallback: usar Yii::$app->user->id si está disponible
+                        $modelConsulta->created_by = Yii::$app->user->id;
+                    }
+                    
+                    if (!$modelConsulta->save()) {
+                        throw new \Exception('Error al crear la consulta: ' . json_encode($modelConsulta->getErrors()));
+                    }
+                    
+                    // Guardar ambos textos en ConsultaIa para tener un registro completo
+                    if (isset($body['texto_original']) || isset($body['texto_procesado'])) {
+                        $consultaIA = new \common\models\ConsultaIa();
+                        $consultaIA->id_consulta = $modelConsulta->id_consulta;
+                        $consultaIA->detalle = json_encode([
+                            'texto_original' => $body['texto_original'] ?? $body['consulta_inicial'] ?? '',
+                            'texto_procesado' => $body['texto_procesado'] ?? '',
+                            'fecha_procesamiento' => date('Y-m-d H:i:s')
+                        ]);
+                        $consultaIA->save(false); // Guardar sin validar para no bloquear si hay errores
+                    }
+                }
+
+                // Obtener configuración completa de pasos para mapeo de datos
+                $jsonPasos = json_decode($configuracion->pasos_json, true);
+                $configuracionPasos = $jsonPasos['conf'] ?? [];
+                
+                // Crear mapa de título a configuración completa
+                $mapaConfiguracion = [];
+                foreach ($configuracionPasos as $pasoConfig) {
+                    $titulo = $pasoConfig['titulo'] ?? null;
+                    if ($titulo) {
+                        $mapaConfiguracion[$titulo] = $pasoConfig;
+                    }
+                }
+                
+                // Procesar cada categoría de la configuración
+                $errores = [];
+                foreach ($categorias as $categoria) {
+                    $titulo = $categoria['titulo'];
+                    $nombreModelo = $categoria['modelo'];
+                    $esRequerido = $categoria['requerido'] ?? false;
+                    
+                    // Buscar datos para esta categoría en datosExtraidos
+                    // Primero intentar por nombre del modelo (más fiable), luego por título (fallback)
+                    $datosCategoria = $datosExtraidos[$nombreModelo] ?? $datosExtraidos[$titulo] ?? null;
+                    
+                    // Si es requerido y no hay datos, registrar error
+                    if ($esRequerido && (empty($datosCategoria) || (is_array($datosCategoria) && count($datosCategoria) == 0))) {
+                        $errores[] = "La categoría '{$titulo}' (modelo: {$nombreModelo}) es requerida pero no tiene datos";
+                        continue;
+                    }
+                    
+                    // Si no hay datos, continuar con la siguiente categoría
+                    if (empty($datosCategoria)) {
+                        continue;
+                    }
+                    
+                    // Obtener configuración completa del paso
+                    $pasoConfigCompleto = $mapaConfiguracion[$titulo] ?? null;
+                    
+                    // Mapear y guardar datos según el modelo usando la configuración
+                    try {
+                        $this->guardarDatosCategoria($modelConsulta, $nombreModelo, $datosCategoria, $titulo, $pasoConfigCompleto);
+                    } catch (\Exception $e) {
+                        $errores[] = "Error guardando {$titulo} (modelo: {$nombreModelo}): " . $e->getMessage();
+                        Yii::error("Error guardando categoría {$titulo} (modelo: {$nombreModelo}): " . $e->getMessage(), 'consulta-guardar');
+                    }
+                }
+                
+                // Si hay errores en categorías requeridas, hacer rollback
+                if (!empty($errores)) {
+                    $transaction->rollBack();
+                    Yii::$app->response->statusCode = 400;
+                    return [
+                        'success' => false,
+                        'message' => 'Error al guardar algunos datos de la consulta.',
+                        'errors' => $errores,
+                    ];
+                }
+                
+                // Marcar consulta como finalizada
+                $modelConsulta->paso_completado = \common\models\Consulta::PASO_FINALIZADA;
+                $modelConsulta->estado = \common\models\Consulta::ESTADO_FINALIZADA;
+                
+                // Si tiene parent de tipo Turno, actualizar estado
+                if ($modelConsulta->parent_class == \common\models\Consulta::PARENT_CLASSES[\common\models\Consulta::PARENT_TURNO]) {
+                    \common\models\Turno::cambiarCampoAtendido($modelConsulta->parent_id, \common\models\Turno::ATENDIDO_SI);
+                    $turno = \common\models\Turno::findOne($modelConsulta->parent_id);
+                    if ($turno) {
+                        \common\models\Turno::cargarRrhhServicioAsignado($modelConsulta->parent_id, $turno->id_servicio_asignado);
+                        $consultaPS = \common\models\ConsultaDerivaciones::getPracticaSolicitadasPorIdConsultaSolicitada($turno->id_consulta_referencia);
+                        if ($consultaPS) {
+                            $consultaPS->id_consulta_responde = $modelConsulta->id_consulta;
+                            $consultaPS->save();
+                        }
+                    }
+                }
+                
+                if (!$modelConsulta->save()) {
+                    throw new \Exception('Error al finalizar la consulta: ' . json_encode($modelConsulta->getErrors()));
+                }
+                
+                $transaction->commit();
+                
+                return [
+                    'success' => true,
+                    'message' => 'Consulta guardada exitosamente.',
+                    'data' => [
+                        'id_consulta' => $modelConsulta->id_consulta,
+                        'estado' => $modelConsulta->estado,
+                    ],
+                ];
+                
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+                throw $e;
+            }
+            
+        } catch (\Exception $e) {
+            Yii::error("Error en actionGuardar: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'consulta-guardar');
+            
+            Yii::$app->response->statusCode = 500;
+            return [
+                'success' => false,
+                'message' => 'Ocurrió un error al guardar la consulta. Por favor, intente nuevamente.',
+                'errors' => YII_DEBUG ? [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ] : null,
+            ];
+        }
+    }
+
+    /**
+     * Guardar datos de una categoría específica en su modelo correspondiente
+     * @param \common\models\Consulta $modelConsulta
+     * @param string $nombreModelo Nombre del modelo (ej: ConsultaMedicamentos, ConsultaSintomas)
+     * @param mixed $datosCategoria Datos de la categoría (puede ser array simple o array de objetos)
+     * @param string $tituloCategoria Título de la categoría para logging
+     * @param array|null $pasoConfig Configuración completa del paso desde pasos_json
+     */
+    private function guardarDatosCategoria($modelConsulta, $nombreModelo, $datosCategoria, $tituloCategoria, $pasoConfig = null)
+    {
+        $claseModelo = "\\common\\models\\{$nombreModelo}";
+        
+        if (!class_exists($claseModelo)) {
+            throw new \Exception("Modelo {$nombreModelo} no existe");
+        }
+        
+        // Obtener modelos existentes de esta categoría
+        $relacion = $this->obtenerRelacionConsulta($nombreModelo);
+        $modelosExistentes = [];
+        if ($relacion && method_exists($modelConsulta, $relacion)) {
+            $modelosExistentes = $modelConsulta->$relacion;
+            if (!is_array($modelosExistentes)) {
+                $modelosExistentes = $modelosExistentes ? [$modelosExistentes] : [];
+            }
+        }
+        
+        $idsGuardados = [];
+        foreach ($modelosExistentes as $modelo) {
+            if (isset($modelo->id)) {
+                $idsGuardados[] = $modelo->id;
+            }
+        }
+        
+        $nuevosIds = [];
+        
+        // Procesar según el tipo de modelo, pasando la configuración
+        switch ($nombreModelo) {
+            case 'ConsultaMedicamentos':
+                $nuevosIds = $this->guardarMedicamentos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig);
+                break;
+                
+            case 'ConsultaSintomas':
+            case 'ConsultaMotivos':
+                $nuevosIds = $this->guardarSintomasOMotivos($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig);
+                break;
+                
+            case 'ConsultaPracticas':
+            case 'ConsultaPracticasOftalmologia':
+                $nuevosIds = $this->guardarPracticas($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig);
+                break;
+                
+            case 'ConsultaDiagnosticos':
+                $nuevosIds = $this->guardarDiagnosticos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig);
+                break;
+                
+            default:
+                // Intentar guardado genérico usando configuración
+                $nuevosIds = $this->guardarGenerico($modelConsulta, $claseModelo, $datosCategoria, $modelosExistentes, $pasoConfig);
+                break;
+        }
+        
+        // Eliminar modelos que estaban en BD pero no vienen en los nuevos datos
+        $idsAEliminar = array_diff($idsGuardados, $nuevosIds);
+        if (!empty($idsAEliminar) && method_exists($claseModelo, 'hardDeleteGrupo')) {
+            $claseModelo::hardDeleteGrupo($modelConsulta->id_consulta, $idsAEliminar);
+        }
+    }
+
+    /**
+     * Obtener el nombre de la relación en Consulta para un modelo dado
+     */
+    private function obtenerRelacionConsulta($nombreModelo)
+    {
+        $mapa = [
+            'ConsultaMedicamentos' => 'consultaMedicamentos',
+            'ConsultaSintomas' => 'consultaSintomas',
+            'ConsultaMotivos' => 'motivoConsulta',
+            'ConsultaPracticas' => 'practicasPersonaConsultas',
+            'ConsultaPracticasOftalmologia' => 'oftalmologiasDP',
+            'ConsultaDiagnosticos' => 'diagnosticoConsultas',
+        ];
+        
+        return $mapa[$nombreModelo] ?? null;
+    }
+
+    /**
+     * Guardar medicamentos usando configuración para mapear datos
+     */
+    private function guardarMedicamentos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig = null)
+    {
+        $nuevosIds = [];
+        
+        if (!is_array($datosCategoria)) {
+            return $nuevosIds;
+        }
+        
+        foreach ($datosCategoria as $medicamentoData) {
+            $modelo = new \common\models\ConsultaMedicamentos();
+            
+            // Mapear campos usando configuración o mapeo por defecto
+            if (is_array($medicamentoData)) {
+                // Mapear usando configuración si está disponible
+                $this->mapearDatosAModelo($modelo, $medicamentoData, $pasoConfig, [
+                    'id_snomed_medicamento' => ['id_snomed_medicamento', 'snomed_code', 'codigo_snomed', 'conceptId'],
+                    'cantidad' => ['Cantidad del medicamento', 'cantidad', 'quantity'],
+                    'frecuencia' => ['Frecuencia de administracion', 'frecuencia', 'frequency'],
+                    'durante' => ['Duracion del tratamiento', 'durante', 'duration', 'duracion'],
+                    'indicaciones' => ['indicaciones', 'indicacion', 'instructions'],
+                ]);
+                
+                // Si hay término del medicamento y código SNOMED, crear/actualizar SNOMED
+                $termino = $medicamentoData['Nombre del medicamento'] ?? $medicamentoData['termino'] ?? $medicamentoData['medicamento'] ?? null;
+                $codigoSnomed = $modelo->id_snomed_medicamento;
+                
+                if ($termino && $codigoSnomed) {
+                    \common\models\snomed\SnomedMedicamentos::crearSiNoExiste($codigoSnomed, $termino);
+                }
+            } else {
+                // Si viene como string simple, solo el nombre
+                $termino = $medicamentoData;
+            }
+            
+            $modelo->id_consulta = $modelConsulta->id_consulta;
+            $modelo->estado = \common\models\ConsultaMedicamentos::ESTADO_ACTIVO;
+            
+            if ($modelo->save()) {
+                $nuevosIds[] = $modelo->id;
+            }
+        }
+        
+        return $nuevosIds;
+    }
+
+    /**
+     * Guardar síntomas o motivos de consulta usando configuración
+     */
+    private function guardarSintomasOMotivos($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig = null)
+    {
+        $nuevosIds = [];
+        
+        if (!is_array($datosCategoria)) {
+            return $nuevosIds;
+        }
+        
+        $claseModelo = "\\common\\models\\{$nombreModelo}";
+        
+        foreach ($datosCategoria as $item) {
+            $modelo = new $claseModelo();
+            
+            if (is_string($item)) {
+                // Si viene como string simple, el código SNOMED debería venir en datosExtraidos con estructura
+                $termino = $item;
+                $modelo->codigo = null;
+            } elseif (is_array($item)) {
+                // Mapear usando configuración
+                $this->mapearDatosAModelo($modelo, $item, $pasoConfig, [
+                    'codigo' => ['codigo', 'id_snomed', 'snomed_code', 'conceptId', 'codigo_snomed'],
+                ]);
+                
+                // Si hay término y código SNOMED, crear/actualizar SNOMED
+                $termino = $item['termino'] ?? $item['texto'] ?? $item['nombre'] ?? null;
+                $codigoSnomed = $modelo->codigo;
+                
+                if ($termino && $codigoSnomed && $nombreModelo === 'ConsultaSintomas') {
+                    \common\models\snomed\SnomedProblemas::crearSiNoExiste($codigoSnomed, $termino);
+                }
+            }
+            
+            $modelo->id_consulta = $modelConsulta->id_consulta;
+            
+            if ($modelo->save()) {
+                $nuevosIds[] = $modelo->id;
+            }
+        }
+        
+        return $nuevosIds;
+    }
+
+    /**
+     * Guardar prácticas usando configuración
+     */
+    private function guardarPracticas($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig = null)
+    {
+        $nuevosIds = [];
+        
+        if (!is_array($datosCategoria)) {
+            return $nuevosIds;
+        }
+        
+        $claseModelo = "\\common\\models\\{$nombreModelo}";
+        
+        foreach ($datosCategoria as $practicaData) {
+            $modelo = new $claseModelo();
+            
+            if (is_string($practicaData)) {
+                $modelo->codigo = null;
+            } elseif (is_array($practicaData)) {
+                // Mapear usando configuración
+                $this->mapearDatosAModelo($modelo, $practicaData, $pasoConfig, [
+                    'codigo' => ['codigo', 'id_snomed', 'snomed_code', 'conceptId', 'codigo_snomed'],
+                ]);
+            }
+            
+            $modelo->id_consulta = $modelConsulta->id_consulta;
+            
+            if ($modelo->save()) {
+                $nuevosIds[] = $modelo->id;
+            }
+        }
+        
+        return $nuevosIds;
+    }
+
+    /**
+     * Guardar diagnósticos usando configuración
+     */
+    private function guardarDiagnosticos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig = null)
+    {
+        $nuevosIds = [];
+        
+        if (!is_array($datosCategoria)) {
+            return $nuevosIds;
+        }
+        
+        foreach ($datosCategoria as $diagnosticoData) {
+            $modelo = new \common\models\DiagnosticoConsulta();
+            
+            if (is_string($diagnosticoData)) {
+                $modelo->codigo = null;
+            } elseif (is_array($diagnosticoData)) {
+                // Mapear usando configuración
+                $this->mapearDatosAModelo($modelo, $diagnosticoData, $pasoConfig, [
+                    'codigo' => ['codigo', 'codigo_cie10', 'cie10', 'id_cie10'],
+                ]);
+            }
+            
+            $modelo->id_consulta = $modelConsulta->id_consulta;
+            
+            if ($modelo->save()) {
+                $nuevosIds[] = $modelo->id;
+            }
+        }
+        
+        return $nuevosIds;
+    }
+
+    /**
+     * Guardado genérico para modelos no específicos usando configuración
+     */
+    private function guardarGenerico($modelConsulta, $claseModelo, $datosCategoria, $modelosExistentes, $pasoConfig = null)
+    {
+        $nuevosIds = [];
+        
+        if (!is_array($datosCategoria)) {
+            return $nuevosIds;
+        }
+        
+        foreach ($datosCategoria as $item) {
+            $modelo = new $claseModelo();
+            
+            if (is_array($item)) {
+                // Mapear usando configuración si está disponible, sino mapeo directo
+                if ($pasoConfig) {
+                    $this->mapearDatosAModelo($modelo, $item, $pasoConfig);
+                } else {
+                    // Mapeo directo por nombre de atributo
+                    foreach ($item as $key => $value) {
+                        if ($modelo->hasAttribute($key)) {
+                            $modelo->$key = $value;
+                        }
+                    }
+                }
+            }
+            
+            // Asignar id_consulta si el modelo tiene ese atributo
+            if ($modelo->hasAttribute('id_consulta')) {
+                $modelo->id_consulta = $modelConsulta->id_consulta;
+            }
+            
+            if ($modelo->save()) {
+                $nuevosIds[] = $modelo->id ?? $modelo->primaryKey;
+            }
+        }
+        
+        return $nuevosIds;
+    }
+
+    /**
+     * Mapear datos de la IA al modelo usando configuración y mapeo de campos
+     * @param \yii\db\ActiveRecord $modelo
+     * @param array $datos Datos de la IA (pueden incluir SNOMED)
+     * @param array|null $pasoConfig Configuración del paso desde pasos_json
+     * @param array|null $mapaCampos Mapa de campos del modelo a posibles nombres en datos de IA
+     */
+    private function mapearDatosAModelo($modelo, $datos, $pasoConfig = null, $mapaCampos = null)
+    {
+        // Si hay configuración, intentar usarla para mapear
+        if ($pasoConfig && isset($pasoConfig['campos'])) {
+            foreach ($pasoConfig['campos'] as $campoConfig) {
+                $nombreCampo = $campoConfig['nombre'] ?? null;
+                $fuentesDatos = $campoConfig['fuentes'] ?? [];
+                
+                if ($nombreCampo && $modelo->hasAttribute($nombreCampo)) {
+                    // Buscar valor en las fuentes especificadas
+                    foreach ($fuentesDatos as $fuente) {
+                        if (isset($datos[$fuente])) {
+                            $modelo->$nombreCampo = $datos[$fuente];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Si hay mapa de campos, usarlo para mapear
+        if ($mapaCampos) {
+            foreach ($mapaCampos as $campoModelo => $fuentesPosibles) {
+                if ($modelo->hasAttribute($campoModelo)) {
+                    foreach ($fuentesPosibles as $fuente) {
+                        if (isset($datos[$fuente])) {
+                            $modelo->$campoModelo = $datos[$fuente];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Mapeo directo por nombre de atributo (fallback)
+        foreach ($datos as $key => $value) {
+            if ($modelo->hasAttribute($key) && !isset($modelo->$key)) {
+                $modelo->$key = $value;
+            }
+        }
+    }
 
 }

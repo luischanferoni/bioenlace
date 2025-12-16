@@ -92,6 +92,9 @@ return [
                 // analisis de la consulta
                 'POST api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
                 'OPTIONS api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
+                // guardar consulta completa
+                'POST api/<version:\w+>/consulta/guardar' => '<version>/consulta/guardar',
+                'OPTIONS api/<version:\w+>/consulta/guardar' => '<version>/consulta/guardar',
 
                 // sign up
                 'POST api/<version:\w+>/signup' => '<version>/signup',

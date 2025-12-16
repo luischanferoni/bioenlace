@@ -104,4 +104,93 @@ class BaseController extends ActiveController
         
         return true;
     }
+
+    /**
+     * Verificar autenticación: Bearer token o sesión web
+     * Retorna array con 'authenticated' (bool) y 'userId' (int|null)
+     * 
+     * @return array ['authenticated' => bool, 'userId' => int|null]
+     */
+    protected function verificarAutenticacion()
+    {
+        $isAuthenticated = false;
+        $userId = null;
+        
+        // Intentar autenticación por Bearer token primero
+        $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
+        if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
+            $token = $matches[1];
+            try {
+                $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(Yii::$app->params['jwtSecret'], 'HS256'));
+                $userId = $decoded->user_id;
+                $isAuthenticated = true;
+            } catch (\Exception $e) {
+                // Token inválido, continuar con verificación de sesión
+            }
+        }
+        
+        // Si no hay Bearer token, verificar sesión web de frontend
+        if (!$isAuthenticated) {
+            $session = Yii::$app->session;
+            
+            // Asegurar que la sesión esté iniciada
+            if (!$session->isActive) {
+                $session->open();
+            }
+            
+            // Verificar si hay identidad de usuario en la sesión
+            $identityId = $session->get('__id');
+            $identity = $session->get('__identity');
+            
+            if ($identity !== null || !empty($identityId)) {
+                if (is_object($identity) && method_exists($identity, 'getId')) {
+                    $userId = $identity->getId();
+                } elseif (is_object($identity) && isset($identity->id)) {
+                    $userId = $identity->id;
+                } elseif (!empty($identityId)) {
+                    $userId = $identityId;
+                }
+                
+                if (!empty($userId)) {
+                    $isAuthenticated = true;
+                }
+            } elseif ($session->has('idPersona')) {
+                // Si hay idPersona en sesión, el usuario está autenticado
+                $isAuthenticated = true;
+                // Intentar obtener userId desde la persona
+                $idPersona = $session->get('idPersona');
+                $persona = \common\models\Persona::findOne(['id_persona' => $idPersona]);
+                if ($persona && $persona->id_user) {
+                    $userId = $persona->id_user;
+                }
+            }
+        }
+        
+        return [
+            'authenticated' => $isAuthenticated,
+            'userId' => $userId,
+        ];
+    }
+
+    /**
+     * Verificar autenticación y retornar error si no está autenticado
+     * Útil para acciones que requieren autenticación pero están excluidas del authenticator
+     * 
+     * @return array|null Retorna null si está autenticado, o array de error si no lo está
+     */
+    protected function requerirAutenticacion()
+    {
+        $auth = $this->verificarAutenticacion();
+        
+        if (!$auth['authenticated']) {
+            Yii::$app->response->statusCode = 401;
+            return [
+                'success' => false,
+                'message' => 'Usuario no autenticado. Debe iniciar sesión o proporcionar un token válido.',
+                'errors' => null,
+            ];
+        }
+        
+        return null;
+    }
 }

@@ -792,6 +792,7 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
             // Obtener userId de la autenticación para asignar created_by
             $auth = $this->verificarAutenticacion();
             $userId = $auth['userId'] ?? null;
+            //var_dump($userId); exit;
             
             $transaction = \Yii::$app->db->beginTransaction();
             

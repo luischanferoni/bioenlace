@@ -7,8 +7,10 @@
 
 <?php
 use yii\helpers\Url;
+use yii\helpers\Html;
 ?>
 <form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/consulta/guardar']) ?>">
+    <?= Html::hiddenInput('id_persona', $paciente->id_persona) ?>
     <!-- Formulario de entrada -->
     <div class="form-group mb-3" id="chat-form">
         <label for="chat-input" class="form-label">

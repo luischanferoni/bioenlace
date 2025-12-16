@@ -101,7 +101,48 @@ class Consulta extends \yii\db\ActiveRecord
                     \yii\db\ActiveRecord::EVENT_BEFORE_DELETE => ['deleted_by'],
                 ],
 
-                'value' => Yii::$app->user->id,                
+                'value' => function ($event) {
+                    // Determinar qué atributo se está procesando según el evento
+                    $attribute = null;
+                    if ($event->name === \yii\db\ActiveRecord::EVENT_BEFORE_INSERT) {
+                        $attribute = 'created_by';
+                    } elseif ($event->name === \yii\db\ActiveRecord::EVENT_BEFORE_UPDATE) {
+                        $attribute = 'updated_by';
+                    } elseif ($event->name === \yii\db\ActiveRecord::EVENT_BEFORE_DELETE) {
+                        $attribute = 'deleted_by';
+                    }
+                    
+                    // Si el campo ya tiene un valor asignado explícitamente, usarlo
+                    if ($attribute && $this->hasAttribute($attribute) && $this->$attribute !== null) {
+                        return $this->$attribute;
+                    }
+                    
+                    // Intentar obtener de Yii::$app->user->id
+                    if (Yii::$app->user && !Yii::$app->user->isGuest) {
+                        return Yii::$app->user->id;
+                    }
+                    
+                    // Si no hay usuario en Yii::$app->user, intentar obtener de la sesión
+                    $session = Yii::$app->session;
+                    if ($session->isActive) {
+                        $identityId = $session->get('__id');
+                        if ($identityId) {
+                            return $identityId;
+                        }
+                        
+                        // Intentar obtener desde idPersona en sesión
+                        if ($session->has('idPersona')) {
+                            $idPersona = $session->get('idPersona');
+                            $persona = \common\models\Persona::findOne(['id_persona' => $idPersona]);
+                            if ($persona && $persona->id_user) {
+                                return $persona->id_user;
+                            }
+                        }
+                    }
+                    
+                    // Si todo falla, retornar null (permitirá que la validación de BD falle si es requerido)
+                    return null;
+                },                
             ],
         ];
     }

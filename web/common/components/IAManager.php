@@ -145,7 +145,7 @@ class IAManager
     {
         return [
             'tipo' => 'ollama',
-            'endpoint' => 'http://localhost:11434/api/generate',
+            'endpoint' => 'http://192.168.1.11:11434/api/generate', // 190.30.242.228:10000
             'headers' => ['Content-Type' => 'application/json'],
             'payload' => [
                 'model' => 'llama3.1:70b',

@@ -8,7 +8,7 @@ return [
     'botonera' => ['view' => false, 'params' => []], // para guardar el path de un partial en donde esten los botones
     
     // Configuración de IA    
-    'ia_proveedor' => 'huggingface', // 'huggingface', 'groq', 'openai' , ollama
+    'ia_proveedor' => 'ollama', // 'huggingface', 'groq', 'openai' , ollama
     
     // NOTA: HuggingFace ofrece tier gratuito con 30,000 requests/mes gratis
     // Optimizar uso para maximizar requests gratuitos antes de usar tier de pago

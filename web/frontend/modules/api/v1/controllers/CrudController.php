@@ -21,18 +21,7 @@ class CrudController extends BaseController
         // El método actionProcessQuery verificará manualmente la autenticación
         $behaviors['authenticator']['except'] = ['options', 'process-query'];
         
-        // Configurar CORS específico para este controlador
-        // Usar la configuración centralizada del módulo
-        $behaviors['corsFilter'] = [
-            'class' => \yii\filters\Cors::class,
-            'cors' => [
-                'Origin' => \frontend\modules\api\v1\Module::getAllowedOrigins(),
-                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
-                'Access-Control-Request-Headers' => ['*'],
-                'Access-Control-Allow-Credentials' => true,
-                'Access-Control-Max-Age' => 86400,
-            ],
-        ];
+        // CORS ya está configurado en BaseController, no es necesario redefinirlo
         
         return $behaviors;
     }
@@ -53,71 +42,15 @@ class CrudController extends BaseController
      */
     public function actionProcessQuery()
     {
-        // Verificar autenticación: 
-        // 1. Intentar con Bearer token (para móvil)
-        // 2. Si no hay Bearer, verificar sesión web (para web)
-        $isAuthenticated = false;
-        $userId = null;
-        
-        // Verificar Bearer token primero (el BaseController maneja esto)
-        if (!Yii::$app->user->isGuest) {
-            $isAuthenticated = true;
-            $userId = Yii::$app->user->id;
-        } 
-        // Si no hay Bearer token, verificar sesión web de frontend
-        else {
-            // El módulo API cambia el componente user a ApiUser (sin sesión habilitada)
-            // Pero la sesión de Yii2 sigue funcionando, solo necesitamos verificar directamente
-            $session = Yii::$app->session;
-            
-            // Asegurar que la sesión esté iniciada
-            if (!$session->isActive) {
-                $session->open();
-            }
-            
-            // Verificar si hay identidad de usuario en la sesión
-            // Yii2 guarda la identidad del usuario en '__identity' y el ID en '__id'
-            $identityId = $session->get('__id');
-            $identity = $session->get('__identity');
-            
-            // Obtener el ID del usuario desde la identidad o desde __id
-            if ($identity !== null) {
-                if (is_object($identity)) {
-                    // Si la identidad es un objeto, obtener el ID
-                    if (method_exists($identity, 'getId')) {
-                        $userId = $identity->getId();
-                    } elseif (isset($identity->id)) {
-                        $userId = $identity->id;
-                    } elseif (!empty($identityId)) {
-                        $userId = $identityId;
-                    }
-                } else {
-                    $userId = $identityId;
-                }
-                
-                if (!empty($userId)) {
-                    $isAuthenticated = true;
-                }
-            } elseif (!empty($identityId)) {
-                // Si solo tenemos el ID pero no la identidad completa
-                $userId = $identityId;
-                $isAuthenticated = true;
-            } 
-            // Verificar también por datos específicos de la aplicación (idPersona)
-            elseif ($session->has('idPersona')) {
-                // Si tenemos idPersona, buscar el usuario correspondiente
-                $idPersona = $session->get('idPersona');
-                $persona = \common\models\Persona::findOne(['id_persona' => $idPersona]);
-                if ($persona && !empty($persona->id_user)) {
-                    $userId = $persona->id_user;
-                    $isAuthenticated = true;
-                }
-            }
+        // Verificar autenticación usando el método de BaseController
+        $authError = $this->requerirAutenticacion();
+        if ($authError !== null) {
+            return $authError;
         }
         
-        if (!$isAuthenticated) {
-            return $this->error('Debe estar autenticado para usar esta funcionalidad', null, 401);
-        }
+        // Obtener el userId usando el método de BaseController
+        $auth = $this->verificarAutenticacion();
+        $userId = $auth['userId'];
 
         $query = Yii::$app->request->post('query');
         

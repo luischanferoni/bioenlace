@@ -15,9 +15,9 @@ return [
     'hf_use_free_tier' => true, // Priorizar uso del tier gratuito (30K requests/mes)
     
     // Configuración de modelos HuggingFace optimizados
-    'hf_model_text_gen' => 'deepseek-ai/DeepSeek-R1:sambanova', // Modelo para generación de texto (DeepSeek R1)
-    'hf_model_correction' => 'deepseek-ai/DeepSeek-R1:sambanova', // Modelo para corrección
-    'hf_model_analysis' => 'deepseek-ai/DeepSeek-R1:sambanova', // Modelo para análisis (DeepSeek R1)
+    'hf_model_text_gen' => 'deepseek-ai/DeepSeek-R1:hyperbolic', // Modelo para generación de texto (DeepSeek R1)
+    'hf_model_correction' => 'deepseek-ai/DeepSeek-R1:hyperbolic', // Modelo para corrección
+    'hf_model_analysis' => 'deepseek-ai/DeepSeek-R1:hyperbolic', // Modelo para análisis (DeepSeek R1)
     'hf_embedding_model' => 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', // Modelo de embeddings
     'hf_stt_model' => 'jonatasgrosman/wav2vec2-xlsr-53-spanish', // Modelo Speech-to-Text (economico por defecto)
     

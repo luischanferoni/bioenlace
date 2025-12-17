@@ -185,7 +185,9 @@ class SisseDbManager extends DbManager
 
         // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getRolesByUser()        
         if (!isset(Yii::$app->authManager->rolesEspeciales) || count(Yii::$app->authManager->rolesEspeciales) == 0) {
-            return [];
+            // Agregar rol "paciente" a todos los usuarios logueados
+            $this->agregarRolPaciente($roles);
+            return $roles;
         }
         foreach (Yii::$app->authManager->rolesEspeciales as $rolEspecial) {
             $rolesEspeciales[] = 'a.item_name LIKE "%'.$rolEspecial.'%"';
@@ -202,7 +204,37 @@ class SisseDbManager extends DbManager
             $roles[$row['name']] = $this->populateItem($row);
         }
 
+        // Agregar rol "paciente" a todos los usuarios logueados
+        $this->agregarRolPaciente($roles);
+
         return $roles;
+    }
+
+    /**
+     * Agregar el rol "paciente" a la lista de roles si no existe ya
+     * Lanza una excepción si el rol "paciente" no existe en la base de datos
+     * @param array $roles Array de roles por referencia
+     * @throws \Exception Si el rol "paciente" no existe en la base de datos
+     */
+    protected function agregarRolPaciente(&$roles)
+    {
+        // Verificar si el rol "paciente" ya existe en los roles
+        if (isset($roles['paciente'])) {
+            return;
+        }
+
+        // Buscar el rol "paciente" en la base de datos
+        $query = (new Query())
+            ->from($this->itemTable)
+            ->where(['name' => 'paciente', 'type' => Item::TYPE_ROLE])
+            ->one($this->db);
+
+        if (!$query) {
+            throw new \Exception('El rol "paciente" no existe en la base de datos. Debe crearse antes de usar el sistema.');
+        }
+
+        // Si el rol existe, agregarlo a la lista
+        $roles['paciente'] = $this->populateItem($query);
     }
 
     /**

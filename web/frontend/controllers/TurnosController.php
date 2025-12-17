@@ -23,6 +23,8 @@ use common\models\Persona;
 use frontend\components\UserRequest;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use yii\debug\models\timeline\DataProvider;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.
@@ -185,6 +187,147 @@ class TurnosController extends Controller
             return ["success" => true];
         } else {
             return ["success" => false, "message" => $model->getErrorSummary(true)];
+        }
+    }
+
+    /**
+     * Crea un turno para el paciente autenticado (usado principalmente desde la app móvil)
+     * El id_persona se obtiene automáticamente del usuario autenticado
+     * 
+     * @return array Respuesta JSON con success y message
+     */
+    public function actionCrearMiTurno()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        // Obtener id_persona del usuario autenticado
+        $idPersona = null;
+        
+        // Intentar obtener desde sesión (para web)
+        $session = Yii::$app->session;
+        if ($session->isActive && $session->has('idPersona')) {
+            $idPersona = $session->get('idPersona');
+        }
+        
+        // Si no está en sesión, intentar obtener desde el usuario autenticado (JWT o sesión web)
+        if (!$idPersona) {
+            // Verificar autenticación por Bearer token (JWT)
+            $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
+            if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
+                $token = $matches[1];
+                try {
+                    $decoded = JWT::decode($token, new Key(Yii::$app->params['jwtSecret'], 'HS256'));
+                    $userId = $decoded->user_id;
+                    
+                    // Buscar persona asociada al usuario
+                    $persona = Persona::findOne(['id_user' => $userId]);
+                    if ($persona) {
+                        $idPersona = $persona->id_persona;
+                    }
+                } catch (\Exception $e) {
+                    // Token inválido
+                }
+            }
+            
+            // Si aún no tenemos idPersona, intentar desde la sesión de usuario
+            if (!$idPersona && Yii::$app->user && !Yii::$app->user->isGuest) {
+                $userId = Yii::$app->user->id;
+                if ($userId) {
+                    $persona = Persona::findOne(['id_user' => $userId]);
+                    if ($persona) {
+                        $idPersona = $persona->id_persona;
+                    }
+                }
+            }
+        }
+        
+        // Validar que se obtuvo el id_persona
+        if (!$idPersona) {
+            Yii::$app->response->statusCode = 401;
+            return [
+                "success" => false, 
+                "message" => "No se pudo identificar al paciente. Debe estar autenticado."
+            ];
+        }
+
+        $model = new Turno();
+        $model->load(Yii::$app->request->post());
+        
+        // Asignar id_persona del usuario autenticado (no se recibe por POST)
+        $model->id_persona = $idPersona;
+        
+        // Campos obligatorios recibidos por POST (id_persona ya está asignado)
+        $model->id_rr_hh = UserRequest::requireUserParam('idRecursoHumano');
+        $model->id_efector = UserRequest::requireUserParam('idEfector');
+        $model->id_servicio = UserRequest::requireUserParam('servicio_actual');
+
+        // Verificar derivaciones pendientes
+        $cps = ConsultaDerivaciones::getDerivacionesPorPersona($model->id_persona, $model->id_efector, $model->id_servicio_asignado, ConsultaDerivaciones::ESTADO_EN_ESPERA);
+        if (count($cps) > 0):
+            foreach ($cps as $cp) {
+                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
+                $cp->save();
+                $parent_id = $cp->id;
+            }
+            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+            $model->parent_id = $parent_id;
+        endif;
+
+        // Validar servicio asignado
+        if ($model->id_servicio_asignado == "" || $model->id_servicio_asignado == false) {
+            throw new BadRequestHttpException('Parametro servicio faltante');
+        }
+
+        // Obtener configuración del servicio-efector para determinar forma de atención
+        $servicioEfector = ServiciosEfector::find()
+            ->where(['id_servicio' => $model->id_servicio_asignado])
+            ->andWhere(['id_efector' => $model->id_efector])
+            ->one();
+
+        if (!$servicioEfector) {
+            throw new BadRequestHttpException('Servicio no encontrado para el efector especificado');
+        }
+
+        // Configurar escenario según forma de atención
+        if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
+            $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
+        } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
+            $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
+
+            // Verificar si el rrhh tiene cupo para atender un paciente más
+            $agenda = Agenda_rrhh::find()
+                ->andWhere(['id_rrhh_servicio_asignado' => $model->id_rrhh_servicio_asignado])
+                ->one();
+            
+            if ($agenda) {
+                $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgados($model->id_rrhh_servicio_asignado, $model->fecha);
+
+                if ($agenda->cupo_pacientes != 0 && $agenda->cupo_pacientes <= $cantTurnosOtorgados) {
+                    return [
+                        "success" => false, 
+                        "message" => "Ya se otorgaron todos los turnos correspondientes al límite establecido, por favor revise el historial de turnos del profesional"
+                    ];
+                }
+            }
+        }
+
+        // Guardar el turno
+        if ($model->save()) {
+            return [
+                "success" => true,
+                "message" => "Turno creado exitosamente",
+                "data" => [
+                    "id_turno" => $model->id_turnos,
+                    "fecha" => $model->fecha,
+                    "hora" => $model->hora
+                ]
+            ];
+        } else {
+            return [
+                "success" => false, 
+                "message" => "Error al crear el turno",
+                "errors" => $model->getErrorSummary(true)
+            ];
         }
     }
 

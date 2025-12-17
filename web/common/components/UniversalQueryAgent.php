@@ -96,6 +96,7 @@ PROMPT;
         $iaResponse = self::callIA($prompt);
         
         if (empty($iaResponse)) {
+            Yii::error("UniversalQueryAgent: callIA devolvió respuesta vacía. Consulta: '{$userQuery}', Prompt length: " . strlen($prompt), 'universal-query-agent');
             return [
                 'success' => false,
                 'error' => 'No se pudo analizar la consulta',
@@ -687,21 +688,36 @@ PROMPT;
     {
         try {
             $proveedorIA = IAManager::getProveedorIA();
+            
+            if (empty($proveedorIA)) {
+                Yii::error("UniversalQueryAgent: No se pudo obtener proveedor de IA", 'universal-query-agent');
+                return null;
+            }
+            
             IAManager::asignarPromptAConfiguracion($proveedorIA, $prompt);
             
             $client = new \yii\httpclient\Client();
-            $response = $client->createRequest()
+            $request = $client->createRequest()
                 ->setMethod('POST')
                 ->setUrl($proveedorIA['endpoint'])
                 ->addHeaders($proveedorIA['headers'])
-                ->setContent(json_encode($proveedorIA['payload']))
-                ->send();
+                ->setContent(json_encode($proveedorIA['payload']));
+            
+            $response = $request->send();
 
             if ($response->isOk) {
-                return IAManager::procesarRespuestaProveedor($response, $proveedorIA['tipo']);
+                $processedResponse = IAManager::procesarRespuestaProveedor($response, $proveedorIA['tipo']);
+                
+                if (empty($processedResponse)) {
+                    Yii::error("UniversalQueryAgent: procesarRespuestaProveedor devolvió vacío. Status: {$response->statusCode}, Tipo: {$proveedorIA['tipo']}, Response body: " . substr($response->content, 0, 500), 'universal-query-agent');
+                }
+                
+                return $processedResponse;
+            } else {
+                Yii::error("UniversalQueryAgent: Respuesta HTTP no OK. Status: {$response->statusCode}, Endpoint: {$proveedorIA['endpoint']}, Response: " . substr($response->content, 0, 500), 'universal-query-agent');
             }
         } catch (\Exception $e) {
-            Yii::error("Error llamando a IA: " . $e->getMessage(), 'universal-query-agent');
+            Yii::error("UniversalQueryAgent: Excepción llamando a IA. Mensaje: {$e->getMessage()}, Trace: " . $e->getTraceAsString(), 'universal-query-agent');
         }
 
         return null;

@@ -9,12 +9,15 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Directorio base del hosting
+BASE_DIR="/home/u257309594/domains/bioenlace.io"
+
 # Directorios
-REPO_DIR="/repo/web"
-FRONTEND_SOURCE_DIR="/repo/frontend/web"
-FRONTEND_DEST_DIR="/public_html/app"
-BACKEND_SOURCE_DIR="/repo/backend/web"
-BACKEND_DEST_DIR="/public_html/app/admin"
+REPO_DIR="$BASE_DIR/repo/web"
+FRONTEND_SOURCE_DIR="$BASE_DIR/repo/web/frontend/web"
+FRONTEND_DEST_DIR="$BASE_DIR/public_html/app"
+BACKEND_SOURCE_DIR="$BASE_DIR/repo/web/backend/web"
+BACKEND_DEST_DIR="$BASE_DIR/public_html/app/admin"
 
 # Carpetas a copiar
 FRONTEND_FOLDERS=("css" "custom-template" "images" "js")

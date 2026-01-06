@@ -42,7 +42,7 @@ $anio = Yii::$app->request->get('anio');
           MINISTERIO DE SALUD - PROVINCIA DE SANTIAGO DEL ESTERO<br/>
           DIRECCI&Oacute;N DE ATENCI&Oacute;N PRIMARIA DE LA SALUD<br/>
           &Aacute;REA DE ENFERMER&Iacute;A<br/>
-          SISSE <?=Yii::$app->user->getNombreEfector()?>
+          BIOENLACE <?=Yii::$app->user->getNombreEfector()?>
         </p> 
     </div>
 </div>  

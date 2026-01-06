@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Listado de Efectores', 'url' => ['
 ?>
 
 <br>
-<h3>Subir archivo al servidor de SISSE</h3> 
+<h3>Subir archivo al servidor de BIOENLACE</h3> 
 <br>
 
 <?php $form = ActiveForm::begin([
@@ -41,7 +41,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Listado de Efectores', 'url' => ['
 <br>
 <br>
 <p>
-    <strong><h5>Presione los botones para actualizar la tabla efectores de SISSE</h5></strong>
+    <strong><h5>Presione los botones para actualizar la tabla efectores de BIOENLACE</h5></strong>
     <?php
     if (isset($archivos)) {
         foreach ($archivos as $file) {

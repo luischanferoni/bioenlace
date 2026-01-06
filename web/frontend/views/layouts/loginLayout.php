@@ -7,7 +7,7 @@ use yii\helpers\Html;
 /* @var $this \yii\web\View */
 /* @var $content string */
 
-$this->title = UserManagementModule::t('front', 'SISSE');
+$this->title = UserManagementModule::t('front', 'BIOENLACE');
 AppAsset::register($this);
 
 ?>
@@ -30,7 +30,7 @@ AppAsset::register($this);
   </div>
   <div class="alert alert-info" role="alert">
     Para ingresar al Sistema en línea siga el 
-    siguiente enlace: <a href="https://sisse.msalsgo.gob.ar">SISSE</a>.
+    siguiente enlace: <a href="https://sisse.msalsgo.gob.ar">BIOENLACE</a>.
   </div>
 <?php endif;?>
 <?php $this->beginBody() ?>

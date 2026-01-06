@@ -16,7 +16,7 @@ use yii\helpers\Html;
 		<div class="row no-gutters align-items-center bg-white">
 			<div class="col-md-12 col-lg-6 align-self-center">
 				<img src="<?= Yii::getAlias('@web')?>/images/nuevo_logo.webp" width="160px" alt="" class="mx-auto d-block mb-5 mt-5 img-fluid">
-				<h3 class="text-center mb-5">VITAMIND</h3>
+				<h3 class="text-center mb-5">BIOENLACE</h3>
 				<div class="row justify-content-center pt-5">
 					<div class="col-md-9">
 						<div class="card  d-flex justify-content-center mb-0 auth-card iq-auth-form">

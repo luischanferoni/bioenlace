@@ -17,7 +17,7 @@ use common\models\Departamento; //Agrego el modelo Departamento
 /* @var $searchModel common\models\busquedas\EfectorBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'Listado de Efectores para SISSE';
+$this->title = 'Listado de Efectores para BIOENLACE';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="efector-index">

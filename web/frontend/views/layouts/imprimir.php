@@ -59,7 +59,7 @@ if(Yii::$app->user->username)
         <?= $content ?>
 
 <footer class="footer">
-        <p class="pull-left">&copy; SISSE <?= date('Y') ?></p>
+        <p class="pull-left">&copy; BIOENLACE <?= date('Y') ?></p>
         <p class="pull-right"><?php echo 'Ministerio de Salud de Santiago del Estero'; ?></p>
 </footer>
 

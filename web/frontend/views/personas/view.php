@@ -94,7 +94,7 @@ $this->registerJsFile(
                     ?>
 
                     <?= '<div class="row">' . Html::a(
-                        'Atenciones de enfermeria (SISSE v1)',
+                        'Atenciones de enfermeria (BIOENLACE v1)',
                         ['atenciones-enfermeria/view', 'id' => $model->id_persona],
                         $options = [
                             'class' => 'linkaModalGeneral ms-2',
@@ -404,15 +404,15 @@ $this->registerJsFile(
                             <?php
                             if ($model->id_user === null || $model->id_user === 0) {
                                 echo SisseGhostHtml::a(
-                                    'Crear acceso a SISSE',
+                                    'Crear acceso a BIOENLACE',
                                     ['/user/crear'],
-                                    ['class' => 'ms-2', 'title' => 'Crear acceso a SISSE']
+                                    ['class' => 'ms-2', 'title' => 'Crear acceso a BIOENLACE']
                                 );
                             } else {
                                 echo SisseGhostHtml::a(
-                                    'Editar acceso a SISSE',
+                                    'Editar acceso a BIOENLACE',
                                     ['/user/update', 'id' => $model->id_user],
-                                    ['class' => 'ms-2', 'title' => 'Editar datos de acceso a SISSE']
+                                    ['class' => 'ms-2', 'title' => 'Editar datos de acceso a BIOENLACE']
                                 );
 
                                 echo SisseGhostHtml::a(

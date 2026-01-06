@@ -166,7 +166,7 @@ $this->registerJs("
 
         $('.buttonsli').click(function(){
             var url = $(this).attr('href');            
-            if(url.indexOf('/sisse/internacion/update') >= 0 ) {
+            if(url.indexOf('/bioenlace/internacion/update') >= 0 ) {
                 $('#modalAltaMedica').modal('show').find('.modal-dialog').load(url);
             }else{            
                 window.location.href = url;

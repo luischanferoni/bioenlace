@@ -2,7 +2,7 @@
 
 /* @var $this yii\web\View */
 
-$this->title = 'SISSE';
+$this->title = 'BIOENLACE';
 
 ?>
 
@@ -14,7 +14,7 @@ $this->title = 'SISSE';
                 <div class="card card-block card-stretch card-height">
                     <div class="flex-wrap card-header d-flex justify-content-between align-items-center">
                         <div class="header-title">
-                            <h4>Backend de SISSE</h4>
+                            <h4>Backend de BIOENLACE</h4>
                         </div>
                     </div>
                 </div> 

@@ -52,10 +52,10 @@ if(Yii::$app->user->username)
     <?php
     $a = explode("/", $_SERVER['REQUEST_URI']);
     NavBar::begin([
-        'brandLabel' => $a[1]=='sisse_prueba'?'SISSE'.'<span class="label label-warning">PRUEBA</span>'.$efector_nombre:'SISSE'.$efector_nombre,
+        'brandLabel' => $a[1]=='bioenlace_prueba'?'BIOENLACE'.'<span class="label label-warning">PRUEBA</span>'.$efector_nombre:'BIOENLACE'.$efector_nombre,
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
-            'class' => $a[1]=='sisse_prueba'?'navbar-default navbar-fixed-top':'navbar-inverse navbar-fixed-top',
+            'class' => $a[1]=='bioenlace_prueba'?'navbar-default navbar-fixed-top':'navbar-inverse navbar-fixed-top',
         ],
     ]);
     echo Nav::widget([
@@ -173,7 +173,7 @@ NavBar::end();
 
 <footer class="footer">
     <div class="container">
-        <p class="pull-left">&copy; SISSE <?= date('Y') ?></p>
+        <p class="pull-left">&copy; BIOENLACE <?= date('Y') ?></p>
 
         <p class="pull-right"><?php echo 'Ministerio de Salud de Santiago del Estero'; ?></p>
     </div>

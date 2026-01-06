@@ -303,9 +303,9 @@ $this->params['breadcrumbs'][] = $this->title;
                         <div class="row">
                             <?php
                             echo SisseGhostHtml::a(
-                                'Editar acceso a SISSE',
+                                'Editar acceso a BIOENLACE',
                                 ['/user/update', 'id' => $model->id_user],
-                                ['class' => 'ms-2', 'title' => 'Editar datos de acceso a SISSE']
+                                ['class' => 'ms-2', 'title' => 'Editar datos de acceso a BIOENLACE']
                             );
                             ?>
                         </div>

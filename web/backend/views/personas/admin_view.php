@@ -144,9 +144,9 @@ $this->params['breadcrumbs'][] = $this->title;
         if ($model->id_user != 0) {
 
             echo SisseGhostHtml::a(
-                'Editar acceso a SISSE',
+                'Editar acceso a BIOENLACE',
                 ['/user/update', 'id' => $model->id_user],
-                ['class' => 'ms-2', 'title' => 'Editar datos de acceso a SISSE']
+                ['class' => 'ms-2', 'title' => 'Editar datos de acceso a BIOENLACE']
             );
         } else {
             echo Html::a(

@@ -36,7 +36,7 @@ use common\models\ServiciosEfector;
                     "data-bs-target" => "#modal-general",
                     "data-bs-toggle" => "modal",
                     "data-title" => sprintf("Turno para %s, %s", $persona->apellido, $persona->nombre),
-                    "data-sisse-id_servicio" => $servicioEfector->id_servicio
+                    "data-bioenlace-id_servicio" => $servicioEfector->id_servicio
                     ]
                 )."</div>";
             } else {
@@ -73,8 +73,8 @@ use common\models\ServiciosEfector;
                             "data-bs-target" => "#modal-general",
                             "data-bs-toggle" => "modal",
                             "data-title" => sprintf("Turno para %s, %s", $persona->apellido, $persona->nombre),
-                            "data-sisse-id_servicio" => $servicioEfector->id_servicio,
-                            "data-sisse-id_rrhh_sa" => $rrhhEfectorServicio->id,
+                            "data-bioenlace-id_servicio" => $servicioEfector->id_servicio,
+                            "data-bioenlace-id_rrhh_sa" => $rrhhEfectorServicio->id,
                             ]
                         );?>
                     <?php endif ?>

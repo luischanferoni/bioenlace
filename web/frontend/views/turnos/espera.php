@@ -35,7 +35,7 @@ if($profesional != ''){ ?>
   <div class="col-4">
     <p class="text-center">
           MINISTERIO DE SALUD - PROVINCIA DE SANTIAGO DEL ESTERO<br/>
-          SISSE <?=Yii::$app->user->getNombreEfector()?>
+          BIOENLACE <?=Yii::$app->user->getNombreEfector()?>
       </p>
   </div>
   <div class="col-4 text-center">

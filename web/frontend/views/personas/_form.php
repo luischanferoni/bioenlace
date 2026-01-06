@@ -818,7 +818,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     <?php
                     foreach ($tels as $tells) {
                         $tipo_tel = \common\models\Tipo_telefono::findOne($tells['id_tipo_telefono']);
-                        //.'/sisse/web/index.php?r=personas_telefono/update&id=' . $tells['id_persona_telefono'] . '&idp=' . $model->id_persona                            
+                        //.'/bioenlace/web/index.php?r=personas_telefono/update&id=' . $tells['id_persona_telefono'] . '&idp=' . $model->id_persona                            
                         echo $tells['numero'] . ' - ' . $tipo_tel->nombre . ' (' . $tells['comentario'] . ') ';
                         echo ' - <a data-pjax="0" aria-label="Actualizar" title="Actualizar" '
                             . 'href="' . Url::toRoute(['persona-telefono/update', 'id' => $tells['id_persona_telefono'], 'idp' => $model->id_persona]) . '">'

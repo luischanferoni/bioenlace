@@ -59,7 +59,7 @@ AppAsset::register($this);
             <footer class="footer">
                 <div class="footer-body">
                     <ul class="left-panel list-inline mb-0 p-0">
-                        <p>© SISSE <?=date("Y")?> - MINISTERIO DE SALUD DE SANTIAGO DEL ESTERO</p>
+                        <p>© BIOENLACE <?=date("Y")?> - MINISTERIO DE SALUD DE SANTIAGO DEL ESTERO</p>
                     </ul>
                     <div class="right-panel">
                         <img src="<?= Yii::getAlias('@web') ?>/images/logoSD.png" width="100px" alt="">

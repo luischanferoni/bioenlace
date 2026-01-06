@@ -1,25 +1,42 @@
+# Vendor y dependencias
 /vendor
+/composer.lock
+
+# Yii Framework
 /yii
-/BD backup
+/yii.bat
+/yii_test
+
+# Archivos de configuración sensibles
 frontend/web/index.php
 frontend/web/index-test.php
 frontend/web/robots.txt
-frontend/web/uploads/*
-frontend/web/practicas/*
-frontend/runtime/*
 backend/web/index.php
 backend/web/index-test.php
 backend/web/robots.txt
-backend/runtime/*
-backend/web/assets
+
+# Uploads y archivos generados por usuarios
+frontend/web/uploads/*
+frontend/web/practicas/*
 backend/web/uploads/*
-composer.lock
-yii
-/nbproject/private/
+
+# Runtime y cache
+frontend/runtime/*
+backend/runtime/*
+console/runtime/*
+backend/web/assets
+
+# Logs
+frontend/runtime/logs/analisis-consultas/*.log
+
+# Node modules (React)
+frontend/web/react/node_modules/*
+
+# Archivos de producción/backup
+/BD backup
 /produccion/sisse-56/*.csv
 /produccion/sisse-56/*.sql
+
+# Herramientas de desarrollo
 .php-cs-fixer.cache
-frontend/web/react/node_modules/*
-console/runtime/*
-# Logs de análisis de consultas individuales
-frontend/runtime/logs/analisis-consultas/*.log
+/nbproject/private/

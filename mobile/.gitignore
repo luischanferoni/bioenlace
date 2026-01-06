@@ -1,0 +1,70 @@
+# Flutter/Dart/Pub related
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
+**/.packages
+**/.packages.generated
+**/.pub-preload-cache/
+**/.pub/
+**/build/
+**/.buildlog/
+**/doc/api/
+**/flutter_*.png
+**/linked_*.ds
+**/unlinked.ds
+**/unlinked_spec.ds
+
+# Android related
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+**/*.jks
+
+# iOS/XCode related
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/xcuserdata
+**/ios/.generated/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/ephemeral
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/xcuserdata/
+
+# macOS
+**/macos/Flutter/ephemeral
+**/Pods/
+
+# Windows
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/flutter/generated_plugins.cmake
+
+# Linux
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/linux/flutter/generated_plugins.cmake
+
+# Miscellaneous
+**/*.class
+**/*.lock
+**/*.log
+**/*.pyc
+**/*.swp
+**/.DS_Store
+**/.history
+**/coverage/
+**/app.*.symbols
+
+# IntelliJ / Android Studio
+**/*.iml
+**/.idea/
+
+# VS Code (opcional - descomentar si no quieres versionar configuraciones)
+# **/.vscode/
+

@@ -8,7 +8,7 @@ return [
     'botonera' => ['view' => false, 'params' => []], // para guardar el path de un partial en donde esten los botones
     
     // Configuración de IA    
-    'ia_proveedor' => 'ollama', // 'huggingface', 'groq', 'openai' , ollama
+    'ia_proveedor' => 'google', // 'huggingface', 'groq', 'openai', 'ollama', 'google' (Vertex AI)
     
     // NOTA: HuggingFace ofrece tier gratuito con 30,000 requests/mes gratis
     // Optimizar uso para maximizar requests gratuitos antes de usar tier de pago
@@ -46,6 +46,18 @@ return [
     'face_verification_provider' => 'azure', // 'azure', 'google', 'simple'
     'google_vision_api_key' => '', // API key para Google Vision API
     'google_vision_project_id' => '', // Project ID (opcional)
+    
+    // Configuración de Google Cloud (Vertex AI, Generative AI, etc.)
+    'google_cloud_credentials_path' => '', // Ruta al archivo JSON de credenciales (o usar variable de entorno GOOGLE_APPLICATION_CREDENTIALS)
+    'google_cloud_project_id' => '', // Project ID de Google Cloud
+    'google_cloud_region' => 'us-central1', // Región para Vertex AI
+    'google_cloud_api_key' => '', // API key alternativa (menos segura, solo para desarrollo)
+    
+    // Configuración de modelos Vertex AI
+    'vertex_ai_model' => 'gemini-1.5-pro', // 'gemini-1.5-pro', 'gemini-1.5-flash', 'text-bison@001', etc.
+    'vertex_ai_location' => 'us-central1', // Ubicación del modelo
+    'vertex_ai_temperature' => 0.3, // Temperature para generación
+    'vertex_ai_max_tokens' => 1000, // Tokens máximos en la respuesta
     'azure_face_api_key' => '', // API key para Azure Face API
     'azure_face_endpoint' => '', // Endpoint de Azure Face API (ej: https://<resource>.cognitiveservices.azure.com)
     'azure_face_min_quality' => 0.35, // Umbral mínimo de qualityForRecognition (0.0 - 1.0)

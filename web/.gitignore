@@ -40,3 +40,12 @@ frontend/web/react/node_modules/*
 # Herramientas de desarrollo
 .php-cs-fixer.cache
 /nbproject/private/
+
+# Credenciales y archivos sensibles
+/config/credentials/
+**/credentials/*.json
+**/credentials/*.key
+**/credentials/*.pem
+*.json
+!composer.json
+!package.json

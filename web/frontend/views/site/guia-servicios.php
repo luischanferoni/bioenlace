@@ -55,11 +55,4 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>        
     </div>
 		
-	
-	<?php 
-		require_once("visitas/usuarios.php");
-		//require_once("visitas/visitas.php"); 
-	?>
-
-	
 </div>

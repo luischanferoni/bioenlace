@@ -5,6 +5,7 @@ frontend/web/index.php
 frontend/web/index-test.php
 frontend/web/robots.txt
 frontend/web/uploads/*
+frontend/web/practicas/*
 frontend/runtime/*
 backend/web/index.php
 backend/web/index-test.php

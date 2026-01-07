@@ -9,9 +9,9 @@
    id="svg1"
    inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
    sodipodi:docname="logo_hecho_con_inkscape_horizontal.svg"
-   inkscape:export-filename="logo_small.png"
-   inkscape:export-xdpi="52.443409"
-   inkscape:export-ydpi="52.443409"
+   inkscape:export-filename="..\..\frontend\frontend\frontend\frontend\frontend\frontend\frontend\frontend\frontend\frontend\frontend\web\images\logo_small.png"
+   inkscape:export-xdpi="18.458735"
+   inkscape:export-ydpi="18.458735"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -27,8 +27,8 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="1.0167041"
-     inkscape:cx="366.37996"
-     inkscape:cy="490.30983"
+     inkscape:cx="14.26177"
+     inkscape:cy="509.98123"
      inkscape:window-width="1920"
      inkscape:window-height="1009"
      inkscape:window-x="-8"
@@ -103,22 +103,22 @@
      id="layer1">
     <path
        style="opacity:1;fill:#000000;fill-opacity:0;fill-rule:nonzero;stroke:#f07167;stroke-width:2.312;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="m 14.491974,135.36746 -5.9372995,0.0696 c 0,0 15.2011735,14.87909 15.3501005,20.60665 0.217219,8.35404 -7.095801,7.72748 -7.095801,7.72748"
+       d="m 13.892,135.36746 -5.3373255,0.0696 c 0,0 15.2011735,14.87909 15.3501005,20.60665 0.217219,8.35404 -7.095801,7.72748 -7.095801,7.72748"
        id="path9"
        sodipodi:nodetypes="ccsc" />
     <path
-       d="m 15.853261,134.34163 c -0.679102,1e-5 -1.725742,0.43225 -1.725818,0.96548 -1.9e-5,0.53325 1.136851,0.92219 1.816023,0.92222 0.679222,5e-5 0.643552,-0.38893 0.64353,-0.92222 -7.4e-5,-0.53326 -0.05457,-0.96551 -0.733735,-0.96548 z"
-       style="opacity:1;fill-opacity:0;stroke:#f07167;stroke-width:1.39013;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+       d="m 15.327872,134.14604 c -0.927401,2e-5 -2.35673,0.59029 -2.356832,1.31854 -3e-5,0.72818 1.552522,1.25932 2.480022,1.25938 0.927568,6e-5 0.878856,-0.53114 0.878826,-1.25938 -1.01e-4,-0.72828 -0.0745,-1.31857 -1.002016,-1.31854 z"
+       style="opacity:1;fill-opacity:0;stroke:#f07167;stroke-width:1.33608;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
        id="path11"
        sodipodi:nodetypes="ccccc" />
     <path
-       d="m 19.914276,134.33656 c 0.687801,2e-5 1.747845,0.43781 1.747922,0.97786 1.8e-5,0.54009 -1.151411,0.93402 -1.839279,0.93404 -0.68792,3e-5 -0.651789,-0.3939 -0.651776,-0.93404 7.9e-5,-0.54008 0.05526,-0.97789 0.743133,-0.97786 z"
-       style="opacity:1;fill-opacity:0;stroke:#f07167;stroke-width:1.35886;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
+       d="m 19.551262,134.12347 c 0.943616,4e-5 2.397936,0.60068 2.398043,1.34161 2.2e-5,0.74096 -1.579666,1.28141 -2.52338,1.28144 -0.943788,3e-5 -0.894214,-0.54041 -0.894199,-1.28144 1.08e-4,-0.74097 0.0758,-1.34164 1.019536,-1.34161 z"
+       style="opacity:1;fill-opacity:0;stroke:#f07167;stroke-width:1.29095;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
        id="path11-1"
        sodipodi:nodetypes="ccccc" />
     <path
        style="fill:#000000;fill-opacity:0;fill-rule:nonzero;stroke:#f07167;stroke-width:2.312;stroke-linecap:butt;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="m 20.486817,135.50678 5.720083,-0.0696 c 0,0 -15.201177,14.87909 -15.350103,20.60665 -0.217219,8.35404 7.095804,7.72749 7.095804,7.72749"
+       d="m 21.087,135.50678 5.1199,-0.0696 c 0,0 -15.201177,14.87909 -15.350103,20.60665 -0.217219,8.35404 7.095804,7.72749 7.095804,7.72749"
        id="path9-2"
        sodipodi:nodetypes="ccsc" />
     <text
@@ -136,14 +136,14 @@
     <text
        xml:space="preserve"
        style="font-size:30.6921px;line-height:0;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;opacity:1;fill:none;fill-opacity:0;fill-rule:nonzero;stroke:#f07167;stroke-width:0.483171;stroke-linecap:butt;stroke-linejoin:bevel;stroke-dasharray:none;stroke-opacity:1"
-       x="35.066959"
+       x="29.59141"
        y="155.14935"
        id="text16"
        transform="scale(0.9664171,1.0347499)"><tspan
          sodipodi:role="line"
          id="tspan16"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30.6921px;line-height:0;font-family:Absans;-inkscape-font-specification:Absans;fill:#f07167;fill-opacity:1;stroke-width:0.483171;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
-         x="35.066959"
+         x="29.59141"
          y="155.14935">BIOENLACE</tspan></text>
   </g>
 </svg>

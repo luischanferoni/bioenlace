@@ -33,7 +33,7 @@ $anio = Yii::$app->request->get('anio');
     <img class="pull-right" src="<?= Yii::getAlias('@web')?>/images/logo_aps.jpeg" style="height: 95px;"/>
   </div>
   <div class="col-4 text-center">  
-    <img class="" src="<?= Yii::getAlias('@web') ?>/images/logoSISSE2_small.png" style="height: 95px;"/>
+    <img class="" src="<?= Yii::getAlias('@web') ?>/images/logo_small.png" style="height: 95px;"/>
   </div>
 </div>
 <div class="row">

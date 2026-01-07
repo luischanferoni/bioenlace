@@ -81,7 +81,7 @@ if (Yii::$app->user->username) {
                 <div class="container-fluid">
                     <div class="d-flex justify-content-between w-100 align-items-center">
                         <div class="d-flex align-items-center">
-                            <img class="img-fluid m-2" width="100px" src="<?php echo Yii::getAlias('@web').'/'?>images/logoSISSE2_small.png">
+                            <img class="img-fluid" src="<?php echo Yii::getAlias('@web').'/'?>images/logo_small.png">
                         </div>
                         
                         <?php if (!Yii::$app->user->isGuest): ?>

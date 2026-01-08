@@ -509,10 +509,21 @@ class IAManager
      */
     public function procesarRespuestaProveedorInstance($response, $tipo)
     {
+        // Log de la respuesta original antes de procesar
+        $responseContent = $response->content ?? '';
+        $responseContentLength = strlen($responseContent);
+        \Yii::info("IAManager::procesarRespuestaProveedorInstance - INICIO. Tipo: {$tipo}. Respuesta original (longitud: {$responseContentLength}): {$responseContent}", 'ia-manager');
+        
         // Descomprimir respuesta si está comprimida
         $content = self::descomprimirRespuesta($response);
         
+        // Log del contenido después de descomprimir
+        \Yii::info("IAManager::procesarRespuestaProveedorInstance - Después de descomprimir. Contenido (longitud: " . strlen($content) . "): {$content}", 'ia-manager');
+        
         $responseData = json_decode($content, true);
+        
+        // Log del JSON parseado
+        \Yii::info("IAManager::procesarRespuestaProveedorInstance - JSON parseado. JSON Error: " . json_last_error_msg() . ". ResponseData completo: " . json_encode($responseData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), 'ia-manager');
         
         if (json_last_error() !== JSON_ERROR_NONE) {
             \Yii::error('Error decodificando JSON de IA: ' . json_last_error_msg() . ' - Contenido preview: ' . substr($content, 0, 200), 'ia-manager');
@@ -552,6 +563,11 @@ class IAManager
             default:
                 $contenido = $responseData;
         }
+
+        // Log del contenido final extraído
+        $contenidoLength = is_string($contenido) ? strlen($contenido) : (is_array($contenido) ? 'array con ' . count($contenido) . ' elementos' : gettype($contenido));
+        $contenidoPreview = is_string($contenido) ? $contenido : (is_array($contenido) ? json_encode($contenido, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) : (string)$contenido);
+        \Yii::info("IAManager::procesarRespuestaProveedorInstance - Contenido final extraído (tipo: {$tipo}, longitud/tamaño: {$contenidoLength}): {$contenidoPreview}", 'ia-manager');
 
         return $contenido;
     }

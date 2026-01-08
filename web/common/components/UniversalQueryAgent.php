@@ -720,6 +720,12 @@ PROMPT;
             if ($response->isOk) {
                 $processedResponse = IAManager::procesarRespuestaProveedor($response, $proveedorIA['tipo']);
                 
+                // Log de lo que devuelve procesarRespuestaProveedor antes de pasarlo a parseJSONResponse
+                $processedResponseType = gettype($processedResponse);
+                $processedResponseLength = is_string($processedResponse) ? strlen($processedResponse) : 'N/A';
+                $processedResponsePreview = is_string($processedResponse) ? $processedResponse : (is_array($processedResponse) ? json_encode($processedResponse, JSON_UNESCAPED_UNICODE) : (string)$processedResponse);
+                Yii::info("UniversalQueryAgent::callIA - Respuesta procesada recibida. Tipo: {$processedResponseType}, Longitud: {$processedResponseLength}, Contenido: {$processedResponsePreview}", 'universal-query-agent');
+                
                 if (empty($processedResponse)) {
                     Yii::error("UniversalQueryAgent: procesarRespuestaProveedor devolvió vacío. Status: {$response->statusCode}, Tipo: {$proveedorIA['tipo']}, Response body: " . substr($response->content, 0, 500), 'universal-query-agent');
                 }

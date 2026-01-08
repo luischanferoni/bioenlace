@@ -742,6 +742,9 @@ PROMPT;
      */
     private static function parseJSONResponse($response)
     {
+        // Log de la respuesta antes de intentar parsear
+        Yii::info("UniversalQueryAgent: Respuesta recibida para parsear. Longitud: " . strlen($response) . " caracteres. Contenido: {$response}", 'universal-query-agent');
+        
         // Buscar JSON en la respuesta
         if (preg_match('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $response, $matches)) {
             $json = json_decode($matches[0], true);

@@ -20,12 +20,12 @@ class AppTheme {
   // #FED9B7 -> naranja (warning)
   static const Color warningColor = Color(0xFFFED9B7);
   static const Color infoColor = Color(0xFF00AFB9);
-  // #f5f5eb -> gris claro (light/background)
-  static const Color light = Color(0xFFF5F5EB);
+  // #fafafa -> gris claro (light/background)
+  static const Color light = Color(0xFFFAFAFA);
   static const Color dark = Color(0xFF324356);
 
-  // #f5f5eb -> gris claro (background)
-  static const Color backgroundColor = Color(0xFFF5F5EB);
+  // #fafafa -> gris claro (background)
+  static const Color backgroundColor = Color(0xFFFAFAFA);
   static const Color cardColor = Color.fromRGBO(255, 255, 255, 1);
   static const Color titleTextColor = Color(0xFF0081A7);
   static const Color subTitleTextColor = Color(0xff797878);

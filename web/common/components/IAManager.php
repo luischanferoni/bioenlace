@@ -224,15 +224,16 @@ class IAManager
         $location = Yii::$app->params['google_cloud_region'] ?? 'us-central1';
         $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-1.5-pro';
         
-        // Construir endpoint de Vertex AI
-        $endpoint = "https://{$location}-aiplatform.googleapis.com/v1/projects/{$projectId}/locations/{$location}/publishers/google/models/{$model}:predict";
-        
         // Alternativa: usar Generative AI API (más simple, requiere API key)
         $apiKey = Yii::$app->params['google_cloud_api_key'] ?? '';
         $usarGenerativeAI = !empty($apiKey);
         
         if ($usarGenerativeAI) {
+            // Generative AI API (con API key) - endpoint público
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
+        } else {
+            // Vertex AI (con cuenta de servicio) - endpoint para modelos Gemini
+            $endpoint = "https://{$location}-aiplatform.googleapis.com/v1/projects/{$projectId}/locations/{$location}/publishers/google/models/{$model}:generateContent";
         }
         
         $headers = [
@@ -244,23 +245,29 @@ class IAManager
             $endpoint .= "?key={$apiKey}";
         } else {
             // Para autenticación con cuenta de servicio, se requiere OAuth2 token
-            // Esto se manejará automáticamente si GOOGLE_APPLICATION_CREDENTIALS está configurado
-            $headers['Authorization'] = 'Bearer ' . self::obtenerTokenGoogle();
+            $token = self::obtenerTokenGoogle();
+            if (empty($token)) {
+                \Yii::error('No se pudo obtener token de Google Cloud. Verifique las credenciales configuradas.', 'ia-manager');
+                throw new \Exception('Error de autenticación con Google Cloud: No se pudo obtener token OAuth2. Configure GOOGLE_APPLICATION_CREDENTIALS o google_cloud_api_key en params-local.php');
+            }
+            $headers['Authorization'] = 'Bearer ' . $token;
         }
+        
+        // Preparar payload base - ambos APIs usan el mismo formato para Gemini
+        $payload = [
+            'contents' => [], // Se llenará con el prompt
+            'generationConfig' => [
+                'maxOutputTokens' => (int)(Yii::$app->params['hf_max_length'] ?? 2000),
+                'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.3)
+            ]
+        ];
         
         return [
             'tipo' => 'google',
             'endpoint' => $endpoint,
             'headers' => $headers,
             'usar_generative_ai' => $usarGenerativeAI,
-            'payload' => [
-                'model' => $model,
-                'contents' => [], // Se llenará con el prompt (formato Google Generative AI)
-                'generationConfig' => [
-                    'maxOutputTokens' => (int)(Yii::$app->params['hf_max_length'] ?? 2000),
-                    'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.3)
-                ]
-            ]
+            'payload' => $payload
         ];
     }
     
@@ -283,10 +290,127 @@ class IAManager
             return '';
         }
         
-        // En producción, deberías usar la biblioteca oficial de Google Cloud PHP
-        // Por ahora, retornamos vacío y el cliente HTTP deberá manejar la autenticación
-        // o usar la biblioteca de Google Cloud
+        // Leer credenciales JSON
+        $credentialsJson = file_get_contents($credentialsPath);
+        $credentials = json_decode($credentialsJson, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE || !isset($credentials['private_key'])) {
+            \Yii::error('Error leyendo credenciales de Google Cloud: ' . json_last_error_msg(), 'ia-manager');
+            return '';
+        }
+        
+        // Verificar si tenemos un token en cache (válido por 1 hora)
+        $cacheKey = 'google_oauth_token_' . md5($credentialsPath);
+        $cachedToken = Yii::$app->cache->get($cacheKey);
+        if ($cachedToken !== false) {
+            return $cachedToken;
+        }
+        
+        // Crear JWT para obtener access token
+        $now = time();
+        $jwt = self::crearJWTGoogle($credentials, $now);
+        
+        if (empty($jwt)) {
+            \Yii::error('Error creando JWT para Google Cloud', 'ia-manager');
+            return '';
+        }
+        
+        // Intercambiar JWT por access token
+        $tokenUri = $credentials['token_uri'] ?? 'https://oauth2.googleapis.com/token';
+        $client = new Client();
+        
+        try {
+            $response = $client->createRequest()
+                ->setMethod('POST')
+                ->setUrl($tokenUri)
+                ->setContent(http_build_query([
+                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                    'assertion' => $jwt
+                ]))
+                ->addHeaders(['Content-Type' => 'application/x-www-form-urlencoded'])
+                ->send();
+            
+            if ($response->isOk) {
+                $tokenData = json_decode($response->content, true);
+                $accessToken = $tokenData['access_token'] ?? '';
+                
+                if (!empty($accessToken)) {
+                    // Guardar en cache (expira en 50 minutos, los tokens duran 1 hora)
+                    $expiresIn = ($tokenData['expires_in'] ?? 3600) - 600; // 10 minutos antes de expirar
+                    Yii::$app->cache->set($cacheKey, $accessToken, $expiresIn);
+                    return $accessToken;
+                }
+            } else {
+                \Yii::error('Error obteniendo token de Google Cloud: ' . $response->statusCode . ' - ' . $response->content, 'ia-manager');
+            }
+        } catch (\Exception $e) {
+            \Yii::error('Excepción obteniendo token de Google Cloud: ' . $e->getMessage(), 'ia-manager');
+        }
+        
         return '';
+    }
+    
+    /**
+     * Crear JWT para autenticación con Google Cloud
+     * @param array $credentials Credenciales de la cuenta de servicio
+     * @param int $now Timestamp actual
+     * @return string JWT firmado
+     */
+    private static function crearJWTGoogle($credentials, $now)
+    {
+        if (!isset($credentials['private_key']) || !isset($credentials['client_email'])) {
+            return '';
+        }
+        
+        // Headers del JWT
+        $header = [
+            'alg' => 'RS256',
+            'typ' => 'JWT'
+        ];
+        
+        // Claims del JWT
+        $claims = [
+            'iss' => $credentials['client_email'],
+            'scope' => 'https://www.googleapis.com/auth/cloud-platform',
+            'aud' => $credentials['token_uri'] ?? 'https://oauth2.googleapis.com/token',
+            'exp' => $now + 3600, // Expira en 1 hora
+            'iat' => $now
+        ];
+        
+        // Codificar header y claims en base64url
+        $headerEncoded = self::base64UrlEncode(json_encode($header));
+        $claimsEncoded = self::base64UrlEncode(json_encode($claims));
+        
+        // Crear signature
+        $signatureInput = $headerEncoded . '.' . $claimsEncoded;
+        $privateKey = openssl_pkey_get_private($credentials['private_key']);
+        
+        if ($privateKey === false) {
+            \Yii::error('Error obteniendo clave privada de Google Cloud: ' . openssl_error_string(), 'ia-manager');
+            return '';
+        }
+        
+        $signature = '';
+        if (!openssl_sign($signatureInput, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+            \Yii::error('Error firmando JWT: ' . openssl_error_string(), 'ia-manager');
+            openssl_free_key($privateKey);
+            return '';
+        }
+        
+        openssl_free_key($privateKey);
+        $signatureEncoded = self::base64UrlEncode($signature);
+        
+        return $signatureInput . '.' . $signatureEncoded;
+    }
+    
+    /**
+     * Codificar en base64url (RFC 4648)
+     * @param string $data
+     * @return string
+     */
+    private static function base64UrlEncode($data)
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
     /**
@@ -355,7 +479,7 @@ class IAManager
                 $proveedorIA['payload']['messages'][] = ['role' => 'user', 'content' => $prompt];
                 break;
             case 'google':
-                // Google Generative AI API usa formato 'contents' con 'parts'
+                // Google Generative AI API y Vertex AI usan el mismo formato 'contents' con 'parts'
                 $proveedorIA['payload']['contents'][] = [
                     'parts' => [
                         ['text' => $prompt]
@@ -407,17 +531,21 @@ class IAManager
                 break;
             case 'google':
                 // Google Vertex AI/Gemini puede usar diferentes formatos
-                // Formato compatible OpenAI (si se usa endpoint de chat completions)
-                if (isset($responseData['choices'][0]['message']['content'])) {
-                    $contenido = $responseData['choices'][0]['message']['content'];
+                // Formato Generative AI API (candidates) - más común
+                if (isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
+                    $contenido = $responseData['candidates'][0]['content']['parts'][0]['text'];
                 }
-                // Formato nativo Vertex AI (predictions)
+                // Formato nativo Vertex AI (predictions) - para endpoint predict
                 elseif (isset($responseData['predictions'][0]['content'])) {
                     $contenido = $responseData['predictions'][0]['content'];
                 }
-                // Formato Generative AI API (candidates)
-                elseif (isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
-                    $contenido = $responseData['candidates'][0]['content']['parts'][0]['text'];
+                // Formato Vertex AI con estructura de texto
+                elseif (isset($responseData['predictions'][0]['text'])) {
+                    $contenido = $responseData['predictions'][0]['text'];
+                }
+                // Formato compatible OpenAI (si se usa endpoint de chat completions)
+                elseif (isset($responseData['choices'][0]['message']['content'])) {
+                    $contenido = $responseData['choices'][0]['message']['content'];
                 }
                 break;
             default:

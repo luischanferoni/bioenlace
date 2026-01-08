@@ -85,6 +85,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final data = result['data'];
         final explanation = data['explanation'] ?? 'Consulta procesada';
         final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
+        final suggestedQuery = data['suggested_query'];
 
         setState(() {
           _isSending = false;
@@ -94,15 +95,21 @@ class _ChatScreenState extends State<ChatScreen> {
             'type': 'bot',
             'content': explanation,
             'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
+            'suggested_query': suggestedQuery,
             'timestamp': DateTime.now(),
           });
         });
       } else {
+        // Si hay explanation en los datos, usarla aunque success sea false (compatibilidad)
+        final data = result['data'];
+        final explanation = data?['explanation'];
+        
         setState(() {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': result['message'] ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.',
+            'content': explanation ?? result['message'] ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.',
+            'suggested_query': data?['suggested_query'],
             'timestamp': DateTime.now(),
           });
         });
@@ -174,6 +181,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 final isUser = message['type'] == 'user';
                 final content = message['content'] as String;
                 final actions = message['actions'] as List<Map<String, dynamic>>?;
+                final suggestedQuery = message['suggested_query'] as String?;
                 final timestamp = message['timestamp'] as DateTime;
 
                 return Column(
@@ -267,6 +275,40 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             );
                           }).toList(),
+                        ),
+                      ),
+                    ],
+                    // Consulta sugerida si existe
+                    if (!isUser && suggestedQuery != null && suggestedQuery.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            // Enviar la consulta sugerida automáticamente
+                            _messageController.text = suggestedQuery;
+                            _sendMessage();
+                          },
+                          icon: Icon(
+                            Icons.lightbulb_outline,
+                            size: 16,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                          label: Text(
+                            suggestedQuery,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: Theme.of(context).primaryColor.withOpacity(0.5),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
                         ),
                       ),
                     ],

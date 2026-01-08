@@ -432,7 +432,7 @@ PROMPT;
             // Si hay sugerencias, incluirlas
             if (!empty($suggestedActions)) {
                 return [
-                    'success' => false,
+                    'success' => true, // Es una respuesta válida del sistema, no un error
                     'explanation' => 'No encontré acciones específicas para tu consulta, pero aquí tienes algunas opciones que podrían ayudarte:',
                     'actions' => array_slice($suggestedActions, 0, 5),
                     'suggested_query' => '¿qué puedo hacer?',
@@ -440,7 +440,7 @@ PROMPT;
             }
             
             return [
-                'success' => false,
+                'success' => true, // Es una respuesta válida del sistema, no un error
                 'explanation' => 'No encontré acciones específicas para tu consulta. Puedes preguntar "¿qué puedo hacer?" para ver todas tus opciones disponibles.',
                 'suggested_query' => '¿qué puedo hacer?',
             ];

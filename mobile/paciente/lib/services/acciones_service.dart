@@ -61,8 +61,11 @@ class AccionesService {
 
       if (response.statusCode == 200) {
         // La respuesta puede venir envuelta en 'data' o directamente
-        if (responseData['success'] == true) {
-          final data = responseData['data'] ?? responseData;
+        final data = responseData['data'] ?? responseData;
+        
+        // Si tiene explanation, es una respuesta válida aunque success sea false
+        // (por compatibilidad con versiones anteriores de la API)
+        if (responseData['success'] == true || data['explanation'] != null) {
           return {
             'success': true,
             'data': data,
@@ -70,7 +73,7 @@ class AccionesService {
         } else {
           return {
             'success': false,
-            'message': responseData['message'] ?? 'Error en la consulta',
+            'message': responseData['message'] ?? data['message'] ?? 'Error en la consulta',
             'data': responseData,
           };
         }

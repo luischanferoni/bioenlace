@@ -30,7 +30,7 @@ class IAManager
     /**
      * Comprimir datos en tránsito (gzip)
      * @param string $data Datos a comprimir
-     * @param string|null $tipoProveedor Tipo de proveedor ('huggingface', 'openai', 'groq', 'ollama')
+     * @param string|null $tipoProveedor Tipo de proveedor ('huggingface', 'openai', 'groq', 'ollama', 'google')
      * @return array ['data' => string, 'headers' => array]
      */
     private static function comprimirDatos($data, $tipoProveedor = null)
@@ -128,6 +128,8 @@ class IAManager
                 return self::getConfiguracionGroq();
             case 'ollama':
                 return self::getConfiguracionOllama();
+            case 'google':
+                return self::getConfiguracionGoogle();
             case 'huggingface':
             default:
                 return self::getConfiguracionHuggingFace($tipoModelo);
@@ -213,6 +215,81 @@ class IAManager
     }
 
     /**
+     * Configuración para Google (Vertex AI / Gemini)
+     * @return array
+     */
+    private static function getConfiguracionGoogle()
+    {
+        $projectId = Yii::$app->params['google_cloud_project_id'] ?? '';
+        $location = Yii::$app->params['google_cloud_region'] ?? 'us-central1';
+        $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-1.5-pro';
+        
+        // Construir endpoint de Vertex AI
+        $endpoint = "https://{$location}-aiplatform.googleapis.com/v1/projects/{$projectId}/locations/{$location}/publishers/google/models/{$model}:predict";
+        
+        // Alternativa: usar Generative AI API (más simple, requiere API key)
+        $apiKey = Yii::$app->params['google_cloud_api_key'] ?? '';
+        $usarGenerativeAI = !empty($apiKey);
+        
+        if ($usarGenerativeAI) {
+            $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
+        }
+        
+        $headers = [
+            'Content-Type' => 'application/json'
+        ];
+        
+        // Si hay API key, usarla en lugar de autenticación de cuenta de servicio
+        if ($usarGenerativeAI) {
+            $endpoint .= "?key={$apiKey}";
+        } else {
+            // Para autenticación con cuenta de servicio, se requiere OAuth2 token
+            // Esto se manejará automáticamente si GOOGLE_APPLICATION_CREDENTIALS está configurado
+            $headers['Authorization'] = 'Bearer ' . self::obtenerTokenGoogle();
+        }
+        
+        return [
+            'tipo' => 'google',
+            'endpoint' => $endpoint,
+            'headers' => $headers,
+            'usar_generative_ai' => $usarGenerativeAI,
+            'payload' => [
+                'model' => $model,
+                'contents' => [], // Se llenará con el prompt (formato Google Generative AI)
+                'generationConfig' => [
+                    'maxOutputTokens' => (int)(Yii::$app->params['hf_max_length'] ?? 2000),
+                    'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.3)
+                ]
+            ]
+        ];
+    }
+    
+    /**
+     * Obtener token de acceso de Google Cloud (OAuth2)
+     * @return string
+     */
+    private static function obtenerTokenGoogle()
+    {
+        // Si hay una API key, no necesitamos token
+        if (!empty(Yii::$app->params['google_cloud_api_key'] ?? '')) {
+            return '';
+        }
+        
+        // Intentar obtener token desde variable de entorno o archivo de credenciales
+        $credentialsPath = Yii::$app->params['google_cloud_credentials_path'] ?? getenv('GOOGLE_APPLICATION_CREDENTIALS');
+        
+        if (empty($credentialsPath) || !file_exists($credentialsPath)) {
+            \Yii::warning('Google Cloud credentials no encontradas. Configure GOOGLE_APPLICATION_CREDENTIALS o google_cloud_api_key', 'ia-manager');
+            return '';
+        }
+        
+        // En producción, deberías usar la biblioteca oficial de Google Cloud PHP
+        // Por ahora, retornamos vacío y el cliente HTTP deberá manejar la autenticación
+        // o usar la biblioteca de Google Cloud
+        return '';
+    }
+
+    /**
      * Configuración para Hugging Face
      * Modelos optimizados para español y costo reducido
      * @param string $tipoModelo Tipo de modelo: 'text-generation', 'text-correction', 'analysis'
@@ -274,8 +351,16 @@ class IAManager
             case 'openai':
             case 'groq':
             case 'huggingface':
-                // Hugging Face ahora usa el mismo formato que OpenAI/Groq
+                // Hugging Face usa el mismo formato que OpenAI/Groq
                 $proveedorIA['payload']['messages'][] = ['role' => 'user', 'content' => $prompt];
+                break;
+            case 'google':
+                // Google Generative AI API usa formato 'contents' con 'parts'
+                $proveedorIA['payload']['contents'][] = [
+                    'parts' => [
+                        ['text' => $prompt]
+                    ]
+                ];
                 break;
         }
     }
@@ -317,8 +402,23 @@ class IAManager
             case 'openai':
             case 'groq':
             case 'huggingface':
-                // Hugging Face ahora usa el mismo formato de respuesta que OpenAI/Groq
+                // Hugging Face usa el mismo formato de respuesta que OpenAI/Groq
                 $contenido = $responseData['choices'][0]['message']['content'] ?? null;
+                break;
+            case 'google':
+                // Google Vertex AI/Gemini puede usar diferentes formatos
+                // Formato compatible OpenAI (si se usa endpoint de chat completions)
+                if (isset($responseData['choices'][0]['message']['content'])) {
+                    $contenido = $responseData['choices'][0]['message']['content'];
+                }
+                // Formato nativo Vertex AI (predictions)
+                elseif (isset($responseData['predictions'][0]['content'])) {
+                    $contenido = $responseData['predictions'][0]['content'];
+                }
+                // Formato Generative AI API (candidates)
+                elseif (isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
+                    $contenido = $responseData['candidates'][0]['content']['parts'][0]['text'];
+                }
                 break;
             default:
                 $contenido = $responseData;

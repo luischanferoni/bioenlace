@@ -2,16 +2,16 @@
 
 /* Variables personalizadas de VitaMind */
 :root {
-    /* Colores principales de VitaMind */
-    --vitamind-primary: #0085db;
+    /* Colores principales de VitaMind - Nueva paleta personalizada */
+    --vitamind-primary: #0081A7;      /* Azul */
     --vitamind-secondary: #707a82;
-    --vitamind-warning: #f8c076;
-    --vitamind-danger: #fb977d;
+    --vitamind-warning: #FED9B7;      /* Naranja */
+    --vitamind-danger: #F07167;       /* Rojo */
     --vitamind-success: #4bd08b;
-    --vitamind-info: #46CAEB;
+    --vitamind-info: #00AFB9;         /* Celeste */
+    --vitamind-light: #FDFCDC;        /* Amarillo */
     
     /* Colores derivados para mantener coherencia */
-    --vitamind-light: #f8f9ff;
     --vitamind-dark: #555d64;
     --vitamind-muted: #878d92;
     
@@ -40,9 +40,9 @@
     
     /* Variables de enlaces */
     --bs-link-color: var(--vitamind-primary);
-    --bs-link-color-rgb: 0, 133, 219;
+    --bs-link-color-rgb: 0, 129, 167;
     --bs-link-hover-color: var(--vitamind-primary-hover);
-    --bs-link-hover-color-rgb: 0, 107, 179;
+    --bs-link-hover-color-rgb: 0, 106, 138;
     
     /* Variables de código */
     --bs-code-color: #d63384;
@@ -60,56 +60,56 @@
     --bs-btn-hover-color: #fff;
     --bs-btn-hover-bg: var(--vitamind-primary-hover);
     --bs-btn-hover-border-color: var(--vitamind-primary-hover);
-    --bs-btn-focus-shadow-rgb: 0, 133, 219;
+    --bs-btn-focus-shadow-rgb: 0, 129, 167;
     --bs-btn-active-color: #fff;
     --bs-btn-active-bg: var(--vitamind-primary-active);
     --bs-btn-active-border-color: var(--vitamind-primary-active);
-    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 133, 219, 0.125);
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 129, 167, 0.125);
     --bs-btn-disabled-color: var(--vitamind-primary);
     --bs-btn-disabled-bg: transparent;
     --bs-btn-disabled-border-color: var(--vitamind-primary);    
 
     /* Colores sutiles y variaciones */
-    --bs-primary-rgb: 0, 133, 219;
+    --bs-primary-rgb: 0, 129, 167;      /* #0081A7 */
     --bs-secondary-rgb: 112, 122, 130;
     --bs-success-rgb: 75, 208, 139;
-    --bs-info-rgb: 70, 202, 235;
-    --bs-warning-rgb: 248, 192, 118;
-    --bs-danger-rgb: 251, 151, 125;
-    --bs-light-rgb: 248, 249, 255;
+    --bs-info-rgb: 0, 175, 185;         /* #00AFB9 */
+    --bs-warning-rgb: 254, 217, 183;    /* #FED9B7 */
+    --bs-danger-rgb: 240, 113, 103;     /* #F07167 */
+    --bs-light-rgb: 253, 252, 220;      /* #FDFCDC */
     --bs-dark-rgb: 85, 93, 100;
     --bs-muted-rgb: 135, 141, 146;
     
     /* Colores de fondo sutiles */
-    --bs-primary-bg-subtle: rgba(0, 133, 219, 0.1);
+    --bs-primary-bg-subtle: rgba(0, 129, 167, 0.1);      /* #0081A7 */
     --bs-secondary-bg-subtle: rgba(112, 122, 130, 0.1);
     --bs-success-bg-subtle: rgba(75, 208, 139, 0.1);
-    --bs-info-bg-subtle: rgba(70, 202, 235, 0.1);
-    --bs-warning-bg-subtle: rgba(248, 192, 118, 0.1);
-    --bs-danger-bg-subtle: rgba(251, 151, 125, 0.1);
-    --bs-light-bg-subtle: rgba(248, 249, 255, 0.1);
+    --bs-info-bg-subtle: rgba(0, 175, 185, 0.1);        /* #00AFB9 */
+    --bs-warning-bg-subtle: rgba(254, 217, 183, 0.1);   /* #FED9B7 */
+    --bs-danger-bg-subtle: rgba(240, 113, 103, 0.1);    /* #F07167 */
+    --bs-light-bg-subtle: rgba(253, 252, 220, 0.1);     /* #FDFCDC */
     --bs-dark-bg-subtle: rgba(85, 93, 100, 0.1);
     --bs-muted-bg-subtle: rgba(135, 141, 146, 0.1);
     
     /* Colores de borde sutiles */
-    --bs-primary-border-subtle: rgba(0, 133, 219, 0.2);
+    --bs-primary-border-subtle: rgba(0, 129, 167, 0.2);      /* #0081A7 */
     --bs-secondary-border-subtle: rgba(112, 122, 130, 0.2);
     --bs-success-border-subtle: rgba(75, 208, 139, 0.2);
-    --bs-info-border-subtle: rgba(70, 202, 235, 0.2);
-    --bs-warning-border-subtle: rgba(248, 192, 118, 0.2);
-    --bs-danger-border-subtle: rgba(251, 151, 125, 0.2);
-    --bs-light-border-subtle: rgba(248, 249, 255, 0.2);
+    --bs-info-border-subtle: rgba(0, 175, 185, 0.2);        /* #00AFB9 */
+    --bs-warning-border-subtle: rgba(254, 217, 183, 0.2);   /* #FED9B7 */
+    --bs-danger-border-subtle: rgba(240, 113, 103, 0.2);    /* #F07167 */
+    --bs-light-border-subtle: rgba(253, 252, 220, 0.2);     /* #FDFCDC */
     --bs-dark-border-subtle: rgba(85, 93, 100, 0.2);
     --bs-muted-border-subtle: rgba(135, 141, 146, 0.2);
     
     /* Colores de hover para botones */
-    --vitamind-primary-hover: #006bb3;
-    --vitamind-primary-active: #005a9c;
+    --vitamind-primary-hover: #006a8a;      /* Azul más oscuro */
+    --vitamind-primary-active: #005570;     /* Azul aún más oscuro */
     --vitamind-secondary-hover: #5a6268;
     --vitamind-success-hover: #3ba870;
-    --vitamind-info-hover: #3bb8d1;
-    --vitamind-warning-hover: #f5b85a;
-    --vitamind-danger-hover: #f9825a;
+    --vitamind-info-hover: #008d94;         /* Celeste más oscuro */
+    --vitamind-warning-hover: #fcc896;      /* Naranja más claro */
+    --vitamind-danger-hover: #ed5a4d;      /* Rojo más oscuro */
 
     --bs-border-radius: 0.175rem;
 }
@@ -135,7 +135,7 @@
 }
 
 .btn-primary:focus {
-    box-shadow: 0 0 0 0.2rem rgba(0, 133, 219, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 129, 167, 0.25) !important;
 }
 
 .btn-primary:active {
@@ -157,7 +157,7 @@
 }
 
 .btn-outline-primary:focus {
-    box-shadow: 0 0 0 0.2rem rgba(0, 133, 219, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 129, 167, 0.25) !important;
 }
 
 .btn-outline-primary:active {
@@ -320,12 +320,12 @@
 
 /* Botones con sombras personalizadas */
 .btn-shadow {
-    box-shadow: 0 2px 4px rgba(0, 133, 219, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 129, 167, 0.2);
     transition: all 0.2s ease;
 }
 
 .btn-shadow:hover {
-    box-shadow: 0 4px 8px rgba(0, 133, 219, 0.3);
+    box-shadow: 0 4px 8px rgba(0, 129, 167, 0.3);
     transform: translateY(-1px);
 }
 
@@ -333,7 +333,7 @@
 .form-control:focus,
 .form-select:focus {
     border-color: var(--vitamind-primary);
-    box-shadow: 0 0 0 0.2rem rgba(0, 133, 219, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(0, 129, 167, 0.25);
 }
 
 /* Utilidades personalizadas de VitaMind */
@@ -478,7 +478,7 @@
 
 /* Page header personalizado */
 .page-header {
-    background: linear-gradient(135deg, var(--vitamind-primary) 0%, #6b8cff 100%);
+    background: linear-gradient(135deg, var(--vitamind-primary) 0%, var(--vitamind-info) 100%);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 

@@ -4,27 +4,33 @@ import 'package:google_fonts/google_fonts.dart';
 class AppTheme {
   const AppTheme();
   
-  // Definición de colores centralizados
-  static const Color primaryColor = Color(0xff00bac7);
+  // Definición de colores centralizados - Nueva paleta BioEnlace
+  // #0081A7 -> azul (primary)
+  static const Color primaryColor = Color(0xFF0081A7);
   static const Color primaryColorDark = Color(0xffffffff);
-  static const Color primaryColorLight = Color(0xff3754aa);
+  // #00AFB9 -> celeste (secondary/info)
+  static const Color primaryColorLight = Color(0xFF00AFB9);
 
-  static const Color secondaryColor = Color(0xFF6C757D);
-  static const Color secondaryContainerColor = Color(0xff13165A);
+  static const Color secondaryColor = Color(0xFF00AFB9);
+  static const Color secondaryContainerColor = Color(0xFF0081A7);
 
   static const Color successColor = Color(0xFF28A745);
-  static const Color dangerColor = Color(0xFFDC3545);
-  static const Color warningColor = Color(0xFFFFC107);
-  static const Color infoColor = Color(0xFF17A2B8);
-  static const Color light = Color(0xFFF8F9FA);
+  // #F07167 -> rojo (danger)
+  static const Color dangerColor = Color(0xFFF07167);
+  // #FED9B7 -> naranja (warning)
+  static const Color warningColor = Color(0xFFFED9B7);
+  static const Color infoColor = Color(0xFF00AFB9);
+  // #f5f5eb -> gris claro (light/background)
+  static const Color light = Color(0xFFF5F5EB);
   static const Color dark = Color(0xFF324356);
 
-  static const Color backgroundColor = Color(0xffe1e1e9);
-  static const Color cardColor = Color.fromRGBO(249, 249, 246, 1);
-  static const Color titleTextColor = Color(0xff5a5d85);
+  // #f5f5eb -> gris claro (background)
+  static const Color backgroundColor = Color(0xFFF5F5EB);
+  static const Color cardColor = Color.fromRGBO(255, 255, 255, 1);
+  static const Color titleTextColor = Color(0xFF0081A7);
   static const Color subTitleTextColor = Color(0xff797878);
-  static const Color iconColor = Color(0xff3E404D);
-  static const Color dividerColor = Color(0xffDFE7DD);  
+  static const Color iconColor = Color(0xFF0081A7);
+  static const Color dividerColor = Color(0xFFE0E0E0);  
   
   
   static ThemeData lightTheme = ThemeData.light().copyWith(
@@ -46,7 +52,7 @@ class AppTheme {
         secondaryContainer: secondaryContainerColor,
         surface: backgroundColor,
         background: backgroundColor,
-        error: Colors.red,
+        error: dangerColor,
         onPrimary: primaryColorDark,
         onSecondary: backgroundColor,
         onSurface: primaryColorDark,

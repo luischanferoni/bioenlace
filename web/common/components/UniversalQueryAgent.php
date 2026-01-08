@@ -112,8 +112,7 @@ PROMPT;
             
             Yii::error("UniversalQueryAgent: No se pudo parsear la respuesta de la IA. " .
                 "Consulta: '{$userQuery}'. " .
-                "Respuesta recibida: " . substr($iaResponse, 0, 1000) . 
-                (strlen($iaResponse) > 1000 ? '... (truncada)' : '') . ". " .
+                "Respuesta recibida completa: {$iaResponse}. " .
                 "Longitud total: " . strlen($iaResponse) . " caracteres. " .
                 "JSON Error Code: {$jsonError}. " .
                 "JSON Error Message: {$jsonErrorMsg}", 

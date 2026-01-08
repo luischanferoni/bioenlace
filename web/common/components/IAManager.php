@@ -481,6 +481,7 @@ class IAManager
             case 'google':
                 // Google Generative AI API y Vertex AI usan el mismo formato 'contents' con 'parts'
                 $proveedorIA['payload']['contents'][] = [
+                    'role' => 'user',
                     'parts' => [
                         ['text' => $prompt]
                     ]

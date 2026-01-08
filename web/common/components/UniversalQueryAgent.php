@@ -751,20 +751,83 @@ PROMPT;
         // Log de la respuesta antes de intentar parsear
         Yii::info("UniversalQueryAgent: Respuesta recibida para parsear. Longitud: " . strlen($response) . " caracteres. Contenido: {$response}", 'universal-query-agent');
         
-        // Buscar JSON en la respuesta
+        // Paso 1: Intentar extraer JSON de code blocks markdown (```json ... ```)
+        if (preg_match('/```(?:json)?\s*\n?(.*?)\n?```/s', $response, $matches)) {
+            $jsonContent = trim($matches[1]);
+            $json = json_decode($jsonContent, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                Yii::info("UniversalQueryAgent: JSON extraído de code block markdown", 'universal-query-agent');
+                return $json;
+            }
+        }
+        
+        // Paso 2: Buscar JSON balanceado (que comience con { y termine con })
+        // Usar un método más robusto que cuente las llaves
+        $startPos = strpos($response, '{');
+        if ($startPos !== false) {
+            $depth = 0;
+            $endPos = $startPos;
+            $inString = false;
+            $escapeNext = false;
+            
+            for ($i = $startPos; $i < strlen($response); $i++) {
+                $char = $response[$i];
+                
+                if ($escapeNext) {
+                    $escapeNext = false;
+                    continue;
+                }
+                
+                if ($char === '\\') {
+                    $escapeNext = true;
+                    continue;
+                }
+                
+                if ($char === '"' && !$escapeNext) {
+                    $inString = !$inString;
+                    continue;
+                }
+                
+                if (!$inString) {
+                    if ($char === '{') {
+                        $depth++;
+                    } elseif ($char === '}') {
+                        $depth--;
+                        if ($depth === 0) {
+                            $endPos = $i;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if ($depth === 0 && $endPos > $startPos) {
+                $jsonContent = substr($response, $startPos, $endPos - $startPos + 1);
+                $json = json_decode($jsonContent, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    Yii::info("UniversalQueryAgent: JSON extraído con balanceo de llaves", 'universal-query-agent');
+                    return $json;
+                }
+            }
+        }
+        
+        // Paso 3: Intentar extraer JSON con regex (método anterior como fallback)
         if (preg_match('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/s', $response, $matches)) {
             $json = json_decode($matches[0], true);
             if (json_last_error() === JSON_ERROR_NONE) {
+                Yii::info("UniversalQueryAgent: JSON extraído con regex", 'universal-query-agent');
                 return $json;
             }
         }
 
-        // Intentar parsear toda la respuesta
+        // Paso 4: Intentar parsear toda la respuesta como JSON
         $json = json_decode($response, true);
         if (json_last_error() === JSON_ERROR_NONE) {
+            Yii::info("UniversalQueryAgent: JSON parseado directamente de la respuesta completa", 'universal-query-agent');
             return $json;
         }
 
+        Yii::warning("UniversalQueryAgent: No se pudo parsear JSON de ninguna forma. JSON Error: " . json_last_error_msg(), 'universal-query-agent');
         return null;
     }
 }

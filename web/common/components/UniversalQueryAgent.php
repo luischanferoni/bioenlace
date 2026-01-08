@@ -708,6 +708,12 @@ PROMPT;
             
             IAManager::asignarPromptAConfiguracion($proveedorIA, $prompt);
             
+            // Log del payload antes de enviar (especialmente para Google)
+            if ($proveedorIA['tipo'] === 'google') {
+                $maxOutputTokens = $proveedorIA['payload']['generationConfig']['maxOutputTokens'] ?? 'no configurado';
+                Yii::info("UniversalQueryAgent: Enviando request a Google con maxOutputTokens: {$maxOutputTokens}. Payload completo: " . json_encode($proveedorIA['payload'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), 'universal-query-agent');
+            }
+            
             $client = new \yii\httpclient\Client();
             $request = $client->createRequest()
                 ->setMethod('POST')

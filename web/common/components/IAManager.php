@@ -254,10 +254,21 @@ class IAManager
         }
         
         // Preparar payload base - ambos APIs usan el mismo formato para Gemini
-        // maxOutputTokens: aumentar límite para evitar truncamiento (8192 es el máximo para Gemini)
-        $maxOutputTokens = (int)(Yii::$app->params['google_max_output_tokens'] ?? Yii::$app->params['hf_max_length'] ?? 8192);
-        // Asegurar que no exceda el máximo permitido por Google
+        // maxOutputTokens: usar configuración específica de Google o un valor alto por defecto
+        // Prioridad: google_max_output_tokens > vertex_ai_max_tokens > 8192 (máximo para Gemini)
+        $maxOutputTokens = (int)(Yii::$app->params['google_max_output_tokens'] ?? 
+                                 Yii::$app->params['vertex_ai_max_tokens'] ?? 
+                                 8192);
+        // Asegurar que no exceda el máximo permitido por Google (8192 para Gemini)
+        // Pero permitir valores más altos si el modelo lo soporta
         $maxOutputTokens = min($maxOutputTokens, 8192);
+        
+        // Si el valor es muy bajo (menos de 2000), aumentarlo a un mínimo razonable
+        // porque respuestas JSON pueden necesitar más tokens
+        if ($maxOutputTokens < 2000) {
+            $maxOutputTokens = 8192; // Usar máximo por defecto si está configurado muy bajo
+            \Yii::warning("IAManager: maxOutputTokens estaba muy bajo, aumentado a 8192 para evitar truncamiento", 'ia-manager');
+        }
         
         $payload = [
             'contents' => [], // Se llenará con el prompt
@@ -267,7 +278,20 @@ class IAManager
             ]
         ];
         
-        \Yii::info("IAManager: Configuración Google con maxOutputTokens: {$maxOutputTokens}", 'ia-manager');
+        // Para modelos con reasoning (como Gemini 2.5 Pro), considerar desactivar reasoning
+        // para respuestas JSON estructuradas, ya que consume tokens del límite
+        // Nota: Esto puede no estar disponible en todos los modelos
+        if (strpos($model, '2.5') !== false || strpos($model, '2.0') !== false) {
+            // Intentar desactivar reasoning para respuestas más largas
+            // Esto puede ayudar a que más tokens estén disponibles para la salida
+            if (!isset($payload['generationConfig']['reasoningConfig'])) {
+                // Algunos modelos permiten desactivar reasoning o limitarlo
+                // Comentado por ahora hasta confirmar soporte del modelo
+                // $payload['generationConfig']['reasoningConfig'] = ['enabled' => false];
+            }
+        }
+        
+        \Yii::info("IAManager: Configuración Google con maxOutputTokens: {$maxOutputTokens}, Modelo: {$model}", 'ia-manager');
         
         return [
             'tipo' => 'google',

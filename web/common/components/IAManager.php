@@ -254,13 +254,20 @@ class IAManager
         }
         
         // Preparar payload base - ambos APIs usan el mismo formato para Gemini
+        // maxOutputTokens: aumentar límite para evitar truncamiento (8192 es el máximo para Gemini)
+        $maxOutputTokens = (int)(Yii::$app->params['google_max_output_tokens'] ?? Yii::$app->params['hf_max_length'] ?? 8192);
+        // Asegurar que no exceda el máximo permitido por Google
+        $maxOutputTokens = min($maxOutputTokens, 8192);
+        
         $payload = [
             'contents' => [], // Se llenará con el prompt
             'generationConfig' => [
-                'maxOutputTokens' => (int)(Yii::$app->params['hf_max_length'] ?? 2000),
+                'maxOutputTokens' => $maxOutputTokens,
                 'temperature' => (float)(Yii::$app->params['hf_temperature'] ?? 0.3)
             ]
         ];
+        
+        \Yii::info("IAManager: Configuración Google con maxOutputTokens: {$maxOutputTokens}", 'ia-manager');
         
         return [
             'tipo' => 'google',
@@ -544,8 +551,23 @@ class IAManager
             case 'google':
                 // Google Vertex AI/Gemini puede usar diferentes formatos
                 // Formato Generative AI API (candidates) - más común
-                if (isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
-                    $contenido = $responseData['candidates'][0]['content']['parts'][0]['text'];
+                if (isset($responseData['candidates'][0]['content']['parts'])) {
+                    $parts = $responseData['candidates'][0]['content']['parts'];
+                    $numParts = count($parts);
+                    \Yii::info("IAManager: Google respuesta con {$numParts} partes", 'ia-manager');
+                    
+                    // Concatenar todas las partes (Google puede dividir respuestas largas en múltiples partes)
+                    $contenido = '';
+                    foreach ($parts as $index => $part) {
+                        if (isset($part['text'])) {
+                            $contenido .= $part['text'];
+                            \Yii::info("IAManager: Parte {$index} longitud: " . strlen($part['text']), 'ia-manager');
+                        }
+                    }
+                    
+                    if (!empty($contenido)) {
+                        \Yii::info("IAManager: Contenido total concatenado longitud: " . strlen($contenido), 'ia-manager');
+                    }
                 }
                 // Formato nativo Vertex AI (predictions) - para endpoint predict
                 elseif (isset($responseData['predictions'][0]['content'])) {

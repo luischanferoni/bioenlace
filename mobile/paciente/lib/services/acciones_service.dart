@@ -92,6 +92,69 @@ class AccionesService {
     }
   }
 
+  /// Ejecuta una acción específica por su action_id
+  /// 
+  /// Este endpoint recibe un action_id y valida permisos antes de ejecutar
+  /// POST /api/v1/crud/execute-action
+  /// Body: {
+  ///   "action_id": "efectores.indexuserefector",
+  ///   "params": {} // opcional
+  /// }
+  Future<Map<String, dynamic>> executeAction(String actionId, {Map<String, dynamic>? params}) async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}/crud/execute-action');
+      
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      // Agregar token de autenticación si existe
+      if (authToken != null) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final response = await http.post(
+        uri,
+        headers: headers,
+        body: json.encode({
+          'action_id': actionId,
+          'params': params ?? {},
+        }),
+      ).timeout(
+        Duration(seconds: AppConfig.httpTimeoutSeconds),
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        if (responseData['success'] == true) {
+          return {
+            'success': true,
+            'data': responseData['data'] ?? responseData,
+          };
+        } else {
+          return {
+            'success': false,
+            'message': responseData['message'] ?? 'Error al ejecutar la acción',
+            'data': responseData,
+          };
+        }
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Error al ejecutar la acción',
+          'errors': responseData['errors'] ?? null,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error de conexión: ${e.toString()}',
+      };
+    }
+  }
+
   /// Obtiene acciones comunes disponibles
   Future<List<Map<String, dynamic>>> getCommonActions() async {
     try {

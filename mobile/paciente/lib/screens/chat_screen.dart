@@ -129,23 +129,49 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _executeAction(Map<String, dynamic> action) {
-    // Ejecutar acción según el tipo
-    final actionType = action['type'] ?? action['action_type'] ?? '';
-    final actionUrl = action['url'] ?? '';
-    final actionTitle = action['title'] ?? action['label'] ?? 'Acción';
+  Future<void> _executeAction(Map<String, dynamic> action) async {
+    final actionId = action['action_id'];
+    final displayName = action['display_name'] ?? action['title'] ?? action['label'] ?? 'Acción';
+    final params = action['params'] as Map<String, dynamic>?;
 
+    if (actionId == null || actionId.isEmpty) {
+      _showErrorSnackbar('Error: No se pudo identificar la acción');
+      return;
+    }
+
+    // Mostrar indicador de carga
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Ejecutando: $actionTitle'),
+        content: Text('Ejecutando: $displayName'),
         backgroundColor: AppTheme.infoColor,
         duration: Duration(seconds: 2),
       ),
     );
 
-    // TODO: Implementar navegación a acciones específicas
-    // Por ahora solo mostramos un mensaje
-    print('Ejecutando acción: $actionType - $actionUrl');
+    try {
+      // Ejecutar acción usando el servicio
+      final result = await _accionesService.executeAction(actionId, params: params);
+
+      if (result['success'] == true) {
+        final data = result['data'];
+        
+        // Agregar mensaje del bot con el resultado
+        setState(() {
+          _chatHistory.add({
+            'type': 'bot',
+            'content': data['message'] ?? data['explanation'] ?? 'Acción ejecutada correctamente',
+            'data': data,
+            'timestamp': DateTime.now(),
+          });
+        });
+        
+        _scrollToBottom();
+      } else {
+        _showErrorSnackbar(result['message'] ?? 'Error al ejecutar la acción');
+      }
+    } catch (e) {
+      _showErrorSnackbar('Error: ${e.toString()}');
+    }
   }
 
   void _showErrorSnackbar(String message) {
@@ -261,7 +287,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           children: actions.map((action) {
                             return ActionChip(
                               label: Text(
-                                action['title'] ?? action['label'] ?? 'Acción',
+                                action['display_name'] ?? action['title'] ?? action['label'] ?? 'Acción',
                                 style: TextStyle(fontSize: 12),
                               ),
                               avatar: Icon(

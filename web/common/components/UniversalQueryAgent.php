@@ -145,10 +145,15 @@ PROMPT;
      */
     private static function findActionsByCriteria($criteria, $userId = null)
     {
-        // Obtener todas las acciones disponibles para el usuario (ya filtradas por permisos)
-        $allActions = ActionMappingService::getAvailableActionsForUser($userId);
+        // Obtener todas las acciones disponibles para el usuario logueado (ya filtradas por permisos)
+        $allActions = ActionMappingService::getAvailableActionsForUser();
+        
+        // Log para debugging
+        $currentUserId = Yii::$app->user->id ?? 'no-autenticado';
+        Yii::info("UniversalQueryAgent::findActionsByCriteria - userId: {$currentUserId}, query_type: {$criteria['query_type']}, acciones encontradas: " . count($allActions), 'universal-query-agent');
         
         if (empty($allActions)) {
+            Yii::warning("UniversalQueryAgent::findActionsByCriteria - No se encontraron acciones para userId: {$currentUserId}", 'universal-query-agent');
             return [];
         }
 
@@ -436,7 +441,7 @@ PROMPT;
         // Si no hay acciones, intentar sugerir acciones relacionadas o comunes
         if (empty($actions)) {
             // Obtener algunas acciones comunes del usuario como sugerencias
-            $allUserActions = ActionMappingService::getAvailableActionsForUser($userId);
+            $allUserActions = ActionMappingService::getAvailableActionsForUser();
             
             // Filtrar acciones comunes relacionadas con la consulta
             $suggestedActions = self::suggestRelatedActions($userQuery, $allUserActions, $criteria);
@@ -508,7 +513,7 @@ PROMPT;
                 'explanation' => $parsed['explanation'] ?? 'Encontré estas acciones relacionadas con tu consulta.',
                 'actions' => $formattedActions,
                 'count' => $parsed['count'] ?? count($actions),
-                'query_type' => $criteria['query_type'],
+                'query_type' => $criteria['query_type'] ?? 'unknown',
             ];
         }
 
@@ -518,7 +523,7 @@ PROMPT;
             'explanation' => 'Encontré ' . count($actions) . ' acciones relacionadas con tu consulta.',
             'actions' => $formattedActions,
             'count' => count($actions),
-            'query_type' => $criteria['query_type'],
+            'query_type' => $criteria['query_type'] ?? 'unknown',
         ];
     }
 

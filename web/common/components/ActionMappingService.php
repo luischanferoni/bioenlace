@@ -29,6 +29,7 @@ class ActionMappingService
         $userId = Yii::$app->user->id;
 
         if (!$userId) {
+            Yii::warning("ActionMappingService::getAvailableActionsForUser - Usuario no autenticado", 'action-mapping');
             return [];
         }
 
@@ -54,6 +55,9 @@ class ActionMappingService
         // Obtener todas las acciones descubiertas
         $allActions = ActionDiscoveryService::discoverAllActions($useCache);
         
+        // Log para debugging
+        Yii::info("ActionMappingService: Total acciones descubiertas: " . count($allActions) . " para usuario: {$userId}", 'action-mapping');
+        
         // Filtrar acciones por permisos del usuario
         $availableActions = [];
         
@@ -63,6 +67,9 @@ class ActionMappingService
                 $availableActions[] = $action;
             }
         }
+        
+        // Log para debugging
+        Yii::info("ActionMappingService: Acciones disponibles después de filtrar: " . count($availableActions) . " para usuario: {$userId}", 'action-mapping');
 
         // Guardar en cache
         if ($cache) {

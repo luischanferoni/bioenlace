@@ -136,8 +136,8 @@ class CrudController extends BaseController
      */
     private function findActionById($actionId, $userId = null)
     {
-        // Obtener todas las acciones disponibles para el usuario
-        $allActions = \common\components\ActionMappingService::getAvailableActionsForUser($userId);
+        // Obtener todas las acciones disponibles para el usuario logueado
+        $allActions = \common\components\ActionMappingService::getAvailableActionsForUser();
         
         foreach ($allActions as $action) {
             if (($action['action_id'] ?? '') === $actionId) {

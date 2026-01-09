@@ -443,10 +443,11 @@ PROMPT;
             
             // Si hay sugerencias, incluirlas
             if (!empty($suggestedActions)) {
+                $suggestedSlice = array_slice($suggestedActions, 0, 5);
                 return [
                     'success' => true, // Es una respuesta válida del sistema, no un error
                     'explanation' => 'No encontré acciones específicas para tu consulta, pero aquí tienes algunas opciones que podrían ayudarte:',
-                    'actions' => array_slice($suggestedActions, 0, 5),
+                    'actions' => self::formatActionsForResponse($suggestedSlice),
                     'suggested_query' => '¿qué puedo hacer?',
                 ];
             }
@@ -498,11 +499,14 @@ PROMPT;
         $iaResponse = self::callIA($prompt);
         $parsed = self::parseJSONResponse($iaResponse);
         
+        // Formatear acciones antes de devolver (usar las acciones originales, no las del LLM)
+        $formattedActions = self::formatActionsForResponse(array_slice($actions, 0, 10));
+        
         if ($parsed) {
             return [
                 'success' => true,
                 'explanation' => $parsed['explanation'] ?? 'Encontré estas acciones relacionadas con tu consulta.',
-                'actions' => $parsed['actions'] ?? $actionsSummary,
+                'actions' => $formattedActions,
                 'count' => $parsed['count'] ?? count($actions),
                 'query_type' => $criteria['query_type'],
             ];
@@ -512,10 +516,80 @@ PROMPT;
         return [
             'success' => true,
             'explanation' => 'Encontré ' . count($actions) . ' acciones relacionadas con tu consulta.',
-            'actions' => array_slice($actions, 0, 10),
+            'actions' => $formattedActions,
             'count' => count($actions),
             'query_type' => $criteria['query_type'],
         ];
+    }
+
+    /**
+     * Formatear acciones para respuesta (solo campos necesarios para UI)
+     * @param array|array[] $actions Una acción o array de acciones
+     * @return array|array[] Acción o array de acciones formateadas
+     */
+    private static function formatActionsForResponse($actions)
+    {
+        // Si está vacío, retornar array vacío
+        if (empty($actions)) {
+            return [];
+        }
+        
+        // Si es una sola acción (no array de arrays - verificar si tiene claves asociativas pero no índice numérico)
+        if (isset($actions['action_id']) || (isset($actions['route']) && !isset($actions[0]))) {
+            return [
+                'action_id' => $actions['action_id'] ?? self::generateActionId($actions),
+                'display_name' => $actions['display_name'] ?? '',
+                'description' => $actions['description'] ?? '',
+                'category' => $actions['category'] ?? null,
+            ];
+        }
+        
+        // Si es array de acciones (tiene índice numérico)
+        $formatted = [];
+        foreach ($actions as $action) {
+            if (is_array($action)) {
+                $formatted[] = [
+                    'action_id' => $action['action_id'] ?? self::generateActionId($action),
+                    'display_name' => $action['display_name'] ?? '',
+                    'description' => $action['description'] ?? '',
+                    'category' => $action['category'] ?? null,
+                ];
+            }
+        }
+        
+        return $formatted;
+    }
+
+    /**
+     * Generar action_id desde una acción si no existe
+     * @param array $action
+     * @return string
+     */
+    private static function generateActionId($action)
+    {
+        // Si ya tiene action_id, usarlo
+        if (!empty($action['action_id'])) {
+            return $action['action_id'];
+        }
+        
+        // Generar desde controller y action
+        $controller = $action['controller'] ?? '';
+        $actionName = $action['action'] ?? '';
+        
+        if ($controller && $actionName) {
+            return strtolower($controller . '.' . $actionName);
+        }
+        
+        // Fallback: usar route si existe
+        if (!empty($action['route'])) {
+            $route = trim($action['route'], '/');
+            $parts = explode('/', $route);
+            if (count($parts) >= 3) {
+                return strtolower($parts[count($parts) - 2] . '.' . $parts[count($parts) - 1]);
+            }
+        }
+        
+        return 'unknown';
     }
 
     /**
@@ -525,22 +599,28 @@ PROMPT;
      */
     private static function formatListAllResponse($actions)
     {
-        // Agrupar por controlador
+        // Formatear acciones (solo campos necesarios)
+        $formattedActions = self::formatActionsForResponse($actions);
+        
+        // Agrupar por controlador (necesitamos el controller original para agrupar)
         $grouped = [];
-        foreach ($actions as $action) {
-            $controller = $action['controller'];
+        foreach ($actions as $index => $action) {
+            $controller = $action['controller'] ?? 'General';
             if (!isset($grouped[$controller])) {
                 $grouped[$controller] = [];
             }
-            $grouped[$controller][] = $action;
+            // Usar la acción formateada correspondiente
+            if (isset($formattedActions[$index])) {
+                $grouped[$controller][] = $formattedActions[$index];
+            }
         }
 
         return [
             'success' => true,
             'explanation' => 'Aquí tienes todas las acciones que tienes permitido realizar en el sistema:',
-            'actions' => $actions,
+            'actions' => $formattedActions,
             'grouped_by_controller' => $grouped,
-            'total_count' => count($actions),
+            'total_count' => count($formattedActions),
             'query_type' => 'list_all',
         ];
     }
@@ -566,24 +646,25 @@ PROMPT;
                 'success' => true,
                 'explanation' => "Encontré una persona con DNI {$dni}.",
                 'action' => [
-                    'route' => '/personas/view',
-                    'type' => 'navigate',
-                    'params' => ['id' => $persona->id_persona],
-                    'name' => "Ver detalles de {$nombreCompleto}",
+                    'action_id' => 'personas.view',
+                    'display_name' => "Ver detalles de {$nombreCompleto}",
                     'description' => "Ver información completa y historial de la persona",
+                    'category' => 'Personas',
+                    // Mantener params para ejecución
+                    'params' => ['id' => $persona->id_persona],
                 ],
                 'data' => [
                     'nombre' => $nombreCompleto,
                     'dni' => $persona->documento,
                 ],
-                'alternative_actions' => $personActions,
+                'alternative_actions' => self::formatActionsForResponse($personActions),
             ];
         }
 
         return [
             'success' => false,
             'explanation' => "No se encontró ninguna persona con DNI {$dni}.",
-            'suggested_actions' => $personActions,
+            'suggested_actions' => self::formatActionsForResponse($personActions),
             'suggested_query' => 'Puedes usar las acciones de búsqueda de personas para buscar por otros criterios.',
         ];
     }

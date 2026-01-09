@@ -104,7 +104,12 @@ class EfectoresController extends Controller
         }
     }
 
-    //Action para mostrar el listado de efectores por usuario
+    /**
+     * Lista los efectores del usuario actual
+     * @tags efectores,listar,ver todos
+     * @keywords listar,ver todos,mostrar,efectores
+     * @synonyms efectores,centros de salud,establecimientos
+     */
     public function actionIndexuserefector()
     {
         $this->layout = 'main_sinmenuizquierda';

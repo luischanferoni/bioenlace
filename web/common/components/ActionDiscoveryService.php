@@ -256,8 +256,12 @@ class ActionDiscoveryService
         // Generar nombre descriptivo
         $displayName = self::generateDisplayName($controllerName, $actionName, $description);
 
+        // Generar identificador único: controlador.accion
+        $actionId = strtolower($controllerName . '.' . $actionName);
+
         return [
             'route' => $route,
+            'action_id' => $actionId,
             'controller' => $controllerName,
             'action' => $actionName,
             'display_name' => $displayName,

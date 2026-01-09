@@ -19,17 +19,14 @@ class ActionMappingService
     const CACHE_DURATION = 1800; // 30 minutos
 
     /**
-     * Obtener acciones disponibles para un usuario específico
+     * Obtener acciones disponibles para el usuario logueado
      * Filtra por roles y permisos del usuario
-     * @param int|null $userId ID del usuario (null para usuario actual)
      * @param bool $useCache Usar cache
      * @return array
      */
-    public static function getAvailableActionsForUser($userId = null, $useCache = true)
+    public static function getAvailableActionsForUser($useCache = true)
     {
-        if ($userId === null) {
-            $userId = Yii::$app->user->id;
-        }
+        $userId = Yii::$app->user->id;
 
         if (!$userId) {
             return [];

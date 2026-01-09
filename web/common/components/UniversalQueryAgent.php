@@ -145,11 +145,11 @@ PROMPT;
      */
     private static function findActionsByCriteria($criteria, $userId = null)
     {
-        // Obtener todas las acciones disponibles para el usuario logueado (ya filtradas por permisos)
-        $allActions = ActionMappingService::getAvailableActionsForUser();
+        // Obtener todas las acciones disponibles para el usuario (ya filtradas por permisos)
+        $allActions = ActionMappingService::getAvailableActionsForUser($userId);
         
         // Log para debugging
-        $currentUserId = Yii::$app->user->id ?? 'no-autenticado';
+        $currentUserId = $userId ?? Yii::$app->user->id ?? 'no-autenticado';
         Yii::info("UniversalQueryAgent::findActionsByCriteria - userId: {$currentUserId}, query_type: {$criteria['query_type']}, acciones encontradas: " . count($allActions), 'universal-query-agent');
         
         if (empty($allActions)) {
@@ -441,7 +441,7 @@ PROMPT;
         // Si no hay acciones, intentar sugerir acciones relacionadas o comunes
         if (empty($actions)) {
             // Obtener algunas acciones comunes del usuario como sugerencias
-            $allUserActions = ActionMappingService::getAvailableActionsForUser();
+            $allUserActions = ActionMappingService::getAvailableActionsForUser($userId);
             
             // Filtrar acciones comunes relacionadas con la consulta
             $suggestedActions = self::suggestRelatedActions($userQuery, $allUserActions, $criteria);

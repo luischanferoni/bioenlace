@@ -317,7 +317,7 @@ class ModelDiscoveryService
     public static function getAvailableModelsForUser($userId = null)
     {
         $allModels = self::discoverAllModels();
-        $availableActions = ActionMappingService::getAvailableActionsForUser();
+        $availableActions = ActionMappingService::getAvailableActionsForUser($userId);
         
         // Filtrar modelos que tienen acciones disponibles para el usuario
         $availableModels = [];

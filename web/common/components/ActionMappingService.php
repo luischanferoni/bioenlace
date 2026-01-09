@@ -21,12 +21,16 @@ class ActionMappingService
     /**
      * Obtener acciones disponibles para el usuario logueado
      * Filtra por roles y permisos del usuario
+     * @param int|null $userId ID del usuario (si es null, usa el usuario actual de la sesión)
      * @param bool $useCache Usar cache
      * @return array
      */
-    public static function getAvailableActionsForUser($useCache = true)
+    public static function getAvailableActionsForUser($userId = null, $useCache = true)
     {
-        $userId = Yii::$app->user->id;
+        // Si no se proporciona userId, intentar obtenerlo de la sesión
+        if ($userId === null) {
+            $userId = Yii::$app->user->id;
+        }
 
         if (!$userId) {
             Yii::warning("ActionMappingService::getAvailableActionsForUser - Usuario no autenticado", 'action-mapping');
@@ -41,8 +45,8 @@ class ActionMappingService
 
         $roles = self::getUserRoles($user);
         
-        // Cache key basado en roles
-        $cacheKey = self::CACHE_KEY_PREFIX . md5(implode(',', $roles));
+        // Cache key basado en userId y roles (para evitar conflictos entre usuarios)
+        $cacheKey = self::CACHE_KEY_PREFIX . $userId . '_' . md5(implode(',', $roles));
         
         $cache = Yii::$app->cache;
         if ($useCache && $cache) {

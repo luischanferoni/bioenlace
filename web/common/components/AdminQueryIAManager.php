@@ -27,8 +27,8 @@ class AdminQueryIAManager
         }
 
         try {
-            // Obtener acciones disponibles para el usuario logueado
-            $availableActions = ActionMappingService::getAvailableActionsForUser();
+            // Obtener acciones disponibles para el usuario
+            $availableActions = ActionMappingService::getAvailableActionsForUser($userId);
             
             // Generar descripción de acciones para el prompt
             $actionsDescription = ActionMappingService::generateActionsDescriptionForIA($availableActions);

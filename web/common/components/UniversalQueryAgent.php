@@ -31,13 +31,29 @@ class UniversalQueryAgent
             if (!empty($actionId)) {
                 $action = self::findActionById($actionId, $userId);
                 if ($action) {
-                    return [
-                        'success' => true,
-                        'explanation' => "Ejecutando: {$action['display_name']}",
-                        'action' => self::formatActionsForResponse($action),
-                        'query_type' => 'direct_action',
-                        'matched_by' => 'action_id',
-                    ];
+                    // Ejecutar la acción directamente y devolver el resultado
+                    $executionResult = self::executeActionDirectly($action, [], $userId);
+                    if ($executionResult['success']) {
+                        return [
+                            'success' => true,
+                            'explanation' => "Listado de {$action['display_name']}",
+                            'action' => self::formatActionsForResponse($action),
+                            'data' => $executionResult['data'] ?? null,
+                            'query_type' => 'direct_action',
+                            'matched_by' => 'action_id',
+                        ];
+                    } else {
+                        // Si falla la ejecución, devolver la acción para que se pueda ejecutar manualmente
+                        return [
+                            'success' => true,
+                            'explanation' => "Encontré la acción: {$action['display_name']}",
+                            'action' => self::formatActionsForResponse($action),
+                            'actions' => [self::formatActionsForResponse($action)],
+                            'query_type' => 'direct_action',
+                            'matched_by' => 'action_id',
+                            'error' => $executionResult['error'] ?? 'Error al ejecutar la acción',
+                        ];
+                    }
                 }
             }
 
@@ -47,14 +63,29 @@ class UniversalQueryAgent
                 $semanticMatch = self::findActionBySemanticMatch($userQuery, $userId);
                 
                 if ($semanticMatch !== null) {
-                    return [
-                        'success' => true,
-                        'explanation' => "Encontré la acción: {$semanticMatch['display_name']}",
-                        'action' => self::formatActionsForResponse($semanticMatch),
-                        'actions' => [self::formatActionsForResponse($semanticMatch)], // También en formato array para compatibilidad
-                        'query_type' => 'direct_action',
-                        'matched_by' => 'semantic',
-                    ];
+                    // Ejecutar la acción directamente y devolver el resultado
+                    $executionResult = self::executeActionDirectly($semanticMatch, [], $userId);
+                    if ($executionResult['success']) {
+                        return [
+                            'success' => true,
+                            'explanation' => "Listado de {$semanticMatch['display_name']}",
+                            'action' => self::formatActionsForResponse($semanticMatch),
+                            'data' => $executionResult['data'] ?? null,
+                            'query_type' => 'direct_action',
+                            'matched_by' => 'semantic',
+                        ];
+                    } else {
+                        // Si falla la ejecución, devolver la acción para que se pueda ejecutar manualmente
+                        return [
+                            'success' => true,
+                            'explanation' => "Encontré la acción: {$semanticMatch['display_name']}",
+                            'action' => self::formatActionsForResponse($semanticMatch),
+                            'actions' => [self::formatActionsForResponse($semanticMatch)],
+                            'query_type' => 'direct_action',
+                            'matched_by' => 'semantic',
+                            'error' => $executionResult['error'] ?? 'Error al ejecutar la acción',
+                        ];
+                    }
                 }
             }
 
@@ -742,6 +773,167 @@ PROMPT;
         }
         
         return 'unknown';
+    }
+
+    /**
+     * Ejecutar una acción directamente y devolver su resultado
+     * @param array $action
+     * @param array $params
+     * @param int|null $userId
+     * @return array
+     */
+    private static function executeActionDirectly($action, $params, $userId)
+    {
+        $route = $action['route'] ?? null;
+        
+        // Si no tiene ruta, es una acción especial del sistema
+        if (empty($route)) {
+            return [
+                'success' => false,
+                'error' => 'Esta acción no puede ejecutarse directamente',
+            ];
+        }
+        
+        // Parsear ruta: /frontend/efectores/indexuserefector
+        $routeParts = explode('/', trim($route, '/'));
+        
+        // Obtener controlador y acción
+        $controllerName = null;
+        $actionName = null;
+        
+        if (count($routeParts) >= 3) {
+            // Formato: /frontend/efectores/indexuserefector
+            $controllerName = $routeParts[count($routeParts) - 2];
+            $actionName = $routeParts[count($routeParts) - 1];
+        } elseif (count($routeParts) >= 2) {
+            // Formato: /efectores/indexuserefector
+            $controllerName = $routeParts[0];
+            $actionName = $routeParts[1];
+        }
+        
+        if (!$controllerName || !$actionName) {
+            return [
+                'success' => false,
+                'error' => 'Ruta inválida: ' . $route,
+            ];
+        }
+        
+        // Crear instancia del controlador
+        $controllerClass = 'frontend\\controllers\\' . ucfirst($controllerName) . 'Controller';
+        
+        if (!class_exists($controllerClass)) {
+            return [
+                'success' => false,
+                'error' => 'Controlador no encontrado: ' . $controllerClass,
+            ];
+        }
+        
+        try {
+            // Crear instancia del controlador
+            $controller = new $controllerClass('api', Yii::$app);
+            
+            // Verificar que el método existe
+            $methodName = 'action' . ucfirst($actionName);
+            if (!method_exists($controller, $methodName)) {
+                return [
+                    'success' => false,
+                    'error' => 'Método no encontrado: ' . $methodName,
+                ];
+            }
+            
+            // Usar reflexión para ejecutar el método y capturar variables locales
+            $reflection = new \ReflectionMethod($controller, $methodName);
+            $reflection->setAccessible(true);
+            
+            // Ejecutar la acción y capturar el resultado
+            ob_start();
+            $result = $reflection->invokeArgs($controller, $params);
+            $output = ob_get_clean();
+            
+            // Si la acción retorna un array, devolverlo directamente
+            if (is_array($result)) {
+                return [
+                    'success' => true,
+                    'data' => $result,
+                ];
+            }
+            
+            // Si retorna una vista (string), intentar extraer datos ejecutando la lógica nuevamente
+            if (is_string($result)) {
+                // Ejecutar la lógica del controlador pero interceptar el DataProvider
+                // Usar una variable estática temporal para capturar el dataProvider
+                $capturedDataProvider = null;
+                
+                try {
+                    // Crear una nueva instancia y ejecutar la lógica
+                    $tempController = new $controllerClass('api', Yii::$app);
+                    
+                    // Interceptar el método render para capturar el dataProvider
+                    // Esto es complejo, así que mejor ejecutar la lógica directamente
+                    
+                    // Para acciones específicas conocidas, ejecutar la lógica directamente
+                    if ($controllerName === 'efectores' && $actionName === 'indexuserefector') {
+                        $searchModel = new \common\models\busquedas\EfectorBusqueda();
+                        $array_efectores = Yii::$app->user->getEfectores() ?? [];
+                        $dataProvider = $searchModel->search(['EfectorBusqueda' => ['efectores' => array_keys($array_efectores)]]);
+                        
+                        // Extraer datos del DataProvider
+                        $models = $dataProvider->getModels();
+                        $totalCount = $dataProvider->getTotalCount();
+                        
+                        $formattedData = [];
+                        foreach ($models as $model) {
+                            $formattedData[] = [
+                                'id_efector' => $model->id_efector,
+                                'nombre' => $model->nombre,
+                                'codigo_sisa' => $model->codigo_sisa,
+                                'domicilio' => $model->domicilio,
+                                'telefono' => $model->telefono,
+                                'tipologia' => $model->tipologia,
+                                'dependencia' => $model->dependencia,
+                            ];
+                        }
+                        
+                        return [
+                            'success' => true,
+                            'data' => [
+                                'efectores' => $formattedData,
+                                'total' => $totalCount,
+                            ],
+                        ];
+                    }
+                    
+                } catch (\Exception $e) {
+                    Yii::error("Error extrayendo datos de DataProvider: " . $e->getMessage(), 'universal-query-agent');
+                }
+                
+                // Si no se pudo extraer datos, devolver el HTML
+                return [
+                    'success' => true,
+                    'data' => [
+                        'html' => $result,
+                        'output' => $output,
+                        'message' => 'La acción retornó una vista HTML. Los datos no pudieron extraerse automáticamente.',
+                    ],
+                ];
+            }
+            
+            // Si no retorna nada o retorna algo inesperado
+            return [
+                'success' => true,
+                'data' => [
+                    'message' => 'Acción ejecutada correctamente',
+                    'output' => $output,
+                ],
+            ];
+            
+        } catch (\Exception $e) {
+            Yii::error("Error ejecutando acción {$action['action_id']}: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'universal-query-agent');
+            return [
+                'success' => false,
+                'error' => 'Error al ejecutar la acción: ' . $e->getMessage(),
+            ];
+        }
     }
 
     /**

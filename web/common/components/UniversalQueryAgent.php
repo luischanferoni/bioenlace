@@ -17,9 +17,9 @@ class UniversalQueryAgent
      * @param int|null $userId ID del usuario
      * @return array Respuesta con acciones o datos
      */
-    public static function processQuery($userQuery, $userId = null)
+    public static function processQuery($userQuery, $userId = null, $actionId = null)
     {
-        if (empty($userQuery)) {
+        if (empty($userQuery) && empty($actionId)) {
             return [
                 'success' => false,
                 'error' => 'La consulta no puede estar vacía',
@@ -27,22 +27,61 @@ class UniversalQueryAgent
         }
 
         try {
-            // Fase 1: IA entiende la intención y genera criterios de búsqueda
+            // FASE 0: Si viene action_id, buscar directamente por ID (más rápido y preciso)
+            if (!empty($actionId)) {
+                $action = self::findActionById($actionId, $userId);
+                if ($action) {
+                    return [
+                        'success' => true,
+                        'explanation' => "Ejecutando: {$action['display_name']}",
+                        'action' => self::formatActionsForResponse($action),
+                        'query_type' => 'direct_action',
+                        'matched_by' => 'action_id',
+                    ];
+                }
+            }
+
+            // FASE 1: Matching semántico ANTES del LLM (más rápido y económico)
+            // Solo si hay userQuery (si solo viene action_id, ya se manejó arriba)
+            if (!empty($userQuery)) {
+                $semanticMatch = self::findActionBySemanticMatch($userQuery, $userId);
+                
+                if ($semanticMatch !== null) {
+                    return [
+                        'success' => true,
+                        'explanation' => "Encontré la acción: {$semanticMatch['display_name']}",
+                        'action' => self::formatActionsForResponse($semanticMatch),
+                        'actions' => [self::formatActionsForResponse($semanticMatch)], // También en formato array para compatibilidad
+                        'query_type' => 'direct_action',
+                        'matched_by' => 'semantic',
+                    ];
+                }
+            }
+
+            // FASE 2: IA entiende la intención y genera criterios de búsqueda
+            // Solo si hay userQuery
+            if (empty($userQuery)) {
+                return [
+                    'success' => false,
+                    'error' => 'Se requiere una consulta o action_id válido',
+                ];
+            }
+            
             $searchCriteria = self::understandIntent($userQuery);
             
             if (!$searchCriteria['success']) {
                 return $searchCriteria;
             }
 
-            // Fase 2: Buscar acciones relevantes usando criterios
+            // FASE 3: Buscar acciones relevantes usando criterios
             $relevantActions = self::findActionsByCriteria($searchCriteria, $userId);
             
-            // Fase 3: Si hay muchas acciones, usar IA para priorizar
+            // FASE 4: Si hay muchas acciones, usar IA para priorizar
             if (count($relevantActions) > 10) {
                 $relevantActions = self::prioritizeActions($userQuery, $relevantActions, 10);
             }
 
-            // Fase 4: Generar respuesta natural usando IA
+            // FASE 5: Generar respuesta natural usando IA
             $response = self::generateNaturalResponse($userQuery, $relevantActions, $searchCriteria, $userId);
             
             return $response;
@@ -525,6 +564,114 @@ PROMPT;
             'count' => count($actions),
             'query_type' => $criteria['query_type'] ?? 'unknown',
         ];
+    }
+
+    /**
+     * Buscar acción por action_id
+     * @param string $actionId
+     * @param int|null $userId
+     * @return array|null
+     */
+    private static function findActionById($actionId, $userId = null)
+    {
+        // Obtener todas las acciones disponibles para el usuario
+        $allActions = ActionMappingService::getAvailableActionsForUser($userId);
+        
+        foreach ($allActions as $action) {
+            if (($action['action_id'] ?? '') === $actionId) {
+                return $action;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Intentar encontrar acción por matching semántico (ANTES del LLM)
+     * @param string $userQuery
+     * @param int|null $userId
+     * @return array|null Acción encontrada o null
+     */
+    private static function findActionBySemanticMatch($userQuery, $userId = null)
+    {
+        if (empty($userQuery)) {
+            return null;
+        }
+
+        $queryLower = strtolower(trim($userQuery));
+        
+        // Obtener todas las acciones disponibles para el usuario
+        $allActions = ActionMappingService::getAvailableActionsForUser($userId);
+        
+        $bestMatch = null;
+        $bestScore = 0;
+        
+        foreach ($allActions as $action) {
+            $score = 0;
+            
+            // Matching exacto en keywords
+            if (!empty($action['keywords'])) {
+                foreach ($action['keywords'] as $keyword) {
+                    $keywordLower = strtolower(trim($keyword));
+                    if ($queryLower === $keywordLower) {
+                        $score += 20; // Coincidencia exacta
+                    } elseif (stripos($queryLower, $keywordLower) !== false) {
+                        $score += 10; // Coincidencia parcial
+                    }
+                }
+            }
+            
+            // Matching en synonyms
+            if (!empty($action['synonyms'])) {
+                foreach ($action['synonyms'] as $synonym) {
+                    $synonymLower = strtolower(trim($synonym));
+                    if ($queryLower === $synonymLower) {
+                        $score += 15;
+                    } elseif (stripos($queryLower, $synonymLower) !== false) {
+                        $score += 8;
+                    }
+                }
+            }
+            
+            // Matching en tags
+            if (!empty($action['tags'])) {
+                foreach ($action['tags'] as $tag) {
+                    $tagLower = strtolower(trim($tag));
+                    if (stripos($queryLower, $tagLower) !== false) {
+                        $score += 5;
+                    }
+                }
+            }
+            
+            // Matching en display_name y description
+            $displayNameLower = strtolower($action['display_name'] ?? '');
+            $descriptionLower = strtolower($action['description'] ?? '');
+            if (stripos($displayNameLower, $queryLower) !== false || 
+                stripos($queryLower, $displayNameLower) !== false) {
+                $score += 12;
+            }
+            if (stripos($descriptionLower, $queryLower) !== false) {
+                $score += 6;
+            }
+            
+            // Matching en action_id (si el query contiene el action_id)
+            $actionId = strtolower($action['action_id'] ?? '');
+            if ($actionId && stripos($queryLower, $actionId) !== false) {
+                $score += 25; // Muy alto si coincide con action_id
+            }
+            
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestMatch = $action;
+            }
+        }
+        
+        // Solo retornar si el score es suficientemente alto (umbral: 15)
+        if ($bestScore >= 15) {
+            return $bestMatch;
+        }
+        
+        return null;
     }
 
     /**

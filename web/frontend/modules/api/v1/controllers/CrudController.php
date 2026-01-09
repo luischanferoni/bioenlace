@@ -53,14 +53,16 @@ class CrudController extends BaseController
         $userId = $auth['userId'];
 
         $query = Yii::$app->request->post('query');
+        $actionId = Yii::$app->request->post('action_id'); // Opcional: para búsqueda directa por ID
         
-        if (empty($query)) {
-            return $this->error('La consulta no puede estar vacía', null, 400);
+        if (empty($query) && empty($actionId)) {
+            return $this->error('La consulta o action_id es requerido', null, 400);
         }
 
         try {
             // Procesar consulta usando UniversalQueryAgent (implementación genérica y mejorada)
-            $result = \common\components\UniversalQueryAgent::processQuery($query, $userId);
+            // Si viene action_id, se buscará primero por ID, luego por matching semántico, y finalmente por LLM
+            $result = \common\components\UniversalQueryAgent::processQuery($query, $userId, $actionId);
             
             // Asegurar que el resultado tenga el formato correcto
             if (isset($result['success'])) {

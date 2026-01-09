@@ -32,7 +32,9 @@ class AccionesService {
   /// 
   /// El endpoint es el mismo que usa la web y la app del médico:
   /// ${AppConfig.apiUrl}/crud/process-query
-  Future<Map<String, dynamic>> processQuery(String query) async {
+  /// 
+  /// [actionId] es opcional: si se proporciona, el backend intentará buscar la acción por ID primero
+  Future<Map<String, dynamic>> processQuery(String query, {String? actionId}) async {
     try {
       // Mismo endpoint que usa site/acciones.php en la web y la app del médico
       final uri = Uri.parse('${AppConfig.apiUrl}/crud/process-query');
@@ -47,12 +49,19 @@ class AccionesService {
         headers['Authorization'] = 'Bearer $authToken';
       }
 
+      final body = <String, dynamic>{
+        'query': query,
+      };
+      
+      // Agregar action_id si se proporciona (opcional)
+      if (actionId != null && actionId.isNotEmpty) {
+        body['action_id'] = actionId;
+      }
+
       final response = await http.post(
         uri,
         headers: headers,
-        body: json.encode({
-          'query': query,
-        }),
+        body: json.encode(body),
       ).timeout(
         Duration(seconds: AppConfig.httpTimeoutSeconds),
       );

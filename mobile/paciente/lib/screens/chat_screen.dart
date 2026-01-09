@@ -86,6 +86,8 @@ class _ChatScreenState extends State<ChatScreen> {
         final explanation = data['explanation'] ?? 'Consulta procesada';
         final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
         final suggestedQuery = data['suggested_query'];
+        final queryType = data['query_type'];
+        final matchedBy = data['matched_by']; // 'action_id', 'semantic', o null (LLM)
 
         setState(() {
           _isSending = false;
@@ -96,9 +98,22 @@ class _ChatScreenState extends State<ChatScreen> {
             'content': explanation,
             'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
             'suggested_query': suggestedQuery,
+            'query_type': queryType,
+            'matched_by': matchedBy,
             'timestamp': DateTime.now(),
           });
         });
+
+        // Si es una acción directa (action_id o semantic) y solo hay una acción, ejecutarla automáticamente
+        if ((matchedBy == 'action_id' || matchedBy == 'semantic') && 
+            actions != null && 
+            actions.length == 1 && 
+            queryType == 'direct_action') {
+          // Ejecutar la acción automáticamente después de un breve delay
+          Future.delayed(Duration(milliseconds: 500), () {
+            _executeAction(actions[0]);
+          });
+        }
       } else {
         // Si hay explanation en los datos, usarla aunque success sea false (compatibilidad)
         final data = result['data'];
@@ -132,45 +147,74 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _executeAction(Map<String, dynamic> action) async {
     final actionId = action['action_id'];
     final displayName = action['display_name'] ?? action['title'] ?? action['label'] ?? 'Acción';
-    final params = action['params'] as Map<String, dynamic>?;
+    final description = action['description'] ?? '';
 
-    if (actionId == null || actionId.isEmpty) {
+    // Usar display_name o description como texto de consulta
+    // El backend intentará identificar la acción por action_id primero, luego por matching semántico
+    final queryText = displayName.isNotEmpty ? displayName : description;
+
+    if (queryText.isEmpty) {
       _showErrorSnackbar('Error: No se pudo identificar la acción');
       return;
     }
 
-    // Mostrar indicador de carga
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Ejecutando: $displayName'),
-        backgroundColor: AppTheme.infoColor,
-        duration: Duration(seconds: 2),
-      ),
-    );
+    // Agregar mensaje del usuario al historial (simulando que escribió el texto)
+    setState(() {
+      _isSending = true;
+      _chatHistory.add({
+        'type': 'user',
+        'content': queryText,
+        'timestamp': DateTime.now(),
+      });
+    });
+
+    _scrollToBottom();
 
     try {
-      // Ejecutar acción usando el servicio
-      final result = await _accionesService.executeAction(actionId, params: params);
+      // Enviar consulta a process-query (igual que "¿qué puedo hacer?")
+      // El backend identificará la acción por action_id primero, luego por matching semántico, y finalmente por LLM
+      final result = await _accionesService.processQuery(queryText, actionId: actionId);
 
       if (result['success'] == true) {
         final data = result['data'];
-        
-        // Agregar mensaje del bot con el resultado
+        final explanation = data['explanation'] ?? 'Consulta procesada';
+        final matchedAction = data['action'] ?? (data['actions'] != null && (data['actions'] as List).isNotEmpty ? (data['actions'] as List)[0] : null);
+        final actions = data['actions'] ?? (matchedAction != null ? [matchedAction] : null);
+
         setState(() {
+          _isSending = false;
+
+          // Agregar respuesta del bot al historial
           _chatHistory.add({
             'type': 'bot',
-            'content': data['message'] ?? data['explanation'] ?? 'Acción ejecutada correctamente',
+            'content': explanation,
+            'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
             'data': data,
             'timestamp': DateTime.now(),
           });
         });
-        
-        _scrollToBottom();
       } else {
-        _showErrorSnackbar(result['message'] ?? 'Error al ejecutar la acción');
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': result['message'] ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.',
+            'timestamp': DateTime.now(),
+          });
+        });
       }
+      _scrollToBottom();
     } catch (e) {
+      setState(() {
+        _isSending = false;
+        _chatHistory.add({
+          'type': 'bot',
+          'content': 'Error al procesar tu consulta. Por favor, intenta nuevamente.',
+          'timestamp': DateTime.now(),
+        });
+      });
       _showErrorSnackbar('Error: ${e.toString()}');
+      _scrollToBottom();
     }
   }
 

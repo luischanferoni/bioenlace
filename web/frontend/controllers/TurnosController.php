@@ -133,9 +133,11 @@ class TurnosController extends Controller
     }
 
     /**
-     * Creates a new Turno model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return mixed
+     * Crea un nuevo turno médico
+     * @category Turnos
+     * @tags turno,cita,crear,agendar,solicitar,nuevo
+     * @keywords crear turno,agendar turno,solicitar turno,nuevo turno,crear cita,agendar cita
+     * @synonyms turno,cita,agenda,reserva,consulta
      */
     public function actionCreate()
     {
@@ -193,6 +195,11 @@ class TurnosController extends Controller
     /**
      * Crea un turno para el paciente autenticado (usado principalmente desde la app móvil)
      * El id_persona se obtiene automáticamente del usuario autenticado
+     * 
+     * @category Turnos
+     * @tags turno,cita,crear,agendar,solicitar,nuevo,paciente
+     * @keywords crear turno,agendar turno,solicitar turno,nuevo turno,crear cita,agendar cita,mi turno
+     * @synonyms turno,cita,agenda,reserva,consulta
      * 
      * @return array Respuesta JSON con success y message
      */

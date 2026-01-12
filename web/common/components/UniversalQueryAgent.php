@@ -454,12 +454,55 @@ PROMPT;
             if (stripos($actionText, $keyword) !== false) {
                 $score += 2.0;
             }
+            
+            // Bonus si la keyword coincide con el nombre del controlador
+            if (stripos($action['controller'], $keyword) !== false) {
+                $score += 3.0; // Bonus adicional por coincidencia en controlador
+            }
         }
 
         // Score por categoría (muy alto si coincide)
         if (!empty($criteria['category']) && !empty($action['category'])) {
             if (strtolower($action['category']) === strtolower($criteria['category'])) {
                 $score += 15.0; // Bonus muy alto por coincidencia de categoría
+            }
+        }
+        
+        // Score por entity_type (si no hay category, usar entity_type)
+        if (!empty($criteria['entity_type']) && !empty($action['category'])) {
+            if (strtolower($action['category']) === strtolower($criteria['entity_type'])) {
+                $score += 15.0; // Bonus muy alto por coincidencia de entity_type
+            }
+        }
+        
+        // Bonus adicional si el controlador coincide con entity_type
+        if (!empty($criteria['entity_type'])) {
+            $entityTypeLower = strtolower($criteria['entity_type']);
+            $controllerLower = strtolower($action['controller']);
+            // Si entity_type es "Turnos" y controller es "turnos", dar bonus
+            if ($entityTypeLower === $controllerLower || 
+                stripos($controllerLower, $entityTypeLower) !== false ||
+                stripos($entityTypeLower, $controllerLower) !== false) {
+                $score += 12.0; // Bonus alto por coincidencia de controlador
+            }
+        }
+        
+        // Score por entity_type (si no hay category, usar entity_type)
+        if (!empty($criteria['entity_type']) && !empty($action['category'])) {
+            if (strtolower($action['category']) === strtolower($criteria['entity_type'])) {
+                $score += 15.0; // Bonus muy alto por coincidencia de entity_type
+            }
+        }
+        
+        // Bonus adicional si el controlador coincide con entity_type
+        if (!empty($criteria['entity_type'])) {
+            $entityTypeLower = strtolower($criteria['entity_type']);
+            $controllerLower = strtolower($action['controller']);
+            // Si entity_type es "Turnos" y controller es "turnos", dar bonus
+            if ($entityTypeLower === $controllerLower || 
+                stripos($controllerLower, $entityTypeLower) !== false ||
+                stripos($entityTypeLower, $controllerLower) !== false) {
+                $score += 12.0; // Bonus alto por coincidencia de controlador
             }
         }
 

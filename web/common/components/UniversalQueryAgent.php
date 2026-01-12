@@ -104,6 +104,19 @@ class UniversalQueryAgent
                 return $searchCriteria;
             }
 
+            // FASE 2.5: Si es data_query, buscar business query primero
+            if ($searchCriteria['query_type'] === 'data_query') {
+                $businessQuery = \common\queries\BusinessQueryRegistry::findMatchingQuery($searchCriteria, $userQuery);
+                
+                if ($businessQuery) {
+                    // Ejecutar business query
+                    return self::executeBusinessQuery($businessQuery, $searchCriteria, $userId);
+                }
+                
+                // Si no hay business query, continuar con acciones normales
+                // (podría ser una consulta de datos simple que se resuelve con acciones)
+            }
+
             // FASE 3: Buscar acciones relevantes usando criterios
             $relevantActions = self::findActionsByCriteria($searchCriteria, $userId);
             
@@ -136,31 +149,52 @@ class UniversalQueryAgent
     {
         $userContext = self::getUserContext();
         
+        // Obtener metadatos del sistema dinámicamente
+        $systemMetadata = self::getSystemMetadata();
+        
         // Obtener categorías disponibles desde acciones descubiertas
         $categories = self::getAvailableCategories();
-        $categoriesText = !empty($categories) ? implode(', ', $categories) : 'Ninguna categoría específica';
+        $categoriesText = !empty($categories) ? implode(', ', $categories) : '';
         
-        // Prompt optimizado (reducido 35% para reducir costos)
+        // Obtener business queries disponibles para contexto
+        $businessQueriesInfo = self::getBusinessQueriesInfo();
+        
+        // Prompt genérico y escalable
         $prompt = <<<PROMPT
-Analiza consulta y genera criterios de búsqueda.
+Analiza esta consulta de usuario en un sistema de gestión de salud:
 
-Contexto: Usuario: {$userContext['name']}, Fecha: {$userContext['current_date']}, Categorías: {$categoriesText}
+"{$userQuery}"
 
-Consulta: "{$userQuery}"
+Contexto del sistema:
+- Usuario: {$userContext['name']}
+- Fecha: {$userContext['current_date']}
+- Entidades disponibles: {$categoriesText}
+- Metadatos: {$systemMetadata}
+{$businessQueriesInfo}
 
-Responde JSON:
+Extrae información de la consulta y responde ÚNICAMENTE con este JSON:
+
 {
-  "intent": "descripción breve",
-  "search_keywords": ["palabra1", "palabra2"],
-  "entity_types": ["tipo1"],
-  "category": "categoría_o_null",
-  "operation_hints": ["operación"],
-  "extracted_data": {"dni": "valor_o_null", "fecha": "valor_o_null", "nombre": "valor_o_null"},
-  "filters": {"user_owned": true/false, "date_range": "mes|año|día|null"},
-  "query_type": "list_all|search|create|update|delete|count|view|unknown"
+  "intent": "descripción de la intención",
+  "search_keywords": ["palabras", "relevantes"],
+  "entity_types": ["tipos", "de", "entidades"],
+  "entity_type": "entidad principal o null",
+  "operation_hints": ["operaciones", "detectadas"],
+  "extracted_data": {
+    "identifiers": [],
+    "dates": [],
+    "names": [],
+    "numbers": []
+  },
+  "filters": {
+    "user_owned": true/false/null,
+    "date_range": "rango o null",
+    "custom": {}
+  },
+  "query_type": "list_all|search|create|update|delete|count|view|data_query|unknown"
 }
 
-Reglas: 7-8 dígitos=DNI, "mis"/"mías"=user_owned:true, "cuántos"/"cantidad"=count, "qué puedo"=list_all
+Usa tu conocimiento del lenguaje para extraer información relevante de la consulta.
 PROMPT;
 
         $iaResponse = self::callIA($prompt);
@@ -199,12 +233,140 @@ PROMPT;
             'intent' => $parsed['intent'] ?? 'consulta general',
             'search_keywords' => $parsed['search_keywords'] ?? [],
             'entity_types' => $parsed['entity_types'] ?? [],
-            'category' => $parsed['category'] ?? null,
+            'entity_type' => $parsed['entity_type'] ?? $parsed['category'] ?? null,
+            'category' => $parsed['entity_type'] ?? $parsed['category'] ?? null, // Mantener compatibilidad
             'operation_hints' => $parsed['operation_hints'] ?? [],
-            'extracted_data' => $parsed['extracted_data'] ?? [],
+            'extracted_data' => self::normalizeExtractedData($parsed['extracted_data'] ?? []),
             'filters' => $parsed['filters'] ?? [],
             'query_type' => $parsed['query_type'] ?? 'unknown',
         ];
+    }
+
+    /**
+     * Ejecutar business query
+     * @param array $businessQuery
+     * @param array $criteria
+     * @param int|null $userId
+     * @return array
+     */
+    private static function executeBusinessQuery($businessQuery, $criteria, $userId = null)
+    {
+        try {
+            // Mapear datos extraídos a parámetros de la query
+            $params = self::mapExtractedDataToQueryParams($businessQuery, $criteria, $userId);
+            
+            // Ejecutar query
+            $result = \common\queries\BusinessQueryRegistry::executeQuery($businessQuery, $params);
+            
+            // Formatear resultado
+            $formattedResult = [];
+            if (is_array($result)) {
+                foreach ($result as $item) {
+                    if (is_object($item) && method_exists($item, 'toArray')) {
+                        $formattedResult[] = $item->toArray();
+                    } elseif (is_array($item)) {
+                        $formattedResult[] = $item;
+                    } else {
+                        $formattedResult[] = ['data' => $item];
+                    }
+                }
+            } else {
+                $formattedResult = $result;
+            }
+            
+            return [
+                'success' => true,
+                'explanation' => $businessQuery['description'] ?? 'Resultado de la consulta',
+                'data' => $formattedResult,
+                'query_type' => 'business_query',
+                'query_id' => $businessQuery['id'] ?? null,
+            ];
+        } catch (\Exception $e) {
+            Yii::error("Error ejecutando business query: " . $e->getMessage(), 'universal-query-agent');
+            return [
+                'success' => false,
+                'error' => 'Error al ejecutar la consulta: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Mapear datos extraídos a parámetros de business query
+     */
+    private static function mapExtractedDataToQueryParams($businessQuery, $criteria, $userId = null)
+    {
+        $params = [];
+        $extractedData = $criteria['extracted_data'] ?? [];
+        $searchKeywords = $criteria['search_keywords'] ?? [];
+        
+        foreach ($businessQuery['parameters'] ?? [] as $param) {
+            $paramName = $param['name'];
+            $value = null;
+            
+            // Mapeo inteligente según nombre del parámetro
+            if (stripos($paramName, 'id_efector') !== false || stripos($paramName, 'efector') !== false) {
+                // Buscar en extracted_data o usar efector actual del usuario
+                $value = $extractedData['id_efector'] ?? Yii::$app->user->getIdEfector();
+            } elseif (stripos($paramName, 'especialidad') !== false) {
+                // Buscar especialidad en keywords o names extraídos
+                // Palabras clave comunes de especialidades
+                $especialidadesKeywords = [
+                    'odontolog' => 'odontolog',
+                    'cardiolog' => 'cardiolog',
+                    'pediatra' => 'pediatra',
+                    'ginecolog' => 'ginecolog',
+                    'traumatolog' => 'traumatolog',
+                    'dermatolog' => 'dermatolog',
+                    'oftalmolog' => 'oftalmolog',
+                    'neurolog' => 'neurolog',
+                ];
+                
+                // Buscar en keywords
+                foreach ($searchKeywords as $keyword) {
+                    $keywordLower = strtolower($keyword);
+                    foreach ($especialidadesKeywords as $espKey => $espValue) {
+                        if (stripos($keywordLower, $espKey) !== false) {
+                            $value = $espValue;
+                            break 2;
+                        }
+                    }
+                }
+                
+                // Si no se encontró, buscar en names extraídos
+                if ($value === null && isset($extractedData['raw']['names'])) {
+                    foreach ($extractedData['raw']['names'] as $name) {
+                        $nameLower = strtolower($name);
+                        foreach ($especialidadesKeywords as $espKey => $espValue) {
+                            if (stripos($nameLower, $espKey) !== false) {
+                                $value = $espValue;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            } elseif (stripos($paramName, 'limit') !== false) {
+                $value = $param['default'] ?? 10;
+            } elseif (stripos($paramName, 'id') !== false) {
+                // Buscar IDs en extracted_data
+                if (isset($extractedData['dni'])) {
+                    $value = $extractedData['dni'];
+                } elseif (isset($extractedData['raw']['identifiers'])) {
+                    $value = $extractedData['raw']['identifiers'][0] ?? null;
+                }
+            }
+            
+            // Si tiene valor por defecto y no se encontró valor, usar el default
+            if ($value === null && isset($param['default'])) {
+                $value = $param['default'];
+            }
+            
+            // Solo agregar si tiene valor o es requerido
+            if ($value !== null || !empty($param['required'])) {
+                $params[$paramName] = $value;
+            }
+        }
+        
+        return $params;
     }
 
     /**
@@ -577,24 +739,32 @@ PROMPT;
         // Formatear acciones antes de devolver (usar las acciones originales, no las del LLM)
         $formattedActions = self::formatActionsForResponse(array_slice($actions, 0, 10));
         
-        if ($parsed) {
-            return [
-                'success' => true,
-                'explanation' => $parsed['explanation'] ?? 'Encontré estas acciones relacionadas con tu consulta.',
-                'actions' => $formattedActions,
-                'count' => $parsed['count'] ?? count($actions),
-                'query_type' => $criteria['query_type'] ?? 'unknown',
-            ];
+        // Analizar parámetros de la acción principal si existe
+        $actionAnalysis = null;
+        if (!empty($actions)) {
+            $primaryAction = $actions[0];
+            $actionAnalysis = ActionParameterAnalyzer::analyzeActionParameters(
+                $primaryAction,
+                $criteria['extracted_data'] ?? [],
+                $userId
+            );
         }
-
-        // Fallback: respuesta básica
-        return [
+        
+        $response = [
             'success' => true,
-            'explanation' => 'Encontré ' . count($actions) . ' acciones relacionadas con tu consulta.',
+            'explanation' => $parsed['explanation'] ?? 'Encontré ' . count($actions) . ' acciones relacionadas con tu consulta.',
             'actions' => $formattedActions,
-            'count' => count($actions),
+            'count' => $parsed['count'] ?? count($actions),
             'query_type' => $criteria['query_type'] ?? 'unknown',
         ];
+        
+        // Agregar análisis de parámetros si existe
+        if ($actionAnalysis) {
+            $response['action_analysis'] = $actionAnalysis;
+            $response['needs_user_input'] = !$actionAnalysis['ready_to_execute'];
+        }
+        
+        return $response;
     }
 
     /**
@@ -1092,6 +1262,113 @@ PROMPT;
         }
         
         return array_keys($categories);
+    }
+
+    /**
+     * Obtener metadatos del sistema de forma dinámica
+     * @return string
+     */
+    private static function getSystemMetadata()
+    {
+        try {
+            // Obtener información sobre modelos disponibles
+            $models = ModelDiscoveryService::discoverAllModels();
+            
+            // Extraer tipos de entidades comunes
+            $entityTypes = [];
+            $commonAttributes = [];
+            
+            foreach (array_slice($models, 0, 30) as $model) { // Limitar para no saturar
+                $entityTypes[] = $model['name'];
+                
+                // Agregar atributos comunes
+                foreach (array_slice($model['attributes'] ?? [], 0, 5) as $attr) {
+                    if (is_array($attr) && isset($attr['name']) && !in_array($attr['name'], $commonAttributes)) {
+                        $commonAttributes[] = $attr['name'];
+                    }
+                }
+            }
+            
+            $metadata = "Tipos de entidades disponibles: " . implode(', ', array_slice($entityTypes, 0, 20)) . "\n";
+            $metadata .= "Atributos comunes: " . implode(', ', array_slice($commonAttributes, 0, 15));
+            
+            return $metadata;
+        } catch (\Exception $e) {
+            Yii::error("Error obteniendo metadatos del sistema: " . $e->getMessage(), 'universal-query-agent');
+            return "Sistema de gestión de salud con múltiples entidades y relaciones.";
+        }
+    }
+
+    /**
+     * Obtener información de business queries disponibles
+     * @return string
+     */
+    private static function getBusinessQueriesInfo()
+    {
+        try {
+            $queries = \common\queries\BusinessQueryRegistry::getAllQueries();
+            
+            if (empty($queries)) {
+                return '';
+            }
+            
+            $info = "\nConsultas de negocio disponibles (ranking, métricas, agregaciones):\n";
+            
+            foreach (array_slice($queries, 0, 10) as $query) { // Limitar para no saturar
+                if (!($query['active'] ?? true)) {
+                    continue;
+                }
+                
+                $keywords = implode(', ', array_slice($query['keywords'] ?? [], 0, 5));
+                $info .= "- {$query['description']} (keywords: {$keywords})\n";
+            }
+            
+            return $info;
+        } catch (\Exception $e) {
+            Yii::error("Error obteniendo business queries: " . $e->getMessage(), 'universal-query-agent');
+            return '';
+        }
+    }
+
+    /**
+     * Normalizar datos extraídos para compatibilidad con código existente
+     * @param array $extractedData
+     * @return array
+     */
+    private static function normalizeExtractedData($extractedData)
+    {
+        $normalized = [];
+        
+        // Si viene en formato antiguo (dni, fecha, nombre), mantenerlo
+        if (isset($extractedData['dni']) || isset($extractedData['fecha']) || isset($extractedData['nombre'])) {
+            $normalized = $extractedData;
+        } else {
+            // Mapear identificadores a DNI si parece ser un documento
+            if (isset($extractedData['identifiers']) && is_array($extractedData['identifiers'])) {
+                foreach ($extractedData['identifiers'] as $identifier) {
+                    // Si es un número de 7-8 dígitos, probablemente es un DNI
+                    if (is_numeric($identifier) && strlen((string)$identifier) >= 7 && strlen((string)$identifier) <= 8) {
+                        $normalized['dni'] = $identifier;
+                        break;
+                    }
+                }
+            }
+            
+            // Mapear fechas
+            if (isset($extractedData['dates']) && is_array($extractedData['dates']) && !empty($extractedData['dates'])) {
+                $normalized['fecha'] = $extractedData['dates'][0];
+            }
+            
+            // Mapear nombres
+            if (isset($extractedData['names']) && is_array($extractedData['names']) && !empty($extractedData['names'])) {
+                $normalized['nombre'] = implode(' ', $extractedData['names']);
+            }
+            
+            // Mantener datos originales también para referencia
+            $normalized['raw'] = $extractedData;
+        }
+        
+        return $normalized;
     }
 
     /**

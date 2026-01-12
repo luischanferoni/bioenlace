@@ -234,7 +234,7 @@ class ActionDiscoveryService
         // NUEVO: Extraer metadatos personalizados del docblock
         $customMetadata = self::extractCustomMetadata($docComment, $controllerName, $actionName);
 
-        // Extraer parámetros
+        // Extraer parámetros con metadatos
         $parameters = [];
         foreach ($method->getParameters() as $param) {
             $paramInfo = [
@@ -249,6 +249,10 @@ class ActionDiscoveryService
                     // No se puede obtener el valor por defecto
                 }
             }
+            
+            // Extraer metadatos del parámetro desde docblock
+            $paramMetadata = self::extractParameterMetadata($docComment, $param->getName());
+            $paramInfo = array_merge($paramInfo, $paramMetadata);
             
             $parameters[] = $paramInfo;
         }
@@ -588,6 +592,80 @@ class ActionDiscoveryService
         $keywords[] = $actionName;
         
         return array_unique($keywords);
+    }
+
+    /**
+     * Extraer metadatos de un parámetro desde docblock
+     * Soporta anotaciones:
+     * @paramOption nombre_param tipo opciones
+     * @paramFilter nombre_param filtro valor
+     * @paramDepends nombre_param depende_de otro_param
+     * @paramEndpoint nombre_param endpoint /ruta/api
+     * 
+     * @param string|false $docComment
+     * @param string $paramName
+     * @return array
+     */
+    private static function extractParameterMetadata($docComment, $paramName)
+    {
+        $metadata = [
+            'option_type' => null,
+            'option_config' => null,
+            'filters' => [],
+            'depends_on' => null,
+            'endpoint' => null,
+            'description' => '',
+        ];
+        
+        if (!$docComment) {
+            return $metadata;
+        }
+        
+        $lines = explode("\n", $docComment);
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            // @paramOption id_efector select efectores|user_efectores
+            if (preg_match('/@paramOption\s+' . preg_quote($paramName) . '\s+(\w+)\s+(.+)/i', $line, $matches)) {
+                $metadata['option_type'] = trim($matches[1]); // select, autocomplete, date, etc.
+                $optionConfig = trim($matches[2]);
+                
+                // Parsear configuración: "efectores|user_efectores" o "servicios|efector_servicios"
+                $parts = explode('|', $optionConfig);
+                $metadata['option_config'] = [
+                    'source' => $parts[0], // efectores, servicios, personas, etc.
+                    'filter' => $parts[1] ?? null, // user_efectores, efector_servicios, etc.
+                ];
+            }
+            
+            // @paramFilter id_servicio servicio_especialidad odontologia
+            if (preg_match('/@paramFilter\s+' . preg_quote($paramName) . '\s+(\w+)\s+(.+)/i', $line, $matches)) {
+                $filterType = trim($matches[1]);
+                $filterValue = trim($matches[2]);
+                $metadata['filters'][] = [
+                    'type' => $filterType,
+                    'value' => $filterValue,
+                ];
+            }
+            
+            // @paramDepends id_servicio id_efector
+            if (preg_match('/@paramDepends\s+' . preg_quote($paramName) . '\s+(\w+)/i', $line, $matches)) {
+                $metadata['depends_on'] = trim($matches[1]);
+            }
+            
+            // @paramEndpoint id_persona /api/v1/personas/search
+            if (preg_match('/@paramEndpoint\s+' . preg_quote($paramName) . '\s+(.+)/i', $line, $matches)) {
+                $metadata['endpoint'] = trim($matches[1]);
+            }
+            
+            // Extraer descripción del @param estándar
+            if (preg_match('/@param\s+\S+\s+\$' . preg_quote($paramName) . '\s+(.+)/', $line, $matches)) {
+                $metadata['description'] = trim($matches[1]);
+            }
+        }
+        
+        return $metadata;
     }
 
     /**

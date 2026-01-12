@@ -4,6 +4,7 @@ import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
+import '../components/dynamic_form.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -88,6 +89,8 @@ class _ChatScreenState extends State<ChatScreen> {
         final suggestedQuery = data['suggested_query'];
         final queryType = data['query_type'];
         final matchedBy = data['matched_by']; // 'action_id', 'semantic', o null (LLM)
+        final needsUserInput = data['needs_user_input'] ?? false;
+        final actionAnalysis = data['action_analysis'] as Map<String, dynamic>?;
 
         setState(() {
           _isSending = false;
@@ -100,15 +103,19 @@ class _ChatScreenState extends State<ChatScreen> {
             'suggested_query': suggestedQuery,
             'query_type': queryType,
             'matched_by': matchedBy,
+            'needs_user_input': needsUserInput,
+            'action_analysis': actionAnalysis,
             'timestamp': DateTime.now(),
           });
         });
 
         // Si es una acción directa (action_id o semantic) y solo hay una acción, ejecutarla automáticamente
+        // PERO solo si no necesita input del usuario
         if ((matchedBy == 'action_id' || matchedBy == 'semantic') && 
             actions != null && 
             actions.length == 1 && 
-            queryType == 'direct_action') {
+            queryType == 'direct_action' &&
+            !needsUserInput) {
           // Ejecutar la acción automáticamente después de un breve delay
           Future.delayed(Duration(milliseconds: 500), () {
             _executeAction(actions[0]);
@@ -180,6 +187,8 @@ class _ChatScreenState extends State<ChatScreen> {
         final explanation = data['explanation'] ?? 'Consulta procesada';
         final matchedAction = data['action'] ?? (data['actions'] != null && (data['actions'] as List).isNotEmpty ? (data['actions'] as List)[0] : null);
         final actions = data['actions'] ?? (matchedAction != null ? [matchedAction] : null);
+        final needsUserInput = data['needs_user_input'] ?? false;
+        final actionAnalysis = data['action_analysis'] as Map<String, dynamic>?;
 
         setState(() {
           _isSending = false;
@@ -190,6 +199,8 @@ class _ChatScreenState extends State<ChatScreen> {
             'content': explanation,
             'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
             'data': data,
+            'needs_user_input': needsUserInput,
+            'action_analysis': actionAnalysis,
             'timestamp': DateTime.now(),
           });
         });
@@ -215,6 +226,42 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       _showErrorSnackbar('Error: ${e.toString()}');
       _scrollToBottom();
+    }
+  }
+
+  Future<void> _executeActionWithParams(String actionId, Map<String, dynamic> params) async {
+    setState(() {
+      _isSending = true;
+    });
+
+    try {
+      final result = await _accionesService.executeAction(actionId, params: params);
+
+      setState(() {
+        _isSending = false;
+      });
+
+      if (result['success'] == true) {
+        final data = result['data'];
+        final explanation = data['explanation'] ?? 'Acción ejecutada exitosamente';
+
+        setState(() {
+          _chatHistory.add({
+            'type': 'bot',
+            'content': explanation,
+            'data': data,
+            'timestamp': DateTime.now(),
+          });
+        });
+      } else {
+        _showErrorSnackbar(result['message'] ?? 'Error al ejecutar la acción');
+      }
+      _scrollToBottom();
+    } catch (e) {
+      setState(() {
+        _isSending = false;
+      });
+      _showErrorSnackbar('Error: ${e.toString()}');
     }
   }
 
@@ -253,6 +300,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 final actions = message['actions'] as List<Map<String, dynamic>>?;
                 final suggestedQuery = message['suggested_query'] as String?;
                 final timestamp = message['timestamp'] as DateTime;
+                final needsUserInput = message['needs_user_input'] as bool? ?? false;
+                final actionAnalysis = message['action_analysis'] as Map<String, dynamic>?;
 
                 return Column(
                   children: [
@@ -345,6 +394,62 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             );
                           }).toList(),
+                        ),
+                      ),
+                    ],
+                    // Formulario dinámico si necesita input del usuario
+                    if (!isUser && needsUserInput && actionAnalysis != null) ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Theme.of(context).primaryColor.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.input,
+                                    size: 20,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Completa la información',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              DynamicForm(
+                                formConfig: actionAnalysis['form_config'] ?? {},
+                                authToken: _accionesService.authToken,
+                                onSubmit: (formValues) async {
+                                  // Ejecutar acción con los parámetros del formulario
+                                  final actionId = actionAnalysis['action_id'] as String?;
+                                  if (actionId != null) {
+                                    await _executeActionWithParams(actionId, formValues);
+                                  }
+                                },
+                                onCancel: () {
+                                  setState(() {
+                                    _chatHistory.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

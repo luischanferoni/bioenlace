@@ -402,10 +402,27 @@ PROMPT;
 
         // Búsqueda semántica usando scoring mejorado con metadatos
         $scoredActions = [];
+        $debugScores = []; // Para debugging
         
         foreach ($allActions as $action) {
             $score = self::calculateSemanticScore($action, $criteria);
             
+            // Log detallado para debugging (solo para acciones de turnos)
+            if (stripos($action['controller'] ?? '', 'turno') !== false || 
+                stripos($action['route'] ?? '', 'turno') !== false) {
+                $debugScores[] = [
+                    'action_id' => $action['action_id'] ?? 'N/A',
+                    'controller' => $action['controller'] ?? 'N/A',
+                    'action' => $action['action'] ?? 'N/A',
+                    'route' => $action['route'] ?? 'N/A',
+                    'category' => $action['category'] ?? 'N/A',
+                    'tags' => $action['tags'] ?? [],
+                    'keywords' => $action['keywords'] ?? [],
+                    'score' => $score,
+                ];
+            }
+            
+            // Incluir acciones con score > 0, o si tienen coincidencias mínimas
             if ($score > 0) {
                 $scoredActions[] = [
                     'action' => $action,
@@ -413,6 +430,14 @@ PROMPT;
                 ];
             }
         }
+        
+        // Log de debugging si hay acciones de turnos
+        if (!empty($debugScores)) {
+            Yii::info("UniversalQueryAgent::findActionsByCriteria - Scores de acciones de turnos: " . json_encode($debugScores, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+        }
+        
+        // Log del total de acciones con score > 0
+        Yii::info("UniversalQueryAgent::findActionsByCriteria - Acciones con score > 0: " . count($scoredActions) . " de " . count($allActions), 'universal-query-agent');
 
         // Ordenar por score
         usort($scoredActions, function($a, $b) {
@@ -478,26 +503,7 @@ PROMPT;
         // Bonus adicional si el controlador coincide con entity_type
         if (!empty($criteria['entity_type'])) {
             $entityTypeLower = strtolower($criteria['entity_type']);
-            $controllerLower = strtolower($action['controller']);
-            // Si entity_type es "Turnos" y controller es "turnos", dar bonus
-            if ($entityTypeLower === $controllerLower || 
-                stripos($controllerLower, $entityTypeLower) !== false ||
-                stripos($entityTypeLower, $controllerLower) !== false) {
-                $score += 12.0; // Bonus alto por coincidencia de controlador
-            }
-        }
-        
-        // Score por entity_type (si no hay category, usar entity_type)
-        if (!empty($criteria['entity_type']) && !empty($action['category'])) {
-            if (strtolower($action['category']) === strtolower($criteria['entity_type'])) {
-                $score += 15.0; // Bonus muy alto por coincidencia de entity_type
-            }
-        }
-        
-        // Bonus adicional si el controlador coincide con entity_type
-        if (!empty($criteria['entity_type'])) {
-            $entityTypeLower = strtolower($criteria['entity_type']);
-            $controllerLower = strtolower($action['controller']);
+            $controllerLower = strtolower($action['controller'] ?? '');
             // Si entity_type es "Turnos" y controller es "turnos", dar bonus
             if ($entityTypeLower === $controllerLower || 
                 stripos($controllerLower, $entityTypeLower) !== false ||
@@ -568,12 +574,29 @@ PROMPT;
         $operationHints = $criteria['operation_hints'] ?? [];
         $actionName = strtolower($action['action']);
         foreach ($operationHints as $hint) {
-            $hint = strtolower($hint);
+            $hint = strtolower(trim($hint));
             if (stripos($actionName, $hint) !== false) {
                 $score += 4.0;
             }
             if (stripos($actionText, $hint) !== false) {
                 $score += 2.0;
+            }
+            // También buscar en tags y keywords
+            if (!empty($action['tags']) && is_array($action['tags'])) {
+                foreach ($action['tags'] as $tag) {
+                    if (stripos(strtolower($tag), $hint) !== false) {
+                        $score += 3.0;
+                        break;
+                    }
+                }
+            }
+            if (!empty($action['keywords']) && is_array($action['keywords'])) {
+                foreach ($action['keywords'] as $keyword) {
+                    if (stripos(strtolower($keyword), $hint) !== false) {
+                        $score += 3.0;
+                        break;
+                    }
+                }
             }
         }
 
@@ -582,7 +605,7 @@ PROMPT;
         $queryTypeMapping = [
             'list' => ['index', 'list', 'listar', 'ver todos'],
             'search' => ['search', 'buscar', 'find', 'filter'],
-            'create' => ['create', 'crear', 'new', 'nuevo'],
+            'create' => ['create', 'crear', 'new', 'nuevo', 'crearmi'],
             'update' => ['update', 'editar', 'edit', 'modificar'],
             'delete' => ['delete', 'eliminar', 'remove'],
             'view' => ['view', 'ver', 'show', 'detalle'],
@@ -594,6 +617,24 @@ PROMPT;
                 if (stripos($actionName, $opKeyword) !== false) {
                     $score += 6.0;
                     break;
+                }
+            }
+        }
+        
+        // Bonus adicional por operation_hints (palabras como "crear", "agendar", "solicitar")
+        $operationHints = $criteria['operation_hints'] ?? [];
+        foreach ($operationHints as $hint) {
+            $hint = strtolower(trim($hint));
+            if (stripos($actionName, $hint) !== false) {
+                $score += 4.0;
+            }
+            // También buscar en tags y keywords
+            if (!empty($action['tags']) && is_array($action['tags'])) {
+                foreach ($action['tags'] as $tag) {
+                    if (stripos(strtolower($tag), $hint) !== false) {
+                        $score += 3.0;
+                        break;
+                    }
                 }
             }
         }

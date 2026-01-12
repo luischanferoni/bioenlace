@@ -12,6 +12,102 @@ use Yii;
 class UniversalQueryAgent
 {
     /**
+     * Método de prueba para testear el matching de acciones con criterios JSON
+     * Útil para debugging y testing desde el navegador
+     * 
+     * @param array $criteria Criterios de búsqueda (formato JSON parseado)
+     * @param int|null $userId ID del usuario
+     * @return array Resultado detallado con acciones encontradas y scores
+     */
+    public static function testFindActions($criteria, $userId = null)
+    {
+        try {
+            // Normalizar criterios (agregar campos faltantes)
+            $normalizedCriteria = [
+                'intent' => $criteria['intent'] ?? '',
+                'search_keywords' => $criteria['search_keywords'] ?? [],
+                'entity_types' => $criteria['entity_types'] ?? [],
+                'entity_type' => $criteria['entity_type'] ?? null,
+                'category' => $criteria['entity_type'] ?? null, // Para compatibilidad
+                'operation_hints' => $criteria['operation_hints'] ?? [],
+                'extracted_data' => self::normalizeExtractedData($criteria['extracted_data'] ?? []),
+                'filters' => $criteria['filters'] ?? [],
+                'query_type' => $criteria['query_type'] ?? 'unknown',
+            ];
+            
+            // Obtener todas las acciones disponibles
+            $allActions = \common\components\ActionMappingService::getAvailableActionsForUser($userId);
+            
+            // Calcular scores para todas las acciones
+            $scoredActions = [];
+            $debugScores = [];
+            
+            foreach ($allActions as $action) {
+                $score = self::calculateSemanticScore($action, $normalizedCriteria);
+                
+                // Guardar información de debugging para todas las acciones de turnos
+                if (stripos($action['controller'] ?? '', 'turno') !== false || 
+                    stripos($action['route'] ?? '', 'turno') !== false) {
+                    $debugScores[] = [
+                        'action_id' => $action['action_id'] ?? 'N/A',
+                        'controller' => $action['controller'] ?? 'N/A',
+                        'action' => $action['action'] ?? 'N/A',
+                        'route' => $action['route'] ?? 'N/A',
+                        'display_name' => $action['display_name'] ?? 'N/A',
+                        'category' => $action['category'] ?? 'N/A',
+                        'tags' => $action['tags'] ?? [],
+                        'keywords' => $action['keywords'] ?? [],
+                        'score' => $score,
+                    ];
+                }
+                
+                if ($score > 0) {
+                    $scoredActions[] = [
+                        'action' => $action,
+                        'score' => $score,
+                    ];
+                }
+            }
+            
+            // Ordenar por score
+            usort($scoredActions, function($a, $b) {
+                return $b['score'] <=> $a['score'];
+            });
+            
+            // Obtener acciones encontradas usando el método normal
+            $foundActions = self::findActionsByCriteria($normalizedCriteria, $userId);
+            
+            return [
+                'success' => true,
+                'criteria' => $normalizedCriteria,
+                'total_actions_available' => count($allActions),
+                'actions_with_score' => count($scoredActions),
+                'actions_found' => count($foundActions),
+                'top_scored_actions' => array_slice($scoredActions, 0, 10),
+                'found_actions' => array_map(function($action) {
+                    return [
+                        'action_id' => $action['action_id'] ?? 'N/A',
+                        'controller' => $action['controller'] ?? 'N/A',
+                        'action' => $action['action'] ?? 'N/A',
+                        'route' => $action['route'] ?? 'N/A',
+                        'display_name' => $action['display_name'] ?? 'N/A',
+                        'category' => $action['category'] ?? 'N/A',
+                        'tags' => $action['tags'] ?? [],
+                        'keywords' => $action['keywords'] ?? [],
+                    ];
+                }, $foundActions),
+                'debug_turnos_actions' => $debugScores,
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ];
+        }
+    }
+
+    /**
      * Procesar cualquier consulta del usuario
      * @param string $userQuery Cualquier consulta en lenguaje natural
      * @param int|null $userId ID del usuario

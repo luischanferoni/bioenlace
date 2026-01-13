@@ -206,9 +206,50 @@ $defaultJson = json_encode([
                                 </div>
                             <?php endif; ?>
                             
-                            <?php if (!empty($result['debug_turnos_actions'])): ?>
-                                <h4 class="mt-4">🔍 Debug: Acciones de Turnos</h4>
-                                <pre class="bg-light p-3 rounded"><code><?= Html::encode(json_encode($result['debug_turnos_actions'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) ?></code></pre>
+                            <?php if (!empty($result['debug_all_actions_scores'])): ?>
+                                <h4 class="mt-4">🔍 Debug: Scores de Todas las Acciones Evaluadas</h4>
+                                <p class="text-muted">Información de debugging para todas las acciones evaluadas con sus scores. Útil para entender por qué un JSON no se asocia con acciones.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Score</th>
+                                                <th>Action ID</th>
+                                                <th>Controller</th>
+                                                <th>Action</th>
+                                                <th>Route</th>
+                                                <th>Display Name</th>
+                                                <th>Entity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php 
+                                            // Ordenar por score descendente para ver las mejores primero
+                                            $sortedScores = $result['debug_all_actions_scores'];
+                                            usort($sortedScores, function($a, $b) {
+                                                return ($b['score'] ?? 0) <=> ($a['score'] ?? 0);
+                                            });
+                                            foreach (array_slice($sortedScores, 0, 20) as $scoreInfo): ?>
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge <?= ($scoreInfo['score'] ?? 0) > 0 ? 'bg-success' : 'bg-secondary' ?>">
+                                                            <?= number_format($scoreInfo['score'] ?? 0, 2) ?>
+                                                        </span>
+                                                    </td>
+                                                    <td><?= Html::encode($scoreInfo['action_id'] ?? 'N/A') ?></td>
+                                                    <td><?= Html::encode($scoreInfo['controller'] ?? 'N/A') ?></td>
+                                                    <td><?= Html::encode($scoreInfo['action'] ?? 'N/A') ?></td>
+                                                    <td><code><?= Html::encode($scoreInfo['route'] ?? 'N/A') ?></code></td>
+                                                    <td><?= Html::encode($scoreInfo['display_name'] ?? 'N/A') ?></td>
+                                                    <td><?= Html::encode($scoreInfo['entity'] ?? 'N/A') ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <?php if (count($result['debug_all_actions_scores']) > 20): ?>
+                                    <p class="text-muted">Mostrando las top 20 acciones. Total evaluadas: <?= count($result['debug_all_actions_scores']) ?></p>
+                                <?php endif; ?>
                             <?php endif; ?>
                             
                         <?php else: ?>

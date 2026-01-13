@@ -644,7 +644,7 @@ class SiteController extends Controller
                 $userId = Yii::$app->user->isGuest ? null : Yii::$app->user->id;
                 
                 // Ejecutar test
-                $result = \common\components\UniversalQueryAgent::testFindActions($criteria, $userId);
+                $result = \common\components\UniversalQueryAgent::testFindActions($criteria, $userId, 'paciente');
                 
             } catch (\Exception $e) {
                 Yii::error("Error en test-action-matching: " . $e->getMessage(), 'site-controller');

@@ -48,7 +48,7 @@ return [
         'user' => [
             'class' => 'frontend\components\UserConfig',
             'enableAutoLogin' => true,
-            'identityCookie' => ['name' => '_identity-vitamind-frontend', 'httpOnly' => true],            
+            'identityCookie' => ['name' => '_identity-bioenlace-frontend', 'httpOnly' => true],            
             // Comment this if you don't want to record user logins
             'on afterLogin' => function ($event) {
                 \webvimark\modules\UserManagement\models\UserVisitLog::newVisitor($event->identity->id);

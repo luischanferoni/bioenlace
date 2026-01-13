@@ -12,52 +12,223 @@ use Yii;
 class UniversalQueryAgent
 {
     /**
+     * Obtener todas las acciones disponibles para un rol específico
+     * @param string|array $roleName Nombre del rol o array de nombres de roles
+     * @param bool $useCache Usar cache
+     * @return array Array de acciones disponibles para el rol
+     */
+    public static function getAvailableActionsByRole($roleName, $useCache = true)
+    {
+        // Normalizar a array si es string
+        $roles = is_array($roleName) ? $roleName : [$roleName];
+        
+        // Cache key basado en roles
+        $cacheKey = 'actions_for_roles_' . md5(implode(',', $roles));
+        
+        $cache = Yii::$app->cache;
+        
+        if ($useCache && $cache) {
+            $cached = $cache->get($cacheKey);
+            if ($cached !== false) {
+                return $cached;
+            }
+        }
+        
+        // PRIMERO: Obtener permisos de los roles desde RBAC (estos son las rutas permitidas)
+        // Solo descubriremos acciones para las rutas que el rol puede ejecutar
+        $authManager = Yii::$app->authManager;
+        $allowedRoutes = [];
+        
+        foreach ($roles as $role) {
+            try {
+                $roleObj = $authManager->getRole($role);
+                if ($roleObj) {
+                    $permissions = $authManager->getPermissionsByRole($role);
+                    var_dump($permissions);
+                    die();
+                    foreach ($permissions as $permission) {
+                        // Los permisos en RBAC son las rutas permitidas
+                        $allowedRoutes[$permission->name] = true;
+                    }
+                }
+            } catch (\Exception $e) {
+                Yii::warning("UniversalQueryAgent::getAvailableActionsByRole - Error obteniendo permisos del rol '{$role}': " . $e->getMessage(), 'universal-query-agent');
+            }
+        }
+        
+        // Si no hay permisos, retornar array vacío (no necesitamos descubrir acciones)
+        if (empty($allowedRoutes)) {
+            Yii::info("UniversalQueryAgent::getAvailableActionsByRole - Rol(es): " . implode(', ', $roles) . " no tiene permisos asignados", 'universal-query-agent');
+            return [];
+        }
+        
+        // SEGUNDO: Construir lista de rutas objetivo (permisos + conversiones)
+        $targetRoutes = [];
+        $permissionNames = array_keys($allowedRoutes);
+
+        // Agregar permisos directos y sus conversiones
+        foreach ($permissionNames as $permissionName) {
+            // Si el permiso ya es una ruta (empieza con /), agregarlo directamente
+            if (strpos($permissionName, '/') === 0) {
+                $targetRoutes[$permissionName] = true;
+            } else {
+                // Convertir permiso a ruta
+                $convertedRoute = self::convertPermissionToRoute($permissionName);
+                if ($convertedRoute) {
+                    $targetRoutes[$convertedRoute] = true;
+                }
+            }
+        }
+        var_dump($targetRoutes);
+        die();
+        // TERCERO: Descubrir solo las acciones que corresponden a las rutas objetivo
+        $availableActions = [];
+        
+        // Descubrir acciones solo para las rutas objetivo
+        $availableActions = self::discoverActionsByRoutes($targetRoutes, $useCache);
+        
+        // Log para debugging
+        Yii::info("UniversalQueryAgent::getAvailableActionsByRole - Rol(es): " . implode(', ', $roles) . ", Rutas objetivo: " . count($targetRoutes) . ", Acciones disponibles: " . count($availableActions), 'universal-query-agent');
+        
+        // Guardar en cache
+        if ($cache) {
+            $cache->set($cacheKey, $availableActions, 1800); // 30 minutos
+        }
+
+        return $availableActions;
+    }
+
+    /**
+     * Descubrir acciones solo para rutas específicas
+     * @param array $targetRoutes Array de rutas objetivo (ej: ["/frontend/turnos/crear-mi-turno" => true])
+     * @param bool $useCache Usar cache si está disponible
+     * @return array Array de acciones que coinciden con las rutas objetivo
+     */
+    private static function discoverActionsByRoutes($targetRoutes, $useCache = true)
+    {
+        $availableActions = [];
+        
+        // Obtener todas las acciones (usa cache, así que es eficiente)
+        // Nota: En el futuro podríamos optimizar ActionDiscoveryService para descubrir solo rutas específicas
+        $allActions = \common\components\ActionDiscoveryService::discoverAllActions($useCache);
+        
+        // Filtrar solo las acciones que coinciden con las rutas objetivo
+        foreach ($allActions as $action) {
+            $route = $action['route'];
+            
+            // Verificar si la ruta es de acceso libre
+            if (\webvimark\modules\UserManagement\models\rbacDB\Route::isFreeAccess($route)) {
+                $availableActions[] = $action;
+                continue;
+            }
+            
+            // Verificar si la ruta coincide exactamente con alguna ruta objetivo
+            if (isset($targetRoutes[$route])) {
+                $availableActions[] = $action;
+                continue;
+            }
+        }
+        
+        return $availableActions;
+    }
+
+    /**
+     * Convertir formato de permiso a ruta
+     * Convierte permisos como "front_mis_turnos" a rutas como "/frontend/turnos/mis-turnos"
+     * @param string $permissionName Nombre del permiso (ej: "front_mis_turnos")
+     * @return string|null Ruta convertida o null si no se puede convertir
+     */
+    private static function convertPermissionToRoute($permissionName)
+    {
+        // Si ya es una ruta (empieza con /), retornarla tal cual
+        if (strpos($permissionName, '/') === 0) {
+            return $permissionName;
+        }
+        
+        // Obtener el path base de la aplicación
+        $path = Yii::$app->params['path'] ?? '';
+        $path = trim($path, '/');
+        
+        // Dividir el permiso por guiones bajos
+        $parts = explode('_', $permissionName);
+        
+        if (empty($parts)) {
+            return null;
+        }
+        
+        // El primer segmento puede ser el módulo o prefijo (ej: "front" -> "frontend")
+        $firstPart = $parts[0];
+        $module = null;
+        
+        // Mapeo de prefijos comunes a módulos
+        $prefixMap = [
+            'front' => 'frontend',
+            'back' => 'backend',
+            'api' => 'api',
+        ];
+        
+        if (isset($prefixMap[$firstPart])) {
+            $module = $prefixMap[$firstPart];
+            array_shift($parts); // Remover el prefijo
+        }
+        
+        // Si quedan menos de 2 partes, no podemos construir una ruta válida
+        if (count($parts) < 2) {
+            return null;
+        }
+        
+        // El último segmento es la acción, el resto es el controlador
+        $action = array_pop($parts);
+        $controller = implode('-', $parts); // Convertir guiones bajos a guiones
+        
+        // Construir la ruta
+        if ($module) {
+            return '/' . ($path ? $path . '/' : '') . $module . '/' . $controller . '/' . $action;
+        }
+        
+        return '/' . ($path ? $path . '/' : '') . $controller . '/' . $action;
+    }
+
+    /**
      * Método de prueba para testear el matching de acciones con criterios JSON
      * Útil para debugging y testing desde el navegador
      * 
      * @param array $criteria Criterios de búsqueda (formato JSON parseado)
      * @param int|null $userId ID del usuario
+     * @param string|array|null $roleName Nombre del rol o roles para filtrar acciones (opcional)
      * @return array Resultado detallado con acciones encontradas y scores
      */
-    public static function testFindActions($criteria, $userId = null)
+    public static function testFindActions($criteria, $userId = null, $roleName = null)
     {
         try {
             // Obtener todas las acciones disponibles
-            $allActions = \common\components\ActionMappingService::getAvailableActionsForUser($userId);
-            
+            // Si se proporciona roleName, usar getAvailableActionsByRole, sino usar getAvailableActionsForUser
+            if ($roleName !== null) {                
+                $allActions = self::getAvailableActionsByRole($roleName, false);
+            } else {
+                $allActions = \common\components\ActionMappingService::getAvailableActionsForUser($userId);
+            }
+            //var_dump($roleName);
+            //die();
             // Calcular scores para todas las acciones
             $scoredActions = [];
-            $debugScores = [];
             $allScores = []; // Para análisis de por qué no hay match
             
             foreach ($allActions as $action) {
                 $score = self::calculateSemanticScore($action, $criteria);
                 
-                // Guardar TODOS los scores para análisis
+                // Guardar TODOS los scores para análisis (útil para debugging de cualquier JSON)
                 $allScores[] = [
                     'action_id' => $action['action_id'] ?? 'N/A',
                     'controller' => $action['controller'] ?? 'N/A',
                     'action' => $action['action'] ?? 'N/A',
+                    'route' => $action['route'] ?? 'N/A',
                     'display_name' => $action['display_name'] ?? 'N/A',
                     'entity' => $action['entity'] ?? 'N/A',
+                    'tags' => $action['tags'] ?? [],
+                    'keywords' => $action['keywords'] ?? [],
                     'score' => $score,
                 ];
-                
-                // Guardar información de debugging para todas las acciones de turnos
-                if (stripos($action['controller'] ?? '', 'turno') !== false || 
-                    stripos($action['route'] ?? '', 'turno') !== false) {
-                    $debugScores[] = [
-                        'action_id' => $action['action_id'] ?? 'N/A',
-                        'controller' => $action['controller'] ?? 'N/A',
-                        'action' => $action['action'] ?? 'N/A',
-                        'route' => $action['route'] ?? 'N/A',
-                        'display_name' => $action['display_name'] ?? 'N/A',
-                        'entity' => $action['entity'] ?? 'N/A',
-                        'tags' => $action['tags'] ?? [],
-                        'keywords' => $action['keywords'] ?? [],
-                        'score' => $score,
-                    ];
-                }
                 
                 if ($score > 0) {
                     $scoredActions[] = [
@@ -72,19 +243,25 @@ class UniversalQueryAgent
                 return $b['score'] <=> $a['score'];
             });
             
-            // Obtener acción encontrada usando el método normal (devuelve un solo elemento o null)
-            $foundAction = self::findActionsByCriteria($criteria, $userId);
+            // Obtener acciones encontradas usando el método normal (devuelve array de acciones)
+            $foundActions = self::findActionsByCriteria($criteria, $userId);
             
             // Verificar compatibilidad con id_servicio si está presente en los criterios
             $servicioInfo = self::validateServicioInCriteria($criteria);
             $servicioCompatible = true;
             $servicioValidationDetails = [];
             
-            if ($servicioInfo['has_servicio'] && $foundAction !== null) {
-                // Verificar si la acción encontrada requiere id_servicio
-                $requiresServicio = self::actionRequiresServicio($foundAction);
+            if ($servicioInfo['has_servicio'] && !empty($foundActions)) {
+                // Verificar si alguna de las acciones encontradas requiere id_servicio
+                $actionsRequiringServicio = [];
+                foreach ($foundActions as $action) {
+                    $requiresServicio = self::actionRequiresServicio($action);
+                    if ($requiresServicio) {
+                        $actionsRequiringServicio[] = $action;
+                    }
+                }
                 
-                if ($requiresServicio) {
+                if (!empty($actionsRequiringServicio)) {
                     // Verificar si el id_servicio es válido
                     if (!$servicioInfo['is_valid']) {
                         $servicioCompatible = false;
@@ -92,21 +269,21 @@ class UniversalQueryAgent
                             'message' => 'El id_servicio proporcionado no es válido',
                             'id_servicio_provided' => $servicioInfo['id_servicio'],
                             'servicio_name' => $servicioInfo['servicio_name'],
-                            'action_requires_servicio' => true,
+                            'actions_requiring_servicio' => count($actionsRequiringServicio),
                         ];
                     } else {
                         $servicioValidationDetails = [
-                            'message' => 'El id_servicio es válido y compatible con la acción encontrada',
+                            'message' => 'El id_servicio es válido y compatible con las acciones encontradas',
                             'id_servicio' => $servicioInfo['id_servicio'],
                             'servicio_name' => $servicioInfo['servicio_name'],
-                            'action_requires_servicio' => true,
+                            'actions_requiring_servicio' => count($actionsRequiringServicio),
                         ];
                     }
                 }
             }
             
             // Determinar si hay asociación exitosa (considerando servicio si aplica)
-            $hasAssociation = $foundAction !== null && $servicioCompatible;
+            $hasAssociation = !empty($foundActions) && $servicioCompatible;
             
             // Analizar por qué no hay asociación si es el caso
             $associationAnalysis = [
@@ -191,19 +368,21 @@ class UniversalQueryAgent
                 'association_analysis' => $associationAnalysis,
                 'total_actions_available' => count($allActions),
                 'actions_with_score' => count($scoredActions),
-                'actions_found' => $foundAction !== null ? 1 : 0,
+                'actions_found' => count($foundActions),
                 'top_scored_actions' => array_slice($scoredActions, 0, 10),
-                'found_actions' => $foundAction !== null ? [[
-                    'action_id' => $foundAction['action_id'] ?? 'N/A',
-                    'controller' => $foundAction['controller'] ?? 'N/A',
-                    'action' => $foundAction['action'] ?? 'N/A',
-                    'route' => $foundAction['route'] ?? 'N/A',
-                    'display_name' => $foundAction['display_name'] ?? 'N/A',
-                    'entity' => $foundAction['entity'] ?? 'N/A',
-                    'tags' => $foundAction['tags'] ?? [],
-                    'keywords' => $foundAction['keywords'] ?? [],
-                ]] : [],
-                'debug_turnos_actions' => $debugScores,
+                'found_actions' => array_map(function($action) {
+                    return [
+                        'action_id' => $action['action_id'] ?? 'N/A',
+                        'controller' => $action['controller'] ?? 'N/A',
+                        'action' => $action['action'] ?? 'N/A',
+                        'route' => $action['route'] ?? 'N/A',
+                        'display_name' => $action['display_name'] ?? 'N/A',
+                        'entity' => $action['entity'] ?? 'N/A',
+                        'tags' => $action['tags'] ?? [],
+                        'keywords' => $action['keywords'] ?? [],
+                    ];
+                }, $foundActions),
+                'debug_all_actions_scores' => $allScores, // Información de debugging para todas las acciones evaluadas
             ];
         } catch (\Exception $e) {
             return [
@@ -353,34 +532,20 @@ class UniversalQueryAgent
                 // (podría ser una consulta de datos simple que se resuelve con acciones)
             }
 
-            // FASE 3: Buscar acción relevante usando criterios (devuelve un solo elemento o null)
-            $foundAction = self::findActionsByCriteria($searchCriteria, $userId);
+            // FASE 3: Buscar acciones relevantes usando criterios (devuelve array de acciones seleccionadas por score)
+            $relevantActions = self::findActionsByCriteria($searchCriteria, $userId);
             
             // Log del resultado de búsqueda
-            if ($foundAction !== null) {
-                Yii::info("UniversalQueryAgent::processQuery - Acción encontrada: {$foundAction['route']} (ID: {$foundAction['action_id']})", 'universal-query-agent');
+            if (!empty($relevantActions)) {
+                Yii::info("UniversalQueryAgent::processQuery - Encontradas " . count($relevantActions) . " acción(es)", 'universal-query-agent');
+                foreach ($relevantActions as $idx => $action) {
+                    Yii::info("UniversalQueryAgent::processQuery - Acción #" . ($idx + 1) . ": {$action['route']} (ID: {$action['action_id']})", 'universal-query-agent');
+                }
             } else {
                 Yii::warning("UniversalQueryAgent::processQuery - No se encontró ninguna acción para los criterios proporcionados", 'universal-query-agent');
             }
             
-            // Convertir a array para compatibilidad con métodos que esperan arrays
-            // Caso especial: si query_type === 'list_all', findActionsByCriteria devuelve array de todas las acciones
-            $relevantActions = [];
-            if ($foundAction !== null) {
-                // Si es array (caso especial list_all), usar directamente
-                if (is_array($foundAction) && isset($foundAction[0]) && is_array($foundAction[0])) {
-                    // Es el caso especial list_all que devuelve array de acciones
-                    $relevantActions = $foundAction;
-                } else {
-                    // Es una sola acción, convertir a array
-                    $relevantActions = [$foundAction];
-                }
-                Yii::info("UniversalQueryAgent::processQuery - Acción convertida a array. Total acciones: " . count($relevantActions), 'universal-query-agent');
-            } else {
-                Yii::warning("UniversalQueryAgent::processQuery - foundAction es null, relevantActions quedará vacío", 'universal-query-agent');
-            }
-            
-            // FASE 4: Si hay muchas acciones, usar IA para priorizar (solo si es list_all)
+            // FASE 4: Si hay muchas acciones, usar IA para priorizar (solo si hay más de 10)
             if (count($relevantActions) > 10) {
                 $relevantActions = self::prioritizeActions($userQuery, $relevantActions, 10);
             }
@@ -630,11 +795,11 @@ PROMPT;
 
     /**
      * Fase 2: Buscar acciones usando criterios (búsqueda local inteligente)
-     * Devuelve SOLO UNA acción: la que tenga el mejor score
+     * Devuelve un array de acciones seleccionadas según su score
+     * Puede devolver una o varias acciones dependiendo de los scores
      * @param array $criteria
      * @param int|null $userId
-     * @return array|null Una sola acción (la mejor) o null si no hay match. 
-     *                    Excepción: si query_type === 'list_all', devuelve array de todas las acciones.
+     * @return array Array de acciones (puede estar vacío si no hay match)
      */
     private static function findActionsByCriteria($criteria, $userId = null)
     {
@@ -647,7 +812,7 @@ PROMPT;
         
         if (empty($allActions)) {
             Yii::warning("UniversalQueryAgent::findActionsByCriteria - No se encontraron acciones para userId: {$currentUserId}", 'universal-query-agent');
-            return null;
+            return [];
         }
 
         // Caso especial: listar todos los permisos
@@ -663,25 +828,9 @@ PROMPT;
 
         // Búsqueda semántica usando scoring mejorado con metadatos
         $scoredActions = [];
-        $debugScores = []; // Para debugging
         
         foreach ($allActions as $action) {
             $score = self::calculateSemanticScore($action, $criteria);
-            
-            // Log detallado para debugging (solo para acciones de turnos)
-            if (stripos($action['controller'] ?? '', 'turno') !== false || 
-                stripos($action['route'] ?? '', 'turno') !== false) {
-                $debugScores[] = [
-                    'action_id' => $action['action_id'] ?? 'N/A',
-                    'controller' => $action['controller'] ?? 'N/A',
-                    'action' => $action['action'] ?? 'N/A',
-                    'route' => $action['route'] ?? 'N/A',
-                    'entity' => $action['entity'] ?? 'N/A',
-                    'tags' => $action['tags'] ?? [],
-                    'keywords' => $action['keywords'] ?? [],
-                    'score' => $score,
-                ];
-            }
             
             // Incluir acciones con score > 0, o si tienen coincidencias mínimas
             if ($score > 0) {
@@ -692,11 +841,6 @@ PROMPT;
             }
         }
         
-        // Log de debugging si hay acciones de turnos
-        if (!empty($debugScores)) {
-            Yii::info("UniversalQueryAgent::findActionsByCriteria - Scores de acciones de turnos: " . json_encode($debugScores, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
-        }
-        
         // Log del total de acciones con score > 0
         Yii::info("UniversalQueryAgent::findActionsByCriteria - Acciones con score > 0: " . count($scoredActions) . " de " . count($allActions), 'universal-query-agent');
 
@@ -705,20 +849,34 @@ PROMPT;
             return $b['score'] <=> $a['score'];
         });
         
-        // Log de la mejor acción seleccionada (después de ordenar)
+        // Seleccionar acciones basándose en el score
+        $selectedActions = [];
+        
         if (!empty($scoredActions)) {
-            $bestAction = $scoredActions[0];
-            Yii::info("UniversalQueryAgent::findActionsByCriteria - Mejor acción seleccionada: {$bestAction['action']['route']} con score: {$bestAction['score']}", 'universal-query-agent');
+            $bestScore = $scoredActions[0]['score'];
+            $threshold = max(10.0, $bestScore * 0.7); // Al menos 70% del mejor score, mínimo 10
+            
+            // Incluir todas las acciones que tengan score >= threshold
+            foreach ($scoredActions as $scoredAction) {
+                if ($scoredAction['score'] >= $threshold) {
+                    $selectedActions[] = $scoredAction['action'];
+                } else {
+                    // Si el score es mucho menor, no incluir más
+                    break;
+                }
+            }
+            
+            // Log de las acciones seleccionadas
+            Yii::info("UniversalQueryAgent::findActionsByCriteria - Seleccionadas " . count($selectedActions) . " acción(es) con score >= {$threshold} (mejor score: {$bestScore})", 'universal-query-agent');
+            foreach ($selectedActions as $idx => $action) {
+                $actionScore = $scoredActions[$idx]['score'] ?? 0;
+                Yii::info("UniversalQueryAgent::findActionsByCriteria - Acción seleccionada #" . ($idx + 1) . ": {$action['route']} (score: {$actionScore})", 'universal-query-agent');
+            }
         } else {
             Yii::info("UniversalQueryAgent::findActionsByCriteria - No se encontró ninguna acción con score > 0", 'universal-query-agent');
         }
 
-        // Retornar SOLO la acción con el mejor score (un solo elemento, no array)
-        if (!empty($scoredActions)) {
-            return $scoredActions[0]['action'];
-        }
-
-        return null;
+        return $selectedActions;
     }
 
     /**
@@ -914,10 +1072,10 @@ PROMPT;
      */
     /**
      * Buscar acciones relacionadas con búsqueda de personas por DNI
-     * Devuelve SOLO UNA acción: la que tenga el mejor score
+     * Devuelve un array de acciones seleccionadas según su score
      * @param array $allActions
      * @param string $dni
-     * @return array|null Una sola acción (la mejor) o null si no hay match
+     * @return array Array de acciones (puede estar vacío si no hay match)
      */
     private static function findPersonSearchActions($allActions, $dni)
     {
@@ -958,12 +1116,25 @@ PROMPT;
             return $b['score'] <=> $a['score'];
         });
 
-        // Retornar SOLO la acción con el mejor score (un solo elemento, no array)
+        // Seleccionar acciones basándose en el score (misma lógica que findActionsByCriteria)
+        $selectedActions = [];
+        
         if (!empty($scoredActions)) {
-            return $scoredActions[0]['action'];
+            $bestScore = $scoredActions[0]['score'];
+            $threshold = max(10.0, $bestScore * 0.7); // Al menos 70% del mejor score, mínimo 10
+            
+            // Incluir todas las acciones que tengan score >= threshold
+            foreach ($scoredActions as $scoredAction) {
+                if ($scoredAction['score'] >= $threshold) {
+                    $selectedActions[] = $scoredAction['action'];
+                } else {
+                    // Si el score es mucho menor, no incluir más
+                    break;
+                }
+            }
         }
 
-        return null;
+        return $selectedActions;
     }
 
     /**

@@ -73,11 +73,70 @@ $defaultJson = json_encode([
                         </h3>
                         
                         <?php if ($result['success']): ?>
-                            <div class="alert alert-info">
+                            <?php 
+                            $hasAssociation = $result['has_association'] ?? false;
+                            $associationAnalysis = $result['association_analysis'] ?? [];
+                            $reason = $associationAnalysis['reason'] ?? 'unknown';
+                            $details = $associationAnalysis['details'] ?? [];
+                            ?>
+                            
+                            <div class="alert <?= $hasAssociation ? 'alert-success' : 'alert-warning' ?>">
+                                <h4>
+                                    <?php if ($hasAssociation): ?>
+                                        ✅ <strong>ASOCIACIÓN ENCONTRADA</strong>
+                                    <?php else: ?>
+                                        ❌ <strong>NO HAY ASOCIACIÓN</strong>
+                                    <?php endif; ?>
+                                </h4>
+                                <strong>Razón:</strong> 
+                                <?php 
+                                $reasonMessages = [
+                                    'success' => '✅ Se encontraron acciones asociadas exitosamente',
+                                    'no_actions_available' => '⚠️ No hay acciones disponibles para el usuario',
+                                    'no_semantic_match' => '❌ Ninguna acción obtuvo score > 0. Los criterios no coinciden con ninguna acción disponible.',
+                                    'low_score_threshold' => '⚠️ Algunas acciones obtuvieron score > 0, pero no pasaron el filtro final.',
+                                    'error' => '❌ Error al procesar la consulta',
+                                ];
+                                echo $reasonMessages[$reason] ?? 'Desconocida';
+                                ?>
+                                <br>
                                 <strong>Total de acciones disponibles:</strong> <?= $result['total_actions_available'] ?><br>
                                 <strong>Acciones con score > 0:</strong> <?= $result['actions_with_score'] ?><br>
                                 <strong>Acciones encontradas:</strong> <?= $result['actions_found'] ?>
                             </div>
+                            
+                            <?php if (!empty($details)): ?>
+                                <div class="alert alert-secondary">
+                                    <h5>📋 Detalles del Análisis:</h5>
+                                    <p><strong>Mensaje:</strong> <?= Html::encode($details['message'] ?? 'N/A') ?></p>
+                                    
+                                    <?php if (isset($details['criteria_received'])): ?>
+                                        <h6>Criterios Recibidos:</h6>
+                                        <pre class="bg-light p-2 rounded"><code><?= Html::encode(json_encode($details['criteria_received'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) ?></code></pre>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($details['top_5_actions_checked'])): ?>
+                                        <h6>Top 5 Acciones Evaluadas:</h6>
+                                        <ul>
+                                            <?php foreach ($details['top_5_actions_checked'] as $action): ?>
+                                                <li>
+                                                    <strong><?= Html::encode($action['display_name'] ?? 'N/A') ?></strong> 
+                                                    (<?= Html::encode($action['controller'] ?? 'N/A') ?>/<?= Html::encode($action['action'] ?? 'N/A') ?>) 
+                                                    - Score: <span class="badge bg-secondary"><?= number_format($action['score'], 2) ?></span>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($details['max_score_found'])): ?>
+                                        <p><strong>Score máximo encontrado:</strong> <?= number_format($details['max_score_found'], 2) ?></p>
+                                    <?php endif; ?>
+                                    
+                                    <?php if (isset($details['best_match_score'])): ?>
+                                        <p><strong>Score del mejor match:</strong> <?= number_format($details['best_match_score'], 2) ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
                             
                             <?php if (!empty($result['found_actions'])): ?>
                                 <h4>🎯 Acciones Encontradas:</h4>

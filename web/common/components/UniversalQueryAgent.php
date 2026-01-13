@@ -72,11 +72,41 @@ class UniversalQueryAgent
                 return $b['score'] <=> $a['score'];
             });
             
-            // Obtener acciones encontradas usando el método normal
-            $foundActions = self::findActionsByCriteria($criteria, $userId);
+            // Obtener acción encontrada usando el método normal (devuelve un solo elemento o null)
+            $foundAction = self::findActionsByCriteria($criteria, $userId);
             
-            // Determinar si hay asociación exitosa
-            $hasAssociation = count($foundActions) > 0;
+            // Verificar compatibilidad con id_servicio si está presente en los criterios
+            $servicioInfo = self::validateServicioInCriteria($criteria);
+            $servicioCompatible = true;
+            $servicioValidationDetails = [];
+            
+            if ($servicioInfo['has_servicio'] && $foundAction !== null) {
+                // Verificar si la acción encontrada requiere id_servicio
+                $requiresServicio = self::actionRequiresServicio($foundAction);
+                
+                if ($requiresServicio) {
+                    // Verificar si el id_servicio es válido
+                    if (!$servicioInfo['is_valid']) {
+                        $servicioCompatible = false;
+                        $servicioValidationDetails = [
+                            'message' => 'El id_servicio proporcionado no es válido',
+                            'id_servicio_provided' => $servicioInfo['id_servicio'],
+                            'servicio_name' => $servicioInfo['servicio_name'],
+                            'action_requires_servicio' => true,
+                        ];
+                    } else {
+                        $servicioValidationDetails = [
+                            'message' => 'El id_servicio es válido y compatible con la acción encontrada',
+                            'id_servicio' => $servicioInfo['id_servicio'],
+                            'servicio_name' => $servicioInfo['servicio_name'],
+                            'action_requires_servicio' => true,
+                        ];
+                    }
+                }
+            }
+            
+            // Determinar si hay asociación exitosa (considerando servicio si aplica)
+            $hasAssociation = $foundAction !== null && $servicioCompatible;
             
             // Analizar por qué no hay asociación si es el caso
             $associationAnalysis = [
@@ -115,20 +145,43 @@ class UniversalQueryAgent
                         'total_actions_checked' => count($allActions),
                     ];
                 } else {
-                    $associationAnalysis['reason'] = 'low_score_threshold';
-                    $associationAnalysis['details'] = [
-                        'message' => 'Algunas acciones obtuvieron score > 0, pero no pasaron el filtro final.',
-                        'max_score_found' => $maxScore,
-                        'top_5_actions_with_score' => $topScores,
-                        'actions_with_score_count' => count($scoredActions),
-                    ];
+                    // Verificar si el problema es el servicio
+                    if (!$servicioCompatible && !empty($servicioValidationDetails)) {
+                        $associationAnalysis['reason'] = 'invalid_servicio';
+                        $associationAnalysis['details'] = array_merge([
+                            'message' => 'Algunas acciones obtuvieron score > 0, pero el id_servicio proporcionado no es válido',
+                            'max_score_found' => $maxScore,
+                            'top_5_actions_with_score' => $topScores,
+                            'actions_with_score_count' => count($scoredActions),
+                        ], $servicioValidationDetails);
+                    } else {
+                        $associationAnalysis['reason'] = 'low_score_threshold';
+                        $associationAnalysis['details'] = [
+                            'message' => 'Algunas acciones obtuvieron score > 0, pero no pasaron el filtro final.',
+                            'max_score_found' => $maxScore,
+                            'top_5_actions_with_score' => $topScores,
+                            'actions_with_score_count' => count($scoredActions),
+                        ];
+                    }
                 }
             } else {
-                $associationAnalysis['reason'] = 'success';
-                $associationAnalysis['details'] = [
-                    'message' => 'Se encontraron acciones asociadas exitosamente',
-                    'best_match_score' => !empty($scoredActions) ? $scoredActions[0]['score'] : 0,
-                ];
+                // Verificar si hay problema con el servicio
+                if (!$servicioCompatible && !empty($servicioValidationDetails)) {
+                    $associationAnalysis['reason'] = 'invalid_servicio';
+                    $associationAnalysis['details'] = array_merge([
+                        'message' => 'Se encontraron acciones, pero el id_servicio proporcionado no es válido',
+                        'best_match_score' => !empty($scoredActions) ? $scoredActions[0]['score'] : 0,
+                    ], $servicioValidationDetails);
+                } else {
+                    $associationAnalysis['reason'] = 'success';
+                    $associationAnalysis['details'] = [
+                        'message' => 'Se encontraron acciones asociadas exitosamente',
+                        'best_match_score' => !empty($scoredActions) ? $scoredActions[0]['score'] : 0,
+                    ];
+                    if (!empty($servicioValidationDetails)) {
+                        $associationAnalysis['details']['servicio_validation'] = $servicioValidationDetails;
+                    }
+                }
             }
             
             return [
@@ -138,20 +191,18 @@ class UniversalQueryAgent
                 'association_analysis' => $associationAnalysis,
                 'total_actions_available' => count($allActions),
                 'actions_with_score' => count($scoredActions),
-                'actions_found' => count($foundActions),
+                'actions_found' => $foundAction !== null ? 1 : 0,
                 'top_scored_actions' => array_slice($scoredActions, 0, 10),
-                'found_actions' => array_map(function($action) {
-                    return [
-                        'action_id' => $action['action_id'] ?? 'N/A',
-                        'controller' => $action['controller'] ?? 'N/A',
-                        'action' => $action['action'] ?? 'N/A',
-                        'route' => $action['route'] ?? 'N/A',
-                        'display_name' => $action['display_name'] ?? 'N/A',
-                        'entity' => $action['entity'] ?? 'N/A',
-                        'tags' => $action['tags'] ?? [],
-                        'keywords' => $action['keywords'] ?? [],
-                    ];
-                }, $foundActions),
+                'found_actions' => $foundAction !== null ? [[
+                    'action_id' => $foundAction['action_id'] ?? 'N/A',
+                    'controller' => $foundAction['controller'] ?? 'N/A',
+                    'action' => $foundAction['action'] ?? 'N/A',
+                    'route' => $foundAction['route'] ?? 'N/A',
+                    'display_name' => $foundAction['display_name'] ?? 'N/A',
+                    'entity' => $foundAction['entity'] ?? 'N/A',
+                    'tags' => $foundAction['tags'] ?? [],
+                    'keywords' => $foundAction['keywords'] ?? [],
+                ]] : [],
                 'debug_turnos_actions' => $debugScores,
             ];
         } catch (\Exception $e) {
@@ -278,10 +329,24 @@ class UniversalQueryAgent
                 // (podría ser una consulta de datos simple que se resuelve con acciones)
             }
 
-            // FASE 3: Buscar acciones relevantes usando criterios
-            $relevantActions = self::findActionsByCriteria($searchCriteria, $userId);
+            // FASE 3: Buscar acción relevante usando criterios (devuelve un solo elemento o null)
+            $foundAction = self::findActionsByCriteria($searchCriteria, $userId);
             
-            // FASE 4: Si hay muchas acciones, usar IA para priorizar
+            // Convertir a array para compatibilidad con métodos que esperan arrays
+            // Caso especial: si query_type === 'list_all', findActionsByCriteria devuelve array de todas las acciones
+            $relevantActions = [];
+            if ($foundAction !== null) {
+                // Si es array (caso especial list_all), usar directamente
+                if (is_array($foundAction) && isset($foundAction[0]) && is_array($foundAction[0])) {
+                    // Es el caso especial list_all que devuelve array de acciones
+                    $relevantActions = $foundAction;
+                } else {
+                    // Es una sola acción, convertir a array
+                    $relevantActions = [$foundAction];
+                }
+            }
+            
+            // FASE 4: Si hay muchas acciones, usar IA para priorizar (solo si es list_all)
             if (count($relevantActions) > 10) {
                 $relevantActions = self::prioritizeActions($userQuery, $relevantActions, 10);
             }
@@ -531,9 +596,11 @@ PROMPT;
 
     /**
      * Fase 2: Buscar acciones usando criterios (búsqueda local inteligente)
+     * Devuelve SOLO UNA acción: la que tenga el mejor score
      * @param array $criteria
      * @param int|null $userId
-     * @return array
+     * @return array|null Una sola acción (la mejor) o null si no hay match. 
+     *                    Excepción: si query_type === 'list_all', devuelve array de todas las acciones.
      */
     private static function findActionsByCriteria($criteria, $userId = null)
     {
@@ -546,7 +613,7 @@ PROMPT;
         
         if (empty($allActions)) {
             Yii::warning("UniversalQueryAgent::findActionsByCriteria - No se encontraron acciones para userId: {$currentUserId}", 'universal-query-agent');
-            return [];
+            return null;
         }
 
         // Caso especial: listar todos los permisos
@@ -556,7 +623,7 @@ PROMPT;
 
         // Caso especial: búsqueda por DNI
         if (!empty($criteria['extracted_data']['dni'])) {
-            // Buscar acciones relacionadas con búsqueda de personas
+            // Buscar acciones relacionadas con búsqueda de personas (devuelve solo la mejor)
             return self::findPersonSearchActions($allActions, $criteria['extracted_data']['dni']);
         }
 
@@ -599,15 +666,25 @@ PROMPT;
         // Log del total de acciones con score > 0
         Yii::info("UniversalQueryAgent::findActionsByCriteria - Acciones con score > 0: " . count($scoredActions) . " de " . count($allActions), 'universal-query-agent');
 
-        // Ordenar por score
+        // Ordenar por score (mayor a menor)
         usort($scoredActions, function($a, $b) {
             return $b['score'] <=> $a['score'];
         });
+        
+        // Log de la mejor acción seleccionada (después de ordenar)
+        if (!empty($scoredActions)) {
+            $bestAction = $scoredActions[0];
+            Yii::info("UniversalQueryAgent::findActionsByCriteria - Mejor acción seleccionada: {$bestAction['action']['route']} con score: {$bestAction['score']}", 'universal-query-agent');
+        } else {
+            Yii::info("UniversalQueryAgent::findActionsByCriteria - No se encontró ninguna acción con score > 0", 'universal-query-agent');
+        }
 
-        // Retornar acciones con score > 0
-        return array_map(function($item) {
-            return $item['action'];
-        }, $scoredActions);
+        // Retornar SOLO la acción con el mejor score (un solo elemento, no array)
+        if (!empty($scoredActions)) {
+            return $scoredActions[0]['action'];
+        }
+
+        return null;
     }
 
     /**
@@ -801,25 +878,58 @@ PROMPT;
      * @param string $dni
      * @return array
      */
+    /**
+     * Buscar acciones relacionadas con búsqueda de personas por DNI
+     * Devuelve SOLO UNA acción: la que tenga el mejor score
+     * @param array $allActions
+     * @param string $dni
+     * @return array|null Una sola acción (la mejor) o null si no hay match
+     */
     private static function findPersonSearchActions($allActions, $dni)
     {
-        $personActions = [];
+        $scoredActions = [];
         
         foreach ($allActions as $action) {
+            $score = 0.0;
             $actionText = strtolower(
                 $action['display_name'] . ' ' . 
                 $action['description'] . ' ' . 
                 $action['controller']
             );
             
-            if (stripos($actionText, 'persona') !== false || 
-                stripos($action['controller'], 'persona') !== false ||
-                (!empty($action['entity']) && stripos($action['entity'], 'Pacientes') !== false)) {
-                $personActions[] = $action;
+            // Calcular score para acciones relacionadas con personas
+            if (stripos($actionText, 'persona') !== false) {
+                $score += 10.0;
+            }
+            if (stripos($action['controller'], 'persona') !== false) {
+                $score += 15.0; // Bonus alto por coincidencia en controlador
+            }
+            if (!empty($action['entity']) && stripos($action['entity'], 'Pacientes') !== false) {
+                $score += 12.0;
+            }
+            if (stripos($actionText, 'buscar') !== false || stripos($actionText, 'search') !== false) {
+                $score += 5.0; // Bonus por ser acción de búsqueda
+            }
+            
+            if ($score > 0) {
+                $scoredActions[] = [
+                    'action' => $action,
+                    'score' => $score,
+                ];
             }
         }
 
-        return $personActions;
+        // Ordenar por score (mayor a menor)
+        usort($scoredActions, function($a, $b) {
+            return $b['score'] <=> $a['score'];
+        });
+
+        // Retornar SOLO la acción con el mejor score (un solo elemento, no array)
+        if (!empty($scoredActions)) {
+            return $scoredActions[0]['action'];
+        }
+
+        return null;
     }
 
     /**
@@ -1774,5 +1884,171 @@ PROMPT;
 
         Yii::warning("UniversalQueryAgent: No se pudo parsear JSON de ninguna forma. JSON Error: " . json_last_error_msg(), 'universal-query-agent');
         return null;
+    }
+
+    /**
+     * Validar si hay id_servicio en los criterios y si es válido
+     * @param array $criteria
+     * @return array
+     */
+    private static function validateServicioInCriteria($criteria)
+    {
+        $result = [
+            'has_servicio' => false,
+            'id_servicio' => null,
+            'servicio_name' => null,
+            'is_valid' => false,
+        ];
+
+        // Buscar id_servicio en extracted_data
+        $extractedData = $criteria['extracted_data'] ?? [];
+        
+        // Buscar id_servicio directamente
+        if (isset($extractedData['id_servicio'])) {
+            $idServicio = $extractedData['id_servicio'];
+            if (is_numeric($idServicio)) {
+                $result['has_servicio'] = true;
+                $result['id_servicio'] = (int)$idServicio;
+                $result['is_valid'] = self::validateServicioId($result['id_servicio']);
+                if ($result['is_valid']) {
+                    $servicio = \common\models\Servicio::findOne($result['id_servicio']);
+                    if ($servicio) {
+                        $result['servicio_name'] = $servicio->nombre;
+                    }
+                }
+            }
+        }
+        
+        // Buscar servicio por nombre y convertirlo a id_servicio
+        if (!$result['has_servicio']) {
+            $servicioName = null;
+            
+            // Buscar en extracted_data
+            if (isset($extractedData['servicio'])) {
+                $servicioName = $extractedData['servicio'];
+            } elseif (isset($extractedData['servicio_actual'])) {
+                $servicioName = $extractedData['servicio_actual'];
+            } elseif (isset($extractedData['raw']['servicio'])) {
+                $servicioName = $extractedData['raw']['servicio'];
+            } elseif (isset($extractedData['raw']['names'])) {
+                // Buscar nombres que puedan ser servicios
+                foreach ($extractedData['raw']['names'] as $name) {
+                    $servicioId = self::findServicioByName($name);
+                    if ($servicioId !== null) {
+                        $result['has_servicio'] = true;
+                        $result['id_servicio'] = $servicioId;
+                        $result['is_valid'] = true;
+                        $servicio = \common\models\Servicio::findOne($servicioId);
+                        if ($servicio) {
+                            $result['servicio_name'] = $servicio->nombre;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // Si encontramos un nombre de servicio, buscar su ID
+            if (!$result['has_servicio'] && $servicioName !== null) {
+                if (is_numeric($servicioName)) {
+                    $result['has_servicio'] = true;
+                    $result['id_servicio'] = (int)$servicioName;
+                    $result['is_valid'] = self::validateServicioId($result['id_servicio']);
+                } else {
+                    $servicioId = self::findServicioByName($servicioName);
+                    if ($servicioId !== null) {
+                        $result['has_servicio'] = true;
+                        $result['id_servicio'] = $servicioId;
+                        $result['is_valid'] = true;
+                        $servicio = \common\models\Servicio::findOne($servicioId);
+                        if ($servicio) {
+                            $result['servicio_name'] = $servicio->nombre;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Validar si un id_servicio existe en la base de datos
+     * @param int $idServicio
+     * @return bool
+     */
+    private static function validateServicioId($idServicio)
+    {
+        try {
+            $servicio = \common\models\Servicio::findOne($idServicio);
+            return $servicio !== null;
+        } catch (\Exception $e) {
+            Yii::error("Error validando id_servicio {$idServicio}: " . $e->getMessage(), 'universal-query-agent');
+            return false;
+        }
+    }
+
+    /**
+     * Buscar servicio por nombre (similar a ActionParameterAnalyzer)
+     * @param string $nombre
+     * @return int|null
+     */
+    private static function findServicioByName($nombre)
+    {
+        if (empty($nombre) || !is_string($nombre)) {
+            return null;
+        }
+
+        try {
+            // Normalizar nombre
+            $nombreNormalizado = trim($nombre);
+            
+            // Buscar en la base de datos
+            $servicio = \common\models\Servicio::find()
+                ->where(['nombre' => $nombreNormalizado])
+                ->one();
+            
+            if ($servicio) {
+                return (int)$servicio->id_servicio;
+            }
+            
+            // Intentar búsqueda con LIKE (case insensitive)
+            $servicio = \common\models\Servicio::find()
+                ->where(['LIKE', 'nombre', $nombreNormalizado])
+                ->one();
+            
+            if ($servicio) {
+                return (int)$servicio->id_servicio;
+            }
+        } catch (\Exception $e) {
+            Yii::error("Error buscando servicio por nombre '{$nombre}': " . $e->getMessage(), 'universal-query-agent');
+        }
+
+        return null;
+    }
+
+    /**
+     * Verificar si una acción requiere id_servicio como parámetro
+     * @param array $action
+     * @return bool
+     */
+    private static function actionRequiresServicio($action)
+    {
+        $parameters = $action['parameters'] ?? [];
+        
+        foreach ($parameters as $param) {
+            $paramName = strtolower($param['name'] ?? '');
+            // Verificar si el parámetro es id_servicio, servicio_actual, o similar
+            if (stripos($paramName, 'servicio') !== false || 
+                stripos($paramName, 'id_servicio') !== false) {
+                // Si es requerido, definitivamente necesita servicio
+                if (!empty($param['required'])) {
+                    return true;
+                }
+                // Si no es requerido pero está presente, también considerar
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

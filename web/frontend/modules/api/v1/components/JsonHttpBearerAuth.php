@@ -41,7 +41,46 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         $response->format = Response::FORMAT_JSON;
         
         try {
-            return parent::authenticate($user, $request, $response);
+            $identity = parent::authenticate($user, $request, $response);
+            
+            // Si la autenticación fue exitosa, obtener id_user del token JWT
+            // y buscar id_persona para asignarlo a la sesión
+            $authHeader = $request->getHeaders()->get('Authorization');
+            if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
+                $token = $matches[1];
+                try {
+                    $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(Yii::$app->params['jwtSecret'], 'HS256'));
+                    $userId = $decoded->user_id;
+                    
+                    // Buscar persona asociada al usuario
+                    $persona = \common\models\Persona::findOne(['id_user' => $userId]);
+                    if (!$persona) {
+                        // Si no se encuentra la persona, lanzar error
+                        $response->format = Response::FORMAT_JSON;
+                        $response->statusCode = 401;
+                        $response->data = [
+                            'success' => false,
+                            'message' => 'No se encontró la persona asociada al usuario. Verifique la configuración del usuario.',
+                            'errors' => null,
+                        ];
+                        $response->send();
+                        Yii::$app->end();
+                    }
+                    
+                    // Asignar idPersona a la sesión
+                    $session = Yii::$app->session;
+                    if (!$session->isActive) {
+                        $session->open();
+                    }
+                    $session->set('idPersona', $persona->id_persona);
+                } catch (\Exception $e) {
+                    // Si hay error decodificando el token, continuar (ya está autenticado por parent)
+                    // Pero registrar el error
+                    Yii::warning("Error al procesar token JWT después de autenticación: " . $e->getMessage(), 'jwt-auth');
+                }
+            }
+            
+            return $identity;
         } catch (UnauthorizedHttpException $e) {
             // Si falla la autenticación, devolver JSON
             $response->format = Response::FORMAT_JSON;

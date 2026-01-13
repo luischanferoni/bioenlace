@@ -89,7 +89,7 @@ $defaultJson = json_encode([
                                                 <th>Route</th>
                                                 <th>Controller</th>
                                                 <th>Action</th>
-                                                <th>Category</th>
+                                                <th>Entity</th>
                                                 <th>Tags</th>
                                                 <th>Keywords</th>
                                             </tr>
@@ -101,7 +101,7 @@ $defaultJson = json_encode([
                                                     <td><code><?= Html::encode($action['route'] ?? 'N/A') ?></code></td>
                                                     <td><?= Html::encode($action['controller'] ?? 'N/A') ?></td>
                                                     <td><?= Html::encode($action['action'] ?? 'N/A') ?></td>
-                                                    <td><?= Html::encode($action['category'] ?? 'N/A') ?></td>
+                                                    <td><?= Html::encode($action['entity'] ?? 'N/A') ?></td>
                                                     <td><?= Html::encode(implode(', ', $action['tags'] ?? [])) ?></td>
                                                     <td><?= Html::encode(implode(', ', $action['keywords'] ?? [])) ?></td>
                                                 </tr>

@@ -50,6 +50,7 @@ class ActionParameterAnalyzer
     
     /**
      * Obtener parámetros de una acción usando reflexión
+     * También detecta parámetros documentados en el docblock con @paramOption
      */
     private static function getActionParameters($action)
     {
@@ -70,12 +71,16 @@ class ActionParameterAnalyzer
             $reflection = new ReflectionMethod($controllerClass, $methodName);
             $docComment = $reflection->getDocComment();
             
+            // Obtener parámetros de la firma del método
+            $methodParamNames = [];
             foreach ($reflection->getParameters() as $param) {
                 $paramInfo = [
                     'name' => $param->getName(),
                     'required' => !$param->isOptional(),
                     'type' => self::inferParameterType($param),
                 ];
+                
+                $methodParamNames[] = $param->getName();
                 
                 if ($param->isOptional()) {
                     try {
@@ -91,11 +96,110 @@ class ActionParameterAnalyzer
                 
                 $params[] = $paramInfo;
             }
+            
+            // NUEVO: Detectar parámetros documentados en docblock con @paramOption
+            // que no están en la firma del método (como servicio_actual que viene por POST)
+            if ($docComment) {
+                $docblockParams = self::extractParametersFromDocblock($docComment);
+                foreach ($docblockParams as $docblockParam) {
+                    // Solo agregar si no existe ya en los parámetros del método
+                    if (!in_array($docblockParam['name'], $methodParamNames)) {
+                        // Verificar si ya existe en params (por si hay duplicado)
+                        $exists = false;
+                        foreach ($params as $existingParam) {
+                            if ($existingParam['name'] === $docblockParam['name']) {
+                                $exists = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$exists) {
+                            // Los parámetros documentados con @paramOption se consideran requeridos
+                            $docblockParam['required'] = true;
+                            $params[] = $docblockParam;
+                        }
+                    }
+                }
+            }
         } catch (\Exception $e) {
             Yii::error("Error obteniendo parámetros de acción: " . $e->getMessage(), 'action-parameter-analyzer');
         }
         
         return $params;
+    }
+    
+    /**
+     * Extraer parámetros documentados en el docblock con @paramOption
+     * 
+     * @param string $docComment
+     * @return array
+     */
+    private static function extractParametersFromDocblock($docComment)
+    {
+        $params = [];
+        
+        if (!$docComment) {
+            return $params;
+        }
+        
+        $lines = explode("\n", $docComment);
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            
+            // @paramOption servicio_actual select servicios|efector_servicios
+            if (preg_match('/@paramOption\s+(\w+)\s+(\w+)\s+(.+)/i', $line, $matches)) {
+                $paramName = trim($matches[1]);
+                $optionType = trim($matches[2]);
+                $optionConfig = trim($matches[3]);
+                
+                // Parsear configuración: "servicios|efector_servicios"
+                $parts = explode('|', $optionConfig);
+                
+                $paramInfo = [
+                    'name' => $paramName,
+                    'required' => true, // Los parámetros con @paramOption se consideran requeridos
+                    'type' => self::inferParameterTypeFromName($paramName),
+                    'source' => 'docblock',
+                    'option_type' => $optionType,
+                    'option_config' => [
+                        'source' => $parts[0], // servicios, efectores, personas, etc.
+                        'filter' => $parts[1] ?? null, // efector_servicios, user_efectores, etc.
+                    ],
+                ];
+                
+                // Extraer otros metadatos si existen
+                $paramMetadata = self::extractParameterMetadata($docComment, $paramName);
+                $paramInfo = array_merge($paramInfo, $paramMetadata);
+                
+                $params[] = $paramInfo;
+            }
+        }
+        
+        return $params;
+    }
+    
+    /**
+     * Inferir tipo de parámetro desde su nombre
+     */
+    private static function inferParameterTypeFromName($paramName)
+    {
+        $name = strtolower($paramName);
+        
+        if (strpos($name, 'id') === 0 || strpos($name, 'id_') === 0) {
+            return 'integer';
+        }
+        if (stripos($name, 'fecha') !== false || stripos($name, 'date') !== false) {
+            return 'date';
+        }
+        if (stripos($name, 'servicio') !== false) {
+            return 'integer'; // id_servicio
+        }
+        if (stripos($name, 'hora') !== false || stripos($name, 'time') !== false) {
+            return 'time';
+        }
+        
+        return 'string';
     }
     
     /**
@@ -229,6 +333,10 @@ class ActionParameterAnalyzer
                 } elseif (isset($extractedData['raw']['names'])) {
                     $value = implode(' ', $extractedData['raw']['names']);
                 }
+            } elseif (stripos($paramName, 'servicio') !== false) {
+                // Mapeo específico para servicios
+                // Puede venir como "servicio", "servicio_actual", "id_servicio", etc.
+                $value = self::mapServicioFromExtractedData($extractedData, $paramName);
             }
             
             if ($value !== null) {
@@ -240,6 +348,145 @@ class ActionParameterAnalyzer
         }
         
         return $mapped;
+    }
+    
+    /**
+     * Mapear servicio desde datos extraídos
+     * Busca nombres de servicios (como "odontologo") y los convierte a id_servicio
+     * 
+     * @param array $extractedData
+     * @param string $paramName Nombre del parámetro (servicio_actual, id_servicio, etc.)
+     * @return int|null ID del servicio encontrado
+     */
+    private static function mapServicioFromExtractedData($extractedData, $paramName)
+    {
+        $servicioValue = null;
+        
+        // 1. Buscar directamente en extractedData
+        if (isset($extractedData['servicio'])) {
+            $servicioValue = $extractedData['servicio'];
+        } elseif (isset($extractedData['id_servicio'])) {
+            // Si ya viene como ID, devolverlo directamente
+            return is_numeric($extractedData['id_servicio']) ? (int)$extractedData['id_servicio'] : null;
+        } elseif (isset($extractedData[$paramName])) {
+            $servicioValue = $extractedData[$paramName];
+        }
+        
+        // 2. Buscar en raw data
+        if ($servicioValue === null && isset($extractedData['raw'])) {
+            if (isset($extractedData['raw']['servicio'])) {
+                $servicioValue = $extractedData['raw']['servicio'];
+            } elseif (isset($extractedData['raw']['names'])) {
+                // Buscar en nombres extraídos (puede venir como "odontologo" en names)
+                foreach ($extractedData['raw']['names'] as $name) {
+                    $servicioId = self::findServicioByName($name);
+                    if ($servicioId !== null) {
+                        return $servicioId;
+                    }
+                }
+            }
+        }
+        
+        // 3. Si el valor es un número, asumir que es un ID
+        if ($servicioValue !== null && is_numeric($servicioValue)) {
+            return (int)$servicioValue;
+        }
+        
+        // 4. Si el valor es texto, buscar el servicio por nombre
+        if ($servicioValue !== null && is_string($servicioValue)) {
+            return self::findServicioByName($servicioValue);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Buscar servicio por nombre (soporta búsqueda parcial y sinónimos)
+     * 
+     * @param string $nombre Nombre del servicio (ej: "odontologo", "odontología", "ODONTOLOGIA")
+     * @return int|null ID del servicio encontrado
+     */
+    private static function findServicioByName($nombre)
+    {
+        if (empty($nombre)) {
+            return null;
+        }
+        
+        // Normalizar nombre: convertir a mayúsculas y limpiar
+        $nombreNormalizado = strtoupper(trim($nombre));
+        
+        // Mapeo de sinónimos comunes
+        $sinonimos = [
+            'odontologo' => 'ODONTOLOGIA',
+            'odontología' => 'ODONTOLOGIA',
+            'odontologia' => 'ODONTOLOGIA',
+            'dental' => 'ODONTOLOGIA',
+            'dentista' => 'ODONTOLOGIA',
+            'pediatra' => 'PEDIATRIA',
+            'pediatría' => 'PEDIATRIA',
+            'ginecologo' => 'GINECOLOGIA',
+            'ginecología' => 'GINECOLOGIA',
+            'ginecologia' => 'GINECOLOGIA',
+            'medico' => 'MED GENERAL',
+            'médico' => 'MED GENERAL',
+            'medico general' => 'MED GENERAL',
+            'medico familiar' => 'MED FAMILIAR',
+            'medico clinica' => 'MED CLINICA',
+            'médico clínica' => 'MED CLINICA',
+            'clinica' => 'MED CLINICA',
+            'clínica' => 'MED CLINICA',
+            'psicologo' => 'PSICOLOGIA',
+            'psicología' => 'PSICOLOGIA',
+            'psicologia' => 'PSICOLOGIA',
+            'kinesiologo' => 'KINESIOLOGIA',
+            'kinesiología' => 'KINESIOLOGIA',
+            'kinesiologia' => 'KINESIOLOGIA',
+            'kinesio' => 'KINESIOLOGIA',
+        ];
+        
+        // Verificar si hay un sinónimo directo
+        $nombreLower = strtolower($nombreNormalizado);
+        if (isset($sinonimos[$nombreLower])) {
+            $nombreNormalizado = $sinonimos[$nombreLower];
+        }
+        
+        // Buscar en la base de datos
+        try {
+            // Primero intentar búsqueda exacta
+            $servicio = \common\models\Servicio::find()
+                ->where(['nombre' => $nombreNormalizado])
+                ->one();
+            
+            if ($servicio) {
+                return (int)$servicio->id_servicio;
+            }
+            
+            // Si no se encuentra exacto, intentar búsqueda con LIKE
+            $servicio = \common\models\Servicio::find()
+                ->where(['LIKE', 'nombre', $nombreNormalizado])
+                ->one();
+            
+            if ($servicio) {
+                return (int)$servicio->id_servicio;
+            }
+            
+            // Último intento: buscar sinónimos en la base de datos
+            foreach ($sinonimos as $sinonimo => $nombreServicio) {
+                if (stripos($nombreNormalizado, $sinonimo) !== false || stripos($sinonimo, $nombreNormalizado) !== false) {
+                    $servicio = \common\models\Servicio::find()
+                        ->where(['nombre' => $nombreServicio])
+                        ->one();
+                    
+                    if ($servicio) {
+                        return (int)$servicio->id_servicio;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Yii::error("Error buscando servicio por nombre '{$nombre}': " . $e->getMessage(), 'action-parameter-analyzer');
+        }
+        
+        return null;
     }
     
     /**

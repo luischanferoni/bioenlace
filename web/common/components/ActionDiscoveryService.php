@@ -273,7 +273,7 @@ class ActionDiscoveryService
             'parameters' => $parameters,
             'method' => $method->getName(),
             // NUEVO: Agregar metadatos extraídos
-            'category' => $customMetadata['category'],
+            'entity' => $customMetadata['entity'],
             'tags' => $customMetadata['tags'],
             'keywords' => $customMetadata['keywords'],
             'synonyms' => $customMetadata['synonyms'],
@@ -382,7 +382,7 @@ class ActionDiscoveryService
 
     /**
      * Extraer metadatos personalizados del docblock
-     * Soporta: @category, @tags, @keywords, @synonyms
+     * Soporta: @entity, @tags, @keywords, @synonyms
      * 
      * @param string|false $docComment
      * @param string $controllerName
@@ -392,7 +392,7 @@ class ActionDiscoveryService
     private static function extractCustomMetadata($docComment, $controllerName, $actionName)
     {
         $metadata = [
-            'category' => null,
+            'entity' => null,
             'tags' => [],
             'keywords' => [],
             'synonyms' => [],
@@ -400,7 +400,7 @@ class ActionDiscoveryService
         
         if (!$docComment) {
             // Si no hay docblock, inferir desde el nombre del controlador
-            $metadata['category'] = self::inferCategory($controllerName);
+            $metadata['entity'] = self::inferEntity($controllerName);
             $metadata['tags'] = self::inferTags($controllerName, $actionName);
             $metadata['keywords'] = self::inferKeywords($actionName);
             return $metadata;
@@ -411,9 +411,9 @@ class ActionDiscoveryService
         foreach ($lines as $line) {
             $line = trim($line);
             
-            // @category Licencias
-            if (preg_match('/@category\s+(.+)/i', $line, $matches)) {
-                $metadata['category'] = trim($matches[1]);
+            // @entity Turnos (también acepta @category para compatibilidad temporal durante migración)
+            if (preg_match('/@(?:entity|category)\s+(.+)/i', $line, $matches)) {
+                $metadata['entity'] = trim($matches[1]);
             }
             
             // @tags licencia,permiso,vacaciones
@@ -442,8 +442,8 @@ class ActionDiscoveryService
         }
         
         // Si no se encontraron metadatos en docblock, inferir
-        if (empty($metadata['category'])) {
-            $metadata['category'] = self::inferCategory($controllerName);
+        if (empty($metadata['entity'])) {
+            $metadata['entity'] = self::inferEntity($controllerName);
         }
         if (empty($metadata['tags'])) {
             $metadata['tags'] = self::inferTags($controllerName, $actionName);
@@ -456,13 +456,13 @@ class ActionDiscoveryService
     }
 
     /**
-     * Inferir categoría desde el nombre del controlador si no está especificada
+     * Inferir entity desde el nombre del controlador si no está especificada
      * @param string $controllerName
      * @return string
      */
-    private static function inferCategory($controllerName)
+    private static function inferEntity($controllerName)
     {
-        $categoryMapping = [
+        $entityMapping = [
             'persona' => 'Pacientes',
             'personas' => 'Pacientes',
             'paciente' => 'Pacientes',
@@ -496,9 +496,9 @@ class ActionDiscoveryService
         
         $controllerLower = strtolower($controllerName);
         
-        foreach ($categoryMapping as $key => $category) {
+        foreach ($entityMapping as $key => $entity) {
             if (stripos($controllerLower, $key) !== false) {
-                return $category;
+                return $entity;
             }
         }
         

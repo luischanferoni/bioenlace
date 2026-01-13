@@ -50,7 +50,7 @@ class ConsultasController extends Controller
 
     /**
      * Lists all Consulta models.
-     * @category Consultas
+     * @entity Consultas
      * @tags consulta,atencion,listar,ver todos
      * @keywords listar,ver todos,mostrar,consultas,atenciones
      * @synonyms consulta,atencion,visita,cita médica
@@ -70,7 +70,7 @@ class ConsultasController extends Controller
 
     /**
      * Crear una nueva consulta
-     * @category Consultas
+     * @entity Consultas
      * @tags consulta,atencion,crear,nuevo
      * @keywords crear,nuevo,agregar,consulta,atencion
      * @synonyms consulta,atencion,visita
@@ -92,7 +92,7 @@ class ConsultasController extends Controller
 
     /**
      * Actualizar una consulta existente
-     * @category Consultas
+     * @entity Consultas
      * @tags consulta,atencion,editar,modificar,actualizar
      * @keywords editar,modificar,actualizar,consulta
      * @synonyms consulta,atencion

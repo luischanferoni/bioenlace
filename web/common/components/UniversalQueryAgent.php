@@ -22,28 +22,26 @@ class UniversalQueryAgent
     public static function testFindActions($criteria, $userId = null)
     {
         try {
-            // Normalizar criterios (agregar campos faltantes)
-            $normalizedCriteria = [
-                'intent' => $criteria['intent'] ?? '',
-                'search_keywords' => $criteria['search_keywords'] ?? [],
-                'entity_types' => $criteria['entity_types'] ?? [],
-                'entity_type' => $criteria['entity_type'] ?? null,
-                'category' => $criteria['entity_type'] ?? null, // Para compatibilidad
-                'operation_hints' => $criteria['operation_hints'] ?? [],
-                'extracted_data' => self::normalizeExtractedData($criteria['extracted_data'] ?? []),
-                'filters' => $criteria['filters'] ?? [],
-                'query_type' => $criteria['query_type'] ?? 'unknown',
-            ];
-            
             // Obtener todas las acciones disponibles
             $allActions = \common\components\ActionMappingService::getAvailableActionsForUser($userId);
             
             // Calcular scores para todas las acciones
             $scoredActions = [];
             $debugScores = [];
+            $allScores = []; // Para análisis de por qué no hay match
             
             foreach ($allActions as $action) {
-                $score = self::calculateSemanticScore($action, $normalizedCriteria);
+                $score = self::calculateSemanticScore($action, $criteria);
+                
+                // Guardar TODOS los scores para análisis
+                $allScores[] = [
+                    'action_id' => $action['action_id'] ?? 'N/A',
+                    'controller' => $action['controller'] ?? 'N/A',
+                    'action' => $action['action'] ?? 'N/A',
+                    'display_name' => $action['display_name'] ?? 'N/A',
+                    'entity' => $action['entity'] ?? 'N/A',
+                    'score' => $score,
+                ];
                 
                 // Guardar información de debugging para todas las acciones de turnos
                 if (stripos($action['controller'] ?? '', 'turno') !== false || 
@@ -54,7 +52,7 @@ class UniversalQueryAgent
                         'action' => $action['action'] ?? 'N/A',
                         'route' => $action['route'] ?? 'N/A',
                         'display_name' => $action['display_name'] ?? 'N/A',
-                        'category' => $action['category'] ?? 'N/A',
+                        'entity' => $action['entity'] ?? 'N/A',
                         'tags' => $action['tags'] ?? [],
                         'keywords' => $action['keywords'] ?? [],
                         'score' => $score,
@@ -75,11 +73,69 @@ class UniversalQueryAgent
             });
             
             // Obtener acciones encontradas usando el método normal
-            $foundActions = self::findActionsByCriteria($normalizedCriteria, $userId);
+            $foundActions = self::findActionsByCriteria($criteria, $userId);
+            
+            // Determinar si hay asociación exitosa
+            $hasAssociation = count($foundActions) > 0;
+            
+            // Analizar por qué no hay asociación si es el caso
+            $associationAnalysis = [
+                'has_association' => $hasAssociation,
+                'reason' => null,
+                'details' => [],
+            ];
+            
+            if (!$hasAssociation) {
+                // Ordenar todos los scores para ver los mejores
+                usort($allScores, function($a, $b) {
+                    return $b['score'] <=> $a['score'];
+                });
+                
+                $topScores = array_slice($allScores, 0, 5);
+                $maxScore = !empty($topScores) ? $topScores[0]['score'] : 0;
+                
+                if (empty($allActions)) {
+                    $associationAnalysis['reason'] = 'no_actions_available';
+                    $associationAnalysis['details'] = [
+                        'message' => 'No hay acciones disponibles para el usuario',
+                        'user_id' => $userId,
+                    ];
+                } elseif ($maxScore == 0) {
+                    $associationAnalysis['reason'] = 'no_semantic_match';
+                    $associationAnalysis['details'] = [
+                        'message' => 'Ninguna acción obtuvo score > 0. Los criterios no coinciden con ninguna acción disponible.',
+                        'criteria_received' => [
+                            'query_type' => $criteria['query_type'] ?? 'N/A',
+                            'entity_type' => $criteria['entity_type'] ?? 'N/A',
+                            'search_keywords' => $criteria['search_keywords'] ?? [],
+                            'entity_types' => $criteria['entity_types'] ?? [],
+                            'operation_hints' => $criteria['operation_hints'] ?? [],
+                        ],
+                        'top_5_actions_checked' => $topScores,
+                        'total_actions_checked' => count($allActions),
+                    ];
+                } else {
+                    $associationAnalysis['reason'] = 'low_score_threshold';
+                    $associationAnalysis['details'] = [
+                        'message' => 'Algunas acciones obtuvieron score > 0, pero no pasaron el filtro final.',
+                        'max_score_found' => $maxScore,
+                        'top_5_actions_with_score' => $topScores,
+                        'actions_with_score_count' => count($scoredActions),
+                    ];
+                }
+            } else {
+                $associationAnalysis['reason'] = 'success';
+                $associationAnalysis['details'] = [
+                    'message' => 'Se encontraron acciones asociadas exitosamente',
+                    'best_match_score' => !empty($scoredActions) ? $scoredActions[0]['score'] : 0,
+                ];
+            }
             
             return [
                 'success' => true,
-                'criteria' => $normalizedCriteria,
+                'criteria' => $criteria,
+                'has_association' => $hasAssociation,
+                'association_analysis' => $associationAnalysis,
                 'total_actions_available' => count($allActions),
                 'actions_with_score' => count($scoredActions),
                 'actions_found' => count($foundActions),
@@ -91,7 +147,7 @@ class UniversalQueryAgent
                         'action' => $action['action'] ?? 'N/A',
                         'route' => $action['route'] ?? 'N/A',
                         'display_name' => $action['display_name'] ?? 'N/A',
-                        'category' => $action['category'] ?? 'N/A',
+                        'entity' => $action['entity'] ?? 'N/A',
                         'tags' => $action['tags'] ?? [],
                         'keywords' => $action['keywords'] ?? [],
                     ];
@@ -101,6 +157,15 @@ class UniversalQueryAgent
         } catch (\Exception $e) {
             return [
                 'success' => false,
+                'has_association' => false,
+                'association_analysis' => [
+                    'has_association' => false,
+                    'reason' => 'error',
+                    'details' => [
+                        'message' => 'Error al procesar la consulta',
+                        'error' => $e->getMessage(),
+                    ],
+                ],
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ];
@@ -248,9 +313,9 @@ class UniversalQueryAgent
         // Obtener metadatos del sistema dinámicamente
         $systemMetadata = self::getSystemMetadata();
         
-        // Obtener categorías disponibles desde acciones descubiertas
-        $categories = self::getAvailableCategories();
-        $categoriesText = !empty($categories) ? implode(', ', $categories) : '';
+        // Obtener entidades disponibles desde acciones descubiertas
+        $entities = self::getAvailableEntities();
+        $entitiesText = !empty($entities) ? implode(', ', $entities) : '';
         
         // Obtener business queries disponibles para contexto
         $businessQueriesInfo = self::getBusinessQueriesInfo();
@@ -264,7 +329,7 @@ Analiza esta consulta de usuario en un sistema de gestión de salud:
 Contexto del sistema:
 - Usuario: {$userContext['name']}
 - Fecha: {$userContext['current_date']}
-- Entidades disponibles: {$categoriesText}
+- Entidades disponibles: {$entitiesText}
 - Metadatos: {$systemMetadata}
 {$businessQueriesInfo}
 
@@ -329,8 +394,7 @@ PROMPT;
             'intent' => $parsed['intent'] ?? 'consulta general',
             'search_keywords' => $parsed['search_keywords'] ?? [],
             'entity_types' => $parsed['entity_types'] ?? [],
-            'entity_type' => $parsed['entity_type'] ?? $parsed['category'] ?? null,
-            'category' => $parsed['entity_type'] ?? $parsed['category'] ?? null, // Mantener compatibilidad
+            'entity_type' => $parsed['entity_type'] ?? null,
             'operation_hints' => $parsed['operation_hints'] ?? [],
             'extracted_data' => self::normalizeExtractedData($parsed['extracted_data'] ?? []),
             'filters' => $parsed['filters'] ?? [],
@@ -511,7 +575,7 @@ PROMPT;
                     'controller' => $action['controller'] ?? 'N/A',
                     'action' => $action['action'] ?? 'N/A',
                     'route' => $action['route'] ?? 'N/A',
-                    'category' => $action['category'] ?? 'N/A',
+                    'entity' => $action['entity'] ?? 'N/A',
                     'tags' => $action['tags'] ?? [],
                     'keywords' => $action['keywords'] ?? [],
                     'score' => $score,
@@ -582,17 +646,10 @@ PROMPT;
             }
         }
 
-        // Score por categoría (muy alto si coincide)
-        if (!empty($criteria['category']) && !empty($action['category'])) {
-            if (strtolower($action['category']) === strtolower($criteria['category'])) {
-                $score += 15.0; // Bonus muy alto por coincidencia de categoría
-            }
-        }
-        
-        // Score por entity_type (si no hay category, usar entity_type)
-        if (!empty($criteria['entity_type']) && !empty($action['category'])) {
-            if (strtolower($action['category']) === strtolower($criteria['entity_type'])) {
-                $score += 15.0; // Bonus muy alto por coincidencia de entity_type
+        // Score por entity (muy alto si coincide)
+        if (!empty($criteria['entity_type']) && !empty($action['entity'])) {
+            if (strtolower($action['entity']) === strtolower($criteria['entity_type'])) {
+                $score += 15.0; // Bonus muy alto por coincidencia de entity
             }
         }
         
@@ -757,7 +814,7 @@ PROMPT;
             
             if (stripos($actionText, 'persona') !== false || 
                 stripos($action['controller'], 'persona') !== false ||
-                (!empty($action['category']) && stripos($action['category'], 'Pacientes') !== false)) {
+                (!empty($action['entity']) && stripos($action['entity'], 'Pacientes') !== false)) {
                 $personActions[] = $action;
             }
         }
@@ -1073,7 +1130,7 @@ PROMPT;
                 'action_id' => $actions['action_id'] ?? self::generateActionId($actions),
                 'display_name' => $actions['display_name'] ?? '',
                 'description' => $actions['description'] ?? '',
-                'category' => $actions['category'] ?? null,
+                    'entity' => $actions['entity'] ?? null,
             ];
         }
         
@@ -1085,7 +1142,7 @@ PROMPT;
                     'action_id' => $action['action_id'] ?? self::generateActionId($action),
                     'display_name' => $action['display_name'] ?? '',
                     'description' => $action['description'] ?? '',
-                    'category' => $action['category'] ?? null,
+                    'entity' => $action['entity'] ?? null,
                 ];
             }
         }
@@ -1343,7 +1400,7 @@ PROMPT;
                     'action_id' => 'personas.view',
                     'display_name' => "Ver detalles de {$nombreCompleto}",
                     'description' => "Ver información completa y historial de la persona",
-                    'category' => 'Personas',
+                    'entity' => 'Personas',
                     // Mantener params para ejecución
                     'params' => ['id' => $persona->id_persona],
                 ],
@@ -1427,21 +1484,21 @@ PROMPT;
     }
 
     /**
-     * Obtener categorías disponibles desde acciones descubiertas
+     * Obtener entidades disponibles desde acciones descubiertas
      * @return array
      */
-    private static function getAvailableCategories()
+    private static function getAvailableEntities()
     {
         $actions = ActionDiscoveryService::discoverAllActions();
-        $categories = [];
+        $entities = [];
         
         foreach ($actions as $action) {
-            if (!empty($action['category']) && is_string($action['category'])) {
-                $categories[$action['category']] = true;
+            if (!empty($action['entity']) && is_string($action['entity'])) {
+                $entities[$action['entity']] = true;
             }
         }
         
-        return array_keys($categories);
+        return array_keys($entities);
     }
 
     /**

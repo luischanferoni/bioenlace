@@ -23,8 +23,6 @@ use common\models\Persona;
 use frontend\components\UserRequest;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use yii\debug\models\timeline\DataProvider;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.
@@ -54,7 +52,7 @@ class TurnosController extends Controller
 
     /**
      * Listar turnos de un paciente
-     * @category Turnos
+     * @entity Turnos
      * @tags turno,cita,listar,ver,agenda
      * @keywords listar,ver turnos,citas,agenda
      * @synonyms turno,cita,agenda,reserva
@@ -134,7 +132,7 @@ class TurnosController extends Controller
 
     /**
      * Crea un nuevo turno médico
-     * @category Turnos
+     * @entity Turnos
      * @tags turno,cita,crear,agendar,solicitar,nuevo
      * @keywords crear turno,agendar turno,solicitar turno,nuevo turno,crear cita,agendar cita
      * @synonyms turno,cita,agenda,reserva,consulta
@@ -196,10 +194,14 @@ class TurnosController extends Controller
      * Crea un turno para el paciente autenticado (usado principalmente desde la app móvil)
      * El id_persona se obtiene automáticamente del usuario autenticado
      * 
-     * @category Turnos
+     * @entity Turnos
      * @tags turno,cita,crear,agendar,solicitar,nuevo,paciente
      * @keywords crear turno,agendar turno,solicitar turno,nuevo turno,crear cita,agendar cita,mi turno
      * @synonyms turno,cita,agenda,reserva,consulta
+     * 
+     * @paramOption servicio_actual select servicios|efector_servicios
+     * @paramOption idRecursoHumano select rrhh|efector_rrhh
+     * @paramOption idEfector select efectores|user_efectores
      * 
      * @return array Respuesta JSON con success y message
      */
@@ -207,46 +209,9 @@ class TurnosController extends Controller
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        // Obtener id_persona del usuario autenticado
-        $idPersona = null;
-        
-        // Intentar obtener desde sesión (para web)
+        // Obtener id_persona de la sesión (ya asignado por la autenticación JWT o web)
         $session = Yii::$app->session;
-        if ($session->isActive && $session->has('idPersona')) {
-            $idPersona = $session->get('idPersona');
-        }
-        
-        // Si no está en sesión, intentar obtener desde el usuario autenticado (JWT o sesión web)
-        if (!$idPersona) {
-            // Verificar autenticación por Bearer token (JWT)
-            $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
-            if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
-                $token = $matches[1];
-                try {
-                    $decoded = JWT::decode($token, new Key(Yii::$app->params['jwtSecret'], 'HS256'));
-                    $userId = $decoded->user_id;
-                    
-                    // Buscar persona asociada al usuario
-                    $persona = Persona::findOne(['id_user' => $userId]);
-                    if ($persona) {
-                        $idPersona = $persona->id_persona;
-                    }
-                } catch (\Exception $e) {
-                    // Token inválido
-                }
-            }
-            
-            // Si aún no tenemos idPersona, intentar desde la sesión de usuario
-            if (!$idPersona && Yii::$app->user && !Yii::$app->user->isGuest) {
-                $userId = Yii::$app->user->id;
-                if ($userId) {
-                    $persona = Persona::findOne(['id_user' => $userId]);
-                    if ($persona) {
-                        $idPersona = $persona->id_persona;
-                    }
-                }
-            }
-        }
+        $idPersona = $session->get('idPersona');
         
         // Validar que se obtuvo el id_persona
         if (!$idPersona) {
@@ -575,7 +540,6 @@ class TurnosController extends Controller
 
     public function crearSlots($horariosAgenda, $cupoPacientes, $minutosXPaciente, $agregoSegundos)
     {
-
         // Inicializar el array para los intervalos
         $intervalos = [];
         $intervaloActual = [];
@@ -620,8 +584,6 @@ class TurnosController extends Controller
 
         return $slots;
     }
-
-
 
     public function actionRrhh($id_servicio)
     {

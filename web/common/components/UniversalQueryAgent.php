@@ -227,9 +227,11 @@ class UniversalQueryAgent
      * Procesar cualquier consulta del usuario
      * @param string $userQuery Cualquier consulta en lenguaje natural
      * @param int|null $userId ID del usuario
+     * @param string|null $actionId ID de acción específica
+     * @param array|null $criteria Criterios pre-generados (opcional, si se proporcionan se usan en lugar de generar con IA)
      * @return array Respuesta con acciones o datos
      */
-    public static function processQuery($userQuery, $userId = null, $actionId = null)
+    public static function processQuery($userQuery, $userId = null, $actionId = null, $criteria = null)
     {
         if (empty($userQuery) && empty($actionId)) {
             return [
@@ -302,18 +304,40 @@ class UniversalQueryAgent
             }
 
             // FASE 2: IA entiende la intención y genera criterios de búsqueda
-            // Solo si hay userQuery
-            if (empty($userQuery)) {
-                return [
-                    'success' => false,
-                    'error' => 'Se requiere una consulta o action_id válido',
+            // Solo si hay userQuery y no se proporcionaron criterios pre-generados
+            if ($criteria !== null) {
+                // Usar criterios proporcionados directamente
+                $searchCriteria = $criteria;
+                Yii::info("UniversalQueryAgent::processQuery - Usando criterios proporcionados: " . json_encode($searchCriteria, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+            } else {
+                // Generar criterios desde el texto del usuario
+                if (empty($userQuery)) {
+                    return [
+                        'success' => false,
+                        'error' => 'Se requiere una consulta, action_id válido o criterios',
+                    ];
+                }
+                
+                $intentResult = self::understandIntent($userQuery);
+                
+                if (!$intentResult['success']) {
+                    return $intentResult;
+                }
+
+                // Extraer solo los criterios (sin la clave 'success')
+                $searchCriteria = [
+                    'intent' => $intentResult['intent'] ?? 'consulta general',
+                    'search_keywords' => $intentResult['search_keywords'] ?? [],
+                    'entity_types' => $intentResult['entity_types'] ?? [],
+                    'entity_type' => $intentResult['entity_type'] ?? null,
+                    'operation_hints' => $intentResult['operation_hints'] ?? [],
+                    'extracted_data' => $intentResult['extracted_data'] ?? [],
+                    'filters' => $intentResult['filters'] ?? [],
+                    'query_type' => $intentResult['query_type'] ?? 'unknown',
                 ];
-            }
-            
-            $searchCriteria = self::understandIntent($userQuery);
-            
-            if (!$searchCriteria['success']) {
-                return $searchCriteria;
+                
+                // Log de los criterios generados para debugging
+                Yii::info("UniversalQueryAgent::processQuery - Criterios generados por IA: " . json_encode($searchCriteria, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
             }
 
             // FASE 2.5: Si es data_query, buscar business query primero
@@ -332,6 +356,13 @@ class UniversalQueryAgent
             // FASE 3: Buscar acción relevante usando criterios (devuelve un solo elemento o null)
             $foundAction = self::findActionsByCriteria($searchCriteria, $userId);
             
+            // Log del resultado de búsqueda
+            if ($foundAction !== null) {
+                Yii::info("UniversalQueryAgent::processQuery - Acción encontrada: {$foundAction['route']} (ID: {$foundAction['action_id']})", 'universal-query-agent');
+            } else {
+                Yii::warning("UniversalQueryAgent::processQuery - No se encontró ninguna acción para los criterios proporcionados", 'universal-query-agent');
+            }
+            
             // Convertir a array para compatibilidad con métodos que esperan arrays
             // Caso especial: si query_type === 'list_all', findActionsByCriteria devuelve array de todas las acciones
             $relevantActions = [];
@@ -344,6 +375,9 @@ class UniversalQueryAgent
                     // Es una sola acción, convertir a array
                     $relevantActions = [$foundAction];
                 }
+                Yii::info("UniversalQueryAgent::processQuery - Acción convertida a array. Total acciones: " . count($relevantActions), 'universal-query-agent');
+            } else {
+                Yii::warning("UniversalQueryAgent::processQuery - foundAction es null, relevantActions quedará vacío", 'universal-query-agent');
             }
             
             // FASE 4: Si hay muchas acciones, usar IA para priorizar (solo si es list_all)
@@ -1007,6 +1041,9 @@ PROMPT;
      */
     private static function generateNaturalResponse($userQuery, $actions, $criteria, $userId = null)
     {
+        // Log para debugging
+        Yii::info("UniversalQueryAgent::generateNaturalResponse - Recibió " . count($actions) . " acción(es). Query: '{$userQuery}'", 'universal-query-agent');
+        
         // Caso especial: búsqueda por DNI
         if (!empty($criteria['extracted_data']['dni'])) {
             return self::handleDniSearch($criteria['extracted_data']['dni'], $actions);
@@ -1019,6 +1056,7 @@ PROMPT;
 
         // Si no hay acciones, intentar sugerir acciones relacionadas o comunes
         if (empty($actions)) {
+            Yii::warning("UniversalQueryAgent::generateNaturalResponse - No hay acciones para procesar. Criterios: " . json_encode($criteria, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
             // Obtener algunas acciones comunes del usuario como sugerencias
             $allUserActions = ActionMappingService::getAvailableActionsForUser($userId);
             

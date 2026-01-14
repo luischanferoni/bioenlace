@@ -37,50 +37,37 @@ class UniversalQueryAgent
         // PRIMERO: Obtener permisos de los roles desde RBAC (estos son las rutas permitidas)
         // Solo descubriremos acciones para las rutas que el rol puede ejecutar
         $authManager = Yii::$app->authManager;
-        $allowedRoutes = [];
+        $targetRoutes = [];
         
         foreach ($roles as $role) {
             try {
                 $roleObj = $authManager->getRole($role);
                 if ($roleObj) {
                     $permissions = $authManager->getPermissionsByRole($role);
-                    var_dump($permissions);
-                    die();
+
                     foreach ($permissions as $permission) {
-                        // Los permisos en RBAC son las rutas permitidas
-                        $allowedRoutes[$permission->name] = true;
+                        $children = $authManager->getChildren($permission->name);
+                        
+                        foreach ($children as $id => $item)
+                        {
+                            if ( $item->type == 3 )
+                            {
+                                $targetRoutes[$item->name] = true;
+                            }
+                        }
                     }
                 }
             } catch (\Exception $e) {
                 Yii::warning("UniversalQueryAgent::getAvailableActionsByRole - Error obteniendo permisos del rol '{$role}': " . $e->getMessage(), 'universal-query-agent');
             }
         }
-        
+
         // Si no hay permisos, retornar array vacío (no necesitamos descubrir acciones)
-        if (empty($allowedRoutes)) {
+        if (empty($targetRoutes)) {
             Yii::info("UniversalQueryAgent::getAvailableActionsByRole - Rol(es): " . implode(', ', $roles) . " no tiene permisos asignados", 'universal-query-agent');
             return [];
         }
-        
-        // SEGUNDO: Construir lista de rutas objetivo (permisos + conversiones)
-        $targetRoutes = [];
-        $permissionNames = array_keys($allowedRoutes);
 
-        // Agregar permisos directos y sus conversiones
-        foreach ($permissionNames as $permissionName) {
-            // Si el permiso ya es una ruta (empieza con /), agregarlo directamente
-            if (strpos($permissionName, '/') === 0) {
-                $targetRoutes[$permissionName] = true;
-            } else {
-                // Convertir permiso a ruta
-                $convertedRoute = self::convertPermissionToRoute($permissionName);
-                if ($convertedRoute) {
-                    $targetRoutes[$convertedRoute] = true;
-                }
-            }
-        }
-        var_dump($targetRoutes);
-        die();
         // TERCERO: Descubrir solo las acciones que corresponden a las rutas objetivo
         $availableActions = [];
         
@@ -208,8 +195,31 @@ class UniversalQueryAgent
             } else {
                 $allActions = \common\components\ActionMappingService::getAvailableActionsForUser($userId);
             }
-            //var_dump($roleName);
-            //die();
+            
+            // Si no hay acciones disponibles, retornar inmediatamente
+            if (empty($allActions)) {
+                return [
+                    'success' => true,
+                    'criteria' => $criteria,
+                    'has_association' => false,
+                    'association_analysis' => [
+                        'has_association' => false,
+                        'reason' => 'no_actions_available',
+                        'details' => [
+                            'message' => 'No hay acciones disponibles para el usuario',
+                            'user_id' => $userId,
+                            'role_name' => $roleName,
+                        ],
+                    ],
+                    'total_actions_available' => 0,
+                    'actions_with_score' => 0,
+                    'actions_found' => 0,
+                    'top_scored_actions' => [],
+                    'found_actions' => [],
+                    'debug_all_actions_scores' => [],
+                ];
+            }
+ 
             // Calcular scores para todas las acciones
             $scoredActions = [];
             $allScores = []; // Para análisis de por qué no hay match
@@ -243,8 +253,20 @@ class UniversalQueryAgent
                 return $b['score'] <=> $a['score'];
             });
             
-            // Obtener acciones encontradas usando el método normal (devuelve array de acciones)
-            $foundActions = self::findActionsByCriteria($criteria, $userId);
+            // Seleccionar acciones basándose en el score (misma lógica que findActionsByCriteria)
+            $foundActions = [];
+            
+            if (!empty($scoredActions)) {
+                $bestScore = $scoredActions[0]['score'];
+                $threshold = max(10.0, $bestScore * 0.7); // Al menos 70% del mejor score, mínimo 10
+                
+                // Incluir todas las acciones que tengan score >= threshold
+                foreach ($scoredActions as $scoredAction) {
+                    if ($scoredAction['score'] >= $threshold) {
+                        $foundActions[] = $scoredAction['action'];
+                    }
+                }
+            }
             
             // Verificar compatibilidad con id_servicio si está presente en los criterios
             $servicioInfo = self::validateServicioInCriteria($criteria);

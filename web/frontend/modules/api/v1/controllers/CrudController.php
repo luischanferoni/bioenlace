@@ -214,16 +214,42 @@ class CrudController extends BaseController
     /**
      * Inyectar parámetros en el request object
      * @param array $params Parámetros a inyectar
+     * @return array Estado original del request para restaurar después
      */
     private function injectParamsIntoRequest($params)
     {
+        $originalState = [
+            'bodyParams' => Yii::$app->request->bodyParams,
+            'requestMethod' => $_SERVER['REQUEST_METHOD'] ?? null,
+        ];
+        
         if (!empty($params)) {
-            // Configurar como POST y inyectar parámetros
-            Yii::$app->request->setMethod('POST');
-            Yii::$app->request->bodyParams = array_merge(
-                Yii::$app->request->bodyParams ?? [],
-                $params
-            );
+            // Inyectar parámetros en bodyParams
+            $currentBodyParams = Yii::$app->request->bodyParams ?? [];
+            Yii::$app->request->bodyParams = array_merge($currentBodyParams, $params);
+            
+            // Establecer el método como POST temporalmente en $_SERVER
+            // Esto es necesario para que UserRequest::requireUserParam() funcione correctamente
+            // ya que verifica Yii::$app->request->isPost que lee de $_SERVER['REQUEST_METHOD']
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+        }
+        
+        return $originalState;
+    }
+    
+    /**
+     * Restaurar el estado original del request
+     * @param array $originalState Estado original guardado
+     */
+    private function restoreRequestState($originalState)
+    {
+        if ($originalState) {
+            Yii::$app->request->bodyParams = $originalState['bodyParams'];
+            if ($originalState['requestMethod'] !== null) {
+                $_SERVER['REQUEST_METHOD'] = $originalState['requestMethod'];
+            } else {
+                unset($_SERVER['REQUEST_METHOD']);
+            }
         }
     }
 
@@ -285,13 +311,9 @@ class CrudController extends BaseController
             ];
         }
         
-        // Guardar estado original del request
-        $originalBodyParams = Yii::$app->request->bodyParams;
-        $originalMethod = Yii::$app->request->method;
-        
         try {
-            // Inyectar parámetros en el request
-            $this->injectParamsIntoRequest($params);
+            // Inyectar parámetros en el request y guardar estado original
+            $originalState = $this->injectParamsIntoRequest($params);
             
             // Crear instancia del controlador
             $controller = new $controllerClass('api', Yii::$app);
@@ -346,8 +368,9 @@ class CrudController extends BaseController
             ];
         } finally {
             // Restaurar estado original del request
-            Yii::$app->request->bodyParams = $originalBodyParams;
-            Yii::$app->request->setMethod($originalMethod);
+            if (isset($originalState)) {
+                $this->restoreRequestState($originalState);
+            }
         }
     }
 

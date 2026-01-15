@@ -159,14 +159,39 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
+    // Buscar action_analysis del mensaje anterior que contiene esta acción
+    // para extraer los parámetros proporcionados (como id_servicio)
+    Map<String, dynamic> params = {};
+    for (int i = _chatHistory.length - 1; i >= 0; i--) {
+      final message = _chatHistory[i];
+      if (message['type'] == 'bot') {
+        final actionAnalysis = message['action_analysis'] as Map<String, dynamic>?;
+        if (actionAnalysis != null && actionAnalysis['action_id'] == actionId) {
+          // Extraer parámetros proporcionados del action_analysis
+          final providedParams = actionAnalysis['parameters']?['provided'] as Map<String, dynamic>?;
+          if (providedParams != null) {
+            providedParams.forEach((key, value) {
+              // El valor puede venir como {'value': X, 'source': 'extracted'}
+              if (value is Map) {
+                params[key] = value['value'];
+              } else {
+                params[key] = value;
+              }
+            });
+          }
+          break;
+        }
+      }
+    }
+
     // Solo ejecutar la acción, sin agregar mensaje del usuario al historial
     setState(() {
       _isSending = true;
     });
 
     try {
-      // Ir directamente al endpoint execute-action usando el action_id
-      final result = await _accionesService.executeAction(actionId);
+      // Ir directamente al endpoint execute-action usando el action_id y los parámetros
+      final result = await _accionesService.executeAction(actionId, params: params);
 
       if (result['success'] == true) {
         final data = result['data'];

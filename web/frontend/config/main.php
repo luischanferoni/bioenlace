@@ -141,6 +141,8 @@ return [
                 // CRUD API
                 'POST api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
                 'OPTIONS api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
+                'POST api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
+                'OPTIONS api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
                 
                 // Audio API (Speech-to-Text)
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',

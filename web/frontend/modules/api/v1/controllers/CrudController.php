@@ -212,6 +212,22 @@ class CrudController extends BaseController
     }
 
     /**
+     * Inyectar parámetros en el request object
+     * @param array $params Parámetros a inyectar
+     */
+    private function injectParamsIntoRequest($params)
+    {
+        if (!empty($params)) {
+            // Configurar como POST y inyectar parámetros
+            Yii::$app->request->setMethod('POST');
+            Yii::$app->request->bodyParams = array_merge(
+                Yii::$app->request->bodyParams ?? [],
+                $params
+            );
+        }
+    }
+
+    /**
      * Ejecutar una acción
      * @param array $action
      * @param array $params
@@ -227,6 +243,7 @@ class CrudController extends BaseController
             return [
                 'success' => false,
                 'error' => 'Esta acción no puede ejecutarse directamente',
+                'action_id' => $action['action_id'] ?? null,
             ];
         }
         
@@ -253,6 +270,7 @@ class CrudController extends BaseController
             return [
                 'success' => false,
                 'error' => 'Ruta inválida: ' . $route,
+                'action_id' => $action['action_id'] ?? null,
             ];
         }
         
@@ -263,10 +281,18 @@ class CrudController extends BaseController
             return [
                 'success' => false,
                 'error' => 'Controlador no encontrado: ' . $controllerClass,
+                'action_id' => $action['action_id'] ?? null,
             ];
         }
         
+        // Guardar estado original del request
+        $originalBodyParams = Yii::$app->request->bodyParams;
+        $originalMethod = Yii::$app->request->method;
+        
         try {
+            // Inyectar parámetros en el request
+            $this->injectParamsIntoRequest($params);
+            
             // Crear instancia del controlador
             $controller = new $controllerClass('api', Yii::$app);
             
@@ -278,52 +304,50 @@ class CrudController extends BaseController
                 return [
                     'success' => false,
                     'error' => 'Método no encontrado: ' . $methodName,
-                ];
-            }
-            
-            // Ejecutar la acción
-            // Para acciones que retornan vistas, necesitamos capturar la salida
-            ob_start();
-            $result = $controller->runAction($actionName, $params);
-            $output = ob_get_clean();
-            
-            // Si la acción retorna un array o string, devolverlo
-            if (is_array($result)) {
-                return [
-                    'success' => true,
-                    'data' => $result,
                     'action_id' => $action['action_id'],
                 ];
             }
             
-            // Si retorna una vista (string), devolverla
-            if (is_string($result)) {
+            // Configurar response format como JSON
+            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            
+            // Ejecutar la acción (sin pasar params directamente, ya están en request)
+            $result = $controller->runAction($actionName, []);
+            
+            // Validar que retorne JSON (array)
+            if (!is_array($result)) {
                 return [
-                    'success' => true,
-                    'data' => [
-                        'html' => $result,
-                        'output' => $output,
-                    ],
+                    'success' => false,
+                    'error' => 'La acción debe retornar JSON (array). Retornó: ' . gettype($result),
                     'action_id' => $action['action_id'],
                 ];
             }
             
-            // Si no retorna nada o retorna algo inesperado
+            // Devolver resultado
             return [
                 'success' => true,
-                'data' => [
-                    'message' => 'Acción ejecutada correctamente',
-                    'output' => $output,
-                ],
+                'data' => $result,
                 'action_id' => $action['action_id'],
             ];
             
+        } catch (\yii\web\BadRequestHttpException $e) {
+            // Manejar excepciones de UserRequest::requireUserParam
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+                'action_id' => $action['action_id'],
+            ];
         } catch (\Exception $e) {
             Yii::error("Error ejecutando acción {$action['action_id']}: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-execute-action');
             return [
                 'success' => false,
                 'error' => 'Error al ejecutar la acción: ' . $e->getMessage(),
+                'action_id' => $action['action_id'],
             ];
+        } finally {
+            // Restaurar estado original del request
+            Yii::$app->request->bodyParams = $originalBodyParams;
+            Yii::$app->request->setMethod($originalMethod);
         }
     }
 

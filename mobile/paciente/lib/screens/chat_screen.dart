@@ -153,24 +153,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _executeAction(Map<String, dynamic> action) async {
     final actionId = action['action_id'];
-    final displayName = action['display_name'] ?? action['title'] ?? action['label'] ?? 'Acción';
 
     if (actionId == null || actionId.isEmpty) {
       _showErrorSnackbar('Error: No se pudo identificar la acción');
       return;
     }
 
-    // Agregar mensaje del usuario al historial
+    // Solo ejecutar la acción, sin agregar mensaje del usuario al historial
     setState(() {
       _isSending = true;
-      _chatHistory.add({
-        'type': 'user',
-        'content': displayName,
-        'timestamp': DateTime.now(),
-      });
     });
-
-    _scrollToBottom();
 
     try {
       // Ir directamente al endpoint execute-action usando el action_id

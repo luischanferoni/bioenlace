@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use frontend\modules\api\v1\controllers\BaseController;
+use yii\helpers\Inflector;
 
 class CrudController extends BaseController
 {
@@ -318,9 +319,10 @@ class CrudController extends BaseController
             // Crear instancia del controlador
             $controller = new $controllerClass('api', Yii::$app);
             
-            // Convertir nombre de acción: indexuserefector -> indexuserefector (ya está en formato correcto)
-            // Pero Yii2 espera: actionIndexuserefector
-            $methodName = 'action' . ucfirst($actionName);
+            // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
+            // usando Inflector de Yii2
+            $actionCamelCase = Inflector::id2camel($actionName, '-');
+            $methodName = 'action' . $actionCamelCase;
             
             if (!method_exists($controller, $methodName)) {
                 return [

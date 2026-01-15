@@ -154,23 +154,18 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _executeAction(Map<String, dynamic> action) async {
     final actionId = action['action_id'];
     final displayName = action['display_name'] ?? action['title'] ?? action['label'] ?? 'Acción';
-    final description = action['description'] ?? '';
 
-    // Usar display_name o description como texto de consulta
-    // El backend intentará identificar la acción por action_id primero, luego por matching semántico
-    final queryText = displayName.isNotEmpty ? displayName : description;
-
-    if (queryText.isEmpty) {
+    if (actionId == null || actionId.isEmpty) {
       _showErrorSnackbar('Error: No se pudo identificar la acción');
       return;
     }
 
-    // Agregar mensaje del usuario al historial (simulando que escribió el texto)
+    // Agregar mensaje del usuario al historial
     setState(() {
       _isSending = true;
       _chatHistory.add({
         'type': 'user',
-        'content': queryText,
+        'content': displayName,
         'timestamp': DateTime.now(),
       });
     });
@@ -178,15 +173,13 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
 
     try {
-      // Enviar consulta a process-query (igual que "¿qué puedo hacer?")
-      // El backend identificará la acción por action_id primero, luego por matching semántico, y finalmente por LLM
-      final result = await _accionesService.processQuery(queryText, actionId: actionId);
+      // Ir directamente al endpoint execute-action usando el action_id
+      final result = await _accionesService.executeAction(actionId);
 
       if (result['success'] == true) {
         final data = result['data'];
-        final explanation = data['explanation'] ?? 'Consulta procesada';
-        final matchedAction = data['action'] ?? (data['actions'] != null && (data['actions'] as List).isNotEmpty ? (data['actions'] as List)[0] : null);
-        final actions = data['actions'] ?? (matchedAction != null ? [matchedAction] : null);
+        final explanation = data['explanation'] ?? 'Acción ejecutada exitosamente';
+        final actions = data['actions'] as List<Map<String, dynamic>>?;
         final needsUserInput = data['needs_user_input'] ?? false;
         final actionAnalysis = data['action_analysis'] as Map<String, dynamic>?;
 
@@ -209,7 +202,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': result['message'] ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.',
+            'content': result['message'] ?? 'Lo siento, no pude ejecutar la acción. Intenta nuevamente.',
             'timestamp': DateTime.now(),
           });
         });
@@ -220,7 +213,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _isSending = false;
         _chatHistory.add({
           'type': 'bot',
-          'content': 'Error al procesar tu consulta. Por favor, intenta nuevamente.',
+          'content': 'Error al ejecutar la acción. Por favor, intenta nuevamente.',
           'timestamp': DateTime.now(),
         });
       });

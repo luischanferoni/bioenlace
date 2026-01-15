@@ -1260,13 +1260,30 @@ PROMPT;
         // Formatear acciones antes de devolver (usar las acciones originales, no las del LLM)
         $formattedActions = self::formatActionsForResponse(array_slice($actions, 0, 10));
         
+        // Preparar extracted_data para el analizador
+        $extractedData = $criteria['extracted_data'] ?? [];
+        
+        // Si se encontró un id_servicio válido en los criterios, agregarlo al extracted_data
+        // para que el analizador pueda mapearlo correctamente
+        $servicioInfo = self::validateServicioInCriteria($criteria);
+        if ($servicioInfo['has_servicio'] && $servicioInfo['is_valid'] && $servicioInfo['id_servicio'] !== null) {
+            // Agregar id_servicio al extracted_data si no está ya presente
+            if (!isset($extractedData['id_servicio'])) {
+                $extractedData['id_servicio'] = $servicioInfo['id_servicio'];
+            }
+            // También agregar servicio_actual si la acción lo requiere
+            if (!isset($extractedData['servicio_actual'])) {
+                $extractedData['servicio_actual'] = $servicioInfo['id_servicio'];
+            }
+        }
+        
         // Analizar parámetros de la acción principal si existe
         $actionAnalysis = null;
         if (!empty($actions)) {
             $primaryAction = $actions[0];
             $actionAnalysis = ActionParameterAnalyzer::analyzeActionParameters(
                 $primaryAction,
-                $criteria['extracted_data'] ?? [],
+                $extractedData,
                 $userId
             );
         }

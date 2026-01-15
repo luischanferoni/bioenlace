@@ -4,6 +4,8 @@ namespace common\components;
 
 use Yii;
 use yii\helpers\FileHelper;
+use yii\helpers\Inflector;
+use yii\helpers\Url;
 use ReflectionClass;
 use ReflectionMethod;
 use webvimark\modules\UserManagement\models\User;
@@ -110,8 +112,11 @@ class ActionDiscoveryService
                 if (strpos($method->getName(), 'action') === 0 && 
                     $method->getName() !== 'actions') {
                     
-                    $actionName = str_replace('action', '', $method->getName());
-                    $actionName = lcfirst($actionName);
+                    // Extraer nombre de acción del método (remover prefijo "action")
+                    $methodName = str_replace('action', '', $method->getName());
+                    
+                    // Convertir de camelCase a kebab-case usando Inflector de Yii2
+                    $actionName = Inflector::camel2id($methodName);
                     
                     // Generar ruta
                     $route = self::generateRoute($module, $controllerName, $actionName);
@@ -191,10 +196,10 @@ class ActionDiscoveryService
     }
 
     /**
-     * Generar ruta canónica
+     * Generar ruta canónica usando Inflector de Yii2 para convertir nombres
      * @param string|null $module
-     * @param string $controller
-     * @param string $action
+     * @param string $controller Nombre del controlador (puede estar en camelCase)
+     * @param string $action Nombre de la acción (ya convertido a kebab-case)
      * @return string
      */
     private static function generateRoute($module, $controller, $action)
@@ -204,11 +209,16 @@ class ActionDiscoveryService
         // Limpiar path (remover barra inicial si existe)
         $path = trim($path, '/');
         
+        // Convertir nombre del controlador de camelCase a kebab-case usando Inflector
+        $controllerId = Inflector::camel2id($controller);
+        
         if ($module) {
-            return '/' . $path . '/' . $module . '/' . $controller . '/' . $action;
+            // Convertir nombre del módulo también
+            $moduleId = Inflector::camel2id($module);
+            return '/' . ($path ? $path . '/' : '') . $moduleId . '/' . $controllerId . '/' . $action;
         }
         
-        return '/' . $path . '/' . $controller . '/' . $action;
+        return '/' . ($path ? $path . '/' : '') . $controllerId . '/' . $action;
     }
 
     /**
@@ -357,7 +367,9 @@ class ActionDiscoveryService
                         $actionsArray = $method->invoke($controller);
                         
                         foreach ($actionsArray as $actionName => $actionConfig) {
-                            $route = self::generateRoute($module, $controllerName, $actionName);
+                            // Convertir nombre de acción a kebab-case usando Inflector
+                            $actionId = Inflector::camel2id($actionName);
+                            $route = self::generateRoute($module, $controllerName, $actionId);
                             $actions[] = [
                                 'route' => $route,
                                 'controller' => $controllerName,

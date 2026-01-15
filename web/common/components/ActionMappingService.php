@@ -130,25 +130,60 @@ class ActionMappingService
             $authManager = Yii::$app->authManager;
             $permissions = $authManager->getPermissionsByUser($user->id);
             
-            // Verificar si alguna permiso coincide con la ruta
+            // Verificar permisos directos y sus hijos (similar a UniversalQueryAgent)
             foreach ($permissions as $permission) {
+                // Verificar coincidencia exacta
                 if ($permission->name === $route) {
                     return true;
                 }
-                // Verificar rutas con sub-rutas (ej: /site/* incluye /site/index)
+                
+                // Obtener hijos del permiso (children)
+                $children = $authManager->getChildren($permission->name);
+                foreach ($children as $id => $item) {
+                    // Verificar si el hijo es de tipo 3 (ruta) y coincide
+                    if ($item->type == 3) {
+                        if ($item->name === $route) {
+                            return true;
+                        }
+                        // Verificar rutas con sub-rutas (ej: /site/* incluye /site/index)
+                        if (strpos($route, $item->name) === 0) {
+                            return true;
+                        }
+                    }
+                }
+                
+                // Verificar rutas con sub-rutas del permiso directo (ej: /site/* incluye /site/index)
                 if (strpos($route, $permission->name) === 0) {
                     return true;
                 }
             }
 
-            // Verificar roles del usuario y sus permisos
+            // Verificar roles del usuario y sus permisos (con hijos)
             $roles = $authManager->getRolesByUser($user->id);
             foreach ($roles as $role) {
                 $rolePermissions = $authManager->getPermissionsByRole($role->name);
                 foreach ($rolePermissions as $permission) {
+                    // Verificar coincidencia exacta
                     if ($permission->name === $route) {
                         return true;
                     }
+                    
+                    // Obtener hijos del permiso (children)
+                    $children = $authManager->getChildren($permission->name);
+                    foreach ($children as $id => $item) {
+                        // Verificar si el hijo es de tipo 3 (ruta) y coincide
+                        if ($item->type == 3) {
+                            if ($item->name === $route) {
+                                return true;
+                            }
+                            // Verificar rutas con sub-rutas (ej: /site/* incluye /site/index)
+                            if (strpos($route, $item->name) === 0) {
+                                return true;
+                            }
+                        }
+                    }
+                    
+                    // Verificar rutas con sub-rutas del permiso directo
                     if (strpos($route, $permission->name) === 0) {
                         return true;
                     }

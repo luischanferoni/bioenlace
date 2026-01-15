@@ -98,7 +98,7 @@ class UniversalQueryAgent
         // Obtener todas las acciones (usa cache, así que es eficiente)
         // Nota: En el futuro podríamos optimizar ActionDiscoveryService para descubrir solo rutas específicas
         $allActions = \common\components\ActionDiscoveryService::discoverAllActions($useCache);
-        
+
         // Filtrar solo las acciones que coinciden con las rutas objetivo
         foreach ($allActions as $action) {
             $route = $action['route'];
@@ -117,63 +117,6 @@ class UniversalQueryAgent
         }
         
         return $availableActions;
-    }
-
-    /**
-     * Convertir formato de permiso a ruta
-     * Convierte permisos como "front_mis_turnos" a rutas como "/frontend/turnos/mis-turnos"
-     * @param string $permissionName Nombre del permiso (ej: "front_mis_turnos")
-     * @return string|null Ruta convertida o null si no se puede convertir
-     */
-    private static function convertPermissionToRoute($permissionName)
-    {
-        // Si ya es una ruta (empieza con /), retornarla tal cual
-        if (strpos($permissionName, '/') === 0) {
-            return $permissionName;
-        }
-        
-        // Obtener el path base de la aplicación
-        $path = Yii::$app->params['path'] ?? '';
-        $path = trim($path, '/');
-        
-        // Dividir el permiso por guiones bajos
-        $parts = explode('_', $permissionName);
-        
-        if (empty($parts)) {
-            return null;
-        }
-        
-        // El primer segmento puede ser el módulo o prefijo (ej: "front" -> "frontend")
-        $firstPart = $parts[0];
-        $module = null;
-        
-        // Mapeo de prefijos comunes a módulos
-        $prefixMap = [
-            'front' => 'frontend',
-            'back' => 'backend',
-            'api' => 'api',
-        ];
-        
-        if (isset($prefixMap[$firstPart])) {
-            $module = $prefixMap[$firstPart];
-            array_shift($parts); // Remover el prefijo
-        }
-        
-        // Si quedan menos de 2 partes, no podemos construir una ruta válida
-        if (count($parts) < 2) {
-            return null;
-        }
-        
-        // El último segmento es la acción, el resto es el controlador
-        $action = array_pop($parts);
-        $controller = implode('-', $parts); // Convertir guiones bajos a guiones
-        
-        // Construir la ruta
-        if ($module) {
-            return '/' . ($path ? $path . '/' : '') . $module . '/' . $controller . '/' . $action;
-        }
-        
-        return '/' . ($path ? $path . '/' : '') . $controller . '/' . $action;
     }
 
     /**
@@ -223,7 +166,7 @@ class UniversalQueryAgent
             // Calcular scores para todas las acciones
             $scoredActions = [];
             $allScores = []; // Para análisis de por qué no hay match
-            
+
             foreach ($allActions as $action) {
                 $score = self::calculateSemanticScore($action, $criteria);
                 

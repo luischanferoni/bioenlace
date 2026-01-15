@@ -110,17 +110,17 @@ class CrudController extends BaseController
         
         try {
             // Buscar la acción por action_id
+            // findActionById ya filtra las acciones por permisos del usuario usando
+            // ActionMappingService::getAvailableActionsForUser que verifica RBAC
             $action = $this->findActionById($actionId, $userId);
             
             if (!$action) {
-                return $this->error('Acción no encontrada o no tienes permisos', null, 404);
+                // La acción no existe o el usuario no tiene permisos para ejecutarla
+                return $this->error('Acción no encontrada o no tienes permisos para ejecutarla según tu rol', null, 403);
             }
             
-            // Validar permisos nuevamente (seguridad)
-            if (!empty($action['route']) && !$this->userCanAccessRoute($userId, $action['route'])) {
-                return $this->error('No tienes permisos para ejecutar esta acción', null, 403);
-            }
-            
+            // Si la acción fue encontrada, significa que el usuario tiene permisos
+            // (ya fue validado por ActionMappingService::getAvailableActionsForUser)
             // Ejecutar la acción
             return $this->executeAction($action, $params, $userId);
             

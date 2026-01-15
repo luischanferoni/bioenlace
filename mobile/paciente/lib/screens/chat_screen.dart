@@ -90,7 +90,10 @@ class _ChatScreenState extends State<ChatScreen> {
         final queryType = data['query_type'];
         final matchedBy = data['matched_by']; // 'action_id', 'semantic', o null (LLM)
         final needsUserInput = data['needs_user_input'] ?? false;
-        final actionAnalysis = data['action_analysis'] as Map<String, dynamic>?;
+        final actionAnalysisRaw = data['action_analysis'];
+        final actionAnalysis = (actionAnalysisRaw is Map) 
+            ? Map<String, dynamic>.from(actionAnalysisRaw) 
+            : null;
 
         setState(() {
           _isSending = false;
@@ -165,21 +168,46 @@ class _ChatScreenState extends State<ChatScreen> {
     for (int i = _chatHistory.length - 1; i >= 0; i--) {
       final message = _chatHistory[i];
       if (message['type'] == 'bot') {
-        final actionAnalysis = message['action_analysis'] as Map<String, dynamic>?;
-        if (actionAnalysis != null && actionAnalysis['action_id'] == actionId) {
-          // Extraer parámetros proporcionados del action_analysis
-          final providedParams = actionAnalysis['parameters']?['provided'] as Map<String, dynamic>?;
-          if (providedParams != null) {
-            providedParams.forEach((key, value) {
-              // El valor puede venir como {'value': X, 'source': 'extracted'}
-              if (value is Map) {
-                params[key] = value['value'];
-              } else {
-                params[key] = value;
+        final actionAnalysis = message['action_analysis'];
+        if (actionAnalysis != null && actionAnalysis is Map) {
+          final analysisMap = actionAnalysis as Map<String, dynamic>;
+          if (analysisMap['action_id'] == actionId) {
+            // Extraer parámetros proporcionados del action_analysis
+            final parameters = analysisMap['parameters'];
+            if (parameters != null && parameters is Map) {
+              final parametersMap = parameters as Map<String, dynamic>;
+              final providedParams = parametersMap['provided'];
+              
+              // Manejar tanto Map como List (por si acaso)
+              if (providedParams != null) {
+                if (providedParams is Map) {
+                  final providedMap = providedParams as Map<String, dynamic>;
+                  providedMap.forEach((key, value) {
+                    // El valor puede venir como {'value': X, 'source': 'extracted'}
+                    if (value is Map) {
+                      params[key] = value['value'];
+                    } else {
+                      params[key] = value;
+                    }
+                  });
+                } else if (providedParams is List) {
+                  // Si es una lista, convertir a mapa si es posible
+                  // (esto no debería pasar normalmente, pero por seguridad)
+                  for (var item in providedParams) {
+                    if (item is Map) {
+                      final itemMap = item as Map<String, dynamic>;
+                      final key = itemMap['name'] ?? itemMap['key'];
+                      final value = itemMap['value'];
+                      if (key != null) {
+                        params[key.toString()] = value;
+                      }
+                    }
+                  }
+                }
               }
-            });
+            }
+            break;
           }
-          break;
         }
       }
     }
@@ -198,7 +226,10 @@ class _ChatScreenState extends State<ChatScreen> {
         final explanation = data['explanation'] ?? 'Acción ejecutada exitosamente';
         final actions = data['actions'] as List<Map<String, dynamic>>?;
         final needsUserInput = data['needs_user_input'] ?? false;
-        final actionAnalysis = data['action_analysis'] as Map<String, dynamic>?;
+        final actionAnalysisRaw = data['action_analysis'];
+        final actionAnalysis = (actionAnalysisRaw is Map) 
+            ? Map<String, dynamic>.from(actionAnalysisRaw) 
+            : null;
 
         setState(() {
           _isSending = false;
@@ -311,7 +342,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 final suggestedQuery = message['suggested_query'] as String?;
                 final timestamp = message['timestamp'] as DateTime;
                 final needsUserInput = message['needs_user_input'] as bool? ?? false;
-                final actionAnalysis = message['action_analysis'] as Map<String, dynamic>?;
+                final actionAnalysisRaw = message['action_analysis'];
+                final actionAnalysis = (actionAnalysisRaw is Map) 
+                    ? Map<String, dynamic>.from(actionAnalysisRaw) 
+                    : null;
 
                 return Column(
                   children: [

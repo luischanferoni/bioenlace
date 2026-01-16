@@ -316,43 +316,71 @@ class CrudController extends BaseController
             // Inyectar parámetros en el request y guardar estado original
             $originalState = $this->injectParamsIntoRequest($params);
             
-            // Crear instancia del controlador
-            $controller = new $controllerClass('api', Yii::$app);
-            
-            // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
-            // usando Inflector de Yii2
-            $actionCamelCase = Inflector::id2camel($actionName, '-');
-            $methodName = 'action' . $actionCamelCase;
-            
-            if (!method_exists($controller, $methodName)) {
+            // Establecer la identidad del usuario antes de ejecutar la acción
+            // Esto es necesario para que los controladores que verifican Yii::$app->user->isGuest funcionen
+            $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
+            if (!$user) {
                 return [
                     'success' => false,
-                    'error' => 'Método no encontrado: ' . $methodName,
+                    'error' => 'Usuario no encontrado',
                     'action_id' => $action['action_id'],
                 ];
             }
             
-            // Configurar response format como JSON
-            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+            // Guardar el estado original del usuario (si había uno)
+            $originalUserIdentity = Yii::$app->user->identity;
+            $wasGuest = Yii::$app->user->isGuest;
             
-            // Ejecutar la acción (sin pasar params directamente, ya están en request)
-            $result = $controller->runAction($actionName, []);
+            // Establecer el usuario como autenticado
+            Yii::$app->user->login($user, 0); // Duración 0 = sesión hasta cerrar navegador
             
-            // Validar que retorne JSON (array)
-            if (!is_array($result)) {
+            try {
+                // Crear instancia del controlador
+                $controller = new $controllerClass('api', Yii::$app);
+                
+                // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
+                // usando Inflector de Yii2
+                $actionCamelCase = Inflector::id2camel($actionName, '-');
+                $methodName = 'action' . $actionCamelCase;
+                
+                if (!method_exists($controller, $methodName)) {
+                    return [
+                        'success' => false,
+                        'error' => 'Método no encontrado: ' . $methodName,
+                        'action_id' => $action['action_id'],
+                    ];
+                }
+                
+                // Configurar response format como JSON
+                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                
+                // Ejecutar la acción (sin pasar params directamente, ya están en request)
+                $result = $controller->runAction($actionName, []);
+                
+                // Validar que retorne JSON (array)
+                if (!is_array($result)) {
+                    return [
+                        'success' => false,
+                        'error' => 'La acción debe retornar JSON (array). Retornó: ' . gettype($result),
+                        'action_id' => $action['action_id'],
+                    ];
+                }
+                
+                // Devolver resultado
                 return [
-                    'success' => false,
-                    'error' => 'La acción debe retornar JSON (array). Retornó: ' . gettype($result),
+                    'success' => true,
+                    'data' => $result,
                     'action_id' => $action['action_id'],
                 ];
+                
+            } finally {
+                // Restaurar el estado original del usuario
+                if ($wasGuest) {
+                    Yii::$app->user->logout();
+                } elseif ($originalUserIdentity) {
+                    Yii::$app->user->login($originalUserIdentity, 0);
+                }
             }
-            
-            // Devolver resultado
-            return [
-                'success' => true,
-                'data' => $result,
-                'action_id' => $action['action_id'],
-            ];
             
         } catch (\yii\web\BadRequestHttpException $e) {
             // Manejar excepciones de UserRequest::requireUserParam

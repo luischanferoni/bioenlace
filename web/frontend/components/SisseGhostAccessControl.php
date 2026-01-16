@@ -50,6 +50,11 @@ class SisseGhostAccessControl extends GhostAccessControl
 			Yii::$app->getResponse()->redirect(Yii::$app->getHomeUrl());
 		}
 
+		// Log para debugging: verificar qué ruta se está verificando
+		$allowedRoutes = Yii::$app->session->get(\webvimark\modules\UserManagement\components\AuthHelper::SESSION_PREFIX_ROUTES, []);
+		$unifiedRoute = \webvimark\modules\UserManagement\components\AuthHelper::unifyRoute($route);
+		Yii::info("SisseGhostAccessControl: Verificando ruta - Original: {$route}, Unificada: {$unifiedRoute}, AllowedRoutes: " . json_encode($allowedRoutes), 'access-control');
+
 		if ( User::canRoute($route) )
 		{
 			return true;

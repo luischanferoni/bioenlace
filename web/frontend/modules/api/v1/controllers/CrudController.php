@@ -340,8 +340,21 @@ class CrudController extends BaseController
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
             
             try {
-                // Crear instancia del controlador
-                $controller = new $controllerClass('api', Yii::$app);
+                // Crear instancia del controlador sin especificar módulo
+                // El controlador está en frontend\controllers, no en un módulo
+                $controller = new $controllerClass($controllerName, Yii::$app);
+                
+                // Deshabilitar temporalmente el behavior ghost-access ya que los permisos
+                // ya fueron verificados en findActionById usando ActionMappingService
+                $originalBehaviors = $controller->behaviors();
+                $controller->detachBehaviors();
+                
+                // Reagregar solo los behaviors que no sean ghost-access
+                foreach ($originalBehaviors as $name => $behavior) {
+                    if ($name !== 'ghost-access') {
+                        $controller->attachBehavior($name, $behavior);
+                    }
+                }
                 
                 // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
                 // usando Inflector de Yii2

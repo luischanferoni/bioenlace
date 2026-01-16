@@ -317,7 +317,8 @@ class CrudController extends BaseController
             $originalState = $this->injectParamsIntoRequest($params);
             
             // Establecer la identidad del usuario antes de ejecutar la acción
-            // Esto es necesario para que los controladores que verifican Yii::$app->user->isGuest funcionen
+            // El usuario ya está autenticado (verificado en actionExecuteAction)
+            // Solo necesitamos establecer la identidad para que los controladores puedan verificar isGuest
             $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
             if (!$user) {
                 return [
@@ -327,12 +328,12 @@ class CrudController extends BaseController
                 ];
             }
             
-            // Guardar el estado original del usuario (si había uno)
+            // Guardar el estado original del usuario para restaurarlo después
             $originalUserIdentity = Yii::$app->user->identity;
-            $wasGuest = Yii::$app->user->isGuest;
             
-            // Establecer el usuario como autenticado
-            Yii::$app->user->login($user, 0); // Duración 0 = sesión hasta cerrar navegador
+            // Establecer la identidad del usuario sin iniciar sesión (API stateless con JWT)
+            // El rol "paciente" se asigna automáticamente por SisseDbManager::getRolesByUser()
+            Yii::$app->user->setIdentity($user);
             
             try {
                 // Crear instancia del controlador
@@ -375,11 +376,7 @@ class CrudController extends BaseController
                 
             } finally {
                 // Restaurar el estado original del usuario
-                if ($wasGuest) {
-                    Yii::$app->user->logout();
-                } elseif ($originalUserIdentity) {
-                    Yii::$app->user->login($originalUserIdentity, 0);
-                }
+                Yii::$app->user->setIdentity($originalUserIdentity);
             }
             
         } catch (\yii\web\BadRequestHttpException $e) {

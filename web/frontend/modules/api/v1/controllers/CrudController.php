@@ -356,6 +356,10 @@ class CrudController extends BaseController
                     }
                 }
                 
+                // Deshabilitar validación CSRF ya que estamos ejecutando desde la API
+                // y la autenticación se maneja con JWT
+                $controller->enableCsrfValidation = false;
+                
                 // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
                 // usando Inflector de Yii2
                 $actionCamelCase = Inflector::id2camel($actionName, '-');

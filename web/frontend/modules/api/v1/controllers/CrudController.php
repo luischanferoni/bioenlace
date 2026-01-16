@@ -331,8 +331,10 @@ class CrudController extends BaseController
             $originalUserIdentity = Yii::$app->user->identity;
             $wasGuest = Yii::$app->user->isGuest;
             
-            // Establecer el usuario como autenticado
-            Yii::$app->user->login($user, 0); // Duración 0 = sesión hasta cerrar navegador
+            // Establecer la identidad del usuario sin iniciar sesión (API stateless con JWT)
+            // Solo establecemos la identidad temporalmente para que los controladores puedan verificar isGuest
+            // No usamos login() porque no queremos crear una sesión web en una API
+            Yii::$app->user->setIdentity($user);
             
             try {
                 // Crear instancia del controlador
@@ -376,9 +378,9 @@ class CrudController extends BaseController
             } finally {
                 // Restaurar el estado original del usuario
                 if ($wasGuest) {
-                    Yii::$app->user->logout();
+                    Yii::$app->user->setIdentity(null);
                 } elseif ($originalUserIdentity) {
-                    Yii::$app->user->login($originalUserIdentity, 0);
+                    Yii::$app->user->setIdentity($originalUserIdentity);
                 }
             }
             

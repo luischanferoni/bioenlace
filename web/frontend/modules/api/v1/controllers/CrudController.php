@@ -335,6 +335,10 @@ class CrudController extends BaseController
             // El rol "paciente" se asigna automáticamente por SisseDbManager::getRolesByUser()
             Yii::$app->user->setIdentity($user);
             
+            // Actualizar permisos y rutas en la sesión para que los controladores puedan verificar acceso
+            // Esto es necesario porque setIdentity() no actualiza automáticamente los permisos
+            \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+            
             try {
                 // Crear instancia del controlador
                 $controller = new $controllerClass('api', Yii::$app);

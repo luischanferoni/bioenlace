@@ -99,10 +99,33 @@ class SisseDbManager extends DbManager
             $permissions = $this->getInheritedPermissionsByRrhh();
         }
 
+        // Obtener todos los roles del usuario (incluyendo "paciente" si se agregó dinámicamente)
+        $userRoles = $this->getRolesByUser($userId);
+        
         // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getInheritedPermissionsByUser()
         if (!isset(Yii::$app->authManager->rolesEspeciales) || count(Yii::$app->authManager->rolesEspeciales) == 0) {
-            return [];
+            // Si no hay rolesEspeciales, obtener permisos de todos los roles del usuario
+            // (incluyendo "paciente" que se agregó dinámicamente)
+            $childrenList = $this->getChildrenList();
+            $result = [];
+            foreach ($userRoles as $roleName => $role) {
+                $this->getChildrenRecursive($roleName, $childrenList, $result);
+            }
+            
+            if (!empty($result)) {
+                $query = (new Query())->from($this->itemTable)->where([
+                    'type' => Item::TYPE_PERMISSION,
+                    'name' => array_keys($result),
+                ]);
+                
+                foreach ($query->all($this->db) as $row) {
+                    $permissions[$row['name']] = $this->populateItem($row);
+                }
+            }
+            
+            return $permissions;
         }
+        
         foreach (Yii::$app->authManager->rolesEspeciales as $rolEspecial) {
             $rolesEspeciales[] = 'item_name LIKE "%'.$rolEspecial.'%"';
         }
@@ -116,6 +139,12 @@ class SisseDbManager extends DbManager
         $result = [];
         foreach ($query->column($this->db) as $roleName) {            
             $this->getChildrenRecursive($roleName, $childrenList, $result);
+        }
+        
+        // También obtener permisos del rol "paciente" si el usuario lo tiene
+        // (aunque no esté en auth_assignment con el patrón especial)
+        if (isset($userRoles['paciente'])) {
+            $this->getChildrenRecursive('paciente', $childrenList, $result);
         }
 
         if (empty($result)) {

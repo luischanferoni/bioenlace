@@ -49,6 +49,9 @@ class AuthController extends BaseController
             return $this->error('Usuario inactivo', null, 401);
         }
 
+        // Asignar rol "paciente" por defecto si no lo tiene
+        \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($user->id);
+
         // Generar token JWT
         $token = $this->generateJwtToken($user);
         $role = $this->getUserRole($user);
@@ -228,10 +231,18 @@ class AuthController extends BaseController
     {
         $role = $this->getUserRole($user);
         
+        // Buscar id_persona asociado al usuario (solo al generar el token)
+        $idPersona = null;
+        $persona = \common\models\Persona::findOne(['id_user' => $user->id]);
+        if ($persona) {
+            $idPersona = $persona->id_persona;
+        }
+        
         $payload = [
             'user_id' => $user->id,
             'email' => $user->email,
             'role' => $role,
+            'id_persona' => $idPersona, // Agregar id_persona al token
             'iat' => time(),
             'exp' => time() + (24 * 60 * 60), // 24 horas
         ];

@@ -238,6 +238,39 @@ class SisseDbManager extends DbManager
     }
 
     /**
+     * Asignar rol "paciente" al usuario si no lo tiene
+     * @param int $userId ID del usuario
+     * @return bool true si se asignó el rol, false si ya lo tenía o hubo error
+     */
+    public static function asignarRolPacienteSiNoExiste($userId)
+    {
+        try {
+            $authManager = Yii::$app->authManager;
+            
+            // Verificar si el usuario ya tiene el rol "paciente"
+            $roles = $authManager->getRolesByUser($userId);
+            if (isset($roles['paciente'])) {
+                return false; // Ya tiene el rol
+            }
+            
+            // Buscar el rol "paciente" en la base de datos
+            $pacienteRole = $authManager->getRole('paciente');
+            if (!$pacienteRole) {
+                Yii::warning("El rol 'paciente' no existe en la base de datos", 'rbac');
+                return false;
+            }
+            
+            // Asignar el rol al usuario
+            $authManager->assign($pacienteRole, $userId);
+            
+            return true;
+        } catch (\Exception $e) {
+            Yii::error("Error asignando rol paciente al usuario {$userId}: " . $e->getMessage(), 'rbac');
+            return false;
+        }
+    }
+
+    /**
      * Existen roles que no dependen del Efector asignado.
      * Que trabajan con todos o con ninguno
      * Revisar web/config rolesEspeciales

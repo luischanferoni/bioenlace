@@ -273,6 +273,15 @@ class UserConfig extends User
 			}
 		}
 
+		// Verificar status del usuario
+		if ($identity->status !== \webvimark\modules\UserManagement\models\User::STATUS_ACTIVE) {
+			Yii::$app->user->logout();
+			throw new \yii\web\ForbiddenHttpException('Usuario inactivo');
+		}
+
+		// Asignar rol "paciente" por defecto a todos los usuarios
+		\common\models\SisseDbManager::asignarRolPacienteSiNoExiste($identity->id);
+
 		parent::afterLogin($identity, $cookieBased, $duration);
 	}
 }

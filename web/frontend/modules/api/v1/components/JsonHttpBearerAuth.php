@@ -43,36 +43,54 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         try {
             $identity = parent::authenticate($user, $request, $response);
             
-            // Si la autenticación fue exitosa, obtener id_user del token JWT
-            // y buscar id_persona para asignarlo a la sesión
+            // Si la autenticación fue exitosa, verificar status y asignar roles
             $authHeader = $request->getHeaders()->get('Authorization');
             if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
                 $token = $matches[1];
                 try {
                     $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(Yii::$app->params['jwtSecret'], 'HS256'));
                     $userId = $decoded->user_id;
+                    $idPersona = $decoded->id_persona ?? null; // Obtener id_persona del token
                     
-                    // Buscar persona asociada al usuario
-                    $persona = \common\models\Persona::findOne(['id_user' => $userId]);
-                    if (!$persona) {
-                        // Si no se encuentra la persona, lanzar error
+                    // Verificar que el usuario existe y está activo
+                    $userModel = \webvimark\modules\UserManagement\models\User::findOne($userId);
+                    if (!$userModel) {
                         $response->format = Response::FORMAT_JSON;
                         $response->statusCode = 401;
                         $response->data = [
                             'success' => false,
-                            'message' => 'No se encontró la persona asociada al usuario. Verifique la configuración del usuario.',
+                            'message' => 'Usuario no encontrado',
                             'errors' => null,
                         ];
                         $response->send();
                         Yii::$app->end();
                     }
                     
-                    // Asignar idPersona a la sesión
-                    $session = Yii::$app->session;
-                    if (!$session->isActive) {
-                        $session->open();
+                    // Verificar status del usuario
+                    if ($userModel->status !== \webvimark\modules\UserManagement\models\User::STATUS_ACTIVE) {
+                        $response->format = Response::FORMAT_JSON;
+                        $response->statusCode = 401;
+                        $response->data = [
+                            'success' => false,
+                            'message' => 'Usuario inactivo',
+                            'errors' => null,
+                        ];
+                        $response->send();
+                        Yii::$app->end();
                     }
-                    $session->set('idPersona', $persona->id_persona);
+                    
+                    // Asignar rol "paciente" por defecto si no lo tiene
+                    \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($userId);
+                    
+                    // Asignar idPersona a la sesión desde el token (sin buscar en BD)
+                    if ($idPersona) {
+                        $session = Yii::$app->session;
+                        if (!$session->isActive) {
+                            $session->open();
+                        }
+                        $session->set('idPersona', $idPersona);
+                    }
+                    
                 } catch (\Exception $e) {
                     // Si hay error decodificando el token, continuar (ya está autenticado por parent)
                     // Pero registrar el error

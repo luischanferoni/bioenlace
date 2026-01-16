@@ -123,6 +123,17 @@ class BaseController extends ActiveController
             try {
                 $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(Yii::$app->params['jwtSecret'], 'HS256'));
                 $userId = $decoded->user_id;
+                $idPersona = $decoded->id_persona ?? null; // Obtener id_persona del token
+                
+                // Asignar idPersona a la sesión si está en el token
+                if ($idPersona) {
+                    $session = Yii::$app->session;
+                    if (!$session->isActive) {
+                        $session->open();
+                    }
+                    $session->set('idPersona', $idPersona);
+                }
+                
                 $isAuthenticated = true;
             } catch (\Exception $e) {
                 // Token inválido, continuar con verificación de sesión

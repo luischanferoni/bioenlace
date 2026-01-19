@@ -101,9 +101,72 @@ class AccionesService {
     }
   }
 
-  /// Ejecuta una acción específica por su action_id
+  /// Obtiene la configuración del formulario/wizard para una acción (GET)
   /// 
-  /// Este endpoint recibe un action_id y valida permisos antes de ejecutar
+  /// Este endpoint devuelve el form_config necesario para armar el wizard
+  /// GET /api/v1/crud/execute-action?action_id=...&param1=value1&param2=value2
+  /// 
+  /// Si todos los parámetros están presentes, devuelve el wizard en el último paso (confirmación)
+  /// Si faltan parámetros, devuelve el wizard desde el principio
+  Future<Map<String, dynamic>> getActionFormConfig(String actionId, {Map<String, dynamic>? params}) async {
+    try {
+      // Construir URI con query parameters
+      final uri = Uri.parse('${AppConfig.apiUrl}/crud/execute-action').replace(
+        queryParameters: {
+          'action_id': actionId,
+          ...?params?.map((key, value) => MapEntry(key, value.toString())),
+        },
+      );
+      
+      final headers = {
+        'Accept': 'application/json',
+      };
+
+      // Agregar token de autenticación si existe
+      if (authToken != null) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final response = await http.get(
+        uri,
+        headers: headers,
+      ).timeout(
+        Duration(seconds: AppConfig.httpTimeoutSeconds),
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        if (responseData['success'] == true) {
+          return {
+            'success': true,
+            'data': responseData['data'] ?? responseData,
+          };
+        } else {
+          return {
+            'success': false,
+            'message': responseData['message'] ?? 'Error al obtener configuración del formulario',
+            'data': responseData,
+          };
+        }
+      } else {
+        return {
+          'success': false,
+          'message': responseData['message'] ?? 'Error al obtener configuración del formulario',
+          'errors': responseData['errors'] ?? null,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Error de conexión: ${e.toString()}',
+      };
+    }
+  }
+
+  /// Ejecuta una acción específica por su action_id (POST)
+  /// 
+  /// Este endpoint ejecuta la acción con los parámetros proporcionados
   /// POST /api/v1/crud/execute-action
   /// Body: {
   ///   "action_id": "efectores.indexuserefector",

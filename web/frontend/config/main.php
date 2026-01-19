@@ -141,6 +141,7 @@ return [
                 // CRUD API
                 'POST api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
                 'OPTIONS api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
+                'GET api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
                 'POST api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
                 'OPTIONS api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
                 

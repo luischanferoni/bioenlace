@@ -81,8 +81,10 @@ class CrudController extends BaseController
     /**
      * Ejecutar una acción específica por su action_id
      * 
-     * Este endpoint recibe un action_id y valida permisos antes de ejecutar
+     * GET: Devuelve el form_config (wizard) para la acción sin ejecutarla
+     * POST: Ejecuta la acción con los parámetros proporcionados
      * 
+     * GET /api/v1/crud/execute-action?action_id=...&param1=value1&param2=value2
      * POST /api/v1/crud/execute-action
      * Body: {
      *   "action_id": "efectores.indexuserefector",
@@ -102,8 +104,17 @@ class CrudController extends BaseController
         $auth = $this->verificarAutenticacion();
         $userId = $auth['userId'];
         
-        $actionId = Yii::$app->request->post('action_id');
-        $params = Yii::$app->request->post('params', []);
+        // Obtener action_id y params según el método HTTP
+        $isGet = Yii::$app->request->isGet;
+        if ($isGet) {
+            $actionId = Yii::$app->request->get('action_id');
+            // Obtener todos los parámetros de la query string excepto action_id
+            $params = Yii::$app->request->get();
+            unset($params['action_id']);
+        } else {
+            $actionId = Yii::$app->request->post('action_id');
+            $params = Yii::$app->request->post('params', []);
+        }
         
         if (empty($actionId)) {
             return $this->error('action_id es requerido', null, 400);
@@ -120,15 +131,135 @@ class CrudController extends BaseController
                 return $this->error('Acción no encontrada o no tienes permisos para ejecutarla según tu rol', null, 403);
             }
             
+            // Si es GET, devolver el form_config (wizard) sin ejecutar
+            if ($isGet) {
+                return $this->getActionFormConfig($action, $params, $userId);
+            }
+            
+            // Si es POST, ejecutar la acción
             // Si la acción fue encontrada, significa que el usuario tiene permisos
             // (ya fue validado por ActionMappingService::getAvailableActionsForUser)
-            // Ejecutar la acción
             return $this->executeAction($action, $params, $userId);
             
         } catch (\Exception $e) {
             Yii::error("Error ejecutando acción: " . $e->getMessage(), 'api-execute-action');
             return $this->error('Error al ejecutar la acción: ' . $e->getMessage(), null, 500);
         }
+    }
+    
+    /**
+     * Obtener configuración del formulario/wizard para una acción
+     * @param array $action
+     * @param array $params Parámetros ya proporcionados
+     * @param int|null $userId
+     * @return array
+     */
+    private function getActionFormConfig($action, $params, $userId)
+    {
+        try {
+            // Analizar parámetros de la acción usando ActionParameterAnalyzer
+            $actionAnalysis = \common\components\ActionParameterAnalyzer::analyzeActionParameters(
+                $action,
+                $params, // Los params de GET se pasan como extractedData
+                $userId
+            );
+            
+            // Generar pasos del wizard
+            $wizardSteps = $this->generateWizardSteps($actionAnalysis['form_config']['fields']);
+            
+            // Determinar el paso inicial del wizard
+            // Si todos los parámetros están presentes, mostrar el último paso (confirmación)
+            // Si faltan parámetros, mostrar desde el principio
+            $initialStep = 0;
+            if ($actionAnalysis['ready_to_execute'] && !empty($wizardSteps)) {
+                // Si está listo para ejecutar, mostrar el último paso (confirmación)
+                $initialStep = count($wizardSteps) - 1;
+            }
+            
+            return [
+                'success' => true,
+                'data' => [
+                    'action_id' => $actionAnalysis['action_id'],
+                    'action_name' => $actionAnalysis['action_name'],
+                    'form_config' => $actionAnalysis['form_config'],
+                    'parameters' => $actionAnalysis['parameters'],
+                    'ready_to_execute' => $actionAnalysis['ready_to_execute'],
+                    'initial_step' => $initialStep, // Paso inicial del wizard
+                    'wizard_steps' => $wizardSteps,
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error("Error obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
+            return $this->error('Error al obtener configuración del formulario: ' . $e->getMessage(), null, 500);
+        }
+    }
+    
+    /**
+     * Generar pasos del wizard basado en los campos del formulario
+     * @param array $fields
+     * @return array
+     */
+    private function generateWizardSteps($fields)
+    {
+        $steps = [];
+        
+        if (empty($fields)) {
+            return $steps;
+        }
+        
+        // Verificar si todos los campos tienen valores (confirmación)
+        $allFieldsHaveValues = true;
+        foreach ($fields as $field) {
+            if (empty($field['value']) && $field['required'] ?? false) {
+                $allFieldsHaveValues = false;
+                break;
+            }
+        }
+        
+        // Si todos los campos tienen valores, crear un solo paso de confirmación
+        if ($allFieldsHaveValues) {
+            $steps[] = [
+                'step' => 0,
+                'title' => "Confirmación",
+                'fields' => $fields,
+            ];
+            return $steps;
+        }
+        
+        // Si faltan campos, agrupar en pasos lógicos
+        $currentStep = 0;
+        $currentStepFields = [];
+        
+        foreach ($fields as $field) {
+            // Si el campo tiene depends_on y ya hay campos en el paso actual,
+            // podría ser un nuevo paso
+            if (!empty($currentStepFields) && isset($field['depends_on'])) {
+                // Si hay dependencia, podría ser un nuevo paso
+                // Por simplicidad, agrupamos todos en un paso a menos que haya muchos campos
+                if (count($currentStepFields) >= 3) {
+                    $steps[] = [
+                        'step' => $currentStep,
+                        'title' => "Paso " . ($currentStep + 1),
+                        'fields' => $currentStepFields,
+                    ];
+                    $currentStep++;
+                    $currentStepFields = [];
+                }
+            }
+            
+            $currentStepFields[] = $field;
+        }
+        
+        // Agregar el último paso si tiene campos
+        if (!empty($currentStepFields)) {
+            $steps[] = [
+                'step' => $currentStep,
+                'title' => $currentStep === 0 ? "Información básica" : "Paso " . ($currentStep + 1),
+                'fields' => $currentStepFields,
+            ];
+        }
+        
+        return $steps;
     }
 
     /**

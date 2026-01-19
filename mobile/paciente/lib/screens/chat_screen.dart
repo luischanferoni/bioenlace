@@ -212,36 +212,39 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     }
 
-    // Solo ejecutar la acción, sin agregar mensaje del usuario al historial
+    // Obtener configuración del formulario/wizard usando GET
     setState(() {
       _isSending = true;
     });
 
     try {
-      // Ir directamente al endpoint execute-action usando el action_id y los parámetros
-      final result = await _accionesService.executeAction(actionId, params: params);
+      // Llamar a GET para obtener el form_config (wizard)
+      final result = await _accionesService.getActionFormConfig(actionId, params: params);
 
       if (result['success'] == true) {
         final data = result['data'];
-        final explanation = data['explanation'] ?? 'Acción ejecutada exitosamente';
-        final actions = data['actions'] as List<Map<String, dynamic>>?;
-        final needsUserInput = data['needs_user_input'] ?? false;
-        final actionAnalysisRaw = data['action_analysis'];
-        final actionAnalysis = (actionAnalysisRaw is Map) 
-            ? Map<String, dynamic>.from(actionAnalysisRaw) 
-            : null;
+        final formConfig = data['form_config'];
+        final wizardSteps = data['wizard_steps'];
+        final initialStep = data['initial_step'] ?? 0;
+        final readyToExecute = data['ready_to_execute'] ?? false;
+        final parameters = data['parameters'];
 
         setState(() {
           _isSending = false;
 
-          // Agregar respuesta del bot al historial
+          // Agregar respuesta del bot con el form_config para mostrar el wizard
           _chatHistory.add({
             'type': 'bot',
-            'content': explanation,
-            'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
+            'content': readyToExecute 
+                ? 'Por favor, confirma los datos para completar la acción.'
+                : 'Por favor, completa los siguientes datos:',
+            'form_config': formConfig,
+            'wizard_steps': wizardSteps,
+            'initial_step': initialStep,
+            'ready_to_execute': readyToExecute,
+            'action_id': actionId,
+            'parameters': parameters,
             'data': data,
-            'needs_user_input': needsUserInput,
-            'action_analysis': actionAnalysis,
             'timestamp': DateTime.now(),
           });
         });
@@ -250,7 +253,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': result['message'] ?? 'Lo siento, no pude ejecutar la acción. Intenta nuevamente.',
+            'content': result['message'] ?? 'Lo siento, no pude obtener el formulario. Intenta nuevamente.',
             'timestamp': DateTime.now(),
           });
         });
@@ -261,7 +264,7 @@ class _ChatScreenState extends State<ChatScreen> {
         _isSending = false;
         _chatHistory.add({
           'type': 'bot',
-          'content': 'Error al ejecutar la acción. Por favor, intenta nuevamente.',
+          'content': 'Error al obtener el formulario. Por favor, intenta nuevamente.',
           'timestamp': DateTime.now(),
         });
       });

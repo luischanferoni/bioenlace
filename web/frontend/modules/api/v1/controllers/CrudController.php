@@ -239,9 +239,12 @@ class CrudController extends BaseController
                             } catch (\yii\web\BadRequestHttpException $e) {
                                 // Si hay error de parámetros (ej: Login Requerido), continuar con análisis automático
                                 Yii::info("Error de parámetros al llamar método {$methodName}: " . $e->getMessage() . ", usando análisis automático", 'api-execute-action');
+                            } catch (\yii\web\HttpException $e) {
+                                // Capturar cualquier excepción HTTP (incluyendo UnauthorizedHttpException)
+                                Yii::info("Error HTTP al llamar método {$methodName}: " . $e->getMessage() . " (código: {$e->statusCode}), usando análisis automático", 'api-execute-action');
                             } catch (\Exception $e) {
                                 // Cualquier otro error, continuar con análisis automático
-                                Yii::warning("Error al llamar método {$methodName}: " . $e->getMessage() . ", usando análisis automático", 'api-execute-action');
+                                Yii::warning("Error al llamar método {$methodName}: " . $e->getMessage() . " (" . get_class($e) . "), usando análisis automático", 'api-execute-action');
                             }
                             
                             // Restaurar formato original

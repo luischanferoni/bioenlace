@@ -110,13 +110,38 @@ class AccionesService {
   /// Si faltan parámetros, devuelve el wizard desde el principio
   Future<Map<String, dynamic>> getActionFormConfig(String actionId, {Map<String, dynamic>? params}) async {
     try {
+      // Construir query parameters
+      final queryParams = <String, String>{
+        'action_id': actionId,
+      };
+      
+      // Agregar parámetros adicionales si existen
+      if (params != null && params.isNotEmpty) {
+        params.forEach((key, value) {
+          if (value != null) {
+            // Convertir el valor a string, manejando diferentes tipos
+            String stringValue;
+            if (value is String) {
+              stringValue = value;
+            } else if (value is num) {
+              stringValue = value.toString();
+            } else if (value is bool) {
+              stringValue = value ? '1' : '0';
+            } else {
+              stringValue = value.toString();
+            }
+            queryParams[key] = stringValue;
+          }
+        });
+      }
+      
       // Construir URI con query parameters
       final uri = Uri.parse('${AppConfig.apiUrl}/crud/execute-action').replace(
-        queryParameters: {
-          'action_id': actionId,
-          ...?params?.map((key, value) => MapEntry(key, value.toString())),
-        },
+        queryParameters: queryParams,
       );
+      
+      // Debug: imprimir URI completa (solo en desarrollo)
+      print('GET execute-action URI: $uri');
       
       final headers = {
         'Accept': 'application/json',

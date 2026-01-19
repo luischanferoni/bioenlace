@@ -5,6 +5,7 @@ namespace common\components;
 use Yii;
 use ReflectionMethod;
 use ReflectionParameter;
+use yii\helpers\Inflector;
 
 /**
  * Servicio para analizar parámetros de acciones y generar formularios dinámicos
@@ -63,8 +64,13 @@ class ActionParameterAnalyzer
                 return $params;
             }
             
-            $methodName = 'action' . ucfirst($action['action']);
+            // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
+            $actionName = $action['action'];
+            $actionCamelCase = Inflector::id2camel($actionName, '-');
+            $methodName = 'action' . $actionCamelCase;
+            
             if (!method_exists($controllerClass, $methodName)) {
+                Yii::warning("Método no encontrado: {$methodName} en {$controllerClass}", 'action-parameter-analyzer');
                 return $params;
             }
             

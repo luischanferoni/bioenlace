@@ -168,32 +168,41 @@ class _ChatScreenState extends State<ChatScreen> {
     for (int i = _chatHistory.length - 1; i >= 0; i--) {
       final message = _chatHistory[i];
       if (message['type'] == 'bot') {
-        final actionAnalysis = message['action_analysis'];
-        if (actionAnalysis != null && actionAnalysis is Map) {
-          final analysisMap = actionAnalysis as Map<String, dynamic>;
+        // Buscar en action_analysis
+        final actionAnalysisRaw = message['action_analysis'];
+        if (actionAnalysisRaw != null && actionAnalysisRaw is Map) {
+          final analysisMap = actionAnalysisRaw as Map<String, dynamic>;
           if (analysisMap['action_id'] == actionId) {
             // Extraer parámetros proporcionados del action_analysis
             final parameters = analysisMap['parameters'];
             if (parameters != null && parameters is Map) {
               final parametersMap = parameters as Map<String, dynamic>;
-              final providedParams = parametersMap['provided'];
+              final providedParamsRaw = parametersMap['provided'];
               
               // Manejar tanto Map como List (por si acaso)
-              if (providedParams != null) {
-                if (providedParams is Map) {
-                  final providedMap = providedParams as Map<String, dynamic>;
+              if (providedParamsRaw != null) {
+                if (providedParamsRaw is Map) {
+                  final providedMap = providedParamsRaw as Map<String, dynamic>;
                   providedMap.forEach((key, value) {
                     // El valor puede venir como {'value': X, 'source': 'extracted'}
                     if (value is Map) {
-                      params[key] = value['value'];
+                      final valueMap = value as Map<String, dynamic>;
+                      // Extraer el valor real del objeto
+                      if (valueMap.containsKey('value')) {
+                        params[key] = valueMap['value'];
+                      } else {
+                        // Si no tiene 'value', usar el valor directamente
+                        params[key] = value;
+                      }
                     } else {
+                      // Si no es un Map, usar el valor directamente
                       params[key] = value;
                     }
                   });
-                } else if (providedParams is List) {
+                } else if (providedParamsRaw is List) {
                   // Si es una lista, convertir a mapa si es posible
                   // (esto no debería pasar normalmente, pero por seguridad)
-                  for (var item in providedParams) {
+                  for (var item in providedParamsRaw) {
                     if (item is Map) {
                       final itemMap = item as Map<String, dynamic>;
                       final key = itemMap['name'] ?? itemMap['key'];
@@ -206,11 +215,50 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
               }
             }
+            
+            // También buscar en extracted_data si está disponible directamente
+            final extractedData = analysisMap['extracted_data'];
+            if (extractedData != null && extractedData is Map) {
+              final extractedMap = extractedData as Map<String, dynamic>;
+              // Agregar id_servicio y servicio_actual si están presentes
+              if (extractedMap.containsKey('id_servicio') && !params.containsKey('id_servicio')) {
+                params['id_servicio'] = extractedMap['id_servicio'];
+              }
+              if (extractedMap.containsKey('servicio_actual') && !params.containsKey('servicio_actual')) {
+                params['servicio_actual'] = extractedMap['servicio_actual'];
+              }
+            }
+            
             break;
+          }
+        }
+        
+        // También buscar en parameters del mensaje (puede venir de form_config previo)
+        final messageParameters = message['parameters'];
+        if (messageParameters != null && messageParameters is Map) {
+          final parametersMap = messageParameters as Map<String, dynamic>;
+          final providedParamsRaw = parametersMap['provided'];
+          
+          if (providedParamsRaw != null && providedParamsRaw is Map) {
+            final providedMap = providedParamsRaw as Map<String, dynamic>;
+            providedMap.forEach((key, value) {
+              // El valor puede venir como {'value': X, 'source': 'extracted'}
+              if (value is Map) {
+                final valueMap = value as Map<String, dynamic>;
+                if (valueMap.containsKey('value') && !params.containsKey(key)) {
+                  params[key] = valueMap['value'];
+                }
+              } else if (!params.containsKey(key)) {
+                params[key] = value;
+              }
+            });
           }
         }
       }
     }
+    
+    // Debug: imprimir parámetros extraídos (solo en desarrollo)
+    print('Parámetros extraídos para $actionId: $params');
 
     // Obtener configuración del formulario/wizard usando GET
     setState(() {
@@ -444,60 +492,140 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ],
-                    // Formulario dinámico si necesita input del usuario
-                    if (!isUser && needsUserInput && actionAnalysis != null) ...[
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Container(
-                          padding: const EdgeInsets.all(16.0),
-                          decoration: BoxDecoration(
-                            color: Colors.blue[50],
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Theme.of(context).primaryColor.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.input,
-                                    size: 20,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Completa la información',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
+                    // Formulario dinámico si hay form_config (viene de getActionFormConfig)
+                    if (!isUser) ...[
+                      Builder(
+                        builder: (context) {
+                          final formConfig = message['form_config'];
+                          final wizardSteps = message['wizard_steps'];
+                          final actionIdFromMessage = message['action_id'];
+                          final parametersFromMessage = message['parameters'];
+                          
+                          if (formConfig != null && formConfig is Map) {
+                            return Column(
+                              children: [
+                                const SizedBox(height: 16),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.input,
+                                              size: 20,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Completa la información',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context).primaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        DynamicForm(
+                                          formConfig: Map<String, dynamic>.from(formConfig),
+                                          authToken: _accionesService.authToken,
+                                          onSubmit: (formValues) async {
+                                            // Ejecutar acción con los parámetros del formulario
+                                            if (actionIdFromMessage != null) {
+                                              await _executeActionWithParams(actionIdFromMessage, formValues);
+                                            }
+                                          },
+                                          onCancel: () {
+                                            setState(() {
+                                              _chatHistory.removeAt(index);
+                                            });
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              DynamicForm(
-                                formConfig: actionAnalysis['form_config'] ?? {},
-                                authToken: _accionesService.authToken,
-                                onSubmit: (formValues) async {
-                                  // Ejecutar acción con los parámetros del formulario
-                                  final actionId = actionAnalysis['action_id'] as String?;
-                                  if (actionId != null) {
-                                    await _executeActionWithParams(actionId, formValues);
-                                  }
-                                },
-                                onCancel: () {
-                                  setState(() {
-                                    _chatHistory.removeAt(index);
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
+                                ),
+                              ],
+                            );
+                          }
+                          
+                          // Si no hay form_config, verificar si hay actionAnalysis (comportamiento anterior)
+                          final actionAnalysis = message['action_analysis'];
+                          final needsUserInput = message['needs_user_input'] ?? false;
+                          
+                          if (needsUserInput && actionAnalysis != null && actionAnalysis is Map) {
+                            return Column(
+                              children: [
+                                const SizedBox(height: 16),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue[50],
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.input,
+                                              size: 20,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Completa la información',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context).primaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                        DynamicForm(
+                                          formConfig: actionAnalysis['form_config'] ?? {},
+                                          authToken: _accionesService.authToken,
+                                          onSubmit: (formValues) async {
+                                            // Ejecutar acción con los parámetros del formulario
+                                            final actionId = actionAnalysis['action_id'] as String?;
+                                            if (actionId != null) {
+                                              await _executeActionWithParams(actionId, formValues);
+                                            }
+                                          },
+                                          onCancel: () {
+                                            setState(() {
+                                              _chatHistory.removeAt(index);
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          
+                          return const SizedBox.shrink();
+                        },
                       ),
                     ],
                     // Consulta sugerida si existe

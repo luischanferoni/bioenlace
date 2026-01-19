@@ -111,6 +111,9 @@ class CrudController extends BaseController
             // Obtener todos los parámetros de la query string excepto action_id
             $params = Yii::$app->request->get();
             unset($params['action_id']);
+            
+            // Log para debug (solo en desarrollo)
+            Yii::info("GET execute-action - action_id: {$actionId}, params: " . json_encode($params), 'api-execute-action');
         } else {
             $actionId = Yii::$app->request->post('action_id');
             $params = Yii::$app->request->post('params', []);

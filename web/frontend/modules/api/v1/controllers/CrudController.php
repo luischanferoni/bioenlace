@@ -173,29 +173,87 @@ class CrudController extends BaseController
             $methodName = 'action' . $actionCamelCase;
             
             if (class_exists($controllerClass) && method_exists($controllerClass, $methodName)) {
-                // Crear instancia temporal
-                $controller = new $controllerClass($action['controller'], Yii::$app);
-                $controller->enableCsrfValidation = false;
-                
-                // Simular GET request
-                $originalGet = $_GET;
-                $originalMethod = $_SERVER['REQUEST_METHOD'] ?? 'POST';
-                $_GET = array_merge(['action_id' => $actionId], $params);
-                $_SERVER['REQUEST_METHOD'] = 'GET';
-                Yii::$app->request->setQueryParams($_GET);
-                
-                try {
-                    $result = $controller->runAction($actionName, []);
-                    
-                    // Si retorna wizard_config, usarlo directamente
-                    if (is_array($result) && isset($result['wizard_config'])) {
-                        $wizardConfig = $result['wizard_config'];
-                        $wizardSteps = $wizardConfig['steps'] ?? [];
-                        $fieldsConfig = $wizardConfig['fields'] ?? [];
+                // Establecer la identidad del usuario antes de ejecutar la acción
+                // El usuario ya está autenticado (verificado en actionExecuteAction)
+                $user = Yii::$app->user->identity;
+                if (!$user) {
+                    // Si no hay identidad establecida, buscarla
+                    $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
+                    if (!$user) {
+                        // Si no hay usuario, continuar con análisis automático
+                        Yii::warning("Usuario no encontrado para userId: {$userId}, usando análisis automático", 'api-execute-action');
                     }
-                } finally {
-                    $_GET = $originalGet;
-                    $_SERVER['REQUEST_METHOD'] = $originalMethod;
+                }
+                
+                if ($user) {
+                    // Guardar el estado original del usuario para restaurarlo después
+                    $originalUserIdentity = Yii::$app->user->identity;
+                    
+                    // Establecer la identidad del usuario sin iniciar sesión (API stateless con JWT)
+                    Yii::$app->user->setIdentity($user);
+                    
+                    // Actualizar permisos y rutas en la sesión para que los controladores puedan verificar acceso
+                    \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+                    
+                    try {
+                        // Crear instancia temporal
+                        $controller = new $controllerClass($action['controller'], Yii::$app);
+                        $controller->enableCsrfValidation = false;
+                        
+                        // Deshabilitar temporalmente el behavior ghost-access ya que los permisos
+                        // ya fueron verificados en findActionById usando ActionMappingService
+                        $originalBehaviors = $controller->behaviors();
+                        $controller->detachBehaviors();
+                        
+                        // Reagregar solo los behaviors que no sean ghost-access
+                        foreach ($originalBehaviors as $name => $behavior) {
+                            if ($name !== 'ghost-access') {
+                                $controller->attachBehavior($name, $behavior);
+                            }
+                        }
+                        
+                        // Simular GET request
+                        $originalGet = $_GET;
+                        $originalMethod = $_SERVER['REQUEST_METHOD'] ?? 'POST';
+                        $_GET = array_merge(['action_id' => $actionId], $params);
+                        $_SERVER['REQUEST_METHOD'] = 'GET';
+                        Yii::$app->request->setQueryParams($_GET);
+                        
+                        try {
+                            // Configurar response format como JSON
+                            $originalFormat = Yii::$app->response->format;
+                            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+                            
+                            try {
+                                $result = $controller->runAction($actionName, []);
+                                
+                                // Si retorna wizard_config, usarlo directamente
+                                if (is_array($result) && isset($result['wizard_config'])) {
+                                    $wizardConfig = $result['wizard_config'];
+                                    $wizardSteps = $wizardConfig['steps'] ?? [];
+                                    $fieldsConfig = $wizardConfig['fields'] ?? [];
+                                }
+                            } catch (\yii\web\ForbiddenHttpException $e) {
+                                // Si hay error de acceso, continuar con análisis automático
+                                Yii::info("Error de acceso al llamar método {$methodName}: " . $e->getMessage() . ", usando análisis automático", 'api-execute-action');
+                            } catch (\yii\web\BadRequestHttpException $e) {
+                                // Si hay error de parámetros (ej: Login Requerido), continuar con análisis automático
+                                Yii::info("Error de parámetros al llamar método {$methodName}: " . $e->getMessage() . ", usando análisis automático", 'api-execute-action');
+                            } catch (\Exception $e) {
+                                // Cualquier otro error, continuar con análisis automático
+                                Yii::warning("Error al llamar método {$methodName}: " . $e->getMessage() . ", usando análisis automático", 'api-execute-action');
+                            }
+                            
+                            // Restaurar formato original
+                            Yii::$app->response->format = $originalFormat;
+                        } finally {
+                            $_GET = $originalGet;
+                            $_SERVER['REQUEST_METHOD'] = $originalMethod;
+                        }
+                    } finally {
+                        // Restaurar el estado original del usuario
+                        Yii::$app->user->setIdentity($originalUserIdentity);
+                    }
                 }
             }
             

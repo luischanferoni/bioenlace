@@ -452,14 +452,19 @@ class CrudController extends BaseController
             
             // Establecer la identidad del usuario antes de ejecutar la acción
             // El usuario ya está autenticado (verificado en actionExecuteAction)
-            // Solo necesitamos establecer la identidad para que los controladores puedan verificar isGuest
-            $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
+            // Intentar usar la identidad ya establecida por JsonHttpBearerAuth si está disponible
+            // Solo buscar el usuario si no está disponible (endpoints excluidos del authenticator)
+            $user = Yii::$app->user->identity;
             if (!$user) {
-                return [
-                    'success' => false,
-                    'error' => 'Usuario no encontrado',
-                    'action_id' => $action['action_id'],
-                ];
+                // Si no hay identidad establecida, buscarla (endpoints excluidos del authenticator)
+                $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
+                if (!$user) {
+                    return [
+                        'success' => false,
+                        'error' => 'Usuario no encontrado',
+                        'action_id' => $action['action_id'],
+                    ];
+                }
             }
             
             // Guardar el estado original del usuario para restaurarlo después

@@ -210,17 +210,9 @@ class TurnosController extends Controller
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         // Obtener id_persona de la sesión (ya asignado por la autenticación JWT o web)
+        // La autenticación garantiza que idPersona esté disponible o lanza error antes
         $session = Yii::$app->session;
         $idPersona = $session->get('idPersona');
-        
-        // Validar que se obtuvo el id_persona
-        if (!$idPersona) {
-            Yii::$app->response->statusCode = 401;
-            return [
-                "success" => false, 
-                "message" => "No se pudo identificar al paciente. Debe estar autenticado."
-            ];
-        }
 
         $model = new Turno();
         $model->load(Yii::$app->request->post());

@@ -160,34 +160,115 @@ class CrudController extends BaseController
     private function getActionFormConfig($action, $params, $userId)
     {
         try {
-            // Analizar parámetros de la acción usando ActionParameterAnalyzer
-            $actionAnalysis = \common\components\ActionParameterAnalyzer::analyzeActionParameters(
-                $action,
-                $params, // Los params de GET se pasan como extractedData
-                $userId
-            );
+            $wizardConfig = null;
+            $wizardSteps = [];
+            $fieldsConfig = [];
+            $actionName = null;
+            $actionId = $action['action_id'] ?? null;
             
-            // Generar pasos del wizard
-            $wizardSteps = $this->generateWizardSteps($actionAnalysis['form_config']['fields']);
+            // Intentar obtener wizard_config llamando al método con GET
+            $controllerClass = 'frontend\\controllers\\' . ucfirst($action['controller']) . 'Controller';
+            $actionName = $action['action'];
+            $actionCamelCase = Inflector::id2camel($actionName, '-');
+            $methodName = 'action' . $actionCamelCase;
             
-            // Determinar el paso inicial del wizard
-            // Si todos los parámetros están presentes, mostrar el último paso (confirmación)
-            // Si faltan parámetros, mostrar desde el principio
-            $initialStep = 0;
-            if ($actionAnalysis['ready_to_execute'] && !empty($wizardSteps)) {
-                // Si está listo para ejecutar, mostrar el último paso (confirmación)
-                $initialStep = count($wizardSteps) - 1;
+            if (class_exists($controllerClass) && method_exists($controllerClass, $methodName)) {
+                // Crear instancia temporal
+                $controller = new $controllerClass($action['controller'], Yii::$app);
+                $controller->enableCsrfValidation = false;
+                
+                // Simular GET request
+                $originalGet = $_GET;
+                $originalMethod = $_SERVER['REQUEST_METHOD'] ?? 'POST';
+                $_GET = array_merge(['action_id' => $actionId], $params);
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                Yii::$app->request->setQueryParams($_GET);
+                
+                try {
+                    $result = $controller->runAction($actionName, []);
+                    
+                    // Si retorna wizard_config, usarlo directamente
+                    if (is_array($result) && isset($result['wizard_config'])) {
+                        $wizardConfig = $result['wizard_config'];
+                        $wizardSteps = $wizardConfig['steps'] ?? [];
+                        $fieldsConfig = $wizardConfig['fields'] ?? [];
+                    }
+                } finally {
+                    $_GET = $originalGet;
+                    $_SERVER['REQUEST_METHOD'] = $originalMethod;
+                }
+            }
+            
+            // Si no hay wizard_config del método, usar análisis automático
+            if (empty($wizardSteps)) {
+                $actionAnalysis = \common\components\ActionParameterAnalyzer::analyzeActionParameters(
+                    $action,
+                    $params, // Los params de GET se pasan como extractedData
+                    $userId
+                );
+                
+                $fieldsConfig = $actionAnalysis['form_config']['fields'] ?? [];
+                $wizardSteps = $this->generateWizardSteps($fieldsConfig);
+                $actionName = $actionAnalysis['action_name'] ?? $action['display_name'] ?? 'Completa la información';
+                $actionId = $actionAnalysis['action_id'] ?? $actionId;
+            } else {
+                // Si hay wizard_config, usar el action_name del action original
+                $actionName = $action['action_name'] ?? $action['display_name'] ?? 'Completa la información';
+            }
+            
+            // Calcular paso inicial de forma genérica
+            $initialStep = $this->calculateInitialStep($wizardSteps, $fieldsConfig, $params);
+            
+            // Preparar form_config para compatibilidad
+            $formConfig = [
+                'fields' => $fieldsConfig,
+            ];
+            
+            // Si hay wizard_config del método, incluir metadata adicional
+            if ($wizardConfig !== null) {
+                $formConfig['navigation'] = $wizardConfig['navigation'] ?? [];
+            }
+            
+            // Determinar si está listo para ejecutar (todos los campos requeridos tienen valores)
+            $readyToExecute = true;
+            foreach ($fieldsConfig as $field) {
+                if (($field['required'] ?? false) && 
+                    (!isset($params[$field['name']]) || 
+                     $params[$field['name']] === null || 
+                     $params[$field['name']] === '')) {
+                    $readyToExecute = false;
+                    break;
+                }
+            }
+            
+            // Preparar parámetros para la respuesta
+            $providedParams = [];
+            $missingParams = [];
+            foreach ($fieldsConfig as $field) {
+                $fieldName = $field['name'] ?? null;
+                if (empty($fieldName)) {
+                    continue;
+                }
+                
+                if (isset($params[$fieldName]) && $params[$fieldName] !== null && $params[$fieldName] !== '') {
+                    $providedParams[$fieldName] = $params[$fieldName];
+                } elseif ($field['required'] ?? false) {
+                    $missingParams[] = $field;
+                }
             }
             
             return [
                 'success' => true,
                 'data' => [
-                    'action_id' => $actionAnalysis['action_id'],
-                    'action_name' => $actionAnalysis['action_name'],
-                    'form_config' => $actionAnalysis['form_config'],
-                    'parameters' => $actionAnalysis['parameters'],
-                    'ready_to_execute' => $actionAnalysis['ready_to_execute'],
-                    'initial_step' => $initialStep, // Paso inicial del wizard
+                    'action_id' => $actionId,
+                    'action_name' => $actionName,
+                    'form_config' => $formConfig,
+                    'parameters' => [
+                        'provided' => $providedParams,
+                        'missing' => $missingParams,
+                    ],
+                    'ready_to_execute' => $readyToExecute,
+                    'initial_step' => $initialStep,
                     'wizard_steps' => $wizardSteps,
                 ],
             ];
@@ -195,6 +276,73 @@ class CrudController extends BaseController
             Yii::error("Error obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
             return $this->error('Error al obtener configuración del formulario: ' . $e->getMessage(), null, 500);
         }
+    }
+    
+    /**
+     * Calcular el paso inicial del wizard basándose en los pasos y parámetros proporcionados
+     * 
+     * @param array $wizardSteps Array de pasos del wizard
+     * @param array $fieldsConfig Configuración de todos los campos (para verificar required)
+     * @param array $providedParams Parámetros ya proporcionados
+     * @return int Índice del paso inicial (0-based)
+     */
+    private function calculateInitialStep($wizardSteps, $fieldsConfig, $providedParams)
+    {
+        if (empty($wizardSteps)) {
+            return 0;
+        }
+        
+        // Si no hay parámetros proporcionados, empezar desde el primer paso
+        if (empty($providedParams)) {
+            return 0;
+        }
+        
+        // Crear un mapa de configuración de campos por nombre para acceso rápido
+        $fieldsMap = [];
+        foreach ($fieldsConfig as $field) {
+            $fieldName = $field['name'] ?? null;
+            if (!empty($fieldName)) {
+                $fieldsMap[$fieldName] = $field;
+            }
+        }
+        
+        // Verificar cada paso en orden para encontrar el primero con campos incompletos
+        foreach ($wizardSteps as $stepIndex => $step) {
+            $stepFields = $step['fields'] ?? [];
+            $stepComplete = true;
+            
+            // Verificar si todos los campos requeridos de este paso tienen valores
+            foreach ($stepFields as $field) {
+                // El campo puede ser un string (nombre) o un array con 'name'
+                $fieldName = is_array($field) ? ($field['name'] ?? null) : $field;
+                
+                if (empty($fieldName)) {
+                    continue;
+                }
+                
+                // Obtener configuración del campo para verificar si es requerido
+                $fieldConfig = $fieldsMap[$fieldName] ?? null;
+                
+                // Si el campo es requerido y no tiene valor, el paso no está completo
+                $isRequired = $fieldConfig['required'] ?? false;
+                $hasValue = isset($providedParams[$fieldName]) && 
+                           $providedParams[$fieldName] !== null && 
+                           $providedParams[$fieldName] !== '';
+                
+                if ($isRequired && !$hasValue) {
+                    $stepComplete = false;
+                    break;
+                }
+            }
+            
+            // Si este paso no está completo, este es el paso inicial
+            if (!$stepComplete) {
+                return $stepIndex;
+            }
+        }
+        
+        // Si todos los pasos están completos, mostrar el último paso (confirmación)
+        return count($wizardSteps) - 1;
     }
     
     /**

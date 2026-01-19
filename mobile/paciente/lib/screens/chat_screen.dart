@@ -276,21 +276,22 @@ class _ChatScreenState extends State<ChatScreen> {
         final initialStep = data['initial_step'] ?? 0;
         final readyToExecute = data['ready_to_execute'] ?? false;
         final parameters = data['parameters'];
+        final actionName = data['action_name'];
 
         setState(() {
           _isSending = false;
 
           // Agregar respuesta del bot con el form_config para mostrar el wizard
+          // Sin mensaje de texto, solo el form_config para mostrar directamente el formulario
           _chatHistory.add({
             'type': 'bot',
-            'content': readyToExecute 
-                ? 'Por favor, confirma los datos para completar la acción.'
-                : 'Por favor, completa los siguientes datos:',
+            'content': '', // Sin mensaje de texto
             'form_config': formConfig,
             'wizard_steps': wizardSteps,
             'initial_step': initialStep,
             'ready_to_execute': readyToExecute,
             'action_id': actionId,
+            'action_name': actionName, // Agregar action_name para usar como título
             'parameters': parameters,
             'data': data,
             'timestamp': DateTime.now(),
@@ -398,72 +399,77 @@ class _ChatScreenState extends State<ChatScreen> {
                     ? Map<String, dynamic>.from(actionAnalysisRaw) 
                     : null;
 
+                // Verificar si hay form_config para ocultar el mensaje de chat
+                final hasFormConfig = message['form_config'] != null;
+                
                 return Column(
                   children: [
-                    // Mensaje
-                    Align(
-                      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 4.0,
-                          horizontal: 16.0,
-                        ),
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: isUser
-                              ? Theme.of(context).primaryColor
-                              : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(16.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (!isUser)
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.smart_toy,
-                                    size: 16,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'BioEnlace',
-                                    style: AppTheme.h6Style.copyWith(
-                                      fontWeight: FontWeight.bold,
+                    // Mensaje (solo mostrar si no hay form_config)
+                    if (!hasFormConfig)
+                      Align(
+                        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 4.0,
+                            horizontal: 16.0,
+                          ),
+                          padding: const EdgeInsets.all(16.0),
+                          decoration: BoxDecoration(
+                            color: isUser
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(16.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!isUser)
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.smart_toy,
+                                      size: 16,
                                       color: Theme.of(context).primaryColor,
-                                      fontSize: 12,
                                     ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'BioEnlace',
+                                      style: AppTheme.h6Style.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              if (!isUser) const SizedBox(height: 4),
+                              if (content.isNotEmpty)
+                                Text(
+                                  content,
+                                  style: AppTheme.subTitleStyle.copyWith(
+                                    color: isUser ? Colors.white : Colors.black87,
+                                    fontSize: 14,
                                   ),
-                                ],
+                                ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isUser ? Colors.white70 : Colors.grey[600],
+                                ),
                               ),
-                            if (!isUser) const SizedBox(height: 4),
-                            Text(
-                              content,
-                              style: AppTheme.subTitleStyle.copyWith(
-                                color: isUser ? Colors.white : Colors.black87,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: isUser ? Colors.white70 : Colors.grey[600],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
                     // Acciones si existen
                     if (!isUser && actions != null && actions.isNotEmpty) ...[
                       const SizedBox(height: 8),
@@ -499,9 +505,11 @@ class _ChatScreenState extends State<ChatScreen> {
                           final formConfig = message['form_config'];
                           final wizardSteps = message['wizard_steps'];
                           final actionIdFromMessage = message['action_id'];
+                          final actionName = message['action_name'];
                           final parametersFromMessage = message['parameters'];
                           
                           if (formConfig != null && formConfig is Map) {
+                            // Si hay form_config, mostrar solo el formulario sin mensaje de chat
                             return Column(
                               children: [
                                 const SizedBox(height: 16),
@@ -527,11 +535,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                               color: Theme.of(context).primaryColor,
                                             ),
                                             const SizedBox(width: 8),
-                                            Text(
-                                              'Completa la información',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Theme.of(context).primaryColor,
+                                            Expanded(
+                                              child: Text(
+                                                actionName ?? 'Completa la información',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Theme.of(context).primaryColor,
+                                                ),
                                               ),
                                             ),
                                           ],

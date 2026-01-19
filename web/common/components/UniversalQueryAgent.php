@@ -1289,21 +1289,9 @@ PROMPT;
             );
         }
         
-        // Construir respuesta simplificada
-        $response = [
-            'success' => true,
-            'explanation' => $parsed['explanation'] ?? 'Encontré ' . count($actions) . ' acciones relacionadas con tu consulta.',
-            'actions' => $formattedActions,
-            'count' => $parsed['count'] ?? count($actions),
-            'query_type' => $criteria['query_type'] ?? 'unknown',
-        ];
-        
-        // Solo agregar action_id y parameters.provided si existe actionAnalysis
+        // Extraer parámetros proporcionados si existe actionAnalysis
+        $providedParams = [];
         if ($actionAnalysis && !empty($actions)) {
-            $response['action_id'] = $actions[0]['action_id'] ?? null;
-            
-            // Extraer solo los parámetros proporcionados (con valores)
-            $providedParams = [];
             if (isset($actionAnalysis['parameters']['provided']) && is_array($actionAnalysis['parameters']['provided'])) {
                 foreach ($actionAnalysis['parameters']['provided'] as $paramName => $paramData) {
                     // El paramData puede ser un array con 'value' o directamente un valor
@@ -1314,11 +1302,30 @@ PROMPT;
                     }
                 }
             }
-            
-            $response['parameters'] = [
-                'provided' => $providedParams
-            ];
         }
+        
+        // Agregar parámetros a la primera acción (la principal) si existen
+        if (!empty($providedParams) && !empty($formattedActions)) {
+            // Si formattedActions es un array de acciones
+            if (isset($formattedActions[0])) {
+                $formattedActions[0]['parameters'] = [
+                    'provided' => $providedParams
+                ];
+            } elseif (isset($formattedActions['action_id'])) {
+                // Si es una sola acción (no array)
+                $formattedActions['parameters'] = [
+                    'provided' => $providedParams
+                ];
+            }
+        }
+        
+        // Construir respuesta simplificada
+        $response = [
+            'success' => true,
+            'explanation' => $parsed['explanation'] ?? 'Encontré ' . count($actions) . ' acciones relacionadas con tu consulta.',
+            'actions' => $formattedActions,
+            'count' => $parsed['count'] ?? count($actions),
+        ];
         
         return $response;
     }

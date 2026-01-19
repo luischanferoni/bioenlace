@@ -1265,7 +1265,8 @@ PROMPT;
         
         // Si se encontró un id_servicio válido en los criterios, agregarlo al extracted_data
         // para que el analizador pueda mapearlo correctamente
-        $servicioInfo = self::validateServicioInCriteria($criteria);
+        // Pasar userQuery para búsqueda directa en el texto si no se encuentra en extracted_data
+        $servicioInfo = self::validateServicioInCriteria($criteria, $userQuery);
         if ($servicioInfo['has_servicio'] && $servicioInfo['is_valid'] && $servicioInfo['id_servicio'] !== null) {
             // Agregar id_servicio al extracted_data si no está ya presente
             if (!isset($extractedData['id_servicio'])) {
@@ -1288,6 +1289,7 @@ PROMPT;
             );
         }
         
+        // Construir respuesta simplificada
         $response = [
             'success' => true,
             'explanation' => $parsed['explanation'] ?? 'Encontré ' . count($actions) . ' acciones relacionadas con tu consulta.',
@@ -1296,10 +1298,26 @@ PROMPT;
             'query_type' => $criteria['query_type'] ?? 'unknown',
         ];
         
-        // Agregar análisis de parámetros si existe
-        if ($actionAnalysis) {
-            $response['action_analysis'] = $actionAnalysis;
-            $response['needs_user_input'] = !$actionAnalysis['ready_to_execute'];
+        // Solo agregar action_id y parameters.provided si existe actionAnalysis
+        if ($actionAnalysis && !empty($actions)) {
+            $response['action_id'] = $actions[0]['action_id'] ?? null;
+            
+            // Extraer solo los parámetros proporcionados (con valores)
+            $providedParams = [];
+            if (isset($actionAnalysis['parameters']['provided']) && is_array($actionAnalysis['parameters']['provided'])) {
+                foreach ($actionAnalysis['parameters']['provided'] as $paramName => $paramData) {
+                    // El paramData puede ser un array con 'value' o directamente un valor
+                    if (is_array($paramData) && isset($paramData['value'])) {
+                        $providedParams[$paramName] = $paramData['value'];
+                    } elseif (!is_array($paramData)) {
+                        $providedParams[$paramName] = $paramData;
+                    }
+                }
+            }
+            
+            $response['parameters'] = [
+                'provided' => $providedParams
+            ];
         }
         
         return $response;
@@ -2078,11 +2096,49 @@ PROMPT;
     }
 
     /**
+     * Extraer servicio directamente del texto de la consulta
+     * Busca palabras clave de servicios en el texto
+     * @param string $userQuery
+     * @return int|null
+     */
+    private static function extractServicioFromQuery($userQuery)
+    {
+        if (empty($userQuery) || !is_string($userQuery)) {
+            return null;
+        }
+        
+        $queryLower = strtolower(trim($userQuery));
+        
+        // Palabras clave de servicios comunes
+        $servicioKeywords = [
+            'odontologo', 'odontología', 'odontologia', 'dental', 'dentista',
+            'pediatra', 'pediatría',
+            'ginecologo', 'ginecología', 'ginecologia',
+            'medico', 'médico', 'medico general', 'medico familiar', 'medico clinica', 'médico clínica', 'clinica', 'clínica',
+            'psicologo', 'psicología', 'psicologia',
+            'kinesiologo', 'kinesiología', 'kinesiologia', 'kinesio',
+        ];
+        
+        // Buscar cada palabra clave en el texto
+        foreach ($servicioKeywords as $keyword) {
+            if (stripos($queryLower, $keyword) !== false) {
+                $servicioId = self::findServicioByName($keyword);
+                if ($servicioId !== null) {
+                    return $servicioId;
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    /**
      * Validar si hay id_servicio en los criterios y si es válido
      * @param array $criteria
+     * @param string|null $userQuery Texto original de la consulta (opcional, para búsqueda directa)
      * @return array
      */
-    private static function validateServicioInCriteria($criteria)
+    private static function validateServicioInCriteria($criteria, $userQuery = null)
     {
         $result = [
             'has_servicio' => false,
@@ -2158,6 +2214,20 @@ PROMPT;
                 }
             }
         }
+        
+        // Si aún no se encontró, buscar directamente en el texto de la consulta
+        if (!$result['has_servicio'] && $userQuery !== null) {
+            $servicioId = self::extractServicioFromQuery($userQuery);
+            if ($servicioId !== null) {
+                $result['has_servicio'] = true;
+                $result['id_servicio'] = $servicioId;
+                $result['is_valid'] = true;
+                $servicio = \common\models\Servicio::findOne($servicioId);
+                if ($servicio) {
+                    $result['servicio_name'] = $servicio->nombre;
+                }
+            }
+        }
 
         return $result;
     }
@@ -2188,12 +2258,47 @@ PROMPT;
         if (empty($nombre) || !is_string($nombre)) {
             return null;
         }
+        
+        // Normalizar nombre: convertir a mayúsculas y limpiar
+        $nombreNormalizado = strtoupper(trim($nombre));
+        
+        // Mapeo de sinónimos comunes
+        $sinonimos = [
+            'odontologo' => 'ODONTOLOGIA',
+            'odontología' => 'ODONTOLOGIA',
+            'odontologia' => 'ODONTOLOGIA',
+            'dental' => 'ODONTOLOGIA',
+            'dentista' => 'ODONTOLOGIA',
+            'pediatra' => 'PEDIATRIA',
+            'pediatría' => 'PEDIATRIA',
+            'ginecologo' => 'GINECOLOGIA',
+            'ginecología' => 'GINECOLOGIA',
+            'ginecologia' => 'GINECOLOGIA',
+            'medico' => 'MED GENERAL',
+            'médico' => 'MED GENERAL',
+            'medico general' => 'MED GENERAL',
+            'medico familiar' => 'MED FAMILIAR',
+            'medico clinica' => 'MED CLINICA',
+            'médico clínica' => 'MED CLINICA',
+            'clinica' => 'MED CLINICA',
+            'clínica' => 'MED CLINICA',
+            'psicologo' => 'PSICOLOGIA',
+            'psicología' => 'PSICOLOGIA',
+            'psicologia' => 'PSICOLOGIA',
+            'kinesiologo' => 'KINESIOLOGIA',
+            'kinesiología' => 'KINESIOLOGIA',
+            'kinesiologia' => 'KINESIOLOGIA',
+            'kinesio' => 'KINESIOLOGIA',
+        ];
+        
+        // Verificar si hay un sinónimo directo
+        $nombreLower = strtolower($nombreNormalizado);
+        if (isset($sinonimos[$nombreLower])) {
+            $nombreNormalizado = $sinonimos[$nombreLower];
+        }
 
         try {
-            // Normalizar nombre
-            $nombreNormalizado = trim($nombre);
-            
-            // Buscar en la base de datos
+            // Primero intentar búsqueda exacta
             $servicio = \common\models\Servicio::find()
                 ->where(['nombre' => $nombreNormalizado])
                 ->one();
@@ -2202,13 +2307,26 @@ PROMPT;
                 return (int)$servicio->id_servicio;
             }
             
-            // Intentar búsqueda con LIKE (case insensitive)
+            // Si no se encuentra exacto, intentar búsqueda con LIKE
             $servicio = \common\models\Servicio::find()
                 ->where(['LIKE', 'nombre', $nombreNormalizado])
                 ->one();
             
             if ($servicio) {
                 return (int)$servicio->id_servicio;
+            }
+            
+            // Último intento: buscar sinónimos en la base de datos
+            foreach ($sinonimos as $sinonimo => $nombreServicio) {
+                if (stripos($nombreNormalizado, $sinonimo) !== false || stripos($sinonimo, $nombreNormalizado) !== false) {
+                    $servicio = \common\models\Servicio::find()
+                        ->where(['nombre' => $nombreServicio])
+                        ->one();
+                    
+                    if ($servicio) {
+                        return (int)$servicio->id_servicio;
+                    }
+                }
             }
         } catch (\Exception $e) {
             Yii::error("Error buscando servicio por nombre '{$nombre}': " . $e->getMessage(), 'universal-query-agent');

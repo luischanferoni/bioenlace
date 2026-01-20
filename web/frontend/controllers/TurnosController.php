@@ -227,7 +227,9 @@ class TurnosController extends Controller
                 $templateParams  // Incluye both template vars y provided params para calcular initial_step
             );
             
-            return $config; // Ya incluye wizard_config con initial_step calculado
+            // El config ya tiene wizard_config, devolverlo directamente
+            // Formato esperado: ['wizard_config' => [...]]
+            return $config;
         }
 
         // Obtener id_persona de la sesión (ya asignado por la autenticación JWT o web)

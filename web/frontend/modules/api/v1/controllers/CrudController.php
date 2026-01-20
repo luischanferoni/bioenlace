@@ -229,8 +229,12 @@ class CrudController extends BaseController
                             try {
                                 $result = $controller->runAction($actionName, []);
                                 
+                                // Debug: log del resultado
+                                Yii::info("Resultado de {$methodName}: " . json_encode($result), 'api-execute-action');
+                                
                                 // Si el método devuelve wizard_config, usarlo directamente
                                 if (is_array($result) && isset($result['wizard_config'])) {
+                                    Yii::info("Detectado wizard_config en resultado de {$methodName}", 'api-execute-action');
                                     $wizardConfig = $result['wizard_config'];
                                     $wizardSteps = $wizardConfig['steps'] ?? [];
                                     $fieldsConfig = $wizardConfig['fields'] ?? [];
@@ -372,6 +376,21 @@ class CrudController extends BaseController
                 $finalWizardSteps = $wizardSteps;
             }
             
+            // Si el método devolvió wizard_config desde template, devolver estructura simplificada
+            if ($hasMethodWizardConfig) {
+                return [
+                    'success' => true,
+                    'data' => [
+                        'action_id' => $actionId,
+                        'action_name' => $actionName,
+                        'form_config' => $formConfig,
+                        'initial_step' => $initialStep,
+                        'wizard_steps' => $finalWizardSteps,
+                    ],
+                ];
+            }
+            
+            // Si viene del análisis automático, incluir parameters y ready_to_execute
             return [
                 'success' => true,
                 'data' => [

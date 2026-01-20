@@ -207,10 +207,9 @@ class TurnosController extends Controller
      */
     public function actionCrearMiTurno()
     {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
         // Si es GET, devolver wizard_config desde template
         if (Yii::$app->request->isGet) {
+            // No establecer FORMAT_JSON aquí, dejar que CrudController lo maneje
             // Obtener parámetros proporcionados por el usuario (vienen en GET)
             $providedParams = Yii::$app->request->get();
             // Remover action_id si está presente (es un parámetro de la API, no del formulario)
@@ -227,10 +226,20 @@ class TurnosController extends Controller
                 $templateParams  // Incluye both template vars y provided params para calcular initial_step
             );
             
+            // Debug: verificar que el config tenga wizard_config
+            if (!isset($config['wizard_config'])) {
+                Yii::error("FormConfigTemplateManager no devolvió wizard_config para turnos/crear-mi-turno", 'turnos-controller');
+                return ['wizard_config' => []];
+            }
+            
             // El config ya tiene wizard_config, devolverlo directamente
             // Formato esperado: ['wizard_config' => [...]]
+            Yii::info("Devolviendo wizard_config desde template: " . json_encode($config), 'turnos-controller');
             return $config;
         }
+
+        // Si es POST, establecer formato JSON para la respuesta
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         // Obtener id_persona de la sesión (ya asignado por la autenticación JWT o web)
         // La autenticación garantiza que idPersona esté disponible o lanza error antes

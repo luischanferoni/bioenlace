@@ -222,15 +222,35 @@ class CrudController extends BaseController
                         Yii::$app->request->setQueryParams($_GET);
                         
                         try {
-                            // Configurar response format como JSON
+                            // Guardar el formato original y deshabilitar el envío automático de respuesta
                             $originalFormat = Yii::$app->response->format;
+                            $originalData = Yii::$app->response->data;
+                            
+                            // Configurar response format como JSON pero sin enviar
                             Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
                             
+                            // Capturar cualquier salida que el método pueda generar
+                            ob_start();
+                            
                             try {
-                                $result = $controller->runAction($actionName, []);
+                                // Usar reflexión para llamar al método directamente y capturar el resultado
+                                // Esto evita problemas con runAction cuando hay FORMAT_JSON
+                                $reflection = new \ReflectionMethod($controller, $methodName);
+                                $reflection->setAccessible(true);
+                                
+                                // Llamar al método directamente
+                                $result = $reflection->invoke($controller);
+                                
+                                // Limpiar cualquier salida capturada
+                                $output = ob_get_clean();
+                                
+                                // Si hay salida pero no hay resultado, podría ser que Yii2 envió la respuesta
+                                if (!empty($output) && $result === null) {
+                                    Yii::warning("El método {$methodName} generó salida pero no retornó valor. Output: " . substr($output, 0, 200), 'api-execute-action');
+                                }
                                 
                                 // Debug: log del resultado
-                                Yii::info("Resultado de {$methodName}: " . json_encode($result), 'api-execute-action');
+                                Yii::info("Resultado de {$methodName}: " . json_encode($result) . " (tipo: " . gettype($result) . ")", 'api-execute-action');
                                 
                                 // Si el método devuelve wizard_config, usarlo directamente
                                 if (is_array($result) && isset($result['wizard_config'])) {
@@ -265,24 +285,40 @@ class CrudController extends BaseController
                                     
                                     $hasMethodWizardConfig = true;
                                 } else {
-                                    $hasMethodWizardConfig = false;
+                                    // El método existe pero no devolvió wizard_config
+                                    throw new \yii\web\ServerErrorHttpException(
+                                        "El método {$methodName} no devolvió wizard_config. " .
+                                        "Resultado recibido: " . json_encode($result) . 
+                                        " (tipo: " . gettype($result) . ")"
+                                    );
                                 }
                             } catch (\yii\web\ForbiddenHttpException $e) {
-                                // Si hay error de acceso, continuar con análisis automático
-                                Yii::info("Error de acceso al llamar método {$methodName}: " . $e->getMessage() . ", usando análisis automático", 'api-execute-action');
+                                // Re-lanzar excepciones de acceso
+                                throw $e;
                             } catch (\yii\web\BadRequestHttpException $e) {
-                                // Si hay error de parámetros (ej: Login Requerido), continuar con análisis automático
-                                Yii::info("Error de parámetros al llamar método {$methodName}: " . $e->getMessage() . ", usando análisis automático", 'api-execute-action');
+                                // Re-lanzar excepciones de parámetros
+                                throw $e;
                             } catch (\yii\web\HttpException $e) {
-                                // Capturar cualquier excepción HTTP (incluyendo UnauthorizedHttpException)
-                                Yii::info("Error HTTP al llamar método {$methodName}: " . $e->getMessage() . " (código: {$e->statusCode}), usando análisis automático", 'api-execute-action');
+                                // Re-lanzar excepciones HTTP
+                                throw $e;
                             } catch (\Exception $e) {
-                                // Cualquier otro error, continuar con análisis automático
-                                Yii::warning("Error al llamar método {$methodName}: " . $e->getMessage() . " (" . get_class($e) . "), usando análisis automático", 'api-execute-action');
+                                // Re-lanzar cualquier otra excepción
+                                Yii::error("Error al llamar método {$methodName}: " . $e->getMessage() . " (" . get_class($e) . "). Trace: " . $e->getTraceAsString(), 'api-execute-action');
+                                throw new \yii\web\ServerErrorHttpException(
+                                    "Error al obtener wizard_config del método {$methodName}: " . $e->getMessage(),
+                                    0,
+                                    $e
+                                );
+                            } finally {
+                                // Limpiar buffer de salida si quedó algo
+                                if (ob_get_level() > 0) {
+                                    ob_end_clean();
+                                }
                             }
                             
-                            // Restaurar formato original
+                            // Restaurar formato original y data
                             Yii::$app->response->format = $originalFormat;
+                            Yii::$app->response->data = $originalData;
                         } finally {
                             $_GET = $originalGet;
                             $_SERVER['REQUEST_METHOD'] = $originalMethod;
@@ -294,18 +330,28 @@ class CrudController extends BaseController
                 }
             }
             
-            // Si no hay wizard_config del método, usar análisis automático
+            // Verificar que tenemos wizard_config del método
             if (empty($wizardSteps) || !$hasMethodWizardConfig) {
-                $actionAnalysis = \common\components\ActionParameterAnalyzer::analyzeActionParameters(
-                    $action,
-                    $params, // Los params de GET se pasan como extractedData
-                    $userId
-                );
-                
-                $fieldsConfig = $actionAnalysis['form_config']['fields'] ?? [];
-                $wizardSteps = $this->generateWizardSteps($fieldsConfig);
-                $actionName = $actionAnalysis['action_name'] ?? $action['display_name'] ?? 'Completa la información';
-                $actionId = $actionAnalysis['action_id'] ?? $actionId;
+                // Si el método existe pero no devolvió wizard_config, lanzar excepción
+                if (class_exists($controllerClass) && method_exists($controllerClass, $methodName)) {
+                    throw new \yii\web\ServerErrorHttpException(
+                        "El método {$methodName} existe pero no devolvió wizard_config. " .
+                        "Se esperaba que el método devuelva un array con 'wizard_config' o con 'steps'/'fields'."
+                    );
+                } else {
+                    // Si el método no existe, usar análisis automático como fallback
+                    Yii::info("Método {$methodName} no existe, usando análisis automático para {$actionId}", 'api-execute-action');
+                    $actionAnalysis = \common\components\ActionParameterAnalyzer::analyzeActionParameters(
+                        $action,
+                        $params, // Los params de GET se pasan como extractedData
+                        $userId
+                    );
+                    
+                    $fieldsConfig = $actionAnalysis['form_config']['fields'] ?? [];
+                    $wizardSteps = $this->generateWizardSteps($fieldsConfig);
+                    $actionName = $actionAnalysis['action_name'] ?? $action['display_name'] ?? 'Completa la información';
+                    $actionId = $actionAnalysis['action_id'] ?? $actionId;
+                }
             } else {
                 // Si hay wizard_config del método, usar el action_name del action original
                 $actionName = $action['action_name'] ?? $action['display_name'] ?? 'Completa la información';

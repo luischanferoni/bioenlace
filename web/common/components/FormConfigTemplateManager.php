@@ -26,8 +26,9 @@ class FormConfigTemplateManager
      * 
      * @param string $entity Nombre de la entidad (ej: 'turnos')
      * @param string $action Nombre de la acción (ej: 'crear-mi-turno')
-     * @param array $params Variables para procesar (ej: ['today' => '2024-01-01'])
-     * @return array Configuración completa del wizard_config
+     * @param array $params Variables para procesar (ej: ['today' => '2024-01-01', 'idEfector' => 123])
+     *                       También incluye los parámetros proporcionados por el usuario para calcular initial_step
+     * @return array Configuración completa del wizard_config con initial_step calculado
      */
     public static function render($entity, $action, $params = [])
     {
@@ -42,6 +43,16 @@ class FormConfigTemplateManager
         
         // 4. Procesar variables dinámicas (como "today")
         $processedConfig = self::processVariables($mergedConfig, $params);
+        
+        // 5. Calcular initial_step basado en los parámetros proporcionados
+        if (isset($processedConfig['wizard_config']['steps']) && isset($processedConfig['wizard_config']['fields'])) {
+            $initialStep = self::calculateInitialStep(
+                $processedConfig['wizard_config']['steps'],
+                $processedConfig['wizard_config']['fields'],
+                $params
+            );
+            $processedConfig['wizard_config']['initial_step'] = $initialStep;
+        }
         
         return $processedConfig;
     }
@@ -164,5 +175,72 @@ class FormConfigTemplateManager
         }
         
         return $config;
+    }
+    
+    /**
+     * Calcular el paso inicial del wizard basándose en los pasos y parámetros proporcionados
+     * 
+     * @param array $wizardSteps Array de pasos del wizard (con fields como nombres o objetos)
+     * @param array $fieldsConfig Configuración de todos los campos (para verificar required)
+     * @param array $providedParams Parámetros ya proporcionados por el usuario
+     * @return int Índice del paso inicial (0-based)
+     */
+    private static function calculateInitialStep($wizardSteps, $fieldsConfig, $providedParams)
+    {
+        if (empty($wizardSteps)) {
+            return 0;
+        }
+        
+        // Si no hay parámetros proporcionados, empezar desde el primer paso
+        if (empty($providedParams)) {
+            return 0;
+        }
+        
+        // Crear un mapa de configuración de campos por nombre para acceso rápido
+        $fieldsMap = [];
+        foreach ($fieldsConfig as $field) {
+            $fieldName = $field['name'] ?? null;
+            if (!empty($fieldName)) {
+                $fieldsMap[$fieldName] = $field;
+            }
+        }
+        
+        // Verificar cada paso en orden para encontrar el primero con campos incompletos
+        foreach ($wizardSteps as $stepIndex => $step) {
+            $stepFields = $step['fields'] ?? [];
+            $stepComplete = true;
+            
+            // Verificar si todos los campos requeridos de este paso tienen valores
+            foreach ($stepFields as $field) {
+                // El campo puede ser un string (nombre) o un array con 'name'
+                $fieldName = is_array($field) ? ($field['name'] ?? null) : $field;
+                
+                if (empty($fieldName)) {
+                    continue;
+                }
+                
+                // Obtener configuración del campo para verificar si es requerido
+                $fieldConfig = $fieldsMap[$fieldName] ?? null;
+                
+                // Si el campo es requerido y no tiene valor, el paso no está completo
+                $isRequired = $fieldConfig['required'] ?? false;
+                $hasValue = isset($providedParams[$fieldName]) && 
+                           $providedParams[$fieldName] !== null && 
+                           $providedParams[$fieldName] !== '';
+                
+                if ($isRequired && !$hasValue) {
+                    $stepComplete = false;
+                    break;
+                }
+            }
+            
+            // Si este paso no está completo, este es el paso inicial
+            if (!$stepComplete) {
+                return $stepIndex;
+            }
+        }
+        
+        // Si todos los pasos están completos, mostrar el último paso (confirmación)
+        return count($wizardSteps) - 1;
     }
 }

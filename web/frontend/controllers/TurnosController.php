@@ -211,17 +211,23 @@ class TurnosController extends Controller
 
         // Si es GET, devolver wizard_config desde template
         if (Yii::$app->request->isGet) {
-            $params = [
+            // Obtener parámetros proporcionados por el usuario (vienen en GET)
+            $providedParams = Yii::$app->request->get();
+            // Remover action_id si está presente (es un parámetro de la API, no del formulario)
+            unset($providedParams['action_id']);
+            
+            // Parámetros para procesar variables dinámicas (como "today")
+            $templateParams = array_merge([
                 'today' => date('Y-m-d')
-            ];
+            ], $providedParams);
             
             $config = \common\components\FormConfigTemplateManager::render(
                 'turnos',  // entity
                 'crear-mi-turno',  // action
-                $params
+                $templateParams  // Incluye both template vars y provided params para calcular initial_step
             );
             
-            return $config; // Ya incluye wizard_config
+            return $config; // Ya incluye wizard_config con initial_step calculado
         }
 
         // Obtener id_persona de la sesión (ya asignado por la autenticación JWT o web)

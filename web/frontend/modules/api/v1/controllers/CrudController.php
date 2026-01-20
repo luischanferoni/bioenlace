@@ -165,6 +165,8 @@ class CrudController extends BaseController
             $fieldsConfig = [];
             $actionName = null;
             $actionId = $action['action_id'] ?? null;
+            $hasMethodWizardConfig = false;
+            $initialStepFromTemplate = null;
             
             // Intentar obtener wizard_config llamando al método con GET
             $controllerClass = 'frontend\\controllers\\' . ucfirst($action['controller']) . 'Controller';
@@ -227,11 +229,39 @@ class CrudController extends BaseController
                             try {
                                 $result = $controller->runAction($actionName, []);
                                 
-                                // Si retorna wizard_config, usarlo directamente
+                                // Si el método devuelve wizard_config, usarlo directamente
                                 if (is_array($result) && isset($result['wizard_config'])) {
                                     $wizardConfig = $result['wizard_config'];
                                     $wizardSteps = $wizardConfig['steps'] ?? [];
                                     $fieldsConfig = $wizardConfig['fields'] ?? [];
+                                    
+                                    // Expandir nombres de campos en steps a objetos completos
+                                    $wizardSteps = $this->expandStepFields($wizardSteps, $fieldsConfig);
+                                    
+                                    // Si el template ya calculó initial_step, usarlo
+                                    if (isset($wizardConfig['initial_step'])) {
+                                        $initialStepFromTemplate = $wizardConfig['initial_step'];
+                                    }
+                                    
+                                    // Marcar que tenemos wizard_config del método
+                                    $hasMethodWizardConfig = true;
+                                } elseif (is_array($result) && (isset($result['steps']) || isset($result['fields']))) {
+                                    // Si tiene steps/fields directamente, envolver en wizard_config
+                                    $wizardConfig = $result;
+                                    $wizardSteps = $wizardConfig['steps'] ?? [];
+                                    $fieldsConfig = $wizardConfig['fields'] ?? [];
+                                    
+                                    // Expandir nombres de campos en steps a objetos completos
+                                    $wizardSteps = $this->expandStepFields($wizardSteps, $fieldsConfig);
+                                    
+                                    // Si el template ya calculó initial_step, usarlo
+                                    if (isset($wizardConfig['initial_step'])) {
+                                        $initialStepFromTemplate = $wizardConfig['initial_step'];
+                                    }
+                                    
+                                    $hasMethodWizardConfig = true;
+                                } else {
+                                    $hasMethodWizardConfig = false;
                                 }
                             } catch (\yii\web\ForbiddenHttpException $e) {
                                 // Si hay error de acceso, continuar con análisis automático
@@ -261,7 +291,7 @@ class CrudController extends BaseController
             }
             
             // Si no hay wizard_config del método, usar análisis automático
-            if (empty($wizardSteps)) {
+            if (empty($wizardSteps) || !$hasMethodWizardConfig) {
                 $actionAnalysis = \common\components\ActionParameterAnalyzer::analyzeActionParameters(
                     $action,
                     $params, // Los params de GET se pasan como extractedData
@@ -273,21 +303,34 @@ class CrudController extends BaseController
                 $actionName = $actionAnalysis['action_name'] ?? $action['display_name'] ?? 'Completa la información';
                 $actionId = $actionAnalysis['action_id'] ?? $actionId;
             } else {
-                // Si hay wizard_config, usar el action_name del action original
+                // Si hay wizard_config del método, usar el action_name del action original
                 $actionName = $action['action_name'] ?? $action['display_name'] ?? 'Completa la información';
             }
             
-            // Calcular paso inicial de forma genérica
-            $initialStep = $this->calculateInitialStep($wizardSteps, $fieldsConfig, $params);
+            // Calcular paso inicial: usar el del template si está disponible, sino calcularlo
+            if (isset($initialStepFromTemplate)) {
+                $initialStep = $initialStepFromTemplate;
+            } else {
+                $initialStep = $this->calculateInitialStep($wizardSteps, $fieldsConfig, $params);
+            }
             
             // Preparar form_config para compatibilidad
             $formConfig = [
                 'fields' => $fieldsConfig,
             ];
             
-            // Si hay wizard_config del método, incluir metadata adicional
-            if ($wizardConfig !== null) {
-                $formConfig['navigation'] = $wizardConfig['navigation'] ?? [];
+            // Si hay wizard_config del método, incluir toda la metadata (navigation, validation, ui, etc.)
+            if ($hasMethodWizardConfig && isset($wizardConfig)) {
+                // Incluir toda la metadata del wizard_config del método
+                if (isset($wizardConfig['navigation'])) {
+                    $formConfig['navigation'] = $wizardConfig['navigation'];
+                }
+                if (isset($wizardConfig['validation'])) {
+                    $formConfig['validation'] = $wizardConfig['validation'];
+                }
+                if (isset($wizardConfig['ui'])) {
+                    $formConfig['ui'] = $wizardConfig['ui'];
+                }
             }
             
             // Determinar si está listo para ejecutar (todos los campos requeridos tienen valores)
@@ -318,6 +361,17 @@ class CrudController extends BaseController
                 }
             }
             
+            // Si el método devolvió wizard_config directamente, usar los steps tal cual vienen
+            // (ya están en formato correcto desde el template)
+            $finalWizardSteps = $wizardSteps;
+            
+            // Si los steps vienen del template y tienen estructura diferente, mantenerla
+            // La app móvil espera wizard_steps con la misma estructura que steps del template
+            if ($hasMethodWizardConfig && !empty($wizardSteps)) {
+                // Los steps ya vienen en el formato correcto del template
+                $finalWizardSteps = $wizardSteps;
+            }
+            
             return [
                 'success' => true,
                 'data' => [
@@ -330,7 +384,7 @@ class CrudController extends BaseController
                     ],
                     'ready_to_execute' => $readyToExecute,
                     'initial_step' => $initialStep,
-                    'wizard_steps' => $wizardSteps,
+                    'wizard_steps' => $finalWizardSteps,
                 ],
             ];
         } catch (\Exception $e) {
@@ -404,6 +458,53 @@ class CrudController extends BaseController
         
         // Si todos los pasos están completos, mostrar el último paso (confirmación)
         return count($wizardSteps) - 1;
+    }
+    
+    /**
+     * Expandir nombres de campos en steps a objetos completos de campos
+     * @param array $steps Array de steps con fields como nombres (strings)
+     * @param array $fieldsConfig Array completo de configuración de campos
+     * @return array Steps con fields expandidos a objetos completos
+     */
+    private function expandStepFields($steps, $fieldsConfig)
+    {
+        if (empty($steps) || empty($fieldsConfig)) {
+            return $steps;
+        }
+        
+        // Crear mapa de campos por nombre para acceso rápido
+        $fieldsMap = [];
+        foreach ($fieldsConfig as $field) {
+            $fieldName = $field['name'] ?? null;
+            if ($fieldName) {
+                $fieldsMap[$fieldName] = $field;
+            }
+        }
+        
+        // Expandir campos en cada step
+        $expandedSteps = [];
+        foreach ($steps as $step) {
+            $expandedStep = $step;
+            $stepFields = $step['fields'] ?? [];
+            $expandedFields = [];
+            
+            foreach ($stepFields as $field) {
+                // Si es string (nombre), buscar el campo completo
+                if (is_string($field)) {
+                    if (isset($fieldsMap[$field])) {
+                        $expandedFields[] = $fieldsMap[$field];
+                    }
+                } else {
+                    // Si ya es un objeto, mantenerlo
+                    $expandedFields[] = $field;
+                }
+            }
+            
+            $expandedStep['fields'] = $expandedFields;
+            $expandedSteps[] = $expandedStep;
+        }
+        
+        return $expandedSteps;
     }
     
     /**

@@ -495,67 +495,6 @@ class CrudController extends BaseController
     }
 
     /**
-     * Verificar si el usuario puede acceder a una ruta
-     * @param int $userId
-     * @param string $route
-     * @return bool
-     */
-    private function userCanAccessRoute($userId, $route)
-    {
-        $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-        
-        if (!$user) {
-            return false;
-        }
-        
-        // Superadmin tiene acceso a todo
-        if ($user->superadmin == 1) {
-            return true;
-        }
-
-        try {
-            // Verificar si la ruta es de acceso libre
-            if (\webvimark\modules\UserManagement\models\rbacDB\Route::isFreeAccess($route)) {
-                return true;
-            }
-
-            // Obtener rutas permitidas para el usuario desde RBAC
-            $authManager = Yii::$app->authManager;
-            $permissions = $authManager->getPermissionsByUser($userId);
-            
-            // Verificar si alguna permiso coincide con la ruta
-            foreach ($permissions as $permission) {
-                if ($permission->name === $route) {
-                    return true;
-                }
-                // Verificar rutas con sub-rutas (ej: /site/* incluye /site/index)
-                if (strpos($route, $permission->name) === 0) {
-                    return true;
-                }
-            }
-
-            // Verificar roles del usuario y sus permisos
-            $roles = $authManager->getRolesByUser($userId);
-            foreach ($roles as $role) {
-                $rolePermissions = $authManager->getPermissionsByRole($role->name);
-                foreach ($rolePermissions as $permission) {
-                    if ($permission->name === $route) {
-                        return true;
-                    }
-                    if (strpos($route, $permission->name) === 0) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        } catch (\Exception $e) {
-            Yii::error("Error verificando acceso a ruta {$route}: " . $e->getMessage(), 'api-execute-action');
-            return false;
-        }
-    }
-
-    /**
      * Inyectar parámetros en el request object
      * @param array $params Parámetros a inyectar
      * @return array Estado original del request para restaurar después

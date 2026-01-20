@@ -209,6 +209,21 @@ class TurnosController extends Controller
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+        // Si es GET, devolver wizard_config desde template
+        if (Yii::$app->request->isGet) {
+            $params = [
+                'today' => date('Y-m-d')
+            ];
+            
+            $config = \common\components\FormConfigTemplateManager::render(
+                'turnos',  // entity
+                'crear-mi-turno',  // action
+                $params
+            );
+            
+            return $config; // Ya incluye wizard_config
+        }
+
         // Obtener id_persona de la sesión (ya asignado por la autenticación JWT o web)
         // La autenticación garantiza que idPersona esté disponible o lanza error antes
         $session = Yii::$app->session;

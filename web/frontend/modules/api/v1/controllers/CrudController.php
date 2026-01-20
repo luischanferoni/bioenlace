@@ -268,6 +268,37 @@ class CrudController extends BaseController
                                     );
                                 }
                                 
+                                // Validar que wizard_config no esté vacío
+                                if (isset($result['wizard_config'])) {
+                                    $wizardConfig = $result['wizard_config'];
+                                    $hasSteps = !empty($wizardConfig['steps'] ?? []);
+                                    $hasFields = !empty($wizardConfig['fields'] ?? []);
+                                    
+                                    if (!$hasSteps && !$hasFields) {
+                                        $errorMsg = "El método {$methodName} devolvió wizard_config vacío (sin steps ni fields).";
+                                        Yii::error($errorMsg, 'api-execute-action');
+                                        return $this->error(
+                                            'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.',
+                                            null,
+                                            500
+                                        );
+                                    }
+                                } elseif (isset($result['steps']) || isset($result['fields'])) {
+                                    // Si tiene steps/fields directamente (sin wizard_config)
+                                    $hasSteps = !empty($result['steps'] ?? []);
+                                    $hasFields = !empty($result['fields'] ?? []);
+                                    
+                                    if (!$hasSteps && !$hasFields) {
+                                        $errorMsg = "El método {$methodName} devolvió steps y fields vacíos.";
+                                        Yii::error($errorMsg, 'api-execute-action');
+                                        return $this->error(
+                                            'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.',
+                                            null,
+                                            500
+                                        );
+                                    }
+                                }
+                                
                                 // Devolver directamente lo que el método devolvió
                                 // El método ya genera el JSON completo
                                 return [

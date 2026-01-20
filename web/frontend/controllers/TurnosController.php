@@ -226,10 +226,24 @@ class TurnosController extends Controller
                 $templateParams  // Incluye both template vars y provided params para calcular initial_step
             );
             
-            // Debug: verificar que el config tenga wizard_config
+            // Verificar que el config tenga wizard_config y no esté vacío
             if (!isset($config['wizard_config'])) {
                 Yii::error("FormConfigTemplateManager no devolvió wizard_config para turnos/crear-mi-turno", 'turnos-controller');
-                return ['wizard_config' => []];
+                throw new \yii\web\ServerErrorHttpException(
+                    "No se pudo cargar la configuración del formulario. Por favor, contacte al administrador."
+                );
+            }
+            
+            // Verificar que wizard_config tenga contenido
+            $wizardConfig = $config['wizard_config'];
+            $hasSteps = !empty($wizardConfig['steps'] ?? []);
+            $hasFields = !empty($wizardConfig['fields'] ?? []);
+            
+            if (!$hasSteps && !$hasFields) {
+                Yii::error("FormConfigTemplateManager devolvió wizard_config vacío para turnos/crear-mi-turno", 'turnos-controller');
+                throw new \yii\web\ServerErrorHttpException(
+                    "No se pudo cargar la configuración del formulario. Por favor, contacte al administrador."
+                );
             }
             
             // El config ya tiene wizard_config, devolverlo directamente

@@ -34,12 +34,15 @@ class FormConfigTemplateManager
     {
         // 1. Cargar template común
         $commonConfig = self::loadCommonTemplate();
+        Yii::info("Common config cargado: " . json_encode($commonConfig), 'form-config-template');
         
         // 2. Cargar template específico del método
         $specificConfig = self::loadSpecificTemplate($entity, $action);
+        Yii::info("Specific config cargado para {$entity}/{$action}: " . json_encode($specificConfig), 'form-config-template');
         
         // 3. Merge: específico sobrescribe común, pero dentro de wizard_config
         $mergedConfig = self::mergeConfigs($commonConfig, $specificConfig);
+        Yii::info("Merged config: " . json_encode($mergedConfig), 'form-config-template');
         
         // 4. Procesar variables dinámicas (como "today")
         $processedConfig = self::processVariables($mergedConfig, $params);
@@ -52,6 +55,8 @@ class FormConfigTemplateManager
                 $params
             );
             $processedConfig['wizard_config']['initial_step'] = $initialStep;
+        } else {
+            Yii::warning("No se encontraron steps o fields en wizard_config después del merge. Steps: " . (isset($processedConfig['wizard_config']['steps']) ? 'existe' : 'no existe') . ", Fields: " . (isset($processedConfig['wizard_config']['fields']) ? 'existe' : 'no existe'), 'form-config-template');
         }
         
         return $processedConfig;
@@ -88,7 +93,10 @@ class FormConfigTemplateManager
             self::TEMPLATE_BASE_PATH . '/' . strtolower($entity) . '/' . $action . '.json'
         );
         
+        Yii::info("Buscando template específico en: {$templatePath}", 'form-config-template');
+        
         if (!file_exists($templatePath)) {
+            Yii::warning("Template específico no encontrado: {$templatePath}", 'form-config-template');
             return [];
         }
         
@@ -96,15 +104,19 @@ class FormConfigTemplateManager
         $decoded = Json::decode($content);
         
         if (json_last_error() !== JSON_ERROR_NONE) {
-            Yii::error("Error parseando JSON específico: " . json_last_error_msg(), 'form-config-template');
+            Yii::error("Error parseando JSON específico en {$templatePath}: " . json_last_error_msg(), 'form-config-template');
             return [];
         }
         
+        Yii::info("Template específico decodificado: " . json_encode($decoded), 'form-config-template');
+        
         // Envolver en wizard_config si no está envuelto
         if (isset($decoded['steps']) || isset($decoded['fields'])) {
+            Yii::info("Envolviendo template específico en wizard_config", 'form-config-template');
             return ['wizard_config' => $decoded];
         }
         
+        Yii::info("Template específico ya tiene estructura wizard_config o diferente", 'form-config-template');
         return $decoded;
     }
     
@@ -116,6 +128,9 @@ class FormConfigTemplateManager
     {
         $result = $common;
         
+        Yii::info("Iniciando merge. Common tiene wizard_config: " . (isset($result['wizard_config']) ? 'sí' : 'no'), 'form-config-template');
+        Yii::info("Specific tiene wizard_config: " . (isset($specific['wizard_config']) ? 'sí' : 'no'), 'form-config-template');
+        
         // Si el específico tiene wizard_config, merge dentro de él
         if (isset($specific['wizard_config'])) {
             if (!isset($result['wizard_config'])) {
@@ -124,19 +139,27 @@ class FormConfigTemplateManager
             
             // Merge recursivo dentro de wizard_config
             foreach ($specific['wizard_config'] as $key => $value) {
+                Yii::info("Mergeando key: {$key}, existe en common: " . (isset($result['wizard_config'][$key]) ? 'sí' : 'no'), 'form-config-template');
+                
                 if (isset($result['wizard_config'][$key]) && is_array($result['wizard_config'][$key]) && is_array($value)) {
                     // Para steps y fields, reemplazar completamente
                     if ($key === 'steps' || $key === 'fields') {
                         $result['wizard_config'][$key] = $value;
+                        Yii::info("Reemplazado {$key} completamente con " . count($value) . " elementos", 'form-config-template');
                     } else {
                         // Para otros (navigation, validation, ui), merge recursivo
                         $result['wizard_config'][$key] = self::mergeArrays($result['wizard_config'][$key], $value);
                     }
                 } else {
                     $result['wizard_config'][$key] = $value;
+                    Yii::info("Agregado nuevo key: {$key}", 'form-config-template');
                 }
             }
+        } else {
+            Yii::warning("Specific no tiene wizard_config, no se puede hacer merge", 'form-config-template');
         }
+        
+        Yii::info("Resultado del merge - tiene steps: " . (isset($result['wizard_config']['steps']) ? 'sí (' . count($result['wizard_config']['steps']) . ')' : 'no') . ", tiene fields: " . (isset($result['wizard_config']['fields']) ? 'sí (' . count($result['wizard_config']['fields']) . ')' : 'no'), 'form-config-template');
         
         return $result;
     }

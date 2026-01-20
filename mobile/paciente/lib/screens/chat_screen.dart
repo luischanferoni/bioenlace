@@ -300,12 +300,9 @@ class _ChatScreenState extends State<ChatScreen> {
       } else {
         setState(() {
           _isSending = false;
-          _chatHistory.add({
-            'type': 'bot',
-            'content': result['message'] ?? 'Lo siento, no pude obtener el formulario. Intenta nuevamente.',
-            'timestamp': DateTime.now(),
-          });
         });
+        // Mostrar alerta flotante en lugar de crear mensaje de chat
+        _showErrorSnackbar(result['message'] ?? 'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.');
       }
       _scrollToBottom();
     } catch (e) {

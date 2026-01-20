@@ -283,6 +283,39 @@ class CrudController extends BaseController
                                             500
                                         );
                                     }
+                                    
+                                    // Transformar wizard_config a la estructura que espera la app móvil
+                                    $formConfig = [
+                                        'fields' => $wizardConfig['fields'] ?? [],
+                                    ];
+                                    
+                                    // Incluir metadata si existe
+                                    if (isset($wizardConfig['navigation'])) {
+                                        $formConfig['navigation'] = $wizardConfig['navigation'];
+                                    }
+                                    if (isset($wizardConfig['validation'])) {
+                                        $formConfig['validation'] = $wizardConfig['validation'];
+                                    }
+                                    if (isset($wizardConfig['ui'])) {
+                                        $formConfig['ui'] = $wizardConfig['ui'];
+                                    }
+                                    
+                                    // Expandir nombres de campos en steps a objetos completos
+                                    $wizardSteps = $this->expandStepFields(
+                                        $wizardConfig['steps'] ?? [],
+                                        $wizardConfig['fields'] ?? []
+                                    );
+                                    
+                                    return [
+                                        'success' => true,
+                                        'data' => [
+                                            'form_config' => $formConfig,
+                                            'wizard_steps' => $wizardSteps,
+                                            'initial_step' => $wizardConfig['initial_step'] ?? 0,
+                                            'action_id' => $actionId,
+                                            'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
+                                        ],
+                                    ];
                                 } elseif (isset($result['steps']) || isset($result['fields'])) {
                                     // Si tiene steps/fields directamente (sin wizard_config)
                                     $hasSteps = !empty($result['steps'] ?? []);
@@ -297,14 +330,37 @@ class CrudController extends BaseController
                                             500
                                         );
                                     }
+                                    
+                                    // Transformar a la estructura esperada
+                                    $formConfig = [
+                                        'fields' => $result['fields'] ?? [],
+                                    ];
+                                    
+                                    $wizardSteps = $this->expandStepFields(
+                                        $result['steps'] ?? [],
+                                        $result['fields'] ?? []
+                                    );
+                                    
+                                    return [
+                                        'success' => true,
+                                        'data' => [
+                                            'form_config' => $formConfig,
+                                            'wizard_steps' => $wizardSteps,
+                                            'initial_step' => $result['initial_step'] ?? 0,
+                                            'action_id' => $actionId,
+                                            'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
+                                        ],
+                                    ];
                                 }
                                 
-                                // Devolver directamente lo que el método devolvió
-                                // El método ya genera el JSON completo
-                                return [
-                                    'success' => true,
-                                    'data' => $result,
-                                ];
+                                // Si no tiene wizard_config ni steps/fields, devolver error
+                                $errorMsg = "El método {$methodName} no devolvió wizard_config, steps ni fields.";
+                                Yii::error($errorMsg, 'api-execute-action');
+                                return $this->error(
+                                    'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.',
+                                    null,
+                                    500
+                                );
                             } catch (\yii\web\ForbiddenHttpException $e) {
                                 // Re-lanzar excepciones de acceso
                                 throw $e;

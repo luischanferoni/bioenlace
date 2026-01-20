@@ -199,9 +199,9 @@ class TurnosController extends Controller
      * @keywords crear turno,agendar turno,solicitar turno,nuevo turno,crear cita,agendar cita,mi turno
      * @synonyms turno,cita,agenda,reserva,consulta
      * 
-     * @paramOption servicio_actual select servicios|efector_servicios
-     * @paramOption idRecursoHumano select rrhh|efector_rrhh
-     * @paramOption idEfector select efectores|user_efectores
+     * @paramOption id_servicio_asignado select servicios|efector_servicios
+     * @paramOption id_rr_hh select rrhh|efector_rrhh
+     * @paramOption id_efector select efectores|user_efectores
      * 
      * @return array Respuesta JSON con success y message
      */
@@ -243,10 +243,27 @@ class TurnosController extends Controller
         // Asignar id_persona del usuario autenticado (no se recibe por POST)
         $model->id_persona = $idPersona;
         
-        // Campos obligatorios recibidos por POST (id_persona ya está asignado)
-        $model->id_rr_hh = UserRequest::requireUserParam('idRecursoHumano');
-        $model->id_efector = UserRequest::requireUserParam('idEfector');
-        $model->id_servicio = UserRequest::requireUserParam('servicio_actual');
+        // Campos obligatorios recibidos por POST usando nombres del modelo
+        $post = Yii::$app->request->post();
+        if (!isset($post['id_rr_hh'])) {
+            throw new BadRequestHttpException('Parámetro requerido: id_rr_hh');
+        }
+        if (!isset($post['id_efector'])) {
+            throw new BadRequestHttpException('Parámetro requerido: id_efector');
+        }
+        if (!isset($post['id_servicio_asignado'])) {
+            throw new BadRequestHttpException('Parámetro requerido: id_servicio_asignado');
+        }
+        
+        $model->id_rr_hh = $post['id_rr_hh'];
+        $model->id_efector = $post['id_efector'];
+        $model->id_servicio_asignado = $post['id_servicio_asignado'];
+        // id_servicio se asigna automáticamente desde id_servicio_asignado si es necesario
+        if (isset($post['id_servicio'])) {
+            $model->id_servicio = $post['id_servicio'];
+        } else {
+            $model->id_servicio = $post['id_servicio_asignado'];
+        }
 
         // Verificar derivaciones pendientes
         $cps = ConsultaDerivaciones::getDerivacionesPorPersona($model->id_persona, $model->id_efector, $model->id_servicio_asignado, ConsultaDerivaciones::ESTADO_EN_ESPERA);

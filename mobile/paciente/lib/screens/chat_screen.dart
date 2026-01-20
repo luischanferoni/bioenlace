@@ -546,6 +546,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                         const SizedBox(height: 12),
                                         DynamicForm(
                                           formConfig: Map<String, dynamic>.from(formConfig),
+                                          wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
+                                          initialStep: message['initial_step'] as int? ?? 0,
                                           authToken: _accionesService.authToken,
                                           onSubmit: (formValues) async {
                                             // Ejecutar acción con los parámetros del formulario

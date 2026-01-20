@@ -6,6 +6,8 @@ import 'package:shared/shared.dart';
 /// Widget para generar formularios dinámicos basados en form_config del backend
 class DynamicForm extends StatefulWidget {
   final Map<String, dynamic> formConfig;
+  final List<dynamic>? wizardSteps;
+  final int? initialStep;
   final String? authToken;
   final Function(Map<String, dynamic>) onSubmit;
   final Function()? onCancel;
@@ -13,6 +15,8 @@ class DynamicForm extends StatefulWidget {
   const DynamicForm({
     Key? key,
     required this.formConfig,
+    this.wizardSteps,
+    this.initialStep,
     required this.onSubmit,
     this.onCancel,
     this.authToken,
@@ -28,10 +32,12 @@ class _DynamicFormState extends State<DynamicForm> {
   final Map<String, List<Map<String, dynamic>>> _optionsCache = {};
   final Map<String, bool> _loadingOptions = {};
   final _formKey = GlobalKey<FormState>();
+  int _currentStep = 0;
 
   @override
   void initState() {
     super.initState();
+    _currentStep = widget.initialStep ?? 0;
     _initializeForm();
   }
 
@@ -349,36 +355,154 @@ class _DynamicFormState extends State<DynamicForm> {
     );
   }
 
+  List<Map<String, dynamic>> _getCurrentStepFields() {
+    // Si hay wizard_steps, usar solo los campos del paso actual
+    if (widget.wizardSteps != null && widget.wizardSteps!.isNotEmpty) {
+      if (_currentStep < widget.wizardSteps!.length) {
+        final currentStepData = widget.wizardSteps![_currentStep] as Map<String, dynamic>;
+        final stepFields = currentStepData['fields'] as List<dynamic>? ?? [];
+        
+        // Obtener todos los campos del formConfig para tener la configuración completa
+        final allFields = widget.formConfig['fields'] as List<dynamic>? ?? [];
+        final fieldsMap = <String, Map<String, dynamic>>{};
+        
+        for (var field in allFields) {
+          final fieldMap = Map<String, dynamic>.from(field);
+          fieldsMap[fieldMap['name'] as String] = fieldMap;
+        }
+        
+        // Retornar solo los campos del paso actual con su configuración completa
+        return stepFields.map((field) {
+          if (field is Map) {
+            return Map<String, dynamic>.from(field);
+          } else if (field is String) {
+            return fieldsMap[field] ?? {'name': field};
+          }
+          return {'name': field.toString()};
+        }).toList();
+      }
+    }
+    
+    // Si no hay wizard_steps, mostrar todos los campos (comportamiento anterior)
+    final fields = widget.formConfig['fields'] as List<dynamic>? ?? [];
+    return fields.map((field) => Map<String, dynamic>.from(field)).toList();
+  }
+
+  bool _canGoToNextStep() {
+    if (widget.wizardSteps == null || widget.wizardSteps!.isEmpty) {
+      return false;
+    }
+    return _currentStep < widget.wizardSteps!.length - 1;
+  }
+
+  bool _canGoToPreviousStep() {
+    return _currentStep > 0;
+  }
+
+  void _goToNextStep() {
+    if (_formKey.currentState?.validate() ?? false) {
+      if (_canGoToNextStep()) {
+        setState(() {
+          _currentStep++;
+        });
+      }
+    }
+  }
+
+  void _goToPreviousStep() {
+    if (_canGoToPreviousStep()) {
+      setState(() {
+        _currentStep--;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final fields = widget.formConfig['fields'] as List<dynamic>? ?? [];
-    final submitLabel = widget.formConfig['submit_label'] as String? ?? 'Enviar';
+    final currentFields = _getCurrentStepFields();
+    final submitLabel = widget.formConfig['ui']?['submit_label'] as String? ?? 
+                       widget.formConfig['submit_label'] as String? ?? 'Enviar';
+    final cancelLabel = widget.formConfig['ui']?['cancel_label'] as String? ?? 'Cancelar';
+    
+    final isWizard = widget.wizardSteps != null && widget.wizardSteps!.isNotEmpty;
+    final isLastStep = isWizard && _currentStep == (widget.wizardSteps!.length - 1);
+    final currentStepData = isWizard && _currentStep < widget.wizardSteps!.length
+        ? widget.wizardSteps![_currentStep] as Map<String, dynamic>
+        : null;
+    final stepTitle = currentStepData?['title'] as String?;
 
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ...fields.map((field) => _buildField(Map<String, dynamic>.from(field))),
+          // Mostrar título del paso si es wizard
+          if (isWizard && stepTitle != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Text(
+                stepTitle,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            // Indicador de progreso del wizard
+            Row(
+              children: List.generate(
+                widget.wizardSteps!.length,
+                (index) => Expanded(
+                  child: Container(
+                    height: 4,
+                    margin: EdgeInsets.symmetric(horizontal: 2),
+                    decoration: BoxDecoration(
+                      color: index <= _currentStep
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          // Campos del paso actual
+          ...currentFields.map((field) => _buildField(field)),
           const SizedBox(height: 16),
+          // Botones de navegación
           Row(
             children: [
               if (widget.onCancel != null)
                 Expanded(
                   child: OutlinedButton(
                     onPressed: widget.onCancel,
-                    child: Text('Cancelar'),
+                    child: Text(cancelLabel),
                   ),
                 ),
               if (widget.onCancel != null) const SizedBox(width: 8),
+              // Botón "Anterior" si no es el primer paso del wizard
+              if (isWizard && _canGoToPreviousStep()) ...[
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _goToPreviousStep,
+                    child: Text('Anterior'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState?.validate() ?? false) {
-                      widget.onSubmit(_formValues);
+                      if (isWizard && !isLastStep) {
+                        _goToNextStep();
+                      } else {
+                        widget.onSubmit(_formValues);
+                      }
                     }
                   },
-                  child: Text(submitLabel),
+                  child: Text(isWizard && !isLastStep ? 'Siguiente' : submitLabel),
                 ),
               ),
             ],

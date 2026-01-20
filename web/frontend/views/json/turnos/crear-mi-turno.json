@@ -1,0 +1,71 @@
+{
+  "steps": [
+    {
+      "step": 0,
+      "title": "Seleccionar Efector y Servicio",
+      "fields": ["id_efector", "id_servicio_asignado"]
+    },
+    {
+      "step": 1,
+      "title": "Seleccionar Profesional y Fecha",
+      "fields": ["id_rr_hh", "fecha"]
+    },
+    {
+      "step": 2,
+      "title": "Seleccionar Hora",
+      "fields": ["hora"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id_efector",
+      "label": "Efector",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/frontend/efectores/search",
+      "option_config": {
+        "source": "efectores",
+        "filter": "user_efectores"
+      }
+    },
+    {
+      "name": "id_servicio_asignado",
+      "label": "Servicio",
+      "type": "select",
+      "required": true,
+      "endpoint": "/frontend/servicios/search",
+      "depends_on": "id_efector",
+      "option_config": {
+        "source": "servicios",
+        "filter": "efector_servicios"
+      }
+    },
+    {
+      "name": "id_rr_hh",
+      "label": "Profesional",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/frontend/rrhh/rrhh-autocomplete",
+      "depends_on": "id_servicio_asignado",
+      "option_config": {
+        "source": "rrhh",
+        "filter": "efector_rrhh"
+      }
+    },
+    {
+      "name": "fecha",
+      "label": "Fecha",
+      "type": "date",
+      "required": true,
+      "format": "YYYY-MM-DD",
+      "min": "today"
+    },
+    {
+      "name": "hora",
+      "label": "Hora",
+      "type": "time",
+      "required": true,
+      "depends_on": "fecha"
+    }
+  ]
+}

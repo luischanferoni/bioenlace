@@ -29,9 +29,6 @@ backend/web/assets
 # Logs
 frontend/runtime/logs/analisis-consultas/*.log
 
-# Node modules (React)
-frontend/web/react/node_modules/*
-
 # Archivos de producción/backup
 /BD backup
 /produccion/sisse-56/*.csv
@@ -49,3 +46,5 @@ frontend/web/react/node_modules/*
 *.json
 !composer.json
 !package.json
+# Excluir templates JSON de form_config del ignore
+!frontend/views/json/**/*.json

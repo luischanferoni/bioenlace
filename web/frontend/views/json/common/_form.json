@@ -1,0 +1,18 @@
+{
+  "wizard_config": {
+    "navigation": {
+      "allow_skip": false,
+      "show_progress": true,
+      "progress_type": "steps"
+    },
+    "validation": {
+      "validate_on_blur": true,
+      "show_errors_immediately": true
+    },
+    "ui": {
+      "theme": "default",
+      "submit_label": "Continuar",
+      "cancel_label": "Cancelar"
+    }
+  }
+}

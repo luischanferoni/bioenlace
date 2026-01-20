@@ -160,14 +160,6 @@ class CrudController extends BaseController
     private function getActionFormConfig($action, $params, $userId)
     {
         try {
-            $wizardConfig = null;
-            $wizardSteps = [];
-            $fieldsConfig = [];
-            $actionName = null;
-            $actionId = $action['action_id'] ?? null;
-            $hasMethodWizardConfig = false;
-            $initialStepFromTemplate = null;
-            
             // Intentar obtener wizard_config llamando al método con GET
             $controllerClass = 'frontend\\controllers\\' . ucfirst($action['controller']) . 'Controller';
             $actionName = $action['action'];
@@ -217,9 +209,19 @@ class CrudController extends BaseController
                         // Simular GET request
                         $originalGet = $_GET;
                         $originalMethod = $_SERVER['REQUEST_METHOD'] ?? 'POST';
+                        $actionId = $action['action_id'] ?? null;
                         $_GET = array_merge(['action_id' => $actionId], $params);
                         $_SERVER['REQUEST_METHOD'] = 'GET';
                         Yii::$app->request->setQueryParams($_GET);
+                        
+                        // Forzar que Yii::$app->request->isGet devuelva true
+                        // Esto es necesario porque setQueryParams no actualiza isGet automáticamente
+                        $reflectionRequest = new \ReflectionClass(Yii::$app->request);
+                        if ($reflectionRequest->hasProperty('_method')) {
+                            $methodProperty = $reflectionRequest->getProperty('_method');
+                            $methodProperty->setAccessible(true);
+                            $methodProperty->setValue(Yii::$app->request, 'GET');
+                        }
                         
                         try {
                             // Guardar el formato original y deshabilitar el envío automático de respuesta
@@ -249,49 +251,29 @@ class CrudController extends BaseController
                                     Yii::warning("El método {$methodName} generó salida pero no retornó valor. Output: " . substr($output, 0, 200), 'api-execute-action');
                                 }
                                 
-                                // Debug: log del resultado
-                                Yii::info("Resultado de {$methodName}: " . json_encode($result) . " (tipo: " . gettype($result) . ")", 'api-execute-action');
-                                
-                                // Si el método devuelve wizard_config, usarlo directamente
-                                if (is_array($result) && isset($result['wizard_config'])) {
-                                    Yii::info("Detectado wizard_config en resultado de {$methodName}", 'api-execute-action');
-                                    $wizardConfig = $result['wizard_config'];
-                                    $wizardSteps = $wizardConfig['steps'] ?? [];
-                                    $fieldsConfig = $wizardConfig['fields'] ?? [];
-                                    
-                                    // Expandir nombres de campos en steps a objetos completos
-                                    $wizardSteps = $this->expandStepFields($wizardSteps, $fieldsConfig);
-                                    
-                                    // Si el template ya calculó initial_step, usarlo
-                                    if (isset($wizardConfig['initial_step'])) {
-                                        $initialStepFromTemplate = $wizardConfig['initial_step'];
-                                    }
-                                    
-                                    // Marcar que tenemos wizard_config del método
-                                    $hasMethodWizardConfig = true;
-                                } elseif (is_array($result) && (isset($result['steps']) || isset($result['fields']))) {
-                                    // Si tiene steps/fields directamente, envolver en wizard_config
-                                    $wizardConfig = $result;
-                                    $wizardSteps = $wizardConfig['steps'] ?? [];
-                                    $fieldsConfig = $wizardConfig['fields'] ?? [];
-                                    
-                                    // Expandir nombres de campos en steps a objetos completos
-                                    $wizardSteps = $this->expandStepFields($wizardSteps, $fieldsConfig);
-                                    
-                                    // Si el template ya calculó initial_step, usarlo
-                                    if (isset($wizardConfig['initial_step'])) {
-                                        $initialStepFromTemplate = $wizardConfig['initial_step'];
-                                    }
-                                    
-                                    $hasMethodWizardConfig = true;
-                                } else {
-                                    // El método existe pero no devolvió wizard_config
+                                // Verificar si el resultado es válido
+                                if ($result === null) {
+                                    $errorMsg = "El método {$methodName} devolvió null.";
+                                    Yii::error($errorMsg, 'api-execute-action');
                                     throw new \yii\web\ServerErrorHttpException(
-                                        "El método {$methodName} no devolvió wizard_config. " .
-                                        "Resultado recibido: " . json_encode($result) . 
-                                        " (tipo: " . gettype($result) . ")"
+                                        "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador."
                                     );
                                 }
+                                
+                                if (!is_array($result)) {
+                                    $errorMsg = "El método {$methodName} devolvió un tipo inválido: " . gettype($result) . ". Se esperaba un array.";
+                                    Yii::error($errorMsg, 'api-execute-action');
+                                    throw new \yii\web\ServerErrorHttpException(
+                                        "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador."
+                                    );
+                                }
+                                
+                                // Devolver directamente lo que el método devolvió
+                                // El método ya genera el JSON completo
+                                return [
+                                    'success' => true,
+                                    'data' => $result,
+                                ];
                             } catch (\yii\web\ForbiddenHttpException $e) {
                                 // Re-lanzar excepciones de acceso
                                 throw $e;
@@ -302,10 +284,25 @@ class CrudController extends BaseController
                                 // Re-lanzar excepciones HTTP
                                 throw $e;
                             } catch (\Exception $e) {
-                                // Re-lanzar cualquier otra excepción
+                                // Registrar error técnico en el log
                                 Yii::error("Error al llamar método {$methodName}: " . $e->getMessage() . " (" . get_class($e) . "). Trace: " . $e->getTraceAsString(), 'api-execute-action');
+                                
+                                // Re-lanzar excepciones HTTP con mensajes amigables
+                                if ($e instanceof \yii\web\HttpException) {
+                                    // Para excepciones HTTP, mantener el mensaje original si es amigable
+                                    // o usar uno genérico si es técnico
+                                    $userMessage = $e->getMessage();
+                                    if (strpos($userMessage, 'wizard_config') !== false || 
+                                        strpos($userMessage, 'método') !== false ||
+                                        strpos($userMessage, 'null') !== false) {
+                                        $userMessage = "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.";
+                                    }
+                                    throw new \yii\web\ServerErrorHttpException($userMessage, $e->getCode(), $e);
+                                }
+                                
+                                // Para otras excepciones, usar mensaje genérico
                                 throw new \yii\web\ServerErrorHttpException(
-                                    "Error al obtener wizard_config del método {$methodName}: " . $e->getMessage(),
+                                    "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.",
                                     0,
                                     $e
                                 );
@@ -330,131 +327,34 @@ class CrudController extends BaseController
                 }
             }
             
-            // Verificar que tenemos wizard_config del método
-            if (empty($wizardSteps) || !$hasMethodWizardConfig) {
-                // Si el método existe pero no devolvió wizard_config, lanzar excepción
-                if (class_exists($controllerClass) && method_exists($controllerClass, $methodName)) {
-                    throw new \yii\web\ServerErrorHttpException(
-                        "El método {$methodName} existe pero no devolvió wizard_config. " .
-                        "Se esperaba que el método devuelva un array con 'wizard_config' o con 'steps'/'fields'."
-                    );
-                } else {
-                    // Si el método no existe, usar análisis automático como fallback
-                    Yii::info("Método {$methodName} no existe, usando análisis automático para {$actionId}", 'api-execute-action');
-                    $actionAnalysis = \common\components\ActionParameterAnalyzer::analyzeActionParameters(
-                        $action,
-                        $params, // Los params de GET se pasan como extractedData
-                        $userId
-                    );
-                    
-                    $fieldsConfig = $actionAnalysis['form_config']['fields'] ?? [];
-                    $wizardSteps = $this->generateWizardSteps($fieldsConfig);
-                    $actionName = $actionAnalysis['action_name'] ?? $action['display_name'] ?? 'Completa la información';
-                    $actionId = $actionAnalysis['action_id'] ?? $actionId;
-                }
-            } else {
-                // Si hay wizard_config del método, usar el action_name del action original
-                $actionName = $action['action_name'] ?? $action['display_name'] ?? 'Completa la información';
+            // Si el método no existe, lanzar excepción
+            $errorMsg = "El método {$methodName} no existe en {$controllerClass}.";
+            Yii::error($errorMsg, 'api-execute-action');
+            throw new \yii\web\ServerErrorHttpException(
+                "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador."
+            );
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            // Excepciones de acceso: mantener el mensaje original
+            Yii::error("Error de acceso obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
+            return $this->error($e->getMessage(), null, $e->statusCode);
+        } catch (\yii\web\BadRequestHttpException $e) {
+            // Excepciones de parámetros: mantener el mensaje original
+            Yii::error("Error de parámetros obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
+            return $this->error($e->getMessage(), null, $e->statusCode);
+        } catch (\yii\web\HttpException $e) {
+            // Otras excepciones HTTP: mantener el mensaje original si es amigable
+            $userMessage = $e->getMessage();
+            if (strpos($userMessage, 'wizard_config') !== false || 
+                strpos($userMessage, 'método') !== false ||
+                strpos($userMessage, 'null') !== false) {
+                $userMessage = "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.";
             }
-            
-            // Calcular paso inicial: usar el del template si está disponible, sino calcularlo
-            if (isset($initialStepFromTemplate)) {
-                $initialStep = $initialStepFromTemplate;
-            } else {
-                $initialStep = $this->calculateInitialStep($wizardSteps, $fieldsConfig, $params);
-            }
-            
-            // Preparar form_config para compatibilidad
-            $formConfig = [
-                'fields' => $fieldsConfig,
-            ];
-            
-            // Si hay wizard_config del método, incluir toda la metadata (navigation, validation, ui, etc.)
-            if ($hasMethodWizardConfig && isset($wizardConfig)) {
-                // Incluir toda la metadata del wizard_config del método
-                if (isset($wizardConfig['navigation'])) {
-                    $formConfig['navigation'] = $wizardConfig['navigation'];
-                }
-                if (isset($wizardConfig['validation'])) {
-                    $formConfig['validation'] = $wizardConfig['validation'];
-                }
-                if (isset($wizardConfig['ui'])) {
-                    $formConfig['ui'] = $wizardConfig['ui'];
-                }
-            }
-            
-            // Determinar si está listo para ejecutar (todos los campos requeridos tienen valores)
-            $readyToExecute = true;
-            foreach ($fieldsConfig as $field) {
-                if (($field['required'] ?? false) && 
-                    (!isset($params[$field['name']]) || 
-                     $params[$field['name']] === null || 
-                     $params[$field['name']] === '')) {
-                    $readyToExecute = false;
-                    break;
-                }
-            }
-            
-            // Preparar parámetros para la respuesta
-            $providedParams = [];
-            $missingParams = [];
-            foreach ($fieldsConfig as $field) {
-                $fieldName = $field['name'] ?? null;
-                if (empty($fieldName)) {
-                    continue;
-                }
-                
-                if (isset($params[$fieldName]) && $params[$fieldName] !== null && $params[$fieldName] !== '') {
-                    $providedParams[$fieldName] = $params[$fieldName];
-                } elseif ($field['required'] ?? false) {
-                    $missingParams[] = $field;
-                }
-            }
-            
-            // Si el método devolvió wizard_config directamente, usar los steps tal cual vienen
-            // (ya están en formato correcto desde el template)
-            $finalWizardSteps = $wizardSteps;
-            
-            // Si los steps vienen del template y tienen estructura diferente, mantenerla
-            // La app móvil espera wizard_steps con la misma estructura que steps del template
-            if ($hasMethodWizardConfig && !empty($wizardSteps)) {
-                // Los steps ya vienen en el formato correcto del template
-                $finalWizardSteps = $wizardSteps;
-            }
-            
-            // Si el método devolvió wizard_config desde template, devolver estructura simplificada
-            if ($hasMethodWizardConfig) {
-                return [
-                    'success' => true,
-                    'data' => [
-                        'action_id' => $actionId,
-                        'action_name' => $actionName,
-                        'form_config' => $formConfig,
-                        'initial_step' => $initialStep,
-                        'wizard_steps' => $finalWizardSteps,
-                    ],
-                ];
-            }
-            
-            // Si viene del análisis automático, incluir parameters y ready_to_execute
-            return [
-                'success' => true,
-                'data' => [
-                    'action_id' => $actionId,
-                    'action_name' => $actionName,
-                    'form_config' => $formConfig,
-                    'parameters' => [
-                        'provided' => $providedParams,
-                        'missing' => $missingParams,
-                    ],
-                    'ready_to_execute' => $readyToExecute,
-                    'initial_step' => $initialStep,
-                    'wizard_steps' => $finalWizardSteps,
-                ],
-            ];
+            Yii::error("Error HTTP obteniendo form_config: " . $e->getMessage() . " (código: {$e->statusCode}). Trace: " . $e->getTraceAsString(), 'api-execute-action');
+            return $this->error($userMessage, null, $e->statusCode);
         } catch (\Exception $e) {
-            Yii::error("Error obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
-            return $this->error('Error al obtener configuración del formulario: ' . $e->getMessage(), null, 500);
+            // Excepciones genéricas: mensaje amigable al usuario, detalles técnicos en el log
+            Yii::error("Error obteniendo form_config: " . $e->getMessage() . " (" . get_class($e) . "). Trace: " . $e->getTraceAsString(), 'api-execute-action');
+            return $this->error('No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.', null, 500);
         }
     }
     

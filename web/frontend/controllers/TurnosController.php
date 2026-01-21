@@ -182,7 +182,6 @@ class TurnosController extends Controller
             }
         }
 
-
         if ($model->save()) {
             return ["success" => true];
         } else {

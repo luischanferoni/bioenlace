@@ -182,6 +182,7 @@ class FormConfigTemplateManager
     /**
      * Procesar variables dinámicas
      * Reemplaza valores especiales como "today" con valores reales
+     * Procesa {{options}} en campos select para reemplazarlos con opciones reales
      */
     private static function processVariables($config, $params)
     {
@@ -194,10 +195,169 @@ class FormConfigTemplateManager
                 if (isset($field['max']) && $field['max'] === 'today') {
                     $field['max'] = $params['today'] ?? date('Y-m-d');
                 }
+                
+                // Procesar {{options}} en campos select
+                if (isset($field['type']) && $field['type'] === 'select') {
+                    if (isset($field['options']) && $field['options'] === '{{options}}') {
+                        $options = self::getOptionsForField($field, $params);
+                        if ($options !== null) {
+                            $field['options'] = $options;
+                        } else {
+                            // Si no se pueden obtener opciones, eliminar el campo options
+                            unset($field['options']);
+                        }
+                    }
+                }
             }
         }
         
         return $config;
+    }
+    
+    /**
+     * Obtener opciones para un campo select basándose en option_config
+     * 
+     * @param array $field Configuración del campo
+     * @param array $params Parámetros disponibles (para dependencias)
+     * @return array|null Array de opciones en formato [{'id': value, 'name': label}, ...] o null si no se pueden obtener
+     */
+    private static function getOptionsForField($field, $params)
+    {
+        if (!isset($field['option_config'])) {
+            return null;
+        }
+        
+        $optionConfig = $field['option_config'];
+        $source = $optionConfig['source'] ?? null;
+        $filter = $optionConfig['filter'] ?? null;
+        $dependsOn = $field['depends_on'] ?? null;
+        
+        if (!$source) {
+            return null;
+        }
+        
+        // Si el campo depende de otro y no tenemos ese valor, no podemos obtener opciones
+        if ($dependsOn && !isset($params[$dependsOn])) {
+            return null;
+        }
+        
+        $options = [];
+        
+        try {
+            switch ($source) {
+                case 'efectores':
+                    $options = self::getEfectoresOptions($filter, $params);
+                    break;
+                case 'servicios':
+                    $options = self::getServiciosOptions($filter, $params);
+                    break;
+                case 'rrhh':
+                    $options = self::getRrhhOptions($filter, $params);
+                    break;
+                // Agregar más fuentes según sea necesario
+                default:
+                    Yii::warning("Fuente de opciones no soportada: {$source}", 'form-config-template');
+                    return null;
+            }
+        } catch (\Exception $e) {
+            Yii::error("Error obteniendo opciones para campo {$field['name']}: " . $e->getMessage(), 'form-config-template');
+            return null;
+        }
+        
+        return $options;
+    }
+    
+    /**
+     * Obtener opciones de efectores
+     */
+    private static function getEfectoresOptions($filter, $params)
+    {
+        $userId = Yii::$app->user->id ?? null;
+        
+        if ($filter === 'user_efectores' && $userId) {
+            // Obtener efectores del usuario
+            $efectores = \common\models\UserEfector::find()
+                ->joinWith('idEfector')
+                ->where(['user_efector.id_user' => $userId])
+                ->andWhere('efectores.deleted_at IS NULL')
+                ->orderBy('efectores.nombre')
+                ->all();
+            
+            $options = [];
+            foreach ($efectores as $efector) {
+                $options[] = [
+                    'id' => $efector->idEfector->id_efector,
+                    'name' => $efector->idEfector->nombre,
+                ];
+            }
+            return $options;
+        } else {
+            // Obtener todos los efectores
+            $efectores = \common\models\Efector::find()
+                ->where('deleted_at IS NULL')
+                ->orderBy('nombre')
+                ->all();
+            
+            $options = [];
+            foreach ($efectores as $efector) {
+                $options[] = [
+                    'id' => $efector->id_efector,
+                    'name' => $efector->nombre,
+                ];
+            }
+            return $options;
+        }
+    }
+    
+    /**
+     * Obtener opciones de servicios
+     */
+    private static function getServiciosOptions($filter, $params)
+    {
+        if ($filter === 'efector_servicios' && isset($params['id_efector'])) {
+            // Obtener servicios del efector
+            $servicios = \common\models\ServiciosEfector::find()
+                ->joinWith('idServicio')
+                ->where(['servicios_efector.id_efector' => $params['id_efector']])
+                ->andWhere('servicios.deleted_at IS NULL')
+                ->orderBy('servicios.nombre')
+                ->all();
+            
+            $options = [];
+            foreach ($servicios as $servicioEfector) {
+                $options[] = [
+                    'id' => $servicioEfector->idServicio->id_servicio,
+                    'name' => $servicioEfector->idServicio->nombre,
+                ];
+            }
+            return $options;
+        } else {
+            // Obtener todos los servicios
+            $servicios = \common\models\Servicio::find()
+                ->where('deleted_at IS NULL')
+                ->orderBy('nombre')
+                ->all();
+            
+            $options = [];
+            foreach ($servicios as $servicio) {
+                $options[] = [
+                    'id' => $servicio->id_servicio,
+                    'name' => $servicio->nombre,
+                ];
+            }
+            return $options;
+        }
+    }
+    
+    /**
+     * Obtener opciones de RRHH
+     */
+    private static function getRrhhOptions($filter, $params)
+    {
+        // Para RRHH, generalmente necesitamos filtros adicionales
+        // Por ahora, retornamos opciones vacías ya que RRHH generalmente requiere autocomplete
+        // Si se necesita, se puede implementar similar a los otros
+        return [];
     }
     
     /**

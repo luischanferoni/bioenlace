@@ -58,71 +58,22 @@ class _DynamicFormState extends State<DynamicForm> {
         _formValues[fieldName] = defaultValue;
       }
       
-      // Cargar opciones si es necesario
-      if (field['endpoint'] != null && field['type'] == 'autocomplete') {
-        _loadOptions(fieldName, field);
+      // Para campos select, cargar opciones directamente del JSON si están disponibles
+      if (field['type'] == 'select' && field['options'] != null) {
+        final options = field['options'] as List<dynamic>? ?? [];
+        _optionsCache[fieldName] = options.map((option) {
+          if (option is Map) {
+            return Map<String, dynamic>.from(option);
+          }
+          return {'id': option.toString(), 'name': option.toString()};
+        }).toList();
       }
+      
+      // NO cargar opciones automáticamente para autocomplete
+      // Se cargarán solo cuando el usuario escriba al menos 3 caracteres
     }
   }
 
-  Future<void> _loadOptions(String fieldName, Map<String, dynamic> field) async {
-    if (_loadingOptions[fieldName] == true) return;
-    
-    setState(() {
-      _loadingOptions[fieldName] = true;
-    });
-
-    try {
-      final endpoint = field['endpoint'] as String;
-      final params = field['params'] as Map<String, dynamic>? ?? {};
-      
-      // Construir URL con parámetros
-      final uri = Uri.parse('${AppConfig.apiUrl}$endpoint');
-      final uriWithParams = uri.replace(queryParameters: params.map((k, v) => MapEntry(k, v.toString())));
-      
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-      
-      if (widget.authToken != null) {
-        headers['Authorization'] = 'Bearer ${widget.authToken}';
-      }
-
-      final response = await http.get(
-        uriWithParams,
-        headers: headers,
-      ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final items = data['data'] ?? data['items'] ?? data;
-        
-        List<Map<String, dynamic>> options = [];
-        if (items is List) {
-          options = items.map((item) {
-            if (item is Map) {
-              return Map<String, dynamic>.from(item);
-            }
-            return {'id': item, 'name': item.toString()};
-          }).toList();
-        }
-        
-        setState(() {
-          _optionsCache[fieldName] = options;
-          _loadingOptions[fieldName] = false;
-        });
-      } else {
-        setState(() {
-          _loadingOptions[fieldName] = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _loadingOptions[fieldName] = false;
-      });
-    }
-  }
 
   Widget _buildField(Map<String, dynamic> field) {
     final fieldName = field['name'] as String;
@@ -144,16 +95,9 @@ class _DynamicFormState extends State<DynamicForm> {
       );
     }
 
-    // Si depende de otro campo, recargar opciones cuando cambie
-    if (dependsOn != null && _formValues.containsKey(dependsOn)) {
-      final dependsValue = _formValues[dependsOn];
-      final fieldParams = field['params'] as Map<String, dynamic>? ?? {};
-      if (fieldParams[dependsOn] != dependsValue) {
-        fieldParams[dependsOn] = dependsValue;
-        field['params'] = fieldParams;
-        _loadOptions(fieldName, field);
-      }
-    }
+    // Si depende de otro campo y es select, las opciones ya deberían venir del backend
+    // Si es autocomplete, se cargarán cuando el usuario escriba
+    // No hacer nada aquí para evitar cargas automáticas
 
     switch (type) {
       case 'autocomplete':
@@ -179,6 +123,8 @@ class _DynamicFormState extends State<DynamicForm> {
         decoration: InputDecoration(
           labelText: label + (required ? ' *' : ''),
           hintText: description,
+          filled: true,
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -203,6 +149,8 @@ class _DynamicFormState extends State<DynamicForm> {
         decoration: InputDecoration(
           labelText: label + (required ? ' *' : ''),
           hintText: description,
+          filled: true,
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -240,6 +188,8 @@ class _DynamicFormState extends State<DynamicForm> {
           decoration: InputDecoration(
             labelText: label + (required ? ' *' : ''),
             hintText: description ?? 'Seleccionar fecha',
+            filled: true,
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -258,25 +208,40 @@ class _DynamicFormState extends State<DynamicForm> {
     final fieldName = field['name'] as String;
     final options = _optionsCache[fieldName] ?? [];
     
+    // Si no hay opciones y hay endpoint, no mostrar el campo (debería usar autocomplete en su lugar)
+    if (options.isEmpty && field['endpoint'] != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Text(
+          'Este campo requiere opciones que se cargarán dinámicamente. Por favor, use autocomplete en su lugar.',
+          style: TextStyle(color: Colors.orange[700], fontSize: 12),
+        ),
+      );
+    }
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           labelText: label + (required ? ' *' : ''),
           hintText: description,
+          filled: true,
+          fillColor: Colors.white,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
           ),
         ),
         value: _formValues[fieldName]?.toString(),
-        items: options.map((option) {
-          final value = option['id']?.toString() ?? option['value']?.toString() ?? option.toString();
-          final display = option['name']?.toString() ?? option['label']?.toString() ?? value;
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(display),
-          );
-        }).toList(),
+        items: options.isEmpty 
+            ? [DropdownMenuItem<String>(value: null, child: Text('Sin opciones disponibles'))]
+            : options.map((option) {
+                final value = option['id']?.toString() ?? option['value']?.toString() ?? option.toString();
+                final display = option['name']?.toString() ?? option['label']?.toString() ?? value;
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(display),
+                );
+              }).toList(),
         onChanged: (value) {
           setState(() {
             _formValues[fieldName] = value;
@@ -291,8 +256,9 @@ class _DynamicFormState extends State<DynamicForm> {
 
   Widget _buildAutocompleteField(Map<String, dynamic> field, String label, bool required, String? description) {
     final fieldName = field['name'] as String;
-    final options = _optionsCache[fieldName] ?? [];
+    final endpoint = field['endpoint'] as String?;
     final isLoading = _loadingOptions[fieldName] == true;
+    final options = _optionsCache[fieldName] ?? [];
     
     if (isLoading) {
       return Padding(
@@ -305,7 +271,7 @@ class _DynamicFormState extends State<DynamicForm> {
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
             SizedBox(width: 8),
-            Text('Cargando opciones...'),
+            Text('Buscando...'),
           ],
         ),
       );
@@ -314,16 +280,32 @@ class _DynamicFormState extends State<DynamicForm> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Autocomplete<Map<String, dynamic>>(
-        optionsBuilder: (TextEditingValue textEditingValue) {
-          if (textEditingValue.text.isEmpty) {
-            return options;
+        optionsBuilder: (TextEditingValue textEditingValue) async {
+          final query = textEditingValue.text.trim();
+          
+          // Solo buscar si hay al menos 3 caracteres
+          if (query.length < 3) {
+            return const Iterable<Map<String, dynamic>>.empty();
           }
-          return options.where((option) {
-            final display = option['name']?.toString() ?? 
-                           option['label']?.toString() ?? 
-                           option.toString();
-            return display.toLowerCase().contains(textEditingValue.text.toLowerCase());
-          });
+          
+          // Si hay endpoint, cargar opciones desde el servidor
+          if (endpoint != null) {
+            // Verificar si ya tenemos opciones cargadas para esta consulta
+            // Si no, cargar desde el servidor
+            await _loadOptionsForAutocomplete(fieldName, field, query);
+          }
+          
+          // Filtrar opciones locales si existen
+          if (options.isNotEmpty) {
+            return options.where((option) {
+              final display = option['name']?.toString() ?? 
+                             option['label']?.toString() ?? 
+                             option.toString();
+              return display.toLowerCase().contains(query.toLowerCase());
+            });
+          }
+          
+          return const Iterable<Map<String, dynamic>>.empty();
         },
         displayStringForOption: (option) {
           return option['name']?.toString() ?? 
@@ -341,7 +323,9 @@ class _DynamicFormState extends State<DynamicForm> {
             focusNode: focusNode,
             decoration: InputDecoration(
               labelText: label + (required ? ' *' : ''),
-              hintText: description,
+              hintText: description ?? 'Escribe al menos 3 caracteres para buscar...',
+              filled: true,
+              fillColor: Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -353,6 +337,80 @@ class _DynamicFormState extends State<DynamicForm> {
         },
       ),
     );
+  }
+  
+  Future<void> _loadOptionsForAutocomplete(String fieldName, Map<String, dynamic> field, String query) async {
+    if (_loadingOptions[fieldName] == true) return;
+    
+    setState(() {
+      _loadingOptions[fieldName] = true;
+    });
+
+    try {
+      final endpoint = field['endpoint'] as String;
+      final params = field['params'] as Map<String, dynamic>? ?? {};
+      
+      // Agregar el query como parámetro 'q'
+      params['q'] = query;
+      
+      // Si depende de otro campo, agregar su valor a los params
+      final dependsOn = field['depends_on'] as String?;
+      if (dependsOn != null && _formValues.containsKey(dependsOn)) {
+        params[dependsOn] = _formValues[dependsOn];
+      }
+      
+      // Construir URL con parámetros
+      final uri = Uri.parse('${AppConfig.apiUrl}$endpoint');
+      final uriWithParams = uri.replace(queryParameters: params.map((k, v) => MapEntry(k, v.toString())));
+      
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      
+      if (widget.authToken != null) {
+        headers['Authorization'] = 'Bearer ${widget.authToken}';
+      }
+
+      final response = await http.get(
+        uriWithParams,
+        headers: headers,
+      ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final items = data['results'] ?? data['data'] ?? data['items'] ?? data;
+        
+        List<Map<String, dynamic>> options = [];
+        if (items is List) {
+          options = items.map((item) {
+            if (item is Map) {
+              // Normalizar formato: puede venir como {'id': x, 'text': y} o {'id': x, 'name': y}
+              final id = item['id']?.toString() ?? item['value']?.toString();
+              final name = item['text']?.toString() ?? item['name']?.toString() ?? item['label']?.toString() ?? id;
+              return {
+                'id': id,
+                'name': name,
+              };
+            }
+            return {'id': item.toString(), 'name': item.toString()};
+          }).toList();
+        }
+        
+        setState(() {
+          _optionsCache[fieldName] = options;
+          _loadingOptions[fieldName] = false;
+        });
+      } else {
+        setState(() {
+          _loadingOptions[fieldName] = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loadingOptions[fieldName] = false;
+      });
+    }
   }
 
   List<Map<String, dynamic>> _getCurrentStepFields() {

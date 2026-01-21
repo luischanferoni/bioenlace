@@ -33,7 +33,7 @@
       "label": "Servicio",
       "type": "select",
       "required": true,
-      "endpoint": "/frontend/servicios/search",
+      "options": "{{options}}",
       "depends_on": "id_efector",
       "option_config": {
         "source": "servicios",

@@ -8,6 +8,7 @@ use common\models\Dialogo;
 use common\models\Mensaje;
 use common\models\Servicio;
 use common\models\Turno;
+use common\components\ConsultaIntentRouter;
 
 class ChatController extends BaseController
 {
@@ -88,36 +89,23 @@ class ChatController extends BaseController
 
         $mensajeUsuario->save();
 
-        // 4. Análisis con IA
-        $servicios = Servicio::find()->select('nombre')->column();
-        $datos = $this->analizarConIA($body['content'], $servicios);
-
-        $intencion = $datos['intencion'] ?? 'crear_turno';
-
-        switch ($intencion) {
-            case 'crear_turno':
-                $respuestaTexto = $this->crearTurno($datos['datos'], $dialogo);
-                break;
-        
-            case 'modificar_turno':
-                $respuestaTexto = $this->modificarTurno($datos['datos'], $dialogo);
-                break;
-        
-            case 'cancelar_turno':
-                $respuestaTexto = "Entiendo. ¿Podés confirmarme qué turno querés cancelar? Por ejemplo, el día y servicio.";
-                break;
-        
-            case 'saludo':
-                $respuestaTexto = "¡Hola! Soy tu asistente virtual para sacar turnos. ¿Querés reservar, modificar o cancelar uno?";
-                break;
-        
-            case 'fuera_de_alcance':
-                $respuestaTexto = "Estoy aquí para ayudarte con turnos médicos. ¿Querés reservar, modificar o cancelar uno?";
-                break;
-        
-            default:
-                $respuestaTexto = "No entendí tu mensaje. Por favor, indicame si querés reservar, modificar o cancelar un turno.";
-                break;
+        // 4. Procesar con el nuevo orquestador
+        try {
+            $result = ConsultaIntentRouter::process($content, $senderId, 'BOT');
+            
+            if ($result['success']) {
+                $respuestaTexto = $result['response']['text'] ?? 'Consulta procesada correctamente.';
+                
+                // Si necesita más información, mantener el contexto
+                if (isset($result['needs_more_info']) && $result['needs_more_info']) {
+                    // El contexto ya fue guardado por ConsultaIntentRouter
+                }
+            } else {
+                $respuestaTexto = $result['error'] ?? 'Ocurrió un error al procesar tu consulta.';
+            }
+        } catch (\Exception $e) {
+            \Yii::error('Error en ConsultaIntentRouter: ' . $e->getMessage(), 'chats');
+            $respuestaTexto = "Ocurrió un error. Por favor, intentá nuevamente.";
         }
 
 
@@ -292,6 +280,10 @@ class ChatController extends BaseController
             */
     }
 
+    /**
+     * @deprecated Este método ya no se usa, se reemplazó por ConsultaIntentRouter
+     * Se mantiene por compatibilidad pero no debería llamarse
+     */
     private function crearTurno($datos, $dialogo)
     {
         // Cargar estado previo o iniciar uno nuevo
@@ -332,13 +324,7 @@ class ChatController extends BaseController
             $respuestaTexto = $preguntas[$siguiente];
         } else {
             // Todos los datos están completos → crear el turno
-            /*$turno = new Turno([
-                'usuario_id' => $senderId,
-                'servicio' => $estado['servicio'],
-                'dia' => $estado['dia'],
-                'horario' => $estado['horario'],
-            ]);
-            $turno->save();*/
+            // NOTA: El código de creación de turno se movió al handler
 
             // Generar respuesta de confirmación
             $respuestaTexto = "Tu turno fue reservado para el servicio \"{$estado['servicio']}\" el {$estado['dia']} a las {$estado['horario']}.";
@@ -353,11 +339,20 @@ class ChatController extends BaseController
 
     private function modificarTurno($datos, $dialogo)
     {
+        /**
+         * @deprecated Este método ya no se usa, se reemplazó por ConsultaIntentRouter
+         * Se mantiene por compatibilidad pero no debería llamarse
+         */
         // Buscar el turno actual (este ejemplo es genérico)
-        $turnoActual = Turno::find()
-        ->where(['usuario_id' => $senderId])
-        ->orderBy(['id' => SORT_DESC])
-        ->one();
+        $turnoActual = null;
+        try {
+            $turnoActual = Turno::find()
+                ->where(['usuario_id' => $dialogo->usuario_id])
+                ->orderBy(['id' => SORT_DESC])
+                ->one();
+        } catch (\Exception $e) {
+            // Si hay error, $turnoActual queda en null
+        }
 
         if (!$turnoActual) {
             $respuestaTexto = "No encontré ningún turno tuyo para modificar. ¿Querés sacar uno nuevo?";

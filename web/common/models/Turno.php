@@ -24,6 +24,74 @@ use common\models\Persona;
  * @property string $fecha_alta
  * @property string $usuario_mod
  * @property string $fecha_mod
+ * 
+ * @chatbot-category turnos
+ * @chatbot-category-name "Gestión de Turnos"
+ * @chatbot-category-description "Acciones concretas relacionadas con turnos médicos"
+ * 
+ * @chatbot-intent crear_turno
+ * @chatbot-intent-name "Crear Turno"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority high
+ * @chatbot-intent-keywords "sacar turno,reservar turno,agendar turno,pedir turno,necesito turno,quiero turno,turno para,turno con,agendar,reservar,sacar cita,cita médica"
+ * @chatbot-intent-patterns "/\b(sacar|reservar|agendar|pedir|necesito|quiero)\s+(un\s+)?turno/i,/turno\s+(para|con|de)/i,/agendar\s+(cita|consulta)/i"
+ * @chatbot-intent-required-params servicio,fecha,hora
+ * @chatbot-intent-optional-params profesional,efector,observaciones
+ * @chatbot-intent-lifetime 600
+ * @chatbot-intent-patient-profile-can-use professional,efector,service
+ * @chatbot-intent-patient-profile-resolve-references true
+ * @chatbot-intent-patient-profile-update-on-complete-type professional
+ * @chatbot-intent-patient-profile-update-on-complete-fields id_rr_hh,id_efector,servicio
+ * @chatbot-intent-patient-profile-cache-ttl 3600
+ * 
+ * @chatbot-intent modificar_turno
+ * @chatbot-intent-name "Modificar Turno"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority high
+ * @chatbot-intent-keywords "cambiar turno,modificar turno,reagendar turno,cambiar fecha,cambiar horario,mover turno,reagendar,modificar cita"
+ * @chatbot-intent-patterns "/\b(cambiar|modificar|reagendar|mover)\s+(el\s+)?turno/i,/cambiar\s+(fecha|horario|hora)/i"
+ * @chatbot-intent-required-params turno_id
+ * @chatbot-intent-optional-params fecha,hora,profesional
+ * @chatbot-intent-lifetime 600
+ * @chatbot-intent-patient-profile-can-use professional
+ * @chatbot-intent-patient-profile-resolve-references false
+ * @chatbot-intent-patient-profile-cache-ttl 3600
+ * 
+ * @chatbot-intent cancelar_turno
+ * @chatbot-intent-name "Cancelar Turno"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority high
+ * @chatbot-intent-keywords "cancelar turno,anular turno,borrar turno,no puedo ir,no voy a ir,cancelar cita"
+ * @chatbot-intent-patterns "/\b(cancelar|anular|borrar)\s+(el\s+)?turno/i,/no\s+(puedo|voy)\s+a\s+ir/i"
+ * @chatbot-intent-required-params turno_id
+ * @chatbot-intent-optional-params
+ * @chatbot-intent-lifetime 300
+ * @chatbot-intent-patient-profile-can-use
+ * @chatbot-intent-patient-profile-resolve-references false
+ * 
+ * @chatbot-intent consultar_turnos
+ * @chatbot-intent-name "Consultar Turnos"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority medium
+ * @chatbot-intent-keywords "mis turnos,ver turnos,turnos futuros,próximo turno,cuándo es mi turno,qué turnos tengo,turnos pasados"
+ * @chatbot-intent-patterns "/\b(mis|ver|consultar)\s+turnos/i,/pr[oó]ximo\s+turno/i,/cu[áa]ndo\s+es\s+mi\s+turno/i"
+ * @chatbot-intent-required-params
+ * @chatbot-intent-optional-params fecha_desde,fecha_hasta,servicio
+ * @chatbot-intent-lifetime 300
+ * @chatbot-intent-patient-profile-can-use
+ * @chatbot-intent-patient-profile-resolve-references false
+ * 
+ * @chatbot-intent disponibilidad_turnos
+ * @chatbot-intent-name "Disponibilidad de Turnos"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority medium
+ * @chatbot-intent-keywords "horarios disponibles,disponibilidad,turnos disponibles,qué horarios hay,cuándo hay turno"
+ * @chatbot-intent-patterns "/horarios?\s+disponibles/i,/turnos?\s+disponibles/i,/cu[áa]ndo\s+hay\s+turno/i"
+ * @chatbot-intent-required-params
+ * @chatbot-intent-optional-params servicio
+ * @chatbot-intent-lifetime 300
+ * @chatbot-intent-patient-profile-can-use
+ * @chatbot-intent-patient-profile-resolve-references false
  */
 class Turno extends \yii\db\ActiveRecord
 {

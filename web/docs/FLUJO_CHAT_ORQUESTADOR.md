@@ -1,5 +1,7 @@
 # Flujo del Chat y Orquestador de Intents
 
+> **Nota sobre Configuración**: Actualmente la configuración del chatbot se realiza manualmente editando archivos PHP (`intent-categories.php`, `intent-parameters.php`, etc.). Existe una propuesta de centralización que usa anotaciones en modelos como source of truth. Ver [CENTRALIZACION_CHATBOT_CONFIG.md](./CENTRALIZACION_CHATBOT_CONFIG.md) para más detalles sobre la arquitectura propuesta.
+
 ## Flujo desde la Llegada de un Chat
 
 Cuando un usuario envía un mensaje al chatbot, el sistema procesa la consulta siguiendo este flujo:
@@ -91,6 +93,8 @@ Se retorna una respuesta estructurada con:
 ---
 
 ## Crear una Nueva Entity con el Orquestador
+
+> **Nota**: Este proceso describe la configuración manual actual. En el futuro, con la implementación de la centralización (ver [CENTRALIZACION_CHATBOT_CONFIG.md](./CENTRALIZACION_CHATBOT_CONFIG.md)), el proceso será más simple: anotar el modelo y ejecutar el generador.
 
 Para agregar una nueva funcionalidad al chatbot, sigue estos pasos:
 
@@ -549,6 +553,8 @@ Si necesitas rutas personalizadas, edita `web/frontend/config/main.php` o el arc
 
 ### Paso 6: Registrar la Categoría e Intents
 
+> **Nota**: Con la centralización propuesta, este paso se reemplaza por anotaciones en el modelo. Ver [CENTRALIZACION_CHATBOT_CONFIG.md](./CENTRALIZACION_CHATBOT_CONFIG.md) para el formato de anotaciones.
+
 Edita `web/common/config/chatbot/intent-categories.php` y agrega tu nueva categoría:
 
 ```php
@@ -597,6 +603,8 @@ return [
 - `priority`: Nivel de prioridad para el scoring
 
 ### Paso 7: Definir Parámetros de los Intents
+
+> **Nota**: Con la centralización propuesta, este paso se reemplaza por anotaciones en el modelo. Ver [CENTRALIZACION_CHATBOT_CONFIG.md](./CENTRALIZACION_CHATBOT_CONFIG.md) para el formato de anotaciones.
 
 Edita `web/common/config/chatbot/intent-parameters.php` y agrega la configuración de parámetros:
 
@@ -719,3 +727,12 @@ Puedes ver un ejemplo completo y funcional en:
 - `web/common/components/intent_handlers/TurnosHandler.php`
 - Configuración en `intent-categories.php` bajo la categoría `'turnos'`
 - Parámetros en `intent-parameters.php` para intents como `'crear_turno'`, `'modificar_turno'`, etc.
+
+### Centralización de Configuración
+
+Para una arquitectura más mantenible, considera usar el sistema de centralización propuesto que:
+- Usa los modelos como source of truth
+- Genera automáticamente los archivos de configuración desde anotaciones
+- Reduce duplicación y errores
+
+Ver [CENTRALIZACION_CHATBOT_CONFIG.md](./CENTRALIZACION_CHATBOT_CONFIG.md) para más información.

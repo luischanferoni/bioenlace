@@ -215,7 +215,7 @@ class ConversationContext
      */
     private static function getCategoryFromIntent($intent)
     {
-        $categories = require Yii::getAlias('@common/config/IntentCategories.php');
+        $categories = require Yii::getAlias('@common/config/chatbot/intent-categories.php');
         
         foreach ($categories as $categoryKey => $category) {
             foreach ($category['intents'] as $intentKey => $intentConfig) {
@@ -235,7 +235,7 @@ class ConversationContext
      */
     private static function getIntentConfig($intent)
     {
-        $intentParams = require Yii::getAlias('@common/config/IntentParameters.php');
+        $intentParams = require Yii::getAlias('@common/config/chatbot/intent-parameters.php');
         return $intentParams[$intent] ?? null;
     }
     

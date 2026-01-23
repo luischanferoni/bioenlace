@@ -55,7 +55,7 @@ class IntentClassifier
     private static function classifyByRules($message, $context = null)
     {
         $messageLower = mb_strtolower(trim($message), 'UTF-8');
-        $categories = require Yii::getAlias('@common/config/IntentCategories.php');
+        $categories = require Yii::getAlias('@common/config/chatbot/intent-categories.php');
         
         $bestMatch = null;
         $bestScore = 0;
@@ -190,7 +190,7 @@ class IntentClassifier
      */
     private static function buildClassificationPrompt($message, $context = null, $rulesResult = null)
     {
-        $categories = require Yii::getAlias('@common/config/IntentCategories.php');
+        $categories = require Yii::getAlias('@common/config/chatbot/intent-categories.php');
         
         // Construir lista de categorías e intents disponibles
         $categoriesList = [];
@@ -253,7 +253,7 @@ PROMPT;
      */
     private static function validateCategoryAndIntent($category, $intent)
     {
-        $categories = require Yii::getAlias('@common/config/IntentCategories.php');
+        $categories = require Yii::getAlias('@common/config/chatbot/intent-categories.php');
         
         if (!isset($categories[$category])) {
             return false;
@@ -274,7 +274,7 @@ PROMPT;
      */
     public static function getIntentInfo($category, $intent)
     {
-        $categories = require Yii::getAlias('@common/config/IntentCategories.php');
+        $categories = require Yii::getAlias('@common/config/chatbot/intent-categories.php');
         
         if (!isset($categories[$category]['intents'][$intent])) {
             return null;

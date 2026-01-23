@@ -32,7 +32,7 @@ abstract class BaseIntentHandler
      */
     protected function getMissingRequiredParams($intent, $parameters)
     {
-        $intentConfig = require Yii::getAlias('@common/config/IntentParameters.php');
+        $intentConfig = require Yii::getAlias('@common/config/chatbot/intent-parameters.php');
         
         if (!isset($intentConfig[$intent])) {
             return [];

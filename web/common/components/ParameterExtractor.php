@@ -295,7 +295,7 @@ class ParameterExtractor
      */
     private static function resolvePatientReferences($message, $messageLower, $parameters, $intent, $context)
     {
-        $references = require Yii::getAlias('@common/config/PatientReferences.php');
+        $references = require Yii::getAlias('@common/config/chatbot/patient-references.php');
         
         // Buscar referencias en el mensaje
         foreach ($references as $referenceText => $referenceConfig) {
@@ -383,7 +383,7 @@ class ParameterExtractor
      */
     private static function getIntentConfig($intent)
     {
-        $intentParams = require Yii::getAlias('@common/config/IntentParameters.php');
+        $intentParams = require Yii::getAlias('@common/config/chatbot/intent-parameters.php');
         return $intentParams[$intent] ?? null;
     }
 }

@@ -101,7 +101,7 @@ class ConsultaIntentRouter
      */
     private static function getHandler($category, $intent)
     {
-        $categories = require Yii::getAlias('@common/config/IntentCategories.php');
+        $categories = require Yii::getAlias('@common/config/chatbot/intent-categories.php');
         
         if (!isset($categories[$category]['intents'][$intent])) {
             return null;

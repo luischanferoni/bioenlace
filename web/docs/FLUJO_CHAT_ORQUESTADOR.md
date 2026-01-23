@@ -202,7 +202,352 @@ class MiNuevaEntityHandler extends BaseIntentHandler
 }
 ```
 
-### Paso 2: Registrar la Categoría e Intents
+### Paso 2: Crear el Modelo (si es necesario)
+
+Si tu entity requiere almacenar datos en la base de datos, crea el modelo en `web/common/models/`:
+
+**Ejemplo: `MiNuevaEntity.php`**
+
+```php
+<?php
+
+namespace common\models;
+
+use Yii;
+use yii\db\ActiveRecord;
+
+/**
+ * Modelo para la tabla mi_nueva_entity
+ *
+ * @property int $id_entity
+ * @property string $nombre
+ * @property string $descripcion
+ * @property int $id_persona
+ * @property string $fecha_alta
+ * @property string $usuario_alta
+ */
+class MiNuevaEntity extends ActiveRecord
+{
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'mi_nueva_entity';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['nombre'], 'required'],
+            [['nombre'], 'string', 'max' => 255],
+            [['descripcion'], 'string'],
+            [['id_persona'], 'integer'],
+            [['fecha_alta'], 'safe'],
+            [['usuario_alta'], 'string', 'max' => 50],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id_entity' => 'ID',
+            'nombre' => 'Nombre',
+            'descripcion' => 'Descripción',
+            'id_persona' => 'Persona',
+            'fecha_alta' => 'Fecha de Alta',
+            'usuario_alta' => 'Usuario de Alta',
+        ];
+    }
+
+    /**
+     * Relación con Persona
+     */
+    public function getPersona()
+    {
+        return $this->hasOne(Persona::class, ['id_persona' => 'id_persona']);
+    }
+}
+```
+
+**Si necesitas una nueva tabla en la base de datos**, crea una migración:
+
+**Ejemplo: `web/common/migrations/mYYYYMMDD_HHMMSS_create_mi_nueva_entity_table.php`**
+
+```php
+<?php
+
+use yii\db\Migration;
+
+/**
+ * Handles the creation of table `{{%mi_nueva_entity}}`.
+ */
+class mYYYYMMDD_HHMMSS_create_mi_nueva_entity_table extends Migration
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function safeUp()
+    {
+        $this->createTable('{{%mi_nueva_entity}}', [
+            'id_entity' => $this->primaryKey(),
+            'nombre' => $this->string(255)->notNull(),
+            'descripcion' => $this->text(),
+            'id_persona' => $this->integer(),
+            'fecha_alta' => $this->timestamp()->defaultExpression('CURRENT_TIMESTAMP'),
+            'usuario_alta' => $this->string(50),
+        ]);
+
+        // Índices
+        $this->createIndex('idx_mi_nueva_entity_id_persona', '{{%mi_nueva_entity}}', 'id_persona');
+        
+        // Foreign keys (si aplica)
+        // $this->addForeignKey(
+        //     'fk_mi_nueva_entity_persona',
+        //     '{{%mi_nueva_entity}}',
+        //     'id_persona',
+        //     '{{%personas}}',
+        //     'id_persona',
+        //     'CASCADE'
+        // );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function safeDown()
+    {
+        // $this->dropForeignKey('fk_mi_nueva_entity_persona', '{{%mi_nueva_entity}}');
+        $this->dropTable('{{%mi_nueva_entity}}');
+    }
+}
+```
+
+**Ejecutar la migración:**
+```bash
+php yii migrate
+```
+
+### Paso 3: Crear el Controlador
+
+Crea el controlador en `web/frontend/controllers/` o `web/frontend/modules/api/v1/controllers/` según corresponda:
+
+**Ejemplo: `web/frontend/controllers/MiNuevaEntityController.php`**
+
+```php
+<?php
+
+namespace frontend\controllers;
+
+use Yii;
+use yii\web\Controller;
+use yii\web\NotFoundHttpException;
+use yii\filters\VerbFilter;
+use common\models\MiNuevaEntity;
+use frontend\components\UserRequest;
+
+/**
+ * MiNuevaEntityController implementa las acciones CRUD para MiNuevaEntity
+ */
+class MiNuevaEntityController extends Controller
+{
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'ghost-access' => [
+                'class' => 'frontend\components\SisseGhostAccessControl',
+            ],
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'delete' => ['POST'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Listar todas las entities del usuario
+     * @entity MiNuevaEntity
+     * @tags entity,listar,ver,consultar
+     * @keywords listar,ver entities,consultar entities,mis entities
+     * @synonyms entity,entidad
+     */
+    public function actionIndex()
+    {
+        $userId = Yii::$app->user->id;
+        $idPersona = Yii::$app->request->get('id_persona');
+        
+        $query = MiNuevaEntity::find();
+        
+        if ($idPersona) {
+            $query->where(['id_persona' => $idPersona]);
+        }
+        
+        $entities = $query->all();
+        
+        return $this->render('index', [
+            'entities' => $entities,
+        ]);
+    }
+
+    /**
+     * Crear una nueva entity
+     * @entity MiNuevaEntity
+     * @tags entity,crear,nuevo,agregar
+     * @keywords crear,agregar entity,nuevo entity
+     * @synonyms crear,agregar,nuevo
+     */
+    public function actionCreate()
+    {
+        $model = new MiNuevaEntity();
+        
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id_entity]);
+        }
+        
+        return $this->render('create', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Ver detalles de una entity
+     * @entity MiNuevaEntity
+     * @tags entity,ver,detalle,mostrar
+     * @keywords ver entity,detalle entity,mostrar entity
+     */
+    public function actionView($id)
+    {
+        return $this->render('view', [
+            'model' => $this->findModel($id),
+        ]);
+    }
+
+    /**
+     * Actualizar una entity
+     * @entity MiNuevaEntity
+     * @tags entity,editar,modificar,actualizar
+     * @keywords editar,modificar entity,actualizar entity
+     */
+    public function actionUpdate($id)
+    {
+        $model = $this->findModel($id);
+        
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->redirect(['view', 'id' => $model->id_entity]);
+        }
+        
+        return $this->render('update', [
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Eliminar una entity
+     * @entity MiNuevaEntity
+     * @tags entity,eliminar,borrar
+     * @keywords eliminar entity,borrar entity
+     */
+    public function actionDelete($id)
+    {
+        $this->findModel($id)->delete();
+        
+        return $this->redirect(['index']);
+    }
+
+    /**
+     * Buscar entity por ID
+     */
+    protected function findModel($id)
+    {
+        if (($model = MiNuevaEntity::findOne($id)) !== null) {
+            return $model;
+        }
+        
+        throw new NotFoundHttpException('La entity solicitada no existe.');
+    }
+}
+```
+
+**Importante: Anotaciones para UniversalQueryAgent**
+
+Para que `UniversalQueryAgent` pueda descubrir automáticamente las acciones del controlador, agrega estas anotaciones en los docblocks de cada acción:
+
+- `@entity NombreEntity`: Nombre de la entidad que maneja
+- `@tags tag1,tag2,tag3`: Tags para búsqueda semántica
+- `@keywords keyword1,keyword2`: Palabras clave específicas
+- `@synonyms sinonimo1,sinonimo2`: Sinónimos para matching
+
+### Paso 4: Crear las Vistas (si aplica)
+
+Si tu controlador renderiza vistas HTML, créalas en `web/frontend/views/mi-nueva-entity/`:
+
+**Ejemplo: `web/frontend/views/mi-nueva-entity/index.php`**
+
+```php
+<?php
+
+use yii\helpers\Html;
+use yii\grid\GridView;
+
+/* @var $this yii\web\View */
+/* @var $entities common\models\MiNuevaEntity[] */
+
+$this->title = 'Mis Entities';
+$this->params['breadcrumbs'][] = $this->title;
+?>
+<div class="mi-nueva-entity-index">
+    <h1><?= Html::encode($this->title) ?></h1>
+
+    <p>
+        <?= Html::a('Crear Nueva Entity', ['create'], ['class' => 'btn btn-success']) ?>
+    </p>
+
+    <?= GridView::widget([
+        'dataProvider' => $dataProvider,
+        'columns' => [
+            ['class' => 'yii\grid\SerialColumn'],
+            'id_entity',
+            'nombre',
+            'descripcion',
+            'fecha_alta',
+            ['class' => 'yii\grid\ActionColumn'],
+        ],
+    ]); ?>
+</div>
+```
+
+**Otras vistas comunes:**
+- `create.php`: Formulario de creación
+- `update.php`: Formulario de edición
+- `view.php`: Vista de detalle
+- `_form.php`: Formulario parcial (reutilizable)
+
+### Paso 5: Configurar Rutas (si es necesario)
+
+Si necesitas rutas personalizadas, edita `web/frontend/config/main.php` o el archivo de configuración de rutas correspondiente:
+
+```php
+'urlManager' => [
+    'rules' => [
+        // ... otras rutas ...
+        'mi-entity/<id:\d+>' => 'mi-nueva-entity/view',
+        'mi-entity/crear' => 'mi-nueva-entity/create',
+    ],
+],
+```
+
+### Paso 6: Registrar la Categoría e Intents
 
 Edita `web/common/config/chatbot/intent-categories.php` y agrega tu nueva categoría:
 
@@ -251,7 +596,7 @@ return [
 - `patterns`: Expresiones regulares para detección más precisa
 - `priority`: Nivel de prioridad para el scoring
 
-### Paso 3: Definir Parámetros de los Intents
+### Paso 7: Definir Parámetros de los Intents
 
 Edita `web/common/config/chatbot/intent-parameters.php` y agrega la configuración de parámetros:
 
@@ -298,7 +643,7 @@ return [
 
 Si necesitas un parámetro personalizado, deberás agregarlo en `ParameterExtractor::extractParameter()`.
 
-### Paso 4: (Opcional) Agregar Referencias del Paciente
+### Paso 8: (Opcional) Agregar Referencias del Paciente
 
 Si tu entity usa referencias del paciente (como "mi médico", "mi efector"), edita `web/common/config/chatbot/patient-references.php`:
 
@@ -314,7 +659,7 @@ return [
 ];
 ```
 
-### Paso 5: Probar la Integración
+### Paso 9: Probar la Integración
 
 1. **Prueba de detección por keywords:**
    - Envía un mensaje con las keywords definidas
@@ -334,22 +679,39 @@ return [
    - Envía múltiples mensajes relacionados
    - Verifica que el contexto se mantenga entre mensajes
 
-### Resumen de Archivos a Modificar
+### Resumen de Archivos a Crear/Modificar
 
+#### Archivos del Orquestador (Chatbot)
 1. ✅ **Crear Handler**: `web/common/components/intent_handlers/MiNuevaEntityHandler.php`
 2. ✅ **Registrar Categoría**: `web/common/config/chatbot/intent-categories.php`
 3. ✅ **Definir Parámetros**: `web/common/config/chatbot/intent-parameters.php`
 4. ⚠️ **Opcional - Referencias**: `web/common/config/chatbot/patient-references.php`
 5. ⚠️ **Opcional - Parámetros personalizados**: `web/common/components/ParameterExtractor.php`
 
+#### Archivos del MVC
+6. ✅ **Crear Modelo**: `web/common/models/MiNuevaEntity.php` (si requiere BD)
+7. ✅ **Crear Migración**: `web/common/migrations/mYYYYMMDD_HHMMSS_create_mi_nueva_entity_table.php` (si requiere nueva tabla)
+8. ✅ **Crear Controlador**: `web/frontend/controllers/MiNuevaEntityController.php`
+9. ✅ **Crear Vistas**: `web/frontend/views/mi-nueva-entity/*.php` (si renderiza HTML)
+10. ⚠️ **Opcional - Configurar Rutas**: `web/frontend/config/main.php` (si necesita rutas personalizadas)
+
 ### Buenas Prácticas
 
+#### Para el Orquestador (Handlers)
 - **Nombres consistentes**: Usa nombres descriptivos y consistentes para intents y handlers
 - **Logging**: Usa `$this->log()` para registrar actividad importante
 - **Manejo de errores**: Siempre retorna respuestas estructuradas, incluso en errores
 - **Contexto**: Actualiza el contexto cuando sea necesario para mantener la conversación
 - **Validación**: Valida siempre los parámetros requeridos antes de procesar
 - **Reutilización**: Usa `UniversalQueryAgent` para buscar acciones del sistema en lugar de hardcodear rutas
+
+#### Para el MVC
+- **Anotaciones en Controladores**: Siempre agrega las anotaciones `@entity`, `@tags`, `@keywords`, `@synonyms` en los docblocks de las acciones para que `UniversalQueryAgent` las descubra automáticamente
+- **Nomenclatura de Tablas**: Usa el prefijo `{{%` para tablas (ej: `{{%mi_nueva_entity}}`) para compatibilidad con diferentes entornos
+- **Relaciones**: Define relaciones en los modelos usando `hasOne()` y `hasMany()` para facilitar consultas
+- **Validaciones**: Define reglas de validación completas en `rules()` del modelo
+- **Behaviors**: Usa behaviors comunes como `TimestampBehavior` para campos de fecha automáticos
+- **Seguridad**: Implementa control de acceso en los controladores usando `SisseGhostAccessControl` o similar
 
 ### Ejemplo Completo: TurnosHandler
 

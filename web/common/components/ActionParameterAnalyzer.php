@@ -599,23 +599,23 @@ class ActionParameterAnalyzer
     {
         $mapping = [
             'efectores' => [
-                'endpoint' => '/api/v1/efectores/search',
+                'endpoint' => '/efectores/search',
                 'input_type' => 'autocomplete',
             ],
             'servicios' => [
-                'endpoint' => '/api/v1/servicios/search',
+                'endpoint' => '/servicios/search',
                 'input_type' => 'autocomplete',
             ],
             'personas' => [
-                'endpoint' => '/api/v1/personas/autocomplete',
+                'endpoint' => '/personas/autocomplete',
                 'input_type' => 'autocomplete',
             ],
             'rrhh' => [
-                'endpoint' => '/api/v1/rrhh/rrhh-autocomplete',
+                'endpoint' => '/rrhh/rrhh-autocomplete',
                 'input_type' => 'autocomplete',
             ],
             'especialidades' => [
-                'endpoint' => '/api/v1/especialidades/search',
+                'endpoint' => '/especialidades/search',
                 'input_type' => 'autocomplete',
             ],
         ];
@@ -655,22 +655,22 @@ class ActionParameterAnalyzer
         if (stripos($paramNameLower, 'efector') !== false || stripos($paramNameLower, 'id_efector') !== false) {
             return [
                 'type' => 'autocomplete',
-                'endpoint' => '/api/v1/efectores/search',
+                'endpoint' => '/efectores/search',
             ];
         } elseif (stripos($paramNameLower, 'servicio') !== false || stripos($paramNameLower, 'id_servicio') !== false) {
             return [
                 'type' => 'autocomplete',
-                'endpoint' => '/api/v1/servicios/search',
+                'endpoint' => '/servicios/search',
             ];
         } elseif (stripos($paramNameLower, 'persona') !== false || stripos($paramNameLower, 'id_persona') !== false) {
             return [
                 'type' => 'autocomplete',
-                'endpoint' => '/api/v1/personas/autocomplete',
+                'endpoint' => '/personas/autocomplete',
             ];
         } elseif (stripos($paramNameLower, 'rrhh') !== false || stripos($paramNameLower, 'id_rrhh') !== false) {
             return [
                 'type' => 'autocomplete',
-                'endpoint' => '/api/v1/rrhh/rrhh-autocomplete',
+                'endpoint' => '/rrhh/rrhh-autocomplete',
             ];
         } elseif (stripos($paramNameLower, 'fecha') !== false || stripos($paramNameLower, 'date') !== false) {
             return [

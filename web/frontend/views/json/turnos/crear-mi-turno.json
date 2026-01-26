@@ -22,7 +22,7 @@
       "label": "Efector",
       "type": "autocomplete",
       "required": true,
-      "endpoint": "/frontend/efectores/search",
+      "endpoint": "/api/v1/efectores/search",
       "option_config": {
         "source": "efectores",
         "filter": "user_efectores"
@@ -45,7 +45,7 @@
       "label": "Profesional",
       "type": "autocomplete",
       "required": true,
-      "endpoint": "/frontend/rrhh/rrhh-autocomplete",
+      "endpoint": "/api/v1/rrhh/rrhh-autocomplete",
       "depends_on": "id_servicio_asignado",
       "option_config": {
         "source": "rrhh",

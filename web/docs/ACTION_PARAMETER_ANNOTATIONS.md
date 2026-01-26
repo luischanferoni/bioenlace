@@ -151,7 +151,7 @@ Cuando faltan parámetros, el sistema devuelve:
     "options": {
       "id_efector": {
         "type": "select",
-        "endpoint": "/frontend/efectores/search"
+        "endpoint": "/api/v1/efectores/search"
       }
     },
     "form_config": {
@@ -161,7 +161,7 @@ Cuando faltan parámetros, el sistema devuelve:
           "label": "Id Efector",
           "type": "select",
           "required": true,
-          "endpoint": "/frontend/efectores/search"
+          "endpoint": "/api/v1/efectores/search"
         }
       ]
     }

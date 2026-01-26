@@ -245,6 +245,7 @@ class TurnosController extends Controller
                 );
             }
             
+            
             // El config ya tiene wizard_config, devolverlo directamente
             // Formato esperado: ['wizard_config' => [...]]
             Yii::info("Devolviendo wizard_config desde template: " . json_encode($config), 'turnos-controller');

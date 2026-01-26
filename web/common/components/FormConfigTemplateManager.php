@@ -191,13 +191,19 @@ class FormConfigTemplateManager
             'id_servicio' => 'id_servicio_asignado',
             'servicio_actual' => 'id_servicio_asignado',
             'servicio' => 'id_servicio_asignado',
+            'id_rr_hh' => 'id_rr_hh', // Ya está correcto, pero lo incluimos para consistencia
+            'id_rrhh' => 'id_rr_hh',
+            'rrhh' => 'id_rr_hh',
+            'profesional' => 'id_rr_hh',
         ];
         
         // Aplicar mapeo de alias a los params
         foreach ($paramAliases as $alias => $realName) {
             if (isset($params[$alias]) && !isset($params[$realName])) {
                 $params[$realName] = $params[$alias];
-                Yii::info("Mapeando parámetro alias '{$alias}' -> '{$realName}' con valor: " . $params[$alias], 'form-config-template');
+                if (YII_DEBUG) {
+                    Yii::info("Mapeando parámetro alias '{$alias}' -> '{$realName}' con valor: " . $params[$alias], 'form-config-template');
+                }
             }
         }
         
@@ -267,8 +273,15 @@ class FormConfigTemplateManager
         }
         
         // Si el campo depende de otro y no tenemos ese valor, no podemos obtener opciones
+        // EXCEPTO si el filter permite obtener opciones sin la dependencia (ej: todos los servicios)
         if ($dependsOn && !isset($params[$dependsOn])) {
-            return null;
+            // Si el source es 'servicios' y el filter es 'efector_servicios', 
+            // pero no tenemos id_efector, aún podemos devolver todos los servicios
+            if ($source === 'servicios' && $filter === 'efector_servicios') {
+                // Continuar para obtener todos los servicios
+            } else {
+                return null;
+            }
         }
         
         $options = [];
@@ -344,8 +357,9 @@ class FormConfigTemplateManager
      */
     private static function getServiciosOptions($filter, $params)
     {
-        if ($filter === 'efector_servicios' && isset($params['id_efector'])) {
-            // Obtener servicios del efector
+        // Si el filtro requiere efector pero no está disponible, devolver todos los servicios
+        if ($filter === 'efector_servicios' && isset($params['id_efector']) && $params['id_efector'] !== null && $params['id_efector'] !== '') {
+            // Obtener servicios del efector específico
             $servicios = \common\models\ServiciosEfector::find()
                 ->joinWith('idServicio')
                 ->where(['servicios_efector.id_efector' => $params['id_efector']])
@@ -356,22 +370,21 @@ class FormConfigTemplateManager
             $options = [];
             foreach ($servicios as $servicioEfector) {
                 $options[] = [
-                    'id' => $servicioEfector->idServicio->id_servicio,
+                    'id' => (string)$servicioEfector->idServicio->id_servicio,
                     'name' => $servicioEfector->idServicio->nombre,
                 ];
             }
             return $options;
         } else {
-            // Obtener todos los servicios
+            // Obtener todos los servicios del sistema (cuando no hay filtro o no se puede aplicar)
             $servicios = \common\models\Servicio::find()
-                ->where('deleted_at IS NULL')
                 ->orderBy('nombre')
                 ->all();
             
             $options = [];
             foreach ($servicios as $servicio) {
                 $options[] = [
-                    'id' => $servicio->id_servicio,
+                    'id' => (string)$servicio->id_servicio,
                     'name' => $servicio->nombre,
                 ];
             }

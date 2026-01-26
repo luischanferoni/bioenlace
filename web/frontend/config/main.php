@@ -138,6 +138,16 @@ return [
                 'POST api/<version:\w+>/config/set-session' => '<version>/config/set-session',
                 'OPTIONS api/<version:\w+>/config/set-session' => '<version>/config/set-session',
                 
+                // Efectores API - Búsqueda
+                'GET api/<version:\w+>/efectores/search' => '<version>/efectores/search',
+                'POST api/<version:\w+>/efectores/search' => '<version>/efectores/search',
+                'OPTIONS api/<version:\w+>/efectores/search' => '<version>/efectores/search',
+                
+                // Recursos Humanos API - Búsqueda
+                'GET api/<version:\w+>/rrhh/rrhh-autocomplete' => '<version>/rrhh/rrhh-autocomplete',
+                'POST api/<version:\w+>/rrhh/rrhh-autocomplete' => '<version>/rrhh/rrhh-autocomplete',
+                'OPTIONS api/<version:\w+>/rrhh/rrhh-autocomplete' => '<version>/rrhh/rrhh-autocomplete',
+                
                 // CRUD API
                 'POST api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',
                 'OPTIONS api/<version:\w+>/crud/process-query' => '<version>/crud/process-query',

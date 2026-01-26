@@ -186,14 +186,37 @@ class FormConfigTemplateManager
      */
     private static function processVariables($config, $params)
     {
+        // Mapeo de alias de parámetros (nombres alternativos que pueden venir de la extracción)
+        $paramAliases = [
+            'id_servicio' => 'id_servicio_asignado',
+            'servicio_actual' => 'id_servicio_asignado',
+            'servicio' => 'id_servicio_asignado',
+        ];
+        
+        // Aplicar mapeo de alias a los params
+        foreach ($paramAliases as $alias => $realName) {
+            if (isset($params[$alias]) && !isset($params[$realName])) {
+                $params[$realName] = $params[$alias];
+                Yii::info("Mapeando parámetro alias '{$alias}' -> '{$realName}' con valor: " . $params[$alias], 'form-config-template');
+            }
+        }
+        
+        // Log de parámetros recibidos (solo en desarrollo)
+        if (YII_DEBUG) {
+            Yii::info("Parámetros recibidos en processVariables: " . json_encode($params), 'form-config-template');
+        }
+        
         // Procesar "today" en campos date e inyectar valores de parámetros proporcionados
         if (isset($config['wizard_config']['fields'])) {
             foreach ($config['wizard_config']['fields'] as &$field) {
                 $fieldName = $field['name'] ?? null;
                 
-                // Inyectar valor si el parámetro está presente
+                // Inyectar valor si el parámetro está presente (directo o por alias)
                 if ($fieldName && isset($params[$fieldName]) && $params[$fieldName] !== null && $params[$fieldName] !== '') {
                     $field['value'] = $params[$fieldName];
+                    if (YII_DEBUG) {
+                        Yii::info("Inyectando valor '{$params[$fieldName]}' en campo '{$fieldName}'", 'form-config-template');
+                    }
                 }
                 
                 if (isset($field['min']) && $field['min'] === 'today') {

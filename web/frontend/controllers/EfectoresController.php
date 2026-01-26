@@ -189,6 +189,7 @@ class EfectoresController extends Controller
             $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
         }
         
+        // Permitir búsqueda sin query si hay filtros o limit
         // Si no hay query ni filtros, retornar vacío
         if (is_null($q) && empty($filters)) {
             return $out;

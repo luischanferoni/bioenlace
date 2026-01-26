@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared/shared.dart';
+import 'searchable_card_selector.dart';
 
 /// Widget para generar formularios dinámicos basados en form_config del backend
 class DynamicForm extends StatefulWidget {
@@ -101,6 +102,11 @@ class _DynamicFormState extends State<DynamicForm> {
 
     switch (type) {
       case 'autocomplete':
+        // Si el campo tiene un endpoint y es de tipo autocomplete, usar el selector con cards
+        final endpoint = field['endpoint'] as String?;
+        if (endpoint != null) {
+          return _buildSearchableCardSelectorField(field, label, required, description);
+        }
         return _buildAutocompleteField(field, label, required, description);
       case 'select':
         return _buildSelectField(field, label, required, description);
@@ -250,6 +256,68 @@ class _DynamicFormState extends State<DynamicForm> {
         validator: required
             ? (value) => value == null || value.isEmpty ? 'Este campo es requerido' : null
             : null,
+      ),
+    );
+  }
+
+  Widget _buildSearchableCardSelectorField(Map<String, dynamic> field, String label, bool required, String? description) {
+    final fieldName = field['name'] as String;
+    final endpoint = field['endpoint'] as String?;
+    final params = field['params'] as Map<String, dynamic>? ?? {};
+    
+    // Si depende de otro campo, agregar su valor a los params
+    final dependsOn = field['depends_on'] as String?;
+    if (dependsOn != null && _formValues.containsKey(dependsOn)) {
+      params[dependsOn] = _formValues[dependsOn];
+    }
+    
+    // Determinar icono según el tipo de campo
+    IconData? icon;
+    String? searchHint;
+    String? emptyMessage;
+    String? noResultsMessage;
+    
+    if (fieldName == 'id_efector' || fieldName.contains('efector')) {
+      icon = Icons.local_hospital;
+      searchHint = 'Buscar efector...';
+      emptyMessage = 'No hay efectores disponibles';
+      noResultsMessage = 'No se encontraron efectores';
+    } else if (fieldName == 'id_rr_hh' || fieldName.contains('rrhh') || fieldName.contains('profesional')) {
+      icon = Icons.person;
+      searchHint = 'Buscar profesional...';
+      emptyMessage = 'No hay profesionales disponibles';
+      noResultsMessage = 'No se encontraron profesionales';
+    } else if (fieldName.contains('servicio')) {
+      icon = Icons.medical_services;
+      searchHint = 'Buscar servicio...';
+      emptyMessage = 'No hay servicios disponibles';
+      noResultsMessage = 'No se encontraron servicios';
+    } else {
+      icon = Icons.article;
+      searchHint = 'Buscar...';
+      emptyMessage = 'No hay opciones disponibles';
+      noResultsMessage = 'No se encontraron resultados';
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: SearchableCardSelector(
+        label: label,
+        required: required,
+        description: description,
+        endpoint: endpoint,
+        params: params,
+        authToken: widget.authToken,
+        initialValue: _formValues[fieldName]?.toString(),
+        icon: icon,
+        searchHint: searchHint,
+        emptyMessage: emptyMessage,
+        noResultsMessage: noResultsMessage,
+        onChanged: (selectedId) {
+          setState(() {
+            _formValues[fieldName] = selectedId;
+          });
+        },
       ),
     );
   }

@@ -302,8 +302,8 @@ class Rrhh extends \yii\db\ActiveRecord
         
         $query->orderBy($orderBy);
         
-        // Límite de resultados (por defecto 50, máximo 200)
-        $limit = isset($filters['limit']) ? min(intval($filters['limit']), 200) : 50;
+        // Límite de resultados (por defecto 5, máximo 200)
+        $limit = isset($filters['limit']) ? min(intval($filters['limit']), 200) : 5;
         $query->limit($limit);
         
         $command = $query->createCommand();

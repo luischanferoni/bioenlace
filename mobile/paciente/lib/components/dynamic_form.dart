@@ -56,7 +56,12 @@ class _DynamicFormState extends State<DynamicForm> {
       
       // Inicializar valor
       if (defaultValue != null) {
-        _formValues[fieldName] = defaultValue;
+        // Convertir a string para campos select que esperan string como value
+        if (field['type'] == 'select') {
+          _formValues[fieldName] = defaultValue.toString();
+        } else {
+          _formValues[fieldName] = defaultValue;
+        }
       }
       
       // Para campos select, cargar opciones directamente del JSON si están disponibles
@@ -633,6 +638,20 @@ class _DynamicFormState extends State<DynamicForm> {
                       if (isWizard && !isLastStep) {
                         _goToNextStep();
                       } else {
+                        // Asegurar que todos los valores inicializados se incluyan
+                        // Incluir valores de campos que pueden tener value pre-inyectado
+                        final allFields = widget.formConfig['fields'] as List<dynamic>? ?? [];
+                        for (var field in allFields) {
+                          final fieldName = field['name'] as String;
+                          final fieldValue = field['value'];
+                          // Si el campo tiene un valor pre-inyectado y no está en _formValues, agregarlo
+                          if (fieldValue != null && !_formValues.containsKey(fieldName)) {
+                            _formValues[fieldName] = fieldValue;
+                          }
+                        }
+                        
+                        // Log para debug
+                        print('Submitting form with values: $_formValues');
                         widget.onSubmit(_formValues);
                       }
                     }

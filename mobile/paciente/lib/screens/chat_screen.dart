@@ -324,8 +324,26 @@ class _ChatScreenState extends State<ChatScreen> {
       _isSending = true;
     });
 
+    // Log para debug: ver qué parámetros se están enviando
+    print('Executing action: $actionId');
+    print('Params being sent: $params');
+    
+    // Filtrar valores nulos o vacíos si es necesario, pero mantener los que tienen valor
+    final filteredParams = <String, dynamic>{};
+    params.forEach((key, value) {
+      if (value != null && value != '') {
+        filteredParams[key] = value;
+      }
+    });
+    
+    if (filteredParams.isNotEmpty) {
+      print('Filtered params: $filteredParams');
+    } else {
+      print('WARNING: No params to send (all were null or empty)');
+    }
+
     try {
-      final result = await _accionesService.executeAction(actionId, params: params);
+      final result = await _accionesService.executeAction(actionId, params: filteredParams);
 
       setState(() {
         _isSending = false;

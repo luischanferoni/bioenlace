@@ -18,6 +18,7 @@ class SearchableCardSelector extends StatefulWidget {
   final String? emptyMessage;
   final String? noResultsMessage;
   final String? searchHint;
+  final bool autoLoad;
 
   const SearchableCardSelector({
     Key? key,
@@ -33,6 +34,7 @@ class SearchableCardSelector extends StatefulWidget {
     this.emptyMessage,
     this.noResultsMessage,
     this.searchHint,
+    this.autoLoad = false,
   }) : super(key: key);
 
   @override
@@ -54,8 +56,19 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   void initState() {
     super.initState();
     _selectedEfectorId = widget.initialValue;
-    _loadInitialItems();
+    // Solo cargar automáticamente si autoLoad es true y la dependencia está satisfecha
+    // Si autoLoad es false, NO cargar automáticamente (el usuario debe escribir para buscar)
+    if (widget.autoLoad && _hasAllDependencies()) {
+      _loadInitialItems();
+    }
     _searchController.addListener(_onSearchChanged);
+  }
+
+  bool _hasAllDependencies() {
+    // Si hay params con id_servicio_asignado, significa que la dependencia está satisfecha
+    return widget.params?.containsKey('id_servicio_asignado') == true &&
+           widget.params?['id_servicio_asignado'] != null &&
+           widget.params?['id_servicio_asignado'] != '';
   }
 
   @override
@@ -66,21 +79,27 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   }
 
   void _onSearchChanged() {
+    if (!mounted) return;
+    
     final query = _searchController.text.trim().toLowerCase();
     
     if (query.isEmpty) {
-      setState(() {
-        _filteredEfectores = _efectores;
-        _isSearching = false;
-      });
+      if (mounted) {
+        setState(() {
+          _filteredEfectores = _efectores;
+          _isSearching = false;
+        });
+      }
     } else {
-      setState(() {
-        _isSearching = true;
-        _filteredEfectores = _efectores.where((item) {
-          final name = (item['text'] ?? item['name'] ?? '').toString().toLowerCase();
-          return name.contains(query);
-        }).toList();
-      });
+      if (mounted) {
+        setState(() {
+          _isSearching = true;
+          _filteredEfectores = _efectores.where((item) {
+            final name = (item['text'] ?? item['name'] ?? '').toString().toLowerCase();
+            return name.contains(query);
+          }).toList();
+        });
+      }
       
       // Si hay endpoint y la búsqueda tiene al menos 2 caracteres, buscar en el servidor
       if (widget.endpoint != null && query.length >= 2) {
@@ -92,6 +111,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   Future<void> _loadInitialItems() async {
     if (widget.endpoint == null) return;
     
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
@@ -118,9 +138,34 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
         headers: headers,
       ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final items = data['results'] ?? data['data'] ?? data['items'] ?? data;
+        // Manejar diferentes estructuras de respuesta:
+        // 1. { "results": [...] }
+        // 2. { "data": { "results": [...] } }
+        // 3. { "data": [...] }
+        // 4. { "items": [...] }
+        // 5. [...] (array directo)
+        dynamic items;
+        if (data['results'] != null) {
+          items = data['results'];
+        } else if (data['data'] != null) {
+          if (data['data'] is Map && data['data']['results'] != null) {
+            items = data['data']['results'];
+          } else if (data['data'] is List) {
+            items = data['data'];
+          } else {
+            items = data['data'];
+          }
+        } else if (data['items'] != null) {
+          items = data['items'];
+        } else if (data is List) {
+          items = data;
+        } else {
+          items = data;
+        }
         
         List<Map<String, dynamic>> itemsList = [];
         if (items is List) {
@@ -137,31 +182,37 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
           }).toList();
         }
         
-        setState(() {
-          _efectores = itemsList;
-          _filteredEfectores = itemsList;
-          _isLoading = false;
-          
-          // Si hay un valor inicial, encontrar el nombre
-          if (_selectedEfectorId != null) {
-            final item = _efectores.firstWhere(
-              (e) => e['id']?.toString() == _selectedEfectorId,
-              orElse: () => {},
-            );
-            if (item.isNotEmpty) {
-              _selectedEfectorName = item['text']?.toString();
+        if (mounted) {
+          setState(() {
+            _efectores = itemsList;
+            _filteredEfectores = itemsList;
+            _isLoading = false;
+            
+            // Si hay un valor inicial, encontrar el nombre
+            if (_selectedEfectorId != null) {
+              final item = _efectores.firstWhere(
+                (e) => e['id']?.toString() == _selectedEfectorId,
+                orElse: () => {},
+              );
+              if (item.isNotEmpty) {
+                _selectedEfectorName = item['text']?.toString();
+              }
             }
-          }
-        });
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -190,9 +241,34 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
         headers: headers,
       ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final items = data['results'] ?? data['data'] ?? data['items'] ?? data;
+        // Manejar diferentes estructuras de respuesta:
+        // 1. { "results": [...] }
+        // 2. { "data": { "results": [...] } }
+        // 3. { "data": [...] }
+        // 4. { "items": [...] }
+        // 5. [...] (array directo)
+        dynamic items;
+        if (data['results'] != null) {
+          items = data['results'];
+        } else if (data['data'] != null) {
+          if (data['data'] is Map && data['data']['results'] != null) {
+            items = data['data']['results'];
+          } else if (data['data'] is List) {
+            items = data['data'];
+          } else {
+            items = data['data'];
+          }
+        } else if (data['items'] != null) {
+          items = data['items'];
+        } else if (data is List) {
+          items = data;
+        } else {
+          items = data;
+        }
         
         List<Map<String, dynamic>> itemsList = [];
         if (items is List) {
@@ -209,9 +285,11 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
           }).toList();
         }
         
-        setState(() {
-          _filteredEfectores = itemsList;
-        });
+        if (mounted) {
+          setState(() {
+            _filteredEfectores = itemsList;
+          });
+        }
       }
     } catch (e) {
       // Error silencioso, mantener resultados locales
@@ -219,6 +297,8 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   }
 
   void _selectItem(Map<String, dynamic> item) {
+    if (!mounted) return;
+    
     final itemId = item['id']?.toString();
     final itemName = item['text']?.toString();
     
@@ -264,11 +344,13 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                 ? IconButton(
                     icon: Icon(Icons.clear),
                     onPressed: () {
-                      setState(() {
-                        _selectedEfectorId = null;
-                        _selectedEfectorName = null;
-                        _searchController.clear();
-                      });
+                      if (mounted) {
+                        setState(() {
+                          _selectedEfectorId = null;
+                          _selectedEfectorName = null;
+                          _searchController.clear();
+                        });
+                      }
                       widget.onChanged(null);
                     },
                   )

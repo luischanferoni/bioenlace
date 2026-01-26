@@ -2,8 +2,8 @@
   "steps": [
     {
       "step": 0,
-      "title": "Seleccionar Efector y Servicio",
-      "fields": ["id_efector", "id_servicio_asignado"]
+      "title": "Seleccionar Servicio y Efector",
+      "fields": ["id_servicio_asignado", "id_efector"]
     },
     {
       "step": 1,
@@ -18,26 +18,27 @@
   ],
   "fields": [
     {
-      "name": "id_efector",
-      "label": "Efector",
-      "type": "autocomplete",
-      "required": true,
-      "endpoint": "/efectores/search",
-      "option_config": {
-        "source": "efectores",
-        "filter": "user_efectores"
-      }
-    },
-    {
       "name": "id_servicio_asignado",
       "label": "Servicio",
       "type": "select",
       "required": true,
       "options": "{{options}}",
-      "depends_on": "id_efector",
       "option_config": {
         "source": "servicios",
         "filter": "efector_servicios"
+      }
+    },
+    {
+      "name": "id_efector",
+      "label": "Efector",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/efectores/search",
+      "depends_on": "id_servicio_asignado",
+      "auto_load": true,
+      "option_config": {
+        "source": "efectores",
+        "filter": "user_efectores"
       }
     },
     {

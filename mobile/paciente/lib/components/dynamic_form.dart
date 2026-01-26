@@ -299,9 +299,17 @@ class _DynamicFormState extends State<DynamicForm> {
       noResultsMessage = 'No se encontraron resultados';
     }
     
+    final autoLoad = field['auto_load'] as bool? ?? false;
+    
+    // Crear una key única basada en la dependencia para forzar reconstrucción cuando cambia
+    final dependencyKey = dependsOn != null && _formValues.containsKey(dependsOn)
+        ? '${fieldName}_${_formValues[dependsOn]}'
+        : fieldName;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: SearchableCardSelector(
+        key: ValueKey(dependencyKey),
         label: label,
         required: required,
         description: description,
@@ -313,6 +321,7 @@ class _DynamicFormState extends State<DynamicForm> {
         searchHint: searchHint,
         emptyMessage: emptyMessage,
         noResultsMessage: noResultsMessage,
+        autoLoad: autoLoad,
         onChanged: (selectedId) {
           setState(() {
             _formValues[fieldName] = selectedId;

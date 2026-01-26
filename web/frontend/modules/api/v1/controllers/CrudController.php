@@ -513,27 +513,20 @@ class CrudController extends BaseController
     }
     
     /**
-     * Expandir nombres de campos en steps a objetos completos de campos
-     * @param array $steps Array de steps con fields como nombres (strings)
+     * Expandir nombres de campos en steps
+     * Por defecto mantiene solo referencias (strings) para evitar duplicación
+     * La app móvil puede buscar los campos completos en form_config.fields
+     * @param array $steps Array de steps con fields como nombres (strings) o objetos
      * @param array $fieldsConfig Array completo de configuración de campos
-     * @return array Steps con fields expandidos a objetos completos
+     * @return array Steps con fields como referencias (strings) para evitar duplicación
      */
     private function expandStepFields($steps, $fieldsConfig)
     {
-        if (empty($steps) || empty($fieldsConfig)) {
+        if (empty($steps)) {
             return $steps;
         }
         
-        // Crear mapa de campos por nombre para acceso rápido
-        $fieldsMap = [];
-        foreach ($fieldsConfig as $field) {
-            $fieldName = $field['name'] ?? null;
-            if ($fieldName) {
-                $fieldsMap[$fieldName] = $field;
-            }
-        }
-        
-        // Expandir campos en cada step
+        // Expandir campos en cada step, manteniendo solo referencias
         $expandedSteps = [];
         foreach ($steps as $step) {
             $expandedStep = $step;
@@ -541,14 +534,19 @@ class CrudController extends BaseController
             $expandedFields = [];
             
             foreach ($stepFields as $field) {
-                // Si es string (nombre), buscar el campo completo
+                // Si es string (nombre), mantenerlo como referencia
                 if (is_string($field)) {
-                    if (isset($fieldsMap[$field])) {
-                        $expandedFields[] = $fieldsMap[$field];
-                    }
-                } else {
-                    // Si ya es un objeto, mantenerlo
                     $expandedFields[] = $field;
+                } else {
+                    // Si es un objeto, extraer solo el nombre para evitar duplicación
+                    // La información completa está en form_config.fields
+                    $fieldName = $field['name'] ?? null;
+                    if ($fieldName) {
+                        $expandedFields[] = $fieldName;
+                    } else {
+                        // Si no tiene name, mantener el objeto (caso especial)
+                        $expandedFields[] = $field;
+                    }
                 }
             }
             

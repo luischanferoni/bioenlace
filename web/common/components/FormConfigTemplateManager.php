@@ -186,9 +186,16 @@ class FormConfigTemplateManager
      */
     private static function processVariables($config, $params)
     {
-        // Procesar "today" en campos date
+        // Procesar "today" en campos date e inyectar valores de parámetros proporcionados
         if (isset($config['wizard_config']['fields'])) {
             foreach ($config['wizard_config']['fields'] as &$field) {
+                $fieldName = $field['name'] ?? null;
+                
+                // Inyectar valor si el parámetro está presente
+                if ($fieldName && isset($params[$fieldName]) && $params[$fieldName] !== null && $params[$fieldName] !== '') {
+                    $field['value'] = $params[$fieldName];
+                }
+                
                 if (isset($field['min']) && $field['min'] === 'today') {
                     $field['min'] = $params['today'] ?? date('Y-m-d');
                 }

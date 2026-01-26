@@ -198,30 +198,115 @@ class Rrhh extends \yii\db\ActiveRecord
     //     return $out;
     // } 
 
-    public static function Autocomplete($q) {
+    public static function Autocomplete($q, $filters = []) {
 
         $out = ['id' => '', 'text' => ''];
 
         $query = new \yii\db\Query;
-        $query->select(['CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", servicios.nombre) AS text',
-                         '`rr_hh`.id_rr_hh AS id'])
+        $query->select(['CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", COALESCE(servicios.nombre, "")) AS text',
+                         'rr_hh.id_rr_hh AS id'])
             ->from('rr_hh')
             ->where('rr_hh.id_profesion IN (2,3,4,5,6,7,8,9,10,28,29,45,49)')
-            ->andWhere(['like', 'CONCAT(personas.apellido, " ", personas.nombre)', '%'.$q.'%', false])
-            ->orWhere(['like', 'CONCAT(personas.nombre, " ", personas.apellido)', '%'.$q.'%', false])
-            ->orWhere(['like', 'CONCAT(personas.nombre, " ", COALESCE(personas.otro_nombre,""))', '%'.$q.'%', false])
-            ->orWhere(['like', 'CONCAT(personas.nombre, " ", COALESCE(personas.otro_nombre,""), " ", personas.apellido)', '%'.$q.'%', false])
-            ->orWhere(['like', 'personas.nombre', '%'.$q.'%', false])
-            ->orWhere(['like', 'personas.otro_nombre', '%'.$q.'%', false])
-            ->orwhere(['like', 'personas.apellido', '%'.$q.'%', false])            
-            ->join('LEFT JOIN', 'rr_hh_efector', 'rr_hh_efector.id_rr_hh = rr_hh.id_rr_hh')
+            ->join('LEFT JOIN', 'rr_hh_efector', 'rr_hh_efector.id_rr_hh = rr_hh.id_rr_hh AND rr_hh_efector.deleted_at IS NULL')
             ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rr_hh_efector.id_servicio')
             ->join('LEFT JOIN', 'personas', 'rr_hh.id_persona = personas.id_persona')
-            ->groupBy(['rr_hh_efector.id_rr_hh'])
-            ->limit(5);
+            ->join('LEFT JOIN', 'profesiones', 'rr_hh.id_profesion = profesiones.id_profesion')
+            ->join('LEFT JOIN', 'especialidades', 'rr_hh.id_especialidad = especialidades.id_especialidad')
+            ->join('LEFT JOIN', 'efectores', 'rr_hh_efector.id_efector = efectores.id_efector');
+        
+        // Búsqueda por nombre/apellido
+        if (!empty($q)) {
+            $query->andWhere([
+                'or',
+                ['like', 'CONCAT(personas.apellido, " ", personas.nombre)', '%'.$q.'%', false],
+                ['like', 'CONCAT(personas.nombre, " ", personas.apellido)', '%'.$q.'%', false],
+                ['like', 'CONCAT(personas.nombre, " ", COALESCE(personas.otro_nombre,""))', '%'.$q.'%', false],
+                ['like', 'CONCAT(personas.nombre, " ", COALESCE(personas.otro_nombre,""), " ", personas.apellido)', '%'.$q.'%', false],
+                ['like', 'personas.nombre', '%'.$q.'%', false],
+                ['like', 'personas.otro_nombre', '%'.$q.'%', false],
+                ['like', 'personas.apellido', '%'.$q.'%', false],
+                ['like', 'personas.documento', '%'.$q.'%', false]
+            ]);
+        }
+        
+        // Filtro por profesión
+        if (!empty($filters['id_profesion'])) {
+            $query->andWhere(['rr_hh.id_profesion' => $filters['id_profesion']]);
+        }
+        
+        // Filtro por especialidad
+        if (!empty($filters['id_especialidad'])) {
+            $query->andWhere(['rr_hh.id_especialidad' => $filters['id_especialidad']]);
+        }
+        
+        // Filtro por efector
+        if (!empty($filters['id_efector'])) {
+            $query->andWhere(['rr_hh_efector.id_efector' => $filters['id_efector']]);
+        }
+        
+        // Filtro por servicio
+        if (!empty($filters['id_servicio'])) {
+            $query->andWhere(['rr_hh_efector.id_servicio' => $filters['id_servicio']]);
+        }
+        
+        // Filtro por nombre de profesión
+        if (!empty($filters['profesion_nombre'])) {
+            $query->andWhere(['like', 'profesiones.nombre', '%'.$filters['profesion_nombre'].'%', false]);
+        }
+        
+        // Filtro por nombre de especialidad
+        if (!empty($filters['especialidad_nombre'])) {
+            $query->andWhere(['like', 'especialidades.nombre', '%'.$filters['especialidad_nombre'].'%', false]);
+        }
+        
+        // Filtro por nombre de efector
+        if (!empty($filters['efector_nombre'])) {
+            $query->andWhere(['like', 'efectores.nombre', '%'.$filters['efector_nombre'].'%', false]);
+        }
+        
+        // Filtro por nombre de servicio
+        if (!empty($filters['servicio_nombre'])) {
+            $query->andWhere(['like', 'servicios.nombre', '%'.$filters['servicio_nombre'].'%', false]);
+        }
+        
+        // Agrupar para evitar duplicados
+        $query->groupBy(['rr_hh.id_rr_hh']);
+        
+        // Ordenamiento
+        $sortBy = isset($filters['sort_by']) ? $filters['sort_by'] : 'apellido';
+        $sortOrder = isset($filters['sort_order']) && strtoupper($filters['sort_order']) === 'DESC' ? SORT_DESC : SORT_ASC;
+        
+        switch ($sortBy) {
+            case 'nombre':
+                $orderBy = ['personas.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC];
+                break;
+            case 'apellido':
+                $orderBy = ['personas.apellido' => $sortOrder, 'personas.nombre' => SORT_ASC];
+                break;
+            case 'profesion':
+                $orderBy = ['profesiones.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
+                break;
+            case 'especialidad':
+                $orderBy = ['especialidades.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
+                break;
+            case 'efector':
+                $orderBy = ['efectores.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
+                break;
+            case 'servicio':
+                $orderBy = ['servicios.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
+                break;
+            default:
+                $orderBy = ['personas.apellido' => $sortOrder, 'personas.nombre' => SORT_ASC];
+                break;
+        }
+        
+        $query->orderBy($orderBy);
+        
+        // Límite de resultados (por defecto 50, máximo 200)
+        $limit = isset($filters['limit']) ? min(intval($filters['limit']), 200) : 50;
+        $query->limit($limit);
+        
         $command = $query->createCommand();
-       
-
         $data = $command->queryAll();
 
         $out = array_values($data);

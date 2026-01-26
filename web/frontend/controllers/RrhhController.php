@@ -289,11 +289,69 @@ class RrhhController extends Controller
 
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $out = ['results' => ['id' => '', 'text' => '']];
-        if (!is_null($q)) {
-            $data = \common\models\Rrhh::autocomplete($q);
-
-            $out['results'] = array_values($data);
+        
+        // Obtener query de GET o POST
+        if ($q === null) {
+            $q = Yii::$app->request->get('q') ?: Yii::$app->request->post('q');
         }
+        
+        // Recopilar todos los filtros de los parámetros GET/POST
+        $filters = [];
+        $request = Yii::$app->request;
+        
+        // Filtro por profesión
+        if ($request->get('id_profesion') || $request->post('id_profesion')) {
+            $filters['id_profesion'] = $request->get('id_profesion') ?: $request->post('id_profesion');
+        }
+        if ($request->get('profesion_nombre') || $request->post('profesion_nombre')) {
+            $filters['profesion_nombre'] = $request->get('profesion_nombre') ?: $request->post('profesion_nombre');
+        }
+        
+        // Filtro por especialidad
+        if ($request->get('id_especialidad') || $request->post('id_especialidad')) {
+            $filters['id_especialidad'] = $request->get('id_especialidad') ?: $request->post('id_especialidad');
+        }
+        if ($request->get('especialidad_nombre') || $request->post('especialidad_nombre')) {
+            $filters['especialidad_nombre'] = $request->get('especialidad_nombre') ?: $request->post('especialidad_nombre');
+        }
+        
+        // Filtro por efector
+        if ($request->get('id_efector') || $request->post('id_efector')) {
+            $filters['id_efector'] = $request->get('id_efector') ?: $request->post('id_efector');
+        }
+        if ($request->get('efector_nombre') || $request->post('efector_nombre')) {
+            $filters['efector_nombre'] = $request->get('efector_nombre') ?: $request->post('efector_nombre');
+        }
+        
+        // Filtro por servicio
+        if ($request->get('id_servicio') || $request->post('id_servicio')) {
+            $filters['id_servicio'] = $request->get('id_servicio') ?: $request->post('id_servicio');
+        }
+        if ($request->get('servicio_nombre') || $request->post('servicio_nombre')) {
+            $filters['servicio_nombre'] = $request->get('servicio_nombre') ?: $request->post('servicio_nombre');
+        }
+        
+        // Límite de resultados
+        if ($request->get('limit') || $request->post('limit')) {
+            $filters['limit'] = $request->get('limit') ?: $request->post('limit');
+        }
+        
+        // Parámetros de ordenamiento
+        if ($request->get('sort_by') || $request->post('sort_by')) {
+            $filters['sort_by'] = $request->get('sort_by') ?: $request->post('sort_by');
+        }
+        if ($request->get('sort_order') || $request->post('sort_order')) {
+            $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
+        }
+        
+        // Si no hay query ni filtros, retornar vacío
+        if (is_null($q) && empty($filters)) {
+            return $out;
+        }
+        
+        $data = \common\models\Rrhh::Autocomplete($q, $filters);
+
+        $out['results'] = array_values($data);
 
         return $out;
     }        

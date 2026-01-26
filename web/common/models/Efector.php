@@ -173,14 +173,133 @@ class Efector extends \yii\db\ActiveRecord
         return $efectores;
     }
 
-    public static function liveSearch($q)
+    public static function liveSearch($q, $filters = [])
     {
-        $results = self::find()
-                ->select(['id_efector AS id', 'nombre AS text'])
-                ->where(['like', 'nombre', '%'.$q.'%', false])
-                ->asArray()
-                ->all();
-
+        $query = self::find()
+                ->select(['efectores.id_efector AS id', 'efectores.nombre AS text'])
+                ->distinct();
+        
+        // Búsqueda por nombre
+        if (!empty($q)) {
+            $query->andWhere(['like', 'efectores.nombre', '%'.$q.'%', false]);
+        }
+        
+        // Filtro por localidad
+        if (!empty($filters['id_localidad'])) {
+            $query->andWhere(['efectores.id_localidad' => $filters['id_localidad']]);
+        }
+        
+        // Filtro por departamento
+        if (!empty($filters['id_departamento'])) {
+            $query->joinWith(['localidad.departamento'])
+                  ->andWhere(['departamentos.id_departamento' => $filters['id_departamento']]);
+        }
+        
+        // Filtro por servicio
+        if (!empty($filters['id_servicio'])) {
+            $query->joinWith(['serviciosEfectors'])
+                  ->andWhere(['servicios_efector.id_servicio' => $filters['id_servicio']]);
+        }
+        
+        // Filtro por dependencia
+        if (!empty($filters['dependencia'])) {
+            $query->andWhere(['like', 'efectores.dependencia', $filters['dependencia']]);
+        }
+        
+        // Filtro por tipología
+        if (!empty($filters['tipologia'])) {
+            $query->andWhere(['efectores.tipologia' => $filters['tipologia']]);
+        }
+        
+        // Filtro por estado
+        if (!empty($filters['estado'])) {
+            $query->andWhere(['efectores.estado' => $filters['estado']]);
+        }
+        
+        // Filtro por geolocalización (radio desde coordenadas)
+        if (!empty($filters['latitud']) && !empty($filters['longitud']) && !empty($filters['radio_km'])) {
+            $lat = floatval($filters['latitud']);
+            $lng = floatval($filters['longitud']);
+            $radio = floatval($filters['radio_km']);
+            
+            // Usar fórmula de Haversine para calcular distancia
+            $query->joinWith(['localidad'])
+                  ->andWhere('localidades.coordenadas IS NOT NULL')
+                  ->andWhere("(
+                    ST_DISTANCE_SPHERE(
+                        localidades.coordenadas, 
+                        POINT({$lng}, {$lat})
+                    ) / 1000
+                  ) <= {$radio}");
+        }
+        
+        // Filtro por nombre de localidad
+        if (!empty($filters['localidad_nombre'])) {
+            $query->joinWith(['localidad'])
+                  ->andWhere(['like', 'localidades.nombre', '%'.$filters['localidad_nombre'].'%', false]);
+        }
+        
+        // Filtro por nombre de departamento
+        if (!empty($filters['departamento_nombre'])) {
+            $query->joinWith(['localidad.departamento'])
+                  ->andWhere(['like', 'departamentos.nombre', '%'.$filters['departamento_nombre'].'%', false]);
+        }
+        
+        // Ordenamiento
+        $sortBy = isset($filters['sort_by']) ? $filters['sort_by'] : 'nombre';
+        $sortOrder = isset($filters['sort_order']) && strtoupper($filters['sort_order']) === 'DESC' ? SORT_DESC : SORT_ASC;
+        
+        switch ($sortBy) {
+            case 'localidad':
+                $query->joinWith(['localidad']); // Yii2 maneja joins duplicados automáticamente
+                $orderBy = ['localidades.nombre' => $sortOrder];
+                break;
+            case 'departamento':
+                $query->joinWith(['localidad.departamento']); // Yii2 maneja joins duplicados automáticamente
+                $orderBy = ['departamentos.nombre' => $sortOrder];
+                break;
+            case 'dependencia':
+                $orderBy = ['efectores.dependencia' => $sortOrder, 'efectores.nombre' => SORT_ASC];
+                break;
+            case 'tipologia':
+                $orderBy = ['efectores.tipologia' => $sortOrder, 'efectores.nombre' => SORT_ASC];
+                break;
+            case 'estado':
+                $orderBy = ['efectores.estado' => $sortOrder, 'efectores.nombre' => SORT_ASC];
+                break;
+            case 'distancia':
+                // Solo aplicable si hay geolocalización
+                if (!empty($filters['latitud']) && !empty($filters['longitud'])) {
+                    $lat = floatval($filters['latitud']);
+                    $lng = floatval($filters['longitud']);
+                    $query->joinWith(['localidad']); // Yii2 maneja joins duplicados automáticamente
+                    $query->addSelect([
+                        'distancia' => new \yii\db\Expression("(
+                            ST_DISTANCE_SPHERE(
+                                localidades.coordenadas, 
+                                POINT({$lng}, {$lat})
+                            ) / 1000
+                        )")
+                    ]);
+                    $orderBy = ['distancia' => $sortOrder];
+                } else {
+                    $orderBy = ['efectores.nombre' => $sortOrder];
+                }
+                break;
+            case 'nombre':
+            default:
+                $orderBy = ['efectores.nombre' => $sortOrder];
+                break;
+        }
+        
+        $query->orderBy($orderBy);
+        
+        // Límite de resultados (por defecto 50, máximo 200)
+        $limit = isset($filters['limit']) ? min(intval($filters['limit']), 200) : 50;
+        $query->limit($limit);
+        
+        $results = $query->asArray()->all();
+        
         return $results;
     }
 

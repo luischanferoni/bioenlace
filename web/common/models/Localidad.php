@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\traits\ParameterQuestionsTrait;
 
 /**
  * This is the model class for table "localidades".
@@ -20,6 +21,7 @@ use Yii;
  */
 class Localidad extends \yii\db\ActiveRecord
 {
+    use ParameterQuestionsTrait;
    
      /**
      * @inheritdoc
@@ -61,6 +63,20 @@ class Localidad extends \yii\db\ActiveRecord
             'cod_postal' => 'Código Postal',
             'id_departamento' => 'Departamento',
             'id_provincia' => 'Provincia',
+        ];
+    }
+    
+    /**
+     * Preguntas para parámetros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'ubicacion' => '¿En qué zona?',
+            'localidad' => '¿En qué zona?',
+            'id_localidad' => '¿En qué zona?',
+            'zona' => '¿En qué zona?',
         ];
     }
 

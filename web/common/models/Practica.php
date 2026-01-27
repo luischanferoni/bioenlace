@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\traits\ParameterQuestionsTrait;
 
 /**
  * This is the model class for table "practicas".
@@ -19,6 +20,7 @@ use Yii;
  */
 class Practica extends \yii\db\ActiveRecord
 {
+    use ParameterQuestionsTrait;
     /**
      * @inheritdoc
      */
@@ -54,6 +56,19 @@ class Practica extends \yii\db\ActiveRecord
             'nombre' => 'Nombre',
             'observacion' => 'Observacion',
             'arancel' => 'Arancel',
+        ];
+    }
+    
+    /**
+     * Preguntas para parámetros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'tipo_practica' => '¿Qué tipo de estudio necesitás?',
+            'practica' => '¿Qué tipo de estudio necesitás?',
+            'id_practica' => '¿Qué tipo de estudio necesitás?',
         ];
     }
 

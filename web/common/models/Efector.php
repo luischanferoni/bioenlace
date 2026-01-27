@@ -4,6 +4,7 @@ namespace common\models;
 
 use Yii;
 use common\models\ServiciosEfector;
+use common\traits\ParameterQuestionsTrait;
 
 /**
  * This is the model class for table "efectores".
@@ -27,6 +28,7 @@ use common\models\ServiciosEfector;
  */
 class Efector extends \yii\db\ActiveRecord
 {
+    use ParameterQuestionsTrait;
     /**
      * @inheritdoc
      */
@@ -82,6 +84,19 @@ class Efector extends \yii\db\ActiveRecord
             'id_localidad' => 'Localidad',            
             'id_departamento'=>'Departamento',
             'estado' => 'Estado: Activo o Inactivo',
+        ];
+    }
+    
+    /**
+     * Preguntas para parámetros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'efector' => '¿En qué centro de salud?',
+            'id_efector' => '¿En qué centro de salud?',
+            'centro_salud' => '¿En qué centro de salud?',
         ];
     }
 
@@ -301,6 +316,186 @@ class Efector extends \yii\db\ActiveRecord
         $results = $query->asArray()->all();
         
         return $results;
+    }
+
+    /**
+     * Validar si un id_efector existe en la base de datos
+     * @param int $idEfector
+     * @return bool
+     */
+    public static function validateId($idEfector)
+    {
+        try {
+            $efector = self::findOne($idEfector);
+            return $efector !== null;
+        } catch (\Exception $e) {
+            Yii::error("Error validando id_efector {$idEfector}: " . $e->getMessage(), 'efector-model');
+            return false;
+        }
+    }
+
+    /**
+     * Buscar efector por nombre
+     * 
+     * @param string $nombre Nombre del efector
+     * @return int|null ID del efector encontrado
+     */
+    public static function findByName($nombre)
+    {
+        if (empty($nombre) || !is_string($nombre)) {
+            return null;
+        }
+        
+        $nombreNormalizado = trim($nombre);
+        
+        try {
+            // Primero intentar búsqueda exacta
+            $efector = self::find()
+                ->where(['nombre' => $nombreNormalizado])
+                ->one();
+            
+            if ($efector) {
+                return (int)$efector->id_efector;
+            }
+            
+            // Si no se encuentra exacto, intentar búsqueda con LIKE
+            $efector = self::find()
+                ->where(['LIKE', 'nombre', $nombreNormalizado])
+                ->one();
+            
+            if ($efector) {
+                return (int)$efector->id_efector;
+            }
+        } catch (\Exception $e) {
+            Yii::error("Error buscando efector por nombre '{$nombre}': " . $e->getMessage(), 'efector-model');
+        }
+        
+        return null;
+    }
+
+    /**
+     * Extraer efector desde el texto de la consulta del usuario
+     * 
+     * @param string $userQuery Texto de la consulta del usuario
+     * @return int|null ID del efector encontrado
+     */
+    public static function extractFromQuery($userQuery)
+    {
+        if (empty($userQuery) || !is_string($userQuery)) {
+            return null;
+        }
+        
+        // Buscar nombres de efectores en el texto usando búsqueda parcial
+        // Esto es más complejo que servicios, así que por ahora retornamos null
+        // y dejamos que se busque por nombre completo desde extracted_data
+        return null;
+    }
+
+    /**
+     * Buscar y validar efector desde datos extraídos y userQuery
+     * 
+     * @param array $extractedData Datos extraídos por la IA
+     * @param string|null $userQuery Texto original de la consulta (opcional)
+     * @param string|null $paramName Nombre del parámetro específico a buscar (ej: 'id_efector', 'efector')
+     * @return array ['found' => bool, 'id' => int|null, 'name' => string|null, 'is_valid' => bool]
+     */
+    public static function findAndValidate($extractedData, $userQuery = null, $paramName = null)
+    {
+        $result = [
+            'found' => false,
+            'id' => null,
+            'name' => null,
+            'is_valid' => false,
+        ];
+
+        // Buscar id_efector directamente en extracted_data
+        if (isset($extractedData['id_efector'])) {
+            $idEfector = $extractedData['id_efector'];
+            if (is_numeric($idEfector)) {
+                $result['found'] = true;
+                $result['id'] = (int)$idEfector;
+                $result['is_valid'] = self::validateId($result['id']);
+                if ($result['is_valid']) {
+                    $efector = self::findOne($result['id']);
+                    if ($efector) {
+                        $result['name'] = $efector->nombre;
+                    }
+                }
+                return $result;
+            }
+        }
+        
+        // Buscar efector por nombre en extracted_data
+        $efectorName = null;
+        $searchKeys = ['efector', 'centro_salud'];
+        if ($paramName) {
+            array_unshift($searchKeys, $paramName);
+        }
+        
+        foreach ($searchKeys as $key) {
+            if (isset($extractedData[$key])) {
+                $efectorName = $extractedData[$key];
+                break;
+            }
+        }
+        
+        // Buscar en raw data
+        if ($efectorName === null && isset($extractedData['raw'])) {
+            if (isset($extractedData['raw']['efector'])) {
+                $efectorName = $extractedData['raw']['efector'];
+            } elseif (isset($extractedData['raw']['names'])) {
+                // Buscar nombres que puedan ser efectores
+                foreach ($extractedData['raw']['names'] as $name) {
+                    $efectorId = self::findByName($name);
+                    if ($efectorId !== null) {
+                        $result['found'] = true;
+                        $result['id'] = $efectorId;
+                        $result['is_valid'] = true;
+                        $efector = self::findOne($efectorId);
+                        if ($efector) {
+                            $result['name'] = $efector->nombre;
+                        }
+                        return $result;
+                    }
+                }
+            }
+        }
+        
+        // Si encontramos un nombre de efector, buscar su ID
+        if ($efectorName !== null) {
+            if (is_numeric($efectorName)) {
+                $result['found'] = true;
+                $result['id'] = (int)$efectorName;
+                $result['is_valid'] = self::validateId($result['id']);
+            } else {
+                $efectorId = self::findByName($efectorName);
+                if ($efectorId !== null) {
+                    $result['found'] = true;
+                    $result['id'] = $efectorId;
+                    $result['is_valid'] = true;
+                    $efector = self::findOne($efectorId);
+                    if ($efector) {
+                        $result['name'] = $efector->nombre;
+                    }
+                }
+            }
+        }
+        
+        // Si aún no se encontró, buscar directamente en el texto de la consulta
+        if (!$result['found'] && $userQuery !== null) {
+            $efectorId = self::extractFromQuery($userQuery);
+            if ($efectorId !== null) {
+                $result['found'] = true;
+                $result['id'] = $efectorId;
+                $result['is_valid'] = true;
+                $efector = self::findOne($efectorId);
+                if ($efector) {
+                    $result['name'] = $efector->nombre;
+                }
+            }
+        }
+
+        return $result;
     }
 
 }

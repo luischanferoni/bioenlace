@@ -5,6 +5,7 @@ namespace common\models;
 use Yii;
 use yii\helpers\Url;
 use common\models\Persona;
+use common\traits\ParameterQuestionsTrait;
 
 
 
@@ -95,6 +96,7 @@ use common\models\Persona;
  */
 class Turno extends \yii\db\ActiveRecord
 {
+    use ParameterQuestionsTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
 
     public $cant_turnos;
@@ -233,6 +235,21 @@ class Turno extends \yii\db\ActiveRecord
             'fecha_alta' => 'Fecha Alta',
             'usuario_mod' => 'Usuario Mod',
             'fecha_mod' => 'Fecha Mod',
+        ];
+    }
+    
+    /**
+     * Preguntas para parámetros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'fecha' => '¿Para qué día querés el turno?',
+            'hora' => '¿En qué horario te gustaría?',
+            'horario' => '¿En qué horario te gustaría?',
+            'turno_id' => '¿Qué turno querés modificar/cancelar?',
+            'id_turnos' => '¿Qué turno querés modificar/cancelar?',
         ];
     }
 

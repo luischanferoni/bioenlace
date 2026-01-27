@@ -1263,19 +1263,10 @@ PROMPT;
         // Preparar extracted_data para el analizador
         $extractedData = $criteria['extracted_data'] ?? [];
         
-        // Si se encontró un id_servicio válido en los criterios, agregarlo al extracted_data
-        // para que el analizador pueda mapearlo correctamente
-        // Pasar userQuery para búsqueda directa en el texto si no se encuentra en extracted_data
-        $servicioInfo = self::validateServicioInCriteria($criteria, $userQuery);
-        if ($servicioInfo['has_servicio'] && $servicioInfo['is_valid'] && $servicioInfo['id_servicio'] !== null) {
-            // Agregar id_servicio al extracted_data si no está ya presente
-            if (!isset($extractedData['id_servicio'])) {
-                $extractedData['id_servicio'] = $servicioInfo['id_servicio'];
-            }
-            // También agregar servicio_actual si la acción lo requiere
-            if (!isset($extractedData['servicio_actual'])) {
-                $extractedData['servicio_actual'] = $servicioInfo['id_servicio'];
-            }
+        // Buscar y validar parámetros de los actions encontrados de manera genérica
+        // Esto reemplaza la lógica hardcodeada de validateServicioInCriteria
+        if (!empty($actions)) {
+            $extractedData = self::findAndValidateActionParameters($actions, $extractedData, $userQuery);
         }
         
         // Analizar parámetros de la acción principal si existe
@@ -2160,7 +2151,103 @@ PROMPT;
     }
 
     /**
+     * Buscar y validar parámetros de actions de manera genérica
+     * Toma los parámetros de los actions encontrados y los busca en extractedData y userQuery
+     * usando los métodos findAndValidate de los modelos correspondientes
+     * 
+     * @param array $actions Array de actions encontrados
+     * @param array $extractedData Datos extraídos por la IA
+     * @param string|null $userQuery Texto original de la consulta (opcional)
+     * @return array extractedData actualizado con los parámetros encontrados y validados
+     */
+    private static function findAndValidateActionParameters($actions, $extractedData, $userQuery = null)
+    {
+        if (empty($actions) || !is_array($actions)) {
+            return $extractedData;
+        }
+        
+        // Obtener todos los parámetros únicos de los actions
+        $allParams = [];
+        foreach ($actions as $action) {
+            $parameters = $action['parameters'] ?? [];
+            foreach ($parameters as $param) {
+                $paramName = $param['name'] ?? null;
+                if ($paramName && !in_array($paramName, $allParams)) {
+                    $allParams[] = $paramName;
+                }
+            }
+        }
+        
+        // Si no hay parámetros, retornar extractedData sin cambios
+        if (empty($allParams)) {
+            return $extractedData;
+        }
+        
+        // Para cada parámetro, buscar su modelo correspondiente y validar
+        foreach ($allParams as $paramName) {
+            // Obtener el modelo asociado al parámetro
+            $modelClass = ParameterQuestionRegistry::getModelClass($paramName);
+            
+            if (!$modelClass) {
+                // Si no hay modelo asociado, continuar con el siguiente parámetro
+                continue;
+            }
+            
+            // Verificar que el modelo tiene el método findAndValidate
+            if (!method_exists($modelClass, 'findAndValidate')) {
+                if (YII_DEBUG) {
+                    Yii::info("Modelo {$modelClass} no tiene método findAndValidate para parámetro {$paramName}", 'universal-query-agent');
+                }
+                continue;
+            }
+            
+            // Llamar al método findAndValidate del modelo
+            try {
+                $result = call_user_func([$modelClass, 'findAndValidate'], $extractedData, $userQuery, $paramName);
+                
+                // Si se encontró y es válido, agregarlo al extractedData
+                if ($result['found'] && $result['is_valid'] && $result['id'] !== null) {
+                    // Agregar el ID encontrado al extractedData con el nombre del parámetro
+                    if (!isset($extractedData[$paramName])) {
+                        $extractedData[$paramName] = $result['id'];
+                    }
+                    
+                    // También agregar variantes comunes del parámetro si no están presentes
+                    // Por ejemplo, si encontramos id_servicio, también agregar servicio_actual si la acción lo requiere
+                    $paramNameLower = strtolower($paramName);
+                    if (stripos($paramNameLower, 'servicio') !== false) {
+                        if (!isset($extractedData['id_servicio']) && stripos($paramNameLower, 'id_servicio') === false) {
+                            $extractedData['id_servicio'] = $result['id'];
+                        }
+                        if (!isset($extractedData['servicio_actual']) && $paramNameLower !== 'servicio_actual') {
+                            // Solo agregar servicio_actual si alguna acción lo requiere
+                            foreach ($actions as $action) {
+                                $parameters = $action['parameters'] ?? [];
+                                foreach ($parameters as $param) {
+                                    if (strtolower($param['name'] ?? '') === 'servicio_actual') {
+                                        $extractedData['servicio_actual'] = $result['id'];
+                                        break 2;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (YII_DEBUG) {
+                        Yii::info("Parámetro {$paramName} encontrado y validado: {$result['id']} ({$result['name']})", 'universal-query-agent');
+                    }
+                }
+            } catch (\Exception $e) {
+                Yii::error("Error buscando parámetro {$paramName} con modelo {$modelClass}: " . $e->getMessage(), 'universal-query-agent');
+            }
+        }
+        
+        return $extractedData;
+    }
+
+    /**
      * Validar si hay id_servicio en los criterios y si es válido
+     * @deprecated Usar findAndValidateActionParameters en su lugar
      * @param array $criteria
      * @param string|null $userQuery Texto original de la consulta (opcional, para búsqueda directa)
      * @return array

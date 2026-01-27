@@ -10,6 +10,7 @@
 namespace common\models;
 
 use Yii;
+use common\traits\ParameterQuestionsTrait;
 
 /**
  * This is the model class for table "medicamentos".
@@ -23,6 +24,7 @@ use Yii;
  */
 class Medicamento extends \yii\db\ActiveRecord
 {
+    use ParameterQuestionsTrait;
     /**
      * @inheritdoc
      */
@@ -50,6 +52,18 @@ class Medicamento extends \yii\db\ActiveRecord
             'id_medicamento' => 'Id Medicamento',
             'generico' => 'Generico',
             'presentacion' => 'Presentacion',
+        ];
+    }
+    
+    /**
+     * Preguntas para parámetros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'medicamento' => '¿Qué medicamento querés consultar?',
+            'id_medicamento' => '¿Qué medicamento querés consultar?',
         ];
     }
 

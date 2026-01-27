@@ -3,8 +3,8 @@
 namespace common\models;
 
 use common\models\snomed\SnomedProblemas;
-
 use Yii;
+use common\traits\ParameterQuestionsTrait;
 
 /**
  * This is the model class for table "consultas_sintomas".
@@ -19,6 +19,7 @@ use Yii;
 class ConsultaSintomas extends \yii\db\ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
+    use ParameterQuestionsTrait;
 
     public $select2_codigo;
 
@@ -61,6 +62,17 @@ class ConsultaSintomas extends \yii\db\ActiveRecord
         return [
             'id_consulta' => 'Consulta',
             'codigo' => 'Sintoma',
+        ];
+    }
+    
+    /**
+     * Preguntas para parámetros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'sintoma' => '¿Qué síntoma tenés?',
         ];
     }
 

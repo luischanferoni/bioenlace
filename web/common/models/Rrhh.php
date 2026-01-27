@@ -6,6 +6,7 @@ use common\models\Profesiones;
 use common\models\Especialidades;
 use common\models\Persona;
 use Yii;
+use common\traits\ParameterQuestionsTrait;
 
 /**
  * This is the model class for table "rr_hh".
@@ -24,6 +25,7 @@ use Yii;
 class Rrhh extends \yii\db\ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
+    use ParameterQuestionsTrait;
     
     /**
      * @inheritdoc
@@ -54,6 +56,20 @@ class Rrhh extends \yii\db\ActiveRecord
             'id_persona' => 'Id Persona',
             'id_profesion' => 'Id Profesion',
             'id_especialidad' => 'Id Especialidad',
+        ];
+    }
+    
+    /**
+     * Preguntas para parámetros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'profesional' => '¿Con qué profesional querés el turno?',
+            'id_rr_hh' => '¿Con qué profesional querés el turno?',
+            'id_rrhh' => '¿Con qué profesional querés el turno?',
+            'rrhh' => '¿Con qué profesional querés el turno?',
         ];
     }
 
@@ -362,6 +378,189 @@ class Rrhh extends \yii\db\ActiveRecord
         } else {
             return false;
         }
+    }
+
+    /**
+     * Validar si un id_rr_hh existe en la base de datos
+     * @param int $idRrhh
+     * @return bool
+     */
+    public static function validateId($idRrhh)
+    {
+        try {
+            $rrhh = self::findOne($idRrhh);
+            return $rrhh !== null;
+        } catch (\Exception $e) {
+            Yii::error("Error validando id_rr_hh {$idRrhh}: " . $e->getMessage(), 'rrhh-model');
+            return false;
+        }
+    }
+
+    /**
+     * Buscar rrhh por nombre (busca en la persona asociada)
+     * 
+     * @param string $nombre Nombre o apellido del profesional
+     * @return int|null ID del rrhh encontrado
+     */
+    public static function findByName($nombre)
+    {
+        if (empty($nombre) || !is_string($nombre)) {
+            return null;
+        }
+        
+        $nombreNormalizado = trim($nombre);
+        
+        try {
+            // Buscar por nombre o apellido de la persona asociada
+            $rrhh = self::find()
+                ->joinWith(['idPersona'])
+                ->where(['or',
+                    ['like', 'personas.nombre', $nombreNormalizado],
+                    ['like', 'personas.apellido', $nombreNormalizado],
+                    ['like', 'personas.documento', $nombreNormalizado]
+                ])
+                ->one();
+            
+            if ($rrhh) {
+                return (int)$rrhh->id_rr_hh;
+            }
+        } catch (\Exception $e) {
+            Yii::error("Error buscando rrhh por nombre '{$nombre}': " . $e->getMessage(), 'rrhh-model');
+        }
+        
+        return null;
+    }
+
+    /**
+     * Extraer rrhh desde el texto de la consulta del usuario
+     * 
+     * @param string $userQuery Texto de la consulta del usuario
+     * @return int|null ID del rrhh encontrado
+     */
+    public static function extractFromQuery($userQuery)
+    {
+        // Por ahora retornamos null, la búsqueda se hace principalmente por nombre completo
+        return null;
+    }
+
+    /**
+     * Buscar y validar rrhh desde datos extraídos y userQuery
+     * 
+     * @param array $extractedData Datos extraídos por la IA
+     * @param string|null $userQuery Texto original de la consulta (opcional)
+     * @param string|null $paramName Nombre del parámetro específico a buscar (ej: 'id_rr_hh', 'id_rrhh', 'profesional')
+     * @return array ['found' => bool, 'id' => int|null, 'name' => string|null, 'is_valid' => bool]
+     */
+    public static function findAndValidate($extractedData, $userQuery = null, $paramName = null)
+    {
+        $result = [
+            'found' => false,
+            'id' => null,
+            'name' => null,
+            'is_valid' => false,
+        ];
+
+        // Buscar id_rr_hh directamente en extracted_data
+        $idKeys = ['id_rr_hh', 'id_rrhh'];
+        if ($paramName) {
+            array_unshift($idKeys, $paramName);
+        }
+        
+        foreach ($idKeys as $key) {
+            if (isset($extractedData[$key])) {
+                $idRrhh = $extractedData[$key];
+                if (is_numeric($idRrhh)) {
+                    $result['found'] = true;
+                    $result['id'] = (int)$idRrhh;
+                    $result['is_valid'] = self::validateId($result['id']);
+                    if ($result['is_valid']) {
+                        $rrhh = self::findOne($result['id']);
+                        if ($rrhh && $rrhh->idPersona) {
+                            $result['name'] = $rrhh->idPersona->apellido . ', ' . $rrhh->idPersona->nombre;
+                        }
+                    }
+                    return $result;
+                }
+            }
+        }
+        
+        // Buscar rrhh por nombre en extracted_data
+        $rrhhName = null;
+        $searchKeys = ['profesional', 'rrhh'];
+        if ($paramName && !in_array($paramName, $idKeys)) {
+            array_unshift($searchKeys, $paramName);
+        }
+        
+        foreach ($searchKeys as $key) {
+            if (isset($extractedData[$key])) {
+                $rrhhName = $extractedData[$key];
+                break;
+            }
+        }
+        
+        // Buscar en raw data
+        if ($rrhhName === null && isset($extractedData['raw'])) {
+            if (isset($extractedData['raw']['profesional'])) {
+                $rrhhName = $extractedData['raw']['profesional'];
+            } elseif (isset($extractedData['raw']['names'])) {
+                // Buscar nombres que puedan ser profesionales
+                foreach ($extractedData['raw']['names'] as $name) {
+                    $rrhhId = self::findByName($name);
+                    if ($rrhhId !== null) {
+                        $result['found'] = true;
+                        $result['id'] = $rrhhId;
+                        $result['is_valid'] = true;
+                        $rrhh = self::findOne($rrhhId);
+                        if ($rrhh && $rrhh->idPersona) {
+                            $result['name'] = $rrhh->idPersona->apellido . ', ' . $rrhh->idPersona->nombre;
+                        }
+                        return $result;
+                    }
+                }
+            }
+        }
+        
+        // Si encontramos un nombre de rrhh, buscar su ID
+        if ($rrhhName !== null) {
+            if (is_numeric($rrhhName)) {
+                $result['found'] = true;
+                $result['id'] = (int)$rrhhName;
+                $result['is_valid'] = self::validateId($result['id']);
+                if ($result['is_valid']) {
+                    $rrhh = self::findOne($result['id']);
+                    if ($rrhh && $rrhh->idPersona) {
+                        $result['name'] = $rrhh->idPersona->apellido . ', ' . $rrhh->idPersona->nombre;
+                    }
+                }
+            } else {
+                $rrhhId = self::findByName($rrhhName);
+                if ($rrhhId !== null) {
+                    $result['found'] = true;
+                    $result['id'] = $rrhhId;
+                    $result['is_valid'] = true;
+                    $rrhh = self::findOne($rrhhId);
+                    if ($rrhh && $rrhh->idPersona) {
+                        $result['name'] = $rrhh->idPersona->apellido . ', ' . $rrhh->idPersona->nombre;
+                    }
+                }
+            }
+        }
+        
+        // Si aún no se encontró, buscar directamente en el texto de la consulta
+        if (!$result['found'] && $userQuery !== null) {
+            $rrhhId = self::extractFromQuery($userQuery);
+            if ($rrhhId !== null) {
+                $result['found'] = true;
+                $result['id'] = $rrhhId;
+                $result['is_valid'] = true;
+                $rrhh = self::findOne($rrhhId);
+                if ($rrhh && $rrhh->idPersona) {
+                    $result['name'] = $rrhh->idPersona->apellido . ', ' . $rrhh->idPersona->nombre;
+                }
+            }
+        }
+
+        return $result;
     }
 
 }

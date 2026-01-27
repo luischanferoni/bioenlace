@@ -389,7 +389,7 @@ class ActionParameterAnalyzer
             } elseif (isset($extractedData['raw']['names'])) {
                 // Buscar en nombres extraídos (puede venir como "odontologo" en names)
                 foreach ($extractedData['raw']['names'] as $name) {
-                    $servicioId = self::findServicioByName($name);
+                    $servicioId = \common\models\Servicio::findByName($name);
                     if ($servicioId !== null) {
                         return $servicioId;
                     }
@@ -402,9 +402,9 @@ class ActionParameterAnalyzer
             return (int)$servicioValue;
         }
         
-        // 4. Si el valor es texto, buscar el servicio por nombre
+        // 4. Si el valor es texto, buscar el servicio por nombre usando el modelo
         if ($servicioValue !== null && is_string($servicioValue)) {
-            return self::findServicioByName($servicioValue);
+            return \common\models\Servicio::findByName($servicioValue);
         }
         
         return null;
@@ -413,6 +413,7 @@ class ActionParameterAnalyzer
     /**
      * Buscar servicio por nombre (soporta búsqueda parcial y sinónimos)
      * 
+     * @deprecated Usar \common\models\Servicio::findByName() en su lugar
      * @param string $nombre Nombre del servicio (ej: "odontologo", "odontología", "ODONTOLOGIA")
      * @return int|null ID del servicio encontrado
      */

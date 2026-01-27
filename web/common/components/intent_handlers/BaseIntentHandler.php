@@ -5,6 +5,7 @@ namespace common\components\intent_handlers;
 use Yii;
 use common\components\ConversationContext;
 use common\components\ParameterExtractor;
+use common\components\ParameterQuestionRegistry;
 
 /**
  * Clase base para todos los handlers de intents
@@ -74,28 +75,29 @@ abstract class BaseIntentHandler
     
     /**
      * Obtener preguntas para parámetros faltantes
-     * @param array $params
-     * @return array
+     * 
+     * Las preguntas se obtienen desde los modelos de Yii2 usando el método
+     * parameterQuestions(), similar a attributeLabels(). Esto hace el sistema
+     * escalable: cuando se agrega un nuevo parámetro, solo hay que:
+     * 1. Agregar el mapeo en ParameterQuestionRegistry
+     * 2. Agregar el método parameterQuestions() al modelo correspondiente
+     * 
+     * @param array $params Array de nombres de parámetros
+     * @return array Array de preguntas para mostrar al usuario
      */
     protected function getQuestionsForParams($params)
     {
-        $questions = [
-            'servicio' => '¿Qué servicio necesitás?',
-            'fecha' => '¿Para qué día querés el turno?',
-            'hora' => '¿En qué horario te gustaría?',
-            'profesional' => '¿Con qué profesional querés el turno?',
-            'efector' => '¿En qué centro de salud?',
-            'medicamento' => '¿Qué medicamento querés consultar?',
-            'sintoma' => '¿Qué síntoma tenés?',
-            'turno_id' => '¿Qué turno querés modificar/cancelar?',
-            'tipo_practica' => '¿Qué tipo de estudio necesitás?',
-            'ubicacion' => '¿En qué zona?'
-        ];
+        // Obtener preguntas desde los modelos usando el registry
+        $questions = ParameterQuestionRegistry::getQuestions($params);
         
+        // Convertir a array indexado (solo valores) para mantener compatibilidad
         $result = [];
         foreach ($params as $param) {
             if (isset($questions[$param])) {
                 $result[] = $questions[$param];
+            } else {
+                // Si no se encuentra en los modelos, loguear para debugging
+                Yii::debug("No se encontró pregunta para el parámetro: {$param}", 'intent-handler');
             }
         }
         

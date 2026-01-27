@@ -216,24 +216,57 @@ class UniversalQueryAgent
             $extractedData = $criteria['extracted_data'] ?? [];
             $userQuery = null; // No tenemos el userQuery aquí, pero findAndValidate puede funcionar sin él
             
+            // Inicializar siempre parametersValidationDetails
+            $parametersValidationDetails = [
+                'message' => 'No hay acciones encontradas para validar parámetros',
+                'actions_parameters' => [], // Parámetros que necesita cada acción
+                'required_params' => [],
+                'optional_params' => [],
+                'found_params' => [],
+                'missing_params' => [],
+                'found_params_with_values' => [],
+                'all_found_params' => [],
+            ];
+            
             // Buscar y validar parámetros requeridos por las acciones encontradas (genérico)
             $extractedDataWithParams = self::findAndValidateActionParameters($foundActions, $extractedData, $userQuery);
             
             // Verificar si hay parámetros requeridos que no se encontraron
             $parametersCompatible = true;
-            $parametersValidationDetails = [];
             
             if (!empty($foundActions)) {
-                // Obtener todos los parámetros requeridos de las acciones
+                // Obtener todos los parámetros de las acciones (requeridos y opcionales)
                 $requiredParams = [];
+                $optionalParams = [];
+                $actionsParameters = []; // Parámetros por acción
+                
                 foreach ($foundActions as $action) {
+                    $actionId = $action['action_id'] ?? 'N/A';
+                    $actionParams = [];
                     $parameters = $action['parameters'] ?? [];
+                    
                     foreach ($parameters as $param) {
                         $paramName = $param['name'] ?? null;
                         $isRequired = $param['required'] ?? false;
-                        if ($paramName && $isRequired && !in_array($paramName, $requiredParams)) {
-                            $requiredParams[] = $paramName;
+                        $paramType = $param['type'] ?? 'unknown';
+                        
+                        if ($paramName) {
+                            $actionParams[] = [
+                                'name' => $paramName,
+                                'required' => $isRequired,
+                                'type' => $paramType,
+                            ];
+                            
+                            if ($isRequired && !in_array($paramName, $requiredParams)) {
+                                $requiredParams[] = $paramName;
+                            } elseif (!$isRequired && !in_array($paramName, $optionalParams)) {
+                                $optionalParams[] = $paramName;
+                            }
                         }
+                    }
+                    
+                    if (!empty($actionParams)) {
+                        $actionsParameters[$actionId] = $actionParams;
                     }
                 }
                 
@@ -248,25 +281,7 @@ class UniversalQueryAgent
                     }
                 }
                 
-                if (!empty($missingParams)) {
-                    $parametersCompatible = false;
-                    $parametersValidationDetails = [
-                        'message' => 'Faltan parámetros requeridos para las acciones encontradas',
-                        'missing_params' => $missingParams,
-                        'found_params' => array_keys($foundParams),
-                        'actions_count' => count($foundActions),
-                    ];
-                } else if (!empty($foundParams)) {
-                    $parametersValidationDetails = [
-                        'message' => 'Todos los parámetros requeridos fueron encontrados y validados',
-                        'found_params' => array_keys($foundParams),
-                        'found_params_with_values' => $foundParams, // Incluir valores para mostrar en la vista
-                        'actions_count' => count($foundActions),
-                    ];
-                }
-                
                 // También incluir todos los parámetros encontrados (no solo los requeridos)
-                // Comparar extractedDataWithParams con extractedData original para ver qué se agregó
                 $allFoundParams = [];
                 foreach ($extractedDataWithParams as $paramName => $paramValue) {
                     // Incluir si no estaba en el extractedData original o si cambió
@@ -274,8 +289,43 @@ class UniversalQueryAgent
                         $allFoundParams[$paramName] = $paramValue;
                     }
                 }
-                if (!empty($allFoundParams)) {
-                    $parametersValidationDetails['all_found_params'] = $allFoundParams;
+                
+                // Construir mensaje y detalles
+                if (!empty($missingParams)) {
+                    $parametersCompatible = false;
+                    $parametersValidationDetails = [
+                        'message' => 'Faltan parámetros requeridos para las acciones encontradas',
+                        'actions_parameters' => $actionsParameters,
+                        'required_params' => $requiredParams,
+                        'optional_params' => $optionalParams,
+                        'missing_params' => $missingParams,
+                        'found_params' => array_keys($foundParams),
+                        'found_params_with_values' => $foundParams,
+                        'all_found_params' => $allFoundParams,
+                        'actions_count' => count($foundActions),
+                    ];
+                } else if (!empty($foundParams)) {
+                    $parametersValidationDetails = [
+                        'message' => 'Todos los parámetros requeridos fueron encontrados y validados',
+                        'actions_parameters' => $actionsParameters,
+                        'required_params' => $requiredParams,
+                        'optional_params' => $optionalParams,
+                        'found_params' => array_keys($foundParams),
+                        'found_params_with_values' => $foundParams,
+                        'all_found_params' => $allFoundParams,
+                        'actions_count' => count($foundActions),
+                    ];
+                } else if (!empty($actionsParameters)) {
+                    $parametersValidationDetails = [
+                        'message' => 'Las acciones no requieren parámetros o no se encontraron parámetros',
+                        'actions_parameters' => $actionsParameters,
+                        'required_params' => $requiredParams,
+                        'optional_params' => $optionalParams,
+                        'found_params' => [],
+                        'found_params_with_values' => [],
+                        'all_found_params' => $allFoundParams,
+                        'actions_count' => count($foundActions),
+                    ];
                 }
             }
             

@@ -155,85 +155,135 @@ $criteriaJsonValue = Yii::$app->request->post('criteriaJson', '');
                                 </div>
                             <?php endif; ?>
                             
-                            <?php if (!empty($result['parameters_validation'])): ?>
-                                <?php 
-                                $paramsValidation = $result['parameters_validation'];
-                                $allFoundParams = $paramsValidation['all_found_params'] ?? [];
-                                $foundParamsWithValues = $paramsValidation['found_params_with_values'] ?? [];
-                                $missingParams = $paramsValidation['missing_params'] ?? [];
-                                ?>
-                                <h4 class="mt-4">🔧 Parámetros Encontrados:</h4>
-                                
-                                <?php if (!empty($allFoundParams) || !empty($foundParamsWithValues)): ?>
-                                    <div class="alert alert-info">
-                                        <p><strong>Mensaje:</strong> <?= Html::encode($paramsValidation['message'] ?? 'N/A') ?></p>
-                                        <?php if (!empty($foundParamsWithValues)): ?>
-                                            <p><strong>Parámetros requeridos encontrados:</strong> <?= count($foundParamsWithValues) ?></p>
-                                        <?php endif; ?>
-                                        <?php if (!empty($allFoundParams)): ?>
-                                            <p><strong>Total de parámetros encontrados:</strong> <?= count($allFoundParams) ?></p>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <?php if (!empty($foundParamsWithValues) || !empty($allFoundParams)): ?>
-                                        <div class="table-responsive">
-                                            <table class="table table-striped">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Parámetro</th>
-                                                        <th>Valor</th>
-                                                        <th>Tipo</th>
-                                                        <th>Estado</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php 
-                                                    // Combinar foundParamsWithValues y allFoundParams, dando prioridad a foundParamsWithValues
-                                                    $allParamsToShow = array_merge($allFoundParams, $foundParamsWithValues);
-                                                    foreach ($allParamsToShow as $paramName => $paramValue): 
-                                                        $isRequired = isset($foundParamsWithValues[$paramName]);
-                                                        $valueDisplay = is_array($paramValue) ? json_encode($paramValue, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : (string)$paramValue;
-                                                        $valueType = gettype($paramValue);
-                                                    ?>
-                                                        <tr>
-                                                            <td><code><?= Html::encode($paramName) ?></code></td>
-                                                            <td>
-                                                                <?php if (is_array($paramValue)): ?>
-                                                                    <pre class="mb-0" style="max-height: 100px; overflow: auto; font-size: 11px;"><?= Html::encode($valueDisplay) ?></pre>
-                                                                <?php else: ?>
-                                                                    <code><?= Html::encode($valueDisplay) ?></code>
-                                                                <?php endif; ?>
-                                                            </td>
-                                                            <td><span class="badge bg-secondary"><?= Html::encode($valueType) ?></span></td>
-                                                            <td>
-                                                                <?php if ($isRequired): ?>
-                                                                    <span class="badge bg-success">Requerido ✓</span>
-                                                                <?php else: ?>
-                                                                    <span class="badge bg-info">Opcional</span>
-                                                                <?php endif; ?>
-                                                            </td>
-                                                        </tr>
-                                                    <?php endforeach; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    <?php endif; ?>
-                                    
-                                    <?php if (!empty($missingParams)): ?>
-                                        <div class="alert alert-warning mt-3">
-                                            <h5>⚠️ Parámetros Requeridos Faltantes:</h5>
-                                            <ul>
-                                                <?php foreach ($missingParams as $missingParam): ?>
-                                                    <li><code><?= Html::encode($missingParam) ?></code></li>
-                                                <?php endforeach; ?>
-                                            </ul>
-                                        </div>
-                                    <?php endif; ?>
-                                <?php else: ?>
-                                    <div class="alert alert-secondary">
-                                        No se encontraron parámetros en los datos extraídos.
-                                    </div>
+                            <?php 
+                            $paramsValidation = $result['parameters_validation'] ?? [];
+                            $actionsParameters = $paramsValidation['actions_parameters'] ?? [];
+                            $requiredParams = $paramsValidation['required_params'] ?? [];
+                            $optionalParams = $paramsValidation['optional_params'] ?? [];
+                            $allFoundParams = $paramsValidation['all_found_params'] ?? [];
+                            $foundParamsWithValues = $paramsValidation['found_params_with_values'] ?? [];
+                            $missingParams = $paramsValidation['missing_params'] ?? [];
+                            ?>
+                            
+                            <h4 class="mt-4">🔧 Parámetros de las Acciones:</h4>
+                            
+                            <div class="alert alert-info">
+                                <p><strong>Mensaje:</strong> <?= Html::encode($paramsValidation['message'] ?? 'No hay información de parámetros') ?></p>
+                                <?php if (!empty($requiredParams)): ?>
+                                    <p><strong>Parámetros requeridos:</strong> <?= count($requiredParams) ?> (<?= implode(', ', $requiredParams) ?>)</p>
                                 <?php endif; ?>
+                                <?php if (!empty($optionalParams)): ?>
+                                    <p><strong>Parámetros opcionales:</strong> <?= count($optionalParams) ?> (<?= implode(', ', $optionalParams) ?>)</p>
+                                <?php endif; ?>
+                                <?php if (!empty($foundParamsWithValues)): ?>
+                                    <p><strong>✅ Parámetros requeridos encontrados:</strong> <?= count($foundParamsWithValues) ?> de <?= count($requiredParams) ?></p>
+                                <?php endif; ?>
+                                <?php if (!empty($missingParams)): ?>
+                                    <p><strong>❌ Parámetros requeridos faltantes:</strong> <?= count($missingParams) ?></p>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <?php if (!empty($actionsParameters)): ?>
+                                <h5>📋 Parámetros que necesita cada acción:</h5>
+                                <?php foreach ($actionsParameters as $actionId => $params): ?>
+                                    <div class="card mb-3">
+                                        <div class="card-header">
+                                            <strong>Action ID:</strong> <code><?= Html::encode($actionId) ?></code>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Parámetro</th>
+                                                            <th>Tipo</th>
+                                                            <th>Requerido</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php foreach ($params as $param): ?>
+                                                            <tr>
+                                                                <td><code><?= Html::encode($param['name']) ?></code></td>
+                                                                <td><span class="badge bg-secondary"><?= Html::encode($param['type'] ?? 'unknown') ?></span></td>
+                                                                <td>
+                                                                    <?php if ($param['required']): ?>
+                                                                        <span class="badge bg-danger">Sí</span>
+                                                                    <?php else: ?>
+                                                                        <span class="badge bg-warning">No</span>
+                                                                    <?php endif; ?>
+                                                                </td>
+                                                            </tr>
+                                                        <?php endforeach; ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="alert alert-secondary">
+                                    Las acciones encontradas no tienen parámetros definidos.
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($foundParamsWithValues) || !empty($allFoundParams)): ?>
+                                <h5 class="mt-4">✅ Parámetros Encontrados y Validados:</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Parámetro</th>
+                                                <th>Valor</th>
+                                                <th>Tipo</th>
+                                                <th>Estado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php 
+                                            // Combinar foundParamsWithValues y allFoundParams, dando prioridad a foundParamsWithValues
+                                            $allParamsToShow = array_merge($allFoundParams, $foundParamsWithValues);
+                                            foreach ($allParamsToShow as $paramName => $paramValue): 
+                                                $isRequired = isset($foundParamsWithValues[$paramName]) || in_array($paramName, $requiredParams);
+                                                $valueDisplay = is_array($paramValue) ? json_encode($paramValue, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : (string)$paramValue;
+                                                $valueType = gettype($paramValue);
+                                            ?>
+                                                <tr>
+                                                    <td><code><?= Html::encode($paramName) ?></code></td>
+                                                    <td>
+                                                        <?php if (is_array($paramValue)): ?>
+                                                            <pre class="mb-0" style="max-height: 100px; overflow: auto; font-size: 11px;"><?= Html::encode($valueDisplay) ?></pre>
+                                                        <?php else: ?>
+                                                            <code><?= Html::encode($valueDisplay) ?></code>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td><span class="badge bg-secondary"><?= Html::encode($valueType) ?></span></td>
+                                                    <td>
+                                                        <?php if ($isRequired): ?>
+                                                            <span class="badge bg-success">Requerido ✓</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-info">Opcional</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-warning">
+                                    ⚠️ No se encontraron parámetros en los datos extraídos.
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($missingParams)): ?>
+                                <h5 class="mt-4">❌ Parámetros Requeridos Faltantes:</h5>
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0">
+                                        <?php foreach ($missingParams as $missingParam): ?>
+                                            <li><code><?= Html::encode($missingParam) ?></code></li>
+                                        <?php endforeach; ?>
+                                    </ul>
+                                </div>
                             <?php endif; ?>
                             
                             <?php if (!empty($result['top_scored_actions'])): ?>

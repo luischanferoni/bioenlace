@@ -260,8 +260,22 @@ class UniversalQueryAgent
                     $parametersValidationDetails = [
                         'message' => 'Todos los parámetros requeridos fueron encontrados y validados',
                         'found_params' => array_keys($foundParams),
+                        'found_params_with_values' => $foundParams, // Incluir valores para mostrar en la vista
                         'actions_count' => count($foundActions),
                     ];
+                }
+                
+                // También incluir todos los parámetros encontrados (no solo los requeridos)
+                // Comparar extractedDataWithParams con extractedData original para ver qué se agregó
+                $allFoundParams = [];
+                foreach ($extractedDataWithParams as $paramName => $paramValue) {
+                    // Incluir si no estaba en el extractedData original o si cambió
+                    if (!isset($extractedData[$paramName]) || $extractedData[$paramName] !== $paramValue) {
+                        $allFoundParams[$paramName] = $paramValue;
+                    }
+                }
+                if (!empty($allFoundParams)) {
+                    $parametersValidationDetails['all_found_params'] = $allFoundParams;
                 }
             }
             
@@ -365,6 +379,7 @@ class UniversalQueryAgent
                         'keywords' => $action['keywords'] ?? [],
                     ];
                 }, $foundActions),
+                'parameters_validation' => $parametersValidationDetails, // Información sobre parámetros encontrados
                 'debug_all_actions_scores' => $allScores, // Información de debugging para todas las acciones evaluadas
             ];
         } catch (\Exception $e) {

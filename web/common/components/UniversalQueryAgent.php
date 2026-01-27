@@ -211,48 +211,62 @@ class UniversalQueryAgent
                 }
             }
             
-            // Verificar compatibilidad con id_servicio si está presente en los criterios
-            // Usar el método genérico findAndValidate del modelo Servicio
+            // Verificar compatibilidad de parámetros requeridos de manera genérica
+            // Usar el método genérico findAndValidateActionParameters que procesa todos los parámetros
             $extractedData = $criteria['extracted_data'] ?? [];
             $userQuery = null; // No tenemos el userQuery aquí, pero findAndValidate puede funcionar sin él
-            $servicioResult = \common\models\Servicio::findAndValidate($extractedData, $userQuery, 'id_servicio');
             
-            $servicioCompatible = true;
-            $servicioValidationDetails = [];
+            // Buscar y validar parámetros requeridos por las acciones encontradas (genérico)
+            $extractedDataWithParams = self::findAndValidateActionParameters($foundActions, $extractedData, $userQuery);
             
-            if ($servicioResult['found'] && !empty($foundActions)) {
-                // Verificar si alguna de las acciones encontradas requiere id_servicio
-                $actionsRequiringServicio = [];
+            // Verificar si hay parámetros requeridos que no se encontraron
+            $parametersCompatible = true;
+            $parametersValidationDetails = [];
+            
+            if (!empty($foundActions)) {
+                // Obtener todos los parámetros requeridos de las acciones
+                $requiredParams = [];
                 foreach ($foundActions as $action) {
-                    $requiresServicio = self::actionRequiresServicio($action);
-                    if ($requiresServicio) {
-                        $actionsRequiringServicio[] = $action;
+                    $parameters = $action['parameters'] ?? [];
+                    foreach ($parameters as $param) {
+                        $paramName = $param['name'] ?? null;
+                        $isRequired = $param['required'] ?? false;
+                        if ($paramName && $isRequired && !in_array($paramName, $requiredParams)) {
+                            $requiredParams[] = $paramName;
+                        }
                     }
                 }
                 
-                if (!empty($actionsRequiringServicio)) {
-                    // Verificar si el id_servicio es válido
-                    if (!$servicioResult['is_valid']) {
-                        $servicioCompatible = false;
-                        $servicioValidationDetails = [
-                            'message' => 'El id_servicio proporcionado no es válido',
-                            'id_servicio_provided' => $servicioResult['id'],
-                            'servicio_name' => $servicioResult['name'],
-                            'actions_requiring_servicio' => count($actionsRequiringServicio),
-                        ];
+                // Verificar si los parámetros requeridos fueron encontrados y validados
+                $missingParams = [];
+                $foundParams = [];
+                foreach ($requiredParams as $paramName) {
+                    if (isset($extractedDataWithParams[$paramName])) {
+                        $foundParams[$paramName] = $extractedDataWithParams[$paramName];
                     } else {
-                        $servicioValidationDetails = [
-                            'message' => 'El id_servicio es válido y compatible con las acciones encontradas',
-                            'id_servicio' => $servicioResult['id'],
-                            'servicio_name' => $servicioResult['name'],
-                            'actions_requiring_servicio' => count($actionsRequiringServicio),
-                        ];
+                        $missingParams[] = $paramName;
                     }
+                }
+                
+                if (!empty($missingParams)) {
+                    $parametersCompatible = false;
+                    $parametersValidationDetails = [
+                        'message' => 'Faltan parámetros requeridos para las acciones encontradas',
+                        'missing_params' => $missingParams,
+                        'found_params' => array_keys($foundParams),
+                        'actions_count' => count($foundActions),
+                    ];
+                } else if (!empty($foundParams)) {
+                    $parametersValidationDetails = [
+                        'message' => 'Todos los parámetros requeridos fueron encontrados y validados',
+                        'found_params' => array_keys($foundParams),
+                        'actions_count' => count($foundActions),
+                    ];
                 }
             }
             
-            // Determinar si hay asociación exitosa (considerando servicio si aplica)
-            $hasAssociation = !empty($foundActions) && $servicioCompatible;
+            // Determinar si hay asociación exitosa (considerando parámetros si aplica)
+            $hasAssociation = !empty($foundActions) && $parametersCompatible;
             
             // Analizar por qué no hay asociación si es el caso
             $associationAnalysis = [
@@ -291,15 +305,15 @@ class UniversalQueryAgent
                         'total_actions_checked' => count($allActions),
                     ];
                 } else {
-                    // Verificar si el problema es el servicio
-                    if (!$servicioCompatible && !empty($servicioValidationDetails)) {
-                        $associationAnalysis['reason'] = 'invalid_servicio';
+                    // Verificar si el problema son los parámetros requeridos
+                    if (!$parametersCompatible && !empty($parametersValidationDetails)) {
+                        $associationAnalysis['reason'] = 'missing_required_parameters';
                         $associationAnalysis['details'] = array_merge([
-                            'message' => 'Algunas acciones obtuvieron score > 0, pero el id_servicio proporcionado no es válido',
+                            'message' => 'Algunas acciones obtuvieron score > 0, pero faltan parámetros requeridos',
                             'max_score_found' => $maxScore,
                             'top_5_actions_with_score' => $topScores,
                             'actions_with_score_count' => count($scoredActions),
-                        ], $servicioValidationDetails);
+                        ], $parametersValidationDetails);
                     } else {
                         $associationAnalysis['reason'] = 'low_score_threshold';
                         $associationAnalysis['details'] = [
@@ -311,21 +325,21 @@ class UniversalQueryAgent
                     }
                 }
             } else {
-                // Verificar si hay problema con el servicio
-                if (!$servicioCompatible && !empty($servicioValidationDetails)) {
-                    $associationAnalysis['reason'] = 'invalid_servicio';
+                // Verificar si hay problema con los parámetros requeridos
+                if (!$parametersCompatible && !empty($parametersValidationDetails)) {
+                    $associationAnalysis['reason'] = 'missing_required_parameters';
                     $associationAnalysis['details'] = array_merge([
-                        'message' => 'Se encontraron acciones, pero el id_servicio proporcionado no es válido',
+                        'message' => 'Se encontraron acciones, pero faltan parámetros requeridos',
                         'best_match_score' => !empty($scoredActions) ? $scoredActions[0]['score'] : 0,
-                    ], $servicioValidationDetails);
+                    ], $parametersValidationDetails);
                 } else {
                     $associationAnalysis['reason'] = 'success';
                     $associationAnalysis['details'] = [
                         'message' => 'Se encontraron acciones asociadas exitosamente',
                         'best_match_score' => !empty($scoredActions) ? $scoredActions[0]['score'] : 0,
                     ];
-                    if (!empty($servicioValidationDetails)) {
-                        $associationAnalysis['details']['servicio_validation'] = $servicioValidationDetails;
+                    if (!empty($parametersValidationDetails)) {
+                        $associationAnalysis['details']['parameters_validation'] = $parametersValidationDetails;
                     }
                 }
             }

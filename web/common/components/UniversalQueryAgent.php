@@ -212,11 +212,15 @@ class UniversalQueryAgent
             }
             
             // Verificar compatibilidad con id_servicio si está presente en los criterios
-            $servicioInfo = self::validateServicioInCriteria($criteria);
+            // Usar el método genérico findAndValidate del modelo Servicio
+            $extractedData = $criteria['extracted_data'] ?? [];
+            $userQuery = null; // No tenemos el userQuery aquí, pero findAndValidate puede funcionar sin él
+            $servicioResult = \common\models\Servicio::findAndValidate($extractedData, $userQuery, 'id_servicio');
+            
             $servicioCompatible = true;
             $servicioValidationDetails = [];
             
-            if ($servicioInfo['has_servicio'] && !empty($foundActions)) {
+            if ($servicioResult['found'] && !empty($foundActions)) {
                 // Verificar si alguna de las acciones encontradas requiere id_servicio
                 $actionsRequiringServicio = [];
                 foreach ($foundActions as $action) {
@@ -228,19 +232,19 @@ class UniversalQueryAgent
                 
                 if (!empty($actionsRequiringServicio)) {
                     // Verificar si el id_servicio es válido
-                    if (!$servicioInfo['is_valid']) {
+                    if (!$servicioResult['is_valid']) {
                         $servicioCompatible = false;
                         $servicioValidationDetails = [
                             'message' => 'El id_servicio proporcionado no es válido',
-                            'id_servicio_provided' => $servicioInfo['id_servicio'],
-                            'servicio_name' => $servicioInfo['servicio_name'],
+                            'id_servicio_provided' => $servicioResult['id'],
+                            'servicio_name' => $servicioResult['name'],
                             'actions_requiring_servicio' => count($actionsRequiringServicio),
                         ];
                     } else {
                         $servicioValidationDetails = [
                             'message' => 'El id_servicio es válido y compatible con las acciones encontradas',
-                            'id_servicio' => $servicioInfo['id_servicio'],
-                            'servicio_name' => $servicioInfo['servicio_name'],
+                            'id_servicio' => $servicioResult['id'],
+                            'servicio_name' => $servicioResult['name'],
                             'actions_requiring_servicio' => count($actionsRequiringServicio),
                         ];
                     }

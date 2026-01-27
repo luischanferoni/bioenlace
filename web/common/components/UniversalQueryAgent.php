@@ -2113,42 +2113,6 @@ PROMPT;
         return null;
     }
 
-    /**
-     * Extraer servicio directamente del texto de la consulta
-     * Busca palabras clave de servicios en el texto
-     * @param string $userQuery
-     * @return int|null
-     */
-    private static function extractServicioFromQuery($userQuery)
-    {
-        if (empty($userQuery) || !is_string($userQuery)) {
-            return null;
-        }
-        
-        $queryLower = strtolower(trim($userQuery));
-        
-        // Palabras clave de servicios comunes
-        $servicioKeywords = [
-            'odontologo', 'odontología', 'odontologia', 'dental', 'dentista',
-            'pediatra', 'pediatría',
-            'ginecologo', 'ginecología', 'ginecologia',
-            'medico', 'médico', 'medico general', 'medico familiar', 'medico clinica', 'médico clínica', 'clinica', 'clínica',
-            'psicologo', 'psicología', 'psicologia',
-            'kinesiologo', 'kinesiología', 'kinesiologia', 'kinesio',
-        ];
-        
-        // Buscar cada palabra clave en el texto
-        foreach ($servicioKeywords as $keyword) {
-            if (stripos($queryLower, $keyword) !== false) {
-                $servicioId = self::findServicioByName($keyword);
-                if ($servicioId !== null) {
-                    return $servicioId;
-                }
-            }
-        }
-        
-        return null;
-    }
 
     /**
      * Buscar y validar parámetros de actions de manera genérica
@@ -2162,10 +2126,6 @@ PROMPT;
      */
     private static function findAndValidateActionParameters($actions, $extractedData, $userQuery = null)
     {
-        if (empty($actions) || !is_array($actions)) {
-            return $extractedData;
-        }
-        
         // Obtener todos los parámetros únicos de los actions
         $allParams = [];
         foreach ($actions as $action) {
@@ -2212,27 +2172,6 @@ PROMPT;
                         $extractedData[$paramName] = $result['id'];
                     }
                     
-                    // También agregar variantes comunes del parámetro si no están presentes
-                    // Por ejemplo, si encontramos id_servicio, también agregar servicio_actual si la acción lo requiere
-                    $paramNameLower = strtolower($paramName);
-                    if (stripos($paramNameLower, 'servicio') !== false) {
-                        if (!isset($extractedData['id_servicio']) && stripos($paramNameLower, 'id_servicio') === false) {
-                            $extractedData['id_servicio'] = $result['id'];
-                        }
-                        if (!isset($extractedData['servicio_actual']) && $paramNameLower !== 'servicio_actual') {
-                            // Solo agregar servicio_actual si alguna acción lo requiere
-                            foreach ($actions as $action) {
-                                $parameters = $action['parameters'] ?? [];
-                                foreach ($parameters as $param) {
-                                    if (strtolower($param['name'] ?? '') === 'servicio_actual') {
-                                        $extractedData['servicio_actual'] = $result['id'];
-                                        break 2;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
                     if (YII_DEBUG) {
                         Yii::info("Parámetro {$paramName} encontrado y validado: {$result['id']} ({$result['name']})", 'universal-query-agent');
                     }
@@ -2270,7 +2209,7 @@ PROMPT;
             if (is_numeric($idServicio)) {
                 $result['has_servicio'] = true;
                 $result['id_servicio'] = (int)$idServicio;
-                $result['is_valid'] = self::validateServicioId($result['id_servicio']);
+                $result['is_valid'] = \common\models\Servicio::validateId($result['id_servicio']);
                 if ($result['is_valid']) {
                     $servicio = \common\models\Servicio::findOne($result['id_servicio']);
                     if ($servicio) {
@@ -2294,7 +2233,7 @@ PROMPT;
             } elseif (isset($extractedData['raw']['names'])) {
                 // Buscar nombres que puedan ser servicios
                 foreach ($extractedData['raw']['names'] as $name) {
-                    $servicioId = self::findServicioByName($name);
+                    $servicioId = \common\models\Servicio::findByName($name);
                     if ($servicioId !== null) {
                         $result['has_servicio'] = true;
                         $result['id_servicio'] = $servicioId;
@@ -2313,9 +2252,9 @@ PROMPT;
                 if (is_numeric($servicioName)) {
                     $result['has_servicio'] = true;
                     $result['id_servicio'] = (int)$servicioName;
-                    $result['is_valid'] = self::validateServicioId($result['id_servicio']);
+                    $result['is_valid'] = \common\models\Servicio::validateId($result['id_servicio']);
                 } else {
-                    $servicioId = self::findServicioByName($servicioName);
+                    $servicioId = \common\models\Servicio::findByName($servicioName);
                     if ($servicioId !== null) {
                         $result['has_servicio'] = true;
                         $result['id_servicio'] = $servicioId;
@@ -2331,7 +2270,7 @@ PROMPT;
         
         // Si aún no se encontró, buscar directamente en el texto de la consulta
         if (!$result['has_servicio'] && $userQuery !== null) {
-            $servicioId = self::extractServicioFromQuery($userQuery);
+            $servicioId = \common\models\Servicio::extractFromQuery($userQuery);
             if ($servicioId !== null) {
                 $result['has_servicio'] = true;
                 $result['id_servicio'] = $servicioId;
@@ -2348,105 +2287,24 @@ PROMPT;
 
     /**
      * Validar si un id_servicio existe en la base de datos
+     * @deprecated Usar \common\models\Servicio::validateId() en su lugar
      * @param int $idServicio
      * @return bool
      */
     private static function validateServicioId($idServicio)
     {
-        try {
-            $servicio = \common\models\Servicio::findOne($idServicio);
-            return $servicio !== null;
-        } catch (\Exception $e) {
-            Yii::error("Error validando id_servicio {$idServicio}: " . $e->getMessage(), 'universal-query-agent');
-            return false;
-        }
+        return \common\models\Servicio::validateId($idServicio);
     }
 
     /**
      * Buscar servicio por nombre (similar a ActionParameterAnalyzer)
+     * @deprecated Usar \common\models\Servicio::findByName() en su lugar
      * @param string $nombre
      * @return int|null
      */
     private static function findServicioByName($nombre)
     {
-        if (empty($nombre) || !is_string($nombre)) {
-            return null;
-        }
-        
-        // Normalizar nombre: convertir a mayúsculas y limpiar
-        $nombreNormalizado = strtoupper(trim($nombre));
-        
-        // Mapeo de sinónimos comunes
-        $sinonimos = [
-            'odontologo' => 'ODONTOLOGIA',
-            'odontología' => 'ODONTOLOGIA',
-            'odontologia' => 'ODONTOLOGIA',
-            'dental' => 'ODONTOLOGIA',
-            'dentista' => 'ODONTOLOGIA',
-            'pediatra' => 'PEDIATRIA',
-            'pediatría' => 'PEDIATRIA',
-            'ginecologo' => 'GINECOLOGIA',
-            'ginecología' => 'GINECOLOGIA',
-            'ginecologia' => 'GINECOLOGIA',
-            'medico' => 'MED GENERAL',
-            'médico' => 'MED GENERAL',
-            'medico general' => 'MED GENERAL',
-            'medico familiar' => 'MED FAMILIAR',
-            'medico clinica' => 'MED CLINICA',
-            'médico clínica' => 'MED CLINICA',
-            'clinica' => 'MED CLINICA',
-            'clínica' => 'MED CLINICA',
-            'psicologo' => 'PSICOLOGIA',
-            'psicología' => 'PSICOLOGIA',
-            'psicologia' => 'PSICOLOGIA',
-            'kinesiologo' => 'KINESIOLOGIA',
-            'kinesiología' => 'KINESIOLOGIA',
-            'kinesiologia' => 'KINESIOLOGIA',
-            'kinesio' => 'KINESIOLOGIA',
-        ];
-        
-        // Verificar si hay un sinónimo directo
-        $nombreLower = strtolower($nombreNormalizado);
-        if (isset($sinonimos[$nombreLower])) {
-            $nombreNormalizado = $sinonimos[$nombreLower];
-        }
-
-        try {
-            // Primero intentar búsqueda exacta
-            $servicio = \common\models\Servicio::find()
-                ->where(['nombre' => $nombreNormalizado])
-                ->one();
-            
-            if ($servicio) {
-                return (int)$servicio->id_servicio;
-            }
-            
-            // Si no se encuentra exacto, intentar búsqueda con LIKE
-            $servicio = \common\models\Servicio::find()
-                ->where(['LIKE', 'nombre', $nombreNormalizado])
-                ->one();
-            
-            if ($servicio) {
-                return (int)$servicio->id_servicio;
-            }
-            
-            // Último intento: buscar sinónimos en la base de datos
-            foreach ($sinonimos as $sinonimo => $nombreServicio) {
-                if (stripos($nombreNormalizado, $sinonimo) !== false || stripos($sinonimo, $nombreNormalizado) !== false) {
-                    $servicio = \common\models\Servicio::find()
-                        ->where(['nombre' => $nombreServicio])
-                        ->one();
-                    
-                    if ($servicio) {
-                        return (int)$servicio->id_servicio;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            Yii::error("Error buscando servicio por nombre '{$nombre}': " . $e->getMessage(), 'universal-query-agent');
-        }
-
-        return null;
+        return \common\models\Servicio::findByName($nombre);
     }
 
     /**

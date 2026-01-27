@@ -213,8 +213,15 @@ class UniversalQueryAgent
             
             // Verificar compatibilidad de parámetros requeridos de manera genérica
             // Usar el método genérico findAndValidateActionParameters que procesa todos los parámetros
-            $extractedData = $criteria['extracted_data'] ?? [];
+            // Normalizar extracted_data primero para que tenga la estructura correcta (con raw)
+            $extractedDataRaw = $criteria['extracted_data'] ?? [];
+            $extractedData = self::normalizeExtractedData($extractedDataRaw, $criteria['filters'] ?? []);
             $userQuery = null; // No tenemos el userQuery aquí, pero findAndValidate puede funcionar sin él
+            
+            // Log para debug
+            if (YII_DEBUG) {
+                Yii::info("testFindActions - extractedData normalizado: " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+            }
             
             // Inicializar siempre parametersValidationDetails
             $parametersValidationDetails = [
@@ -2075,13 +2082,16 @@ PROMPT;
             
             if (!empty($names)) {
                 $normalized['nombre'] = implode(' ', $names);
-                // También mantener los names en raw para que findAndValidateActionParameters los procese
-                if (!isset($extractedData['names']) || empty($extractedData['names'])) {
+            }
+            
+            // Asegurar que extractedData tenga names para raw
+            if (!isset($extractedData['names']) || empty($extractedData['names'])) {
+                if (!empty($names)) {
                     $extractedData['names'] = $names;
                 }
             }
             
-            // Mantener datos originales también para referencia
+            // Mantener datos originales también para referencia (esto es crítico para findAndValidate)
             $normalized['raw'] = $extractedData;
         }
         
@@ -2325,7 +2335,15 @@ PROMPT;
             
             // Llamar al método findAndValidate del modelo
             try {
+                if (YII_DEBUG) {
+                    Yii::info("Buscando parámetro {$paramName} con modelo {$modelClass}. extractedData keys: " . implode(', ', array_keys($extractedData)) . ", raw keys: " . (isset($extractedData['raw']) ? implode(', ', array_keys($extractedData['raw'])) : 'no raw'), 'universal-query-agent');
+                }
+                
                 $result = call_user_func([$modelClass, 'findAndValidate'], $extractedData, $userQuery, $paramName);
+                
+                if (YII_DEBUG) {
+                    Yii::info("Resultado de findAndValidate para {$paramName}: " . json_encode($result, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+                }
                 
                 // Si se encontró y es válido, agregarlo al extractedData
                 if ($result['found'] && $result['is_valid'] && $result['id'] !== null) {
@@ -2336,6 +2354,10 @@ PROMPT;
                     
                     if (YII_DEBUG) {
                         Yii::info("Parámetro {$paramName} encontrado y validado: {$result['id']} ({$result['name']})", 'universal-query-agent');
+                    }
+                } else {
+                    if (YII_DEBUG) {
+                        Yii::info("Parámetro {$paramName} NO encontrado. found: " . ($result['found'] ? 'true' : 'false') . ", is_valid: " . ($result['is_valid'] ? 'true' : 'false') . ", id: " . ($result['id'] ?? 'null'), 'universal-query-agent');
                     }
                 }
             } catch (\Exception $e) {

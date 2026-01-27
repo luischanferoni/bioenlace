@@ -12,6 +12,12 @@ use Yii;
 class UniversalQueryAgent
 {
     /**
+     * Variable estática para activar debug en testFindActions
+     * @var bool
+     */
+    private static $testModeDebug = false;
+    
+    /**
      * Obtener todas las acciones disponibles para un rol específico
      * @param string|array $roleName Nombre del rol o array de nombres de roles
      * @param bool $useCache Usar cache
@@ -130,6 +136,9 @@ class UniversalQueryAgent
      */
     public static function testFindActions($criteria, $userId = null, $roleName = null)
     {
+        // Activar modo debug para este método de test
+        self::$testModeDebug = true;
+        
         try {
             // Obtener todas las acciones disponibles
             // Si se proporciona roleName, usar getAvailableActionsByRole, sino usar getAvailableActionsForUser
@@ -219,7 +228,7 @@ class UniversalQueryAgent
             $userQuery = null; // No tenemos el userQuery aquí, pero findAndValidate puede funcionar sin él
             
             // Log para debug
-            if (YII_DEBUG) {
+            if (self::isDebugMode()) {
                 Yii::info("testFindActions - extractedData normalizado: " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
             }
             
@@ -415,7 +424,7 @@ class UniversalQueryAgent
                 }
             }
             
-            return [
+            $result = [
                 'success' => true,
                 'criteria' => $criteria,
                 'has_association' => $hasAssociation,
@@ -439,7 +448,15 @@ class UniversalQueryAgent
                 'parameters_validation' => $parametersValidationDetails, // Información sobre parámetros encontrados
                 'debug_all_actions_scores' => $allScores, // Información de debugging para todas las acciones evaluadas
             ];
+            
+            // Restaurar modo debug
+            self::$testModeDebug = false;
+            
+            return $result;
         } catch (\Exception $e) {
+            // Restaurar modo debug incluso en caso de error
+            self::$testModeDebug = false;
+            
             return [
                 'success' => false,
                 'has_association' => false,
@@ -455,6 +472,15 @@ class UniversalQueryAgent
                 'trace' => $e->getTraceAsString(),
             ];
         }
+    }
+    
+    /**
+     * Verificar si el modo debug está activo (YII_DEBUG o testModeDebug)
+     * @return bool
+     */
+    private static function isDebugMode()
+    {
+        return (defined('YII_DEBUG') && YII_DEBUG) || self::$testModeDebug;
     }
 
     /**
@@ -1374,7 +1400,7 @@ PROMPT;
             foreach ($criteria['filters']['custom'] as $key => $value) {
                 if (is_string($value) && !empty(trim($value)) && !is_numeric($value)) {
                     $extractedData['raw']['names'][] = $value;
-                    if (YII_DEBUG) {
+                    if (self::isDebugMode()) {
                         Yii::info("Agregado valor desde filters.custom.{$key} a extracted_data.raw.names: " . $value, 'universal-query-agent');
                     }
                 }
@@ -1382,7 +1408,7 @@ PROMPT;
         }
         
         // Log del extractedData antes de buscar parámetros
-        if (YII_DEBUG) {
+        if (self::isDebugMode()) {
             Yii::info("extractedData antes de findAndValidateActionParameters: " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
         }
         
@@ -1390,7 +1416,7 @@ PROMPT;
         $extractedData = self::findAndValidateActionParameters($actions, $extractedData, $userQuery);
         
         // Log del extractedData después de buscar parámetros
-        if (YII_DEBUG) {
+        if (self::isDebugMode()) {
             Yii::info("extractedData después de findAndValidateActionParameters: " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
         }
         
@@ -1398,7 +1424,7 @@ PROMPT;
         $actionAnalysis = self::analyzePrimaryActionParameters($actions, $extractedData, $userId);
         
         // Log del actionAnalysis
-        if (YII_DEBUG && $actionAnalysis) {
+        if (self::isDebugMode() && $actionAnalysis) {
             Yii::info("actionAnalysis: " . json_encode($actionAnalysis, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
         }
         
@@ -1416,16 +1442,16 @@ PROMPT;
                 }
                 
                 // Log para debug
-                if (YII_DEBUG && !empty($providedParams)) {
+                if (self::isDebugMode() && !empty($providedParams)) {
                     Yii::info("Parámetros proporcionados extraídos: " . json_encode($providedParams), 'universal-query-agent');
                 }
             } else {
-                if (YII_DEBUG) {
+                if (self::isDebugMode()) {
                     Yii::info("actionAnalysis no tiene parameters.provided o está vacío", 'universal-query-agent');
                 }
             }
         } else {
-            if (YII_DEBUG) {
+            if (self::isDebugMode()) {
                 Yii::info("No hay actionAnalysis o actions vacío. actionAnalysis existe: " . ($actionAnalysis ? 'sí' : 'no') . ", actions count: " . count($actions), 'universal-query-agent');
             }
         }
@@ -1832,58 +1858,6 @@ PROMPT;
             'grouped_by_controller' => $grouped,
             'total_count' => count($formattedActions),
             'query_type' => 'list_all',
-        ];
-    }
-
-    /**
-     * Manejar búsqueda por DNI
-     * @param string $dni
-     * @param array $personActions
-     * @return array
-     */
-    private static function handleDniSearch($dni, $personActions)
-    {
-        // Validar parámetros
-        if (empty($dni)) {
-            return [
-                'success' => false,
-                'error' => 'DNI no proporcionado',
-            ];
-        }
-        
-        // Intentar buscar persona directamente
-        /** @var \common\models\Persona|null $persona */
-        $persona = \common\models\Persona::find()
-            ->where(['documento' => $dni])
-            ->one();
-
-        if ($persona !== null) {
-            $nombreCompleto = $persona->getNombreCompleto(\common\models\Persona::FORMATO_NOMBRE_A_N);
-            
-            return [
-                'success' => true,
-                'explanation' => "Encontré una persona con DNI {$dni}.",
-                'action' => [
-                    'action_id' => 'personas.view',
-                    'display_name' => "Ver detalles de {$nombreCompleto}",
-                    'description' => "Ver información completa y historial de la persona",
-                    'entity' => 'Personas',
-                    // Mantener params para ejecución
-                    'params' => ['id' => $persona->id_persona],
-                ],
-                'data' => [
-                    'nombre' => $nombreCompleto,
-                    'dni' => $persona->documento,
-                ],
-                'alternative_actions' => self::formatActionsForResponse($personActions),
-            ];
-        }
-
-        return [
-            'success' => false,
-            'explanation' => "No se encontró ninguna persona con DNI {$dni}.",
-            'suggested_actions' => self::formatActionsForResponse($personActions),
-            'suggested_query' => 'Puedes usar las acciones de búsqueda de personas para buscar por otros criterios.',
         ];
     }
 
@@ -2327,7 +2301,7 @@ PROMPT;
             
             // Verificar que el modelo tiene el método findAndValidate
             if (!method_exists($modelClass, 'findAndValidate')) {
-                if (YII_DEBUG) {
+                if (self::isDebugMode()) {
                     Yii::info("Modelo {$modelClass} no tiene método findAndValidate para parámetro {$paramName}", 'universal-query-agent');
                 }
                 continue;
@@ -2335,13 +2309,13 @@ PROMPT;
             
             // Llamar al método findAndValidate del modelo
             try {
-                if (YII_DEBUG) {
+                if (self::isDebugMode()) {
                     Yii::info("Buscando parámetro {$paramName} con modelo {$modelClass}. extractedData keys: " . implode(', ', array_keys($extractedData)) . ", raw keys: " . (isset($extractedData['raw']) ? implode(', ', array_keys($extractedData['raw'])) : 'no raw'), 'universal-query-agent');
                 }
                 
                 $result = call_user_func([$modelClass, 'findAndValidate'], $extractedData, $userQuery, $paramName);
                 
-                if (YII_DEBUG) {
+                if (self::isDebugMode()) {
                     Yii::info("Resultado de findAndValidate para {$paramName}: " . json_encode($result, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
                 }
                 
@@ -2352,11 +2326,11 @@ PROMPT;
                         $extractedData[$paramName] = $result['id'];
                     }
                     
-                    if (YII_DEBUG) {
+                    if (self::isDebugMode()) {
                         Yii::info("Parámetro {$paramName} encontrado y validado: {$result['id']} ({$result['name']})", 'universal-query-agent');
                     }
                 } else {
-                    if (YII_DEBUG) {
+                    if (self::isDebugMode()) {
                         Yii::info("Parámetro {$paramName} NO encontrado. found: " . ($result['found'] ? 'true' : 'false') . ", is_valid: " . ($result['is_valid'] ? 'true' : 'false') . ", id: " . ($result['id'] ?? 'null'), 'universal-query-agent');
                     }
                 }

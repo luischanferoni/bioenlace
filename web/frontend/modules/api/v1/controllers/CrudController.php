@@ -522,10 +522,6 @@ class CrudController extends BaseController
      */
     private function expandStepFields($steps, $fieldsConfig)
     {
-        if (empty($steps)) {
-            return $steps;
-        }
-        
         // Expandir campos en cada step, manteniendo solo referencias
         $expandedSteps = [];
         foreach ($steps as $step) {

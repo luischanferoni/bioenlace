@@ -786,9 +786,10 @@ PROMPT;
         }
 
         // Caso especial: búsqueda por DNI
-        if (!empty($criteria['extracted_data']['dni'])) {
-            // Buscar acciones relacionadas con búsqueda de personas (devuelve solo la mejor)
-            return self::findPersonSearchActions($allActions, $criteria['extracted_data']['dni']);
+        // Buscar acciones relacionadas con búsqueda de personas (devuelve solo la mejor)
+        $dni = $criteria['extracted_data']['dni'] ?? null;
+        if ($dni) {
+            return self::findPersonSearchActions($allActions, $dni);
         }
 
         // Búsqueda semántica usando scoring mejorado con metadatos
@@ -1044,6 +1045,11 @@ PROMPT;
      */
     private static function findPersonSearchActions($allActions, $dni)
     {
+        // Validar parámetros
+        if (empty($dni) || empty($allActions) || !is_array($allActions)) {
+            return [];
+        }
+        
         $scoredActions = [];
         
         foreach ($allActions as $action) {
@@ -1181,8 +1187,9 @@ PROMPT;
         Yii::info("UniversalQueryAgent::generateNaturalResponse - Recibió " . count($actions) . " acción(es). Query: '{$userQuery}'", 'universal-query-agent');
         
         // Caso especial: búsqueda por DNI
-        if (!empty($criteria['extracted_data']['dni'])) {
-            return self::handleDniSearch($criteria['extracted_data']['dni'], $actions);
+        $dni = $criteria['extracted_data']['dni'] ?? null;
+        if ($dni) {
+            return self::handleDniSearch($dni, $actions);
         }
 
         // Caso especial: listar todos los permisos
@@ -1265,20 +1272,10 @@ PROMPT;
         
         // Buscar y validar parámetros de los actions encontrados de manera genérica
         // Esto reemplaza la lógica hardcodeada de validateServicioInCriteria
-        if (!empty($actions)) {
-            $extractedData = self::findAndValidateActionParameters($actions, $extractedData, $userQuery);
-        }
+        $extractedData = self::findAndValidateActionParameters($actions, $extractedData, $userQuery);
         
         // Analizar parámetros de la acción principal si existe
-        $actionAnalysis = null;
-        if (!empty($actions)) {
-            $primaryAction = $actions[0];
-            $actionAnalysis = ActionParameterAnalyzer::analyzeActionParameters(
-                $primaryAction,
-                $extractedData,
-                $userId
-            );
-        }
+        $actionAnalysis = self::analyzePrimaryActionParameters($actions, $extractedData, $userId);
         
         // Extraer parámetros proporcionados si existe actionAnalysis
         $providedParams = [];
@@ -1721,6 +1718,14 @@ PROMPT;
      */
     private static function handleDniSearch($dni, $personActions)
     {
+        // Validar parámetros
+        if (empty($dni)) {
+            return [
+                'success' => false,
+                'error' => 'DNI no proporcionado',
+            ];
+        }
+        
         // Intentar buscar persona directamente
         /** @var \common\models\Persona|null $persona */
         $persona = \common\models\Persona::find()
@@ -2115,6 +2120,28 @@ PROMPT;
 
 
     /**
+     * Analizar parámetros de la acción principal
+     * 
+     * @param array $actions Array de actions encontrados
+     * @param array $extractedData Datos extraídos por la IA
+     * @param int|null $userId ID del usuario
+     * @return array|null Análisis de parámetros o null si no hay acciones
+     */
+    private static function analyzePrimaryActionParameters($actions, $extractedData, $userId = null)
+    {
+        if (empty($actions) || !is_array($actions)) {
+            return null;
+        }
+        
+        $primaryAction = $actions[0];
+        return ActionParameterAnalyzer::analyzeActionParameters(
+            $primaryAction,
+            $extractedData,
+            $userId
+        );
+    }
+
+    /**
      * Buscar y validar parámetros de actions de manera genérica
      * Toma los parámetros de los actions encontrados y los busca en extractedData y userQuery
      * usando los métodos findAndValidate de los modelos correspondientes
@@ -2126,6 +2153,11 @@ PROMPT;
      */
     private static function findAndValidateActionParameters($actions, $extractedData, $userQuery = null)
     {
+        // Validar que actions no esté vacío
+        if (empty($actions) || !is_array($actions)) {
+            return $extractedData;
+        }
+        
         // Obtener todos los parámetros únicos de los actions
         $allParams = [];
         foreach ($actions as $action) {
@@ -2136,11 +2168,6 @@ PROMPT;
                     $allParams[] = $paramName;
                 }
             }
-        }
-        
-        // Si no hay parámetros, retornar extractedData sin cambios
-        if (empty($allParams)) {
-            return $extractedData;
         }
         
         // Para cada parámetro, buscar su modelo correspondiente y validar

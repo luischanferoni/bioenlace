@@ -577,12 +577,18 @@ Extrae información de la consulta y responde ÚNICAMENTE con este JSON:
     "numbers": []
   },
   "filters": {
-    "user_owned": true/false/null,
     "date_range": "rango o null",
     "custom": {}
   },
   "query_type": "list_all|search|create|update|delete|count|view|data_query|unknown"
 }
+
+IMPORTANTE: 
+- Extrae intenciones y valores/parámetros de la consulta
+- En "extracted_data.names" coloca TODOS los nombres, valores de texto o identificadores de entidades que encuentres (servicios, profesionales, lugares, etc.)
+- En "extracted_data.identifiers" coloca números que puedan ser IDs o documentos
+- En "extracted_data.dates" coloca fechas mencionadas
+- "filters.custom" solo debe usarse para filtros personalizados específicos del sistema, NO para valores/parámetros extraídos
 
 Usa tu conocimiento del lenguaje para extraer información relevante de la consulta.
 PROMPT;
@@ -625,7 +631,7 @@ PROMPT;
             'entity_types' => $parsed['entity_types'] ?? [],
             'entity_type' => $parsed['entity_type'] ?? null,
             'operation_hints' => $parsed['operation_hints'] ?? [],
-            'extracted_data' => self::normalizeExtractedData($parsed['extracted_data'] ?? []),
+            'extracted_data' => self::normalizeExtractedData($parsed['extracted_data'] ?? [], $parsed['filters'] ?? []),
             'filters' => $parsed['filters'] ?? [],
             'query_type' => $parsed['query_type'] ?? 'unknown',
         ];
@@ -1185,12 +1191,6 @@ PROMPT;
     {
         // Log para debugging
         Yii::info("UniversalQueryAgent::generateNaturalResponse - Recibió " . count($actions) . " acción(es). Query: '{$userQuery}'", 'universal-query-agent');
-        
-        // Caso especial: búsqueda por DNI
-        $dni = $criteria['extracted_data']['dni'] ?? null;
-        if ($dni) {
-            return self::handleDniSearch($dni, $actions);
-        }
 
         // Caso especial: listar todos los permisos
         if ($criteria['query_type'] === 'list_all') {
@@ -1270,12 +1270,47 @@ PROMPT;
         // Preparar extracted_data para el analizador
         $extractedData = $criteria['extracted_data'] ?? [];
         
+        // Si extracted_data['raw']['names'] está vacío, procesar filters.custom como respaldo genérico
+        // Cualquier valor string en filters.custom puede ser un nombre/servicio/parámetro
+        if (empty($extractedData['raw']['names']) && !empty($criteria['filters']['custom'])) {
+            if (!isset($extractedData['raw'])) {
+                $extractedData['raw'] = [];
+            }
+            if (!isset($extractedData['raw']['names'])) {
+                $extractedData['raw']['names'] = [];
+            }
+            
+            // Procesar todos los valores en filters.custom que sean strings
+            foreach ($criteria['filters']['custom'] as $key => $value) {
+                if (is_string($value) && !empty(trim($value)) && !is_numeric($value)) {
+                    $extractedData['raw']['names'][] = $value;
+                    if (YII_DEBUG) {
+                        Yii::info("Agregado valor desde filters.custom.{$key} a extracted_data.raw.names: " . $value, 'universal-query-agent');
+                    }
+                }
+            }
+        }
+        
+        // Log del extractedData antes de buscar parámetros
+        if (YII_DEBUG) {
+            Yii::info("extractedData antes de findAndValidateActionParameters: " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+        }
+        
         // Buscar y validar parámetros de los actions encontrados de manera genérica
-        // Esto reemplaza la lógica hardcodeada de validateServicioInCriteria
         $extractedData = self::findAndValidateActionParameters($actions, $extractedData, $userQuery);
+        
+        // Log del extractedData después de buscar parámetros
+        if (YII_DEBUG) {
+            Yii::info("extractedData después de findAndValidateActionParameters: " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+        }
         
         // Analizar parámetros de la acción principal si existe
         $actionAnalysis = self::analyzePrimaryActionParameters($actions, $extractedData, $userId);
+        
+        // Log del actionAnalysis
+        if (YII_DEBUG && $actionAnalysis) {
+            Yii::info("actionAnalysis: " . json_encode($actionAnalysis, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+        }
         
         // Extraer parámetros proporcionados si existe actionAnalysis
         $providedParams = [];
@@ -1912,9 +1947,10 @@ PROMPT;
     /**
      * Normalizar datos extraídos para compatibilidad con código existente
      * @param array $extractedData
+     * @param array $filters Filtros opcionales para procesar custom como respaldo
      * @return array
      */
-    private static function normalizeExtractedData($extractedData)
+    private static function normalizeExtractedData($extractedData, $filters = [])
     {
         $normalized = [];
         
@@ -1939,8 +1975,27 @@ PROMPT;
             }
             
             // Mapear nombres
+            $names = [];
             if (isset($extractedData['names']) && is_array($extractedData['names']) && !empty($extractedData['names'])) {
-                $normalized['nombre'] = implode(' ', $extractedData['names']);
+                $names = $extractedData['names'];
+            }
+            
+            // Si no hay names pero hay filters.custom, procesar valores genéricos como respaldo
+            // Cualquier valor string en filters.custom puede ser un nombre/servicio/parámetro
+            if (empty($names) && !empty($filters['custom'])) {
+                foreach ($filters['custom'] as $key => $value) {
+                    if (is_string($value) && !empty(trim($value)) && !is_numeric($value)) {
+                        $names[] = $value;
+                    }
+                }
+            }
+            
+            if (!empty($names)) {
+                $normalized['nombre'] = implode(' ', $names);
+                // También mantener los names en raw para que findAndValidateActionParameters los procese
+                if (!isset($extractedData['names']) || empty($extractedData['names'])) {
+                    $extractedData['names'] = $names;
+                }
             }
             
             // Mantener datos originales también para referencia
@@ -2008,11 +2063,11 @@ PROMPT;
                 $processedResponse = IAManager::procesarRespuestaProveedor($response, $proveedorIA['tipo']);
                 
                 // Log de lo que devuelve procesarRespuestaProveedor antes de pasarlo a parseJSONResponse
-                $processedResponseType = gettype($processedResponse);
+                /*$processedResponseType = gettype($processedResponse);
                 $processedResponseLength = is_string($processedResponse) ? strlen($processedResponse) : 'N/A';
                 $processedResponsePreview = is_string($processedResponse) ? $processedResponse : (is_array($processedResponse) ? json_encode($processedResponse, JSON_UNESCAPED_UNICODE) : (string)$processedResponse);
                 Yii::info("UniversalQueryAgent::callIA - Respuesta procesada recibida. Tipo: {$processedResponseType}, Longitud: {$processedResponseLength}, Contenido: {$processedResponsePreview}", 'universal-query-agent');
-                
+                */
                 if (empty($processedResponse)) {
                     Yii::error("UniversalQueryAgent: procesarRespuestaProveedor devolvió vacío. Status: {$response->statusCode}, Tipo: {$proveedorIA['tipo']}, Response body: " . substr($response->content, 0, 500), 'universal-query-agent');
                 }
@@ -2035,9 +2090,6 @@ PROMPT;
      */
     private static function parseJSONResponse($response)
     {
-        // Log de la respuesta antes de intentar parsear
-        Yii::info("UniversalQueryAgent: Respuesta recibida para parsear. Longitud: " . strlen($response) . " caracteres. Contenido: {$response}", 'universal-query-agent');
-        
         // Paso 1: Intentar extraer JSON de code blocks markdown (```json ... ```)
         if (preg_match('/```(?:json)?\s*\n?(.*?)\n?```/s', $response, $matches)) {
             $jsonContent = trim($matches[1]);

@@ -369,13 +369,17 @@ class ActionParameterAnalyzer
         $servicioValue = null;
         
         // 1. Buscar directamente en extractedData
-        if (isset($extractedData['servicio'])) {
-            $servicioValue = $extractedData['servicio'];
-        } elseif (isset($extractedData['id_servicio'])) {
-            // Si ya viene como ID, devolverlo directamente
+        // Prioridad: id_servicio > servicio > paramName específico (id_servicio_asignado, servicio_actual, etc.)
+        if (isset($extractedData['id_servicio'])) {
+            // Si ya viene como ID, devolverlo directamente (tiene prioridad)
             return is_numeric($extractedData['id_servicio']) ? (int)$extractedData['id_servicio'] : null;
+        } elseif (isset($extractedData['servicio'])) {
+            $servicioValue = $extractedData['servicio'];
         } elseif (isset($extractedData[$paramName])) {
             $servicioValue = $extractedData[$paramName];
+        } elseif (isset($extractedData['servicio_actual'])) {
+            // También buscar servicio_actual como alias
+            $servicioValue = $extractedData['servicio_actual'];
         }
         
         // 2. Buscar en raw data

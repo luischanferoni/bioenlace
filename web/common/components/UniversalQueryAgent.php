@@ -1301,6 +1301,19 @@ PROMPT;
                         $providedParams[$paramName] = $paramData;
                     }
                 }
+                
+                // Log para debug
+                if (YII_DEBUG && !empty($providedParams)) {
+                    Yii::info("Parámetros proporcionados extraídos: " . json_encode($providedParams), 'universal-query-agent');
+                }
+            } else {
+                if (YII_DEBUG) {
+                    Yii::info("actionAnalysis no tiene parameters.provided o está vacío", 'universal-query-agent');
+                }
+            }
+        } else {
+            if (YII_DEBUG) {
+                Yii::info("No hay actionAnalysis o actions vacío. actionAnalysis existe: " . ($actionAnalysis ? 'sí' : 'no') . ", actions count: " . count($actions), 'universal-query-agent');
             }
         }
         
@@ -1326,6 +1339,13 @@ PROMPT;
             'actions' => $formattedActions,
             'count' => $parsed['count'] ?? count($actions),
         ];
+        
+        // Agregar parámetros proporcionados al nivel superior de la respuesta si existen
+        if (!empty($providedParams)) {
+            $response['parameters'] = [
+                'provided' => $providedParams
+            ];
+        }
         
         return $response;
     }

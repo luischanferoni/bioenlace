@@ -1407,6 +1407,15 @@ PROMPT;
             }
         }
         
+        // Resolución centralizada por tipo de entidad (EntityParameterResolver)
+        $requiredTypes = EntityParameterResolver::getRequiredTypesFromActions($actions);
+        if (!empty($requiredTypes)) {
+            $extractedData = EntityParameterResolver::resolve($extractedData, $userQuery, $requiredTypes);
+            if (self::isDebugMode()) {
+                Yii::info("extractedData después de EntityParameterResolver (tipos: " . implode(', ', $requiredTypes) . "): " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+            }
+        }
+        
         // Log del extractedData antes de buscar parámetros
         if (self::isDebugMode()) {
             Yii::info("extractedData antes de findAndValidateActionParameters: " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');

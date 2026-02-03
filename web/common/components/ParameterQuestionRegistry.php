@@ -42,6 +42,7 @@ class ParameterQuestionRegistry
         // Parámetros de Servicio
         'servicio' => Servicio::class,
         'id_servicio' => Servicio::class,
+        'id_servicio_asignado' => Servicio::class,
         'servicio_asignado' => Servicio::class,
         'servicio_actual' => Servicio::class,
         

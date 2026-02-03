@@ -309,7 +309,9 @@ class ActionParameterAnalyzer
     }
     
     /**
-     * Mapear datos extraídos a parámetros
+     * Mapear datos extraídos a parámetros.
+     * Usa tipo semántico (EntityParameterResolver) para entidades; extractedData ya viene
+     * enriquecido por EntityParameterResolver con la clave canónica y la familia.
      */
     private static function mapExtractedDataToParameters($extractedData, $requiredParams)
     {
@@ -319,29 +321,41 @@ class ActionParameterAnalyzer
             $paramName = $param['name'];
             $value = null;
             
-            // Mapeo inteligente basado en nombre del parámetro
-            if (stripos($paramName, 'id') !== false) {
-                // Buscar IDs en extracted_data
-                if (isset($extractedData['dni'])) {
-                    $value = $extractedData['dni'];
-                } elseif (isset($extractedData['raw']['identifiers'])) {
-                    $value = $extractedData['raw']['identifiers'][0] ?? null;
+            // 1) Tipo semántico: leer de clave canónica o del propio param (resolver ya propagó)
+            $semanticType = EntityParameterResolver::getSemanticType($paramName);
+            if ($semanticType !== null) {
+                $canonical = EntityParameterResolver::getCanonicalKey($semanticType);
+                $value = isset($extractedData[$canonical]) ? $extractedData[$canonical] : ($extractedData[$paramName] ?? null);
+                if ($value === null || $value === '') {
+                    $value = null;
                 }
-            } elseif (stripos($paramName, 'fecha') !== false || stripos($paramName, 'date') !== false) {
-                if (isset($extractedData['fecha'])) {
-                    $value = $extractedData['fecha'];
-                } elseif (isset($extractedData['raw']['dates'])) {
-                    $value = $extractedData['raw']['dates'][0] ?? null;
+            }
+            
+            // 2) Parámetros sin tipo semántico: mapeo por nombre
+            if ($value === null) {
+                if (stripos($paramName, 'fecha') !== false || stripos($paramName, 'date') !== false) {
+                    if (isset($extractedData['fecha'])) {
+                        $value = $extractedData['fecha'];
+                    } elseif (isset($extractedData['raw']['dates'])) {
+                        $value = $extractedData['raw']['dates'][0] ?? null;
+                    }
+                } elseif (stripos($paramName, 'nombre') !== false || stripos($paramName, 'name') !== false) {
+                    if (isset($extractedData['nombre'])) {
+                        $value = $extractedData['nombre'];
+                    } elseif (isset($extractedData['raw']['names'])) {
+                        $value = implode(' ', $extractedData['raw']['names']);
+                    }
+                } elseif (stripos($paramName, 'id') !== false && stripos($paramName, 'servicio') === false && stripos($paramName, 'efector') === false && stripos($paramName, 'rrhh') === false) {
+                    if (isset($extractedData['dni'])) {
+                        $value = $extractedData['dni'];
+                    } elseif (isset($extractedData['raw']['identifiers'])) {
+                        $value = $extractedData['raw']['identifiers'][0] ?? null;
+                    }
                 }
-            } elseif (stripos($paramName, 'nombre') !== false || stripos($paramName, 'name') !== false) {
-                if (isset($extractedData['nombre'])) {
-                    $value = $extractedData['nombre'];
-                } elseif (isset($extractedData['raw']['names'])) {
-                    $value = implode(' ', $extractedData['raw']['names']);
-                }
-            } elseif (stripos($paramName, 'servicio') !== false) {
-                // Mapeo específico para servicios
-                // Puede venir como "servicio", "servicio_actual", "id_servicio", etc.
+            }
+            
+            // 3) Fallback legacy: servicio por nombre (si no está en familia o resolver no rellenó)
+            if ($value === null && stripos($paramName, 'servicio') !== false) {
                 $value = self::mapServicioFromExtractedData($extractedData, $paramName);
             }
             

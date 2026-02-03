@@ -98,7 +98,7 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {
           _isSending = false;
 
-          // Agregar respuesta del bot al historial
+          // Agregar respuesta del bot al historial (parameters a nivel raíz para execute-action URL)
           _chatHistory.add({
             'type': 'bot',
             'content': explanation,
@@ -108,6 +108,7 @@ class _ChatScreenState extends State<ChatScreen> {
             'matched_by': matchedBy,
             'needs_user_input': needsUserInput,
             'action_analysis': actionAnalysis,
+            'parameters': data['parameters'],
             'timestamp': DateTime.now(),
           });
         });
@@ -162,9 +163,20 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    // Buscar action_analysis del mensaje anterior que contiene esta acción
-    // para extraer los parámetros proporcionados (como id_servicio)
+    // Parámetros ya obtenidos por process-query (ej. id_servicio_asignado) para incluir en la URL execute-action
     Map<String, dynamic> params = {};
+    final actionParams = action['parameters'];
+    if (actionParams != null && actionParams is Map) {
+      final providedRaw = (actionParams as Map<String, dynamic>)['provided'];
+      if (providedRaw != null && providedRaw is Map) {
+        final provided = providedRaw as Map<String, dynamic>;
+        provided.forEach((key, value) {
+          if (value != null) params[key] = value;
+        });
+      }
+    }
+
+    // Completar con action_analysis del mensaje en el historial si existe
     for (int i = _chatHistory.length - 1; i >= 0; i--) {
       final message = _chatHistory[i];
       if (message['type'] == 'bot') {
@@ -184,6 +196,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 if (providedParamsRaw is Map) {
                   final providedMap = providedParamsRaw as Map<String, dynamic>;
                   providedMap.forEach((key, value) {
+                    if (params.containsKey(key)) return; // Prioridad a params de la acción
                     // El valor puede venir como {'value': X, 'source': 'extracted'}
                     if (value is Map) {
                       final valueMap = value as Map<String, dynamic>;
@@ -191,24 +204,20 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (valueMap.containsKey('value')) {
                         params[key] = valueMap['value'];
                       } else {
-                        // Si no tiene 'value', usar el valor directamente
                         params[key] = value;
                       }
                     } else {
-                      // Si no es un Map, usar el valor directamente
                       params[key] = value;
                     }
                   });
                 } else if (providedParamsRaw is List) {
                   // Si es una lista, convertir a mapa si es posible
-                  // (esto no debería pasar normalmente, pero por seguridad)
                   for (var item in providedParamsRaw) {
                     if (item is Map) {
                       final itemMap = item as Map<String, dynamic>;
                       final key = itemMap['name'] ?? itemMap['key'];
-                      final value = itemMap['value'];
-                      if (key != null) {
-                        params[key.toString()] = value;
+                      if (key != null && !params.containsKey(key)) {
+                        params[key.toString()] = itemMap['value'];
                       }
                     }
                   }

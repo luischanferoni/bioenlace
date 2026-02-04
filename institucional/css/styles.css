@@ -1,11 +1,11 @@
-/* Reset y Variables - Paleta basada en logo Bioenlace (coral #E68A7D) + tonos claros y color complementario */
+/* Reset y Variables - Paleta basada en logo Bioenlace (coral #E68A7D); página con predominio de blanco */
 :root {
-    /* Logo y coral */
+    /* Logo y coral (uso acotado) */
     --primary-color: #E68A7D;
     --primary-dark: #c97265;
     --primary-light: #f0b5ac;
     --primary-lighter: #fceeea;
-    --primary-pale: #fdf5f4;
+    --primary-pale: #fdf8f7;
     /* Color complementario (teal/salud) */
     --complement-color: #5a9a8c;
     --complement-light: #8bc4b8;
@@ -15,9 +15,9 @@
     --accent-color: #d4a574;
     --text-dark: #2d2524;
     --text-light: #5c504f;
-    --bg-light: #fdf8f7;
+    --bg-light: #fafafa;
     --bg-white: #ffffff;
-    --border-color: #f0ddd9;
+    --border-color: #eeeceb;
     --shadow-sm: 0 1px 2px 0 rgba(230, 138, 125, 0.06);
     --shadow-md: 0 4px 6px -1px rgba(230, 138, 125, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(230, 138, 125, 0.12);
@@ -149,8 +149,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, var(--primary-lighter) 0%, var(--primary-light) 40%, var(--complement-pale) 100%);
-    opacity: 0.85;
+    background: linear-gradient(180deg, var(--bg-white) 0%, var(--primary-lighter) 30%, var(--bg-white) 100%);
+    opacity: 1;
     z-index: -1;
 }
 
@@ -161,7 +161,7 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(230, 138, 125, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(230, 138, 125, 0.04) 0%, transparent 70%);
     animation: rotate 20s linear infinite;
 }
 
@@ -282,7 +282,7 @@ section {
 
 /* About Section */
 .about {
-    background: var(--primary-pale);
+    background: var(--bg-white);
 }
 
 .about-content {
@@ -348,6 +348,10 @@ section {
 }
 
 /* Services Section */
+.services {
+    background: var(--bg-light);
+}
+
 .services-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -426,7 +430,7 @@ section {
 
 /* Features Section */
 .features {
-    background: var(--primary-lighter);
+    background: var(--bg-white);
 }
 
 .features-grid {
@@ -484,10 +488,30 @@ section {
     line-height: 1.8;
 }
 
-/* Caso de uso - Scrollytelling */
+/* Caso de uso - Scrollytelling: 3 flujos, elementos aparecen al hacer scroll */
 .caso-de-uso {
-    background: var(--primary-pale);
+    background: var(--bg-white);
 }
+
+.flow-block {
+    margin-bottom: 4rem;
+}
+
+.flow-block:last-child {
+    margin-bottom: 0;
+}
+
+.flow-block__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.flow-block--paciente .flow-block__title { color: var(--primary-color); }
+.flow-block--medico .flow-block__title { color: var(--complement-color); }
+.flow-block--institucion .flow-block__title { color: var(--text-light); }
 
 .flow-timeline {
     max-width: 640px;
@@ -498,27 +522,50 @@ section {
     gap: 0;
 }
 
+.flow-timeline--empty {
+    min-height: 120px;
+    align-items: center;
+    justify-content: center;
+}
+
+.flow-empty-message {
+    color: var(--text-light);
+    font-size: 1rem;
+}
+
 .flow-step {
     width: 100%;
     text-align: center;
     padding: 0 1rem 0;
 }
 
-.flow-node {
-    opacity: 0.5;
-    transform: scale(0.98);
-    transition: opacity 0.5s ease, transform 0.4s ease, box-shadow 0.4s ease;
+/* Contenido oculto por defecto; aparece al hacer scroll (.flow-step.visible) */
+.flow-step__content {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.45s ease;
 }
 
-.flow-step.active .flow-node {
+.flow-step.visible .flow-step__content {
     opacity: 1;
-    transform: scale(1);
-    box-shadow: 0 0 0 3px var(--primary-light);
+    transform: translateY(0);
+}
+
+.flow-node {
+    transition: box-shadow 0.4s ease;
+}
+
+.flow-step.visible .flow-node {
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.flow-block--medico .flow-step.visible .flow-node {
+    box-shadow: 0 0 0 2px var(--complement-light);
 }
 
 .flow-node__image-placeholder {
     min-height: 180px;
-    background: var(--bg-white);
+    background: var(--bg-light);
     border: 2px dashed var(--border-color);
     border-radius: 0.75rem;
     display: flex;
@@ -532,9 +579,14 @@ section {
     transition: border-color 0.4s ease, background 0.4s ease;
 }
 
-.flow-step.active .flow-node__image-placeholder {
+.flow-step.visible .flow-node__image-placeholder {
     border-color: var(--primary-light);
     background: var(--primary-lighter);
+}
+
+.flow-block--medico .flow-step.visible .flow-node__image-placeholder {
+    border-color: var(--complement-light);
+    background: var(--complement-pale);
 }
 
 .flow-node__label {
@@ -559,6 +611,12 @@ section {
     height: 50px;
     margin: 0 auto 0.5rem;
     flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.4s ease 0.2s;
+}
+
+.flow-step.visible .flow-connector {
+    opacity: 1;
 }
 
 .flow-arrow {
@@ -578,7 +636,7 @@ section {
 .flow-arrow__line {
     stroke-dasharray: 80;
     stroke-dashoffset: 80;
-    transition: stroke-dashoffset 0.6s ease 0.1s, stroke 0.4s ease;
+    transition: stroke-dashoffset 0.55s ease 0.15s, stroke 0.4s ease;
 }
 
 .flow-arrow__head {
@@ -587,16 +645,23 @@ section {
     transition: fill 0.4s ease, stroke 0.4s ease;
 }
 
-.flow-step.active .flow-connector .flow-arrow__line,
-.flow-connector.connector-active .flow-arrow__line {
+.flow-step.visible .flow-connector .flow-arrow__line {
     stroke-dashoffset: 0;
     stroke: var(--primary-color);
 }
 
-.flow-step.active .flow-connector .flow-arrow__head,
-.flow-connector.connector-active .flow-arrow__head {
+.flow-step.visible .flow-connector .flow-arrow__head {
     stroke: var(--primary-color);
     fill: var(--primary-color);
+}
+
+.flow-block--medico .flow-step.visible .flow-connector .flow-arrow__line {
+    stroke: var(--complement-color);
+}
+
+.flow-block--medico .flow-step.visible .flow-connector .flow-arrow__head {
+    stroke: var(--complement-color);
+    fill: var(--complement-color);
 }
 
 /* Contact Section */

@@ -73,17 +73,15 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
-// Scrollytelling: activar pasos del caso de uso al hacer scroll
+// Scrollytelling: cuadros y flechas aparecen al hacer scroll
 const flowStepObserverOptions = {
-    threshold: 0.35,
-    rootMargin: '0px 0px -15% 0px'
+    threshold: 0.25,
+    rootMargin: '0px 0px -10% 0px'
 };
 const flowStepObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
         if (entry.isIntersecting) {
-            entry.target.classList.add('active');
-            const connector = entry.target.querySelector('.flow-connector');
-            if (connector) connector.classList.add('connector-active');
+            entry.target.classList.add('visible');
         }
     });
 }, flowStepObserverOptions);

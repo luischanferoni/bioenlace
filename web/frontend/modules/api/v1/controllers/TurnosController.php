@@ -11,6 +11,7 @@ use common\models\ServiciosEfector;
 use common\models\Agenda_rrhh;
 use common\models\ConsultaDerivaciones;
 use common\models\Consulta;
+use common\models\Rrhh;
 use frontend\components\UserRequest;
 
 class TurnosController extends BaseController
@@ -24,7 +25,7 @@ class TurnosController extends BaseController
     {
         $behaviors = parent::behaviors();
         
-        // Excluir index de autenticación obligatoria (se manejará manualmente con user_id)
+        // Excluir index y mis-turnos de autenticación obligatoria (index se maneja con user_id; mis-turnos requiere auth)
         $except = $behaviors['authenticator']['except'] ?? [];
         if (!in_array('index', $except)) {
             $except[] = 'index';
@@ -46,6 +47,69 @@ class TurnosController extends BaseController
         unset($actions['index'], $actions['view'], $actions['create'], $actions['update']);
         
         return $actions;
+    }
+
+    /**
+     * Mis turnos (paciente): listar turnos del usuario autenticado con tipo_atencion e id_consulta para chat.
+     * GET /api/v1/turnos/mis-turnos?fecha_desde=2024-01-01&fecha_hasta=2024-12-31
+     */
+    public function actionMisTurnos()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $err = $this->requerirAutenticacion();
+        if ($err !== null) {
+            return $err;
+        }
+        $auth = $this->verificarAutenticacion();
+        $userId = $auth['userId'];
+        $persona = Persona::findOne(['id_user' => $userId]);
+        if (!$persona) {
+            return $this->error('No se encontró persona asociada al usuario', null, 403);
+        }
+
+        $fechaDesde = Yii::$app->request->get('fecha_desde', date('Y-m-d'));
+        $fechaHasta = Yii::$app->request->get('fecha_hasta', date('Y-m-d', strtotime('+3 months')));
+
+        $turnos = Turno::find()
+            ->where(['id_persona' => $persona->id_persona])
+            ->andWhere(['>=', 'fecha', $fechaDesde])
+            ->andWhere(['<=', 'fecha', $fechaHasta])
+            ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
+            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
+            ->all();
+
+        $formattedTurnos = [];
+        foreach ($turnos as $turno) {
+            $paciente = $turno->persona;
+            $servicio = $turno->servicio ? $turno->servicio->nombre :
+                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+            $profesional = $turno->rrhh && $turno->rrhh->idPersona
+                ? $turno->rrhh->idPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                : null;
+
+            $formattedTurnos[] = [
+                'id' => $turno->id_turnos,
+                'id_persona' => $turno->id_persona,
+                'fecha' => $turno->fecha,
+                'hora' => $turno->hora,
+                'servicio' => $servicio,
+                'id_servicio_asignado' => $turno->id_servicio_asignado,
+                'estado' => $turno->estado,
+                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+                'id_consulta' => $consulta ? $consulta->id_consulta : null,
+                'profesional' => $profesional,
+                'observaciones' => $turno->observaciones,
+                'created_at' => $turno->created_at,
+            ];
+        }
+
+        return $this->success([
+            'turnos' => $formattedTurnos,
+            'total' => count($formattedTurnos),
+        ]);
     }
 
     /**
@@ -96,6 +160,7 @@ class TurnosController extends BaseController
             $servicio = $turno->servicio ? $turno->servicio->nombre : 
                        ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
             
+            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,
                 'id_persona' => $turno->id_persona,
@@ -110,6 +175,8 @@ class TurnosController extends BaseController
                 'id_servicio_asignado' => $turno->id_servicio_asignado,
                 'estado' => $turno->estado,
                 'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+                'id_consulta' => $consulta ? $consulta->id_consulta : null,
                 'observaciones' => $turno->observaciones,
                 'atendido' => $turno->atendido,
                 'created_at' => $turno->created_at,
@@ -227,7 +294,24 @@ class TurnosController extends BaseController
         
         $model = new Turno();
         $model->load($request->post(), '');
-        
+        if (empty($model->tipo_atencion)) {
+            $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
+        }
+        // Si es teleconsulta, validar que el profesional acepte consultas online
+        if ($model->tipo_atencion === Turno::TIPO_ATENCION_TELECONSULTA) {
+            $idRrhh = $model->id_rr_hh;
+            if (!$idRrhh && $model->id_rrhh_servicio_asignado) {
+                $rrhhServicio = \common\models\RrhhServicio::findOne($model->id_rrhh_servicio_asignado);
+                $idRrhh = $rrhhServicio ? $rrhhServicio->id_rr_hh : null;
+            }
+            if ($idRrhh) {
+                $rrhh = Rrhh::findOne($idRrhh);
+                if (!$rrhh || !$rrhh->acepta_consultas_online) {
+                    return $this->error('El profesional seleccionado no acepta consultas por chat. Elegí atención presencial u otro profesional.', null, 422);
+                }
+            }
+        }
+
         // Validar campos obligatorios
         if (!$model->id_persona) {
             return $this->error('El campo id_persona es obligatorio', null, 422);

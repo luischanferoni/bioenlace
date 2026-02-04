@@ -47,7 +47,7 @@ class ConsultaChatMessage extends ActiveRecord
             [['user_name'], 'string', 'max' => 100],
             [['user_role'], 'string', 'max' => 20],
             [['message_type'], 'string', 'max' => 20],
-            [['message_type'], 'in', 'range' => ['texto', 'imagen', 'audio', 'documento']],
+            [['message_type'], 'in', 'range' => ['texto', 'imagen', 'audio', 'video', 'documento']],
             [['user_role'], 'in', 'range' => ['medico', 'paciente', 'enfermeria', 'administrador']],
             [['consulta_id'], 'exist', 'skipOnError' => true, 'targetClass' => Consulta::class, 'targetAttribute' => ['consulta_id' => 'id_consulta']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],

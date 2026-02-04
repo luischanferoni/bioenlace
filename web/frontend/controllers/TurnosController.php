@@ -262,7 +262,27 @@ class TurnosController extends Controller
 
         $model = new Turno();
         $model->load(Yii::$app->request->post());
-        
+        if (empty($model->tipo_atencion)) {
+            $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
+        }
+        // Si es teleconsulta, validar que el profesional acepte consultas online
+        if ($model->tipo_atencion === Turno::TIPO_ATENCION_TELECONSULTA) {
+            $idRrhh = $model->id_rr_hh ?? null;
+            if (!$idRrhh && !empty($model->id_rrhh_servicio_asignado)) {
+                $rrhhServicio = \common\models\RrhhServicio::findOne($model->id_rrhh_servicio_asignado);
+                $idRrhh = $rrhhServicio ? $rrhhServicio->id_rr_hh : null;
+            }
+            if ($idRrhh) {
+                $rrhh = \common\models\Rrhh::findOne($idRrhh);
+                if (!$rrhh || !$rrhh->acepta_consultas_online) {
+                    return [
+                        'success' => false,
+                        'message' => 'El profesional seleccionado no acepta consultas por chat. Elegí atención presencial u otro profesional.',
+                    ];
+                }
+            }
+        }
+
         // Asignar id_persona del usuario autenticado (no se recibe por POST)
         $model->id_persona = $idPersona;
         

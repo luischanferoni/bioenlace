@@ -73,12 +73,30 @@ const observer = new IntersectionObserver((entries) => {
     });
 }, observerOptions);
 
+// Scrollytelling: activar pasos del caso de uso al hacer scroll
+const flowStepObserverOptions = {
+    threshold: 0.35,
+    rootMargin: '0px 0px -15% 0px'
+};
+const flowStepObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+            const connector = entry.target.querySelector('.flow-connector');
+            if (connector) connector.classList.add('connector-active');
+        }
+    });
+}, flowStepObserverOptions);
+
 // Observar elementos para animación
 document.addEventListener('DOMContentLoaded', () => {
     const animateElements = document.querySelectorAll('.service-card, .feature-item, .stat-item');
     animateElements.forEach(el => {
         observer.observe(el);
     });
+
+    const flowSteps = document.querySelectorAll('.flow-step.scroll-step');
+    flowSteps.forEach(step => flowStepObserver.observe(step));
 });
 
 // Formulario de contacto

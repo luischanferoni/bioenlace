@@ -5,6 +5,7 @@ import 'package:shared/shared.dart';
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../components/dynamic_form.dart';
+import 'mis_turnos_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -402,6 +403,24 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         backgroundColor: Theme.of(context).primaryColor,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today, color: Colors.white),
+            tooltip: 'Mis turnos',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MisTurnosScreen(
+                    authToken: _accionesService.authToken,
+                    userId: widget.chatService.currentUserId,
+                    userName: widget.chatService.currentUserName,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [

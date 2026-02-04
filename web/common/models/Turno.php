@@ -113,6 +113,9 @@ class Turno extends \yii\db\ActiveRecord
     const ESTADO_MOTIVO_SIN_ATENDER_PACIENTE = 'SIN_ATENDER_X_PACIENTE';
     const ESTADO_MOTIVO_SIN_ATENDER_MEDICO = 'SIN_ATENDER_X_MEDICO';
 
+    const TIPO_ATENCION_PRESENCIAL = 'presencial';
+    const TIPO_ATENCION_TELECONSULTA = 'teleconsulta';
+
     //Esta constante considera los estados de los turnos que me deshabilitan slots en el calendario.
     const ESTADOS_PARA_DESHABILITAR = [
         self::ESTADO_PENDIENTE,
@@ -212,6 +215,9 @@ class Turno extends \yii\db\ActiveRecord
                 }
             }],
             [['id_rrhh_servicio_asignado'], 'default', 'value' => 0],
+            [['tipo_atencion'], 'string', 'max' => 20],
+            [['tipo_atencion'], 'in', 'range' => [self::TIPO_ATENCION_PRESENCIAL, self::TIPO_ATENCION_TELECONSULTA]],
+            [['tipo_atencion'], 'default', 'value' => self::TIPO_ATENCION_PRESENCIAL],
             ['estado_motivo', 'in', 'range' => array_keys(Turno::ESTADO_MOTIVO)],
         ];
     }
@@ -235,6 +241,7 @@ class Turno extends \yii\db\ActiveRecord
             'fecha_alta' => 'Fecha Alta',
             'usuario_mod' => 'Usuario Mod',
             'fecha_mod' => 'Fecha Mod',
+            'tipo_atencion' => 'Tipo de atención',
         ];
     }
     

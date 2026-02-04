@@ -111,12 +111,16 @@ return [
                 'OPTIONS api/<version:\w+>/consulta-chat/messages/<id:\d+>' => '<version>/consulta-chat/messages',
                 'POST api/<version:\w+>/consulta-chat/send' => '<version>/consulta-chat/send',
                 'OPTIONS api/<version:\w+>/consulta-chat/send' => '<version>/consulta-chat/send',
+                'POST api/<version:\w+>/consulta-chat/upload' => '<version>/consulta-chat/upload',
+                'OPTIONS api/<version:\w+>/consulta-chat/upload' => '<version>/consulta-chat/upload',
                 'GET api/<version:\w+>/consulta-chat/status/<id:\d+>' => '<version>/consulta-chat/status',
                 'OPTIONS api/<version:\w+>/consulta-chat/status/<id:\d+>' => '<version>/consulta-chat/status',
                 
                 // Turnos API
                 'GET api/<version:\w+>/turnos' => '<version>/turnos/index',
                 'OPTIONS api/<version:\w+>/turnos' => '<version>/turnos/index',
+                'GET api/<version:\w+>/turnos/mis-turnos' => '<version>/turnos/mis-turnos',
+                'OPTIONS api/<version:\w+>/turnos/mis-turnos' => '<version>/turnos/mis-turnos',
                 'GET api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/view',
                 'OPTIONS api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/view',
                 'POST api/<version:\w+>/turnos' => '<version>/turnos/create',

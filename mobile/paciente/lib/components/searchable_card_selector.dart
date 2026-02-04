@@ -51,6 +51,8 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   bool _isSearching = false;
   String? _selectedEfectorId;
   String? _selectedEfectorName;
+  /// Evita disparar búsqueda al servidor cuando el texto se actualiza por selección de un cuadro (tap).
+  bool _isSelectingItem = false;
 
   @override
   void initState() {
@@ -84,9 +86,11 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
 
   void _onSearchChanged() {
     if (!mounted) return;
-    
+    // No disparar búsqueda al servidor cuando el texto se puso por tap en un cuadro (solo selección).
+    if (_isSelectingItem) return;
+
     final query = _searchController.text.trim().toLowerCase();
-    
+
     if (query.isEmpty) {
       if (mounted) {
         setState(() {
@@ -104,8 +108,8 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
           }).toList();
         });
       }
-      
-      // Si hay endpoint y la búsqueda tiene al menos 2 caracteres, buscar en el servidor
+
+      // Solo buscar en el servidor cuando el usuario escribe en el campo, no cuando seleccionó un cuadro.
       if (widget.endpoint != null && query.length >= 2) {
         _searchItems(query);
       }
@@ -302,17 +306,19 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
 
   void _selectItem(Map<String, dynamic> item) {
     if (!mounted) return;
-    
+
     final itemId = item['id']?.toString();
     final itemName = item['text']?.toString();
-    
+
+    _isSelectingItem = true;
     setState(() {
       _selectedEfectorId = itemId;
       _selectedEfectorName = itemName;
       _searchController.text = itemName ?? '';
       _searchFocusNode.unfocus();
     });
-    
+    _isSelectingItem = false;
+
     widget.onChanged(itemId);
   }
 

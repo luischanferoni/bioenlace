@@ -42,7 +42,9 @@ class Rrhh extends \yii\db\ActiveRecord
     {
         return [
             [['id_persona', 'id_profesion'], 'required'],
-            [['id_persona', 'id_profesion', 'id_especialidad'], 'integer']
+            [['id_persona', 'id_profesion', 'id_especialidad'], 'integer'],
+            [['acepta_consultas_online'], 'boolean'],
+            [['acepta_consultas_online'], 'default', 'value' => false],
         ];
     }
 
@@ -56,6 +58,7 @@ class Rrhh extends \yii\db\ActiveRecord
             'id_persona' => 'Id Persona',
             'id_profesion' => 'Id Profesion',
             'id_especialidad' => 'Id Especialidad',
+            'acepta_consultas_online' => 'Acepta consultas online',
         ];
     }
     

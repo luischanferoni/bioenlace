@@ -12,6 +12,8 @@ class Turno {
   final String? observaciones;
   final String? atendido;
   final String? createdAt;
+  final int? idConsulta;
+  final String? tipoAtencion;
 
   Turno({
     required this.id,
@@ -26,6 +28,8 @@ class Turno {
     this.observaciones,
     this.atendido,
     this.createdAt,
+    this.idConsulta,
+    this.tipoAtencion,
   });
 
   // Crear desde JSON de la API
@@ -45,6 +49,8 @@ class Turno {
       observaciones: json['observaciones'] as String?,
       atendido: json['atendido'] as String?,
       createdAt: json['created_at'] as String?,
+      idConsulta: json['id_consulta'] as int?,
+      tipoAtencion: json['tipo_atencion'] as String?,
     );
   }
 

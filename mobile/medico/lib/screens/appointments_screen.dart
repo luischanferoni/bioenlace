@@ -6,15 +6,18 @@ import 'package:shared/shared.dart';
 import '../models/turno.dart';
 import '../services/turnos_service.dart';
 import 'patient_timeline_screen.dart';
+import 'chat_consulta_screen.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   final String? authToken;
   final String? rrhhId;
+  final String? userId;
 
   const AppointmentsScreen({
     Key? key,
     this.authToken,
     this.rrhhId,
+    this.userId,
   }) : super(key: key);
 
   @override
@@ -378,6 +381,20 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                     backgroundColor: _getEstadoColor(turno.estado).withOpacity(0.2),
                     labelStyle: TextStyle(color: _getEstadoColor(turno.estado)),
                   ),
+                  if (turno.idConsulta != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.chat, size: 18),
+                        onPressed: () => _abrirChat(turno.idConsulta!, turno.paciente?.nombreCompleto ?? 'Paciente'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.secondaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        label: const Text('Chat'),
+                      ),
+                    ),
                   ElevatedButton(
                     onPressed: () => _verHistoriaClinica(turno.idPersona),
                     style: ElevatedButton.styleFrom(
@@ -418,6 +435,21 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         builder: (context) => PatientTimelineScreen(
           personaId: personaId,
           authToken: widget.authToken,
+        ),
+      ),
+    );
+  }
+
+  void _abrirChat(int consultaId, String nombrePaciente) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChatConsultaScreen(
+          consultaId: consultaId,
+          authToken: widget.authToken,
+          userId: widget.userId ?? '0',
+          userName: null,
+          titulo: 'Chat con $nombrePaciente',
         ),
       ),
     );

@@ -17,14 +17,14 @@
     <nav class="navbar" id="navbar">
         <div class="container">
             <div class="nav-wrapper">
-                <div class="logo">
-                    <i class="fas fa-heartbeat"></i>
-                    <span>Bioenlace</span>
-                </div>
+                <a href="#inicio" class="logo">
+                    <img src="images/logo_small.png" alt="Bioenlace" class="logo-img">
+                </a>
                 <ul class="nav-menu" id="navMenu">
                     <li><a href="#inicio" class="nav-link">Inicio</a></li>
                     <li><a href="#nosotros" class="nav-link">Nosotros</a></li>
                     <li><a href="#servicios" class="nav-link">Servicios</a></li>
+                    <li><a href="#caso-de-uso" class="nav-link">Caso de uso</a></li>
                     <li><a href="#caracteristicas" class="nav-link">Características</a></li>
                     <li><a href="#contacto" class="nav-link">Contacto</a></li>
                 </ul>
@@ -138,6 +138,87 @@
                         <li><i class="fas fa-check"></i> Un solo sistema para múltiples aspectos de la salud</li>
                     </ul>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Caso de uso - Scrollytelling -->
+    <section id="caso-de-uso" class="caso-de-uso">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Así funciona Bioenlace</h2>
+                <p class="section-subtitle">Un caso de uso: del paciente al médico y a la institución</p>
+            </div>
+            <div class="flow-timeline">
+                <article class="flow-step scroll-step" data-step="1">
+                    <div class="flow-node">
+                        <div class="flow-node__image-placeholder">
+                            Imagen: Paciente abre la app y escribe su consulta
+                        </div>
+                        <p class="flow-node__label">Paciente inicia consulta</p>
+                    </div>
+                    <p class="flow-step__text">El paciente abre la app, escribe su duda o síntoma y envía el mensaje.</p>
+                    <div class="flow-connector" aria-hidden="true">
+                        <svg class="flow-arrow" viewBox="0 0 40 60" preserveAspectRatio="none">
+                            <line class="flow-arrow__line" x1="20" y1="0" x2="20" y2="55"/>
+                            <polygon class="flow-arrow__head" points="20,60 12,48 28,48"/>
+                        </svg>
+                    </div>
+                </article>
+                <article class="flow-step scroll-step" data-step="2">
+                    <div class="flow-node">
+                        <div class="flow-node__image-placeholder">
+                            Imagen: Chat con IA respondiendo o derivando
+                        </div>
+                        <p class="flow-node__label">IA responde o deriva</p>
+                    </div>
+                    <p class="flow-step__text">La IA responde en el chat. Si no puede resolver, sugiere sacar turno con un médico.</p>
+                    <div class="flow-connector" aria-hidden="true">
+                        <svg class="flow-arrow" viewBox="0 0 40 60" preserveAspectRatio="none">
+                            <line class="flow-arrow__line" x1="20" y1="0" x2="20" y2="55"/>
+                            <polygon class="flow-arrow__head" points="20,60 12,48 28,48"/>
+                        </svg>
+                    </div>
+                </article>
+                <article class="flow-step scroll-step" data-step="3">
+                    <div class="flow-node">
+                        <div class="flow-node__image-placeholder">
+                            Imagen: Paciente elige turno (presencial, videollamada, chat)
+                        </div>
+                        <p class="flow-node__label">Paciente pide turno</p>
+                    </div>
+                    <p class="flow-step__text">El paciente elige tipo de atención: presencial, videollamada o chat, y confirma el turno.</p>
+                    <div class="flow-connector" aria-hidden="true">
+                        <svg class="flow-arrow" viewBox="0 0 40 60" preserveAspectRatio="none">
+                            <line class="flow-arrow__line" x1="20" y1="0" x2="20" y2="55"/>
+                            <polygon class="flow-arrow__head" points="20,60 12,48 28,48"/>
+                        </svg>
+                    </div>
+                </article>
+                <article class="flow-step scroll-step" data-step="4">
+                    <div class="flow-node">
+                        <div class="flow-node__image-placeholder">
+                            Imagen: Médico atiende por videollamada o chat
+                        </div>
+                        <p class="flow-node__label">Médico atiende</p>
+                    </div>
+                    <p class="flow-step__text">El médico recibe el turno y atiende por videollamada, chat (texto, fotos, audios) o presencial.</p>
+                    <div class="flow-connector" aria-hidden="true">
+                        <svg class="flow-arrow" viewBox="0 0 40 60" preserveAspectRatio="none">
+                            <line class="flow-arrow__line" x1="20" y1="0" x2="20" y2="55"/>
+                            <polygon class="flow-arrow__head" points="20,60 12,48 28,48"/>
+                        </svg>
+                    </div>
+                </article>
+                <article class="flow-step scroll-step" data-step="5">
+                    <div class="flow-node">
+                        <div class="flow-node__image-placeholder">
+                            Imagen: Panel institución con estadísticas y alertas
+                        </div>
+                        <p class="flow-node__label">Institución ve resultados</p>
+                    </div>
+                    <p class="flow-step__text">La institución ve la consulta cerrada, estadísticas y alertas en su panel de gestión.</p>
+                </article>
             </div>
         </div>
     </section>
@@ -258,8 +339,7 @@
             <div class="footer-content">
                 <div class="footer-section">
                     <div class="footer-logo">
-                        <i class="fas fa-heartbeat"></i>
-                        <span>Bioenlace</span>
+                        <img src="images/logo_small.png" alt="Bioenlace" class="footer-logo-img">
                     </div>
                     <p>Plataforma de salud digital para pacientes y salud pública: chat con IA, turnos presenciales y por videollamada, gestión de consultas, estadísticas, alertas y campañas.</p>
                     <div class="social-links">
@@ -275,6 +355,7 @@
                         <li><a href="#inicio">Inicio</a></li>
                         <li><a href="#nosotros">Nosotros</a></li>
                         <li><a href="#servicios">Servicios</a></li>
+                        <li><a href="#caso-de-uso">Caso de uso</a></li>
                         <li><a href="#caracteristicas">Características</a></li>
                     </ul>
                 </div>

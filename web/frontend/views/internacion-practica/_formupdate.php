@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
 use yii\web\JsExpression;
-use common\models\Rrhh_efector;
+use common\models\RrhhEfector;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 
@@ -52,7 +52,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
 
         ?>
     <?php 
-        $rrhh_Efector= new Rrhh_efector();
+        $rrhh_Efector= new RrhhEfector();
         $profesionales = $rrhh_Efector->obtenerProfesionalesPorEfector(yii::$app->user->getIdEfector());
 
         echo $form->field($model, 'id_rrhh_solicita')->widget(Select2::classname(), [
@@ -73,7 +73,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
     <?= $form->field($model, 'imageFile')->fileInput() ?>
 
 <?php 
-        $rrhh_Efector= new Rrhh_efector();
+        $rrhh_Efector= new RrhhEfector();
         $profesionales = $rrhh_Efector->obtenerProfesionalesPorEfector(yii::$app->user->getIdEfector());
 
         echo $form->field($model, 'id_rrhh_realiza')->widget(Select2::classname(), [

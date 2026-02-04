@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 use common\models\Persona;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 use yii\helpers\ArrayHelper;
 use assets\AppAsset; /* AppAsset::register($this);
 

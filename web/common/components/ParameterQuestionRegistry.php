@@ -6,7 +6,7 @@ use Yii;
 use common\models\Turno;
 use common\models\Servicio;
 use common\models\Efector;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 use common\models\Medicamento;
 use common\models\Practica;
 use common\models\Localidad;
@@ -51,11 +51,11 @@ class ParameterQuestionRegistry
         'id_efector' => Efector::class,
         'centro_salud' => Efector::class,
         
-        // Parámetros de Rrhh (Profesional)
-        'profesional' => Rrhh::class,
-        'id_rr_hh' => Rrhh::class,
-        'id_rrhh' => Rrhh::class,
-        'rrhh' => Rrhh::class,
+        // Parámetros de Rrhh (Profesional) - modelo RrhhEfector
+        'profesional' => RrhhEfector::class,
+        'id_rr_hh' => RrhhEfector::class,
+        'id_rrhh' => RrhhEfector::class,
+        'rrhh' => RrhhEfector::class,
         
         // Parámetros de Medicamento
         'medicamento' => Medicamento::class,

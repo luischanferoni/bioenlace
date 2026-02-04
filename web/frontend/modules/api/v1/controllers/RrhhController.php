@@ -3,11 +3,11 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 
 class RrhhController extends BaseController
 {
-    public $modelClass = 'common\models\Rrhh';
+    public $modelClass = 'common\models\RrhhEfector';
     
     /**
      * Sobrescribir behaviors para permitir acceso sin autenticación a rrhh-autocomplete
@@ -92,7 +92,7 @@ class RrhhController extends BaseController
             return $this->success(['results' => [['id' => '', 'text' => '']]]);
         }
         
-        $data = Rrhh::Autocomplete($q, $filters);
+        $data = RrhhEfector::autocompleteRrhh($q, $filters);
 
         return $this->success(['results' => array_values($data)]);
     }

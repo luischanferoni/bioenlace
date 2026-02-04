@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\RrhhBusqueda */
+/* @var $model common\models\busquedas\RrhhEfectorBusqueda */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 
@@ -16,16 +16,12 @@ use yii\widgets\ActiveForm;
     ]); ?>
 
     <?= $form->field($model, 'id_rr_hh') ?>
-
     <?= $form->field($model, 'id_persona') ?>
-
-    <?= $form->field($model, 'id_profesion') ?>
-
-    <?= $form->field($model, 'id_especialidad') ?>
+    <?= $form->field($model, 'nombrePersona') ?>
 
     <div class="form-group">
-        <?= Html::submitButton('Search', ['class' => 'btn btn-primary']) ?>
-        <?= Html::resetButton('Reset', ['class' => 'btn btn-default']) ?>
+        <?= Html::submitButton('Buscar', ['class' => 'btn btn-primary']) ?>
+        <?= Html::resetButton('Limpiar', ['class' => 'btn btn-default']) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

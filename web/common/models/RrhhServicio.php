@@ -16,8 +16,8 @@ use Yii;
  * @property int $created_by
  * @property int|null $updated_by
  * @property int|null $deleted_by
- * 
- * @property RrhhEfector $rrhh_efector
+ *
+ * @property RrhhEfector $rrhhEfector
  * @property Servicio $servicio
  * 
  */
@@ -52,7 +52,7 @@ class RrhhServicio extends \yii\db\ActiveRecord
     {
         return [
             [['id_rr_hh', 'id_servicio'], 'required'],
-            [['id_rr_hh', 'id_rr_hh', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
+            [['id_rr_hh', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [
                 'id_servicio', 'unique', 
@@ -87,11 +87,6 @@ class RrhhServicio extends \yii\db\ActiveRecord
     public function getRrhhEfector()
     {
         return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
-    }
-
-    public function getRrhh()
-    {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     /**

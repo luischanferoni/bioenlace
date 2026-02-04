@@ -32,7 +32,6 @@ use common\models\Departamento;
 use common\models\Persona_mails;
 use common\models\Persona_hc;
 use common\models\Agenda_rrhh;
-use common\models\Rrhh;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Tipo_documento;
@@ -628,7 +627,7 @@ class PersonasController extends Controller
     public function actionDeleterrhh()
     {
         $id = Yii::$app->request->post('id');
-        $rrhh = Rrhh::find()
+        $rrhh = RrhhEfector::find()
             ->where(['id_rr_hh' => $id])
             ->one();
 

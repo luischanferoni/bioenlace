@@ -8,8 +8,7 @@ use kartik\time\TimePicker;
 use common\models\Efector;
 use common\models\Tipo_dia;
 use common\models\Persona;
-use common\models\Rrhh;
-use common\models\Rrhh_efector;
+use common\models\RrhhEfector;
 use kartik\select2\Select2;
 use kartik\checkbox\CheckboxX;
 
@@ -26,7 +25,7 @@ use kartik\checkbox\CheckboxX;
         <div class="col-md-10 columns">
             <?php if($model->isNewRecord){ 
             echo $form->field($model, 'id_rr_hh')->widget(Select2::classname(), [
-                'data' => ArrayHelper::map(Rrhh_efector::obtenerProfesionalesPorEfector(yii::$app->user->getIdEfector()), 'id_rr_hh', 'datos'),
+                'data' => ArrayHelper::map(RrhhEfector::obtenerMedicosPorEfector(yii::$app->user->getIdEfector()), 'id_rr_hh', 'datos'),
                 'theme' => 'bootstrap',
                 'language' => 'en',
                 'options' => ['placeholder' => 'Seleccione el Profesional...'],

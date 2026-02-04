@@ -3,21 +3,18 @@
 namespace frontend\controllers;
 
 use Yii;
-use common\models\Rrhh_efector;
-use common\models\busquedas\Rrhh_efectorBusqueda;
+use common\models\RrhhEfector;
+use common\models\busquedas\RrhhEfectorBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 
 /**
- * Rrhh_efectoresController implements the CRUD actions for Rrhh_efector model.
+ * Rrhh_efectoresController implementa el CRUD para el modelo RrhhEfector.
  */
 class Rrhh_efectoresController extends Controller
 {
-    /**
-     * {@inheritdoc}
-     */
     public function behaviors()
     {
         return [
@@ -30,13 +27,9 @@ class Rrhh_efectoresController extends Controller
         ];
     }
 
-    /**
-     * Lists all Rrhh_efector models.
-     * @return mixed
-     */
     public function actionIndex()
     {
-        $searchModel = new Rrhh_efectorBusqueda();
+        $searchModel = new RrhhEfectorBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
@@ -46,31 +39,22 @@ class Rrhh_efectoresController extends Controller
     }
 
     /**
-     * Displays a single Rrhh_efector model.
      * @param integer $id_rr_hh
      * @param integer $id_efector
-     * @param integer $id_condicion_laboral
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionView($id_rr_hh, $id_efector, $id_condicion_laboral)
+    public function actionView($id_rr_hh, $id_efector)
     {
         return $this->render('view', [
-            'model' => $this->findModel($id_rr_hh, $id_efector, $id_condicion_laboral),
+            'model' => $this->findModel($id_rr_hh, $id_efector),
         ]);
     }
 
-    /**
-     * Creates a new Rrhh_efector model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return mixed
-     */
     public function actionCreate()
     {
-        $model = new Rrhh_efector();
+        $model = new RrhhEfector();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector, 'id_condicion_laboral' => $model->id_condicion_laboral]);
+            return $this->redirect(['view', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector]);
         }
 
         return $this->render('create', [
@@ -79,20 +63,15 @@ class Rrhh_efectoresController extends Controller
     }
 
     /**
-     * Updates an existing Rrhh_efector model.
-     * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id_rr_hh
      * @param integer $id_efector
-     * @param integer $id_condicion_laboral
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionUpdate($id_rr_hh, $id_efector, $id_condicion_laboral)
+    public function actionUpdate($id_rr_hh, $id_efector)
     {
-        $model = $this->findModel($id_rr_hh, $id_efector, $id_condicion_laboral);
+        $model = $this->findModel($id_rr_hh, $id_efector);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector, 'id_condicion_laboral' => $model->id_condicion_laboral]);
+            return $this->redirect(['view', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector]);
         }
 
         return $this->render('update', [
@@ -101,62 +80,42 @@ class Rrhh_efectoresController extends Controller
     }
 
     /**
-     * Deletes an existing Rrhh_efector model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id_rr_hh
      * @param integer $id_efector
-     * @param integer $id_condicion_laboral
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
      */
-    public function actionDelete($id_rr_hh, $id_efector, $id_condicion_laboral)
+    public function actionDelete($id_rr_hh, $id_efector)
     {
-        $this->findModel($id_rr_hh, $id_efector, $id_condicion_laboral)->delete();
-
+        $this->findModel($id_rr_hh, $id_efector)->delete();
         return $this->redirect(['index']);
     }
 
     /**
-     * Finds the Rrhh_efector model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id_rr_hh
      * @param integer $id_efector
-     * @param integer $id_condicion_laboral
-     * @return Rrhh_efector the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
+     * @return RrhhEfector
+     * @throws NotFoundHttpException
      */
-    protected function findModel($id_rr_hh, $id_efector, $id_condicion_laboral)
+    protected function findModel($id_rr_hh, $id_efector)
     {
-        if (($model = Rrhh_efector::findOne(['id_rr_hh' => $id_rr_hh, 'id_efector' => $id_efector, 'id_condicion_laboral' => $id_condicion_laboral])) !== null) {
+        if (($model = RrhhEfector::findOne(['id_rr_hh' => $id_rr_hh, 'id_efector' => $id_efector])) !== null) {
             return $model;
         }
-
         throw new NotFoundHttpException('The requested page does not exist.');
     }
-
-
 
     public function actionProfesionalesPorEfector()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $out = [];
-
-        if (isset($_POST['depdrop_parents'])) {
-            $parents = $_POST['depdrop_parents'];
-            if ($parents != null) {
-                $id_efector = $parents[0];
-    
-                $profesionales = Rrhh_efector::obtenerProfesionalesPorEfector($id_efector);
-                $arrayEfectores = ArrayHelper::map($profesionales,'id_rr_hh', 'datos');
-
-                foreach($arrayEfectores as $key => $value){
-                    $out[] = ['id' => $key, 'name' => $value];
-                }
-              
-                return ['output' => $out, 'selected' => ''];
+        if (isset($_POST['depdrop_parents']) && $_POST['depdrop_parents'] != null) {
+            $id_efector = $_POST['depdrop_parents'][0];
+            $profesionales = RrhhEfector::obtenerMedicosPorEfector($id_efector);
+            $arrayEfectores = ArrayHelper::map($profesionales, 'id_rr_hh', 'datos');
+            foreach ($arrayEfectores as $key => $value) {
+                $out[] = ['id' => $key, 'name' => $value];
             }
+            return ['output' => $out, 'selected' => ''];
         }
         return ['output' => '', 'selected' => ''];
     }
-
 }

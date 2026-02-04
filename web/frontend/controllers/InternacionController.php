@@ -18,7 +18,6 @@ use common\models\InfraestructuraPiso;
 use common\models\InfraestructuraCama;
 use common\models\Persona;
 use common\models\Setup;
-use common\models\Rrhh;
 use common\models\CoberturaMedica;
 use common\models\Efector;
 use common\models\Servicio;
@@ -130,8 +129,8 @@ class InternacionController extends Controller
     public function formatearDatosProfesional($modeloRrhh)
     {
         $array_profesiones = [];
-        if (isset($modeloRrhh->rrhhEfector->persona->profesionalSalud)) {
-            foreach ($modeloRrhh->rrhhEfector->persona->profesionalSalud as $profesional) {
+        if (isset($modeloRrhh->persona->profesionalSalud)) {
+            foreach ($modeloRrhh->persona->profesionalSalud as $profesional) {
                 if (isset($profesional->especialidad)) {
                     $array_profesiones[$profesional->profesion->nombre][] = $profesional->especialidad->nombre;
                 } else {

@@ -8,7 +8,7 @@ use yii\web\UploadedFile;
 use common\models\ConsultaChatMessage;
 use common\models\Consulta;
 use common\models\Persona;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 
 class ConsultaChatController extends BaseController
 {
@@ -43,8 +43,8 @@ class ConsultaChatController extends BaseController
         if ((int) $consulta->id_persona === (int) $persona->id_persona) {
             return true;
         }
-        $rrhh = Rrhh::findOne($consulta->id_rr_hh);
-        return $rrhh && (int) $rrhh->id_persona === (int) $persona->id_persona;
+        $rrhhEfector = RrhhEfector::find()->where(['id_rr_hh' => $consulta->id_rr_hh])->one();
+        return $rrhhEfector && (int) $rrhhEfector->id_persona === (int) $persona->id_persona;
     }
 
     /**

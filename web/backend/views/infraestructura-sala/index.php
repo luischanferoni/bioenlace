@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
 use common\models\InfraestructuraPiso;
-use common\models\Rrhh_efector;
+use common\models\RrhhEfector;
 use common\models\Servicio;
 
 /* @var $this yii\web\View */
@@ -39,7 +39,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'responsable.rrhh.idPersona.nombreCompleto',
                 'label' => 'Responsable',                
                 'filter' => Html::activeDropDownList($searchModel, 'id_responsable', 
-                            ArrayHelper::map(Rrhh_efector::obtenerProfesionalesPorEfector(yii::$app->user->getIdEfector()),'id_rr_hh', 'datos'), 
+                            ArrayHelper::map(RrhhEfector::obtenerMedicosPorEfector(yii::$app->user->getIdEfector()),'id_rr_hh', 'datos'), 
                             ['class' => 'form-control', 
                             'prompt' => '- Seleccione -'])
             ],

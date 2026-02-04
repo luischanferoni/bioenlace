@@ -3,7 +3,7 @@
 namespace common\queries\business;
 
 use Yii;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 use common\models\Turno;
 use common\models\Especialidades;
 
@@ -26,75 +26,44 @@ class RankingQueries
      */
     public static function getMedicosMasRapidos($especialidad = null, $id_efector = null, $limit = 10)
     {
-        // Query base para profesionales
-        $query = Rrhh::find()
+        // Query base para profesionales (rrhh_efector; especialidad no disponible en este modelo)
+        $query = RrhhEfector::find()
             ->alias('r')
             ->joinWith(['persona p'])
-            ->joinWith(['especialidad e'])
             ->where(['r.deleted_at' => null]);
-        
-        // Filtrar por especialidad si se especifica
-        if ($especialidad) {
-            $especialidadModel = Especialidades::find()
-                ->where(['like', 'nombre', $especialidad])
-                ->one();
-            
-            if ($especialidadModel) {
-                $query->andWhere(['r.id_especialidad' => $especialidadModel->id_especialidad]);
-            } else {
-                // Si no se encuentra la especialidad exacta, buscar por coincidencia parcial
-                // Ya tenemos joinWith(['especialidad e']) arriba, solo agregamos el where
-                $query->andWhere(['like', 'e.nombre', $especialidad]);
-            }
-        }
-        
-        // Filtrar por efector si se especifica
+
         if ($id_efector) {
-            $query->joinWith(['rrhhEfector re'])
-                ->andWhere(['re.id_efector' => $id_efector])
-                ->andWhere(['re.deleted_at' => null]);
+            $query->andWhere(['r.id_efector' => $id_efector]);
         }
-        
-        // Obtener profesionales con información básica
-        $profesionales = $query
-            ->select([
-                'r.id_rr_hh',
-                'p.nombre',
-                'p.apellido',
-                'p.id_persona',
-                'e.nombre as especialidad_nombre',
-            ])
-            ->all();
-        
+
+        $profesionales = $query->all();
+
         $result = [];
         foreach ($profesionales as $rrhh) {
             $persona = $rrhh->persona;
-            
             if (!$persona) {
                 continue;
             }
-            
-            // Calcular métricas básicas: cantidad de turnos atendidos (proxy de disponibilidad)
+
             $turnosAtendidos = Turno::find()
                 ->where(['id_rr_hh' => $rrhh->id_rr_hh])
                 ->andWhere(['estado' => Turno::ESTADO_ATENDIDO])
                 ->count();
-            
-            // Calcular turnos disponibles próximos (proxy de rapidez)
+
             $turnosDisponibles = Turno::find()
                 ->where(['id_rr_hh' => $rrhh->id_rr_hh])
                 ->andWhere(['>=', 'fecha', date('Y-m-d')])
                 ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
                 ->count();
-            
+
             $result[] = [
                 'id_rrhh' => $rrhh->id_rr_hh,
                 'id_persona' => $persona->id_persona,
                 'nombre_completo' => $persona->getNombreCompleto(),
-                'especialidad' => $rrhh->especialidad->nombre ?? null,
+                'especialidad' => null,
                 'turnos_atendidos' => $turnosAtendidos,
                 'turnos_disponibles' => $turnosDisponibles,
-                'score_disponibilidad' => $turnosDisponibles, // Más turnos disponibles = más rápido
+                'score_disponibilidad' => $turnosDisponibles,
                 'efector' => $id_efector ? (\common\models\Efector::findOne($id_efector)->nombre ?? null) : null,
             ];
         }

@@ -5,7 +5,7 @@ namespace common\components;
 use Yii;
 use common\models\Servicio;
 use common\models\Efector;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 use common\models\Practica;
 use common\models\Localidad;
 use common\models\Medicamento;
@@ -62,7 +62,7 @@ class EntityParameterResolver
     private static $entityTypeToModel = [
         'servicio' => Servicio::class,
         'efector' => Efector::class,
-        'rrhh' => Rrhh::class,
+        'rrhh' => RrhhEfector::class,
         'practica' => Practica::class,
         'localidad' => Localidad::class,
         'medicamento' => Medicamento::class,

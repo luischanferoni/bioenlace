@@ -22,6 +22,7 @@ use Yii;
  * @property string $fecha_inicio
  * @property string $fecha_fin
  * @property integer $id_efector
+ * @property bool $acepta_consultas_online Si el profesional acepta consultas por chat/videollamada en esta agenda
  */
 class Agenda_rrhh extends \yii\db\ActiveRecord
 {
@@ -67,6 +68,7 @@ class Agenda_rrhh extends \yii\db\ActiveRecord
                 },*/
             ],
             [['id_rrhh_servicio_asignado', 'id_tipo_dia', 'id_efector', 'cupo_pacientes'], 'integer'],
+            [['acepta_consultas_online'], 'boolean'],
             [['hora_inicio', 'hora_fin', 'fecha_inicio', 'fecha_fin'], 'safe'],
             [['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo', 
             'lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2','formas_atencion'], 'string'],
@@ -96,6 +98,7 @@ class Agenda_rrhh extends \yii\db\ActiveRecord
             'fecha_inicio' => 'Fecha Inicio',
             'fecha_fin' => 'Fecha Fin',
             'id_efector' => 'Efector',
+            'acepta_consultas_online' => 'Acepta consultas online',
         ];
     }
     

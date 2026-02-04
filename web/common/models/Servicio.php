@@ -4,6 +4,7 @@ namespace common\models;
 
 use Yii;
 use common\models\Efector;
+use common\models\RrhhEfector;
 use common\traits\ParameterQuestionsTrait;
 
 /**
@@ -69,8 +70,8 @@ class Servicio extends \yii\db\ActiveRecord
     
     public function getRrhhs()
     {
-        return $this->hasMany(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh'])
-                ->viaTable('rr_hh_efector', ['id_servicio' => 'id_servicio']);
+        return $this->hasMany(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh'])
+                ->viaTable('rrhh_servicio', ['id_servicio' => 'id_servicio']);
     }
 
     /**

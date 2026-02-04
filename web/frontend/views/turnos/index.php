@@ -16,7 +16,7 @@ use yii\web\JsExpression;
 use yii\helpers\ArrayHelper;
 use common\models\Persona;
 use common\models\Rrhh;
-use common\models\Rrhh_efector;
+use common\models\RrhhEfector;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */

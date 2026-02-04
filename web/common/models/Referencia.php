@@ -216,20 +216,21 @@ class Referencia extends \yii\db\ActiveRecord
         
     public function getUsuarioPorIdEfectorIdServicio($idefector,$idservicio)
     {
-        $usuarios = common\models\Rrhh_efector::find()->asArray()->select(
-                    ['id_servicio' => 'rr_hh_efector.id_servicio',
-                        'id_rr_hh' => 'rr_hh_efector.id_rr_hh',
-                        'id_persona' => 'rr_hh.id_persona',
+        $usuarios = \common\models\RrhhEfector::find()->asArray()->select(
+                    ['id_servicio' => 'rrhh_servicio.id_servicio',
+                        'id_rr_hh' => 'rrhh_efector.id_rr_hh',
+                        'id_persona' => 'rrhh_efector.id_persona',
                         'id_user' => 'personas.id_user',
                         'username' => 'user.username'
                     ])
-                    ->from('rr_hh_efector')
-                    ->join('INNER JOIN','rr_hh','rr_hh_efector.id_rr_hh = rr_hh.id_rr_hh')
-                    ->join('INNER JOIN','personas','rr_hh.id_persona = personas.id_persona')
-                    ->join('INNER JOIN','user','personas.id_user = user.id')
-                    ->where(['rr_hh_efector.id_efector' => $idefector])
-                    ->andwhere(['rr_hh_efector.id_servicio' => $idservicio])
+                    ->from('rrhh_efector')
+                    ->join('INNER JOIN', 'rrhh_servicio', 'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh AND rrhh_servicio.deleted_at IS NULL')
+                    ->join('INNER JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
+                    ->join('INNER JOIN', 'user', 'personas.id_user = user.id')
+                    ->where(['rrhh_efector.id_efector' => $idefector])
+                    ->andWhere(['rrhh_servicio.id_servicio' => $idservicio])
                     ->orderBy('username')->all();
+        return $usuarios;
     }
         
         

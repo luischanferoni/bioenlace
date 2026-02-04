@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\models\RrhhEfector;
 use common\models\snomed\SnomedProcedimientos;
 
 /**
@@ -105,7 +106,7 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
      */
     public function getRrhhSolicita()
     {
-        return $this->hasOne(Rrhh_efector::className(), ['id_rr_hh' => 'id_rrhh_solicita']);
+        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rrhh_solicita']);
     }
 
     /**
@@ -115,6 +116,6 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
      */
     public function getRrhhRealiza()
     {
-        return $this->hasOne(Rrhh_efector::className(), ['id_rr_hh' => 'id_rrhh_realiza']);
+        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rrhh_realiza']);
     }       
 }

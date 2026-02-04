@@ -4,6 +4,7 @@ namespace common\models;
 use common\models\snomed\SnomedProcedimientos;
 use yii\data\ActiveDataProvider;
 use common\models\Consulta;
+use common\models\RrhhEfector;
 use Yii;
 
 /**
@@ -170,7 +171,7 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
      */
     public function getRrhhDerivado()
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     /**

@@ -265,21 +265,31 @@ class TurnosController extends Controller
         if (empty($model->tipo_atencion)) {
             $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
         }
-        // Si es teleconsulta, validar que el profesional acepte consultas online
+        // Si es teleconsulta, validar que la agenda del profesional (Agenda_rrhh) acepte consultas online
         if ($model->tipo_atencion === Turno::TIPO_ATENCION_TELECONSULTA) {
-            $idRrhh = $model->id_rr_hh ?? null;
-            if (!$idRrhh && !empty($model->id_rrhh_servicio_asignado)) {
-                $rrhhServicio = \common\models\RrhhServicio::findOne($model->id_rrhh_servicio_asignado);
-                $idRrhh = $rrhhServicio ? $rrhhServicio->id_rr_hh : null;
+            $idRrhhServicio = !empty($model->id_rrhh_servicio_asignado) ? $model->id_rrhh_servicio_asignado : null;
+            if (!$idRrhhServicio && !empty($model->id_rr_hh) && !empty($model->id_servicio_asignado)) {
+                $rs = \common\models\RrhhServicio::find()
+                    ->andWhere(['id_rr_hh' => $model->id_rr_hh, 'id_servicio' => $model->id_servicio_asignado])
+                    ->select('id')->one();
+                $idRrhhServicio = $rs ? $rs->id : null;
             }
-            if ($idRrhh) {
-                $rrhh = \common\models\Rrhh::findOne($idRrhh);
-                if (!$rrhh || !$rrhh->acepta_consultas_online) {
+            if ($idRrhhServicio) {
+                $aceptaOnline = Agenda_rrhh::find()
+                    ->andWhere(['id_rrhh_servicio_asignado' => $idRrhhServicio])
+                    ->andWhere(['acepta_consultas_online' => true])
+                    ->exists();
+                if (!$aceptaOnline) {
                     return [
                         'success' => false,
                         'message' => 'El profesional seleccionado no acepta consultas por chat. Elegí atención presencial u otro profesional.',
                     ];
                 }
+            } elseif ($model->id_rrhh_servicio_asignado || $model->id_rr_hh) {
+                return [
+                    'success' => false,
+                    'message' => 'No se encontró la agenda del profesional para el servicio.',
+                ];
             }
         }
 

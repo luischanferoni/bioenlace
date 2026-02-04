@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\models\RrhhEfector;
 use common\models\snomed\SnomedMedicamentos;
 
 
@@ -74,7 +75,7 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
      */
     public function getRrhhSuministra()
     {
-        return $this->hasOne(Rrhh_efector::className(), ['id_rr_hh' => 'id_rrhh']);
+        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rrhh']);
     }
 
         /**

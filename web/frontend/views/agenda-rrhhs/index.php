@@ -6,7 +6,7 @@ use yii\bootstrap5\Modal;
 use yii\helpers\Url;
 use yii\widgets\Pjax;
 use common\models\Persona;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 use yii\helpers\ArrayHelper;
 
 /* @var $this yii\web\View */

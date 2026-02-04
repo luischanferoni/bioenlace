@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use common\models\InfraestructuraPiso;
-use common\models\Rrhh_efector;
+use common\models\RrhhEfector;
 use common\models\Servicios_efector;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
@@ -26,7 +26,7 @@ use yii\helpers\ArrayHelper;
 
     <?php //$form->field($model, 'id_responsable')->textInput() ?>
     <?php 
-            $rrhh_Efector= new Rrhh_efector();
+            $rrhh_Efector= new RrhhEfector();
             $profesionales = $rrhh_Efector->obtenerProfesionalesPorEfector(yii::$app->user->getIdEfector());
 
             echo $form->field($model, 'id_responsable')->widget(Select2::classname(), [

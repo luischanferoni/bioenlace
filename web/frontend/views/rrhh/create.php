@@ -2,14 +2,13 @@
 
 use yii\helpers\Html;
 
-
 /* @var $this yii\web\View */
-/* @var $model common\models\Rrhh */
+/* @var $model common\models\RrhhEfector */
+/* @var $model_persona common\models\Persona|null */
 
-$this->title = 'Crear RRHH para: '.$model_persona->apellido.', '.$model_persona->nombre;
-$this->params['breadcrumbs'][] = ['label' => 'Rrhhs', 'url' => ['index']];
+$this->title = 'Crear RRHH' . ($model_persona ? ' para: ' . $model_persona->apellido . ', ' . $model_persona->nombre : '');
+$this->params['breadcrumbs'][] = ['label' => 'RRHH', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
-
 ?>
 <div class="rrhh-create">
 
@@ -18,10 +17,6 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= $this->render('_form', [
         'model' => $model,
         'model_persona' => $model_persona,
-        //'model_efector' => $model_efector,
-        //'model_condiciones_laborales' => $model_condiciones_laborales ,
-         'model_rr_hh_efector' => $model_rr_hh_efector,
-         //'model_servicios' => $model_servicios,
     ]) ?>
 
 </div>

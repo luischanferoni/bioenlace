@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
 use common\models\InternacionMedicamento;
-use common\models\Rrhh_efector;
+use common\models\RrhhEfector;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\busquedas\InternacionMedicamento */

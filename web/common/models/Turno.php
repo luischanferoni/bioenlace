@@ -276,7 +276,7 @@ class Turno extends \yii\db\ActiveRecord
     }
     public function getRrhh()
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     public function getRrhhEfector()

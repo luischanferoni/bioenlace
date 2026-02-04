@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
-use common\models\Rrhh_efector;
+use common\models\RrhhEfector;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Telefono;

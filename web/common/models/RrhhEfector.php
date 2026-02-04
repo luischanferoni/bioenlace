@@ -327,4 +327,79 @@ class RrhhEfector extends \yii\db\ActiveRecord
  
      }
 
+    /**
+     * Autocomplete de RRHH usando tablas rrhh_efector y rrhh_servicio (schema actual).
+     * Devuelve lista de profesionales con id (id_rr_hh) y text (nombre + servicio).
+     * @param string|null $q
+     * @param array $filters id_efector, id_servicio, id_servicio_asignado, efector_nombre, servicio_nombre, limit, sort_by, sort_order
+     * @return array
+     */
+    public static function autocompleteRrhh($q, $filters = [])
+    {
+        $query = new \yii\db\Query();
+        $query->select([
+                'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " ", COALESCE(personas.otro_nombre,""), " - ", COALESCE(servicios.nombre, "")) AS text',
+                'rrhh_efector.id_rr_hh AS id'
+            ])
+            ->from('rrhh_efector')
+            ->join('LEFT JOIN', 'rrhh_servicio', 'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh AND rrhh_servicio.deleted_at IS NULL')
+            ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rrhh_servicio.id_servicio')
+            ->join('LEFT JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
+            ->join('LEFT JOIN', 'efectores', 'rrhh_efector.id_efector = efectores.id_efector')
+            ->where(['rrhh_efector.deleted_at' => null]);
+
+        if (!empty($q)) {
+            $query->andWhere([
+                'or',
+                ['like', 'CONCAT(personas.apellido, " ", personas.nombre)', '%' . $q . '%', false],
+                ['like', 'CONCAT(personas.nombre, " ", personas.apellido)', '%' . $q . '%', false],
+                ['like', 'CONCAT(personas.nombre, " ", COALESCE(personas.otro_nombre,""))', '%' . $q . '%', false],
+                ['like', 'CONCAT(personas.nombre, " ", COALESCE(personas.otro_nombre,""), " ", personas.apellido)', '%' . $q . '%', false],
+                ['like', 'personas.nombre', '%' . $q . '%', false],
+                ['like', 'personas.otro_nombre', '%' . $q . '%', false],
+                ['like', 'personas.apellido', '%' . $q . '%', false],
+                ['like', 'personas.documento', '%' . $q . '%', false]
+            ]);
+        }
+
+        if (!empty($filters['id_efector'])) {
+            $query->andWhere(['rrhh_efector.id_efector' => $filters['id_efector']]);
+        }
+        $idServicio = $filters['id_servicio'] ?? $filters['id_servicio_asignado'] ?? null;
+        if (!empty($idServicio)) {
+            $query->andWhere(['rrhh_servicio.id_servicio' => $idServicio]);
+        }
+        if (!empty($filters['efector_nombre'])) {
+            $query->andWhere(['like', 'efectores.nombre', '%' . $filters['efector_nombre'] . '%', false]);
+        }
+        if (!empty($filters['servicio_nombre'])) {
+            $query->andWhere(['like', 'servicios.nombre', '%' . $filters['servicio_nombre'] . '%', false]);
+        }
+
+        $query->groupBy(['rrhh_efector.id_rr_hh']);
+
+        $sortBy = $filters['sort_by'] ?? 'apellido';
+        $sortOrder = isset($filters['sort_order']) && strtoupper($filters['sort_order']) === 'DESC' ? SORT_DESC : SORT_ASC;
+        switch ($sortBy) {
+            case 'nombre':
+                $orderBy = ['personas.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC];
+                break;
+            case 'efector':
+                $orderBy = ['efectores.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
+                break;
+            case 'servicio':
+                $orderBy = ['servicios.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
+                break;
+            case 'apellido':
+            default:
+                $orderBy = ['personas.apellido' => $sortOrder, 'personas.nombre' => SORT_ASC];
+                break;
+        }
+        $query->orderBy($orderBy);
+        $limit = isset($filters['limit']) ? min((int) $filters['limit'], 200) : 5;
+        $query->limit($limit);
+
+        return array_values($query->createCommand()->queryAll());
+    }
+
 }

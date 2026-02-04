@@ -19,7 +19,6 @@ use common\models\LoginForm;
 use common\models\Efector;
 use common\models\ContactForm;
 use common\models\Consulta;
-use common\models\Rrhh;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Persona;

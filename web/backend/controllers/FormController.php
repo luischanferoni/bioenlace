@@ -7,7 +7,7 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use common\models\Efector;
-use common\models\Rrhh;
+use common\models\RrhhEfector;
 use common\models\Persona;
 use yii\httpclient\Client;
 use yii\base\DynamicModel;

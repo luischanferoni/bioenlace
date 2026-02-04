@@ -33,6 +33,9 @@ class AppTheme {
   static const Color dividerColor = Color(0xFFE0E0E0);  
   
   
+  /// Color del placeholder (hint) en inputs - gris visible sobre fondo blanco
+  static const Color hintColor = Color(0xFF6C757D);
+
   static ThemeData lightTheme = ThemeData.light().copyWith(
     scaffoldBackgroundColor: backgroundColor,
     primaryColor: primaryColor,
@@ -45,6 +48,15 @@ class AppTheme {
     iconTheme: IconThemeData(color: iconColor),
     dividerColor: dividerColor,
     textTheme: GoogleFonts.openSansTextTheme(),
+    inputDecorationTheme: InputDecorationTheme(
+      hintStyle: GoogleFonts.openSans(
+        color: hintColor,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      filled: true,
+      fillColor: cardColor,
+    ),
     colorScheme: ColorScheme(
         primary: primaryColor,
         primaryContainer: primaryColor,

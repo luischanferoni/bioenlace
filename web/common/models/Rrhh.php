@@ -214,23 +214,27 @@ class Rrhh extends \yii\db\ActiveRecord
     //     return $out;
     // } 
 
+    /**
+     * Autocomplete de RRHH usando tablas rrhh_efector y rrhh_servicio (schema actual).
+     * La tabla rr_hh no existe en la base actual; id_rr_hh proviene de rrhh_efector.
+     */
     public static function Autocomplete($q, $filters = []) {
 
         $out = ['id' => '', 'text' => ''];
 
         $query = new \yii\db\Query;
-        $query->select(['CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", COALESCE(servicios.nombre, "")) AS text',
-                         'rr_hh.id_rr_hh AS id'])
-            ->from('rr_hh')
-            ->where('rr_hh.id_profesion IN (2,3,4,5,6,7,8,9,10,28,29,45,49)')
-            ->join('LEFT JOIN', 'rr_hh_efector', 'rr_hh_efector.id_rr_hh = rr_hh.id_rr_hh AND rr_hh_efector.deleted_at IS NULL')
-            ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rr_hh_efector.id_servicio')
-            ->join('LEFT JOIN', 'personas', 'rr_hh.id_persona = personas.id_persona')
-            ->join('LEFT JOIN', 'profesiones', 'rr_hh.id_profesion = profesiones.id_profesion')
-            ->join('LEFT JOIN', 'especialidades', 'rr_hh.id_especialidad = especialidades.id_especialidad')
-            ->join('LEFT JOIN', 'efectores', 'rr_hh_efector.id_efector = efectores.id_efector');
+        $query->select([
+                'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " ", COALESCE(personas.otro_nombre,""), " - ", COALESCE(servicios.nombre, "")) AS text',
+                'rrhh_efector.id_rr_hh AS id'
+            ])
+            ->from('rrhh_efector')
+            ->join('LEFT JOIN', 'rrhh_servicio', 'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh AND rrhh_servicio.deleted_at IS NULL')
+            ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rrhh_servicio.id_servicio')
+            ->join('LEFT JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
+            ->join('LEFT JOIN', 'efectores', 'rrhh_efector.id_efector = efectores.id_efector')
+            ->where(['rrhh_efector.deleted_at' => null]);
         
-        // Búsqueda por nombre/apellido
+        // Búsqueda por nombre/apellido/documento
         if (!empty($q)) {
             $query->andWhere([
                 'or',
@@ -245,34 +249,15 @@ class Rrhh extends \yii\db\ActiveRecord
             ]);
         }
         
-        // Filtro por profesión
-        if (!empty($filters['id_profesion'])) {
-            $query->andWhere(['rr_hh.id_profesion' => $filters['id_profesion']]);
-        }
-        
-        // Filtro por especialidad
-        if (!empty($filters['id_especialidad'])) {
-            $query->andWhere(['rr_hh.id_especialidad' => $filters['id_especialidad']]);
-        }
-        
         // Filtro por efector
         if (!empty($filters['id_efector'])) {
-            $query->andWhere(['rr_hh_efector.id_efector' => $filters['id_efector']]);
+            $query->andWhere(['rrhh_efector.id_efector' => $filters['id_efector']]);
         }
         
-        // Filtro por servicio
-        if (!empty($filters['id_servicio'])) {
-            $query->andWhere(['rr_hh_efector.id_servicio' => $filters['id_servicio']]);
-        }
-        
-        // Filtro por nombre de profesión
-        if (!empty($filters['profesion_nombre'])) {
-            $query->andWhere(['like', 'profesiones.nombre', '%'.$filters['profesion_nombre'].'%', false]);
-        }
-        
-        // Filtro por nombre de especialidad
-        if (!empty($filters['especialidad_nombre'])) {
-            $query->andWhere(['like', 'especialidades.nombre', '%'.$filters['especialidad_nombre'].'%', false]);
+        // Filtro por servicio (id_servicio o id_servicio_asignado)
+        $idServicio = $filters['id_servicio'] ?? $filters['id_servicio_asignado'] ?? null;
+        if (!empty($idServicio)) {
+            $query->andWhere(['rrhh_servicio.id_servicio' => $idServicio]);
         }
         
         // Filtro por nombre de efector
@@ -285,8 +270,8 @@ class Rrhh extends \yii\db\ActiveRecord
             $query->andWhere(['like', 'servicios.nombre', '%'.$filters['servicio_nombre'].'%', false]);
         }
         
-        // Agrupar para evitar duplicados
-        $query->groupBy(['rr_hh.id_rr_hh']);
+        // Agrupar para evitar duplicados (un mismo rrhh puede tener varios servicios)
+        $query->groupBy(['rrhh_efector.id_rr_hh']);
         
         // Ordenamiento
         $sortBy = isset($filters['sort_by']) ? $filters['sort_by'] : 'apellido';
@@ -296,21 +281,13 @@ class Rrhh extends \yii\db\ActiveRecord
             case 'nombre':
                 $orderBy = ['personas.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC];
                 break;
-            case 'apellido':
-                $orderBy = ['personas.apellido' => $sortOrder, 'personas.nombre' => SORT_ASC];
-                break;
-            case 'profesion':
-                $orderBy = ['profesiones.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
-                break;
-            case 'especialidad':
-                $orderBy = ['especialidades.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
-                break;
             case 'efector':
                 $orderBy = ['efectores.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
                 break;
             case 'servicio':
                 $orderBy = ['servicios.nombre' => $sortOrder, 'personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC];
                 break;
+            case 'apellido':
             default:
                 $orderBy = ['personas.apellido' => $sortOrder, 'personas.nombre' => SORT_ASC];
                 break;
@@ -319,15 +296,13 @@ class Rrhh extends \yii\db\ActiveRecord
         $query->orderBy($orderBy);
         
         // Límite de resultados (por defecto 5, máximo 200)
-        $limit = isset($filters['limit']) ? min(intval($filters['limit']), 200) : 5;
+        $limit = isset($filters['limit']) ? min((int) $filters['limit'], 200) : 5;
         $query->limit($limit);
         
         $command = $query->createCommand();
         $data = $command->queryAll();
 
-        $out = array_values($data);
-
-        return $out;
+        return array_values($data);
     } 
 
     public function beforeSave($insert)

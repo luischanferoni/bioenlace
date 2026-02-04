@@ -62,9 +62,12 @@ class RrhhController extends BaseController
             $filters['efector_nombre'] = $request->get('efector_nombre') ?: $request->post('efector_nombre');
         }
         
-        // Filtro por servicio
+        // Filtro por servicio (acepta id_servicio o id_servicio_asignado)
         if ($request->get('id_servicio') || $request->post('id_servicio')) {
             $filters['id_servicio'] = $request->get('id_servicio') ?: $request->post('id_servicio');
+        }
+        if ($request->get('id_servicio_asignado') || $request->post('id_servicio_asignado')) {
+            $filters['id_servicio_asignado'] = $request->get('id_servicio_asignado') ?: $request->post('id_servicio_asignado');
         }
         if ($request->get('servicio_nombre') || $request->post('servicio_nombre')) {
             $filters['servicio_nombre'] = $request->get('servicio_nombre') ?: $request->post('servicio_nombre');

@@ -268,9 +268,7 @@ class _DynamicFormState extends State<DynamicForm> {
   /// Resuelve el mapeo params (nombre_parametro_endpoint -> nombre_campo_formulario) desde el campo o desde formConfig.
   static Map<String, String>? _resolveParamsMapping(Map<String, dynamic> field, Map<String, dynamic> formConfig) {
     final rawParams = field['params'];
-    final fieldName = field['name']?.toString() ?? '?';
-    final isMap = rawParams is Map;
-    debugPrint('[DynamicForm] _resolveParamsMapping field=$fieldName rawParams=$rawParams type=${rawParams?.runtimeType} isMap=$isMap isEmpty=${isMap ? rawParams.isEmpty : 'n/a'}');
+
     if (rawParams is Map && rawParams.isNotEmpty) {
       return rawParams.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
     }

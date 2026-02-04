@@ -105,30 +105,17 @@ class ParameterExtractor
     }
     
     /**
-     * Extraer servicio del mensaje
+     * Extraer servicio del mensaje.
+     * Usa Servicio::extractFromQuery (dinámico desde BD) y devuelve el nombre del servicio.
      */
     private static function extractServicio($messageLower)
     {
-        $servicios = [
-            'odontologia', 'odontólogo', 'odontologo',
-            'pediatria', 'pediatra',
-            'clinica', 'clínica',
-            'ginecologia', 'ginecólogo', 'ginecologo',
-            'cardiologia', 'cardiólogo', 'cardiologo',
-            'neurologia', 'neurólogo', 'neurologo',
-            'psicologia', 'psicólogo', 'psicologo',
-            'nutricion', 'nutricionista',
-            'kinesiologia', 'kinesiólogo', 'kinesiologo'
-        ];
-        
-        foreach ($servicios as $servicio) {
-            if (stripos($messageLower, $servicio) !== false) {
-                // Normalizar nombre del servicio
-                return self::normalizeServicio($servicio);
-            }
+        $idServicio = \common\models\Servicio::extractFromQuery($messageLower);
+        if ($idServicio === null) {
+            return null;
         }
-        
-        return null;
+        $servicio = \common\models\Servicio::findOne($idServicio);
+        return $servicio ? $servicio->nombre : null;
     }
     
     /**
@@ -312,28 +299,17 @@ class ParameterExtractor
     }
     
     /**
-     * Normalizar nombre de servicio
+     * Normalizar nombre de servicio (fallback cuando ya se tiene un nombre extraído).
+     * Si el valor coincide con un servicio en BD, devuelve su nombre oficial.
      */
     private static function normalizeServicio($servicio)
     {
-        $normalizations = [
-            'odontologia' => 'ODONTOLOGIA',
-            'odontólogo' => 'ODONTOLOGIA',
-            'odontologo' => 'ODONTOLOGIA',
-            'pediatria' => 'PEDIATRIA',
-            'pediatra' => 'PEDIATRIA',
-            'clinica' => 'MED CLINICA',
-            'clínica' => 'MED CLINICA',
-            'ginecologia' => 'GINECOLOGIA',
-            'ginecólogo' => 'GINECOLOGIA',
-            'ginecologo' => 'GINECOLOGIA',
-            'cardiologia' => 'CARDIOLOGIA',
-            'cardiólogo' => 'CARDIOLOGIA',
-            'cardiologo' => 'CARDIOLOGIA'
-        ];
-        
-        $servicioLower = mb_strtolower($servicio, 'UTF-8');
-        return $normalizations[$servicioLower] ?? strtoupper($servicio);
+        $id = \common\models\Servicio::findByName($servicio);
+        if ($id !== null) {
+            $s = \common\models\Servicio::findOne($id);
+            return $s ? $s->nombre : strtoupper($servicio);
+        }
+        return strtoupper($servicio);
     }
     
     /**

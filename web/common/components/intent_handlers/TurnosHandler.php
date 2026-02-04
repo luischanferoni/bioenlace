@@ -216,18 +216,22 @@ class TurnosHandler extends BaseIntentHandler
     }
     
     /**
-     * Obtener sugerencias para parámetros (sobrescribir método base)
+     * Obtener sugerencias para parámetros (sobrescribir método base).
+     * Servicios tomados dinámicamente de la BD (los que aceptan turnos).
      */
     protected function getSuggestionsForParams($params)
     {
         $suggestions = [];
         
         if (in_array('servicio', $params)) {
-            // Sugerir servicios comunes
-            $suggestions[] = 'ODONTOLOGIA';
-            $suggestions[] = 'PEDIATRIA';
-            $suggestions[] = 'MED CLINICA';
-            $suggestions[] = 'GINECOLOGIA';
+            $servicios = \common\models\Servicio::getServiciosConTurnos();
+            $limit = 8;
+            foreach ($servicios as $s) {
+                $suggestions[] = $s->nombre;
+                if (count($suggestions) >= $limit) {
+                    break;
+                }
+            }
         }
         
         return $suggestions;

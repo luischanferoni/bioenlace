@@ -425,93 +425,15 @@ class ActionParameterAnalyzer
     }
     
     /**
-     * Buscar servicio por nombre (soporta búsqueda parcial y sinónimos)
-     * 
+     * Buscar servicio por nombre (delega en modelo; dinámico desde BD).
+     *
      * @deprecated Usar \common\models\Servicio::findByName() en su lugar
-     * @param string $nombre Nombre del servicio (ej: "odontologo", "odontología", "ODONTOLOGIA")
+     * @param string $nombre Nombre del servicio (ej. "odontologo", "cardiología")
      * @return int|null ID del servicio encontrado
      */
     private static function findServicioByName($nombre)
     {
-        if (empty($nombre)) {
-            return null;
-        }
-        
-        // Normalizar nombre: convertir a mayúsculas y limpiar
-        $nombreNormalizado = strtoupper(trim($nombre));
-        
-        // Mapeo de sinónimos comunes
-        $sinonimos = [
-            'odontologo' => 'ODONTOLOGIA',
-            'odontología' => 'ODONTOLOGIA',
-            'odontologia' => 'ODONTOLOGIA',
-            'dental' => 'ODONTOLOGIA',
-            'dentista' => 'ODONTOLOGIA',
-            'pediatra' => 'PEDIATRIA',
-            'pediatría' => 'PEDIATRIA',
-            'ginecologo' => 'GINECOLOGIA',
-            'ginecología' => 'GINECOLOGIA',
-            'ginecologia' => 'GINECOLOGIA',
-            'medico' => 'MED GENERAL',
-            'médico' => 'MED GENERAL',
-            'medico general' => 'MED GENERAL',
-            'medico familiar' => 'MED FAMILIAR',
-            'medico clinica' => 'MED CLINICA',
-            'médico clínica' => 'MED CLINICA',
-            'clinica' => 'MED CLINICA',
-            'clínica' => 'MED CLINICA',
-            'psicologo' => 'PSICOLOGIA',
-            'psicología' => 'PSICOLOGIA',
-            'psicologia' => 'PSICOLOGIA',
-            'kinesiologo' => 'KINESIOLOGIA',
-            'kinesiología' => 'KINESIOLOGIA',
-            'kinesiologia' => 'KINESIOLOGIA',
-            'kinesio' => 'KINESIOLOGIA',
-        ];
-        
-        // Verificar si hay un sinónimo directo
-        $nombreLower = strtolower($nombreNormalizado);
-        if (isset($sinonimos[$nombreLower])) {
-            $nombreNormalizado = $sinonimos[$nombreLower];
-        }
-        
-        // Buscar en la base de datos
-        try {
-            // Primero intentar búsqueda exacta
-            $servicio = \common\models\Servicio::find()
-                ->where(['nombre' => $nombreNormalizado])
-                ->one();
-            
-            if ($servicio) {
-                return (int)$servicio->id_servicio;
-            }
-            
-            // Si no se encuentra exacto, intentar búsqueda con LIKE
-            $servicio = \common\models\Servicio::find()
-                ->where(['LIKE', 'nombre', $nombreNormalizado])
-                ->one();
-            
-            if ($servicio) {
-                return (int)$servicio->id_servicio;
-            }
-            
-            // Último intento: buscar sinónimos en la base de datos
-            foreach ($sinonimos as $sinonimo => $nombreServicio) {
-                if (stripos($nombreNormalizado, $sinonimo) !== false || stripos($sinonimo, $nombreNormalizado) !== false) {
-                    $servicio = \common\models\Servicio::find()
-                        ->where(['nombre' => $nombreServicio])
-                        ->one();
-                    
-                    if ($servicio) {
-                        return (int)$servicio->id_servicio;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            Yii::error("Error buscando servicio por nombre '{$nombre}': " . $e->getMessage(), 'action-parameter-analyzer');
-        }
-        
-        return null;
+        return \common\models\Servicio::findByName($nombre);
     }
     
     /**

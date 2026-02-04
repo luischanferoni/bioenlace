@@ -160,9 +160,71 @@ class Servicio extends \yii\db\ActiveRecord
     }
 
     /**
-     * Buscar servicio por nombre (soporta búsqueda parcial y sinónimos)
-     * 
-     * @param string $nombre Nombre del servicio (ej: "odontologo", "odontología", "ODONTOLOGIA")
+     * Servicios que aceptan turnos (cache por request)
+     * @return Servicio[]
+     */
+    public static function getServiciosConTurnos()
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        try {
+            $cache = self::find()
+                ->where(['acepta_turnos' => 'SI'])
+                ->orderBy(['nombre' => SORT_ASC])
+                ->all();
+        } catch (\Exception $e) {
+            Yii::error("Error getServiciosConTurnos: " . $e->getMessage(), 'servicio-model');
+            $cache = [];
+        }
+        return $cache;
+    }
+
+    /**
+     * Genera términos de búsqueda para matchear texto de usuario (ej. "cardiólogo", "cardiologo")
+     * a partir del nombre en BD (ej. "CARDIOLOGIA"). Dinámico para cualquier servicio.
+     * @param string $nombreServicio Nombre del servicio en BD (ej. "CARDIOLOGIA", "ODONTOLOGIA")
+     * @return string[]
+     */
+    public static function getSearchTermsForNombre($nombreServicio)
+    {
+        $n = trim($nombreServicio);
+        if ($n === '') {
+            return [];
+        }
+        $sinTildes = self::quitarTildes($n);
+        $lower = mb_strtolower($sinTildes, 'UTF-8');
+        $terms = [$lower];
+        // Raíz sin -ia: CARDIOLOGIA -> cardiolog (para matchear cardiólogo, cardiologo, cardiología)
+        if (preg_match('/^(.+)(ia|ía)$/u', $lower, $m)) {
+            $raiz = $m[1];
+            $terms[] = $raiz . 'o';   // cardiologo
+            $terms[] = $raiz . 'a';   // cardiologa
+            $terms[] = $raiz;         // cardiolog
+        }
+        // Variantes con tildes comunes
+        $terms[] = mb_strtolower($n, 'UTF-8');
+        return array_unique($terms);
+    }
+
+    /**
+     * Quitar tildes para búsqueda insensible a acentos
+     */
+    private static function quitarTildes($s)
+    {
+        $map = [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n',
+            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U', 'Ñ' => 'N',
+        ];
+        return strtr($s, $map);
+    }
+
+    /**
+     * Buscar servicio por nombre de forma dinámica desde la base de datos.
+     * Matchea nombre o variantes (cardiólogo, cardiologo, cardiología) contra servicios existentes.
+     *
+     * @param string $nombre Nombre o mención del servicio (ej. "odontologo", "cardiología", "el oftalmologo")
      * @return int|null ID del servicio encontrado
      */
     public static function findByName($nombre)
@@ -170,87 +232,48 @@ class Servicio extends \yii\db\ActiveRecord
         if (empty($nombre) || !is_string($nombre)) {
             return null;
         }
-        
-        // Normalizar nombre: convertir a mayúsculas y limpiar
-        $nombreNormalizado = strtoupper(trim($nombre));
-        
-        // Mapeo de sinónimos comunes
-        $sinonimos = [
-            'odontologo' => 'ODONTOLOGIA',
-            'odontología' => 'ODONTOLOGIA',
-            'odontologia' => 'ODONTOLOGIA',
-            'dental' => 'ODONTOLOGIA',
-            'dentista' => 'ODONTOLOGIA',
-            'pediatra' => 'PEDIATRIA',
-            'pediatría' => 'PEDIATRIA',
-            'ginecologo' => 'GINECOLOGIA',
-            'ginecología' => 'GINECOLOGIA',
-            'ginecologia' => 'GINECOLOGIA',
-            'medico' => 'MED GENERAL',
-            'médico' => 'MED GENERAL',
-            'medico general' => 'MED GENERAL',
-            'medico familiar' => 'MED FAMILIAR',
-            'medico clinica' => 'MED CLINICA',
-            'médico clínica' => 'MED CLINICA',
-            'clinica' => 'MED CLINICA',
-            'clínica' => 'MED CLINICA',
-            'psicologo' => 'PSICOLOGIA',
-            'psicología' => 'PSICOLOGIA',
-            'psicologia' => 'PSICOLOGIA',
-            'kinesiologo' => 'KINESIOLOGIA',
-            'kinesiología' => 'KINESIOLOGIA',
-            'kinesiologia' => 'KINESIOLOGIA',
-            'kinesio' => 'KINESIOLOGIA',
-        ];
-        
-        // Verificar si hay un sinónimo directo
-        $nombreLower = strtolower($nombreNormalizado);
-        if (isset($sinonimos[$nombreLower])) {
-            $nombreNormalizado = $sinonimos[$nombreLower];
-        }
-        
+        $nombre = trim($nombre);
+        $nombreNorm = strtoupper(self::quitarTildes($nombre));
+        $nombreLower = mb_strtolower($nombre, 'UTF-8');
+
         try {
-            // Primero intentar búsqueda exacta
-            $servicio = self::find()
-                ->where(['nombre' => $nombreNormalizado])
-                ->one();
-            
+            // 1) Búsqueda exacta en BD
+            $servicio = self::find()->where(['nombre' => $nombreNorm])->one();
             if ($servicio) {
                 return (int)$servicio->id_servicio;
             }
-            
-            // Si no se encuentra exacto, intentar búsqueda con LIKE
-            $servicio = self::find()
-                ->where(['LIKE', 'nombre', $nombreNormalizado])
-                ->one();
-            
+
+            // 2) LIKE en BD por si el nombre en BD tiene formato distinto
+            $servicio = self::find()->where(['LIKE', 'nombre', $nombreNorm])->one();
             if ($servicio) {
                 return (int)$servicio->id_servicio;
             }
-            
-            // Último intento: buscar sinónimos en la base de datos
-            foreach ($sinonimos as $sinonimo => $nombreServicio) {
-                if (stripos($nombreNormalizado, $sinonimo) !== false || stripos($sinonimo, $nombreNormalizado) !== false) {
-                    $servicio = self::find()
-                        ->where(['nombre' => $nombreServicio])
-                        ->one();
-                    
-                    if ($servicio) {
-                        return (int)$servicio->id_servicio;
+
+            // 3) Matchear contra términos generados desde todos los servicios (dinámico)
+            $servicios = self::getServiciosConTurnos();
+            foreach ($servicios as $s) {
+                $terms = self::getSearchTermsForNombre($s->nombre);
+                foreach ($terms as $term) {
+                    if ($term === '' || strlen($term) < 3) {
+                        continue;
+                    }
+                    // El usuario puede decir "el cardiologo" o "cardiologo"
+                    if ($nombreLower === $term || strpos($nombreLower, $term) !== false || strpos($term, $nombreLower) !== false) {
+                        return (int)$s->id_servicio;
                     }
                 }
             }
         } catch (\Exception $e) {
             Yii::error("Error buscando servicio por nombre '{$nombre}': " . $e->getMessage(), 'servicio-model');
         }
-        
         return null;
     }
 
     /**
-     * Extraer servicio desde el texto de la consulta del usuario
-     * Busca palabras clave de servicios comunes en el texto
-     * 
+     * Extraer servicio desde el texto de la consulta del usuario.
+     * Dinámico: usa todos los servicios que aceptan turnos en la BD y sus variantes (Xólogo, Xología).
+     * Devuelve el servicio cuyo término matchee con la longitud más larga (más específico).
+     *
      * @param string $userQuery Texto de la consulta del usuario
      * @return int|null ID del servicio encontrado
      */
@@ -259,30 +282,28 @@ class Servicio extends \yii\db\ActiveRecord
         if (empty($userQuery) || !is_string($userQuery)) {
             return null;
         }
-        
-        $queryLower = strtolower(trim($userQuery));
-        
-        // Palabras clave de servicios comunes
-        $servicioKeywords = [
-            'odontologo', 'odontología', 'odontologia', 'dental', 'dentista',
-            'pediatra', 'pediatría',
-            'ginecologo', 'ginecología', 'ginecologia',
-            'medico', 'médico', 'medico general', 'medico familiar', 'medico clinica', 'médico clínica', 'clinica', 'clínica',
-            'psicologo', 'psicología', 'psicologia',
-            'kinesiologo', 'kinesiología', 'kinesiologia', 'kinesio',
-        ];
-        
-        // Buscar cada palabra clave en el texto
-        foreach ($servicioKeywords as $keyword) {
-            if (stripos($queryLower, $keyword) !== false) {
-                $servicioId = self::findByName($keyword);
-                if ($servicioId !== null) {
-                    return $servicioId;
+        $queryLower = mb_strtolower(trim($userQuery), 'UTF-8');
+        $querySinTildes = self::quitarTildes($queryLower);
+
+        $bestId = null;
+        $bestLen = 0;
+
+        foreach (self::getServiciosConTurnos() as $servicio) {
+            $terms = self::getSearchTermsForNombre($servicio->nombre);
+            foreach ($terms as $term) {
+                if ($term === '' || strlen($term) < 3) {
+                    continue;
+                }
+                $termSinTildes = self::quitarTildes($term);
+                if (strpos($queryLower, $term) !== false || strpos($querySinTildes, $termSinTildes) !== false) {
+                    if (strlen($term) > $bestLen) {
+                        $bestLen = strlen($term);
+                        $bestId = (int)$servicio->id_servicio;
+                    }
                 }
             }
         }
-        
-        return null;
+        return $bestId;
     }
 
     /**

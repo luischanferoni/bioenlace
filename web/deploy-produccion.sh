@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de despliegue para el hosting
-# Este script actualiza el repositorio y copia las carpetas necesarias del frontend y backend
+# Este script actualiza el repositorio, ejecuta las migraciones de BD y copia las carpetas necesarias del frontend y backend
 
 # Colores para mensajes
 RED='\033[0;31m'
@@ -34,7 +34,16 @@ if ! git pull; then
 fi
 echo -e "${GREEN}Git pull completado exitosamente${NC}"
 
-# Paso 2: Verificar que los directorios fuente existen
+# Paso 2: Ejecutar migraciones
+echo -e "${YELLOW}Ejecutando migraciones de base de datos...${NC}"
+if php yii migrate --migrationPath=@common/migrations --interactive=0; then
+    echo -e "${GREEN}Migraciones completadas exitosamente${NC}"
+else
+    echo -e "${RED}Error: Las migraciones fallaron${NC}"
+    exit 1
+fi
+
+# Paso 3: Verificar que los directorios fuente existen
 if [ ! -d "$FRONTEND_SOURCE_DIR" ]; then
     echo -e "${RED}Error: El directorio fuente del frontend $FRONTEND_SOURCE_DIR no existe${NC}"
     exit 1
@@ -45,7 +54,7 @@ if [ ! -d "$BACKEND_SOURCE_DIR" ]; then
     exit 1
 fi
 
-# Paso 3: Verificar que los directorios destino existen
+# Paso 4: Verificar que los directorios destino existen
 if [ ! -d "$FRONTEND_DEST_DIR" ]; then
     echo -e "${RED}Error: El directorio destino del frontend $FRONTEND_DEST_DIR no existe${NC}"
     exit 1
@@ -61,7 +70,7 @@ fi
 # ==========================================
 echo -e "${YELLOW}=== Desplegando Frontend ===${NC}"
 
-# Paso 4: Borrar el contenido de la carpeta assets del frontend
+# Paso 5: Borrar el contenido de la carpeta assets del frontend
 FRONTEND_ASSETS_DIR="$FRONTEND_DEST_DIR/assets"
 if [ -d "$FRONTEND_ASSETS_DIR" ]; then
     echo -e "${YELLOW}Borrando contenido de la carpeta assets del frontend...${NC}"
@@ -74,7 +83,7 @@ else
     echo -e "${YELLOW}La carpeta assets del frontend no existe, se omite la limpieza${NC}"
 fi
 
-# Paso 5: Copiar las carpetas especificadas del frontend
+# Paso 6: Copiar las carpetas especificadas del frontend
 echo -e "${YELLOW}Copiando carpetas del frontend a $FRONTEND_DEST_DIR...${NC}"
 for folder in "${FRONTEND_FOLDERS[@]}"; do
     SOURCE_PATH="$FRONTEND_SOURCE_DIR/$folder"
@@ -98,7 +107,7 @@ done
 # ==========================================
 echo -e "${YELLOW}=== Desplegando Backend ===${NC}"
 
-# Paso 6: Borrar el contenido de la carpeta assets del backend
+# Paso 7: Borrar el contenido de la carpeta assets del backend
 BACKEND_ASSETS_DIR="$BACKEND_DEST_DIR/assets"
 if [ -d "$BACKEND_ASSETS_DIR" ]; then
     echo -e "${YELLOW}Borrando contenido de la carpeta assets del backend...${NC}"
@@ -111,7 +120,7 @@ else
     echo -e "${YELLOW}La carpeta assets del backend no existe, se omite la limpieza${NC}"
 fi
 
-# Paso 7: Copiar las carpetas especificadas del backend
+# Paso 8: Copiar las carpetas especificadas del backend
 echo -e "${YELLOW}Copiando carpetas del backend a $BACKEND_DEST_DIR...${NC}"
 for folder in "${BACKEND_FOLDERS[@]}"; do
     SOURCE_PATH="$BACKEND_SOURCE_DIR/$folder"

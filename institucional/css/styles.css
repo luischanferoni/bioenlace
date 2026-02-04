@@ -1,19 +1,27 @@
-/* Reset y Variables - Paleta basada en logo Bioenlace (coral #E68A7D) */
+/* Reset y Variables - Paleta basada en logo Bioenlace (coral #E68A7D) + tonos claros y color complementario */
 :root {
+    /* Logo y coral */
     --primary-color: #E68A7D;
     --primary-dark: #c97265;
-    --primary-light: #f0a89e;
+    --primary-light: #f0b5ac;
+    --primary-lighter: #fceeea;
+    --primary-pale: #fdf5f4;
+    /* Color complementario (teal/salud) */
+    --complement-color: #5a9a8c;
+    --complement-light: #8bc4b8;
+    --complement-pale: #e8f4f1;
+    /* Neutros y acentos */
     --secondary-color: #a8d5c9;
     --accent-color: #d4a574;
     --text-dark: #2d2524;
     --text-light: #5c504f;
     --bg-light: #fdf8f7;
     --bg-white: #ffffff;
-    --border-color: #ecdad8;
-    --shadow-sm: 0 1px 2px 0 rgba(230, 138, 125, 0.08);
-    --shadow-md: 0 4px 6px -1px rgba(230, 138, 125, 0.12);
-    --shadow-lg: 0 10px 15px -3px rgba(230, 138, 125, 0.15);
-    --shadow-xl: 0 20px 25px -5px rgba(230, 138, 125, 0.18);
+    --border-color: #f0ddd9;
+    --shadow-sm: 0 1px 2px 0 rgba(230, 138, 125, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(230, 138, 125, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(230, 138, 125, 0.12);
+    --shadow-xl: 0 20px 25px -5px rgba(230, 138, 125, 0.15);
     --transition: all 0.3s ease;
 }
 
@@ -141,8 +149,8 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 50%, var(--accent-color) 100%);
-    opacity: 0.15;
+    background: linear-gradient(135deg, var(--primary-lighter) 0%, var(--primary-light) 40%, var(--complement-pale) 100%);
+    opacity: 0.85;
     z-index: -1;
 }
 
@@ -153,7 +161,7 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(230, 138, 125, 0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(230, 138, 125, 0.08) 0%, transparent 70%);
     animation: rotate 20s linear infinite;
 }
 
@@ -274,7 +282,7 @@ section {
 
 /* About Section */
 .about {
-    background: var(--bg-light);
+    background: var(--primary-pale);
 }
 
 .about-content {
@@ -329,7 +337,7 @@ section {
     width: 100%;
     max-width: 400px;
     height: 400px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
     border-radius: 1rem;
     display: flex;
     align-items: center;
@@ -360,10 +368,19 @@ section {
     box-shadow: var(--shadow-xl);
 }
 
+.service-card:nth-child(1) .service-icon {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+}
+.service-card:nth-child(2) .service-icon {
+    background: linear-gradient(135deg, var(--complement-light), var(--complement-color));
+}
+.service-card:nth-child(3) .service-icon {
+    background: linear-gradient(135deg, var(--primary-light), var(--complement-color));
+}
 .service-icon {
     width: 70px;
     height: 70px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
     border-radius: 1rem;
     display: flex;
     align-items: center;
@@ -397,13 +414,16 @@ section {
     gap: 0.5rem;
 }
 
+.service-card:nth-child(1) .service-features i { color: var(--primary-color); }
+.service-card:nth-child(2) .service-features i { color: var(--complement-color); }
+.service-card:nth-child(3) .service-features i { color: var(--complement-color); }
 .service-features i {
     color: var(--primary-color);
 }
 
 /* Features Section */
 .features {
-    background: var(--bg-light);
+    background: var(--primary-lighter);
 }
 
 .features-grid {
@@ -412,6 +432,9 @@ section {
     gap: 2rem;
 }
 
+.feature-item:nth-child(even) {
+    border-left: 3px solid var(--complement-light);
+}
 .feature-item {
     background: var(--bg-white);
     padding: 2rem;

@@ -65,10 +65,14 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   }
 
   bool _hasAllDependencies() {
-    // Si hay params con id_servicio_asignado, significa que la dependencia está satisfecha
-    return widget.params?.containsKey('id_servicio_asignado') == true &&
-           widget.params?['id_servicio_asignado'] != null &&
-           widget.params?['id_servicio_asignado'] != '';
+    // Considerar dependencias satisfechas si hay algún param con valor (excl. q, limit)
+    if (widget.params == null || widget.params!.isEmpty) return false;
+    for (final entry in widget.params!.entries) {
+      if (entry.key == 'q' || entry.key == 'limit') continue;
+      final v = entry.value;
+      if (v != null && v.toString().trim() != '') return true;
+    }
+    return false;
   }
 
   @override

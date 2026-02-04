@@ -35,6 +35,7 @@
       "required": true,
       "endpoint": "/efectores/search",
       "depends_on": "id_servicio_asignado",
+      "params": { "id_servicio": "id_servicio_asignado" },
       "auto_load": true,
       "option_config": {
         "source": "efectores",

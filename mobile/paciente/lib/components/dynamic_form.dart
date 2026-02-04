@@ -265,51 +265,85 @@ class _DynamicFormState extends State<DynamicForm> {
     );
   }
 
+  /// Resuelve el mapeo params (nombre_parametro_endpoint -> nombre_campo_formulario) desde el campo o desde formConfig.
+  static Map<String, String>? _resolveParamsMapping(Map<String, dynamic> field, Map<String, dynamic> formConfig) {
+    final rawParams = field['params'];
+    final fieldName = field['name']?.toString() ?? '?';
+    final isMap = rawParams is Map;
+    debugPrint('[DynamicForm] _resolveParamsMapping field=$fieldName rawParams=$rawParams type=${rawParams?.runtimeType} isMap=$isMap isEmpty=${isMap ? rawParams.isEmpty : 'n/a'}');
+    if (rawParams is Map && rawParams.isNotEmpty) {
+      return rawParams.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
+    }
+    // Fallback: buscar el campo por nombre en formConfig.fields (respuesta original del API)
+    final name = field['name'] as String?;
+    if (name == null) return null;
+    final allFields = formConfig['fields'] as List<dynamic>? ?? [];
+    for (var raw in allFields) {
+      if (raw is! Map) continue;
+      final rf = raw;
+      if (rf['name']?.toString() == name) {
+        final p = rf['params'];
+        if (p is Map && p.isNotEmpty) {
+          return p.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
+  /// Construye los query params para el endpoint a partir del mapeo definido en el JSON.
+  /// params: { "nombre_parametro_endpoint": "nombre_campo_formulario" } → se envía nombre_parametro_endpoint = valor del campo.
+  /// Si no hay params, se usa depends_on: se envía el nombre del campo como nombre del parámetro (retrocompatibilidad).
+  Map<String, dynamic> _buildEndpointParams(Map<String, dynamic> field) {
+    final paramsMapping = _resolveParamsMapping(field, widget.formConfig);
+    final dependsOn = field['depends_on'] as String?;
+    final result = <String, dynamic>{};
+
+    if (paramsMapping != null && paramsMapping.isNotEmpty) {
+      for (final entry in paramsMapping.entries) {
+        final paramName = entry.key;
+        final formFieldName = entry.value;
+        if (formFieldName.isNotEmpty && _formValues.containsKey(formFieldName)) {
+          final v = _formValues[formFieldName];
+          if (v != null && v.toString().trim() != '') {
+            result[paramName] = v;
+          }
+        }
+      }
+    } else if (dependsOn != null && _formValues.containsKey(dependsOn)) {
+      final v = _formValues[dependsOn];
+      if (v != null && v.toString().trim() != '') {
+        result[dependsOn] = v;
+      }
+    }
+    return result;
+  }
+
   Widget _buildSearchableCardSelectorField(Map<String, dynamic> field, String label, bool required, String? description) {
     final fieldName = field['name'] as String;
     final endpoint = field['endpoint'] as String?;
-    final params = field['params'] as Map<String, dynamic>? ?? {};
-    
-    // Si depende de otro campo, agregar su valor a los params
-    final dependsOn = field['depends_on'] as String?;
-    if (dependsOn != null && _formValues.containsKey(dependsOn)) {
-      params[dependsOn] = _formValues[dependsOn];
-    }
-    
-    // Determinar icono según el tipo de campo
-    IconData? icon;
-    String? searchHint;
-    String? emptyMessage;
-    String? noResultsMessage;
-    
-    if (fieldName == 'id_efector' || fieldName.contains('efector')) {
-      icon = Icons.local_hospital;
-      searchHint = 'Buscar efector...';
-      emptyMessage = 'No hay efectores disponibles';
-      noResultsMessage = 'No se encontraron efectores';
-    } else if (fieldName == 'id_rr_hh' || fieldName.contains('rrhh') || fieldName.contains('profesional')) {
-      icon = Icons.person;
-      searchHint = 'Buscar profesional...';
-      emptyMessage = 'No hay profesionales disponibles';
-      noResultsMessage = 'No se encontraron profesionales';
-    } else if (fieldName.contains('servicio')) {
-      icon = Icons.medical_services;
-      searchHint = 'Buscar servicio...';
-      emptyMessage = 'No hay servicios disponibles';
-      noResultsMessage = 'No se encontraron servicios';
-    } else {
-      icon = Icons.article;
-      searchHint = 'Buscar...';
-      emptyMessage = 'No hay opciones disponibles';
-      noResultsMessage = 'No se encontraron resultados';
-    }
-    
+    final params = _buildEndpointParams(field);
+
+    // Textos e icono desde el JSON; fallback genérico (app agnóstica)
+    final icon = Icons.article;
+    final searchHint = field['search_hint'] as String? ?? field['searchHint'] as String? ?? 'Buscar...';
+    final emptyMessage = field['empty_message'] as String? ?? field['emptyMessage'] as String? ?? 'No hay opciones disponibles';
+    final noResultsMessage = field['no_results_message'] as String? ?? field['noResultsMessage'] as String? ?? 'No se encontraron resultados';
+
     final autoLoad = field['auto_load'] as bool? ?? false;
-    
-    // Crear una key única basada en la dependencia para forzar reconstrucción cuando cambia
-    final dependencyKey = dependsOn != null && _formValues.containsKey(dependsOn)
-        ? '${fieldName}_${_formValues[dependsOn]}'
-        : fieldName;
+
+    // Key única cuando cambian los valores de los campos de los que dependen (nombres vienen del JSON)
+    final rawParamsForKey = field['params'];
+    final paramsMapForKey = rawParamsForKey is Map ? rawParamsForKey : null;
+    final hasParamsMapping = paramsMapForKey != null && paramsMapForKey.isNotEmpty;
+    final dependsOn = field['depends_on'] as String?;
+    final dependentFieldNames = hasParamsMapping
+        ? paramsMapForKey.values.map((v) => v?.toString() ?? '').where((s) => s.isNotEmpty).toSet().toList()
+        : (dependsOn != null ? [dependsOn] : <String>[]);
+    final dependencyKey = dependentFieldNames.isEmpty
+        ? fieldName
+        : '${fieldName}_${dependentFieldNames.map((f) => _formValues[f]?.toString() ?? '').join('_')}';
     
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -430,17 +464,9 @@ class _DynamicFormState extends State<DynamicForm> {
 
     try {
       final endpoint = field['endpoint'] as String;
-      final params = field['params'] as Map<String, dynamic>? ?? {};
-      
-      // Agregar el query como parámetro 'q'
+      final params = Map<String, dynamic>.from(_buildEndpointParams(field));
       params['q'] = query;
-      
-      // Si depende de otro campo, agregar su valor a los params
-      final dependsOn = field['depends_on'] as String?;
-      if (dependsOn != null && _formValues.containsKey(dependsOn)) {
-        params[dependsOn] = _formValues[dependsOn];
-      }
-      
+
       // Construir URL con parámetros
       final uri = Uri.parse('${AppConfig.apiUrl}$endpoint');
       final uriWithParams = uri.replace(queryParameters: params.map((k, v) => MapEntry(k, v.toString())));
@@ -506,9 +532,22 @@ class _DynamicFormState extends State<DynamicForm> {
         final allFields = widget.formConfig['fields'] as List<dynamic>? ?? [];
         final fieldsMap = <String, Map<String, dynamic>>{};
         
-        for (var field in allFields) {
-          final fieldMap = Map<String, dynamic>.from(field);
-          fieldsMap[fieldMap['name'] as String] = fieldMap;
+        for (var rawField in allFields) {
+          final fieldMap = Map<String, dynamic>.from(rawField);
+          // Asegurar que 'params' (mapeo nombre_parametro -> nombre_campo) se preserve; puede perderse en el copy desde JSON
+          if (rawField is Map) {
+            final rf = rawField;
+            if (rf.containsKey('params')) {
+              final p = rf['params'];
+              if (p is Map) {
+                fieldMap['params'] = p.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''));
+              }
+            }
+          }
+          final name = fieldMap['name'] as String?;
+          if (name != null && name.isNotEmpty) {
+            fieldsMap[name] = fieldMap;
+          }
         }
         
         // Retornar solo los campos del paso actual con su configuración completa

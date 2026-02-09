@@ -284,29 +284,27 @@ class _ChatScreenState extends State<ChatScreen> {
         final formConfig = data['form_config'];
         final wizardSteps = data['wizard_steps'];
         final initialStep = data['initial_step'] ?? 0;
-        final readyToExecute = data['ready_to_execute'] ?? false;
-        final parameters = data['parameters'];
         final actionName = data['action_name'];
 
         setState(() {
           _isSending = false;
-
-          // Agregar respuesta del bot con el form_config para mostrar el wizard
-          // Sin mensaje de texto, solo el form_config para mostrar directamente el formulario
-          _chatHistory.add({
-            'type': 'bot',
-            'content': '', // Sin mensaje de texto
-            'form_config': formConfig,
-            'wizard_steps': wizardSteps,
-            'initial_step': initialStep,
-            'ready_to_execute': readyToExecute,
-            'action_id': actionId,
-            'action_name': actionName, // Agregar action_name para usar como título
-            'parameters': parameters,
-            'data': data,
-            'timestamp': DateTime.now(),
-          });
         });
+
+        // Si hay formulario, abrirlo directamente en modal (sin crear mensaje en el chat)
+        if (formConfig != null && formConfig is Map) {
+          _showFormModal(
+            context: context,
+            formConfig: Map<String, dynamic>.from(formConfig),
+            wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
+            initialStep: initialStep,
+            title: actionName ?? 'Completa la información',
+            authToken: _accionesService.authToken,
+            onSubmit: (formValues) async {
+              await _executeActionWithParams(actionId, formValues);
+            },
+            onCancel: () {},
+          );
+        }
       } else {
         setState(() {
           _isSending = false;
@@ -381,6 +379,79 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       _showErrorSnackbar('Error: ${e.toString()}');
     }
+  }
+
+  /// Despliega el formulario dinámico en un modal (bottom sheet) para móvil.
+  void _showFormModal({
+    required BuildContext context,
+    required Map<String, dynamic> formConfig,
+    List<Map<String, dynamic>>? wizardSteps,
+    int initialStep = 0,
+    required String title,
+    String? authToken,
+    required Future<void> Function(Map<String, dynamic>) onSubmit,
+    required VoidCallback onCancel,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) => Container(
+        height: MediaQuery.of(modalContext).size.height,
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+        ),
+        child: Column(
+          children: [
+            // Título y cerrar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      Navigator.of(modalContext).pop();
+                      onCancel();
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Formulario con scroll
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: DynamicForm(
+                  formConfig: formConfig,
+                  wizardSteps: wizardSteps,
+                  initialStep: initialStep,
+                  authToken: authToken,
+                  onSubmit: (formValues) async {
+                    Navigator.of(modalContext).pop();
+                    await onSubmit(formValues);
+                  },
+                  onCancel: () {
+                    Navigator.of(modalContext).pop();
+                    onCancel();
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showErrorSnackbar(String message) {
@@ -552,25 +623,46 @@ class _ChatScreenState extends State<ChatScreen> {
                           final parametersFromMessage = message['parameters'];
                           
                           if (formConfig != null && formConfig is Map) {
-                            // Si hay form_config, mostrar solo el formulario sin mensaje de chat
+                            // Card tappable: un solo tap abre directamente el formulario en modal
                             return Column(
                               children: [
                                 const SizedBox(height: 16),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue[50],
+                                  child: Material(
+                                    color: Colors.blue[50],
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: InkWell(
+                                      onTap: () {
+                                        _showFormModal(
+                                          context: context,
+                                          formConfig: Map<String, dynamic>.from(formConfig),
+                                          wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
+                                          initialStep: message['initial_step'] as int? ?? 0,
+                                          title: actionName ?? 'Completa la información',
+                                          authToken: _accionesService.authToken,
+                                          onSubmit: (formValues) async {
+                                            if (actionIdFromMessage != null) {
+                                              await _executeActionWithParams(actionIdFromMessage, formValues);
+                                            }
+                                          },
+                                          onCancel: () {
+                                            setState(() {
+                                              _chatHistory.removeAt(index);
+                                            });
+                                          },
+                                        );
+                                      },
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Theme.of(context).primaryColor.withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16.0),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Row(
                                           children: [
                                             Icon(
                                               Icons.input,
@@ -587,27 +679,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                                 ),
                                               ),
                                             ),
+                                            Icon(
+                                              Icons.arrow_forward_ios,
+                                              size: 14,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
                                           ],
                                         ),
-                                        const SizedBox(height: 12),
-                                        DynamicForm(
-                                          formConfig: Map<String, dynamic>.from(formConfig),
-                                          wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
-                                          initialStep: message['initial_step'] as int? ?? 0,
-                                          authToken: _accionesService.authToken,
-                                          onSubmit: (formValues) async {
-                                            // Ejecutar acción con los parámetros del formulario
-                                            if (actionIdFromMessage != null) {
-                                              await _executeActionWithParams(actionIdFromMessage, formValues);
-                                            }
-                                          },
-                                          onCancel: () {
-                                            setState(() {
-                                              _chatHistory.removeAt(index);
-                                            });
-                                          },
-                                        ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -620,47 +699,23 @@ class _ChatScreenState extends State<ChatScreen> {
                           final needsUserInput = message['needs_user_input'] ?? false;
                           
                           if (needsUserInput && actionAnalysis != null && actionAnalysis is Map) {
+                            final actionId = actionAnalysis['action_id'] as String?;
                             return Column(
                               children: [
                                 const SizedBox(height: 16),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue[50],
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Theme.of(context).primaryColor.withOpacity(0.3),
-                                      ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.input,
-                                              size: 20,
-                                              color: Theme.of(context).primaryColor,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              'Completa la información',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Theme.of(context).primaryColor,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        DynamicForm(
-                                          formConfig: actionAnalysis['form_config'] ?? {},
+                                  child: Material(
+                                    color: Colors.blue[50],
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: InkWell(
+                                      onTap: () {
+                                        _showFormModal(
+                                          context: context,
+                                          formConfig: Map<String, dynamic>.from(actionAnalysis['form_config'] ?? {}),
+                                          title: 'Completa la información',
                                           authToken: _accionesService.authToken,
                                           onSubmit: (formValues) async {
-                                            // Ejecutar acción con los parámetros del formulario
-                                            final actionId = actionAnalysis['action_id'] as String?;
                                             if (actionId != null) {
                                               await _executeActionWithParams(actionId, formValues);
                                             }
@@ -670,8 +725,42 @@ class _ChatScreenState extends State<ChatScreen> {
                                               _chatHistory.removeAt(index);
                                             });
                                           },
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16.0),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                          ),
                                         ),
-                                      ],
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.input,
+                                              size: 20,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Completa la información',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Theme.of(context).primaryColor,
+                                                ),
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.arrow_forward_ios,
+                                              size: 14,
+                                              color: Theme.of(context).primaryColor,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),

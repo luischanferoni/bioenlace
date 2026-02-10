@@ -38,39 +38,14 @@ class RrhhController extends BaseController
         // Recopilar todos los filtros de los parámetros GET/POST
         $filters = [];
         
-        // Filtro por profesión
-        if ($request->get('id_profesion') || $request->post('id_profesion')) {
-            $filters['id_profesion'] = $request->get('id_profesion') ?: $request->post('id_profesion');
-        }
-        if ($request->get('profesion_nombre') || $request->post('profesion_nombre')) {
-            $filters['profesion_nombre'] = $request->get('profesion_nombre') ?: $request->post('profesion_nombre');
-        }
-        
-        // Filtro por especialidad
-        if ($request->get('id_especialidad') || $request->post('id_especialidad')) {
-            $filters['id_especialidad'] = $request->get('id_especialidad') ?: $request->post('id_especialidad');
-        }
-        if ($request->get('especialidad_nombre') || $request->post('especialidad_nombre')) {
-            $filters['especialidad_nombre'] = $request->get('especialidad_nombre') ?: $request->post('especialidad_nombre');
-        }
-        
         // Filtro por efector
         if ($request->get('id_efector') || $request->post('id_efector')) {
             $filters['id_efector'] = $request->get('id_efector') ?: $request->post('id_efector');
         }
-        if ($request->get('efector_nombre') || $request->post('efector_nombre')) {
-            $filters['efector_nombre'] = $request->get('efector_nombre') ?: $request->post('efector_nombre');
-        }
         
-        // Filtro por servicio (acepta id_servicio o id_servicio_asignado)
+        // Filtro por servicio
         if ($request->get('id_servicio') || $request->post('id_servicio')) {
             $filters['id_servicio'] = $request->get('id_servicio') ?: $request->post('id_servicio');
-        }
-        if ($request->get('id_servicio_asignado') || $request->post('id_servicio_asignado')) {
-            $filters['id_servicio_asignado'] = $request->get('id_servicio_asignado') ?: $request->post('id_servicio_asignado');
-        }
-        if ($request->get('servicio_nombre') || $request->post('servicio_nombre')) {
-            $filters['servicio_nombre'] = $request->get('servicio_nombre') ?: $request->post('servicio_nombre');
         }
         
         // Límite de resultados

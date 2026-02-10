@@ -32,39 +32,29 @@ class RrhhController extends BaseController
         
         $request = Yii::$app->request;
         
-        // Obtener query de GET o POST
+        // id_efector e id_servicio son requeridos
+        $idEfector = $request->get('id_efector') ?: $request->post('id_efector');
+        $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
+        if (empty($idEfector) || empty($idServicio)) {
+            return $this->error('id_efector e id_servicio son requeridos', null, 422);
+        }
+        
+        // Query de búsqueda: nombre del profesional (GET o POST). Si no viene, se devuelven todos.
         $q = $request->get('q') ?: $request->post('q');
         
-        // Recopilar todos los filtros de los parámetros GET/POST
-        $filters = [];
+        $filters = [
+            'id_efector' => $idEfector,
+            'id_servicio' => $idServicio,
+        ];
         
-        // Filtro por efector
-        if ($request->get('id_efector') || $request->post('id_efector')) {
-            $filters['id_efector'] = $request->get('id_efector') ?: $request->post('id_efector');
-        }
-        
-        // Filtro por servicio
-        if ($request->get('id_servicio') || $request->post('id_servicio')) {
-            $filters['id_servicio'] = $request->get('id_servicio') ?: $request->post('id_servicio');
-        }
-        
-        // Límite de resultados
         if ($request->get('limit') || $request->post('limit')) {
             $filters['limit'] = $request->get('limit') ?: $request->post('limit');
         }
-        
-        // Parámetros de ordenamiento
         if ($request->get('sort_by') || $request->post('sort_by')) {
             $filters['sort_by'] = $request->get('sort_by') ?: $request->post('sort_by');
         }
         if ($request->get('sort_order') || $request->post('sort_order')) {
             $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
-        }
-        
-        // Permitir búsqueda sin query si hay filtros o limit
-        // Si no hay query ni filtros, retornar vacío
-        if (is_null($q) && empty($filters)) {
-            return $this->success(['results' => [['id' => '', 'text' => '']]]);
         }
         
         $data = RrhhEfector::autocompleteRrhh($q, $filters);

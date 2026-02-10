@@ -58,6 +58,7 @@
         "id_servicio": "id_servicio_asignado",
         "id_efector": "id_efector"
       },
+      "auto_load": true,
       "option_config": {
         "source": "rrhh",
         "filter": "efector_rrhh"

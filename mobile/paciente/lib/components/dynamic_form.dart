@@ -80,6 +80,16 @@ class _DynamicFormState extends State<DynamicForm> {
     }
   }
 
+  /// Normaliza depends_on del JSON: puede ser un string (un campo) o una lista (varios).
+  List<String> _getDependsOnList(Map<String, dynamic> field) {
+    final raw = field['depends_on'];
+    if (raw == null) return [];
+    if (raw is String) return raw.isNotEmpty ? [raw] : [];
+    if (raw is List) {
+      return raw.map((e) => e?.toString() ?? '').where((s) => s.isNotEmpty).toList();
+    }
+    return [];
+  }
 
   Widget _buildField(Map<String, dynamic> field) {
     final fieldName = field['name'] as String;
@@ -87,15 +97,20 @@ class _DynamicFormState extends State<DynamicForm> {
     final type = field['type'] as String? ?? 'text';
     final required = field['required'] as bool? ?? false;
     final description = field['description'] as String?;
-    final dependsOn = field['depends_on'] as String?;
+    final dependsOnList = _getDependsOnList(field);
     final message = field['message'] as String?;
 
-    // Verificar dependencias
-    if (dependsOn != null && !_formValues.containsKey(dependsOn)) {
+    // Verificar dependencias (todas deben estar completas)
+    final missingDeps = dependsOnList.where((d) {
+      if (!_formValues.containsKey(d)) return true;
+      final v = _formValues[d];
+      return v == null || v.toString().trim() == '';
+    }).toList();
+    if (missingDeps.isNotEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Text(
-          message ?? 'Primero debe completar: $dependsOn',
+          message ?? 'Primero debe completar: ${missingDeps.join(", ")}',
           style: TextStyle(color: Colors.orange[700], fontSize: 12),
         ),
       );
@@ -295,7 +310,7 @@ class _DynamicFormState extends State<DynamicForm> {
   /// Si no hay params, se usa depends_on: se envía el nombre del campo como nombre del parámetro (retrocompatibilidad).
   Map<String, dynamic> _buildEndpointParams(Map<String, dynamic> field) {
     final paramsMapping = _resolveParamsMapping(field, widget.formConfig);
-    final dependsOn = field['depends_on'] as String?;
+    final dependsOnList = _getDependsOnList(field);
     final result = <String, dynamic>{};
 
     if (paramsMapping != null && paramsMapping.isNotEmpty) {
@@ -309,10 +324,14 @@ class _DynamicFormState extends State<DynamicForm> {
           }
         }
       }
-    } else if (dependsOn != null && _formValues.containsKey(dependsOn)) {
-      final v = _formValues[dependsOn];
-      if (v != null && v.toString().trim() != '') {
-        result[dependsOn] = v;
+    } else {
+      for (final dep in dependsOnList) {
+        if (_formValues.containsKey(dep)) {
+          final v = _formValues[dep];
+          if (v != null && v.toString().trim() != '') {
+            result[dep] = v;
+          }
+        }
       }
     }
     return result;
@@ -335,10 +354,9 @@ class _DynamicFormState extends State<DynamicForm> {
     final rawParamsForKey = field['params'];
     final paramsMapForKey = rawParamsForKey is Map ? rawParamsForKey : null;
     final hasParamsMapping = paramsMapForKey != null && paramsMapForKey.isNotEmpty;
-    final dependsOn = field['depends_on'] as String?;
     final dependentFieldNames = hasParamsMapping
         ? paramsMapForKey.values.map((v) => v?.toString() ?? '').where((s) => s.isNotEmpty).toSet().toList()
-        : (dependsOn != null ? [dependsOn] : <String>[]);
+        : _getDependsOnList(field);
     final dependencyKey = dependentFieldNames.isEmpty
         ? fieldName
         : '${fieldName}_${dependentFieldNames.map((f) => _formValues[f]?.toString() ?? '').join('_')}';

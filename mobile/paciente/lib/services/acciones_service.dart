@@ -1,7 +1,12 @@
 // lib/services/acciones_service.dart
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
+
+/// Mensaje amigable cuando la API tarda demasiado o hay error de conexión
+const String _timeoutErrorMessage =
+    'Hubo un error, por favor intente enviar el mensaje de nuevo en unos minutos.';
 
 /// Servicio para procesar consultas en lenguaje natural y obtener acciones
 /// 
@@ -96,7 +101,7 @@ class AccionesService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'Error de conexión: ${e.toString()}',
+        'message': e is TimeoutException ? _timeoutErrorMessage : 'Error de conexión: ${e.toString()}',
       };
     }
   }
@@ -184,7 +189,7 @@ class AccionesService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'Error de conexión: ${e.toString()}',
+        'message': e is TimeoutException ? _timeoutErrorMessage : 'Error de conexión: ${e.toString()}',
       };
     }
   }
@@ -247,7 +252,7 @@ class AccionesService {
     } catch (e) {
       return {
         'success': false,
-        'message': 'Error de conexión: ${e.toString()}',
+        'message': e is TimeoutException ? _timeoutErrorMessage : 'Error de conexión: ${e.toString()}',
       };
     }
   }

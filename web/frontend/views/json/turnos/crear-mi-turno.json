@@ -54,6 +54,7 @@
       "required": true,
       "endpoint": "/rrhh/rrhh-autocomplete",
       "depends_on": "id_servicio_asignado",
+      "params": { "id_servicio": "id_servicio_asignado" },
       "option_config": {
         "source": "rrhh",
         "filter": "efector_rrhh"

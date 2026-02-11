@@ -680,5 +680,26 @@ class Turno extends \yii\db\ActiveRecord
 
     }
 
+    /**
+     * Query: indica si ya existe un turno activo en ese slot (para búsqueda de primer disponible).
+     * Flujo MVC: usado por Controller/Component; las queries viven en el modelo.
+     *
+     * @param int $idRrhhServicioAsignado
+     * @param string $fecha Y-m-d
+     * @param string $hora HH:MM (se normaliza a HH:MM:00 internamente si hace falta)
+     * @return bool
+     */
+    public static function estaOcupadoSlot($idRrhhServicioAsignado, $fecha, $hora)
+    {
+        $horaNormalizada = (strlen($hora) === 5 && strpos($hora, ':') !== false) ? $hora . ':00' : $hora;
+        return static::findActive()
+            ->andWhere([
+                'id_rrhh_servicio_asignado' => (int) $idRrhhServicioAsignado,
+                'fecha' => $fecha,
+                'hora' => $horaNormalizada,
+            ])
+            ->exists();
+    }
+
 
 }

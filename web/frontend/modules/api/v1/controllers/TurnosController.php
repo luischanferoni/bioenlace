@@ -11,6 +11,7 @@ use common\models\ServiciosEfector;
 use common\models\Agenda_rrhh;
 use common\models\ConsultaDerivaciones;
 use common\models\Consulta;
+use common\components\TurnoSlotFinder;
 use frontend\components\UserRequest;
 
 class TurnosController extends BaseController
@@ -59,6 +60,60 @@ class TurnosController extends BaseController
     {
         $controller = new \frontend\controllers\TurnosController('turnos', Yii::$app);
         return $controller->runAction('eventos');
+    }
+
+    /**
+     * Primer turno disponible por servicio (y opcional efector/restricciones).
+     * Flujo: API endpoint -> Controller -> Modelos (vía TurnoSlotFinder) -> JSON.
+     * GET /api/v1/turnos/proximo-disponible?id_servicio=10&id_efector=3
+     * POST body (opcional): { "id_servicio": 10, "id_efector": 3, "restricciones": [{"campo":"dia_semana","operador":"NOT","valor":"LUNES"}] }
+     */
+    public function actionProximoDisponible()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $err = $this->requerirAutenticacion();
+        if ($err !== null) {
+            return $err;
+        }
+
+        $request = Yii::$app->request;
+        $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
+        if (!$idServicio) {
+            return $this->error('El parámetro id_servicio es obligatorio', null, 422);
+        }
+
+        $criteria = [
+            'id_servicio' => (int) $idServicio,
+            'id_efector' => $request->get('id_efector') ?: $request->post('id_efector'),
+            'fecha_desde' => $request->get('fecha_desde') ?: $request->post('fecha_desde'),
+            'max_dias' => $request->get('max_dias') ?: $request->post('max_dias'),
+        ];
+        $restricciones = $request->get('restricciones') ?: $request->post('restricciones');
+        if (!empty($restricciones) && is_array($restricciones)) {
+            $criteria['restricciones'] = $restricciones;
+        }
+
+        try {
+            $slot = TurnoSlotFinder::findFirstAvailable($criteria);
+        } catch (\Throwable $e) {
+            Yii::warning('TurnoSlotFinder::findFirstAvailable error: ' . $e->getMessage(), 'api-turnos');
+            return $this->error('No se pudo calcular el próximo turno disponible', null, 500);
+        }
+
+        if ($slot === null) {
+            return $this->success([
+                'disponible' => false,
+                'slot' => null,
+                'message' => 'No hay turnos disponibles en el rango de búsqueda.',
+            ]);
+        }
+
+        return $this->success([
+            'disponible' => true,
+            'slot' => $slot,
+            'message' => sprintf('Próximo turno: %s a las %s', $slot['fecha'], $slot['hora']),
+        ]);
     }
 
     /**

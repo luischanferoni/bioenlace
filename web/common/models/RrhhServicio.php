@@ -139,7 +139,23 @@ class RrhhServicio extends \yii\db\ActiveRecord
 
     }
 
-  
+    /**
+     * Query: RRHH que atienden un servicio en un efector (para búsqueda de slots).
+     * Flujo MVC: usado por Controller/Component que orquesta; las queries viven en el modelo.
+     *
+     * @param int $idServicio
+     * @param int $idEfector
+     * @return RrhhServicio[]
+     */
+    public static function findPorServicioEfector($idServicio, $idEfector)
+    {
+        return static::find()
+            ->from(['rs' => static::tableName()])
+            ->leftJoin('rrhh_efector re', 're.id_rr_hh = rs.id_rr_hh')
+            ->andWhere(['re.id_efector' => (int) $idEfector])
+            ->andWhere(['rs.id_servicio' => (int) $idServicio])
+            ->all();
+    }
 
 
 }

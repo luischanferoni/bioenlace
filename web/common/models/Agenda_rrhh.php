@@ -203,6 +203,113 @@ class Agenda_rrhh extends \yii\db\ActiveRecord
             $this->clearErrors('id_rrhh_servicio_asignado');
             $this->addError('id_rrhh_servicio_asignado', 'La agenda para este servicio esta vacía');
         }
-    }    
-   
+    }
+
+    /**
+     * Query: agendas por lista de id_rrhh_servicio_asignado (para búsqueda de slots).
+     * Flujo MVC: usado por Controller/Component; las queries viven en el modelo.
+     *
+     * @param int[] $idsRrhhServicio
+     * @return Agenda_rrhh[] indexado por id_rrhh_servicio_asignado
+     */
+    public static function findPorIdsRrhhServicio(array $idsRrhhServicio)
+    {
+        if (empty($idsRrhhServicio)) {
+            return [];
+        }
+        return static::find()
+            ->andWhere(['in', 'id_rrhh_servicio_asignado', $idsRrhhServicio])
+            ->indexBy('id_rrhh_servicio_asignado')
+            ->all();
+    }
+
+    /** Columnas de agenda por día de la semana (N=1..7) */
+    private static function getColumnasAgenda()
+    {
+        return ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
+    }
+
+    /**
+     * Slots (horas) disponibles para esta agenda en una fecha dada.
+     * Usa columnas lunes_2..domingo_2 y cupo; lógica de negocio en el modelo.
+     *
+     * @param string $dia Fecha en Y-m-d
+     * @return string[] Lista de horas en formato HH:MM
+     */
+    public function getSlotsParaDia($dia)
+    {
+        $columnas = static::getColumnasAgenda();
+        $nroDiaSemana = (int) date('N', strtotime($dia)); // 1 = lunes, 7 = domingo
+        $colAgenda = $columnas[$nroDiaSemana - 1] ?? null;
+        if (!$colAgenda) {
+            return [];
+        }
+        $colValue = $this->{$colAgenda};
+        if (!$colValue) {
+            return [];
+        }
+        $horariosAgenda = array_map('intval', explode(',', $colValue));
+        if (empty($horariosAgenda)) {
+            return [];
+        }
+        if (is_null($this->cupo_pacientes) || $this->cupo_pacientes == 0) {
+            $minutosXPaciente = 15;
+            $agregoSegundos = false;
+            $cupoPacientes = count($horariosAgenda) * 5;
+        } else {
+            $minutosXPaciente = 60 * count($horariosAgenda) / $this->cupo_pacientes;
+            $agregoSegundos = ($minutosXPaciente - (int) $minutosXPaciente) >= 0.5;
+            $cupoPacientes = $this->cupo_pacientes;
+        }
+        return static::crearSlotsDesdeHorarios($horariosAgenda, $cupoPacientes, $minutosXPaciente, $agregoSegundos);
+    }
+
+    /**
+     * Genera lista de slots HH:MM a partir de horarios de agenda (lógica de negocio en modelo).
+     *
+     * @param int[] $horariosAgenda
+     * @param int $cupoPacientes
+     * @param float|int $minutosXPaciente
+     * @param bool $agregoSegundos
+     * @return string[]
+     */
+    public static function crearSlotsDesdeHorarios(array $horariosAgenda, $cupoPacientes, $minutosXPaciente, $agregoSegundos)
+    {
+        $intervalos = [];
+        $intervaloActual = [];
+        for ($i = 0; $i < count($horariosAgenda); $i++) {
+            if (empty($intervaloActual)) {
+                $intervaloActual[] = $horariosAgenda[$i];
+            } else {
+                if ($horariosAgenda[$i] === $intervaloActual[count($intervaloActual) - 1] + 1) {
+                    $intervaloActual[] = $horariosAgenda[$i];
+                } else {
+                    $intervalos[] = $intervaloActual;
+                    $intervaloActual = [$horariosAgenda[$i]];
+                }
+            }
+        }
+        if (!empty($intervaloActual)) {
+            $intervalos[] = $intervaloActual;
+        }
+        $slots = [];
+        $minutosXPaciente = (int) $minutosXPaciente;
+        foreach ($intervalos as $horarios) {
+            $inicio = new \DateTime(sprintf('%02d:00', $horarios[0]));
+            $ultHora = new \DateTime(sprintf('%02d:00', $horarios[count($horarios) - 1]));
+            $fin = clone $ultHora;
+            $fin->modify('+60 minutes');
+            while ($inicio < $fin && $cupoPacientes > 0) {
+                $slots[] = $inicio->format('H:i');
+                if ($agregoSegundos) {
+                    $inicio->modify("+{$minutosXPaciente} minutes 30 seconds");
+                } else {
+                    $inicio->modify("+{$minutosXPaciente} minutes");
+                }
+                $cupoPacientes--;
+            }
+        }
+        return $slots;
+    }
+
 }

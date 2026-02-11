@@ -19,6 +19,10 @@ class SearchableCardSelector extends StatefulWidget {
   final String? noResultsMessage;
   final String? searchHint;
   final bool autoLoad;
+  /// Opciones ya cargadas (p. ej. desde caché del formulario). Si no son null, no se dispara auto_load.
+  final List<Map<String, dynamic>>? initialOptions;
+  /// Se llama cuando se cargaron opciones desde el endpoint, para que el padre pueda cachear.
+  final void Function(List<Map<String, dynamic>>)? onOptionsLoaded;
 
   const SearchableCardSelector({
     Key? key,
@@ -35,6 +39,8 @@ class SearchableCardSelector extends StatefulWidget {
     this.noResultsMessage,
     this.searchHint,
     this.autoLoad = false,
+    this.initialOptions,
+    this.onOptionsLoaded,
   }) : super(key: key);
 
   @override
@@ -58,8 +64,14 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   void initState() {
     super.initState();
     _selectedEfectorId = widget.initialValue;
+    // Si ya tenemos opciones (caché del padre), usarlas y no disparar carga al servidor
+    if (widget.initialOptions != null) {
+      _efectores = List<Map<String, dynamic>>.from(widget.initialOptions!);
+      _filteredEfectores = List<Map<String, dynamic>>.from(widget.initialOptions!);
+      _searchController.addListener(_onSearchChanged);
+      return;
+    }
     // Solo cargar automáticamente si autoLoad es true y la dependencia está satisfecha
-    // Si autoLoad es false, NO cargar automáticamente (el usuario debe escribir para buscar)
     if (widget.autoLoad && _hasAllDependencies()) {
       _loadInitialItems();
     }
@@ -207,6 +219,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
               }
             }
           });
+          widget.onOptionsLoaded?.call(itemsList);
         }
       } else {
         if (mounted) {

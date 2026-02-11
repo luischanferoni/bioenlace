@@ -7,13 +7,13 @@
     },
     {
       "step": 1,
-      "title": "Seleccionar Profesional y Fecha",
-      "fields": ["id_rr_hh", "fecha"]
+      "title": "Seleccionar Profesional",
+      "fields": ["id_rr_hh"]
     },
     {
       "step": 2,
-      "title": "Seleccionar Hora",
-      "fields": ["hora"]
+      "title": "Seleccionar turno disponible",
+      "fields": ["fecha", "hora"]
     },
     {
       "step": 3,
@@ -70,14 +70,32 @@
       "type": "date",
       "required": true,
       "format": "YYYY-MM-DD",
-      "min": "today"
+      "min": "today",
+      "depends_on": "id_rr_hh"
     },
     {
       "name": "hora",
       "label": "Hora",
-      "type": "time",
+      "type": "autocomplete",
       "required": true,
-      "depends_on": "fecha"
+      "endpoint": "/turnos/eventos",
+      "depends_on": ["id_rr_hh", "fecha"],
+      "params": {
+        "id_rr_hh": "id_rr_hh",
+        "id_servicio": "id_servicio_asignado",
+        "dia": "fecha",
+        "formato": "formato_slots"
+      },
+      "auto_load": true,
+      "option_config": {
+        "source": "turnos_disponibles",
+        "filter": null
+      }
+    },
+    {
+      "name": "formato_slots",
+      "type": "text",
+      "value": "slots"
     },
     {
       "name": "tipo_atencion",

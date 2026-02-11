@@ -31,6 +31,8 @@ class _DynamicFormState extends State<DynamicForm> {
   final Map<String, dynamic> _formValues = {};
   final Map<String, TextEditingController> _controllers = {};
   final Map<String, List<Map<String, dynamic>>> _optionsCache = {};
+  /// Cache de opciones cargadas por SearchableCardSelector (key = fieldName|dependencyKey) para no refetch al cambiar de paso.
+  final Map<String, List<Map<String, dynamic>>> _selectorOptionsCache = {};
   final Map<String, bool> _loadingOptions = {};
   final _formKey = GlobalKey<FormState>();
   int _currentStep = 0;
@@ -360,7 +362,9 @@ class _DynamicFormState extends State<DynamicForm> {
     final dependencyKey = dependentFieldNames.isEmpty
         ? fieldName
         : '${fieldName}_${dependentFieldNames.map((f) => _formValues[f]?.toString() ?? '').join('_')}';
-    
+    final selectorCacheKey = '${fieldName}|$dependencyKey';
+    final cachedOptions = _selectorOptionsCache[selectorCacheKey];
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: SearchableCardSelector(
@@ -377,6 +381,12 @@ class _DynamicFormState extends State<DynamicForm> {
         emptyMessage: emptyMessage,
         noResultsMessage: noResultsMessage,
         autoLoad: autoLoad,
+        initialOptions: cachedOptions,
+        onOptionsLoaded: (list) {
+          setState(() {
+            _selectorOptionsCache[selectorCacheKey] = list;
+          });
+        },
         onChanged: (selectedId) {
           setState(() {
             _formValues[fieldName] = selectedId;

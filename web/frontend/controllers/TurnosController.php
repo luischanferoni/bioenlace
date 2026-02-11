@@ -425,12 +425,22 @@ class TurnosController extends Controller
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $dia = Yii::$app->request->get('dia') ? Yii::$app->request->get('dia') : date("Y-m-d");
-        $id_rrhh_servicio_asignado = Yii::$app->request->get('id_rrhh_servicio_asignado', 0);
-        $id_servicio = Yii::$app->request->get('id_servicio');
+        $request = Yii::$app->request;
+        $dia = $request->get('dia') ?: $request->post('dia') ?: date("Y-m-d");
+        $id_rrhh_servicio_asignado = (int) ($request->get('id_rrhh_servicio_asignado') ?: $request->post('id_rrhh_servicio_asignado') ?: 0);
+        $id_servicio = $request->get('id_servicio') ?: $request->post('id_servicio');
+        $id_rr_hh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+
+        if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio) {
+            $resolved = RrhhServicio::obtenerIdRrhhServicio($id_rr_hh, $id_servicio);
+            if ($resolved) {
+                $id_rrhh_servicio_asignado = (int) $resolved;
+            }
+        }
 
         $id_efector = Yii::$app->user->getIdEfector();
 
+        $formatoSlots = ($request->get('formato') ?: $request->post('formato')) === 'slots';
 
         $turnosQuery = Turno::findActive();
         if ($id_rrhh_servicio_asignado) {
@@ -493,7 +503,9 @@ class TurnosController extends Controller
             // no hay agenda para el dia seleccionado
             if (!$agendaDiaSeleccionado) {
                 $mensajeSinTurnosDisponibles = '<p class="fst-italic ps-5">Sin turnos disponibles.</p>';
-                return ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles],];
+                $ret = ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles]];
+                if ($formatoSlots) $ret['results'] = [];
+                return $ret;
             }
 
             // quito posibles repetidos por el array_merge
@@ -503,7 +515,9 @@ class TurnosController extends Controller
             // si hay agenda (no salta en el return anterior) y si el dia seleccionado no es el dia actual
             $mensajePorOrdendeLlegada = '<p class="ps-5"><u><strong>Los turnos se otorgan por orden de llegada.</strong></u></p>';
             if ($dia !== date("Y-m-d")) {
-                return ['turnos' => ['maniana' => $mensajePorOrdendeLlegada, 'tarde' => $mensajePorOrdendeLlegada],];
+                $ret = ['turnos' => ['maniana' => $mensajePorOrdendeLlegada, 'tarde' => $mensajePorOrdendeLlegada]];
+                if ($formatoSlots) $ret['results'] = [];
+                return $ret;
             }
 
             $cupoPacientes = count($horariosAgenda) * 5;
@@ -516,14 +530,18 @@ class TurnosController extends Controller
 
             $mensajeSinTurnosDisponibles = '<p class="fst-italic ps-5">Sin turnos disponibles.</p>';
             if (!$agenda->{$columnasAgenda[$nroDiaDeSemana]} || $agenda->{$columnasAgenda[$nroDiaDeSemana]} == '') {
-                return ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles],];
+                $ret = ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles]];
+                if ($formatoSlots) $ret['results'] = [];
+                return $ret;
             }
 
             // TODO: Bug, por mas que sea por orden de llegada, si no hay ningun servicio (agenda)
             // que atienda para el día elegido no se puede otorgar
             $mensajePorOrdendeLlegada = '<p class="ps-5"><u><strong>Los turnos se otorgan por orden de llegada.</strong></u></p>';
             if ($agenda->formas_atencion == 'ORDEN_LLEGADA' && $dia !== date("Y-m-d")) {
-                return ['turnos' => ['maniana' => $mensajePorOrdendeLlegada, 'tarde' => $mensajePorOrdendeLlegada],];
+                $ret = ['turnos' => ['maniana' => $mensajePorOrdendeLlegada, 'tarde' => $mensajePorOrdendeLlegada]];
+                if ($formatoSlots) $ret['results'] = [];
+                return $ret;
             }
 
             $horariosAgenda = array_map('intval', explode(",", $agenda->{$columnasAgenda[$nroDiaDeSemana]}));
@@ -542,6 +560,7 @@ class TurnosController extends Controller
 
         $botonesTurnosManiana = [];
         $botonesTurnosTarde = [];
+        $slotsDisponibles = [];
 
         // bandera para saber si todos los turnos ya estan tomados, para el sobreturno
         $todosTomados = true;
@@ -558,9 +577,11 @@ class TurnosController extends Controller
             // Si esta viendo los turnos del día actual entonces no habilitamos
             // para que seleccione las horas que sean menores a la hora actual
             //ademas deshabilitamos los botones si el dia es feriado.
+            $deshabilitado = false;
             if ($dia == date("Y-m-d")) {
                 if ($hora <= date("H:i")) {
                     $options['class'] = 'btn btn-outline-secondary rounded-pill mt-2 me-1 ';
+                    $deshabilitado = true;
                 } else {
                     // El if del orden de llegada va aqui para calcular la hora del siguiente turno
                     if ($formasAtencion == 'ORDEN_LLEGADA') {
@@ -571,6 +592,7 @@ class TurnosController extends Controller
 
             if ($feriado != null) {
                 $options['class'] = 'btn btn-outline-secondary rounded-pill mt-2 me-1 ';
+                $deshabilitado = true;
             }
 
             $horario = \DateTime::createFromFormat('H:i', $hora);
@@ -598,6 +620,9 @@ class TurnosController extends Controller
                 }
             } else {
                 $todosTomados = false;
+                if (!$deshabilitado) {
+                    $slotsDisponibles[] = $slot;
+                }
             }
 
             $unaDeLaManiana = \DateTime::createFromFormat('H:i', "00:00");
@@ -610,15 +635,27 @@ class TurnosController extends Controller
             }
 
             if ($break) {
-                return [
+                $resp = [
                     'turnos' => ['maniana' => $botonesTurnosManiana, 'tarde' => $botonesTurnosTarde, 'todosTomados' => $todosTomados, 'mensajeFeriado' => $mensajeFeriado],
                 ];
+                if (($request->get('formato') ?: $request->post('formato')) === 'slots') {
+                    $resp['results'] = array_map(function ($h) {
+                        return ['id' => $h, 'text' => $h];
+                    }, $slotsDisponibles);
+                }
+                return $resp;
             }
             // }
         }
-        return [
+        $resp = [
             'turnos' => ['maniana' => $botonesTurnosManiana, 'tarde' => $botonesTurnosTarde, 'todosTomados' => $todosTomados, 'mensajeFeriado' => $mensajeFeriado],
         ];
+        if (($request->get('formato') ?: $request->post('formato')) === 'slots') {
+            $resp['results'] = array_map(function ($h) {
+                return ['id' => $h, 'text' => $h];
+            }, $slotsDisponibles);
+        }
+        return $resp;
     }
 
 

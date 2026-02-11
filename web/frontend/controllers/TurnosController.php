@@ -30,7 +30,7 @@ use yii\debug\models\timeline\DataProvider;
 class TurnosController extends Controller
 {
 
-    public $freeAccessActions = ['list-turnos'];
+    public $freeAccessActions = ['list-turnos', 'eventos'];
 
     /**
      * {@inheritdoc}

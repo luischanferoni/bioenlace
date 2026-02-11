@@ -205,14 +205,19 @@ class _DynamicFormState extends State<DynamicForm> {
             firstDate: DateTime(1900),
             lastDate: DateTime(2100),
             builder: (context, child) {
+              // Tema claro completo para todo el calendario (días, mes, año, cabecera)
+              // así todos los textos son oscuros sobre fondo claro.
+              final lightScheme = ColorScheme.light(
+                surface: Colors.white,
+                onSurface: Colors.black87,
+                primary: Theme.of(context).colorScheme.primary,
+                onPrimary: Colors.white,
+              );
               return Theme(
-                data: Theme.of(context).copyWith(
-                  colorScheme: Theme.of(context).colorScheme.copyWith(
-                    surface: Colors.white,
-                    onSurface: Colors.black87,
-                    primary: Theme.of(context).colorScheme.primary,
-                    onPrimary: Colors.white,
-                  ),
+                data: ThemeData.light().copyWith(
+                  colorScheme: lightScheme,
+                  dialogBackgroundColor: Colors.white,
+                  textTheme: ThemeData.light().textTheme.apply(bodyColor: Colors.black87, displayColor: Colors.black87),
                 ),
                 child: child!,
               );

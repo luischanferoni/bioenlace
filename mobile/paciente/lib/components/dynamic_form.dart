@@ -204,6 +204,19 @@ class _DynamicFormState extends State<DynamicForm> {
             initialDate: DateTime.now(),
             firstDate: DateTime(1900),
             lastDate: DateTime(2100),
+            builder: (context, child) {
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  colorScheme: Theme.of(context).colorScheme.copyWith(
+                    surface: Colors.white,
+                    onSurface: Colors.black87,
+                    primary: Theme.of(context).colorScheme.primary,
+                    onPrimary: Colors.white,
+                  ),
+                ),
+                child: child!,
+              );
+            },
           );
           if (date != null) {
             final formattedDate = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -351,6 +364,7 @@ class _DynamicFormState extends State<DynamicForm> {
     final noResultsMessage = field['no_results_message'] as String? ?? field['noResultsMessage'] as String? ?? 'No se encontraron resultados';
 
     final autoLoad = field['auto_load'] as bool? ?? false;
+    final showSearch = field['show_search'] as bool? ?? true;
 
     // Key única cuando cambian los valores de los campos de los que dependen (nombres vienen del JSON)
     final rawParamsForKey = field['params'];
@@ -381,6 +395,7 @@ class _DynamicFormState extends State<DynamicForm> {
         emptyMessage: emptyMessage,
         noResultsMessage: noResultsMessage,
         autoLoad: autoLoad,
+        showSearch: showSearch,
         initialOptions: cachedOptions,
         onOptionsLoaded: (list) {
           setState(() {

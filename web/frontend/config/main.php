@@ -123,6 +123,8 @@ return [
                 'OPTIONS api/<version:\w+>/turnos/mis-turnos' => '<version>/turnos/mis-turnos',
                 'GET api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/view',
                 'OPTIONS api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/view',
+                'GET api/<version:\w+>/turnos/eventos' => '<version>/turnos/eventos',
+                'OPTIONS api/<version:\w+>/turnos/eventos' => '<version>/turnos/eventos',
                 'POST api/<version:\w+>/turnos' => '<version>/turnos/create',
                 'OPTIONS api/<version:\w+>/turnos' => '<version>/turnos/create',
                 'PUT api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',

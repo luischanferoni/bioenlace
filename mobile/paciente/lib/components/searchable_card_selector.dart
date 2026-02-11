@@ -23,6 +23,8 @@ class SearchableCardSelector extends StatefulWidget {
   final List<Map<String, dynamic>>? initialOptions;
   /// Se llama cuando se cargaron opciones desde el endpoint, para que el padre pueda cachear.
   final void Function(List<Map<String, dynamic>>)? onOptionsLoaded;
+  /// Si false, no se muestra el campo de búsqueda (solo lista de opciones, p. ej. slots de horarios).
+  final bool showSearch;
 
   const SearchableCardSelector({
     Key? key,
@@ -41,6 +43,7 @@ class SearchableCardSelector extends StatefulWidget {
     this.autoLoad = false,
     this.initialOptions,
     this.onOptionsLoaded,
+    this.showSearch = true,
   }) : super(key: key);
 
   @override
@@ -50,7 +53,8 @@ class SearchableCardSelector extends StatefulWidget {
 class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  
+  final GlobalKey<FormFieldState<String?>> _formFieldKey = GlobalKey<FormFieldState<String?>>();
+
   List<Map<String, dynamic>> _efectores = [];
   List<Map<String, dynamic>> _filteredEfectores = [];
   bool _isLoading = false;
@@ -332,60 +336,16 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
     });
     _isSelectingItem = false;
 
+    if (!widget.showSearch) {
+      _formFieldKey.currentState?.didChange(itemId);
+    }
     widget.onChanged(itemId);
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildCardsContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Label
-        if (widget.label != null) ...[
-          Text(
-            widget.label! + (widget.required ? ' *' : ''),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-        
-        // Campo de búsqueda
-        TextFormField(
-          controller: _searchController,
-          focusNode: _searchFocusNode,
-          decoration: InputDecoration(
-            hintText: widget.searchHint ?? widget.description ?? 'Buscar...',
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            prefixIcon: Icon(Icons.search),
-            suffixIcon: _selectedEfectorId != null
-                ? IconButton(
-                    icon: Icon(Icons.clear),
-                    onPressed: () {
-                      if (mounted) {
-                        setState(() {
-                          _selectedEfectorId = null;
-                          _selectedEfectorName = null;
-                          _searchController.clear();
-                        });
-                      }
-                      widget.onChanged(null);
-                    },
-                  )
-                : null,
-          ),
-          validator: widget.required
-              ? (value) => _selectedEfectorId == null ? 'Este campo es requerido' : null
-              : null,
-        ),
-        
-        const SizedBox(height: 16),
-        
         // Lista de efectores
         if (_isLoading)
           Center(
@@ -399,7 +359,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                _isSearching 
+                _isSearching
                     ? (widget.noResultsMessage ?? 'No se encontraron resultados')
                     : (widget.emptyMessage ?? 'No hay opciones disponibles'),
                 style: TextStyle(color: Colors.grey[600]),
@@ -407,8 +367,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
             ),
           )
         else ...[
-          // Lista horizontal de minicards (solo si no hay búsqueda activa o hay pocos resultados)
-          if (!_isSearching || _filteredEfectores.length <= 10)
+          if (!widget.showSearch || !_isSearching || _filteredEfectores.length <= 10)
             SizedBox(
               height: 120,
               child: ListView.builder(
@@ -417,7 +376,6 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                 itemBuilder: (context, index) {
                   final efector = _filteredEfectores[index];
                   final isSelected = efector['id']?.toString() == _selectedEfectorId;
-                  
                   return Container(
                     width: 140,
                     margin: EdgeInsets.only(right: 12),
@@ -427,7 +385,6 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
               ),
             )
           else
-            // Lista vertical si hay muchos resultados
             Container(
               constraints: BoxConstraints(maxHeight: 300),
               child: ListView.builder(
@@ -436,7 +393,6 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                 itemBuilder: (context, index) {
                   final efector = _filteredEfectores[index];
                   final isSelected = efector['id']?.toString() == _selectedEfectorId;
-                  
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: _buildItemCard(efector, isSelected),
@@ -447,6 +403,92 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
         ],
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Label
+        if (widget.label != null) ...[
+          Text(
+            widget.label! + (widget.required ? ' *' : ''),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (widget.description != null && widget.description!.isNotEmpty) ...[
+          Text(
+            widget.description!,
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+        ],
+        // Campo de búsqueda (oculto si showSearch es false, p. ej. solo slots)
+        if (widget.showSearch)
+          TextFormField(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            decoration: InputDecoration(
+              hintText: widget.searchHint ?? widget.description ?? 'Buscar...',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              prefixIcon: Icon(Icons.search),
+              suffixIcon: _selectedEfectorId != null
+                  ? IconButton(
+                      icon: Icon(Icons.clear),
+                      onPressed: () {
+                        if (mounted) {
+                          setState(() {
+                            _selectedEfectorId = null;
+                            _selectedEfectorName = null;
+                            _searchController.clear();
+                          });
+                        }
+                        widget.onChanged(null);
+                      },
+                    )
+                  : null,
+            ),
+            validator: widget.required
+                ? (value) => _selectedEfectorId == null ? 'Este campo es requerido' : null
+                : null,
+          ),
+        if (widget.showSearch) const SizedBox(height: 16),
+        // Lista de opciones (cards)
+        if (widget.showSearch)
+          _buildCardsContent()
+        else
+          FormField<String?>(
+            key: _formFieldKey,
+            initialValue: _selectedEfectorId,
+            validator: widget.required
+                ? (v) => (v == null || v.toString().trim().isEmpty) ? 'Este campo es requerido' : null
+                : null,
+            builder: (state) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCardsContent(),
+                if (state.hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      state.errorText!,
+                      style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+    return content;
   }
 
   Widget _buildItemCard(Map<String, dynamic> item, bool isSelected) {

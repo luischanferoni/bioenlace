@@ -29,6 +29,9 @@ class TurnosController extends BaseController
         if (!in_array('index', $except)) {
             $except[] = 'index';
         }
+        if (!in_array('eventos', $except)) {
+            $except[] = 'eventos';
+        }
         $behaviors['authenticator']['except'] = $except;
         
         return $behaviors;
@@ -46,6 +49,16 @@ class TurnosController extends BaseController
         unset($actions['index'], $actions['view'], $actions['create'], $actions['update']);
         
         return $actions;
+    }
+
+    /**
+     * Slots disponibles para un profesional/fecha. Delega al controlador web turnos/eventos.
+     * GET /api/v1/turnos/eventos?id_rr_hh=...&id_servicio=...&dia=...&formato=slots
+     */
+    public function actionEventos()
+    {
+        $controller = new \frontend\controllers\TurnosController('turnos', Yii::$app);
+        return $controller->runAction('eventos');
     }
 
     /**

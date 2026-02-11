@@ -87,6 +87,7 @@
         "formato": "formato_slots"
       },
       "auto_load": true,
+      "show_search": false,
       "option_config": {
         "source": "turnos_disponibles",
         "filter": null

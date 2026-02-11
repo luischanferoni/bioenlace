@@ -664,6 +664,9 @@ class UniversalQueryAgent
         
         // Obtener business queries disponibles para contexto
         $businessQueriesInfo = self::getBusinessQueriesInfo();
+
+        // Lista de servicios que aceptan turnos: la IA debe elegir de esta lista para resolver "piel" -> Dermatología, etc.
+        $serviciosParaTurnos = self::getServiciosParaTurnosParaPrompt();
         
         // Prompt genérico y escalable
         $prompt = <<<PROMPT
@@ -677,6 +680,7 @@ Contexto del sistema:
 - Entidades disponibles: {$entitiesText}
 - Metadatos: {$systemMetadata}
 {$businessQueriesInfo}
+{$serviciosParaTurnos}
 
 Extrae información de la consulta y responde ÚNICAMENTE con este JSON:
 
@@ -690,7 +694,9 @@ Extrae información de la consulta y responde ÚNICAMENTE con este JSON:
     "identifiers": [],
     "dates": [],
     "names": [],
-    "numbers": []
+    "numbers": [],
+    "servicio": "nombre exacto del servicio de la lista anterior o null",
+    "id_servicio": null
   },
   "filters": {
     "date_range": "rango o null",
@@ -705,6 +711,7 @@ IMPORTANTE:
 - En "extracted_data.identifiers" coloca números que puedan ser IDs o documentos
 - En "extracted_data.dates" coloca fechas mencionadas
 - "filters.custom" solo debe usarse para filtros personalizados específicos del sistema, NO para valores/parámetros extraídos
+- SERVICIO PARA TURNOS: Si el usuario pide un turno (crear/agendar/solicitar) y menciona una especialidad, parte del cuerpo o tema (ej. piel, vista, dientes, corazón, médico de pies), debes elegir el servicio que mejor coincida de la lista "Servicios disponibles para turnos" y poner su nombre EXACTO en extracted_data.servicio y su id numérico en extracted_data.id_servicio. Usa SOLO valores de esa lista. Si no hay lista o no hay coincidencia clara, deja servicio e id_servicio en null.
 
 Usa tu conocimiento del lenguaje para extraer información relevante de la consulta.
 PROMPT;
@@ -2066,6 +2073,14 @@ PROMPT;
             if (!empty($names)) {
                 $normalized['nombre'] = implode(' ', $names);
             }
+
+            // Servicio resuelto por la IA (ej. "piel" -> Dermatología): preservar para turnos
+            if (isset($extractedData['servicio']) && $extractedData['servicio'] !== null && $extractedData['servicio'] !== '') {
+                $normalized['servicio'] = $extractedData['servicio'];
+            }
+            if (isset($extractedData['id_servicio']) && $extractedData['id_servicio'] !== null && $extractedData['id_servicio'] !== '') {
+                $normalized['id_servicio'] = is_numeric($extractedData['id_servicio']) ? (int) $extractedData['id_servicio'] : $extractedData['id_servicio'];
+            }
             
             // Asegurar que extractedData tenga names para raw
             if (!isset($extractedData['names']) || empty($extractedData['names'])) {
@@ -2079,6 +2094,29 @@ PROMPT;
         }
         
         return $normalized;
+    }
+
+    /**
+     * Lista de servicios que aceptan turnos, formateada para el prompt de la IA.
+     * La IA debe elegir de esta lista para mapear "piel" -> Dermatología, "vista" -> Oftalmología, etc.
+     * @return string
+     */
+    private static function getServiciosParaTurnosParaPrompt()
+    {
+        try {
+            $servicios = \common\models\Servicio::getServiciosConTurnos();
+            if (empty($servicios)) {
+                return '';
+            }
+            $lines = [];
+            foreach ($servicios as $s) {
+                $lines[] = '  - id_servicio: ' . (int)$s->id_servicio . ', nombre: ' . $s->nombre;
+            }
+            return "\nServicios disponibles para turnos (elige SOLO de esta lista cuando el usuario pida un turno y mencione especialidad/parte del cuerpo/tema):\n" . implode("\n", $lines);
+        } catch (\Throwable $e) {
+            Yii::warning('UniversalQueryAgent::getServiciosParaTurnosParaPrompt: ' . $e->getMessage(), 'universal-query-agent');
+            return '';
+        }
     }
 
     /**

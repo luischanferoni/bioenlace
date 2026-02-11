@@ -255,13 +255,12 @@ class TurnosController extends Controller
         // Si es POST, establecer formato JSON para la respuesta
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        // Obtener id_persona de la sesión (ya asignado por la autenticación JWT o web)
-        // La autenticación garantiza que idPersona esté disponible o lanza error antes
-        $session = Yii::$app->session;
-        $idPersona = $session->get('idPersona');
+        // id_persona viene de sesión (la autenticación API/JWT ya lo establece en capas previas)
+        $idPersona = Yii::$app->session->get('idPersona');
 
         $model = new Turno();
-        $model->load(Yii::$app->request->post());
+        // formName '' para aceptar params en nivel superior (p. ej. desde execute-action API)
+        $model->load(Yii::$app->request->post(), '');
         if (empty($model->tipo_atencion)) {
             $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
         }
@@ -296,26 +295,42 @@ class TurnosController extends Controller
         // Asignar id_persona del usuario autenticado (no se recibe por POST)
         $model->id_persona = $idPersona;
         
-        // Campos obligatorios recibidos por POST usando nombres del modelo
+        // Campos obligatorios recibidos por POST (nivel superior o dentro de 'params' desde execute-action)
         $post = Yii::$app->request->post();
-        if (!isset($post['id_rr_hh'])) {
+        $p = isset($post['params']) && is_array($post['params']) ? $post['params'] : $post;
+        if (empty($p['id_rr_hh'])) {
             throw new BadRequestHttpException('Parámetro requerido: id_rr_hh');
         }
-        if (!isset($post['id_efector'])) {
+        if (empty($p['id_efector'])) {
             throw new BadRequestHttpException('Parámetro requerido: id_efector');
         }
-        if (!isset($post['id_servicio_asignado'])) {
+        if (empty($p['id_servicio_asignado'])) {
             throw new BadRequestHttpException('Parámetro requerido: id_servicio_asignado');
         }
-        
-        $model->id_rr_hh = $post['id_rr_hh'];
-        $model->id_efector = $post['id_efector'];
-        $model->id_servicio_asignado = $post['id_servicio_asignado'];
+        if (empty($p['fecha'])) {
+            throw new BadRequestHttpException('Parámetro requerido: fecha');
+        }
+        if (empty($p['hora'])) {
+            throw new BadRequestHttpException('Parámetro requerido: hora');
+        }
+
+        $model->id_rr_hh = $p['id_rr_hh'];
+        $model->id_efector = $p['id_efector'];
+        $model->id_servicio_asignado = $p['id_servicio_asignado'];
+        $model->fecha = $p['fecha'];
+        $model->hora = $p['hora'];
         // id_servicio se asigna automáticamente desde id_servicio_asignado si es necesario
-        if (isset($post['id_servicio'])) {
-            $model->id_servicio = $post['id_servicio'];
+        if (!empty($p['id_servicio'])) {
+            $model->id_servicio = $p['id_servicio'];
         } else {
-            $model->id_servicio = $post['id_servicio_asignado'];
+            $model->id_servicio = $p['id_servicio_asignado'];
+        }
+        // Resolver id_rrhh_servicio_asignado (el cliente envía id_rr_hh, no el id de rrhh_servicio)
+        if (empty($model->id_rrhh_servicio_asignado) && !empty($model->id_rr_hh) && !empty($model->id_servicio_asignado)) {
+            $resolved = RrhhServicio::obtenerIdRrhhServicio($model->id_rr_hh, $model->id_servicio_asignado);
+            if ($resolved) {
+                $model->id_rrhh_servicio_asignado = (int) $resolved;
+            }
         }
 
         // Verificar derivaciones pendientes

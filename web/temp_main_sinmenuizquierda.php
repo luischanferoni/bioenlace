@@ -1,1 +1,0 @@
-how 5b88b340b0fb08f8242f7d5e1ca91d329dcdcf18\^:frontend/views/layouts/main_sinmenuizquierda.php

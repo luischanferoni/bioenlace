@@ -248,7 +248,7 @@ class IAManager
             $token = self::obtenerTokenGoogle();
             if (empty($token)) {
                 \Yii::error('No se pudo obtener token de Google Cloud. Verifique las credenciales configuradas.', 'ia-manager');
-                throw new \Exception('Error de autenticación con Google Cloud: No se pudo obtener token OAuth2. Configure GOOGLE_APPLICATION_CREDENTIALS o google_cloud_api_key en params-local.php');
+                throw new \Exception('Error de autenticación con Google Cloud: No se pudo obtener token OAuth2. Configure google_cloud_credentials_path o google_cloud_api_key en frontend/config/params-local.php');
             }
             $headers['Authorization'] = 'Bearer ' . $token;
         }
@@ -313,11 +313,11 @@ class IAManager
             return '';
         }
         
-        // Intentar obtener token desde variable de entorno o archivo de credenciales
-        $credentialsPath = Yii::$app->params['google_cloud_credentials_path'] ?? getenv('GOOGLE_APPLICATION_CREDENTIALS');
+        // Ruta al archivo de credenciales (params en common)
+        $credentialsPath = Yii::$app->params['google_cloud_credentials_path'] ?? '';
         
         if (empty($credentialsPath) || !file_exists($credentialsPath)) {
-            \Yii::warning('Google Cloud credentials no encontradas. Configure GOOGLE_APPLICATION_CREDENTIALS o google_cloud_api_key', 'ia-manager');
+            \Yii::warning('Google Cloud credentials no encontradas. Configure google_cloud_credentials_path o google_cloud_api_key en frontend/config/params-local.php', 'ia-manager');
             return '';
         }
         

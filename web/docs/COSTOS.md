@@ -206,7 +206,7 @@ Para Vertex AI / Gemini y videollamadas (Twilio, Daily.co) se usan rangos típic
 ### Supuestos base (costo real, sin estrategias de reducción)
 
 - **Consultas por médico**: 20/día = 600/mes (mismo que el análisis principal).
-- **Costo real de IA por llamada** (sin caché ni optimizaciones): según plan de hosting, p. ej. RunPod \$0.014/consulta → **~\$0.014 por interacción IA**; AWS Reserved \$0.008–0.011 → **~\$0.008–0.011 por interacción**.
+- **Costo real de IA por llamada** (sin caché ni optimizaciones): según plan de hosting, p. ej. RunPod \$0.014/consulta → **~\$0.014 por interacción IA**; AWS Reserved \$0.008–0.011 → **~\$0.008–0.011 por interacción**; GCP Preemptible \$0.002–0.006/consulta → **~\$0.002–0.006 por interacción** (solo adecuado para cargas tolerantes a interrupciones; ver [ESTRATEGIAS_REDUCCION_COSTO.md](./ESTRATEGIAS_REDUCCION_COSTO.md)).
 
 ---
 
@@ -219,6 +219,7 @@ Costo real = uso completo sin respuestas predefinidas ni caché (todas las inter
 | Mensajes pre-consulta estimados | 600 consultas × 5 mensajes = 3.000; 50% con IA ⇒ **1.500 llamadas IA** | — |
 | **Costo real** (RunPod, \$0.014/llamada) | 1.500 × \$0.014 | **~\$21/médico/mes** |
 | **Costo real** (AWS Reserved, \$0.009/llamada) | 1.500 × \$0.009 | **~\$13.50/médico/mes** |
+| **Costo real** (GCP Preemptible, \$0.002–0.006/llamada) | 1.500 × \$0.002–0.006 | **~\$3–9/médico/mes** |
 
 ---
 
@@ -231,6 +232,7 @@ Costo real = todas las interacciones que requieren IA sin flujos guiados ni cach
 | Total llamadas IA/médico/mes | ~400 (20 nuevos × 10 + 100 activos × 2) | — |
 | **Costo real** (RunPod, \$0.014/llamada) | 400 × \$0.014 | **~\$5.60/médico/mes** |
 | **Costo real** (AWS Reserved, \$0.009/llamada) | 400 × \$0.009 | **~\$3.60/médico/mes** |
+| **Costo real** (GCP Preemptible, \$0.002–0.006/llamada) | 400 × \$0.002–0.006 | **~\$0.80–2.40/médico/mes** |
 
 ---
 
@@ -269,13 +271,13 @@ Todos los valores son **costo real**. El **porcentaje de reducción** posible so
 
 | Capacidad | Costo real (USD/médico/mes) |
 |-----------|-----------------------------|
-| Conversación pre-consulta (IA) | \$13.50–21 (según plan hosting) |
-| Agente onboarding y día a día (IA) | \$3.60–5.60 (según plan hosting) |
+| Conversación pre-consulta (IA) | \$3–21 (según plan hosting: GCP Preemptible–RunPod) |
+| Agente onboarding y día a día (IA) | \$0.80–5.60 (según plan hosting: GCP Preemptible–RunPod) |
 | Audios, fotos, videos (STT + Vision, uso máximo) | \$8.95–9.60 |
 | Videollamadas (CPaaS) | \$10–17.30 |
-| **Total adicional (capacidades)** | **~\$36–53/médico/mes** |
+| **Total adicional (capacidades)** | **~\$23–53/médico/mes** (según plan hosting) |
 
-**Costo real total por médico/mes** (infra IA/hosting + capacidades): ejemplo con RunPod (\$8.36) + pre-consulta (\$21) + onboarding (\$5.60) + medios STT+Vision (\$9.60) + video (\$17.30) ≈ **~\$62/médico/mes** (sin aplicar estrategias de reducción).
+**Costo real total por médico/mes** (infra IA/hosting + capacidades): ejemplo con RunPod (\$8.36) + pre-consulta (\$21) + onboarding (\$5.60) + medios STT+Vision (\$9.60) + video (\$17.30) ≈ **~\$62/médico/mes** (sin aplicar estrategias de reducción). Con GCP Preemptible (solo si la carga tolera interrupciones): infra (\$1.40–3.78) + pre-consulta (\$3–9) + onboarding (\$0.80–2.40) + medios (\$9.60) + video (\$17.30) ≈ **~\$32–43/médico/mes**.
 
 ---
 

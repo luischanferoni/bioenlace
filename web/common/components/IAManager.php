@@ -634,6 +634,9 @@ class IAManager
             $prompt = trim($prompt);
             if (empty($prompt) || strlen($prompt) < 3) {
                 \Yii::warning("Prompt vacío o muy corto, saltando request de IA", 'ia-manager');
+                if (class_exists(\common\components\AICostTracker::class)) {
+                    \common\components\AICostTracker::registrarEvitada('validacion', $contexto);
+                }
                 return null;
             }
             
@@ -641,6 +644,9 @@ class IAManager
             $deduplicado = \common\components\RequestDeduplicator::buscarSimilar($prompt, $contexto);
             if ($deduplicado !== null) {
                 \Yii::info("Request duplicado encontrado para: {$contexto}", 'ia-manager');
+                if (class_exists(\common\components\AICostTracker::class)) {
+                    \common\components\AICostTracker::registrarEvitada('dedup', $contexto);
+                }
                 return $deduplicado;
             }
             
@@ -670,6 +676,9 @@ class IAManager
                     }
                     // Guardar en deduplicador también
                     \common\components\RequestDeduplicator::guardar($prompt, $cached, $contexto);
+                    if (class_exists(\common\components\AICostTracker::class)) {
+                        \common\components\AICostTracker::registrarEvitada('cache', $contexto);
+                    }
                     return $cached;
                 }
             }
@@ -771,6 +780,12 @@ class IAManager
             
             // Log del payload para debugging (solo primeros 500 caracteres)
             \Yii::info("Enviando request a: {$proveedorIA['endpoint']} - Payload preview: " . substr($payloadJson, 0, 500), 'ia-manager');
+            
+            // Simulación en pruebas de costos: no enviar HTTP, devolver mock
+            if (class_exists(\common\components\AICostTracker::class) && \common\components\AICostTracker::debeSimularIA()) {
+                \common\components\AICostTracker::registrarLlamadaSimulada($contexto, $tipoModelo);
+                return [];
+            }
             
             $client = new Client();
             $response = $client->createRequest()
@@ -948,6 +963,9 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
             $corregidaCPU = CPUProcessor::procesar('correccion_ortografica_basica', $palabra);
             if ($corregidaCPU !== $palabra) {
                 \Yii::info("Corrección CPU aplicada: '{$palabra}' -> '{$corregidaCPU}'", 'ia-manager');
+                if (class_exists(\common\components\AICostTracker::class)) {
+                    \common\components\AICostTracker::registrarEvitada('cpu', 'corregirPalabra');
+                }
                 return [
                     'suggestion' => $corregidaCPU,
                     'confidence' => 0.7,
@@ -955,7 +973,7 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                 ];
             }
         }
-        
+
         // Si CPU no corrigió, usar LLM
         return $this->corregirPalabraConLLMReal($palabra, $contexto, $especialidad);
     }
@@ -970,6 +988,10 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
     private function corregirPalabraConLLMReal($palabra, $contexto, $especialidad = null)
     {
         try {
+            if (class_exists(\common\components\AICostTracker::class) && \common\components\AICostTracker::debeSimularIA()) {
+                \common\components\AICostTracker::registrarLlamadaSimulada('corregirPalabraLLM', 'text-correction');
+                return null;
+            }
             // Mejor prompt que enfatiza el contexto
             $prompt = "Eres un especialista médico en {$especialidad}. Analiza la siguiente oración médica y corrige SOLO la palabra indicada si tiene un error ortográfico. Si la palabra está correcta en el contexto, no la cambies.\n\n";
             $prompt .= "Oración: {$contexto}\n";
@@ -1238,6 +1260,9 @@ Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adiciona
                         $cached['cambios'] = $cambiosValidos;
                     }
                     \Yii::info("✅ CORRECCIÓN: Obtenida desde CACHE (texto: " . substr($texto, 0, 50) . "...)", 'ia-manager');
+                    if (class_exists(\common\components\AICostTracker::class)) {
+                        \common\components\AICostTracker::registrarEvitada('cache', 'corregirTextoCompleto');
+                    }
                     if ($logger) {
                         $logger->registrar(
                             'CACHE',
@@ -1328,6 +1353,19 @@ Texto: {$texto}";
                 ),
                 'ia-manager'
             );
+            
+            // Simulación en pruebas de costos: no enviar HTTP, devolver mock
+            if (class_exists(\common\components\AICostTracker::class) && \common\components\AICostTracker::debeSimularIA()) {
+                \common\components\AICostTracker::registrarLlamadaSimulada('corregirTextoCompleto', 'text-correction');
+                return [
+                    'texto_corregido' => $texto,
+                    'cambios' => [],
+                    'confidence' => 0,
+                    'total_changes' => 0,
+                    'processing_time' => microtime(true) - $inicio,
+                    'metodo' => 'mock'
+                ];
+            }
             
             // Realizar petición
             $client = new Client();

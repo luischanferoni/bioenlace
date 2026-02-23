@@ -29,6 +29,12 @@ El chat/bot debe **guiar al paciente en la comunicación previa a sacar el turno
 
 ---
 
+## Pruebas de costos de IA
+
+- [pruebas_costos_ia.md](pruebas_costos_ia.md) – Cómo definir conversaciones en archivos JSON, ejecutarlas por CLI o web (siempre con IA simulada) y leer el resumen de costos (evitadas vs simuladas).
+
+---
+
 ## Referencias
 
 - [CAPACIDADES_PACIENTE_MEDICO.md](../CAPACIDADES_PACIENTE_MEDICO.md) – Descripción de las capacidades.

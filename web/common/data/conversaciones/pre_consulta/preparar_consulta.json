@@ -1,0 +1,10 @@
+{
+  "tipo": "pre_consulta",
+  "nombre": "Preparar consulta",
+  "descripcion": "Usuario indica motivo o datos antes de la consulta",
+  "mensajes": [
+    "Tengo consulta mañana",
+    "Es por un dolor de cabeza que no se me va",
+    "Hace una semana más o menos"
+  ]
+}

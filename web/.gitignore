@@ -48,3 +48,5 @@ frontend/runtime/logs/analisis-consultas/*.log
 !package.json
 # Excluir templates JSON de form_config del ignore
 !frontend/views/json/**/*.json
+# Conversaciones de prueba para costos de IA
+!common/data/conversaciones/**/*.json

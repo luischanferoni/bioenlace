@@ -1,0 +1,9 @@
+{
+  "tipo": "pre_turno",
+  "nombre": "Cancelar turno",
+  "descripcion": "Usuario solicita cancelar o reprogramar un turno",
+  "mensajes": [
+    "Necesito cancelar mi turno",
+    "El del martes a las 10"
+  ]
+}

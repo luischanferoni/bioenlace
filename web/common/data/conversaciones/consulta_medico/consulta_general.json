@@ -1,0 +1,9 @@
+{
+  "tipo": "consulta_medico",
+  "nombre": "Consulta médica general",
+  "descripcion": "Interacción durante la consulta con el médico",
+  "mensajes": [
+    "¿Qué me recomienda para el dolor?",
+    "¿Puedo tomar ibuprofeno con el ayuno?"
+  ]
+}

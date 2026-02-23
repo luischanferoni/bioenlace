@@ -1,0 +1,9 @@
+{
+  "tipo": "sistema",
+  "nombre": "Ayuda general",
+  "descripcion": "Preguntas sobre uso del sistema",
+  "mensajes": [
+    "¿Qué puedo hacer aquí?",
+    "¿Dónde veo mis turnos?"
+  ]
+}

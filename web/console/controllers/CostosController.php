@@ -74,6 +74,9 @@ class CostosController extends Controller
                 $texto = $result['response']['text'] ?? ($result['error'] ?? json_encode($result));
                 $respuestas[] = ['mensaje' => $mensaje, 'respuesta' => $texto];
                 $this->stdout("      Bot: " . mb_substr($texto, 0, 120) . (mb_strlen($texto) > 120 ? '...' : '') . "\n");
+                if (!empty($result['error']) && !empty($result['metadata']['error_details'])) {
+                    $this->stderr("      Detalle: " . $result['metadata']['error_details'] . "\n", \yii\helpers\Console::FG_YELLOW);
+                }
             } catch (\Throwable $e) {
                 $this->stderr("      Error: " . $e->getMessage() . "\n", \yii\helpers\Console::FG_RED);
                 $respuestas[] = ['mensaje' => $mensaje, 'error' => $e->getMessage()];

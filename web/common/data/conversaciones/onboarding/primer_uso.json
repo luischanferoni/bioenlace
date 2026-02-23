@@ -1,0 +1,10 @@
+{
+  "tipo": "onboarding",
+  "nombre": "Primer uso",
+  "descripcion": "Usuario nuevo conociendo el sistema",
+  "mensajes": [
+    "Hola, soy nuevo",
+    "¿Cómo saco un turno?",
+    "Gracias"
+  ]
+}

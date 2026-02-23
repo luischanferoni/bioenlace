@@ -1,0 +1,10 @@
+{
+  "tipo": "pre_turno",
+  "nombre": "Sacar turno completo",
+  "descripcion": "Usuario pide turno e indica servicio y día",
+  "mensajes": [
+    "Hola, quiero sacar un turno",
+    "Para clínica médica",
+    "Mañana a la tarde"
+  ]
+}

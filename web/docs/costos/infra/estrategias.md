@@ -9,6 +9,7 @@ Este documento detalla cómo **reducir el costo real** de la infra (GPU en RunPo
 | Palanca | Reducción estimada (% del costo real de infra) |
 |---------|--------------------------------------------------|
 | Optimizaciones de código (menos carga por consulta) | **40–60%** |
+| Modelos más pequeños o específicos por tarea | **20–50%** (coste de inferencia) |
 | Elegir plan más barato (Spot/Preemptible vs RunPod) | **43–88%** |
 | Economías de escala (más consultas por misma instancia) | Menor $/consulta (no % del total) |
 
@@ -35,6 +36,14 @@ Este documento detalla cómo **reducir el costo real** de la infra (GPU en RunPo
 - **Qué hace**: A mayor volumen de consultas por médico (o por instancia), el costo **por consulta** baja cuando el costo mensual del plan es fijo (RunPod).
 - **Cómo**: Agrupar médicos en la misma infra; dimensionar instancias para un uso medio-alto sin sobredimensionar.
 - **Efecto**: No es % de reducción del costo total mensual del plan, sino **menor costo por consulta** (referencia [infra/costos.md](costos.md), escenarios por volumen).
+
+---
+
+## 4. Usar modelos más pequeños o específicos por tarea
+
+- **Qué hace**: En nuestra GPU el costo depende del tiempo de inferencia. Modelos con menos parámetros (p. ej. 7B frente a 13B/70B) o modelos acotados por tarea (corrección, clasificación de intents, resúmenes cortos) consumen menos tiempo de GPU por llamada, lo que reduce el costo por consulta.
+- **Cómo**: Sustituir el modelo grande por uno más pequeño donde la calidad lo permita; usar encoders o modelos de 1–3B para tareas concretas (corrección, clasificación) y reservar el modelo grande solo para chat complejo o análisis. Parámetros de modelo en `params.php` (`hf_model_*`, etc.).
+- **Reducción estimada**: **20–50%** del costo de inferencia en conjunto; si la mayoría de las llamadas pasan a modelos pequeños o específicos, hasta **40–60%**. Se suma a las optimizaciones de código (caché, uso condicional).
 
 ---
 

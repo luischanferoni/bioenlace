@@ -5,6 +5,7 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 ## Supuestos base
 
 - **Consultas por médico**: 20/día = 600/mes (31 días).
+- **Consulta típica**: 600–1.500 tokens totales (input + output). A mayor cantidad de tokens, mayor costo por consulta (más tiempo de GPU por inferencia).
 - **Costo real**: se indica por plan y por ítem en las tablas siguientes.
 
 ---
@@ -65,6 +66,20 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 | **AWS Reserved** | $0.008–0.011 | $4.56–6.84 |
 | **AWS Spot** | $0.0025–0.008 | $1.52–4.56 |
 | **GCP Preemptible** | $0.002–0.006 | $1.40–3.78 |
+
+---
+
+## Costo por consulta según tamaño del prompt (bandas de tokens)
+
+Las cifras del resumen anterior corresponden a una **consulta base** (600–1.500 tokens). Para prompts más cortos o más largos, el costo por consulta escala de forma aproximada con el total de tokens (input + output).
+
+| Banda | Tokens totales (aprox.) | Factor sobre costo base | RunPod 3090 (USD/consulta) | GCP Preemptible (USD/consulta) |
+|-------|-------------------------|--------------------------|----------------------------|--------------------------------|
+| Consulta corta | 200–600 | ~0,6 | ~$0.008 | ~$0.001–0.004 |
+| Consulta base | 600–1.500 | 1 | $0.014 | $0.002–0.006 |
+| Consulta larga | 1.500–3.000 | ~1,5–2 | ~$0.021–0.028 | ~$0.003–0.012 |
+
+El mismo factor se aplica al costo por consulta de los demás planes (AWS Reserved, Spot): multiplicar el USD/consulta del plan por el factor de la banda.
 
 ---
 

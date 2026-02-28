@@ -4,9 +4,9 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 
 ## Supuestos base
 
-- **Consultas por médico**: 20/día = 600/mes (31 días).
+- **Consultas por médico**: 20/día = 400/mes (20 × 20 días).
 - **Consulta típica**: 600–1.500 tokens totales (input + output). A mayor cantidad de tokens, mayor costo por consulta (más tiempo de GPU por inferencia).
-- **Costo real**: se indica por plan y por ítem en las tablas siguientes.
+- **Costo real**: se indica por plan y por ítem en las tablas siguientes. Las cifras asumen un **modelo de tamaño estándar**; con **modelos pequeños** (7B u equivalentes) el costo por consulta baja (ver sección [Modelos pequeños](#modelos-pequeños-7b-u-equivalentes-en-nuestra-gpu)).
 
 ---
 
@@ -15,8 +15,8 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 ### Plan 1: RunPod RTX 3090 (Recomendado)
 
 - **Costo**: $8.36/médico/mes
-- **Consultas/mes**: 600
-- **Costo por consulta**: $8.36 ÷ 600 ≈ **$0.014/consulta**
+- **Consultas/mes**: 400
+- **Costo por consulta**: $8.36 ÷ 400 ≈ **$0.021/consulta**
 
 **Ventajas**: Precio fijo, sin interrupciones, fácil de configurar.  
 **Desventajas**: Escalado manual, menos servicios que AWS/GCP.
@@ -25,7 +25,7 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 
 ### Plan 2: RunPod RTX 4090
 
-- **Costo**: $8.43/médico/mes | **Costo por consulta**: **$0.014/consulta**
+- **Costo**: $8.43/médico/mes | **Costo por consulta**: **$0.021/consulta**
 - **Ventajas**: GPU más potente. **Desventajas**: Algo más caro que 3090, escalado manual.
 
 ---
@@ -59,13 +59,13 @@ Este documento refleja el **costo real** de la infraestructura cuando la IA corr
 
 ## Resumen comparativo (costo real por consulta)
 
-| Plan de Hosting | Costo real (USD/consulta) | Costo real (USD/médico/mes, 600 consultas) |
+| Plan de Hosting | Costo real (USD/consulta) | Costo real (USD/médico/mes, 400 consultas) |
 |-----------------|---------------------------|---------------------------------------------|
-| **RunPod RTX 3090** | $0.014 | $8.36 |
-| **RunPod RTX 4090** | $0.014 | $8.43 |
-| **AWS Reserved** | $0.008–0.011 | $4.56–6.84 |
-| **AWS Spot** | $0.0025–0.008 | $1.52–4.56 |
-| **GCP Preemptible** | $0.002–0.006 | $1.40–3.78 |
+| **RunPod RTX 3090** | $0.021 | $8.36 |
+| **RunPod RTX 4090** | $0.021 | $8.43 |
+| **AWS Reserved** | $0.011–0.017 | $4.56–6.84 |
+| **AWS Spot** | $0.0038–0.011 | $1.52–4.56 |
+| **GCP Preemptible** | $0.0035–0.0095 | $1.40–3.78 |
 
 ---
 
@@ -75,11 +75,31 @@ Las cifras del resumen anterior corresponden a una **consulta base** (600–1.50
 
 | Banda | Tokens totales (aprox.) | Factor sobre costo base | RunPod 3090 (USD/consulta) | GCP Preemptible (USD/consulta) |
 |-------|-------------------------|--------------------------|----------------------------|--------------------------------|
-| Consulta corta | 200–600 | ~0,6 | ~$0.008 | ~$0.001–0.004 |
-| Consulta base | 600–1.500 | 1 | $0.014 | $0.002–0.006 |
-| Consulta larga | 1.500–3.000 | ~1,5–2 | ~$0.021–0.028 | ~$0.003–0.012 |
+| Consulta corta | 200–600 | ~0,6 | ~$0.013 | ~$0.002–0.006 |
+| Consulta base | 600–1.500 | 1 | $0.021 | $0.0035–0.0095 |
+| Consulta larga | 1.500–3.000 | ~1,5–2 | ~$0.032–0.042 | ~$0.005–0.019 |
 
 El mismo factor se aplica al costo por consulta de los demás planes (AWS Reserved, Spot): multiplicar el USD/consulta del plan por el factor de la banda.
+
+---
+
+## Modelos pequeños (7B u equivalentes) en nuestra GPU
+
+Con **modelos chicos** (p. ej. 7B parámetros) la inferencia es más rápida: la misma GPU atiende más consultas por hora. El costo mensual del plan no cambia, pero el **costo por consulta** baja porque repartimos el mismo costo fijo entre más consultas.
+
+Supuesto: consulta típica ~1.500 tokens; modelo pequeño ~2× más rápido que modelo grande en la misma GPU ⇒ hasta ~**2× más consultas** por mes con la misma máquina, o bien mismo volumen con menor uso de GPU.
+
+**Costo por consulta aproximado con modelo pequeño** (400 consultas/mes como referencia; si se duplica throughput, equivale a ~$ por 800 “slots”):
+
+| Plan de Hosting | Costo real (USD/consulta) modelo estándar | Con modelo pequeño (~2× throughput) |
+|-----------------|-------------------------------------------|-------------------------------------|
+| **RunPod RTX 3090** | $0.021 | **~$0.010–0.011** |
+| **RunPod RTX 4090** | $0.021 | **~$0.010–0.011** |
+| **AWS Reserved** | $0.011–0.017 | **~$0.0055–0.0085** |
+| **AWS Spot** | $0.0038–0.011 | **~$0.002–0.0055** |
+| **GCP Preemptible** | $0.0035–0.0095 | **~$0.0018–0.005** |
+
+*Rango orientativo*: con modelos chicos en nuestra infra, el costo por consulta de ~1.500 tokens puede quedar en **~$0.002–0.011/consulta** según plan, comparable en el extremo bajo a API con GPT-4o mini (~$0.0005–0.0007/consulta), pero con costo fijo de GPU ya asumido.
 
 ---
 
@@ -94,14 +114,14 @@ El mismo factor se aplica al costo por consulta de los demás planes (AWS Reserv
 | AWS Spot | $0.005–0.015 | $1.55–4.65 |
 | GCP Preemptible | $0.005–0.012 | $1.55–3.72 |
 
-### 20 consultas/día (600/mes) – Base
+### 20 consultas/día (400/mes) – Base
 
 | Plan | USD/consulta | USD/médico/mes |
 |------|--------------|----------------|
-| RunPod RTX 3090 | $0.014 | $8.36 |
-| AWS Reserved | $0.008–0.011 | $4.56–6.84 |
-| AWS Spot | $0.0025–0.008 | $1.52–4.56 |
-| GCP Preemptible | $0.002–0.006 | $1.40–3.78 |
+| RunPod RTX 3090 | $0.021 | $8.36 |
+| AWS Reserved | $0.011–0.017 | $4.56–6.84 |
+| AWS Spot | $0.0038–0.011 | $1.52–4.56 |
+| GCP Preemptible | $0.0035–0.0095 | $1.40–3.78 |
 
 ### 30 consultas/día (930/mes)
 
@@ -125,16 +145,16 @@ El mismo factor se aplica al costo por consulta de los demás planes (AWS Reserv
 
 ## Cargas adicionales de IA en nuestra infra
 
-Cuando la IA corre en nuestra GPU, estas capacidades suman **más llamadas de inferencia** además de las 600 consultas base. El costo por llamada es el mismo que el costo por consulta del plan elegido.
+Cuando la IA corre en nuestra GPU, estas capacidades suman **más llamadas de inferencia** además de las 400 consultas base. El costo por llamada es el mismo que el costo por consulta del plan elegido.
 
 ### Costo real de IA por llamada (referencia por plan)
 
 | Plan | USD por llamada IA (aprox.) |
 |------|-----------------------------|
-| RunPod RTX 3090/4090 | $0.014 |
-| AWS Reserved | $0.008–0.011 |
-| AWS Spot | $0.0025–0.008 |
-| GCP Preemptible | $0.002–0.006 |
+| RunPod RTX 3090/4090 | $0.021 |
+| AWS Reserved | $0.011–0.017 |
+| AWS Spot | $0.0038–0.011 |
+| GCP Preemptible | $0.0035–0.0095 |
 
 ---
 
@@ -146,10 +166,10 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 |----------|----------|----------------------------------|
 | Contactos pre-turno estimados | ~1.000/médico/mes (personas que inician para sacar turno) | — |
 | Mensajes con IA | 4 mensajes × 40% con IA ⇒ **~1.600 llamadas IA** | — |
-| **RunPod** ($0.014/llamada) | 1.600 × $0.014 | **~$22.40/médico/mes** |
-| **AWS Reserved** ($0.009/llamada) | 1.600 × $0.009 | **~$14.40/médico/mes** |
-| **AWS Spot** ($0.0025–0.008/llamada) | 1.600 × ($0.0025–0.008) | **~$4–12.80/médico/mes** |
-| **GCP Preemptible** ($0.002–0.006/llamada) | 1.600 × ($0.002–0.006) | **~$3.20–9.60/médico/mes** |
+| **RunPod** ($0.021/llamada) | 1.600 × $0.021 | **~$33.60/médico/mes** |
+| **AWS Reserved** ($0.014/llamada) | 1.600 × $0.014 | **~$22.40/médico/mes** |
+| **AWS Spot** ($0.0038–0.011/llamada) | 1.600 × ($0.0038–0.011) | **~$6.10–17.60/médico/mes** |
+| **GCP Preemptible** ($0.0035–0.0095/llamada) | 1.600 × ($0.0035–0.0095) | **~$5.60–15.20/médico/mes** |
 
 ---
 
@@ -157,11 +177,11 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Mensajes pre-consulta | 600 consultas × 5 mensajes = 3.000; 50% con IA ⇒ **1.500 llamadas IA** | — |
-| **RunPod** | 1.500 × $0.014 | **~$21/médico/mes** |
-| **AWS Reserved** | 1.500 × $0.009 | **~$13.50/médico/mes** |
-| **AWS Spot** | 1.500 × ($0.0025–0.008) | **~$3.75–12/médico/mes** |
-| **GCP Preemptible** | 1.500 × ($0.002–0.006) | **~$3–9/médico/mes** |
+| Mensajes pre-consulta | 400 consultas × 5 mensajes = 2.000; 50% con IA ⇒ **1.000 llamadas IA** | — |
+| **RunPod** | 1.000 × $0.021 | **~$21/médico/mes** |
+| **AWS Reserved** | 1.000 × $0.014 | **~$14/médico/mes** |
+| **AWS Spot** | 1.000 × ($0.0038–0.011) | **~$3.80–11/médico/mes** |
+| **GCP Preemptible** | 1.000 × ($0.0035–0.0095) | **~$3.50–9.50/médico/mes** |
 
 ---
 
@@ -170,10 +190,10 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
 | Llamadas IA/médico/mes | ~400 (20 nuevos × 10 + 100 activos × 2) | — |
-| **RunPod** | 400 × $0.014 | **~$5.60/médico/mes** |
-| **AWS Reserved** | 400 × $0.009 | **~$3.60/médico/mes** |
-| **AWS Spot** | 400 × ($0.0025–0.008) | **~$1–3.20/médico/mes** |
-| **GCP Preemptible** | 400 × ($0.002–0.006) | **~$0.80–2.40/médico/mes** |
+| **RunPod** | 400 × $0.021 | **~$8.40/médico/mes** |
+| **AWS Reserved** | 400 × $0.014 | **~$5.60/médico/mes** |
+| **AWS Spot** | 400 × ($0.0038–0.011) | **~$1.50–4.40/médico/mes** |
+| **GCP Preemptible** | 400 × ($0.0035–0.0095) | **~$1.40–3.80/médico/mes** |
 
 ---
 
@@ -181,10 +201,10 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 | Capacidad | Costo real (USD/médico/mes) |
 |-----------|-----------------------------|
-| Comunicación previa al turno (pre-turno) | $3.20–22.40 (según plan) |
-| Conversación pre-consulta | $3–21 (según plan) |
+| Comunicación previa al turno (pre-turno) | $5.60–33.60 (según plan) |
+| Conversación pre-consulta | $3.50–21 (según plan) |
 | Agente onboarding y día a día | $0.80–5.60 (según plan) |
-| **Subtotal IA en infra** | **~$7–49/médico/mes** (según plan) |
+| **Subtotal IA en infra** | **~$10–60/médico/mes** (según plan) |
 
 **Nota**: Medios (STT, Vision) y videollamadas no consumen GPU nuestra; su coste es por API y figura en [api/costos.md](../api/costos.md).
 

@@ -2,16 +2,17 @@
 
 Este documento refleja el **costo real** cuando se usan **APIs externas** (IA generativa, STT, Vision, videollamadas), **sin aplicar** estrategias de reducción. Las reducciones posibles se documentan en [api/estrategias.md](estrategias.md).
 
-Incluye: precios de referencia de Google Cloud y otros; coste por capacidad cuando la IA o los servicios corren vía API; y la **comunicación previa al turno** (pre-turno), que no estaba contemplada antes.
+Se consideran **APIs de Google** (Vertex AI/Gemini, Speech-to-Text, Vision) y **Together AI** (Llama 3.1 8B) para IA generativa. Incluye: precios de referencia, coste por capacidad y la **comunicación previa al turno** (pre-turno).
 
 ## Supuestos base
 
 - **Consultas por médico**: 20/día = 400/mes (20×20, mismo que en [infra/costos.md](../infra/costos.md)).
+- **Proveedor de API (IA generativa)**: se consideran **Google (Vertex AI / Gemini)** y **Together AI (Llama 3.1 8B)**. Transcripción y análisis de imágenes: **Google** (Speech-to-Text, Vision API).
 - Todos los valores son **costo real** (uso completo sin caché ni optimizaciones).
 
 ---
 
-## Precios de referencia (Google Cloud y otros, 2025)
+## Precios de referencia (Google Cloud, 2025)
 
 | Servicio | Precio (USD) | Fuente / Notas |
 |----------|--------------|-----------------|
@@ -25,32 +26,17 @@ Para **Vertex AI / Gemini** y **videollamadas** (Twilio, Daily.co) conviene revi
 
 ---
 
-## Coste de IA vía API (referencia)
+## Coste de IA vía API – Google y Together AI
 
-Cuando la IA **no** corre en nuestra GPU sino vía **Vertex/Gemini, OpenAI, etc.**, el coste depende del proveedor y del modelo (p. ej. Gemini Flash vs Pro). Se asume que el coste por “llamada IA” equivalente es del orden de **$0.005–0.02** según modelo y longitud (referencia típica 2025). Para **modelos pequeños vía API** (p. ej. OpenAI GPT-4o mini), ver el desglose por token más abajo. Para cifras exactas, usar calculadoras del proveedor y [api/estrategias.md](estrategias.md) para reducir uso (modelo más barato, caché, tokens).
+### Google (Vertex AI / Gemini)
 
-### Desglose por token: OpenAI (GPT-4o mini)
+Para un modelo tipo **Gemini Flash** y consulta típica de 1.500 tokens (input + output), el coste por llamada es del orden de **$0.0005–0.001** por consulta (referencia 2025). A 400 consultas/mes: **aprox. $0.20–0.40/médico/mes** solo por IA de consultas. [Calculador de Google](https://cloud.google.com/vertex-ai/generative-ai/pricing).
 
-Precios típicos por millón de tokens (referencia 2025):
+### Together AI (Llama 3.1 8B)
 
-| Tipo   | USD por millón de tokens |
-|--------|---------------------------|
-| Input  | $0.15                     |
-| Output | $0.60                     |
+Precio **$0.18 por millón de tokens** (input y output; referencia [Together AI](https://docs.together.ai/docs/serverless-models)). Para consulta de 1.500 tokens: 1.500 × $0.18/1.000.000 ≈ **$0.00027 por consulta**. A 400 consultas/mes: **aprox. $0.11/médico/mes** solo por IA de consultas. Más barato que Gemini Flash por consulta; útil como alternativa para reducir coste de IA generativa.
 
-**Consulta de 1.500 tokens totales (input + output)** — según reparto ejemplo:
-
-| Reparto (input / output) | Cálculo | USD por consulta   |
-|--------------------------|---------|--------------------|
-| 1.000 in + 500 out       | 0,15×0,001 + 0,60×0,0005 | **≈ $0.00045** |
-| 750 + 750                | 0,15×0,00075 + 0,60×0,00075 | **≈ $0.00056** |
-| 500 + 1.000 (respuesta larga) | 0,15×0,0005 + 0,60×0,001 | **≈ $0.00068** |
-
-**Rango orientativo para consulta ~1.500 tokens**: **$0.0005–0.0007** por consulta (~0,05–0,07 céntimos USD).
-
-**A 400 consultas/mes (20×20)**: 400 × $0.0006 ≈ **~$0.24/médico/mes** solo por IA de consultas (modelo mini).
-
-Los modelos más caros (p. ej. GPT-4o estándar) o consultas más largas siguen en el rango **$0.005–0.02 por llamada**; usar calculadoras del proveedor para cifras exactas.
+Para cifras exactas, usar [api/estrategias.md](estrategias.md) y las páginas de precios de cada proveedor.
 
 ---
 
@@ -62,12 +48,9 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Contactos pre-turno | ~1.000/médico/mes; 4 mensajes × 40% con IA ⇒ **~1.600 llamadas IA** | — |
-| **IA vía API** (ej. $0.01/llamada media) | 1.600 × $0.01 | **~$16/médico/mes** (orden de magnitud) |
-| **IA vía API** (ej. Flash, ~$0.005/llamada) | 1.600 × $0.005 | **~$8/médico/mes** |
-| **IA vía API** (OpenAI GPT-4o mini, ~1.500 tokens/llamada) | 1.600 × $0.0006 | **~$0.96/médico/mes** |
-
-*Rango orientativo*: **~$1–16/médico/mes** (modelo mini a modelo estándar) según modelo y longitud de respuestas. Ver [api/estrategias.md](estrategias.md) para reducción (caché, reglas, menos % con IA).
+| Contactos pre-turno | 1.000/médico/mes; 4 mensajes × 40% con IA ⇒ **1.600 llamadas IA** | — |
+| **Google (Gemini Flash)** 1.600 × $0.0006/llamada | — | **aprox. $0.96/médico/mes** |
+| **Together AI (Llama 3.1 8B)** 1.600 × $0.00027/llamada | — | **aprox. $0.43/médico/mes** |
 
 ---
 
@@ -76,11 +59,8 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
 | Llamadas IA | 400 × 5 × 50% = **1.000 llamadas IA** | — |
-| **IA vía API** (ej. $0.01/llamada) | 1.000 × $0.01 | **~$10/médico/mes** |
-| **IA vía API** (Flash, ~$0.005) | 1.000 × $0.005 | **~$5/médico/mes** |
-| **IA vía API** (OpenAI GPT-4o mini, ~1.500 tokens/llamada) | 1.000 × $0.0006 | **~$0.60/médico/mes** |
-
-*Rango orientativo*: **~$0.60–10/médico/mes** (modelo mini a estándar).
+| **Google (Gemini Flash)** 1.000 × $0.0006/llamada | — | **aprox. $0.60/médico/mes** |
+| **Together AI (Llama 3.1 8B)** 1.000 × $0.00027/llamada | — | **aprox. $0.27/médico/mes** |
 
 ---
 
@@ -88,16 +68,22 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Llamadas IA/médico/mes | ~400 | — |
-| **IA vía API** (ej. $0.01/llamada) | 400 × $0.01 | **~$4/médico/mes** |
-| **IA vía API** (Flash, ~$0.005) | 400 × $0.005 | **~$2/médico/mes** |
-| **IA vía API** (OpenAI GPT-4o mini, ~1.500 tokens/llamada) | 400 × $0.0006 | **~$0.24/médico/mes** |
-
-*Rango orientativo*: **~$0.24–4/médico/mes** (modelo mini a estándar).
+| Llamadas IA/médico/mes | 400 | — |
+| **Google (Gemini Flash)** 400 × $0.0006/llamada | — | **aprox. $0.24/médico/mes** |
+| **Together AI (Llama 3.1 8B)** 400 × $0.00027/llamada | — | **aprox. $0.11/médico/mes** |
 
 ---
 
-### 4. Intercambio de audios, fotos y videos (STT + Vision)
+### 4. Consulta (IA de las 400 consultas/mes)
+
+| Concepto | Supuesto | Costo real mensual (por médico) |
+|----------|----------|----------------------------------|
+| **Google (Gemini Flash)** 400 × $0.0006/consulta | — | **aprox. $0.24/médico/mes** |
+| **Together AI (Llama 3.1 8B)** 400 × $0.00027/consulta | — | **aprox. $0.11/médico/mes** |
+
+---
+
+### 5. Intercambio de audios, fotos y videos (STT + Vision)
 
 **Modelo de uso**: Los medios no se almacenan en cloud; solo hay costo cuando se envía a la nube para analizar (STT, Vision). Ver [CAPACIDADES_PACIENTE_MEDICO.md](../../CAPACIDADES_PACIENTE_MEDICO.md).
 
@@ -110,7 +96,7 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 ---
 
-### 5. Videollamadas paciente–médico
+### 6. Videollamadas paciente–médico
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
@@ -124,16 +110,36 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 ## Resumen: costo real por API (por médico/mes)
 
-| Capacidad | Costo real (USD/médico/mes) |
-|-----------|-----------------------------|
-| Comunicación previa al turno (IA vía API) | ~$1–16 (mini a estándar) |
-| Conversación pre-consulta (IA vía API) | ~$0.60–10 (mini a estándar) |
-| Agente onboarding (IA vía API) | ~$0.24–4 (mini a estándar) |
-| Audios, fotos, videos (STT + Vision, uso máximo) | ~$5.44–6.40 |
-| Videollamadas (CPaaS) | ~$10–11.52 |
-| **Total adicional (API)** | **~$17–48/médico/mes** (modelo mini a estándar; según proveedor video) |
+**Apartado 1** usa **Google (Gemini Flash)** o **Together AI (Llama 3.1 8B)**; **Apartado 2** usa **Google** (STT, Vision). Cifras orientativas: Gemini Flash aprox. $0.0006/llamada (1.500 tokens), Together AI Llama 3.1 8B aprox. $0.00027/llamada.
 
-**Nota**: Si la IA de pre-turno, pre-consulta y onboarding corre en **nuestra infra**, esos ítems figuran en [infra/costos.md](../infra/costos.md) y no se duplican aquí; aquí solo se cuentan cuando se usan APIs de IA.
+### Apartado 1 – IA generativa (chat y consulta)
+
+| Concepto | Google (Gemini Flash) | Together AI (Llama 3.1 8B) |
+|----------|------------------------|-----------------------------|
+| Comunicación previa al turno | aprox. $0.96 | aprox. $0.43 |
+| Conversación pre-consulta | aprox. $0.60 | aprox. $0.27 |
+| Agente onboarding | aprox. $0.24 | aprox. $0.11 |
+| Consulta (400 consultas/mes) | aprox. $0.24 | aprox. $0.11 |
+| **Total (Apartado 1)** | **aprox. $2.04** | **aprox. $0.92** |
+
+### Apartado 2 – Medios (transcripción y análisis de imágenes)
+
+Solo Google (Speech-to-Text, Vision API).
+
+| Concepto | Costo real (USD/médico/mes) |
+|----------|-----------------------------|
+| Transcripción de audios (STT, Google) | $5.44 (V1, 60 min gratis) – $6.40 (V2) |
+| Análisis de fotos (Vision API, Google) | $0 (800 imágenes; 1.000 gratis/mes) |
+| **Total (Apartado 2)** | **aprox. $5.44–6.40** |
+
+### Total general
+
+| Proveedor IA (Apartado 1) | Total Apartado 1 | Total Apartado 2 | **Total general** |
+|---------------------------|------------------|------------------|-------------------|
+| Google (Gemini Flash) | aprox. $2.04 | aprox. $5.44–6.40 | **aprox. $7.50–8.44** |
+| Together AI (Llama 3.1 8B) | aprox. $0.92 | aprox. $5.44–6.40 | **aprox. $6.36–7.32** |
+
+**Nota**: Si la IA de pre-turno, pre-consulta, onboarding y consulta corre en **nuestra infra**, esos ítems figuran en [infra/costos.md](../infra/costos.md) y no se duplican aquí. Videollamadas (Twilio, Daily.co, etc.) no están incluidas en este resumen; ver sección correspondiente si aplica.
 
 ---
 
@@ -141,4 +147,5 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 - [api/estrategias.md](estrategias.md) – Cómo reducir coste vía API.
 - [infra/costos.md](../infra/costos.md) – Costes cuando la IA corre en nuestra GPU.
+- [Together AI – Serverless Models / Pricing](https://docs.together.ai/docs/serverless-models) – Llama 3.1 8B y otros modelos.
 - [CAPACIDADES_PACIENTE_MEDICO.md](../../CAPACIDADES_PACIENTE_MEDICO.md) – Descripción de las capacidades.

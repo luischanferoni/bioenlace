@@ -11,11 +11,11 @@ Estas mismas tácticas, al reducir **llamadas a IA**, también reducen la carga 
 | Área | Costo real ref. (api/costos.md) | Reducción estimada | Palancas principales |
 |------|---------------------------------|--------------------|-----------------------|
 | IA / modelos (chat, corrección, análisis) | Según modelo y volumen | **40–60%** | Caché, uso condicional, modelo más barato |
-| Comunicación pre-turno | ~$8–16/médico/mes | **30–50%** | Menos % que llama IA, respuestas predefinidas, caché |
-| Pre-consulta | ~$7.50–15/médico/mes | **30–50%** | Idem |
-| Onboarding | ~$2–4/médico/mes | **Hasta ~60%** | Flujos guiados, FAQ, caché |
-| Medios (STT + Vision) | ~$8.95–9.60/médico/mes | **50–100%** | Transcribir/analizar solo cuando aporte; tier gratis; caché |
-| Videollamadas | ~$10–17.30/médico/mes | **20–50%** | Plan por asiento, límite de duración, proveedor |
+| Comunicación pre-turno | $8–16/médico/mes | **30–50%** | Menos % que llama IA, respuestas predefinidas, caché |
+| Pre-consulta | $7.50–15/médico/mes | **30–50%** | Idem |
+| Onboarding | $2–4/médico/mes | **Hasta 60%** | Flujos guiados, FAQ, caché |
+| Medios (STT + Vision) | $8.95–9.60/médico/mes | **50–100%** | Transcribir/analizar solo cuando aporte; tier gratis; caché |
+| Videollamadas | $10–17.30/médico/mes | **20–50%** | Plan por asiento, límite de duración, proveedor |
 
 ---
 
@@ -86,7 +86,7 @@ El chat que guía al paciente **antes** de sacar el turno (puede terminar en tur
 
 ## 4. Agente de onboarding y día a día
 
-- **Flujos guiados y FAQ primero**: Resolver con árboles de decisión, botones y respuestas fijas; IA solo cuando el usuario hace pregunta libre no cubierta. **Hasta ~60%** del costo real del agente.
+- **Flujos guiados y FAQ primero**: Resolver con árboles de decisión, botones y respuestas fijas; IA solo cuando el usuario hace pregunta libre no cubierta. **Hasta 60%** del costo real del agente.
 - **Caché por tipo de consulta**: **20–40%**.
 - **Reducir interacciones por usuario** (mejor UX, menos pasos): **Variable**.
 

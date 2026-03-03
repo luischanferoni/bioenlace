@@ -6,9 +6,12 @@ import 'package:shared/shared.dart';
 
 import '../models/turno.dart';
 import '../services/turnos_service.dart';
+import '../services/internados_service.dart';
+import '../services/guardia_service.dart';
 import 'patient_timeline_screen.dart';
 
-/// Pantalla principal del médico - Listado de turnos (igual que la web)
+/// Pantalla principal del médico. Contenido según encounter class:
+/// AMB/VR/OBSENC/HH = turnos; IMP = pacientes internados; EMER = ingresos en guardia.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -29,24 +32,33 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TurnosService _turnosService = TurnosService();
+  final InternadosService _internadosService = InternadosService();
+  final GuardiaService _guardiaService = GuardiaService();
+
   List<Turno> _turnos = [];
+  List<InternadoItem> _internados = [];
+  List<GuardiaItem> _guardia = [];
   bool _isLoading = true;
   String _errorMessage = '';
   DateTime _fechaSeleccionada = DateTime.now();
 
+  String _encounterClass = 'AMB';
+  int? _efectorId;
+
   @override
   void initState() {
     super.initState();
-    // Configurar userId para desarrollo/simulación
     _turnosService.userId = widget.userId;
-    
+    _internadosService.userId = widget.userId;
+    _guardiaService.userId = widget.userId;
     if (widget.authToken != null && widget.authToken!.isNotEmpty) {
       _turnosService.authToken = widget.authToken;
+      _internadosService.authToken = widget.authToken;
+      _guardiaService.authToken = widget.authToken;
     } else {
-      // Si no hay token, intentar obtenerlo de SharedPreferences
       _loadAuthToken();
     }
-    _cargarTurnos();
+    _loadEncounterAndData();
   }
 
   Future<void> _loadAuthToken() async {
@@ -56,16 +68,74 @@ class _HomeScreenState extends State<HomeScreen> {
       if (token != null && token.isNotEmpty) {
         setState(() {
           _turnosService.authToken = token;
+          _internadosService.authToken = token;
+          _guardiaService.authToken = token;
         });
       } else {
-        // Si no hay token, usar userId para desarrollo/simulación
         setState(() {
           _turnosService.userId = widget.userId;
+          _internadosService.userId = widget.userId;
+          _guardiaService.userId = widget.userId;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Error al cargar token de autenticación: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadEncounterAndData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encounter = prefs.getString('encounter_class') ?? 'AMB';
+    final efectorId = prefs.getInt('efector_id');
+    setState(() {
+      _encounterClass = encounter;
+      _efectorId = efectorId;
+    });
+    if (encounter == 'IMP') {
+      _cargarInternados();
+    } else if (encounter == 'EMER') {
+      _cargarGuardia();
+    } else {
+      _cargarTurnos();
+    }
+  }
+
+  Future<void> _cargarInternados() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+    try {
+      final list = await _internadosService.getInternados(efectorId: _efectorId);
+      setState(() {
+        _internados = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error al cargar internados: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _cargarGuardia() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+    try {
+      final list = await _guardiaService.getGuardia(efectorId: _efectorId);
+      setState(() {
+        _guardia = list;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error al cargar guardia: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -139,81 +209,90 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  VoidCallback get _onRetry {
+    if (_encounterClass == 'IMP') return _cargarInternados;
+    if (_encounterClass == 'EMER') return _cargarGuardia;
+    return _cargarTurnos;
+  }
+
   @override
   Widget build(BuildContext context) {
     final esHoy = _fechaSeleccionada.year == DateTime.now().year &&
         _fechaSeleccionada.month == DateTime.now().month &&
         _fechaSeleccionada.day == DateTime.now().day;
     final siguienteTurno = esHoy ? _obtenerSiguienteTurno() : null;
+    final isTurnosView = _encounterClass != 'IMP' && _encounterClass != 'EMER';
 
     return Container(
       color: AppTheme.backgroundColor,
       child: Column(
         children: [
-          // Header con fecha y navegación (igual que la web)
           SafeArea(
             bottom: false,
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 16.0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
               color: Colors.white,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
-                      _formatearFechaAmigable(_fechaSeleccionada),
-                      style: AppTheme.h2Style.copyWith(
-                        color: AppTheme.dark,
-                        fontSize: 20,
-                      ),
+                      _encounterClass == 'IMP'
+                          ? 'Pacientes internados'
+                          : _encounterClass == 'EMER'
+                              ? 'Ingresos en guardia'
+                              : _formatearFechaAmigable(_fechaSeleccionada),
+                      style: AppTheme.h2Style.copyWith(color: AppTheme.dark, fontSize: 20),
                     ),
                   ),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => _cambiarFecha(-1),
-                        icon: const Icon(Icons.chevron_left, size: 16),
-                        label: const Text('Anterior'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.secondaryColor,
-                          side: const BorderSide(color: AppTheme.secondaryColor),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  if (isTurnosView)
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _cambiarFecha(-1),
+                          icon: const Icon(Icons.chevron_left, size: 16),
+                          label: const Text('Anterior'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.secondaryColor,
+                            side: const BorderSide(color: AppTheme.secondaryColor),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: _irAHoy,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.secondaryColor,
-                          side: const BorderSide(color: AppTheme.secondaryColor),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _irAHoy,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.secondaryColor,
+                            side: const BorderSide(color: AppTheme.secondaryColor),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          child: const Text('Hoy'),
                         ),
-                        child: const Text('Hoy'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => _cambiarFecha(1),
-                        icon: const Icon(Icons.chevron_right, size: 16),
-                        label: const Text('Siguiente'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.secondaryColor,
-                          side: const BorderSide(color: AppTheme.secondaryColor),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => _cambiarFecha(1),
+                          icon: const Icon(Icons.chevron_right, size: 16),
+                          label: const Text('Siguiente'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.secondaryColor,
+                            side: const BorderSide(color: AppTheme.secondaryColor),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    )
+                  else
+                    IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: _isLoading ? null : (_encounterClass == 'IMP' ? _cargarInternados : _cargarGuardia),
+                    ),
                 ],
               ),
             ),
           ),
-          // Contenido
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -222,44 +301,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 48,
-                              color: AppTheme.dangerColor,
-                            ),
+                            Icon(Icons.error_outline, size: 48, color: AppTheme.dangerColor),
                             const SizedBox(height: 16),
-                            Text(
-                              _errorMessage,
-                              style: AppTheme.subTitleStyle,
-                              textAlign: TextAlign.center,
-                            ),
+                            Text(_errorMessage, style: AppTheme.subTitleStyle, textAlign: TextAlign.center),
                             const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _cargarTurnos,
-                              child: const Text('Reintentar'),
-                            ),
+                            ElevatedButton(onPressed: _onRetry, child: const Text('Reintentar')),
                           ],
                         ),
                       )
-                    : _turnos.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  size: 48,
-                                  color: AppTheme.infoColor,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No hay turnos programados para esta fecha.',
-                                  style: AppTheme.subTitleStyle,
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView(
+                    : _encounterClass == 'IMP'
+                        ? _buildInternadosList()
+                        : _encounterClass == 'EMER'
+                            ? _buildGuardiaList()
+                            : _turnos.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.info_outline, size: 48, color: AppTheme.infoColor),
+                                        const SizedBox(height: 16),
+                                        Text('No hay turnos programados para esta fecha.', style: AppTheme.subTitleStyle),
+                                      ],
+                                    ),
+                                  )
+                                : ListView(
                             padding: const EdgeInsets.all(16.0),
                             children: [
                               // Card de siguiente turno (solo si es hoy) - igual que la web
@@ -298,6 +363,80 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInternadosList() {
+    if (_internados.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.bed, size: 48, color: AppTheme.infoColor),
+            const SizedBox(height: 16),
+            Text('No hay pacientes internados.', style: AppTheme.subTitleStyle),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: _internados.length,
+      itemBuilder: (context, index) {
+        final i = _internados[index];
+        return Card(
+          elevation: 2,
+          child: ListTile(
+            leading: Icon(Icons.person, color: AppTheme.primaryColor),
+            title: Text(i.nombreCompleto, style: AppTheme.h5Style),
+            subtitle: Text(
+              [if (i.cama != null) 'Cama ${i.cama}', if (i.sala != null) 'Sala ${i.sala}', if (i.documento != null) 'Doc. ${i.documento}']
+                  .where((e) => e.isNotEmpty)
+                  .join(' · '),
+              style: AppTheme.subTitleStyle,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _verHistoriaClinica(i.idPersona),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGuardiaList() {
+    if (_guardia.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.emergency, size: 48, color: AppTheme.infoColor),
+            const SizedBox(height: 16),
+            Text('No hay ingresos en guardia.', style: AppTheme.subTitleStyle),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: _guardia.length,
+      itemBuilder: (context, index) {
+        final g = _guardia[index];
+        return Card(
+          elevation: 2,
+          child: ListTile(
+            leading: Icon(Icons.person, color: AppTheme.primaryColor),
+            title: Text(g.nombreCompleto, style: AppTheme.h5Style),
+            subtitle: Text(
+              [if (g.fecha != null) g.fecha!, if (g.hora != null) g.hora!, if (g.documento != null) 'Doc. ${g.documento}']
+                  .where((e) => e.isNotEmpty)
+                  .join(' · '),
+              style: AppTheme.subTitleStyle,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _verHistoriaClinica(g.idPersona),
+          ),
+        );
+      },
     );
   }
 

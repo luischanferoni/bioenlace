@@ -70,7 +70,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
             children: [
               // Header
               Text(
-                'VitaMind',
+                'BioEnlace',
                 style: AppTheme.h1Style.copyWith(
                   color: AppTheme.dark,
                   fontSize: 32,

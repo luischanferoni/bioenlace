@@ -10,13 +10,13 @@ import 'main_screen.dart';
 class ConfigWizardScreen extends StatefulWidget {
   final String userId;
   final String userName;
-  final String authToken;
+  final String? authToken;
 
   const ConfigWizardScreen({
     Key? key,
     required this.userId,
     required this.userName,
-    required this.authToken,
+    this.authToken,
   }) : super(key: key);
 
   @override
@@ -239,7 +239,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                   _buildStepConnector(),
                   _buildStepIndicator(1, 'Servicio'),
                   _buildStepConnector(),
-                  _buildStepIndicator(2, '√Årea'),
+                  _buildStepIndicator(2, '√ˇrea'),
                 ],
               ),
             ),
@@ -465,7 +465,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Seleccione el √Årea',
+            'Seleccione el √ˇrea',
             style: AppTheme.h2Style,
           ),
           const SizedBox(height: 8),

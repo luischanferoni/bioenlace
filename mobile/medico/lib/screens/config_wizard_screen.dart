@@ -216,14 +216,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Configuración Inicial',
-          style: AppTheme.h2Style.copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Configuraci?n Inicial')),
       body: Container(
         color: AppTheme.backgroundColor,
         child: Column(

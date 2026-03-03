@@ -44,6 +44,35 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: cardColor,
       elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: primaryColor,
+      foregroundColor: primaryColorDark,
+      elevation: 0,
+      centerTitle: false,
+      titleTextStyle: GoogleFonts.openSans(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        color: primaryColorDark,
+      ),
+      iconTheme: IconThemeData(color: primaryColorDark),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: cardColor,
+      selectedItemColor: primaryColor,
+      unselectedItemColor: subTitleTextColor,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: primaryColorDark,
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     ),
     iconTheme: IconThemeData(color: iconColor),
     dividerColor: dividerColor,
@@ -56,6 +85,15 @@ class AppTheme {
       ),
       filled: true,
       fillColor: cardColor,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: dividerColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: primaryColor, width: 1.5),
+      ),
     ),
     colorScheme: ColorScheme(
         primary: primaryColor,

@@ -58,14 +58,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Historia Clínica',
-          style: AppTheme.h2Style.copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Historia Clínica')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty

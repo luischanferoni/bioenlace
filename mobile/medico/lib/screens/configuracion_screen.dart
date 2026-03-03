@@ -122,14 +122,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Configuración',
-          style: AppTheme.h2Style.copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Configuración')),
       body: Container(
         color: AppTheme.backgroundColor,
         child: ListView(

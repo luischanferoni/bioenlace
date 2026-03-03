@@ -113,14 +113,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     final siguienteTurno = esHoy ? _obtenerSiguienteTurno() : null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Turnos',
-          style: AppTheme.h2Style.copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Turnos')),
       body: Container(
         color: AppTheme.backgroundColor,
         child: Column(

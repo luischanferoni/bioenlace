@@ -117,11 +117,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.titulo, style: AppTheme.h2Style.copyWith(color: Colors.white)),
-        backgroundColor: Theme.of(context).primaryColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: Text(widget.titulo)),
       body: Column(
         children: [
           Expanded(

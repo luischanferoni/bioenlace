@@ -72,11 +72,12 @@ void main() async {
       await prefs.setString('user_id', '5748');
       await prefs.setString('rrhh_id', '7830');
       await prefs.setString('user_name', 'Usuario Médico');
-      await prefs.setBool('is_logged_in', false); // No auto-login, requiere autenticación
       print('[DEBUG] main() - Valores iniciales guardados');
     }
+    // Para la app móvil del médico simulamos login biométrico correcto
+    await prefs.setBool('is_logged_in', true);
     
-    isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    isLoggedIn = true;
     userId = prefs.getString('user_id') ?? '5748';
     userName = prefs.getString('user_name') ?? 'Usuario Médico';
     
@@ -116,164 +117,84 @@ class MyApp extends StatelessWidget {
       title: 'BioEnlace Médico',
       theme: AppTheme.lightTheme,
       navigatorKey: navigatorKey,
-      home: isLoggedIn && userId.isNotEmpty
-          ? FutureBuilder<Map<String, dynamic>>(
-              future: _getUserData(),
-              builder: (context, snapshot) {
-                print('[DEBUG] FutureBuilder - connectionState: ${snapshot.connectionState}');
-                print('[DEBUG] FutureBuilder - hasData: ${snapshot.hasData}');
-                print('[DEBUG] FutureBuilder - hasError: ${snapshot.hasError}');
-                
-                // Manejar estado de conexión
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  print('[DEBUG] FutureBuilder - Mostrando loading...');
-                  return const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                
-                // Manejar errores
-                if (snapshot.hasError) {
-                  print('[ERROR] FutureBuilder - Error: ${snapshot.error}');
-                  return Scaffold(
-                    body: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                          const SizedBox(height: 16),
-                          Text('Error al cargar datos: ${snapshot.error}'),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              // Recargar la app
-                              runApp(MyApp(
-                                isLoggedIn: isLoggedIn,
-                                userId: userId,
-                                userName: userName,
-                              ));
-                            },
-                            child: const Text('Reintentar'),
-                          ),
-                        ],
-                      ),
+      home: FutureBuilder<Map<String, dynamic>>(
+        future: _getUserData(),
+        builder: (context, snapshot) {
+          print('[DEBUG] FutureBuilder - connectionState: ${snapshot.connectionState}');
+          print('[DEBUG] FutureBuilder - hasData: ${snapshot.hasData}');
+          print('[DEBUG] FutureBuilder - hasError: ${snapshot.hasError}');
+          
+          // Manejar estado de conexión
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            print('[DEBUG] FutureBuilder - Mostrando loading...');
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          
+          // Manejar errores
+          if (snapshot.hasError) {
+            print('[ERROR] FutureBuilder - Error: ${snapshot.error}');
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error al cargar datos: ${snapshot.error}'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Recargar la app
+                        runApp(MyApp(
+                          isLoggedIn: isLoggedIn,
+                          userId: userId,
+                          userName: userName,
+                        ));
+                      },
+                      child: const Text('Reintentar'),
                     ),
-                  );
-                }
-                
-                // Si no hay datos, mostrar login
-                if (!snapshot.hasData) {
-                  print('[DEBUG] FutureBuilder - No hay datos, mostrando LoginScreen');
-                  return LoginScreen(
-                    appTitle: 'Bienvenido a BioEnlace Médico',
-                    appSubtitle: 'Tu plataforma de gestión médica',
-                    // Textos personalizados para la app del médico
-                    welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
-                    onLoginSuccess: (_, __, ___) {},
-                  );
-                }
-                
-                final data = snapshot.data!;
-                final authToken = data['authToken'] as String?;
-                final configCompleted = data['configCompleted'] as bool? ?? false;
-                
-                print('[DEBUG] FutureBuilder - authToken: ${authToken != null ? "${authToken.substring(0, authToken.length > 20 ? 20 : authToken.length)}..." : "null"}');
-                print('[DEBUG] FutureBuilder - configCompleted: $configCompleted');
-                
-                // Si no hay token, siempre mostrar login (incluso si config está completa)
-                if (authToken == null || authToken.isEmpty) {
-                  print('[DEBUG] FutureBuilder - No hay authToken, mostrando LoginScreen');
-                  return LoginScreen(
-                    appTitle: 'Bienvenido a BioEnlace Médico',
-                    appSubtitle: 'Tu plataforma de gestión médica',
-                    // Textos personalizados para la app del médico
-                    welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
-                    onLoginSuccess: (userId, userName, loginContext) async {
-                      print('[DEBUG] onLoginSuccess (dentro FutureBuilder) - userId: $userId, userName: $userName');
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('is_logged_in', true);
-                      await prefs.setString('user_id', userId);
-                      await prefs.setString('user_name', userName);
-                      
-                      print('[DEBUG] onLoginSuccess (dentro FutureBuilder) - Datos guardados, esperando delay...');
-                      // Pequeño delay para asegurar que SharedPreferences se haya guardado completamente
-                      await Future.delayed(const Duration(milliseconds: 100));
-                      
-                      // Reconstruir la app completamente para que lea los nuevos valores
-                      final newPrefs = await SharedPreferences.getInstance();
-                      final newIsLoggedIn = newPrefs.getBool('is_logged_in') ?? false;
-                      final newUserId = newPrefs.getString('user_id') ?? userId;
-                      final newUserName = newPrefs.getString('user_name') ?? userName;
-                      
-                      print('[DEBUG] onLoginSuccess (dentro FutureBuilder) - Reconstruyendo app con isLoggedIn: $newIsLoggedIn');
-                      // Reconstruir la app con los nuevos valores
-                      runApp(MyApp(
-                        isLoggedIn: newIsLoggedIn,
-                        userId: newUserId,
-                        userName: newUserName,
-                      ));
-                    },
-                  );
-                }
-                
-                // Si la configuración no está completa, mostrar wizard
-                if (!configCompleted) {
-                  print('[DEBUG] FutureBuilder - Config no completa, mostrando ConfigWizardScreen');
-                  return ConfigWizardScreen(
-                    userId: userId,
-                    userName: userName,
-                    authToken: authToken,
-                  );
-                }
-                
-                // Todo configurado y con token válido, mostrar MainScreen
-                print('[DEBUG] FutureBuilder - Todo configurado, mostrando MainScreen');
-                return MainScreen(
-                  userId: userId,
-                  userName: userName,
-                  authToken: authToken,
-                  rrhhId: data['rrhhId'] as String? ?? '7830',
-                );
-              },
-            )
-          : LoginScreen(
-              appTitle: 'Bienvenido a BioEnlace Médico',
-              appSubtitle: 'Tu plataforma de gestión médica',
-              // Textos personalizados para la app del médico
-              welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
-              onLoginSuccess: (userId, userName, loginContext) async {
-                print('[DEBUG] onLoginSuccess (LoginScreen inicial) - userId: $userId, userName: $userName');
-                // Guardar estado de login
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setBool('is_logged_in', true);
-                await prefs.setString('user_id', userId);
-                await prefs.setString('user_name', userName);
-                
-                print('[DEBUG] onLoginSuccess (LoginScreen inicial) - Datos guardados');
-                print('[DEBUG] onLoginSuccess (LoginScreen inicial) - auth_token existe: ${prefs.containsKey('auth_token')}');
-                print('[DEBUG] onLoginSuccess (LoginScreen inicial) - config_completed: ${prefs.getBool('config_completed') ?? false}');
-                
-                // Pequeño delay para asegurar que SharedPreferences se haya guardado completamente
-                await Future.delayed(const Duration(milliseconds: 100));
-                
-                // Reconstruir la app completamente para que lea los nuevos valores
-                // Esto asegura que el MaterialApp se reconstruya con el nuevo estado
-                final newPrefs = await SharedPreferences.getInstance();
-                final newIsLoggedIn = newPrefs.getBool('is_logged_in') ?? false;
-                final newUserId = newPrefs.getString('user_id') ?? userId;
-                final newUserName = newPrefs.getString('user_name') ?? userName;
-                
-                print('[DEBUG] onLoginSuccess (LoginScreen inicial) - Reconstruyendo app con isLoggedIn: $newIsLoggedIn');
-                print('[DEBUG] onLoginSuccess (LoginScreen inicial) - newUserId: $newUserId, newUserName: $newUserName');
-                
-                // Reconstruir la app con los nuevos valores
-                runApp(MyApp(
-                  isLoggedIn: newIsLoggedIn,
-                  userId: newUserId,
-                  userName: newUserName,
-                ));
-              },
-            ),
+                  ],
+                ),
+              ),
+            );
+          }
+          
+          if (!snapshot.hasData) {
+            print('[DEBUG] FutureBuilder - No hay datos, usando valores por defecto');
+            return const Scaffold(
+              body: Center(child: Text('No se pudieron cargar datos de usuario')),
+            );
+          }
+          
+          final data = snapshot.data!;
+          final authToken = data['authToken'] as String?;
+          final configCompleted = data['configCompleted'] as bool? ?? false;
+          
+          print('[DEBUG] FutureBuilder - authToken: ${authToken != null ? "${authToken.substring(0, authToken.length > 20 ? 20 : authToken.length)}..." : "null"}');
+          print('[DEBUG] FutureBuilder - configCompleted: $configCompleted');
+          
+          // Si la configuración no está completa, mostrar wizard (aunque no haya token, se usa user_id para desarrollo)
+          if (!configCompleted) {
+            print('[DEBUG] FutureBuilder - Config no completa, mostrando ConfigWizardScreen');
+            return ConfigWizardScreen(
+              userId: userId,
+              userName: userName,
+              authToken: authToken,
+            );
+          }
+          
+          // Todo configurado, mostrar MainScreen (puede operar en modo desarrollo con user_id)
+          print('[DEBUG] FutureBuilder - Todo configurado, mostrando MainScreen');
+          return MainScreen(
+            userId: userId,
+            userName: userName,
+            authToken: authToken,
+            rrhhId: data['rrhhId'] as String? ?? '7830',
+          );
+        },
+      ),
     );
   }
 }

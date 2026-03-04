@@ -53,14 +53,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Acciones',
-          style: AppTheme.h2Style.copyWith(color: Colors.white),
-        ),
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Acciones')),
       body: Container(
         color: AppTheme.backgroundColor,
         child: SingleChildScrollView(
@@ -70,7 +63,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
             children: [
               // Header
               Text(
-                'VitaMind',
+                'BioEnlace',
                 style: AppTheme.h1Style.copyWith(
                   color: AppTheme.dark,
                   fontSize: 32,

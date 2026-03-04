@@ -126,7 +126,7 @@ return [
                 'GET api/<version:\w+>/turnos/eventos' => '<version>/turnos/eventos',
                 'OPTIONS api/<version:\w+>/turnos/eventos' => '<version>/turnos/eventos',
                 'POST api/<version:\w+>/turnos' => '<version>/turnos/create',
-                'OPTIONS api/<version:\w+>/turnos' => '<version>/turnos/create',
+                'OPTIONS api/<version:\w+>/turnos' => '<version>/turnos/options',
                 'PUT api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',
                 'OPTIONS api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',
                 
@@ -134,6 +134,12 @@ return [
                 'GET api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
                 'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
                 
+                // Listados por encounter (internación, guardia)
+                'GET api/<version:\w+>/listado/internacion' => '<version>/listado/internacion',
+                'OPTIONS api/<version:\w+>/listado/internacion' => '<version>/listado/internacion',
+                'GET api/<version:\w+>/listado/guardia' => '<version>/listado/guardia',
+                'OPTIONS api/<version:\w+>/listado/guardia' => '<version>/listado/guardia',
+
                 // Config API
                 'GET api/<version:\w+>/config/efectores' => '<version>/config/efectores',
                 'OPTIONS api/<version:\w+>/config/efectores' => '<version>/config/efectores',

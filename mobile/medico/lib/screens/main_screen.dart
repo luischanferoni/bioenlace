@@ -26,15 +26,18 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  int _homeRefreshKey = 0;
 
-  final List<Widget> _screens = [];
+  void _onEncounterChanged() {
+    setState(() {
+      _homeRefreshKey++;
+    });
+  }
 
-  @override
-  void initState() {
-    super.initState();
-    // Inicializar las pantallas
-    _screens.addAll([
+  List<Widget> _buildScreens() {
+    return [
       HomeScreen(
+        key: ValueKey('home_$_homeRefreshKey'),
         userId: widget.userId,
         userName: widget.userName,
         authToken: widget.authToken,
@@ -47,8 +50,10 @@ class _MainScreenState extends State<MainScreen> {
       ConfiguracionScreen(
         userId: widget.userId,
         userName: widget.userName,
+        authToken: widget.authToken,
+        onEncounterChanged: _onEncounterChanged,
       ),
-    ]);
+    ];
   }
 
   void _onItemTapped(int index) {
@@ -62,14 +67,11 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: _screens,
+        children: _buildScreens(),
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppTheme.primaryColor,
-        unselectedItemColor: AppTheme.secondaryColor,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

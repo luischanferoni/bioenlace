@@ -76,7 +76,7 @@ $hola = 1;
                                                 $esMedico = User::hasRole(['Medico'], $superAdminAllowed = true);
 
                                                 $operaciones = ($esEnfermero || $esMedico)? Html::a('Atender', ['internacion/view', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';
-                                                $operaciones .=  ($esEnfermero || $esMedico)?Html::a('Ver Historial', ['paciente/historia', 'id' => $pacienteId], $options = ['class' => 'buttonsli dropdown-item']):'';
+                                                // Timeline deshabilitado: $operaciones .= ($esEnfermero || $esMedico)?Html::a('Ver Historial', ['paciente/historia', 'id' => $pacienteId], $options = ['class' => 'buttonsli dropdown-item']):'';
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Tratamientos', ['internacion/view', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Solicitar Practica', ['internacion-practica/create', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item buttonAltaMedica']):'';
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Medicamentos', ['internacion-suministro-medicamento/create', 'idi' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';

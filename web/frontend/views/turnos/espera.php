@@ -157,12 +157,9 @@ foreach ($turnos as $turno) { ?>
             ); ?>
             <br /><br />
             <?php
-            //TODO: agregarle un anchor para que cuando acceda al historial posicione en la linea de tiempo a la altura del turno
-            $urlConsulta = Url::toRoute('paciente/historia/'.$turno['id_persona']);
-            //$urlConsulta = Url::to(['paciente/historia/'.$turno['id_persona'].'?withOffcanvas='.ConsultasConfiguracion::crearUrlPorServicio($turno->id_servicio_asignado)]);
-            echo Html::a('Cargar Consulta', $urlConsulta,
-              ['class' => 'btn btn-success', 'id' => 'cargar_consulta']
-            ); 
+            // Timeline deshabilitado temporalmente
+            // $urlConsulta = Url::toRoute('paciente/historia/'.$turno['id_persona']);
+            // echo Html::a('Cargar Consulta', $urlConsulta, ['class' => 'btn btn-success', 'id' => 'cargar_consulta']);
           }
           ?>
 

@@ -8,7 +8,8 @@ import '../models/turno.dart';
 import '../services/turnos_service.dart';
 import '../services/internados_service.dart';
 import '../services/guardia_service.dart';
-import 'patient_timeline_screen.dart';
+// Timeline deshabilitado temporalmente
+// import 'patient_timeline_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
 /// AMB/VR/OBSENC/HH = turnos; IMP = pacientes internados; EMER = ingresos en guardia.
@@ -464,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: AppTheme.subTitleStyle,
             ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _verHistoriaClinica(i.idPersona),
+            onTap: () => _onTapSinTimeline(context),
           ),
         );
       },
@@ -501,7 +502,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: AppTheme.subTitleStyle,
             ),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _verHistoriaClinica(g.idPersona),
+            onTap: () => _onTapSinTimeline(context),
           ),
         );
       },
@@ -513,7 +514,7 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 0,
       color: AppTheme.primaryColor.withOpacity(0.1),
       child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona),
+        onTap: () => _onTapSinTimeline(context),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -571,7 +572,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       elevation: 0,
       child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona),
+        onTap: () => _onTapSinTimeline(context),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -645,14 +646,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     backgroundColor: _getEstadoColor(turno.estado).withOpacity(0.2),
                     labelStyle: TextStyle(color: _getEstadoColor(turno.estado)),
                   ),
-                  ElevatedButton(
-                    onPressed: () => _verHistoriaClinica(turno.idPersona),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    child: const Text('Cargar consulta'),
+                  // Timeline deshabilitado: botón Historia clínica oculto
+                  Text(
+                    'Historia clínica no disponible',
+                    style: AppTheme.subTitleStyle,
                   ),
                 ],
               ),
@@ -678,15 +675,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _verHistoriaClinica(int personaId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PatientTimelineScreen(
-          personaId: personaId,
-          authToken: widget.authToken,
-        ),
+  static void _onTapSinTimeline(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Historia clínica no disponible temporalmente.'),
       ),
     );
   }
+
+  // Timeline deshabilitado temporalmente
+  // void _verHistoriaClinica(int personaId) {
+  //   Navigator.push(context, MaterialPageRoute(
+  //     builder: (context) => PatientTimelineScreen(
+  //       personaId: personaId,
+  //       authToken: widget.authToken,
+  //     ),
+  //   ));
+  // }
 }

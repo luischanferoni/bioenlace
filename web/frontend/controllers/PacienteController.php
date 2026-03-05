@@ -60,6 +60,9 @@ class PacienteController extends Controller
      */
     public function actionHistoria($id)
     {
+        // Timeline deshabilitado temporalmente: redirigir a ficha del paciente
+        return $this->redirect(['personas/view', 'id' => $id]);
+
         $this->layout = 'blanco';
 
         $paciente = Persona::findOne($id);        

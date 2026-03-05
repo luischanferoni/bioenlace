@@ -17,7 +17,9 @@ $session = Yii::$app->getSession();
           <strong class="ps-5">Persona: </strong><?= $session_persona->nombre . ' ' . $session_persona->otro_nombre . ' ' . $session_persona->apellido . " " . $session_persona->otro_apellido ?>&nbsp;
           <strong><?= $session_persona->tipoDocumento->nombre . ' </strong> ' . $session_persona->documento ?>&nbsp;&nbsp;
           <?= Html::a('<span class="ps-5" style="font-size: large;"><i class="bi bi-person-lines-fill"></i></span>', ['personas/view', 'id' => $session_persona->id_persona], ['class' => 'alert-link', 'title' => 'Menu Persona']) ?>
-          <?= Html::a('<span class="ps-5" style="font-size: large;"><i class="bi bi-file-medical-fill"></i></span>', ['paciente/historia', 'id' => $session_persona->id_persona], ['class' => 'alert-link', 'title' => 'Historia Clínica']) ?>
+          <?php /* Timeline deshabilitado temporalmente - enlace a Historia Clínica
+          echo Html::a('<span class="ps-5" style="font-size: large;"><i class="bi bi-file-medical-fill"></i></span>', ['paciente/historia', 'id' => $session_persona->id_persona], ['class' => 'alert-link', 'title' => 'Historia Clínica']);
+          */ ?>
         </div>
 
         <div class="col-md-1 d-flex justify-content-end">

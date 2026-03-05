@@ -1667,10 +1667,10 @@ class PersonasController extends Controller
 
     private function crearUrlBotonV2($paciente)
     {
-        if (User::hasPermission('paciente/historia')) {
-            return Url::toRoute('paciente/historia/' . $paciente->id_persona);
-        }
-
+        // Timeline deshabilitado: no enlazar a paciente/historia
+        // if (User::hasPermission('paciente/historia')) {
+        //     return Url::toRoute('paciente/historia/' . $paciente->id_persona);
+        // }
         return Url::toRoute('personas/' . $paciente->id_persona);
     }
 }

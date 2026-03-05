@@ -75,9 +75,8 @@ use common\models\Persona;
                             <p class="mb-1"><strong><?= $guardia->paciente->tipoDocumento->nombre ?>: </strong> <?= $guardia->paciente->documento ?></p>
                         </div>
                         <div class="ms-1" style="width: 13%;">
-                            <a title="Historia" href='<?= Url::toRoute('paciente/historia/'.$guardia->id_persona) ?>' target="_blank" class="p-1 btn btn-dark btn-sm me-4 mt-4">
-                                Atender
-                            </a>                                  
+                            <?php /* Timeline deshabilitado: Url::toRoute('paciente/historia/'.$guardia->id_persona) */ ?>
+                            <span class="p-1 btn btn-dark btn-sm me-4 mt-4" title="Atender (historia clínica no disponible)">Atender</span>                                  
                         </div> 
                     </div>   
 

@@ -51,12 +51,14 @@ $this->registerJsFile(
                                         $nombreAcciones = '<div class="d-flex align-items-center"><div class="media-support-info">';
                                         $nombreAcciones .= "<h5 class='iq-sub-label'>".$data->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)."</h5>".
                                             "<div class='d-grid gap-card grid-cols-2 mt-3'>";
+                                            /* Timeline deshabilitado temporalmente
                                             if (User::hasRole("Medico") || User::hasRole("enfermeria")) {
                                                 $nombreAcciones .= Html::a('Historia Clínica', 
                                                         ['paciente/historia/'.$data->id_persona],
                                                         ['class' => 'btn btn-outline-info me-2']
                                                 );
                                             }
+                                            */
 
                                             $nombreAcciones .= Html::a('Finalizar', 
                                                     ['guardia/finalizar/'.$data->id],

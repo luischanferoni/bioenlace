@@ -929,8 +929,8 @@
             'bootstrap.min',
             'ajax-wrapper.js',
             'turnos.js',
-            'chat-inteligente.js',
-            'timeline.js'
+            'chat-inteligente.js'
+            // 'timeline.js' - deshabilitado temporalmente
         ];
         
         // Eliminar <link> tags de CSS que ya están cargados
@@ -1063,7 +1063,7 @@
             /\/create$/i,          // Formularios de creación
             /\/update\//i,         // Formularios de edición
             /\/reporte/i,          // Reportes
-            /\/timeline/i,         // Timelines
+            // /\/timeline/i,      // Timelines - deshabilitado temporalmente
             /\/historial/i         // Historiales
         ];
         

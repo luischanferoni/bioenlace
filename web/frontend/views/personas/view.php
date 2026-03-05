@@ -82,6 +82,7 @@ $this->registerJsFile(
                 <div class="card-body">
                     <h4 class="mb-2">Historia Clínica</h4>
                     <?php
+                    /* Timeline deshabilitado temporalmente
                     echo '<div class="row">' . Html::a(
                         'Ver Historia Clínica',
                         ['paciente/historia', 'id' => $model->id_persona],
@@ -91,6 +92,7 @@ $this->registerJsFile(
                             'title' => 'Historial del Paciente',
                         ]
                     ) . '</div>';
+                    */
                     ?>
 
                     <?= '<div class="row">' . Html::a(

@@ -122,9 +122,13 @@ class PersonaController extends BaseController
     /**
      * Obtener timeline completo de persona
      * Incluye: Turnos, Consultas, Internaciones, Guardias, Documentos Externos, Encuestas, Estudios
+     * Deshabilitado temporalmente: responde 503 si se llama (rutas comentadas en config).
      */
     public function actionTimeline($id)
     {
+        // Timeline deshabilitado temporalmente
+        return $this->error('Timeline no disponible temporalmente', null, 503);
+
         $persona = Persona::findOne($id);
         if (!$persona) {
             return $this->error('Persona no encontrada', null, 404);

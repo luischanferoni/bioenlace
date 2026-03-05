@@ -526,7 +526,8 @@ class Forms extends Component
             if ($instancia["createdFor"]) {
                 $paciente = Persona::findOne($instancia["createdFor"]);
                 #$instanciasResult[$key]["nombre"] = ($paciente) ? $paciente->getNombreCompleto('apellido_nombre') : 'No definido';
-                $instanciasResult[$key]["nombre"] = '<a href="' . \yii\helpers\Url::to(['paciente/historia/' . $paciente->id_persona]) . '" target="_blank">' . $paciente->apellido . ', ' . $paciente->nombre . ' ' . $paciente->otro_nombre . '</a>';
+                // Timeline deshabilitado: enlace a paciente/historia. Mostrar solo nombre.
+                $instanciasResult[$key]["nombre"] = $paciente->apellido . ', ' . $paciente->nombre . ' ' . $paciente->otro_nombre;
             } else {
                 $instanciasResult[$key]["nombre"] = 'No definido';
             }

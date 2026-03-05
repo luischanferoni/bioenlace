@@ -106,10 +106,8 @@ $this->params['breadcrumbs'][] = $this->title;
                                                                                 <div class="d-flex justify-content-evenly">
                                                                                     <?php 
                                                                                         if (User::hasRole("Medico") || User::hasRole("enfermeria")) {
-                                                                                            echo Html::a('Historia Clínica', 
-                                                                                                    ['paciente/historia/'.$dato->internacionActual->id_persona],
-                                                                                                    ['class' => 'btn btn-outline-info me-2']) . 
-                                                                                                Html::a('Internacion', 
+                                                                                            /* Timeline deshabilitado: Html::a('Historia Clínica', ['paciente/historia/'.$dato->internacionActual->id_persona], ...) . */
+                                                                                            echo Html::a('Internacion', 
                                                                                                     ['internacion/'.$dato->internacionActual->id],
                                                                                                     ['class' => 'btn btn-outline-success me-2']);
                                                                                         }

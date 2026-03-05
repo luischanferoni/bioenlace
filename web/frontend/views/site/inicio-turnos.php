@@ -39,7 +39,7 @@ $this->title = 'Inicio - Turnos';
                      data-expandable="false" 
                      data-full-page="true" 
                      data-action-type="appointment" 
-                     data-action-url="<?= Url::toRoute(['/paciente/historia', 'id' => 920779], true) ?>">
+                     data-action-url=""><?php /* Timeline deshabilitado: Url::toRoute(['/paciente/historia', 'id' => 920779], true) */ ?>
                     <div class="card-body">
                         <div class="d-flex align-items-center mb-2">
                             <i class="bi bi-calendar-check text-primary me-2" style="font-size: 1.5rem;"></i>
@@ -99,9 +99,11 @@ $this->title = 'Inicio - Turnos';
                             </div>
                         </div>
                         <div class="card-footer bg-transparent">
+                            <?php /* Timeline deshabilitado temporalmente
                             <a href="<?= Url::to(['/paciente/historia', 'id' => $turno->id_persona]) ?>" class="btn btn-sm btn-primary">
                                 Ver Historia Clínica
                             </a>
+                            */ ?>
                         </div>
                     </div>
                 </div>

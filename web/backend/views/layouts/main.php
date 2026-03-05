@@ -103,6 +103,13 @@ $home = Yii::$app->getHomeUrl();
                             'label' => 'Consultas',
                             'url' => ['/consultas-configuracion/index'],
                         ],
+                        [
+                            'label' => 'Resumen IA',
+                            'items' => [
+                                ['label' => 'Categorías de sensibilidad', 'url' => ['/sensibilidad-categoria/index']],
+                                ['label' => 'Mapeo SNOMED → sensibilidad', 'url' => ['/sensibilidad-mapeo/index']],
+                            ]
+                        ],
                     ],
                 ]);
             ?>

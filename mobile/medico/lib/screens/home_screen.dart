@@ -197,7 +197,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Turno? _obtenerSiguienteTurno() {
     if (_turnos.isEmpty) return null;
     final ahora = DateTime.now();
-    // Excluir el turno simulado (id=999999) del cálculo del siguiente turno
     final turnosReales = _turnos.where((turno) => turno.id != 999999).toList();
     if (turnosReales.isEmpty) return null;
     return turnosReales.firstWhere(
@@ -207,6 +206,26 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       orElse: () => turnosReales.first,
     );
+  }
+
+  /// Turnos pendientes (PENDIENTE), sin incluir el siguiente.
+  List<Turno> _getPendientes(Turno? siguienteTurno) {
+    final siguienteId = siguienteTurno?.id;
+    return _turnos
+        .where((t) =>
+            t.estado == 'PENDIENTE' &&
+            t.id != 999999 &&
+            (siguienteId == null || t.id != siguienteId))
+        .toList();
+  }
+
+  /// Turnos ya cargados: ATENDIDO o EN_ATENCION.
+  List<Turno> _getConsultasCargadas() {
+    return _turnos
+        .where((t) =>
+            (t.estado == 'ATENDIDO' || t.estado == 'EN_ATENCION') &&
+            t.id != 999999)
+        .toList();
   }
 
   VoidCallback get _onRetry {
@@ -324,44 +343,93 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ],
                                     ),
                                   )
-                                : ListView(
-                            padding: const EdgeInsets.all(16.0),
-                            children: [
-                              // Card de siguiente turno (solo si es hoy) - igual que la web
-                              if (siguienteTurno != null)
-                                _buildSiguienteTurnoCard(siguienteTurno),
-                              if (siguienteTurno != null)
-                                const SizedBox(height: 16),
-                              // Lista de turnos en grid (igual que la web: col-md-6 col-lg-4)
-                              // En mobile mostramos 1 columna, en tablet 2 columnas
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final crossAxisCount = constraints.maxWidth > 600 ? 2 : 1;
-                                  // Excluir el siguiente turno de la lista si existe (para evitar duplicados)
-                                  final siguienteId = siguienteTurno?.id;
-                                  final turnosParaLista = siguienteId != null
-                                      ? _turnos.where((turno) => turno.id != siguienteId).toList()
-                                      : _turnos;
-                                  return GridView.builder(
-                                    shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: crossAxisCount,
-                                      childAspectRatio: crossAxisCount == 1 ? 1.2 : 1.1,
-                                      crossAxisSpacing: 16,
-                                      mainAxisSpacing: 12,
-                                    ),
-                                    itemCount: turnosParaLista.length,
-                                    itemBuilder: (context, index) {
-                                      return _buildTurnoCard(turnosParaLista[index]);
-                                    },
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
+                                : _buildTurnosPorEstado(siguienteTurno),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTurnosPorEstado(Turno? siguienteTurno) {
+    final pendientes = _getPendientes(siguienteTurno);
+    final cargadas = _getConsultasCargadas();
+    const maxCardWidth = 420.0;
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      children: [
+        // Sección: Siguiente turno
+        if (siguienteTurno != null) ...[
+          _buildSeccionSubtitulo('Siguiente turno'),
+          const SizedBox(height: 8),
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: maxCardWidth),
+              child: _buildSiguienteTurnoCard(siguienteTurno),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+        // Sección: Pendientes
+        _buildSeccionSubtitulo('Pendientes'),
+        const SizedBox(height: 8),
+        if (pendientes.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Text(
+                'No hay turnos pendientes.',
+                style: AppTheme.subTitleStyle,
+              ),
+            ),
+          )
+        else
+          ...pendientes.map((t) => Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: maxCardWidth),
+                    child: _buildTurnoCard(t),
+                  ),
+                ),
+              )),
+        const SizedBox(height: 24),
+        // Sección: Consultas cargadas
+        _buildSeccionSubtitulo('Consultas cargadas'),
+        const SizedBox(height: 8),
+        if (cargadas.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Text(
+                'No hay consultas cargadas.',
+                style: AppTheme.subTitleStyle,
+              ),
+            ),
+          )
+        else
+          ...cargadas.map((t) => Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: maxCardWidth),
+                    child: _buildTurnoCard(t),
+                  ),
+                ),
+              )),
+      ],
+    );
+  }
+
+  Widget _buildSeccionSubtitulo(String texto) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Text(
+        texto,
+        style: AppTheme.h5Style.copyWith(
+          color: AppTheme.primaryColor,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

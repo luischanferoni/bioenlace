@@ -130,7 +130,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           children: [
             // Información del usuario
             Card(
-              elevation: 2,
+              elevation: 0,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -171,7 +171,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             const SizedBox(height: 16),
             // Área de trabajo (Encounter Class)
             Card(
-              elevation: 2,
+              elevation: 0,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -236,7 +236,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             const SizedBox(height: 16),
             // Opciones de configuración
             Card(
-              elevation: 2,
+              elevation: 0,
               child: Column(
                 children: [
                   ListTile(
@@ -286,7 +286,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             
             // Cerrar sesión
             Card(
-              elevation: 2,
+              elevation: 0,
               child: ListTile(
                 leading: Icon(Icons.logout, color: AppTheme.dangerColor),
                 title: Text(

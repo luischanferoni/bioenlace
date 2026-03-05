@@ -385,7 +385,7 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         final i = _internados[index];
         return Card(
-          elevation: 2,
+          elevation: 0,
           child: ListTile(
             leading: Icon(Icons.person, color: AppTheme.primaryColor),
             title: Text(i.nombreCompleto, style: AppTheme.h5Style),
@@ -422,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         final g = _guardia[index];
         return Card(
-          elevation: 2,
+          elevation: 0,
           child: ListTile(
             leading: Icon(Icons.person, color: AppTheme.primaryColor),
             title: Text(g.nombreCompleto, style: AppTheme.h5Style),
@@ -442,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSiguienteTurnoCard(Turno turno) {
     return Card(
-      elevation: 4,
+      elevation: 0,
       color: AppTheme.primaryColor.withOpacity(0.1),
       child: InkWell(
         onTap: () => _verHistoriaClinica(turno.idPersona),
@@ -501,7 +501,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildTurnoCard(Turno turno) {
     return Card(
-      elevation: 2,
+      elevation: 0,
       child: InkWell(
         onTap: () => _verHistoriaClinica(turno.idPersona),
         borderRadius: BorderRadius.circular(8),

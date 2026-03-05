@@ -1,6 +1,5 @@
 // lib/screens/patient_timeline_screen.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:shared/shared.dart';
 
 import '../models/timeline_event.dart';
@@ -26,6 +25,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
 
+  final TextEditingController _chatController = TextEditingController();
+  final FocusNode _chatFocusNode = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +35,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _timelineService.authToken = widget.authToken;
     }
     _cargarTimeline();
+  }
+
+  @override
+  void dispose() {
+    _chatController.dispose();
+    _chatFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _cargarTimeline() async {
@@ -87,18 +96,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 )
               : _timelineData == null
                   ? const Center(child: Text('No hay datos disponibles'))
-                  : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header con datos del paciente
-                          _buildPacienteHeader(_timelineData!.persona),
-                          // Información médica
-                          _buildInformacionMedica(_timelineData!.informacionMedica),
-                          // Timeline
-                          _buildTimeline(_timelineData!.timeline),
-                        ],
-                      ),
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Header con datos del paciente
+                                _buildPacienteHeader(_timelineData!.persona),
+                                // Información médica
+                                _buildInformacionMedica(_timelineData!.informacionMedica),
+                                // Motivos de esta consulta
+                                _buildMotivosConsulta(_timelineData!.timeline),
+                              ],
+                            ),
+                          ),
+                        ),
+                        _buildChatInputBar(),
+                      ],
                     ),
     );
   }
@@ -112,59 +128,20 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Nombre Completo:',
-            style: AppTheme.h5Style.copyWith(fontWeight: FontWeight.bold),
-          ),
-          Text(
-            persona.nombreCompleto,
-            style: AppTheme.h4Style,
-          ),
-          const SizedBox(height: 12),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'F. Nacimiento:',
-                      style: AppTheme.subTitleStyle.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      persona.fechaNacimiento != null
-                          ? DateFormat('dd MMMM yyyy', 'es').format(
-                              DateTime.parse(persona.fechaNacimiento!))
-                          : 'No disponible',
-                      style: AppTheme.subTitleStyle,
-                    ),
-                    if (persona.edad != null)
-                      Text(
-                        '(${persona.edad} años)',
-                        style: AppTheme.subTitleStyle,
-                      ),
-                  ],
+                child: Text(
+                  persona.nombreCompleto,
+                  style: AppTheme.h4Style,
                 ),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Nro. Documento:',
-                      style: AppTheme.subTitleStyle.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      persona.documento ?? 'No disponible',
-                      style: AppTheme.subTitleStyle,
-                    ),
-                  ],
+              if (persona.edad != null)
+                Text(
+                  '${persona.edad} años',
+                  style: AppTheme.h4Style,
                 ),
-              ),
             ],
           ),
         ],
@@ -182,7 +159,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'INFORMACIÓN MÉDICA',
+            'CONDICIÓN ACTUAL',
             style: AppTheme.h4Style.copyWith(
               color: AppTheme.primaryColor,
               fontWeight: FontWeight.bold,
@@ -258,182 +235,100 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Widget _buildTimeline(List<TimelineEvent> eventos) {
-    if (eventos.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32.0),
-        child: Center(
-          child: Text(
-            'No hay eventos en el timeline',
-            style: AppTheme.subTitleStyle,
-          ),
-        ),
-      );
+  Widget _buildMotivosConsulta(List<TimelineEvent> eventos) {
+    TimelineEvent? ultimoTurnoConMotivo;
+    for (var i = eventos.length - 1; i >= 0; i--) {
+      final e = eventos[i];
+      if (e.tipo == 'Turno' && e.resumen != null && e.resumen!.trim().isNotEmpty) {
+        ultimoTurnoConMotivo = e;
+        break;
+      }
     }
 
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16.0),
+      color: Colors.white,
+      margin: const EdgeInsets.only(bottom: 8.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'TIMELINE',
+            'MOTIVOS DE ESTA CONSULTA',
             style: AppTheme.h4Style.copyWith(
+              color: AppTheme.primaryColor,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
-          ...eventos.map((evento) => Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: _buildEventoCard(evento),
-              )),
+          const SizedBox(height: 12),
+          if (ultimoTurnoConMotivo == null)
+            Text(
+              'Sin motivos registrados para esta consulta.',
+              style: AppTheme.subTitleStyle,
+            )
+          else
+            Text(
+              ultimoTurnoConMotivo.resumen!,
+              style: AppTheme.subTitleStyle,
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildEventoCard(TimelineEvent evento) {
-    final fecha = evento.fechaDateTime;
-    final fechaFormateada = fecha != null
-        ? DateFormat('dd/MM/yyyy HH:mm', 'es').format(fecha)
-        : evento.fecha;
-
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildChatInputBar() {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        color: Colors.white,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    color: _getTipoColor(evento.tipo).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    _getTipoIcono(evento.tipo),
-                    color: _getTipoColor(evento.tipo),
-                    size: 24,
-                  ),
+            Expanded(
+              child: TextField(
+                controller: _chatController,
+                focusNode: _chatFocusNode,
+                minLines: 4,
+                maxLines: 8,
+                decoration: const InputDecoration(
+                  hintText: 'Escribir consulta',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        evento.tipo,
-                        style: AppTheme.h4Style.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        fechaFormateada,
-                        style: AppTheme.subTitleStyle,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-            if (evento.servicio != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.local_hospital,
-                      size: 16, color: AppTheme.subTitleTextColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Servicio: ${evento.servicio}',
-                    style: AppTheme.subTitleStyle,
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.mic),
+              color: AppTheme.primaryColor,
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Envío de audios en desarrollo'),
                   ),
-                ],
-              ),
-            ],
-            if (evento.profesional != null) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.person,
-                      size: 16, color: AppTheme.subTitleTextColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Profesional: ${evento.profesional}',
-                    style: AppTheme.subTitleStyle,
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.send),
+              color: AppTheme.primaryColor,
+              onPressed: () {
+                final text = _chatController.text.trim();
+                if (text.isEmpty) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Envío de notas en desarrollo'),
                   ),
-                ],
-              ),
-            ],
-            if (evento.efector != null) ...[
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.business,
-                      size: 16, color: AppTheme.subTitleTextColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Efector: ${evento.efector}',
-                    style: AppTheme.subTitleStyle,
-                  ),
-                ],
-              ),
-            ],
-            if (evento.resumen != null && evento.resumen!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                evento.resumen!,
-                style: AppTheme.subTitleStyle,
-              ),
-            ],
+                );
+                _chatController.clear();
+                _chatFocusNode.unfocus();
+              },
+            ),
           ],
         ),
       ),
     );
-  }
-
-  IconData _getTipoIcono(String tipo) {
-    switch (tipo) {
-      case 'Turno':
-        return Icons.calendar_today;
-      case 'Consulta':
-        return Icons.medical_services;
-      case 'Internacion':
-        return Icons.local_hospital;
-      case 'Guardia':
-        return Icons.emergency;
-      case 'DocumentoExterno':
-        return Icons.description;
-      case 'EncuestaParchesMamarios':
-        return Icons.assignment;
-      case 'EstudiosImagenes':
-        return Icons.image;
-      case 'EstudiosLab':
-        return Icons.science;
-      case 'Forms':
-        return Icons.article;
-      default:
-        return Icons.circle;
-    }
-  }
-
-  Color _getTipoColor(String tipo) {
-    switch (tipo) {
-      case 'Turno':
-        return AppTheme.primaryColor;
-      case 'Consulta':
-        return AppTheme.infoColor;
-      case 'Internacion':
-        return AppTheme.warningColor;
-      case 'Guardia':
-        return AppTheme.dangerColor;
-      case 'DocumentoExterno':
-        return AppTheme.secondaryColor;
-      default:
-        return AppTheme.dark;
-    }
   }
 }
 

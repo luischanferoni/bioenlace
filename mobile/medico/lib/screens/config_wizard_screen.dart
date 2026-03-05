@@ -62,7 +62,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
 
     try {
       // Cargar efectores y encounter classes en paralelo
-      // Pasar userId para desarrollo/simulación
+      // Pasar userId para desarrollo/simulaci?n
       final efectoresFuture = _configService.getEfectores(userId: widget.userId);
       final encounterClassesFuture = _configService.getEncounterClasses();
 
@@ -74,7 +74,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         _isLoading = false;
       });
 
-      // Si solo hay un efector, seleccionarlo automáticamente
+      // Si solo hay un efector, seleccionarlo autom?ticamente
       if (_efectores.length == 1) {
         _selectedEfector = _efectores.first;
         _loadServicios(_efectores.first.id);
@@ -95,14 +95,14 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     });
 
     try {
-      // Pasar userId para desarrollo/simulación
+      // Pasar userId para desarrollo/simulaci?n
       final servicios = await _configService.getServicios(efectorId, userId: widget.userId);
       setState(() {
         _servicios = servicios;
         _isLoading = false;
       });
 
-      // Si solo hay un servicio, seleccionarlo automáticamente
+      // Si solo hay un servicio, seleccionarlo autom?ticamente
       if (_servicios.length == 1) {
         _selectedServicio = _servicios.first;
       }
@@ -207,7 +207,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al guardar configuración: ${e.toString()}';
+        _errorMessage = 'Error al guardar configuraci?n: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -216,7 +216,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuraci?n Inicial')),
+      appBar: AppBar(title: const Text('Configuración Inicial')),
       body: Container(
         color: AppTheme.backgroundColor,
         child: Column(
@@ -232,7 +232,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                   _buildStepConnector(),
                   _buildStepIndicator(1, 'Servicio'),
                   _buildStepConnector(),
-                  _buildStepIndicator(2, '��rea'),
+                  _buildStepIndicator(2, 'Área'),
                 ],
               ),
             ),
@@ -391,11 +391,6 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             style: AppTheme.h2Style,
           ),
           const SizedBox(height: 8),
-          Text(
-            'Elija el efector donde trabajará',
-            style: AppTheme.subTitleStyle,
-          ),
-          const SizedBox(height: 24),
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else
@@ -424,7 +419,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Elija el servicio donde trabajará',
+            'Elija el servicio donde trabajar?',
             style: AppTheme.subTitleStyle,
           ),
           const SizedBox(height: 24),
@@ -458,12 +453,12 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Seleccione el ��rea',
+            'Seleccione el Área',
             style: AppTheme.h2Style,
           ),
           const SizedBox(height: 8),
           Text(
-            'Elija el área donde trabajará',
+            'Elija el Área donde trabajar?',
             style: AppTheme.subTitleStyle,
           ),
           const SizedBox(height: 24),
@@ -488,7 +483,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     required VoidCallback onTap,
   }) {
     return Card(
-      elevation: isSelected ? 4 : 2,
+      elevation: 0,
       color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
       child: InkWell(
         onTap: onTap,

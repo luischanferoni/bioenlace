@@ -496,7 +496,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
     final defaultIcon = widget.icon ?? Icons.article;
     
     return Card(
-      elevation: isSelected ? 4 : 1,
+      elevation: 0,
       color: isSelected 
           ? Theme.of(context).primaryColor.withOpacity(0.1)
           : Colors.white,

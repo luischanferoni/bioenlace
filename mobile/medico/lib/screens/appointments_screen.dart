@@ -241,7 +241,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   Widget _buildSiguienteTurnoCard(Turno turno) {
     return Card(
-      elevation: 4,
+      elevation: 0,
       color: AppTheme.primaryColor.withOpacity(0.1),
       child: InkWell(
         onTap: () => _verHistoriaClinica(turno.idPersona),
@@ -299,7 +299,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   Widget _buildTurnoCard(Turno turno) {
     return Card(
-      elevation: 2,
+      elevation: 0,
       child: InkWell(
         onTap: () => _verHistoriaClinica(turno.idPersona),
         child: Padding(

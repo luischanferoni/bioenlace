@@ -147,7 +147,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
               if (_responseText != null || _actions != null) ...[
                 const SizedBox(height: 24),
                 Card(
-                  elevation: 2,
+                  elevation: 0,
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -248,7 +248,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
     required VoidCallback onTap,
   }) {
     return Card(
-      elevation: 2,
+      elevation: 0,
       color: AppTheme.cardColor,
       child: InkWell(
         onTap: onTap,

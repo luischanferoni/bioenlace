@@ -43,7 +43,7 @@ class AppTheme {
     primaryColorLight: primaryColorLight,
     cardTheme: CardThemeData(
       color: cardColor,
-      elevation: 2,
+      elevation: 0,
     ),
     iconTheme: IconThemeData(color: iconColor),
     dividerColor: dividerColor,

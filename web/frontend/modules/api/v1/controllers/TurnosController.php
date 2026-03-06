@@ -38,9 +38,6 @@ class TurnosController extends BaseController
         return $behaviors;
     }
 
-    /**
-     * Permitir OPTIONS en index para preflight CORS (evitar 405 Method Not Allowed)
-     */
     protected function verbs()
     {
         return array_merge(parent::verbs(), [
@@ -141,15 +138,6 @@ class TurnosController extends BaseController
      */
     public function actionIndex()
     {
-        // Preflight CORS: responder 204 sin cuerpo (la ruta OPTIONS debe apuntar a turnos/options)
-        if (Yii::$app->request->getMethod() === 'OPTIONS') {
-            Yii::$app->response->statusCode = 204;
-            Yii::$app->response->getHeaders()->set('Allow', 'GET, OPTIONS');
-            Yii::$app->response->format = \yii\web\Response::FORMAT_RAW;
-            Yii::$app->response->content = '';
-            return '';
-        }
-
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $request = Yii::$app->request;
         $user = Yii::$app->user->identity;

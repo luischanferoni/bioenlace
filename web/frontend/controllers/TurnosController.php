@@ -21,6 +21,7 @@ use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
 use frontend\components\UserRequest;
+use common\components\TurnoSlotFinder;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use yii\debug\models\timeline\DataProvider;
 
@@ -30,7 +31,22 @@ use yii\debug\models\timeline\DataProvider;
 class TurnosController extends Controller
 {
 
+    /** Acciones sin autenticación obligatoria. Fuente única para Web y API (móvil). */
     public $freeAccessActions = ['list-turnos', 'eventos', 'mis-turnos'];
+
+    /** Misma lista para la API: nombres de acción que no requieren auth (index, eventos, etc.). */
+    public static $authenticatorExcept = ['index', 'eventos'];
+
+    /** Verbs por acción; la API los usa al mapear. */
+    public static $verbs = [
+        'index' => ['GET', 'HEAD', 'OPTIONS'],
+        'view' => ['GET', 'HEAD', 'OPTIONS'],
+        'create' => ['POST', 'OPTIONS'],
+        'update' => ['PUT', 'PATCH', 'OPTIONS'],
+        'eventos' => ['GET', 'OPTIONS'],
+        'mis-turnos' => ['GET', 'OPTIONS'],
+        'proximo-disponible' => ['GET', 'POST', 'OPTIONS'],
+    ];
 
     /**
      * {@inheritdoc}
@@ -480,6 +496,308 @@ class TurnosController extends Controller
                 'turnos' => $formattedTurnos,
                 'total' => count($formattedTurnos),
             ],
+        ];
+    }
+
+    /**
+     * Listar turnos por rrhh/fecha (lógica para API). Retorna array para JSON.
+     */
+    public function actionIndexApi()
+    {
+        $request = Yii::$app->request;
+        $user = Yii::$app->user->identity;
+        $userId = null;
+        if (!$user) {
+            $userId = $request->get('user_id');
+            if ($userId) {
+                $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
+                if ($user) {
+                    Yii::$app->user->login($user);
+                }
+            }
+        }
+        $fecha = $request->get('fecha', date('Y-m-d'));
+        $rrhhId = $request->get('rrhh_id');
+        if (!$rrhhId) {
+            $rrhhId = Yii::$app->user->getIdRecursoHumano();
+        }
+        if (!$rrhhId) {
+            throw new BadRequestHttpException('No se pudo determinar el recurso humano. Proporcione rrhh_id o user_id para desarrollo.');
+        }
+        $turnos = Turno::getTurnosPorRrhhPorFecha($fecha, $rrhhId);
+        $formattedTurnos = [];
+        foreach ($turnos as $turno) {
+            $paciente = $turno->persona;
+            $servicio = $turno->servicio ? $turno->servicio->nombre :
+                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+            $formattedTurnos[] = [
+                'id' => $turno->id_turnos,
+                'id_persona' => $turno->id_persona,
+                'paciente' => [
+                    'id' => $paciente ? $paciente->id_persona : null,
+                    'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
+                    'documento' => $paciente ? $paciente->documento : null,
+                ],
+                'fecha' => $turno->fecha,
+                'hora' => $turno->hora,
+                'servicio' => $servicio,
+                'id_servicio_asignado' => $turno->id_servicio_asignado,
+                'estado' => $turno->estado,
+                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+                'id_consulta' => $consulta ? $consulta->id_consulta : null,
+                'observaciones' => $turno->observaciones,
+                'atendido' => $turno->atendido,
+                'created_at' => $turno->created_at,
+            ];
+        }
+        $esHoy = ($fecha == date('Y-m-d'));
+        if ($esHoy) {
+            $pacientePrueba = Persona::findOne(920779);
+            if ($pacientePrueba) {
+                $servicioPrueba = null;
+                $idServicioAsignado = null;
+                if ($rrhhId) {
+                    $rrhhEfector = RrhhEfector::findOne($rrhhId);
+                    if ($rrhhEfector && $rrhhEfector->id_efector) {
+                        $servicioEfector = ServiciosEfector::find()
+                            ->where(['id_efector' => $rrhhEfector->id_efector])
+                            ->one();
+                        if ($servicioEfector) {
+                            $servicioPrueba = $servicioEfector->servicio ? $servicioEfector->servicio->nombre : 'Consulta General';
+                            $idServicioAsignado = $servicioEfector->id_servicio;
+                        }
+                    }
+                }
+                if (!$servicioPrueba) {
+                    $servicioPrueba = 'Consulta General';
+                }
+                $turnoPrueba = [
+                    'id' => 999999,
+                    'id_persona' => 920779,
+                    'paciente' => [
+                        'id' => $pacientePrueba->id_persona,
+                        'nombre_completo' => $pacientePrueba->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
+                        'documento' => $pacientePrueba->documento,
+                    ],
+                    'fecha' => $fecha,
+                    'hora' => '10:00',
+                    'servicio' => $servicioPrueba,
+                    'id_servicio_asignado' => $idServicioAsignado,
+                    'estado' => Turno::ESTADO_PENDIENTE,
+                    'estado_label' => Turno::ESTADOS[Turno::ESTADO_PENDIENTE] ?? 'Pendiente',
+                    'observaciones' => 'Turno de prueba',
+                    'atendido' => null,
+                    'created_at' => date('Y-m-d H:i:s'),
+                ];
+                array_unshift($formattedTurnos, $turnoPrueba);
+            }
+        }
+        return [
+            'turnos' => $formattedTurnos,
+            'fecha' => $fecha,
+            'total' => count($formattedTurnos),
+        ];
+    }
+
+    /**
+     * Detalle de un turno por id (lógica para API).
+     */
+    public function actionViewApi($id)
+    {
+        $turno = Turno::findOne($id);
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $paciente = $turno->persona;
+        $servicio = $turno->servicio ? $turno->servicio->nombre :
+            ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+        return [
+            'id' => $turno->id_turnos,
+            'id_persona' => $turno->id_persona,
+            'paciente' => [
+                'id' => $paciente ? $paciente->id_persona : null,
+                'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
+                'documento' => $paciente ? $paciente->documento : null,
+                'fecha_nacimiento' => $paciente ? $paciente->fecha_nacimiento : null,
+                'edad' => $paciente ? $paciente->edad : null,
+            ],
+            'fecha' => $turno->fecha,
+            'hora' => $turno->hora,
+            'servicio' => $servicio,
+            'id_servicio_asignado' => $turno->id_servicio_asignado,
+            'id_rrhh_servicio_asignado' => $turno->id_rrhh_servicio_asignado,
+            'estado' => $turno->estado,
+            'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+            'estado_motivo' => $turno->estado_motivo,
+            'observaciones' => $turno->observaciones,
+            'atendido' => $turno->atendido,
+            'id_efector' => $turno->id_efector,
+            'parent_class' => $turno->parent_class,
+            'parent_id' => $turno->parent_id,
+            'created_at' => $turno->created_at,
+            'updated_at' => $turno->updated_at,
+        ];
+    }
+
+    /**
+     * Crear turno (lógica para API). POST. Retorna array o lanza excepción.
+     */
+    public function actionCreateApi()
+    {
+        $request = Yii::$app->request;
+        $model = new Turno();
+        $model->load($request->post(), '');
+        if (empty($model->tipo_atencion)) {
+            $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
+        }
+        if ($model->tipo_atencion === Turno::TIPO_ATENCION_TELECONSULTA) {
+            $idRrhhServicio = $model->id_rrhh_servicio_asignado;
+            if (!$idRrhhServicio && $model->id_rr_hh && $model->id_servicio_asignado) {
+                $rs = \common\models\RrhhServicio::find()
+                    ->andWhere(['id_rr_hh' => $model->id_rr_hh, 'id_servicio' => $model->id_servicio_asignado])
+                    ->select('id')->one();
+                $idRrhhServicio = $rs ? $rs->id : null;
+            }
+            if ($idRrhhServicio) {
+                $aceptaOnline = Agenda_rrhh::find()
+                    ->andWhere(['id_rrhh_servicio_asignado' => $idRrhhServicio])
+                    ->andWhere(['acepta_consultas_online' => true])
+                    ->exists();
+                if (!$aceptaOnline) {
+                    throw new BadRequestHttpException('El profesional seleccionado no acepta consultas por chat. Elegí atención presencial u otro profesional.');
+                }
+            } elseif ($model->id_rrhh_servicio_asignado || $model->id_rr_hh) {
+                throw new BadRequestHttpException('No se encontró la agenda del profesional para el servicio.');
+            }
+        }
+        if (!$model->id_persona) {
+            throw new BadRequestHttpException('El campo id_persona es obligatorio');
+        }
+        if (!$model->id_efector) {
+            $model->id_efector = Yii::$app->user->getIdEfector();
+        }
+        if (!$model->id_efector) {
+            throw new BadRequestHttpException('No se pudo determinar el efector');
+        }
+        if (!$model->id_rr_hh) {
+            $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        }
+        if ($model->id_servicio_asignado && $model->id_persona && $model->id_efector) {
+            $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
+                $model->id_persona,
+                $model->id_efector,
+                $model->id_servicio_asignado,
+                ConsultaDerivaciones::ESTADO_EN_ESPERA
+            );
+            if (count($cps) > 0) {
+                foreach ($cps as $cp) {
+                    $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
+                    $cp->save();
+                    $parent_id = $cp->id;
+                }
+                $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+                $model->parent_id = $parent_id;
+            }
+        }
+        if (!$model->id_servicio_asignado) {
+            throw new BadRequestHttpException('El campo id_servicio_asignado es obligatorio');
+        }
+        $servicioEfector = ServiciosEfector::find()
+            ->where(['id_servicio' => $model->id_servicio_asignado])
+            ->andWhere(['id_efector' => $model->id_efector])
+            ->one();
+        if ($servicioEfector) {
+            if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
+                $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
+            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
+                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
+                if ($model->id_rrhh_servicio_asignado) {
+                    $agenda = Agenda_rrhh::find()
+                        ->andWhere(['id_rrhh_servicio_asignado' => $model->id_rrhh_servicio_asignado])
+                        ->one();
+                    if ($agenda) {
+                        $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgados($model->id_rrhh_servicio_asignado, $model->fecha);
+                        if ($agenda->cupo_pacientes != 0 && $agenda->cupo_pacientes <= $cantTurnosOtorgados) {
+                            throw new BadRequestHttpException('Ya se otorgaron todos los turnos correspondientes al límite establecido');
+                        }
+                    }
+                }
+            }
+        }
+        if (!$model->save()) {
+            throw new BadRequestHttpException(implode(', ', $model->getFirstErrors()));
+        }
+        $idConsulta = null;
+        $consulta = Consulta::createFromTurno($model);
+        if ($consulta) {
+            $idConsulta = (int) $consulta->id_consulta;
+        }
+        return [
+            'id' => $model->id_turnos,
+            'fecha' => $model->fecha,
+            'hora' => $model->hora,
+            'id_consulta' => $idConsulta,
+        ];
+    }
+
+    /**
+     * Actualizar turno (lógica para API).
+     */
+    public function actionUpdateApi($id)
+    {
+        $turno = Turno::findOne($id);
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $turno->load(Yii::$app->request->post(), '');
+        if (!$turno->save()) {
+            throw new BadRequestHttpException(implode(', ', $turno->getFirstErrors()));
+        }
+        return [
+            'id' => $turno->id_turnos,
+            'estado' => $turno->estado,
+        ];
+    }
+
+    /**
+     * Próximo turno disponible por servicio (lógica para API).
+     */
+    public function actionProximoDisponibleApi()
+    {
+        $request = Yii::$app->request;
+        $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
+        if (!$idServicio) {
+            throw new BadRequestHttpException('El parámetro id_servicio es obligatorio');
+        }
+        $criteria = [
+            'id_servicio' => (int) $idServicio,
+            'id_efector' => $request->get('id_efector') ?: $request->post('id_efector'),
+            'fecha_desde' => $request->get('fecha_desde') ?: $request->post('fecha_desde'),
+            'max_dias' => $request->get('max_dias') ?: $request->post('max_dias'),
+        ];
+        $restricciones = $request->get('restricciones') ?: $request->post('restricciones');
+        if (!empty($restricciones) && is_array($restricciones)) {
+            $criteria['restricciones'] = $restricciones;
+        }
+        try {
+            $slot = TurnoSlotFinder::findFirstAvailable($criteria);
+        } catch (\Throwable $e) {
+            Yii::warning('TurnoSlotFinder::findFirstAvailable error: ' . $e->getMessage(), 'api-turnos');
+            throw new \yii\web\ServerErrorHttpException('No se pudo calcular el próximo turno disponible');
+        }
+        if ($slot === null) {
+            return [
+                'disponible' => false,
+                'slot' => null,
+                'message' => 'No hay turnos disponibles en el rango de búsqueda.',
+            ];
+        }
+        return [
+            'disponible' => true,
+            'slot' => $slot,
+            'message' => sprintf('Próximo turno: %s a las %s', $slot['fecha'], $slot['hora']),
         ];
     }
 

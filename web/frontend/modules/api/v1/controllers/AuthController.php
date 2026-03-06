@@ -15,15 +15,8 @@ class AuthController extends BaseController
 {
     public $modelClass = '';
 
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        
-        // No requerir autenticación para login y register
-        $behaviors['authenticator']['except'] = ['login', 'register', 'refresh-token', 'generate-test-token', 'options'];
-        
-        return $behaviors;
-    }
+    /** Acciones sin autenticación (no mapea a frontend; solo API). */
+    public static $authenticatorExcept = ['login', 'register', 'refresh-token', 'generate-test-token'];
 
     /**
      * Login de usuario

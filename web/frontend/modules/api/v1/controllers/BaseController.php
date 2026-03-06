@@ -8,6 +8,8 @@ use yii\filters\auth\HttpBearerAuth;
 use yii\filters\Cors;
 use yii\filters\ContentNegotiator;
 use yii\web\Response;
+use yii\web\NotFoundHttpException;
+use yii\web\BadRequestHttpException;
 use frontend\modules\api\v1\components\JsonHttpBearerAuth;
 
 class BaseController extends ActiveController
@@ -17,14 +19,24 @@ class BaseController extends ActiveController
         'collectionEnvelope' => 'items',
     ];
 
+    /**
+     * Clase del controlador frontend que este controlador API mapea.
+     * Si est? definida, except y verbs se leen de ese controlador (fuente ?nica Web + API).
+     */
+    public static $frontendControllerClass = null;
+
+    /**
+     * Acciones que no requieren autenticaci?n (solo para controladores API que no mapean a frontend, ej. AuthController).
+     * Los controladores mapeadores usan $frontendControllerClass y toman except del controlador frontend.
+     */
+    public static $authenticatorExcept = [];
+
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        
-        // Configurar CORS usando la configuración centralizada del módulo
+
+        // Configurar CORS usando la configuraci?n centralizada del m?dulo
         $allowedOrigins = \frontend\modules\api\v1\Module::getAllowedOrigins();
-        // Agregar * para mobile si es necesario (pero solo si no se requiere credentials)
-        // Si se requiere credentials, no se puede usar *
         $behaviors['corsFilter'] = [
             'class' => Cors::class,
             'cors' => [
@@ -36,10 +48,16 @@ class BaseController extends ActiveController
             ],
         ];
 
-        // Configurar autenticación con componente personalizado que siempre devuelve JSON
+        // Except del authenticator: base + (si hay frontend, desde ah?; si no, desde $authenticatorExcept del hijo)
+        $except = ['options'];
+        if (static::$frontendControllerClass !== null && property_exists(static::$frontendControllerClass, 'authenticatorExcept')) {
+            $except = array_merge($except, static::$frontendControllerClass::$authenticatorExcept ?? []);
+        } else {
+            $except = array_merge($except, static::$authenticatorExcept);
+        }
         $behaviors['authenticator'] = [
             'class' => JsonHttpBearerAuth::class,
-            'except' => ['options', 'login', 'register'],
+            'except' => array_values(array_unique($except)),
         ];
 
         // Configurar content negotiator
@@ -53,6 +71,19 @@ class BaseController extends ActiveController
         return $behaviors;
     }
 
+    /**
+     * Verbs: si este controlador mapea a un frontend, se fusionan los verbs definidos all?.
+     */
+    protected function verbs()
+    {
+        $verbs = parent::verbs();
+        if (static::$frontendControllerClass !== null && property_exists(static::$frontendControllerClass, 'verbs')) {
+            $frontendVerbs = static::$frontendControllerClass::$verbs ?? [];
+            $verbs = array_merge($verbs, $frontendVerbs);
+        }
+        return $verbs;
+    }
+
     public function actions()
     {
         $actions = parent::actions();
@@ -64,9 +95,39 @@ class BaseController extends ActiveController
     }
 
     /**
-     * Respuesta de éxito estándar
+     * Ejecuta una acci?n del controlador frontend y devuelve success(data).
+     * Para controladores API que solo mapean: usa $frontendControllerClass y convierte excepciones en error JSON.
      */
-    protected function success($data = null, $message = 'Operación exitosa', $code = 200)
+    protected function runFrontendAction($actionId, $params = [])
+    {
+        $className = static::$frontendControllerClass;
+        if ($className === null) {
+            throw new \yii\web\ServerErrorHttpException('frontendControllerClass no definido');
+        }
+        $id = strtolower(preg_replace('/Controller$/', '', (new \ReflectionClass($className))->getShortName()));
+        try {
+            $controller = new $className($id, Yii::$app);
+            $result = $controller->runAction($actionId, $params);
+            if (isset($result['success']) && isset($result['data'])) {
+                return $result;
+            }
+            return $this->success($result);
+        } catch (NotFoundHttpException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        } catch (BadRequestHttpException $e) {
+            return $this->error($e->getMessage(), null, 422);
+        } catch (\yii\web\ServerErrorHttpException $e) {
+            return $this->error($e->getMessage(), null, 500);
+        } catch (\Throwable $e) {
+            Yii::warning(static::class . ' runFrontendAction(' . $actionId . '): ' . $e->getMessage(), 'api');
+            return $this->error('Error en el servidor', null, 500);
+        }
+    }
+
+    /**
+     * Respuesta de ?xito est?ndar
+     */
+    protected function success($data = null, $message = 'Operaci?n exitosa', $code = 200)
     {
         Yii::$app->response->statusCode = $code;
         return [
@@ -77,9 +138,9 @@ class BaseController extends ActiveController
     }
 
     /**
-     * Respuesta de error estándar
+     * Respuesta de error est?ndar
      */
-    protected function error($message = 'Error en la operación', $errors = null, $code = 400)
+    protected function error($message = 'Error en la operaci?n', $errors = null, $code = 400)
     {
         Yii::$app->response->statusCode = $code;
         return [
@@ -99,14 +160,14 @@ class BaseController extends ActiveController
         $validator->rules = $rules;
         
         if (!$validator->validate($data, $errors)) {
-            return $this->error('Datos inválidos', $errors, 422);
+            return $this->error('Datos inv?lidos', $errors, 422);
         }
         
         return true;
     }
 
     /**
-     * Verificar autenticación: Bearer token o sesión web
+     * Verificar autenticaci?n: Bearer token o sesi?n web
      * Retorna array con 'authenticated' (bool) y 'userId' (int|null)
      * 
      * @return array ['authenticated' => bool, 'userId' => int|null]
@@ -116,7 +177,7 @@ class BaseController extends ActiveController
         $isAuthenticated = false;
         $userId = null;
         
-        // Intentar autenticación por Bearer token primero
+        // Intentar autenticaci?n por Bearer token primero
         $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
         if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
             $token = $matches[1];
@@ -125,7 +186,7 @@ class BaseController extends ActiveController
                 $userId = $decoded->user_id;
                 $idPersona = $decoded->id_persona ?? null; // Obtener id_persona del token
                 
-                // Asignar idPersona a la sesión si está en el token
+                // Asignar idPersona a la sesi?n si est? en el token
                 if ($idPersona) {
                     $session = Yii::$app->session;
                     if (!$session->isActive) {
@@ -136,20 +197,20 @@ class BaseController extends ActiveController
                 
                 $isAuthenticated = true;
             } catch (\Exception $e) {
-                // Token inválido, continuar con verificación de sesión
+                // Token inv?lido, continuar con verificaci?n de sesi?n
             }
         }
         
-        // Si no hay Bearer token, verificar sesión web de frontend
+        // Si no hay Bearer token, verificar sesi?n web de frontend
         if (!$isAuthenticated) {
             $session = Yii::$app->session;
             
-            // Asegurar que la sesión esté iniciada
+            // Asegurar que la sesi?n est? iniciada
             if (!$session->isActive) {
                 $session->open();
             }
             
-            // Verificar si hay identidad de usuario en la sesión
+            // Verificar si hay identidad de usuario en la sesi?n
             $identityId = $session->get('__id');
             $identity = $session->get('__identity');
             
@@ -166,7 +227,7 @@ class BaseController extends ActiveController
                     $isAuthenticated = true;
                 }
             } elseif ($session->has('idPersona')) {
-                // Si hay idPersona en sesión, el usuario está autenticado
+                // Si hay idPersona en sesi?n, el usuario est? autenticado
                 $isAuthenticated = true;
                 // Intentar obtener userId desde la persona
                 $idPersona = $session->get('idPersona');
@@ -184,10 +245,10 @@ class BaseController extends ActiveController
     }
 
     /**
-     * Verificar autenticación y retornar error si no está autenticado
-     * Útil para acciones que requieren autenticación pero están excluidas del authenticator
+     * Verificar autenticaci?n y retornar error si no est? autenticado
+     * ?til para acciones que requieren autenticaci?n pero est?n excluidas del authenticator
      * 
-     * @return array|null Retorna null si está autenticado, o array de error si no lo está
+     * @return array|null Retorna null si est? autenticado, o array de error si no lo est?
      */
     protected function requerirAutenticacion()
     {
@@ -197,7 +258,7 @@ class BaseController extends ActiveController
             Yii::$app->response->statusCode = 401;
             return [
                 'success' => false,
-                'message' => 'Usuario no autenticado. Debe iniciar sesión o proporcionar un token válido.',
+                'message' => 'Usuario no autenticado. Debe iniciar sesi?n o proporcionar un token v?lido.',
                 'errors' => null,
             ];
         }

@@ -24,6 +24,10 @@ use webvimark\modules\UserManagement\UserManagementModule;
  */
 class EfectoresController extends Controller
 {
+    /** Acciones sin auth para API (fuente única Web + API). */
+    public static $authenticatorExcept = ['search'];
+    public static $verbs = ['search' => ['GET', 'POST', 'OPTIONS']];
+
     public function behaviors()
     {
         //control de acceso mediante la extensión

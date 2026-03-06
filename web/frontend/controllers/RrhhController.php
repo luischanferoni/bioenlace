@@ -5,6 +5,7 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
+use yii\web\BadRequestHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\Json;
 
@@ -19,6 +20,10 @@ use common\models\Servicio;
  */
 class RrhhController extends Controller
 {
+    /** Acciones sin auth para API (fuente única Web + API). */
+    public static $authenticatorExcept = ['rrhh-autocomplete'];
+    public static $verbs = ['rrhh-autocomplete' => ['GET', 'POST', 'OPTIONS']];
+
     public function behaviors()
     {
         return [
@@ -163,18 +168,23 @@ class RrhhController extends Controller
     public function actionRrhhAutocomplete($q = null)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $out = ['results' => ['id' => '', 'text' => '']];
-        $q = $q ?? Yii::$app->request->get('q') ?? Yii::$app->request->post('q');
-        $filters = [];
         $request = Yii::$app->request;
-        if ($request->get('id_efector') || $request->post('id_efector')) {
-            $filters['id_efector'] = $request->get('id_efector') ?: $request->post('id_efector');
+        $idEfector = $request->get('id_efector') ?: $request->post('id_efector');
+        $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
+        if (empty($idEfector) || empty($idServicio)) {
+            throw new BadRequestHttpException('id_efector e id_servicio son requeridos');
+        }
+        $out = ['results' => ['id' => '', 'text' => '']];
+        $q = $q ?? $request->get('q') ?? $request->post('q');
+        $filters = [
+            'id_efector' => $idEfector,
+            'id_servicio' => $idServicio,
+        ];
+        if ($request->get('limit') || $request->post('limit')) {
+            $filters['limit'] = $request->get('limit') ?: $request->post('limit');
         }
         if ($request->get('efector_nombre') || $request->post('efector_nombre')) {
             $filters['efector_nombre'] = $request->get('efector_nombre') ?: $request->post('efector_nombre');
-        }
-        if ($request->get('id_servicio') || $request->post('id_servicio')) {
-            $filters['id_servicio'] = $request->get('id_servicio') ?: $request->post('id_servicio');
         }
         if ($request->get('servicio_nombre') || $request->post('servicio_nombre')) {
             $filters['servicio_nombre'] = $request->get('servicio_nombre') ?: $request->post('servicio_nombre');

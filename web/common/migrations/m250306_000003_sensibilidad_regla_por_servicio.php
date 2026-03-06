@@ -49,7 +49,7 @@ class m250306_000003_sensibilidad_regla_por_servicio extends Migration
         $this->createTable('{{%sensibilidad_regla_servicio}}', [
             'id' => $this->primaryKey(),
             'id_regla' => $this->integer()->notNull(),
-            'id_servicio' => $this->integer()->notNull()->comment('Servicio que ve generalizado/oculto según la regla'),
+            'id_servicio' => $this->integer()->unsigned()->notNull()->comment('Servicio que ve generalizado/oculto según la regla'),
         ], $tableOptions);
         $this->createIndex('idx_sensibilidad_regla_servicio_regla_servicio', '{{%sensibilidad_regla_servicio}}', ['id_regla', 'id_servicio'], true);
         $this->addForeignKey(

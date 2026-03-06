@@ -11,6 +11,8 @@ use common\models\Consulta;
 /**
  * Proceso separado: agregar mensajes de motivos de consulta y actualizar Consulta.motivo_consulta.
  * Luego se puede extender con codificación SNOMED, corrección ortográfica y estructuración.
+ * Al insertar en consultas_motivos desde este proceso, usar ConsultaMotivos::ORIGEN_PACIENTE
+ * para diferenciar de los motivos cargados por el médico (ORIGEN_MEDICO).
  *
  * Uso:
  *   php yii motivos-consulta/procesar              # Todas las consultas con mensajes pendientes
@@ -86,6 +88,7 @@ class MotivosConsultaController extends Controller
             }
 
             $consulta->motivo_consulta = $texto;
+            // Si más adelante se codifica a SNOMED y se inserta ConsultaMotivos, usar origen = ConsultaMotivos::ORIGEN_PACIENTE
             if ($consulta->save(false)) {
                 $count++;
                 $this->stdout("  Consulta $consultaId: motivo_consulta actualizado.\n", Console::FG_GREEN);

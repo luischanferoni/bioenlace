@@ -367,6 +367,20 @@ class Consulta extends \yii\db\ActiveRecord
         return $this->hasMany(ConsultaMotivos::className(), ['id_consulta' => 'id_consulta']);
     }
 
+    /** Motivos cargados por el médico (consultas_motivos con origen = medico) */
+    public function getMotivosMedico()
+    {
+        return $this->hasMany(ConsultaMotivos::className(), ['id_consulta' => 'id_consulta'])
+            ->andOnCondition(['origen' => ConsultaMotivos::ORIGEN_MEDICO]);
+    }
+
+    /** Motivos cargados por el paciente (codificación desde app, origen = paciente) */
+    public function getMotivosPaciente()
+    {
+        return $this->hasMany(ConsultaMotivos::className(), ['id_consulta' => 'id_consulta'])
+            ->andOnCondition(['origen' => ConsultaMotivos::ORIGEN_PACIENTE]);
+    }
+
     public function getAutofacturacion()
     {
         return $this->hasOne(Autofacturacion::className(), ['id_consulta' => 'id_consulta']);

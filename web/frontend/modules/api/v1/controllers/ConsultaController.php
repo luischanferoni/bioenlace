@@ -1202,12 +1202,15 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
             }
             
             $modelo->id_consulta = $modelConsulta->id_consulta;
-            
+            if ($nombreModelo === 'ConsultaMotivos') {
+                $modelo->origen = \common\models\ConsultaMotivos::ORIGEN_MEDICO;
+            }
+
             if ($modelo->save()) {
                 $nuevosIds[] = $modelo->id;
             }
         }
-        
+
         return $nuevosIds;
     }
 

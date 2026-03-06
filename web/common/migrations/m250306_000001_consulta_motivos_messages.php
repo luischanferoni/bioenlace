@@ -12,8 +12,8 @@ class m250306_000001_consulta_motivos_messages extends Migration
     {
         $this->createTable('{{%consulta_motivos_messages}}', [
             'id' => $this->primaryKey(),
-            'consulta_id' => $this->integer()->notNull()->comment('ID de la consulta'),
-            'user_id' => $this->integer()->notNull()->comment('Usuario (paciente) que envía'),
+            'consulta_id' => $this->integer()->unsigned()->notNull()->comment('ID de la consulta'),
+            'user_id' => $this->integer()->unsigned()->notNull()->comment('Usuario (paciente) que envía'),
             'user_name' => $this->string(100)->notNull(),
             'content' => $this->text()->notNull()->comment('Texto o ruta relativa del archivo'),
             'message_type' => $this->string(20)->notNull()->defaultValue('texto')->comment('texto, imagen, audio'),

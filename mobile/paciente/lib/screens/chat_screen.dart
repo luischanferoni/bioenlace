@@ -10,8 +10,14 @@ import 'chat_motivos_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
+  /// Si se provee, el botón "Mis turnos" del AppBar cambia a la pestaña Mis turnos (ej. en MainScreen).
+  final VoidCallback? onIrAMisTurnos;
 
-  const ChatScreen({Key? key, required this.chatService}) : super(key: key);
+  const ChatScreen({
+    Key? key,
+    required this.chatService,
+    this.onIrAMisTurnos,
+  }) : super(key: key);
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -480,16 +486,20 @@ class _ChatScreenState extends State<ChatScreen> {
             icon: const Icon(Icons.calendar_today, color: Colors.white),
             tooltip: 'Mis turnos',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MisTurnosScreen(
-                    authToken: _accionesService.authToken,
-                    userId: widget.chatService.currentUserId,
-                    userName: widget.chatService.currentUserName,
+              if (widget.onIrAMisTurnos != null) {
+                widget.onIrAMisTurnos!();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MisTurnosScreen(
+                      authToken: _accionesService.authToken,
+                      userId: widget.chatService.currentUserId,
+                      userName: widget.chatService.currentUserName,
+                    ),
                   ),
-                ),
-              );
+                );
+              }
             },
           ),
         ],

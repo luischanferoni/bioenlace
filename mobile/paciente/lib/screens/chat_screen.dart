@@ -6,6 +6,7 @@ import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../components/dynamic_form.dart';
 import 'mis_turnos_screen.dart';
+import 'chat_motivos_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -779,7 +780,6 @@ class _ChatScreenState extends State<ChatScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            // Enviar la consulta sugerida automáticamente
                             _messageController.text = suggestedQuery;
                             _sendMessage();
                           },
@@ -804,6 +804,40 @@ class _ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                         ),
+                      ),
+                    ],
+                    // CTA Cargar motivos cuando la respuesta incluye id_consulta (ej. tras crear turno)
+                    if (!isUser) ...[
+                      Builder(
+                        builder: (context) {
+                          final data = message['data'];
+                          final idConsulta = data is Map ? data['id_consulta'] : null;
+                          final idConsultaInt = idConsulta is int ? idConsulta : (idConsulta is num ? idConsulta.toInt() : null);
+                          if (idConsultaInt == null) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0),
+                            child: ActionChip(
+                              avatar: Icon(Icons.edit_note, size: 18, color: Theme.of(context).primaryColor),
+                              label: const Text('Cargar motivos de la consulta'),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ChatMotivosScreen(
+                                      consultaId: idConsultaInt,
+                                      authToken: _accionesService.authToken,
+                                      userId: widget.chatService.currentUserId,
+                                      userName: widget.chatService.currentUserName,
+                                      titulo: 'Motivos de la consulta',
+                                    ),
+                                  ),
+                                );
+                              },
+                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+                              labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontSize: 13),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ],

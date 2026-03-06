@@ -115,6 +115,14 @@ return [
                 'OPTIONS api/<version:\w+>/consulta-chat/upload' => '<version>/consulta-chat/upload',
                 'GET api/<version:\w+>/consulta-chat/status/<id:\d+>' => '<version>/consulta-chat/status',
                 'OPTIONS api/<version:\w+>/consulta-chat/status/<id:\d+>' => '<version>/consulta-chat/status',
+
+                // Motivos de consulta (conversación paciente: texto, audio, fotos)
+                'GET api/<version:\w+>/motivos-consulta/messages/<id:\d+>' => '<version>/motivos-consulta/messages',
+                'OPTIONS api/<version:\w+>/motivos-consulta/messages/<id:\d+>' => '<version>/motivos-consulta/messages',
+                'POST api/<version:\w+>/motivos-consulta/send' => '<version>/motivos-consulta/send',
+                'OPTIONS api/<version:\w+>/motivos-consulta/send' => '<version>/motivos-consulta/send',
+                'POST api/<version:\w+>/motivos-consulta/upload' => '<version>/motivos-consulta/upload',
+                'OPTIONS api/<version:\w+>/motivos-consulta/upload' => '<version>/motivos-consulta/upload',
                 
                 // Turnos API
                 'GET api/<version:\w+>/turnos' => '<version>/turnos/index',

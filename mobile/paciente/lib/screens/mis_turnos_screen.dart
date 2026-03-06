@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import '../services/turnos_service.dart';
 import 'chat_medico_screen.dart';
+import 'chat_motivos_screen.dart';
 
 /// Pantalla "Mis turnos" del paciente. Muestra turnos con opción de abrir chat si es teleconsulta.
 class MisTurnosScreen extends StatefulWidget {
@@ -91,50 +92,76 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                           final idConsulta = t['id_consulta'];
                           final puedeChat = tipoAtencion == 'teleconsulta' && idConsulta != null;
 
+                          final puedeMotivos = idConsulta != null;
+                          final tituloMotivos = 'Motivos · ${t['fecha']} ${t['hora']}';
+
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              title: Text(
-                                '${t['fecha']} · ${t['hora']}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Column(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  if (t['servicio'] != null) Text(t['servicio'].toString()),
-                                  if (t['profesional'] != null) Text('Con: ${t['profesional']}'),
+                                  Text(
+                                    '${t['fecha']} · ${t['hora']}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  if (t['servicio'] != null) Text(t['servicio'].toString(), style: AppTheme.subTitleStyle),
+                                  if (t['profesional'] != null) Text('Con: ${t['profesional']}', style: AppTheme.subTitleStyle),
                                   Text(
                                     tipoAtencion == 'teleconsulta' ? 'Consulta por chat' : 'Presencial',
                                     style: TextStyle(
-                                      color: tipoAtencion == 'teleconsulta'
-                                          ? AppTheme.primaryColor
-                                          : Colors.grey[600],
+                                      color: tipoAtencion == 'teleconsulta' ? AppTheme.primaryColor : Colors.grey[600],
                                       fontSize: 12,
                                     ),
                                   ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 6,
+                                    children: [
+                                      if (puedeMotivos)
+                                        OutlinedButton.icon(
+                                          icon: const Icon(Icons.edit_note, size: 18),
+                                          label: const Text('Cargar motivos'),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => ChatMotivosScreen(
+                                                  consultaId: idConsulta as int,
+                                                  authToken: widget.authToken,
+                                                  userId: widget.userId,
+                                                  userName: widget.userName ?? 'Paciente',
+                                                  titulo: tituloMotivos,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      if (puedeChat)
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.chat, size: 18),
+                                          label: const Text('Abrir chat'),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) => ChatMedicoScreen(
+                                                  consultaId: idConsulta as int,
+                                                  authToken: widget.authToken,
+                                                  userId: widget.userId,
+                                                  userName: widget.userName ?? 'Paciente',
+                                                  titulo: 'Chat con ${t['profesional'] ?? 'médico'}',
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               ),
-                              trailing: puedeChat
-                                  ? ElevatedButton.icon(
-                                      icon: const Icon(Icons.chat, size: 18),
-                                      label: const Text('Abrir chat'),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ChatMedicoScreen(
-                                              consultaId: idConsulta as int,
-                                              authToken: widget.authToken,
-                                              userId: widget.userId,
-                                              userName: widget.userName ?? 'Paciente',
-                                              titulo: 'Chat con ${t['profesional'] ?? 'médico'}',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    )
-                                  : null,
                             ),
                           );
                         },

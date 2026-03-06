@@ -6,11 +6,12 @@ use yii\db\ActiveRecord;
 
 /**
  * Categoría de sensibilidad para el módulo de resumen con IA.
- * Cada código SNOMED puede mapearse a una categoría; luego las reglas por visor definen si ocultar, generalizar o ver.
+ * Cada código SNOMED se mapea a una categoría; la regla de la categoría define acción (generalizar|ocultar) y para qué servicios aplica; el resto ve completo.
  *
  * @property int $id
  * @property string $nombre
  * @property string|null $descripcion
+ * @property SensibilidadRegla|null $regla
  */
 class SensibilidadCategoria extends ActiveRecord
 {
@@ -55,22 +56,11 @@ class SensibilidadCategoria extends ActiveRecord
     }
 
     /**
+     * Regla de sensibilidad para esta categoría (una por categoría). Lista de servicios en regla->reglaServicios; el resto ve completo.
      * @return \yii\db\ActiveQuery
      */
-    public function getReglasVisor()
+    public function getRegla()
     {
-        return $this->hasMany(SensibilidadReglaVisor::class, ['id_categoria' => 'id']);
-    }
-
-    /**
-     * Valores permitidos para accion en reglas.
-     */
-    public static function accionesDisponibles()
-    {
-        return [
-            'ver_completo' => 'Ver completo',
-            'generalizar' => 'Generalizar',
-            'ocultar' => 'Ocultar',
-        ];
+        return $this->hasOne(SensibilidadRegla::class, ['id_categoria' => 'id']);
     }
 }

@@ -21,7 +21,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 </div>
             </div>
             <div class="card-body">
-                <p class="text-muted small">Las categorías se usan para clasificar códigos SNOMED y definir reglas de visibilidad por servicio/rol (ocultar, generalizar, ver completo).</p>
+                <p class="text-muted small">Las categorías agrupan códigos SNOMED. Por categoría se define una regla: acción (generalizar/ocultar) y lista de servicios que la reciben; el resto ve el dato completo.</p>
                 <?= GridView::widget([
                     'dataProvider' => $dataProvider,
                     'columns' => [

@@ -24,6 +24,14 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
         ]) ?>
         <?= Html::a('Mapeos SNOMED', ['sensibilidad-mapeo/index', 'SensibilidadMapeoSnomedBusqueda[id_categoria]' => $model->id], ['class' => 'btn btn-outline-secondary']) ?>
+        <?php
+        $regla = $model->regla;
+        if ($regla) {
+            echo Html::a('Regla (generalizar/ocultar por servicio)', ['sensibilidad-regla/update', 'id' => $regla->id], ['class' => 'btn btn-outline-secondary']);
+        } else {
+            echo Html::a('Crear regla', ['sensibilidad-regla/create', 'id_categoria' => $model->id], ['class' => 'btn btn-outline-secondary']);
+        }
+        ?>
     </p>
 
     <?= DetailView::widget([

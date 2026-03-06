@@ -49,23 +49,24 @@ flowchart LR
   end
   subgraph reglas [Reglas configurables]
     M[Código SNOMED → Categoría sensibilidad]
-    V[Visor servicio/rol × Categoría → ocultar/generalizar/ver]
+    R[Categoría → Regla: acción + lista de servicios]
   end
   subgraph salida [Salida]
     T[Texto permitido para visor]
   end
   D --> M
-  M --> V
-  V --> T
+  M --> R
+  R --> T
 ```
 
 - **Clasificación**: cada **código SNOMED** (o rango jerárquico) se mapea a una **categoría de sensibilidad** (ej. `violencia_sexual`, `salud_mental_detallada`, `consumo_sustancias`). El mapeo es **solo por código**, no por texto libre.
-- **Visibilidad**: para cada **visor** (especialidad o servicio o rol) y cada categoría se define: **ocultar** (no incluir ese concepto en la vista), **generalizar** (sustituir por un concepto genérico, también por código o etiqueta), o **ver completo**.
-- **Aplicación**: al armar el "texto permitido" para un visor, se recorren los **datos estructurados** del paciente; por cada ítem con código SNOMED se consulta la categoría y la regla del visor; se incluye, se generaliza o se omite. **No se usa en ningún paso el texto libre** del médico ni del paciente.
+- **Regla por categoría**: para cada categoría hay una **regla** con una **acción** (`generalizar` u `ocultar`) y una **lista de servicios** a los que aplica esa acción. Los servicios en la lista ven el dato generalizado u oculto; **el resto ve el dato completo**. Lista vacía = nadie restringido = todos ven completo. No se considera excepción por "servicio creador".
+- **Aplicación**: al armar el "texto permitido" para un visor (servicio), por cada ítem con código SNOMED se obtiene la categoría y su regla; si el visor está en la lista de servicios de la regla, se aplica la acción (generalizar/ocultar); si no, se muestra completo. **No se usa en ningún paso el texto libre** del médico ni del paciente.
+- **Alertas**: si un servicio asigna un código para el cual él mismo está en la lista "generalizar/ocultar" de esa categoría, el backend debe registrar una **alerta para revisión manual** (módulo de alertas): no se impide la carga, pero se marca el caso para que un humano revise (error de asignación, excepción válida o cambio de regla).
 
 ### 3.4 Configurable, reseteable, actualizable
 
-- **Configurable**: categorías de sensibilidad, mapeo SNOMED → categoría, y matriz (visor × categoría → acción) en tablas o config editables por administración.
+- **Configurable**: categorías de sensibilidad, mapeo SNOMED → categoría, y por categoría la regla (acción + lista de servicios) en tablas editables por administración.
 - **Reseteable**: al cambiar categorías o reglas se marcan como inválidos los resúmenes afectados; un proceso (job/comando) regenera los resúmenes con las nuevas reglas.
 - **Actualizable**: ante nueva consulta o dato, se actualiza el texto base y, para cada visor que corresponda, se vuelve a aplicar el filtro de sensibilidad y se regenera el resumen con IA, guardando en BD.
 
@@ -78,7 +79,8 @@ flowchart LR
 - **Sensibilidad**:
   - `sensibilidad_categoria` — id, nombre, descripción.
   - `sensibilidad_mapeo_snomed` — código (o raíz jerárquica) SNOMED → id_categoria.
-  - `sensibilidad_regla_visor` — visor (id_servicio o id_rol), id_categoria, accion (`ver_completo` | `generalizar` | `ocultar`), opcional: código/etiqueta de generalización.
+  - `sensibilidad_regla` — id_categoria (uno por categoría), accion (`generalizar` | `ocultar`), opcional: codigo_generalizacion, etiqueta_generalizacion.
+  - `sensibilidad_regla_servicio` — id_regla, id_servicio. Servicios que reciben la acción (generalizar/ocultar); lista vacía = todos ven completo.
 
 No se almacena ni se usa texto libre del médico/paciente en este módulo.
 
@@ -94,13 +96,13 @@ No se almacena ni se usa texto libre del médico/paciente en este módulo.
 
 ## 6. Orden de implementación sugerido
 
-1. **Tablas y modelos**: texto base, resumen por servicio, categorías de sensibilidad, mapeo SNOMED → categoría, reglas visor × categoría.
+1. **Tablas y modelos**: texto base, resumen por servicio, categorías de sensibilidad, mapeo SNOMED → categoría, regla por categoría + lista de servicios.
 2. **Servicio de texto base**: construir y actualizar el texto base por paciente (incremental al agregar consulta).
 3. **Módulo de sensibilidad**: dado un texto base (o lista de ítems con SNOMED) y un visor, producir el "texto permitido" (ocultar/generalizar según reglas).
 4. **Generación de resúmenes**: para cada visor (servicio), aplicar sensibilidad sobre el texto base, llamar a la IA, guardar en `resumen_paciente_servicio`.
 5. **Disparadores**: al crear/actualizar consulta (y opcionalmente otros datos), encolar actualización de texto base y de resúmenes del paciente.
 6. **API y UI**: endpoint(s) para leer resumen por paciente/servicio (y opcional por consulta actual); en la app móvil (`PatientTimelineScreen`) y/o web, mostrar el resumen correspondiente al servicio/consulta actual.
-7. **Admin**: pantallas o comandos para mantener categorías, mapeos SNOMED y reglas de visor; y para marcar como inválidos y regenerar resúmenes (reseteable).
+7. **Admin**: pantallas o comandos para mantener categorías, mapeos SNOMED y reglas (acción + lista de servicios por categoría); y para marcar como inválidos y regenerar resúmenes (reseteable). Módulo de **alertas** para casos donde un servicio asigna un código que según la regla ese servicio solo vería generalizado/oculto.
 
 ---
 

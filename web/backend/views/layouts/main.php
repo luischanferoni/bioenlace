@@ -107,6 +107,7 @@ $home = Yii::$app->getHomeUrl();
                             'label' => 'Resumen IA',
                             'items' => [
                                 ['label' => 'Categorías de sensibilidad', 'url' => ['/sensibilidad-categoria/index']],
+                                ['label' => 'Reglas (generalizar/ocultar por servicio)', 'url' => ['/sensibilidad-regla/index']],
                                 ['label' => 'Mapeo SNOMED → sensibilidad', 'url' => ['/sensibilidad-mapeo/index']],
                             ]
                         ],

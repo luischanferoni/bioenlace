@@ -30,7 +30,7 @@ use yii\debug\models\timeline\DataProvider;
 class TurnosController extends Controller
 {
 
-    public $freeAccessActions = ['list-turnos', 'eventos'];
+    public $freeAccessActions = ['list-turnos', 'eventos', 'misTurnos'];
 
     /**
      * {@inheritdoc}
@@ -407,6 +407,80 @@ class TurnosController extends Controller
                 "errors" => $model->getErrorSummary(true)
             ];
         }
+    }
+
+    /**
+     * Lista los turnos del usuario autenticado (paciente). GET fecha_desde, fecha_hasta opcionales. Respuesta JSON.
+     */
+    public function actionMisTurnos()
+    {
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        $userId = Yii::$app->user->id;
+        if (!$userId) {
+            \Yii::$app->response->statusCode = 401;
+            return [
+                'success' => false,
+                'message' => 'Usuario no autenticado.',
+                'data' => ['turnos' => [], 'total' => 0],
+            ];
+        }
+
+        $persona = Persona::findOne(['id_user' => $userId]);
+        if (!$persona) {
+            \Yii::$app->response->statusCode = 403;
+            return [
+                'success' => false,
+                'message' => 'No se encontró persona asociada al usuario',
+                'data' => ['turnos' => [], 'total' => 0],
+            ];
+        }
+
+        $request = Yii::$app->request;
+        $fechaDesde = $request->get('fecha_desde', date('Y-m-d'));
+        $fechaHasta = $request->get('fecha_hasta', date('Y-m-d', strtotime('+3 months')));
+
+        $turnos = Turno::find()
+            ->where(['id_persona' => $persona->id_persona])
+            ->andWhere(['>=', 'fecha', $fechaDesde])
+            ->andWhere(['<=', 'fecha', $fechaHasta])
+            ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
+            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
+            ->all();
+
+        $formattedTurnos = [];
+        foreach ($turnos as $turno) {
+            $servicio = $turno->servicio ? $turno->servicio->nombre :
+                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+            $profesional = $turno->rrhh && $turno->rrhh->idPersona
+                ? $turno->rrhh->idPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                : null;
+            $formattedTurnos[] = [
+                'id' => $turno->id_turnos,
+                'id_persona' => $turno->id_persona,
+                'fecha' => $turno->fecha,
+                'hora' => $turno->hora,
+                'servicio' => $servicio,
+                'id_servicio_asignado' => $turno->id_servicio_asignado,
+                'estado' => $turno->estado,
+                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+                'id_consulta' => $consulta ? $consulta->id_consulta : null,
+                'profesional' => $profesional,
+                'observaciones' => $turno->observaciones,
+                'created_at' => $turno->created_at,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'OK',
+            'data' => [
+                'turnos' => $formattedTurnos,
+                'total' => count($formattedTurnos),
+            ],
+        ];
     }
 
     /**

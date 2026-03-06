@@ -127,66 +127,12 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Mis turnos (paciente): listar turnos del usuario autenticado con tipo_atencion e id_consulta para chat.
-     * GET /api/v1/turnos/mis-turnos?fecha_desde=2024-01-01&fecha_hasta=2024-12-31
+     * Lista los turnos del paciente autenticado. GET fecha_desde, fecha_hasta opcionales.
      */
     public function actionMisTurnos()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        $err = $this->requerirAutenticacion();
-        if ($err !== null) {
-            return $err;
-        }
-        $auth = $this->verificarAutenticacion();
-        $userId = $auth['userId'];
-        $persona = Persona::findOne(['id_user' => $userId]);
-        if (!$persona) {
-            return $this->error('No se encontró persona asociada al usuario', null, 403);
-        }
-
-        $fechaDesde = Yii::$app->request->get('fecha_desde', date('Y-m-d'));
-        $fechaHasta = Yii::$app->request->get('fecha_hasta', date('Y-m-d', strtotime('+3 months')));
-
-        $turnos = Turno::find()
-            ->where(['id_persona' => $persona->id_persona])
-            ->andWhere(['>=', 'fecha', $fechaDesde])
-            ->andWhere(['<=', 'fecha', $fechaHasta])
-            ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
-            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
-            ->all();
-
-        $formattedTurnos = [];
-        foreach ($turnos as $turno) {
-            $paciente = $turno->persona;
-            $servicio = $turno->servicio ? $turno->servicio->nombre :
-                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
-            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
-            $profesional = $turno->rrhh && $turno->rrhh->idPersona
-                ? $turno->rrhh->idPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
-                : null;
-
-            $formattedTurnos[] = [
-                'id' => $turno->id_turnos,
-                'id_persona' => $turno->id_persona,
-                'fecha' => $turno->fecha,
-                'hora' => $turno->hora,
-                'servicio' => $servicio,
-                'id_servicio_asignado' => $turno->id_servicio_asignado,
-                'estado' => $turno->estado,
-                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
-                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
-                'id_consulta' => $consulta ? $consulta->id_consulta : null,
-                'profesional' => $profesional,
-                'observaciones' => $turno->observaciones,
-                'created_at' => $turno->created_at,
-            ];
-        }
-
-        return $this->success([
-            'turnos' => $formattedTurnos,
-            'total' => count($formattedTurnos),
-        ]);
+        $controller = new \frontend\controllers\TurnosController('turnos', Yii::$app);
+        return $controller->runAction('misTurnos', []);
     }
 
     /**

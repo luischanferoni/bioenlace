@@ -42,6 +42,7 @@ class TurnosController extends BaseController
     {
         return array_merge(parent::verbs(), [
             'index' => ['GET', 'HEAD', 'OPTIONS'],
+            'mis-turnos' => ['GET', 'OPTIONS'],
         ]);
     }
 
@@ -129,7 +130,7 @@ class TurnosController extends BaseController
     public function actionMisTurnos()
     {
         $controller = new \frontend\controllers\TurnosController('turnos', Yii::$app);
-        return $controller->runAction('misTurnos', []);
+        return $controller->runAction('mis-turnos', []);
     }
 
     /**

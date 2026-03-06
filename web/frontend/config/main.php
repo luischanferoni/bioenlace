@@ -137,9 +137,9 @@ return [
                 'PUT api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',
                 'OPTIONS api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',
                 
-                // Personas Timeline API (deshabilitado temporalmente)
-                // 'GET api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
-                // 'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
+                // Personas Timeline API (historia clínica)
+                'GET api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
+                'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
                 
                 // Listados por encounter (internación, guardia)
                 'GET api/<version:\w+>/listado/internacion' => '<version>/listado/internacion',

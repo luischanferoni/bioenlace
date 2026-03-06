@@ -86,7 +86,7 @@ $this->title = 'Inicio - Turnos';
                                 <strong><i class="bi bi-hospital me-2"></i>Servicio:</strong>
                                 <?= Html::encode($servicio) ?>
                             </div>
-                            <?php if ($turno->observaciones): ?>
+                            <?php if ($turno->hasAttribute('observaciones') && $turno->observaciones != ''): ?>
                                 <div class="mb-2">
                                     <strong><i class="bi bi-chat-left-text me-2"></i>Observaciones:</strong>
                                     <small class="text-muted"><?= Html::encode($turno->observaciones) ?></small>

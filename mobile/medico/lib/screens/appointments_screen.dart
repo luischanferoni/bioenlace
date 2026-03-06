@@ -5,8 +5,7 @@ import 'package:shared/shared.dart';
 
 import '../models/turno.dart';
 import '../services/turnos_service.dart';
-// Timeline deshabilitado temporalmente
-// import 'patient_timeline_screen.dart';
+import 'patient_timeline_screen.dart';
 import 'chat_consulta_screen.dart';
 
 class AppointmentsScreen extends StatefulWidget {
@@ -245,7 +244,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       elevation: 0,
       color: AppTheme.primaryColor.withOpacity(0.1),
       child: InkWell(
-        onTap: () => _onTapSinTimeline(context),
+        onTap: () => _verHistoriaClinica(turno.idPersona),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -302,7 +301,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     return Card(
       elevation: 0,
       child: InkWell(
-        onTap: () => _onTapSinTimeline(context),
+        onTap: () => _verHistoriaClinica(turno.idPersona),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -389,10 +388,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                         label: const Text('Chat'),
                       ),
                     ),
-                  // Timeline deshabilitado: botón Historia clínica oculto
-                  Text(
-                    'Historia clínica no disponible',
-                    style: AppTheme.subTitleStyle,
+                  TextButton.icon(
+                    icon: const Icon(Icons.medical_services, size: 18),
+                    label: const Text('Historia clínica'),
+                    onPressed: () => _verHistoriaClinica(turno.idPersona),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppTheme.primaryColor,
+                    ),
                   ),
                 ],
               ),
@@ -418,23 +420,17 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
   }
 
-  static void _onTapSinTimeline(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Historia clínica no disponible temporalmente.'),
+  void _verHistoriaClinica(int personaId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PatientTimelineScreen(
+          personaId: personaId,
+          authToken: widget.authToken,
+        ),
       ),
     );
   }
-
-  // Timeline deshabilitado temporalmente
-  // void _verHistoriaClinica(int personaId) {
-  //   Navigator.push(context, MaterialPageRoute(
-  //     builder: (context) => PatientTimelineScreen(
-  //       personaId: personaId,
-  //       authToken: widget.authToken,
-  //     ),
-  //   ));
-  // }
 
   void _abrirChat(int consultaId, String nombrePaciente) {
     Navigator.push(

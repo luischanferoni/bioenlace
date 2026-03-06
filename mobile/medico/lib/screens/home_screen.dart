@@ -8,8 +8,7 @@ import '../models/turno.dart';
 import '../services/turnos_service.dart';
 import '../services/internados_service.dart';
 import '../services/guardia_service.dart';
-// Timeline deshabilitado temporalmente
-// import 'patient_timeline_screen.dart';
+import 'patient_timeline_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
 /// AMB/VR/OBSENC/HH = turnos; IMP = pacientes internados; EMER = ingresos en guardia.
@@ -514,7 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 0,
       color: AppTheme.primaryColor.withOpacity(0.1),
       child: InkWell(
-        onTap: () => _onTapSinTimeline(context),
+        onTap: () => _verHistoriaClinica(turno.idPersona),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -572,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       elevation: 0,
       child: InkWell(
-        onTap: () => _onTapSinTimeline(context),
+        onTap: () => _verHistoriaClinica(turno.idPersona),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -646,10 +645,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     backgroundColor: _getEstadoColor(turno.estado).withOpacity(0.2),
                     labelStyle: TextStyle(color: _getEstadoColor(turno.estado)),
                   ),
-                  // Timeline deshabilitado: botón Historia clínica oculto
-                  Text(
-                    'Historia clínica no disponible',
-                    style: AppTheme.subTitleStyle,
+                  TextButton.icon(
+                    icon: const Icon(Icons.medical_services, size: 18),
+                    label: const Text('Historia clínica'),
+                    onPressed: () => _verHistoriaClinica(turno.idPersona),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppTheme.primaryColor,
+                    ),
                   ),
                 ],
               ),
@@ -683,13 +685,15 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Timeline deshabilitado temporalmente
-  // void _verHistoriaClinica(int personaId) {
-  //   Navigator.push(context, MaterialPageRoute(
-  //     builder: (context) => PatientTimelineScreen(
-  //       personaId: personaId,
-  //       authToken: widget.authToken,
-  //     ),
-  //   ));
-  // }
+  void _verHistoriaClinica(int personaId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PatientTimelineScreen(
+          personaId: personaId,
+          authToken: widget.authToken,
+        ),
+      ),
+    );
+  }
 }

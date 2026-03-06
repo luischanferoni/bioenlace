@@ -8,11 +8,14 @@ import '../services/timeline_service.dart';
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
   final String? authToken;
+  /// true = solo ver historia clínica (sin formulario); false = mismo que "Cargar Consulta" con barra para escribir
+  final bool soloVer;
 
   const PatientTimelineScreen({
     Key? key,
     required this.personaId,
     this.authToken,
+    this.soloVer = true,
   }) : super(key: key);
 
   @override
@@ -113,7 +116,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             ),
                           ),
                         ),
-                        _buildChatInputBar(),
+                        if (!widget.soloVer) _buildChatInputBar(),
                       ],
                     ),
     );

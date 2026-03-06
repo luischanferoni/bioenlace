@@ -116,11 +116,19 @@ class BaseController extends ActiveController
             return $this->error($e->getMessage(), null, 404);
         } catch (BadRequestHttpException $e) {
             return $this->error($e->getMessage(), null, 422);
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         } catch (\yii\web\ServerErrorHttpException $e) {
             return $this->error($e->getMessage(), null, 500);
         } catch (\Throwable $e) {
-            Yii::warning(static::class . ' runFrontendAction(' . $actionId . '): ' . $e->getMessage(), 'api');
-            return $this->error('Error en el servidor', null, 500);
+            Yii::error(
+                static::class . ' runFrontendAction(' . $actionId . '): ' . $e->getMessage() . "\n" . $e->getTraceAsString(),
+                'api'
+            );
+            $message = defined('YII_DEBUG') && YII_DEBUG
+                ? 'Error en el servidor: ' . $e->getMessage()
+                : 'Error en el servidor';
+            return $this->error($message, null, 500);
         }
     }
 

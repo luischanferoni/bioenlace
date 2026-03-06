@@ -32,7 +32,7 @@ class TurnosController extends Controller
 {
 
     /** Acciones sin autenticación obligatoria. Fuente única para Web y API (móvil). */
-    public $freeAccessActions = ['list-turnos', 'eventos', 'mis-turnos'];
+    public $freeAccessActions = ['list-turnos', 'eventos', 'mis-turnos', 'index-api', 'view-api', 'create-api', 'update-api', 'proximo-disponible-api'];
 
     /** Misma lista para la API: nombres de acción que no requieren auth (index, eventos, etc.). */
     public static $authenticatorExcept = ['index', 'eventos'];
@@ -524,7 +524,16 @@ class TurnosController extends Controller
         if (!$rrhhId) {
             throw new BadRequestHttpException('No se pudo determinar el recurso humano. Proporcione rrhh_id o user_id para desarrollo.');
         }
-        $turnos = Turno::getTurnosPorRrhhPorFecha($fecha, $rrhhId);
+        $rrhh = RrhhEfector::findOne($rrhhId);
+        if (!$rrhh) {
+            throw new NotFoundHttpException('Recurso humano no encontrado.');
+        }
+        try {
+            $turnos = Turno::getTurnosPorRrhhPorFecha($fecha, $rrhhId);
+        } catch (\Throwable $e) {
+            Yii::error('TurnosController::actionIndexApi getTurnosPorRrhhPorFecha: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
+            throw new \yii\web\ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
+        }
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
             $paciente = $turno->persona;

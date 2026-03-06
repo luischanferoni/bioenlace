@@ -983,6 +983,39 @@ class Consulta extends \yii\db\ActiveRecord
         //TODO: revisar si se agrega otro parent ver la clase del hasOne
         return $this->hasOne(Turno::className(), [$parentIdAttr => 'parent_id']);
     }
+
+    /**
+     * Crea una consulta asociada a un turno recién creado (para que el paciente pueda cargar motivos
+     * y el médico tenga el registro de consulta desde el momento del turno).
+     * Si ya existe una consulta para ese turno, la devuelve sin crear otra.
+     * @param Turno $turno turno recién guardado
+     * @return Consulta|null la consulta creada o existente, o null si falla
+     */
+    public static function createFromTurno(Turno $turno)
+    {
+        $existente = self::findOne(['id_turnos' => $turno->id_turnos]);
+        if ($existente) {
+            return $existente;
+        }
+        $consulta = new self();
+        $consulta->id_turnos = $turno->id_turnos;
+        $consulta->parent_class = self::PARENT_CLASSES[self::PARENT_TURNO];
+        $consulta->parent_id = $turno->id_turnos;
+        $consulta->id_persona = $turno->id_persona;
+        $consulta->id_rr_hh = $turno->id_rr_hh;
+        $consulta->id_efector = $turno->getAttribute('id_efector') ?: null;
+        $consulta->id_servicio = $turno->id_servicio_asignado ?: $turno->getAttribute('id_servicio');
+        if ($consulta->id_efector === null && $turno->id_rr_hh) {
+            $rrhh = \common\models\RrhhEfector::findOne($turno->id_rr_hh);
+            if ($rrhh) {
+                $consulta->id_efector = $rrhh->id_efector;
+            }
+        }
+        if (!$consulta->id_efector || !$consulta->id_servicio) {
+            return null;
+        }
+        return $consulta->save(false) ? $consulta : null;
+    }
     
     public static function returnMsjError($mensaje)
     {

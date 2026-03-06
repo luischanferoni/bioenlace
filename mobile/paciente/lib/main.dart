@@ -6,16 +6,17 @@ import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart'; // Usar LoginScreen del paquete compartido
 
 import 'services/chat_service.dart';
-import 'screens/chat_screen.dart';
+import 'screens/main_screen.dart';
 import 'screens/signup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
   final userId = prefs.getString('user_id') ?? '';
   final userName = prefs.getString('user_name') ?? '';
+  final authToken = prefs.getString('auth_token');
 
   ChatService? chatService;
 
@@ -25,33 +26,28 @@ void main() async {
       currentUserName: userName,
     );
   }
-  /*    
-  // Simulamos un usuario logeado
-  final chatService = ChatService(
-    currentUserId: 'user123',
-    currentUserName: 'Usuario Demo',
-  );
-  */
 
   runApp(MyApp(
     isLoggedIn: isLoggedIn,
     chatService: chatService,
+    authToken: authToken,
   ));
 }
 
 class MyApp extends StatelessWidget {
   final bool isLoggedIn;
   final ChatService? chatService;
+  final String? authToken;
 
-  const MyApp({Key? key, required this.isLoggedIn, this.chatService}) : super(key: key);
+  const MyApp({Key? key, required this.isLoggedIn, this.chatService, this.authToken}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Chat App',
+      title: 'BioEnlace Paciente',
       theme: AppTheme.lightTheme,
       home: isLoggedIn
-          ? ChatScreen(chatService: chatService!)
+          ? MainScreen(chatService: chatService!, authToken: authToken)
           : LoginScreen(
               appTitle: 'Bienvenido a BioEnlace',
               appSubtitle: 'Tu asistente de salud personal',
@@ -65,10 +61,12 @@ class MyApp extends StatelessWidget {
                   currentUserId: userId,
                   currentUserName: userName,
                 );
-                // Navegar a la pantalla de chat usando el contexto del LoginScreen
+                // Navegar a la pantalla principal (Inicio con bottom nav)
                 Navigator.pushReplacement(
                   loginContext,
-                  MaterialPageRoute(builder: (_) => ChatScreen(chatService: newChatService)),
+                  MaterialPageRoute(
+                    builder: (_) => MainScreen(chatService: newChatService, authToken: null),
+                  ),
                 );
               },
               onNavigateToSignup: (loginContext) {
@@ -128,11 +126,11 @@ class MyApp extends StatelessWidget {
                         ),
                       );
                       
-                      // Navegar al ChatScreen con el servicio configurado
+                      // Navegar a MainScreen (Inicio con bottom nav)
                       Navigator.pushReplacement(
                         loginContext,
                         MaterialPageRoute(
-                          builder: (_) => ChatScreen(chatService: chatService),
+                          builder: (_) => MainScreen(chatService: chatService, authToken: token),
                         ),
                       );
                     } else {
@@ -156,14 +154,14 @@ class MyApp extends StatelessWidget {
                       Navigator.pushReplacement(
                         loginContext,
                         MaterialPageRoute(
-                          builder: (_) => ChatScreen(chatService: demoChatService),
+                          builder: (_) => MainScreen(chatService: demoChatService, authToken: null),
                         ),
                       );
                     }
                   } else {
                     // Cerrar el diálogo de carga
                     Navigator.pop(loginContext);
-                    
+
                     // Mostrar error y usar modo visitante como fallback
                     ScaffoldMessenger.of(loginContext).showSnackBar(
                       SnackBar(
@@ -172,16 +170,16 @@ class MyApp extends StatelessWidget {
                         duration: Duration(seconds: 3),
                       ),
                     );
-                    
+
                     final demoChatService = ChatService(
                       currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
                       currentUserName: 'Visitante',
                     );
-                    
+
                     Navigator.pushReplacement(
                       loginContext,
                       MaterialPageRoute(
-                        builder: (_) => ChatScreen(chatService: demoChatService),
+                        builder: (_) => MainScreen(chatService: demoChatService, authToken: null),
                       ),
                     );
                   }
@@ -204,11 +202,11 @@ class MyApp extends StatelessWidget {
                     currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
                     currentUserName: 'Visitante',
                   );
-                  
+
                   Navigator.pushReplacement(
                     loginContext,
                     MaterialPageRoute(
-                      builder: (_) => ChatScreen(chatService: demoChatService),
+                      builder: (_) => MainScreen(chatService: demoChatService, authToken: null),
                     ),
                   );
                 }

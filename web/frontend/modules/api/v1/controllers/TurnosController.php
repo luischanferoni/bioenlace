@@ -485,10 +485,16 @@ class TurnosController extends BaseController
         
         // Guardar turno
         if ($model->save()) {
+            $idConsulta = null;
+            $consulta = Consulta::createFromTurno($model);
+            if ($consulta) {
+                $idConsulta = (int) $consulta->id_consulta;
+            }
             return $this->success([
                 'id' => $model->id_turnos,
                 'fecha' => $model->fecha,
                 'hora' => $model->hora,
+                'id_consulta' => $idConsulta,
             ], 'Turno creado exitosamente', 201);
         } else {
             return $this->error('Error al crear el turno', $model->getErrors(), 422);

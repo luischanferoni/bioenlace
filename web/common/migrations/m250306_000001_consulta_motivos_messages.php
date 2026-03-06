@@ -30,20 +30,12 @@ class m250306_000001_consulta_motivos_messages extends Migration
             'CASCADE',
             'CASCADE'
         );
-        $this->addForeignKey(
-            'fk_consulta_motivos_messages_user',
-            '{{%consulta_motivos_messages}}',
-            'user_id',
-            '{{%user}}',
-            'id',
-            'CASCADE',
-            'CASCADE'
-        );
+        // No se agrega FK a user: el tipo de user.id puede variar (INT/BIGINT, signed/unsigned) y provoca errno 150.
+        // user_id se mantiene como columna; la relación se valida en el modelo (exist rule).
     }
 
     public function safeDown()
     {
-        $this->dropForeignKey('fk_consulta_motivos_messages_user', '{{%consulta_motivos_messages}}');
         $this->dropForeignKey('fk_consulta_motivos_messages_consulta', '{{%consulta_motivos_messages}}');
         $this->dropTable('{{%consulta_motivos_messages}}');
     }

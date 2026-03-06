@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 /// Servicio para obtener "Mis turnos" del paciente (con tipo_atencion e id_consulta para chat).
@@ -7,6 +8,13 @@ class TurnosService {
   final String? authToken;
 
   TurnosService({this.authToken});
+
+  /// Obtiene el token a usar: el inyectado o el guardado en SharedPreferences (para evitar 401 en mis-turnos).
+  Future<String?> _getEffectiveToken() async {
+    if (authToken != null && authToken!.isNotEmpty) return authToken;
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token');
+  }
 
   Future<Map<String, dynamic>> getMisTurnos({
     String? fechaDesde,
@@ -21,11 +29,12 @@ class TurnosService {
         });
       }
 
+      final token = await _getEffectiveToken();
       final headers = {
         'Accept': 'application/json',
       };
-      if (authToken != null && authToken!.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $authToken';
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
       }
 
       final response = await http.get(
@@ -43,9 +52,12 @@ class TurnosService {
           'total': data['data']?['total'] ?? 0,
         };
       }
+      final message = response.statusCode == 401
+          ? (data['message'] ?? 'No autorizado. Iniciá sesión de nuevo para ver tus turnos.')
+          : (data['message'] ?? 'Error al cargar turnos');
       return {
         'success': false,
-        'message': data['message'] ?? 'Error al cargar turnos',
+        'message': message,
         'turnos': [],
         'total': 0,
       };

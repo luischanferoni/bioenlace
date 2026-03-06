@@ -55,17 +55,19 @@ class MyApp extends StatelessWidget {
               welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
               signupButtonText: '¿No tienes cuenta? Regístrate aquí',
               goToHomeButtonText: 'Ir al inicio de la app',
-              onLoginSuccess: (userId, userName, loginContext) {
-                // Crear servicio de chat
+              onLoginSuccess: (userId, userName, loginContext) async {
+                // Token puede haber sido guardado por el flujo de login (ej. biometría)
+                final prefs = await SharedPreferences.getInstance();
+                final token = prefs.getString('auth_token');
                 final newChatService = ChatService(
                   currentUserId: userId,
                   currentUserName: userName,
                 );
-                // Navegar a la pantalla principal (Inicio con bottom nav)
+                if (!loginContext.mounted) return;
                 Navigator.pushReplacement(
                   loginContext,
                   MaterialPageRoute(
-                    builder: (_) => MainScreen(chatService: newChatService, authToken: null),
+                    builder: (_) => MainScreen(chatService: newChatService, authToken: token),
                   ),
                 );
               },

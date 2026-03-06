@@ -484,7 +484,6 @@ class TurnosController extends Controller
                 'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
                 'id_consulta' => $consulta ? $consulta->id_consulta : null,
                 'profesional' => $profesional,
-                'observaciones' => $turno->observaciones,
                 'created_at' => $turno->created_at,
             ];
         }
@@ -563,7 +562,6 @@ class TurnosController extends Controller
                 'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
                 'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
                 'id_consulta' => $consulta ? $consulta->id_consulta : null,
-                'observaciones' => $turno->observaciones,
                 'atendido' => $turno->atendido,
                 'created_at' => $turno->created_at,
             ];
@@ -603,7 +601,6 @@ class TurnosController extends Controller
                     'id_servicio_asignado' => $idServicioAsignado,
                     'estado' => Turno::ESTADO_PENDIENTE,
                     'estado_label' => Turno::ESTADOS[Turno::ESTADO_PENDIENTE] ?? 'Pendiente',
-                    'observaciones' => 'Turno de prueba',
                     'atendido' => null,
                     'created_at' => date('Y-m-d H:i:s'),
                 ];
@@ -647,7 +644,6 @@ class TurnosController extends Controller
             'estado' => $turno->estado,
             'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
             'estado_motivo' => $turno->estado_motivo,
-            'observaciones' => $turno->observaciones,
             'atendido' => $turno->atendido,
             'id_efector' => $turno->id_efector,
             'parent_class' => $turno->parent_class,

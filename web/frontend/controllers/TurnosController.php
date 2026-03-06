@@ -528,10 +528,17 @@ class TurnosController extends Controller
         if (!$rrhh) {
             throw new NotFoundHttpException('Recurso humano no encontrado.');
         }
+        // Consulta por id_rr_hh y fecha sin depender del efector del usuario actual (válido para API/paciente).
+        // getTurnosPorRrhhPorFecha filtra por Yii::$app->user->getIdEfector() y falla para usuarios sin efector (ej. Paciente).
         try {
-            $turnos = Turno::getTurnosPorRrhhPorFecha($fecha, $rrhhId);
+            $turnos = Turno::findActive()
+                ->andWhere(['id_rr_hh' => (int) $rrhhId, 'fecha' => $fecha])
+                ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
+                ->andWhere(['is', 'atendido', null])
+                ->orderBy('hora')
+                ->all();
         } catch (\Throwable $e) {
-            Yii::error('TurnosController::actionIndexApi getTurnosPorRrhhPorFecha: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
+            Yii::error('TurnosController::actionIndexApi: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
             throw new \yii\web\ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
         }
         $formattedTurnos = [];

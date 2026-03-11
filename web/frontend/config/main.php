@@ -190,10 +190,7 @@ return [
         ],
         'forms' => [
             'class' => 'frontend\components\apis\Forms',
-        ],
-        'deepSeek' => [
-            'class' => 'frontend\components\apis\DeepSeek',
-        ],        
+        ],       
         'authClientCollection' => [
             'class' => 'yii\authclient\Collection',
             'clients' => [

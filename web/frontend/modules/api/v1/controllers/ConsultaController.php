@@ -22,11 +22,7 @@ class ConsultaController extends BaseController
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        
-        // Permitir acceso sin autenticación Bearer si hay sesión activa (para web)
-        // El método actionAnalizar verificará manualmente la autenticación
-        $behaviors['authenticator']['except'] = ['options', 'analizar', 'guardar'];
-        
+        $behaviors['authenticator']['except'] = ['options'];
         return $behaviors;
     }
 
@@ -35,12 +31,6 @@ class ConsultaController extends BaseController
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            // Verificar autenticación usando método centralizado
-            $errorAuth = $this->requerirAutenticacion();
-            if ($errorAuth !== null) {
-                return $errorAuth;
-            }
-
             $body = Yii::$app->request->getBodyParams();
             $userPerTabConfig = $body['userPerTabConfig'] ?? [];
             $idRrHhServicio = $userPerTabConfig['id_rrhh_servicio'] ?? null;        
@@ -686,12 +676,6 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            // Verificar autenticación usando método centralizado
-            $errorAuth = $this->requerirAutenticacion();
-            if ($errorAuth !== null) {
-                return $errorAuth;
-            }
-
             // Obtener datos del POST - intentar múltiples fuentes
             $body = Yii::$app->request->getBodyParams();
             $post = Yii::$app->request->post();
@@ -789,11 +773,8 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
                 ];
             }
 
-            // Obtener userId de la autenticación para asignar created_by
-            $auth = $this->verificarAutenticacion();
-            $userId = $auth['userId'] ?? null;
-            //var_dump($userId); exit;
-            
+            $userId = Yii::$app->user->id;
+
             $transaction = \Yii::$app->db->beginTransaction();
             
             try {
@@ -896,14 +877,8 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
                         $modelConsulta->motivo_consulta = $body['motivo_consulta'];
                     }
                     
-                    // Asignar created_by explícitamente si tenemos userId
-                    if ($userId !== null) {
-                        $modelConsulta->created_by = $userId;
-                    } elseif (Yii::$app->user && !Yii::$app->user->isGuest) {
-                        // Fallback: usar Yii::$app->user->id si está disponible
-                        $modelConsulta->created_by = Yii::$app->user->id;
-                    }
-                    
+                    $modelConsulta->created_by = $userId;
+
                     if (!$modelConsulta->save()) {
                         throw new \Exception('Error al crear la consulta: ' . json_encode($modelConsulta->getErrors()));
                     }

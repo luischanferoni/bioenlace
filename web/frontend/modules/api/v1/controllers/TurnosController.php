@@ -29,10 +29,6 @@ class TurnosController extends BaseController
 
     public function actionProximoDisponible()
     {
-        $err = $this->requerirAutenticacion();
-        if ($err !== null) {
-            return $err;
-        }
         return $this->runFrontendAction('proximo-disponible-api');
     }
 

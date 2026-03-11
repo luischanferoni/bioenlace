@@ -12,18 +12,12 @@ class CrudController extends BaseController
     public $enableCsrfValidation = false; // Deshabilitar CSRF para API
 
     /**
-     * Configurar behaviors para permitir sesiones web además de Bearer token
+     * Autenticación centralizada en JsonHttpBearerAuth; process-query y execute-action requieren Bearer.
      */
     public function behaviors()
     {
         $behaviors = parent::behaviors();
-        
-        // Permitir acceso sin autenticación Bearer si hay sesión activa
-        // Los métodos actionProcessQuery y actionExecuteAction verificarán manualmente la autenticación
-        $behaviors['authenticator']['except'] = ['options', 'process-query', 'execute-action'];
-        
-        // CORS ya está configurado en BaseController, no es necesario redefinirlo
-        
+        $behaviors['authenticator']['except'] = ['options'];
         return $behaviors;
     }
 
@@ -43,15 +37,7 @@ class CrudController extends BaseController
      */
     public function actionProcessQuery()
     {
-        // Verificar autenticación usando el método de BaseController
-        $authError = $this->requerirAutenticacion();
-        if ($authError !== null) {
-            return $authError;
-        }
-        
-        // Obtener el userId usando el método de BaseController
-        $auth = $this->verificarAutenticacion();
-        $userId = $auth['userId'];
+        $userId = Yii::$app->user->id;
 
         $query = Yii::$app->request->post('query');
         $actionId = Yii::$app->request->post('action_id'); // Opcional: para búsqueda directa por ID
@@ -95,15 +81,8 @@ class CrudController extends BaseController
      */
     public function actionExecuteAction()
     {
-        // Verificar autenticación
-        $authError = $this->requerirAutenticacion();
-        if ($authError !== null) {
-            return $authError;
-        }
-        
-        $auth = $this->verificarAutenticacion();
-        $userId = $auth['userId'];
-        
+        $userId = Yii::$app->user->id;
+
         // Obtener action_id y params según el método HTTP
         $isGet = Yii::$app->request->isGet;
         if ($isGet) {

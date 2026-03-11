@@ -31,12 +31,6 @@ use yii\debug\models\timeline\DataProvider;
 class TurnosController extends Controller
 {
 
-    /** Acciones sin autenticación obligatoria. Fuente única para Web y API (móvil). */
-    public $freeAccessActions = ['list-turnos', 'eventos', 'mis-turnos', 'index-api', 'view-api', 'create-api', 'update-api', 'proximo-disponible-api'];
-
-    /** Misma lista para la API: nombres de acción que no requieren auth (index, eventos, etc.). */
-    public static $authenticatorExcept = ['index', 'eventos'];
-
     /** Verbs por acción; la API los usa al mapear. */
     public static $verbs = [
         'index' => ['GET', 'HEAD', 'OPTIONS'],
@@ -469,8 +463,8 @@ class TurnosController extends Controller
             $servicio = $turno->servicio ? $turno->servicio->nombre :
                 ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
             $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
-            $profesional = $turno->rrhh && $turno->rrhh->idPersona
-                ? $turno->rrhh->idPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+            $profesional = $turno->rrhh && $turno->rrhh->persona
+                ? $turno->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
                 : null;
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,

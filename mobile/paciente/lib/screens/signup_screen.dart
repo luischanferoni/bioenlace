@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +6,6 @@ import 'package:shared/shared.dart';
 import '../services/chat_service.dart';
 import '../services/registration_service.dart';
 import 'chat_screen.dart';
-import '../components/camera_overlay.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -17,45 +15,10 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  File? _dniImage;
-  File? _selfieImage;
   bool _isSubmitting = false;
-
-  Future<void> _pickImage(bool isSelfie) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CameraOverlay(
-          isSelfie: isSelfie,
-          onImageCaptured: (File image) {
-            setState(() {
-              if (isSelfie) {
-                _selfieImage = image;
-              } else {
-                _dniImage = image;
-              }
-            });
-            Navigator.pop(context);
-          },
-          onCancel: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-    );
-  }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_dniImage == null || _selfieImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Debes subir ambas fotos'),
-          backgroundColor: AppTheme.warningColor,
-        ),
-      );
-      return;
-    }
 
     setState(() {
       _isSubmitting = true;
@@ -63,41 +26,22 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final registrationService = RegistrationService();
-      final result = await registrationService.submitRegistration(_dniImage!, _selfieImage!);
+      final result = await registrationService.submitRegistration();
 
       if (result['success'] == true) {
         final data = result['data'];
-        final userId = data['user_id'] ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
-        final dniData = data['dni_data'] ?? {};
-        final faceMatch = data['face_match'] ?? {};
-        
-        // Verificar si la verificación facial fue exitosa
-        final faceMatchSuccess = faceMatch['match'] ?? false;
-        final faceMatchScore = faceMatch['score'] ?? 0.0;
-        
-        if (!faceMatchSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('La verificación facial falló. Por favor, intenta nuevamente con fotos más claras.'),
-              backgroundColor: AppTheme.warningColor,
-              duration: Duration(seconds: 5),
-            ),
-          );
-          setState(() {
-            _isSubmitting = false;
-          });
-          return;
-        }
+        final registro = data['registro'] ?? {};
+        final persona = registro['data']?['persona'] ?? {};
+        final userId = 'paciente_${persona['id_persona'] ?? DateTime.now().millisecondsSinceEpoch}';
 
         // Guardar datos en SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('is_logged_in', true);
         await prefs.setString('user_id', userId);
-        await prefs.setString('user_name', '${dniData['nombre'] ?? ''} ${dniData['apellido'] ?? ''}'.trim());
-        await prefs.setString('dni_detected', dniData['dni'] ?? '');
-        await prefs.setString('name_detected', '${dniData['nombre'] ?? ''} ${dniData['apellido'] ?? ''}'.trim());
+        await prefs.setString('user_name', '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim());
+        await prefs.setString('dni_detected', persona['documento'] ?? '');
+        await prefs.setString('name_detected', '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim());
         await prefs.setBool('biometric_enabled', true);
-        await prefs.setDouble('face_match_score', faceMatchScore);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -174,96 +118,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
-              // Botón para DNI
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.credit_card,
-                        size: 48,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Documento de Identidad',
-                        style: AppTheme.h5Style,
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          style: ButtonStyles.primaryOutline(context, hasIcon: true),
-                          onPressed: () => _pickImage(false),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(_dniImage == null ? Icons.camera_alt : Icons.check),
-                              const SizedBox(width: 8),
-                              Text(
-                                _dniImage == null ? 'Subir foto del DNI' : 'DNI cargado',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Botón para Selfie
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.face,
-                        size: 48,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Foto Personal',
-                        style: AppTheme.h5Style,
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: ElevatedButton(
-                          style: ButtonStyles.primaryOutline(context, hasIcon: true),
-                          onPressed: () => _pickImage(true),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(_selfieImage == null ? Icons.camera_alt : Icons.check),
-                              const SizedBox(width: 8),
-                              Text(
-                                _selfieImage == null ? 'Subir selfie' : 'Selfie cargada',                                
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               
               const SizedBox(height: 32),
               

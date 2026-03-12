@@ -55,6 +55,7 @@ class MyApp extends StatelessWidget {
               welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
               signupButtonText: '¿No tienes cuenta? Regístrate aquí',
               goToHomeButtonText: 'Ir al inicio de la app',
+              diditBiometricWorkflowId: AppConfig.diditPacienteBiometricWorkflowId,
               onLoginSuccess: (userId, userName, loginContext) async {
                 // Token puede haber sido guardado por el flujo de login (ej. biometría)
                 final prefs = await SharedPreferences.getInstance();

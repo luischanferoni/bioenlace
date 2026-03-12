@@ -1,39 +1,27 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
-import '../models/user_registration.dart';
+import 'package:didit_sdk/sdk_flutter.dart';
 
 class RegistrationService {
-  /// Envía las fotos del DNI y selfie al backend para registro y verificación facial
-  Future<Map<String, dynamic>> submitRegistration(File dniImage, File selfieImage) async {
+  /// Inicia el flujo de verificación de identidad con Didit y, si es aprobado,
+  /// llama al endpoint de registro unificado en el backend.
+  Future<Map<String, dynamic>> submitRegistration() async {
     try {
-      // 1) Primero usamos el endpoint existente /signup para:
-      //    - extraer datos del DNI
-      //    - verificar coincidencia facial
-      final signupUri = Uri.parse('${AppConfig.apiUrl}/signup');
-      final request = http.MultipartRequest('POST', signupUri)
-        ..files.add(await http.MultipartFile.fromPath('dni_photo', dniImage.path))
-        ..files.add(await http.MultipartFile.fromPath('selfie_photo', selfieImage.path));
-
-      final streamedResponse = await request.send().timeout(
-        Duration(seconds: AppConfig.httpTimeoutSeconds),
+      // 1) Iniciar verificación con Didit usando el workflow de KYC para pacientes
+      final result = await DiditSdk.startVerificationWithWorkflow(
+        AppConfig.diditPacienteKycWorkflowId,
+        config: const DiditConfig(
+          languageCode: 'es',
+          loggingEnabled: true,
+        ),
       );
-      
-      final response = await http.Response.fromStream(streamedResponse);
-      final responseData = json.decode(response.body);
 
-      if (response.statusCode == 200 && responseData['success'] == true) {
-        // 2) Con los datos del DNI extraídos por /signup, llamamos al nuevo
-        //    endpoint de registro unificado de la API (/registro/registrar),
-        //    para crear/actualizar la persona y sincronizar con MPI/REFEPS.
-        try {
-          final dniData = responseData['dni_data'] ?? {};
-          final dni = dniData['dni'];
-          final nombre = dniData['nombre'];
-          final apellido = dniData['apellido'];
-
-          if (dni != null && nombre != null && apellido != null) {
+      switch (result) {
+        case VerificationCompleted(:final session):
+          // Estado de la sesión: approved | pending | declined
+          if (session.status == VerificationStatus.approved) {
+            // 2) Llamar al endpoint de registro unificado del backend
             final registroUri = Uri.parse('${AppConfig.apiUrl}/registro/registrar');
             final registroResponse = await http
                 .post(
@@ -41,37 +29,47 @@ class RegistrationService {
                   headers: {'Content-Type': 'application/json'},
                   body: json.encode({
                     'tipo': 'paciente',
-                    'dni': dni,
-                    'nombre': nombre,
-                    'apellido': apellido,
+                    'verification_id': session.sessionId,
                   }),
                 )
                 .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
             final registroData = json.decode(registroResponse.body);
-            responseData['registro'] = registroData;
+
+            if (registroResponse.statusCode >= 200 && registroResponse.statusCode < 300 && registroData['success'] == true) {
+              return {
+                'success': true,
+                'data': {
+                  'didit_session': {
+                    'session_id': session.sessionId,
+                    'status': session.status.name,
+                  },
+                  'registro': registroData,
+                },
+              };
+            } else {
+              return {
+                'success': false,
+                'message': registroData['message'] ?? 'Error en el registro en el backend',
+                'errors': registroData['errors'],
+              };
+            }
           } else {
-            responseData['registro'] = {
+            return {
               'success': false,
-              'message': 'No se pudieron obtener todos los datos del DNI para registrar a la persona',
+              'message': 'La verificación de identidad está en estado: ${session.status.name}.',
             };
           }
-        } catch (e) {
-          // No rompemos el flujo original si el nuevo registro falla,
-          // pero devolvemos el error para poder depurarlo.
-          responseData['registro_error'] = e.toString();
-        }
-
-        return {
-          'success': true,
-          'data': responseData,
-        };
-      } else {
-        return {
-          'success': false,
-          'message': responseData['message'] ?? 'Error en el registro',
-          'errors': responseData['errors'] ?? null,
-        };
+        case VerificationCancelled():
+          return {
+            'success': false,
+            'message': 'Verificación cancelada por el usuario.',
+          };
+        case VerificationFailed(:final error):
+          return {
+            'success': false,
+            'message': 'Error en Didit: ${error.message}',
+          };
       }
     } catch (e) {
       return {

@@ -7,6 +7,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\UnauthorizedHttpException;
 use common\models\User;
 use common\models\Persona;
+use common\components\DiditClient;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -16,7 +17,7 @@ class AuthController extends BaseController
     public $modelClass = '';
 
     /** Acciones sin autenticación (no mapea a frontend; solo API). */
-    public static $authenticatorExcept = ['login', 'register', 'refresh-token', 'generate-test-token'];
+    public static $authenticatorExcept = ['login', 'register', 'refresh-token', 'generate-test-token', 'biometric-login'];
 
     /**
      * Login de usuario
@@ -185,6 +186,96 @@ class AuthController extends BaseController
         } catch (\Exception $e) {
             return $this->error('Token inválido', null, 401);
         }
+    }
+
+    /**
+     * Login biométrico usando Didit (selfie + liveness + face match).
+     *
+     * Ruta: POST /api/v1/auth/biometric-login
+     *
+     * Payload esperado:
+     * {
+     *   "biometric_verification_id": "didit-biometric-verification-id",
+     *   "device_id": "uuid-del-dispositivo",
+     *   "platform": "android" | "ios" | "otro"
+     * }
+     */
+    public function actionBiometricLogin()
+    {
+        $request = Yii::$app->request;
+        $verificationId = $request->post('biometric_verification_id');
+        $deviceId = $request->post('device_id');
+        $platform = $request->post('platform');
+
+        if (!$verificationId) {
+            return $this->error('El campo "biometric_verification_id" es requerido', null, 400);
+        }
+
+        /** @var DiditClient $didit */
+        $didit = Yii::$container->has(DiditClient::class)
+            ? Yii::$container->get(DiditClient::class)
+            : new DiditClient();
+
+        $diditResult = $didit->getBiometricAuth($verificationId);
+
+        if ($diditResult['success'] !== true || $diditResult['status'] === 'rejected') {
+            return $this->error('Verificación biométrica rechazada por Didit', $diditResult, 401);
+        }
+
+        // Resolver persona por referencia Didit o por documento
+        $persona = null;
+        if (!empty($diditResult['didit_reference_id'])) {
+            $persona = Persona::findOne(['didit_reference_id' => $diditResult['didit_reference_id']]);
+        }
+        if ($persona === null && !empty($diditResult['linked_document'])) {
+            $persona = Persona::findOne(['documento' => $diditResult['linked_document']]);
+        }
+
+        if ($persona === null) {
+            return $this->error('No se encontró persona asociada a la verificación biométrica', $diditResult, 404);
+        }
+
+        if (!$persona->id_user) {
+            return $this->error(
+                'La persona (id_persona ' . $persona->id_persona . ') no tiene usuario asociado para login.',
+                null,
+                404
+            );
+        }
+
+        $user = User::findIdentity($persona->id_user);
+        if (!$user) {
+            return $this->error('Usuario no encontrado para id_user: ' . $persona->id_user, null, 404);
+        }
+
+        if ($user->status !== User::STATUS_ACTIVE) {
+            return $this->error('Usuario inactivo', null, 401);
+        }
+
+        // Generar token JWT
+        $token = $this->generateJwtToken($user);
+        $role = $this->getUserRole($user);
+        $permissions = $this->getUserPermissions($user);
+
+        // Nota: por ahora no persistimos device_id/platform en user_device; se puede extender luego.
+
+        return $this->success([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->username,
+                'email' => $user->email,
+                'role' => $role,
+                'permissions' => $permissions,
+            ],
+            'persona' => [
+                'id_persona' => $persona->id_persona,
+                'nombre' => $persona->nombre,
+                'apellido' => $persona->apellido,
+                'documento' => $persona->documento,
+            ],
+            'didit' => $diditResult,
+            'token' => $token,
+        ], 'Login biométrico exitoso');
     }
 
     /**

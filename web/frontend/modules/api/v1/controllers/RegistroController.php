@@ -4,7 +4,6 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\components\RegistroService;
-use common\components\VerifikClient;
 
 /**
  * Controlador de registro unificado para pacientes y médicos.
@@ -17,10 +16,8 @@ use common\components\VerifikClient;
  *
  * {
  *   "tipo": "paciente" | "medico",
- *   "dni": "29486884",
- *   "nombre": "Mercedes",
- *   "apellido": "Diaz",
- *   "fecha_nacimiento": "1984-01-01",   // opcional pero recomendado
+ *   "verification_id": "didit-verification-id",
+ *   "fecha_nacimiento": "1984-01-01",   // opcional, solo si no viene de Didit
  *   "email": "persona@example.com",     // opcional según caso de uso
  *   "telefono": "+54...",              // opcional
  *   "extras": { ... }                  // opcional, datos adicionales
@@ -40,9 +37,9 @@ use common\components\VerifikClient;
  *       "fecha_nacimiento": "1984-01-01",
  *       "tipo": "paciente"
  *     },
- *     "verifik": {
+ *     "didit": {
  *       "verification_id": "...",
- *       "status": "aprobado" | "rechazado"
+ *       "status": "approved" | "rejected" | "pending"
  *     },
  *     "mpi": {
  *       "empadronado": true,
@@ -104,7 +101,7 @@ class RegistroController extends BaseController
     }
 
     /**
-     * Endpoint unificado de registro de pacientes y médicos.
+     * Endpoint unificado de registro de pacientes y médicos utilizando Didit.
      *
      * Ruta: POST /api/v1/registro/registrar
      *
@@ -127,16 +124,14 @@ class RegistroController extends BaseController
         $bodyParams = $request->getBodyParams();
 
         $tipo = $bodyParams['tipo'] ?? null;
-        $dni = $bodyParams['dni'] ?? null;
-        $nombre = $bodyParams['nombre'] ?? null;
-        $apellido = $bodyParams['apellido'] ?? null;
+        $verificationId = $bodyParams['verification_id'] ?? null;
 
         if (!$tipo || !in_array($tipo, ['paciente', 'medico'], true)) {
             return $this->error('El campo "tipo" es requerido y debe ser "paciente" o "medico".', null, 400);
         }
 
-        if (!$dni || !$nombre || !$apellido) {
-            return $this->error('Los campos "dni", "nombre" y "apellido" son requeridos.', null, 400);
+        if (!$verificationId) {
+            return $this->error('El campo "verification_id" (Didit) es requerido.', null, 400);
         }
 
         /** @var RegistroService $service */

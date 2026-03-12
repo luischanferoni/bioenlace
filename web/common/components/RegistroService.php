@@ -5,6 +5,9 @@ namespace common\components;
 use Yii;
 use common\models\Persona;
 use common\models\PersonaMpi;
+use common\models\User;
+use webvimark\modules\UserManagement\models\rbacDB\Role;
+use Firebase\JWT\JWT;
 
 /**
  * Servicio de orquestación para el registro de pacientes y médicos.
@@ -18,56 +21,46 @@ use common\models\PersonaMpi;
 class RegistroService
 {
     /**
-     * Ejecuta el flujo de registro unificado.
+     * Ejecuta el flujo de registro unificado utilizando Didit como proveedor de identidad.
      *
-     * @param array $bodyParams Datos recibidos desde la API (tipo, dni, nombre, apellido, etc.).
-     * @return array Estructura:
-     *               [
-     *                 'persona' => [...],
-     *                 'verifik' => [...],
-     *                 'mpi' => [...],
-     *                 'refeps' => [...|null],
-     *               ]
+     * @param array $bodyParams
+     * @return array
      *
-     * @throws \RuntimeException En caso de error bloqueante (por ejemplo, rechazo de Verifik o problemas de guardado).
+     * @throws \RuntimeException
      */
     public function registrar(array $bodyParams): array
     {
         $tipo = $bodyParams['tipo'] ?? null;
-        $dni = $bodyParams['dni'] ?? null;
-        $nombre = $bodyParams['nombre'] ?? null;
-        $apellido = $bodyParams['apellido'] ?? null;
+        $verificationId = $bodyParams['verification_id'] ?? null;
 
         if (!$tipo || !in_array($tipo, ['paciente', 'medico'], true)) {
             throw new \RuntimeException('El campo "tipo" es requerido y debe ser "paciente" o "medico".');
         }
 
+        if (!$verificationId) {
+            throw new \RuntimeException('El campo "verification_id" de Didit es requerido para el registro.');
+        }
+
+        /** @var DiditClient $didit */
+        $didit = Yii::$container->has(DiditClient::class)
+            ? Yii::$container->get(DiditClient::class)
+            : new DiditClient();
+
+        $diditResult = $didit->getIdentityVerification($verificationId);
+
+        if ($diditResult['success'] === false || $diditResult['status'] === 'rejected') {
+            throw new \RuntimeException('Verificación de identidad rechazada por Didit');
+        }
+
+        $dni = $diditResult['documento'] ?? null;
+        $nombre = $diditResult['nombre'] ?? null;
+        $apellido = $diditResult['apellido'] ?? null;
+
         if (!$dni || !$nombre || !$apellido) {
-            throw new \RuntimeException('Los campos "dni", "nombre" y "apellido" son requeridos.');
+            throw new \RuntimeException('La respuesta de Didit no contiene datos mínimos de identidad (dni, nombre, apellido).');
         }
 
-        /** @var VerifikClient $verifik */
-        $verifik = Yii::$container->has(VerifikClient::class)
-            ? Yii::$container->get(VerifikClient::class)
-            : new VerifikClient();
-
-        $verifikResult = $verifik->verifyDni(
-            $dni,
-            $nombre,
-            $apellido,
-            [
-                'context' => [
-                    'tipo' => $tipo,
-                    'source' => 'api_registro',
-                ],
-            ]
-        );
-
-        if ($verifikResult['success'] === false && $verifikResult['status'] === 'rechazado') {
-            throw new \RuntimeException('Verificación de identidad rechazada por Verifik');
-        }
-
-        // Crear o actualizar persona.
+        // Crear o actualizar persona en base a los datos devueltos por Didit.
         $persona = Persona::findOne(['documento' => $dni]);
         $esNueva = false;
 
@@ -80,7 +73,9 @@ class RegistroService
         $persona->apellido = $apellido;
         $persona->documento = $dni;
 
-        if (!empty($bodyParams['fecha_nacimiento'])) {
+        if (!empty($diditResult['fecha_nacimiento'])) {
+            $persona->fecha_nacimiento = $diditResult['fecha_nacimiento'];
+        } elseif (!empty($bodyParams['fecha_nacimiento'])) {
             $persona->fecha_nacimiento = $bodyParams['fecha_nacimiento'];
         }
 
@@ -89,6 +84,13 @@ class RegistroService
         }
         if (property_exists($persona, 'telefono') && !empty($bodyParams['telefono'])) {
             $persona->telefono = $bodyParams['telefono'];
+        }
+
+        if (property_exists($persona, 'didit_reference_id') && !empty($diditResult['didit_reference_id'])) {
+            $persona->didit_reference_id = $diditResult['didit_reference_id'];
+        }
+        if (property_exists($persona, 'didit_last_kyc_verification_id')) {
+            $persona->didit_last_kyc_verification_id = $diditResult['verification_id'] ?? $verificationId;
         }
 
         if (!$persona->save()) {
@@ -105,6 +107,91 @@ class RegistroService
             }
         }
 
+        // Crear o vincular usuario de aplicación asociado a la persona
+        $user = null;
+        if ($persona->id_user) {
+            $user = User::findOne($persona->id_user);
+        }
+
+        if ($user === null) {
+            $user = new User();
+            // Username basado en tipo + documento
+            $user->username = ($tipo === 'medico' ? 'medico_' : 'paciente_') . $dni;
+            // Email: usar el provisto o un placeholder derivado del documento
+            $email = $bodyParams['email'] ?? null;
+            if (empty($email)) {
+                $email = $dni . '@example.com';
+            }
+            $user->email = $email;
+            $user->status = User::STATUS_ACTIVE;
+            $user->setPassword(Yii::$app->security->generateRandomString(32));
+            $user->generateAuthKey();
+
+            if (!$user->save()) {
+                throw new \RuntimeException('Error creando usuario de aplicación: ' . json_encode($user->getErrors()));
+            }
+
+            $persona->id_user = $user->id;
+            // Guardar sin validar nuevamente reglas de Persona
+            $persona->save(false);
+
+            // Asignar rol según tipo
+            try {
+                if ($tipo === 'paciente') {
+                    // Usa helper existente para pacientes si está disponible
+                    if (class_exists(\common\models\SisseDbManager::class) && method_exists(\common\models\SisseDbManager::class, 'asignarRolPacienteSiNoExiste')) {
+                        \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($user->id);
+                    }
+                } elseif ($tipo === 'medico') {
+                    $medicoRole = Role::findOne(['name' => 'Medico']) ?? Role::findOne(['name' => 'medico']);
+                    if ($medicoRole) {
+                        Yii::$app->authManager->assign($medicoRole, $user->id);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('No se pudo asignar rol al usuario recién creado: ' . $e->getMessage(), 'registro');
+            }
+        }
+
+        // Obtener rol principal para incluir en el token/respuesta
+        $roleName = 'usuario';
+        if ($user) {
+            try {
+                $roles = Role::getUserRoles($user->id);
+                if (!empty($roles)) {
+                    $firstRole = reset($roles);
+                    if ($firstRole && isset($firstRole->name)) {
+                        $roleName = $firstRole->name;
+                    }
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('Error obteniendo rol de usuario en RegistroService: ' . $e->getMessage(), 'registro');
+            }
+        }
+
+        // Generar JWT para permitir que las apps inicien sesión inmediatamente después del registro
+        $token = null;
+        if ($user) {
+            $jwtSecret = Yii::$app->params['jwtSecret'] ?? null;
+            if ($jwtSecret) {
+                $payload = [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'role' => $roleName,
+                    'id_persona' => $persona->id_persona,
+                    'iat' => time(),
+                    'exp' => time() + (24 * 60 * 60),
+                ];
+                try {
+                    $token = JWT::encode($payload, $jwtSecret, 'HS256');
+                } catch (\Throwable $e) {
+                    Yii::error('Error generando JWT en RegistroService: ' . $e->getMessage(), 'registro');
+                }
+            } else {
+                Yii::warning('jwtSecret no configurado en params; no se generará token en RegistroService.', 'registro');
+            }
+        }
+
         $personaData = [
             'id_persona' => $persona->id_persona,
             'nombre' => $persona->nombre,
@@ -117,9 +204,16 @@ class RegistroService
 
         return [
             'persona' => $personaData,
-            'verifik' => $verifikResult,
+            'didit' => $diditResult,
             'mpi' => $mpiInfo,
             'refeps' => $refepsInfo,
+            'user' => $user ? [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $roleName,
+            ] : null,
+            'token' => $token,
         ];
     }
 

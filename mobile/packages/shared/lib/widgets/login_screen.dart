@@ -1,7 +1,12 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:didit_sdk/sdk_flutter.dart';
 import '../auth/biometric_auth.dart';
 import '../theme/theme.dart';
+import '../config/api_config.dart';
 
 /// Pantalla de login compartida que acepta callbacks para navegación personalizada
 class LoginScreen extends StatefulWidget {
@@ -45,6 +50,10 @@ class LoginScreen extends StatefulWidget {
   /// Texto cuando la biometría está disponible
   final String? biometricAvailableText;
 
+  /// Workflow ID de Didit para autenticación biométrica ("Ya tengo cuenta").
+  /// Si es null, se usa solo la biometría local del dispositivo.
+  final String? diditBiometricWorkflowId;
+
   const LoginScreen({
     Key? key,
     this.appTitle = 'Bienvenido a BioEnlace',
@@ -59,6 +68,7 @@ class LoginScreen extends StatefulWidget {
     this.signupButtonText,
     this.goToHomeButtonText,
     this.biometricAvailableText,
+    this.diditBiometricWorkflowId,
   }) : super(key: key);
 
   @override
@@ -104,74 +114,163 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final result = await _biometricAuth.authenticate(
-        'Autenticación con $_biometricType para ingresar a ${widget.appTitle}',
-      );
-
-      if (result['success'] == true) {
-        print('[DEBUG] _loginWithBiometrics - Autenticación exitosa');
-        // Obtener datos del usuario registrado
-        final prefs = await SharedPreferences.getInstance();
-        // Usar valores simulados si existen, sino usar valores por defecto
-        final userId = prefs.getString('user_id') ?? '5748';
-        final userName = prefs.getString('user_name') ?? prefs.getString('provided_name') ?? 'Usuario Médico';
-        
-        print('[DEBUG] _loginWithBiometrics - userId: $userId, userName: $userName');
-        
-        // Asegurar que rrhh_id esté guardado para el usuario simulado
-        if (!prefs.containsKey('rrhh_id')) {
-          await prefs.setString('rrhh_id', '7830');
-          print('[DEBUG] _loginWithBiometrics - rrhh_id guardado: 7830');
-        }
-        
-        // Simular token de autenticación (en producción esto vendría del servidor)
-        // Para el usuario simulado 5748, usar un token simulado
-        final authTokenExists = prefs.containsKey('auth_token');
-        if (!authTokenExists) {
-          final newToken = 'simulated_token_${userId}_${DateTime.now().millisecondsSinceEpoch}';
-          await prefs.setString('auth_token', newToken);
-          print('[DEBUG] _loginWithBiometrics - auth_token creado: ${newToken.substring(0, newToken.length > 30 ? 30 : newToken.length)}...');
-        } else {
-          final existingToken = prefs.getString('auth_token');
-          print('[DEBUG] _loginWithBiometrics - auth_token ya existe: ${existingToken != null ? existingToken.substring(0, existingToken.length > 30 ? 30 : existingToken.length) : "null"}...');
-        }
-        
-        // Asegurar que el auth_token se haya guardado completamente
-        await prefs.reload();
-        print('[DEBUG] _loginWithBiometrics - SharedPreferences recargado');
-        print('[DEBUG] _loginWithBiometrics - config_completed: ${prefs.getBool('config_completed') ?? false}');
-
-        // Mostrar mensaje de éxito
-        final welcomeMsg = widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(welcomeMsg.replaceAll('{userName}', userName)),
-            backgroundColor: AppTheme.successColor,
-          ),
+      // Si no hay workflow de Didit configurado, usar solo biometría local como fallback
+      if (widget.diditBiometricWorkflowId == null) {
+        final localResult = await _biometricAuth.authenticate(
+          'Autenticación con $_biometricType para ingresar a ${widget.appTitle}',
         );
 
-        // Llamar al callback de éxito después de un pequeño delay para asegurar que el contexto esté listo
-        print('[DEBUG] _loginWithBiometrics - Esperando delay antes de llamar onLoginSuccess...');
-        await Future.delayed(const Duration(milliseconds: 200));
-        print('[DEBUG] _loginWithBiometrics - Llamando onLoginSuccess...');
-        if (mounted) {
-          widget.onLoginSuccess(userId, userName, context);
-          print('[DEBUG] _loginWithBiometrics - onLoginSuccess llamado');
-        }
-      } else {
-        // Solo mostrar mensaje si no fue cancelación del usuario
-        final isUserCancel = result['isUserCancel'] == true;
-        final error = result['error'] as String?;
-        
-        if (!isUserCancel && error != null) {
+        if (localResult['success'] == true) {
+          final prefs = await SharedPreferences.getInstance();
+          final userId = prefs.getString('user_id') ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+          final userName = prefs.getString('user_name') ?? 'Usuario';
+
+          final welcomeMsg = widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error),
+              content: Text(welcomeMsg.replaceAll('{userName}', userName)),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+
+          await Future.delayed(const Duration(milliseconds: 200));
+          if (mounted) {
+            widget.onLoginSuccess(userId, userName, context);
+          }
+        } else {
+          final isUserCancel = localResult['isUserCancel'] == true;
+          final error = localResult['error'] as String?;
+          if (!isUserCancel && error != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(error),
+                backgroundColor: AppTheme.dangerColor,
+              ),
+            );
+          }
+        }
+        return;
+      }
+
+      // 1) Autenticación biométrica remota con Didit
+      final diditResult = await DiditSdk.startVerificationWithWorkflow(
+        widget.diditBiometricWorkflowId!,
+        config: const DiditConfig(
+          languageCode: 'es',
+          loggingEnabled: true,
+        ),
+      );
+
+      switch (diditResult) {
+        case VerificationCompleted(:final session):
+          // 2) Llamar al backend para login biométrico
+          final prefs = await SharedPreferences.getInstance();
+          String deviceId = prefs.getString('device_id') ??
+              'device_${DateTime.now().millisecondsSinceEpoch}';
+          if (!prefs.containsKey('device_id')) {
+            await prefs.setString('device_id', deviceId);
+          }
+
+          final platform = Platform.isAndroid
+              ? 'android'
+              : (Platform.isIOS ? 'ios' : 'otro');
+
+          final uri = Uri.parse('${AppConfig.apiUrl}/auth/biometric-login');
+          final response = await http
+              .post(
+                uri,
+                headers: {'Content-Type': 'application/json'},
+                body: jsonEncode({
+                  'biometric_verification_id': session.sessionId,
+                  'device_id': deviceId,
+                  'platform': platform,
+                }),
+              )
+              .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
+
+          final data = jsonDecode(response.body);
+
+          if (response.statusCode >= 200 &&
+              response.statusCode < 300 &&
+              data['success'] == true) {
+            final payload = data['data'] ?? {};
+            final user = payload['user'] ?? {};
+            final persona = payload['persona'] ?? {};
+            final token = payload['token'] as String?;
+
+            final userId = (user['id'] ?? '').toString();
+            final userName =
+                user['name'] ?? '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
+
+            // Guardar en SharedPreferences
+            await prefs.setBool('is_logged_in', true);
+            if (token != null) {
+              await prefs.setString('auth_token', token);
+            }
+            await prefs.setString('user_id', userId);
+            await prefs.setString('user_name', userName);
+            if (persona['documento'] != null) {
+              await prefs.setString('dni_detected', persona['documento']);
+            }
+
+            // 3) Biometría local opcional como segundo factor
+            final localResult = await _biometricAuth.authenticate(
+              'Confirma con $_biometricType para ingresar a ${widget.appTitle}',
+            );
+            if (localResult['success'] != true) {
+              final error = localResult['error'] as String?;
+              if (error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(error),
+                    backgroundColor: AppTheme.dangerColor,
+                  ),
+                );
+              }
+              return;
+            }
+
+            final welcomeMsg =
+                widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(welcomeMsg.replaceAll('{userName}', userName)),
+                backgroundColor: AppTheme.successColor,
+              ),
+            );
+
+            await Future.delayed(const Duration(milliseconds: 200));
+            if (mounted) {
+              widget.onLoginSuccess(userId, userName, context);
+            }
+          } else {
+            final message = data['message'] ?? 'Error en login biométrico';
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: AppTheme.dangerColor,
+              ),
+            );
+          }
+          break;
+
+        case VerificationCancelled():
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Verificación cancelada por el usuario'),
+              backgroundColor: AppTheme.warningColor,
+            ),
+          );
+          break;
+
+        case VerificationFailed(:final error):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error en Didit: ${error.message}'),
               backgroundColor: AppTheme.dangerColor,
             ),
           );
-        }
-        // Si el usuario canceló, no mostrar ningún mensaje (comportamiento normal)
+          break;
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

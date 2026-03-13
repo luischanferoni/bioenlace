@@ -4,6 +4,9 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\components\RegistroService;
+use common\models\Persona;
+use common\models\User;
+use webvimark\modules\UserManagement\models\rbacDB\Role;
 
 /**
  * Controlador de registro unificado para pacientes y médicos.
@@ -97,6 +100,7 @@ class RegistroController extends BaseController
     {
         $verbs = parent::verbs();
         $verbs['registrar'] = ['POST', 'OPTIONS'];
+        $verbs['simular-paciente-mercedes'] = ['POST', 'OPTIONS'];
         return $verbs;
     }
 
@@ -152,6 +156,104 @@ class RegistroController extends BaseController
             $result,
             'Solicitud de registro recibida correctamente',
             202
+        );
+    }
+
+    /**
+     * Endpoint de prueba: crear/vincular un paciente simulado (Mercedes Diaz, DNI 29558371)
+     * sin llamar a Didit ni a servicios externos.
+     *
+     * Ruta: POST /api/v1/registro/simular-paciente-mercedes
+     */
+    public function actionSimularPacienteMercedes()
+    {
+        $dni = '29558371';
+        $nombre = 'Mercedes';
+        $apellido = 'Diaz';
+
+        // Buscar o crear Persona
+        $persona = Persona::findOne(['documento' => $dni]);
+        $esNueva = false;
+
+        if ($persona === null) {
+            $persona = new Persona();
+            $esNueva = true;
+        }
+
+        $persona->nombre = $nombre;
+        $persona->apellido = $apellido;
+        $persona->documento = $dni;
+
+        if (!$persona->save()) {
+            return $this->error(
+                'Error guardando datos de la persona simulada: ' . json_encode($persona->getErrors()),
+                null,
+                422
+            );
+        }
+
+        // Crear o reutilizar usuario asociado
+        $user = null;
+        if ($persona->id_user) {
+            $user = User::findOne($persona->id_user);
+        }
+
+        if ($user === null) {
+            $user = new User();
+            $user->username = 'paciente_' . $dni;
+            $user->email = $dni . '@example.com';
+            $user->status = User::STATUS_ACTIVE;
+            $user->setPassword(Yii::$app->security->generateRandomString(32));
+            $user->generateAuthKey();
+
+            if (!$user->save()) {
+                return $this->error(
+                    'Error creando usuario para la persona simulada: ' . json_encode($user->getErrors()),
+                    null,
+                    422
+                );
+            }
+
+            $persona->id_user = $user->id;
+            $persona->save(false);
+
+            // Asignar rol paciente si existe
+            try {
+                if (class_exists(\common\models\SisseDbManager::class)
+                    && method_exists(\common\models\SisseDbManager::class, 'asignarRolPacienteSiNoExiste')
+                ) {
+                    \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($user->id);
+                } else {
+                    $pacienteRole = Role::findOne(['name' => 'paciente']);
+                    if ($pacienteRole) {
+                        Yii::$app->authManager->assign($pacienteRole, $user->id);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('No se pudo asignar rol paciente al usuario simulado: ' . $e->getMessage(), 'registro');
+            }
+        }
+
+        $personaData = [
+            'id_persona' => $persona->id_persona,
+            'nombre' => $persona->nombre,
+            'apellido' => $persona->apellido,
+            'documento' => $persona->documento,
+            'es_nueva' => $esNueva,
+        ];
+
+        $userData = $user ? [
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+        ] : null;
+
+        return $this->success(
+            [
+                'persona' => $personaData,
+                'user' => $userData,
+            ],
+            'Paciente simulado (Mercedes Diaz) creado/actualizado correctamente'
         );
     }
 }

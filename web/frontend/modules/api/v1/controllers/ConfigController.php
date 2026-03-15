@@ -10,8 +10,6 @@ use common\models\RrhhServicio;
 class ConfigController extends BaseController
 {
     // ModelClass requerido por ActiveController, aunque no lo usemos directamente
-    public $modelClass = 'common\models\User';
-    
     /**
      * Sobrescribir behaviors para permitir acceso sin autenticación a algunos endpoints
      */

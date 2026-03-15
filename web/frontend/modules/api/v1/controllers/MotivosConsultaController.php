@@ -10,7 +10,6 @@ use yii\web\Response;
  */
 class MotivosConsultaController extends BaseController
 {
-    public $modelClass = '';
     public $enableCsrfValidation = false;
     protected $_verbs = ['GET', 'POST', 'OPTIONS'];
 

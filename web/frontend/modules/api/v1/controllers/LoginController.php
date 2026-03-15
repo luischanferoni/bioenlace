@@ -16,7 +16,6 @@ use common\models\RrhhEfector;
 
 class LoginController extends BaseController
 {
-	public $modelClass = '';
 	public $enableCsrfValidation = false;
   	// Add more verbs here if needed
   	protected $_verbs = ['POST','OPTIONS'];

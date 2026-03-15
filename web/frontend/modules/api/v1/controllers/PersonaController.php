@@ -12,8 +12,6 @@ use common\components\PersonaTimelineService;
  */
 class PersonaController extends BaseController
 {
-    public $modelClass = 'common\models\Persona';
-
     public static $authenticatorExcept = ['timeline'];
 
     public function actions()

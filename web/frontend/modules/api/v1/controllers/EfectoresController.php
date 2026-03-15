@@ -11,8 +11,6 @@ use common\models\Efector;
  */
 class EfectoresController extends BaseController
 {
-    public $modelClass = 'common\models\Efector';
-
     public static $authenticatorExcept = ['search'];
 
     public function actions()

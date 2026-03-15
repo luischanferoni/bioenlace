@@ -70,8 +70,6 @@ class RegistroController extends BaseController
      *
      * @var string
      */
-    public $modelClass = 'common\models\Persona';
-
     /**
      * Acciones sin autenticación: permitimos que el registro se haga sin token.
      *

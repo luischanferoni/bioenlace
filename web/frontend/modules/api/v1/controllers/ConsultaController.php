@@ -8,8 +8,6 @@ namespace frontend\modules\api\v1\controllers;
  */
 class ConsultaController extends BaseController
 {
-    public $modelClass = 'common\models\Consulta';
-
     public static $frontendControllerClass = \frontend\controllers\ConsultaController::class;
 
     public function actions()

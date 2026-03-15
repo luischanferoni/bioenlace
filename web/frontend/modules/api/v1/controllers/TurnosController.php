@@ -10,8 +10,6 @@ use Yii;
  */
 class TurnosController extends BaseController
 {
-    public $modelClass = 'common\models\Turno';
-
     /** Este controlador API solo mapea; except y verbs se leen del controlador frontend. */
     public static $frontendControllerClass = \frontend\controllers\TurnosController::class;
 

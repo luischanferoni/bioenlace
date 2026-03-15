@@ -16,8 +16,6 @@ use common\models\InfraestructuraPiso;
  */
 class ListadoController extends BaseController
 {
-    public $modelClass = 'common\models\User';
-
     public function actions()
     {
         $actions = parent::actions();

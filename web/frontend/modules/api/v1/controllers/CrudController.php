@@ -8,7 +8,6 @@ use yii\helpers\Inflector;
 
 class CrudController extends BaseController
 {
-    public $modelClass = ''; // No usamos ActiveController para este endpoint
     public $enableCsrfValidation = false; // Deshabilitar CSRF para API
 
     /**

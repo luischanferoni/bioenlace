@@ -8,8 +8,6 @@ use common\components\ProcesadorTextoMedico;
 
 class AudioController extends BaseController
 {
-    public $modelClass = null;
-
     /**
      * Endpoint para recibir audio y transcribirlo
      * POST /api/v1/audio/transcribir

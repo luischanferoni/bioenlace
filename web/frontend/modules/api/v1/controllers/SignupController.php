@@ -15,7 +15,6 @@ use ImagickPixel;
 
 class SignupController extends BaseController
 {
-    public $modelClass = ''; // No usamos ActiveController para este endpoint
     public $enableCsrfValidation = false; // Importante para API
 
     public function behaviors()

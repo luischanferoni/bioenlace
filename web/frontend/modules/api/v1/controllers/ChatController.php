@@ -12,7 +12,6 @@ use common\components\ConsultaIntentRouter;
 
 class ChatController extends BaseController
 {
-    public $modelClass = '';
     public $enableCsrfValidation = false;
     // Add more verbs here if needed
     protected $_verbs = ['POST','OPTIONS'];

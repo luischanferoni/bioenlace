@@ -12,8 +12,6 @@ use common\models\RrhhEfector;
  */
 class RrhhController extends BaseController
 {
-    public $modelClass = 'common\models\RrhhEfector';
-
     public static $authenticatorExcept = ['rrhh-autocomplete'];
 
     public function actions()

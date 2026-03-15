@@ -3,8 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\rest\ActiveController;
-use yii\filters\auth\HttpBearerAuth;
+use yii\web\Controller;
 use yii\filters\Cors;
 use yii\filters\ContentNegotiator;
 use yii\web\Response;
@@ -13,13 +12,8 @@ use yii\web\BadRequestHttpException;
 use frontend\modules\api\v1\components\JsonHttpBearerAuth;
 use frontend\modules\api\v1\components\ApiGhostAccessControl;
 
-class BaseController extends ActiveController
+class BaseController extends Controller
 {
-    public $serializer = [
-        'class' => 'yii\rest\Serializer',
-        'collectionEnvelope' => 'items',
-    ];
-
     /**
      * Clase del controlador frontend que este controlador API mapea.
      * Si est? definida, except y verbs se leen de ese controlador (fuente ?nica Web + API).
@@ -34,9 +28,9 @@ class BaseController extends ActiveController
 
     public function behaviors()
     {
-        $behaviors = parent::behaviors();
+        $behaviors = parent::behaviors(); // []
 
-        // Configurar CORS usando la configuraci?n centralizada del m?dulo
+        // Configurar CORS usando la configuración centralizada del módulo
         $allowedOrigins = \frontend\modules\api\v1\Module::getAllowedOrigins();
         $behaviors['corsFilter'] = [
             'class' => Cors::class,
@@ -83,26 +77,15 @@ class BaseController extends ActiveController
      */
     protected function verbs()
     {
-        $verbs = parent::verbs();
+        $verbs = [];
         if (static::$frontendControllerClass !== null && property_exists(static::$frontendControllerClass, 'verbs')) {
-            $frontendVerbs = static::$frontendControllerClass::$verbs ?? [];
-            $verbs = array_merge($verbs, $frontendVerbs);
+            $verbs = static::$frontendControllerClass::$verbs ?? [];
         }
         return $verbs;
     }
 
-    public function actions()
-    {
-        $actions = parent::actions();
-        
-        // Deshabilitar acciones por defecto que no necesitamos
-        unset($actions['delete'], $actions['create'], $actions['update']);
-        
-        return $actions;
-    }
-
     /**
-     * Ejecuta una acci?n del controlador frontend y devuelve success(data).
+     * Ejecuta una acción del controlador frontend y devuelve success(data).
      * Para controladores API que solo mapean: usa $frontendControllerClass y convierte excepciones en error JSON.
      */
     protected function runFrontendAction($actionId, $params = [])

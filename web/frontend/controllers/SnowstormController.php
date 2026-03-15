@@ -16,9 +16,6 @@ class SnowstormController extends Controller
     {
          //control de acceso mediante la extensión
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],
         ];
     }
 

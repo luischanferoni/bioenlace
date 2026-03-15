@@ -20,10 +20,6 @@ class ServiciosController extends Controller
     {
         //control de acceso mediante la extension
         return [
-            'ghost-access'=> [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-                'except' => ['search']
-            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [

@@ -37,11 +37,7 @@ class RrhhEfectorController extends Controller
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-                'except' => ['servicios-por-rrhh', 'profesionales-por-servicio-efector']
-            ],
-           'verbs' => [
+            'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],

@@ -23,9 +23,6 @@ class ConsultaChatController extends Controller
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],
         ];
     }
 

@@ -27,9 +27,6 @@ class ProfesionalSaludController extends Controller
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],            
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['create'],

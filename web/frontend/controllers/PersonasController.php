@@ -66,14 +66,6 @@ class PersonasController extends Controller
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-                'except' => [
-                    'vacunas', 
-                    'buscarhome', 
-                    'curvas-crecimiento',
-                    'signos-vitales']
-            ],
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['historia', 'view', 'crear-numero-historia-clinica'],

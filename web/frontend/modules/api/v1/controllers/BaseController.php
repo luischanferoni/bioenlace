@@ -11,6 +11,7 @@ use yii\web\Response;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use frontend\modules\api\v1\components\JsonHttpBearerAuth;
+use frontend\modules\api\v1\components\ApiGhostAccessControl;
 
 class BaseController extends ActiveController
 {
@@ -57,6 +58,12 @@ class BaseController extends ActiveController
         }
         $behaviors['authenticator'] = [
             'class' => JsonHttpBearerAuth::class,
+            'except' => array_values(array_unique($except)),
+        ];
+
+        // Control de acceso por permisos (rutas api/v1/...)
+        $behaviors['api-ghost-access'] = [
+            'class' => ApiGhostAccessControl::class,
             'except' => array_values(array_unique($except)),
         ];
 

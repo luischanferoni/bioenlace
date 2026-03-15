@@ -46,9 +46,6 @@ class ConsultaAtencionesEnfermeriaController extends DefaultController
         // control de acceso mediante la extensión
         return [
 
-            'ghost-access' => [
-                 'class' => 'frontend\components\SisseGhostAccessControl',
-             ],
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['index', 'espera'],

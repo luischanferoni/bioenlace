@@ -28,9 +28,6 @@ class EncuestaParchesMamariosController extends Controller
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],
             // Este es para no permitir crear una encuesta para un paciente que ya la tiene
             'access' => [
                 'class' => SisseActionFilter::className(),

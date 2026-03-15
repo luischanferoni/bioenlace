@@ -27,10 +27,6 @@ class RrhhController extends Controller
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-                'except' => ['rrhh-autocomplete'],
-            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [

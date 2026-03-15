@@ -23,9 +23,6 @@ class InfraestructuraSalaController extends Controller
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],            
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [

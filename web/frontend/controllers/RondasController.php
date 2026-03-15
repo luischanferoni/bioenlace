@@ -28,9 +28,6 @@ class RondasController extends Controller
     {
         //control de acceso mediante la extension
         return [
-            'ghost-access'=> [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [

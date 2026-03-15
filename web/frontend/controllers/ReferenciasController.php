@@ -24,9 +24,6 @@ class ReferenciasController extends Controller
     {
          //control de acceso mediante la extensión
          return [
-            'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [

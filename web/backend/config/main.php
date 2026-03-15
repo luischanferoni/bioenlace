@@ -131,7 +131,8 @@ return [
                 };
             },
         ],
-        'frontend' => ['class' => \frontend\Module::class]
+        'frontend' => ['class' => \frontend\Module::class],
+        'api' => ['class' => \frontend\modules\api\v1\Module::class]
         //'gridview' => [
         //    'class' => 'kartik\grid\Module',
         //]        

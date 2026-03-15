@@ -131,9 +131,9 @@ class MyApp extends StatelessWidget {
                 );
 
                 try {
-                  // Obtener token del paciente de prueba con DNI 29558371
+                  // Simular sesión: obtener token para el usuario con id 5749 (paciente de prueba)
                   final tokenResponse = await http.get(
-                    Uri.parse('${AppConfig.apiUrl}/auth/generate-test-token?dni=29558371'),
+                    Uri.parse('${AppConfig.apiUrl}/auth/generate-test-token?user_id=5749'),
                   ).timeout(Duration(seconds: 10));
 
                   if (tokenResponse.statusCode == 200) {

@@ -333,43 +333,51 @@ class AuthController extends BaseController
     }
 
     /**
-     * Endpoint de prueba: Generar token para paciente por DNI
-     * Solo para desarrollo/pruebas
+     * Endpoint de prueba: Generar token para paciente por DNI o por user_id.
+     * Solo para desarrollo/pruebas. Parámetros: dni O user_id.
      */
     public function actionGenerateTestToken()
     {
         $request = Yii::$app->request;
         $dni = $request->post('dni') ?? $request->get('dni');
-
-        if (!$dni) {
-            return $this->error('DNI requerido', null, 400);
+        $userId = $request->post('user_id') ?? $request->get('user_id');
+        if ($userId !== null && $userId !== '') {
+            $userId = (int) $userId;
+        } else {
+            $userId = null;
         }
 
-        // Buscar persona por DNI
-        $persona = Persona::findOne(['documento' => $dni]);
-        
-        if (!$persona) {
-            return $this->error('No se encontró paciente con DNI: ' . $dni, null, 404);
+        if ($userId !== null) {
+            // Por user_id: buscar usuario y luego su persona
+            $user = User::findIdentity($userId);
+            if (!$user) {
+                return $this->error('No se encontró usuario con id: ' . $userId, null, 404);
+            }
+            $persona = Persona::findOne(['id_user' => $user->id]);
+            if (!$persona) {
+                return $this->error('El usuario ' . $userId . ' no tiene persona asociada', null, 404);
+            }
+        } elseif ($dni) {
+            // Por DNI: buscar persona y luego su usuario
+            $persona = Persona::findOne(['documento' => $dni]);
+            if (!$persona) {
+                return $this->error('No se encontró paciente con DNI: ' . $dni, null, 404);
+            }
+            if (!$persona->id_user) {
+                return $this->error('El paciente con DNI ' . $dni . ' no tiene usuario asociado. id_persona: ' . $persona->id_persona, null, 404);
+            }
+            $user = User::findIdentity($persona->id_user);
+            if (!$user) {
+                return $this->error('Usuario no encontrado para id_user: ' . $persona->id_user, null, 404);
+            }
+        } else {
+            return $this->error('Se requiere dni o user_id', null, 400);
         }
 
-        // Verificar si tiene usuario asociado
-        if (!$persona->id_user) {
-            return $this->error('El paciente con DNI ' . $dni . ' no tiene usuario asociado. id_persona: ' . $persona->id_persona, null, 404);
-        }
-
-        // Buscar el usuario
-        $user = User::findIdentity($persona->id_user);
-        
-        if (!$user) {
-            return $this->error('Usuario no encontrado para id_user: ' . $persona->id_user, null, 404);
-        }
-
-        // Verificar que el usuario esté activo
         if ($user->status !== User::STATUS_ACTIVE) {
             return $this->error('Usuario inactivo', null, 401);
         }
 
-        // Generar token JWT
         $token = $this->generateJwtToken($user);
         $role = $this->getUserRole($user);
         $permissions = $this->getUserPermissions($user);
@@ -389,6 +397,6 @@ class AuthController extends BaseController
                 'documento' => $persona->documento,
             ],
             'token' => $token,
-        ], 'Token generado exitosamente para paciente con DNI: ' . $dni);
+        ], 'Token generado exitosamente');
     }
 }

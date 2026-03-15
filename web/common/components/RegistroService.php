@@ -142,9 +142,12 @@ class RegistroService
                 throw new \RuntimeException('Error creando usuario de aplicación: ' . json_encode($user->getErrors()));
             }
 
+            // Vincular persona al usuario recién creado (obligatorio para que queden asociados)
             $persona->id_user = $user->id;
-            // Guardar sin validar nuevamente reglas de Persona
-            $persona->save(false);
+            $persona->scenario = Persona::SCENARIOUSERUPDATE;
+            if (!$persona->save(false)) {
+                throw new \RuntimeException('Error actualizando id_user en persona: ' . json_encode($persona->getErrors()));
+            }
 
             // Asignar rol según tipo
             try {

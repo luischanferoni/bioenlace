@@ -14,6 +14,9 @@ use frontend\modules\api\v1\components\ApiGhostAccessControl;
 
 class BaseController extends Controller
 {
+    /** Desactivar CSRF para peticiones API (token/sesión no aplican). */
+    public $enableCsrfValidation = false;
+
     /**
      * Clase del controlador frontend que este controlador API mapea.
      * Si est? definida, except y verbs se leen de ese controlador (fuente ?nica Web + API).

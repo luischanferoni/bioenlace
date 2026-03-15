@@ -69,15 +69,26 @@ class RegistroService
             $esNueva = true;
         }
 
+        $persona->scenario = Persona::SCENARIOCREATEUPDATE;
         $persona->nombre = $nombre;
         $persona->apellido = $apellido;
         $persona->documento = $dni;
+        $persona->acredita_identidad = 1; // Verificación de identidad realizada con Didit
 
         if (!empty($diditResult['fecha_nacimiento'])) {
             $persona->fecha_nacimiento = $diditResult['fecha_nacimiento'];
         } elseif (!empty($bodyParams['fecha_nacimiento'])) {
             $persona->fecha_nacimiento = $bodyParams['fecha_nacimiento'];
         }
+        if (empty($persona->fecha_nacimiento)) {
+            $persona->fecha_nacimiento = $bodyParams['fecha_nacimiento'] ?? null;
+        }
+
+        // Valores mapeados desde Didit (nunca null: genero 0=no especificado, id_tipodoc/id_estado_civil default 1)
+        $persona->id_tipodoc = $diditResult['id_tipodoc'] ?? $persona->id_tipodoc ?? 1;
+        $persona->id_estado_civil = $diditResult['id_estado_civil'] ?? $persona->id_estado_civil ?? 1;
+        $persona->genero = $diditResult['genero'] ?? $persona->genero ?? 0;
+        $persona->sexo_biologico = $diditResult['sexo_biologico'] ?? $persona->sexo_biologico ?? 0;
 
         if (property_exists($persona, 'email') && !empty($bodyParams['email'])) {
             $persona->email = $bodyParams['email'];

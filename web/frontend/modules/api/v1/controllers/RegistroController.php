@@ -178,9 +178,18 @@ class RegistroController extends BaseController
             $esNueva = true;
         }
 
+        $persona->scenario = Persona::SCENARIOCREATEUPDATE;
         $persona->nombre = $nombre;
         $persona->apellido = $apellido;
         $persona->documento = $dni;
+        $persona->fecha_nacimiento = $persona->fecha_nacimiento ?: '1984-01-01';
+        $persona->id_tipodoc = $persona->id_tipodoc ?: 1;
+        $persona->id_estado_civil = $persona->id_estado_civil ?: 1;
+        $persona->acredita_identidad = 1; // Simula registro con identidad acreditada (Didit)
+        if ($persona->sexo_biologico === null && $persona->genero === null) {
+            $persona->sexo_biologico = 1;
+            $persona->genero = 1;
+        }
 
         if (!$persona->save()) {
             return $this->error(
@@ -213,6 +222,7 @@ class RegistroController extends BaseController
             }
 
             $persona->id_user = $user->id;
+            $persona->scenario = Persona::SCENARIOUSERUPDATE;
             $persona->save(false);
 
             // Asignar rol paciente si existe

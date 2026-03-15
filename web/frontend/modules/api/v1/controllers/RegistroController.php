@@ -75,7 +75,7 @@ class RegistroController extends BaseController
      *
      * @var string[]
      */
-    public static $authenticatorExcept = ['registrar'];
+    public static $authenticatorExcept = ['registrar', 'simular-paciente-mercedes'];
 
     /**
      * Deshabilitamos las acciones REST por defecto; usamos acciones personalizadas.

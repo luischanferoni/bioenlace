@@ -300,11 +300,13 @@ class _LoginScreenState extends State<LoginScreen> {
         iconTheme: IconThemeData(color: AppTheme.dark),
       ),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
               // Icono de huella digital grande
               Container(
                 width: 120,
@@ -502,6 +504,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ],
             ],
           ),
+        ),
         ),
       ),
     );

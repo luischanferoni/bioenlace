@@ -52,13 +52,13 @@ class User extends webvimarkUser {
     }
 
     public function afterSave($insert, $changedAttributes)
-    {   
-        parent::afterSave();
+    {
+        parent::afterSave($insert, $changedAttributes);
 
-        if(Yii::$app->getRequest()->getQueryParam('id')){
+        if (Yii::$app->getRequest()->getQueryParam('id')) {
             $idpersona = Yii::$app->getRequest()->getQueryParam('id');
-            $iduser = $model->id;
-            self::actualizarIduserpersona($idpersona,$iduser);
+            $iduser = $this->id;
+            self::actualizarIduserpersona($idpersona, $iduser);
         }
     }
 

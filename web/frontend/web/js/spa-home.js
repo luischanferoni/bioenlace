@@ -229,6 +229,143 @@
     }
 
     /**
+     * Renderizar UI dinámica a partir de una definición genérica
+     * Actualmente soporta ui_type = "wizard" usando wizard_config.
+     * @param {Object} json - Respuesta completa de la API de UI
+     * @param {HTMLElement} container - Contenedor donde se debe renderizar la UI
+     * @param {Object} options - Opciones adicionales (por ejemplo, url original)
+     */
+    function renderDynamicUi(json, container, options = {}) {
+        if (!json || !container) {
+            return;
+        }
+
+        const uiType = json.ui_type || 'wizard';
+
+        switch (uiType) {
+            case 'wizard':
+                if (json.wizard_config) {
+                    renderWizard(json.wizard_config, container, options);
+                } else {
+                    container.innerHTML = '<div class="alert alert-warning">No se encontró configuración de wizard.</div>';
+                }
+                break;
+            default:
+                container.innerHTML = '<div class="alert alert-info">Este tipo de UI aún no está soportado en la web: ' + escapeHtml(uiType) + '</div>';
+        }
+    }
+
+    /**
+     * Renderizar un wizard basado en wizard_config
+     * @param {Object} config - wizard_config devuelto por el backend
+     * @param {HTMLElement} container - Contenedor donde se debe renderizar
+     * @param {Object} options - Opciones adicionales (por ejemplo, { url: fullUrl })
+     */
+    function renderWizard(config, container, options = {}) {
+        if (!config || !container) {
+            return;
+        }
+
+        const steps = Array.isArray(config.steps) ? config.steps : [];
+        const fieldsConfig = Array.isArray(config.fields) ? config.fields : [];
+        let currentStep = typeof config.initial_step === 'number' ? config.initial_step : 0;
+        const submitUrl = options.url || null;
+
+        function getFieldConfigByName(name) {
+            return fieldsConfig.find(f => f.name === name);
+        }
+
+        function renderCurrentStep() {
+            const step = steps[currentStep];
+            if (!step) {
+                container.innerHTML = '<div class="alert alert-warning">No se encontró el paso del wizard.</div>';
+                return;
+            }
+
+            let html = '<div class="wizard-step">';
+
+            // Título del paso
+            if (step.title) {
+                html += '<h5 class="mb-3">' + escapeHtml(step.title) + '</h5>';
+            }
+
+            html += '<form id="wizard-form">';
+
+            // Campos del paso
+            const stepFields = Array.isArray(step.fields) ? step.fields : [];
+            stepFields.forEach(fieldName => {
+                const fieldDef = typeof fieldName === 'string' ? getFieldConfigByName(fieldName) : fieldName;
+                if (fieldDef) {
+                    html += renderFormField(fieldDef);
+                }
+            });
+
+            // Navegación
+            html += '<div class="mt-3 d-flex justify-content-between">';
+            if (currentStep > 0) {
+                html += '<button type="button" class="btn btn-outline-secondary" data-action="prev">Anterior</button>';
+            } else {
+                html += '<span></span>';
+            }
+
+            if (currentStep < steps.length - 1) {
+                html += '<button type="button" class="btn btn-primary" data-action="next">Siguiente</button>';
+            } else {
+                html += '<button type="submit" class="btn btn-success">Confirmar</button>';
+            }
+            html += '</div>';
+
+            html += '</form>';
+            html += '</div>';
+
+            container.innerHTML = html;
+
+            const form = document.getElementById('wizard-form');
+            if (!form) {
+                return;
+            }
+
+            form.addEventListener('click', function(e) {
+                const action = e.target.dataset.action;
+                if (!action) {
+                    return;
+                }
+                e.preventDefault();
+
+                if (action === 'next') {
+                    // TODO: validaciones simples antes de avanzar
+                    if (currentStep < steps.length - 1) {
+                        currentStep++;
+                        renderCurrentStep();
+                    }
+                } else if (action === 'prev') {
+                    if (currentStep > 0) {
+                        currentStep--;
+                        renderCurrentStep();
+                    }
+                }
+            });
+
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                // Recolectar valores del formulario del último paso (por ahora)
+                const formData = new FormData(form);
+                const payload = {};
+                formData.forEach((value, key) => {
+                    payload[key] = value;
+                });
+
+                // Por ahora solo logueamos; más adelante se puede enviar a submitUrl
+                console.log('Valores del wizard (último paso):', payload, 'submitUrl:', submitUrl);
+                alert('Este wizard aún no envía los datos al servidor. Implementar POST cuando se defina el flujo completo.');
+            });
+        }
+
+        renderCurrentStep();
+    }
+
+    /**
      * Renderizar campo de formulario
      */
     function renderFormField(field) {
@@ -867,7 +1004,68 @@
             // URL relativa sin / - usar baseUrl + / + url
             fullUrl = window.spaConfig.baseUrl + '/' + url;
         }
-        
+
+        // Si es una UI dinámica (JSON), usar el renderizador de UI
+        if (type === 'ui') {
+            fetch(fullUrl, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'X-App-Client': 'web-frontend',
+                    'X-App-Version': window.spaConfig && window.spaConfig.appVersion ? window.spaConfig.appVersion : '1.0.0'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+                }
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        console.warn('Se esperaba JSON para UI dinámica, pero se recibió:', text.substring(0, 200));
+                        throw new Error('Respuesta no válida para UI dinámica');
+                    });
+                }
+                return response.json();
+            })
+            .then(json => {
+                const pageElement = document.getElementById(`spa-page-${pageId}`);
+                if (!pageElement) {
+                    console.error(`No se encontró el elemento de página: spa-page-${pageId}`);
+                    return;
+                }
+                const content = pageElement.querySelector('.spa-page-content');
+                if (!content) {
+                    console.error('No se encontró el contenedor .spa-page-content');
+                    return;
+                }
+
+                if (json.kind === 'ui_definition') {
+                    renderDynamicUi(json, content, { url: fullUrl });
+                } else {
+                    content.innerHTML = '<div class="alert alert-warning">La respuesta no es una definición de UI válida.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando UI dinámica:', error);
+                const pageElement = document.getElementById(`spa-page-${pageId}`);
+                if (pageElement) {
+                    const content = pageElement.querySelector('.spa-page-content');
+                    if (content) {
+                        content.innerHTML = `<div class="alert alert-danger">
+                            <strong>Error al cargar la UI dinámica</strong><br>
+                            ${error.message}<br>
+                            <small>URL: ${fullUrl}</small>
+                        </div>`;
+                    }
+                }
+            });
+
+            return;
+        }
+
+        // Caso normal: cargar HTML tradicional
         fetch(fullUrl, {
             method: 'GET',
             headers: {
@@ -1058,6 +1256,7 @@
         
         // Patrones que indican que debe ser página completa
         const fullPagePatterns = [
+            /\/api\/v1\/ui\//i,      // Endpoints de UI dinámica
             /\/index$/i,           // Listados
             /\/view\//i,           // Vistas de detalle
             /\/create$/i,          // Formularios de creación
@@ -1076,6 +1275,7 @@
     function determineActionType(route) {
         if (!route) return 'default';
         
+        if (/\/api\/v1\/ui\//i.test(route)) return 'ui';
         if (/\/index$/i.test(route)) return 'list';
         if (/\/create$/i.test(route)) return 'form';
         if (/\/view\//i.test(route)) return 'detail';

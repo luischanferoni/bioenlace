@@ -144,12 +144,6 @@ return [
                 // Personas Timeline API (historia clínica)
                 'GET api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
                 'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
-                
-                // Listados por encounter (internación, guardia)
-                'GET api/<version:\w+>/listado/internacion' => '<version>/listado/internacion',
-                'OPTIONS api/<version:\w+>/listado/internacion' => '<version>/listado/internacion',
-                'GET api/<version:\w+>/listado/guardia' => '<version>/listado/guardia',
-                'OPTIONS api/<version:\w+>/listado/guardia' => '<version>/listado/guardia',
 
                 // Config API
                 'GET api/<version:\w+>/config/efectores' => '<version>/config/efectores',

@@ -211,7 +211,7 @@ class TurnosController extends Controller
      */
     public function actionCrearMiTurno()
     {
-        // Si es GET, devolver wizard_config desde template
+        // Si es GET, devolver definición de UI (wizard_config) desde template
         if (Yii::$app->request->isGet) {
             // No establecer FORMAT_JSON aquí, dejar que CrudController lo maneje
             // Obtener parámetros proporcionados por el usuario (vienen en GET)
@@ -250,11 +250,23 @@ class TurnosController extends Controller
                 );
             }
             
-            
-            // El config ya tiene wizard_config, devolverlo directamente
-            // Formato esperado: ['wizard_config' => [...]]
-            Yii::info("Devolviendo wizard_config desde template: " . json_encode($config), 'turnos-controller');
-            return $config;
+            // Leer headers de versión/capacidades (para logging y futura selección de template)
+            $request = Yii::$app->request;
+            $appClient = $request->headers->get('X-App-Client');    // ej: paciente-flutter, web-frontend
+            $appVersion = $request->headers->get('X-App-Version');  // ej: 2.0.0
+            $androidSdk = $request->headers->get('X-Android-Sdk');  // opcional en mobile
+
+            Yii::info(
+                "Devolviendo UI definition para turnos/crear-mi-turno; client={$appClient}, version={$appVersion}, sdk={$androidSdk}",
+                'turnos-controller'
+            );
+
+            // Envolver wizard_config con metadatos de UI, manteniendo compatibilidad
+            return [
+                'kind'          => 'ui_definition',
+                'ui_type'       => 'wizard',
+                'wizard_config' => $wizardConfig,
+            ];
         }
 
         // Si es POST, establecer formato JSON para la respuesta

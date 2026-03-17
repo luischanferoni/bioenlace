@@ -35,7 +35,6 @@ class TurnosController extends BaseController
      */
     public function actionMisTurnos()
     {
-        $userId = Yii::$app->user->id;
         $idPersona = Yii::$app->user->getIdPersona();
 
         $request = Yii::$app->request;

@@ -145,18 +145,7 @@ class CrudController extends BaseController
             $methodName = 'action' . $actionCamelCase;
             
             if (class_exists($controllerClass) && method_exists($controllerClass, $methodName)) {
-                // Establecer la identidad del usuario antes de ejecutar la acción
-                // El usuario ya está autenticado (verificado en actionExecuteAction)
                 $user = Yii::$app->user->identity;
-                if (!$user) {
-                    // Si no hay identidad establecida, buscarla
-                    $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-                    if (!$user) {
-                        // Si no hay usuario, continuar con análisis automático
-                        Yii::warning("Usuario no encontrado para userId: {$userId}, usando análisis automático", 'api-execute-action');
-                    }
-                }
-                
                 if ($user) {
                     // Guardar el estado original del usuario para restaurarlo después
                     $originalUserIdentity = Yii::$app->user->identity;
@@ -723,22 +712,7 @@ class CrudController extends BaseController
             // Inyectar parámetros en el request y guardar estado original
             $originalState = $this->injectParamsIntoRequest($params);
             
-            // Establecer la identidad del usuario antes de ejecutar la acción
-            // El usuario ya está autenticado (verificado en actionExecuteAction)
-            // Intentar usar la identidad ya establecida por JsonHttpBearerAuth si está disponible
-            // Solo buscar el usuario si no está disponible (endpoints excluidos del authenticator)
             $user = Yii::$app->user->identity;
-            if (!$user) {
-                // Si no hay identidad establecida, buscarla (endpoints excluidos del authenticator)
-                $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-                if (!$user) {
-                    return [
-                        'success' => false,
-                        'error' => 'Usuario no encontrado',
-                        'action_id' => $action['action_id'],
-                    ];
-                }
-            }
             
             // Guardar el estado original del usuario para restaurarlo después
             $originalUserIdentity = Yii::$app->user->identity;

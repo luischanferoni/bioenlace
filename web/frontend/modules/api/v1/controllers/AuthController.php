@@ -15,51 +15,7 @@ use Firebase\JWT\Key;
 class AuthController extends BaseController
 {
     /** Acciones sin autenticación (no mapea a frontend; solo API). */
-    public static $authenticatorExcept = ['login', 'register', 'refresh-token', 'generate-test-token', 'biometric-login'];
-
-    /**
-     * Login de usuario
-     */
-    public function actionLogin()
-    {
-        $request = Yii::$app->request;
-        $email = $request->post('email');
-        $password = $request->post('password');
-
-        if (!$email || !$password) {
-            return $this->error('Email y contraseña son requeridos', null, 400);
-        }
-
-        // Buscar usuario por email
-        $user = User::findByEmail($email);
-        if (!$user || !$user->validatePassword($password)) {
-            return $this->error('Credenciales inválidas', null, 401);
-        }
-
-        // Verificar que el usuario esté activo
-        if ($user->status !== User::STATUS_ACTIVE) {
-            return $this->error('Usuario inactivo', null, 401);
-        }
-
-        // Asignar rol "paciente" por defecto si no lo tiene
-        \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($user->id);
-
-        // Generar token JWT
-        $token = $this->generateJwtToken($user);
-        $role = $this->getUserRole($user);
-        $permissions = $this->getUserPermissions($user);
-
-        return $this->success([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->username,
-                'email' => $user->email,
-                'role' => $role,
-                'permissions' => $permissions,
-            ],
-            'token' => $token,
-        ], 'Login exitoso');
-    }
+    public static $authenticatorExcept = ['register', 'refresh-token', 'generate-test-token', 'biometric-login'];
 
     /**
      * Registro de usuario
@@ -104,8 +60,8 @@ class AuthController extends BaseController
             Yii::warning('No se pudo asignar rol paciente al usuario: ' . $e->getMessage());
         }
 
-        // Generar token JWT
-        $token = $this->generateJwtToken($user);
+        // Generar token JWT reutilizando id_persona ya resuelto
+        $token = $this->generateJwtToken($user, $persona->id_persona);
         $role = $this->getUserRole($user);
         $permissions = $this->getUserPermissions($user);
 
@@ -309,15 +265,17 @@ class AuthController extends BaseController
     /**
      * Generar token JWT
      */
-    private function generateJwtToken($user)
+    private function generateJwtToken($user, ?int $idPersona = null)
     {
         $role = $this->getUserRole($user);
-        
-        // Buscar id_persona asociado al usuario (solo al generar el token)
-        $idPersona = null;
-        $persona = \common\models\Persona::findOne(['id_user' => $user->id]);
-        if ($persona) {
-            $idPersona = $persona->id_persona;
+
+        // Si no viene id_persona (casos como refresh-token o generate-test-token),
+        // buscarlo una sola vez aquí.
+        if ($idPersona === null) {
+            $persona = \common\models\Persona::findOne(['id_user' => $user->id]);
+            if ($persona) {
+                $idPersona = $persona->id_persona;
+            }
         }
         
         $payload = [

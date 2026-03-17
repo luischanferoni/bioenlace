@@ -17,9 +17,8 @@ class ConfigController extends BaseController
     {
         $behaviors = parent::behaviors();
         
-        // Permitir acceso sin autenticación a encounter-classes (es una lista estática)
-        // También permitir efectores, servicios y set-session (se manejará la autenticación manualmente si es necesario)
-        $behaviors['authenticator']['except'] = ['options', 'encounter-classes', 'efectores', 'servicios', 'set-session'];
+        // Permitir acceso sin autenticación solo a encounter-classes (lista estática)
+        $behaviors['authenticator']['except'] = ['options', 'encounter-classes'];
         
         // Asegurar formato JSON siempre
         $behaviors['contentNegotiator'] = [
@@ -63,29 +62,7 @@ class ConfigController extends BaseController
      */
     public function actionEfectores()
     {
-        // Forzar formato JSON
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
-        $request = Yii::$app->request;
         $user = Yii::$app->user->identity;
-        
-        // Para desarrollo: permitir usar user_id directamente si no hay autenticación válida
-        $userId = null;
-        if (!$user) {
-            $userId = $request->get('user_id');
-            if ($userId) {
-                // Buscar usuario directamente
-                $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-                if ($user) {
-                    // Simular login para este usuario
-                    Yii::$app->user->login($user);
-                }
-            }
-        }
-        
-        if (!$user) {
-            return $this->error('Usuario no autenticado. Verifique que el token sea válido o proporcione user_id para desarrollo.', null, 401);
-        }
 
         try {
             // Obtener efectores desde sesión si están disponibles
@@ -158,34 +135,11 @@ class ConfigController extends BaseController
      */
     public function actionServicios()
     {
-        // Forzar formato JSON
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
         $request = Yii::$app->request;
         $efectorId = $request->get('efector_id');
         
         if (!$efectorId) {
             return $this->error('El parámetro efector_id es requerido', null, 400);
-        }
-
-        $user = Yii::$app->user->identity;
-        
-        // Para desarrollo: permitir usar user_id directamente si no hay autenticación válida
-        $userId = null;
-        if (!$user) {
-            $userId = $request->get('user_id');
-            if ($userId) {
-                // Buscar usuario directamente
-                $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-                if ($user) {
-                    // Simular login para este usuario
-                    Yii::$app->user->login($user);
-                }
-            }
-        }
-        
-        if (!$user) {
-            return $this->error('Usuario no autenticado. Verifique que el token sea válido o proporcione user_id para desarrollo.', null, 401);
         }
 
         // Obtener el rrhh_efector para este usuario y efector
@@ -222,9 +176,6 @@ class ConfigController extends BaseController
      */
     public function actionEncounterClasses()
     {
-        // Forzar formato JSON
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
         $encounterClasses = ConsultasConfiguracion::ENCOUNTER_CLASS;
         
         $formatted = [];
@@ -247,29 +198,8 @@ class ConfigController extends BaseController
      */
     public function actionSetSession()
     {
-        // Forzar formato JSON
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
         $request = Yii::$app->request;
         $user = Yii::$app->user->identity;
-        
-        // Para desarrollo: permitir usar user_id directamente si no hay autenticación válida
-        $userId = null;
-        if (!$user) {
-            $userId = $request->post('user_id');
-            if ($userId) {
-                // Buscar usuario directamente
-                $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-                if ($user) {
-                    // Simular login para este usuario
-                    Yii::$app->user->login($user);
-                }
-            }
-        }
-        
-        if (!$user) {
-            return $this->error('Usuario no autenticado. Verifique que el token sea válido o proporcione user_id para desarrollo.', null, 401);
-        }
 
         $efectorId = $request->post('efector_id');
         $servicioId = $request->post('servicio_id');

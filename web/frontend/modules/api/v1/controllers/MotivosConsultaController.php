@@ -38,8 +38,6 @@ class MotivosConsultaController extends BaseController
      */
     public function actionMessages($consulta_id)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
         if ($err !== null) {
             return $err;
@@ -82,8 +80,6 @@ class MotivosConsultaController extends BaseController
      */
     public function actionSend()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         $body = Yii::$app->request->getBodyParams();
         $consulta_id = $body['consulta_id'] ?? null;
         if (!$consulta_id) {
@@ -138,8 +134,6 @@ class MotivosConsultaController extends BaseController
      */
     public function actionUpload()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         $consulta_id = Yii::$app->request->post('consulta_id');
         if (!$consulta_id) {
             return ['success' => false, 'message' => 'Falta consulta_id', 'data' => null];

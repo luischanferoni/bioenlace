@@ -31,8 +31,6 @@ class ConsultaController extends BaseController
 
     public function actionAnalizar()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         try {
             $body = Yii::$app->request->getBodyParams();
             $userPerTabConfig = $body['userPerTabConfig'] ?? [];
@@ -255,8 +253,6 @@ HTML;
 
     public function actionGuardar()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         try {
             $body = Yii::$app->request->getBodyParams();
             $post = Yii::$app->request->post();

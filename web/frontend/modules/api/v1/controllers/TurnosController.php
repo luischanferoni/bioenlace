@@ -35,34 +35,15 @@ class TurnosController extends BaseController
      */
     public function actionMisTurnos()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
         $userId = Yii::$app->user->id;
-        if (!$userId) {
-            Yii::$app->response->statusCode = 401;
-            return [
-                'success' => false,
-                'message' => 'Usuario no autenticado.',
-                'data' => ['turnos' => [], 'total' => 0],
-            ];
-        }
-
-        $persona = Persona::findOne(['id_user' => $userId]);
-        if (!$persona) {
-            Yii::$app->response->statusCode = 403;
-            return [
-                'success' => false,
-                'message' => 'No se encontró persona asociada al usuario',
-                'data' => ['turnos' => [], 'total' => 0],
-            ];
-        }
+        $idPersona = Yii::$app->user->getIdPersona();
 
         $request = Yii::$app->request;
         $fechaDesde = $request->get('fecha_desde', date('Y-m-d'));
         $fechaHasta = $request->get('fecha_hasta', date('Y-m-d', strtotime('+3 months')));
 
         $turnos = Turno::find()
-            ->where(['id_persona' => $persona->id_persona])
+            ->where(['id_persona' => $idPersona])
             ->andWhere(['>=', 'fecha', $fechaDesde])
             ->andWhere(['<=', 'fecha', $fechaHasta])
             ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
@@ -109,17 +90,6 @@ class TurnosController extends BaseController
     public function actionIndex()
     {
         $request = Yii::$app->request;
-        $user = Yii::$app->user->identity;
-        $userId = null;
-        if (!$user) {
-            $userId = $request->get('user_id');
-            if ($userId) {
-                $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-                if ($user) {
-                    Yii::$app->user->login($user);
-                }
-            }
-        }
         $fecha = $request->get('fecha', date('Y-m-d'));
         $rrhhId = $request->get('rrhh_id');
         if (!$rrhhId) {
@@ -421,8 +391,6 @@ class TurnosController extends BaseController
      */
     public function actionEventos()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
         $request = Yii::$app->request;
         $dia = $request->get('dia') ?: $request->post('dia') ?: date('Y-m-d');
         $id_rrhh_servicio_asignado = (int)($request->get('id_rrhh_servicio_asignado') ?: $request->post('id_rrhh_servicio_asignado') ?: 0);

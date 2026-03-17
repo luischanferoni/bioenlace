@@ -27,8 +27,14 @@ class ApiGhostAccessControl extends ActionFilter
             return true;
         }
 
-        // Ruta en formato api/v1/controller-id/action-id (mismo que webvimark al listar API)
-        $route = 'api/' . $action->uniqueId;
+        // uniqueId viene como "v1/turnos/mis-turnos" → en DB las rutas son "/api/turnos/mis-turnos"
+        $uniqueId = $action->uniqueId;
+        $parts = explode('/', $uniqueId);
+        if (!empty($parts) && $parts[0] === 'v1') {
+            array_shift($parts);
+        }
+        $routePath = implode('/', $parts);
+        $route = '/api/' . $routePath;
 
         if (Route::isFreeAccess($route, $action)) {
             return true;

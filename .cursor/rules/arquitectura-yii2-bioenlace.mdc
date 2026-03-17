@@ -1,0 +1,29 @@
+---
+description: Lineamientos de arquitectura Yii2 para Bioenlace
+alwaysApply: true
+---
+
+# Arquitectura y responsabilidades
+
+- **Autenticación**:
+  - Siempre se resuelve en capas previas (middleware, filtros, bootstrap).
+  - Los controllers y la lógica de negocio asumen usuario autenticado; no deben chequear `isGuest` ni `Yii::$app->user->id`.
+
+- **Modelos (`models`)**:
+  - Se usan para persistencia y lógica cercana a datos (ActiveRecord, validaciones, relaciones).
+  - No colocar lógica de autorización ni reglas de dueño de recursos en los modelos.
+
+- **Controladores (`controllers`)**:
+  - Orquestan la lógica de negocio usando modelos y componentes de Yii.
+  - No verifican login; solo aplican reglas de negocio específicas (por ejemplo, “el usuario ya autenticado es dueño de la consulta”).
+
+- **Reutilización de lógica transversal**:
+  - Si varios controllers necesitan la misma verificación (p.ej. dueño de la consulta), crear:
+    - Una subclase de `Controller` o del `BaseController` correspondiente, y/o
+    - Un `ActionFilter` o `behavior` registrado en `behaviors()`.
+  - Evitar duplicar código como `canAccessConsulta` o closures `allowed` en cada controller.
+
+- **Uso de Yii2**:
+  - Priorizar las herramientas de Yii2 (controllers, filters, behaviors, `AccessControl`, etc.) antes de inventar nuevas capas o patrones.
+  - Solo crear componentes propios cuando Yii2 no cubra el caso.
+

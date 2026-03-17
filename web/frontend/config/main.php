@@ -83,7 +83,7 @@ return [
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
                 // mensajes
-                'GET api/<version:\w+>/messages' => '<version>/chat/index',                
+                'GET api/<version:\w+>/messages' => '<version>/chat/index',
                 'OPTIONS api/<version:\w+>/messages' => '<version>/chat/index',
 
                 // chat turnos
@@ -108,7 +108,6 @@ return [
                 // generar token de prueba para paciente por DNI
                 'POST api/<version:\w+>/auth/generate-test-token' => '<version>/auth/generate-test-token',
                 'GET api/<version:\w+>/auth/generate-test-token' => '<version>/auth/generate-test-token',
-                'OPTIONS api/<version:\w+>/login' => '<version>/login/login',
 
                 // consulta-chat - chat médico
                 'GET api/<version:\w+>/consulta-chat/messages/<id:\d+>' => '<version>/consulta-chat/messages',

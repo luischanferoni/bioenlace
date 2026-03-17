@@ -13,8 +13,6 @@ use common\components\ConsultaIntentRouter;
 class ChatController extends BaseController
 {
     public $enableCsrfValidation = false;
-    // Add more verbs here if needed
-    protected $_verbs = ['POST','OPTIONS'];
 
     public function behaviors()
     {
@@ -33,17 +31,6 @@ class ChatController extends BaseController
           'login' => ['POST'],
       ];
   }*/
-    /**
-     * Send the HTTP options available to this route
-     */
-    public function actionOptions()
-    {
-        if (Yii::$app->getRequest()->getMethod() !== 'OPTIONS') {
-            Yii::$app->getResponse()->setStatusCode(405);
-        }
-        Yii::$app->getResponse()->getHeaders()->set('Allow', implode(', ', $this->_verbs));
-    }
-
     public function actionIndex()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

@@ -18,20 +18,6 @@ use common\models\RrhhEfector;
 class ConsultaChatController extends BaseController
 {
     public $enableCsrfValidation = false;
-    protected $_verbs = ['GET', 'POST', 'OPTIONS'];
-
-    public function behaviors()
-    {
-        return parent::behaviors();
-    }
-
-    public function actionOptions()
-    {
-        if (Yii::$app->getRequest()->getMethod() !== 'OPTIONS') {
-            Yii::$app->getResponse()->setStatusCode(405);
-        }
-        Yii::$app->getResponse()->getHeaders()->set('Allow', implode(', ', $this->_verbs));
-    }
 
     public function actionMessages($consulta_id)
     {

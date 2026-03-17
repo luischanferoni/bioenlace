@@ -718,7 +718,7 @@ class CrudController extends BaseController
             $originalUserIdentity = Yii::$app->user->identity;
             
             // Establecer la identidad del usuario sin iniciar sesión (API stateless con JWT)
-            // El rol "paciente" se asigna automáticamente por SisseDbManager::getRolesByUser()
+            // El rol "paciente" se asigna automáticamente por BioenlaceDbManager::getRolesByUser()
             Yii::$app->user->setIdentity($user);
             
             // Actualizar permisos y rutas en la sesión para que los controladores puedan verificar acceso

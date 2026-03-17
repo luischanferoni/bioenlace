@@ -227,10 +227,10 @@ class RegistroController extends BaseController
 
             // Asignar rol paciente si existe
             try {
-                if (class_exists(\common\models\SisseDbManager::class)
-                    && method_exists(\common\models\SisseDbManager::class, 'asignarRolPacienteSiNoExiste')
+                if (class_exists(\common\models\BioenlaceDbManager::class)
+                    && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')
                 ) {
-                    \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($user->id);
+                    \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
                 } else {
                     $pacienteRole = Role::findOne(['name' => 'paciente']);
                     if ($pacienteRole) {

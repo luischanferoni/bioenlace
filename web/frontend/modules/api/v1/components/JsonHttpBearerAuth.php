@@ -79,7 +79,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             Yii::$app->end();
         }
 
-        \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($userId);
+        \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($userId);
 
         if ($idPersona) {
             $session = Yii::$app->session;

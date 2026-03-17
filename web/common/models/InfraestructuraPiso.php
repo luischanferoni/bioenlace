@@ -60,9 +60,43 @@ class InfraestructuraPiso extends \yii\db\ActiveRecord
         return $this->hasMany(InfraestructuraSala::className(), ['id_piso' => 'id']);
     }
 
-    public function pisosPorEfector($id_efector) 
+    public function pisosPorEfector($id_efector)
     {
-        return InfraestructuraPiso::find()->where('id_efector = '. $id_efector)->all();
+        return InfraestructuraPiso::find()->where('id_efector = ' . (int) $id_efector)->all();
+    }
+
+    /**
+     * Internados (camas ocupadas con datos de internación) del efector.
+     * @param int $id_efector
+     * @return array lista de ['id', 'id_persona', 'nombre', 'cama', 'sala', 'piso']
+     */
+    public static function getInternadosPorEfector($id_efector)
+    {
+        $pisos = (new self())->pisosPorEfector($id_efector);
+        $internados = [];
+        foreach ($pisos as $piso) {
+            foreach ($piso->infraestructuraSalas as $sala) {
+                foreach ($sala->infraestructuraCamas as $cama) {
+                    if ($cama->estado !== 'ocupada') {
+                        continue;
+                    }
+                    $int = $cama->internacionActual;
+                    if (!$int || !is_object($int)) {
+                        continue;
+                    }
+                    $id = $int->id;
+                    $internados[$id] = [
+                        'id' => $id,
+                        'id_persona' => $int->id_persona,
+                        'nombre' => $int->paciente ? $int->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin nombre',
+                        'cama' => $cama->nro_cama,
+                        'sala' => $sala->nro_sala,
+                        'piso' => $piso->nro_piso,
+                    ];
+                }
+            }
+        }
+        return array_values($internados);
     }
 
     /**

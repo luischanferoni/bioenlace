@@ -175,6 +175,10 @@ return [
                 // Audio API (Speech-to-Text)
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
                 'OPTIONS api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
+
+                // Inicio / datos según encounter (turnos, internados, guardias) - Web y App móvil
+                'GET api/<version:\w+>/inicio/datos' => '<version>/inicio/datos',
+                'OPTIONS api/<version:\w+>/inicio/datos' => '<version>/inicio/datos',
             ],            
         ],
         'snowstorm' => [

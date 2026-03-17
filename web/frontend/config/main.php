@@ -41,7 +41,7 @@ return [
             'errorAction' => 'site/error'
         ],        
         'authManager' => [
-            'class' => 'common\models\SisseDbManager',
+            'class' => 'common\models\BioenlaceDbManager',
             'efectorAssignmentTable' => 'rrhh_servicio',
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_'],
         ],
@@ -57,7 +57,7 @@ return [
         ],
         'session' => [
             // this is the name of the session cookie used for login on the frontend
-            'name' => 'sisse-frontend',
+            'name' => 'bioenlace-frontend',
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,

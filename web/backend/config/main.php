@@ -14,7 +14,7 @@ $baseUrl = str_replace('/backend/web', '/admin', (new Request)->getBaseUrl());
 //$frontModule = \Yii::$app->getModule('frontend');
 
 return [
-    'id' => 'sisse-backend',
+    'id' => 'bioenlace-backend',
     'language' => 'es',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
@@ -39,14 +39,14 @@ return [
             'class' => 'yii\caching\FileCache',
         ],
         'authManager' => [
-            'class' => 'common\models\SisseDbManager',
+            'class' => 'common\models\BioenlaceDbManager',
             'efectorAssignmentTable' => 'rrhh_servicio',
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_'],
         ],        
         'user' => [
             'class' => 'backend\components\UserConfig',
             'enableAutoLogin' => true,
-            'identityCookie' => ['name' => '_identity-sisse-backend', 'httpOnly' => true],
+            'identityCookie' => ['name' => '_identity-bioenlace-backend', 'httpOnly' => true],
         ],
         'frontendUser' => $frontConfig['components']['user'],        
         'errorHandler' => [
@@ -54,7 +54,7 @@ return [
         ],        
         'session' => [
             // this is the name of the session cookie used for login on the backend
-            'name' => 'sisse-backend',
+            'name' => 'bioenlace-backend',
         ],
         'log' => [
             'traceLevel' => YII_DEBUG ? 3 : 0,

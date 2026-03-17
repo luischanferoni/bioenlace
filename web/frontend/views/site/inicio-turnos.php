@@ -10,7 +10,8 @@ $fechaAnterior = date('Y-m-d', strtotime($fecha . ' -1 day'));
 $fechaSiguiente = date('Y-m-d', strtotime($fecha . ' +1 day'));
 $tituloFecha = TimelineHelper::formatearFechaAmigable($fecha);
 $esHoy = ($fecha == date('Y-m-d'));
-$urlInicioDatos = Url::to(['site/inicio-datos'], true);
+// Endpoint único (API) usado por web y móvil
+$urlInicioDatos = Url::to(['/api/v1/inicio/datos'], true);
 
 $this->title = 'Inicio - Turnos';
 ?>
@@ -181,12 +182,18 @@ $this->registerJs(<<<JS
     .then(function(r) { return r.json(); })
     .then(function(res) {
         loading.classList.add('d-none');
-        if (res.error) {
-            showError(res.error);
+        // Respuesta estándar de la API: { success, message, data: { ... } }
+        if (res.success === false) {
+            showError(res.message || 'Error al obtener los datos.');
             return;
         }
-        var kind = res.kind;
-        var data = res.data || [];
+        var payload = res.data || {};
+        if (payload.error) {
+            showError(payload.error);
+            return;
+        }
+        var kind = payload.kind;
+        var data = payload.data || [];
         if (kind === 'turnos') {
             renderTurnos(data);
         } else if (kind === 'internados') {

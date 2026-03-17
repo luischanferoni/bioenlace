@@ -6,7 +6,7 @@ use yii\db\Query;
 use yii\rbac\Item;
 use yii\rbac\DbManager;
 
-class SisseDbManager extends DbManager
+class BioenlaceDbManager extends DbManager
 {
     public $rolesEspeciales;
     public $efectorAssignmentTable;

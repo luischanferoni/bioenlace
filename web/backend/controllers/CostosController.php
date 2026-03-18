@@ -6,8 +6,8 @@ use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\Response;
-use common\\components\\Chatbot\\ConversacionLoader;
-use common\\components\\Chatbot\\ConsultaIntentRouter;
+use common\components\Chatbot\ConversacionLoader;
+use common\components\Chatbot\ConsultaIntentRouter;
 use common\components\Ai\Cost\AICostTracker;
 
 /**

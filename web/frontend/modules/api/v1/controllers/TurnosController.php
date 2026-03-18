@@ -14,7 +14,7 @@ use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
-use common\\components\\Chatbot\\TurnoSlotFinder;
+use common\components\Services\Turnos\TurnoSlotFinder;
 
 /**
  * API Turnos: lógica de turnos expuesta como endpoints REST-ish.

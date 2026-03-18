@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components;
+namespace common\components\Chatbot;
 
 use Yii;
 use common\components\Chatbot\Classification\IntentClassifier;
-use common\\components\\Chatbot\\ConversationContext;
-use common\\components\\Chatbot\\ParameterExtractor;
+use common\components\Chatbot\ConversationContext;
+use common\components\Chatbot\ParameterExtractor;
 use common\components\Chatbot\IntentHandlers\IntentHandlerRegistry;
 
 /**

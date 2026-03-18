@@ -19,21 +19,15 @@ class ActionMappingService
     public const CACHE_DURATION = 1800; // 30 minutos
 
     /**
-     * Obtener acciones disponibles para el usuario logueado
-     * Filtra por roles y permisos del usuario
-     * @param int|null $userId ID del usuario (si es null, usa el usuario actual de la sesión)
+     * Obtener acciones disponibles para un usuario.
+     * Filtra por roles y permisos del usuario.
+     * @param int|null $userId ID del usuario (si es null no se devuelven acciones)
      * @param bool $useCache Usar cache
      * @return array
      */
     public static function getAvailableActionsForUser($userId = null, $useCache = true)
     {
-        // Si no se proporciona userId, intentar obtenerlo de la sesión
-        if ($userId === null) {
-            $userId = Yii::$app->user->id;
-        }
-
         if (!$userId) {
-            Yii::warning("ActionMappingService::getAvailableActionsForUser - Usuario no autenticado", 'action-mapping');
             return [];
         }
 
@@ -190,11 +184,6 @@ class ActionMappingService
                 }
             }
 
-            // Si el usuario actual es el mismo, usar el método canRoute
-            if (Yii::$app->user->id == $user->id) {
-                return User::canRoute($route, false);
-            }
-
             return false;
         } catch (\Exception $e) {
             Yii::error("Error verificando acceso a ruta {$route}: " . $e->getMessage(), 'action-mapping');
@@ -267,10 +256,6 @@ class ActionMappingService
      */
     public static function invalidateCacheForUser($userId = null)
     {
-        if ($userId === null) {
-            $userId = Yii::$app->user->id;
-        }
-
         if (!$userId) {
             return;
         }

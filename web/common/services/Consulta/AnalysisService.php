@@ -3,7 +3,7 @@
 namespace common\services\Consulta;
 
 use Yii;
-use common\\components\\Chatbot\\RespuestaPredefinidaManager;
+use common\components\Chatbot\RespuestaPredefinidaManager;
 
 final class AnalysisService
 {

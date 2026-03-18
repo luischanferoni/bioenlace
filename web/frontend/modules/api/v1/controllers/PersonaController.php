@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\Persona;
-use common\\components\\Services\\PersonaTimelineService;
+use common\components\Services\PersonaTimelineService;
 
 /**
  * API Persona: CRUD y timeline (historia clínica).

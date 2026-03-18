@@ -2,7 +2,7 @@
 
 namespace common\components\Chatbot\IntentHandlers\Handlers;
 
-use common\\components\\Chatbot\\ConversationContext;
+use common\components\Chatbot\ConversationContext;
 use common\components\UniversalQueryAgent;
 
 class TurnosHandler extends BaseIntentHandler

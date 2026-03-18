@@ -3,7 +3,7 @@
 namespace common\components\Chatbot\IntentHandlers\Handlers;
 
 use Yii;
-use common\\components\\Chatbot\\ConversationContext;
+use common\components\Chatbot\ConversationContext;
 use common\components\UniversalQueryAgent;
 use common\models\SegNivelInternacion;
 
@@ -346,7 +346,7 @@ class InternacionHandler extends BaseIntentHandler
 
         if (!empty($parameters['id_persona'])) {
             $idPersona = (int)$parameters['id_persona'];
-            $idEfector = Yii::$app->user && !Yii::$app->user->isGuest ? Yii::$app->user->getIdEfector() : null;
+        $idEfector = Yii::$app->user->getIdEfector();
             if ($idEfector) {
                 $id = SegNivelInternacion::personaInternadaEnEfector($idPersona, $idEfector);
                 if ($id) {

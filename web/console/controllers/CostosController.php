@@ -4,8 +4,8 @@ namespace console\controllers;
 
 use Yii;
 use yii\console\Controller;
-use common\\components\\Chatbot\\ConversacionLoader;
-use common\\components\\Chatbot\\ConsultaIntentRouter;
+use common\components\Chatbot\ConversacionLoader;
+use common\components\Chatbot\ConsultaIntentRouter;
 use common\components\Ai\Cost\AICostTracker;
 
 /**

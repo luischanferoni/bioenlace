@@ -8,7 +8,7 @@ use common\models\Dialogo;
 use common\models\Mensaje;
 use common\models\Servicio;
 use common\models\Turno;
-use common\\components\\Chatbot\\ConsultaIntentRouter;
+use common\components\Chatbot\ConsultaIntentRouter;
 
 class ChatController extends BaseController
 {

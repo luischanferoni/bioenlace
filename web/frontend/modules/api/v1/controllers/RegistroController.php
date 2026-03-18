@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\\components\\Services\\RegistroService;
+use common\components\Services\RegistroService;
 use common\models\Persona;
 use common\models\User;
 use webvimark\modules\UserManagement\models\rbacDB\Role;

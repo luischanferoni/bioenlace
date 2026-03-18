@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Chatbot;
+namespace common\components\Services\Turnos;
 
 use Yii;
 use common\models\Turno;

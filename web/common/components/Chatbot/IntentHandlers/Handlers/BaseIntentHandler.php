@@ -3,8 +3,8 @@
 namespace common\components\Chatbot\IntentHandlers\Handlers;
 
 use Yii;
-use common\\components\\Chatbot\\ConversationContext;
-use common\\components\\Chatbot\\ParameterQuestionRegistry;
+use common\components\Chatbot\ConversationContext;
+use common\components\Chatbot\ParameterQuestionRegistry;
 
 abstract class BaseIntentHandler
 {

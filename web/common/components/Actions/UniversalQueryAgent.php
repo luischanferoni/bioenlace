@@ -824,8 +824,8 @@ PROMPT;
             
             // Mapeo inteligente según nombre del parámetro
             if (stripos($paramName, 'id_efector') !== false || stripos($paramName, 'efector') !== false) {
-                // Buscar en extracted_data o usar efector actual del usuario
-                $value = $extractedData['id_efector'] ?? Yii::$app->user->getIdEfector();
+                // Buscar en extracted_data; no tomar el efector desde la sesión aquí
+                $value = $extractedData['id_efector'] ?? null;
             } elseif (stripos($paramName, 'especialidad') !== false) {
                 // Buscar especialidad en keywords o names extraídos
                 // Palabras clave comunes de especialidades
@@ -901,8 +901,8 @@ PROMPT;
         // Obtener todas las acciones disponibles para el usuario (ya filtradas por permisos)
         $allActions = \common\components\Actions\ActionMappingService::getAvailableActionsForUser($userId);
         
-        // Log para debugging
-        $currentUserId = $userId ?? Yii::$app->user->id ?? 'no-autenticado';
+        // Log para debugging (el userId debe venir dado por capas previas)
+        $currentUserId = $userId ?? 'no-especificado';
         Yii::info("UniversalQueryAgent::findActionsByCriteria - userId: {$currentUserId}, query_type: {$criteria['query_type']}, acciones encontradas: " . count($allActions), 'universal-query-agent');
         
         if (empty($allActions)) {
@@ -1416,9 +1416,9 @@ PROMPT;
         }
         
         // Resolución centralizada por tipo de entidad (EntityParameterResolver)
-        $requiredTypes = \\common\\components\\Actions\\EntityParameterResolver::getRequiredTypesFromActions($actions);
+        $requiredTypes = \common\components\Actions\EntityParameterResolver::getRequiredTypesFromActions($actions);
         if (!empty($requiredTypes)) {
-            $extractedData = \\common\\components\\Actions\\EntityParameterResolver::resolve($extractedData, $userQuery, $requiredTypes);
+            $extractedData = \common\components\Actions\EntityParameterResolver::resolve($extractedData, $userQuery, $requiredTypes);
             if (self::isDebugMode()) {
                 Yii::info("extractedData después de EntityParameterResolver (tipos: " . implode(', ', $requiredTypes) . "): " . json_encode($extractedData, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
             }
@@ -2306,7 +2306,7 @@ PROMPT;
         }
         
         $primaryAction = $actions[0];
-        return \\common\\components\\Actions\\ActionParameterAnalyzer::analyzeActionParameters(
+        return \common\components\Actions\ActionParameterAnalyzer::analyzeActionParameters(
             $primaryAction,
             $extractedData,
             $userId

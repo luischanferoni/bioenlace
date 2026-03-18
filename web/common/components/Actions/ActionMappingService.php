@@ -56,12 +56,15 @@ class ActionMappingService
         // Log para debugging
         Yii::info("ActionMappingService: Total acciones descubiertas: " . count($allActions) . " para usuario: {$userId}", 'action-mapping');
 
-        // Filtrar acciones por permisos del usuario
+        $routeMap = null;
+        if ((int) $user->superadmin !== 1) {
+            $routeMap = AllowedRoutesResolver::getTargetRoutesMapForUserId((int) $user->id, $useCache);
+        }
+
         $availableActions = [];
 
         foreach ($allActions as $action) {
-            // Verificar si el usuario tiene acceso a esta ruta
-            if (self::userCanAccessRoute($user, $action['route'])) {
+            if (self::userCanAccessRoute($user, $action['route'], $routeMap)) {
                 $availableActions[] = $action;
             }
         }
@@ -107,84 +110,29 @@ class ActionMappingService
      * @param string $route
      * @return bool
      */
-    private static function userCanAccessRoute($user, $route)
+    /**
+     * @param array<string, true>|null $routeMap null = superadmin (todo permitido); [] = solo libres
+     */
+    private static function userCanAccessRoute($user, $route, $routeMap = null)
     {
-        // Superadmin tiene acceso a todo
-        if ($user->superadmin == 1) {
+        if ((int) $user->superadmin === 1) {
             return true;
         }
 
         try {
-            // Verificar si la ruta es de acceso libre
             if (Route::isFreeAccess($route)) {
                 return true;
             }
 
-            // Obtener rutas permitidas para el usuario desde RBAC
-            $authManager = Yii::$app->authManager;
-            $permissions = $authManager->getPermissionsByUser($user->id);
-
-            // Verificar permisos directos y sus hijos (children)
-            foreach ($permissions as $permission) {
-                // Verificar coincidencia exacta
-                if ($permission->name === $route) {
-                    return true;
-                }
-
-                // Obtener hijos del permiso (children)
-                $children = $authManager->getChildren($permission->name);
-                foreach ($children as $item) {
-                    // Verificar si el hijo es de tipo 3 (ruta) y coincide
-                    if ($item->type == 3) {
-                        if ($item->name === $route) {
-                            return true;
-                        }
-                        // Verificar rutas con sub-rutas (ej: /site/* incluye /site/index)
-                        if (strpos($route, $item->name) === 0) {
-                            return true;
-                        }
-                    }
-                }
-
-                // Verificar rutas con sub-rutas del permiso directo (ej: /site/* incluye /site/index)
-                if (strpos($route, $permission->name) === 0) {
-                    return true;
-                }
+            if ($routeMap === null) {
+                $routeMap = AllowedRoutesResolver::getTargetRoutesMapForUserId((int) $user->id, true);
             }
 
-            // Verificar roles del usuario y sus permisos (con hijos)
-            $roles = $authManager->getRolesByUser($user->id);
-            foreach ($roles as $role) {
-                $rolePermissions = $authManager->getPermissionsByRole($role->name);
-                foreach ($rolePermissions as $permission) {
-                    // Verificar coincidencia exacta
-                    if ($permission->name === $route) {
-                        return true;
-                    }
-
-                    // Obtener hijos del permiso (children)
-                    $children = $authManager->getChildren($permission->name);
-                    foreach ($children as $item) {
-                        // Verificar si el hijo es de tipo 3 (ruta) y coincide
-                        if ($item->type == 3) {
-                            if ($item->name === $route) {
-                                return true;
-                            }
-                            // Verificar rutas con sub-rutas
-                            if (strpos($route, $item->name) === 0) {
-                                return true;
-                            }
-                        }
-                    }
-
-                    // Verificar rutas con sub-rutas del permiso directo
-                    if (strpos($route, $permission->name) === 0) {
-                        return true;
-                    }
-                }
+            if ($routeMap === null) {
+                return true;
             }
 
-            return false;
+            return AllowedRoutesResolver::routeAllowedByMap($route, $routeMap);
         } catch (\Exception $e) {
             Yii::error("Error verificando acceso a ruta {$route}: " . $e->getMessage(), 'action-mapping');
             return false;

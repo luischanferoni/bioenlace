@@ -3,6 +3,7 @@
 namespace common\components\Chatbot\IntentHandlers\Handlers;
 
 use Yii;
+use common\components\Actions\ChatApiActionBuilder;
 
 class ConsultaMedicaHandler extends BaseIntentHandler
 {
@@ -54,12 +55,11 @@ class ConsultaMedicaHandler extends BaseIntentHandler
 
         $respuesta .= "\n\n¿Querés sacar un turno para consultar?";
 
-        return $this->generateSuccessResponse($respuesta, ['sintoma' => $sintoma], [
-            [
-                'title' => 'Sacar turno',
-                'action' => 'crear_turno',
-            ],
-        ]);
+        return $this->generateSuccessResponse(
+            $respuesta,
+            ['sintoma' => $sintoma],
+            ChatApiActionBuilder::buildTurnoActions($userId !== null ? (int) $userId : null)
+        );
     }
 
     private function handleConsultaMedicamento($message, $parameters, $context, $userId)
@@ -91,12 +91,11 @@ class ConsultaMedicaHandler extends BaseIntentHandler
 
         $respuesta .= "\n\n¿Querés consultar con un médico?";
 
-        return $this->generateSuccessResponse($respuesta, ['medicamento' => $medicamento], [
-            [
-                'title' => 'Sacar turno',
-                'action' => 'crear_turno',
-            ],
-        ]);
+        return $this->generateSuccessResponse(
+            $respuesta,
+            ['medicamento' => $medicamento],
+            ChatApiActionBuilder::buildTurnoActions($userId !== null ? (int) $userId : null)
+        );
     }
 
     private function handleConsultaPrevencion($message, $parameters, $context, $userId)
@@ -118,13 +117,11 @@ class ConsultaMedicaHandler extends BaseIntentHandler
         $respuesta .= "Es importante mantener el calendario de vacunación al día.\n\n";
         $respuesta .= "¿Querés consultar tu calendario de vacunación o sacar un turno para vacunarte?";
 
-        return $this->generateSuccessResponse($respuesta, [], [
-            [
-                'title' => 'Sacar turno para vacunación',
-                'action' => 'crear_turno',
-                'servicio' => 'VACUNACION',
-            ],
-        ]);
+        return $this->generateSuccessResponse(
+            $respuesta,
+            [],
+            ChatApiActionBuilder::buildVacunacionActions($userId !== null ? (int) $userId : null)
+        );
     }
 
     private function handleCuandoConsultar($message, $parameters, $context, $userId)
@@ -139,16 +136,11 @@ class ConsultaMedicaHandler extends BaseIntentHandler
         $respuesta .= "En caso de emergencia, llamá al 107 o 911.\n\n";
         $respuesta .= "¿Querés sacar un turno para consultar?";
 
-        return $this->generateSuccessResponse($respuesta, [], [
-            [
-                'title' => 'Sacar turno',
-                'action' => 'crear_turno',
-            ],
-            [
-                'title' => 'Emergencia',
-                'action' => 'emergencia_critica',
-            ],
-        ]);
+        return $this->generateSuccessResponse(
+            $respuesta,
+            [],
+            ChatApiActionBuilder::buildCuandoConsultarActions($userId !== null ? (int) $userId : null)
+        );
     }
 }
 

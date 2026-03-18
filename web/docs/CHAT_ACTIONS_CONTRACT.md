@@ -63,7 +63,8 @@ Los clientes deben soportar como mínimo este shape:
   - `select_patient`: abrir selector/búsqueda de paciente.
   - `open_form`: alias de `open_route` cuando el cliente necesita diferenciar navegación vs modal/form.
 - `title`: string, texto del botón.
-- `route`: string, ruta canónica (preferentemente igual a `ActionDiscoveryService` / RBAC routes).
+- `route`: string, ruta canónica. **Preferencia:** rutas **API** bajo `/api/v1/...` (o las descubiertas que contengan `/api/`) para apps y web que consumen el backend vía REST. Las acciones generadas por [`ChatApiActionBuilder`](../common/components/Actions/ChatApiActionBuilder.php) priorizan endpoints API permitidos por RBAC.
+- `method`: string opcional (`GET`, `POST`, …) cuando la acción descubierta o el fallback no sea GET; el cliente debe invocar el endpoint con ese verbo.
 - `params`: objeto opcional. Query params para componer la URL final.
 - `prefill`: objeto opcional. Datos estructurados para **pre-poblar** el formulario (si el cliente lo soporta).
 

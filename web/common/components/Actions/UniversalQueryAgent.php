@@ -40,33 +40,26 @@ class UniversalQueryAgent
                 return $cached;
             }
         }
-        
-        // PRIMERO: Obtener permisos de los roles desde RBAC (estos son las rutas permitidas)
-        // Solo descubriremos acciones para las rutas que el rol puede ejecutar
-        $authManager = Yii::$app->authManager;
-        $targetRoutes = [];
-        
-        foreach ($roles as $role) {
-            try {
-                $roleObj = $authManager->getRole($role);
-                if ($roleObj) {
-                    $permissions = $authManager->getPermissionsByRole($role);
 
-                    foreach ($permissions as $permission) {
-                        $children = $authManager->getChildren($permission->name);
-                        
-                        foreach ($children as $id => $item)
-                        {
-                            if ( $item->type == 3 )
-                            {
-                                $targetRoutes[$item->name] = true;
-                            }
-                        }
+        $targetRoutes = [];
+        $usedSessionRoutes = false;
+        if (AllowedRoutesResolver::sessionRolesMatch($roles)) {
+            $sessionRoutes = AllowedRoutesResolver::getSessionUserRoutes();
+            if (is_array($sessionRoutes) && $sessionRoutes !== []) {
+                foreach ($sessionRoutes as $r) {
+                    $r = is_string($r) ? '/' . ltrim($r, '/') : '';
+                    if ($r !== '' && $r !== '/') {
+                        $targetRoutes[$r] = true;
                     }
                 }
-            } catch (\Exception $e) {
-                Yii::warning("UniversalQueryAgent::getAvailableActionsByRole - Error obteniendo permisos del rol '{$role}': " . $e->getMessage(), 'universal-query-agent');
+                $usedSessionRoutes = $targetRoutes !== [];
+                if ($usedSessionRoutes) {
+                    Yii::info('UniversalQueryAgent::getAvailableActionsByRole - targetRoutes from session (__userRoutes)', 'universal-query-agent');
+                }
             }
+        }
+        if (!$usedSessionRoutes) {
+            $targetRoutes = AllowedRoutesResolver::getTargetRoutesMapForRoles($roles, $useCache);
         }
 
         // Si no hay permisos, retornar array vacío (no necesitamos descubrir acciones)
@@ -116,10 +109,8 @@ class UniversalQueryAgent
                 continue;
             }
             
-            // Verificar si la ruta coincide exactamente con alguna ruta objetivo
-            if (isset($targetRoutes[$route])) {
+            if (AllowedRoutesResolver::routeAllowedByMap($route, $targetRoutes)) {
                 $availableActions[] = $action;
-                continue;
             }
         }
         

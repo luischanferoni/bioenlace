@@ -172,7 +172,7 @@ $home = Yii::$app->getHomeUrl();
     <footer class="footer">
             <div class="footer-body">
                 <ul class="left-panel list-inline mb-0 p-0">
-                    <p>© BIOENLACE <?=date("Y")?> - MINISTERIO DE SALUD DE SANTIAGO DEL ESTERO</p>
+                    <p>© BIOENLACE <?=date("Y")?></p>
                 </ul>
                 <div class="right-panel">
                     <img src="<?= Yii::getAlias('@web') ?>/images/logoSD.png" width="100px" alt="">

@@ -12,21 +12,18 @@ $hoy = date('Y-m-d');
 
 $encounterMeta = [
     Consulta::ENCOUNTER_CLASS_AMB => [
-        'label' => 'Consultorio / ambulatorio',
-        'descripcion' => 'Pacientes con turno pendiente de atención. La fecha define qué turnos se muestran (por atender en esa jornada).',
+        'label' => 'Ambulatorio',
     ],
     Consulta::ENCOUNTER_CLASS_IMP => [
         'label' => 'Internación',
-        'descripcion' => 'Pacientes actualmente internados en su efector.',
     ],
     Consulta::ENCOUNTER_CLASS_EMER => [
         'label' => 'Guardia',
-        'descripcion' => 'Ingresos en guardia pendientes de atención en su efector.',
     ],
 ];
 $metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
     ? $encounterMeta[$encounter_class]
-    : ['label' => '', 'descripcion' => ''];
+    : ['label' => ''];
 
 $urlAjax = Url::to(['/api/v1/pacientes'], true);
 $encounterJson = Json::encode($encounter_class);
@@ -40,9 +37,6 @@ $this->title = 'Pacientes';
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
             <span class="badge bg-primary"><?= Html::encode($metaEc['label']) ?></span>
         </div>
-        <?php if (!empty($metaEc['descripcion'])): ?>
-            <p class="text-muted small mb-0"><?= Html::encode($metaEc['descripcion']) ?></p>
-        <?php endif; ?>
     <?php endif; ?>
 </div>
 
@@ -187,7 +181,11 @@ $this->registerJs(<<<JS
         return;
     }
 
-    var ajaxOpts = { method: 'GET', dataType: 'json', headers: { 'X-Requested-With': 'XMLHttpRequest' } };
+    var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+    if (window.apiAuthToken) {
+        headers['Authorization'] = 'Bearer ' + window.apiAuthToken;
+    }
+    var ajaxOpts = { method: 'GET', dataType: 'json', headers: headers };
 
     \$.ajax(\$.extend({}, ajaxOpts, { url: '{$urlAjax}', data: { fecha: fecha } }))
     .done(function(res) {

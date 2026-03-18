@@ -3,7 +3,6 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\filters\auth\CompositeAuth;
 use common\models\Consulta;
 use common\models\Guardia;
 use common\models\InfraestructuraPiso;
@@ -11,38 +10,11 @@ use common\models\Persona;
 use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
 use common\models\Turno;
-use frontend\modules\api\v1\components\JsonHttpBearerAuth;
-use frontend\modules\api\v1\components\SessionIdentityAuth;
-
 /**
  * Listado de pacientes por modalidad (encounter): ambulatorio, internación, guardia.
- * GET /api/v1/pacientes/ambulatorio?fecha=…
- * GET /api/v1/pacientes/internacion
- * GET /api/v1/pacientes/guardia
  */
 class PacientesController extends BaseController
 {
-    public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        unset($behaviors['authenticator']);
-        $behaviors['authenticator'] = [
-            'class' => CompositeAuth::class,
-            'authMethods' => [
-                JsonHttpBearerAuth::class,
-                SessionIdentityAuth::class,
-            ],
-            'except' => ['options'],
-        ];
-
-        return $behaviors;
-    }
-
-    public function actionOptions()
-    {
-        Yii::$app->response->statusCode = 204;
-    }
-
     /**
      * Listado de pacientes según encounter del usuario (turnos / internados / guardia).
      * GET /api/v1/pacientes?fecha=YYYY-MM-DD
@@ -107,30 +79,6 @@ class PacientesController extends BaseController
                     'fecha' => $fecha,
                 ];
         }
-    }
-
-    /**
-     * Turnos pendientes del médico (ambulatorio). Sin turno de prueba salvo ?prueba=1
-     */
-    public function actionAmbulatorio()
-    {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $fecha = Yii::$app->request->get('fecha', date('Y-m-d'));
-        $conPrueba = Yii::$app->request->get('prueba') === '1';
-        $payload = $this->turnosAmbulatorioMedico($fecha, null, $conPrueba);
-        return array_merge(['success' => true], $payload);
-    }
-
-    public function actionInternacion()
-    {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        return ['success' => true, 'internados' => $this->internadosPorEfector()];
-    }
-
-    public function actionGuardia()
-    {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        return ['success' => true, 'guardias' => $this->guardiasPendientesPorEfector()];
     }
 
     /**

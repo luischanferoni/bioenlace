@@ -194,6 +194,8 @@ if (Yii::$app->user->username) {
     <script>
     // Inicializar userPerTabConfig para que esté disponible en todas las peticiones AJAX
     window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
+    // Token JWT para consumir la API v1 desde la SPA web
+    window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')); ?>;
     </script>
     <?php endif; ?>
     

@@ -177,7 +177,7 @@ return [
 
                 // Pacientes (encounter resuelto en backend)
                 'GET api/<version:\w+>/pacientes' => '<version>/pacientes/index',
-                'OPTIONS api/<version:\w+>/pacientes' => '<version>/pacientes/options',
+                'OPTIONS api/<version:\w+>/pacientes' => '<version>/pacientes/index',
             ],            
         ],
         'snowstorm' => [

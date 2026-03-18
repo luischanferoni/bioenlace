@@ -5,7 +5,7 @@ use yii\widgets\DetailView;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\bootstrap5\Modal;
-use common\components\SisseGhostHtml;
+use common\components\Integrations\Sisse\SisseGhostHtml;
 
 use webvimark\modules\UserManagement\models\User;
 

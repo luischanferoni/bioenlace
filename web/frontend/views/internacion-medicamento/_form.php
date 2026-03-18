@@ -16,6 +16,25 @@ use yii\helpers\Url;
     <div class="card">
         <div class="card-body">
 
+            <div class="card mb-3">
+                <div class="card-header bg-soft-info">
+                    <h5 class="mb-0">Carga por texto (asistente)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-lg-9">
+                            <label class="form-label" for="internacion-medicacion-intake-text">Describí la indicación</label>
+                            <textarea id="internacion-medicacion-intake-text" class="form-control" rows="3" placeholder="Ej: amoxicilina 500 cada 8h por 7 días, 1 comprimido, VO."></textarea>
+                            <div class="form-text">El asistente completa campos simples (cantidad/dosis/indicaciones). La selección del medicamento (concepto) puede requerir confirmación manual.</div>
+                        </div>
+                        <div class="col-12 col-lg-3">
+                            <button type="button" id="internacion-medicacion-intake-analyze" class="btn btn-outline-primary w-100">Analizar y pre-cargar</button>
+                        </div>
+                    </div>
+                    <div id="internacion-medicacion-intake-status" class="mt-3" style="display:none;"></div>
+                </div>
+            </div>
+
             <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
             <?php
             DynamicFormWidget::begin([
@@ -117,3 +136,75 @@ use yii\helpers\Url;
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    const btn = document.getElementById('internacion-medicacion-intake-analyze');
+    const textarea = document.getElementById('internacion-medicacion-intake-text');
+    const status = document.getElementById('internacion-medicacion-intake-status');
+    if (!btn || !textarea) return;
+
+    function showStatus(html, cls) {
+        if (!status) return;
+        status.style.display = 'block';
+        status.className = cls;
+        status.innerHTML = html;
+    }
+
+    function setField(index, attr, value) {
+        if (value === null || value === undefined || value === '') return;
+        const id = `segnivelinternacionmedicamento-${index}-${attr}`;
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = value;
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    btn.addEventListener('click', async () => {
+        const text = (textarea.value || '').trim();
+        if (!text) {
+            showStatus('Escribí un texto para analizar.', 'alert alert-warning');
+            return;
+        }
+        btn.disabled = true;
+        showStatus('Analizando...', 'alert alert-info');
+
+        try {
+            const baseUrl = (window.spaConfig && window.spaConfig.baseUrl) ? window.spaConfig.baseUrl : window.location.origin;
+            const url = `${baseUrl}/api/v1/entity-intake/analyze`;
+            const payload = { entity: 'internacion_medicacion', intent: 'internacion_indicar_medicacion', text };
+            const resp = window.VitaMindAjax
+                ? await window.VitaMindAjax.fetchPost(url, payload)
+                : await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+
+            const json = resp.ok ? await resp.json() : await resp.json().catch(() => null);
+            if (!resp.ok || !json || !json.success) {
+                showStatus('No se pudo analizar el texto.', 'alert alert-danger');
+                return;
+            }
+
+            const prefill = (json.data && json.data.prefill) ? json.data.prefill : {};
+            // Completar primera fila (index 0)
+            setField(0, 'cantidad', prefill.cantidad || prefill.dosis || '');
+            setField(0, 'dosis_diaria', prefill.dosis_diaria || prefill.frecuencia || '');
+            setField(0, 'indicacion', prefill.indicacion || prefill.observaciones || '');
+
+            const medicamento = prefill.medicamento || null;
+            const missing = (json.data && json.data.missing_required) ? json.data.missing_required : [];
+
+            if (medicamento) {
+                showStatus(`Pre-cargado. Medicación detectada: <strong>${medicamento}</strong>. Seleccioná el concepto en la columna “Concepto” si no quedó elegido automáticamente.`, missing.length ? 'alert alert-warning' : 'alert alert-success');
+            } else if (missing.length) {
+                showStatus(`Pre-cargado parcial. Faltan campos requeridos: <strong>${missing.join(', ')}</strong>.`, 'alert alert-warning');
+            } else {
+                showStatus('Pre-cargado correctamente. Revisá y guardá.', 'alert alert-success');
+            }
+        } catch (e) {
+            showStatus('Error al analizar el texto. Intentá nuevamente.', 'alert alert-danger');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+</script>

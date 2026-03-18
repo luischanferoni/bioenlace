@@ -4,7 +4,7 @@ namespace common\models;
 
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
-use common\components\EmbeddingsManager;
+use common\components\Ai\Embeddings\EmbeddingsManager;
 
 /**
  * Modelo para respuestas predefinidas de IA

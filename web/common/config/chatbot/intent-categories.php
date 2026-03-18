@@ -541,8 +541,93 @@ return [
     // 11. INTERNACIÓN
     'internacion' => [
         'name' => 'Internación',
-        'description' => 'Información sobre internación',
+        'description' => 'Acciones operativas sobre internación (ingreso, alta, cama, medicación, diagnósticos, prácticas)',
         'intents' => [
+            'internacion_ingreso' => [
+                'name' => 'Ingreso a Internación',
+                'keywords' => [
+                    'internar', 'ingresar a internación', 'admitir', 'admisión', 'ingreso a sala',
+                    'internación ingreso', 'crear internación', 'nueva internación'
+                ],
+                'patterns' => [
+                    '/\b(internar|internaci[oó]n)\b.*\b(ingresar|ingreso|admitir|admisi[oó]n|crear|nueva)\b/i',
+                    '/\b(ingresar|admitir|crear)\b.*\b(internaci[oó]n)\b/i'
+                ],
+                'handler' => 'InternacionHandler',
+                'priority' => 'high'
+            ],
+            'internacion_ver_actual' => [
+                'name' => 'Ver Internación Actual',
+                'keywords' => [
+                    'ver internación', 'abrir internación', 'internación actual', 'ver sala', 'ver cama',
+                    'detalle internación'
+                ],
+                'patterns' => [
+                    '/\b(ver|abrir|detalle)\b.*\b(internaci[oó]n)\b/i',
+                    '/\b(internaci[oó]n)\b.*\b(actual|activa)\b/i'
+                ],
+                'handler' => 'InternacionHandler',
+                'priority' => 'high'
+            ],
+            'internacion_alta' => [
+                'name' => 'Alta / Externación',
+                'keywords' => [
+                    'alta', 'externación', 'dar el alta', 'egreso', 'alta de internación', 'alta paciente internado'
+                ],
+                'patterns' => [
+                    '/\b(dar\s+el\s+alta|alta|externaci[oó]n|egreso)\b/i',
+                    '/\b(alta)\b.*\b(internaci[oó]n|internado)\b/i'
+                ],
+                'handler' => 'InternacionHandler',
+                'priority' => 'high'
+            ],
+            'internacion_cambio_cama' => [
+                'name' => 'Cambio de Cama',
+                'keywords' => [
+                    'cambio de cama', 'cambiar cama', 'trasladar de cama', 'pasar a otra cama', 'mover cama'
+                ],
+                'patterns' => [
+                    '/\b(cambio|cambiar|trasladar|pasar|mover)\b.*\b(cama)\b/i'
+                ],
+                'handler' => 'InternacionHandler',
+                'priority' => 'high'
+            ],
+            'internacion_indicar_medicacion' => [
+                'name' => 'Indicar Medicación (Internación)',
+                'keywords' => [
+                    'indicar medicación', 'agregar medicación', 'medicación', 'prescribir', 'ordenar medicación'
+                ],
+                'patterns' => [
+                    '/\b(indicar|agregar|prescribir|ordenar)\b.*\b(medicaci[oó]n|medicamento)\b/i',
+                    '/\b(medicaci[oó]n|medicamento)\b.*\b(internaci[oó]n|internado)\b/i'
+                ],
+                'handler' => 'InternacionHandler',
+                'priority' => 'high'
+            ],
+            'internacion_agregar_diagnostico' => [
+                'name' => 'Agregar Diagnóstico (Internación)',
+                'keywords' => [
+                    'agregar diagnóstico', 'nuevo diagnóstico', 'diagnóstico', 'diagnosticar', 'cargar diagnóstico'
+                ],
+                'patterns' => [
+                    '/\b(agregar|cargar|nuevo)\b.*\b(diagn[oó]stico)\b/i',
+                    '/\b(diagn[oó]stico)\b.*\b(internaci[oó]n|internado)\b/i'
+                ],
+                'handler' => 'InternacionHandler',
+                'priority' => 'high'
+            ],
+            'internacion_agregar_practica' => [
+                'name' => 'Agregar Práctica (Internación)',
+                'keywords' => [
+                    'agregar práctica', 'cargar práctica', 'indicar práctica', 'práctica', 'procedimiento', 'estudio'
+                ],
+                'patterns' => [
+                    '/\b(agregar|cargar|indicar)\b.*\b(pr[áa]ctica|procedimiento|estudio)\b/i',
+                    '/\b(pr[áa]ctica|procedimiento|estudio)\b.*\b(internaci[oó]n|internado)\b/i'
+                ],
+                'handler' => 'InternacionHandler',
+                'priority' => 'medium'
+            ],
             'estado_internacion' => [
                 'name' => 'Estado de Internación',
                 'keywords' => [

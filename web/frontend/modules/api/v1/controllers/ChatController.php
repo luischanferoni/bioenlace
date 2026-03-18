@@ -8,7 +8,7 @@ use common\models\Dialogo;
 use common\models\Mensaje;
 use common\models\Servicio;
 use common\models\Turno;
-use common\components\ConsultaIntentRouter;
+use common\\components\\Chatbot\\ConsultaIntentRouter;
 
 class ChatController extends BaseController
 {
@@ -76,21 +76,24 @@ class ChatController extends BaseController
         $mensajeUsuario->save();
 
         // 4. Procesar con el nuevo orquestador
+        $routerResult = null;
+        $routerError = null;
         try {
-            $result = ConsultaIntentRouter::process($content, $senderId, 'BOT');
+            $routerResult = ConsultaIntentRouter::process($content, $senderId, 'BOT');
             
-            if ($result['success']) {
-                $respuestaTexto = $result['response']['text'] ?? 'Consulta procesada correctamente.';
+            if (($routerResult['success'] ?? false) === true) {
+                $respuestaTexto = $routerResult['response']['text'] ?? 'Consulta procesada correctamente.';
                 
                 // Si necesita más información, mantener el contexto
-                if (isset($result['needs_more_info']) && $result['needs_more_info']) {
+                if (isset($routerResult['needs_more_info']) && $routerResult['needs_more_info']) {
                     // El contexto ya fue guardado por ConsultaIntentRouter
                 }
             } else {
-                $respuestaTexto = $result['error'] ?? 'Ocurrió un error al procesar tu consulta.';
+                $respuestaTexto = $routerResult['error'] ?? 'Ocurrió un error al procesar tu consulta.';
             }
         } catch (\Exception $e) {
             \Yii::error('Error en ConsultaIntentRouter: ' . $e->getMessage(), 'chats');
+            $routerError = $e->getMessage();
             $respuestaTexto = "Ocurrió un error. Por favor, intentá nuevamente.";
         }
 
@@ -151,7 +154,9 @@ class ChatController extends BaseController
 
         Yii::$app->response->statusCode = 201;
 
-        // 6. Devolver respuesta en formato requerido
+        // 6. Devolver respuesta al cliente.
+        // Mantener compatibilidad: `content` sigue siendo solo texto.
+        // Agregar payload estructurado (actions/metadata/etc.) para web + apps.
         return [
             'success' => true,
             'id' => (string)$mensajeBot->id,
@@ -159,6 +164,16 @@ class ChatController extends BaseController
             'senderName' => $mensajeBot->sender_name,
             'content' => $mensajeBot->content,
             'timestamp' => (string)strtotime($mensajeBot->timestamp),
+            'router' => [
+                'success' => $routerResult['success'] ?? false,
+                'needs_more_info' => $routerResult['needs_more_info'] ?? false,
+                'missing_params' => $routerResult['missing_params'] ?? [],
+                'response' => $routerResult['response'] ?? ['text' => $respuestaTexto],
+                'actions' => $routerResult['actions'] ?? [],
+                'suggestions' => $routerResult['suggestions'] ?? [],
+                'metadata' => $routerResult['metadata'] ?? [],
+                'error' => $routerResult['error'] ?? $routerError,
+            ],
         ];
     }
 

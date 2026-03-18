@@ -5,9 +5,9 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\Response;
 use common\models\Consulta;
-use common\components\ProcesadorTextoMedico;
+use common\\components\\Text\\ProcesadorTextoMedico;
 use common\components\ConsultaLogger;
-use common\components\ConsultaClassifier;
+use common\components\Chatbot\Classification\ConsultaClassifier;
 use common\components\DeferredSnomedProcessor;
 
 /**

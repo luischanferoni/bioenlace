@@ -4,7 +4,7 @@ namespace console\controllers;
 
 use Yii;
 use yii\console\Controller;
-use common\components\ChatbotMetadataExtractor;
+use common\\components\\Chatbot\\ChatbotMetadataExtractor;
 use yii\helpers\FileHelper;
 
 /**

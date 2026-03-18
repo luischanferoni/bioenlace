@@ -629,8 +629,10 @@ class SiteController extends Controller
                 // Obtener userId del usuario actual
                 $userId = Yii::$app->user->isGuest ? null : Yii::$app->user->id;
                 
-                // Ejecutar test
-                $result = \common\components\UniversalQueryAgent::testFindActions($criteria, $userId, 'paciente');
+                // Ejecutar test (rol opcional para filtrar acciones)
+                $roleName = Yii::$app->request->post('roleName');
+                $roleName = is_string($roleName) && trim($roleName) !== '' ? trim($roleName) : null;
+                $result = \common\components\UniversalQueryAgent::testFindActions($criteria, $userId, $roleName);
                 
             } catch (\Exception $e) {
                 Yii::error("Error en test-action-matching: " . $e->getMessage(), 'site-controller');

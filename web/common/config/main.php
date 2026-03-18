@@ -55,7 +55,7 @@ return [
             ]
         ],
         'iamanager' => [
-            'class' => 'common\\components\\IAManager',
+            'class' => 'common\\components\\Ai\\IAManager',
         ]
     ],
 ];

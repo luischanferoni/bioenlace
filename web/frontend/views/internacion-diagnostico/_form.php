@@ -21,6 +21,25 @@ use yii\web\JsExpression;
             <div class="card">
                 <div class="card-body">
 
+                    <div class="card mb-3">
+                        <div class="card-header bg-soft-info">
+                            <h5 class="mb-0">Carga por texto (asistente)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-lg-9">
+                                    <label class="form-label" for="internacion-diagnostico-intake-text">Describí el/los diagnósticos</label>
+                                    <textarea id="internacion-diagnostico-intake-text" class="form-control" rows="3" placeholder="Ej: neumonía adquirida en la comunidad, insuficiencia respiratoria..."></textarea>
+                                    <div class="form-text">El asistente detecta el texto del diagnóstico; la selección del concepto SNOMED se confirma en el selector.</div>
+                                </div>
+                                <div class="col-12 col-lg-3">
+                                    <button type="button" id="internacion-diagnostico-intake-analyze" class="btn btn-outline-primary w-100">Analizar</button>
+                                </div>
+                            </div>
+                            <div id="internacion-diagnostico-intake-status" class="mt-3" style="display:none;"></div>
+                        </div>
+                    </div>
+
                     <?php $form = ActiveForm::begin(['id' => 'dynamic-form']); ?>
                     <?php
                     DynamicFormWidget::begin([
@@ -125,3 +144,61 @@ use yii\web\JsExpression;
     <?php ActiveForm::end(); ?>
 
 </div>
+
+<script>
+(function() {
+    const btn = document.getElementById('internacion-diagnostico-intake-analyze');
+    const textarea = document.getElementById('internacion-diagnostico-intake-text');
+    const status = document.getElementById('internacion-diagnostico-intake-status');
+    if (!btn || !textarea) return;
+
+    function showStatus(html, cls) {
+        if (!status) return;
+        status.style.display = 'block';
+        status.className = cls;
+        status.innerHTML = html;
+    }
+
+    btn.addEventListener('click', async () => {
+        const text = (textarea.value || '').trim();
+        if (!text) {
+            showStatus('Escribí un texto para analizar.', 'alert alert-warning');
+            return;
+        }
+
+        btn.disabled = true;
+        showStatus('Analizando...', 'alert alert-info');
+
+        try {
+            const baseUrl = (window.spaConfig && window.spaConfig.baseUrl) ? window.spaConfig.baseUrl : window.location.origin;
+            const url = `${baseUrl}/api/v1/entity-intake/analyze`;
+            const payload = { entity: 'internacion_diagnostico', intent: 'internacion_agregar_diagnostico', text };
+            const resp = window.VitaMindAjax
+                ? await window.VitaMindAjax.fetchPost(url, payload)
+                : await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+
+            const json = resp.ok ? await resp.json() : await resp.json().catch(() => null);
+            if (!resp.ok || !json || !json.success) {
+                showStatus('No se pudo analizar el texto.', 'alert alert-danger');
+                return;
+            }
+
+            const prefill = (json.data && json.data.prefill) ? json.data.prefill : {};
+            const diag = prefill.diagnostico || null;
+            const missing = (json.data && json.data.missing_required) ? json.data.missing_required : [];
+
+            if (diag) {
+                showStatus(`Diagnóstico detectado: <strong>${diag}</strong>. Seleccioná el concepto en el selector.`, missing.length ? 'alert alert-warning' : 'alert alert-success');
+            } else if (missing.length) {
+                showStatus(`Faltan campos requeridos: <strong>${missing.join(', ')}</strong>.`, 'alert alert-warning');
+            } else {
+                showStatus('Listo. Seleccioná el concepto en el selector.', 'alert alert-success');
+            }
+        } catch (e) {
+            showStatus('Error al analizar el texto. Intentá nuevamente.', 'alert alert-danger');
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+</script>

@@ -166,4 +166,95 @@ return [
             'resolve_references' => false
         ]
     ]
+    ,
+
+    // INTERNACIÓN (operativo)
+    'internacion_ingreso' => [
+        'required_params' => [],
+        'optional_params' => ['id_persona', 'id_cama', 'servicio', 'efector'],
+        'lifetime' => 900, // 15 minutos
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector', 'service', 'professional'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
+    'internacion_ver_actual' => [
+        'required_params' => [],
+        'optional_params' => ['id_persona', 'id_internacion'],
+        'lifetime' => 600,
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector', 'service'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
+    'internacion_alta' => [
+        'required_params' => ['id_internacion'],
+        'optional_params' => ['id_persona', 'motivo', 'tipo_alta'],
+        'lifetime' => 600,
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector', 'service', 'professional'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
+    'internacion_cambio_cama' => [
+        'required_params' => ['id_internacion'],
+        'optional_params' => ['id_cama'],
+        'lifetime' => 600,
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
+    'internacion_indicar_medicacion' => [
+        'required_params' => ['id_internacion'],
+        'optional_params' => ['medicamento', 'dosis', 'frecuencia', 'via', 'observaciones'],
+        'lifetime' => 600,
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector', 'service', 'professional'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
+    'internacion_agregar_diagnostico' => [
+        'required_params' => ['id_internacion'],
+        'optional_params' => ['diagnostico', 'snomed', 'observaciones'],
+        'lifetime' => 600,
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector', 'service', 'professional'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
+    'internacion_agregar_practica' => [
+        'required_params' => ['id_internacion'],
+        'optional_params' => ['practica', 'tipo_practica', 'observaciones'],
+        'lifetime' => 600,
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector', 'service', 'professional'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
+    'estado_internacion' => [
+        'required_params' => [],
+        'optional_params' => ['id_persona', 'id_internacion'],
+        'lifetime' => 300,
+        'cleanup_on' => ['intent_change', 'completed', 'timeout'],
+        'patient_profile' => [
+            'can_use' => ['efector', 'service'],
+            'resolve_references' => true,
+            'cache_ttl' => 3600
+        ]
+    ],
 ];

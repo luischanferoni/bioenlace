@@ -22,6 +22,18 @@ $criteriaJsonValue = Yii::$app->request->post('criteriaJson', '');
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
                     <h3 class="card-title">JSON de Criterios</h3>
+
+                    <div class="form-group mb-3">
+                        <?= Html::label('Rol (opcional, para filtrar acciones por RBAC)', 'roleName', ['class' => 'form-label']) ?>
+                        <?= Html::textInput('roleName', Yii::$app->request->post('roleName', ''), [
+                            'id' => 'roleName',
+                            'class' => 'form-control',
+                            'placeholder' => 'Ej: medico, enfermeria, administrativo (vacío = usar acciones del usuario actual)',
+                        ]) ?>
+                        <small class="form-text text-muted">
+                            Si lo dejás vacío, el test usa las acciones disponibles para el usuario autenticado actual.
+                        </small>
+                    </div>
                     
                     <div class="form-group">
                         <?= Html::label('Criterios (JSON)', 'criteriaJson', ['class' => 'form-label']) ?>

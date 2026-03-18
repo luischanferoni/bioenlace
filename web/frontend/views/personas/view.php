@@ -7,7 +7,7 @@ use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 
 use common\models\User;
-use common\components\SisseGhostHtml;
+use common\components\Integrations\Sisse\SisseGhostHtml;
 
 use common\models\persona_telefono;
 use common\models\Tipo_telefono;

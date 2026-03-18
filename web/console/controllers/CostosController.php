@@ -4,9 +4,9 @@ namespace console\controllers;
 
 use Yii;
 use yii\console\Controller;
-use common\components\ConversacionLoader;
-use common\components\ConsultaIntentRouter;
-use common\components\AICostTracker;
+use common\\components\\Chatbot\\ConversacionLoader;
+use common\\components\\Chatbot\\ConsultaIntentRouter;
+use common\components\Ai\Cost\AICostTracker;
 
 /**
  * Pruebas de costos de IA: ejecutar conversaciones sin llamar a la IA real.

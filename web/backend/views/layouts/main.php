@@ -5,8 +5,8 @@ use yii\helpers\Html;
 use backend\assets\AppAsset;
 
 use webvimark\modules\UserManagement\UserManagementModule;
-use common\components\NavSisse;
-use common\components\NavSisseHigh;
+use common\components\Integrations\Sisse\NavSisse;
+use common\components\Integrations\Sisse\NavSisseHigh;
 
 AppAsset::register($this);
 

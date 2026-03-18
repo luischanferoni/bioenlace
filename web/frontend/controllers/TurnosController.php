@@ -21,7 +21,7 @@ use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
 use frontend\components\UserRequest;
-use common\components\TurnoSlotFinder;
+use common\\components\\Chatbot\\TurnoSlotFinder;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.

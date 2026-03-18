@@ -126,7 +126,7 @@ class SiteController extends Controller
         $fechaParam = Yii::$app->request->get('fecha');
         $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
 
-        return $this->redirect(['pacientes/listado', 'fecha' => $fecha]);
+        return $this->redirect(['site/pacientes', 'fecha' => $fecha]);
     }
 
     public function actionAcciones()

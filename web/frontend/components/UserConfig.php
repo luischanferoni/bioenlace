@@ -34,7 +34,7 @@ class UserConfig extends BaseUserConfig
             throw new \yii\web\ForbiddenHttpException('Usuario inactivo');
         }
 
-        \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($identity->id);
+        \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($identity->id);
 
         parent::afterLogin($identity, $cookieBased, $duration);
     }

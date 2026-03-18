@@ -154,8 +154,8 @@ class RegistroService
             try {
                 if ($tipo === 'paciente') {
                     // Usa helper existente para pacientes si está disponible
-                    if (class_exists(\common\models\SisseDbManager::class) && method_exists(\common\models\SisseDbManager::class, 'asignarRolPacienteSiNoExiste')) {
-                        \common\models\SisseDbManager::asignarRolPacienteSiNoExiste($user->id);
+                    if (class_exists(\common\models\BioenlaceDbManager::class) && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')) {
+                        \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
                     }
                 } elseif ($tipo === 'medico') {
                     $medicoRole = Role::findOne(['name' => 'Medico']) ?? Role::findOne(['name' => 'medico']);

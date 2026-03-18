@@ -133,8 +133,7 @@ class SiteController extends Controller
             $fecha = date('Y-m-d');
         }
 
-        return $this->render('inicio-turnos', [
-            'turnos' => [],
+        return $this->render('inicio-dia', [
             'fecha' => $fecha,
             'encounter_class' => Yii::$app->user->getEncounterClass(),
         ]);
@@ -165,8 +164,7 @@ class SiteController extends Controller
             $fecha = date('Y-m-d');
         }
 
-        return $this->render('inicio-turnos', [
-            'turnos' => [],
+        return $this->render('inicio-dia', [
             'fecha' => $fecha,
             'encounter_class' => Yii::$app->user->getEncounterClass(),
         ]);

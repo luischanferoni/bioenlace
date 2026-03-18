@@ -10,7 +10,7 @@ use common\models\Persona;
 use common\models\InfraestructuraPiso;
 
 /**
- * API para datos de la pantalla de inicio (inicio-turnos).
+ * API para datos de la pantalla de inicio (site/inicio-dia).
  * Según el encounter class del usuario: AMB → turnos, IMP → internados, EMER → guardias.
  * GET /api/v1/inicio/datos?fecha=YYYY-MM-DD
  */

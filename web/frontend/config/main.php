@@ -78,7 +78,7 @@ return [
             'showScriptName' => false,
             // Disable r= routes
             'enablePrettyUrl' => true,
-            'rules' => [  
+            'rules' => [
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
@@ -175,9 +175,9 @@ return [
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
                 'OPTIONS api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
 
-                // Inicio / datos según encounter (turnos, internados, guardias) - Web y App móvil
-                'GET api/<version:\w+>/inicio/datos' => '<version>/inicio/datos',
-                'OPTIONS api/<version:\w+>/inicio/datos' => '<version>/inicio/datos',
+                // Pacientes (encounter resuelto en backend)
+                'GET api/<version:\w+>/pacientes' => '<version>/pacientes/index',
+                'OPTIONS api/<version:\w+>/pacientes' => '<version>/pacientes/options',
             ],            
         ],
         'snowstorm' => [

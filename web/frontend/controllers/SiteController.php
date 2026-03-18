@@ -123,20 +123,10 @@ class SiteController extends Controller
             ]);
         }
 
-        // Si tiene la configuración completa, mostrar la vista de inicio (datos se cargan por AJAX según encounter)
-        $this->layout = 'main';
-
         $fechaParam = Yii::$app->request->get('fecha');
-        if ($fechaParam) {
-            $fecha = date('Y-m-d', strtotime($fechaParam));
-        } else {
-            $fecha = date('Y-m-d');
-        }
+        $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
 
-        return $this->render('inicio-dia', [
-            'fecha' => $fecha,
-            'encounter_class' => Yii::$app->user->getEncounterClass(),
-        ]);
+        return $this->redirect(['pacientes/listado', 'fecha' => $fecha]);
     }
 
     public function actionAcciones()
@@ -154,19 +144,45 @@ class SiteController extends Controller
             return;
         }
         
-        $this->layout = 'main';
-
-        // Obtener fecha desde parámetro o usar hoy (datos se cargan por AJAX según encounter)
         $fechaParam = Yii::$app->request->get('fecha');
-        if ($fechaParam) {
-            $fecha = date('Y-m-d', strtotime($fechaParam));
-        } else {
-            $fecha = date('Y-m-d');
+        $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
+
+        return $this->redirect(['pacientes/listado', 'fecha' => $fecha]);
+    }
+
+    /**
+     * Vista HTML del listado de pacientes (datos vía API /api/v1/pacientes/*).
+     */
+    public function actionPacientesListado()
+    {
+        if (Yii::$app->user->isGuest) {
+            Yii::$app->user->loginRequired();
+            return null;
         }
 
-        return $this->render('inicio-dia', [
+        $idEfector = Yii::$app->user->getIdEfector();
+        $servicioActual = Yii::$app->user->getServicioActual();
+        $encounterClass = Yii::$app->user->getEncounterClass();
+
+        if (!$idEfector || !$servicioActual || !$encounterClass) {
+            $this->layout = 'main_sinmenuizquierda';
+            $searchEfectores = new EfectorBusqueda();
+            $array_efectores = Yii::$app->user->getEfectores() ?? [];
+            $dataProviderEfectores = $searchEfectores->search(['EfectorBusqueda' => ['efectores' => array_keys($array_efectores)]]);
+
+            return $this->render('despuesdelogin/inicio', [
+                'searchEfectores' => $searchEfectores,
+                'dataProviderEfectores' => $dataProviderEfectores,
+            ]);
+        }
+
+        $this->layout = 'main';
+        $fechaParam = Yii::$app->request->get('fecha');
+        $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
+
+        return $this->render('//pacientes/listado', [
             'fecha' => $fecha,
-            'encounter_class' => Yii::$app->user->getEncounterClass(),
+            'encounter_class' => $encounterClass,
         ]);
     }
 
@@ -217,7 +233,7 @@ class SiteController extends Controller
     public static function despuesDeLogin()
     {
         if (Yii::$app->user->isSuperadmin) {
-            Yii::$app->response->redirect(['site/index'])->send();
+            Yii::$app->response->redirect(['pacientes/listado'])->send();
             return;
         }
 
@@ -414,11 +430,11 @@ class SiteController extends Controller
 
         if (User::hasRole(['Administrativo'])) {
             // Usuarios administrativos van a la nueva página de inicio con IA
-            $url = ['/site/index'];
+            $url = ['/pacientes/listado'];
         } elseif (User::hasRole(['Enfermeria'])) {
             $url = ['/personas/buscar-persona'];
         } else {
-            $url = ['/site/index'];
+            $url = ['/pacientes/listado'];
         }
 
         return $url;

@@ -167,8 +167,8 @@ if (Yii::$app->user->username) {
                         <div class="container-fluid">
                             <ul class="navbar-nav">
                                 <li class="nav-item">
-                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= (Yii::$app->controller->action->id == 'index' || Yii::$app->controller->action->id == 'inicio') ? 'active' : '' ?>" href="<?= Url::to(['/site/index']) ?>">
-                                        <i class="bi bi-house-door fs-2"></i> Inicio
+                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= (Yii::$app->controller->id === 'site' && Yii::$app->controller->action->id === 'pacientes-listado') ? 'active' : '' ?>" href="<?= Url::to(['/pacientes/listado']) ?>">
+                                        <i class="bi bi-people fs-2"></i> Pacientes
                                     </a>
                                 </li>
                                 <li class="nav-item">

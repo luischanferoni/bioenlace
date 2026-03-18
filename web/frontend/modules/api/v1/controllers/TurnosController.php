@@ -15,7 +15,6 @@ use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
 use common\components\Services\Turnos\TurnoSlotFinder;
-
 /**
  * API Turnos: lógica de turnos expuesta como endpoints REST-ish.
  *
@@ -102,88 +101,11 @@ class TurnosController extends BaseController
             throw new NotFoundHttpException('Recurso humano no encontrado.');
         }
         try {
-            $turnos = Turno::findActive()
-                ->andWhere(['id_rr_hh' => (int) $rrhhId, 'fecha' => $fecha])
-                ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
-                ->andWhere(['is', 'atendido', null])
-                ->orderBy('hora')
-                ->all();
+            return PacientesController::agendaAmbulatorioJson($fecha, (int) $rrhhId, true);
         } catch (\Throwable $e) {
             Yii::error('TurnosController::actionIndexApi: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
             throw new \yii\web\ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
         }
-        $formattedTurnos = [];
-        foreach ($turnos as $turno) {
-            $paciente = $turno->persona;
-            $servicio = $turno->servicio ? $turno->servicio->nombre :
-                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
-            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
-            $formattedTurnos[] = [
-                'id' => $turno->id_turnos,
-                'id_persona' => $turno->id_persona,
-                'paciente' => [
-                    'id' => $paciente ? $paciente->id_persona : null,
-                    'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
-                    'documento' => $paciente ? $paciente->documento : null,
-                ],
-                'fecha' => $turno->fecha,
-                'hora' => $turno->hora,
-                'servicio' => $servicio,
-                'id_servicio_asignado' => $turno->id_servicio_asignado,
-                'estado' => $turno->estado,
-                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
-                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
-                'id_consulta' => $consulta ? $consulta->id_consulta : null,
-                'atendido' => $turno->atendido,
-                'created_at' => $turno->created_at,
-            ];
-        }
-        $esHoy = ($fecha == date('Y-m-d'));
-        if ($esHoy) {
-            $pacientePrueba = Persona::findOne(920779);
-            if ($pacientePrueba) {
-                $servicioPrueba = null;
-                $idServicioAsignado = null;
-                if ($rrhhId) {
-                    $rrhhEfector = RrhhEfector::findOne($rrhhId);
-                    if ($rrhhEfector && $rrhhEfector->id_efector) {
-                        $servicioEfector = ServiciosEfector::find()
-                            ->where(['id_efector' => $rrhhEfector->id_efector])
-                            ->one();
-                        if ($servicioEfector) {
-                            $servicioPrueba = $servicioEfector->servicio ? $servicioEfector->servicio->nombre : 'Consulta General';
-                            $idServicioAsignado = $servicioEfector->id_servicio;
-                        }
-                    }
-                }
-                if (!$servicioPrueba) {
-                    $servicioPrueba = 'Consulta General';
-                }
-                $turnoPrueba = [
-                    'id' => 999999,
-                    'id_persona' => 920779,
-                    'paciente' => [
-                        'id' => $pacientePrueba->id_persona,
-                        'nombre_completo' => $pacientePrueba->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
-                        'documento' => $pacientePrueba->documento,
-                    ],
-                    'fecha' => $fecha,
-                    'hora' => '10:00',
-                    'servicio' => $servicioPrueba,
-                    'id_servicio_asignado' => $idServicioAsignado,
-                    'estado' => Turno::ESTADO_PENDIENTE,
-                    'estado_label' => Turno::ESTADOS[Turno::ESTADO_PENDIENTE] ?? 'Pendiente',
-                    'atendido' => null,
-                    'created_at' => date('Y-m-d H:i:s'),
-                ];
-                array_unshift($formattedTurnos, $turnoPrueba);
-            }
-        }
-        return [
-            'turnos' => $formattedTurnos,
-            'fecha' => $fecha,
-            'total' => count($formattedTurnos),
-        ];
     }
 
     /**

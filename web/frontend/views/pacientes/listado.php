@@ -85,6 +85,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
 $urlInternacionView = Url::to(['internacion/view'], true);
 $urlGuardiaIndex = Url::to(['guardia/index'], true);
 $urlInternacionRonda = Url::to(['internacion/ronda'], true);
+$urlPacienteHistoria = Url::to(['/paciente/historia'], true);
 $this->registerJs(<<<JS
 (function() {
     var \$ = window.jQuery;
@@ -113,13 +114,16 @@ $this->registerJs(<<<JS
             var estadoClass = (t.estado === 'PENDIENTE') ? 'warning' : 'secondary';
             var estadoLabel = t.estado_label || t.estado || '';
             var obs = (t.observaciones) ? '<div class="mb-2"><strong><i class="bi bi-chat-left-text me-2"></i>Observaciones:</strong> <small class="text-muted">' + escapeHtml(t.observaciones) + '</small></div>' : '';
+            var idPersona = t.id_persona || (t.paciente ? t.paciente.id : null);
+            var urlHistoria = idPersona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(idPersona)) : null;
             html += '<div class="col-md-6 col-lg-4 mb-3">' +
-                '<div class="card h-100 shadow-sm">' +
+                '<div class="card h-100 shadow-sm position-relative" style="cursor:pointer;"' + (urlHistoria ? (' onclick="window.location.href=\\'' + urlHistoria + '\\'"') : '') + '>' +
                 '<div class="card-body">' +
                 '<h5 class="card-title"><i class="bi bi-person-circle text-primary me-2"></i>' + escapeHtml(nombre) + '</h5>' +
                 '<div class="mb-2"><strong><i class="bi bi-clock me-2"></i>Turno:</strong> ' + escapeHtml(t.hora) + '</div>' +
                 '<div class="mb-2"><strong><i class="bi bi-hospital me-2"></i>Servicio:</strong> ' + escapeHtml(servicio) + '</div>' + obs +
                 '<div class="mt-3"><span class="badge bg-' + estadoClass + '">' + escapeHtml(estadoLabel) + '</span></div>' +
+                (urlHistoria ? '<span class="stretched-link" aria-label="Abrir historia clínica"></span>' : '') +
                 '</div></div></div>';
         });
         html += '</div>';
@@ -134,11 +138,15 @@ $this->registerJs(<<<JS
         var html = '<div class="card"><div class="card-header"><h4 class="mb-0">Pacientes internados</h4></div><div class="card-body">';
         data.forEach(function(i) {
             var urlView = '{$urlInternacionView}' + '?id=' + i.id;
+            var urlHistoria = i.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(i.id_persona)) : null;
             html += '<div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded">' +
                 '<div class="ms-3" style="flex:1;">' +
                 '<h5 class="mb-0">' + escapeHtml(i.nombre) + '</h5>' +
                 '<p class="mb-1"><strong>Piso:</strong> ' + escapeHtml(i.piso) + ' <strong>Sala:</strong> ' + escapeHtml(i.sala) + ' <strong>Cama:</strong> ' + escapeHtml(i.cama) + '</p>' +
-                '<a href="' + urlView + '" class="p-2 btn btn-success btn-sm mt-2">Atender paciente</a>' +
+                '<div class="d-flex flex-wrap gap-2 mt-2">' +
+                    '<a href="' + urlView + '" class="p-2 btn btn-success btn-sm">Atender paciente</a>' +
+                    (urlHistoria ? '<a href="' + urlHistoria + '" class="p-2 btn btn-outline-primary btn-sm">Historia clínica</a>' : '') +
+                '</div>' +
                 '</div></div>';
         });
         html += '</div><div class="card-footer"><a href="{$urlInternacionRonda}" class="btn btn-primary">Ronda de internación</a></div></div>';
@@ -153,12 +161,13 @@ $this->registerJs(<<<JS
         var html = '<div class="card"><div class="card-header bg-light"><h4 class="mb-0">Pacientes en guardia</h4></div><div class="card-body">';
         data.forEach(function(g) {
             var docLabel = (g.tipo_documento) ? escapeHtml(g.tipo_documento) + ': ' : '';
+            var urlHistoria = g.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(g.id_persona)) : null;
             html += '<div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded">' +
                 '<div class="ms-3" style="flex:1;">' +
                 '<h5 class="mb-0">' + escapeHtml(g.nombre_completo) + '</h5>' +
                 '<p class="mb-1">' + docLabel + escapeHtml(g.documento || '') + '</p>' +
                 '</div>' +
-                '<span class="btn btn-dark btn-sm">Atender</span>' +
+                (urlHistoria ? '<a href="' + urlHistoria + '" class="btn btn-dark btn-sm">Atender</a>' : '<span class="btn btn-dark btn-sm disabled">Atender</span>') +
                 '</div>';
         });
         html += '</div><div class="card-footer"><a href="{$urlGuardiaIndex}" class="btn btn-success float-end">Ver todos los ingresos activos</a></div></div>';

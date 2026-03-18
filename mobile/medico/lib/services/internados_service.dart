@@ -30,7 +30,9 @@ class InternadoItem {
     return InternadoItem(
       id: (json['id'] as int?) ?? 0,
       idPersona: (json['id_persona'] as int?) ?? 0,
-      nombreCompleto: (json['nombre_completo'] as String?) ?? 'Sin nombre',
+      nombreCompleto: (json['nombre_completo'] as String?) ??
+          (json['nombre'] as String?) ??
+          'Sin nombre',
       documento: json['documento'] as String?,
       fechaInicio: json['fecha_inicio'] as String?,
       horaInicio: json['hora_inicio'] as String?,

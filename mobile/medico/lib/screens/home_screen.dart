@@ -5,9 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../models/turno.dart';
-import '../services/turnos_service.dart';
 import '../services/internados_service.dart';
 import '../services/guardia_service.dart';
+import '../services/pacientes_service.dart';
 import 'patient_timeline_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
@@ -31,9 +31,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final TurnosService _turnosService = TurnosService();
-  final InternadosService _internadosService = InternadosService();
-  final GuardiaService _guardiaService = GuardiaService();
+  final PacientesService _pacientesService = PacientesService();
 
   List<Turno> _turnos = [];
   List<InternadoItem> _internados = [];
@@ -43,18 +41,14 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _fechaSeleccionada = DateTime.now();
 
   String _encounterClass = 'AMB';
-  int? _efectorId;
+  // efector_id se conserva en prefs por otras pantallas (no se usa aquí).
 
   @override
   void initState() {
     super.initState();
-    _turnosService.userId = widget.userId;
-    _internadosService.userId = widget.userId;
-    _guardiaService.userId = widget.userId;
+    _pacientesService.userId = widget.userId;
     if (widget.authToken != null && widget.authToken!.isNotEmpty) {
-      _turnosService.authToken = widget.authToken;
-      _internadosService.authToken = widget.authToken;
-      _guardiaService.authToken = widget.authToken;
+      _pacientesService.authToken = widget.authToken;
     } else {
       _loadAuthToken();
     }
@@ -67,15 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
       final token = prefs.getString('auth_token');
       if (token != null && token.isNotEmpty) {
         setState(() {
-          _turnosService.authToken = token;
-          _internadosService.authToken = token;
-          _guardiaService.authToken = token;
+          _pacientesService.authToken = token;
         });
       } else {
         setState(() {
-          _turnosService.userId = widget.userId;
-          _internadosService.userId = widget.userId;
-          _guardiaService.userId = widget.userId;
+          _pacientesService.userId = widget.userId;
         });
       }
     } catch (e) {
@@ -89,77 +79,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadEncounterAndData() async {
     final prefs = await SharedPreferences.getInstance();
     final encounter = prefs.getString('encounter_class') ?? 'AMB';
-    final efectorId = prefs.getInt('efector_id');
     setState(() {
       _encounterClass = encounter;
-      _efectorId = efectorId;
     });
-    if (encounter == 'IMP') {
-      _cargarInternados();
-    } else if (encounter == 'EMER') {
-      _cargarGuardia();
-    } else {
-      _cargarTurnos();
-    }
+    await _cargarListadoPacientes();
   }
 
-  Future<void> _cargarInternados() async {
+  Future<void> _cargarListadoPacientes() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
-    try {
-      final list = await _internadosService.getInternados(efectorId: _efectorId);
-      setState(() {
-        _internados = list;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error al cargar internados: ${e.toString()}';
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _cargarGuardia() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-    try {
-      final list = await _guardiaService.getGuardia(efectorId: _efectorId);
-      setState(() {
-        _guardia = list;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Error al cargar guardia: ${e.toString()}';
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _cargarTurnos() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
     try {
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
-      final turnos = await _turnosService.getTurnosPorFecha(
-        fechaStr,
-        rrhhId: widget.rrhhId,
-      );
+      final res = await _pacientesService.getListado(fecha: fechaStr);
       setState(() {
-        _turnos = turnos;
+        _turnos = [];
+        _internados = [];
+        _guardia = [];
+        if (res.kind == 'turnos') {
+          _turnos = res.data
+              .map((e) => Turno.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else if (res.kind == 'internados') {
+          _internados = res.data
+              .map((e) => InternadoItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else if (res.kind == 'guardias') {
+          _guardia = res.data
+              .map((e) => GuardiaItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else {
+          _errorMessage = 'Respuesta inválida del servidor (kind=${res.kind})';
+        }
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al cargar turnos: ${e.toString()}';
+        _errorMessage = 'Error al cargar pacientes: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -169,14 +126,14 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _fechaSeleccionada = _fechaSeleccionada.add(Duration(days: dias));
     });
-    _cargarTurnos();
+    _cargarListadoPacientes();
   }
 
   void _irAHoy() {
     setState(() {
       _fechaSeleccionada = DateTime.now();
     });
-    _cargarTurnos();
+    _cargarListadoPacientes();
   }
 
   String _formatearFechaAmigable(DateTime fecha) {
@@ -229,9 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   VoidCallback get _onRetry {
-    if (_encounterClass == 'IMP') return _cargarInternados;
-    if (_encounterClass == 'EMER') return _cargarGuardia;
-    return _cargarTurnos;
+    return _cargarListadoPacientes;
   }
 
   @override
@@ -306,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   else
                     IconButton(
                       icon: const Icon(Icons.refresh),
-                      onPressed: _isLoading ? null : (_encounterClass == 'IMP' ? _cargarInternados : _cargarGuardia),
+                      onPressed: _isLoading ? null : _cargarListadoPacientes,
                     ),
                 ],
               ),

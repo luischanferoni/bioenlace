@@ -137,23 +137,10 @@ class SiteController extends Controller
     }
 
 
-    public function actionIndex()
-    {
-        if (Yii::$app->user->isGuest) {
-            Yii::$app->user->loginRequired();
-            return;
-        }
-        
-        $fechaParam = Yii::$app->request->get('fecha');
-        $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
-
-        return $this->redirect(['pacientes/listado', 'fecha' => $fecha]);
-    }
-
     /**
      * Vista HTML del listado de pacientes (datos vía API /api/v1/pacientes/*).
      */
-    public function actionPacientesListado()
+    public function actionPacientes()
     {
         if (Yii::$app->user->isGuest) {
             Yii::$app->user->loginRequired();
@@ -233,7 +220,7 @@ class SiteController extends Controller
     public static function despuesDeLogin()
     {
         if (Yii::$app->user->isSuperadmin) {
-            Yii::$app->response->redirect(['pacientes/listado'])->send();
+            Yii::$app->response->redirect(['site/pacientes'])->send();
             return;
         }
 
@@ -429,12 +416,11 @@ class SiteController extends Controller
         }
 
         if (User::hasRole(['Administrativo'])) {
-            // Usuarios administrativos van a la nueva página de inicio con IA
-            $url = ['/pacientes/listado'];
+            $url = ['/site/pacientes'];
         } elseif (User::hasRole(['Enfermeria'])) {
             $url = ['/personas/buscar-persona'];
         } else {
-            $url = ['/pacientes/listado'];
+            $url = ['/site/pacientes'];
         }
 
         return $url;

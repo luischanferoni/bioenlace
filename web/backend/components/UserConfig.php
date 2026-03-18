@@ -81,6 +81,19 @@ class UserConfig extends User
 		return null;
 	}
 
+    /**
+     * Compatibilidad con helpers de frontend: efector en sesión.
+     */
+    public function setIdEfector($idEfector)
+    {
+        Yii::$app->session->set('idEfector', $idEfector);
+    }
+
+    public function getIdEfector()
+    {
+        return Yii::$app->session->get('idEfector');
+    }
+
 	/**
 	 * @inheritdoc
 	 */

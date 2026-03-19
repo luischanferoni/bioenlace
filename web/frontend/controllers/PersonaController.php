@@ -91,20 +91,6 @@ class PersonaController extends Controller
     }
 
     /**
-     * Obtener timeline completo de persona (historia clínica)
-     * Incluye: Turnos, Consultas, Internaciones, Guardias, Documentos Externos, Encuestas, Estudios
-     */
-    public function actionTimeline($id)
-    {
-        $efector_sesion = method_exists(Yii::$app->user, 'getIdEfector') ? Yii::$app->user->getIdEfector() : null;
-        $data = \common\components\PersonaTimelineService::buildTimelineData($id, $efector_sesion);
-        if ($data === null) {
-            return $this->error('Persona no encontrada', null, 404);
-        }
-        return $this->success($data);
-    }
-
-    /**
      * Crear nueva persona
      */
     public function actionCreate()

@@ -14,7 +14,7 @@ use Firebase\JWT\JWT;
  * Servicio de orquestación para el registro de pacientes y médicos.
  *
  * Se encarga de:
- *  - Verificar identidad con Verifik.
+ *  - Verificar identidad con Didit.
  *  - Crear o actualizar registros en la tabla personas.
  *  - Sincronizar información mínima con MPI (id_mpi).
  *  - Validar profesionales contra REFEPS/SISA cuando el tipo es "medico".

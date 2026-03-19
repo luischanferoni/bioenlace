@@ -4,7 +4,6 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\Persona;
-use common\components\Services\PersonaTimelineService;
 
 /**
  * API Persona: CRUD y timeline (historia clínica).
@@ -92,15 +91,8 @@ class PersonaController extends BaseController
      */
     public function actionTimeline($id)
     {
-        $idEfector = null;
-        if (method_exists(Yii::$app->user, 'getIdEfector')) {
-            $idEfector = Yii::$app->user->getIdEfector();
-        }
-        $data = PersonaTimelineService::buildTimelineData($id, $idEfector);
-        if ($data === null) {
-            return $this->error('Persona no encontrada', null, 404);
-        }
-        return $this->success($data);
+        // Endpoint deshabilitado: no necesitamos construir el timeline en este flujo.
+        return $this->error('Endpoint de timeline deshabilitado', null, 404);
     }
 
     /**

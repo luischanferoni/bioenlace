@@ -61,7 +61,7 @@ class PacienteController extends Controller
     public function actionHistoria($id)
     {
         // Timeline deshabilitado temporalmente: redirigir a ficha del paciente
-        return $this->redirect(['personas/view', 'id' => $id]);
+        //return $this->redirect(['personas/view', 'id' => $id]);
 
         $this->layout = 'blanco';
 
@@ -79,7 +79,7 @@ class PacienteController extends Controller
 
         //Son dos querys de turnos, la primera trae los turnos asociados especificamente al rrhh en sesion, la segunda query se encarga
         //de traer todos los turnos dados al servicio o que tienen pase previo con el servicio del rrhh en sesion. Revisar o mejorar esta query!!
-
+/*
         $queryTurnosDefinitiva = (new \yii\db\Query())
             ->select([
                 'id' => 'turnos.id_turnos',
@@ -445,6 +445,8 @@ class PacienteController extends Controller
             ##################################################
         }
 
+        */
+
         usort($historial, function ($a, $b) {
             return strtotime($b['fecha']) - strtotime($a['fecha']);
         });
@@ -575,7 +577,7 @@ class PacienteController extends Controller
 
         return $this->render('timeline/timeline', [
             'persona' => $paciente,
-            'historial' => $historial,
+            //'historial' => $historial,
             'condicionesActivas' => $condicionesActivas,
             'condicionesCronicas' => $condicionesCronicas,
             'hallazgos' => $hallazgos,

@@ -463,7 +463,6 @@ class ConsultasController extends Controller
         }
     }
 
-
     private function preClonacion($modelConsulta, $val, $nuevaConsulta)
     {
 
@@ -493,7 +492,6 @@ class ConsultasController extends Controller
 
         return true;
     }
-
 
     private function clonarChilds($nuevaConsulta, $children, $relacion)
     {

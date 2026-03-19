@@ -478,6 +478,49 @@ class Consulta extends \yii\db\ActiveRecord
         }
     }
 
+    /**
+     * Obtiene el último `motivo_consulta` no vacío de la última consulta asociada
+     * a los turnos de la persona. Mantiene el mismo universo de joins que el timeline.
+     *
+     * @param int $personaId
+     * @param int|null $idEfector
+     * @return string|null
+     */
+    public static function getUltimoMotivoConsultaTurno(int $personaId, ?int $idEfector = null): ?string
+    {
+        if ($personaId <= 0) {
+            return null;
+        }
+
+        $query = static::find()
+            ->alias('c')
+            ->select([
+                'motivo' => new \yii\db\Expression('NULLIF(TRIM(c.motivo_consulta), "")'),
+            ])
+            ->innerJoin('turnos t', 'c.id_turnos = t.id_turnos')
+            // Uniones para mantener el mismo universo que el armado previo del timeline.
+            ->innerJoin('rrhh_servicio rs', 'rs.id = t.id_rrhh_servicio_asignado')
+            ->innerJoin('rrhh_efector re', 're.id_rr_hh = rs.id_rr_hh')
+            ->innerJoin('servicios s', 's.id_servicio = t.id_servicio_asignado')
+            ->innerJoin('efectores e', 'e.id_efector = t.id_efector')
+            ->innerJoin('servicios_efector as se', 'se.id_servicio = t.id_servicio_asignado and se.id_efector = t.id_efector')
+            ->leftJoin('servicios as pase_prev', 'pase_prev.id_servicio = se.pase_previo')
+            ->where(['t.id_persona' => $personaId])
+            ->andWhere('t.deleted_at IS NULL')
+            ->andWhere('c.deleted_at IS NULL')
+            ->andWhere(new \yii\db\Expression('NULLIF(TRIM(c.motivo_consulta), "") IS NOT NULL'))
+            ->orderBy(['t.fecha' => SORT_DESC, 't.hora' => SORT_DESC, 'c.id_consulta' => SORT_DESC])
+            ->limit(1);
+
+        if (!empty($idEfector)) {
+            $query->andWhere(['t.id_efector' => $idEfector]);
+        }
+
+        $motivo = $query->scalar();
+
+        return is_string($motivo) ? trim($motivo) : null;
+    }
+
     public function getMostUseRrhh($medico)
     {
         $connection = Yii::$app->getDb();

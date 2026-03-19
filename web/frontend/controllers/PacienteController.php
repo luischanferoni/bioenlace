@@ -60,20 +60,10 @@ class PacienteController extends Controller
      */
     public function actionHistoria($id)
     {
-        // Timeline deshabilitado temporalmente: redirigir a ficha del paciente
-        //return $this->redirect(['personas/view', 'id' => $id]);
-
         $this->layout = 'blanco';
 
         $paciente = Persona::findOne($id);        
         $id_turnos = Yii::$app->request->get('parent_id');
-
-        $session = Yii::$app->getSession();
-        $session->set('persona', serialize($paciente));
-
-        $efector_sesion = Yii::$app->user->getIdEfector();
-      //  var_dump(Yii::$app->user->getIdRecursoHumano());die;
-        $servicios = Yii::$app->user->getServicios();
 
         ##consulta para turnos de un paciente#############
 
@@ -575,39 +565,8 @@ class PacienteController extends Controller
         $idServicioPP = is_object($servPasePrevio) ? $servPasePrevio->pase_previo : 0;
 
         $motivosConsultaTurno = null;
-        $personaId = (int)($paciente->id_persona ?? 0);
 
-        if ($personaId > 0) {
-            // Último `motivo_consulta` no vacío asociado al turno más reciente.
-            $motivoQuery = Consulta::find()
-                ->alias('c')
-                ->select([
-                    'motivo' => new \yii\db\Expression('NULLIF(TRIM(c.motivo_consulta), "")'),
-                ])
-                ->innerJoin('turnos t', 'c.id_turnos = t.id_turnos')
-                // Uniones para mantener el mismo universo que el armado previo del timeline.
-                ->innerJoin('rrhh_servicio rs', 'rs.id = t.id_rrhh_servicio_asignado')
-                ->innerJoin('rrhh_efector re', 're.id_rr_hh = rs.id_rr_hh')
-                ->innerJoin('servicios s', 's.id_servicio = t.id_servicio_asignado')
-                ->innerJoin('efectores e', 'e.id_efector = t.id_efector')
-                ->innerJoin('servicios_efector as se', 'se.id_servicio = t.id_servicio_asignado and se.id_efector = t.id_efector')
-                ->leftJoin('servicios as pase_prev', 'pase_prev.id_servicio = se.pase_previo')
-                ->where(['t.id_persona' => $personaId])
-                ->andWhere('t.deleted_at IS NULL')
-                ->andWhere('c.deleted_at IS NULL')
-                ->andWhere(new \yii\db\Expression('NULLIF(TRIM(c.motivo_consulta), "") IS NOT NULL'));
-
-            if (!empty($idEfector)) {
-                $motivoQuery->andWhere(['t.id_efector' => $idEfector]);
-            }
-
-            $motivo = $motivoQuery
-                ->orderBy(['t.fecha' => SORT_DESC, 't.hora' => SORT_DESC, 'c.id_consulta' => SORT_DESC])
-                ->limit(1)
-                ->scalar();
-
-            $motivosConsultaTurno = is_string($motivo) ? trim($motivo) : null;
-        }
+        $motivosConsultaTurno = Consulta::getUltimoMotivoConsultaTurno($paciente->id_persona, $idEfector);
 
         //TODO: hacer un ordenamiento del historial completo, tal vez ahaya que transformar las fechas para ordenar y volverlas a poner con formato al mostrarlas
         // echo "<pre>";

@@ -47,7 +47,7 @@ $this->registerJsFile(
                     
                     <!-- Columna derecha: Información médica -->
                     <div class="col-12 ms-3">
-                        <h6 class="mb-2 text-primary"><b>INFORMACIÓN MÉDICA</b></h6>
+                        <h6 class="mb-2 text-primary"><b>ESTADO ACTUAL DEL PACIENTE</b></h6>
                         
                         <!-- Última Vacuna -->
                         <!--<div class="mb-2">

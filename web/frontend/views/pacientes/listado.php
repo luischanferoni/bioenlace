@@ -46,13 +46,13 @@ $this->title = 'Pacientes';
         <strong>Filtrar por fecha del turno:</strong> solo se listan turnos <strong>pendientes y sin atender</strong> en la fecha elegida.
     </div>
     <div class="btn-group" role="group">
-        <a href="<?= Url::to(['pacientes/listado', 'fecha' => $fechaAnterior]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Url::to(['site/pacientes', 'fecha' => $fechaAnterior]) ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-chevron-left"></i> Fecha anterior
         </a>
-        <a href="<?= Url::to(['pacientes/listado', 'fecha' => $hoy]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Url::to(['site/pacientes', 'fecha' => $hoy]) ?>" class="btn btn-outline-secondary btn-sm">
             Fecha de hoy
         </a>
-        <a href="<?= Url::to(['pacientes/listado', 'fecha' => $fechaSiguiente]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Url::to(['site/pacientes', 'fecha' => $fechaSiguiente]) ?>" class="btn btn-outline-secondary btn-sm">
             Fecha siguiente <i class="bi bi-chevron-right"></i>
         </a>
     </div>

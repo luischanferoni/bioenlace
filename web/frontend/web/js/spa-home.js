@@ -821,14 +821,38 @@
     }
 
     /**
-     * Adjuntar listeners a los cards
+     * Navegar a una URL dentro del stack SPA (p. ej. desde listados con links secundarios)
+     * @param {string} url - URL absoluta o relativa al sitio
+     * @param {string} [title] - Título de la página en el stack
      */
-    function attachCardListeners() {
-        const cards = document.querySelectorAll('.spa-card');
+    function spaNavigateToUrl(url, title) {
+        if (!url) {
+            return;
+        }
+        const pageId = generatePageId(url);
+        const cardTitle = title || 'Cargando...';
+        navigateTo(pageId, cardTitle, '<p>Cargando...</p>', { url: url });
+        loadPageContent(url, pageId);
+    }
+
+    window.spaNavigateToUrl = spaNavigateToUrl;
+
+    /**
+     * Adjuntar listeners a los cards .spa-card que aún no tienen listener
+     * @param {ParentNode} [root] - Raíz para querySelectorAll (por defecto document)
+     */
+    function attachCardListeners(root) {
+        const base = root && typeof root.querySelectorAll === 'function' ? root : document;
+        const cards = base.querySelectorAll('.spa-card:not([data-spa-bound])');
         cards.forEach(card => {
+            card.setAttribute('data-spa-bound', '1');
             card.addEventListener('click', function(e) {
                 // No hacer nada si se hace click en el contenido expandido
                 if (e.target.closest('.spa-card-expand-content')) {
+                    return;
+                }
+                // Links/botones secundarios dentro del card (historia, etc.)
+                if (e.target.closest('[data-spa-no-card]')) {
                     return;
                 }
 
@@ -840,7 +864,8 @@
 
                 if (fullPage) {
                     // Abrir nueva página
-                    openFullPage(actionUrl, this.querySelector('.card-title').textContent, actionType);
+                    const titleEl = this.querySelector('.card-title');
+                    openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', actionType);
                 } else if (expandable) {
                     // Expandir in-place
                     toggleCardExpansion(cardId, actionUrl, actionType);
@@ -864,6 +889,8 @@
             });
         });
     }
+
+    window.attachSpaCardListeners = attachCardListeners;
 
     /**
      * Alternar expansión de card

@@ -12,7 +12,19 @@ use yii\web\View;
 
 
 $tieneRolEnfermeria = User::hasRole(['enfermeria']) ? true : false;
-$this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $persona->edad . ' años - Barrio: ';
+// Barrio del paciente (domicilio activo)
+$barrioNombre = null;
+if (is_object($persona) && is_object($persona->domicilioActivo)) {
+    if (is_object($persona->domicilioActivo->modelBarrio)) {
+        $barrioNombre = $persona->domicilioActivo->modelBarrio->nombre;
+    } elseif (!empty($persona->domicilioActivo->barrio)) {
+        // Fallback: el campo guarda el id del barrio; si no hay relación, mostramos el valor crudo.
+        $barrioNombre = $persona->domicilioActivo->barrio;
+    }
+}
+
+$barrioTexto = !empty($barrioNombre) ? $barrioNombre : 'Sin datos';
+$this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $persona->edad . ' años - Barrio: ' . $barrioTexto;
 
 // Los archivos JS (turnos.js, chat-inteligente.js, timeline.js) se cargan automáticamente desde AppAsset
 // Solo registrar Plotly si es necesario para gráficos

@@ -15,6 +15,14 @@ use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
 use common\components\Services\Turnos\TurnoSlotFinder;
+use common\components\Services\Turnos\TurnoSlotOfferService;
+use common\components\Services\Turnos\TurnoLifecycleService;
+use common\components\Services\Turnos\TurnoConfirmationService;
+use common\components\Services\Turnos\PolicyModeradaException;
+use common\components\Services\Turnos\BulkCancelDayService;
+use common\models\EfectorTurnosConfig;
+use yii\web\ForbiddenHttpException;
+use yii\web\ConflictHttpException;
 /**
  * API Turnos: lógica de turnos expuesta como endpoints REST-ish.
  *
@@ -187,6 +195,13 @@ class TurnosController extends BaseController
         if (!$model->id_efector) {
             throw new BadRequestHttpException('No se pudo determinar el efector');
         }
+        $authPersona = Yii::$app->user->getIdPersona();
+        if ($authPersona && (int) $model->id_persona === (int) $authPersona) {
+            $pol = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
+            if ($pol->autogestionBloqueada((int) $model->id_persona, (int) $model->id_efector)) {
+                throw new ConflictHttpException('Reserva por app no disponible por política de cancelaciones: acercate al efector o llamá.');
+            }
+        }
         if (!$model->id_rr_hh) {
             $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
         }
@@ -240,6 +255,11 @@ class TurnosController extends BaseController
         if ($consulta) {
             $idConsulta = (int)$consulta->id_consulta;
         }
+        try {
+            (new TurnoLifecycleService())->afterTurnoCreado($model);
+        } catch (\Throwable $e) {
+            Yii::warning('afterTurnoCreado: ' . $e->getMessage(), 'api-turnos');
+        }
         return [
             'id' => $model->id_turnos,
             'fecha' => $model->fecha,
@@ -257,14 +277,202 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
+        $oldTipo = $turno->tipo_atencion;
         $turno->load(Yii::$app->request->post(), '');
+        if ($turno->tipo_atencion !== $oldTipo && $turno->tipo_atencion === Turno::TIPO_ATENCION_TELECONSULTA) {
+            $cfg = EfectorTurnosConfig::getOrCreateForEfector((int) $turno->id_efector);
+            if (!$cfg->permitir_cambio_modalidad) {
+                throw new BadRequestHttpException('Cambio de modalidad no permitido en este efector');
+            }
+            $idRrhhServicio = $turno->id_rrhh_servicio_asignado;
+            if ($idRrhhServicio) {
+                $aceptaOnline = Agenda_rrhh::find()
+                    ->andWhere(['id_rrhh_servicio_asignado' => $idRrhhServicio])
+                    ->andWhere(['acepta_consultas_online' => true])
+                    ->exists();
+                if (!$aceptaOnline) {
+                    throw new BadRequestHttpException('El profesional no acepta teleconsulta para esta agenda');
+                }
+            }
+        }
         if (!$turno->save()) {
             throw new BadRequestHttpException(implode(', ', $turno->getFirstErrors()));
         }
         return [
             'id' => $turno->id_turnos,
             'estado' => $turno->estado,
+            'tipo_atencion' => $turno->tipo_atencion,
         ];
+    }
+
+    /**
+     * Política de autogestión (cancelaciones) para el paciente autenticado y efector actual.
+     */
+    public function actionPoliticaAutogestion()
+    {
+        $idPersona = Yii::$app->user->getIdPersona();
+        $idEfector = Yii::$app->user->getIdEfector();
+        if (!$idPersona || !$idEfector) {
+            throw new BadRequestHttpException('No se pudo determinar persona o efector');
+        }
+        $svc = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
+        return array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, $idEfector));
+    }
+
+    /**
+     * POST cancelar turno. Body: estado_motivo, canal (app|admin|telefono)
+     */
+    public function actionCancelar($id)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idPersona = Yii::$app->user->getIdPersona();
+        if ((int) $turno->id_persona !== (int) $idPersona) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+        $req = Yii::$app->request;
+        $motivo = $req->post('estado_motivo', Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE);
+        $canal = $req->post('canal', 'app');
+        if (!in_array($motivo, [Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE, Turno::ESTADO_MOTIVO_CANCELADO_MEDICO], true)) {
+            $motivo = Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE;
+        }
+        $life = new TurnoLifecycleService();
+        try {
+            $life->cancelar($turno, $motivo, $canal, Yii::$app->user->id ?? null);
+        } catch (PolicyModeradaException $e) {
+            Yii::$app->response->statusCode = 409;
+            return [
+                'success' => false,
+                'code' => 'CANCEL_POLICY_MODERADA',
+                'message' => $e->getMessage(),
+            ];
+        }
+        return ['success' => true, 'message' => 'Turno cancelado'];
+    }
+
+    /**
+     * GET slots alternativos para reprogramar (mismo servicio; opcional mismo profesional).
+     */
+    public function actionSlotsAlternativos($id)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idPersona = Yii::$app->user->getIdPersona();
+        if ((int) $turno->id_persona !== (int) $idPersona) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+        $req = Yii::$app->request;
+        $limit = (int) $req->get('limit', 15);
+        $mismoProf = $req->get('mismo_profesional', '1') === '1' || $req->get('mismo_profesional') === true;
+        $criteria = [
+            'id_servicio' => (int) $turno->id_servicio_asignado,
+            'id_efector' => (int) $turno->id_efector,
+            'fecha_desde' => date('Y-m-d'),
+            'max_dias' => (int) $req->get('max_dias', 45),
+        ];
+        if ($mismoProf && (int) $turno->id_rrhh_servicio_asignado > 0) {
+            $criteria['id_rrhh_servicio_asignado'] = (int) $turno->id_rrhh_servicio_asignado;
+        }
+        $offer = new TurnoSlotOfferService();
+        $slots = $offer->findSlots($criteria, $limit);
+        return ['success' => true, 'slots' => $slots];
+    }
+
+    /**
+     * POST confirmar asistencia al turno.
+     */
+    public function actionConfirmarAsistencia($id)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idPersona = Yii::$app->user->getIdPersona();
+        if ((int) $turno->id_persona !== (int) $idPersona) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+        $token = Yii::$app->request->post('token');
+        if ($token && $turno->confirmacion_token && !hash_equals((string) $turno->confirmacion_token, (string) $token)) {
+            throw new BadRequestHttpException('Token inválido');
+        }
+        (new TurnoConfirmationService())->confirmarAsistencia($turno, Yii::$app->user->id ?? null);
+        return ['success' => true, 'message' => 'Asistencia confirmada'];
+    }
+
+    /**
+     * POST reprogramar: body fecha, hora, id_rrhh_servicio_asignado, id_rr_hh opcional
+     */
+    public function actionReprogramar($id)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idPersona = Yii::$app->user->getIdPersona();
+        if ((int) $turno->id_persona !== (int) $idPersona) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+        $policy = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
+        if ($policy->autogestionBloqueada($idPersona, (int) $turno->id_efector)) {
+            Yii::$app->response->statusCode = 409;
+            return [
+                'success' => false,
+                'code' => 'REPROGRAM_POLICY_MODERADA',
+                'message' => 'Reprogramación por app no disponible: acercate al efector o llamá.',
+            ];
+        }
+        $req = Yii::$app->request;
+        $fecha = $req->post('fecha');
+        $hora = $req->post('hora');
+        $idRrsa = (int) $req->post('id_rrhh_servicio_asignado', $turno->id_rrhh_servicio_asignado);
+        if (!$fecha || !$hora) {
+            throw new BadRequestHttpException('fecha y hora requeridos');
+        }
+        if (Turno::estaOcupadoSlot($idRrsa, $fecha, $hora)) {
+            throw new BadRequestHttpException('El horario ya no está disponible');
+        }
+        $turno->fecha = $fecha;
+        $turno->hora = $hora;
+        $turno->id_rrhh_servicio_asignado = $idRrsa;
+        $rr = RrhhServicio::findOne($idRrsa);
+        if ($rr) {
+            $turno->id_rr_hh = $rr->id_rr_hh;
+        }
+        if (!$turno->save()) {
+            throw new BadRequestHttpException(implode(', ', $turno->getFirstErrors()));
+        }
+        \common\models\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
+        try {
+            $conf = new TurnoConfirmationService();
+            $conf->ensureConfirmacionToken($turno);
+            $conf->programarNotificaciones($turno);
+        } catch (\Throwable $e) {
+            Yii::warning('reprogramar notif: ' . $e->getMessage(), 'api-turnos');
+        }
+        return ['success' => true, 'id' => $turno->id_turnos, 'fecha' => $turno->fecha, 'hora' => $turno->hora];
+    }
+
+    /**
+     * POST bulk cancel día (AdminEfector). Body: fecha, id_rr_hh opcional
+     */
+    public function actionBulkCancelDia()
+    {
+        if (!\common\models\User::hasRole('AdminEfector')) {
+            throw new ForbiddenHttpException('Solo administrador de efector');
+        }
+        $fecha = Yii::$app->request->post('fecha');
+        if (!$fecha) {
+            throw new BadRequestHttpException('fecha requerida');
+        }
+        $idEfector = Yii::$app->user->getIdEfector();
+        $idRrhh = Yii::$app->request->post('id_rr_hh');
+        $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
+        $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id);
+        return ['success' => true, 'cancelados' => $n];
     }
 
     /**

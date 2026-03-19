@@ -20,8 +20,11 @@ use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
+use common\models\User;
 use frontend\components\UserRequest;
 use common\components\Services\Turnos\TurnoSlotFinder;
+use common\components\Services\Turnos\SobreturnoService;
+use common\components\Services\Turnos\BulkCancelDayService;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.
@@ -38,6 +41,9 @@ class TurnosController extends Controller
         'eventos' => ['GET', 'OPTIONS'],
         'mis-turnos' => ['GET', 'OPTIONS'],
         'proximo-disponible' => ['GET', 'POST', 'OPTIONS'],
+        'reprogramar' => ['GET', 'HEAD', 'OPTIONS'],
+        'bulk-cancel-dia' => ['POST', 'OPTIONS'],
+        'crear-sobreturno' => ['POST', 'OPTIONS'],
     ];
 
     /**
@@ -50,6 +56,8 @@ class TurnosController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['POST'],
+                    'bulk-cancel-dia' => ['POST'],
+                    'crear-sobreturno' => ['POST'],
                 ],
             ],
         ];
@@ -188,6 +196,11 @@ class TurnosController extends Controller
         }
 
         if ($model->save()) {
+            try {
+                (new \common\components\Services\Turnos\TurnoLifecycleService())->afterTurnoCreado($model);
+            } catch (\Throwable $e) {
+                \Yii::warning('afterTurnoCreado web: ' . $e->getMessage(), 'turnos');
+            }
             return ["success" => true];
         } else {
             return ["success" => false, "message" => $model->getErrorSummary(true)];
@@ -1181,6 +1194,103 @@ class TurnosController extends Controller
                 'model' => $model,
             ]);
         }
+    }
+
+    /**
+     * UI separada de reprogramación (lista turnos futuros + enlace a API desde app/SPA).
+     */
+    public function actionReprogramar()
+    {
+        $session = Yii::$app->getSession();
+        $session_persona = @unserialize($session['persona']);
+        if (!$session_persona || !isset($session_persona->id_persona)) {
+            return $this->redirect(['personas/buscar-persona']);
+        }
+        $idEfector = Yii::$app->user->getIdEfector();
+        $turnos = Turno::findActive()
+            ->where(['id_persona' => $session_persona->id_persona, 'id_efector' => $idEfector, 'estado' => Turno::ESTADO_PENDIENTE])
+            ->andWhere(['>=', 'fecha', date('Y-m-d')])
+            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
+            ->all();
+
+        return $this->render('reprogramar', [
+            'persona' => $session_persona,
+            'turnos' => $turnos,
+        ]);
+    }
+
+    /**
+     * Cancelación masiva del día (AdminEfector). POST JSON: fecha, id_rr_hh opcional.
+     */
+    public function actionBulkCancelDia()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        if (!User::hasRole('AdminEfector')) {
+            throw new \yii\web\ForbiddenHttpException('Solo administrador de efector');
+        }
+        $fecha = Yii::$app->request->post('fecha');
+        if (!$fecha) {
+            throw new BadRequestHttpException('fecha requerida');
+        }
+        $idRrhh = Yii::$app->request->post('id_rr_hh');
+        $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
+        $n = (new BulkCancelDayService())->cancelarDia(
+            Yii::$app->user->getIdEfector(),
+            $fecha,
+            $idRrhh,
+            Yii::$app->user->id
+        );
+        return ['success' => true, 'cancelados' => $n];
+    }
+
+    /**
+     * Sobreturno urgente: crea turno y notifica retraso a pacientes posteriores.
+     */
+    public function actionCrearSobreturno()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $model = new Turno();
+        $model->load(Yii::$app->request->post());
+        $model->id_persona = UserRequest::requireUserParam('id_persona');
+        $model->id_rr_hh = UserRequest::requireUserParam('idRecursoHumano');
+        $model->id_efector = UserRequest::requireUserParam('idEfector');
+        $model->id_servicio = UserRequest::requireUserParam('servicio_actual');
+        $model->es_sobreturno = true;
+
+        $cps = ConsultaDerivaciones::getDerivacionesPorPersona($model->id_persona, $model->id_efector, $model->id_servicio_asignado, ConsultaDerivaciones::ESTADO_EN_ESPERA);
+        if (count($cps) > 0) {
+            foreach ($cps as $cp) {
+                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
+                $cp->save();
+                $parent_id = $cp->id;
+            }
+            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+            $model->parent_id = $parent_id;
+        }
+
+        if ($model->id_servicio_asignado == "" || $model->id_servicio_asignado == false) {
+            throw new BadRequestHttpException('Parametro servicio faltante');
+        }
+
+        $servicioEfector = ServiciosEfector::find()->where(['id_servicio' => $model->id_servicio_asignado])->andWhere(['id_efector' => $model->id_efector])->one();
+        if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
+            $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
+        } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
+            $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
+            // Sobreturno: no se aplica límite de cupo (turno urgente).
+        }
+
+        if (!$model->save()) {
+            return ['success' => false, 'message' => $model->getErrorSummary(true)];
+        }
+        Consulta::createFromTurno($model);
+        try {
+            (new SobreturnoService())->notificarRetrasoPorSobreturno($model);
+            (new \common\components\Services\Turnos\TurnoLifecycleService())->afterTurnoCreado($model);
+        } catch (\Throwable $e) {
+            Yii::warning('sobreturno post: ' . $e->getMessage(), 'turnos');
+        }
+        return ['success' => true, 'id_turno' => $model->id_turnos];
     }
 
     /**

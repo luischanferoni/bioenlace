@@ -82,9 +82,23 @@ class TurnoSlotFinder
      */
     public static function findFirstAvailable(array $criteria): ?array
     {
+        $found = self::findAvailableSlots($criteria, 1);
+        return $found ? $found[0] : null;
+    }
+
+    /**
+     * Lista hasta $limit slots libres (mismo criterio que findFirstAvailable).
+     * Criterio opcional: id_rrhh_servicio_asignado — limita a esa agenda/profesional.
+     *
+     * @param array $criteria
+     * @param int $limit
+     * @return array<int, array<string, mixed>>
+     */
+    public static function findAvailableSlots(array $criteria, $limit = 10): array
+    {
         $idServicio = $criteria['id_servicio'] ?? null;
         if (!$idServicio) {
-            throw new \InvalidArgumentException('TurnoSlotFinder::findFirstAvailable requiere id_servicio');
+            throw new \InvalidArgumentException('TurnoSlotFinder requiere id_servicio');
         }
 
         $idEfector = $criteria['id_efector'] ?? null;
@@ -102,41 +116,57 @@ class TurnoSlotFinder
         }
 
         $restricciones = $criteria['restricciones'] ?? [];
+        $soloRrhhServicio = isset($criteria['id_rrhh_servicio_asignado'])
+            ? (int) $criteria['id_rrhh_servicio_asignado']
+            : null;
 
-        // Preprocesar restricciones (orquestación; diccionario en este component)
         $diasSemanaExcluidos = self::buildDiasSemanaExcluidos($restricciones);
         $franjasExcluidas = self::buildFranjasExcluidas($restricciones);
 
-        // Modelos (queries): RRHH y agendas por servicio/efector
         $rrhhServicios = RrhhServicio::findPorServicioEfector((int) $idServicio, (int) $idEfector);
         if (empty($rrhhServicios)) {
-            return null;
+            return [];
         }
 
         $idsRrhhServicio = array_map(function (RrhhServicio $rs) {
-            return $rs->id;
+            return (int) $rs->id;
         }, $rrhhServicios);
-        $agendas = Agenda_rrhh::findPorIdsRrhhServicio($idsRrhhServicio);
-        if (empty($agendas)) {
-            return null;
+        if ($soloRrhhServicio) {
+            if (!in_array($soloRrhhServicio, $idsRrhhServicio, true)) {
+                return [];
+            }
+            $idsRrhhServicio = [$soloRrhhServicio];
         }
 
-        // Búsqueda día a día: orquestación usando solo modelos
-        for ($offset = 0; $offset < $maxDias; $offset++) {
+        $agendas = Agenda_rrhh::findPorIdsRrhhServicio($idsRrhhServicio);
+        if (empty($agendas)) {
+            return [];
+        }
+
+        $limit = max(1, (int) $limit);
+        $out = [];
+
+        for ($offset = 0; $offset < $maxDias && count($out) < $limit; $offset++) {
             $dia = date('Y-m-d', strtotime($fechaDesde . " +{$offset} days"));
-            $nroDiaSemana = (int) date('N', strtotime($dia)); // 1 (lunes) a 7 (domingo)
+            $nroDiaSemana = (int) date('N', strtotime($dia));
 
             if (in_array($nroDiaSemana, $diasSemanaExcluidos, true)) {
                 continue;
             }
 
             foreach ($agendas as $agenda) {
+                if (count($out) >= $limit) {
+                    break 2;
+                }
                 $slots = $agenda->getSlotsParaDia($dia);
                 if (empty($slots)) {
                     continue;
                 }
 
                 foreach ($slots as $hora) {
+                    if (count($out) >= $limit) {
+                        break 3;
+                    }
                     if (self::isHoraExcluida($hora, $franjasExcluidas)) {
                         continue;
                     }
@@ -158,7 +188,7 @@ class TurnoSlotFinder
                         continue;
                     }
 
-                    return [
+                    $out[] = [
                         'fecha' => $dia,
                         'hora' => $hora,
                         'id_rr_hh' => (int) $rrhhServ->id_rr_hh,
@@ -170,7 +200,7 @@ class TurnoSlotFinder
             }
         }
 
-        return null;
+        return $out;
     }
 
     /**

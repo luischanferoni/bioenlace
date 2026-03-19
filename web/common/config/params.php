@@ -11,4 +11,8 @@ return [
     'SISA_APP_ID'=> '6df3d2f1',
     'SISA_APP_KEY'=>'e6d747f81e4ef3112750cc477f35fd29',
     'hf_activar_correccion' => true,
+    /** Push turnos: si se define httpEndpoint, TurnoNotificacionController reenvía el payload (proxy). */
+    'turnosPush' => [
+        'httpEndpoint' => null,
+    ],
 ];

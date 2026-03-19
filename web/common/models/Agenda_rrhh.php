@@ -23,6 +23,7 @@ use Yii;
  * @property string $fecha_fin
  * @property integer $id_efector
  * @property bool $acepta_consultas_online Si el profesional acepta consultas por chat/videollamada en esta agenda
+ * @property int|null $duracion_slot_minutos Si no null, fija minutos por turno (override cálculo por cupo)
  */
 class Agenda_rrhh extends \yii\db\ActiveRecord
 {
@@ -67,7 +68,7 @@ class Agenda_rrhh extends \yii\db\ActiveRecord
                     return $model->is_member == 2;
                 },*/
             ],
-            [['id_rrhh_servicio_asignado', 'id_tipo_dia', 'id_efector', 'cupo_pacientes'], 'integer'],
+            [['id_rrhh_servicio_asignado', 'id_tipo_dia', 'id_efector', 'cupo_pacientes', 'duracion_slot_minutos'], 'integer'],
             [['acepta_consultas_online'], 'boolean'],
             [['hora_inicio', 'hora_fin', 'fecha_inicio', 'fecha_fin'], 'safe'],
             [['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo', 
@@ -98,6 +99,8 @@ class Agenda_rrhh extends \yii\db\ActiveRecord
             'fecha_inicio' => 'Fecha Inicio',
             'fecha_fin' => 'Fecha Fin',
             'id_efector' => 'Efector',
+            'cupo_pacientes' => 'Cupo de pacientes',
+            'duracion_slot_minutos' => 'Duración slot (min)',
             'acepta_consultas_online' => 'Acepta consultas online',
         ];
     }
@@ -252,7 +255,16 @@ class Agenda_rrhh extends \yii\db\ActiveRecord
         if (empty($horariosAgenda)) {
             return [];
         }
-        if (is_null($this->cupo_pacientes) || $this->cupo_pacientes == 0) {
+        $duracion = isset($this->duracion_slot_minutos) ? (int) $this->duracion_slot_minutos : 0;
+        if ($duracion > 0) {
+            $minutosXPaciente = $duracion;
+            $agregoSegundos = false;
+            if (!is_null($this->cupo_pacientes) && (int) $this->cupo_pacientes > 0) {
+                $cupoPacientes = (int) $this->cupo_pacientes;
+            } else {
+                $cupoPacientes = static::estimateSlotCapacityFromHorarios($horariosAgenda, $duracion);
+            }
+        } elseif (is_null($this->cupo_pacientes) || $this->cupo_pacientes == 0) {
             $minutosXPaciente = 15;
             $agregoSegundos = false;
             $cupoPacientes = count($horariosAgenda) * 5;
@@ -310,6 +322,43 @@ class Agenda_rrhh extends \yii\db\ActiveRecord
             }
         }
         return $slots;
+    }
+
+    /**
+     * Capacidad aproximada de slots cuando no hay cupo fijo pero sí duración fija (minutos por bloque horario).
+     *
+     * @param int[] $horariosAgenda horas enteras (ej. 8,9,10)
+     * @param int $duracionMin
+     * @return int
+     */
+    public static function estimateSlotCapacityFromHorarios(array $horariosAgenda, $duracionMin)
+    {
+        if (empty($horariosAgenda) || $duracionMin < 1) {
+            return 0;
+        }
+        sort($horariosAgenda);
+        $total = 0;
+        $run = [$horariosAgenda[0]];
+        for ($i = 1; $i < count($horariosAgenda); $i++) {
+            if ($horariosAgenda[$i] === $run[count($run) - 1] + 1) {
+                $run[] = $horariosAgenda[$i];
+            } else {
+                $total += static::minutesInHourRun($run) / $duracionMin;
+                $run = [$horariosAgenda[$i]];
+            }
+        }
+        $total += static::minutesInHourRun($run) / $duracionMin;
+        return max(1, (int) floor($total));
+    }
+
+    private static function minutesInHourRun(array $run)
+    {
+        if (empty($run)) {
+            return 0;
+        }
+        $first = (int) $run[0];
+        $last = (int) $run[count($run) - 1];
+        return ($last - $first + 1) * 60;
     }
 
 }

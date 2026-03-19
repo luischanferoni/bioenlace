@@ -70,6 +70,8 @@ $this->title = 'Pacientes';
     <div id="pacientes-listado-error" class="d-none alert alert-warning"></div>
 </div>
 
+<?= $this->render('_listado_templates') ?>
+
 <?php
 $esHoy = ($fecha === $hoy);
 $esHoyJs = $esHoy ? 'true' : 'false';
@@ -84,9 +86,10 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
 
 <?php
 $urlInternacionView = Url::to(['internacion/view'], true);
-$urlGuardiaIndex = Url::to(['guardia/index'], true);
-$urlInternacionRonda = Url::to(['internacion/ronda'], true);
 $urlPacienteHistoria = Url::to(['/paciente/historia'], true);
+$msgEmptyTurnos = Json::encode('No hay pacientes con turno pendiente de atención en la fecha seleccionada.');
+$msgEmptyInternados = Json::encode('No hay pacientes internados para mostrar.');
+$msgEmptyGuardias = Json::encode('No hay ingresos en guardia pendientes.');
 $this->registerJs(<<<JS
 (function() {
     var \$ = window.jQuery;
@@ -106,140 +109,232 @@ $this->registerJs(<<<JS
         return div.innerHTML;
     }
 
-    function escapeAttr(s) {
-        if (s == null) return '';
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;');
-    }
-
     function bindSpaCardsIfNeeded() {
         if (pacientesSpaEnabled && typeof window.attachSpaCardListeners === 'function') {
             window.attachSpaCardListeners(container);
         }
     }
 
-    function renderTurnos(data) {
-        if (!data.length) {
-            container.innerHTML = '<div class="alert alert-secondary"><i class="bi bi-info-circle me-2"></i>No hay pacientes con turno pendiente de atención en la fecha seleccionada.</div>';
+    function importTemplate(templateId) {
+        var tpl = document.getElementById(templateId);
+        if (!tpl || !tpl.content) {
+            return null;
+        }
+        return document.importNode(tpl.content, true);
+    }
+
+    function clearListadoContent() {
+        while (container.firstChild) {
+            container.removeChild(container.firstChild);
+        }
+    }
+
+    function showListadoEmpty(message) {
+        clearListadoContent();
+        var frag = importTemplate('tpl-pacientes-alert-empty');
+        if (!frag) {
             return;
         }
-        var html = '<div class="row">';
-        data.forEach(function(t, idx) {
-            var nombre = (t.paciente && t.paciente.nombre_completo) ? t.paciente.nombre_completo : 'Sin paciente';
-            var servicio = t.servicio || 'Sin servicio';
-            var estadoClass = (t.estado === 'PENDIENTE') ? 'warning' : 'secondary';
-            var estadoLabel = t.estado_label || t.estado || '';
-            var obs = (t.observaciones) ? '<div class="mb-2"><strong><i class="bi bi-chat-left-text me-2"></i>Observaciones:</strong> <small class="text-muted">' + escapeHtml(t.observaciones) + '</small></div>' : '';
-            var idPersona = t.id_persona || (t.paciente ? t.paciente.id : null);
-            var urlHistoria = idPersona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(idPersona)) : null;
-            var cardId = 'pac-turno-' + idx + '-' + (idPersona != null ? String(idPersona) : 'x');
+        var msgEl = frag.querySelector('[data-field="message"]');
+        if (msgEl) {
+            msgEl.textContent = message;
+        }
+        container.appendChild(frag);
+    }
 
-            if (pacientesSpaEnabled && urlHistoria) {
-                html += '<div class="col-md-6 col-lg-4 mb-3">' +
-                    '<div class="card h-100 shadow-sm position-relative spa-card"' +
-                    ' data-card-id="' + escapeAttr(cardId) + '"' +
-                    ' data-expandable="false" data-full-page="true" data-action-type="default"' +
-                    ' data-action-url="' + escapeAttr(urlHistoria) + '">' +
-                    '<div class="card-body">' +
-                    '<h5 class="card-title"><i class="bi bi-person-circle text-primary me-2"></i>' + escapeHtml(nombre) + '</h5>' +
-                    '<div class="mb-2"><strong><i class="bi bi-clock me-2"></i>Turno:</strong> ' + escapeHtml(t.hora) + '</div>' +
-                    '<div class="mb-2"><strong><i class="bi bi-hospital me-2"></i>Servicio:</strong> ' + escapeHtml(servicio) + '</div>' + obs +
-                    '<div class="mt-3"><span class="badge bg-' + estadoClass + '">' + escapeHtml(estadoLabel) + '</span></div>' +
-                    '</div></div></div>';
-            } else {
-                html += '<div class="col-md-6 col-lg-4 mb-3">' +
-                    '<div class="card h-100 shadow-sm position-relative" style="cursor:pointer;"' + (urlHistoria ? (' onclick="window.location.href=\\'' + urlHistoria + '\\'"') : '') + '>' +
-                    '<div class="card-body">' +
-                    '<h5 class="card-title"><i class="bi bi-person-circle text-primary me-2"></i>' + escapeHtml(nombre) + '</h5>' +
-                    '<div class="mb-2"><strong><i class="bi bi-clock me-2"></i>Turno:</strong> ' + escapeHtml(t.hora) + '</div>' +
-                    '<div class="mb-2"><strong><i class="bi bi-hospital me-2"></i>Servicio:</strong> ' + escapeHtml(servicio) + '</div>' + obs +
-                    '<div class="mt-3"><span class="badge bg-' + estadoClass + '">' + escapeHtml(estadoLabel) + '</span></div>' +
-                    (urlHistoria ? '<span class="stretched-link" aria-label="Abrir historia clínica"></span>' : '') +
-                    '</div></div></div>';
+    function fillTurnoCard(colEl, t, idx) {
+        var nombre = (t.paciente && t.paciente.nombre_completo) ? t.paciente.nombre_completo : 'Sin paciente';
+        var servicio = t.servicio || 'Sin servicio';
+        var estadoClass = (t.estado === 'PENDIENTE') ? 'warning' : 'secondary';
+        var estadoLabel = t.estado_label || t.estado || '';
+        var idPersona = t.id_persona || (t.paciente ? t.paciente.id : null);
+        var urlHistoria = idPersona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(idPersona)) : null;
+        var cardId = 'pac-turno-' + idx + '-' + (idPersona != null ? String(idPersona) : 'x');
+
+        var card = colEl.querySelector('[data-role="turno-card"]');
+        if (!card) {
+            return;
+        }
+
+        colEl.querySelector('[data-field="nombre"]').textContent = nombre;
+        colEl.querySelector('[data-field="hora"]').textContent = t.hora || '';
+        colEl.querySelector('[data-field="servicio"]').textContent = servicio;
+
+        var badge = colEl.querySelector('[data-field="estado-badge"]');
+        badge.className = 'badge bg-' + estadoClass;
+        badge.textContent = estadoLabel;
+
+        var obsSlot = colEl.querySelector('[data-slot="observaciones"]');
+        if (t.observaciones && obsSlot) {
+            obsSlot.classList.remove('d-none');
+            var obsText = obsSlot.querySelector('[data-field="observaciones"]');
+            if (obsText) {
+                obsText.textContent = t.observaciones;
             }
+        }
+
+        if (pacientesSpaEnabled && urlHistoria) {
+            card.dataset.cardId = cardId;
+            card.dataset.actionUrl = urlHistoria;
+        } else {
+            var stretched = colEl.querySelector('[data-role="stretched-link"]');
+            if (urlHistoria) {
+                card.addEventListener('click', function() {
+                    window.location.href = urlHistoria;
+                });
+                if (stretched) {
+                    stretched.classList.remove('d-none');
+                }
+            }
+        }
+    }
+
+    function renderTurnos(data) {
+        if (!data.length) {
+            showListadoEmpty({$msgEmptyTurnos});
+            return;
+        }
+        clearListadoContent();
+        var wrapFrag = importTemplate('tpl-pacientes-turnos-wrap');
+        if (!wrapFrag) {
+            return;
+        }
+        var row = wrapFrag.querySelector('[data-role="turnos-grid"]');
+        container.appendChild(wrapFrag);
+
+        var tplId = pacientesSpaEnabled ? 'tpl-paciente-turno-spa' : 'tpl-paciente-turno-legacy';
+        data.forEach(function(t, idx) {
+            var itemFrag = importTemplate(tplId);
+            if (!itemFrag) {
+                return;
+            }
+            var col = itemFrag.firstElementChild;
+            if (!col) {
+                return;
+            }
+            fillTurnoCard(col, t, idx);
+            row.appendChild(col);
         });
-        html += '</div>';
-        container.innerHTML = html;
         bindSpaCardsIfNeeded();
+    }
+
+    function fillInternadoRow(rowEl, i, idx) {
+        var urlView = '{$urlInternacionView}' + '?id=' + i.id;
+        var urlHistoria = i.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(i.id_persona)) : null;
+        var cardId = 'pac-int-' + idx + '-' + i.id;
+
+        rowEl.querySelector('[data-field="nombre"]').textContent = i.nombre || '';
+        rowEl.querySelector('[data-field="piso"]').textContent = i.piso || '';
+        rowEl.querySelector('[data-field="sala"]').textContent = i.sala || '';
+        rowEl.querySelector('[data-field="cama"]').textContent = i.cama || '';
+
+        if (pacientesSpaEnabled) {
+            rowEl.dataset.cardId = cardId;
+            rowEl.dataset.actionUrl = urlView;
+            var aHist = rowEl.querySelector('[data-role="link-historia"]');
+            if (urlHistoria && aHist) {
+                aHist.href = urlHistoria;
+                aHist.classList.remove('d-none');
+                aHist.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (window.pacientesSpaEnabled && window.spaNavigateToUrl) {
+                        e.preventDefault();
+                        window.spaNavigateToUrl(urlHistoria, 'Historia clínica');
+                    }
+                });
+            }
+        } else {
+            var aAtender = rowEl.querySelector('[data-role="link-atender"]');
+            var aHistLeg = rowEl.querySelector('[data-role="link-historia"]');
+            if (aAtender) {
+                aAtender.href = urlView;
+            }
+            if (urlHistoria && aHistLeg) {
+                aHistLeg.href = urlHistoria;
+                aHistLeg.classList.remove('d-none');
+            }
+        }
     }
 
     function renderInternados(data) {
         if (!data.length) {
-            container.innerHTML = '<div class="alert alert-secondary"><i class="bi bi-info-circle me-2"></i>No hay pacientes internados para mostrar.</div>';
+            showListadoEmpty({$msgEmptyInternados});
             return;
         }
-        var html = '<div class="card"><div class="card-header"><h4 class="mb-0">Pacientes internados</h4></div><div class="card-body">';
-        data.forEach(function(i, idx) {
-            var urlView = '{$urlInternacionView}' + '?id=' + i.id;
-            var urlHistoria = i.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(i.id_persona)) : null;
-            var cardId = 'pac-int-' + idx + '-' + i.id;
+        clearListadoContent();
+        var wrapFrag = importTemplate('tpl-pacientes-internados-wrap');
+        if (!wrapFrag) {
+            return;
+        }
+        var rowsSlot = wrapFrag.querySelector('[data-slot="internados-rows"]');
+        container.appendChild(wrapFrag);
 
-            if (pacientesSpaEnabled) {
-                html += '<div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded spa-card"' +
-                    ' data-card-id="' + escapeAttr(cardId) + '"' +
-                    ' data-expandable="false" data-full-page="true" data-action-type="default"' +
-                    ' data-action-url="' + escapeAttr(urlView) + '">' +
-                    '<div class="ms-3" style="flex:1;">' +
-                    '<h5 class="card-title mb-0">' + escapeHtml(i.nombre) + '</h5>' +
-                    '<p class="mb-1"><strong>Piso:</strong> ' + escapeHtml(i.piso) + ' <strong>Sala:</strong> ' + escapeHtml(i.sala) + ' <strong>Cama:</strong> ' + escapeHtml(i.cama) + '</p>' +
-                    '<div class="d-flex flex-wrap gap-2 mt-2">' +
-                    '<span class="p-2 btn btn-success btn-sm">Atender paciente</span>' +
-                    (urlHistoria ? '<a href="' + escapeAttr(urlHistoria) + '" class="p-2 btn btn-outline-primary btn-sm" data-spa-no-card="1" onclick="event.stopPropagation(); if(window.pacientesSpaEnabled && window.spaNavigateToUrl){event.preventDefault();window.spaNavigateToUrl(this.href,\'Historia clínica\');}">Historia clínica</a>' : '') +
-                    '</div>' +
-                    '</div></div>';
-            } else {
-                html += '<div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded">' +
-                    '<div class="ms-3" style="flex:1;">' +
-                    '<h5 class="mb-0">' + escapeHtml(i.nombre) + '</h5>' +
-                    '<p class="mb-1"><strong>Piso:</strong> ' + escapeHtml(i.piso) + ' <strong>Sala:</strong> ' + escapeHtml(i.sala) + ' <strong>Cama:</strong> ' + escapeHtml(i.cama) + '</p>' +
-                    '<div class="d-flex flex-wrap gap-2 mt-2">' +
-                    '<a href="' + escapeAttr(urlView) + '" class="p-2 btn btn-success btn-sm">Atender paciente</a>' +
-                    (urlHistoria ? '<a href="' + escapeAttr(urlHistoria) + '" class="p-2 btn btn-outline-primary btn-sm">Historia clínica</a>' : '') +
-                    '</div>' +
-                    '</div></div>';
+        var tplId = pacientesSpaEnabled ? 'tpl-paciente-internado-row-spa' : 'tpl-paciente-internado-row-legacy';
+        data.forEach(function(i, idx) {
+            var itemFrag = importTemplate(tplId);
+            if (!itemFrag) {
+                return;
             }
+            var row = itemFrag.firstElementChild;
+            if (!row) {
+                return;
+            }
+            fillInternadoRow(row, i, idx);
+            rowsSlot.appendChild(row);
         });
-        html += '</div><div class="card-footer"><a href="{$urlInternacionRonda}" class="btn btn-primary">Ronda de internación</a></div></div>';
-        container.innerHTML = html;
         bindSpaCardsIfNeeded();
+    }
+
+    function fillGuardiaRow(rowEl, g, idx) {
+        var urlHistoria = g.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(g.id_persona)) : null;
+        var cardId = 'pac-guardia-' + idx + '-' + (g.id_persona || 'x');
+        var docLine = (g.tipo_documento ? (g.tipo_documento + ': ') : '') + (g.documento || '');
+
+        rowEl.querySelector('[data-field="nombre"]').textContent = g.nombre_completo || '';
+        rowEl.querySelector('[data-field="documento-line"]').textContent = docLine;
+
+        if (pacientesSpaEnabled && urlHistoria) {
+            rowEl.dataset.cardId = cardId;
+            rowEl.dataset.actionUrl = urlHistoria;
+        } else {
+            var aAtender = rowEl.querySelector('[data-role="link-atender"]');
+            var spanDis = rowEl.querySelector('[data-role="atender-disabled"]');
+            if (urlHistoria && aAtender) {
+                aAtender.href = urlHistoria;
+                aAtender.classList.remove('d-none');
+            } else if (spanDis) {
+                spanDis.classList.remove('d-none');
+            }
+        }
     }
 
     function renderGuardias(data) {
         if (!data.length) {
-            container.innerHTML = '<div class="alert alert-secondary"><i class="bi bi-info-circle me-2"></i>No hay ingresos en guardia pendientes.</div>';
+            showListadoEmpty({$msgEmptyGuardias});
             return;
         }
-        var html = '<div class="card"><div class="card-header bg-light"><h4 class="mb-0">Pacientes en guardia</h4></div><div class="card-body">';
-        data.forEach(function(g, idx) {
-            var docLabel = (g.tipo_documento) ? escapeHtml(g.tipo_documento) + ': ' : '';
-            var urlHistoria = g.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(g.id_persona)) : null;
-            var cardId = 'pac-guardia-' + idx + '-' + (g.id_persona || 'x');
+        clearListadoContent();
+        var wrapFrag = importTemplate('tpl-pacientes-guardias-wrap');
+        if (!wrapFrag) {
+            return;
+        }
+        var rowsSlot = wrapFrag.querySelector('[data-slot="guardias-rows"]');
+        container.appendChild(wrapFrag);
 
-            if (pacientesSpaEnabled && urlHistoria) {
-                html += '<div class="d-flex align-items-center justify-content-between p-3 mb-2 bg-soft-gray rounded spa-card"' +
-                    ' data-card-id="' + escapeAttr(cardId) + '"' +
-                    ' data-expandable="false" data-full-page="true" data-action-type="default"' +
-                    ' data-action-url="' + escapeAttr(urlHistoria) + '">' +
-                    '<div class="ms-3" style="flex:1;">' +
-                    '<h5 class="card-title mb-0">' + escapeHtml(g.nombre_completo) + '</h5>' +
-                    '<p class="mb-1">' + docLabel + escapeHtml(g.documento || '') + '</p>' +
-                    '</div>' +
-                    '<span class="btn btn-dark btn-sm me-2"><i class="bi bi-chevron-right"></i> Atender</span>' +
-                    '</div>';
-            } else {
-                html += '<div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded">' +
-                    '<div class="ms-3" style="flex:1;">' +
-                    '<h5 class="mb-0">' + escapeHtml(g.nombre_completo) + '</h5>' +
-                    '<p class="mb-1">' + docLabel + escapeHtml(g.documento || '') + '</p>' +
-                    '</div>' +
-                    (urlHistoria ? '<a href="' + escapeAttr(urlHistoria) + '" class="btn btn-dark btn-sm">Atender</a>' : '<span class="btn btn-dark btn-sm disabled">Atender</span>') +
-                    '</div>';
+        data.forEach(function(g, idx) {
+            var urlHistoria = g.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(g.id_persona)) : null;
+            var useSpaTpl = pacientesSpaEnabled && urlHistoria;
+            var itemFrag = importTemplate(useSpaTpl ? 'tpl-paciente-guardia-row-spa' : 'tpl-paciente-guardia-row-legacy');
+            if (!itemFrag) {
+                return;
             }
+            var row = itemFrag.firstElementChild;
+            if (!row) {
+                return;
+            }
+            fillGuardiaRow(row, g, idx);
+            rowsSlot.appendChild(row);
         });
-        html += '</div><div class="card-footer"><a href="{$urlGuardiaIndex}" class="btn btn-success float-end">Ver todos los ingresos activos</a></div></div>';
-        container.innerHTML = html;
         bindSpaCardsIfNeeded();
     }
 

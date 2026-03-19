@@ -219,6 +219,10 @@ class Turno extends \yii\db\ActiveRecord
             [['tipo_atencion'], 'in', 'range' => [self::TIPO_ATENCION_PRESENCIAL, self::TIPO_ATENCION_TELECONSULTA]],
             [['tipo_atencion'], 'default', 'value' => self::TIPO_ATENCION_PRESENCIAL],
             ['estado_motivo', 'in', 'range' => array_keys(Turno::ESTADO_MOTIVO)],
+            [['es_sobreturno'], 'boolean'],
+            [['orden_atencion', 'minutos_desplazamiento_estimado'], 'integer'],
+            [['confirmado_en'], 'safe'],
+            [['confirmacion_token'], 'string', 'max' => 64],
         ];
     }
 

@@ -16,12 +16,14 @@ $period = new DatePeriod(
 $turnos_url_eventos = Url::to(['turnos/eventos']);
 $turnos_url_historial = Url::to(['turnos/historial']);
 $turnos_url_create = Url::to(['turnos/create']);
+$turnos_url_crear_sobreturno = Url::to(['turnos/crear-sobreturno']);
 $turnos_url_delete = Url::to(['turnos/delete']);
 $turnos_id_efector = Yii::$app->user->getIdEfector();
 $hoy = (new DateTime())->format('Y-m-d');
 
 $this->registerJsVar("turnos_url_eventos", $turnos_url_eventos);
 $this->registerJsVar("turnos_url_create", $turnos_url_create);
+$this->registerJsVar("turnos_url_crear_sobreturno", $turnos_url_crear_sobreturno);
 $this->registerJsVar("turnos_url_delete", $turnos_url_delete);
 $this->registerJsVar("turnos_id_efector", $turnos_id_efector);
 $this->registerJsVar("turnos_id_servicio", 0);

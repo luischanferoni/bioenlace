@@ -10,6 +10,8 @@ use common\models\ValidarArchivo; //incluyo el modelo que me permite validar el 
 use yii\web\UploadedFile; //incluyo la extensión para cargar el archivo
 
 use common\models\Efector;
+use common\models\EfectorTurnosConfig;
+use common\models\PersonaEfectorAutogestionLiberacion;
 use common\models\busquedas\EfectorBusqueda;
 use common\models\busquedas\RrhhEfectorBusqueda;
 
@@ -34,6 +36,7 @@ class EfectoresController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['post'],
+                    'liberar-autogestion' => ['post'],
                 ],
             ],
         ];
@@ -322,7 +325,46 @@ class EfectoresController extends Controller
          
         $this->redirect(["efectores/subir_archivo","mensaje_dos" => $mensaje_dos]);    
     
-   }   
+   }
+
+    /**
+     * Configuración integral de turnos y comunicación entre médicos (AdminEfector).
+     * @param int $id id_efector
+     */
+    public function actionTurnosIntegralConfig($id)
+    {
+        $efector = $this->findModel($id);
+        $model = EfectorTurnosConfig::getOrCreateForEfector($id);
+        if (Yii::$app->request->isPost && $model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->session->setFlash('success', 'Configuración guardada.');
+            return $this->redirect(['turnos-integral-config', 'id' => $id]);
+        }
+        return $this->render('turnos-integral-config', [
+            'efector' => $efector,
+            'model' => $model,
+        ]);
+    }
+
+    /**
+     * Registra liberación de autogestión para un paciente (presencial / llamada verificada).
+     */
+    public function actionLiberarAutogestion($id)
+    {
+        $this->findModel($id);
+        $idPersona = (int) Yii::$app->request->post('id_persona');
+        if (!$idPersona) {
+            Yii::$app->session->setFlash('error', 'id_persona requerido');
+            return $this->redirect(['turnos-integral-config', 'id' => $id]);
+        }
+        PersonaEfectorAutogestionLiberacion::registrar(
+            $idPersona,
+            (int) $id,
+            Yii::$app->user->id,
+            Yii::$app->request->post('motivo')
+        );
+        Yii::$app->session->setFlash('success', 'Autogestión liberada para la persona en este efector.');
+        return $this->redirect(['turnos-integral-config', 'id' => $id]);
+    }
   
 }
 

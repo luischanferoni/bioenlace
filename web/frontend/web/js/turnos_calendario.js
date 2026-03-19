@@ -16,11 +16,7 @@ function getEventos(dia) {
     function (data) {
       $("#eventos_maniana").html(data.turnos.maniana);
       $("#eventos_tarde").html(data.turnos.tarde);
-      $("#todosTomados").html(data.todosTomados);
-      if (data.turnos.todosTomados) {
-        // FIXME: funcionalidad sobreturno NO especifada.
-        $("#btn_turno_sobreturno").show();
-      }
+      $("#todosTomados").val(data.turnos.todosTomados ? "1" : "");
 
       if (
         data.turnos.mensajeFeriado != "" &&
@@ -108,6 +104,7 @@ $(document).ready(function () {
     $("#msg_turno_atendido").hide();
     $("#btn_turno_create").show();
     $("#btn_turno_cancel").hide();
+    $("#btn_turno_sobreturno").hide();
 
     // cambiamos el estilo de la hora seleccionada
     $(".hora").removeClass("bg-primary text-white");
@@ -124,6 +121,9 @@ $(document).ready(function () {
     $("#hora_input").val($(this).html());
     // deshabilitamos el boton de crear turno
     $("#btn_turno_create").prop("disabled", false);
+    if ($("#todosTomados").val() === "1") {
+      $("#btn_turno_sobreturno").show();
+    }
     if ($(this).attr("id")) {
       if ($(this).attr("id-persona") == '".$persona->id_persona."') {
         $("#sobreturno_div").show();
@@ -176,6 +176,37 @@ $(document).ready(function () {
           $("#modal-general").modal("hide");
         });
     }
+  });
+
+  $(document).on("click", "#btn_turno_sobreturno", function (e) {
+    e.preventDefault();
+    $("#btn_turno_sobreturno").prop("disabled", true);
+    $.post(
+      typeof turnos_url_crear_sobreturno !== "undefined"
+        ? turnos_url_crear_sobreturno
+        : turnos_url_create.replace("/create", "/crear-sobreturno"),
+      {
+        "Turno[fecha]": $("#fecha_input").val(),
+        "Turno[hora]": $("#hora_input").val(),
+        "Turno[id_rrhh_servicio_asignado]": turnos_id_rrhh_sa,
+        "Turno[id_servicio_asignado]": turnos_id_servicio,
+        "Turno[id_efector]": turnos_id_efector,
+      },
+      function (data) {}
+    )
+      .done(function (data) {
+        if (data.success == true) {
+          alertaFlotante("Sobreturno registrado", "success");
+          $("#modal-general").modal("hide");
+        } else {
+          alertaFlotante(data.message || "Error", "danger");
+        }
+        $("#btn_turno_sobreturno").prop("disabled", false);
+      })
+      .fail(function () {
+        alertaFlotante("Error inesperado", "danger");
+        $("#btn_turno_sobreturno").prop("disabled", false);
+      });
   });
 
   //

@@ -122,6 +122,19 @@ use common\models\Agenda_rrhh;
                                                     'data-bs-original-title' => 'Cupo de pacientes',
                                                     'disabled' => in_array($modeloRrhhServicio->id_servicio, array_keys($map_con_acepta_turnos["SI"]))?false:true])->label(false) ?>
                         </div>
+                        <div class="col col-md-2">
+                            <?= $form->field($model_agenda, "[{$i}]duracion_slot_minutos")
+                                ->input('number', [
+                                    'min' => 5,
+                                    'max' => 180,
+                                    'placeholder' => 'Min/slot',
+                                    'class' => 'form-control',
+                                    'data-bs-toggle' => 'tooltip',
+                                    'data-bs-placement' => 'top',
+                                    'data-bs-original-title' => 'Duración fija del turno en minutos (opcional; anula cálculo por cupo)',
+                                    'disabled' => in_array($modeloRrhhServicio->id_servicio, array_keys($map_con_acepta_turnos["SI"])) ? false : true,
+                                ])->label('Min/slot') ?>
+                        </div>
                         <div class="col col-md-3">                            
                             <?= $form->field($model_agenda, "[{$i}]formas_atencion")->DropDownList( 
                                                         Agenda_rrhh::FORMAS_ATENCION, 

@@ -203,7 +203,6 @@ $this->registerJsFile(
     </div>
 </div>
 
-
 <?php
 
 Modal::begin([

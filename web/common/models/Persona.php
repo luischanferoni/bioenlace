@@ -72,6 +72,7 @@ class Persona extends \yii\db\ActiveRecord
     const FORMATO_NOMBRE_A_OA_N_ON = 'apellido_otroapellido_nombre_otronombre';
     const FORMATO_NOMBRE_A_N = 'apellido_nombre';
     const FORMATO_NOMBRE_A_N_D = 'apellido_nombre_dni';
+    const FORMATO_NOMBRE_A_N_E = 'apellido_nombre_edad';
 
     /**
      * @inheritdoc
@@ -316,6 +317,10 @@ class Persona extends \yii\db\ActiveRecord
 
             case self::FORMATO_NOMBRE_A_N_D:
                 return $this->apellido . ', ' . $this->nombre . ' - ' . $this->documento;
+                break;
+
+            case self::FORMATO_NOMBRE_A_N_E:
+                return $this->apellido . ', ' . $this->nombre . ' - ' . $this->getEdad();
                 break;
 
             default:

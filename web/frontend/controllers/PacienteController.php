@@ -22,6 +22,7 @@ use common\models\Guardia;
 use common\models\Alergias;
 use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
+use common\components\PersonaTimelineService;
 use \frontend\components\UserRequest;
 // Filtros y componentes
 use frontend\filters\SisseActionFilter;
@@ -566,6 +567,12 @@ class PacienteController extends Controller
 
         $idServicioPP = !is_null($servPasePrevio) ? $servPasePrevio->pase_previo : 0;
 
+        $motivosConsultaTurno = null;
+        $timelineHistoria = PersonaTimelineService::buildTimelineData($paciente->id_persona, $idEfector);
+        if ($timelineHistoria !== null) {
+            $motivosConsultaTurno = PersonaTimelineService::ultimoMotivoConsultaDesdeTimeline($timelineHistoria['timeline']);
+        }
+
         //TODO: hacer un ordenamiento del historial completo, tal vez ahaya que transformar las fechas para ordenar y volverlas a poner con formato al mostrarlas
         // echo "<pre>";
         // var_dump($historial);
@@ -587,7 +594,8 @@ class PacienteController extends Controller
             'pase_previo' =>  $idServicioPP,
 
             'encounterClass' => $encounterClass,
-            'servicioActual' => $idServicio
+            'servicioActual' => $idServicio,
+            'motivosConsultaTurno' => $motivosConsultaTurno,
         ]);
     }
 

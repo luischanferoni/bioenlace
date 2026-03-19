@@ -12,7 +12,7 @@ use yii\web\View;
 
 
 $tieneRolEnfermeria = User::hasRole(['enfermeria']) ? true : false;
-$this->title = $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N);
+$this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $persona->edad . ' años - Barrio: ';
 
 // Los archivos JS (turnos.js, chat-inteligente.js, timeline.js) se cargan automáticamente desde AppAsset
 // Solo registrar Plotly si es necesario para gráficos
@@ -32,39 +32,6 @@ $this->registerJsFile(
         <div class="card border-2 mb-1">
             <div class="card-body p-4 pb-1">
                 <div class="row">
-                    <!-- Columna izquierda: Datos del paciente -->
-                    <div class="col-12 mb-3 border-bottom border-2">
-                        
-                        <!-- Desktop: Horizontal layout -->
-                        <div class="d-flex flex-row d-none d-md-flex">
-                            <b>Nombre Completo:</b>
-                            <div class="ms-2 me-2"><?= $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido ?></div>
-
-                            <b class="ps-2 border-start border-2 pl-2">F. Nacimiento:</b>
-                            <div class="ms-2 me-2"><?= Yii::$app->formatter->asDate($persona->fecha_nacimiento, 'dd LLLL yyyy').' ('.$persona->edad.' años)' ?></div>
-                            <b class="ps-2 border-start border-2 pl-2">Nro. Documento:</b>
-                            <div class="ms-2"><?= $persona->documento ?></div>
-                        </div>
-                        
-                        <!-- Mobile: Vertical layout -->
-                        <div class="d-flex flex-column d-md-none">
-                            <div class="mb-2">
-                                <b>Nombre Completo:</b>
-                                <div class="ms-2"><?= $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido ?></div>
-                            </div>
-                            
-                            <div class="mb-2">
-                                <b>F. Nacimiento:</b>
-                                <div class="ms-2"><?= Yii::$app->formatter->asDate($persona->fecha_nacimiento, 'dd LLLL yyyy').' ('.$persona->edad.' años)' ?></div>
-                            </div>
-                            
-                            <div class="mb-2">
-                                <b>Nro. Documento:</b>
-                                <div class="ms-2"><?= $persona->documento ?></div>
-                            </div>
-                        </div>
-                        
-                    </div>
                     
                     <!-- Columna derecha: Información médica -->
                     <div class="col-12 ms-3">
@@ -145,6 +112,18 @@ $this->registerJsFile(
                                     } ?>
                                 </p>
                             </div>
+                        </div>
+
+                        <?php
+                        $textoMotivosTurno = $motivosConsultaTurno ?? null;
+                        ?>
+                        <div class="mb-3 pb-2 border-bottom border-2">
+                            <h6 class="mb-2 text-primary"><b>MOTIVOS DE ESTA CONSULTA</b></h6>
+                            <?php if ($textoMotivosTurno !== null && trim((string) $textoMotivosTurno) !== '') : ?>
+                                <p class="mb-0 text-body" style="white-space: pre-wrap;"><?= Html::encode($textoMotivosTurno) ?></p>
+                            <?php else : ?>
+                                <p class="mb-0 text-muted">Sin motivos registrados para esta consulta.</p>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Signos Vitales Actuales -->

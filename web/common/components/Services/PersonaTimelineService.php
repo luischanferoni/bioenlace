@@ -3,6 +3,7 @@
 namespace common\components;
 
 use Yii;
+use yii\db\Expression;
 use common\models\Persona;
 use common\models\Consulta;
 
@@ -27,12 +28,15 @@ class PersonaTimelineService
 
         $id = $personaId;
 
+        // Texto de motivos redactado por el paciente (consulta vinculada al turno)
+        $motivoSubquery = '(SELECT NULLIF(TRIM(c.motivo_consulta), "") FROM consultas c WHERE c.id_turnos = turnos.id_turnos AND c.deleted_at IS NULL ORDER BY c.id_consulta DESC LIMIT 1)';
+
         // Query para Turnos
         $queryTurnos = (new \yii\db\Query())
             ->select([
                 'id' => 'turnos.id_turnos',
                 'fecha' => 'CONCAT(turnos.fecha," ",turnos.hora)',
-                'resumen' => 'CONCAT("Turno")',
+                'resumen' => new Expression($motivoSubquery),
                 'parent_class' => 'turnos.parent_class',
                 'id_servicio' => 'id_servicio_asignado',
                 'servicio' => 'servicios.nombre',
@@ -291,6 +295,25 @@ class PersonaTimelineService
             'timeline' => $timeline,
             'total_eventos' => count($timeline),
         ];
+    }
+
+    /**
+     * Primer evento Turno con texto de motivo (timeline ordenado por fecha descendente = el más reciente).
+     * Ignora el marcador legacy "Turno" si aún existiera en datos viejos.
+     */
+    public static function ultimoMotivoConsultaDesdeTimeline(array $timeline): ?string
+    {
+        foreach ($timeline as $e) {
+            if (($e['tipo'] ?? '') !== 'Turno') {
+                continue;
+            }
+            $r = trim((string) ($e['resumen'] ?? ''));
+            if ($r === '' || $r === 'Turno') {
+                continue;
+            }
+            return $r;
+        }
+        return null;
     }
 
     private static function formatCondiciones($condiciones)

@@ -5,6 +5,9 @@ use yii\helpers\Html;
 
 use common\models\Turno;
 
+$resumenMotivo = isset($historia['resumen']) ? trim((string) $historia['resumen']) : '';
+$tieneMotivoPaciente = $resumenMotivo !== '' && strcasecmp($resumenMotivo, 'Turno') !== 0;
+
 ?>
 
 <div class="timeline-dots1 border-info text-info">
@@ -17,8 +20,11 @@ use common\models\Turno;
 
 <div class="d-inline-block w-100">
     <div class="d-flex align-items-center">        
-        <p>Servicio: <?=$historia['servicio']?></p>        
+        <p class="mb-1">Servicio: <?=$historia['servicio']?></p>        
     </div>
+    <?php if ($tieneMotivoPaciente) : ?>
+        <p class="mb-0 small text-body" style="white-space: pre-wrap;"><strong>Motivo (paciente):</strong> <?= Html::encode($resumenMotivo) ?></p>
+    <?php endif; ?>
 </div>
 <?php //var_dump($historia);die;?>
 <div class="iq-media-group iq-media-group-1 timeline_footer mt-2 pb-3 border-bottom">

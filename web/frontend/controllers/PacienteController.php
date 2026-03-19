@@ -362,7 +362,7 @@ class PacienteController extends Controller
             $accessToken = $client->authenticateClient();*/
             #####encontrar id Patient###########################
             #$patient = Yii::$app->sianlabs->getIdPatient('29384314',$accessToken->getToken());
-
+/*
             try {
                 $client = Yii::$app->authClientCollection->getClient('sianlabs');                
                 $accessToken = $client->authenticateClient();
@@ -445,12 +445,12 @@ class PacienteController extends Controller
             ##################################################
         }
 
-        */
+        
 
         usort($historial, function ($a, $b) {
             return strtotime($b['fecha']) - strtotime($a['fecha']);
         });
-
+*/
         list($condicionesActivas, $condicionesCronicas) =
                 DCRepo::getCondicionesPaciente($paciente->id_persona);
 

@@ -72,17 +72,12 @@ $this->title = 'Pacientes';
 
 <?= $this->render('_listado_templates') ?>
 
-<?php
-$esHoy = ($fecha === $hoy);
-$esHoyJs = $esHoy ? 'true' : 'false';
-if ($esHoy): ?>
 <div id="spa-pages-container" class="spa-pages-container"></div>
 <?php
 $this->registerJsFile('@web/js/spa-navigation.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('@web/js/spa-home.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
-<?php endif; ?>
 
 <?php
 $urlInternacionView = Url::to(['internacion/view'], true);
@@ -98,9 +93,6 @@ $this->registerJs(<<<JS
     var errorEl = document.getElementById('pacientes-listado-error');
     var fecha = '{$fecha}';
     var encounter = {$encounterJson};
-    /** SPA solo cuando la vista carga spa-navigation + spa-home (fecha = hoy) */
-    window.pacientesSpaEnabled = {$esHoyJs};
-    var pacientesSpaEnabled = window.pacientesSpaEnabled;
 
     function escapeHtml(s) {
         if (s == null) return '';
@@ -109,8 +101,8 @@ $this->registerJs(<<<JS
         return div.innerHTML;
     }
 
-    function bindSpaCardsIfNeeded() {
-        if (pacientesSpaEnabled && typeof window.attachSpaCardListeners === 'function') {
+    function bindSpaCards() {
+        if (typeof window.attachSpaCardListeners === 'function') {
             window.attachSpaCardListeners(container);
         }
     }
@@ -173,19 +165,20 @@ $this->registerJs(<<<JS
             }
         }
 
-        if (pacientesSpaEnabled && urlHistoria) {
+        if (urlHistoria) {
+            card.classList.add('spa-card');
+            card.setAttribute('data-expandable', 'false');
+            card.setAttribute('data-full-page', 'true');
+            card.setAttribute('data-action-type', 'default');
             card.dataset.cardId = cardId;
             card.dataset.actionUrl = urlHistoria;
         } else {
-            var stretched = colEl.querySelector('[data-role="stretched-link"]');
-            if (urlHistoria) {
-                card.addEventListener('click', function() {
-                    window.location.href = urlHistoria;
-                });
-                if (stretched) {
-                    stretched.classList.remove('d-none');
-                }
-            }
+            card.classList.remove('spa-card');
+            card.removeAttribute('data-expandable');
+            card.removeAttribute('data-full-page');
+            card.removeAttribute('data-action-type');
+            card.removeAttribute('data-card-id');
+            card.removeAttribute('data-action-url');
         }
     }
 
@@ -202,9 +195,8 @@ $this->registerJs(<<<JS
         var row = wrapFrag.querySelector('[data-role="turnos-grid"]');
         container.appendChild(wrapFrag);
 
-        var tplId = pacientesSpaEnabled ? 'tpl-paciente-turno-spa' : 'tpl-paciente-turno-legacy';
         data.forEach(function(t, idx) {
-            var itemFrag = importTemplate(tplId);
+            var itemFrag = importTemplate('tpl-paciente-turno');
             if (!itemFrag) {
                 return;
             }
@@ -215,7 +207,7 @@ $this->registerJs(<<<JS
             fillTurnoCard(col, t, idx);
             row.appendChild(col);
         });
-        bindSpaCardsIfNeeded();
+        bindSpaCards();
     }
 
     function fillInternadoRow(rowEl, i, idx) {
@@ -228,31 +220,19 @@ $this->registerJs(<<<JS
         rowEl.querySelector('[data-field="sala"]').textContent = i.sala || '';
         rowEl.querySelector('[data-field="cama"]').textContent = i.cama || '';
 
-        if (pacientesSpaEnabled) {
-            rowEl.dataset.cardId = cardId;
-            rowEl.dataset.actionUrl = urlView;
-            var aHist = rowEl.querySelector('[data-role="link-historia"]');
-            if (urlHistoria && aHist) {
-                aHist.href = urlHistoria;
-                aHist.classList.remove('d-none');
-                aHist.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (window.pacientesSpaEnabled && window.spaNavigateToUrl) {
-                        e.preventDefault();
-                        window.spaNavigateToUrl(urlHistoria, 'Historia clínica');
-                    }
-                });
-            }
-        } else {
-            var aAtender = rowEl.querySelector('[data-role="link-atender"]');
-            var aHistLeg = rowEl.querySelector('[data-role="link-historia"]');
-            if (aAtender) {
-                aAtender.href = urlView;
-            }
-            if (urlHistoria && aHistLeg) {
-                aHistLeg.href = urlHistoria;
-                aHistLeg.classList.remove('d-none');
-            }
+        rowEl.dataset.cardId = cardId;
+        rowEl.dataset.actionUrl = urlView;
+        var aHist = rowEl.querySelector('[data-role="link-historia"]');
+        if (urlHistoria && aHist) {
+            aHist.href = urlHistoria;
+            aHist.classList.remove('d-none');
+            aHist.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (window.spaNavigateToUrl) {
+                    e.preventDefault();
+                    window.spaNavigateToUrl(urlHistoria, 'Historia clínica');
+                }
+            });
         }
     }
 
@@ -269,9 +249,8 @@ $this->registerJs(<<<JS
         var rowsSlot = wrapFrag.querySelector('[data-slot="internados-rows"]');
         container.appendChild(wrapFrag);
 
-        var tplId = pacientesSpaEnabled ? 'tpl-paciente-internado-row-spa' : 'tpl-paciente-internado-row-legacy';
         data.forEach(function(i, idx) {
-            var itemFrag = importTemplate(tplId);
+            var itemFrag = importTemplate('tpl-paciente-internado-row');
             if (!itemFrag) {
                 return;
             }
@@ -282,7 +261,7 @@ $this->registerJs(<<<JS
             fillInternadoRow(row, i, idx);
             rowsSlot.appendChild(row);
         });
-        bindSpaCardsIfNeeded();
+        bindSpaCards();
     }
 
     function fillGuardiaRow(rowEl, g, idx) {
@@ -293,17 +272,28 @@ $this->registerJs(<<<JS
         rowEl.querySelector('[data-field="nombre"]').textContent = g.nombre_completo || '';
         rowEl.querySelector('[data-field="documento-line"]').textContent = docLine;
 
-        if (pacientesSpaEnabled && urlHistoria) {
+        var cta = rowEl.querySelector('[data-role="cta-atender"]');
+        if (urlHistoria) {
+            rowEl.classList.add('spa-card');
+            rowEl.setAttribute('data-expandable', 'false');
+            rowEl.setAttribute('data-full-page', 'true');
+            rowEl.setAttribute('data-action-type', 'default');
             rowEl.dataset.cardId = cardId;
             rowEl.dataset.actionUrl = urlHistoria;
+            if (cta) {
+                cta.classList.remove('disabled');
+                cta.innerHTML = '<i class="bi bi-chevron-right"></i> Atender';
+            }
         } else {
-            var aAtender = rowEl.querySelector('[data-role="link-atender"]');
-            var spanDis = rowEl.querySelector('[data-role="atender-disabled"]');
-            if (urlHistoria && aAtender) {
-                aAtender.href = urlHistoria;
-                aAtender.classList.remove('d-none');
-            } else if (spanDis) {
-                spanDis.classList.remove('d-none');
+            rowEl.classList.remove('spa-card');
+            rowEl.removeAttribute('data-expandable');
+            rowEl.removeAttribute('data-full-page');
+            rowEl.removeAttribute('data-action-type');
+            rowEl.removeAttribute('data-card-id');
+            rowEl.removeAttribute('data-action-url');
+            if (cta) {
+                cta.classList.add('disabled');
+                cta.innerHTML = 'Atender';
             }
         }
     }
@@ -322,9 +312,7 @@ $this->registerJs(<<<JS
         container.appendChild(wrapFrag);
 
         data.forEach(function(g, idx) {
-            var urlHistoria = g.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(g.id_persona)) : null;
-            var useSpaTpl = pacientesSpaEnabled && urlHistoria;
-            var itemFrag = importTemplate(useSpaTpl ? 'tpl-paciente-guardia-row-spa' : 'tpl-paciente-guardia-row-legacy');
+            var itemFrag = importTemplate('tpl-paciente-guardia-row');
             if (!itemFrag) {
                 return;
             }
@@ -335,7 +323,7 @@ $this->registerJs(<<<JS
             fillGuardiaRow(row, g, idx);
             rowsSlot.appendChild(row);
         });
-        bindSpaCardsIfNeeded();
+        bindSpaCards();
     }
 
     function showError(msg) {

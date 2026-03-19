@@ -337,9 +337,9 @@ class EfectoresController extends Controller
         $model = EfectorTurnosConfig::getOrCreateForEfector($id);
         if (Yii::$app->request->isPost && $model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->setFlash('success', 'Configuración guardada.');
-            return $this->redirect(['turnos-integral-config', 'id' => $id]);
+            return $this->redirect(['turnos_integral_config', 'id' => $id]);
         }
-        return $this->render('turnos-integral-config', [
+        return $this->render('turnos_integral_config', [
             'efector' => $efector,
             'model' => $model,
         ]);
@@ -354,7 +354,7 @@ class EfectoresController extends Controller
         $idPersona = (int) Yii::$app->request->post('id_persona');
         if (!$idPersona) {
             Yii::$app->session->setFlash('error', 'id_persona requerido');
-            return $this->redirect(['turnos-integral-config', 'id' => $id]);
+            return $this->redirect(['turnos_integral_config', 'id' => $id]);
         }
         PersonaEfectorAutogestionLiberacion::registrar(
             $idPersona,
@@ -363,7 +363,7 @@ class EfectoresController extends Controller
             Yii::$app->request->post('motivo')
         );
         Yii::$app->session->setFlash('success', 'Autogestión liberada para la persona en este efector.');
-        return $this->redirect(['turnos-integral-config', 'id' => $id]);
+        return $this->redirect(['turnos_integral_config', 'id' => $id]);
     }
   
 }

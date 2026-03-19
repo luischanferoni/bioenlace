@@ -19,6 +19,7 @@ alwaysApply: false
 
 - Criterios de cuándo usar **descriptor JSON** (`/api/v1/ui/...`, `kind: ui_definition`) vs **vista nativa**: ver `web/docs/VISTAS_DINAMICAS_JSON_Y_NATIVAS.md`.
 - Listados **ricos y específicos de web** (SPA, muchas acciones, layout custom) suelen seguir siendo **vista nativa + templates**; no forzar todo al motor JSON salvo que el flujo sea estable, compartible con móvil y mayormente “config”.
+- Ejemplo: `views/pacientes/listado.php` carga siempre `spa-navigation` / `spa-home` y las tarjetas navegables usan `spa-card` + `attachSpaCardListeners` (sin duplicar plantillas legacy).
 
 ## Yii2
 

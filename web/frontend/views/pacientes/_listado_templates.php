@@ -1,7 +1,7 @@
 <?php
 /**
  * Plantillas HTML del listado de pacientes (turnos / internados / guardia).
- * El JS clona estos <template> y solo asigna textos, URLs y data-* dinámicos.
+ * El JS clona estos <template> y asigna textos, URLs y data-*; añade spa-card cuando corresponde.
  */
 
 use yii\helpers\Html;
@@ -21,13 +21,9 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
     <div class="row" data-role="turnos-grid"></div>
 </template>
 
-<template id="tpl-paciente-turno-spa">
+<template id="tpl-paciente-turno">
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 shadow-sm position-relative spa-card"
-             data-expandable="false"
-             data-full-page="true"
-             data-action-type="default"
-             data-role="turno-card">
+        <div class="card h-100 shadow-sm position-relative" data-role="turno-card">
             <div class="card-body">
                 <h5 class="card-title">
                     <i class="bi bi-person-circle text-primary me-2"></i><span data-field="nombre"></span>
@@ -43,30 +39,6 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
                     <small class="text-muted" data-field="observaciones"></small>
                 </div>
                 <div class="mt-3"><span class="badge" data-field="estado-badge"></span></div>
-            </div>
-        </div>
-    </div>
-</template>
-
-<template id="tpl-paciente-turno-legacy">
-    <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 shadow-sm position-relative" style="cursor:pointer;" data-role="turno-card">
-            <div class="card-body">
-                <h5 class="card-title">
-                    <i class="bi bi-person-circle text-primary me-2"></i><span data-field="nombre"></span>
-                </h5>
-                <div class="mb-2">
-                    <strong><i class="bi bi-clock me-2"></i>Turno:</strong> <span data-field="hora"></span>
-                </div>
-                <div class="mb-2">
-                    <strong><i class="bi bi-hospital me-2"></i>Servicio:</strong> <span data-field="servicio"></span>
-                </div>
-                <div class="mb-2 d-none" data-slot="observaciones">
-                    <strong><i class="bi bi-chat-left-text me-2"></i>Observaciones:</strong>
-                    <small class="text-muted" data-field="observaciones"></small>
-                </div>
-                <div class="mt-3"><span class="badge" data-field="estado-badge"></span></div>
-                <span class="stretched-link d-none" data-role="stretched-link" aria-label="Abrir historia clínica"></span>
             </div>
         </div>
     </div>
@@ -84,7 +56,7 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
     </div>
 </template>
 
-<template id="tpl-paciente-internado-row-spa">
+<template id="tpl-paciente-internado-row">
     <div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded spa-card"
          data-expandable="false"
          data-full-page="true"
@@ -105,23 +77,6 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
     </div>
 </template>
 
-<template id="tpl-paciente-internado-row-legacy">
-    <div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded" data-role="internado-row">
-        <div class="ms-3" style="flex:1;">
-            <h5 class="mb-0" data-field="nombre"></h5>
-            <p class="mb-1">
-                <strong>Piso:</strong> <span data-field="piso"></span>
-                <strong>Sala:</strong> <span data-field="sala"></span>
-                <strong>Cama:</strong> <span data-field="cama"></span>
-            </p>
-            <div class="d-flex flex-wrap gap-2 mt-2">
-                <a href="#" class="p-2 btn btn-success btn-sm" data-role="link-atender">Atender paciente</a>
-                <a href="#" class="p-2 btn btn-outline-primary btn-sm d-none" data-role="link-historia">Historia clínica</a>
-            </div>
-        </div>
-    </div>
-</template>
-
 <template id="tpl-pacientes-guardias-wrap">
     <div class="card" data-role="guardias-wrap">
         <div class="card-header bg-light">
@@ -134,27 +89,12 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
     </div>
 </template>
 
-<template id="tpl-paciente-guardia-row-spa">
-    <div class="d-flex align-items-center justify-content-between p-3 mb-2 bg-soft-gray rounded spa-card"
-         data-expandable="false"
-         data-full-page="true"
-         data-action-type="default"
-         data-role="guardia-row">
+<template id="tpl-paciente-guardia-row">
+    <div class="d-flex align-items-center justify-content-between p-3 mb-2 bg-soft-gray rounded" data-role="guardia-row">
         <div class="ms-3" style="flex:1;">
             <h5 class="card-title mb-0" data-field="nombre"></h5>
             <p class="mb-1"><span data-field="documento-line"></span></p>
         </div>
-        <span class="btn btn-dark btn-sm me-2"><i class="bi bi-chevron-right"></i> Atender</span>
-    </div>
-</template>
-
-<template id="tpl-paciente-guardia-row-legacy">
-    <div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded" data-role="guardia-row">
-        <div class="ms-3" style="flex:1;">
-            <h5 class="mb-0" data-field="nombre"></h5>
-            <p class="mb-1"><span data-field="documento-line"></span></p>
-        </div>
-        <a href="#" class="btn btn-dark btn-sm d-none" data-role="link-atender">Atender</a>
-        <span class="btn btn-dark btn-sm disabled d-none" data-role="atender-disabled">Atender</span>
+        <span class="btn btn-dark btn-sm me-2" data-role="cta-atender"><i class="bi bi-chevron-right"></i> Atender</span>
     </div>
 </template>

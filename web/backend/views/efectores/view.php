@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
             </div> 
             <div class="d-flex align-items-center">
                 <?= Html::a('Actualizar', ['update', 'id' => $model->id_efector], ['class' => 'btn btn-sm btn-primary']) ?>
-                <?= Html::a('Turnos (config)', ['turnos-integral-config', 'id' => $model->id_efector], ['class' => 'btn btn-sm btn-outline-secondary ms-2']) ?>
+                <?= Html::a('Turnos (config)', ['turnos_integral_config', 'id' => $model->id_efector], ['class' => 'btn btn-sm btn-outline-secondary ms-2']) ?>
                 <?= Html::a('Eliminar', ['delete', 'id' => $model->id_efector], [
                     'class' => 'btn btn-sm btn-danger ms-2',
                     'data' => [

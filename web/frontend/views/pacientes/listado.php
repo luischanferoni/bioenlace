@@ -260,6 +260,12 @@ $this->registerJs(<<<JS
     }
 
     var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+    if (typeof window.getBioenlaceApiClientHeaders === 'function') {
+        headers = window.getBioenlaceApiClientHeaders(headers);
+    } else {
+        headers['X-App-Client'] = 'web-frontend';
+        headers['X-App-Version'] = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
+    }
     if (window.apiAuthToken) {
         headers['Authorization'] = 'Bearer ' + window.apiAuthToken;
     }

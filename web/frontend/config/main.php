@@ -170,6 +170,10 @@ return [
                 'GET api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
                 'POST api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
                 'OPTIONS api/<version:\w+>/crud/execute-action' => '<version>/crud/execute-action',
+
+                // Descriptores de UI dinámica (JSON: wizards, etc.) — mismo action_id que crud/execute-action
+                'GET api/<version:\w+>/ui/<entity:[\w-]+>/<action:[\w-]+>' => '<version>/ui/descriptor',
+                'OPTIONS api/<version:\w+>/ui/<entity:[\w-]+>/<action:[\w-]+>' => '<version>/ui/options',
                 
                 // Audio API (Speech-to-Text)
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',

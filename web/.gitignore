@@ -46,7 +46,7 @@ frontend/runtime/logs/analisis-consultas/*.log
 *.json
 !composer.json
 !package.json
-# Excluir templates JSON de form_config del ignore
-!frontend/views/json/**/*.json
+# Excluir descriptores UI JSON (módulo API v1) del ignore global *.json
+!frontend/modules/api/v1/views/json/**/*.json
 # Conversaciones de prueba para costos de IA
 !common/data/conversaciones/**/*.json

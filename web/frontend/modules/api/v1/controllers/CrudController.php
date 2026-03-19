@@ -273,15 +273,26 @@ class CrudController extends BaseController
                                         $wizardConfig['fields'] ?? []
                                     );
                                     
+                                    $data = [
+                                        'form_config' => $formConfig,
+                                        'wizard_steps' => $wizardSteps,
+                                        'initial_step' => $wizardConfig['initial_step'] ?? 0,
+                                        'action_id' => $actionId,
+                                        'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
+                                    ];
+                                    if (isset($result['kind'])) {
+                                        $data['kind'] = $result['kind'];
+                                    }
+                                    if (isset($result['ui_type'])) {
+                                        $data['ui_type'] = $result['ui_type'];
+                                    }
+                                    if (isset($result['compatibility'])) {
+                                        $data['compatibility'] = $result['compatibility'];
+                                    }
+
                                     return [
                                         'success' => true,
-                                        'data' => [
-                                            'form_config' => $formConfig,
-                                            'wizard_steps' => $wizardSteps,
-                                            'initial_step' => $wizardConfig['initial_step'] ?? 0,
-                                            'action_id' => $actionId,
-                                            'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
-                                        ],
+                                        'data' => $data,
                                     ];
                                 } elseif (isset($result['steps']) || isset($result['fields'])) {
                                     // Si tiene steps/fields directamente (sin wizard_config)
@@ -308,15 +319,26 @@ class CrudController extends BaseController
                                         $result['fields'] ?? []
                                     );
                                     
+                                    $data = [
+                                        'form_config' => $formConfig,
+                                        'wizard_steps' => $wizardSteps,
+                                        'initial_step' => $result['initial_step'] ?? 0,
+                                        'action_id' => $actionId,
+                                        'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
+                                    ];
+                                    if (isset($result['kind'])) {
+                                        $data['kind'] = $result['kind'];
+                                    }
+                                    if (isset($result['ui_type'])) {
+                                        $data['ui_type'] = $result['ui_type'];
+                                    }
+                                    if (isset($result['compatibility'])) {
+                                        $data['compatibility'] = $result['compatibility'];
+                                    }
+
                                     return [
                                         'success' => true,
-                                        'data' => [
-                                            'form_config' => $formConfig,
-                                            'wizard_steps' => $wizardSteps,
-                                            'initial_step' => $result['initial_step'] ?? 0,
-                                            'action_id' => $actionId,
-                                            'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
-                                        ],
+                                        'data' => $data,
                                     ];
                                 }
                                 

@@ -1,6 +1,6 @@
 ## Vistas dinámicas JSON vs vistas nativas (Web / Flutter)
 
-Este documento resume **cuándo usamos vistas dinámicas basadas en JSON** (por ejemplo `frontend/views/json/turnos/crear-mi-turno.json`) y **cuándo preferimos vistas nativas**:
+Este documento resume **cuándo usamos vistas dinámicas basadas en JSON** (por ejemplo `frontend/modules/api/v1/views/json/turnos/crear-mi-turno.json`) y **cuándo preferimos vistas nativas**:
 
 - **Web**: vistas PHP/HTML de Yii2 (`views/.../*.php`, componentes JS/SPA).
 - **Móvil**: pantallas nativas Flutter (widgets y layouts propios de la app).
@@ -18,10 +18,10 @@ Las vistas JSON representan **descriptores de UI** que se consumen desde la API.
 - vistas de detalle,
 - menús simples u otros layouts básicos.
 
-En el backend se cargan con algo como:
+En el backend se cargan con **`UiDefinitionTemplateManager`** (antes se usaba el nombre `FormConfigTemplateManager`, deprecado: no se trata solo de “formularios”, sino de **definiciones de UI**):
 
 ```php
-$config = FormConfigTemplateManager::render('turnos', 'crear-mi-turno', $params);
+$config = \common\components\UiDefinitionTemplateManager::render('turnos', 'crear-mi-turno', $params);
 // devuelve ['wizard_config' => [...]]
 ```
 
@@ -149,10 +149,19 @@ Para que los clientes (web y Flutter) sepan que una respuesta contiene una **def
 
 ### 5.1. Convención de rutas
 
-Ejemplos de endpoints:
+**Implementado en `frontend/config/main.php`:**
+
+- `GET /api/v1/ui/<entidad>/<accion>` → `UiController::actionDescriptor` (ej. `GET /api/v1/ui/turnos/crear-mi-turno`)
+- `OPTIONS /api/v1/ui/<entidad>/<accion>` → CORS (`UiController::actionOptions`)
+
+El permiso sigue el mismo `action_id` que `crud/execute-action` (`entidad.accion`). En RBAC suelen registrarse rutas como `/api/ui/descriptor` y `/api/ui/options` para quien deba consumir descriptores.
+
+**Alternativa:** `GET /api/v1/crud/execute-action?action_id=turnos.crear-mi-turno` (respuesta móvil con `form_config` / `wizard_steps` y metadatos `kind`, `ui_type`, `compatibility`).
+
+Ejemplos de URLs:
 
 - `GET /api/v1/ui/turnos/crear-mi-turno`
-- `GET /api/v1/ui/personas/actualizar-datos`
+- `GET /api/v1/ui/personas/actualizar-datos` (cuando exista la acción descubierta)
 
 Los clientes pueden asumir que:
 
@@ -167,5 +176,27 @@ Además de `wizard_config`, las respuestas de UI pueden incluir un envoltorio es
 {
   "kind": "ui_definition",
   "ui_type": "wizard",
-  "wizard_config": { }
+  "wizard_config": { },
+  "compatibility": { }
 }
+```
+
+### 5.3. Compatibilidad por cliente y versión de app
+
+En el JSON del flujo se puede declarar opcionalmente **`ui_meta`** (queda dentro de `wizard_config` tras el merge):
+
+```json
+"ui_meta": {
+  "schema_version": "1",
+  "clients": {
+    "*": { "min_app_version": "1.0.0" },
+    "paciente-flutter": { "min_app_version": "2.0.0", "max_app_version": "99.0.0" }
+  }
+}
+```
+
+El backend usa los headers `X-App-Client` y `X-App-Version` y adjunta **`compatibility`** en la respuesta. Ver `UiDefinitionTemplateManager::evaluateClientCompatibility()`.
+
+**Cliente web:** en `views/layouts/main.php` se define `window.spaConfig.appVersion` (parámetro `spaWebAppVersion` en `frontend/config/params.php`) y `window.getBioenlaceApiClientHeaders()`. La SPA (`spa-home.js`), `ajax-wrapper.js` (`VitaMindAjax.fetchPost`), listado de pacientes y envíos relevantes de `chat-inteligente.js` envían esos headers automáticamente.
+
+**App móvil (Flutter u otra):** conviene enviar en todas las peticiones a `/api/v1/*` los mismos headers, por ejemplo `X-App-Client: paciente-flutter` y `X-App-Version` con el semver de la app (desde `package_info` o equivalente).

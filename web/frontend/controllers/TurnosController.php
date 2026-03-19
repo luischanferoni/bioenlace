@@ -224,7 +224,7 @@ class TurnosController extends Controller
                 'today' => date('Y-m-d')
             ], $providedParams);
             
-            $config = \common\components\FormConfigTemplateManager::render(
+            $config = \common\components\UiDefinitionTemplateManager::render(
                 'turnos',  // entity
                 'crear-mi-turno',  // action
                 $templateParams  // Incluye both template vars y provided params para calcular initial_step
@@ -232,7 +232,7 @@ class TurnosController extends Controller
             
             // Verificar que el config tenga wizard_config y no esté vacío
             if (!isset($config['wizard_config'])) {
-                Yii::error("FormConfigTemplateManager no devolvió wizard_config para turnos/crear-mi-turno", 'turnos-controller');
+                Yii::error("UiDefinitionTemplateManager no devolvió wizard_config para turnos/crear-mi-turno", 'turnos-controller');
                 throw new \yii\web\ServerErrorHttpException(
                     "No se pudo cargar la configuración del formulario. Por favor, contacte al administrador."
                 );
@@ -244,28 +244,34 @@ class TurnosController extends Controller
             $hasFields = !empty($wizardConfig['fields'] ?? []);
             
             if (!$hasSteps && !$hasFields) {
-                Yii::error("FormConfigTemplateManager devolvió wizard_config vacío para turnos/crear-mi-turno", 'turnos-controller');
+                Yii::error("UiDefinitionTemplateManager devolvió wizard_config vacío para turnos/crear-mi-turno", 'turnos-controller');
                 throw new \yii\web\ServerErrorHttpException(
                     "No se pudo cargar la configuración del formulario. Por favor, contacte al administrador."
                 );
             }
             
-            // Leer headers de versión/capacidades (para logging y futura selección de template)
-            $request = Yii::$app->request;
-            $appClient = $request->headers->get('X-App-Client');    // ej: paciente-flutter, web-frontend
-            $appVersion = $request->headers->get('X-App-Version');  // ej: 2.0.0
-            $androidSdk = $request->headers->get('X-Android-Sdk');  // opcional en mobile
+            $headers = \common\components\UiDefinitionTemplateManager::getClientHeadersFromRequest();
+            $appClient = $headers['client'];
+            $appVersion = $headers['version'];
+            $androidSdk = $headers['android_sdk'];
 
             Yii::info(
                 "Devolviendo UI definition para turnos/crear-mi-turno; client={$appClient}, version={$appVersion}, sdk={$androidSdk}",
                 'turnos-controller'
             );
 
+            $compatibility = \common\components\UiDefinitionTemplateManager::evaluateClientCompatibility(
+                $wizardConfig,
+                $appClient,
+                $appVersion
+            );
+
             // Envolver wizard_config con metadatos de UI, manteniendo compatibilidad
             return [
-                'kind'          => 'ui_definition',
-                'ui_type'       => 'wizard',
-                'wizard_config' => $wizardConfig,
+                'kind'            => 'ui_definition',
+                'ui_type'         => 'wizard',
+                'wizard_config'   => $wizardConfig,
+                'compatibility'   => $compatibility,
             ];
         }
 

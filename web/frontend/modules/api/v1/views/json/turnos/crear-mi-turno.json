@@ -1,4 +1,12 @@
 {
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": {
+        "min_app_version": "1.0.0"
+      }
+    }
+  },
   "steps": [
     {
       "step": 0,

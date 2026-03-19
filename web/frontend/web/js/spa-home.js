@@ -6,6 +6,21 @@
 (function() {
     'use strict';
 
+    /**
+     * Headers X-App-Client / X-App-Version para /api/v1 (compatibilidad UI en backend).
+     * Si existe window.getBioenlaceApiClientHeaders (layout main), lo usa.
+     */
+    function clientApiHeaders(extra) {
+        if (typeof window.getBioenlaceApiClientHeaders === 'function') {
+            return window.getBioenlaceApiClientHeaders(extra || {});
+        }
+        var v = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
+        return Object.assign(
+            { 'X-App-Client': 'web-frontend', 'X-App-Version': v },
+            extra || {}
+        );
+    }
+
     // Referencias a elementos DOM
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
@@ -57,11 +72,11 @@
         const crudUrl = window.spaConfig.baseUrl + '/api/v1/crud/process-query';
         fetch(crudUrl, {
             method: 'POST',
-            headers: {
+            headers: clientApiHeaders({
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
-            },
+            }),
             credentials: 'same-origin', // Incluir cookies de sesión
             body: JSON.stringify({
                 query: query
@@ -598,9 +613,9 @@
         fetch(action, {
             method: 'POST',
             body: formData,
-            headers: {
+            headers: clientApiHeaders({
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            })
         })
         .then(response => response.json())
         .then(data => {
@@ -640,10 +655,10 @@
         
         fetch(route, {
             method: 'POST',
-            headers: {
+            headers: clientApiHeaders({
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest'
-            },
+            }),
             body: formData
         })
         .then(response => response.json())
@@ -938,9 +953,9 @@
 
         fetch(url, {
             method: 'GET',
-            headers: {
+            headers: clientApiHeaders({
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            })
         })
         .then(response => {
             if (response.ok) {
@@ -1036,12 +1051,10 @@
         if (type === 'ui') {
             fetch(fullUrl, {
                 method: 'GET',
-                headers: {
+                headers: clientApiHeaders({
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                    'X-App-Client': 'web-frontend',
-                    'X-App-Version': window.spaConfig && window.spaConfig.appVersion ? window.spaConfig.appVersion : '1.0.0'
-                }
+                    'Accept': 'application/json'
+                })
             })
             .then(response => {
                 if (!response.ok) {
@@ -1095,9 +1108,9 @@
         // Caso normal: cargar HTML tradicional
         fetch(fullUrl, {
             method: 'GET',
-            headers: {
+            headers: clientApiHeaders({
                 'X-Requested-With': 'XMLHttpRequest'
-            }
+            })
         })
         .then(response => {
             if (response.ok) {
@@ -1217,10 +1230,10 @@
         const url = window.spaConfig.baseUrl + '/site/get-common-actions';
         fetch(url, {
             method: 'GET',
-            headers: {
+            headers: clientApiHeaders({
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
-            }
+            })
         })
         .then(response => {
             // Verificar que la respuesta sea JSON

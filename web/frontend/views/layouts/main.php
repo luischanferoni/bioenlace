@@ -203,7 +203,19 @@ if (Yii::$app->user->username) {
     // Inicializar variables globales para la SPA
     window.spaConfig = {
         baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
-        csrfToken: '<?= Yii::$app->request->csrfToken ?>'
+        csrfToken: '<?= Yii::$app->request->csrfToken ?>',
+        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>
+    };
+    /**
+     * Headers para API v1: compatibilidad de descriptores UI (UiDefinitionTemplateManager).
+     * Uso: fetch(url, { headers: window.getBioenlaceApiClientHeaders({ Accept: 'application/json' }) })
+     */
+    window.getBioenlaceApiClientHeaders = function (extra) {
+        var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
+        return Object.assign(
+            { 'X-App-Client': 'web-frontend', 'X-App-Version': ver },
+            extra || {}
+        );
     };
     
     // Calcular y establecer la altura del navbar para el posicionamiento del sidebar

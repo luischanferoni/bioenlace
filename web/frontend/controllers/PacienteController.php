@@ -22,7 +22,7 @@ use common\models\Guardia;
 use common\models\Alergias;
 use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
-use common\components\PersonaTimelineService;
+use common\models\PersonaTimelineRepository;
 use \frontend\components\UserRequest;
 // Filtros y componentes
 use frontend\filters\SisseActionFilter;
@@ -467,9 +467,16 @@ class PacienteController extends Controller
                 $condicionesActivas[] = $diag2;
             }
         }
-        $hallazgos = \common\models\Alergias::find()->where(['id_persona' => $paciente->id_persona])->all();
-        $antecedentes_personales = \common\models\PersonasAntecedente::find()->where(['id_persona' => $paciente->id_persona, 'tipo_antecedente' => 'Personal'])->all();
-        $antecedentes_familiares = \common\models\PersonasAntecedente::find()->where(['id_persona' => $paciente->id_persona, 'tipo_antecedente' => 'Familiar'])->all();
+        /** @var array<int, object> $hallazgos */
+        $hallazgos = (array) \common\models\Alergias::find()->where(['id_persona' => $paciente->id_persona])->all();
+        /** @var array<int, object> $antecedentes_personales */
+        $antecedentes_personales = \common\models\PersonasAntecedente::find()
+            ->where(['id_persona' => $paciente->id_persona, 'tipo_antecedente' => 'Personal'])
+            ->all();
+        /** @var array<int, object> $antecedentes_familiares */
+        $antecedentes_familiares = \common\models\PersonasAntecedente::find()
+            ->where(['id_persona' => $paciente->id_persona, 'tipo_antecedente' => 'Familiar'])
+            ->all();
         
         // Simulación de datos adicionales
         if ((defined('YII_DEBUG') && YII_DEBUG) || Yii::$app->getRequest()->getQueryParam('simular_diagnosticos')) {
@@ -560,18 +567,16 @@ class PacienteController extends Controller
         $idEfector = Yii::$app->user->getIdEfector();
         $encounterClass = Yii::$app->user->getEncounterClass();
 
+        /** @var ?\common\models\ServiciosEfector $servPasePrevio */
         $servPasePrevio = ServiciosEfector::find()
             ->where(['id_efector'=>$idEfector])
             ->andWhere(['id_servicio' => $idServicio])
             ->one();
 
-        $idServicioPP = !is_null($servPasePrevio) ? $servPasePrevio->pase_previo : 0;
+        $idServicioPP = is_object($servPasePrevio) ? $servPasePrevio->pase_previo : 0;
 
         $motivosConsultaTurno = null;
-        $timelineHistoria = PersonaTimelineService::buildTimelineData($paciente->id_persona, $idEfector);
-        if ($timelineHistoria !== null) {
-            $motivosConsultaTurno = PersonaTimelineService::ultimoMotivoConsultaDesdeTimeline($timelineHistoria['timeline']);
-        }
+        $motivosConsultaTurno = PersonaTimelineRepository::getUltimoMotivoConsultaTurno($paciente->id_persona, $idEfector);
 
         //TODO: hacer un ordenamiento del historial completo, tal vez ahaya que transformar las fechas para ordenar y volverlas a poner con formato al mostrarlas
         // echo "<pre>";
@@ -744,6 +749,7 @@ class PacienteController extends Controller
                 return $resultadoValidacion;
             }
 
+            /** @var ?\common\models\ConsultasConfiguracion $configuracion */
             $configuracion = \common\models\ConsultasConfiguracion::find()
                 ->where(['id_servicio' => $resultadoValidacion['idServicio']])
                 ->andWhere(['encounter_class' => $resultadoValidacion['encounterClass']])
@@ -751,7 +757,7 @@ class PacienteController extends Controller
                 ->one();
         }
 
-        if (!$configuracion) {
+        if (!is_object($configuracion)) {
             return ['success' => false, 'msg' => 'Error: Servicio sin configuración'];
         }
 

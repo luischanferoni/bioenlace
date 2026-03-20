@@ -521,7 +521,7 @@ class SiteController extends Controller
 
         try {
             // Obtener acciones disponibles para el usuario
-            $availableActions = \common\components\ActionMappingService::getAvailableActionsForUser();
+            $availableActions = \common\components\Actions\ActionMappingService::getAvailableActionsForUser();
             
             // Filtrar acciones comunes según el rol del usuario
             $commonActions = self::filterCommonActions($availableActions);

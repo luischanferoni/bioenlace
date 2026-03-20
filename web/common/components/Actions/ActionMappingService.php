@@ -140,26 +140,6 @@ class ActionMappingService
     }
 
     /**
-     * Misma regla que filtra acciones en {@see getAvailableActionsForUser} (AllowedRoutesResolver + isFreeAccess).
-     * En API/JWT, {@see User::canRoute} puede no alinearse con ese mapa RBAC.
-     *
-     * @param int|null $userId
-     * @param string $route p. ej. /frontend/turnos/crear-mi-turno
-     */
-    public static function userCanAccessFrontendRoute($userId, $route)
-    {
-        if (!$userId || $route === '') {
-            return false;
-        }
-        $user = User::findOne((int) $userId);
-        if (!$user) {
-            return false;
-        }
-
-        return self::userCanAccessRoute($user, $route, null);
-    }
-
-    /**
      * Generar descripción estructurada de acciones para el modelo de IA
      * @param array $actions
      * @return string

@@ -47,6 +47,25 @@ final class EntitySchemaRegistry
                 'required' => ['practica'],
                 'optional' => ['tipo_practica', 'observaciones'],
             ],
+            // Agenda quirúrgica: borrador para POST /api/v1/quirofano/cirugias
+            'quirofano_cirugia' => [
+                'required' => [
+                    'id_quirofano_sala',
+                    'id_persona',
+                    'fecha_hora_inicio',
+                    'fecha_hora_fin_estimada',
+                ],
+                'optional' => [
+                    'id_seg_nivel_internacion',
+                    'id_practica',
+                    'procedimiento_descripcion',
+                    'observaciones',
+                    'estado',
+                    'documento_paciente',
+                    'sala_nombre',
+                    'sala_codigo',
+                ],
+            ],
         ];
 
         // Permitir que el intent determine el schema por defecto.

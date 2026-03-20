@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\components\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Text\ProcesadorTextoMedico;
+use common\components\Services\Consulta\ConsultaProcesamientoService;
 
 class AudioController extends BaseController
 {
@@ -64,10 +65,9 @@ class AudioController extends BaseController
                         ? $resultadoProcesamiento['texto_procesado'] 
                         : $resultadoProcesamiento;
 
-                    // Llamar al análisis de consulta
-                    $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
-                    $consultaController = new \frontend\modules\api\v1\controllers\ConsultaController('consulta', 'frontend\modules\api\v1');
-                    $resultadoIA = $consultaController->analizarConsultaConIA(
+                    $consultaSvc = new ConsultaProcesamientoService();
+                    $categorias = $consultaSvc->getModelosPorConfiguracion($idConfiguracion);
+                    $resultadoIA = $consultaSvc->analizarConsultaConIA(
                         $textoProcesado,
                         $servicio ? $servicio->nombre : null,
                         $categorias
@@ -100,23 +100,5 @@ class AudioController extends BaseController
                 'error' => 'Error procesando audio: ' . $e->getMessage()
             ];
         }
-    }
-
-    private function getModelosPorConfiguracion($idConfiguracion)
-    {
-        if (!$idConfiguracion) {
-            return [];
-        }
-
-        try {
-            $configuracion = \common\models\ConsultasConfiguracion::findOne($idConfiguracion);
-            if ($configuracion && $configuracion->modelos) {
-                return json_decode($configuracion->modelos, true) ?? [];
-            }
-        } catch (\Exception $e) {
-            Yii::error("Error obteniendo configuración: " . $e->getMessage(), 'audio-controller');
-        }
-
-        return [];
     }
 }

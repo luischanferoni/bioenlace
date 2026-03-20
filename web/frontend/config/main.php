@@ -201,6 +201,25 @@ return [
                 // Pacientes (encounter resuelto en backend)
                 'GET api/<version:\w+>/pacientes' => '<version>/pacientes/index',
                 'OPTIONS api/<version:\w+>/pacientes' => '<version>/pacientes/index',
+
+                // Quirófano — agenda (salas + cirugías)
+                'GET api/<version:\w+>/quirofano/salas' => '<version>/quirofano/salas',
+                'POST api/<version:\w+>/quirofano/salas' => '<version>/quirofano/salas',
+                'OPTIONS api/<version:\w+>/quirofano/salas' => '<version>/quirofano/options',
+                'GET api/<version:\w+>/quirofano/salas/<id:\d+>' => '<version>/quirofano/view-sala',
+                'PATCH api/<version:\w+>/quirofano/salas/<id:\d+>' => '<version>/quirofano/update-sala',
+                'DELETE api/<version:\w+>/quirofano/salas/<id:\d+>' => '<version>/quirofano/delete-sala',
+                'OPTIONS api/<version:\w+>/quirofano/salas/<id:\d+>' => '<version>/quirofano/options',
+                'GET api/<version:\w+>/quirofano/cirugias' => '<version>/quirofano/cirugias',
+                'POST api/<version:\w+>/quirofano/cirugias' => '<version>/quirofano/cirugias',
+                'POST api/<version:\w+>/quirofano/cirugias/intake' => '<version>/quirofano/cirugia-intake',
+                'OPTIONS api/<version:\w+>/quirofano/cirugias' => '<version>/quirofano/options',
+                'OPTIONS api/<version:\w+>/quirofano/cirugias/intake' => '<version>/quirofano/options',
+                'GET api/<version:\w+>/quirofano/cirugias/<id:\d+>' => '<version>/quirofano/view-cirugia',
+                'PATCH api/<version:\w+>/quirofano/cirugias/<id:\d+>' => '<version>/quirofano/update-cirugia',
+                'PATCH api/<version:\w+>/quirofano/cirugias/<id:\d+>/estado' => '<version>/quirofano/cirugia-estado',
+                'OPTIONS api/<version:\w+>/quirofano/cirugias/<id:\d+>' => '<version>/quirofano/options',
+                'OPTIONS api/<version:\w+>/quirofano/cirugias/<id:\d+>/estado' => '<version>/quirofano/options',
             ],            
         ],
         'snowstorm' => [

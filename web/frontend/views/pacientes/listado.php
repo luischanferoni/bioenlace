@@ -4,8 +4,11 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\Json;
 use common\models\Consulta;
+use common\models\Servicio;
 
+$idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Consulta::ENCOUNTER_CLASS_AMB);
+$esImpQuirurgico = ($encounter_class === Consulta::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
 $fechaAnterior = date('Y-m-d', strtotime($fecha . ' -1 day'));
 $fechaSiguiente = date('Y-m-d', strtotime($fecha . ' +1 day'));
 $hoy = date('Y-m-d');
@@ -40,10 +43,14 @@ $this->title = 'Pacientes';
     <?php endif; ?>
 </div>
 
-<?php if ($esAmbulatorio): ?>
+<?php if ($esAmbulatorio || $esImpQuirurgico): ?>
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
     <div class="text-muted small">
+        <?php if ($esAmbulatorio): ?>
         <strong>Filtrar por fecha del turno:</strong> solo se listan turnos <strong>pendientes y sin atender</strong> en la fecha elegida.
+        <?php else: ?>
+        <strong>Filtrar por fecha:</strong> cirugías agendadas en el efector para el día indicado.
+        <?php endif; ?>
     </div>
     <div class="btn-group" role="group">
         <a href="<?= Url::to(['site/pacientes', 'fecha' => $fechaAnterior]) ?>" class="btn btn-outline-secondary btn-sm">
@@ -85,6 +92,7 @@ $urlPacienteHistoria = Url::to(['/paciente/historia'], true);
 $msgEmptyTurnos = Json::encode('No hay pacientes con turno pendiente de atención en la fecha seleccionada.');
 $msgEmptyInternados = Json::encode('No hay pacientes internados para mostrar.');
 $msgEmptyGuardias = Json::encode('No hay ingresos en guardia pendientes.');
+$msgEmptyCirugias = Json::encode('No hay cirugías agendadas para la fecha seleccionada.');
 $this->registerJs(<<<JS
 (function() {
     var \$ = window.jQuery;
@@ -134,13 +142,24 @@ $this->registerJs(<<<JS
         container.appendChild(frag);
     }
 
+    function historiaConContexto(personaId, ctx) {
+        if (!personaId) return null;
+        var base = '{$urlPacienteHistoria}';
+        var q = 'id=' + encodeURIComponent(personaId);
+        if (ctx && typeof ctx === 'object') {
+            if (ctx.parent) q += '&parent=' + encodeURIComponent(ctx.parent);
+            if (ctx.parent_id != null) q += '&parent_id=' + encodeURIComponent(ctx.parent_id);
+        }
+        return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
+    }
+
     function fillTurnoCard(colEl, t, idx) {
         var nombre = (t.paciente && t.paciente.nombre_completo) ? t.paciente.nombre_completo : 'Sin paciente';
         var servicio = t.servicio || 'Sin servicio';
         var estadoClass = (t.estado === 'PENDIENTE') ? 'warning' : 'secondary';
         var estadoLabel = t.estado_label || t.estado || '';
         var idPersona = t.id_persona || (t.paciente ? t.paciente.id : null);
-        var urlHistoria = idPersona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(idPersona)) : null;
+        var urlHistoria = historiaConContexto(idPersona, { parent: 'TURNO', parent_id: t.id });
         var cardId = 'pac-turno-' + idx + '-' + (idPersona != null ? String(idPersona) : 'x');
 
         var card = colEl.querySelector('[data-role="turno-card"]');
@@ -212,7 +231,7 @@ $this->registerJs(<<<JS
 
     function fillInternadoRow(rowEl, i, idx) {
         var urlView = '{$urlInternacionView}' + '?id=' + i.id;
-        var urlHistoria = i.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(i.id_persona)) : null;
+        var urlHistoria = historiaConContexto(i.id_persona, { parent: 'INTERNACION', parent_id: i.id });
         var cardId = 'pac-int-' + idx + '-' + i.id;
 
         rowEl.querySelector('[data-field="nombre"]').textContent = i.nombre || '';
@@ -264,8 +283,74 @@ $this->registerJs(<<<JS
         bindSpaCards();
     }
 
+    function fillCirugiaCard(colEl, c, idx) {
+        var nombre = (c.paciente && c.paciente.nombre_completo) ? c.paciente.nombre_completo : 'Sin paciente';
+        var idPersona = c.id_persona || (c.paciente ? c.paciente.id : null);
+        var urlHistoria = historiaConContexto(idPersona, { parent: 'CIRUGIA', parent_id: c.id });
+        var estadoClass = (c.estado === 'REALIZADA' || c.estado === 'CANCELADA') ? 'secondary' : 'warning';
+        var estadoLabel = c.estado_label || c.estado || '';
+        var cardId = 'pac-cirugia-' + idx + '-' + (c.id != null ? String(c.id) : 'x');
+
+        var card = colEl.querySelector('[data-role="cirugia-card"]');
+        if (!card) {
+            return;
+        }
+
+        colEl.querySelector('[data-field="nombre"]').textContent = nombre;
+        colEl.querySelector('[data-field="sala"]').textContent = c.sala_nombre || '—';
+        colEl.querySelector('[data-field="inicio"]').textContent = c.fecha_hora_inicio || '';
+
+        var badge = colEl.querySelector('[data-field="estado-badge"]');
+        badge.className = 'badge bg-' + estadoClass;
+        badge.textContent = estadoLabel;
+
+        if (urlHistoria) {
+            card.classList.add('spa-card');
+            card.setAttribute('data-expandable', 'false');
+            card.setAttribute('data-full-page', 'true');
+            card.setAttribute('data-action-type', 'default');
+            card.dataset.cardId = cardId;
+            card.dataset.actionUrl = urlHistoria;
+        } else {
+            card.classList.remove('spa-card');
+            card.removeAttribute('data-expandable');
+            card.removeAttribute('data-full-page');
+            card.removeAttribute('data-action-type');
+            card.removeAttribute('data-card-id');
+            card.removeAttribute('data-action-url');
+        }
+    }
+
+    function renderCirugias(data) {
+        if (!data.length) {
+            showListadoEmpty({$msgEmptyCirugias});
+            return;
+        }
+        clearListadoContent();
+        var wrapFrag = importTemplate('tpl-pacientes-cirugias-wrap');
+        if (!wrapFrag) {
+            return;
+        }
+        var row = wrapFrag.querySelector('[data-role="cirugias-grid"]');
+        container.appendChild(wrapFrag);
+
+        data.forEach(function(c, idx) {
+            var itemFrag = importTemplate('tpl-paciente-cirugia');
+            if (!itemFrag) {
+                return;
+            }
+            var col = itemFrag.firstElementChild;
+            if (!col) {
+                return;
+            }
+            fillCirugiaCard(col, c, idx);
+            row.appendChild(col);
+        });
+        bindSpaCards();
+    }
+
     function fillGuardiaRow(rowEl, g, idx) {
-        var urlHistoria = g.id_persona ? ('{$urlPacienteHistoria}' + '?id=' + encodeURIComponent(g.id_persona)) : null;
+        var urlHistoria = historiaConContexto(g.id_persona, { parent: 'GUARDIA', parent_id: g.id });
         var cardId = 'pac-guardia-' + idx + '-' + (g.id_persona || 'x');
         var docLine = (g.tipo_documento ? (g.tipo_documento + ': ') : '') + (g.documento || '');
 
@@ -369,6 +454,8 @@ $this->registerJs(<<<JS
             renderInternados(data);
         } else if (kind === 'guardias') {
             renderGuardias(data);
+        } else if (kind === 'cirugias') {
+            renderCirugias(data);
         } else {
             showError('No hay datos configurados para este tipo de atención.');
             loading.classList.add('d-none');

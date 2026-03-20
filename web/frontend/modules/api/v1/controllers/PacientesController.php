@@ -3,11 +3,14 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
+use common\models\Cirugia;
 use common\models\Consulta;
 use common\models\Guardia;
 use common\models\InfraestructuraPiso;
 use common\models\Persona;
+use common\models\QuirofanoSala;
 use common\models\RrhhEfector;
+use common\models\Servicio;
 use common\models\ServiciosEfector;
 use common\models\Turno;
 /**
@@ -50,6 +53,19 @@ class PacientesController extends BaseController
                     'total' => $payload['total'],
                 ];
             case Consulta::ENCOUNTER_CLASS_IMP:
+                $idServicioSesion = (int) Yii::$app->user->getServicioActual();
+                if ($idServicioSesion && Servicio::esServicioAgendaQuirurgica($idServicioSesion)) {
+                    $data = $this->cirugiasAgendadasPorEfectorYFecha($fecha);
+                    return [
+                        'success' => true,
+                        'message' => 'OK',
+                        'encounter_class' => $encounterClass,
+                        'kind' => 'cirugias',
+                        'data' => $data,
+                        'fecha' => $fecha,
+                        'total' => count($data),
+                    ];
+                }
                 $data = $this->internadosPorEfector();
                 return [
                     'success' => true,
@@ -193,6 +209,52 @@ class PacientesController extends BaseController
             return [];
         }
         return InfraestructuraPiso::getInternadosPorEfector($idEfector);
+    }
+
+    /**
+     * Cirugías del efector en la fecha indicada (ventana calendario del día local).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function cirugiasAgendadasPorEfectorYFecha(string $fecha): array
+    {
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if (!$idEfector) {
+            return [];
+        }
+        $inicio = $fecha . ' 00:00:00';
+        $fin = $fecha . ' 23:59:59';
+        $rows = Cirugia::find()->alias('c')
+            ->innerJoin(['s' => QuirofanoSala::tableName()], 's.id = c.id_quirofano_sala')
+            ->where(['s.id_efector' => $idEfector])
+            ->andWhere(['s.deleted_at' => null])
+            ->andWhere(['>=', 'c.fecha_hora_inicio', $inicio])
+            ->andWhere(['<=', 'c.fecha_hora_inicio', $fin])
+            ->orderBy(['c.fecha_hora_inicio' => SORT_ASC])
+            ->all();
+
+        $out = [];
+        foreach ($rows as $c) {
+            /** @var Cirugia $c */
+            $paciente = $c->persona;
+            $sala = $c->sala;
+            $out[] = [
+                'id' => (int) $c->id,
+                'id_persona' => (int) $c->id_persona,
+                'paciente' => [
+                    'id' => $paciente ? (int) $paciente->id_persona : null,
+                    'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
+                    'documento' => $paciente ? $paciente->documento : null,
+                ],
+                'sala_nombre' => $sala ? $sala->nombre : '',
+                'fecha_hora_inicio' => $c->fecha_hora_inicio,
+                'fecha_hora_fin_estimada' => $c->fecha_hora_fin_estimada,
+                'estado' => $c->estado,
+                'estado_label' => $c->getEstadoLabel(),
+            ];
+        }
+
+        return $out;
     }
 
     /**

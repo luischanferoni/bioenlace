@@ -19,21 +19,24 @@ $apiCirugiaJson = Json::encode($apiCirugia);
 $baseJson = Json::encode($base);
 $efectorFallback = (int) Yii::$app->request->get('id_efector', Yii::$app->user->getIdEfector());
 $indexUrlJson = Json::encode(Url::to(['index', 'id_efector' => $efectorFallback]));
+$urlHistoriaTpl = Url::to(['/paciente/historia']);
 ?>
 <div class="quirofano-update-cirugia">
     <h1><?= Html::encode($this->title) ?></h1>
+
+    <div class="alert alert-info">
+        El <strong>informe clínico</strong> se carga en la <strong>historia clínica</strong> del paciente
+        (menú Pacientes o enlace abajo). Esta pantalla es solo para <strong>agenda</strong> (sala, horarios, estado).
+    </div>
 
     <div id="qu-msg" class="alert d-none" role="alert"></div>
     <p id="qu-loading" class="text-muted">Cargando…</p>
 
     <div id="qu-form" class="d-none">
-        <div class="panel panel-default">
-            <div class="panel-heading">Texto libre (opcional)</div>
-            <div class="panel-body">
-                <textarea id="qu-texto" class="form-control" rows="2" placeholder="Nota para re-interpretar…"></textarea>
-                <button type="button" id="qu-intake" class="btn btn-default btn-sm">Sugerir desde texto</button>
-            </div>
-        </div>
+        <p class="mb-2">
+            <a id="qu-link-hc" class="btn btn-outline-primary btn-sm" href="#" target="_blank" rel="noopener">Abrir historia clínica (consulta)</a>
+            <?= Html::a('Ir a Pacientes', ['/site/pacientes'], ['class' => 'btn btn-link btn-sm']) ?>
+        </p>
 
         <div class="form-group">
             <label for="qu-sala">Sala</label>
@@ -41,7 +44,7 @@ $indexUrlJson = Json::encode(Url::to(['index', 'id_efector' => $efectorFallback]
         </div>
         <div class="form-group">
             <label for="qu-persona">ID paciente</label>
-            <input type="number" id="qu-persona" class="form-control" />
+            <input type="number" id="qu-persona" class="form-control" readonly />
         </div>
         <div class="form-group">
             <label for="qu-internacion">ID internación (opcional)</label>
@@ -50,14 +53,6 @@ $indexUrlJson = Json::encode(Url::to(['index', 'id_efector' => $efectorFallback]
         <div class="form-group">
             <label for="qu-practica">ID práctica (opcional)</label>
             <input type="number" id="qu-practica" class="form-control" />
-        </div>
-        <div class="form-group">
-            <label for="qu-proc">Procedimiento</label>
-            <textarea id="qu-proc" class="form-control" rows="2"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="qu-obs">Observaciones</label>
-            <textarea id="qu-obs" class="form-control" rows="2"></textarea>
         </div>
         <div class="form-group">
             <label for="qu-estado">Estado</label>
@@ -77,21 +72,21 @@ $indexUrlJson = Json::encode(Url::to(['index', 'id_efector' => $efectorFallback]
         </div>
 
         <div class="form-group">
-            <button type="button" id="qu-guardar" class="btn btn-success">Guardar</button>
+            <button type="button" id="qu-guardar" class="btn btn-success">Guardar agenda</button>
             <?= Html::a('Volver', ['index', 'id_efector' => $efectorFallback], ['class' => 'btn btn-default']) ?>
         </div>
     </div>
 </div>
 
 <?php
-$apiIntakeJson = Json::encode($base . '/api/v1/quirofano/cirugias/intake');
+$urlHistoriaBaseJson = Json::encode($urlHistoriaTpl);
 $js = <<<JS
 (function () {
     var cid = {$idJson};
     var apiGet = {$apiCirugiaJson};
     var apiPatch = {$apiCirugiaJson};
-    var apiIntake = {$apiIntakeJson};
     var indexUrl = {$indexUrlJson};
+    var urlHistoriaBase = {$urlHistoriaBaseJson};
     var idEfectorActual = null;
 
     function msg(html, kind) {
@@ -136,16 +131,23 @@ $js = <<<JS
             });
     }
 
+    function setHistoriaLink(personaId) {
+        var a = document.getElementById('qu-link-hc');
+        if (!a || !personaId) return;
+        var sep = urlHistoriaBase.indexOf('?') >= 0 ? '&' : '?';
+        a.href = urlHistoriaBase + sep + 'id=' + encodeURIComponent(personaId)
+            + '&parent=CIRUGIA&parent_id=' + encodeURIComponent(cid);
+    }
+
     function applyCirugia(d) {
         document.getElementById('qu-sala').value = String(d.id_quirofano_sala);
         document.getElementById('qu-persona').value = String(d.id_persona);
         document.getElementById('qu-internacion').value = d.id_seg_nivel_internacion != null ? String(d.id_seg_nivel_internacion) : '';
         document.getElementById('qu-practica').value = d.id_practica != null ? String(d.id_practica) : '';
-        document.getElementById('qu-proc').value = d.procedimiento_descripcion || '';
-        document.getElementById('qu-obs').value = d.observaciones || '';
         document.getElementById('qu-estado').value = d.estado || '';
         document.getElementById('qu-ini').value = d.fecha_hora_inicio || '';
         document.getElementById('qu-fin').value = d.fecha_hora_fin_estimada || '';
+        setHistoriaLink(d.id_persona);
     }
 
     fetch(apiGet, { credentials: 'same-origin', headers: headers(false) })
@@ -172,52 +174,13 @@ $js = <<<JS
             msg('Error de red al cargar.', 'alert-danger');
         });
 
-    document.getElementById('qu-intake').addEventListener('click', function () {
-        if (!idEfectorActual) return;
-        var texto = (document.getElementById('qu-texto').value || '').trim();
-        fetch(apiIntake, {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: headers(true),
-            body: JSON.stringify({ id_efector: idEfectorActual, texto: texto })
-        }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-        .then(function (x) {
-            if (!x.ok || !x.j || !x.j.success || !x.j.data) {
-                msg((x.j && x.j.message) ? x.j.message : 'Intake fallido.', 'alert-danger');
-                return;
-            }
-            var draft = x.j.data.draft || {};
-            if (draft.id_quirofano_sala) {
-                document.getElementById('qu-sala').value = String(draft.id_quirofano_sala);
-            }
-            if (draft.id_persona) {
-                document.getElementById('qu-persona').value = String(draft.id_persona);
-            }
-            if (draft.fecha_hora_inicio) {
-                document.getElementById('qu-ini').value = draft.fecha_hora_inicio;
-            }
-            if (draft.fecha_hora_fin_estimada) {
-                document.getElementById('qu-fin').value = draft.fecha_hora_fin_estimada;
-            }
-            if (draft.procedimiento_descripcion) {
-                document.getElementById('qu-proc').value = draft.procedimiento_descripcion;
-            }
-            if (draft.observaciones) {
-                document.getElementById('qu-obs').value = draft.observaciones;
-            }
-            msg('Sugerencias aplicadas (revisá antes de guardar).', 'alert-warning');
-        }).catch(function () { msg('Error de red.', 'alert-danger'); });
-    });
-
     document.getElementById('qu-guardar').addEventListener('click', function () {
         var body = {
             id_quirofano_sala: parseInt(document.getElementById('qu-sala').value, 10),
             id_persona: parseInt(document.getElementById('qu-persona').value, 10),
             fecha_hora_inicio: (document.getElementById('qu-ini').value || '').trim(),
             fecha_hora_fin_estimada: (document.getElementById('qu-fin').value || '').trim(),
-            estado: (document.getElementById('qu-estado').value || '').trim(),
-            procedimiento_descripcion: (document.getElementById('qu-proc').value || '').trim() || null,
-            observaciones: (document.getElementById('qu-obs').value || '').trim() || null
+            estado: (document.getElementById('qu-estado').value || '').trim()
         };
         var intern = document.getElementById('qu-internacion').value;
         body.id_seg_nivel_internacion = intern === '' ? null : parseInt(intern, 10);

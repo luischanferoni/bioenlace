@@ -98,3 +98,26 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
         <span class="btn btn-dark btn-sm me-2" data-role="cta-atender"><i class="bi bi-chevron-right"></i> Atender</span>
     </div>
 </template>
+
+<template id="tpl-pacientes-cirugias-wrap">
+    <div class="row" data-role="cirugias-grid"></div>
+</template>
+
+<template id="tpl-paciente-cirugia">
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 shadow-sm position-relative" data-role="cirugia-card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-person-circle text-primary me-2"></i><span data-field="nombre"></span>
+                </h5>
+                <div class="mb-2">
+                    <strong><i class="bi bi-hospital me-2"></i>Sala:</strong> <span data-field="sala"></span>
+                </div>
+                <div class="mb-2">
+                    <strong><i class="bi bi-clock me-2"></i>Inicio:</strong> <span data-field="inicio"></span>
+                </div>
+                <div class="mt-3"><span class="badge" data-field="estado-badge"></span></div>
+            </div>
+        </div>
+    </div>
+</template>

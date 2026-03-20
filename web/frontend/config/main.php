@@ -215,6 +215,8 @@ return [
                 'POST api/<version:\w+>/quirofano/cirugias/intake' => '<version>/quirofano/cirugia-intake',
                 'OPTIONS api/<version:\w+>/quirofano/cirugias' => '<version>/quirofano/options',
                 'OPTIONS api/<version:\w+>/quirofano/cirugias/intake' => '<version>/quirofano/options',
+                'GET api/<version:\w+>/quirofano/cirugias/<id:\d+>/informe-clinico' => '<version>/quirofano/informe-clinico',
+                'OPTIONS api/<version:\w+>/quirofano/cirugias/<id:\d+>/informe-clinico' => '<version>/quirofano/options',
                 'GET api/<version:\w+>/quirofano/cirugias/<id:\d+>' => '<version>/quirofano/view-cirugia',
                 'PATCH api/<version:\w+>/quirofano/cirugias/<id:\d+>' => '<version>/quirofano/update-cirugia',
                 'PATCH api/<version:\w+>/quirofano/cirugias/<id:\d+>/estado' => '<version>/quirofano/cirugia-estado',

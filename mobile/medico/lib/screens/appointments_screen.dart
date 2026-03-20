@@ -244,7 +244,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       elevation: 0,
       color: AppTheme.primaryColor.withOpacity(0.1),
       child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona),
+        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -301,7 +301,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     return Card(
       elevation: 0,
       child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona),
+        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -391,7 +391,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                   TextButton.icon(
                     icon: const Icon(Icons.medical_services, size: 18),
                     label: const Text('Historia clínica'),
-                    onPressed: () => _verHistoriaClinica(turno.idPersona),
+                    onPressed: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
                     style: TextButton.styleFrom(
                       foregroundColor: AppTheme.primaryColor,
                     ),
@@ -420,13 +420,16 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
   }
 
-  void _verHistoriaClinica(int personaId) {
+  void _verHistoriaClinica(int personaId, {String? parent, int? parentId}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PatientTimelineScreen(
           personaId: personaId,
           authToken: widget.authToken,
+          soloVer: parent == null,
+          consultParent: parent,
+          consultParentId: parentId,
         ),
       ),
     );

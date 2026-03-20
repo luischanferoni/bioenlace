@@ -75,6 +75,25 @@ class Servicio extends \yii\db\ActiveRecord
     }
 
     /**
+     * Servicios cuya agenda en site/pacientes (IMP) debe listar cirugías en lugar de internados.
+     * @see \Yii::$app->params['serviciosAgendaQuirurgicaIds']
+     */
+    public static function esServicioAgendaQuirurgica(int $idServicio): bool
+    {
+        $ids = Yii::$app->params['serviciosAgendaQuirurgicaIds'] ?? [];
+        if (is_array($ids) && in_array($idServicio, $ids, true)) {
+            return true;
+        }
+        $s = self::findOne($idServicio);
+        if (!$s) {
+            return false;
+        }
+        $n = mb_strtolower((string) $s->nombre, 'UTF-8');
+
+        return (bool) preg_match('/cirug|quir[oó]fano|quirofano|\bqx\b/i', $n);
+    }
+
+    /**
      * @return \yii\db\ActiveQuery
      */
     public function getReferencias()

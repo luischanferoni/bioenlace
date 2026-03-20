@@ -372,7 +372,10 @@ HTML;
                     $modelConsulta->editando = 0;
 
                     if ($parent && $parentId) {
-                        $modelConsulta->parent_class = Consulta::PARENT_CLASSES[$parent] ?? '';
+                        if (empty(Consulta::PARENT_CLASSES[$parent])) {
+                            throw new \Exception('Tipo de parent de consulta no válido: ' . $parent);
+                        }
+                        $modelConsulta->parent_class = Consulta::PARENT_CLASSES[$parent];
                         $modelConsulta->parent_id = $parentId;
                     } else {
                         $encounterClass = Yii::$app->user->getEncounterClass();

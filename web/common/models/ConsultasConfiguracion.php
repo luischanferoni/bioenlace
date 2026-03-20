@@ -413,7 +413,7 @@ class ConsultasConfiguracion extends \yii\db\ActiveRecord
 
             $derivacion = ConsultaDerivaciones::findOne($parentId);
 
-            if ($derivacion) {
+            if (!$derivacion) {
                 Yii::warning('Llamada a getModeloConsulta parentId a una Derivacion que no existe, parentId: ' . $parentId);
                 $mensajeError = 'Ocurrio un error con la derivacion, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
@@ -422,6 +422,28 @@ class ConsultasConfiguracion extends \yii\db\ActiveRecord
 
             $idServicio = $derivacion->id_servicio;
             $encounterClass = self::ENCOUNTER_CLASS_AMB;
+        }
+
+        if ($parent == Consulta::PARENT_CIRUGIA) {
+            $cirugia = Cirugia::findOne((int) $parentId);
+            if (!$cirugia) {
+                Yii::warning('validarPermisoAtencion: cirugía inexistente, parentId: ' . $parentId);
+                $mensajeError = 'No se encontró la cirugía indicada.';
+                return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
+            }
+            if ((int) $cirugia->id_persona !== (int) $paciente->id_persona) {
+                return ['success' => false, 'msg' => 'La cirugía no corresponde al paciente de esta historia clínica.', 'idServicio' => null, 'encounterClass' => null];
+            }
+            $sala = $cirugia->sala;
+            if (!$sala || $sala->deleted_at !== null) {
+                return ['success' => false, 'msg' => 'La sala de quirófano asociada no está disponible.', 'idServicio' => null, 'encounterClass' => null];
+            }
+            $efectorSesion = Yii::$app->user->getIdEfector();
+            if ($efectorSesion && (int) $sala->id_efector !== (int) $efectorSesion) {
+                return ['success' => false, 'msg' => 'La cirugía pertenece a otro efector. Cambie el efector en el menú superior.', 'idServicio' => null, 'encounterClass' => null];
+            }
+            $idServicio = Yii::$app->user->getServicioActual();
+            $encounterClass = self::ENCOUNTER_CLASS_IMP;
         }
 
         if ($parent == Consulta::PARENT_GUARDIA) {

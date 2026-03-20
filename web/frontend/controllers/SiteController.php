@@ -170,6 +170,7 @@ class SiteController extends Controller
         return $this->render('//pacientes/listado', [
             'fecha' => $fecha,
             'encounter_class' => $encounterClass,
+            'id_servicio_actual' => (int) $servicioActual,
         ]);
     }
 

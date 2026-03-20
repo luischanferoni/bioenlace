@@ -2,7 +2,14 @@
 /**
  * Vista parcial para el formulario de consulta
  * @var $paciente \common\models\Persona
+ * @var $idConfiguracion int|null
+ * @var $idConsulta int|string|null
+ * @var $parent string|null
+ * @var $parentId int|string|null
  */
+$idConsulta = $idConsulta ?? null;
+$parent = $parent ?? null;
+$parentId = $parentId ?? null;
 ?>
 
 <?php
@@ -11,6 +18,18 @@ use yii\helpers\Html;
 ?>
 <form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/consulta/guardar']) ?>">
     <?= Html::hiddenInput('id_persona', $paciente->id_persona) ?>
+    <?php if (!empty($idConfiguracion)): ?>
+        <?= Html::hiddenInput('id_configuracion', (int) $idConfiguracion) ?>
+    <?php endif; ?>
+    <?php if ($idConsulta !== null && $idConsulta !== '' && (int) $idConsulta > 0): ?>
+        <?= Html::hiddenInput('id_consulta', (int) $idConsulta) ?>
+    <?php endif; ?>
+    <?php if ($parent !== null && $parent !== ''): ?>
+        <?= Html::hiddenInput('parent', (string) $parent) ?>
+    <?php endif; ?>
+    <?php if ($parentId !== null && $parentId !== ''): ?>
+        <?= Html::hiddenInput('parent_id', (int) $parentId) ?>
+    <?php endif; ?>
     <!-- Formulario de entrada -->
     <div class="form-group mb-3" id="chat-form">
         <label for="chat-input" class="form-label">

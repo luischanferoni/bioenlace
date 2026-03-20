@@ -631,7 +631,10 @@ class PacienteController extends Controller
                 $idConfiguracion = $resultadoConfiguracion['idConfiguracion'] ?? null;
                 $formularioHtml = $this->renderPartial('_formulario_consulta', [
                     'paciente' => $paciente,
-                    'idConfiguracion' => $idConfiguracion
+                    'idConfiguracion' => $idConfiguracion,
+                    'idConsulta' => $idConsulta,
+                    'parent' => $parent,
+                    'parentId' => $parentId,
                 ]);
             }
 

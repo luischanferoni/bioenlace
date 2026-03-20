@@ -15,4 +15,9 @@ return [
     'turnosPush' => [
         'httpEndpoint' => null,
     ],
+    /**
+     * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en /api/v1/pacientes.
+     * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.
+     */
+    'serviciosAgendaQuirurgicaIds' => [],
 ];

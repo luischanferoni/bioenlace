@@ -280,7 +280,14 @@ async function cargarFormularioConsulta() {
     
     try {
         const endpoints = getEndpoints();
-        const response = await fetch(`${endpoints.formularioConsulta}`, {
+        let formularioUrl = endpoints.formularioConsulta || '';
+        const qs = typeof window !== 'undefined' && window.location && window.location.search
+            ? window.location.search.replace(/^\?/, '')
+            : '';
+        if (qs) {
+            formularioUrl += (formularioUrl.indexOf('?') >= 0 ? '&' : '?') + qs;
+        }
+        const response = await fetch(formularioUrl, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

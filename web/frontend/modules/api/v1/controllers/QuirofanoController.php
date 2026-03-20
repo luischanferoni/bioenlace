@@ -8,6 +8,7 @@ use yii\web\ConflictHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\models\Cirugia;
+use common\models\Consulta;
 use common\models\QuirofanoSala;
 use common\components\Services\Quirofano\CirugiaAgendaService;
 use common\components\Services\Quirofano\CirugiaIntakeService;
@@ -231,6 +232,45 @@ class QuirofanoController extends BaseController
     }
 
     /**
+     * GET /api/v1/quirofano/cirugias/<id>/informe-clinico
+     * Consulta clínica (Nivel 1) anclada a la cirugía, si existe.
+     */
+    public function actionInformeClinico($id)
+    {
+        try {
+            $model = $this->findCirugia((int) $id);
+            UserEfectorAccess::requireEfectorAccess($this->efectorIdFromCirugia($model));
+            $parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_CIRUGIA];
+            $consulta = Consulta::find()
+                ->where([
+                    'parent_class' => $parentClass,
+                    'parent_id' => (int) $model->id,
+                ])
+                ->andWhere(['deleted_at' => null])
+                ->orderBy(['id_consulta' => SORT_DESC])
+                ->one();
+            if (!$consulta) {
+                return $this->success([
+                    'id_consulta' => null,
+                    'id_configuracion' => null,
+                    'texto_original' => null,
+                    'texto_procesado' => null,
+                ], 'Sin informe clínico asociado.');
+            }
+            return $this->success([
+                'id_consulta' => (int) $consulta->id_consulta,
+                'id_configuracion' => (int) $consulta->id_configuracion,
+                'texto_original' => $consulta->consulta_inicial,
+                'texto_procesado' => $consulta->observacion,
+            ], 'OK');
+        } catch (NotFoundHttpException $e) {
+            return $this->error($e->getMessage(), null, 404);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        }
+    }
+
+    /**
      * GET /api/v1/quirofano/cirugias/<id>
      */
     public function actionViewCirugia($id)
@@ -257,7 +297,7 @@ class QuirofanoController extends BaseController
             $data = Yii::$app->request->getBodyParams();
             $attrs = [
                 'id_quirofano_sala', 'id_persona', 'id_seg_nivel_internacion', 'id_practica',
-                'procedimiento_descripcion', 'observaciones', 'fecha_hora_inicio', 'fecha_hora_fin_estimada',
+                'fecha_hora_inicio', 'fecha_hora_fin_estimada',
             ];
             foreach ($attrs as $attr) {
                 if (array_key_exists($attr, $data)) {

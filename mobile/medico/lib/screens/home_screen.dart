@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../models/turno.dart';
+import '../models/cirugia_agenda_item.dart';
 import '../services/internados_service.dart';
 import '../services/guardia_service.dart';
 import '../services/pacientes_service.dart';
@@ -36,6 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Turno> _turnos = [];
   List<InternadoItem> _internados = [];
   List<GuardiaItem> _guardia = [];
+  List<CirugiaAgendaItem> _cirugias = [];
+  String _lastListKind = '';
   bool _isLoading = true;
   String _errorMessage = '';
   DateTime _fechaSeleccionada = DateTime.now();
@@ -89,6 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
+      _lastListKind = '';
     });
     try {
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
@@ -97,6 +101,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _turnos = [];
         _internados = [];
         _guardia = [];
+        _cirugias = [];
+        _lastListKind = res.kind;
         if (res.kind == 'turnos') {
           _turnos = res.data
               .map((e) => Turno.fromJson(e as Map<String, dynamic>))
@@ -108,6 +114,10 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (res.kind == 'guardias') {
           _guardia = res.data
               .map((e) => GuardiaItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+        } else if (res.kind == 'cirugias') {
+          _cirugias = res.data
+              .map((e) => CirugiaAgendaItem.fromJson(e as Map<String, dynamic>))
               .toList();
         } else {
           _errorMessage = 'Respuesta inválida del servidor (kind=${res.kind})';
@@ -195,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _fechaSeleccionada.month == DateTime.now().month &&
         _fechaSeleccionada.day == DateTime.now().day;
     final siguienteTurno = esHoy ? _obtenerSiguienteTurno() : null;
-    final isTurnosView = _encounterClass != 'IMP' && _encounterClass != 'EMER';
+    final puedeFiltrarFecha = _encounterClass == 'AMB' || _encounterClass == 'IMP';
 
     return Container(
       color: AppTheme.backgroundColor,
@@ -212,14 +222,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: Text(
                       _encounterClass == 'IMP'
-                          ? 'Pacientes internados'
+                          ? (_lastListKind == 'cirugias'
+                              ? 'Agenda quirúrgica'
+                              : 'Pacientes internados')
                           : _encounterClass == 'EMER'
                               ? 'Ingresos en guardia'
                               : _formatearFechaAmigable(_fechaSeleccionada),
                       style: AppTheme.h2Style.copyWith(color: AppTheme.dark, fontSize: 20),
                     ),
                   ),
-                  if (isTurnosView)
+                  if (puedeFiltrarFecha)
                     Row(
                       children: [
                         ElevatedButton.icon(
@@ -256,13 +268,22 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                         ),
+                        if (_encounterClass == 'IMP') ...[
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.refresh),
+                            onPressed: _isLoading ? null : _cargarListadoPacientes,
+                          ),
+                        ],
                       ],
                     )
-                  else
+                  else if (_encounterClass == 'EMER')
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: _isLoading ? null : _cargarListadoPacientes,
-                    ),
+                    )
+                  else
+                    const SizedBox.shrink(),
                 ],
               ),
             ),
@@ -284,7 +305,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       )
                     : _encounterClass == 'IMP'
-                        ? _buildInternadosList()
+                        ? (_lastListKind == 'cirugias'
+                            ? _buildCirugiasList()
+                            : _buildInternadosList())
                         : _encounterClass == 'EMER'
                             ? _buildGuardiaList()
                             : _turnos.isEmpty
@@ -389,6 +412,45 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildCirugiasList() {
+    if (_cirugias.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.medical_information_outlined, size: 48, color: AppTheme.infoColor),
+            const SizedBox(height: 16),
+            Text('No hay cirugías agendadas para esta fecha.', style: AppTheme.subTitleStyle),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: _cirugias.length,
+      itemBuilder: (context, index) {
+        final c = _cirugias[index];
+        return Card(
+          elevation: 0,
+          child: ListTile(
+            leading: Icon(Icons.local_hospital, color: AppTheme.primaryColor),
+            title: Text(c.nombrePaciente, style: AppTheme.h5Style),
+            subtitle: Text(
+              [
+                if (c.salaNombre.isNotEmpty) 'Sala ${c.salaNombre}',
+                if (c.fechaHoraInicio != null) c.fechaHoraInicio!,
+                c.estadoLabel,
+              ].where((e) => e.isNotEmpty).join(' · '),
+              style: AppTheme.subTitleStyle,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _verHistoriaClinicaCirugia(c),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildInternadosList() {
     if (_internados.isEmpty) {
       return Center(
@@ -468,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> {
       elevation: 0,
       color: AppTheme.primaryColor.withOpacity(0.1),
       child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona),
+        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -526,7 +588,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Card(
       elevation: 0,
       child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona),
+        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -603,7 +665,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   TextButton.icon(
                     icon: const Icon(Icons.medical_services, size: 18),
                     label: const Text('Historia clínica'),
-                    onPressed: () => _verHistoriaClinica(turno.idPersona),
+                    onPressed: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
                     style: TextButton.styleFrom(
                       foregroundColor: AppTheme.primaryColor,
                     ),
@@ -640,13 +702,31 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _verHistoriaClinica(int personaId) {
+  void _verHistoriaClinica(int personaId, {String? parent, int? parentId}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PatientTimelineScreen(
           personaId: personaId,
           authToken: widget.authToken,
+          soloVer: parent == null,
+          consultParent: parent,
+          consultParentId: parentId,
+        ),
+      ),
+    );
+  }
+
+  void _verHistoriaClinicaCirugia(CirugiaAgendaItem c) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PatientTimelineScreen(
+          personaId: c.idPersona,
+          authToken: widget.authToken,
+          soloVer: false,
+          consultParent: 'CIRUGIA',
+          consultParentId: c.id,
         ),
       ),
     );

@@ -54,6 +54,7 @@ class Consulta extends \yii\db\ActiveRecord
     const PARENT_GUARDIA = 'GUARDIA';
     const PARENT_PASE_PREVIO = 'PASE_PREVIO';
     const PARENT_ENCUESTA_PARCHES = 'ENCUESTA_PARCHES';
+    const PARENT_CIRUGIA = 'CIRUGIA';
 
     const PARENT_CLASSES = [
             self::PARENT_TURNO => '\common\models\Turno', 
@@ -63,7 +64,8 @@ class Consulta extends \yii\db\ActiveRecord
             self::PARENT_GENERICO_EMER => '\common\models\GenericoEMER',
             self::PARENT_GUARDIA => '\common\models\Guardia',
             self::PARENT_PASE_PREVIO => '\common\models\ServiciosEfector', //revisar
-            self::PARENT_ENCUESTA_PARCHES => '\common\models\EncuestaParchesMamarios'
+            self::PARENT_ENCUESTA_PARCHES => '\common\models\EncuestaParchesMamarios',
+            self::PARENT_CIRUGIA => '\common\models\Cirugia',
         ];
 
     // Estados de consulta
@@ -1016,15 +1018,15 @@ class Consulta extends \yii\db\ActiveRecord
             return $this->hasOne(Turno::className(), ['id_turnos' => 'id_turnos']);
         }
 
-        $parentIdAttr = 'id';
         switch ($this->parent_class) {
+            case self::PARENT_CLASSES[self::PARENT_CIRUGIA]:
+                return $this->hasOne(Cirugia::className(), ['id' => 'parent_id']);
             case '\common\models\Turno':
             case '\common\models\ServiciosEfector':
-                $parentIdAttr = 'id_turnos';
-                break;
+                return $this->hasOne(Turno::className(), ['id_turnos' => 'parent_id']);
         }
         //TODO: revisar si se agrega otro parent ver la clase del hasOne
-        return $this->hasOne(Turno::className(), [$parentIdAttr => 'parent_id']);
+        return $this->hasOne(Turno::className(), ['id_turnos' => 'parent_id']);
     }
 
     /**

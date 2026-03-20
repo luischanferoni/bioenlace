@@ -4,18 +4,24 @@ import 'package:shared/shared.dart';
 
 import '../models/timeline_event.dart';
 import '../services/timeline_service.dart';
+import '../services/consulta_guardar_service.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
   final String? authToken;
-  /// true = solo ver historia clínica (sin formulario); false = mismo que "Cargar Consulta" con barra para escribir
+  /// true = solo ver historia clínica (sin formulario); false = barra para escribir notas
   final bool soloVer;
+  /// Contexto de consulta (ej. `CIRUGIA`, `TURNO`) alineado con web / `validarPermisoAtencion`.
+  final String? consultParent;
+  final int? consultParentId;
 
   const PatientTimelineScreen({
     Key? key,
     required this.personaId,
     this.authToken,
     this.soloVer = true,
+    this.consultParent,
+    this.consultParentId,
   }) : super(key: key);
 
   @override
@@ -24,18 +30,27 @@ class PatientTimelineScreen extends StatefulWidget {
 
 class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final TimelineService _timelineService = TimelineService();
+  final ConsultaGuardarService _consultaGuardar = ConsultaGuardarService();
   TimelineResponse? _timelineData;
   bool _isLoading = true;
   String _errorMessage = '';
+  bool _guardandoConsulta = false;
 
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
+
+  bool get _mostrarBarraConsulta =>
+      !widget.soloVer ||
+      (widget.consultParent != null &&
+          widget.consultParent!.isNotEmpty &&
+          widget.consultParentId != null);
 
   @override
   void initState() {
     super.initState();
     if (widget.authToken != null) {
       _timelineService.authToken = widget.authToken;
+      _consultaGuardar.authToken = widget.authToken;
     }
     _cargarTimeline();
   }
@@ -116,7 +131,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             ),
                           ),
                         ),
-                        if (!widget.soloVer) _buildChatInputBar(),
+                        if (_mostrarBarraConsulta) _buildChatInputBar(),
                       ],
                     ),
     );
@@ -279,6 +294,48 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
+  Future<void> _enviarConsulta() async {
+    final text = _chatController.text.trim();
+    if (text.isEmpty) return;
+
+    if (widget.consultParent != null &&
+        widget.consultParent!.isNotEmpty &&
+        widget.consultParentId != null) {
+      setState(() => _guardandoConsulta = true);
+      try {
+        await _consultaGuardar.guardar(
+          idPersona: widget.personaId,
+          parent: widget.consultParent!,
+          parentId: widget.consultParentId!,
+          texto: text,
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Consulta guardada')),
+        );
+        _chatController.clear();
+        _chatFocusNode.unfocus();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      } finally {
+        if (mounted) setState(() => _guardandoConsulta = false);
+      }
+      return;
+    }
+
+    if (!widget.soloVer) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Defina contexto de consulta (parent) o use el flujo web para analizar con IA.'),
+        ),
+      );
+      return;
+    }
+  }
+
   Widget _buildChatInputBar() {
     return SafeArea(
       top: false,
@@ -314,19 +371,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.send),
+              icon: _guardandoConsulta
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send),
               color: AppTheme.primaryColor,
-              onPressed: () {
-                final text = _chatController.text.trim();
-                if (text.isEmpty) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Envío de notas en desarrollo'),
-                  ),
-                );
-                _chatController.clear();
-                _chatFocusNode.unfocus();
-              },
+              onPressed: _guardandoConsulta ? null : _enviarConsulta,
             ),
           ],
         ),

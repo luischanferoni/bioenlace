@@ -21,7 +21,7 @@ final class AllowedRoutesResolver
     public const LOG_CATEGORY = 'allowed-routes-resolver';
 
     /**
-     * Mapa route => true a partir de roles (misma lógica que UniversalQueryAgent legacy).
+     * Mapa route => true a partir de roles (misma lógica que Actions\UniversalQueryAgent).
      *
      * @param string[] $roles
      * @return array<string, true>

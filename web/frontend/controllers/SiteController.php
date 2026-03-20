@@ -633,7 +633,7 @@ class SiteController extends Controller
                 // Ejecutar test (rol opcional para filtrar acciones)
                 $roleName = Yii::$app->request->post('roleName');
                 $roleName = is_string($roleName) && trim($roleName) !== '' ? trim($roleName) : null;
-                $result = \common\components\UniversalQueryAgent::testFindActions($criteria, $userId, $roleName);
+                $result = \common\components\Actions\UniversalQueryAgent::testFindActions($criteria, $userId, $roleName);
                 
             } catch (\Exception $e) {
                 Yii::error("Error en test-action-matching: " . $e->getMessage(), 'site-controller');

@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
+use common\components\Actions\UniversalQueryAgent;
 use frontend\modules\api\v1\controllers\BaseController;
 use yii\helpers\Inflector;
 
@@ -48,7 +49,7 @@ class CrudController extends BaseController
         try {
             // Procesar consulta usando UniversalQueryAgent (implementación genérica y mejorada)
             // Si viene action_id, se buscará primero por ID, luego por matching semántico, y finalmente por LLM
-            $result = \common\components\UniversalQueryAgent::processQuery($query, $userId, $actionId);
+            $result = UniversalQueryAgent::processQuery($query, $userId, $actionId);
             
             // Asegurar que el resultado tenga el formato correcto
             if (isset($result['success'])) {

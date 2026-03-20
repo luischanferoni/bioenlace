@@ -2,7 +2,7 @@
 
 namespace common\components\Chatbot\IntentHandlers\Handlers;
 
-use common\components\UniversalQueryAgent;
+use common\components\Actions\UniversalQueryAgent;
 
 class HistoriaClinicaHandler extends BaseIntentHandler
 {

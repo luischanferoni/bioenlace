@@ -111,7 +111,7 @@ namespace common\components\intent_handlers;
 
 use Yii;
 use common\components\ConversationContext;
-use common\components\UniversalQueryAgent;
+use common\components\Actions\UniversalQueryAgent;
 
 /**
  * Handler para intents relacionados con Mi Nueva Entity

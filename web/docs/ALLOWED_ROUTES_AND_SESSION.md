@@ -3,7 +3,7 @@
 ## Resumen
 
 - **[`AllowedRoutesResolver`](../common/components/Actions/AllowedRoutesResolver.php)** centraliza cómo se obtiene el conjunto de rutas que un usuario puede usar para filtrar acciones descubiertas.
-- **Sesión (webvimark):** tras el login, `AuthHelper::updatePermissions()` guarda en sesión `__userRoutes` (lista de rutas). Si el request es del usuario autenticado y coincide el conjunto de roles con el de sesión, **`UniversalQueryAgent::getAvailableActionsByRole`** usa esas rutas **sin** recorrer `getPermissionsByRole` en bucle.
+- **Sesión (webvimark):** tras el login, `AuthHelper::updatePermissions()` guarda en sesión `__userRoutes` (lista de rutas). Si el request es del usuario autenticado y coincide el conjunto de roles con el de sesión, **`common\components\Actions\UniversalQueryAgent::getAvailableActionsByRole`** usa esas rutas **sin** recorrer `getPermissionsByRole` en bucle.
 - **Caché de aplicación:** clave `allowed_routes_map_u_{userId}` (TTL 30 min) y `target_routes_roles_{md5(roles)}` para mapas por rol.
 - **Invalidación:** webvimark usa `runtime/__permissions_last_mod.txt`; al tocarse, `ensurePermissionsUpToDate()` refresca sesión. La caché de app expira por TTL; para forzar, usar `AllowedRoutesResolver::invalidateUserCache($userId)`.
 

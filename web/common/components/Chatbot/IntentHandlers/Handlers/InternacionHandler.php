@@ -4,7 +4,7 @@ namespace common\components\Chatbot\IntentHandlers\Handlers;
 
 use Yii;
 use common\components\Chatbot\ConversationContext;
-use common\components\UniversalQueryAgent;
+use common\components\Actions\UniversalQueryAgent;
 use common\models\SegNivelInternacion;
 
 class InternacionHandler extends BaseIntentHandler

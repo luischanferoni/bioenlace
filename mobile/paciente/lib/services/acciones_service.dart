@@ -16,7 +16,7 @@ const String _timeoutErrorMessage =
 /// - El chatbot del paciente
 /// 
 /// Endpoint: /api/v1/crud/process-query
-/// El backend procesa la consulta usando UniversalQueryAgent y devuelve
+/// El backend procesa la consulta con UniversalQueryAgent (`web/common/components/Actions/`) y devuelve
 /// acciones relevantes que el usuario puede realizar (solicitar turnos, 
 /// ver historia clínica, etc.)
 class AccionesService {

@@ -103,6 +103,24 @@ final class ChatApiActionBuilder
     }
 
     /**
+     * Permiso para POST autogestión de turno (misma URL pública /api/v1/turnos).
+     * Acepta rutas de permiso nuevas y legadas durante migración RBAC.
+     */
+    private static function userCanCrearTurnoAutogestion(?int $userId): bool
+    {
+        if (!$userId) {
+            return false;
+        }
+        foreach (['/api/turnos/crear-como-paciente', '/api/turnos/create', '/api/v1/turnos'] as $r) {
+            if (self::userCanOpenApiRoute($userId, $r)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * CTA sacar / gestionar turno vía API.
      *
      * @return list<array<string, mixed>>
@@ -114,12 +132,12 @@ final class ChatApiActionBuilder
         if ($found) {
             return [self::discoveredActionToOpenRoute($found, $title)];
         }
-        $fallback = '/api/v1/turnos';
-        if (self::userCanOpenApiRoute($userId, $fallback)) {
+        $postUrl = '/api/v1/turnos';
+        if (self::userCanCrearTurnoAutogestion($userId)) {
             return [[
                 'type' => 'open_route',
                 'title' => $title,
-                'route' => $fallback,
+                'route' => $postUrl,
                 'method' => 'POST',
                 'params' => [],
             ]];
@@ -137,12 +155,12 @@ final class ChatApiActionBuilder
         if ($found) {
             return [self::discoveredActionToOpenRoute($found, 'Vacunación / turno')];
         }
-        $fallback = '/api/v1/turnos';
-        if (self::userCanOpenApiRoute($userId, $fallback)) {
+        $postUrl = '/api/v1/turnos';
+        if (self::userCanCrearTurnoAutogestion($userId)) {
             return [[
                 'type' => 'open_route',
                 'title' => 'Turno vacunación',
-                'route' => $fallback,
+                'route' => $postUrl,
                 'method' => 'POST',
                 'params' => ['servicio' => 'VACUNACION'],
             ]];

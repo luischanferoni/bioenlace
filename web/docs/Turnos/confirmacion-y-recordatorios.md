@@ -9,7 +9,7 @@
 
 2. **Cron** (consola): `php yii turno-notificacion/run` procesa filas `PENDIENTE` con `run_at <= now`.
 
-3. **Confirmación**: `POST api/v1/turnos/{id}/confirmar-asistencia` (opcional `token` en body). Marca `confirmado_en` y cancela notificaciones pendientes.
+3. **Confirmación**: `POST api/v1/turnos/{id}/confirmar-asistencia` (opcional `token` en body; permiso `/api/turnos/confirmar-asistencia-como-paciente`). Marca `confirmado_en` y cancela notificaciones pendientes.
 
 ## Contenido enriquecido
 

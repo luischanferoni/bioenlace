@@ -24,12 +24,25 @@ use common\models\EfectorTurnosConfig;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 /**
- * API Turnos: lógica de turnos expuesta como endpoints REST-ish.
+ * API Turnos: convención verbo + ámbito (comoPaciente | paraPaciente | efector | recurso).
  *
- * - GET /api/v1/turnos/como-paciente → actionComoPaciente: turnos donde soy paciente (RBAC: /api/turnos/como-paciente).
- * - GET /api/v1/agenda/dia → {@see AgendaController::actionDia}: agenda del profesional (RBAC: /api/agenda/dia).
- * - POST /api/v1/turnos → actionCreate: autogestión paciente; id_persona del usuario autenticado (RBAC: /api/turnos/create).
- * - POST /api/v1/turnos/para-paciente → actionParaPaciente: id_persona en cuerpo; roles operativos (RBAC: /api/turnos/para-paciente).
+ * | Método                          | HTTP | URL pública (v1)     | Permiso ApiGhost (/api/turnos/…)   |
+ * |---------------------------------|------|----------------------|-------------------------------------|
+ * | actionComoPaciente              | GET  | …/como-paciente      | como-paciente                       |
+ * | actionVerTurno                  | GET  | …/turnos/{id}        | ver-turno                           |
+ * | actionActualizarTurno           | PUT/PATCH | …/turnos/{id}   | actualizar-turno                    |
+ * | actionCrearComoPaciente         | POST | …/turnos             | crear-como-paciente                 |
+ * | actionCrearParaPaciente         | POST | …/para-paciente      | crear-para-paciente                 |
+ * | actionPoliticaComoPaciente      | GET  | …/politica-como-paciente | politica-como-paciente          |
+ * | actionCancelarComoPaciente      | POST | …/{id}/cancelar      | cancelar-como-paciente              |
+ * | actionSlotsAlternativosComoPaciente | GET | …/{id}/slots-alternativos | slots-alternativos-como-paciente |
+ * | actionConfirmarAsistenciaComoPaciente | POST | …/{id}/confirmar-asistencia | confirmar-asistencia-como-paciente |
+ * | actionReprogramarComoPaciente   | POST | …/{id}/reprogramar   | reprogramar-como-paciente           |
+ * | actionConsultarOcupacionDia   | GET/POST | …/eventos        | consultar-ocupacion-dia             |
+ * | actionCancelarDiaEfector        | POST | …/cancelar-dia-efector | cancelar-dia-efector            |
+ * | actionConsultarProximoDisponible | GET/POST | …/turnos/proximo-disponible | consultar-proximo-disponible |
+ *
+ * {@see AgendaController} — GET /api/v1/agenda/dia (permiso /api/agenda/dia).
  */
 class TurnosController extends BaseController
 {
@@ -122,9 +135,9 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Detalle de un turno por id (lógica para API).
+     * Detalle de un turno por id. GET /api/v1/turnos/{id}. RBAC: /api/turnos/ver-turno
      */
-    public function actionView($id)
+    public function actionVerTurno($id)
     {
         $turno = Turno::findOne($id);
         if (!$turno) {
@@ -161,10 +174,11 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Crear turno para el usuario autenticado (paciente). POST /api/v1/turnos.
-     * Ignora id_persona del cuerpo; se usa la persona ligada al usuario (id_user).
+     * Alta de turno en autogestión (“como paciente”): el beneficiario es siempre la persona del usuario autenticado.
+     *
+     * HTTP: POST /api/v1/turnos. RBAC: /api/turnos/crear-como-paciente. Ignora id_persona en el cuerpo.
      */
-    public function actionCreate()
+    public function actionCrearComoPaciente()
     {
         $request = Yii::$app->request;
         $model = new Turno();
@@ -179,10 +193,11 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Crear turno indicando el paciente (id_persona en cuerpo). POST /api/v1/turnos/para-paciente.
-     * Permiso de ruta esperado: /api/turnos/para-paciente (no asignar al rol paciente).
+     * Alta de turno en gestión operativa: el beneficiario es el paciente indicado en el cuerpo (id_persona obligatorio).
+     *
+     * HTTP: POST /api/v1/turnos/para-paciente. RBAC: /api/turnos/crear-para-paciente (no asignar al rol paciente).
      */
-    public function actionParaPaciente()
+    public function actionCrearParaPaciente()
     {
         $request = Yii::$app->request;
         $model = new Turno();
@@ -303,9 +318,9 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Actualizar turno (lógica para API).
+     * Actualizar turno existente. PUT/PATCH /api/v1/turnos/{id}. RBAC: /api/turnos/actualizar-turno
      */
-    public function actionUpdate($id)
+    public function actionActualizarTurno($id)
     {
         $turno = Turno::findOne($id);
         if (!$turno) {
@@ -341,8 +356,9 @@ class TurnosController extends BaseController
 
     /**
      * Política de autogestión (cancelaciones) para el paciente autenticado y efector actual.
+     * GET /api/v1/turnos/politica-como-paciente. RBAC: /api/turnos/politica-como-paciente
      */
-    public function actionPoliticaAutogestion()
+    public function actionPoliticaComoPaciente()
     {
         $idPersona = Yii::$app->user->getIdPersona();
         $idEfector = Yii::$app->user->getIdEfector();
@@ -354,9 +370,10 @@ class TurnosController extends BaseController
     }
 
     /**
-     * POST cancelar turno. Body: estado_motivo, canal (app|admin|telefono)
+     * Cancelar turno propio (autogestión). POST …/turnos/{id}/cancelar. Body: estado_motivo, canal.
+     * RBAC: /api/turnos/cancelar-como-paciente
      */
-    public function actionCancelar($id)
+    public function actionCancelarComoPaciente($id)
     {
         $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
         if (!$turno) {
@@ -387,9 +404,10 @@ class TurnosController extends BaseController
     }
 
     /**
-     * GET slots alternativos para reprogramar (mismo servicio; opcional mismo profesional).
+     * Slots alternativos para reprogramar turno propio. GET …/turnos/{id}/slots-alternativos.
+     * RBAC: /api/turnos/slots-alternativos-como-paciente
      */
-    public function actionSlotsAlternativos($id)
+    public function actionSlotsAlternativosComoPaciente($id)
     {
         $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
         if (!$turno) {
@@ -417,9 +435,10 @@ class TurnosController extends BaseController
     }
 
     /**
-     * POST confirmar asistencia al turno.
+     * Confirmar asistencia al turno propio. POST …/turnos/{id}/confirmar-asistencia (body token opcional).
+     * RBAC: /api/turnos/confirmar-asistencia-como-paciente
      */
-    public function actionConfirmarAsistencia($id)
+    public function actionConfirmarAsistenciaComoPaciente($id)
     {
         $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
         if (!$turno) {
@@ -438,9 +457,9 @@ class TurnosController extends BaseController
     }
 
     /**
-     * POST reprogramar: body fecha, hora, id_rrhh_servicio_asignado, id_rr_hh opcional
+     * Reprogramar turno propio. POST …/turnos/{id}/reprogramar. RBAC: /api/turnos/reprogramar-como-paciente
      */
-    public function actionReprogramar($id)
+    public function actionReprogramarComoPaciente($id)
     {
         $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
         if (!$turno) {
@@ -491,9 +510,10 @@ class TurnosController extends BaseController
     }
 
     /**
-     * POST bulk cancel día (AdminEfector). Body: fecha, id_rr_hh opcional
+     * Cancelación masiva del día en el efector (AdminEfector). POST …/cancelar-dia-efector.
+     * RBAC: /api/turnos/cancelar-dia-efector
      */
-    public function actionBulkCancelDia()
+    public function actionCancelarDiaEfector()
     {
         if (!\common\models\User::hasRole('AdminEfector')) {
             throw new ForbiddenHttpException('Solo administrador de efector');
@@ -510,9 +530,9 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Próximo turno disponible por servicio (lógica para API).
+     * Próximo slot libre por servicio/efector (búsqueda). RBAC si se expone ruta: /api/turnos/consultar-proximo-disponible
      */
-    public function actionProximoDisponible()
+    public function actionConsultarProximoDisponible()
     {
         $request = Yii::$app->request;
         $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
@@ -550,9 +570,10 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Este método carga las horas disponibles por día.
+     * Ocupación de agenda por día (horarios tomados / eventos calendario). GET|POST …/turnos/eventos.
+     * RBAC: /api/turnos/consultar-ocupacion-dia
      */
-    public function actionEventos()
+    public function actionConsultarOcupacionDia()
     {
         $request = Yii::$app->request;
         $dia = $request->get('dia') ?: $request->post('dia') ?: date('Y-m-d');

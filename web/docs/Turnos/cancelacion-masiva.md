@@ -2,14 +2,14 @@
 
 ## API
 
-`POST api/v1/turnos/bulk-cancel-dia` — requiere rol **AdminEfector**. Body JSON:
+`POST api/v1/turnos/cancelar-dia-efector` — requiere rol **AdminEfector** (permiso `/api/turnos/cancelar-dia-efector`). Body JSON:
 
 - `fecha` (Y-m-d), obligatorio
 - `id_rr_hh` opcional (solo turnos de ese profesional)
 
 ## Web
 
-`POST turnos/bulk-cancel-dia` (mismo cuerpo, usuario sesión con AdminEfector).
+`POST turnos/cancelar-dia-efector` (mismo cuerpo, usuario sesión con AdminEfector).
 
 ## Reglas
 

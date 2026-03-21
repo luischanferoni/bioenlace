@@ -21,7 +21,7 @@ Esta carpeta describe flujos de negocio del **sistema de turnos** (agenda, estad
 - Cancelación HTTP (frontend): `frontend\controllers\TurnosController::actionDelete`.
 - UI calendario: `frontend\views\turnos\_calendario.php`, `frontend\web\js\turnos_calendario.js`.
 - Búsqueda de slots: `common\components\Services\Turnos\TurnoSlotFinder`.
-- API v1 turnos: `frontend\modules\api\v1\controllers\TurnosController` — cancelar, reprogramar, slots-alternativos, confirmar, bulk, política.
+- API v1 turnos: `frontend\modules\api\v1\controllers\TurnosController` — convención y RBAC: **[API-nomenclatura-y-RBAC.md](./API-nomenclatura-y-RBAC.md)** (tabla canónica en el docblock del controlador).
 - Servicios: `common\components\Services\Turnos\*`, cron `php yii turno-notificacion/run`.
 - Config por efector (backend): `backend\controllers\EfectoresController::actionTurnosIntegralConfig`.
 

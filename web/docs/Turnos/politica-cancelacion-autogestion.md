@@ -18,5 +18,5 @@ Solo turnos **cancelados por paciente** (`CANCELADO_X_PACIENTE`) con soft delete
 
 ## API
 
-- `GET api/v1/turnos/politica-autogestion` — estado para el paciente autenticado.
+- `GET api/v1/turnos/politica-como-paciente` — estado para el paciente autenticado (permiso `/api/turnos/politica-como-paciente`).
 - Cancelación app: `POST api/v1/turnos/{id}/cancelar` con `canal=app` puede devolver **409** `CANCEL_POLICY_MODERADA`.

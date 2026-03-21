@@ -10,7 +10,7 @@ $this->title = 'Reprogramar turnos';
     <h1 class="h4 mb-3"><?= Html::encode($this->title) ?></h1>
     <p class="text-muted">
         Esta pantalla es independiente del calendario de agenda. Los turnos se modifican vía API
-        <code>POST api/v1/turnos/&lt;id&gt;/reprogramar</code> o desde la app móvil (misma API).
+        <code>POST api/v1/turnos/&lt;id&gt;/reprogramar</code> (permiso <code>/api/turnos/reprogramar-como-paciente</code>) o desde la app móvil (misma API).
     </p>
     <p>
         <?= Html::a('Volver a turnos', ['turnos/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>

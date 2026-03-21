@@ -1,0 +1,16 @@
+---
+description: Nomenclatura API turnos (paciente vs operativo) y rutas RBAC
+globs:
+  - web/frontend/modules/api/v1/controllers/TurnosController.php
+  - web/frontend/modules/api/v1/controllers/AgendaController.php
+alwaysApply: false
+---
+
+# API v1 — Turnos: nomenclatura y corte paciente / operativo
+
+- **Fuente de verdad** de la tabla acción ↔ HTTP ↔ permiso: docblock de clase en `TurnosController.php` (API v1).
+- **Patrón de nombres (acciones Yii):** `verbo` + **ámbito** — `ComoPaciente` (autogestión, dueño del turno = usuario), `ParaPaciente` (alta operativa con `id_persona` en cuerpo), `Efector` (admin masivo), `Consultar…` (búsqueda/ocupación).
+- **Permisos webvimark / ApiGhost:** ruta normalizada `/api/turnos/<action-id>` (sin `v1`; el `uniqueId` de Yii es `v1/turnos/<action-id>`). Ej.: `actionVerTurno` → `/api/turnos/ver-turno`.
+- **Agenda profesional** no vive en `turnos/index`: usar `AgendaController::actionDia` → `GET /api/v1/agenda/dia`, permiso `/api/agenda/dia`.
+- **No reintroducir** nombres REST genéricos en acciones nuevas (`view`, `update`, `create`) para turnos: generan ambigüedad con el corte de seguridad; seguir el mismo esquema que el docblock.
+- Al cambiar `main.php`, mantener **orden de reglas** (rutas literales antes que `turnos/<id:\d+>`) y evitar **OPTIONS duplicados** para el mismo path si enrutan a acciones distintas.

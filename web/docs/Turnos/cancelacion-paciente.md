@@ -32,7 +32,7 @@ Otros motivos relacionados con el paciente en el mismo dominio (no son “cancel
 
 1. Solo cancelar turnos en estado **PENDIENTE** (o el conjunto de estados que negocio defina como “aún modificables”).
 2. Exigir **motivo** antes de enviar (la UI ya evita envío si el combo está vacío).
-3. Si el turno estaba ligado a una **derivación** en espera con turno, revisar si hace falta revertir o actualizar el estado de la derivación (lógica en creación de turno en `TurnosController::actionCreate` — al cancelar puede requerir simetría según reglas del efector).
+3. Si el turno estaba ligado a una **derivación** en espera con turno, revisar si hace falta revertir o actualizar el estado de la derivación (lógica en creación de turno en `TurnosController::actionCrearComoPaciente` / flujo de alta — al cancelar puede requerir simetría según reglas del efector).
 
 ## Efectos colaterales deseables (roadmap)
 

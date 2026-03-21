@@ -27,7 +27,7 @@ class ApiGhostAccessControl extends ActionFilter
             return true;
         }
 
-        // uniqueId viene como "v1/turnos/mis-turnos" → en DB las rutas son "/api/turnos/mis-turnos"
+        // uniqueId ej. "v1/turnos/como-paciente" → ruta DB "/api/turnos/como-paciente"; "v1/agenda/dia" → "/api/agenda/dia"
         $uniqueId = $action->uniqueId;
         $parts = explode('/', $uniqueId);
         if (!empty($parts) && $parts[0] === 'v1') {

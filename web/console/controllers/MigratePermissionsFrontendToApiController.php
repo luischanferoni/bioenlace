@@ -14,7 +14,7 @@ use yii\db\Query;
  *   php yii migrate-permissions-frontend-to-api   # modo dry-run (no escribe)
  *   php yii migrate-permissions-frontend-to-api --apply   # aplica cambios
  *
- * Convierte rutas tipo "frontend/turnos/index" en "api/v1/turnos/index"
+ * Convierte rutas tipo "frontend/turnos/index" en equivalentes API (ej. agenda/dia, turnos/como-paciente).
  * y actualiza las asignaciones (auth_item_child) para que los roles/permisos
  * que tenían la ruta frontend pasen a tener la ruta API.
  * Opcionalmente elimina las rutas frontend antiguas.

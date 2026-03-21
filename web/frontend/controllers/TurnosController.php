@@ -39,7 +39,7 @@ class TurnosController extends Controller
         'create' => ['POST', 'OPTIONS'],
         'update' => ['PUT', 'PATCH', 'OPTIONS'],
         'eventos' => ['GET', 'OPTIONS'],
-        'mis-turnos' => ['GET', 'OPTIONS'],
+        'como-paciente' => ['GET', 'OPTIONS'],
         'proximo-disponible' => ['GET', 'POST', 'OPTIONS'],
         'reprogramar' => ['GET', 'HEAD', 'OPTIONS'],
         'bulk-cancel-dia' => ['POST', 'OPTIONS'],
@@ -446,9 +446,9 @@ class TurnosController extends Controller
     }
 
     /**
-     * Lista los turnos del usuario autenticado (paciente). GET fecha_desde, fecha_hasta opcionales. Respuesta JSON.
+     * Turnos del usuario como paciente (GET …/turnos/como-paciente vía API). fecha_desde / fecha_hasta opcionales.
      */
-    public function actionMisTurnos()
+    public function actionComoPaciente()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 

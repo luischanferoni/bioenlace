@@ -26,8 +26,10 @@ use yii\web\ConflictHttpException;
 /**
  * API Turnos: lógica de turnos expuesta como endpoints REST-ish.
  *
- * - POST /api/v1/turnos → actionCreate: autogestión paciente; id_persona sale del usuario autenticado (RBAC: rol paciente).
- * - POST /api/v1/turnos/para-paciente → actionParaPaciente: id_persona en cuerpo; RBAC solo roles operativos (no paciente).
+ * - GET /api/v1/turnos/como-paciente → actionComoPaciente: turnos donde soy paciente (RBAC: /api/turnos/como-paciente).
+ * - GET /api/v1/agenda/dia → {@see AgendaController::actionDia}: agenda del profesional (RBAC: /api/agenda/dia).
+ * - POST /api/v1/turnos → actionCreate: autogestión paciente; id_persona del usuario autenticado (RBAC: /api/turnos/create).
+ * - POST /api/v1/turnos/para-paciente → actionParaPaciente: id_persona en cuerpo; roles operativos (RBAC: /api/turnos/para-paciente).
  */
 class TurnosController extends BaseController
 {
@@ -39,9 +41,9 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Lista los turnos del usuario autenticado (paciente). GET fecha_desde, fecha_hasta opcionales. Respuesta JSON.
+     * Turnos donde el usuario es paciente. GET /api/v1/turnos/como-paciente (fecha_desde, fecha_hasta opcionales).
      */
-    public function actionMisTurnos()
+    public function actionComoPaciente()
     {
         $idPersona = Yii::$app->user->getIdPersona();
 
@@ -92,9 +94,11 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Listar turnos por rrhh/fecha (lógica para API). Retorna array para JSON.
+     * Respuesta JSON agenda del día (profesional). Usado por {@see AgendaController::actionDia}.
+     *
+     * @return array<string, mixed>
      */
-    public function actionIndex()
+    public static function agendaDiaResponse(): array
     {
         $request = Yii::$app->request;
         $fecha = $request->get('fecha', date('Y-m-d'));
@@ -112,7 +116,7 @@ class TurnosController extends BaseController
         try {
             return PacientesController::agendaAmbulatorioJson($fecha, (int) $rrhhId, true);
         } catch (\Throwable $e) {
-            Yii::error('TurnosController::actionIndexApi: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
+            Yii::error('TurnosController::agendaDiaResponse: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
             throw new \yii\web\ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
         }
     }

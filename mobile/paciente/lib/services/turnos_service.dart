@@ -9,7 +9,7 @@ class TurnosService {
 
   TurnosService({this.authToken});
 
-  /// Obtiene el token a usar: el inyectado o el guardado en SharedPreferences (para evitar 401 en mis-turnos).
+  /// Obtiene el token a usar: el inyectado o el guardado en SharedPreferences (para evitar 401 en turnos/como-paciente).
   Future<String?> _getEffectiveToken() async {
     if (authToken != null && authToken!.isNotEmpty) return authToken;
     final prefs = await SharedPreferences.getInstance();
@@ -21,7 +21,7 @@ class TurnosService {
     String? fechaHasta,
   }) async {
     try {
-      var uri = Uri.parse('${AppConfig.apiUrl}/turnos/mis-turnos');
+      var uri = Uri.parse('${AppConfig.apiUrl}/turnos/como-paciente');
       if (fechaDesde != null || fechaHasta != null) {
         uri = uri.replace(queryParameters: {
           if (fechaDesde != null) 'fecha_desde': fechaDesde,

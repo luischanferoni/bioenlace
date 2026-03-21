@@ -127,11 +127,11 @@ return [
                 'POST api/<version:\w+>/motivos-consulta/upload' => '<version>/motivos-consulta/upload',
                 'OPTIONS api/<version:\w+>/motivos-consulta/upload' => '<version>/motivos-consulta/upload',
                 
-                // Turnos API
-                'GET api/<version:\w+>/turnos' => '<version>/turnos/index',
-                'OPTIONS api/<version:\w+>/turnos' => '<version>/turnos/options',
-                'GET api/<version:\w+>/turnos/mis-turnos' => '<version>/turnos/mis-turnos',
-                'OPTIONS api/<version:\w+>/turnos/mis-turnos' => '<version>/turnos/mis-turnos',
+                // Turnos / agenda API (paciente: turnos/como-paciente; profesional: agenda/dia)
+                'GET api/<version:\w+>/agenda/dia' => '<version>/agenda/dia',
+                'OPTIONS api/<version:\w+>/agenda/dia' => '<version>/agenda/dia',
+                'GET api/<version:\w+>/turnos/como-paciente' => '<version>/turnos/como-paciente',
+                'OPTIONS api/<version:\w+>/turnos/como-paciente' => '<version>/turnos/como-paciente',
                 'GET api/<version:\w+>/turnos/politica-autogestion' => '<version>/turnos/politica-autogestion',
                 'OPTIONS api/<version:\w+>/turnos/politica-autogestion' => '<version>/turnos/politica-autogestion',
                 'POST api/<version:\w+>/turnos/bulk-cancel-dia' => '<version>/turnos/bulk-cancel-dia',

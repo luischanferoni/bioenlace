@@ -148,6 +148,8 @@ return [
                 'OPTIONS api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/view',
                 'GET api/<version:\w+>/turnos/eventos' => '<version>/turnos/eventos',
                 'OPTIONS api/<version:\w+>/turnos/eventos' => '<version>/turnos/eventos',
+                'POST api/<version:\w+>/turnos/para-paciente' => '<version>/turnos/para-paciente',
+                'OPTIONS api/<version:\w+>/turnos/para-paciente' => '<version>/turnos/para-paciente',
                 'POST api/<version:\w+>/turnos' => '<version>/turnos/create',
                 'PUT api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',
                 'PATCH api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/update',

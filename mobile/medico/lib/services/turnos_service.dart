@@ -185,7 +185,7 @@ class TurnosService {
   Future<Turno> crearTurno(Map<String, dynamic> datosTurno) async {
     try {
       final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/turnos'),
+        Uri.parse('${AppConfig.apiUrl}/turnos/para-paciente'),
         headers: _headers,
         body: json.encode(datosTurno),
       );

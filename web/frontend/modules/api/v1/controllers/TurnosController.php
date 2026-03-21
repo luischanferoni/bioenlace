@@ -26,7 +26,8 @@ use yii\web\ConflictHttpException;
 /**
  * API Turnos: lógica de turnos expuesta como endpoints REST-ish.
  *
- * La lógica se implementa directamente aquí, sin usar el controlador del frontend.
+ * - POST /api/v1/turnos → actionCreate: autogestión paciente; id_persona sale del usuario autenticado (RBAC: rol paciente).
+ * - POST /api/v1/turnos/para-paciente → actionParaPaciente: id_persona en cuerpo; RBAC solo roles operativos (no paciente).
  */
 class TurnosController extends BaseController
 {
@@ -156,13 +157,45 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Crear turno (lógica para API). POST. Retorna array o lanza excepción.
+     * Crear turno para el usuario autenticado (paciente). POST /api/v1/turnos.
+     * Ignora id_persona del cuerpo; se usa la persona ligada al usuario (id_user).
      */
     public function actionCreate()
     {
         $request = Yii::$app->request;
         $model = new Turno();
         $model->load($request->post(), '');
+        $personaUsuario = Persona::findOne(['id_user' => Yii::$app->user->id]);
+        if (!$personaUsuario) {
+            throw new ForbiddenHttpException('No se encontró persona asociada al usuario.');
+        }
+        $model->id_persona = $personaUsuario->id_persona;
+
+        return $this->persistTurnoCreacion($model);
+    }
+
+    /**
+     * Crear turno indicando el paciente (id_persona en cuerpo). POST /api/v1/turnos/para-paciente.
+     * Permiso de ruta esperado: /api/turnos/para-paciente (no asignar al rol paciente).
+     */
+    public function actionParaPaciente()
+    {
+        $request = Yii::$app->request;
+        $model = new Turno();
+        $model->load($request->post(), '');
+        if (!$model->id_persona) {
+            throw new BadRequestHttpException('El campo id_persona es obligatorio');
+        }
+
+        return $this->persistTurnoCreacion($model);
+    }
+
+    /**
+     * Persistencia y reglas comunes tras armar el modelo (id_persona ya resuelto).
+     * @return array{id: int, fecha: mixed, hora: mixed, id_consulta: int|null}
+     */
+    protected function persistTurnoCreacion(Turno $model): array
+    {
         if (empty($model->tipo_atencion)) {
             $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
         }
@@ -185,9 +218,6 @@ class TurnosController extends BaseController
             } elseif ($model->id_rrhh_servicio_asignado || $model->id_rr_hh) {
                 throw new BadRequestHttpException('No se encontró la agenda del profesional para el servicio.');
             }
-        }
-        if (!$model->id_persona) {
-            throw new BadRequestHttpException('El campo id_persona es obligatorio');
         }
         if (!$model->id_efector) {
             $model->id_efector = Yii::$app->user->getIdEfector();

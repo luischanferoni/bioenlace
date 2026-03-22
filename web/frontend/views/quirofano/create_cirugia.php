@@ -22,8 +22,8 @@ $indexUrlJson = Json::encode(Url::to(['index', 'id_efector' => $idEfector]));
     <h1><?= Html::encode($this->title) ?></h1>
 
     <div class="alert alert-info">
-        El <strong>informe clínico</strong> de la cirugía se carga solo desde la <strong>historia clínica</strong>
-        del paciente (p. ej. desde <?= Html::a('Pacientes', ['/site/pacientes']) ?>). Aquí solo se agenda la cirugía.
+        Acá cargás la <strong>agenda</strong> de la cirugía (sala, paciente, horarios, etc.), igual que un <strong>turno</strong>.
+        La <strong>consulta</strong> clínica del acto va en historia clínica (<?= Html::a('Pacientes', ['/site/pacientes']) ?>).
     </div>
 
     <div id="qc-msg" class="alert d-none" role="alert"></div>

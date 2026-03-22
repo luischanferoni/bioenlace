@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Nueva cirugía', ['create-cirugia', 'id_efector' => $idEfector], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Nueva cirugía (agenda)', ['create-cirugia', 'id_efector' => $idEfector], ['class' => 'btn btn-success']) ?>
         <?= Html::a('Salas de quirófano', ['salas', 'id_efector' => $idEfector], ['class' => 'btn btn-default']) ?>
     </p>
 
@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'fecha_hora_inicio',
             'fecha_hora_fin_estimada',
             [
-                'label' => 'HC',
+                'label' => 'HC / consulta',
                 'format' => 'raw',
                 'value' => function ($m) {
                     $idEf = (int) Yii::$app->request->get('id_efector', Yii::$app->user->getIdEfector());

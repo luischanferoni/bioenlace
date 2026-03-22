@@ -83,6 +83,32 @@ class _DynamicFormState extends State<DynamicForm> {
   }
 
   /// Normaliza depends_on del JSON: puede ser un string (un campo) o una lista (varios).
+  /// Expande `hora` (u otro campo) con valor compuesto `id_rrsa|fecha|hora` según `slot_selection` del JSON.
+  static void applySlotCompositeExpansion(
+    List<dynamic> allFields,
+    Map<String, dynamic> payload,
+  ) {
+    for (final raw in allFields) {
+      if (raw is! Map) continue;
+      final field = Map<String, dynamic>.from(raw);
+      final ss = field['slot_selection'];
+      if (ss is! Map) continue;
+      final fieldName = field['name']?.toString();
+      if (fieldName == null || fieldName.isEmpty) continue;
+      final composite = payload[fieldName]?.toString();
+      if (composite == null || composite.isEmpty) continue;
+      final sep = ss['separator']?.toString() ?? '|';
+      if (!composite.contains(sep)) continue;
+      final parts = (ss['parts'] as List<dynamic>?)?.map((e) => e.toString()).toList();
+      if (parts == null || parts.isEmpty) continue;
+      final chunks = composite.split(sep);
+      if (chunks.length != parts.length) continue;
+      for (var i = 0; i < parts.length; i++) {
+        payload[parts[i]] = chunks[i];
+      }
+    }
+  }
+
   List<String> _getDependsOnList(Map<String, dynamic> field) {
     final raw = field['depends_on'];
     if (raw == null) return [];
@@ -734,10 +760,23 @@ class _DynamicFormState extends State<DynamicForm> {
                             _formValues[fieldName] = fieldValue;
                           }
                         }
-                        
-                        // Log para debug
-                        print('Submitting form with values: $_formValues');
-                        widget.onSubmit(_formValues);
+
+                        final payload = Map<String, dynamic>.from(_formValues);
+                        applySlotCompositeExpansion(allFields, payload);
+
+                        final excludeSubmit = <String>{};
+                        for (var f in allFields) {
+                          if (f is Map && f['include_in_submit'] == false) {
+                            final n = f['name']?.toString();
+                            if (n != null && n.isNotEmpty) excludeSubmit.add(n);
+                          }
+                        }
+                        for (final k in excludeSubmit) {
+                          payload.remove(k);
+                        }
+
+                        print('Submitting form with values: $payload');
+                        widget.onSubmit(payload);
                       }
                     }
                   },

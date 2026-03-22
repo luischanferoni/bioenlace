@@ -83,28 +83,34 @@
     },
     {
       "name": "hora",
-      "label": "Hora",
+      "label": "Horario disponible",
       "type": "autocomplete",
       "required": true,
-      "endpoint": "/turnos/eventos",
+      "endpoint": "/turnos/slots-disponibles-como-paciente",
       "depends_on": ["id_rr_hh", "fecha"],
       "params": {
-        "id_rr_hh": "id_rr_hh",
         "id_servicio": "id_servicio_asignado",
-        "dia": "fecha",
-        "formato": "formato_slots"
+        "id_efector": "id_efector",
+        "id_rr_hh": "id_rr_hh",
+        "fecha_desde": "fecha",
+        "max_dias": "slots_max_dias"
       },
       "auto_load": true,
       "show_search": false,
+      "slot_selection": {
+        "separator": "|",
+        "parts": ["id_rrhh_servicio_asignado", "fecha", "hora"]
+      },
       "option_config": {
-        "source": "turnos_disponibles",
+        "source": "slots_disponibles_paciente",
         "filter": null
       }
     },
     {
-      "name": "formato_slots",
+      "name": "slots_max_dias",
       "type": "text",
-      "value": "slots"
+      "value": "1",
+      "include_in_submit": false
     },
     {
       "name": "tipo_atencion",

@@ -3,6 +3,76 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared/shared.dart';
 
+bool _endpointIsSlotsPaciente(String? endpoint) =>
+    endpoint != null && endpoint.contains('slots-disponibles-como-paciente');
+
+/// `YYYY-MM-DD` → `dd/MM/yyyy` para el subtítulo de la card.
+String _formatFechaCardSlots(String isoDate) {
+  final p = isoDate.split('-');
+  if (p.length != 3) return isoDate;
+  return '${p[2]}/${p[1]}/${p[0]}';
+}
+
+/// Aplana `por_dia` de GET …/turnos/slots-disponibles-como-paciente a ítems `id` / `text` para cards.
+List<Map<String, dynamic>> _flattenSlotsPacientePorDia(Map<String, dynamic> data) {
+  if (data['success'] != true) return [];
+  final out = <Map<String, dynamic>>[];
+  final porDia = data['por_dia'];
+  if (porDia is! List) return out;
+  for (final day in porDia) {
+    if (day is! Map) continue;
+    final fecha = day['fecha']?.toString() ?? '';
+    void addFranja(List<dynamic>? slots, String franjaLabel) {
+      for (final s in slots ?? []) {
+        if (s is! Map) continue;
+        final hora = s['hora']?.toString() ?? '';
+        final idRrsa = s['id_rrhh_servicio_asignado']?.toString() ?? '';
+        if (fecha.isEmpty || hora.isEmpty || idRrsa.isEmpty) continue;
+        final id = '$idRrsa|$fecha|$hora';
+        final fechaTxt = _formatFechaCardSlots(fecha);
+        out.add({
+          'id': id,
+          'text': '$fechaTxt · $franjaLabel · $hora',
+        });
+      }
+    }
+    addFranja(day['manana'] as List<dynamic>?, 'Mañana');
+    addFranja(day['tarde'] as List<dynamic>?, 'Tarde');
+  }
+  return out;
+}
+
+List<Map<String, dynamic>> _itemsListFromApiJson(Map<String, dynamic> data, String? endpoint) {
+  if (_endpointIsSlotsPaciente(endpoint)) {
+    return _flattenSlotsPacientePorDia(data);
+  }
+  dynamic items;
+  if (data['results'] != null) {
+    items = data['results'];
+  } else if (data['data'] != null) {
+    if (data['data'] is Map && (data['data'] as Map)['results'] != null) {
+      items = (data['data'] as Map)['results'];
+    } else if (data['data'] is List) {
+      items = data['data'];
+    } else {
+      items = data['data'];
+    }
+  } else if (data['items'] != null) {
+    items = data['items'];
+  } else {
+    items = data;
+  }
+  if (items is! List) return [];
+  return items.map<Map<String, dynamic>>((item) {
+    if (item is Map) {
+      final id = item['id']?.toString() ?? item['value']?.toString();
+      final text = item['text']?.toString() ?? item['name']?.toString() ?? item['label']?.toString() ?? id;
+      return {'id': id, 'text': text};
+    }
+    return {'id': item.toString(), 'text': item.toString()};
+  }).toList();
+}
+
 /// Widget genérico para seleccionar elementos con búsqueda y minicards
 /// Puede usarse para efectores, recursos humanos, servicios, etc.
 class SearchableCardSelector extends StatefulWidget {
@@ -126,7 +196,9 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
       }
 
       // Solo buscar en el servidor cuando el usuario escribe en el campo, no cuando seleccionó un cuadro.
-      if (widget.endpoint != null && query.length >= 2) {
+      if (widget.endpoint != null &&
+          query.length >= 2 &&
+          !_endpointIsSlotsPaciente(widget.endpoint)) {
         _searchItems(query);
       }
     }
@@ -142,8 +214,9 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
 
     try {
       final params = Map<String, dynamic>.from(widget.params ?? {});
-      // Cargar items iniciales sin query para mostrar los primeros
-      params['limit'] = '5';
+      if (!_endpointIsSlotsPaciente(widget.endpoint)) {
+        params['limit'] = '5';
+      }
       
       final uri = Uri.parse('${AppConfig.apiUrl}${widget.endpoint}');
       final uriWithParams = uri.replace(queryParameters: params.map((k, v) => MapEntry(k, v.toString())));
@@ -165,47 +238,10 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Manejar diferentes estructuras de respuesta:
-        // 1. { "results": [...] }
-        // 2. { "data": { "results": [...] } }
-        // 3. { "data": [...] }
-        // 4. { "items": [...] }
-        // 5. [...] (array directo)
-        dynamic items;
-        if (data['results'] != null) {
-          items = data['results'];
-        } else if (data['data'] != null) {
-          if (data['data'] is Map && data['data']['results'] != null) {
-            items = data['data']['results'];
-          } else if (data['data'] is List) {
-            items = data['data'];
-          } else {
-            items = data['data'];
-          }
-        } else if (data['items'] != null) {
-          items = data['items'];
-        } else if (data is List) {
-          items = data;
-        } else {
-          items = data;
-        }
-        
-        List<Map<String, dynamic>> itemsList = [];
-        if (items is List) {
-          itemsList = items.map((item) {
-            if (item is Map) {
-              final id = item['id']?.toString() ?? item['value']?.toString();
-              final text = item['text']?.toString() ?? item['name']?.toString() ?? item['label']?.toString() ?? id;
-              return {
-                'id': id,
-                'text': text,
-              };
-            }
-            return {'id': item.toString(), 'text': item.toString()};
-          }).toList();
-        }
-        
+        final raw = json.decode(response.body);
+        final map = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+        final itemsList = _itemsListFromApiJson(map, widget.endpoint);
+
         if (mounted) {
           setState(() {
             _efectores = itemsList;
@@ -243,7 +279,8 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
 
   Future<void> _searchItems(String query) async {
     if (widget.endpoint == null) return;
-    
+    if (_endpointIsSlotsPaciente(widget.endpoint)) return;
+
     try {
       final params = Map<String, dynamic>.from(widget.params ?? {});
       params['q'] = query;
@@ -269,47 +306,10 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Manejar diferentes estructuras de respuesta:
-        // 1. { "results": [...] }
-        // 2. { "data": { "results": [...] } }
-        // 3. { "data": [...] }
-        // 4. { "items": [...] }
-        // 5. [...] (array directo)
-        dynamic items;
-        if (data['results'] != null) {
-          items = data['results'];
-        } else if (data['data'] != null) {
-          if (data['data'] is Map && data['data']['results'] != null) {
-            items = data['data']['results'];
-          } else if (data['data'] is List) {
-            items = data['data'];
-          } else {
-            items = data['data'];
-          }
-        } else if (data['items'] != null) {
-          items = data['items'];
-        } else if (data is List) {
-          items = data;
-        } else {
-          items = data;
-        }
-        
-        List<Map<String, dynamic>> itemsList = [];
-        if (items is List) {
-          itemsList = items.map((item) {
-            if (item is Map) {
-              final id = item['id']?.toString() ?? item['value']?.toString();
-              final text = item['text']?.toString() ?? item['name']?.toString() ?? item['label']?.toString() ?? id;
-              return {
-                'id': id,
-                'text': text,
-              };
-            }
-            return {'id': item.toString(), 'text': item.toString()};
-          }).toList();
-        }
-        
+        final raw = json.decode(response.body);
+        final map = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+        final itemsList = _itemsListFromApiJson(map, widget.endpoint);
+
         if (mounted) {
           setState(() {
             _filteredEfectores = itemsList;
@@ -533,7 +533,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
               Text(
                 itemName,
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,

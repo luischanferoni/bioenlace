@@ -15,6 +15,17 @@ return [
     'turnosPush' => [
         'httpEndpoint' => null,
     ],
+    /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */
+    'turnosPaciente' => [
+        /** Máximo de slots devueltos en una respuesta agrupada */
+        'slots_oferta_max' => 20,
+        /** Días hacia adelante que puede explorar TurnoSlotFinder */
+        'slots_busqueda_max_dias' => 45,
+        /** Hora límite inclusive: &lt; este HH:MM → franja `manana`, ≥ → `tarde` */
+        'franja_tarde_desde' => '13:00',
+        /** Tope duro si el cliente envía `limite` (anti-abuso) */
+        'slots_oferta_max_cliente' => 60,
+    ],
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en /api/v1/pacientes.
      * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.

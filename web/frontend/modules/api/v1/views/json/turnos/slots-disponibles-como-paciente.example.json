@@ -1,0 +1,39 @@
+{
+  "_comment": "Ejemplo de respuesta GET|POST /api/v1/turnos/slots-disponibles-como-paciente",
+  "success": true,
+  "limite": 20,
+  "max_dias_busqueda": 45,
+  "franja_tarde_desde": "13:00",
+  "total": 4,
+  "criterios": {
+    "id_servicio": 12,
+    "id_efector": 3,
+    "id_rrhh_servicio_asignado": 88,
+    "fecha_desde": "2026-03-22"
+  },
+  "por_dia": [
+    {
+      "fecha": "2026-03-22",
+      "manana": [
+        {
+          "fecha": "2026-03-22",
+          "hora": "09:00",
+          "id_rr_hh": 41,
+          "id_rrhh_servicio_asignado": 88,
+          "id_efector": 3,
+          "id_servicio": 12
+        }
+      ],
+      "tarde": [
+        {
+          "fecha": "2026-03-22",
+          "hora": "15:30",
+          "id_rr_hh": 41,
+          "id_rrhh_servicio_asignado": 88,
+          "id_efector": 3,
+          "id_servicio": 12
+        }
+      ]
+    }
+  ]
+}

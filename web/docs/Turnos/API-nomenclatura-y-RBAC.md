@@ -20,9 +20,17 @@ Documento de referencia para convenciones de nombres, URLs públicas y permisos 
 |------|------------------|
 | Reglas HTTP | `web/frontend/config/main.php` |
 | Lógica de respuesta | `TurnosController.php`, `AgendaController.php` |
+| Slots oferta paciente (agrupados día / mañana-tarde) | `TurnoSlotOfferService`, params `turnosPaciente` en `common/config/params.php` |
 | Cálculo compartido agenda día | `TurnosController::agendaDiaResponse()` |
 | Alta compartida | `TurnosController::persistTurnoCreacion()` |
 | Chat / CTAs que chequean permiso | `common/components/Actions/ChatApiActionBuilder.php` (p. ej. crear turno autogestión) |
+
+## Oferta de slots (paciente)
+
+- **URL:** `GET|POST /api/v1/turnos/slots-disponibles-como-paciente`
+- **Permiso webvimark:** `/api/turnos/slots-disponibles-como-paciente` (registrar y asignar al rol paciente u otros que correspondan).
+- **Límites por defecto:** clave `turnosPaciente` en `common/config/params.php` (`slots_oferta_max`, `slots_busqueda_max_dias`, `franja_tarde_desde`, `slots_oferta_max_cliente`).
+- **Ejemplo de respuesta:** `web/frontend/modules/api/v1/views/json/turnos/slots-disponibles-como-paciente.example.json`
 
 ## Migración de permisos
 

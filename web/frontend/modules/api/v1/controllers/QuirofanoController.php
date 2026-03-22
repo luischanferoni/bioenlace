@@ -8,14 +8,15 @@ use yii\web\ConflictHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\models\Cirugia;
-use common\models\Consulta;
 use common\models\QuirofanoSala;
 use common\components\Services\Quirofano\CirugiaAgendaService;
-use common\components\Services\Quirofano\CirugiaIntakeService;
 use common\components\Quirofano\UserEfectorAccess;
 
 /**
- * API agenda quirúrgica (salas + cirugías).
+ * API agenda quirúrgica: salas (CRUD) y cirugías (alta/edición de agenda).
+ *
+ * Cirugía aquí = ítem de agenda (sala, horarios, estado operativo, vínculos operativos), análogo a turnos.
+ * El informe o nota clínica del acto se registra como consulta en historia clínica, no en este recurso.
  */
 class QuirofanoController extends BaseController
 {
@@ -140,34 +141,6 @@ class QuirofanoController extends BaseController
     }
 
     /**
-     * POST /api/v1/quirofano/cirugias/intake
-     * Body: texto (string), id_efector (int)
-     */
-    public function actionCirugiaIntake()
-    {
-        $req = Yii::$app->request;
-        try {
-            if (!$req->isPost) {
-                throw new BadRequestHttpException('Solo POST.');
-            }
-            $data = $req->getBodyParams();
-            $idEfector = isset($data['id_efector']) ? (int) $data['id_efector'] : 0;
-            $texto = isset($data['texto']) ? (string) $data['texto'] : '';
-            if (!$idEfector) {
-                throw new BadRequestHttpException('Parámetro id_efector requerido.');
-            }
-            UserEfectorAccess::requireEfectorAccess($idEfector);
-            $svc = new CirugiaIntakeService();
-            $out = $svc->procesar($texto, $idEfector);
-            return $this->success($out, 'Intake procesado.');
-        } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
-        } catch (BadRequestHttpException $e) {
-            return $this->error($e->getMessage(), null, 400);
-        }
-    }
-
-    /**
      * GET/POST /api/v1/quirofano/cirugias
      */
     public function actionCirugias()
@@ -229,45 +202,6 @@ class QuirofanoController extends BaseController
             return $this->error($e->getMessage(), null, 400);
         }
         throw new BadRequestHttpException('Método no soportado.');
-    }
-
-    /**
-     * GET /api/v1/quirofano/cirugias/<id>/informe-clinico
-     * Consulta clínica (Nivel 1) anclada a la cirugía, si existe.
-     */
-    public function actionInformeClinico($id)
-    {
-        try {
-            $model = $this->findCirugia((int) $id);
-            UserEfectorAccess::requireEfectorAccess($this->efectorIdFromCirugia($model));
-            $parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_CIRUGIA];
-            $consulta = Consulta::find()
-                ->where([
-                    'parent_class' => $parentClass,
-                    'parent_id' => (int) $model->id,
-                ])
-                ->andWhere(['deleted_at' => null])
-                ->orderBy(['id_consulta' => SORT_DESC])
-                ->one();
-            if (!$consulta) {
-                return $this->success([
-                    'id_consulta' => null,
-                    'id_configuracion' => null,
-                    'texto_original' => null,
-                    'texto_procesado' => null,
-                ], 'Sin informe clínico asociado.');
-            }
-            return $this->success([
-                'id_consulta' => (int) $consulta->id_consulta,
-                'id_configuracion' => (int) $consulta->id_configuracion,
-                'texto_original' => $consulta->consulta_inicial,
-                'texto_procesado' => $consulta->observacion,
-            ], 'OK');
-        } catch (NotFoundHttpException $e) {
-            return $this->error($e->getMessage(), null, 404);
-        } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
-        }
     }
 
     /**

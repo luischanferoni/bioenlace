@@ -38,6 +38,7 @@ use yii\web\ConflictHttpException;
  * | actionSlotsAlternativosComoPaciente | GET | …/{id}/slots-alternativos | slots-alternativos-como-paciente |
  * | actionConfirmarAsistenciaComoPaciente | POST | …/{id}/confirmar-asistencia | confirmar-asistencia-como-paciente |
  * | actionReprogramarComoPaciente   | POST | …/{id}/reprogramar   | reprogramar-como-paciente           |
+ * | actionSlotsDisponiblesComoPaciente | GET/POST | …/slots-disponibles-como-paciente | slots-disponibles-como-paciente |
  * | actionConsultarOcupacionDia   | GET/POST | …/eventos        | consultar-ocupacion-dia             |
  * | actionCancelarDiaEfector        | POST | …/cancelar-dia-efector | cancelar-dia-efector            |
  * | actionConsultarProximoDisponible | GET/POST | …/turnos/proximo-disponible | consultar-proximo-disponible |
@@ -429,8 +430,7 @@ class TurnosController extends BaseController
         if ($mismoProf && (int) $turno->id_rrhh_servicio_asignado > 0) {
             $criteria['id_rrhh_servicio_asignado'] = (int) $turno->id_rrhh_servicio_asignado;
         }
-        $offer = new TurnoSlotOfferService();
-        $slots = $offer->findSlots($criteria, $limit);
+        $slots = TurnoSlotFinder::findAvailableSlots($criteria, max(1, $limit));
         return ['success' => true, 'slots' => $slots];
     }
 
@@ -567,6 +567,96 @@ class TurnosController extends BaseController
             'slot' => $slot,
             'message' => sprintf('Próximo turno: %s a las %s', $slot['fecha'], $slot['hora']),
         ];
+    }
+
+    /**
+     * Próximos slots libres agrupados por día y por franja (mañana / tarde). Autogestión paciente.
+     *
+     * GET|POST …/turnos/slots-disponibles-como-paciente. Query/body:
+     * - id_servicio (obligatorio), id_efector (opcional, sesión), id_rr_hh opcional, id_rrhh_servicio_asignado opcional,
+     * - fecha_desde, limite, max_dias, franja_tarde_desde (opcionales; defaults en params `turnosPaciente`),
+     * - restricciones (JSON array, mismo formato que {@see TurnoSlotFinder::findAvailableSlots}).
+     *
+     * RBAC: /api/turnos/slots-disponibles-como-paciente. Firma JSON: `views/json/turnos/slots-disponibles-como-paciente.example.json`.
+     * {@see TurnoSlotOfferService}
+     */
+    public function actionSlotsDisponiblesComoPaciente()
+    {
+        $req = Yii::$app->request;
+        $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
+        if (!$idServicio) {
+            throw new BadRequestHttpException('id_servicio es obligatorio');
+        }
+        $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
+        if (!$idEfector) {
+            $idEfector = Yii::$app->user->getIdEfector();
+        }
+        if (!$idEfector) {
+            throw new BadRequestHttpException('No se pudo determinar id_efector');
+        }
+
+        $criteria = [
+            'id_servicio' => (int) $idServicio,
+            'id_efector' => (int) $idEfector,
+            'fecha_desde' => $req->get('fecha_desde') ?: $req->post('fecha_desde') ?: date('Y-m-d'),
+        ];
+
+        $idRrsa = (int) ($req->get('id_rrhh_servicio_asignado') ?: $req->post('id_rrhh_servicio_asignado') ?: 0);
+        $idRrhh = $req->get('id_rr_hh') ?: $req->post('id_rr_hh');
+        if ($idRrsa <= 0 && $idRrhh) {
+            $resolved = RrhhServicio::obtenerIdRrhhServicio((int) $idRrhh, (int) $idServicio);
+            if ($resolved) {
+                $idRrsa = (int) $resolved;
+            }
+        }
+        if ($idRrsa > 0) {
+            $criteria['id_rrhh_servicio_asignado'] = $idRrsa;
+        }
+
+        $restr = $req->get('restricciones') ?: $req->post('restricciones');
+        if (is_string($restr) && $restr !== '') {
+            $decoded = json_decode($restr, true);
+            if (is_array($decoded)) {
+                $criteria['restricciones'] = $decoded;
+            }
+        } elseif (is_array($restr)) {
+            $criteria['restricciones'] = $restr;
+        }
+
+        $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $p = Yii::$app->params['turnosPaciente'] ?? [];
+        $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
+
+        $limiteRaw = $req->get('limite') ?: $req->post('limite');
+        $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
+        $limite = max(1, min($maxCliente, $limite));
+
+        $maxDiasRaw = $req->get('max_dias') ?: $req->post('max_dias');
+        $maxDias = $maxDiasRaw !== null && $maxDiasRaw !== '' ? (int) $maxDiasRaw : $defaults['max_dias'];
+        $maxDias = max(1, min(90, $maxDias));
+
+        $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
+        $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
+        if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
+            $franja = $defaults['franja_tarde_desde'];
+        }
+
+        try {
+            $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        } catch (\RuntimeException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        return array_merge(['success' => true], $grouped, [
+            'criterios' => [
+                'id_servicio' => (int) $idServicio,
+                'id_efector' => (int) $idEfector,
+                'id_rrhh_servicio_asignado' => $criteria['id_rrhh_servicio_asignado'] ?? null,
+                'fecha_desde' => $criteria['fecha_desde'],
+            ],
+        ]);
     }
 
     /**

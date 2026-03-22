@@ -11,7 +11,8 @@ use common\components\Quirofano\UserEfectorAccess;
 use frontend\filters\QuirofanoEfectorAccessFilter;
 
 /**
- * Vistas mínimas de agenda quirúrgica: listados en servidor; altas/edición vía API v1 (JWT en sesión).
+ * Vistas mínimas de agenda quirúrgica: listado, alta/edición de ítem de agenda (como turnos), salas.
+ * La nota o informe clínico del acto es consulta en HC, no esta pantalla.
  */
 class QuirofanoController extends Controller
 {

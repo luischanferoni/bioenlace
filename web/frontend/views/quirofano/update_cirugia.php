@@ -25,8 +25,8 @@ $urlHistoriaTpl = Url::to(['/paciente/historia']);
     <h1><?= Html::encode($this->title) ?></h1>
 
     <div class="alert alert-info">
-        El <strong>informe clínico</strong> se carga en la <strong>historia clínica</strong> del paciente
-        (menú Pacientes o enlace abajo). Esta pantalla es solo para <strong>agenda</strong> (sala, horarios, estado).
+        Esta pantalla es <strong>agenda</strong> (sala, horarios, estado). La <strong>consulta</strong> clínica del acto
+        se registra en historia clínica (enlace abajo), no aquí.
     </div>
 
     <div id="qu-msg" class="alert d-none" role="alert"></div>
@@ -34,7 +34,7 @@ $urlHistoriaTpl = Url::to(['/paciente/historia']);
 
     <div id="qu-form" class="d-none">
         <p class="mb-2">
-            <a id="qu-link-hc" class="btn btn-outline-primary btn-sm" href="#" target="_blank" rel="noopener">Abrir historia clínica (consulta)</a>
+            <a id="qu-link-hc" class="btn btn-outline-primary btn-sm" href="#" target="_blank" rel="noopener">Historia clínica (consulta)</a>
             <?= Html::a('Ir a Pacientes', ['/site/pacientes'], ['class' => 'btn btn-link btn-sm']) ?>
         </p>
 

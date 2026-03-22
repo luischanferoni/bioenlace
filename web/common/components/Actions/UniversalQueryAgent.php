@@ -4,6 +4,8 @@ namespace common\components\Actions;
 
 use Yii;
 use common\components\Ai\IAManager;
+use common\components\MensajeIntent\MensajeCatalogBuilder;
+use common\components\MensajeIntent\MensajeCatalogItem;
 
 /**
  * Agente CRUD completamente genérico y dinámico
@@ -570,7 +572,7 @@ class UniversalQueryAgent
                     ];
                 }
                 
-                $intentResult = self::understandIntent($userQuery);
+                $intentResult = self::understandIntent($userQuery, $userId);
                 
                 if (!$intentResult['success']) {
                     return $intentResult;
@@ -639,20 +641,28 @@ class UniversalQueryAgent
 
     /**
      * Fase 1: Entender intención y generar criterios de búsqueda
-     * La IA analiza la consulta SIN ver todas las acciones
+     * La IA analiza la consulta con catálogo mínimo de acciones permitidas al usuario (RBAC).
      * @param string $userQuery
+     * @param int|string|null $userId
      * @return array
      */
-    private static function understandIntent($userQuery)
+    private static function understandIntent($userQuery, $userId = null)
     {
         $userContext = self::getUserContext();
         
         // Obtener metadatos del sistema dinámicamente
         $systemMetadata = self::getSystemMetadata();
         
-        // Obtener entidades disponibles desde acciones descubiertas
-        $entities = self::getAvailableEntities();
-        $entitiesText = !empty($entities) ? implode(', ', $entities) : '';
+        $catalogJson = self::buildAllowedActionsCatalogJson($userId);
+        if ($catalogJson !== '') {
+            $catalogBlock = "Acciones permitidas para este usuario (JSON). Usa solo estas rutas/action_id como referencia de lo que puede hacer:\n{$catalogJson}\n";
+            $entitiesLine = '';
+        } else {
+            $catalogBlock = '';
+            $entities = self::getAvailableEntities();
+            $entitiesText = !empty($entities) ? implode(', ', $entities) : 'ninguna detectada';
+            $entitiesLine = "- Entidades disponibles (referencia global): {$entitiesText}\n";
+        }
         
         // Obtener business queries disponibles para contexto
         $businessQueriesInfo = self::getBusinessQueriesInfo();
@@ -662,15 +672,12 @@ class UniversalQueryAgent
         
         // Prompt genérico y escalable
         $prompt = <<<PROMPT
-Analiza esta consulta de usuario en un sistema de gestión de salud:
+Analiza esta consulta de usuario en un sistema de gestion de salud:
 
 "{$userQuery}"
 
 Contexto del sistema:
-- Usuario: {$userContext['name']}
-- Fecha: {$userContext['current_date']}
-- Entidades disponibles: {$entitiesText}
-- Metadatos: {$systemMetadata}
+{$catalogBlock}{$entitiesLine}- Metadatos: {$systemMetadata}
 {$businessQueriesInfo}
 {$serviciosParaTurnos}
 
@@ -1935,6 +1942,47 @@ PROMPT;
         return array_map(function($item) {
             return $item['action'];
         }, $suggested);
+    }
+
+    /**
+     * JSON del catálogo mínimo (ruta, action_id, title, description, keywords) solo para acciones RBAC del usuario.
+     * @param int|string|null $userId
+     */
+    private static function buildAllowedActionsCatalogJson($userId): string
+    {
+        $uid = self::normalizeUserIdForIntent($userId);
+        if ($uid === null) {
+            return '';
+        }
+        $items = MensajeCatalogBuilder::buildAllowedActionsOnly($uid);
+        if ($items === []) {
+            return '';
+        }
+        $list = array_map(static function (MensajeCatalogItem $i) {
+            return $i->toPromptArray();
+        }, $items);
+
+        return json_encode($list, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * @param int|string|null $userId
+     */
+    private static function normalizeUserIdForIntent($userId): ?int
+    {
+        if ($userId === null || $userId === '') {
+            return null;
+        }
+        if (is_int($userId)) {
+            return $userId > 0 ? $userId : null;
+        }
+        if (is_string($userId) && ctype_digit($userId)) {
+            $n = (int) $userId;
+
+            return $n > 0 ? $n : null;
+        }
+
+        return null;
     }
 
     /**

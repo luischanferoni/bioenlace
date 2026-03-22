@@ -8,7 +8,7 @@ use common\models\Dialogo;
 use common\models\Mensaje;
 use common\models\Servicio;
 use common\models\Turno;
-use common\components\Chatbot\ConsultaIntentRouter;
+use common\components\Chatbot\MensajeIntentRouter;
 
 class ChatController extends BaseController
 {
@@ -79,20 +79,20 @@ class ChatController extends BaseController
         $routerResult = null;
         $routerError = null;
         try {
-            $routerResult = ConsultaIntentRouter::process($content, $senderId, 'BOT');
+            $routerResult = MensajeIntentRouter::process($content, $senderId, 'BOT');
             
             if (($routerResult['success'] ?? false) === true) {
                 $respuestaTexto = $routerResult['response']['text'] ?? 'Consulta procesada correctamente.';
                 
                 // Si necesita más información, mantener el contexto
                 if (isset($routerResult['needs_more_info']) && $routerResult['needs_more_info']) {
-                    // El contexto ya fue guardado por ConsultaIntentRouter
+                    // El contexto ya fue guardado por MensajeIntentRouter
                 }
             } else {
                 $respuestaTexto = $routerResult['error'] ?? 'Ocurrió un error al procesar tu consulta.';
             }
         } catch (\Exception $e) {
-            \Yii::error('Error en ConsultaIntentRouter: ' . $e->getMessage(), 'chats');
+            \Yii::error('Error en MensajeIntentRouter: ' . $e->getMessage(), 'chats');
             $routerError = $e->getMessage();
             $respuestaTexto = "Ocurrió un error. Por favor, intentá nuevamente.";
         }
@@ -282,7 +282,7 @@ class ChatController extends BaseController
     }
 
     /**
-     * @deprecated Este método ya no se usa, se reemplazó por ConsultaIntentRouter
+     * @deprecated Este método ya no se usa, se reemplazó por MensajeIntentRouter
      * Se mantiene por compatibilidad pero no debería llamarse
      */
     private function crearTurno($datos, $dialogo)
@@ -341,7 +341,7 @@ class ChatController extends BaseController
     private function modificarTurno($datos, $dialogo)
     {
         /**
-         * @deprecated Este método ya no se usa, se reemplazó por ConsultaIntentRouter
+         * @deprecated Este método ya no se usa, se reemplazó por MensajeIntentRouter
          * Se mantiene por compatibilidad pero no debería llamarse
          */
         // Buscar el turno actual (este ejemplo es genérico)

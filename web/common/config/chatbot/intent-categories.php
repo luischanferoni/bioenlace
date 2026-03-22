@@ -1,9 +1,10 @@
 <?php
 /**
- * Configuración de categorías e intents para el orquestador de consultas
- * 
- * Define todas las categorías de consultas y sus intents asociados,
- * junto con keywords y patrones para detección por reglas.
+ * Configuración de categorías e intents para el orquestador de mensajes (MensajeIntentRouter).
+ *
+ * Define categorías, intents, keywords y patrones para la fase de reglas.
+ * Opcional por intent: `required_routes` => ['/ruta/yii', ...] — si está definido y no vacío,
+ * el intent solo entra en el catálogo si el usuario tiene acceso a alguna de esas rutas (RBAC).
  */
 
 return [

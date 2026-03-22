@@ -7,7 +7,7 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\Response;
 use common\components\Chatbot\ConversacionLoader;
-use common\components\Chatbot\ConsultaIntentRouter;
+use common\components\Chatbot\MensajeIntentRouter;
 use common\components\Ai\Cost\AICostTracker;
 
 /**
@@ -72,7 +72,7 @@ class CostosController extends Controller
         $respuestas = [];
         foreach ($mensajes as $i => $mensaje) {
             try {
-                $result = ConsultaIntentRouter::process($mensaje, $userId, 'BOT');
+                $result = MensajeIntentRouter::process($mensaje, $userId, 'BOT');
                 $texto = $result['response']['text'] ?? ($result['error'] ?? '');
                 $respuestas[] = [
                     'mensaje' => $mensaje,

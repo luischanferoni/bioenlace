@@ -5,7 +5,7 @@ namespace console\controllers;
 use Yii;
 use yii\console\Controller;
 use common\components\Chatbot\ConversacionLoader;
-use common\components\Chatbot\ConsultaIntentRouter;
+use common\components\Chatbot\MensajeIntentRouter;
 use common\components\Ai\Cost\AICostTracker;
 
 /**
@@ -70,7 +70,7 @@ class CostosController extends Controller
         foreach ($mensajes as $i => $mensaje) {
             $this->stdout("  [{$i}] Usuario: {$mensaje}\n");
             try {
-                $result = ConsultaIntentRouter::process($mensaje, $userId, 'BOT');
+                $result = MensajeIntentRouter::process($mensaje, $userId, 'BOT');
                 $texto = $result['response']['text'] ?? ($result['error'] ?? json_encode($result));
                 $respuestas[] = ['mensaje' => $mensaje, 'respuesta' => $texto];
                 $this->stdout("      Bot: " . mb_substr($texto, 0, 120) . (mb_strlen($texto) > 120 ? '...' : '') . "\n");

@@ -105,6 +105,33 @@ class ActionMappingService
     }
 
     /**
+     * Indica si el usuario (por id) puede usar la ruta según RBAC / rutas libres.
+     * Útil para filtrar intents de conversación por `required_routes` sin duplicar lógica.
+     *
+     * @param int|string|null $userId
+     */
+    public static function userIdCanAccessRoute($userId, string $route): bool
+    {
+        if ($userId === null || $userId === '') {
+            return false;
+        }
+        $uid = (int) $userId;
+        if ($uid <= 0) {
+            return false;
+        }
+        $user = User::findOne($uid);
+        if (!$user) {
+            return false;
+        }
+        $routeMap = null;
+        if ((int) $user->superadmin !== 1) {
+            $routeMap = AllowedRoutesResolver::getTargetRoutesMapForUserId($uid, true);
+        }
+
+        return self::userCanAccessRoute($user, $route, $routeMap);
+    }
+
+    /**
      * Verificar si el usuario puede acceder a una ruta
      * @param User $user
      * @param string $route

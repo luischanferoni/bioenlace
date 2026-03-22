@@ -204,8 +204,8 @@ class UniversalQueryAgent
             
             if (!empty($scoredActions)) {
                 $bestScore = $scoredActions[0]['score'];
-                $threshold = max(10.0, $bestScore * 0.7); // Al menos 70% del mejor score, mínimo 10
-                
+                $threshold = self::relativeScoreThreshold($bestScore);
+
                 // Incluir todas las acciones que tengan score >= threshold
                 foreach ($scoredActions as $scoredAction) {
                     if ($scoredAction['score'] >= $threshold) {
@@ -213,7 +213,7 @@ class UniversalQueryAgent
                     }
                 }
             }
-            
+
             // Verificar compatibilidad de parámetros requeridos de manera genérica
             // Usar el método genérico findAndValidateActionParameters que procesa todos los parámetros
             // Normalizar extracted_data primero para que tenga la estructura correcta (con raw)
@@ -527,7 +527,8 @@ class UniversalQueryAgent
 
             // FASE 1: Matching semántico ANTES del LLM (más rápido y económico)
             // Solo si hay userQuery (si solo viene action_id, ya se manejó arriba)
-            if (!empty($userQuery)) {
+            // No aplicar a "¿qué puedo hacer?" — debe resolverse como list_all de todas las acciones permitidas
+            if (!empty($userQuery) && !self::isListAllQueryHeuristic((string) $userQuery)) {
                 $semanticMatch = self::findActionBySemanticMatch($userQuery, $userId);
                 
                 if ($semanticMatch !== null) {
@@ -563,6 +564,9 @@ class UniversalQueryAgent
                 // Usar criterios proporcionados directamente
                 $searchCriteria = $criteria;
                 Yii::info("UniversalQueryAgent::processQuery - Usando criterios proporcionados: " . json_encode($searchCriteria, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+                if (!empty($userQuery) && self::isListAllQueryHeuristic((string) $userQuery)) {
+                    $searchCriteria['query_type'] = 'list_all';
+                }
             } else {
                 // Generar criterios desde el texto del usuario
                 if (empty($userQuery)) {
@@ -589,9 +593,17 @@ class UniversalQueryAgent
                     'filters' => $intentResult['filters'] ?? [],
                     'query_type' => $intentResult['query_type'] ?? 'unknown',
                 ];
-                
+                $searchCriteria['search_keywords'] = self::mergeUserQueryTokensIntoKeywords(
+                    $userQuery,
+                    is_array($searchCriteria['search_keywords']) ? $searchCriteria['search_keywords'] : []
+                );
+
                 // Log de los criterios generados para debugging
                 Yii::info("UniversalQueryAgent::processQuery - Criterios generados por IA: " . json_encode($searchCriteria, JSON_UNESCAPED_UNICODE), 'universal-query-agent');
+            }
+
+            if (!empty($userQuery) && self::isListAllQueryHeuristic((string) $userQuery)) {
+                $searchCriteria['query_type'] = 'list_all';
             }
 
             // FASE 2.5: Si es data_query, buscar business query primero
@@ -620,8 +632,9 @@ class UniversalQueryAgent
                 Yii::warning("UniversalQueryAgent::processQuery - No se encontró ninguna acción para los criterios proporcionados", 'universal-query-agent');
             }
             
-            // FASE 4: Si hay muchas acciones, usar IA para priorizar (solo si hay más de 10)
-            if (count($relevantActions) > 10) {
+            // FASE 4: Priorizar con IA solo si no es listado completo ("¿qué puedo hacer?")
+            $isListAll = ($searchCriteria['query_type'] ?? '') === 'list_all';
+            if (!$isListAll && count($relevantActions) > 10) {
                 $relevantActions = self::prioritizeActions($userQuery, $relevantActions, 10);
             }
 
@@ -705,6 +718,7 @@ Extrae información de la consulta y responde ÚNICAMENTE con este JSON:
 }
 
 IMPORTANTE: 
+- Si el usuario pregunta qué puede hacer, qué opciones tiene, sus permisos o capacidades, o frases como "¿qué puedo hacer?", "qué ofrece el sistema", "menú de acciones" → query_type debe ser "list_all" (listar todo lo permitido, sin filtrar a una sola entidad).
 - Extrae intenciones y valores/parámetros de la consulta
 - En "extracted_data.names" coloca TODOS los nombres, valores de texto o identificadores de entidades que encuentres (servicios, profesionales, lugares, etc.)
 - En "extracted_data.identifiers" coloca números que puedan ser IDs o documentos
@@ -887,6 +901,73 @@ PROMPT;
     }
 
     /**
+     * Umbral relativo para incluir acciones candidatas sin exigir score mínimo 10
+     * (un mejor score de p. ej. 9 quedaba fuera con max(10, best*0.7)).
+     */
+    private static function relativeScoreThreshold($bestScore): float
+    {
+        if ($bestScore <= 0) {
+            return 0.0;
+        }
+
+        return max(1.0, $bestScore * 0.65);
+    }
+
+    /**
+     * Refuerza search_keywords con tokens del texto del usuario (la IA a veces omite "turno", etc.).
+     *
+     * @param string $userQuery
+     * @param string[] $keywords
+     * @return string[]
+     */
+    /**
+     * Preguntas que deben listar todas las acciones RBAC del usuario (sin recorte a 10 ni matching semántico previo).
+     */
+    private static function isListAllQueryHeuristic($query): bool
+    {
+        $q = mb_strtolower(trim((string) $query), 'UTF-8');
+        if ($q === '') {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\bqu[eé]\s+puedo\s+hacer\b|\bqu[eé]\s+se\s+puede\s+hacer\b|\bqu[eé]\s+opciones\s+tengo\b|\btodas?\s+mis\s+opciones\b|\blist(ar)?o?\s+todo\s+lo\s+que\s+puedo\b/u',
+            $q
+        );
+    }
+
+    private static function mergeUserQueryTokensIntoKeywords($userQuery, array $keywords): array
+    {
+        $keywords = array_values(array_filter(array_map('trim', $keywords), static function ($k) {
+            return $k !== '' && is_string($k);
+        }));
+        $lower = mb_strtolower(trim($userQuery), 'UTF-8');
+        if ($lower === '') {
+            return $keywords;
+        }
+        $parts = preg_split('/[\s,.;:!?¿¡"\']+/u', $lower, -1, PREG_SPLIT_NO_EMPTY);
+        $stop = [
+            'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas', 'de', 'del', 'al', 'y', 'o', 'en', 'con', 'por', 'para',
+            'que', 'su', 'sus', 'mi', 'mis', 'tu', 'tus', 'se', 'les', 'lo', 'me', 'te', 'ha', 'he', 'es', 'son', 'ser', 'hay',
+        ];
+        $extra = [];
+        foreach ($parts as $p) {
+            if (mb_strlen($p) < 3) {
+                continue;
+            }
+            if (in_array($p, $stop, true)) {
+                continue;
+            }
+            $extra[] = $p;
+        }
+        if (preg_match('/turno|cita|agenda|reserv/i', $userQuery)) {
+            $extra[] = 'turno';
+        }
+
+        return array_values(array_unique(array_merge($keywords, $extra)));
+    }
+
+    /**
      * Fase 2: Buscar acciones usando criterios (búsqueda local inteligente)
      * Devuelve un array de acciones seleccionadas según su score
      * Puede devolver una o varias acciones dependiendo de los scores
@@ -948,8 +1029,8 @@ PROMPT;
         
         if (!empty($scoredActions)) {
             $bestScore = $scoredActions[0]['score'];
-            $threshold = max(10.0, $bestScore * 0.7); // Al menos 70% del mejor score, mínimo 10
-            
+            $threshold = self::relativeScoreThreshold($bestScore);
+
             // Incluir todas las acciones que tengan score >= threshold
             foreach ($scoredActions as $scoredAction) {
                 if ($scoredAction['score'] >= $threshold) {
@@ -959,7 +1040,7 @@ PROMPT;
                     break;
                 }
             }
-            
+
             // Log de las acciones seleccionadas
             Yii::info("UniversalQueryAgent::findActionsByCriteria - Seleccionadas " . count($selectedActions) . " acción(es) con score >= {$threshold} (mejor score: {$bestScore})", 'universal-query-agent');
             foreach ($selectedActions as $idx => $action) {
@@ -1120,6 +1201,7 @@ PROMPT;
         $queryType = $criteria['query_type'] ?? 'unknown';
         $queryTypeMapping = [
             'list' => ['index', 'list', 'listar', 'ver todos'],
+            'list_all' => ['index', 'list', 'listar', 'ver todos'],
             'search' => ['search', 'buscar', 'find', 'filter'],
             'create' => ['create', 'crear', 'new', 'nuevo', 'crearmi'],
             'update' => ['update', 'editar', 'edit', 'modificar'],
@@ -1220,8 +1302,8 @@ PROMPT;
         
         if (!empty($scoredActions)) {
             $bestScore = $scoredActions[0]['score'];
-            $threshold = max(10.0, $bestScore * 0.7); // Al menos 70% del mejor score, mínimo 10
-            
+            $threshold = self::relativeScoreThreshold($bestScore);
+
             // Incluir todas las acciones que tengan score >= threshold
             foreach ($scoredActions as $scoredAction) {
                 if ($scoredAction['score'] >= $threshold) {
@@ -1604,8 +1686,8 @@ PROMPT;
             }
         }
         
-        // Solo retornar si el score es suficientemente alto (umbral: 15)
-        if ($bestScore >= 15) {
+        // Umbral moderado: frases como "necesito un turno…" suelen sumar poco por keyword exacto
+        if ($bestScore >= 10) {
             return $bestMatch;
         }
         
@@ -1849,12 +1931,37 @@ PROMPT;
     }
 
     /**
+     * @param array $actions
+     * @return array
+     */
+    private static function dedupeActionsForResponse(array $actions): array
+    {
+        $seen = [];
+        $out = [];
+        foreach ($actions as $action) {
+            $r = isset($action['route']) ? '/' . ltrim((string) $action['route'], '/') : '';
+            if ($r === '' || $r === '/') {
+                $out[] = $action;
+                continue;
+            }
+            if (isset($seen[$r])) {
+                continue;
+            }
+            $seen[$r] = true;
+            $out[] = $action;
+        }
+
+        return $out;
+    }
+
+    /**
      * Formatear respuesta para "listar todos los permisos"
      * @param array $actions
      * @return array
      */
     private static function formatListAllResponse($actions)
     {
+        $actions = self::dedupeActionsForResponse($actions);
         // Formatear acciones (solo campos necesarios)
         $formattedActions = self::formatActionsForResponse($actions);
         

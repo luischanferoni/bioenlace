@@ -28,7 +28,7 @@ class ActionDiscoveryService
     /**
      * Cache key para acciones descubiertas
      */
-    public const CACHE_KEY_ACTIONS = 'discovered_actions_all';
+    public const CACHE_KEY_ACTIONS = 'discovered_actions_all_v2';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**
@@ -67,12 +67,99 @@ class ActionDiscoveryService
             }
         }
 
+        $actions = array_merge($actions, self::discoverApiV1ControllerActions());
+
         // Guardar en cache
         if ($cache) {
             $cache->set($cacheKey, $actions, self::CACHE_DURATION);
         }
 
         return $actions;
+    }
+
+    /**
+     * Acciones del módulo API v1: rutas alineadas con {@see ApiGhostAccessControl} (/api/&lt;controller&gt;/&lt;action&gt;).
+     */
+    private static function discoverApiV1ControllerActions(): array
+    {
+        $alias = '@frontend/modules/api/v1/controllers';
+        $realPath = Yii::getAlias($alias);
+        if (!is_dir($realPath)) {
+            return [];
+        }
+
+        $files = FileHelper::findFiles($realPath, [
+            'only' => ['*Controller.php'],
+            'recursive' => false,
+        ]);
+
+        $actions = [];
+        foreach ($files as $file) {
+            $actions = array_merge($actions, self::extractActionsFromApiV1ControllerFile($file));
+        }
+
+        return $actions;
+    }
+
+    /**
+     * @param string $filePath
+     * @return array
+     */
+    private static function extractActionsFromApiV1ControllerFile($filePath)
+    {
+        $actions = [];
+        $className = self::getClassNameFromFile($filePath);
+
+        if (!$className) {
+            return $actions;
+        }
+
+        try {
+            $reflection = new ReflectionClass($className);
+
+            if (
+                !$reflection->isSubclassOf('yii\web\Controller') &&
+                !$reflection->isSubclassOf('yii\rest\Controller')
+            ) {
+                return $actions;
+            }
+
+            $shortName = $reflection->getShortName();
+            if ($shortName === 'BaseController' || $reflection->isAbstract()) {
+                return $actions;
+            }
+
+            $controllerName = self::getControllerName($shortName);
+            $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
+
+            foreach ($methods as $method) {
+                $methodName = $method->getName();
+                if (strpos($methodName, 'action') !== 0 || $methodName === 'actions') {
+                    continue;
+                }
+
+                $methodName = str_replace('action', '', $methodName);
+                $actionName = Inflector::camel2id($methodName);
+                $route = self::generateApiGhostRoute($controllerName, $actionName);
+
+                $metadata = self::extractActionMetadata($method, $route, $controllerName, $actionName);
+                if ($metadata) {
+                    $actions[] = $metadata;
+                }
+            }
+        } catch (\Exception $e) {
+            Yii::error("Error extrayendo acciones API v1 de {$filePath}: " . $e->getMessage(), 'action-discovery');
+        }
+
+        return $actions;
+    }
+
+    /**
+     * Ruta de permiso igual que ApiGhostAccessControl: /api/{controller}/{action}
+     */
+    private static function generateApiGhostRoute(string $controllerName, string $actionKebab): string
+    {
+        return '/api/' . $controllerName . '/' . $actionKebab;
     }
 
     /**

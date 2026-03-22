@@ -15,7 +15,7 @@ class ActionMappingService
     /**
      * Cache key para acciones por rol
      */
-    public const CACHE_KEY_PREFIX = 'actions_for_role_';
+    public const CACHE_KEY_PREFIX = 'actions_for_role_v2_';
     public const CACHE_DURATION = 1800; // 30 minutos
 
     /**
@@ -69,6 +69,8 @@ class ActionMappingService
             }
         }
 
+        $availableActions = self::dedupeActionsByRoute($availableActions);
+
         // Log para debugging
         Yii::info("ActionMappingService: Acciones disponibles después de filtrar: " . count($availableActions) . " para usuario: {$userId}", 'action-mapping');
 
@@ -78,6 +80,32 @@ class ActionMappingService
         }
 
         return $availableActions;
+    }
+
+    /**
+     * Evita duplicados (misma ruta de permiso) por descubrimiento en web + API v1.
+     *
+     * @param array $actions
+     * @return array
+     */
+    private static function dedupeActionsByRoute(array $actions): array
+    {
+        $seen = [];
+        $out = [];
+        foreach ($actions as $action) {
+            $r = isset($action['route']) ? '/' . ltrim((string) $action['route'], '/') : '';
+            if ($r === '' || $r === '/') {
+                $out[] = $action;
+                continue;
+            }
+            if (isset($seen[$r])) {
+                continue;
+            }
+            $seen[$r] = true;
+            $out[] = $action;
+        }
+
+        return $out;
     }
 
     /**

@@ -145,6 +145,11 @@ class CrudController extends BaseController
             $actionCamelCase = Inflector::id2camel($actionName, '-');
             $methodName = 'action' . $actionCamelCase;
             
+            // Para acciones API de alta de turno, no ejecutar el método POST en GET.
+            if (($action['controller'] ?? '') === 'turnos' && in_array($actionName, ['crear-como-paciente', 'crear-para-paciente'], true)) {
+                return $this->buildTurnosWizardFromTemplate($action, $params);
+            }
+            
             if (class_exists($controllerClass) && method_exists($controllerClass, $methodName)) {
                 $user = Yii::$app->user->identity;
                 if ($user) {
@@ -828,6 +833,84 @@ class CrudController extends BaseController
             if (isset($originalState)) {
                 $this->restoreRequestState($originalState);
             }
+        }
+    }
+
+
+    /**
+     * Construye form_config/wizard para alta de turnos desde template UI,
+     * evitando ejecutar actionCrearComoPaciente() en modo GET.
+     *
+     * @param array $action
+     * @param array $params
+     * @return array
+     */
+    private function buildTurnosWizardFromTemplate(array $action, array $params): array
+    {
+        try {
+            $templateParams = array_merge([
+                'today' => date('Y-m-d'),
+            ], $params);
+
+            $config = \common\components\UiDefinitionTemplateManager::render(
+                'turnos',
+                'crear-mi-turno',
+                $templateParams
+            );
+
+            $wizardConfig = $config['wizard_config'] ?? [];
+            $hasSteps = !empty($wizardConfig['steps'] ?? []);
+            $hasFields = !empty($wizardConfig['fields'] ?? []);
+            if (!$hasSteps && !$hasFields) {
+                return $this->error(
+                    'No se pudo obtener la configuracion del formulario. Por favor, intente nuevamente mas tarde.',
+                    null,
+                    500
+                );
+            }
+
+            $formConfig = [
+                'fields' => $wizardConfig['fields'] ?? [],
+            ];
+            if (isset($wizardConfig['navigation'])) {
+                $formConfig['navigation'] = $wizardConfig['navigation'];
+            }
+            if (isset($wizardConfig['validation'])) {
+                $formConfig['validation'] = $wizardConfig['validation'];
+            }
+            if (isset($wizardConfig['ui'])) {
+                $formConfig['ui'] = $wizardConfig['ui'];
+            }
+
+            $wizardSteps = $this->expandStepFields(
+                $wizardConfig['steps'] ?? [],
+                $wizardConfig['fields'] ?? []
+            );
+
+            $data = [
+                'form_config' => $formConfig,
+                'wizard_steps' => $wizardSteps,
+                'initial_step' => $wizardConfig['initial_step'] ?? 0,
+                'action_id' => $action['action_id'] ?? null,
+                'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la informacion',
+                'kind' => 'ui_definition',
+                'ui_type' => 'wizard',
+            ];
+            if (isset($config['compatibility'])) {
+                $data['compatibility'] = $config['compatibility'];
+            }
+
+            return [
+                'success' => true,
+                'data' => $data,
+            ];
+        } catch (\Throwable $e) {
+            Yii::error("Error buildTurnosWizardFromTemplate: " . $e->getMessage(), 'api-execute-action');
+            return $this->error(
+                'No se pudo obtener la configuracion del formulario. Por favor, contacte al administrador.',
+                null,
+                500
+            );
         }
     }
 

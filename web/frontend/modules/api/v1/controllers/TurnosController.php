@@ -574,8 +574,11 @@ class TurnosController extends BaseController
      *
      * GET|POST …/turnos/slots-disponibles-como-paciente. Query/body:
      * - id_servicio (obligatorio), id_efector (opcional, sesión), id_rr_hh opcional, id_rrhh_servicio_asignado opcional,
-     * - fecha_desde, limite, max_dias, franja_tarde_desde (opcionales; defaults en params `turnosPaciente`),
+     * - limite y franja_tarde_desde (opcionales; defaults en params `turnosPaciente`),
      * - restricciones (JSON array, mismo formato que {@see TurnoSlotFinder::findAvailableSlots}).
+     *
+     * Nota: la búsqueda siempre inicia desde la fecha actual y usa max_dias de configuración;
+     * `fecha_desde` y `max_dias` del cliente se ignoran para mantener comportamiento consistente.
      *
      * RBAC: /api/turnos/slots-disponibles-como-paciente. Firma JSON: `views/json/turnos/slots-disponibles-como-paciente.example.json`.
      * {@see TurnoSlotOfferService}
@@ -598,7 +601,7 @@ class TurnosController extends BaseController
         $criteria = [
             'id_servicio' => (int) $idServicio,
             'id_efector' => (int) $idEfector,
-            'fecha_desde' => $req->get('fecha_desde') ?: $req->post('fecha_desde') ?: date('Y-m-d'),
+            'fecha_desde' => date('Y-m-d'),
         ];
 
         $idRrsa = (int) ($req->get('id_rrhh_servicio_asignado') ?: $req->post('id_rrhh_servicio_asignado') ?: 0);
@@ -631,8 +634,7 @@ class TurnosController extends BaseController
         $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
         $limite = max(1, min($maxCliente, $limite));
 
-        $maxDiasRaw = $req->get('max_dias') ?: $req->post('max_dias');
-        $maxDias = $maxDiasRaw !== null && $maxDiasRaw !== '' ? (int) $maxDiasRaw : $defaults['max_dias'];
+        $maxDias = (int) $defaults['max_dias'];
         $maxDias = max(1, min(90, $maxDias));
 
         $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');

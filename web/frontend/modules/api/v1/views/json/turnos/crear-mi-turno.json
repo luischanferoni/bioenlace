@@ -21,7 +21,7 @@
     {
       "step": 2,
       "title": "Seleccionar turno disponible",
-      "fields": ["fecha", "hora"]
+      "fields": ["hora"]
     },
     {
       "step": 3,
@@ -74,12 +74,9 @@
     },
     {
       "name": "fecha",
-      "label": "Fecha",
-      "type": "date",
-      "required": true,
-      "format": "YYYY-MM-DD",
-      "min": "today",
-      "depends_on": "id_rr_hh"
+      "type": "hidden",
+      "required": false,
+      "include_in_submit": true
     },
     {
       "name": "hora",
@@ -87,13 +84,11 @@
       "type": "autocomplete",
       "required": true,
       "endpoint": "/turnos/slots-disponibles-como-paciente",
-      "depends_on": ["id_rr_hh", "fecha"],
+      "depends_on": ["id_rr_hh"],
       "params": {
         "id_servicio": "id_servicio_asignado",
         "id_efector": "id_efector",
-        "id_rr_hh": "id_rr_hh",
-        "fecha_desde": "fecha",
-        "max_dias": "slots_max_dias"
+        "id_rr_hh": "id_rr_hh"
       },
       "auto_load": true,
       "show_search": false,
@@ -105,12 +100,6 @@
         "source": "slots_disponibles_paciente",
         "filter": null
       }
-    },
-    {
-      "name": "slots_max_dias",
-      "type": "text",
-      "value": "1",
-      "include_in_submit": false
     },
     {
       "name": "tipo_atencion",

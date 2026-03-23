@@ -1552,6 +1552,11 @@ PROMPT;
                 Yii::info("No hay actionAnalysis o actions vacío. actionAnalysis existe: " . ($actionAnalysis ? 'sí' : 'no') . ", actions count: " . count($actions), 'universal-query-agent');
             }
         }
+
+        // Fallback para acciones de turnos sin parámetros reflejados por método (p.ej. actionCrearComoPaciente()).
+        if (empty($providedParams)) {
+            $providedParams = self::buildProvidedParamsFallback($actions, $extractedData);
+        }
         
         // Agregar parámetros a la primera acción (la principal) si existen
         if (!empty($providedParams) && !empty($formattedActions)) {
@@ -1584,6 +1589,45 @@ PROMPT;
         }
         
         return $response;
+    }
+
+    /**
+     * @param array $actions
+     * @param array $extractedData
+     * @return array
+     */
+    private static function buildProvidedParamsFallback(array $actions, array $extractedData): array
+    {
+        if (empty($actions)) {
+            return [];
+        }
+
+        $primary = $actions[0] ?? [];
+        $controller = strtolower((string)($primary['controller'] ?? ''));
+        $actionName = strtolower((string)($primary['action'] ?? ''));
+        $route = strtolower((string)($primary['route'] ?? ''));
+
+        // Alta de turnos: mapear servicio detectado por IA al parámetro esperado por API.
+        $isTurnoCreate = (
+            $controller === 'turnos' &&
+            (strpos($actionName, 'crear') !== false || strpos($route, '/turnos') !== false)
+        );
+        if (!$isTurnoCreate) {
+            return [];
+        }
+
+        $params = [];
+        $idServicio = $extractedData['id_servicio'] ?? ($extractedData['raw']['id_servicio'] ?? null);
+        $servicioNombre = $extractedData['servicio'] ?? ($extractedData['raw']['servicio'] ?? null);
+
+        if ($idServicio !== null && $idServicio !== '' && is_numeric($idServicio)) {
+            $params['id_servicio_asignado'] = (int)$idServicio;
+        }
+        if (is_string($servicioNombre) && trim($servicioNombre) !== '') {
+            $params['servicio'] = trim($servicioNombre);
+        }
+
+        return $params;
     }
 
     /**

@@ -12,7 +12,7 @@ class CrudController extends BaseController
     public $enableCsrfValidation = false; // Deshabilitar CSRF para API
 
     /**
-     * Autenticación centralizada en JsonHttpBearerAuth; process-query y execute-action requieren Bearer.
+     * AutenticaciÃ³n centralizada en JsonHttpBearerAuth; process-query y execute-action requieren Bearer.
      */
     public function behaviors()
     {
@@ -29,9 +29,9 @@ class CrudController extends BaseController
      * 
      * Ejemplos de consultas:
      * - "listame mis licencias"
-     * - "29486884" (búsqueda por DNI)
-     * - "cuántos consultas voy atendiendo este mes?"
-     * - "qué puedo hacer?"
+     * - "29486884" (bÃºsqueda por DNI)
+     * - "cuÃ¡ntos consultas voy atendiendo este mes?"
+     * - "quÃ© puedo hacer?"
      * 
      * @return array Respuesta con acciones encontradas o error
      */
@@ -40,15 +40,15 @@ class CrudController extends BaseController
         $userId = Yii::$app->user->id;
 
         $query = Yii::$app->request->post('query');
-        $actionId = Yii::$app->request->post('action_id'); // Opcional: para búsqueda directa por ID
+        $actionId = Yii::$app->request->post('action_id'); // Opcional: para bÃºsqueda directa por ID
         
         if (empty($query) && empty($actionId)) {
             return $this->error('La consulta o action_id es requerido', null, 400);
         }
 
         try {
-            // Procesar consulta usando UniversalQueryAgent (implementación genérica y mejorada)
-            // Si viene action_id, se buscará primero por ID, luego por matching semántico, y finalmente por LLM
+            // Procesar consulta usando UniversalQueryAgent (implementaciÃ³n genÃ©rica y mejorada)
+            // Si viene action_id, se buscarÃ¡ primero por ID, luego por matching semÃ¡ntico, y finalmente por LLM
             $result = UniversalQueryAgent::processQuery($query, $userId, $actionId);
             
             // Asegurar que el resultado tenga el formato correcto
@@ -56,7 +56,7 @@ class CrudController extends BaseController
                 return $result;
             }
             
-            // Si no tiene formato estándar, envolverlo
+            // Si no tiene formato estÃ¡ndar, envolverlo
             return $this->success($result);
         } catch (\Exception $e) {
             Yii::error("Error procesando consulta: " . $e->getMessage(), 'api-crud-controller');
@@ -65,10 +65,10 @@ class CrudController extends BaseController
     }
 
     /**
-     * Ejecutar una acción específica por su action_id
+     * Ejecutar una acciÃ³n especÃ­fica por su action_id
      * 
-     * GET: Devuelve el form_config (wizard) para la acción sin ejecutarla
-     * POST: Ejecuta la acción con los parámetros proporcionados
+     * GET: Devuelve el form_config (wizard) para la acciÃ³n sin ejecutarla
+     * POST: Ejecuta la acciÃ³n con los parÃ¡metros proporcionados
      * 
      * GET /api/v1/crud/execute-action?action_id=...&param1=value1&param2=value2
      * POST /api/v1/crud/execute-action
@@ -83,11 +83,11 @@ class CrudController extends BaseController
     {
         $userId = Yii::$app->user->id;
 
-        // Obtener action_id y params según el método HTTP
+        // Obtener action_id y params segÃºn el mÃ©todo HTTP
         $isGet = Yii::$app->request->isGet;
         if ($isGet) {
             $actionId = Yii::$app->request->get('action_id');
-            // Obtener todos los parámetros de la query string excepto action_id
+            // Obtener todos los parÃ¡metros de la query string excepto action_id
             $params = Yii::$app->request->get();
             unset($params['action_id']);
             
@@ -103,14 +103,14 @@ class CrudController extends BaseController
         }
         
         try {
-            // Buscar la acción por action_id
+            // Buscar la acciÃ³n por action_id
             // findActionById ya filtra las acciones por permisos del usuario usando
             // ActionMappingService::getAvailableActionsForUser que verifica RBAC
             $action = $this->findActionById($actionId, $userId);
             
             if (!$action) {
-                // La acción no existe o el usuario no tiene permisos para ejecutarla
-                return $this->error('Acción no encontrada o no tienes permisos para ejecutarla según tu rol', null, 403);
+                // La acciÃ³n no existe o el usuario no tiene permisos para ejecutarla
+                return $this->error('AcciÃ³n no encontrada o no tienes permisos para ejecutarla segÃºn tu rol', null, 403);
             }
             
             // Si es GET, devolver el form_config (wizard) sin ejecutar
@@ -118,29 +118,29 @@ class CrudController extends BaseController
                 return $this->getActionFormConfig($action, $params, $userId);
             }
             
-            // Si es POST, ejecutar la acción
-            // Si la acción fue encontrada, significa que el usuario tiene permisos
+            // Si es POST, ejecutar la acciÃ³n
+            // Si la acciÃ³n fue encontrada, significa que el usuario tiene permisos
             // (ya fue validado por ActionMappingService::getAvailableActionsForUser)
             return $this->executeAction($action, $params, $userId);
             
         } catch (\Exception $e) {
-            Yii::error("Error ejecutando acción: " . $e->getMessage(), 'api-execute-action');
-            return $this->error('Error al ejecutar la acción: ' . $e->getMessage(), null, 500);
+            Yii::error("Error ejecutando acciÃ³n: " . $e->getMessage(), 'api-execute-action');
+            return $this->error('Error al ejecutar la acciÃ³n: ' . $e->getMessage(), null, 500);
         }
     }
     
     /**
-     * Obtener configuración del formulario/wizard para una acción
+     * Obtener configuraciÃ³n del formulario/wizard para una acciÃ³n
      * @param array $action
-     * @param array $params Parámetros ya proporcionados
+     * @param array $params ParÃ¡metros ya proporcionados
      * @param int|null $userId
      * @return array
      */
     private function getActionFormConfig($action, $params, $userId)
     {
         try {
-            // Intentar obtener wizard_config llamando al método con GET
-            $controllerClass = 'frontend\\controllers\\' . ucfirst($action['controller']) . 'Controller';
+            // Intentar obtener wizard_config llamando al mÃ©todo con GET
+            $controllerClass = $this->resolveControllerClassByAction($action);
             $actionName = $action['action'];
             $actionCamelCase = Inflector::id2camel($actionName, '-');
             $methodName = 'action' . $actionCamelCase;
@@ -148,18 +148,18 @@ class CrudController extends BaseController
             if (class_exists($controllerClass) && method_exists($controllerClass, $methodName)) {
                 $user = Yii::$app->user->identity;
                 if ($user) {
-                    // Guardar el estado original del usuario para restaurarlo después
+                    // Guardar el estado original del usuario para restaurarlo despuÃ©s
                     $originalUserIdentity = Yii::$app->user->identity;
                     
-                    // Establecer la identidad del usuario sin iniciar sesión (API stateless con JWT)
+                    // Establecer la identidad del usuario sin iniciar sesiÃ³n (API stateless con JWT)
                     Yii::$app->user->setIdentity($user);
                     
-                    // Actualizar permisos y rutas en la sesión para que los controladores puedan verificar acceso
+                    // Actualizar permisos y rutas en la sesiÃ³n para que los controladores puedan verificar acceso
                     \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
                     
                     try {
                         // Crear instancia temporal
-                        $controller = new $controllerClass($action['controller'], Yii::$app);
+                        $controller = $this->createControllerInstance($controllerClass, $action['controller']);
                         $controller->enableCsrfValidation = false;
                         
                         // Deshabilitar temporalmente el behavior ghost-access ya que los permisos
@@ -183,7 +183,7 @@ class CrudController extends BaseController
                         Yii::$app->request->setQueryParams($_GET);
                         
                         // Forzar que Yii::$app->request->isGet devuelva true
-                        // Esto es necesario porque setQueryParams no actualiza isGet automáticamente
+                        // Esto es necesario porque setQueryParams no actualiza isGet automÃ¡ticamente
                         $reflectionRequest = new \ReflectionClass(Yii::$app->request);
                         if ($reflectionRequest->hasProperty('_method')) {
                             $methodProperty = $reflectionRequest->getProperty('_method');
@@ -192,67 +192,67 @@ class CrudController extends BaseController
                         }
                         
                         try {
-                            // Guardar el formato original y deshabilitar el envío automático de respuesta
+                            // Guardar el formato original y deshabilitar el envÃ­o automÃ¡tico de respuesta
                             $originalFormat = Yii::$app->response->format;
                             $originalData = Yii::$app->response->data;
                             
                             // Configurar response format como JSON pero sin enviar
                             Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
                             
-                            // Capturar cualquier salida que el método pueda generar
+                            // Capturar cualquier salida que el mÃ©todo pueda generar
                             ob_start();
                             
                             try {
-                                // Usar reflexión para llamar al método directamente y capturar el resultado
+                                // Usar reflexiÃ³n para llamar al mÃ©todo directamente y capturar el resultado
                                 // Esto evita problemas con runAction cuando hay FORMAT_JSON
                                 $reflection = new \ReflectionMethod($controller, $methodName);
                                 $reflection->setAccessible(true);
                                 
-                                // Llamar al método directamente
+                                // Llamar al mÃ©todo directamente
                                 $result = $reflection->invoke($controller);
                                 
                                 // Limpiar cualquier salida capturada
                                 $output = ob_get_clean();
                                 
-                                // Si hay salida pero no hay resultado, podría ser que Yii2 envió la respuesta
+                                // Si hay salida pero no hay resultado, podrÃ­a ser que Yii2 enviÃ³ la respuesta
                                 if (!empty($output) && $result === null) {
-                                    Yii::warning("El método {$methodName} generó salida pero no retornó valor. Output: " . substr($output, 0, 200), 'api-execute-action');
+                                    Yii::warning("El mÃ©todo {$methodName} generÃ³ salida pero no retornÃ³ valor. Output: " . substr($output, 0, 200), 'api-execute-action');
                                 }
                                 
-                                // Verificar si el resultado es válido
+                                // Verificar si el resultado es vÃ¡lido
                                 if ($result === null) {
-                                    $errorMsg = "El método {$methodName} devolvió null.";
+                                    $errorMsg = "El mÃ©todo {$methodName} devolviÃ³ null.";
                                     Yii::error($errorMsg, 'api-execute-action');
                                     throw new \yii\web\ServerErrorHttpException(
-                                        "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador."
+                                        "No se pudo obtener la configuraciÃ³n del formulario. Por favor, contacte al administrador."
                                     );
                                 }
                                 
                                 if (!is_array($result)) {
-                                    $errorMsg = "El método {$methodName} devolvió un tipo inválido: " . gettype($result) . ". Se esperaba un array.";
+                                    $errorMsg = "El mÃ©todo {$methodName} devolviÃ³ un tipo invÃ¡lido: " . gettype($result) . ". Se esperaba un array.";
                                     Yii::error($errorMsg, 'api-execute-action');
                                     throw new \yii\web\ServerErrorHttpException(
-                                        "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador."
+                                        "No se pudo obtener la configuraciÃ³n del formulario. Por favor, contacte al administrador."
                                     );
                                 }
                                 
-                                // Validar que wizard_config no esté vacío
+                                // Validar que wizard_config no estÃ© vacÃ­o
                                 if (isset($result['wizard_config'])) {
                                     $wizardConfig = $result['wizard_config'];
                                     $hasSteps = !empty($wizardConfig['steps'] ?? []);
                                     $hasFields = !empty($wizardConfig['fields'] ?? []);
                                     
                                     if (!$hasSteps && !$hasFields) {
-                                        $errorMsg = "El método {$methodName} devolvió wizard_config vacío (sin steps ni fields).";
+                                        $errorMsg = "El mÃ©todo {$methodName} devolviÃ³ wizard_config vacÃ­o (sin steps ni fields).";
                                         Yii::error($errorMsg, 'api-execute-action');
                                         return $this->error(
-                                            'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.',
+                                            'No se pudo obtener la configuraciÃ³n del formulario. Por favor, intente nuevamente mÃ¡s tarde.',
                                             null,
                                             500
                                         );
                                     }
                                     
-                                    // Transformar wizard_config a la estructura que espera la app móvil
+                                    // Transformar wizard_config a la estructura que espera la app mÃ³vil
                                     $formConfig = [
                                         'fields' => $wizardConfig['fields'] ?? [],
                                     ];
@@ -279,7 +279,7 @@ class CrudController extends BaseController
                                         'wizard_steps' => $wizardSteps,
                                         'initial_step' => $wizardConfig['initial_step'] ?? 0,
                                         'action_id' => $actionId,
-                                        'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
+                                        'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la informaciÃ³n',
                                     ];
                                     if (isset($result['kind'])) {
                                         $data['kind'] = $result['kind'];
@@ -301,10 +301,10 @@ class CrudController extends BaseController
                                     $hasFields = !empty($result['fields'] ?? []);
                                     
                                     if (!$hasSteps && !$hasFields) {
-                                        $errorMsg = "El método {$methodName} devolvió steps y fields vacíos.";
+                                        $errorMsg = "El mÃ©todo {$methodName} devolviÃ³ steps y fields vacÃ­os.";
                                         Yii::error($errorMsg, 'api-execute-action');
                                         return $this->error(
-                                            'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.',
+                                            'No se pudo obtener la configuraciÃ³n del formulario. Por favor, intente nuevamente mÃ¡s tarde.',
                                             null,
                                             500
                                         );
@@ -325,7 +325,7 @@ class CrudController extends BaseController
                                         'wizard_steps' => $wizardSteps,
                                         'initial_step' => $result['initial_step'] ?? 0,
                                         'action_id' => $actionId,
-                                        'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la información',
+                                        'action_name' => $action['action_name'] ?? $action['display_name'] ?? 'Completa la informaciÃ³n',
                                     ];
                                     if (isset($result['kind'])) {
                                         $data['kind'] = $result['kind'];
@@ -344,10 +344,10 @@ class CrudController extends BaseController
                                 }
                                 
                                 // Si no tiene wizard_config ni steps/fields, devolver error
-                                $errorMsg = "El método {$methodName} no devolvió wizard_config, steps ni fields.";
+                                $errorMsg = "El mÃ©todo {$methodName} no devolviÃ³ wizard_config, steps ni fields.";
                                 Yii::error($errorMsg, 'api-execute-action');
                                 return $this->error(
-                                    'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.',
+                                    'No se pudo obtener la configuraciÃ³n del formulario. Por favor, intente nuevamente mÃ¡s tarde.',
                                     null,
                                     500
                                 );
@@ -355,36 +355,36 @@ class CrudController extends BaseController
                                 // Re-lanzar excepciones de acceso
                                 throw $e;
                             } catch (\yii\web\BadRequestHttpException $e) {
-                                // Re-lanzar excepciones de parámetros
+                                // Re-lanzar excepciones de parÃ¡metros
                                 throw $e;
                             } catch (\yii\web\HttpException $e) {
                                 // Re-lanzar excepciones HTTP
                                 throw $e;
                             } catch (\Exception $e) {
-                                // Registrar error técnico en el log
-                                Yii::error("Error al llamar método {$methodName}: " . $e->getMessage() . " (" . get_class($e) . "). Trace: " . $e->getTraceAsString(), 'api-execute-action');
+                                // Registrar error tÃ©cnico en el log
+                                Yii::error("Error al llamar mÃ©todo {$methodName}: " . $e->getMessage() . " (" . get_class($e) . "). Trace: " . $e->getTraceAsString(), 'api-execute-action');
                                 
                                 // Re-lanzar excepciones HTTP con mensajes amigables
                                 if ($e instanceof \yii\web\HttpException) {
                                     // Para excepciones HTTP, mantener el mensaje original si es amigable
-                                    // o usar uno genérico si es técnico
+                                    // o usar uno genÃ©rico si es tÃ©cnico
                                     $userMessage = $e->getMessage();
                                     if (strpos($userMessage, 'wizard_config') !== false || 
-                                        strpos($userMessage, 'método') !== false ||
+                                        strpos($userMessage, 'mÃ©todo') !== false ||
                                         strpos($userMessage, 'null') !== false) {
-                                        $userMessage = "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.";
+                                        $userMessage = "No se pudo obtener la configuraciÃ³n del formulario. Por favor, contacte al administrador.";
                                     }
                                     throw new \yii\web\ServerErrorHttpException($userMessage, $e->getCode(), $e);
                                 }
                                 
-                                // Para otras excepciones, usar mensaje genérico
+                                // Para otras excepciones, usar mensaje genÃ©rico
                                 throw new \yii\web\ServerErrorHttpException(
-                                    "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.",
+                                    "No se pudo obtener la configuraciÃ³n del formulario. Por favor, contacte al administrador.",
                                     0,
                                     $e
                                 );
                             } finally {
-                                // Limpiar buffer de salida si quedó algo
+                                // Limpiar buffer de salida si quedÃ³ algo
                                 if (ob_get_level() > 0) {
                                     ob_end_clean();
                                 }
@@ -404,44 +404,44 @@ class CrudController extends BaseController
                 }
             }
             
-            // Si el método no existe, lanzar excepción
-            $errorMsg = "El método {$methodName} no existe en {$controllerClass}.";
+            // Si el mÃ©todo no existe, lanzar excepciÃ³n
+            $errorMsg = "El mÃ©todo {$methodName} no existe en {$controllerClass}.";
             Yii::error($errorMsg, 'api-execute-action');
             throw new \yii\web\ServerErrorHttpException(
-                "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador."
+                "No se pudo obtener la configuraciÃ³n del formulario. Por favor, contacte al administrador."
             );
         } catch (\yii\web\ForbiddenHttpException $e) {
             // Excepciones de acceso: mantener el mensaje original
             Yii::error("Error de acceso obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
             return $this->error($e->getMessage(), null, $e->statusCode);
         } catch (\yii\web\BadRequestHttpException $e) {
-            // Excepciones de parámetros: mantener el mensaje original
-            Yii::error("Error de parámetros obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
+            // Excepciones de parÃ¡metros: mantener el mensaje original
+            Yii::error("Error de parÃ¡metros obteniendo form_config: " . $e->getMessage(), 'api-execute-action');
             return $this->error($e->getMessage(), null, $e->statusCode);
         } catch (\yii\web\HttpException $e) {
             // Otras excepciones HTTP: mantener el mensaje original si es amigable
             $userMessage = $e->getMessage();
             if (strpos($userMessage, 'wizard_config') !== false || 
-                strpos($userMessage, 'método') !== false ||
+                strpos($userMessage, 'mÃ©todo') !== false ||
                 strpos($userMessage, 'null') !== false) {
-                $userMessage = "No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.";
+                $userMessage = "No se pudo obtener la configuraciÃ³n del formulario. Por favor, contacte al administrador.";
             }
-            Yii::error("Error HTTP obteniendo form_config: " . $e->getMessage() . " (código: {$e->statusCode}). Trace: " . $e->getTraceAsString(), 'api-execute-action');
+            Yii::error("Error HTTP obteniendo form_config: " . $e->getMessage() . " (cÃ³digo: {$e->statusCode}). Trace: " . $e->getTraceAsString(), 'api-execute-action');
             return $this->error($userMessage, null, $e->statusCode);
         } catch (\Exception $e) {
-            // Excepciones genéricas: mensaje amigable al usuario, detalles técnicos en el log
+            // Excepciones genÃ©ricas: mensaje amigable al usuario, detalles tÃ©cnicos en el log
             Yii::error("Error obteniendo form_config: " . $e->getMessage() . " (" . get_class($e) . "). Trace: " . $e->getTraceAsString(), 'api-execute-action');
-            return $this->error('No se pudo obtener la configuración del formulario. Por favor, contacte al administrador.', null, 500);
+            return $this->error('No se pudo obtener la configuraciÃ³n del formulario. Por favor, contacte al administrador.', null, 500);
         }
     }
     
     /**
-     * Calcular el paso inicial del wizard basándose en los pasos y parámetros proporcionados
+     * Calcular el paso inicial del wizard basÃ¡ndose en los pasos y parÃ¡metros proporcionados
      * 
      * @param array $wizardSteps Array de pasos del wizard
-     * @param array $fieldsConfig Configuración de todos los campos (para verificar required)
-     * @param array $providedParams Parámetros ya proporcionados
-     * @return int Índice del paso inicial (0-based)
+     * @param array $fieldsConfig ConfiguraciÃ³n de todos los campos (para verificar required)
+     * @param array $providedParams ParÃ¡metros ya proporcionados
+     * @return int Ãndice del paso inicial (0-based)
      */
     private function calculateInitialStep($wizardSteps, $fieldsConfig, $providedParams)
     {
@@ -449,12 +449,12 @@ class CrudController extends BaseController
             return 0;
         }
         
-        // Si no hay parámetros proporcionados, empezar desde el primer paso
+        // Si no hay parÃ¡metros proporcionados, empezar desde el primer paso
         if (empty($providedParams)) {
             return 0;
         }
         
-        // Crear un mapa de configuración de campos por nombre para acceso rápido
+        // Crear un mapa de configuraciÃ³n de campos por nombre para acceso rÃ¡pido
         $fieldsMap = [];
         foreach ($fieldsConfig as $field) {
             $fieldName = $field['name'] ?? null;
@@ -477,10 +477,10 @@ class CrudController extends BaseController
                     continue;
                 }
                 
-                // Obtener configuración del campo para verificar si es requerido
+                // Obtener configuraciÃ³n del campo para verificar si es requerido
                 $fieldConfig = $fieldsMap[$fieldName] ?? null;
                 
-                // Si el campo es requerido y no tiene valor, el paso no está completo
+                // Si el campo es requerido y no tiene valor, el paso no estÃ¡ completo
                 $isRequired = $fieldConfig['required'] ?? false;
                 $hasValue = isset($providedParams[$fieldName]) && 
                            $providedParams[$fieldName] !== null && 
@@ -492,23 +492,23 @@ class CrudController extends BaseController
                 }
             }
             
-            // Si este paso no está completo, este es el paso inicial
+            // Si este paso no estÃ¡ completo, este es el paso inicial
             if (!$stepComplete) {
                 return $stepIndex;
             }
         }
         
-        // Si todos los pasos están completos, mostrar el último paso (confirmación)
+        // Si todos los pasos estÃ¡n completos, mostrar el Ãºltimo paso (confirmaciÃ³n)
         return count($wizardSteps) - 1;
     }
     
     /**
      * Expandir nombres de campos en steps
-     * Por defecto mantiene solo referencias (strings) para evitar duplicación
-     * La app móvil puede buscar los campos completos en form_config.fields
+     * Por defecto mantiene solo referencias (strings) para evitar duplicaciÃ³n
+     * La app mÃ³vil puede buscar los campos completos en form_config.fields
      * @param array $steps Array de steps con fields como nombres (strings) o objetos
-     * @param array $fieldsConfig Array completo de configuración de campos
-     * @return array Steps con fields como referencias (strings) para evitar duplicación
+     * @param array $fieldsConfig Array completo de configuraciÃ³n de campos
+     * @return array Steps con fields como referencias (strings) para evitar duplicaciÃ³n
      */
     private function expandStepFields($steps, $fieldsConfig)
     {
@@ -524,8 +524,8 @@ class CrudController extends BaseController
                 if (is_string($field)) {
                     $expandedFields[] = $field;
                 } else {
-                    // Si es un objeto, extraer solo el nombre para evitar duplicación
-                    // La información completa está en form_config.fields
+                    // Si es un objeto, extraer solo el nombre para evitar duplicaciÃ³n
+                    // La informaciÃ³n completa estÃ¡ en form_config.fields
                     $fieldName = $field['name'] ?? null;
                     if ($fieldName) {
                         $expandedFields[] = $fieldName;
@@ -556,7 +556,7 @@ class CrudController extends BaseController
             return $steps;
         }
         
-        // Verificar si todos los campos tienen valores (confirmación)
+        // Verificar si todos los campos tienen valores (confirmaciÃ³n)
         $allFieldsHaveValues = true;
         foreach ($fields as $field) {
             if (empty($field['value']) && $field['required'] ?? false) {
@@ -565,25 +565,25 @@ class CrudController extends BaseController
             }
         }
         
-        // Si todos los campos tienen valores, crear un solo paso de confirmación
+        // Si todos los campos tienen valores, crear un solo paso de confirmaciÃ³n
         if ($allFieldsHaveValues) {
             $steps[] = [
                 'step' => 0,
-                'title' => "Confirmación",
+                'title' => "ConfirmaciÃ³n",
                 'fields' => $fields,
             ];
             return $steps;
         }
         
-        // Si faltan campos, agrupar en pasos lógicos
+        // Si faltan campos, agrupar en pasos lÃ³gicos
         $currentStep = 0;
         $currentStepFields = [];
         
         foreach ($fields as $field) {
             // Si el campo tiene depends_on y ya hay campos en el paso actual,
-            // podría ser un nuevo paso
+            // podrÃ­a ser un nuevo paso
             if (!empty($currentStepFields) && isset($field['depends_on'])) {
-                // Si hay dependencia, podría ser un nuevo paso
+                // Si hay dependencia, podrÃ­a ser un nuevo paso
                 // Por simplicidad, agrupamos todos en un paso a menos que haya muchos campos
                 if (count($currentStepFields) >= 3) {
                     $steps[] = [
@@ -599,11 +599,11 @@ class CrudController extends BaseController
             $currentStepFields[] = $field;
         }
         
-        // Agregar el último paso si tiene campos
+        // Agregar el Ãºltimo paso si tiene campos
         if (!empty($currentStepFields)) {
             $steps[] = [
                 'step' => $currentStep,
-                'title' => $currentStep === 0 ? "Información básica" : "Paso " . ($currentStep + 1),
+                'title' => $currentStep === 0 ? "InformaciÃ³n bÃ¡sica" : "Paso " . ($currentStep + 1),
                 'fields' => $currentStepFields,
             ];
         }
@@ -612,7 +612,7 @@ class CrudController extends BaseController
     }
 
     /**
-     * Buscar acción por action_id
+     * Buscar acciÃ³n por action_id
      * @param string $actionId
      * @param int|null $userId
      * @return array|null
@@ -632,9 +632,9 @@ class CrudController extends BaseController
     }
 
     /**
-     * Inyectar parámetros en el request object
-     * @param array $params Parámetros a inyectar
-     * @return array Estado original del request para restaurar después
+     * Inyectar parÃ¡metros en el request object
+     * @param array $params ParÃ¡metros a inyectar
+     * @return array Estado original del request para restaurar despuÃ©s
      */
     private function injectParamsIntoRequest($params)
     {
@@ -644,11 +644,11 @@ class CrudController extends BaseController
         ];
         
         if (!empty($params)) {
-            // Inyectar parámetros en bodyParams
+            // Inyectar parÃ¡metros en bodyParams
             $currentBodyParams = Yii::$app->request->bodyParams ?? [];
             Yii::$app->request->bodyParams = array_merge($currentBodyParams, $params);
             
-            // Establecer el método como POST temporalmente en $_SERVER
+            // Establecer el mÃ©todo como POST temporalmente en $_SERVER
             // Esto es necesario para que UserRequest::requireUserParam() funcione correctamente
             // ya que verifica Yii::$app->request->isPost que lee de $_SERVER['REQUEST_METHOD']
             $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -674,7 +674,7 @@ class CrudController extends BaseController
     }
 
     /**
-     * Ejecutar una acción
+     * Ejecutar una acciÃ³n
      * @param array $action
      * @param array $params
      * @param int|null $userId
@@ -684,11 +684,11 @@ class CrudController extends BaseController
     {
         $route = $action['route'] ?? null;
         
-        // Si no tiene ruta, es una acción especial del sistema
+        // Si no tiene ruta, es una acciÃ³n especial del sistema
         if (empty($route)) {
             return [
                 'success' => false,
-                'error' => 'Esta acción no puede ejecutarse directamente',
+                'error' => 'Esta acciÃ³n no puede ejecutarse directamente',
                 'action_id' => $action['action_id'] ?? null,
             ];
         }
@@ -696,7 +696,7 @@ class CrudController extends BaseController
         // Parsear ruta: /frontend/efectores/indexuserefector
         $routeParts = explode('/', trim($route, '/'));
         
-        // Obtener controlador y acción
+        // Obtener controlador y acciÃ³n
         // Formato esperado: /frontend/efectores/indexuserefector
         // O: /efectores/indexuserefector
         $controllerName = null;
@@ -715,13 +715,13 @@ class CrudController extends BaseController
         if (!$controllerName || !$actionName) {
             return [
                 'success' => false,
-                'error' => 'Ruta inválida: ' . $route,
+                'error' => 'Ruta invÃ¡lida: ' . $route,
                 'action_id' => $action['action_id'] ?? null,
             ];
         }
         
         // Crear instancia del controlador
-        $controllerClass = 'frontend\\controllers\\' . ucfirst($controllerName) . 'Controller';
+        $controllerClass = $this->resolveControllerClassByRoute($route, $controllerName);
         
         if (!class_exists($controllerClass)) {
             return [
@@ -732,26 +732,26 @@ class CrudController extends BaseController
         }
         
         try {
-            // Inyectar parámetros en el request y guardar estado original
+            // Inyectar parÃ¡metros en el request y guardar estado original
             $originalState = $this->injectParamsIntoRequest($params);
             
             $user = Yii::$app->user->identity;
             
-            // Guardar el estado original del usuario para restaurarlo después
+            // Guardar el estado original del usuario para restaurarlo despuÃ©s
             $originalUserIdentity = Yii::$app->user->identity;
             
-            // Establecer la identidad del usuario sin iniciar sesión (API stateless con JWT)
-            // El rol "paciente" se asigna automáticamente por BioenlaceDbManager::getRolesByUser()
+            // Establecer la identidad del usuario sin iniciar sesiÃ³n (API stateless con JWT)
+            // El rol "paciente" se asigna automÃ¡ticamente por BioenlaceDbManager::getRolesByUser()
             Yii::$app->user->setIdentity($user);
             
-            // Actualizar permisos y rutas en la sesión para que los controladores puedan verificar acceso
-            // Esto es necesario porque setIdentity() no actualiza automáticamente los permisos
+            // Actualizar permisos y rutas en la sesiÃ³n para que los controladores puedan verificar acceso
+            // Esto es necesario porque setIdentity() no actualiza automÃ¡ticamente los permisos
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
             
             try {
-                // Crear instancia del controlador sin especificar módulo
-                // El controlador está en frontend\controllers, no en un módulo
-                $controller = new $controllerClass($controllerName, Yii::$app);
+                // Crear instancia del controlador sin especificar mÃ³dulo
+                // El controlador estÃ¡ en frontend\controllers, no en un mÃ³dulo
+                $controller = $this->createControllerInstance($controllerClass, $controllerName);
                 
                 // Deshabilitar temporalmente el behavior ghost-access ya que los permisos
                 // ya fueron verificados en findActionById usando ActionMappingService
@@ -765,11 +765,11 @@ class CrudController extends BaseController
                     }
                 }
                 
-                // Deshabilitar validación CSRF ya que estamos ejecutando desde la API
-                // y la autenticación se maneja con JWT
+                // Deshabilitar validaciÃ³n CSRF ya que estamos ejecutando desde la API
+                // y la autenticaciÃ³n se maneja con JWT
                 $controller->enableCsrfValidation = false;
                 
-                // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
+                // Convertir nombre de acciÃ³n de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
                 // usando Inflector de Yii2
                 $actionCamelCase = Inflector::id2camel($actionName, '-');
                 $methodName = 'action' . $actionCamelCase;
@@ -777,7 +777,7 @@ class CrudController extends BaseController
                 if (!method_exists($controller, $methodName)) {
                     return [
                         'success' => false,
-                        'error' => 'Método no encontrado: ' . $methodName,
+                        'error' => 'MÃ©todo no encontrado: ' . $methodName,
                         'action_id' => $action['action_id'],
                     ];
                 }
@@ -785,14 +785,14 @@ class CrudController extends BaseController
                 // Configurar response format como JSON
                 Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
                 
-                // Ejecutar la acción (sin pasar params directamente, ya están en request)
+                // Ejecutar la acciÃ³n (sin pasar params directamente, ya estÃ¡n en request)
                 $result = $controller->runAction($actionName, []);
                 
                 // Validar que retorne JSON (array)
                 if (!is_array($result)) {
                     return [
                         'success' => false,
-                        'error' => 'La acción debe retornar JSON (array). Retornó: ' . gettype($result),
+                        'error' => 'La acciÃ³n debe retornar JSON (array). RetornÃ³: ' . gettype($result),
                         'action_id' => $action['action_id'],
                     ];
                 }
@@ -817,10 +817,10 @@ class CrudController extends BaseController
                 'action_id' => $action['action_id'],
             ];
         } catch (\Exception $e) {
-            Yii::error("Error ejecutando acción {$action['action_id']}: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-execute-action');
+            Yii::error("Error ejecutando acciÃ³n {$action['action_id']}: " . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-execute-action');
             return [
                 'success' => false,
-                'error' => 'Error al ejecutar la acción: ' . $e->getMessage(),
+                'error' => 'Error al ejecutar la acciÃ³n: ' . $e->getMessage(),
                 'action_id' => $action['action_id'],
             ];
         } finally {
@@ -831,6 +831,57 @@ class CrudController extends BaseController
         }
     }
 
+
+    /**
+     * Resuelve la clase de controlador según route/controller de la acción descubierta.
+     * Prioriza controladores API v1 cuando la ruta inicia con /api/.
+     *
+     * @param array $action
+     * @return string
+     */
+    private function resolveControllerClassByAction(array $action)
+    {
+        $controllerName = (string)($action['controller'] ?? '');
+        $route = (string)($action['route'] ?? '');
+
+        return $this->resolveControllerClassByRoute($route, $controllerName);
+    }
+
+    /**
+     * @param string $route
+     * @param string $controllerName
+     * @return string
+     */
+    private function resolveControllerClassByRoute($route, $controllerName)
+    {
+        $controllerStudly = ucfirst((string)$controllerName);
+        $apiClass = 'frontend\\modules\\api\\v1\\controllers\\' . $controllerStudly . 'Controller';
+        $webClass = 'frontend\\controllers\\' . $controllerStudly . 'Controller';
+
+        if (strpos((string)$route, '/api/') === 0 && class_exists($apiClass)) {
+            return $apiClass;
+        }
+        if (class_exists($webClass)) {
+            return $webClass;
+        }
+
+        return $apiClass;
+    }
+
+    /**
+     * @param string $controllerClass
+     * @param string $controllerId
+     * @return \yii\base\Controller
+     */
+    private function createControllerInstance($controllerClass, $controllerId)
+    {
+        $module = Yii::$app;
+        if (strpos((string)$controllerClass, 'frontend\\modules\\api\\v1\\controllers\\') === 0) {
+            $module = Yii::$app->getModule('v1') ?: Yii::$app;
+        }
+
+        return new $controllerClass($controllerId, $module);
+    }
     /**
      * Deshabilitar acciones por defecto de ActiveController
      */
@@ -839,4 +890,5 @@ class CrudController extends BaseController
         return [];
     }
 }
+
 

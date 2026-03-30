@@ -340,6 +340,9 @@
                 return;
             }
 
+            // Autocomplete (opciones remotas) y filtros
+            attachAutocompleteHandlers(container);
+
             form.addEventListener('click', function(e) {
                 const action = e.target.dataset.action;
                 if (!action) {
@@ -392,6 +395,9 @@
         html += '</label>';
         
         switch (field.type) {
+            case 'autocomplete':
+                html += renderAutocompleteField(field);
+                break;
             case 'select':
                 html += renderSelectField(field);
                 break;
@@ -413,6 +419,188 @@
         
         html += '</div>';
         return html;
+    }
+
+    /**
+     * Renderizar campo autocomplete (opciones remotas desde endpoint).
+     * Soporta `show_search: false` + `filters` (chips) para flujos como slots de turnos.
+     * Nota: implementación liviana para wizard web.
+     */
+    function renderAutocompleteField(field) {
+        const showSearch = field.show_search !== false;
+        const endpoint = field.endpoint || '';
+        const filters = Array.isArray(field.filters) ? field.filters : [];
+        const id = 'ac_' + (field.name || '').replace(/[^a-z0-9_]/gi, '_') + '_' + Math.floor(Math.random() * 100000);
+
+        let html = '';
+        // Valor seleccionado (hidden) + preview (readonly)
+        html += '<input type="hidden" name="' + escapeHtml(field.name) + '" id="' + id + '_value" value="' + escapeHtml(field.value || '') + '">';
+        html += '<div class="input-group">';
+        html += '<input type="text" class="form-control" id="' + id + '_text" placeholder="Seleccionar..." readonly>';
+        html += '<button type="button" class="btn btn-outline-primary" data-ac-open="' + id + '">Elegir</button>';
+        html += '</div>';
+        html += '<div class="mt-2 d-none" data-ac-panel="' + id + '"></div>';
+
+        // Guardar metadata en data-* para el handler
+        html += '<div class="d-none"'
+            + ' data-ac-meta="' + id + '"'
+            + ' data-ac-endpoint="' + escapeHtml(endpoint) + '"'
+            + ' data-ac-show-search="' + (showSearch ? '1' : '0') + '"'
+            + ' data-ac-filters=\'' + escapeHtml(JSON.stringify(filters)) + '\''
+            + ' data-ac-params=\'' + escapeHtml(JSON.stringify(field.params || {})) + '\''
+            + '></div>';
+        return html;
+    }
+
+    /**
+     * Extrae valores del wizard form para armar query params según mapping.
+     */
+    function buildEndpointParamsFromWizardForm(paramsMapping) {
+        const form = document.getElementById('wizard-form');
+        if (!form) return {};
+        const fd = new FormData(form);
+        const out = {};
+        if (paramsMapping && typeof paramsMapping === 'object') {
+            Object.keys(paramsMapping).forEach((paramName) => {
+                const fieldName = paramsMapping[paramName];
+                if (!fieldName) return;
+                const v = fd.get(fieldName);
+                if (v !== null && ('' + v).trim() !== '') {
+                    out[paramName] = v;
+                }
+            });
+        }
+        return out;
+    }
+
+    /**
+     * Inicializa handlers de autocomplete dentro del wizard (se llama tras renderCurrentStep).
+     */
+    function attachAutocompleteHandlers(root) {
+        const base = root && typeof root.querySelectorAll === 'function' ? root : document;
+        const buttons = base.querySelectorAll('[data-ac-open]');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('data-ac-bound') === '1') return;
+            btn.setAttribute('data-ac-bound', '1');
+            btn.addEventListener('click', async function () {
+                const id = this.getAttribute('data-ac-open');
+                const metaEl = base.querySelector('[data-ac-meta="' + id + '"]');
+                const panel = base.querySelector('[data-ac-panel="' + id + '"]');
+                if (!metaEl || !panel) return;
+
+                const endpoint = metaEl.getAttribute('data-ac-endpoint') || '';
+                const filters = JSON.parse(metaEl.getAttribute('data-ac-filters') || '[]');
+                const paramsMapping = JSON.parse(metaEl.getAttribute('data-ac-params') || '{}');
+                const params = buildEndpointParamsFromWizardForm(paramsMapping);
+
+                panel.classList.remove('d-none');
+                panel.innerHTML = '<div class="text-muted small">Cargando...</div>';
+                try {
+                    const url = new URL(endpoint, window.location.origin);
+                    Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+                    const res = await fetch(url.toString(), { headers: clientApiHeaders({ 'Accept': 'application/json' }) });
+                    const data = await res.json();
+
+                    // Soporte slots-disponibles-como-paciente (por_dia)
+                    let items = [];
+                    if (endpoint.includes('slots-disponibles-como-paciente') && Array.isArray(data.por_dia)) {
+                        // Derivar filtros básicos si existen
+                        const wantsDia = filters.some(f => f && f.id === 'dia');
+                        const wantsFranja = filters.some(f => f && f.id === 'franja');
+                        const dias = wantsDia ? data.por_dia.map(d => d.fecha).filter(Boolean) : [];
+                        const uniqDias = [...new Set(dias)];
+                        let selectedDia = uniqDias[0] || null;
+                        let selectedFranja = wantsFranja ? 'manana' : null;
+
+                        const chipsHtml = [];
+                        if (wantsDia && uniqDias.length) {
+                            chipsHtml.push('<div class="mb-2"><div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">'
+                                + uniqDias.map(fecha => '<button type="button" class="btn btn-sm ' + (fecha === selectedDia ? 'btn-primary' : 'btn-outline-primary') + '" data-ac-chip-dia="' + id + '" data-value="' + escapeHtml(fecha) + '">' + escapeHtml(fecha) + '</button>').join('')
+                                + '</div></div>');
+                        }
+                        if (wantsFranja) {
+                            const franjas = [{ v: 'manana', l: 'Mañana' }, { v: 'tarde', l: 'Tarde' }];
+                            chipsHtml.push('<div class="mb-2"><div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">'
+                                + franjas.map(fr => '<button type="button" class="btn btn-sm ' + (fr.v === selectedFranja ? 'btn-primary' : 'btn-outline-primary') + '" data-ac-chip-franja="' + id + '" data-value="' + fr.v + '">' + fr.l + '</button>').join('')
+                                + '</div></div>');
+                        }
+
+                        function rebuildItems() {
+                            items = [];
+                            data.por_dia.forEach(d => {
+                                if (!d || !d.fecha) return;
+                                if (selectedDia && d.fecha !== selectedDia) return;
+                                function add(list, franjaLabel) {
+                                    (list || []).forEach(s => {
+                                        if (!s) return;
+                                        const idRrsa = s.id_rrhh_servicio_asignado;
+                                        const hora = s.hora;
+                                        if (!idRrsa || !hora) return;
+                                        const value = '' + idRrsa + '|' + d.fecha + '|' + hora;
+                                        items.push({ value: value, label: d.fecha + ' · ' + franjaLabel + ' · ' + hora });
+                                    });
+                                }
+                                if (!selectedFranja) {
+                                    add(d.manana, 'Mañana');
+                                    add(d.tarde, 'Tarde');
+                                } else if (selectedFranja === 'manana') {
+                                    add(d.manana, 'Mañana');
+                                } else {
+                                    add(d.tarde, 'Tarde');
+                                }
+                            });
+                            renderItems();
+                        }
+
+                        function renderItems() {
+                            panel.innerHTML = chipsHtml.join('') + (items.length ? '<div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">'
+                                + items.map(it => '<button type="button" class="btn btn-sm btn-outline-secondary" data-ac-item="' + id + '" data-value="' + escapeHtml(it.value) + '" data-label="' + escapeHtml(it.label) + '">' + escapeHtml(it.label) + '</button>').join('')
+                                + '</div>' : '<div class="text-muted small">Sin resultados</div>');
+
+                            // Bind chips/items
+                            panel.querySelectorAll('[data-ac-chip-dia="' + id + '"]').forEach(b => b.addEventListener('click', () => { selectedDia = b.getAttribute('data-value'); rebuildItems(); }));
+                            panel.querySelectorAll('[data-ac-chip-franja="' + id + '"]').forEach(b => b.addEventListener('click', () => { selectedFranja = b.getAttribute('data-value'); rebuildItems(); }));
+                            panel.querySelectorAll('[data-ac-item="' + id + '"]').forEach(b => b.addEventListener('click', () => {
+                                const v = b.getAttribute('data-value') || '';
+                                const l = b.getAttribute('data-label') || '';
+                                const valueEl = document.getElementById(id + '_value');
+                                const textEl = document.getElementById(id + '_text');
+                                if (valueEl) valueEl.value = v;
+                                if (textEl) textEl.value = l;
+                                panel.classList.add('d-none');
+                            }));
+                        }
+
+                        rebuildItems();
+                        return;
+                    }
+
+                    // Fallback: intentar results/items/data as list
+                    const arr = Array.isArray(data.results) ? data.results
+                        : (data.data && Array.isArray(data.data.results) ? data.data.results
+                            : (Array.isArray(data.items) ? data.items : (Array.isArray(data.data) ? data.data : [])));
+                    items = arr.map(it => {
+                        const v = (it && typeof it === 'object') ? (it.id ?? it.value ?? '') : ('' + it);
+                        const l = (it && typeof it === 'object') ? (it.text ?? it.name ?? it.label ?? v) : ('' + it);
+                        return { value: '' + v, label: '' + l };
+                    });
+                    panel.innerHTML = items.length
+                        ? '<div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">' + items.map(it => '<button type="button" class="btn btn-sm btn-outline-secondary" data-ac-item="' + id + '" data-value="' + escapeHtml(it.value) + '" data-label="' + escapeHtml(it.label) + '">' + escapeHtml(it.label) + '</button>').join('') + '</div>'
+                        : '<div class="text-muted small">Sin resultados</div>';
+                    panel.querySelectorAll('[data-ac-item="' + id + '"]').forEach(b => b.addEventListener('click', () => {
+                        const v = b.getAttribute('data-value') || '';
+                        const l = b.getAttribute('data-label') || '';
+                        const valueEl = document.getElementById(id + '_value');
+                        const textEl = document.getElementById(id + '_text');
+                        if (valueEl) valueEl.value = v;
+                        if (textEl) textEl.value = l;
+                        panel.classList.add('d-none');
+                    }));
+                } catch (e) {
+                    panel.innerHTML = '<div class="text-danger small">Error cargando opciones</div>';
+                }
+            });
+        });
     }
 
     /**

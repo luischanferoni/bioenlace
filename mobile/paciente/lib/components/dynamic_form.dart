@@ -387,6 +387,7 @@ class _DynamicFormState extends State<DynamicForm> {
     final fieldName = field['name'] as String;
     final endpoint = field['endpoint'] as String?;
     final params = _buildEndpointParams(field);
+    final filters = field['filters'];
 
     // Textos e icono desde el JSON; fallback genérico (app agnóstica)
     final icon = Icons.article;
@@ -427,6 +428,7 @@ class _DynamicFormState extends State<DynamicForm> {
         noResultsMessage: noResultsMessage,
         autoLoad: autoLoad,
         showSearch: showSearch,
+        filters: filters,
         initialOptions: cachedOptions,
         onOptionsLoaded: (list) {
           setState(() {

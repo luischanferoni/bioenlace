@@ -92,6 +92,22 @@
       },
       "auto_load": true,
       "show_search": false,
+      "filters": [
+        {
+          "id": "dia",
+          "label": "Día",
+          "type": "chips",
+          "default_first": true,
+          "source": { "from": "response", "path": "available_filters.dias" }
+        },
+        {
+          "id": "franja",
+          "label": "Franja",
+          "type": "chips",
+          "default_first": true,
+          "source": { "from": "response", "path": "available_filters.franjas" }
+        }
+      ],
       "slot_selection": {
         "separator": "|",
         "parts": ["id_rrhh_servicio_asignado", "fecha", "hora"]

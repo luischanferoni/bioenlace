@@ -95,6 +95,9 @@ class SearchableCardSelector extends StatefulWidget {
   final void Function(List<Map<String, dynamic>>)? onOptionsLoaded;
   /// Si false, no se muestra el campo de búsqueda (solo lista de opciones, p. ej. slots de horarios).
   final bool showSearch;
+  /// Filtros opcionales declarados en el JSON del wizard (backend-driven).
+  /// Estructura esperada: lista de objetos con id/label/type/default_first/source, etc.
+  final dynamic filters;
 
   const SearchableCardSelector({
     Key? key,
@@ -114,6 +117,7 @@ class SearchableCardSelector extends StatefulWidget {
     this.initialOptions,
     this.onOptionsLoaded,
     this.showSearch = true,
+    this.filters,
   }) : super(key: key);
 
   @override
@@ -134,6 +138,12 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   /// Evita disparar búsqueda al servidor cuando el texto se actualiza por selección de un cuadro (tap).
   bool _isSelectingItem = false;
 
+  // --- Filtros (solo se activan si el field declara `filters`) ---
+  final Map<String, String?> _selectedFilters = {};
+  List<Map<String, dynamic>> _filterItemsDia = [];
+  List<Map<String, dynamic>> _filterItemsFranja = [];
+  List<dynamic> _slotsPorDiaRaw = [];
+
   @override
   void initState() {
     super.initState();
@@ -150,6 +160,117 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
       _loadInitialItems();
     }
     _searchController.addListener(_onSearchChanged);
+  }
+
+  bool _hasFilters() {
+    return widget.filters is List && (widget.filters as List).isNotEmpty;
+  }
+
+  bool _wantsFilter(String id) {
+    if (!_hasFilters()) return false;
+    for (final f in (widget.filters as List)) {
+      if (f is Map && f['id']?.toString() == id) return true;
+    }
+    return false;
+  }
+
+  bool _defaultFirstFor(String id) {
+    if (!_hasFilters()) return false;
+    for (final f in (widget.filters as List)) {
+      if (f is Map && f['id']?.toString() == id) {
+        return f['default_first'] == true || f['defaultFirst'] == true;
+      }
+    }
+    return false;
+  }
+
+  void _ensureDefaultFilterSelections() {
+    if (!_hasFilters()) return;
+    if (_wantsFilter('dia') && _defaultFirstFor('dia')) {
+      if ((_selectedFilters['dia'] == null || _selectedFilters['dia']!.isEmpty) && _filterItemsDia.isNotEmpty) {
+        _selectedFilters['dia'] = _filterItemsDia.first['value']?.toString() ?? _filterItemsDia.first['id']?.toString();
+      }
+    }
+    if (_wantsFilter('franja') && _defaultFirstFor('franja')) {
+      if ((_selectedFilters['franja'] == null || _selectedFilters['franja']!.isEmpty) && _filterItemsFranja.isNotEmpty) {
+        _selectedFilters['franja'] = _filterItemsFranja.first['value']?.toString() ?? _filterItemsFranja.first['id']?.toString();
+      }
+    }
+  }
+
+  void _buildFiltersFromSlotsResponse(Map<String, dynamic> map) {
+    // Enfoque backend-driven: si la API aún no devuelve available_filters, derivamos de por_dia.
+    final porDia = map['por_dia'];
+    _slotsPorDiaRaw = porDia is List ? porDia : [];
+
+    if (_wantsFilter('dia')) {
+      final out = <Map<String, dynamic>>[];
+      for (final day in _slotsPorDiaRaw) {
+        if (day is! Map) continue;
+        final fecha = day['fecha']?.toString() ?? '';
+        if (fecha.isEmpty) continue;
+        out.add({'value': fecha, 'label': _formatFechaCardSlots(fecha)});
+      }
+      // dedupe conservando orden
+      final seen = <String, bool>{};
+      _filterItemsDia = out.where((x) {
+        final v = x['value']?.toString() ?? '';
+        if (v.isEmpty || seen[v] == true) return false;
+        seen[v] = true;
+        return true;
+      }).toList();
+    } else {
+      _filterItemsDia = [];
+    }
+
+    if (_wantsFilter('franja')) {
+      _filterItemsFranja = const [
+        {'value': 'manana', 'label': 'Mañana'},
+        {'value': 'tarde', 'label': 'Tarde'},
+      ];
+    } else {
+      _filterItemsFranja = [];
+    }
+
+    _ensureDefaultFilterSelections();
+  }
+
+  List<Map<String, dynamic>> _flattenSlotsPacienteWithFilters() {
+    // Si no hay filtros seleccionados, fallback al comportamiento anterior (todo).
+    final dia = _selectedFilters['dia'];
+    final franja = _selectedFilters['franja'];
+    if ((dia == null || dia.isEmpty) && (franja == null || franja.isEmpty)) {
+      final map = <String, dynamic>{'success': true, 'por_dia': _slotsPorDiaRaw};
+      return _flattenSlotsPacientePorDia(map);
+    }
+    final out = <Map<String, dynamic>>[];
+    for (final day in _slotsPorDiaRaw) {
+      if (day is! Map) continue;
+      final fecha = day['fecha']?.toString() ?? '';
+      if (dia != null && dia.isNotEmpty && fecha != dia) continue;
+
+      void addFranja(List<dynamic>? slots, String franjaLabel) {
+        for (final s in slots ?? []) {
+          if (s is! Map) continue;
+          final hora = s['hora']?.toString() ?? '';
+          final idRrsa = s['id_rrhh_servicio_asignado']?.toString() ?? '';
+          if (fecha.isEmpty || hora.isEmpty || idRrsa.isEmpty) continue;
+          final id = '$idRrsa|$fecha|$hora';
+          final fechaTxt = _formatFechaCardSlots(fecha);
+          out.add({'id': id, 'text': '$fechaTxt · $franjaLabel · $hora'});
+        }
+      }
+
+      if (franja == null || franja.isEmpty) {
+        addFranja(day['manana'] as List<dynamic>?, 'Mañana');
+        addFranja(day['tarde'] as List<dynamic>?, 'Tarde');
+      } else if (franja == 'manana') {
+        addFranja(day['manana'] as List<dynamic>?, 'Mañana');
+      } else if (franja == 'tarde') {
+        addFranja(day['tarde'] as List<dynamic>?, 'Tarde');
+      }
+    }
+    return out;
   }
 
   bool _hasAllDependencies() {
@@ -240,7 +361,13 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
       if (response.statusCode == 200) {
         final raw = json.decode(response.body);
         final map = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-        final itemsList = _itemsListFromApiJson(map, widget.endpoint);
+        // Si hay filtros declarados y estamos en slots de paciente, construir filtros y aplicar.
+        if (_endpointIsSlotsPaciente(widget.endpoint) && _hasFilters()) {
+          _buildFiltersFromSlotsResponse(map);
+        }
+        final itemsList = _endpointIsSlotsPaciente(widget.endpoint) && _hasFilters()
+            ? _flattenSlotsPacienteWithFilters()
+            : _itemsListFromApiJson(map, widget.endpoint);
 
         if (mounted) {
           setState(() {
@@ -461,6 +588,40 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                 : null,
           ),
         if (widget.showSearch) const SizedBox(height: 16),
+        if (!widget.showSearch && _hasFilters() && _endpointIsSlotsPaciente(widget.endpoint)) ...[
+          if (_wantsFilter('dia') && _filterItemsDia.isNotEmpty) ...[
+            _buildFilterChipsRow(
+              label: 'Día',
+              items: _filterItemsDia,
+              selectedValue: _selectedFilters['dia'],
+              onChanged: (v) {
+                setState(() {
+                  _selectedFilters['dia'] = v;
+                  final itemsList = _flattenSlotsPacienteWithFilters();
+                  _efectores = itemsList;
+                  _filteredEfectores = itemsList;
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+          if (_wantsFilter('franja') && _filterItemsFranja.isNotEmpty) ...[
+            _buildFilterChipsRow(
+              label: 'Franja',
+              items: _filterItemsFranja,
+              selectedValue: _selectedFilters['franja'],
+              onChanged: (v) {
+                setState(() {
+                  _selectedFilters['franja'] = v;
+                  final itemsList = _flattenSlotsPacienteWithFilters();
+                  _efectores = itemsList;
+                  _filteredEfectores = itemsList;
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ],
         // Lista de opciones (cards)
         if (widget.showSearch)
           _buildCardsContent()
@@ -489,6 +650,50 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
       ],
     );
     return content;
+  }
+
+  Widget _buildFilterChipsRow({
+    required String label,
+    required List<Map<String, dynamic>> items,
+    required String? selectedValue,
+    required void Function(String value) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 40,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length,
+            itemBuilder: (context, idx) {
+              final it = items[idx];
+              final value = it['value']?.toString() ?? it['id']?.toString() ?? '';
+              final text = it['label']?.toString() ?? it['text']?.toString() ?? value;
+              final selected = value.isNotEmpty && value == selectedValue;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ChoiceChip(
+                  label: Text(text, overflow: TextOverflow.ellipsis),
+                  selected: selected,
+                  onSelected: (_) {
+                    if (value.isNotEmpty) onChanged(value);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildItemCard(Map<String, dynamic> item, bool isSelected) {

@@ -531,7 +531,7 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Próximo slot libre por servicio/efector (búsqueda). RBAC si se expone ruta: /api/turnos/consultar-proximo-disponible
+     * Próximo slot libre por servicio/efector (búsqueda)
      */
     public function actionConsultarProximoDisponible()
     {

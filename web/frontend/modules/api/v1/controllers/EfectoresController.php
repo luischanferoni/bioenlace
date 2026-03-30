@@ -21,11 +21,11 @@ class EfectoresController extends BaseController
     }
 
     /**
-     * GET/POST /api/v1/efectores/search
+     * GET/POST /api/v1/efectores/buscar
      * Parámetros: q (opcional), id_localidad, id_departamento, id_servicio, dependencia, tipologia, estado,
      * latitud, longitud, radio_km, limit, sort_by, sort_order, etc.
      */
-    public function actionSearch($q = null)
+    public function actionBuscar($q = null)
     {
         $out = ['results' => ['id' => '', 'text' => '']];
         if ($q === null) {

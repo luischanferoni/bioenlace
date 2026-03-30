@@ -31,7 +31,7 @@ class ChatController extends BaseController
           'login' => ['POST'],
       ];
   }*/
-    public function actionIndex()
+    public function actionEstado()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         return ['success' => true, 'mensajes' => [], 'msj' => ''];

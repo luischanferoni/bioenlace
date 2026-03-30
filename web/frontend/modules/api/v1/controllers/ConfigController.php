@@ -60,7 +60,7 @@ class ConfigController extends BaseController
      * Obtener efectores del usuario autenticado
      * GET /api/v1/config/efectores?user_id=5748 (para desarrollo)
      */
-    public function actionEfectores()
+    public function actionListarEfectores()
     {
         $user = Yii::$app->user->identity;
 
@@ -133,7 +133,7 @@ class ConfigController extends BaseController
      * Obtener servicios de un efector específico
      * GET /api/v1/config/servicios?efector_id=123&user_id=5748 (para desarrollo)
      */
-    public function actionServicios()
+    public function actionListarServicios()
     {
         $request = Yii::$app->request;
         $efectorId = $request->get('efector_id');
@@ -174,7 +174,7 @@ class ConfigController extends BaseController
      * GET /api/v1/config/encounter-classes
      * No requiere autenticación (lista estática)
      */
-    public function actionEncounterClasses()
+    public function actionListarEncounterClasses()
     {
         $encounterClasses = ConsultasConfiguracion::ENCOUNTER_CLASS;
         
@@ -196,7 +196,7 @@ class ConfigController extends BaseController
      * POST /api/v1/config/set-session
      * Body: { "efector_id": 123, "servicio_id": 456, "encounter_class": "AMB", "user_id": 5748 } (user_id opcional para desarrollo)
      */
-    public function actionSetSession()
+    public function actionEstablecerSession()
     {
         $request = Yii::$app->request;
         $user = Yii::$app->user->identity;

@@ -540,7 +540,7 @@ class ActionParameterAnalyzer
     {
         $mapping = [
             'efectores' => [
-                'endpoint' => '/efectores/search',
+                'endpoint' => '/efectores/buscar',
                 'input_type' => 'autocomplete',
             ],
             'servicios' => [
@@ -552,7 +552,7 @@ class ActionParameterAnalyzer
                 'input_type' => 'autocomplete',
             ],
             'rrhh' => [
-                'endpoint' => '/rrhh/rrhh-autocomplete',
+                'endpoint' => '/rrhh/autocomplete',
                 'input_type' => 'autocomplete',
             ],
             'especialidades' => [
@@ -596,7 +596,7 @@ class ActionParameterAnalyzer
         if (stripos($paramNameLower, 'efector') !== false || stripos($paramNameLower, 'id_efector') !== false) {
             return [
                 'type' => 'autocomplete',
-                'endpoint' => '/efectores/search',
+                'endpoint' => '/efectores/buscar',
             ];
         } elseif (stripos($paramNameLower, 'servicio') !== false || stripos($paramNameLower, 'id_servicio') !== false) {
             return [
@@ -611,7 +611,7 @@ class ActionParameterAnalyzer
         } elseif (stripos($paramNameLower, 'rrhh') !== false || stripos($paramNameLower, 'id_rrhh') !== false) {
             return [
                 'type' => 'autocomplete',
-                'endpoint' => '/rrhh/rrhh-autocomplete',
+                'endpoint' => '/rrhh/autocomplete',
             ];
         } elseif (stripos($paramNameLower, 'fecha') !== false || stripos($paramNameLower, 'date') !== false) {
             return [

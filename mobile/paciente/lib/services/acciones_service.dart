@@ -15,7 +15,7 @@ const String _timeoutErrorMessage =
 /// - La app móvil del médico
 /// - El chatbot del paciente
 /// 
-/// Endpoint: /api/v1/crud/process-query
+  /// Endpoint: /api/v1/crud/procesar-consulta
 /// El backend procesa la consulta con UniversalQueryAgent (`web/common/components/Actions/`) y devuelve
 /// acciones relevantes que el usuario puede realizar (solicitar turnos, 
 /// ver historia clínica, etc.)
@@ -36,13 +36,13 @@ class AccionesService {
   /// - "¿Cuándo es mi próxima consulta?"
   /// 
   /// El endpoint es el mismo que usa la web y la app del médico:
-  /// ${AppConfig.apiUrl}/crud/process-query
+  /// ${AppConfig.apiUrl}/crud/procesar-consulta
   /// 
   /// [actionId] es opcional: si se proporciona, el backend intentará buscar la acción por ID primero
   Future<Map<String, dynamic>> processQuery(String query, {String? actionId}) async {
     try {
       // Mismo endpoint que usa site/acciones.php en la web y la app del médico
-      final uri = Uri.parse('${AppConfig.apiUrl}/crud/process-query');
+      final uri = Uri.parse('${AppConfig.apiUrl}/crud/procesar-consulta');
       
       final headers = {
         'Content-Type': 'application/json',
@@ -109,7 +109,7 @@ class AccionesService {
   /// Obtiene la configuración del formulario/wizard para una acción (GET)
   /// 
   /// Este endpoint devuelve el form_config necesario para armar el wizard
-  /// GET /api/v1/crud/execute-action?action_id=...&param1=value1&param2=value2
+  /// GET /api/v1/crud/ejecutar-accion?action_id=...&param1=value1&param2=value2
   /// 
   /// Si todos los parámetros están presentes, devuelve el wizard en el último paso (confirmación)
   /// Si faltan parámetros, devuelve el wizard desde el principio
@@ -141,7 +141,7 @@ class AccionesService {
       }
       
       // Construir URI con query parameters
-      final uri = Uri.parse('${AppConfig.apiUrl}/crud/execute-action').replace(
+      final uri = Uri.parse('${AppConfig.apiUrl}/crud/ejecutar-accion').replace(
         queryParameters: queryParams,
       );
       
@@ -197,14 +197,14 @@ class AccionesService {
   /// Ejecuta una acción específica por su action_id (POST)
   /// 
   /// Este endpoint ejecuta la acción con los parámetros proporcionados
-  /// POST /api/v1/crud/execute-action
+  /// POST /api/v1/crud/ejecutar-accion
   /// Body: {
   ///   "action_id": "efectores.indexuserefector",
   ///   "params": {} // opcional
   /// }
   Future<Map<String, dynamic>> executeAction(String actionId, {Map<String, dynamic>? params}) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/crud/execute-action');
+      final uri = Uri.parse('${AppConfig.apiUrl}/crud/ejecutar-accion');
       
       final headers = {
         'Content-Type': 'application/json',

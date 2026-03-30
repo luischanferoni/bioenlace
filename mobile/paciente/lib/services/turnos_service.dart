@@ -21,7 +21,7 @@ class TurnosService {
     String? fechaHasta,
   }) async {
     try {
-      var uri = Uri.parse('${AppConfig.apiUrl}/turnos/como-paciente');
+      var uri = Uri.parse('${AppConfig.apiUrl}/turnos/listar-como-paciente');
       if (fechaDesde != null || fechaHasta != null) {
         uri = uri.replace(queryParameters: {
           if (fechaDesde != null) 'fecha_desde': fechaDesde,

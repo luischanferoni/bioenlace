@@ -22,7 +22,7 @@ class ConsultaChatService {
 
   Future<Map<String, dynamic>> getMessages(int consultaId) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/messages/$consultaId');
+      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/mensajes/$consultaId');
       final response = await http.get(uri, headers: _headers)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
       final data = json.decode(response.body);
@@ -37,7 +37,7 @@ class ConsultaChatService {
 
   Future<Map<String, dynamic>> sendMessage(int consultaId, String text, {String userRole = 'medico'}) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/send');
+      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/enviar');
       final body = {
         'consulta_id': consultaId,
         'message': text,
@@ -65,7 +65,7 @@ class ConsultaChatService {
     required String messageType,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/upload');
+      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
       request.fields['consulta_id'] = consultaId.toString();

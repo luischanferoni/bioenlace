@@ -156,7 +156,7 @@ Para que los clientes (web y Flutter) sepan que una respuesta contiene una **def
 
 El permiso sigue el mismo `action_id` que `crud/execute-action` (`entidad.accion`). En RBAC suelen registrarse rutas como `/api/ui/descriptor` y `/api/ui/options` para quien deba consumir descriptores.
 
-**Alternativa:** `GET /api/v1/crud/execute-action?action_id=turnos.crear-mi-turno` (respuesta móvil con `form_config` / `wizard_steps` y metadatos `kind`, `ui_type`, `compatibility`).
+**Alternativa:** `GET /api/v1/crud/ejecutar-accion?action_id=turnos.crear-mi-turno` (respuesta móvil con `form_config` / `wizard_steps` y metadatos `kind`, `ui_type`, `compatibility`).
 
 Ejemplos de URLs:
 

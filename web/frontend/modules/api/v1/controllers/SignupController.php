@@ -21,11 +21,11 @@ class SignupController extends BaseController
     {
         $behaviors = parent::behaviors();
         // No requerir autenticación para signup
-        $behaviors['authenticator']['except'] = ['options', 'index'];
+        $behaviors['authenticator']['except'] = ['options', 'registrar'];
         return $behaviors;
     }
 
-    public function actionIndex()
+    public function actionRegistrar()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 

@@ -46,7 +46,7 @@
       "label": "Efector",
       "type": "autocomplete",
       "required": true,
-      "endpoint": "/efectores/search",
+      "endpoint": "/efectores/buscar",
       "depends_on": "id_servicio_asignado",
       "params": { "id_servicio": "id_servicio_asignado" },
       "auto_load": true,
@@ -60,7 +60,7 @@
       "label": "Profesional",
       "type": "autocomplete",
       "required": true,
-      "endpoint": "/rrhh/rrhh-autocomplete",
+      "endpoint": "/rrhh/autocomplete",
       "depends_on": ["id_efector", "id_servicio_asignado"],
       "params": {
         "id_servicio": "id_servicio_asignado",

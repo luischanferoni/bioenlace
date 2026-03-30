@@ -20,7 +20,7 @@ class AuthController extends BaseController
     /**
      * Registro de usuario
      */
-    public function actionRegister()
+    public function actionRegistrar()
     {
         $request = Yii::$app->request;
         $email = $request->post('email');
@@ -80,7 +80,7 @@ class AuthController extends BaseController
     /**
      * Obtener usuario actual
      */
-    public function actionMe()
+    public function actionYo()
     {
         $user = Yii::$app->user->identity;
         
@@ -103,7 +103,7 @@ class AuthController extends BaseController
     /**
      * Logout
      */
-    public function actionLogout()
+    public function actionCerrarSesion()
     {
         // En JWT, el logout se maneja del lado del cliente
         // Aquí podríamos implementar una blacklist de tokens si es necesario
@@ -113,7 +113,7 @@ class AuthController extends BaseController
     /**
      * Refrescar token
      */
-    public function actionRefreshToken()
+    public function actionRefrescarToken()
     {
         $request = Yii::$app->request;
         $token = $request->post('token');
@@ -154,7 +154,7 @@ class AuthController extends BaseController
      *   "platform": "android" | "ios" | "otro"
      * }
      */
-    public function actionBiometricLogin()
+    public function actionLoginBiometrico()
     {
         $request = Yii::$app->request;
         $verificationId = $request->post('biometric_verification_id');
@@ -294,7 +294,7 @@ class AuthController extends BaseController
      * Endpoint de prueba: Generar token para paciente por DNI o por user_id.
      * Solo para desarrollo/pruebas. Parámetros: dni O user_id.
      */
-    public function actionGenerateTestToken()
+    public function actionGenerarTokenPrueba()
     {
         $request = Yii::$app->request;
         $dni = $request->post('dni') ?? $request->get('dni');

@@ -6,7 +6,7 @@ Documento de referencia para convenciones de nombres, URLs públicas y permisos 
 
 1. **Autogestión (como paciente):** el recurso afectado es siempre el del **usuario autenticado** (persona vía `id_user` o comprobación `turno.id_persona === sesión`). Ej.: listar mis turnos, cancelar mi turno, crear turno sin elegir otro `id_persona`.
 2. **Operativo (para paciente / efector):** el cuerpo o el alcance administrativo define **otro** paciente o todo un día en el efector. Requiere permisos distintos; el rol paciente no debe tener rutas como `crear-para-paciente` o `cancelar-dia-efector`.
-3. **Agenda profesional:** listado por RRHH/fecha en `GET /api/v1/agenda/dia` (`AgendaController`), no confundir con “mis turnos como paciente” (`GET …/turnos/como-paciente`).
+3. **Agenda profesional:** listado por RRHH/fecha en `GET /api/v1/agenda/dia` (`AgendaController`), no confundir con “mis turnos como paciente” (`GET …/turnos/listar-como-paciente`).
 
 ## Patrón de nombres
 

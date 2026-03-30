@@ -23,7 +23,7 @@ class PersonaController extends BaseController
     /**
      * GET /api/v1/persona/index
      */
-    public function actionIndex()
+    public function actionListar()
     {
         $request = Yii::$app->request;
         $query = Persona::find();
@@ -66,7 +66,7 @@ class PersonaController extends BaseController
     /**
      * GET /api/v1/persona/view?id=...
      */
-    public function actionView($id)
+    public function actionVer($id)
     {
         $persona = Persona::findOne($id);
         if (!$persona) {
@@ -98,7 +98,7 @@ class PersonaController extends BaseController
     /**
      * POST /api/v1/persona/create
      */
-    public function actionCreate()
+    public function actionCrear()
     {
         $request = Yii::$app->request;
         $persona = new Persona();
@@ -116,7 +116,7 @@ class PersonaController extends BaseController
     /**
      * PUT/PATCH /api/v1/persona/update?id=...
      */
-    public function actionUpdate($id)
+    public function actionActualizar($id)
     {
         $persona = Persona::findOne($id);
         if (!$persona) {
@@ -137,7 +137,7 @@ class PersonaController extends BaseController
     /**
      * DELETE /api/v1/persona/delete?id=...
      */
-    public function actionDelete($id)
+    public function actionEliminar($id)
     {
         $persona = Persona::findOne($id);
         if (!$persona) {

@@ -69,7 +69,7 @@
         hideResponse();
 
         // Usar endpoint de la API
-        const crudUrl = window.spaConfig.baseUrl + '/api/v1/crud/process-query';
+        const crudUrl = window.spaConfig.baseUrl + '/api/v1/crud/procesar-consulta';
         fetch(crudUrl, {
             method: 'POST',
             headers: clientApiHeaders({

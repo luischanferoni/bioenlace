@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
 /// Servicio para la conversación de motivos de consulta (texto, audio, fotos).
-/// Endpoints: motivos-consulta/messages, send, upload.
+/// Endpoints: motivos-consulta/mensajes, enviar, subir.
 class MotivosConsultaService {
   final String? authToken;
   final String userId;
@@ -23,7 +23,7 @@ class MotivosConsultaService {
 
   Future<Map<String, dynamic>> getMessages(int consultaId) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/messages/$consultaId');
+      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/mensajes/$consultaId');
       final response = await http.get(uri, headers: _headers)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
       final data = json.decode(response.body);
@@ -50,7 +50,7 @@ class MotivosConsultaService {
 
   Future<Map<String, dynamic>> sendMessage(int consultaId, String text) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/send');
+      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/enviar');
       final body = {
         'consulta_id': consultaId,
         'message': text,
@@ -77,7 +77,7 @@ class MotivosConsultaService {
     required String messageType,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/upload');
+      final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/subir');
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(_headers);
       request.fields['consulta_id'] = consultaId.toString();

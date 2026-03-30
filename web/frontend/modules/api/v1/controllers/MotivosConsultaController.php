@@ -22,7 +22,7 @@ class MotivosConsultaController extends BaseController
     /**
      * GET mensajes de motivos de una consulta.
      */
-    public function actionMessages($consulta_id)
+    public function actionListarMensajes($consulta_id)
     {
         [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
         if ($err !== null) {
@@ -64,7 +64,7 @@ class MotivosConsultaController extends BaseController
     /**
      * POST enviar mensaje de texto.
      */
-    public function actionSend()
+    public function actionEnviar()
     {
         $body = Yii::$app->request->getBodyParams();
         $consulta_id = $body['consulta_id'] ?? null;
@@ -118,7 +118,7 @@ class MotivosConsultaController extends BaseController
     /**
      * POST subir archivo (imagen o audio).
      */
-    public function actionUpload()
+    public function actionSubir()
     {
         $consulta_id = Yii::$app->request->post('consulta_id');
         if (!$consulta_id) {

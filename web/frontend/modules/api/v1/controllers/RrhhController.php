@@ -12,7 +12,7 @@ use common\models\RrhhEfector;
  */
 class RrhhController extends BaseController
 {
-    public static $authenticatorExcept = ['rrhh-autocomplete'];
+    public static $authenticatorExcept = ['autocomplete'];
 
     public function actions()
     {
@@ -22,10 +22,10 @@ class RrhhController extends BaseController
     }
 
     /**
-     * GET/POST /api/v1/rrhh/rrhh-autocomplete
+     * GET/POST /api/v1/rrhh/autocomplete
      * Parámetros: id_efector, id_servicio (requeridos); q, limit, sort_by, sort_order, efector_nombre, servicio_nombre (opcionales).
      */
-    public function actionRrhhAutocomplete($q = null)
+    public function actionAutocomplete($q = null)
     {
         $request = Yii::$app->request;
         $idEfector = $request->get('id_efector') ?: $request->post('id_efector');

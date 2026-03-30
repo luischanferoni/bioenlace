@@ -35,7 +35,7 @@ class CrudController extends BaseController
      * 
      * @return array Respuesta con acciones encontradas o error
      */
-    public function actionProcessQuery()
+    public function actionProcesarConsulta()
     {
         $userId = Yii::$app->user->id;
 
@@ -70,8 +70,8 @@ class CrudController extends BaseController
      * GET: Devuelve el form_config (wizard) para la acciÃ³n sin ejecutarla
      * POST: Ejecuta la acciÃ³n con los parÃ¡metros proporcionados
      * 
-     * GET /api/v1/crud/execute-action?action_id=...&param1=value1&param2=value2
-     * POST /api/v1/crud/execute-action
+     * GET /api/v1/crud/ejecutar-accion?action_id=...&param1=value1&param2=value2
+     * POST /api/v1/crud/ejecutar-accion
      * Body: {
      *   "action_id": "efectores.indexuserefector",
      *   "params": {} // opcional
@@ -79,7 +79,7 @@ class CrudController extends BaseController
      * 
      * @return array
      */
-    public function actionExecuteAction()
+    public function actionEjecutarAccion()
     {
         $userId = Yii::$app->user->id;
 

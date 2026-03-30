@@ -37,7 +37,7 @@ class QuirofanoController extends BaseController
     /**
      * GET/POST /api/v1/quirofano/salas
      */
-    public function actionSalas()
+    public function actionListarSalas()
     {
         $req = Yii::$app->request;
         try {
@@ -79,7 +79,7 @@ class QuirofanoController extends BaseController
     /**
      * GET /api/v1/quirofano/salas/<id>
      */
-    public function actionViewSala($id)
+    public function actionVerSala($id)
     {
         try {
             $model = $this->findSala((int) $id);
@@ -95,7 +95,7 @@ class QuirofanoController extends BaseController
     /**
      * PATCH /api/v1/quirofano/salas/<id>
      */
-    public function actionUpdateSala($id)
+    public function actionActualizarSala($id)
     {
         try {
             $model = $this->findSala((int) $id);
@@ -124,7 +124,7 @@ class QuirofanoController extends BaseController
     /**
      * DELETE /api/v1/quirofano/salas/<id>
      */
-    public function actionDeleteSala($id)
+    public function actionEliminarSala($id)
     {
         try {
             $model = $this->findSala((int) $id);
@@ -143,7 +143,7 @@ class QuirofanoController extends BaseController
     /**
      * GET/POST /api/v1/quirofano/cirugias
      */
-    public function actionCirugias()
+    public function actionListarCirugias()
     {
         $req = Yii::$app->request;
         try {
@@ -207,7 +207,7 @@ class QuirofanoController extends BaseController
     /**
      * GET /api/v1/quirofano/cirugias/<id>
      */
-    public function actionViewCirugia($id)
+    public function actionVerCirugia($id)
     {
         try {
             $model = $this->findCirugia((int) $id);
@@ -223,7 +223,7 @@ class QuirofanoController extends BaseController
     /**
      * PATCH /api/v1/quirofano/cirugias/<id>
      */
-    public function actionUpdateCirugia($id)
+    public function actionActualizarCirugia($id)
     {
         try {
             $model = $this->findCirugia((int) $id);
@@ -271,7 +271,7 @@ class QuirofanoController extends BaseController
     /**
      * PATCH /api/v1/quirofano/cirugias/<id>/estado
      */
-    public function actionCirugiaEstado($id)
+    public function actionEstadoCirugia($id)
     {
         try {
             $model = $this->findCirugia((int) $id);

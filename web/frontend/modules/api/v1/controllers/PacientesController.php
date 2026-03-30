@@ -22,7 +22,7 @@ class PacientesController extends BaseController
      * Listado de pacientes según encounter del usuario (turnos / internados / guardia).
      * GET /api/v1/pacientes?fecha=YYYY-MM-DD
      */
-    public function actionIndex()
+    public function actionListar()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $fecha = Yii::$app->request->get('fecha', date('Y-m-d'));

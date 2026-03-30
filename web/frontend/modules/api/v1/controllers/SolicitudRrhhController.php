@@ -15,7 +15,7 @@ use common\models\RrhhEfector;
  */
 class SolicitudRrhhController extends BaseController
 {
-    public function actionIndex()
+    public function actionListar()
     {
         $idEfector = Yii::$app->user->getIdEfector();
         $idRrhh = Yii::$app->user->getIdRecursoHumano();
@@ -51,7 +51,7 @@ class SolicitudRrhhController extends BaseController
         return ['success' => true, 'solicitudes' => $out];
     }
 
-    public function actionCreate()
+    public function actionCrear()
     {
         $idEfector = Yii::$app->user->getIdEfector();
         $idRrhh = Yii::$app->user->getIdRecursoHumano();

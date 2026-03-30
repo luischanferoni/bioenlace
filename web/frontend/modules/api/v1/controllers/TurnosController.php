@@ -24,25 +24,6 @@ use common\models\EfectorTurnosConfig;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 /**
- * API Turnos: convención verbo + ámbito (comoPaciente | paraPaciente | efector | recurso).
- *
- * | Método                          | HTTP | URL pública (v1)     | Permiso ApiGhost (/api/turnos/…)   |
- * |---------------------------------|------|----------------------|-------------------------------------|
- * | actionComoPaciente              | GET  | …/como-paciente      | como-paciente                       |
- * | actionVerTurno                  | GET  | …/turnos/{id}        | ver-turno                           |
- * | actionActualizarTurno           | PUT/PATCH | …/turnos/{id}   | actualizar-turno                    |
- * | actionCrearComoPaciente         | POST | …/turnos             | crear-como-paciente                 |
- * | actionCrearParaPaciente         | POST | …/para-paciente      | crear-para-paciente                 |
- * | actionPoliticaComoPaciente      | GET  | …/politica-como-paciente | politica-como-paciente          |
- * | actionCancelarComoPaciente      | POST | …/{id}/cancelar      | cancelar-como-paciente              |
- * | actionSlotsAlternativosComoPaciente | GET | …/{id}/slots-alternativos | slots-alternativos-como-paciente |
- * | actionConfirmarAsistenciaComoPaciente | POST | …/{id}/confirmar-asistencia | confirmar-asistencia-como-paciente |
- * | actionReprogramarComoPaciente   | POST | …/{id}/reprogramar   | reprogramar-como-paciente           |
- * | actionSlotsDisponiblesComoPaciente | GET/POST | …/slots-disponibles-como-paciente | slots-disponibles-como-paciente |
- * | actionConsultarOcupacionDia   | GET/POST | …/eventos        | consultar-ocupacion-dia             |
- * | actionCancelarDiaEfector        | POST | …/cancelar-dia-efector | cancelar-dia-efector            |
- * | actionConsultarProximoDisponible | GET/POST | …/turnos/proximo-disponible | consultar-proximo-disponible |
- *
  * {@see AgendaController} — GET /api/v1/agenda/dia (permiso /api/agenda/dia).
  */
 class TurnosController extends BaseController
@@ -55,10 +36,10 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Turnos donde el usuario es paciente. GET /api/v1/turnos/como-paciente (fecha_desde, fecha_hasta opcionales).
+     * Turnos donde el usuario es paciente. GET /api/v1/turnos/listar-como-paciente (fecha_desde, fecha_hasta opcionales).
      * @action_name Reservar turno
      */
-    public function actionComoPaciente()
+    public function actionListarComoPaciente()
     {
         $idPersona = Yii::$app->user->getIdPersona();
 
@@ -528,46 +509,6 @@ class TurnosController extends BaseController
         $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
         $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id);
         return ['success' => true, 'cancelados' => $n];
-    }
-
-    /**
-     * Próximo slot libre por servicio/efector (búsqueda)
-     */
-    public function actionConsultarProximoDisponible()
-    {
-        $request = Yii::$app->request;
-        $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
-        if (!$idServicio) {
-            throw new BadRequestHttpException('El parámetro id_servicio es obligatorio');
-        }
-        $criteria = [
-            'id_servicio' => (int)$idServicio,
-            'id_efector' => $request->get('id_efector') ?: $request->post('id_efector'),
-            'fecha_desde' => $request->get('fecha_desde') ?: $request->post('fecha_desde'),
-            'max_dias' => $request->get('max_dias') ?: $request->post('max_dias'),
-        ];
-        $restricciones = $request->get('restricciones') ?: $request->post('restricciones');
-        if (!empty($restricciones) && is_array($restricciones)) {
-            $criteria['restricciones'] = $restricciones;
-        }
-        try {
-            $slot = TurnoSlotFinder::findFirstAvailable($criteria);
-        } catch (\Throwable $e) {
-            Yii::warning('TurnoSlotFinder::findFirstAvailable error: ' . $e->getMessage(), 'api-turnos');
-            throw new \yii\web\ServerErrorHttpException('No se pudo calcular el próximo turno disponible');
-        }
-        if ($slot === null) {
-            return [
-                'disponible' => false,
-                'slot' => null,
-                'message' => 'No hay turnos disponibles en el rango de búsqueda.',
-            ];
-        }
-        return [
-            'disponible' => true,
-            'slot' => $slot,
-            'message' => sprintf('Próximo turno: %s a las %s', $slot['fecha'], $slot['hora']),
-        ];
     }
 
     /**

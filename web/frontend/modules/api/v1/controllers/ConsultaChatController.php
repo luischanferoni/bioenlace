@@ -19,7 +19,7 @@ class ConsultaChatController extends BaseController
 {
     public $enableCsrfValidation = false;
 
-    public function actionMessages($consulta_id)
+    public function actionListarMensajes($consulta_id)
     {
         [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
         if ($err !== null) {
@@ -63,7 +63,7 @@ class ConsultaChatController extends BaseController
         ];
     }
 
-    public function actionSend()
+    public function actionEnviar()
     {
         $body = Yii::$app->request->getBodyParams();
         $consulta_id = $body['consulta_id'] ?? null;
@@ -128,7 +128,7 @@ class ConsultaChatController extends BaseController
         ];
     }
 
-    public function actionUpload()
+    public function actionSubir()
     {
         $consulta_id = Yii::$app->request->post('consulta_id');
         if (!$consulta_id) {
@@ -213,7 +213,7 @@ class ConsultaChatController extends BaseController
         ];
     }
 
-    public function actionStatus($consulta_id)
+    public function actionEstado($consulta_id)
     {
         [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
         if ($err !== null) {

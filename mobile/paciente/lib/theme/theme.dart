@@ -49,6 +49,16 @@ class AppTheme {
     dividerColor: dividerColor,
     textTheme: GoogleFonts.openSansTextTheme(),
     inputDecorationTheme: InputDecorationTheme(
+      labelStyle: GoogleFonts.openSans(
+        color: Colors.black,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+      ),
+      floatingLabelStyle: GoogleFonts.openSans(
+        color: Colors.black,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
       hintStyle: GoogleFonts.openSans(
         color: hintColor,
         fontSize: 14,

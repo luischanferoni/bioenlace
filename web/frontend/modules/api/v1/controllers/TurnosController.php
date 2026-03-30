@@ -56,6 +56,7 @@ class TurnosController extends BaseController
 
     /**
      * Turnos donde el usuario es paciente. GET /api/v1/turnos/como-paciente (fecha_desde, fecha_hasta opcionales).
+     * @action_name Reservar turno
      */
     public function actionComoPaciente()
     {

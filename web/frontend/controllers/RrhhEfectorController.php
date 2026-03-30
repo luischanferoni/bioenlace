@@ -624,19 +624,6 @@ class RrhhEfectorController extends Controller
         //return ['error' => false, 'msg' => $rrhhServicios];
     }
 
-    public function actionRrhhAutocomplete($q = null) {
-
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $out = ['results' => ['id' => '', 'text' => '']];
-        if (!is_null($q)) {
-            $data = \common\models\RrhhEfector::obtenerProfesionalesParches($q);
-
-            $out['results'] = array_values($data);
-        }
-
-        return $out;
-    } 
-
     public function actionProfesionalesPorServicioEfector()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

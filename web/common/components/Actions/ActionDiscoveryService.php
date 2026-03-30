@@ -365,6 +365,7 @@ class ActionDiscoveryService
             'controller' => $controllerName,
             'action' => $actionName,
             'display_name' => $displayName,
+            'action_name' => $customMetadata['action_name'],
             'description' => $description,
             'parameters' => $parameters,
             'method' => $method->getName(),
@@ -499,6 +500,9 @@ class ActionDiscoveryService
             'tags' => [],
             'keywords' => [],
             'synonyms' => [],
+            // Nombre "humano" explícito para UI / execute-action.
+            // Se expone como action_name y tiene prioridad sobre display_name.
+            'action_name' => null,
         ];
 
         if (!$docComment) {
@@ -513,6 +517,16 @@ class ActionDiscoveryService
 
         foreach ($lines as $line) {
             $line = trim($line);
+
+            // @action_name "Reservar turno"
+            // @display_name "Reservar turno" (alias, útil para migraciones)
+            if (preg_match('/@(?:action_name|actionName|display_name|displayName)\s+(.+)/i', $line, $matches)) {
+                $value = trim($matches[1]);
+                $value = trim($value, "\"'"); // permitir comillas opcionales
+                if ($value !== '') {
+                    $metadata['action_name'] = $value;
+                }
+            }
 
             // @entity Turnos (también acepta @category para compatibilidad temporal durante migración)
             if (preg_match('/@(?:entity|category)\s+(.+)/i', $line, $matches)) {

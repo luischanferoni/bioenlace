@@ -80,7 +80,7 @@
     },
     {
       "name": "hora",
-      "label": "Horario disponible",
+      "label": "Horarios disponibles",
       "type": "autocomplete",
       "required": true,
       "endpoint": "/turnos/slots-disponibles-como-paciente",

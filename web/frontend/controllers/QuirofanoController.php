@@ -45,20 +45,6 @@ class QuirofanoController extends Controller
         ]);
     }
 
-    public function actionSalas()
-    {
-        $searchModel = new QuirofanoSalaBusqueda();
-        $idEfector = (int) Yii::$app->request->get('id_efector', Yii::$app->user->getIdEfector());
-        $searchModel->id_efector = $idEfector ?: null;
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
-        return $this->render('salas', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-            'idEfector' => $idEfector,
-        ]);
-    }
-
     public function actionCreateSala()
     {
         $idEfector = (int) Yii::$app->request->get('id_efector', Yii::$app->user->getIdEfector());
@@ -67,21 +53,11 @@ class QuirofanoController extends Controller
         return $this->render('create_sala', ['idEfector' => $idEfector]);
     }
 
-    public function actionUpdateSala($id)
-    {
-        return $this->render('update_sala', ['id' => (int) $id]);
-    }
-
     public function actionCreateCirugia()
     {
         $idEfector = (int) Yii::$app->request->get('id_efector', Yii::$app->user->getIdEfector());
         UserEfectorAccess::requireEfectorAccess($idEfector);
 
         return $this->render('create_cirugia', ['idEfector' => $idEfector]);
-    }
-
-    public function actionUpdateCirugia($id)
-    {
-        return $this->render('update_cirugia', ['id' => (int) $id]);
     }
 }

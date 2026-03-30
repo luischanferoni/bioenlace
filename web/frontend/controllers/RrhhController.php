@@ -20,10 +20,6 @@ use common\models\Servicio;
  */
 class RrhhController extends Controller
 {
-    /** Acciones sin auth para API (fuente única Web + API). */
-    public static $authenticatorExcept = ['rrhh-autocomplete'];
-    public static $verbs = ['rrhh-autocomplete' => ['GET', 'POST', 'OPTIONS']];
-
     public function behaviors()
     {
         return [
@@ -160,45 +156,5 @@ class RrhhController extends Controller
             return;
         }
         echo Json::encode(['output' => '', 'selected' => '']);
-    }
-
-    public function actionRrhhAutocomplete($q = null)
-    {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $request = Yii::$app->request;
-        $idEfector = $request->get('id_efector') ?: $request->post('id_efector');
-        $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
-        if (empty($idEfector) || empty($idServicio)) {
-            throw new BadRequestHttpException('id_efector e id_servicio son requeridos');
-        }
-        $out = ['results' => ['id' => '', 'text' => '']];
-        $q = $q ?? $request->get('q') ?? $request->post('q');
-        $filters = [
-            'id_efector' => $idEfector,
-            'id_servicio' => $idServicio,
-        ];
-        if ($request->get('limit') || $request->post('limit')) {
-            $filters['limit'] = $request->get('limit') ?: $request->post('limit');
-        }
-        if ($request->get('efector_nombre') || $request->post('efector_nombre')) {
-            $filters['efector_nombre'] = $request->get('efector_nombre') ?: $request->post('efector_nombre');
-        }
-        if ($request->get('servicio_nombre') || $request->post('servicio_nombre')) {
-            $filters['servicio_nombre'] = $request->get('servicio_nombre') ?: $request->post('servicio_nombre');
-        }
-        if ($request->get('limit') || $request->post('limit')) {
-            $filters['limit'] = $request->get('limit') ?: $request->post('limit');
-        }
-        if ($request->get('sort_by') || $request->post('sort_by')) {
-            $filters['sort_by'] = $request->get('sort_by') ?: $request->post('sort_by');
-        }
-        if ($request->get('sort_order') || $request->post('sort_order')) {
-            $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
-        }
-        if ($q === null && empty($filters)) {
-            return $out;
-        }
-        $out['results'] = array_values(RrhhEfector::autocompleteRrhh($q, $filters));
-        return $out;
     }
 }

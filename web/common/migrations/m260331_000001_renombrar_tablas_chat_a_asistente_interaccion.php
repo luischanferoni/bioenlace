@@ -170,8 +170,15 @@ class m260331_000001_renombrar_tablas_chat_a_asistente_interaccion extends Migra
 
             $isJsonValid = stripos($clause, 'json_valid') !== false;
 
-            // MariaDB: DROP CHECK `constraint_name`
-            $this->execute("ALTER TABLE `{$rawTable}` DROP CHECK `{$name}`");
+            // Variantes MySQL/MariaDB:
+            // - MySQL 8+:    ALTER TABLE t DROP CHECK <name>
+            // - MariaDB:    ALTER TABLE t DROP CONSTRAINT <name>
+            // Algunas instalaciones reportan error de sintaxis con DROP CHECK.
+            try {
+                $this->execute("ALTER TABLE `{$rawTable}` DROP CHECK `{$name}`");
+            } catch (\Throwable $e) {
+                $this->execute("ALTER TABLE `{$rawTable}` DROP CONSTRAINT `{$name}`");
+            }
 
             $dropped[] = [
                 'constraint_name' => $name,

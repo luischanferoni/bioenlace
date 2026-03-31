@@ -29,15 +29,15 @@ class ConsultaMotivosMessage extends ActiveRecord
 
     public static function tableName()
     {
-        return 'consulta_motivos_messages';
+        return 'interaccion_motivos_consulta';
     }
 
     public function rules()
     {
         return [
-            [['consulta_id', 'user_id', 'user_name', 'content'], 'required'],
+            [['consulta_id', 'user_id', 'user_name', 'texto'], 'required'],
             [['consulta_id', 'user_id'], 'integer'],
-            [['content'], 'string'],
+            [['texto'], 'string'],
             [['created_at'], 'safe'],
             [['user_name'], 'string', 'max' => 100],
             [['message_type'], 'string', 'max' => 20],
@@ -54,7 +54,7 @@ class ConsultaMotivosMessage extends ActiveRecord
             'consulta_id' => 'Consulta ID',
             'user_id' => 'User ID',
             'user_name' => 'User Name',
-            'content' => 'Content',
+            'texto' => 'Texto',
             'message_type' => 'Message Type',
             'created_at' => 'Created At',
         ];

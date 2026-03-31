@@ -15,15 +15,15 @@ const String _timeoutErrorMessage =
 /// - La app móvil del médico
 /// - El chatbot del paciente
 /// 
-  /// Endpoint: /api/v1/crud/procesar-consulta
+  /// Endpoint: /api/v1/crud/procesar-interaccion
 /// El backend procesa la consulta con UniversalQueryAgent (`web/common/components/Actions/`) y devuelve
 /// acciones relevantes que el usuario puede realizar (solicitar turnos, 
 /// ver historia clínica, etc.)
-class AccionesService {
+class AsistenteService {
   String userId;
   final String? authToken;
 
-  AccionesService({
+  AsistenteService({
     required this.userId,
     this.authToken,
   });
@@ -36,13 +36,13 @@ class AccionesService {
   /// - "¿Cuándo es mi próxima consulta?"
   /// 
   /// El endpoint es el mismo que usa la web y la app del médico:
-  /// ${AppConfig.apiUrl}/crud/procesar-consulta
+  /// ${AppConfig.apiUrl}/crud/procesar-interaccion
   /// 
   /// [actionId] es opcional: si se proporciona, el backend intentará buscar la acción por ID primero
-  Future<Map<String, dynamic>> processQuery(String query, {String? actionId}) async {
+  Future<Map<String, dynamic>> procesarInteraccion(String textoInteraccionUsuario, {String? actionId}) async {
     try {
       // Mismo endpoint que usa site/acciones.php en la web y la app del médico
-      final uri = Uri.parse('${AppConfig.apiUrl}/crud/procesar-consulta');
+      final uri = Uri.parse('${AppConfig.apiUrl}/crud/procesar-interaccion');
       
       final headers = {
         'Content-Type': 'application/json',
@@ -55,7 +55,9 @@ class AccionesService {
       }
 
       final body = <String, dynamic>{
-        'query': query,
+        'interaccion_usuario': {
+          'texto': textoInteraccionUsuario,
+        },
       };
       
       // Agregar action_id si se proporciona (opcional)

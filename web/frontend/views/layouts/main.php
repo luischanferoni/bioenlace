@@ -172,8 +172,8 @@ if (Yii::$app->user->username) {
                                     </a>
                                 </li>
                                 <li class="nav-item">
-                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= Yii::$app->controller->action->id == 'acciones' ? 'active' : '' ?>" href="<?= Url::to(['/site/acciones']) ?>">
-                                        <i class="bi bi-lightning-charge fs-2"></i> Acciones
+                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= Yii::$app->controller->action->id == 'asistente' ? 'active' : '' ?>" href="<?= Url::to(['/site/asistente']) ?>">
+                                        <i class="bi bi-stars fs-2"></i> Asistente
                                     </a>
                                 </li>
                             </ul>

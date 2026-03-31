@@ -8,7 +8,7 @@ La captura clínica en texto/audio para internación sigue el mismo criterio que
 
 - Usuario autenticado con rol interno (médico/enfermería/adm).
 - Acceso a módulos de internación en web.
-- Endpoint API de chat disponible (según despliegue), p. ej. `POST /api/v1/messages/enviar` o el que use el cliente.
+- Endpoint API del asistente (canal chat) disponible: `POST /api/v1/asistente/enviar`.
 
 ## 1) Prueba de “actions” en API chat
 

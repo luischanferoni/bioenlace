@@ -1417,14 +1417,14 @@ PROMPT;
                     'success' => true, // Es una respuesta válida del sistema, no un error
                     'explanation' => 'No encontré acciones específicas para tu consulta, pero aquí tienes algunas opciones que podrían ayudarte:',
                     'actions' => self::formatActionsForResponse($suggestedSlice),
-                    'suggested_query' => '¿qué puedo hacer?',
+                    'interaccion_sugerida' => ['texto' => '¿qué puedo hacer?'],
                 ];
             }
             
             return [
                 'success' => true, // Es una respuesta válida del sistema, no un error
                 'explanation' => 'No encontré acciones específicas para tu consulta. Puedes preguntar "¿qué puedo hacer?" para ver todas tus opciones disponibles.',
-                'suggested_query' => '¿qué puedo hacer?',
+                'interaccion_sugerida' => ['texto' => '¿qué puedo hacer?'],
             ];
         }
 

@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 
-use common\models\Dialogo;
-use common\models\Mensaje;
+use common\models\AsistenteConversacion;
+use common\models\AsistenteInteraccion;
 use common\models\Servicio;
 use common\models\Turno;
 use common\components\Chatbot\MensajeIntentRouter;
@@ -50,30 +50,30 @@ class ChatController extends BaseController
         }
     
         // 1. Buscar o crear el diálogo
-        $dialogo = Dialogo::findOne(['usuario_id' => $senderId, 'bot_id' => 'BOT']);
-        if (!$dialogo) {
-            $dialogo = new Dialogo([
+        $conversacion = AsistenteConversacion::findOne(['usuario_id' => $senderId, 'bot_id' => 'BOT']);
+        if (!$conversacion) {
+            $conversacion = new AsistenteConversacion([
                 'usuario_id' => $senderId,
                 'bot_id' => 'BOT',
             ]);
-            $dialogo->save();
+            $conversacion->save();
         }
 
         // 2. Cargar estado parcial previo
-        $estadoActual = json_decode($dialogo->estado_json, true) ?? [];
+        $estadoActual = json_decode($conversacion->contexto_json, true) ?? [];
 
         // 3. Guardar el mensaje del usuario
-        $mensajeUsuario = new Mensaje([
-            'dialogo_id' => $dialogo->id,
+        $interaccionUsuario = new AsistenteInteraccion([
+            'conversacion_id' => $conversacion->id,
             'sender_id' => $senderId,
             'sender_name' => $senderId, // Si querés un nombre más amigable, lo podés derivar.
-            'content' => $content,
+            'texto' => $content,
             'status' => 'recibido',
             'message_type' => 'texto',
             'is_resent' => 0,
         ]);
 
-        $mensajeUsuario->save();
+        $interaccionUsuario->save();
 
         // 4. Procesar con el nuevo orquestador
         $routerResult = null;
@@ -140,17 +140,17 @@ class ChatController extends BaseController
         }       
 */
         // 5. Guardar el mensaje del bot
-        $mensajeBot = new Mensaje([
-            'dialogo_id' => $dialogo->id,
+        $interaccionBot = new AsistenteInteraccion([
+            'conversacion_id' => $conversacion->id,
             'sender_id' => 'BOT',
             'sender_name' => 'Bot',
-            'content' => $respuestaTexto,
+            'texto' => $respuestaTexto,
             'status' => 'enviado',
             'message_type' => 'texto',
             'is_resent' => 0,
         ]);
-        $mensajeBot->save();
-        $mensajeBot->refresh();
+        $interaccionBot->save();
+        $interaccionBot->refresh();
 
         Yii::$app->response->statusCode = 201;
 
@@ -159,11 +159,11 @@ class ChatController extends BaseController
         // Agregar payload estructurado (actions/metadata/etc.) para web + apps.
         return [
             'success' => true,
-            'id' => (string)$mensajeBot->id,
-            'senderId' => $mensajeBot->sender_id,
-            'senderName' => $mensajeBot->sender_name,
-            'content' => $mensajeBot->content,
-            'timestamp' => (string)strtotime($mensajeBot->timestamp),
+            'id' => (string)$interaccionBot->id,
+            'senderId' => $interaccionBot->sender_id,
+            'senderName' => $interaccionBot->sender_name,
+            'content' => $interaccionBot->texto,
+            'timestamp' => (string)strtotime($interaccionBot->created_at),
             'router' => [
                 'success' => $routerResult['success'] ?? false,
                 'needs_more_info' => $routerResult['needs_more_info'] ?? false,
@@ -347,7 +347,9 @@ class ChatController extends BaseController
         // Buscar el turno actual (este ejemplo es genérico)
         $turnoActual = null;
         try {
-            $turnoActual = Turno::find()
+            /** @var \yii\db\ActiveQuery $turnosQuery */
+            $turnosQuery = Turno::find();
+            $turnoActual = $turnosQuery
                 ->where(['usuario_id' => $dialogo->usuario_id])
                 ->orderBy(['id' => SORT_DESC])
                 ->one();

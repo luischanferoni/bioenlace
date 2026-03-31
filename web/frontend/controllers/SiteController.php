@@ -129,11 +129,11 @@ class SiteController extends Controller
         return $this->redirect(['site/pacientes', 'fecha' => $fecha]);
     }
 
-    public function actionAcciones()
+    public function actionAsistente()
     {
         $this->layout = 'main';
 
-        return $this->render('acciones');
+        return $this->render('asistente');
     }
 
 

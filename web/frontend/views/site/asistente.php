@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-$this->title = 'Acciones';
+$this->title = 'Asistente';
 $this->registerJsFile('@web/js/spa-navigation.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('@web/js/spa-home.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
@@ -13,13 +13,13 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10">
 
-            <!-- Textarea estilo ChatGPT -->
+            <!-- Chat del asistente -->
             <div class="mb-4">
                 <textarea 
                     id="spa-query-input" 
                     class="form-control form-control-lg" 
                     rows="3" 
-                    placeholder="Escribe tu consulta aquí... Ejemplo: 'Necesito buscar una persona' o 'Quiero ver los reportes disponibles'"
+                    placeholder="Escribe lo que necesitas... Ejemplo: 'Necesito buscar una persona' o 'Quiero ver los reportes disponibles'"
                     style="resize: none;"
                 ></textarea>
                 <div class="d-flex justify-content-end mt-3">
@@ -33,7 +33,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 </div>
             </div>
 
-            <!-- Área de respuesta de IA -->
+            <!-- Respuesta del asistente -->
             <div id="spa-response-section" class="mb-4 d-none">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -43,9 +43,9 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 </div>
             </div>
 
-            <!-- Acciones comunes iniciales -->
+            <!-- Sugerencias iniciales -->
             <div id="spa-common-actions" class="mt-5">
-                <h3 class="text-center mb-4 fw-semibold text-dark">Acciones Comunes</h3>
+                <h3 class="text-center mb-4 fw-semibold text-dark">Sugerencias del asistente</h3>
                 <div id="spa-common-actions-grid" class="row g-3">
                     <!-- Se llenará dinámicamente con JavaScript -->
                 </div>

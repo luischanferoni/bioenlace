@@ -154,7 +154,7 @@ Para que los clientes (web y Flutter) sepan que una respuesta contiene una **def
 - `GET /api/v1/ui/<entidad>/<accion>` → `UiController::actionDescriptor` (ej. `GET /api/v1/ui/turnos/crear-mi-turno`)
 - `OPTIONS /api/v1/ui/<entidad>/<accion>` → CORS (`UiController::actionOptions`)
 
-El permiso sigue el mismo `action_id` que `crud/execute-action` (`entidad.accion`). En RBAC suelen registrarse rutas como `/api/ui/descriptor` y `/api/ui/options` para quien deba consumir descriptores.
+El permiso sigue el mismo `action_id` que `crud/ejecutar-accion` (`entidad.accion`). En RBAC suelen registrarse rutas como `/api/ui/descriptor` y `/api/ui/options` para quien deba consumir descriptores.
 
 **Alternativa:** `GET /api/v1/crud/ejecutar-accion?action_id=turnos.crear-mi-turno` (respuesta móvil con `form_config` / `wizard_steps` y metadatos `kind`, `ui_type`, `compatibility`).
 

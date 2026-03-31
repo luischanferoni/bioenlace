@@ -69,7 +69,7 @@
         hideResponse();
 
         // Usar endpoint de la API
-        const crudUrl = window.spaConfig.baseUrl + '/api/v1/crud/procesar-consulta';
+        const crudUrl = window.spaConfig.baseUrl + '/api/v1/crud/procesar-interaccion';
         fetch(crudUrl, {
             method: 'POST',
             headers: clientApiHeaders({
@@ -79,7 +79,7 @@
             }),
             credentials: 'same-origin', // Incluir cookies de sesión
             body: JSON.stringify({
-                query: query
+                interaccion_usuario: { texto: query }
             })
         })
         .then(response => {
@@ -164,7 +164,8 @@
                     
                     // Si success es false pero hay explicación, mostrar como información (no error)
                     if (result.success === false) {
-                        displayInfoResponse(explanation, actionsToDisplay, result.suggested_query);
+                        const suggested = result.interaccion_sugerida && result.interaccion_sugerida.texto ? result.interaccion_sugerida.texto : null;
+                        displayInfoResponse(explanation, actionsToDisplay, suggested);
                     } else {
                         displayResponse(explanation, actionsToDisplay);
                     }

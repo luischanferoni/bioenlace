@@ -6,7 +6,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * This is the model class for table "consulta_chat_messages".
+ * This is the model class for table "interaccion_chat_clinico".
  * Tabla separada para mensajes de chat médico en consultas.
  *
  * @property int $id
@@ -14,7 +14,7 @@ use yii\db\ActiveRecord;
  * @property int $user_id
  * @property string $user_name
  * @property string $user_role
- * @property string $content
+ * @property string $texto
  * @property string $message_type
  * @property boolean $is_read
  * @property string $created_at
@@ -30,7 +30,7 @@ class ConsultaChatMessage extends ActiveRecord
      */
     public static function tableName()
     {
-        return 'consulta_chat_messages';
+        return 'interaccion_chat_clinico';
     }
 
     /**
@@ -39,9 +39,9 @@ class ConsultaChatMessage extends ActiveRecord
     public function rules()
     {
         return [
-            [['consulta_id', 'user_id', 'user_name', 'user_role', 'content'], 'required'],
+            [['consulta_id', 'user_id', 'user_name', 'user_role', 'texto'], 'required'],
             [['consulta_id', 'user_id'], 'integer'],
-            [['content'], 'string'],
+            [['texto'], 'string'],
             [['is_read'], 'boolean'],
             [['created_at', 'updated_at'], 'safe'],
             [['user_name'], 'string', 'max' => 100],
@@ -75,7 +75,7 @@ class ConsultaChatMessage extends ActiveRecord
             'user_id' => 'User ID',
             'user_name' => 'User Name',
             'user_role' => 'User Role',
-            'content' => 'Content',
+            'texto' => 'Texto',
             'message_type' => 'Message Type',
             'is_read' => 'Is Read',
             'created_at' => 'Created At',

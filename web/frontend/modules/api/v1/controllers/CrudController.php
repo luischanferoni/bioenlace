@@ -22,34 +22,38 @@ class CrudController extends BaseController
     }
 
     /**
-     * Procesar consulta en lenguaje natural usando UniversalQueryAgent
+     * Procesar interacción del usuario en lenguaje natural usando UniversalQueryAgent
      * 
-     * Este endpoint procesa consultas en lenguaje natural y devuelve acciones relevantes
+     * Este endpoint procesa interacciones del usuario en lenguaje natural y devuelve acciones relevantes
      * del sistema que el usuario tiene permitido realizar.
      * 
-     * Ejemplos de consultas:
+     * Ejemplos de interacciones:
      * - "listame mis licencias"
      * - "29486884" (bÃºsqueda por DNI)
-     * - "cuÃ¡ntos consultas voy atendiendo este mes?"
+     * - "cuÃ¡ntas consultas voy atendiendo este mes?"
      * - "quÃ© puedo hacer?"
      * 
      * @return array Respuesta con acciones encontradas o error
      */
-    public function actionProcesarConsulta()
+    public function actionProcesarInteraccion()
     {
         $userId = Yii::$app->user->id;
 
-        $query = Yii::$app->request->post('query');
+        $interaccionUsuario = Yii::$app->request->post('interaccion_usuario');
+        $texto = null;
+        if (is_array($interaccionUsuario)) {
+            $texto = $interaccionUsuario['texto'] ?? null;
+        }
         $actionId = Yii::$app->request->post('action_id'); // Opcional: para bÃºsqueda directa por ID
         
-        if (empty($query) && empty($actionId)) {
-            return $this->error('La consulta o action_id es requerido', null, 400);
+        if (($texto === null || trim((string) $texto) === '') && empty($actionId)) {
+            return $this->error('interaccion_usuario.texto o action_id es requerido', null, 400);
         }
 
         try {
             // Procesar consulta usando UniversalQueryAgent (implementaciÃ³n genÃ©rica y mejorada)
             // Si viene action_id, se buscarÃ¡ primero por ID, luego por matching semÃ¡ntico, y finalmente por LLM
-            $result = UniversalQueryAgent::processQuery($query, $userId, $actionId);
+            $result = UniversalQueryAgent::processQuery($texto, $userId, $actionId);
             
             // Asegurar que el resultado tenga el formato correcto
             if (isset($result['success'])) {

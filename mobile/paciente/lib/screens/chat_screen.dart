@@ -26,7 +26,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  late AccionesService _accionesService;
+  late AsistenteService _asistenteService;
   List<Map<String, dynamic>> _chatHistory = [];
   bool _isSending = false;
 
@@ -50,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final authToken = prefs.getString('auth_token');
     
     // Inicializar servicio con el userId y token
-    _accionesService = AccionesService(
+    _asistenteService = AsistenteService(
       userId: widget.chatService.currentUserId,
       authToken: authToken,
     );
@@ -87,14 +87,14 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
 
     try {
-      // Procesar consulta con el servicio de acciones
-      final result = await _accionesService.processQuery(text);
+      // Procesar interacción del usuario con el servicio de acciones
+      final result = await _asistenteService.procesarInteraccion(text);
 
       if (result['success'] == true) {
         final data = result['data'];
         final explanation = data['explanation'] ?? 'Consulta procesada';
         final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
-        final suggestedQuery = data['suggested_query'];
+        final suggestedQuery = data['interaccion_sugerida']?['texto'];
         final queryType = data['query_type'];
         final matchedBy = data['matched_by']; // 'action_id', 'semantic', o null (LLM)
         final needsUserInput = data['needs_user_input'] ?? false;
@@ -143,7 +143,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _chatHistory.add({
             'type': 'bot',
             'content': explanation ?? result['message'] ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.',
-            'suggested_query': data?['suggested_query'],
+            'suggested_query': data?['interaccion_sugerida']?['texto'],
             'timestamp': DateTime.now(),
           });
         });
@@ -284,7 +284,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     try {
       // Llamar a GET para obtener el form_config (wizard)
-      final result = await _accionesService.getActionFormConfig(actionId, params: params);
+      final result = await _asistenteService.getActionFormConfig(actionId, params: params);
 
       if (result['success'] == true) {
         final data = result['data'];
@@ -305,7 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
             wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
             initialStep: initialStep,
             title: actionName ?? 'Completa la información',
-            authToken: _accionesService.authToken,
+            authToken: _asistenteService.authToken,
             onSubmit: (formValues) async {
               await _executeActionWithParams(actionId, formValues);
             },
@@ -358,7 +358,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     try {
-      final result = await _accionesService.executeAction(actionId, params: filteredParams);
+      final result = await _asistenteService.executeAction(actionId, params: filteredParams);
 
       setState(() {
         _isSending = false;
@@ -493,7 +493,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (_) => MisTurnosScreen(
-                      authToken: _accionesService.authToken,
+                      authToken: _asistenteService.authToken,
                       userId: widget.chatService.currentUserId,
                       userName: widget.chatService.currentUserName,
                     ),
@@ -651,7 +651,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
                                           initialStep: message['initial_step'] as int? ?? 0,
                                           title: actionName ?? 'Completa la información',
-                                          authToken: _accionesService.authToken,
+                                          authToken: _asistenteService.authToken,
                                           onSubmit: (formValues) async {
                                             if (actionIdFromMessage != null) {
                                               await _executeActionWithParams(actionIdFromMessage, formValues);
@@ -725,7 +725,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                           context: context,
                                           formConfig: Map<String, dynamic>.from(actionAnalysis['form_config'] ?? {}),
                                           title: 'Completa la información',
-                                          authToken: _accionesService.authToken,
+                                          authToken: _asistenteService.authToken,
                                           onSubmit: (formValues) async {
                                             if (actionId != null) {
                                               await _executeActionWithParams(actionId, formValues);
@@ -835,7 +835,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   MaterialPageRoute(
                                     builder: (_) => ChatMotivosScreen(
                                       consultaId: idConsultaInt,
-                                      authToken: _accionesService.authToken,
+                                      authToken: _asistenteService.authToken,
                                       userId: widget.chatService.currentUserId,
                                       userName: widget.chatService.currentUserName,
                                       titulo: 'Motivos de la consulta',

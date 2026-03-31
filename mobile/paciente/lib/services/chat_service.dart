@@ -16,13 +16,21 @@ class ChatService {
 
   Future<List<Message>> getMessages() async {
     try {
-      final response = await http.get(Uri.parse('${AppConfig.apiUrl}/messages'));
+      final response = await http.get(Uri.parse('${AppConfig.apiUrl}/asistente/estado'));
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
-          final List<dynamic> jsonMessages = json.decode(data['mensajes']);
-          return jsonMessages.map((json) => Message.fromJson(json)).toList();
+          final raw = data['mensajes'];
+          if (raw == null) return [];
+          if (raw is String) {
+            final List<dynamic> jsonMessages = json.decode(raw);
+            return jsonMessages.map((json) => Message.fromJson(json)).toList();
+          }
+          if (raw is List) {
+            return raw.map((json) => Message.fromJson(json)).toList();
+          }
+          return [];
         }
         else {
           throw Exception('Failed to load messages');
@@ -39,7 +47,7 @@ class ChatService {
   Future<Message> sendMessage(String content) async {
     try {
       final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/messages/enviar'),
+        Uri.parse('${AppConfig.apiUrl}/asistente/enviar'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'senderId': currentUserId,
@@ -64,7 +72,7 @@ class ChatService {
       final originalMessage = await _getMessageById(messageId);
       
       final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/messages'),
+        Uri.parse('${AppConfig.apiUrl}/asistente/enviar'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'senderId': currentUserId,
@@ -86,12 +94,6 @@ class ChatService {
   }
 
   Future<Message> _getMessageById(String id) async {
-    final response = await http.get(Uri.parse('${AppConfig.apiUrl}/messages/$id'));
-    
-    if (response.statusCode == 200) {
-      return Message.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load message');
-    }
+    throw UnimplementedError('Sin retrocompatibilidad: /messages/{id} fue removido y este método requiere un endpoint específico.');
   }
 }

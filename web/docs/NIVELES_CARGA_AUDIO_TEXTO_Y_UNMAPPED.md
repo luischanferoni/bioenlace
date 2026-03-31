@@ -34,8 +34,8 @@ Una carga corresponde a Nivel 2 cuando:
 - La persistencia real de la entidad ocurre cuando el usuario envia el formulario (o cuando el sistema guarda el estado/contenido del chat que representa ese borrador, ver politica A abajo).
 
 Referencias en el repo:
-- `web/frontend/views/site/acciones.php` (chat de "acciones" para CRUD guiado)
-- `web/frontend/modules/api/v1/controllers/CrudController.php` (`crud/process-query`)
+- `web/frontend/views/site/asistente.php` (chat del asistente para CRUD guiado)
+- `web/frontend/modules/api/v1/controllers/CrudController.php` (`crud/procesar-interaccion`, request `interaccion_usuario.texto`)
 - `web/frontend/modules/api/v1/controllers/ChatController.php` (`chat/recibir`) (si el flujo usa dialogos/mensajes persistidos)
 - `web/common/components/Chatbot/ConsultaIntentRouter.php` (orquestacion: clasifica, extrae parametros, enruta a handler)
 - `web/common/components/Chatbot/IntentHandlers/Handlers/TurnosHandler.php` (ejemplo de handler de intents)
@@ -64,7 +64,7 @@ En lugar de agregar columnas a cada tabla, se propone una tabla unica.
 Campos minimos:
 - `id` (PK)
 - `level` (int: 1 o 2)
-- `scope_type` (string: tipo de destino persistido; ejemplo: `diagnostico_consultas`, `consulta_chat_messages`, `consulta_motivos_messages`, `turnos`, `chat_mensaje`, `chat_dialogo`)
+- `scope_type` (string: tipo de destino persistido; ejemplo: `diagnostico_consultas`, `interaccion_chat_clinico`, `interaccion_motivos_consulta`, `turnos`, `asistente_interaccion`, `asistente_conversacion`)
 - `scope_id` (string/int: id del registro destino persistido)
 - `source` (json o string; ejemplo: `intent:crear_turno`, `categoria:Diagnosticos`, `modelo:ConsultaDiagnosticos`, `tab_id`, etc.)
 - `raw` (json o text): payload/resto no mapeado
@@ -96,19 +96,19 @@ Fallback:
 
 ### Como aplicar Politica A en Nivel 2 (Turnos y cualquier entity guiada por formulario)
 En Nivel 2, puede ocurrir que:
-- se persista un registro de chat/mensaje/estado (ej. `chat_mensaje`, `consulta_chat_messages`), o
+- se persista un registro de chat/interacción/estado (ej. `asistente_interaccion`, `interaccion_chat_clinico`), o
 - no persista chat como entidad (ej. un CRUD guiado por “acciones” donde el guardado ocurre en el submit del formulario).
 
 Regla (robusta):
 - El "scope" principal para guardar unmapped en Nivel 2 es el primer registro destino persistido disponible en el flujo:
-  - Si existe chat/mensaje/estado persistido, usarlo: `chat_mensaje` (ej: `common\models\Mensaje`) o `consulta_chat_messages` / `consulta_motivos_messages`.
+  - Si existe chat/interacción/estado persistido, usarlo: `asistente_interaccion` (ej: `common\models\AsistenteInteraccion`) o `interaccion_chat_clinico` / `interaccion_motivos_consulta`.
   - Si no existe un registro chat persistido en esa etapa, usar el destino final una vez que se guarda (ej: `turnos`, `cirugia` u otro registro destino).
 
 Referencias en el repo:
-- `web/frontend/modules/api/v1/controllers/CrudController.php` (`crud/process-query`) (chat de “acciones” con guardado en submit)
+- `web/frontend/modules/api/v1/controllers/CrudController.php` (`crud/procesar-interaccion`) (chat de “acciones” con guardado en submit)
 - `web/frontend/modules/api/v1/controllers/ChatController.php` (crea/usa `Dialogo` y guarda mensajes)
-- `web/common/models/Dialogo.php` (`chat_dialogo`)
-- `web/common/models/Mensaje.php` (`chat_mensaje`)
+- `web/common/models/AsistenteConversacion.php` (`asistente_conversacion`)
+- `web/common/models/AsistenteInteraccion.php` (`asistente_interaccion`)
 - `web/common/models/ConsultaChatMessage.php` y `web/common/models/ConsultaMotivosMessage.php` (chat medico y motivos)
 
 Cuando la entidad final se cree (en el submit/guardar del formulario):
@@ -119,7 +119,7 @@ En esta doc se fija lo minimo:
 
 ## Reglas para "no mezclar" responsabilidades
 1. Nivel 1: la logica pesada de interpretacion + persistencia se implementa en `ConsultaProcesamientoService` y se basa en `ConsultasConfiguracion`.
-2. Nivel 2: la logica conversacional de intents y el armado de formulario precargado se implementa en handlers (ej: `TurnosHandler`) y/o orquestadores de CRUD guiado (ej: `CrudController::process-query` / `UniversalQueryAgent`).
+2. Nivel 2: la logica conversacional de intents y el armado de formulario precargado se implementa en handlers (ej: `TurnosHandler`) y/o orquestadores de CRUD guiado (ej: `CrudController::actionProcesarConsulta` / `UniversalQueryAgent`).
 3. El unmapped se guarda en `ai_unmapped_data`, pero el origen (que parte no mapea) se detecta en:
    - Nivel 1: en el mapper de `guardarDatosCategoria` / `mapearDatosAModelo`.
    - Nivel 2: en el parser que arma params del intent y/o en el armado del formulario precargado (segun que "resto" no se convierte en campos esperados).
@@ -144,5 +144,5 @@ En esta doc se fija lo minimo:
    - Nivel 1: categoria/modelo (los nombres usados por `ConsultasConfiguracion`).
    - Nivel 2: intent y parametros extraidos (si estan disponibles).
 3. Mantener consistencia en `scope_type`:
-   - usar los nombres de clase o tabla (ej: `diagnostico_consultas`, `consultas_medicamentos`, `consulta_chat_messages`) para que sea consultable.
+  - usar los nombres de clase o tabla (ej: `diagnostico_consultas`, `consultas_medicamentos`, `interaccion_chat_clinico`) para que sea consultable.
 

@@ -82,13 +82,11 @@ return [
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
-                // mensajes
-                'GET api/<version:\w+>/messages' => '<version>/chat/index',
-                'OPTIONS api/<version:\w+>/messages' => '<version>/chat/index',
-
-                // chat turnos
-                'POST api/<version:\w+>/messages/enviar' => '<version>/chat/recibir',
-                'OPTIONS api/<version:\w+>/messages/enviar' => '<version>/chat/recibir',
+                // Asistente (canal chat)
+                'GET api/<version:\w+>/asistente/estado' => '<version>/chat/estado',
+                'OPTIONS api/<version:\w+>/asistente/estado' => '<version>/chat/estado',
+                'POST api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
+                'OPTIONS api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
                 // analisis de la consulta
                 'POST api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
                 'OPTIONS api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
@@ -191,8 +189,8 @@ return [
                 'OPTIONS api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',
                 
                 // CRUD API
-                'POST api/<version:\w+>/crud/procesar-consulta' => '<version>/crud/procesar-consulta',
-                'OPTIONS api/<version:\w+>/crud/procesar-consulta' => '<version>/crud/procesar-consulta',
+                'POST api/<version:\w+>/crud/procesar-interaccion' => '<version>/crud/procesar-interaccion',
+                'OPTIONS api/<version:\w+>/crud/procesar-interaccion' => '<version>/crud/procesar-interaccion',
                 'GET api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',
                 'POST api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',
                 'OPTIONS api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',

@@ -3,7 +3,7 @@
 namespace common\components\Chatbot;
 
 use Yii;
-use common\models\Dialogo;
+use common\models\AsistenteConversacion;
 
 /**
  * Gestión de contexto estructurado de conversación
@@ -21,13 +21,13 @@ class ConversationContext
      */
     public static function load($userId, $botId = 'BOT')
     {
-        $dialogo = Dialogo::findOne(['usuario_id' => $userId, 'bot_id' => $botId]);
+        $conversacion = AsistenteConversacion::findOne(['usuario_id' => $userId, 'bot_id' => $botId]);
         
-        if (!$dialogo || empty($dialogo->estado_json)) {
+        if (!$conversacion || empty($conversacion->contexto_json)) {
             return self::getEmptyContext();
         }
         
-        $context = json_decode($dialogo->estado_json, true);
+        $context = json_decode($conversacion->contexto_json, true);
         
         // Validar estructura y limpiar si es necesario
         if (!is_array($context) || !isset($context['current_intent'])) {
@@ -49,10 +49,10 @@ class ConversationContext
      */
     public static function save($userId, $context, $botId = 'BOT')
     {
-        $dialogo = Dialogo::findOne(['usuario_id' => $userId, 'bot_id' => $botId]);
+        $conversacion = AsistenteConversacion::findOne(['usuario_id' => $userId, 'bot_id' => $botId]);
         
-        if (!$dialogo) {
-            $dialogo = new Dialogo([
+        if (!$conversacion) {
+            $conversacion = new AsistenteConversacion([
                 'usuario_id' => $userId,
                 'bot_id' => $botId,
             ]);
@@ -61,9 +61,9 @@ class ConversationContext
         // Limpiar contexto antes de guardar
         $context = self::cleanExpired($context);
         
-        $dialogo->estado_json = json_encode($context);
+        $conversacion->contexto_json = json_encode($context);
         
-        return $dialogo->save();
+        return $conversacion->save();
     }
     
     /**

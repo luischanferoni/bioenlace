@@ -37,7 +37,6 @@ class TurnosController extends BaseController
 
     /**
      * Turnos donde el usuario es paciente. GET /api/v1/turnos/listar-como-paciente (fecha_desde, fecha_hasta opcionales).
-     * @action_name Reservar turno
      */
     public function actionListarComoPaciente()
     {
@@ -159,6 +158,7 @@ class TurnosController extends BaseController
     /**
      * Alta de turno en autogestión (“como paciente”): el beneficiario es siempre la persona del usuario autenticado.
      *
+     * @action_name Reservar turno
      * HTTP: POST /api/v1/turnos. RBAC: /api/turnos/crear-como-paciente. Ignora id_persona en el cuerpo.
      */
     public function actionCrearComoPaciente()

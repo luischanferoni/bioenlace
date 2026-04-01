@@ -133,7 +133,7 @@ class MyApp extends StatelessWidget {
                 try {
                   // Simular sesión: obtener token para el usuario con id 5749 (paciente de prueba)
                   final tokenResponse = await http.get(
-                    Uri.parse('${AppConfig.apiUrl}/auth/generate-test-token?user_id=5749'),
+                    Uri.parse('${AppConfig.apiUrl}/auth/generar-token-prueba?user_id=5749'),
                   ).timeout(Duration(seconds: 10));
 
                   if (tokenResponse.statusCode == 200) {

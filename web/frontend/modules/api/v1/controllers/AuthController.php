@@ -15,7 +15,7 @@ use Firebase\JWT\Key;
 class AuthController extends BaseController
 {
     /** Acciones sin autenticación (no mapea a frontend; solo API). */
-    public static $authenticatorExcept = ['register', 'refresh-token', 'generate-test-token', 'biometric-login'];
+    public static $authenticatorExcept = ['register', 'refresh-token', 'generate-token-prueba', 'login-biometrico'];
 
     /**
      * Registro de usuario

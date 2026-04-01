@@ -332,8 +332,6 @@ class ConsultasController extends Controller
         return $this->render('view', $context);
     }
 
-    public $freeAccessActions = ['imprimirreceta', 'prescripciones-medicas-por-consulta'];
-
     /**
      * Displays a single Consulta model.
      * @param string $id

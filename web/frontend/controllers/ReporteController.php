@@ -224,8 +224,6 @@ class ReporteController extends Controller
         ]);
 
     }
-    
-    public $freeAccessActions = ['planilla4', 'planilla5', 'planilla9', 'planillac7', 'reportefarmacia', 'reporte'];
 
     public function actionReportefarmacia()
     {

@@ -3,31 +3,17 @@
 namespace frontend\controllers;
 
 use Yii;
-use yii\filters\AccessControl;
 use yii\web\Controller;
-use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
-use yii\web\NotFoundHttpException;
-use yii\httpclient\Client;
 
 //use webvimark\modules\UserManagement\UserManagementModule;
 use webvimark\modules\UserManagement\models\User;
 
-use frontend\modules\mapear\controllers;
-
-use common\models\LoginForm;
 use common\models\Efector;
-use common\models\ContactForm;
-use common\models\Consulta;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Persona;
 use common\models\Agenda_rrhh;
-use common\models\Turno;
-use common\models\Guardia;
-use common\models\Novedad;
-use common\models\InfraestructuraPiso;
-use common\models\InfraestructuraCama;
 use common\models\busquedas\EfectorBusqueda;
 
 class SiteController extends Controller
@@ -551,30 +537,6 @@ class SiteController extends Controller
                 'actions' => [],
             ];
         }
-    }
-
-    /**
-     * Filtrar acciones comunes para usuarios administrativos
-     * @param array $actions
-     * @return array
-     */
-    private static function filterCommonActions($actions)
-    {
-        // Palabras clave que indican acciones comunes para administrativos
-        $keywords = [
-            'persona', 'buscar', 'crear', 'listar', 'reporte', 'usuario',
-            'efector', 'servicio', 'turno', 'consulta', 'configuracion',
-            'administrar', 'gestionar'
-        ];
-
-        // Ordenar acciones por relevancia
-        usort($actions, function($a, $b) use ($keywords) {
-            $scoreA = self::calculateRelevanceScore($a, $keywords);
-            $scoreB = self::calculateRelevanceScore($b, $keywords);
-            return $scoreB <=> $scoreA; // Orden descendente
-        });
-
-        return $actions;
     }
 
     /**

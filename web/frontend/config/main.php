@@ -13,7 +13,10 @@ return [
     'id' => 'bioenlace-frontend',
     'language' => 'es',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+        'log',
+        \frontend\components\EnforceGhostAccessBootstrap::class,
+    ],
     'timeZone' => 'America/Argentina/Tucuman',
     'controllerNamespace' => 'frontend\controllers',    
     'components' => [

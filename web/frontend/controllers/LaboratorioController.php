@@ -23,8 +23,6 @@ use common\models\Persona;
  */
 class LaboratorioController extends Controller
 {
-    public $freeAccessActions = ['busqueda', 'seleccionar-descarga', 'descargar'];
-
     /**
      * {@inheritdoc}
      */

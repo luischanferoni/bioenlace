@@ -24,8 +24,6 @@ class ConsultaMotivosChatController extends Controller
         ];
     }
 
-    public $freeAccessActions = ['messages', 'send', 'upload'];
-
     /**
      * Indica si el usuario actual puede acceder a la consulta (paciente o médico asignado).
      */

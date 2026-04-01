@@ -26,8 +26,6 @@ class ConsultaChatController extends Controller
         ];
     }
 
-    public $freeAccessActions = ['messages', 'send', 'upload', 'status'];
-
     protected function canAccessConsulta(Consulta $consulta)
     {
         $userId = Yii::$app->user->id;

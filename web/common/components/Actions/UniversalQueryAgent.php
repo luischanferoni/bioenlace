@@ -6,6 +6,7 @@ use Yii;
 use common\components\Ai\IAManager;
 use common\components\MensajeIntent\MensajeCatalogBuilder;
 use common\components\MensajeIntent\MensajeCatalogItem;
+use common\components\Chatbot\ParameterQuestionRegistry;
 
 /**
  * Agente CRUD completamente genérico y dinámico

@@ -15,3 +15,9 @@
 ## API sin sesión PHP
 
 Los clientes que autentican solo con token pueden no tener `__userRoutes` en sesión del servidor. En ese caso se usa **`Route::getUserRoutes($userId)`** (una consulta agrupada) + caché de app.
+
+## Web (frontend) consumiendo API v1
+
+- La API v1 autentica con **`Authorization: Bearer <jwt>`** (ver `frontend/modules/api/v1/components/JsonHttpBearerAuth.php`) y el módulo API tiene `enableSession=false` (ver `frontend/modules/api/v1/Module.php`), por lo que **no autentica por cookie/sesión web**.
+- En la web, tras el login, `frontend/components/UserConfig::afterLogin()` genera un JWT y lo guarda en sesión como `apiJwtToken`.
+- El layout `frontend/views/layouts/main.php` expone ese token como `window.apiAuthToken` y `window.getBioenlaceApiClientHeaders()` lo adjunta automáticamente como header `Authorization`.

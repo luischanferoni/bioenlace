@@ -212,10 +212,13 @@ if (Yii::$app->user->username) {
      */
     window.getBioenlaceApiClientHeaders = function (extra) {
         var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
-        return Object.assign(
-            { 'X-App-Client': 'web-frontend', 'X-App-Version': ver },
-            extra || {}
-        );
+        var base = { 'X-App-Client': 'web-frontend', 'X-App-Version': ver };
+        // Si el usuario está logueado en la web, se genera un JWT en sesión (UserConfig::afterLogin)
+        // para consumir /api/v1 igual que la app móvil. Incluirlo automáticamente evita 401.
+        if (window.apiAuthToken) {
+            base['Authorization'] = 'Bearer ' + window.apiAuthToken;
+        }
+        return Object.assign(base, extra || {});
     };
     
     // Calcular y establecer la altura del navbar para el posicionamiento del sidebar

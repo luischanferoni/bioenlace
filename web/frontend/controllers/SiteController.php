@@ -289,6 +289,7 @@ class SiteController extends Controller
         // Si el usuario no esta en ningun efector se puede tratar de un usuario con permisos para todos los efectores o ninguno
         if (count($rrhh_efectores) == 0) {
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+            \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
             $keys = Yii::$app->session->get(\webvimark\modules\UserManagement\components\AuthHelper::SESSION_PREFIX_ROLES);
 
             $x_efector = false;
@@ -386,6 +387,7 @@ class SiteController extends Controller
         // AuthHelper::updatePermissions recibe como parametro id_user pero no lo utiliza
         // debido al cambio en config/web.php 'components' => ['authManager'...
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+        \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         self::establecerAgendaDisponible($rrhhEfector->id_rr_hh);
 

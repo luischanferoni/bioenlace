@@ -14,11 +14,20 @@ use webvimark\modules\UserManagement\models\User;
  */
 final class AllowedRoutesResolver
 {
-    public const CACHE_KEY_PREFIX = 'allowed_routes_map_u_';
+    /**
+     * Versión de clave de caché: si cambia la lógica del mapa, se ignoran entradas viejas.
+     */
+    public const CACHE_KEY_PREFIX = 'allowed_routes_map_u_v2_';
 
     public const CACHE_DURATION = 1800;
 
     public const LOG_CATEGORY = 'allowed-routes-resolver';
+
+    /**
+     * Tras {@see AuthHelper::updatePermissions}, debe coincidir con el usuario cuyas rutas están en
+     * {@see AuthHelper::SESSION_PREFIX_ROUTES}; si no, no se reutiliza la sesión (evita JWT ≠ dueño de __userRoutes).
+     */
+    public const SESSION_ROUTES_OWNER_KEY = '__bioenlace_user_routes_owner_id';
 
     /**
      * Mapa route => true a partir de roles (misma lógica que Actions\UniversalQueryAgent).
@@ -166,7 +175,17 @@ final class AllowedRoutesResolver
                 }
                 $fromSession = !empty($map);
                 if ($fromSession) {
-                    Yii::info("AllowedRoutesResolver: session routes hit user {$userId} count=" . count($map), self::LOG_CATEGORY);
+                    $routesOwner = Yii::$app->session->get(self::SESSION_ROUTES_OWNER_KEY);
+                    if ($routesOwner === null || (int) $routesOwner !== $userId) {
+                        Yii::info(
+                            "AllowedRoutesResolver: ignorando __userRoutes (owner sesión no coincide con userId {$userId})",
+                            self::LOG_CATEGORY
+                        );
+                        $fromSession = false;
+                        $map = [];
+                    } else {
+                        Yii::info("AllowedRoutesResolver: session routes hit user {$userId} count=" . count($map), self::LOG_CATEGORY);
+                    }
                 }
             }
         }
@@ -228,5 +247,26 @@ final class AllowedRoutesResolver
         if (Yii::$app->cache) {
             Yii::$app->cache->delete(self::CACHE_KEY_PREFIX . $userId);
         }
+    }
+
+    /**
+     * Marcar que {@see AuthHelper::SESSION_PREFIX_ROUTES} corresponde a este usuario (llamar tras updatePermissions).
+     */
+    public static function markSessionRoutesOwner(int $userId): void
+    {
+        if (!Yii::$app->has('session')) {
+            return;
+        }
+        $session = Yii::$app->session;
+        try {
+            if (!$session->isActive) {
+                $session->open();
+            }
+        } catch (\Throwable $e) {
+            Yii::debug('markSessionRoutesOwner: no se pudo abrir sesión: ' . $e->getMessage(), self::LOG_CATEGORY);
+
+            return;
+        }
+        $session->set(self::SESSION_ROUTES_OWNER_KEY, $userId);
     }
 }

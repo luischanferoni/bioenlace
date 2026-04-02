@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\components;
 
 use Yii;
+use common\components\Actions\AllowedRoutesResolver;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\UnauthorizedHttpException;
 use yii\web\Response;
@@ -91,6 +92,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
 
         $user->setIdentity($userModel);
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions($user);
+        AllowedRoutesResolver::markSessionRoutesOwner((int) $userModel->id);
 
         return $userModel;
     }

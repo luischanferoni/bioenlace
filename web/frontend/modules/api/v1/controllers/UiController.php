@@ -105,6 +105,7 @@ class UiController extends BaseController
         $originalUserIdentity = Yii::$app->user->identity;
         Yii::$app->user->setIdentity($user);
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+        \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         try {
             $controller = new $controllerClass($action['controller'], Yii::$app);

@@ -183,8 +183,14 @@ class ActionMappingService
                 $routeMap = AllowedRoutesResolver::getTargetRoutesMapForUserId((int) $user->id, true);
             }
 
+            // Solo superadmin usa mapa null (sin filtro). Si llega null aquí, negar por seguridad.
             if ($routeMap === null) {
-                return true;
+                Yii::error(
+                    'userCanAccessRoute: mapa de rutas null para usuario no superadmin (id=' . (int) $user->id . ')',
+                    'action-mapping'
+                );
+
+                return false;
             }
 
             return AllowedRoutesResolver::routeAllowedByMap($route, $routeMap);

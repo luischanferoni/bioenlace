@@ -165,6 +165,7 @@ class CrudController extends BaseController
                     
                     // Actualizar permisos y rutas en la sesiÃ³n para que los controladores puedan verificar acceso
                     \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+                    \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
                     
                     try {
                         // Crear instancia temporal
@@ -756,6 +757,7 @@ class CrudController extends BaseController
             // Actualizar permisos y rutas en la sesiÃ³n para que los controladores puedan verificar acceso
             // Esto es necesario porque setIdentity() no actualiza automÃ¡ticamente los permisos
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+            \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
             
             try {
                 // Crear instancia del controlador sin especificar mÃ³dulo

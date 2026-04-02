@@ -4,7 +4,7 @@ namespace frontend\controllers;
 
 use common\models\ConsultaBalanceHidrico;
 use common\models\FormularioDinamico;
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 use Yii;
 use common\models\ConsultasRecetaLentes;
 use common\models\busquedas\ConsultasRecetaLentesBusqueda;
@@ -18,7 +18,7 @@ use yii\filters\VerbFilter;
 /**
  * ConsultasRecetaLentesController implements the CRUD actions for ConsultasRecetaLentes model.
  */
-class ConsultasRecetaLentesController extends DefaultController
+class ConsultasRecetaLentesController extends DefaultConsultaController
 {
     /**
      * {@inheritdoc}

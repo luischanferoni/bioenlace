@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\web\Controller;
@@ -21,7 +21,7 @@ use common\models\Servicio;
 use common\models\Adjunto;
 use common\models\snomed\SnomedProcedimientos;
 
-class ConsultaDerivacionesController extends DefaultController
+class ConsultaDerivacionesController extends DefaultConsultaController
 {
     use \frontend\controllers\traits\ConsultaTrait;
     use \frontend\controllers\traits\AdjuntoTrait;

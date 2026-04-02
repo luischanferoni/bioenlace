@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\web\Controller;
@@ -18,7 +18,7 @@ use common\models\ConsultaDerivaciones;
 
 use common\models\snomed\SnomedProblemas;
 
-class ConsultaMotivosConsultaController extends DefaultController
+class ConsultaMotivosConsultaController extends DefaultConsultaController
 {
     //use \frontend\controllers\traits\ConsultaTrait;
 

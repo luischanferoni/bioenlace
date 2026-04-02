@@ -12,12 +12,12 @@ use yii\data\ActiveDataProvider;
 use common\models\Consulta;
 use common\models\ConsultaBalanceHidrico;
 use common\models\FormularioDinamico;
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 /**
  * ConsultaBalanceHidricoController implements the CRUD actions for ConsultaBalanceHidrico model.
  */
-class ConsultaBalanceHidricoController extends DefaultController
+class ConsultaBalanceHidricoController extends DefaultConsultaController
 {
     use \common\traits\PersistentParametersTrait;
     

@@ -4,7 +4,7 @@ namespace frontend\controllers;
 
 use common\models\ConsultaDerivaciones;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\web\Controller;
@@ -26,7 +26,7 @@ use common\models\form\IMPDiagnosticoForm;
 /**
  * ConsultasController implements the CRUD actions for Consulta model.
  */
-class ConsultaDiagnosticosController extends DefaultController
+class ConsultaDiagnosticosController extends DefaultConsultaController
 {
     use \frontend\controllers\traits\ConsultaTrait;
 

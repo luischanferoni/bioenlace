@@ -11,14 +11,14 @@ use common\models\busquedas\ConsultaPracticasOftalmologiaBusqueda;
 use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 use yii\base\Exception;
 
 
 /**
  * ConsultaPracticasOftalmologiaController implements the CRUD actions for ConsultaPracticasOftalmologia model.
  */
-class ConsultaPracticasOftalmologiaController extends DefaultController
+class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
 {
     /**
      * {@inheritdoc}

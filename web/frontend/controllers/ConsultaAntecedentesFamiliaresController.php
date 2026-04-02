@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\helpers\ArrayHelper;
@@ -13,7 +13,7 @@ use frontend\components\SisseHtmlHelpers;
 use common\models\PersonasAntecedenteFamiliar;
 use common\models\snomed\SnomedSituacion;
 
-class ConsultaAntecedentesFamiliaresController extends DefaultController
+class ConsultaAntecedentesFamiliaresController extends DefaultConsultaController
 {
     use \frontend\controllers\traits\ConsultaTrait;
 

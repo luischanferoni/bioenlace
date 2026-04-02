@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\web\Controller;
@@ -22,7 +22,7 @@ use common\models\ConsultaDerivaciones;
 /**
  * ConsultasController implements the CRUD actions for Consulta model.
  */
-class ConsultaAlergiasController extends DefaultController
+class ConsultaAlergiasController extends DefaultConsultaController
 {
     use \frontend\controllers\traits\ConsultaTrait;
 

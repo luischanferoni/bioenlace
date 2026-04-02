@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 
@@ -20,7 +20,7 @@ use common\models\snomed\SnomedProcedimientos;
 /**
  * ConsultaOdontologiaController implements the CRUD actions for ConsultaOdontologiaPracticas, ConsultaOdontologiaEstados and ConsultaOdontologiaDiagnosticos model.
  */
-class ConsultaOdontologiaController extends DefaultController
+class ConsultaOdontologiaController extends DefaultConsultaController
 {
 
     public function createCore($modelConsulta)

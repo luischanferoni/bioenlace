@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\web\Controller;
@@ -20,7 +20,7 @@ use common\models\Turno;
 use common\models\ConsultaSintomas;
 use common\models\snomed\SnomedProblemas;
 
-class ConsultaSintomasController extends DefaultController
+class ConsultaSintomasController extends DefaultConsultaController
 {
     use \frontend\controllers\traits\ConsultaTrait;
 

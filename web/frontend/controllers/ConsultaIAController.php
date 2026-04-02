@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\web\Controller;
@@ -15,7 +15,7 @@ use common\models\Consulta;
 use common\models\Turno;
 use common\models\ConsultaIa;
 
-class ConsultaIAController extends DefaultController
+class ConsultaIAController extends DefaultConsultaController
 {
     //use \frontend\controllers\traits\ConsultaTrait;
 

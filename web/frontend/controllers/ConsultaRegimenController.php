@@ -13,13 +13,13 @@ use yii\helpers\ArrayHelper;
 use common\models\FormularioDinamico;
 use common\models\Consulta;
 use common\models\snomed\SnomedProcedimientos;
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 
 /**
  * ConsultaRegimenController implements the CRUD actions for ConsultaRegimen model.
  */
-class ConsultaRegimenController extends DefaultController
+class ConsultaRegimenController extends DefaultConsultaController
 {
     use \common\traits\PersistentParametersTrait;
     

@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use frontend\controllers\DefaultController;
+use frontend\controllers\DefaultConsultaController;
 
 use Yii;
 use yii\base\Exception;
@@ -11,7 +11,7 @@ use common\models\ConsultaPracticas;
 use common\models\FormularioDinamico;
 use common\models\snomed\SnomedProcedimientos;
 
-class ConsultaEvaluacionController extends DefaultController
+class ConsultaEvaluacionController extends DefaultConsultaController
 {
     use \frontend\controllers\traits\ConsultaTrait;
 

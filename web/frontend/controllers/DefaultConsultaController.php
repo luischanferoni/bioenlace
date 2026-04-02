@@ -16,7 +16,7 @@ use common\models\Consulta;
 use common\models\ConsultaDerivaciones;
 use common\models\Turno;
 
-class DefaultController extends Controller
+class DefaultConsultaController extends Controller
 {
     use \frontend\controllers\traits\ConsultaTrait;
 

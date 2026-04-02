@@ -3,6 +3,7 @@
 namespace backend\controllers;
 
 use Yii;
+use yii\helpers\FileHelper;
 use yii\web\NotFoundHttpException;
 
 use webvimark\components\AdminDefaultController;
@@ -67,11 +68,13 @@ class UserController extends \webvimark\modules\UserManagement\controllers\UserC
 
     public function actionImpersonate($id)
     {
-        //echo Yii::getAlias('@frontend/runtime');die;
-        file_put_contents(Yii::getAlias('@frontend').'/runtime/impersonation/a.txt', $id, LOCK_EX);
+        $dir = Yii::getAlias('@frontend') . '/runtime/impersonation';
+        FileHelper::createDirectory($dir);
+        file_put_contents($dir . '/a.txt', (string) (int) $id, LOCK_EX);
 
         $url = Yii::$app->urlManager->createAbsoluteUrl(['site/impersonate']);
         $url = str_replace("/admin/", "/", $url);
-    	return $this->redirect($url);
+
+        return $this->redirect($url);
     }  
 }

@@ -19,6 +19,12 @@ class SisseGhostAccessControl extends GhostAccessControl
 			return true;
 		}
 
+		// Impersonate desde el backend: sesión "admin" es otra cookie que la del frontend; el usuario llega como guest.
+		// El admin escribe runtime/impersonation/a.txt; solo entonces se permite esta acción sin sesión previa.
+		if (self::hasPendingImpersonationTicket($action)) {
+			return true;
+		}
+
 		$route = Yii::$app->params['path'].'/' . $action->uniqueId;
 
 		if ( Route::isFreeAccess($route, $action) )
@@ -70,5 +76,22 @@ class SisseGhostAccessControl extends GhostAccessControl
 		}
 
 		return false;
+	}
+
+	/**
+	 * Ticket colocado por backend UserController::actionImpersonate (archivo en runtime del frontend).
+	 */
+	private static function hasPendingImpersonationTicket(Action $action): bool
+	{
+		if ($action->uniqueId !== 'site/impersonate') {
+			return false;
+		}
+		$path = Yii::getAlias('@runtime') . '/impersonation/a.txt';
+		if (!is_file($path)) {
+			return false;
+		}
+		$raw = @file_get_contents($path);
+
+		return is_string($raw) && trim($raw) !== '';
 	}
 }

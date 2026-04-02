@@ -471,13 +471,40 @@ class SiteController extends Controller
 
     public function actionImpersonate()
     {
-        $id = file_get_contents(Yii::getAlias('@runtime') . '/impersonation/a.txt');
+        $path = Yii::getAlias('@runtime') . '/impersonation/a.txt';
+        $raw = is_file($path) ? file_get_contents($path) : '';
+        $id = is_string($raw) ? (int) trim($raw) : 0;
+
+        if ($id <= 0) {
+            Yii::$app->session->setFlash('error', 'Enlace de impersonación inválido o expirado.');
+
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
 
         $user = User::findOne($id);
+        if ($user === null) {
+            @file_put_contents($path, '', LOCK_EX);
+            Yii::$app->session->setFlash('error', 'Usuario no encontrado.');
 
-        Yii::$app->user->login($user, $duration = 0);
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
 
-        file_put_contents(Yii::getAlias('@runtime') . '/impersonation/a.txt', "", LOCK_EX);
+        try {
+            Yii::$app->user->login($user, 0);
+        } catch (\Throwable $e) {
+            @file_put_contents($path, '', LOCK_EX);
+            Yii::$app->session->setFlash('error', 'No se pudo iniciar sesión con ese usuario.');
+            Yii::error('actionImpersonate: ' . $e->getMessage(), __METHOD__);
+
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
+        @file_put_contents($path, '', LOCK_EX);
+
+        // Si afterLogin no terminó la respuesta (p. ej. sin evento redirect), ir al inicio.
+        if (!Yii::$app->response->isSent) {
+            return $this->redirect(['site/inicio']);
+        }
     }
 
     public function actionError()

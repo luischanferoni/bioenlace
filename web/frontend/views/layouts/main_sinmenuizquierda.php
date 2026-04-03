@@ -33,6 +33,29 @@ AppAsset::register($this);
         </main>
     </div>
     <?php $this->endBody() ?>
+
+    <?php if (!Yii::$app->user->isGuest): ?>
+    <script>
+    window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
+    window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')) ?>;
+    </script>
+    <?php endif; ?>
+
+    <script>
+    window.spaConfig = {
+        baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
+        csrfToken: '<?= Yii::$app->request->csrfToken ?>',
+        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>
+    };
+    window.getBioenlaceApiClientHeaders = function (extra) {
+        var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
+        var base = { 'X-App-Client': 'web-frontend', 'X-App-Version': ver };
+        if (window.apiAuthToken) {
+            base['Authorization'] = 'Bearer ' + window.apiAuthToken;
+        }
+        return Object.assign(base, extra || {});
+    };
+    </script>
 </body>
 </html>
 <?php $this->endPage() ?>

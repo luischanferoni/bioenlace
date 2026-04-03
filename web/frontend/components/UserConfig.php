@@ -3,9 +3,13 @@
 namespace frontend\components;
 
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 use common\models\Persona;
+use common\models\RrhhEfector;
+use common\models\RrhhServicio;
 use Firebase\JWT\JWT;
+use frontend\controllers\SiteController;
 
 /**
  * Componente user para la aplicación web (sesión, cookie, login por formulario).
@@ -36,6 +40,10 @@ class UserConfig extends BaseUserConfig
                 ];
                 $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
                 $session->set('apiJwtToken', $token);
+
+                // BioenlaceDbManager arma permisos con getIdRecursoHumano(); sin esto, __userRoutes queda vacío
+                // hasta elegir efector (impersonate nunca pasa por ese POST).
+                $this->tryBootstrapSingleEfectorSession($persona);
             } else {
                 throw new NotFoundHttpException('Hubo un error con su usuario, comuníquese con los encargados del sistema.');
             }
@@ -55,5 +63,33 @@ class UserConfig extends BaseUserConfig
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) $identity->id);
 
         parent::afterLogin($identity, $cookieBased, $duration);
+    }
+
+    /**
+     * Si la persona tiene un único vínculo RRHH+efector, fijar sesión como en SiteController (flujo comentado).
+     * Así Route::getUserRoutes / __userRoutes reflejan permisos al primer request (login e impersonate).
+     */
+    private function tryBootstrapSingleEfectorSession(Persona $persona): void
+    {
+        $idRh = Yii::$app->user->getIdRecursoHumano();
+        if ($idRh !== null && $idRh !== '' && (int) $idRh > 0) {
+            return;
+        }
+
+        $efectores = RrhhEfector::getEfectores($persona->id_persona);
+        if (count($efectores) !== 1) {
+            return;
+        }
+
+        $row = $efectores[0];
+        Yii::$app->user->setIdEfector($row['id_efector']);
+        Yii::$app->user->setNombreEfector($row['nombre']);
+        Yii::$app->user->setIdRecursoHumano($row['id_rr_hh']);
+
+        $rrhhServicio = RrhhServicio::findActive()->andWhere(['id_rr_hh' => $row['id_rr_hh']])->all();
+        Yii::$app->user->setServicios(ArrayHelper::map($rrhhServicio, 'id_servicio', 'servicio.nombre'));
+        Yii::$app->user->setEfectores(ArrayHelper::map($efectores, 'id_efector', 'nombre'));
+
+        SiteController::establecerAgendaDisponible($row['id_rr_hh']);
     }
 }

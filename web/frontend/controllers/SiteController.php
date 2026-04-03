@@ -288,7 +288,7 @@ class SiteController extends Controller
 
         // Si el usuario no esta en ningun efector se puede tratar de un usuario con permisos para todos los efectores o ninguno
         if (count($rrhh_efectores) == 0) {
-            \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+            \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
             \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
             $keys = Yii::$app->session->get(\webvimark\modules\UserManagement\components\AuthHelper::SESSION_PREFIX_ROLES);
 
@@ -329,6 +329,11 @@ class SiteController extends Controller
         // En session todos los efectores en los que el usuario trabaja
         // para que luego pueda cambiar si necesita
         Yii::$app->user->setEfectores(ArrayHelper::map($rrhh_efectores, 'id_efector', 'nombre'));
+
+        // BioenlaceDbManager usa idRecursoHumano en sesión para armar permisos; tras elegir lista de efectores
+        // aún puede faltar ese dato (varios efectores). Refrescar rutas con el contexto actual.
+        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
+        \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         return ['site/inicio'];
     }
@@ -386,7 +391,7 @@ class SiteController extends Controller
         Yii::$app->user->setServicios(ArrayHelper::map($rrhhEfector->rrhhServicio, 'id_servicio', 'servicio.nombre'));
         // AuthHelper::updatePermissions recibe como parametro id_user pero no lo utiliza
         // debido al cambio en config/web.php 'components' => ['authManager'...
-        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
+        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         self::establecerAgendaDisponible($rrhhEfector->id_rr_hh);
@@ -418,7 +423,7 @@ class SiteController extends Controller
     /**
      * Establece en session un array que nos va a pemitir saber la agenda del dia actual
      */
-    private static function establecerAgendaDisponible($id_rr_hh)
+    public static function establecerAgendaDisponible($id_rr_hh)
     {
         $serviciosDelRrhh = RrhhServicio::find()
             ->select(['id', 'id_servicio'])

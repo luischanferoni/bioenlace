@@ -10,6 +10,8 @@ use yii\helpers\ArrayHelper;
 use frontend\assets\FormWizardAsset;
 
 FormWizardAsset::register($this);
+
+$urlServiciosPorRrhh = Url::to(['/api/v1/rrhh/servicios-por-rrhh'], true);
 ?>
 
     <?php $form = ActiveForm::begin([
@@ -80,17 +82,28 @@ FormWizardAsset::register($this);
 <?php
     $this->registerJs('
         $(".a-servicio").on("click", function(e) {
+            var headers = (typeof window.getBioenlaceApiClientHeaders === "function")
+                ? window.getBioenlaceApiClientHeaders({})
+                : {};
             $.ajax({
-                url: "'.Url::to(['rrhh-efector/servicios-por-rrhh']).'",
+                url: '.json_encode($urlServiciosPorRrhh).',
                 type: "POST",
+                headers: headers,
+                dataType: "json",
                 data: {
-                    idEfector: $("input[name=nombre_efector]:checked", "#grid_efectores").val(), 
-                    //encounterClass: $("input[name=encounter_class]:checked").val()
+                    id_efector: $("input[name=nombre_efector]:checked", "#grid_efectores").val()
                 },
-                success: function (data) {
-                    console.log(data);
-
-                    $("#div_servicios").html(data);
+                success: function (res) {
+                    var html = "";
+                    var esc = function (t) { return $("<div>").text(t == null ? "" : String(t)).html(); };
+                    if (res.servicios && res.servicios.length) {
+                        res.servicios.forEach(function (s) {
+                            var id = parseInt(s.id_servicio, 10);
+                            html += "<input type=\"radio\" name=\"servicio\" class=\"btn-check\" id=\"btn-check-servicio-" + id + "\" value=\"" + id + "\">";
+                            html += "<label class=\"btn btn-soft-primary p-5\" for=\"btn-check-servicio-" + id + "\"><h3>" + esc(s.nombre) + "</h3></label>";
+                        });
+                    }
+                    $("#div_servicios").html(html);
                 },
                 error: function () {
                     $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"

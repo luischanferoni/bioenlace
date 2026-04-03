@@ -22,8 +22,6 @@ use common\models\Persona;
 use common\models\Servicio;
 use common\models\ProfesionalSalud;
 use common\models\FormularioDinamico;
-use common\models\ServiciosEfector;
-
 /**
  * RrhhEfectorController implements the CRUD actions for RrhhEfector model.
  */
@@ -582,46 +580,6 @@ class RrhhEfectorController extends Controller
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
-    }
-
-    public function actionServiciosPorRrhh()
-    {
-        $idEfector = Yii::$app->request->post('idEfector');
-
-        $rrhhEfector = RrhhEfector::find()
-                    ->where([
-                            'id_efector' => $idEfector, 
-                            'id_persona' => Yii::$app->user->getIdPersona()
-                            ])
-                    ->one();
-
-        $html = "";
-        foreach ($rrhhEfector->rrhhServicio as $rrhhServicio) {
-
-            $servicioEfector = ServiciosEfector::findActive()
-            ->where([
-                'id_efector' => $idEfector, 
-                'id_servicio' => $rrhhServicio->id_servicio
-                ])
-            ->one();
-            //Controla que el servicio esté activo en el efector o sea admin de efector
-            if((isset($servicioEfector) && is_null($servicioEfector->deleted_at)) || $rrhhServicio->servicio->nombre == 'ADMINISTRAR EFECTOR')
-            {
-                $html .= '<input type="radio" name="servicio" class="btn-check" 
-                            id="btn-check-servicio-'.$rrhhServicio->id_servicio.'" value="'.$rrhhServicio->id_servicio.'">
-                    <label class="btn btn-soft-primary p-5" for="btn-check-servicio-'.$rrhhServicio->id_servicio.'">
-                    <h3>'.$rrhhServicio->servicio->nombre.'</h3>
-                    </label>';
-            }
-        }
-
-        return $html;
-        //$rrhhServicios = ArrayHelper::map($rrhh_efector->rrhhServicio, 'id_servicio', 'servicio.nombre');
-        //Yii::$app->user->setServicios($rrhhServicios);
-
-        //\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        //return ['error' => false, 'msg' => $rrhhServicios];
     }
 
     public function actionProfesionalesPorServicioEfector()

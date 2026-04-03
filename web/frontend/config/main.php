@@ -190,6 +190,8 @@ return [
                 'GET api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',
                 'POST api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',
                 'OPTIONS api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',
+                'POST api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
+                'OPTIONS api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
                 
                 // CRUD API
                 'POST api/<version:\w+>/crud/procesar-interaccion' => '<version>/crud/procesar-interaccion',

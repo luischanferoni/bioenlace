@@ -128,9 +128,20 @@ return [
                 'POST api/<version:\w+>/motivos-consulta/subir' => '<version>/motivos-consulta/subir',
                 'OPTIONS api/<version:\w+>/motivos-consulta/subir' => '<version>/motivos-consulta/subir',
                 
-                // Turnos / agenda API (paciente: turnos/como-paciente; profesional: agenda/dia)
+                // Turnos / agenda API (paciente: turnos/como-paciente; profesional: agenda/dia; CRUD agenda laboral)
                 'GET api/<version:\w+>/agenda/dia' => '<version>/agenda/dia',
                 'OPTIONS api/<version:\w+>/agenda/dia' => '<version>/agenda/dia',
+                'GET api/<version:\w+>/agenda/rrhh' => '<version>/agenda/listar-rrhh',
+                'OPTIONS api/<version:\w+>/agenda/rrhh' => '<version>/agenda/listar-rrhh',
+                'POST api/<version:\w+>/agenda/rrhh' => '<version>/agenda/crear-rrhh',
+                'OPTIONS api/<version:\w+>/agenda/rrhh' => '<version>/agenda/crear-rrhh',
+                'GET api/<version:\w+>/agenda/rrhh/<id:\d+>' => '<version>/agenda/ver-rrhh',
+                'OPTIONS api/<version:\w+>/agenda/rrhh/<id:\d+>' => '<version>/agenda/ver-rrhh',
+                'PUT api/<version:\w+>/agenda/rrhh/<id:\d+>' => '<version>/agenda/actualizar-rrhh',
+                'PATCH api/<version:\w+>/agenda/rrhh/<id:\d+>' => '<version>/agenda/actualizar-rrhh',
+                'OPTIONS api/<version:\w+>/agenda/rrhh/<id:\d+>' => '<version>/agenda/actualizar-rrhh',
+                'DELETE api/<version:\w+>/agenda/rrhh/<id:\d+>' => '<version>/agenda/eliminar-rrhh',
+                'OPTIONS api/<version:\w+>/agenda/rrhh/<id:\d+>' => '<version>/agenda/eliminar-rrhh',
                 'GET api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'GET api/<version:\w+>/turnos/slots-disponibles-como-paciente' => '<version>/turnos/slots-disponibles-como-paciente',

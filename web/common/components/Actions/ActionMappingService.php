@@ -15,7 +15,7 @@ class ActionMappingService
     /**
      * Cache key para acciones por rol
      */
-    public const CACHE_KEY_PREFIX = 'actions_for_role_v2_';
+    public const CACHE_KEY_PREFIX = 'actions_for_role_v3_';
     public const CACHE_DURATION = 1800; // 30 minutos
 
     /**
@@ -83,7 +83,7 @@ class ActionMappingService
     }
 
     /**
-     * Evita duplicados (misma ruta de permiso) por descubrimiento en web + API v1.
+     * Evita duplicados (misma ruta de permiso); el descubrimiento es solo API v1.
      *
      * @param array $actions
      * @return array

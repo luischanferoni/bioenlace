@@ -117,8 +117,6 @@ class SiteController extends Controller
 
     public function actionAsistente()
     {
-        $this->layout = 'main';
-
         return $this->render('asistente');
     }
 
@@ -128,35 +126,13 @@ class SiteController extends Controller
      */
     public function actionPacientes()
     {
-        if (Yii::$app->user->isGuest) {
-            Yii::$app->user->loginRequired();
-            return null;
-        }
-
-        $idEfector = Yii::$app->user->getIdEfector();
-        $servicioActual = Yii::$app->user->getServicioActual();
-        $encounterClass = Yii::$app->user->getEncounterClass();
-
-        if (!$idEfector || !$servicioActual || !$encounterClass) {
-            $this->layout = 'main_sinmenuizquierda';
-            $searchEfectores = new EfectorBusqueda();
-            $array_efectores = Yii::$app->user->getEfectores() ?? [];
-            $dataProviderEfectores = $searchEfectores->search(['EfectorBusqueda' => ['efectores' => array_keys($array_efectores)]]);
-
-            return $this->render('despuesdelogin/inicio', [
-                'searchEfectores' => $searchEfectores,
-                'dataProviderEfectores' => $dataProviderEfectores,
-            ]);
-        }
-
-        $this->layout = 'main';
         $fechaParam = Yii::$app->request->get('fecha');
         $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
 
         return $this->render('//pacientes/listado', [
             'fecha' => $fecha,
-            'encounter_class' => $encounterClass,
-            'id_servicio_actual' => (int) $servicioActual,
+            'encounter_class' => Yii::$app->user->getEncounterClass(),
+            'id_servicio_actual' => (int) Yii::$app->user->getServicioActual(),
         ]);
     }
 
@@ -530,15 +506,6 @@ class SiteController extends Controller
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        // Verificar que el usuario esté autenticado
-        if (Yii::$app->user->isGuest) {
-            return [
-                'success' => false,
-                'error' => 'Debe estar autenticado para usar esta funcionalidad',
-                'actions' => [],
-            ];
-        }
-
         try {
             // Obtener acciones disponibles para el usuario
             $availableActions = \common\components\ActionMappingService::getAvailableActionsForUser();
@@ -573,76 +540,4 @@ class SiteController extends Controller
         }
     }
 
-    /**
-     * Calcular puntuación de relevancia para una acción
-     * @param array $action
-     * @param array $keywords
-     * @return int
-     */
-    private static function calculateRelevanceScore($action, $keywords)
-    {
-        $score = 0;
-        $text = strtolower($action['display_name'] . ' ' . $action['description'] . ' ' . $action['controller'] . ' ' . $action['action']);
-        
-        foreach ($keywords as $keyword) {
-            if (stripos($text, $keyword) !== false) {
-                $score += 2;
-            }
-        }
-
-        // Priorizar acciones de index (listados)
-        if ($action['action'] === 'index') {
-            $score += 3;
-        }
-
-        return $score;
-    }
-
-    /**
-     * Método de prueba para testear el matching de acciones
-     * Accesible desde: /site/test-action-matching
-     * 
-     * @return string
-     */
-    public function actionTestActionMatching()
-    {
-        $this->layout = 'main';
-        $result = null;
-        
-        // Si es POST, procesar el JSON
-        if (Yii::$app->request->isPost) {
-            try {
-                $criteriaJson = Yii::$app->request->post('criteriaJson');
-                
-                if (empty($criteriaJson)) {
-                    throw new \Exception('No se recibió el JSON de criterios.');
-                }
-                
-                $criteria = json_decode($criteriaJson, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new \Exception('JSON inválido: ' . json_last_error_msg());
-                }
-                
-                // Obtener userId del usuario actual
-                $userId = Yii::$app->user->isGuest ? null : Yii::$app->user->id;
-                
-                // Ejecutar test (rol opcional para filtrar acciones)
-                $roleName = Yii::$app->request->post('roleName');
-                $roleName = is_string($roleName) && trim($roleName) !== '' ? trim($roleName) : null;
-                $result = \common\components\Actions\UniversalQueryAgent::testFindActions($criteria, $userId, $roleName);
-                
-            } catch (\Exception $e) {
-                Yii::error("Error en test-action-matching: " . $e->getMessage(), 'site-controller');
-                $result = [
-                    'success' => false,
-                    'error' => $e->getMessage(),
-                    'trace' => YII_DEBUG ? $e->getTraceAsString() : null,
-                ];
-            }
-        }
-        
-        return $this->render('test-action-matching', [
-            'result' => $result,
-        ]);
-    }
 }

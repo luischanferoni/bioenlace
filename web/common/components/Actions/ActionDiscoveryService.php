@@ -18,17 +18,15 @@ use webvimark\modules\UserManagement\models\rbacDB\Route;
 class ActionDiscoveryService
 {
     /**
-     * Directorios donde buscar controladores
+     * Orquestador / descubrimiento de acciones: solo API v1 (ver {@see discoverApiV1ControllerActions}).
+     * No se indexan controladores web de frontend ni backend.
      */
-    private static $controllerPaths = [
-        '@frontend/controllers',
-        '@backend/controllers',
-    ];
+    private static $controllerPaths = [];
 
     /**
      * Cache key para acciones descubiertas
      */
-    public const CACHE_KEY_ACTIONS = 'discovered_actions_all_v2';
+    public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v1';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**

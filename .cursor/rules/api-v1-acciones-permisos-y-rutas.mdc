@@ -1,0 +1,14 @@
+---
+description: API v1 — nombres de acciones, permisos y reglas de urlManager
+globs:
+  - web/frontend/modules/api/v1/controllers/**/*.php
+  - web/frontend/config/main.php
+alwaysApply: false
+---
+
+# API v1 — acciones, permisos y enrutado
+
+- **Documentación en código**: el docblock de cada controller API (o la convención del módulo) debe dejar claro qué hace cada acción y, si aplica, el verbo HTTP y el corte de autorización.
+- **Nombres de acción**: cuando una misma operación tiene **sujetos o permisos distintos** (p. ej. el usuario actúa sobre sí mismo vs. staff sobre un tercero vs. ámbito efector), usar **nombres explícitos** que reflejen el ámbito; evitar `create` / `update` / `view` genéricos si generan ambigüedad con el control de acceso.
+- **Permisos (webvimark / ApiGhost)**: alinear la ruta registrada con la convención del proyecto (normalmente **sin** repetir el segmento `v1` en la ruta de permiso si así está configurado el `uniqueId` / filtros). Mantener coherencia entre nombre de acción Yii, patrón de URL y permiso.
+- **`urlManager` (`main.php`)**: reglas **más específicas antes** que los patrones con parámetros amplios; no duplicar el mismo path/método **OPTIONS** apuntando a acciones distintas.

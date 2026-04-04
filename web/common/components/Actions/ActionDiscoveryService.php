@@ -26,7 +26,7 @@ class ActionDiscoveryService
     /**
      * Cache key para acciones descubiertas
      */
-    public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v1';
+    public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v3';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**
@@ -36,6 +36,8 @@ class ActionDiscoveryService
      */
     public static function discoverAllActions($useCache = true)
     {
+        $useCache = ActionCatalogSettings::shouldUseCache($useCache);
+
         $cache = Yii::$app->cache;
         $cacheKey = self::CACHE_KEY_ACTIONS;
 
@@ -643,6 +645,11 @@ class ActionDiscoveryService
         if (stripos($controllerLower, 'turno') !== false) {
             $tags[] = 'turno';
             $tags[] = 'cita';
+        }
+        if (stripos($controllerLower, 'agenda') !== false) {
+            $tags[] = 'agenda';
+            $tags[] = 'rrhh';
+            $tags[] = 'laboral';
         }
         if (stripos($controllerLower, 'licencia') !== false) {
             $tags[] = 'licencia';

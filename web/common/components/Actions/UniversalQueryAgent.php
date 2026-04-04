@@ -29,11 +29,13 @@ class UniversalQueryAgent
      */
     public static function getAvailableActionsByRole($roleName, $useCache = true)
     {
+        $useCache = ActionCatalogSettings::shouldUseCache($useCache);
+
         // Normalizar a array si es string
         $roles = is_array($roleName) ? $roleName : [$roleName];
         
         // Cache key basado en roles
-        $cacheKey = 'actions_for_roles_' . md5(implode(',', $roles));
+        $cacheKey = 'actions_for_roles_v2_' . md5(implode(',', $roles));
         
         $cache = Yii::$app->cache;
         
@@ -81,7 +83,7 @@ class UniversalQueryAgent
         Yii::info("UniversalQueryAgent::getAvailableActionsByRole - Rol(es): " . implode(', ', $roles) . ", Rutas objetivo: " . count($targetRoutes) . ", Acciones disponibles: " . count($availableActions), 'universal-query-agent');
         
         // Guardar en cache
-        if ($cache) {
+        if ($useCache && $cache) {
             $cache->set($cacheKey, $availableActions, 1800); // 30 minutos
         }
 
@@ -961,7 +963,9 @@ PROMPT;
             }
             $extra[] = $p;
         }
-        if (preg_match('/turno|cita|agenda|reserv/i', $userQuery)) {
+        // "agenda" sola suele ser paciente (reservar); agenda laboral/RRHH/profesional no debe empujar el dominio Turnos.
+        $agendaLaboral = (bool) preg_match('/\b(laboral|rrhh|recursos\s+humanos|horario|efector|profesional|mi\s+agenda\s+de\s+trabajo)\b/ui', $userQuery);
+        if (preg_match('/turno|cita|reserv/i', $userQuery) || (preg_match('/agenda/i', $userQuery) && !$agendaLaboral)) {
             $extra[] = 'turno';
         }
 

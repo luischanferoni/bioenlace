@@ -37,6 +37,8 @@ final class AllowedRoutesResolver
      */
     public static function getTargetRoutesMapForRoles(array $roles, bool $useCache = true): array
     {
+        $useCache = ActionCatalogSettings::shouldUseCache($useCache);
+
         $roles = array_values(array_filter(array_map('strval', $roles)));
         sort($roles);
         $cacheKey = 'target_routes_roles_' . md5(implode(',', $roles));
@@ -134,6 +136,8 @@ final class AllowedRoutesResolver
      */
     public static function getTargetRoutesMapForUserId(int $userId, bool $useAppCache = true): ?array
     {
+        $useAppCache = ActionCatalogSettings::shouldUseCache($useAppCache);
+
         $user = User::findOne($userId);
         if (!$user) {
             return [];

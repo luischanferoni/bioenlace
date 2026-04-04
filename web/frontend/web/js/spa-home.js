@@ -24,6 +24,7 @@
     // Referencias a elementos DOM
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
+    const whatCanIDoBtn = document.getElementById('spa-what-can-i-do-btn');
     const responseSection = document.getElementById('spa-response-section');
     const explanationDiv = document.getElementById('spa-explanation');
     const actionsDiv = document.getElementById('spa-actions');
@@ -50,6 +51,14 @@
 
             // Focus en textarea al cargar
             queryInput.focus();
+        }
+
+        if (whatCanIDoBtn && queryInput) {
+            whatCanIDoBtn.addEventListener('click', function () {
+                queryInput.value = '¿Qué puedo hacer?';
+                handleInput();
+                handleSendQuery();
+            });
         }
     }
 
@@ -936,7 +945,17 @@
         
         // Si hay consulta sugerida, agregarla
         if (suggestedQuery) {
-            explanationDiv.innerHTML += '<div class="mt-2"><small class="text-muted">Sugerencia: <a href="#" class="text-primary" onclick="document.getElementById(\'spa-query-input\').value=\'' + escapeHtml(suggestedQuery) + '\'; handleSendQuery(); return false;">' + escapeHtml(suggestedQuery) + '</a></small></div>';
+            explanationDiv.innerHTML += '<div class="mt-2"><small class="text-muted">Sugerencia: <button type="button" class="btn btn-link btn-sm p-0 align-baseline text-primary spa-suggested-query-btn">' + escapeHtml(suggestedQuery) + '</button></small></div>';
+            const b = explanationDiv.querySelector('.spa-suggested-query-btn');
+            if (b) {
+                b.addEventListener('click', function () {
+                    if (queryInput) {
+                        queryInput.value = suggestedQuery;
+                        handleInput();
+                    }
+                    handleSendQuery();
+                });
+            }
         }
         
         // Mostrar acciones si existen
@@ -1460,11 +1479,21 @@
      * Estado de carga
      */
     function setLoadingState(loading) {
-        sendBtn.disabled = loading;
+        if (sendBtn) {
+            sendBtn.disabled = loading;
+        }
+        if (whatCanIDoBtn) {
+            whatCanIDoBtn.disabled = loading;
+        }
+        if (!sendBtn) {
+            return;
+        }
         const spinner = sendBtn.querySelector('.spa-spinner');
         const sendIcon = sendBtn.querySelector('.spa-send-icon');
         const sendText = sendBtn.querySelector('.spa-send-text');
-        
+        if (!spinner || !sendIcon || !sendText) {
+            return;
+        }
         if (loading) {
             spinner.classList.remove('d-none');
             sendIcon.classList.add('d-none');
@@ -1528,6 +1557,17 @@
         };
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
+
+    /**
+     * API mínima para onclick legacy en vistas (si hiciera falta).
+     */
+    window.spaAsistenteSubmitQuery = function (text) {
+        if (queryInput && text != null && String(text).trim() !== '') {
+            queryInput.value = String(text);
+            handleInput();
+        }
+        handleSendQuery();
+    };
 
     // Inicializar cuando el DOM esté listo
     if (document.readyState === 'loading') {

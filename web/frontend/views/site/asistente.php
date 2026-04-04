@@ -22,8 +22,11 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                     placeholder="Escribe lo que necesitas... Ejemplo: 'Necesito buscar una persona' o 'Quiero ver los reportes disponibles'"
                     style="resize: none;"
                 ></textarea>
-                <div class="d-flex justify-content-end mt-3">
-                    <button id="spa-send-btn" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
+                <div class="d-flex justify-content-end flex-wrap gap-2 mt-3">
+                    <button type="button" id="spa-what-can-i-do-btn" class="btn btn-outline-secondary btn-lg">
+                        ¿Qué puedo hacer?
+                    </button>
+                    <button type="button" id="spa-send-btn" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
                         <span class="spa-send-icon">→</span>
                         <span class="spa-send-text">Enviar</span>
                         <span class="spa-spinner d-none">

@@ -87,18 +87,20 @@ class SiteController extends Controller
         ];
     }
 
+    /**
+     * Post-login: si falta efector, servicio o encounter class en sesión, muestra el asistente de selección
+     * (vistas despuesdelogin/*). Si ya está completo, redirige al listado de pacientes.
+     * No es equivalente a actionPacientes: aquí se resuelve contexto de sesión, allí se lista la agenda del día.
+     */
     public function actionInicio()
     {
-        // Verificar si el usuario tiene configurado el efector, servicio y encounter class
         $idEfector = Yii::$app->user->getIdEfector();
         $servicioActual = Yii::$app->user->getServicioActual();
         $encounterClass = Yii::$app->user->getEncounterClass();
 
-        // Si no tiene la configuración completa, mostrar la pantalla de selección
         if (!$idEfector || !$servicioActual || !$encounterClass) {
             $this->layout = 'main_sinmenuizquierda';
-            
-            // Preparar datos para la vista de selección
+
             $searchEfectores = new EfectorBusqueda();
             $array_efectores = Yii::$app->user->getEfectores() ?? [];
             $dataProviderEfectores = $searchEfectores->search(['EfectorBusqueda' => ['efectores' => array_keys($array_efectores)]]);
@@ -482,7 +484,7 @@ class SiteController extends Controller
 
         @file_put_contents($path, '', LOCK_EX);
 
-        // Si afterLogin no terminó la respuesta (p. ej. sin evento redirect), ir al inicio.
+        // Si afterLogin no terminó la respuesta (p. ej. sin evento redirect), ir a inicio (wizard o pacientes).
         if (!Yii::$app->response->isSent) {
             return $this->redirect(['site/inicio']);
         }

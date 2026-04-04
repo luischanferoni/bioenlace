@@ -31,4 +31,13 @@ return [
      * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.
      */
     'serviciosAgendaQuirurgicaIds' => [],
+
+    /**
+     * Catálogo de acciones API: descubrimiento de controladores v1, listas filtradas por RBAC, UniversalQuery.
+     * useCache => false: sin caché de aplicación en cada request (útil mientras se suman rutas/controladores).
+     * Sobrescribir en params-local (frontend/common) durante construcción; en producción dejar true.
+     */
+    'apiActionCatalog' => [
+        'useCache' => true,
+    ],
 ];

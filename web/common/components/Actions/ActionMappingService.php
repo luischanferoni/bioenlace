@@ -15,7 +15,7 @@ class ActionMappingService
     /**
      * Cache key para acciones por rol
      */
-    public const CACHE_KEY_PREFIX = 'actions_for_role_v3_';
+    public const CACHE_KEY_PREFIX = 'actions_for_role_v4_';
     public const CACHE_DURATION = 1800; // 30 minutos
 
     /**
@@ -30,6 +30,8 @@ class ActionMappingService
         if (!$userId) {
             return [];
         }
+
+        $useCache = ActionCatalogSettings::shouldUseCache($useCache);
 
         // Obtener roles del usuario
         $user = User::findOne($userId);
@@ -75,7 +77,7 @@ class ActionMappingService
         Yii::info("ActionMappingService: Acciones disponibles después de filtrar: " . count($availableActions) . " para usuario: {$userId}", 'action-mapping');
 
         // Guardar en cache
-        if ($cache) {
+        if ($useCache && $cache) {
             $cache->set($cacheKey, $availableActions, self::CACHE_DURATION);
         }
 

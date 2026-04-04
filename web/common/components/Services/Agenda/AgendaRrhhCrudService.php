@@ -4,17 +4,39 @@ namespace common\components\Services\Agenda;
 
 use common\models\Agenda_rrhh;
 use common\models\busquedas\Agenda_rrhhBusqueda;
+use common\models\RrhhEfector;
+use common\models\RrhhServicio;
 use yii\data\ActiveDataProvider;
+use yii\web\BadRequestHttpException;
 
 /**
  * Listado y serialización de agendas laborales (tabla agenda_rrhh) para la API.
+ *
+ * Una fila = agenda de un servicio (vía {@see Agenda_rrhh::id_rrhh_servicio_asignado}) para un RRHH en un efector.
  */
 class AgendaRrhhCrudService
 {
-    public static function findOwned(int $idAgenda, int $idEfector): ?Agenda_rrhh
+    /**
+     * Agenda en el efector (cualquier RRHH). Uso: personal con permiso para-efector.
+     */
+    public static function findOwnedByEfector(int $idAgenda, int $idEfector): ?Agenda_rrhh
     {
         return Agenda_rrhh::find()
             ->where(['id_agenda_rrhh' => $idAgenda, 'id_efector' => $idEfector])
+            ->one();
+    }
+
+    /**
+     * Agenda del profesional autenticado (mismo efector y mismo id_rr_hh).
+     */
+    public static function findOwnedByProfesional(int $idAgenda, int $idEfector, int $idRrhh): ?Agenda_rrhh
+    {
+        return Agenda_rrhh::find()
+            ->where([
+                'id_agenda_rrhh' => $idAgenda,
+                'id_efector' => $idEfector,
+                'id_rr_hh' => $idRrhh,
+            ])
             ->one();
     }
 
@@ -33,6 +55,39 @@ class AgendaRrhhCrudService
         }
 
         return $dp;
+    }
+
+    /**
+     * Listado acotado al RRHH del profesional (ignora id_rr_hh en query si viniera malicioso).
+     */
+    public static function searchForProfesional(array $queryParams, int $idRrhh, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
+    {
+        $queryParams['id_rr_hh'] = $idRrhh;
+
+        return self::search($queryParams, $defaultPerPage, $maxPerPage);
+    }
+
+    /**
+     * Valida que el servicio asignado pertenezca al RRHH y que el RRHH pertenezca al efector.
+     *
+     * @throws BadRequestHttpException
+     */
+    public static function assertServicioAsignadoParaRrhhEfector(?int $idRrhhServicioAsignado, int $idRrhh, int $idEfector): void
+    {
+        if ($idRrhhServicioAsignado === null || $idRrhhServicioAsignado <= 0) {
+            return;
+        }
+        $rs = RrhhServicio::findOne($idRrhhServicioAsignado);
+        if ($rs === null) {
+            throw new BadRequestHttpException('Servicio asignado no encontrado.');
+        }
+        if ((int) $rs->id_rr_hh !== $idRrhh) {
+            throw new BadRequestHttpException('El servicio asignado no corresponde a este recurso humano.');
+        }
+        $re = RrhhEfector::findOne($idRrhh);
+        if ($re === null || (int) $re->id_efector !== $idEfector) {
+            throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
+        }
     }
 
     /**

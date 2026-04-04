@@ -38,6 +38,6 @@ return [
      * Sobrescribir en params-local (frontend/common) durante construcción; en producción dejar true.
      */
     'apiActionCatalog' => [
-        'useCache' => true,
+        'useCache' => false,
     ],
 ];

@@ -6,7 +6,7 @@ use Yii;
 use yii\base\Component;
 use common\models\Consulta;
 use common\components\Text\ProcesadorTextoMedico;
-use common\components\ConsultaLogger;
+use common\components\Logging\ConsultaLogger;
 use common\components\Chatbot\Classification\ConsultaClassifier;
 use common\components\DeferredSnomedProcessor;
 

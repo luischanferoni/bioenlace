@@ -7,7 +7,6 @@ use yii\base\Component;
 use common\models\Consulta;
 use common\components\Text\ProcesadorTextoMedico;
 use common\components\Logging\ConsultaLogger;
-use common\components\Chatbot\Classification\ConsultaClassifier;
 use common\components\Terminology\Snomed\DeferredSnomedProcessor;
 
 /**
@@ -85,47 +84,47 @@ class ConsultaProcesamientoService extends Component
 
             $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
 
-            $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
+            // Camino "consulta simple" (CPU, sin GPU) desactivado: siempre modelo IA. Revisar ConsultaClassifier::esConsultaSimple antes de reactivar.
+            // $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
+            // if ($esSimple) {
+            //     $logger->registrar(
+            //         'ANÁLISIS SIMPLE',
+            //         $textoProcesado,
+            //         null,
+            //         ['metodo' => 'ConsultaClassifier::procesarConsultaSimple']
+            //     );
+            //     $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
+            //     $logger->registrar(
+            //         'ANÁLISIS SIMPLE',
+            //         null,
+            //         'Consulta simple procesada sin GPU',
+            //         [
+            //             'metodo' => 'ConsultaClassifier::procesarConsultaSimple',
+            //             'categorias_extraidas' => isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
+            //         ]
+            //     );
+            // } else {
 
-            if ($esSimple) {
-                $logger->registrar(
-                    'ANÁLISIS SIMPLE',
-                    $textoProcesado,
-                    null,
-                    ['metodo' => 'ConsultaClassifier::procesarConsultaSimple']
-                );
+            $logger->registrar(
+                'ANÁLISIS IA',
+                $textoProcesado,
+                null,
+                ['metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA']
+            );
 
-                $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
+            $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
 
-                $logger->registrar(
-                    'ANÁLISIS SIMPLE',
-                    null,
-                    'Consulta simple procesada sin GPU',
-                    [
-                        'metodo' => 'ConsultaClassifier::procesarConsultaSimple',
-                        'categorias_extraidas' => isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
-                    ]
-                );
-            } else {
-                $logger->registrar(
-                    'ANÁLISIS IA',
-                    $textoProcesado,
-                    null,
-                    ['metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA']
-                );
+            $logger->registrar(
+                'ANÁLISIS IA',
+                null,
+                $resultadoIA ? 'Análisis completado' : 'Error en análisis',
+                [
+                    'metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA',
+                    'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
+                ]
+            );
 
-                $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
-
-                $logger->registrar(
-                    'ANÁLISIS IA',
-                    null,
-                    $resultadoIA ? 'Análisis completado' : 'Error en análisis',
-                    [
-                        'metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA',
-                        'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
-                    ]
-                );
-            }
+            // } // al reactivar if ($esSimple) … else { … }, descomentar este cierre antes de $datosConSnomed
 
             $datosConSnomed = null;
             $estadisticasSnomed = null;

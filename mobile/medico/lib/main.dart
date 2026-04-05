@@ -1,5 +1,8 @@
 // lib/main.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -7,6 +10,9 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
 import 'screens/medico_signup_screen.dart';
+
+/// Usuario de prueba para simulación en login (mismo mecanismo que paciente vía `generar-token-prueba`).
+const int _kSimulacionMedicoUserId = 5748;
 
 // Clave global para el Navigator
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -170,6 +176,7 @@ class MyApp extends StatelessWidget {
               appTitle: 'BioEnlace Médico',
               appSubtitle: 'Acceso para profesionales de la salud',
               welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
+              goToHomeButtonText: 'Ir al inicio de la app',
               biometricAvailableText: 'Biometría configurada y lista para usar',
               diditBiometricWorkflowId: AppConfig.diditMedicoBiometricWorkflowId,
               onLoginSuccess: (userId, userName, loginContext) async {
@@ -195,7 +202,103 @@ class MyApp extends StatelessWidget {
                   ),
                 );
               },
-              onNavigateToHome: null,
+              onNavigateToHome: (loginContext) async {
+                showDialog(
+                  context: loginContext,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+
+                try {
+                  final tokenResponse = await http
+                      .get(
+                        Uri.parse(
+                          '${AppConfig.apiUrl}/auth/generar-token-prueba?user_id=$_kSimulacionMedicoUserId',
+                        ),
+                      )
+                      .timeout(const Duration(seconds: 10));
+
+                  if (tokenResponse.statusCode == 200) {
+                    final responseData =
+                        json.decode(tokenResponse.body) as Map<String, dynamic>;
+
+                    if (responseData['success'] == true) {
+                      final data = responseData['data'] as Map<String, dynamic>;
+                      final token = data['token'] as String;
+                      final user = data['user'] as Map<String, dynamic>;
+                      final persona = data['persona'] as Map<String, dynamic>;
+                      final displayName =
+                          '${persona['apellido']}, ${persona['nombre']}';
+
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('is_logged_in', true);
+                      await prefs.setString('auth_token', token);
+                      await prefs.setString('user_id', user['id'].toString());
+                      await prefs.setString('user_name', displayName);
+                      if (persona['documento'] != null) {
+                        await prefs.setString(
+                          'dni_detected',
+                          persona['documento'].toString(),
+                        );
+                      }
+                      // Forzar wizard con el nuevo usuario (evita rrhh/efector de otra sesión).
+                      await prefs.setBool('config_completed', false);
+
+                      if (!loginContext.mounted) return;
+                      Navigator.pop(loginContext);
+
+                      ScaffoldMessenger.of(loginContext).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Sesión de prueba: ${user['name'] ?? displayName} (id $_kSimulacionMedicoUserId)',
+                          ),
+                          backgroundColor: AppTheme.successColor,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+
+                      Navigator.pushReplacement(
+                        loginContext,
+                        MaterialPageRoute(
+                          builder: (_) => ConfigWizardScreen(
+                            userId: user['id'].toString(),
+                            userName: displayName,
+                            authToken: token,
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                  }
+
+                  if (loginContext.mounted) {
+                    Navigator.pop(loginContext);
+                    ScaffoldMessenger.of(loginContext).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'No se pudo simular el acceso del médico de prueba. Revisá la API o el user_id.',
+                        ),
+                        backgroundColor: AppTheme.warningColor,
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (!loginContext.mounted) return;
+                  if (Navigator.canPop(loginContext)) {
+                    Navigator.pop(loginContext);
+                  }
+                  ScaffoldMessenger.of(loginContext).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $e'),
+                      backgroundColor: AppTheme.dangerColor,
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              },
             ),
     );
   }

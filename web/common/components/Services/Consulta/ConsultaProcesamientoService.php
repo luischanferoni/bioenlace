@@ -8,7 +8,7 @@ use common\models\Consulta;
 use common\components\Text\ProcesadorTextoMedico;
 use common\components\Logging\ConsultaLogger;
 use common\components\Chatbot\Classification\ConsultaClassifier;
-use common\components\DeferredSnomedProcessor;
+use common\components\Terminology\Snomed\DeferredSnomedProcessor;
 
 /**
  * Análisis IA y persistencia de consultas (agnóstico de capa HTTP).

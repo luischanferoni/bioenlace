@@ -643,7 +643,7 @@ class IAManager
             }
             
             // Verificar deduplicación primero
-            $deduplicado = \common\components\RequestDeduplicator::buscarSimilar($prompt, $contexto);
+            $deduplicado = RequestDeduplicator::buscarSimilar($prompt, $contexto);
             if ($deduplicado !== null) {
                 \Yii::info("Request duplicado encontrado para: {$contexto}", 'ia-manager');
                 if (class_exists(\common\components\Ai\Cost\AICostTracker::class)) {
@@ -677,7 +677,7 @@ class IAManager
                         );
                     }
                     // Guardar en deduplicador también
-                    \common\components\RequestDeduplicator::guardar($prompt, $cached, $contexto);
+                    RequestDeduplicator::guardar($prompt, $cached, $contexto);
                     if (class_exists(\common\components\Ai\Cost\AICostTracker::class)) {
                         \common\components\Ai\Cost\AICostTracker::registrarEvitada('cache', $contexto);
                     }
@@ -820,7 +820,7 @@ class IAManager
                             \Yii::info("⚠️ ESTRUCTURACIÓN: Cache DESACTIVADO - No se guardó en cache", 'ia-manager');
                         }
                         // Guardar en deduplicador
-                        \common\components\RequestDeduplicator::guardar($prompt, $resultado, $contexto);
+                        RequestDeduplicator::guardar($prompt, $resultado, $contexto);
                     }
                     
                     // Registrar respuesta recibida

@@ -17,7 +17,7 @@ use yii\web\BadRequestHttpException;
 class AgendaRrhhCrudService
 {
     /**
-     * Agenda en el efector (cualquier RRHH). Uso: personal con permiso para-efector.
+     * Agenda en el efector (cualquier RRHH). Uso: personal con permiso para-recurso (CRUD sobre terceros).
      */
     public static function findOwnedByEfector(int $idAgenda, int $idEfector): ?Agenda_rrhh
     {
@@ -65,6 +65,36 @@ class AgendaRrhhCrudService
         $queryParams['id_rr_hh'] = $idRrhh;
 
         return self::search($queryParams, $defaultPerPage, $maxPerPage);
+    }
+
+    /**
+     * Listado forzando efector y RRHH (staff). Los params no pueden cambiar el ámbito vía id_rr_hh/id_efector en query.
+     */
+    public static function searchParaRecurso(
+        array $queryParams,
+        int $idEfector,
+        int $idRrhh,
+        int $defaultPerPage = 20,
+        int $maxPerPage = 100
+    ): ActiveDataProvider {
+        $queryParams['id_efector'] = $idEfector;
+        $queryParams['id_rr_hh'] = $idRrhh;
+
+        return self::search($queryParams, $defaultPerPage, $maxPerPage);
+    }
+
+    /**
+     * @throws BadRequestHttpException
+     */
+    public static function assertRrhhPerteneceAEfector(int $idRrhh, int $idEfector): void
+    {
+        if ($idRrhh <= 0 || $idEfector <= 0) {
+            throw new BadRequestHttpException('id_efector e id_rr_hh deben ser válidos.');
+        }
+        $re = RrhhEfector::findOne($idRrhh);
+        if ($re === null || (int) $re->id_efector !== $idEfector) {
+            throw new BadRequestHttpException('El recurso humano no pertenece al efector indicado.');
+        }
     }
 
     /**

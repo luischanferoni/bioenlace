@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use common\components\Services\Agenda\AgendaRrhhCrudService;
@@ -15,19 +16,19 @@ use common\models\Agenda_rrhh;
  *
  * **Modelo:** 1 efector → 1 RRHH → N servicios (`rrhh_servicio`) → **1 agenda por servicio** (`id_rrhh_servicio_asignado`).
  *
- * **RBAC en dos ámbitos** (como turnos paciente vs operativo):
- * - **como-profesional:** solo el RRHH del usuario en sesión (`getIdRecursoHumano()`); un médico no lista ni edita agendas de otros.
- * - **para-efector:** staff del establecimiento; puede gestionar agendas de cualquier RRHH del efector (`id_rr_hh` en alta y filtros de listado).
+ * **Listado siempre:** el detalle por ítem viene en cada fila del listado; no hay acciones `ver-*`.
  *
- * Rutas HTTP v1 y permisos `/api/agenda/...` (sin `v1` en webvimark):
- * - GET /api/v1/agenda/dia → /api/agenda/dia
- * - GET/POST …/agenda/listar-como-profesional, …/crear-como-profesional, GET/PUT/PATCH/DELETE …/ver|actualizar|eliminar-como-profesional/{id}
- * - GET/POST …/agenda/listar-para-efector, …/crear-para-efector, GET/PUT/PATCH/DELETE …/ver|actualizar|eliminar-para-efector/{id}
+ * **RBAC (alineado a Turnos: ámbito propio vs operativo sobre tercero):**
+ * - **`listar`, `crear`, `actualizar`, `eliminar`:** RRHH del usuario en sesión; efector desde sesión (no se aceptan `id_rr_hh` / `id_efector` en query para ampliar alcance).
+ * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; listar exige **siempre** `id_efector` e `id_rr_hh` en query; alta exige ambos en cuerpo o query.
+ *
+ * Permisos `/api/agenda/...` (sin `v1` en webvimark):
+ * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso
  */
 class AgendaController extends BaseController
 {
     /**
-     * Citas del día (vista operativa del profesional). RBAC: /api/agenda/dia
+     * Citas del día (vista operativa). RBAC: /api/agenda/dia
      *
      * @action_name Ver mi agenda del día (profesional)
      * @entity Agendas
@@ -41,54 +42,58 @@ class AgendaController extends BaseController
     }
 
     /**
-     * Listado paginado: solo agendas del RRHH del usuario. RBAC: /api/agenda/listar-como-profesional
+     * Listado paginado del RRHH logueado en el efector de sesión. RBAC: /api/agenda/listar
      *
      * @action_name Listar mis agendas por servicio
      * @entity Agendas
      * @tags agenda,profesional,mis-agendas,servicio,listar
      * @keywords mis agendas laborales, horarios mis servicios, mis especialidades agenda
      */
-    public function actionListarComoProfesional()
+    public function actionListar()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         $idRrhh = $this->requireRecursoHumanoId();
-        $dp = AgendaRrhhCrudService::searchForProfesional(Yii::$app->request->queryParams, $idRrhh);
+        $params = Yii::$app->request->queryParams;
+        unset($params['id_rr_hh'], $params['id_efector']);
+
+        $dp = AgendaRrhhCrudService::searchForProfesional($params, $idRrhh);
 
         return $this->paginatedListResponse($dp);
     }
 
     /**
-     * Detalle si la agenda es del RRHH del usuario. RBAC: /api/agenda/ver-como-profesional
+     * Listado de un médico concreto. Query obligatorio: id_efector, id_rr_hh. RBAC: /api/agenda/listar-para-recurso
      *
-     * @action_name Ver detalle de mi agenda (por servicio)
+     * @action_name Listar agendas de un recurso en un efector
      * @entity Agendas
-     * @tags agenda,profesional,ver,detalle,servicio
-     * @param int $id id_agenda_rrhh
+     * @tags agenda,staff,listar,rrhh,efector
+     * @keywords agendas de un médico, listar horarios profesional
      */
-    public function actionVerComoProfesional($id)
+    public function actionListarParaRecurso()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        $idEfector = $this->requireEfectorId();
-        $idRrhh = $this->requireRecursoHumanoId();
-        $model = AgendaRrhhCrudService::findOwnedByProfesional((int) $id, $idEfector, $idRrhh);
-        if ($model === null) {
-            throw new NotFoundHttpException('Agenda no encontrada.');
+        $params = Yii::$app->request->queryParams;
+        $idEfector = (int) ($params['id_efector'] ?? 0);
+        $idRrhh = (int) ($params['id_rr_hh'] ?? 0);
+        if ($idEfector <= 0 || $idRrhh <= 0) {
+            throw new BadRequestHttpException('id_efector e id_rr_hh son obligatorios.');
         }
+        $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
+        AgendaRrhhCrudService::assertRrhhPerteneceAEfector($idRrhh, $idEfector);
 
-        return [
-            'success' => true,
-            'data' => AgendaRrhhCrudService::toApiArray($model),
-        ];
+        $dp = AgendaRrhhCrudService::searchParaRecurso($params, $idEfector, $idRrhh);
+
+        return $this->paginatedListResponse($dp);
     }
 
     /**
-     * Alta de agenda para el propio RRHH (cuerpo sin poder fijar otro id_rr_hh). RBAC: /api/agenda/crear-como-profesional
+     * Alta para el propio RRHH. RBAC: /api/agenda/crear
      *
      * @action_name Crear agenda para uno de mis servicios
      * @entity Agendas
      * @tags agenda,profesional,crear,servicio,horarios
      */
-    public function actionCrearComoProfesional()
+    public function actionCrear()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -96,82 +101,13 @@ class AgendaController extends BaseController
     }
 
     /**
-     * Actualizar agenda propia. RBAC: /api/agenda/actualizar-como-profesional
+     * Alta para otro RRHH (id_efector + id_rr_hh en body o query). RBAC: /api/agenda/crear-para-recurso
      *
-     * @action_name Actualizar mi agenda (servicio)
+     * @action_name Crear agenda para un profesional (staff)
      * @entity Agendas
-     * @tags agenda,profesional,actualizar,editar
-     * @param int $id id_agenda_rrhh
+     * @tags agenda,staff,crear
      */
-    public function actionActualizarComoProfesional($id)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        return $this->updateAgendaResponse((int) $id, false);
-    }
-
-    /**
-     * Baja lógica de agenda propia. RBAC: /api/agenda/eliminar-como-profesional
-     *
-     * @action_name Eliminar mi agenda (servicio)
-     * @entity Agendas
-     * @tags agenda,profesional,eliminar,baja
-     * @param int $id id_agenda_rrhh
-     */
-    public function actionEliminarComoProfesional($id)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        return $this->deleteAgendaResponse((int) $id, false);
-    }
-
-    /**
-     * Listado paginado en el efector (todos los RRHH). RBAC: /api/agenda/listar-para-efector
-     *
-     * @action_name Listar agendas del efector (todos los profesionales)
-     * @entity Agendas
-     * @tags agenda,efector,staff,listar,rrhh
-     * @keywords agendas del establecimiento, listar médicos horarios
-     */
-    public function actionListarParaEfector()
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $dp = AgendaRrhhCrudService::search(Yii::$app->request->queryParams);
-
-        return $this->paginatedListResponse($dp);
-    }
-
-    /**
-     * Detalle en el ámbito efector. RBAC: /api/agenda/ver-para-efector
-     *
-     * @action_name Ver agenda (gestión efector)
-     * @entity Agendas
-     * @tags agenda,efector,staff,ver
-     * @param int $id id_agenda_rrhh
-     */
-    public function actionVerParaEfector($id)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $idEfector = $this->requireEfectorId();
-        $model = AgendaRrhhCrudService::findOwnedByEfector((int) $id, $idEfector);
-        if ($model === null) {
-            throw new NotFoundHttpException('Agenda no encontrada.');
-        }
-
-        return [
-            'success' => true,
-            'data' => AgendaRrhhCrudService::toApiArray($model),
-        ];
-    }
-
-    /**
-     * Alta en efector; requiere id_rr_hh en JSON o query (id_rr_hh / id). RBAC: /api/agenda/crear-para-efector
-     *
-     * @action_name Crear agenda para un profesional del efector
-     * @entity Agendas
-     * @tags agenda,efector,staff,crear
-     */
-    public function actionCrearParaEfector()
+    public function actionCrearParaRecurso()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -179,13 +115,28 @@ class AgendaController extends BaseController
     }
 
     /**
-     * RBAC: /api/agenda/actualizar-para-efector
+     * RBAC: /api/agenda/actualizar
      *
-     * @action_name Actualizar agenda (gestión efector)
+     * @action_name Actualizar mi agenda (servicio)
+     * @entity Agendas
+     * @tags agenda,profesional,actualizar,editar
+     * @param int $id id_agenda_rrhh
+     */
+    public function actionActualizar($id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        return $this->updateAgendaResponse((int) $id, false);
+    }
+
+    /**
+     * RBAC: /api/agenda/actualizar-para-recurso
+     *
+     * @action_name Actualizar agenda de un profesional (staff)
      * @entity Agendas
      * @param int $id id_agenda_rrhh
      */
-    public function actionActualizarParaEfector($id)
+    public function actionActualizarParaRecurso($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -193,17 +144,43 @@ class AgendaController extends BaseController
     }
 
     /**
-     * RBAC: /api/agenda/eliminar-para-efector
+     * RBAC: /api/agenda/eliminar
      *
-     * @action_name Eliminar agenda (gestión efector)
+     * @action_name Eliminar mi agenda (servicio)
+     * @entity Agendas
+     * @tags agenda,profesional,eliminar,baja
+     * @param int $id id_agenda_rrhh
+     */
+    public function actionEliminar($id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        return $this->deleteAgendaResponse((int) $id, false);
+    }
+
+    /**
+     * RBAC: /api/agenda/eliminar-para-recurso
+     *
+     * @action_name Eliminar agenda de un profesional (staff)
      * @entity Agendas
      * @param int $id id_agenda_rrhh
      */
-    public function actionEliminarParaEfector($id)
+    public function actionEliminarParaRecurso($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         return $this->deleteAgendaResponse((int) $id, true);
+    }
+
+    /**
+     * Si el usuario tiene efector en sesión, el parámetro debe coincidir (staff no cruza establecimientos).
+     */
+    private function assertEfectorParamMatchesSessionWhenPresent(int $idEfectorParam): void
+    {
+        $sessionEfector = (int) Yii::$app->user->getIdEfector();
+        if ($sessionEfector > 0 && $sessionEfector !== $idEfectorParam) {
+            throw new ForbiddenHttpException('El efector indicado no coincide con su sesión.');
+        }
     }
 
     private function requireEfectorId(): int
@@ -255,27 +232,32 @@ class AgendaController extends BaseController
     /**
      * @return array<string, mixed>
      */
-    private function createAgendaResponse(bool $paraEfector): array
+    private function createAgendaResponse(bool $paraRecurso): array
     {
-        $idEfector = $this->requireEfectorId();
         $body = $this->normalizeAgendaRequestBody();
 
-        if ($paraEfector) {
-            $legacyRrhh = Yii::$app->request->get('id_rr_hh') ?: Yii::$app->request->get('id');
-            if ($legacyRrhh !== null && $legacyRrhh !== '' && empty($body['id_rr_hh'])) {
-                $body['id_rr_hh'] = (int) $legacyRrhh;
-            }
+        if ($paraRecurso) {
+            $idEfector = (int) ($body['id_efector'] ?? Yii::$app->request->get('id_efector') ?? 0);
             $idRrhh = (int) ($body['id_rr_hh'] ?? 0);
-            unset($body['id_rr_hh']);
             if ($idRrhh <= 0) {
-                throw new BadRequestHttpException('id_rr_hh es requerido para crear agenda en el efector.');
+                $legacy = Yii::$app->request->get('id_rr_hh') ?: Yii::$app->request->get('id');
+                if ($legacy !== null && $legacy !== '') {
+                    $idRrhh = (int) $legacy;
+                }
             }
+            unset($body['id_efector'], $body['id_rr_hh']);
+            if ($idEfector <= 0 || $idRrhh <= 0) {
+                throw new BadRequestHttpException('id_efector e id_rr_hh son requeridos para crear agenda para otro recurso.');
+            }
+            $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
+            AgendaRrhhCrudService::assertRrhhPerteneceAEfector($idRrhh, $idEfector);
         } else {
+            $idEfector = $this->requireEfectorId();
             $idRrhh = $this->requireRecursoHumanoId();
-            unset($body['id_rr_hh']);
+            unset($body['id_efector'], $body['id_rr_hh']);
         }
 
-        unset($body['id_agenda_rrhh'], $body['id_efector']);
+        unset($body['id_agenda_rrhh']);
 
         $model = new Agenda_rrhh();
         $model->id_efector = $idEfector;
@@ -307,10 +289,10 @@ class AgendaController extends BaseController
     /**
      * @return array<string, mixed>
      */
-    private function updateAgendaResponse(int $idAgenda, bool $paraEfector): array
+    private function updateAgendaResponse(int $idAgenda, bool $paraRecurso): array
     {
         $idEfector = $this->requireEfectorId();
-        if ($paraEfector) {
+        if ($paraRecurso) {
             $model = AgendaRrhhCrudService::findOwnedByEfector($idAgenda, $idEfector);
         } else {
             $model = AgendaRrhhCrudService::findOwnedByProfesional($idAgenda, $idEfector, $this->requireRecursoHumanoId());
@@ -351,10 +333,10 @@ class AgendaController extends BaseController
     /**
      * @return array<string, mixed>
      */
-    private function deleteAgendaResponse(int $idAgenda, bool $paraEfector): array
+    private function deleteAgendaResponse(int $idAgenda, bool $paraRecurso): array
     {
         $idEfector = $this->requireEfectorId();
-        if ($paraEfector) {
+        if ($paraRecurso) {
             $model = AgendaRrhhCrudService::findOwnedByEfector($idAgenda, $idEfector);
         } else {
             $model = AgendaRrhhCrudService::findOwnedByProfesional($idAgenda, $idEfector, $this->requireRecursoHumanoId());

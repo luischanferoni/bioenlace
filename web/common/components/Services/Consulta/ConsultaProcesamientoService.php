@@ -526,11 +526,11 @@ HTML;
     {
         try {
             $similitudMinima = Yii::$app->params['similitud_minima_respuestas'] ?? 0.85;
-            $respuestaPredefinida = \common\components\RespuestaPredefinidaManager::obtenerRespuesta($texto, $servicio, $similitudMinima);
+            $respuestaPredefinida = \common\components\Chatbot\RespuestaPredefinidaManager::obtenerRespuesta($texto, $servicio, $similitudMinima);
 
             if ($respuestaPredefinida) {
                 Yii::info('Respuesta predefinida encontrada para consulta similar (sin GPU)', 'consulta-ia');
-                \common\components\RespuestaPredefinidaManager::incrementarUsos($respuestaPredefinida['id']);
+                \common\components\Chatbot\RespuestaPredefinidaManager::incrementarUsos($respuestaPredefinida['id']);
                 return $respuestaPredefinida['respuesta_json'];
             }
 
@@ -553,7 +553,7 @@ HTML;
 
             if ($resultado && !isset($resultado['error'])) {
                 try {
-                    \common\components\RespuestaPredefinidaManager::guardarRespuesta($texto, $resultado, $servicio);
+                    \common\components\Chatbot\RespuestaPredefinidaManager::guardarRespuesta($texto, $resultado, $servicio);
                 } catch (\Exception $e) {
                     Yii::warning('No se pudo guardar respuesta predefinida: ' . $e->getMessage(), 'respuestas-predefinidas');
                 }

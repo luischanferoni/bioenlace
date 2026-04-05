@@ -4,6 +4,8 @@ namespace frontend\modules\api\v1\components;
 
 use Yii;
 use common\components\Actions\AllowedRoutesResolver;
+use common\models\Persona;
+use common\models\RrhhEfector;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\UnauthorizedHttpException;
 use yii\web\Response;
@@ -55,7 +57,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         }
 
         $userId = $decoded->user_id;
-        $idPersona = $decoded->id_persona ?? null;
+        $idPersonaClaim = isset($decoded->id_persona) ? (int) $decoded->id_persona : 0;
 
         $userModel = \webvimark\modules\UserManagement\models\User::findOne($userId);
         if (!$userModel) {
@@ -82,12 +84,43 @@ class JsonHttpBearerAuth extends HttpBearerAuth
 
         \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($userId);
 
-        if ($idPersona) {
-            $session = Yii::$app->session;
-            if (!$session->isActive) {
-                $session->open();
+        $session = Yii::$app->session;
+        if (!$session->isActive) {
+            $session->open();
+        }
+
+        $persona = null;
+        if ($idPersonaClaim > 0) {
+            $persona = Persona::findOne($idPersonaClaim);
+            if ($persona && (int) $persona->id_user !== (int) $userModel->id) {
+                $response->statusCode = 401;
+                $response->data = [
+                    'success' => false,
+                    'message' => 'El token no coincide con la identidad del usuario.',
+                    'errors' => null,
+                ];
+                $response->send();
+                Yii::$app->end();
             }
-            $session->set('idPersona', $idPersona);
+        }
+        if (!$persona && (int) ($userModel->superadmin ?? 0) !== 1) {
+            $persona = Persona::findOne(['id_user' => $userModel->id]);
+        }
+        if (!$persona && (int) ($userModel->superadmin ?? 0) !== 1) {
+            $response->statusCode = 401;
+            $response->data = [
+                'success' => false,
+                'message' => 'Cuenta sin persona asociada. Comuníquese con administración.',
+                'errors' => null,
+            ];
+            $response->send();
+            Yii::$app->end();
+        }
+        if ($persona !== null) {
+            $session->set('idPersona', (int) $persona->id_persona);
+            $session->set('apellidoUsuario', $persona->apellido);
+            $session->set('nombreUsuario', $persona->nombre);
+            $session->set('efectores', RrhhEfector::getEfectores($persona->id_persona));
         }
 
         $user->setIdentity($userModel);

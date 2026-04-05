@@ -24,6 +24,7 @@ void main() async {
     chatService = ChatService(
       currentUserId: userId,
       currentUserName: userName,
+      authToken: authToken,
     );
   }
 
@@ -105,6 +106,7 @@ class MyApp extends StatelessWidget {
                 final newChatService = ChatService(
                   currentUserId: userId,
                   currentUserName: userName,
+                  authToken: token,
                 );
                 if (!loginContext.mounted) return;
                 Navigator.pushReplacement(
@@ -160,6 +162,7 @@ class MyApp extends StatelessWidget {
                       final chatService = ChatService(
                         currentUserId: user['id'].toString(),
                         currentUserName: '${persona['apellido']}, ${persona['nombre']}',
+                        authToken: token,
                       );
                       
                       // Mostrar mensaje de éxito
@@ -194,8 +197,9 @@ class MyApp extends StatelessWidget {
                       final demoChatService = ChatService(
                         currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
                         currentUserName: 'Visitante',
+                        authToken: null,
                       );
-                      
+
                       Navigator.pushReplacement(
                         loginContext,
                         MaterialPageRoute(
@@ -219,6 +223,7 @@ class MyApp extends StatelessWidget {
                     final demoChatService = ChatService(
                       currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
                       currentUserName: 'Visitante',
+                      authToken: null,
                     );
 
                     Navigator.pushReplacement(
@@ -246,6 +251,7 @@ class MyApp extends StatelessWidget {
                   final demoChatService = ChatService(
                     currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
                     currentUserName: 'Visitante',
+                    authToken: null,
                   );
 
                   Navigator.pushReplacement(

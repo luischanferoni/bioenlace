@@ -166,11 +166,7 @@ class TurnosController extends BaseController
         $request = Yii::$app->request;
         $model = new Turno();
         $model->load($request->post(), '');
-        $personaUsuario = Persona::findOne(['id_user' => Yii::$app->user->id]);
-        if (!$personaUsuario) {
-            throw new ForbiddenHttpException('No se encontró persona asociada al usuario.');
-        }
-        $model->id_persona = $personaUsuario->id_persona;
+        $model->id_persona = (int) Yii::$app->user->getIdPersona();
 
         return $this->persistTurnoCreacion($model);
     }
@@ -343,11 +339,11 @@ class TurnosController extends BaseController
      */
     public function actionPoliticaComoPaciente()
     {
-        $idPersona = Yii::$app->user->getIdPersona();
         $idEfector = Yii::$app->user->getIdEfector();
-        if (!$idPersona || !$idEfector) {
-            throw new BadRequestHttpException('No se pudo determinar persona o efector');
+        if (!$idEfector) {
+            throw new BadRequestHttpException('No se pudo determinar el efector; configure sesión operativa (config/set-session).');
         }
+        $idPersona = (int) Yii::$app->user->getIdPersona();
         $svc = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
         return array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, $idEfector));
     }

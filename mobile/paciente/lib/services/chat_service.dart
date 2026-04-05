@@ -5,19 +5,36 @@ import 'package:shared/shared.dart';
 
 import '../models/message.dart';
 
-class ChatService {  
+class ChatService {
   final String currentUserId;
   final String currentUserName;
+  /// Si está definido, se envía en `asistente/enviar` (API v1 con Bearer).
+  final String? authToken;
 
   ChatService({
     required this.currentUserId,
     required this.currentUserName,
+    this.authToken,
   });
+
+  Map<String, String> _jsonHeaders() {
+    final h = <String, String>{
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    };
+    if (authToken != null && authToken!.isNotEmpty) {
+      h['Authorization'] = 'Bearer $authToken';
+    }
+    return h;
+  }
 
   Future<List<Message>> getMessages() async {
     try {
-      final response = await http.get(Uri.parse('${AppConfig.apiUrl}/asistente/estado'));
-      
+      final response = await http.get(
+        Uri.parse('${AppConfig.apiUrl}/asistente/estado'),
+        headers: _jsonHeaders(),
+      );
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
@@ -31,8 +48,7 @@ class ChatService {
             return raw.map((json) => Message.fromJson(json)).toList();
           }
           return [];
-        }
-        else {
+        } else {
           throw Exception('Failed to load messages');
         }
       } else {
@@ -44,20 +60,32 @@ class ChatService {
     }
   }
 
+  /// Misma tubería que el asistente en web/app: POST `asistente/enviar` con cuerpo `{ "content": ... }`.
   Future<Message> sendMessage(String content) async {
     try {
       final response = await http.post(
         Uri.parse('${AppConfig.apiUrl}/asistente/enviar'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _jsonHeaders(),
         body: json.encode({
-          'senderId': currentUserId,
-          'senderName': currentUserName,
           'content': content,
         }),
       );
 
-      if (response.statusCode == 201) {
-        return Message.fromJson(json.decode(response.body));
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        if (body['success'] == true && body['data'] is Map<String, dynamic>) {
+          final data = body['data'] as Map<String, dynamic>;
+          final explanation =
+              data['explanation']?.toString() ?? 'Consulta procesada';
+          return Message(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            senderId: 'BOT',
+            senderName: 'Bot',
+            content: explanation,
+            timestamp: DateTime.now(),
+          );
+        }
+        throw Exception(body['message']?.toString() ?? 'Failed to send message');
       } else {
         throw Exception('Failed to send message');
       }
@@ -70,20 +98,32 @@ class ChatService {
   Future<Message> resendMessage(String messageId) async {
     try {
       final originalMessage = await _getMessageById(messageId);
-      
+
       final response = await http.post(
         Uri.parse('${AppConfig.apiUrl}/asistente/enviar'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _jsonHeaders(),
         body: json.encode({
-          'senderId': currentUserId,
-          'senderName': currentUserName,
           'content': originalMessage.content,
           'isResent': true,
         }),
       );
 
-      if (response.statusCode == 201) {
-        return Message.fromJson(json.decode(response.body));
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        if (body['success'] == true && body['data'] is Map<String, dynamic>) {
+          final data = body['data'] as Map<String, dynamic>;
+          final explanation =
+              data['explanation']?.toString() ?? 'Consulta procesada';
+          return Message(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            senderId: 'BOT',
+            senderName: 'Bot',
+            content: explanation,
+            timestamp: DateTime.now(),
+            isResent: true,
+          );
+        }
+        throw Exception(body['message']?.toString() ?? 'Failed to resend message');
       } else {
         throw Exception('Failed to resend message');
       }

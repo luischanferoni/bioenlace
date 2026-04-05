@@ -78,8 +78,8 @@
         hideResponse();
 
         // Usar endpoint de la API
-        const crudUrl = window.spaConfig.baseUrl + '/api/v1/crud/procesar-interaccion';
-        fetch(crudUrl, {
+        const asistenteUrl = window.spaConfig.baseUrl + '/api/v1/asistente/enviar';
+        fetch(asistenteUrl, {
             method: 'POST',
             headers: clientApiHeaders({
                 'Content-Type': 'application/json',
@@ -88,7 +88,7 @@
             }),
             credentials: 'same-origin', // Incluir cookies de sesión
             body: JSON.stringify({
-                interaccion_usuario: { texto: query }
+                content: query
             })
         })
         .then(response => {
@@ -122,15 +122,9 @@
             return response.json();
         })
         .then(data => {
-            // La respuesta puede venir de dos formas:
-            // 1. Directamente: {success: true, explanation: "...", action: {...}, data: {...}}
-            // 2. Envuelta: {success: true, data: {success: true, explanation: "...", ...}}
-            // 
-            // Si data.data existe Y tiene success/explanation/action, entonces data.data es el resultado real
-            // Si no, entonces data es el resultado directamente
+            // Respuesta API v1 asistente/enviar: { success, message, data } donde data es el payload del agente.
             let result = data;
             if (data.data && typeof data.data === 'object' && (data.data.success !== undefined || data.data.explanation !== undefined || data.data.action !== undefined)) {
-                // data.data contiene el resultado real
                 result = data.data;
             }
             

@@ -54,6 +54,7 @@ class _SignupScreenState extends State<SignupScreen> {
         final chatService = ChatService(
           currentUserId: userId,
           currentUserName: prefs.getString('user_name') ?? 'Usuario',
+          authToken: prefs.getString('auth_token'),
         );
 
         // Navegar a la pantalla de chat
@@ -217,6 +218,7 @@ class _SignupScreenState extends State<SignupScreen> {
       final chatService = ChatService(
         currentUserId: testUserId,
         currentUserName: testUserName,
+        authToken: null,
       );
 
       // Mostrar mensaje informativo

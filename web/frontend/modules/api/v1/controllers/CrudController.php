@@ -3,7 +3,6 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Actions\UniversalQueryAgent;
 use frontend\modules\api\v1\controllers\BaseController;
 use yii\helpers\Inflector;
 
@@ -12,60 +11,13 @@ class CrudController extends BaseController
     public $enableCsrfValidation = false; // Deshabilitar CSRF para API
 
     /**
-     * AutenticaciÃ³n centralizada en JsonHttpBearerAuth; process-query y execute-action requieren Bearer.
+     * Autenticación centralizada en JsonHttpBearerAuth; execute-action requiere Bearer.
      */
     public function behaviors()
     {
         $behaviors = parent::behaviors();
         $behaviors['authenticator']['except'] = ['options'];
         return $behaviors;
-    }
-
-    /**
-     * Procesar interacción del usuario en lenguaje natural usando UniversalQueryAgent
-     * 
-     * Este endpoint procesa interacciones del usuario en lenguaje natural y devuelve acciones relevantes
-     * del sistema que el usuario tiene permitido realizar.
-     * 
-     * Ejemplos de interacciones:
-     * - "listame mis licencias"
-     * - "29486884" (bÃºsqueda por DNI)
-     * - "cuÃ¡ntas consultas voy atendiendo este mes?"
-     * - "quÃ© puedo hacer?"
-     * 
-     * @return array Respuesta con acciones encontradas o error
-     */
-    public function actionProcesarInteraccion()
-    {
-        $userId = Yii::$app->user->id;
-
-        $interaccionUsuario = Yii::$app->request->post('interaccion_usuario');
-        $texto = null;
-        if (is_array($interaccionUsuario)) {
-            $texto = $interaccionUsuario['texto'] ?? null;
-        }
-        $actionId = Yii::$app->request->post('action_id'); // Opcional: para bÃºsqueda directa por ID
-        
-        if (($texto === null || trim((string) $texto) === '') && empty($actionId)) {
-            return $this->error('interaccion_usuario.texto o action_id es requerido', null, 400);
-        }
-
-        try {
-            // Procesar consulta usando UniversalQueryAgent (implementaciÃ³n genÃ©rica y mejorada)
-            // Si viene action_id, se buscarÃ¡ primero por ID, luego por matching semÃ¡ntico, y finalmente por LLM
-            $result = UniversalQueryAgent::processQuery($texto, $userId, $actionId);
-            
-            // Asegurar que el resultado tenga el formato correcto
-            if (isset($result['success'])) {
-                return $result;
-            }
-            
-            // Si no tiene formato estÃ¡ndar, envolverlo
-            return $this->success($result);
-        } catch (\Exception $e) {
-            Yii::error("Error procesando consulta: " . $e->getMessage(), 'api-crud-controller');
-            return $this->error('Error al procesar la consulta. Por favor, intente nuevamente.', null, 500);
-        }
     }
 
     /**

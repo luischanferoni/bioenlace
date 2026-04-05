@@ -201,6 +201,7 @@ class ConfiguracionScreen extends StatelessWidget {
         final newChatService = ChatService(
           currentUserId: userId,
           currentUserName: userName,
+          authToken: prefs.getString('auth_token'),
         );
         Navigator.pushReplacement(
           loginContext,

@@ -48,35 +48,9 @@ class ConfigController extends BaseController
      */
     public function actionListarEfectores()
     {
-        $user = Yii::$app->user->identity;
-
         try {
-            // Obtener efectores desde sesión si están disponibles
             $efectores = Yii::$app->user->getEfectores();
-            
-            // Si no hay efectores en sesión, obtenerlos directamente de la base de datos
-            if (empty($efectores)) {
-                $idPersona = Yii::$app->user->getIdPersona();
-                
-                if (!$idPersona) {
-                    // Intentar obtener idPersona desde la persona asociada al usuario
-                    $persona = \common\models\Persona::findOne(['id_user' => $user->id]);
-                    if ($persona) {
-                        $idPersona = $persona->id_persona;
-                        // Guardar en sesión para próximas consultas
-                        Yii::$app->session->set('idPersona', $idPersona);
-                    }
-                }
-                
-                if ($idPersona) {
-                    $rrhhEfectores = \common\models\RrhhEfector::getEfectores($idPersona);
-                    if (!empty($rrhhEfectores)) {
-                        Yii::$app->user->setEfectores($rrhhEfectores);
-                        $efectores = $rrhhEfectores;
-                    }
-                }
-            }
-            
+
             if (empty($efectores)) {
                 return $this->error('No se encontraron efectores asignados para este usuario', null, 404);
             }

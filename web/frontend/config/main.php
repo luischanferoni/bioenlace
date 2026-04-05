@@ -214,8 +214,6 @@ return [
                 'OPTIONS api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
                 
                 // CRUD API
-                'POST api/<version:\w+>/crud/procesar-interaccion' => '<version>/crud/procesar-interaccion',
-                'OPTIONS api/<version:\w+>/crud/procesar-interaccion' => '<version>/crud/procesar-interaccion',
                 'GET api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',
                 'POST api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',
                 'OPTIONS api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',

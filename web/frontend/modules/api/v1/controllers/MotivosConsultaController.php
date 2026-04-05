@@ -7,8 +7,6 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\models\ConsultaMotivosMessage;
 use common\models\Consulta;
-use common\models\Persona;
-use common\models\RrhhEfector;
 
 /**
  * API motivos de consulta (mensajes, envío, subida de archivos).
@@ -83,8 +81,7 @@ class MotivosConsultaController extends BaseController
         }
 
         $userId = Yii::$app->user->id;
-        $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-        $userName = $user ? $user->username : 'Paciente';
+        $userName = Yii::$app->user->identity->username ?? 'Paciente';
 
         $msg = new ConsultaMotivosMessage();
         $msg->consulta_id = (int) $consulta_id;
@@ -162,8 +159,7 @@ class MotivosConsultaController extends BaseController
         }
 
         $userId = Yii::$app->user->id;
-        $user = \webvimark\modules\UserManagement\models\User::findOne($userId);
-        $userName = $user ? $user->username : 'Paciente';
+        $userName = Yii::$app->user->identity->username ?? 'Paciente';
 
         $msg = new ConsultaMotivosMessage();
         $msg->consulta_id = (int) $consulta_id;
@@ -199,23 +195,19 @@ class MotivosConsultaController extends BaseController
     }
 
     /**
-     * Indica si el usuario actual puede acceder a la consulta (paciente o médico asignado).
+     * Paciente: `consulta.id_persona` === sesión `idPersona` ({@see JsonHttpBearerAuth}).
+     * Médico: `consulta.id_rr_hh` === sesión `idRecursoHumano` ({@see ConfigController::actionEstablecerSession}).
      */
-    protected function canAccessConsulta(Consulta $consulta)
+    protected function canAccessConsulta(Consulta $consulta): bool
     {
-        $userId = Yii::$app->user->id;
-        if (!$userId) {
-            return false;
-        }
-        $persona = Persona::findOne(['id_user' => $userId]);
-        if (!$persona) {
-            return false;
-        }
-        if ((int) $consulta->id_persona === (int) $persona->id_persona) {
+        if ((int) $consulta->id_persona === (int) Yii::$app->user->getIdPersona()) {
             return true;
         }
-        $rrhhEfector = RrhhEfector::find()->where(['id_rr_hh' => $consulta->id_rr_hh])->one();
-        return $rrhhEfector && (int) $rrhhEfector->id_persona === (int) $persona->id_persona;
+
+        $idRrhhConsulta = (int) $consulta->id_rr_hh;
+        $idRrhhSesion = (int) Yii::$app->user->getIdRecursoHumano();
+
+        return $idRrhhConsulta > 0 && $idRrhhSesion > 0 && $idRrhhConsulta === $idRrhhSesion;
     }
 
     /**

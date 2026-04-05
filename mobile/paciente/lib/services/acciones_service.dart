@@ -14,8 +14,8 @@ const String _timeoutErrorMessage =
 /// - La web (site/acciones.php) 
 /// - La app móvil del médico
 /// - El chatbot del paciente
-/// 
-  /// Endpoint: /api/v1/crud/procesar-interaccion
+///
+/// Endpoint: /api/v1/asistente/enviar
 /// El backend procesa la consulta con UniversalQueryAgent (`web/common/components/Actions/`) y devuelve
 /// acciones relevantes que el usuario puede realizar (solicitar turnos, 
 /// ver historia clínica, etc.)
@@ -36,13 +36,13 @@ class AsistenteService {
   /// - "¿Cuándo es mi próxima consulta?"
   /// 
   /// El endpoint es el mismo que usa la web y la app del médico:
-  /// ${AppConfig.apiUrl}/crud/procesar-interaccion
+  /// ${AppConfig.apiUrl}/asistente/enviar
   /// 
   /// [actionId] es opcional: si se proporciona, el backend intentará buscar la acción por ID primero
   Future<Map<String, dynamic>> procesarInteraccion(String textoInteraccionUsuario, {String? actionId}) async {
     try {
       // Mismo endpoint que usa site/acciones.php en la web y la app del médico
-      final uri = Uri.parse('${AppConfig.apiUrl}/crud/procesar-interaccion');
+      final uri = Uri.parse('${AppConfig.apiUrl}/asistente/enviar');
       
       final headers = {
         'Content-Type': 'application/json',
@@ -55,9 +55,7 @@ class AsistenteService {
       }
 
       final body = <String, dynamic>{
-        'interaccion_usuario': {
-          'texto': textoInteraccionUsuario,
-        },
+        'content': textoInteraccionUsuario,
       };
       
       // Agregar action_id si se proporciona (opcional)

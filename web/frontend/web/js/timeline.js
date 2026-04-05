@@ -408,6 +408,24 @@ async function loadTodosLosSignosVitales() {
     }
 }
 
+/**
+ * Query string de la página HC para el fetch de formulario-consulta (sin duplicar `id` ni `fecha`).
+ */
+function buildFormularioConsultaQueryFromLocation() {
+    if (typeof window === 'undefined' || !window.location || !window.location.search) {
+        return '';
+    }
+    try {
+        const params = new URLSearchParams(window.location.search);
+        params.delete('fecha');
+        params.delete('id');
+        const s = params.toString();
+        return s || '';
+    } catch (e) {
+        return '';
+    }
+}
+
 // Función para cargar el estado del formulario via AJAX
 async function cargarFormularioConsulta() {
     const container = document.getElementById('formulario-container');
@@ -415,9 +433,7 @@ async function cargarFormularioConsulta() {
     try {
         const endpoints = getEndpoints();
         let formularioUrl = endpoints.formularioConsulta || '';
-        const qs = typeof window !== 'undefined' && window.location && window.location.search
-            ? window.location.search.replace(/^\?/, '')
-            : '';
+        const qs = buildFormularioConsultaQueryFromLocation();
         if (qs) {
             formularioUrl += (formularioUrl.indexOf('?') >= 0 ? '&' : '?') + qs;
         }

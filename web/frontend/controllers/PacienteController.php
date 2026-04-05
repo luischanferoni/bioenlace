@@ -610,13 +610,23 @@ class PacienteController extends Controller
             $parentId = Yii::$app->request->get('parent_id');
             $parent = Yii::$app->request->get('parent');
 
-            // La timeline puede abrir con ?id_turno=… (y timeline.js reenvía el query al AJAX); sin parent,
-            // validarPermisoAtencion trataba la atención como GENERICO_AMB y bloqueaba por turnoHoy().
+            // Sin parent, validarPermisoAtencion asume GENERICO_AMB y bloquea si turnoHoy(); alinear con el
+            // turno de la sesión cuando la URL solo trae id (+ fecha del listado, etc.).
             if (!$idConsulta && ($parent === null || $parent === '')) {
                 $idTurnoGet = Yii::$app->request->get('id_turno');
                 if ($idTurnoGet !== null && $idTurnoGet !== '') {
                     $parent = Consulta::PARENT_TURNO;
                     $parentId = (int) $idTurnoGet;
+                } elseif (Yii::$app->user->getEncounterClass() === Consulta::ENCOUNTER_CLASS_AMB) {
+                    $turnoSesion = $paciente->turnoHoy(
+                        Yii::$app->user->getServicioActual(),
+                        Yii::$app->user->getIdRecursoHumano(),
+                        Yii::$app->user->getIdEfector()
+                    );
+                    if ($turnoSesion) {
+                        $parent = Consulta::PARENT_TURNO;
+                        $parentId = (int) $turnoSesion->id_turnos;
+                    }
                 }
             }
 

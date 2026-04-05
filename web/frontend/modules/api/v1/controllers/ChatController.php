@@ -33,14 +33,11 @@ class ChatController extends BaseController
   }*/
     public function actionEstado()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         return ['success' => true, 'mensajes' => [], 'msj' => ''];
     }
 
     public function actionRecibir()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
         $body = Yii::$app->request->getBodyParams();
         $senderId = $body['senderId'] ?? null;
         $content = $body['content'] ?? null;

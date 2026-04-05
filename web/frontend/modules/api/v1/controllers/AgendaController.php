@@ -7,7 +7,6 @@ use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use yii\web\Response;
 use common\components\Services\Agenda\AgendaRrhhCrudService;
 use common\models\Agenda_rrhh;
 
@@ -51,7 +50,6 @@ class AgendaController extends BaseController
      */
     public function actionListar()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
         $idRrhh = $this->requireRecursoHumanoId();
         $params = Yii::$app->request->queryParams;
         unset($params['id_rr_hh'], $params['id_efector']);
@@ -71,7 +69,6 @@ class AgendaController extends BaseController
      */
     public function actionListarParaRecurso()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
         $params = Yii::$app->request->queryParams;
         $idEfector = (int) ($params['id_efector'] ?? 0);
         $idRrhh = (int) ($params['id_rr_hh'] ?? 0);
@@ -95,8 +92,6 @@ class AgendaController extends BaseController
      */
     public function actionCrear()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         return $this->createAgendaResponse(false);
     }
 
@@ -109,8 +104,6 @@ class AgendaController extends BaseController
      */
     public function actionCrearParaRecurso()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         return $this->createAgendaResponse(true);
     }
 
@@ -124,8 +117,6 @@ class AgendaController extends BaseController
      */
     public function actionActualizar($id)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         return $this->updateAgendaResponse((int) $id, false);
     }
 
@@ -138,8 +129,6 @@ class AgendaController extends BaseController
      */
     public function actionActualizarParaRecurso($id)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         return $this->updateAgendaResponse((int) $id, true);
     }
 
@@ -153,8 +142,6 @@ class AgendaController extends BaseController
      */
     public function actionEliminar($id)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         return $this->deleteAgendaResponse((int) $id, false);
     }
 
@@ -167,8 +154,6 @@ class AgendaController extends BaseController
      */
     public function actionEliminarParaRecurso($id)
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         return $this->deleteAgendaResponse((int) $id, true);
     }
 

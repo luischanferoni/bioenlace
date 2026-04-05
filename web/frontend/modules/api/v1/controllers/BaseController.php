@@ -64,6 +64,17 @@ class BaseController extends Controller
     }
 
     /**
+     * Toda la API v1 responde JSON; evita repetir {@see Response::FORMAT_JSON} en cada acción.
+     * El {@see ContentNegotiator} sigue disponible para Accept; esto fija el formato por defecto.
+     */
+    public function beforeAction($action)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        return parent::beforeAction($action);
+    }
+
+    /**
      * Respuesta de ?xito est?ndar
      */
     protected function success($data = null, $message = 'Operaci?n exitosa', $code = 200)

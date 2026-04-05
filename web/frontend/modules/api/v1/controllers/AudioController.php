@@ -15,8 +15,6 @@ class AudioController extends BaseController
      */
     public function actionTranscribir()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
         try {
             $request = Yii::$app->request;
             $audioData = $request->post('audio') ?? $request->post('audio_data');

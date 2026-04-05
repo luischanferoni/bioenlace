@@ -24,7 +24,6 @@ class PacientesController extends BaseController
      */
     public function actionListar()
     {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $fecha = Yii::$app->request->get('fecha', date('Y-m-d'));
         $encounterClass = Yii::$app->user->getEncounterClass();
 

@@ -793,9 +793,6 @@ class CrudController extends BaseController
                     ];
                 }
                 
-                // Configurar response format como JSON
-                Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-                
                 // Ejecutar la acciÃ³n (sin pasar params directamente, ya estÃ¡n en request)
                 $result = $controller->runAction($actionName, []);
                 

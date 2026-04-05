@@ -3,7 +3,6 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\Response;
 use common\components\Services\Consulta\ConsultaProcesamientoService;
 
 /**
@@ -22,7 +21,6 @@ class ConsultaController extends BaseController
 
     public function actionAnalizar()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
         $out = (new ConsultaProcesamientoService())->analizar(Yii::$app->request->getBodyParams());
 
         return $this->applyConsultaHttpStatus($out);
@@ -30,7 +28,6 @@ class ConsultaController extends BaseController
 
     public function actionGuardar()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
         $body = $this->mergeGuardarRequestBody();
         if (YII_DEBUG) {
             Yii::info('Datos recibidos en actionGuardar (api): ' . json_encode([

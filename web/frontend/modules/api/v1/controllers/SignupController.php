@@ -3,7 +3,6 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\Response;
 use yii\web\UploadedFile;
 use yii\web\BadRequestHttpException;
 use yii\helpers\FileHelper;
@@ -27,8 +26,6 @@ class SignupController extends BaseController
 
     public function actionRegistrar()
     {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
         // Validar método
         if (!Yii::$app->request->isPost) {
             throw new BadRequestHttpException('Método no permitido');

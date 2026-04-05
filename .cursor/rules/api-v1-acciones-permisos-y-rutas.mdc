@@ -8,6 +8,7 @@ alwaysApply: true
 
 # API v1 — acciones, permisos y enrutado
 
+- **`BaseController` (API v1):** `beforeAction` fija `response->format = JSON` para todas las acciones; no repetir en cada método salvo casos excepcionales (p. ej. guardar/restaurar formato al invocar controladores web desde `UiController` / `CrudController`).
 - **Documentación en código**: el docblock de cada controller API (o la convención del módulo) debe dejar claro qué hace cada acción y, si aplica, el verbo HTTP y el corte de autorización.
 - **Nombres de acción**: cuando una misma operación tiene **sujetos o permisos distintos** (p. ej. el usuario actúa sobre sí mismo vs. staff sobre un tercero vs. ámbito efector), usar **nombres explícitos** que reflejen el ámbito; evitar `create` / `update` / `view` genéricos si generan ambigüedad con el control de acceso.
 - **Permisos (webvimark / ApiGhost)**: alinear la ruta registrada con la convención del proyecto (normalmente **sin** repetir el segmento `v1` en la ruta de permiso si así está configurado el `uniqueId` / filtros). Mantener coherencia entre nombre de acción Yii, patrón de URL y permiso.

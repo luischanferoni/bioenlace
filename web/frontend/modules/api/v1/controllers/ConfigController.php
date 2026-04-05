@@ -19,32 +19,18 @@ class ConfigController extends BaseController
         
         // Permitir acceso sin autenticación solo a encounter-classes (lista estática)
         $behaviors['authenticator']['except'] = ['options', 'encounter-classes'];
-        
-        // Asegurar formato JSON siempre
-        $behaviors['contentNegotiator'] = [
-            'class' => \yii\filters\ContentNegotiator::class,
-            'formats' => [
-                'application/json' => \yii\web\Response::FORMAT_JSON,
-            ],
-        ];
-        
+
         return $behaviors;
     }
     
     /**
-     * Manejar errores de autenticación devolviendo JSON
+     * Manejar errores de autenticación devolviendo JSON (formato ya fija {@see BaseController::beforeAction}).
      */
     public function beforeAction($action)
     {
-        // Forzar formato JSON antes de cualquier acción
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        
-        // Manejar excepciones de autenticación
         try {
             return parent::beforeAction($action);
         } catch (\yii\web\UnauthorizedHttpException $e) {
-            // Si es una excepción de autenticación, devolver JSON en lugar de HTML
-            Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
             Yii::$app->response->statusCode = 401;
             Yii::$app->response->data = [
                 'success' => false,

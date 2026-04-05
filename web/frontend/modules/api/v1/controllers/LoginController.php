@@ -36,7 +36,6 @@ class LoginController extends BaseController
   }*/
     public function actionLogin()
     {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $model = new LoginForm();
 
         if (!Yii::$app->request->post()) {

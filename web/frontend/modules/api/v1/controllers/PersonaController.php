@@ -4,9 +4,10 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\Persona;
+use common\components\Services\Persona\PersonaSignosVitalesService;
 
 /**
- * API Persona: CRUD y timeline (historia clínica).
+ * API Persona: CRUD, signos vitales y timeline (historia clínica).
  * Lógica migrada desde frontend\controllers\PersonaController.
  */
 class PersonaController extends BaseController
@@ -84,6 +85,29 @@ class PersonaController extends BaseController
             'direccion' => $persona->direccion,
             'created_at' => $persona->created_at,
         ]);
+    }
+
+    /**
+     * GET /api/v1/personas/{id}/signos-vitales
+     * Permiso RBAC: /api/persona/signos-vitales
+     * Query opcional (solo YII_DEBUG): simular_signos=1
+     */
+    public function actionSignosVitales($id)
+    {
+        $persona = Persona::findOne($id);
+        if (!$persona) {
+            return $this->error('Persona no encontrada', null, 404);
+        }
+
+        $simular = false;
+        if (defined('YII_DEBUG') && YII_DEBUG) {
+            $simular = (bool) Yii::$app->request->get('simular_signos', false);
+        }
+
+        $service = new PersonaSignosVitalesService();
+        $payload = $service->getSignosVitalesData($persona, $simular);
+
+        return $this->success($payload, 'Signos vitales obtenidos');
     }
 
     /**

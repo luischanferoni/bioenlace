@@ -276,7 +276,7 @@ Modal::end();
         endpoints: {
             curvasCrecimiento: <?= $persona->edad < 14 ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
-            signosVitales: '<?= \yii\helpers\Url::to(['personas/signos-vitales', 'id' => $persona->id_persona]) ?>',
+            signosVitales: <?= json_encode(\yii\helpers\Url::to(['/v1/persona/signos-vitales', 'id' => (int) $persona->id_persona], true), JSON_UNESCAPED_SLASHES) ?>,
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>'
         }
     };

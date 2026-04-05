@@ -174,7 +174,135 @@ async function loadTodasLasVacunas() {
     }
 }
 
-// Función para cargar los signos vitales actuales
+function escapeHtmlSignos(text) {
+    if (text === null || text === undefined || text === '') {
+        return '';
+    }
+    const div = document.createElement('div');
+    div.textContent = String(text);
+    return div.innerHTML;
+}
+
+function tieneValorSigno(v) {
+    return v !== null && v !== undefined && String(v).trim() !== '';
+}
+
+function buildSignosVitalesActualesHtml(ultimosSv) {
+    if (!ultimosSv) {
+        return '<div class="text-muted"><i class="bi bi-info-circle"></i> No se encontraron signos vitales registrados</div>';
+    }
+    const peso = ultimosSv.peso && tieneValorSigno(ultimosSv.peso.value);
+    const talla = ultimosSv.talla && tieneValorSigno(ultimosSv.talla.value);
+    const imc = ultimosSv.imc && tieneValorSigno(ultimosSv.imc.value);
+    const ta = ultimosSv.ta && tieneValorSigno(ultimosSv.ta.sistolica) && tieneValorSigno(ultimosSv.ta.diastolica);
+    if (!peso && !talla && !imc && !ta) {
+        return '<div class="text-muted"><i class="bi bi-info-circle"></i> No se encontraron signos vitales registrados</div>';
+    }
+    const parts = [];
+    parts.push('<div class="row g-3 mb-3">');
+    if (peso) {
+        parts.push(
+            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
+            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-speedometer2 text-primary me-2"></i><span>Peso</span></h6>',
+            '<p class="card-text fw-bold mb-1 fs-6">', escapeHtmlSignos(ultimosSv.peso.value), ' kg</p>',
+            '</div></div></div>'
+        );
+    }
+    if (talla) {
+        parts.push(
+            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
+            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-rulers text-success me-2"></i><span>Altura</span></h6>',
+            '<p class="card-text fw-bold mb-1 fs-6">', escapeHtmlSignos(ultimosSv.talla.value), ' cm</p>',
+            '</div></div></div>'
+        );
+    }
+    if (imc) {
+        parts.push(
+            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
+            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-graph-up text-info me-2"></i><span>IMC</span></h6>',
+            '<p class="card-text fw-bold mb-1 fs-6">', escapeHtmlSignos(ultimosSv.imc.value), '</p>',
+            '</div></div></div>'
+        );
+    }
+    if (ta) {
+        parts.push(
+            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
+            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-heart-pulse text-danger me-2"></i><span>Tensión Arterial</span></h6>',
+            '<p class="card-text fw-bold mb-1 fs-6">',
+            escapeHtmlSignos(ultimosSv.ta.sistolica), '/', escapeHtmlSignos(ultimosSv.ta.diastolica), ' mmHg</p>',
+            '</div></div></div>'
+        );
+    }
+    parts.push('</div>');
+    return parts.join('');
+}
+
+function formatFilaSignosVitalesModal(row) {
+    const fechaRaw = row.fecha_atencion != null && row.fecha_atencion !== '' ? row.fecha_atencion : row.fecha;
+    let fechaCell = '-';
+    if (fechaRaw) {
+        const s = String(fechaRaw);
+        if (/^\d{4}-\d{2}-\d{2}/.test(s) || s.indexOf('T') !== -1) {
+            const d = new Date(s);
+            fechaCell = !isNaN(d.getTime())
+                ? d.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                : escapeHtmlSignos(s);
+        } else {
+            fechaCell = escapeHtmlSignos(s);
+        }
+    }
+    let pa = '-';
+    if (row.ta1_sistolica != null && row.ta1_sistolica !== '' && row.ta1_diastolica != null && row.ta1_diastolica !== '') {
+        pa = '<span class="badge bg-primary">' + escapeHtmlSignos(row.ta1_sistolica) + '/' + escapeHtmlSignos(row.ta1_diastolica) + ' mmHg</span>';
+    } else if (row.ta && String(row.ta).indexOf('/') !== -1) {
+        pa = '<span class="badge bg-primary">' + escapeHtmlSignos(row.ta) + ' mmHg</span>';
+    }
+    const fc = row.frecuencia_cardiaca != null && row.frecuencia_cardiaca !== ''
+        ? '<span class="badge bg-info">' + escapeHtmlSignos(row.frecuencia_cardiaca) + ' lpm</span>'
+        : (row.fc != null && row.fc !== '' ? '<span class="badge bg-info">' + escapeHtmlSignos(row.fc) + ' lpm</span>' : '<span class="text-muted">-</span>');
+    const temp = row.temperatura != null && row.temperatura !== ''
+        ? '<span class="badge bg-warning">' + escapeHtmlSignos(row.temperatura) + '°C</span>'
+        : '<span class="text-muted">-</span>';
+    const spo2 = row.saturacion_oxigeno != null && row.saturacion_oxigeno !== ''
+        ? '<span class="badge bg-success">' + escapeHtmlSignos(row.saturacion_oxigeno) + '%</span>'
+        : '<span class="text-muted">-</span>';
+    const peso = row.peso != null && row.peso !== '' ? escapeHtmlSignos(row.peso) + ' kg' : '<span class="text-muted">-</span>';
+    const alt = row.talla != null && row.talla !== '' ? escapeHtmlSignos(row.talla) + ' cm' : '<span class="text-muted">-</span>';
+    const imc = row.imc != null && row.imc !== ''
+        ? '<span class="badge bg-secondary">' + escapeHtmlSignos(Number(row.imc).toFixed(1)) + '</span>'
+        : '<span class="text-muted">-</span>';
+    return (
+        '<tr><td>' + fechaCell + '</td><td>' + pa + '</td><td>' + fc + '</td><td>' + temp + '</td><td>' + spo2 + '</td><td>' + peso + '</td><td>' + alt + '</td><td>' + imc + '</td></tr>'
+    );
+}
+
+function buildSignosVitalesModalHtml(datosSv) {
+    if (!datosSv || !datosSv.length) {
+        return (
+            '<div class="signos-vitales-modal"><div class="card"><div class="card-header"><h5 class="card-title mb-0">' +
+            '<i class="bi bi-heart-pulse"></i> Historial de Signos Vitales</h5></div><div class="card-body">' +
+            '<div class="alert alert-info"><i class="bi bi-info-circle"></i> No se encontraron registros de signos vitales para este paciente.</div>' +
+            '</div></div></div>'
+        );
+    }
+    const rows = datosSv.map(formatFilaSignosVitalesModal).join('');
+    return (
+        '<div class="signos-vitales-modal"><div class="card"><div class="card-header"><h5 class="card-title mb-0">' +
+        '<i class="bi bi-heart-pulse"></i> Historial de Signos Vitales</h5></div><div class="card-body">' +
+        '<div class="table-responsive"><table class="table table-striped table-hover">' +
+        '<thead class="table-dark"><tr><th>Fecha</th><th>Presión Arterial</th><th>Frecuencia Cardíaca</th><th>Temperatura</th><th>Saturación O₂</th><th>Peso</th><th>Altura</th><th>IMC</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table></div></div></div></div>'
+    );
+}
+
+function getSignosVitalesFetchHeaders() {
+    if (typeof window.getBioenlaceApiClientHeaders === 'function') {
+        return window.getBioenlaceApiClientHeaders({ Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' });
+    }
+    return { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
+}
+
+// Función para cargar los signos vitales actuales (API v1 JSON)
 async function loadSignosVitalesActuales() {
     const content = document.getElementById('signos-vitales-actuales-content');
     
@@ -193,15 +321,12 @@ async function loadSignosVitalesActuales() {
     }
     
     try {
-        const url = `${endpoints.signosVitales}&actuales=1`;
+        const url = endpoints.signosVitales;
         console.log('Cargando signos vitales desde:', url);
         
         const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
+            headers: getSignosVitalesFetchHeaders(),
             credentials: 'same-origin'
         });
         
@@ -211,22 +336,23 @@ async function loadSignosVitalesActuales() {
             const data = await response.json();
             console.log('Datos recibidos:', data);
             
-            if (data && data.success) {
+            if (data && data.success && data.data) {
+                const d = data.data;
                 if (content) {
-                    content.innerHTML = data.html || '<div class="text-muted"><i class="bi bi-info-circle"></i> No hay datos disponibles</div>';
+                    content.innerHTML = buildSignosVitalesActualesHtml(d.ultimos_sv);
                     console.log('Contenido de signos vitales actualizado');
                 }
                 
                 // Actualizar título con fecha
                 const titulo = document.getElementById('signos-vitales-titulo');
-                if (titulo && data.fecha_titulo) {
-                    titulo.textContent = `SIGNOS VITALES ACTUALES (${data.fecha_titulo})`;
+                if (titulo && d.fecha_titulo) {
+                    titulo.textContent = 'SIGNOS VITALES ACTUALES (' + d.fecha_titulo + ')';
                 }
                 
                 // Mostrar link si hay más signos vitales
                 const link = document.getElementById('signos-vitales-link');
-                if (link && data.tiene_mas_sv) {
-                    link.style.display = 'block';
+                if (link) {
+                    link.style.display = d.tiene_mas_sv ? 'block' : 'none';
                 }
             } else {
                 if (content) {
@@ -252,19 +378,27 @@ async function loadSignosVitalesActuales() {
     }
 }
 
-// Función para cargar todos los signos vitales en el modal
+// Función para cargar todos los signos vitales en el modal (API v1 JSON)
 async function loadTodosLosSignosVitales() {
     const modalContent = document.getElementById('modal-signos-vitales-content');
     modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Cargando historial de signos vitales...</p></div>';
     
     try {
         const endpoints = getEndpoints();
-        const url = `${endpoints.signosVitales}&modal=1`;
-        const response = await fetch(url);
+        const url = endpoints.signosVitales;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: getSignosVitalesFetchHeaders(),
+            credentials: 'same-origin'
+        });
         
         if (response.ok) {
-            const html = await response.text();
-            modalContent.innerHTML = html;
+            const data = await response.json();
+            if (data && data.success && data.data && Array.isArray(data.data.datos_sv)) {
+                modalContent.innerHTML = buildSignosVitalesModalHtml(data.data.datos_sv);
+            } else {
+                modalContent.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> No se pudo interpretar la respuesta del servidor.</div>';
+            }
         } else {
             throw new Error('Error en la respuesta');
         }

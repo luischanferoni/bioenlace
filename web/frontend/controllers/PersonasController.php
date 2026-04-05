@@ -39,6 +39,7 @@ use common\models\ConsultasConfiguracion;
 use common\models\Consulta;
 use common\models\Guardia;
 use common\models\PersonaRepository;
+use common\components\Services\Persona\PersonaSignosVitalesService;
 use common\models\Percentilos;
 use common\models\ServiciosEfector;
 use common\models\DiagnosticoConsulta;
@@ -406,137 +407,24 @@ class PersonasController extends Controller
     public function actionSignosVitales($id)
     {
         $persona = $this->findModel($id);
-        $actuales = Yii::$app->getRequest()->getQueryParam('actuales', false);
-        $modal = Yii::$app->getRequest()->getQueryParam('modal', false);
-        
-        $datos_sv = PersonaRepository::getDatosSignosVitales($persona);
-        $ultimos_sv = PersonaRepository::getUltimosSignosVitales($datos_sv);
 
-        // Datos de prueba para signos vitales (solo en entorno de desarrollo o si se solicita)
-        if (defined('YII_DEBUG') && YII_DEBUG || Yii::$app->getRequest()->getQueryParam('simular_signos')) {
-            $now = date('Y-m-d H:i:s');
-            $fecha_formateada = date('d/m/Y H:i');
-            
-            // Simular datos en el formato correcto
-            $ultimos_sv = [
-                'peso' => [
-                    'value' => '70.5',
-                    'fecha' => $fecha_formateada
-                ],
-                'talla' => [
-                    'value' => '172',
-                    'fecha' => $fecha_formateada
-                ],
-                'imc' => [
-                    'value' => '23.8',
-                    'fecha' => $fecha_formateada
-                ],
-                'ta' => [
-                    'sistolica' => '120',
-                    'diastolica' => '80',
-                    'fecha' => $fecha_formateada
-                ]
-            ];
-            
-            // También simular datos_sv para el modal
-            $datos_sv = [
-                [
-                    'fecha_atencion' => $now,
-                    'peso' => 70.5,
-                    'talla' => 172,
-                    'imc' => 23.8,
-                    'ta1_sistolica' => 120,
-                    'ta1_diastolica' => 80
-                ],
-                [
-                    'fecha_atencion' => date('Y-m-d H:i:s', strtotime('-2 days')),
-                    'peso' => 70.0,
-                    'talla' => 172,
-                    'imc' => 23.6,
-                    'ta1_sistolica' => 118,
-                    'ta1_diastolica' => 76
-                ],
-                [
-                    'fecha' => date('Y-m-d H:i:s', strtotime('-7 days')),
-                    'ta' => '125/82',
-                    'fc' => 75,
-                    'fr' => 17,
-                    'temperatura' => 36.8,
-                    'peso' => 79.0,
-                    'talla' => 172
-                ],
-            ];
-            // No sobrescribir $ultimos_sv aquí, ya está configurado correctamente arriba
-        }
-        
-        // Si se solicitan signos vitales actuales
-        if ($actuales) {
-            // Para simulación, siempre considerar como actual
-            $es_actual = (defined('YII_DEBUG') && YII_DEBUG) || Yii::$app->getRequest()->getQueryParam('simular_signos');
-            $total_sv = count($datos_sv);
-            
-            // Obtener la fecha para el título
-            $fecha_titulo = '';
-            if (isset($ultimos_sv['peso']['fecha'])) {
-                $fecha_titulo = $ultimos_sv['peso']['fecha'];
-            } elseif (isset($ultimos_sv['talla']['fecha'])) {
-                $fecha_titulo = $ultimos_sv['talla']['fecha'];
-            } elseif (isset($ultimos_sv['imc']['fecha'])) {
-                $fecha_titulo = $ultimos_sv['imc']['fecha'];
-            } elseif (isset($ultimos_sv['ta']['fecha'])) {
-                $fecha_titulo = $ultimos_sv['ta']['fecha'];
-            }
-            
-            Yii::$app->response->format = Response::FORMAT_JSON;
-            return [
-                'success' => true,
-                'html' => $this->renderPartial('_signos_vitales_actuales', [
-                    'ultimos_sv' => $ultimos_sv,
-                    'es_actual' => $es_actual,
-                    'total_sv' => $total_sv,
-                ]),
-                'total_sv' => $total_sv,
-                'tiene_mas_sv' => $total_sv > 1,
-                'es_actual' => $es_actual,
-                'fecha_titulo' => $fecha_titulo
-            ];
-        }
-        
-        // Si es modal, devolver vista completa
-        if ($modal) {
-            // Debug temporal - remover después
-            \Yii::info('Datos SV para modal: ' . print_r($datos_sv, true), 'debug');
-            \Yii::info('Total registros SV: ' . count($datos_sv), 'debug');
-            
-            $data_provider = new \yii\data\ArrayDataProvider([
-                'allModels' => $datos_sv,
-                'pagination' => [
-                    'pageSize' => 10,
-                ],
-            ]);
-            
-            return $this->renderAjax('_signos_vitales_modal', [
-                'persona' => $persona,
-                'datos_sv' => $datos_sv,
-                'ultimos_sv' => $ultimos_sv,
-                'data_provider' => $data_provider,
-            ]);
-        }
-        
-        // Comportamiento por defecto
+        $simular = (defined('YII_DEBUG') && YII_DEBUG) || (bool) Yii::$app->getRequest()->getQueryParam('simular_signos');
+        $service = new PersonaSignosVitalesService();
+        $payload = $service->getSignosVitalesData($persona, $simular);
+        $datos_sv = $payload['datos_sv'];
+        $ultimos_sv = $payload['ultimos_sv'];
+
         $data_provider = new \yii\data\ArrayDataProvider([
             'allModels' => $datos_sv,
             'pagination' => false,
         ]);
-        
-        $context = [
+
+        return $this->renderAjax('signos_vitales', [
             'persona' => $persona,
             'datos_sv' => $datos_sv,
             'ultimos_sv' => $ultimos_sv,
             'data_provider' => $data_provider,
-        ];
-
-        return $this->renderAjax('signos_vitales', $context);
+        ]);
     }
 
    /* public function renderAjax($view, $params = [])

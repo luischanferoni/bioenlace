@@ -186,6 +186,8 @@ return [
                 'OPTIONS api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/crear',
                 
                 // Personas Timeline API (historia clínica)
+                'GET api/<version:\w+>/personas/<id:\d+>/signos-vitales' => '<version>/persona/signos-vitales',
+                'OPTIONS api/<version:\w+>/personas/<id:\d+>/signos-vitales' => '<version>/persona/signos-vitales',
                 'GET api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
                 'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
 

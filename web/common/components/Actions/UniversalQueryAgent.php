@@ -1092,22 +1092,20 @@ PROMPT;
             }
         }
 
-        // Score por entity (muy alto si coincide)
+        // Refuerzo si la IA acertó entity_type (moderado: no debe anular keywords/tags del docblock).
         if (!empty($criteria['entity_type']) && !empty($action['entity'])) {
             if (strtolower($action['entity']) === strtolower($criteria['entity_type'])) {
-                $score += 15.0; // Bonus muy alto por coincidencia de entity
+                $score += 7.0;
             }
         }
-        
-        // Bonus adicional si el controlador coincide con entity_type
+
         if (!empty($criteria['entity_type'])) {
             $entityTypeLower = strtolower($criteria['entity_type']);
             $controllerLower = strtolower($action['controller'] ?? '');
-            // Si entity_type es "Turnos" y controller es "turnos", dar bonus
-            if ($entityTypeLower === $controllerLower || 
+            if ($entityTypeLower === $controllerLower ||
                 stripos($controllerLower, $entityTypeLower) !== false ||
                 stripos($entityTypeLower, $controllerLower) !== false) {
-                $score += 12.0; // Bonus alto por coincidencia de controlador
+                $score += 5.0;
             }
         }
 
@@ -1334,11 +1332,14 @@ PROMPT;
         $actionsSummary = [];
         
         foreach ($actionsSample as $action) {
-            $actionsSummary[] = [
+            $actionsSummary[] = array_filter([
                 'route' => $action['route'],
                 'name' => $action['display_name'],
                 'description' => $action['description'],
-            ];
+                'entity' => $action['entity'] ?? null,
+            ], static function ($v) {
+                return $v !== null && $v !== '';
+            });
         }
 
         $actionsJson = json_encode($actionsSummary, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
@@ -1433,11 +1434,14 @@ PROMPT;
         // Preparar resumen de acciones para la IA
         $actionsSummary = [];
         foreach (array_slice($actions, 0, 10) as $action) {
-            $actionsSummary[] = [
+            $actionsSummary[] = array_filter([
                 'route' => $action['route'],
                 'name' => $action['display_name'],
                 'description' => $action['description'],
-            ];
+                'entity' => $action['entity'] ?? null,
+            ], static function ($v) {
+                return $v !== null && $v !== '';
+            });
         }
 
         $actionsJson = json_encode($actionsSummary, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

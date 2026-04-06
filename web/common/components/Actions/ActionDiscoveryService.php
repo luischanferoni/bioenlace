@@ -26,7 +26,7 @@ class ActionDiscoveryService
     /**
      * Cache key para acciones descubiertas
      */
-    public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v5';
+    public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v6';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**

@@ -32,7 +32,7 @@ class AgendaController extends BaseController
      * @action_name Ver mi agenda del día (profesional)
      * @entity Agendas
      * @tags agenda,profesional,operativo,dia,citas,turnos-asignados
-     * @keywords agenda del día, turnos de hoy, pacientes hoy, mi día
+     * @keywords agenda, agenda del día, turnos de hoy, pacientes hoy, mi día, ocupación
      * @synonyms qué tengo hoy, citas del día, ocupación del día
      */
     public function actionDia()

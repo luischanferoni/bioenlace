@@ -182,17 +182,26 @@ $urlEncounterClasses = Url::to(['/api/v1/catalogos/encounter-classes'], true);
                     id_efector: $("input[name=nombre_efector]:checked", "#grid_efectores").val()
                 },
                 success: function (res) {
-                    var html = "";
-                    var esc = function (t) { return $("<div>").text(t == null ? "" : String(t)).html(); };
                     var servicios = (res && res.servicios) ? res.servicios : (res && res.data && res.data.servicios ? res.data.servicios : []);
-                    if (servicios && servicios.length) {
-                        servicios.forEach(function (s) {
-                            var id = parseInt(s.id_servicio, 10);
-                            html += "<input type=\"radio\" name=\"servicio\" class=\"btn-check\" id=\"btn-check-servicio-" + id + "\" value=\"" + id + "\">";
-                            html += "<label class=\"btn btn-soft-primary p-5\" for=\"btn-check-servicio-" + id + "\"><h3>" + esc(s.nombre) + "</h3></label>";
-                        });
-                    }
-                    $("#div_servicios").html(html);
+                    var container = document.getElementById("div_servicios");
+                    var tmpl = document.getElementById("tmpl_servicio");
+                    if (!container || !tmpl) return;
+                    container.innerHTML = "";
+                    (servicios || []).forEach(function (s, idx) {
+                        var id = parseInt(s.id_servicio, 10);
+                        var nombre = s.nombre == null ? "" : String(s.nombre);
+                        if (!id) return;
+                        var node = document.importNode(tmpl.content, true);
+                        var input = node.querySelector("input[name=servicio]");
+                        var label = node.querySelector("label");
+                        var h3 = node.querySelector("h3");
+                        var inputId = "btn-check-servicio-" + idx + "-" + id;
+                        input.id = inputId;
+                        input.value = String(id);
+                        label.setAttribute("for", inputId);
+                        h3.textContent = nombre;
+                        container.appendChild(node);
+                    });
                 },
                 error: function () {
                     $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"

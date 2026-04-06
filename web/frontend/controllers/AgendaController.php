@@ -16,6 +16,7 @@ class AgendaController extends Controller
 {
     public function actionIndex()
     {
+        $this->layout = 'blanco';
         $tiposDia = ArrayHelper::map(
             Tipo_dia::find()->orderBy(['nombre' => SORT_ASC])->all(),
             'id_tipo_dia',

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import '../models/timeline_event.dart';
-import '../services/timeline_service.dart';
+import '../services/historia_clinica_service.dart';
 import '../services/consulta_guardar_service.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
@@ -29,9 +29,9 @@ class PatientTimelineScreen extends StatefulWidget {
 }
 
 class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
-  final TimelineService _timelineService = TimelineService();
+  final HistoriaClinicaService _historiaClinicaService = HistoriaClinicaService();
   final ConsultaGuardarService _consultaGuardar = ConsultaGuardarService();
-  TimelineResponse? _timelineData;
+  HistoriaClinicaResponse? _historiaClinicaData;
   bool _isLoading = true;
   String _errorMessage = '';
   bool _guardandoConsulta = false;
@@ -49,10 +49,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   void initState() {
     super.initState();
     if (widget.authToken != null) {
-      _timelineService.authToken = widget.authToken;
+      _historiaClinicaService.authToken = widget.authToken;
       _consultaGuardar.authToken = widget.authToken;
     }
-    _cargarTimeline();
+    _cargarHistoriaClinica();
   }
 
   @override
@@ -62,21 +62,22 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     super.dispose();
   }
 
-  Future<void> _cargarTimeline() async {
+  Future<void> _cargarHistoriaClinica() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
     try {
-      final data = await _timelineService.getTimeline(widget.personaId);
+      final data =
+          await _historiaClinicaService.getHistoriaClinica(widget.personaId);
       setState(() {
-        _timelineData = data;
+        _historiaClinicaData = data;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al cargar timeline: ${e.toString()}';
+        _errorMessage = 'Error al cargar historia clínica: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -106,13 +107,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: _cargarTimeline,
+                        onPressed: _cargarHistoriaClinica,
                         child: const Text('Reintentar'),
                       ),
                     ],
                   ),
                 )
-              : _timelineData == null
+              : _historiaClinicaData == null
                   ? const Center(child: Text('No hay datos disponibles'))
                   : Column(
                       children: [
@@ -122,11 +123,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Header con datos del paciente
-                                _buildPacienteHeader(_timelineData!.persona),
+                                _buildPacienteHeader(_historiaClinicaData!.persona),
                                 // Información médica
-                                _buildInformacionMedica(_timelineData!.informacionMedica),
+                                _buildInformacionMedica(
+                                    _historiaClinicaData!.informacionMedica),
                                 // Motivos de esta consulta
-                                _buildMotivosConsulta(_timelineData!.timeline),
+                                _buildMotivosConsulta(
+                                    _historiaClinicaData!.historiaClinica),
                               ],
                             ),
                           ),

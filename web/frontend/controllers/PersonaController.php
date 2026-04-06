@@ -12,7 +12,7 @@ class PersonaController extends Controller
     public $modelClass = 'common\models\Persona';
 
     /** Acciones sin auth para API (leído por BaseController de la API). */
-    public static $authenticatorExcept = ['timeline'];
+    public static $authenticatorExcept = ['historia-clinica'];
 
     /**
      * Respuesta de éxito estándar (copiada de BaseController para uso en frontend).

@@ -234,7 +234,7 @@ Modal::end();
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
             signosVitales: <?= json_encode(\yii\helpers\Url::to(['/v1/persona/signos-vitales', 'id' => (int) $persona->id_persona], true), JSON_UNESCAPED_SLASHES) ?>,
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
-            timeline: '/api/v1/personas/<?= (int) $persona->id_persona ?>/timeline'
+            historiaClinica: '/api/v1/personas/<?= (int) $persona->id_persona ?>/historia-clinica'
         }
     };
 
@@ -275,11 +275,11 @@ Modal::end();
     async function loadTimelineSummary() {
         try {
             var endpoints = timelineConfig.endpoints || {};
-            if (!endpoints.timeline) return;
-            var resp = await fetch(endpoints.timeline, { headers: bioHeaders() });
+            if (!endpoints.historiaClinica) return;
+            var resp = await fetch(endpoints.historiaClinica, { headers: bioHeaders() });
             var payload = await resp.json();
             if (!payload || payload.success !== true || !payload.data) {
-                throw new Error((payload && payload.message) ? payload.message : 'Error al cargar timeline');
+                throw new Error((payload && payload.message) ? payload.message : 'Error al cargar historia clínica');
             }
             var info = payload.data.informacion_medica || {};
             renderBadges('tl_condiciones_activas', info.condiciones_activas || [], 'border border-info text-info');

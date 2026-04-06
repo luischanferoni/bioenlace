@@ -100,12 +100,12 @@ class PacientesController extends BaseController
     }
 
     /**
-     * Timeline clínico de una persona (vista paciente).
+     * Historia clínica agregada de una persona (vista paciente).
      *
-     * GET /api/v1/personas/{id}/timeline
-     * RBAC: /api/pacientes/timeline
+     * GET /api/v1/personas/{id}/historia-clinica
+     * RBAC: /api/pacientes/historia-clinica
      */
-    public function actionTimeline($id)
+    public function actionHistoriaClinica($id)
     {
         $persona = Persona::findOne((int) $id);
         if (!$persona) {
@@ -155,7 +155,7 @@ class PacientesController extends BaseController
         $idEfector = Yii::$app->user->getIdEfector();
         $motivosConsulta = $idEfector ? Consulta::getUltimoMotivoConsultaTurno((int) $persona->id_persona, (int) $idEfector) : null;
 
-        // Timeline de eventos (mínimo viable: turnos + consultas).
+        // Registros de historia clínica (mínimo viable: turnos + consultas).
         $events = [];
 
         $turnos = Turno::find()
@@ -226,8 +226,8 @@ class PacientesController extends BaseController
                 'antecedentes_familiares' => $antecedentesFamiliares,
                 'motivos_consulta' => $motivosConsulta,
             ],
-            'timeline' => $events,
-            'total_eventos' => count($events),
+            'historia_clinica' => $events,
+            'total_historia_clinica' => count($events),
         ], 'OK');
     }
 

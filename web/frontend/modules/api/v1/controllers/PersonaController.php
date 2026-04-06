@@ -5,10 +5,10 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\models\Persona;
 use common\components\Services\Persona\PersonaSignosVitalesService;
-// Nota: el timeline clínico vive en PacientesController (persona en rol paciente).
+// Nota: la historia clínica agregada vive en PacientesController (persona en rol paciente).
 
 /**
- * API Persona: CRUD, signos vitales y timeline (historia clínica).
+ * API Persona: CRUD y signos vitales. Historia clínica: {@see PacientesController::actionHistoriaClinica}.
  * Lógica migrada desde frontend\controllers\PersonaController.
  */
 class PersonaController extends BaseController
@@ -111,7 +111,7 @@ class PersonaController extends BaseController
         return $this->success($payload, 'Signos vitales obtenidos');
     }
 
-    // actionTimeline removida: usar GET /api/v1/personas/{id}/timeline (PacientesController::actionTimeline)
+    // Historia clínica: GET /api/v1/personas/{id}/historia-clinica → PacientesController::actionHistoriaClinica
 
     /**
      * POST /api/v1/persona/create

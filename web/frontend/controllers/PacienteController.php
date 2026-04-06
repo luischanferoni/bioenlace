@@ -441,7 +441,7 @@ class PacienteController extends Controller
             return strtotime($b['fecha']) - strtotime($a['fecha']);
         });
 */
-        // Migración: el resumen clínico y timeline se consumen desde la API (GET /api/v1/personas/{id}/timeline).
+        // Migración: el resumen clínico se consume desde la API (GET /api/v1/personas/{id}/historia-clinica).
         // El frontend sólo renderiza la vista.
         return $this->render('timeline/timeline', [
             'persona' => $paciente,

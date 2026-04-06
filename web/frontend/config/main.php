@@ -194,8 +194,8 @@ return [
                 // Personas Timeline API (historia clínica)
                 'GET api/<version:\w+>/personas/<id:\d+>/signos-vitales' => '<version>/persona/signos-vitales',
                 'OPTIONS api/<version:\w+>/personas/<id:\d+>/signos-vitales' => '<version>/persona/signos-vitales',
-                'GET api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/pacientes/timeline',
-                'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/pacientes/timeline',
+                'GET api/<version:\w+>/personas/<id:\d+>/historia-clinica' => '<version>/pacientes/historia-clinica',
+                'OPTIONS api/<version:\w+>/personas/<id:\d+>/historia-clinica' => '<version>/pacientes/historia-clinica',
 
                 // Config API
                 // (Se eliminan endpoints de listados en ConfigController; ver Efectores/Rrhh/Catálogos/SesiónOperativa)

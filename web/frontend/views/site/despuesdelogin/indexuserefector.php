@@ -1,8 +1,5 @@
 <?php
 
-use yii\helpers\Html;
-use yii\grid\GridView;
-
 ?>
 <div class="card">
     <div class="card-body">
@@ -11,25 +8,13 @@ use yii\grid\GridView;
         </div>
 
         <div class="custom-table-effect">
-
-            <?= GridView::widget([
-                'dataProvider' => $dataProviderEfectores,
-                'id' => 'grid_efectores',
-                'columns' => [
-                    [
-                        'attribute'=> 'nombre',
-                        'label'=> 'Efector',
-                        'format'=> 'raw',
-                        'value' => function ($model, $key, $index) {
-                            
-                            return Html::radio('nombre_efector', false, 
-                                        ['label' => $model->nombre, 'value' => $model->id_efector]);
-                        },
-
-                    ],
-            
-                ],
-            ]); ?>
+            <div id="grid_efectores" class="d-flex flex-column gap-2"></div>
+            <template id="tmpl_efector_radio">
+                <div class="form-check">
+                    <input type="radio" class="form-check-input" name="nombre_efector" />
+                    <label class="form-check-label"></label>
+                </div>
+            </template>
 
         </div>
     </div>

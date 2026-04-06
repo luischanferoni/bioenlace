@@ -14,7 +14,6 @@ use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Persona;
 use common\models\Agenda_rrhh;
-use common\models\busquedas\EfectorBusqueda;
 
 class SiteController extends Controller
 {
@@ -101,14 +100,7 @@ class SiteController extends Controller
         if (!$idEfector || !$servicioActual || !$encounterClass) {
             $this->layout = 'main_sinmenuizquierda';
 
-            $searchEfectores = new EfectorBusqueda();
-            $array_efectores = Yii::$app->user->getEfectores() ?? [];
-            $dataProviderEfectores = $searchEfectores->search(['EfectorBusqueda' => ['efectores' => array_keys($array_efectores)]]);
-
-            return $this->render('despuesdelogin/inicio', [
-                'searchEfectores' => $searchEfectores,
-                'dataProviderEfectores' => $dataProviderEfectores,
-            ]);
+            return $this->render('despuesdelogin/inicio');
         }
 
         $fechaParam = Yii::$app->request->get('fecha');

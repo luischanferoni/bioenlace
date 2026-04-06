@@ -192,26 +192,30 @@ return [
                 'OPTIONS api/<version:\w+>/personas/<id:\d+>/timeline' => '<version>/persona/timeline',
 
                 // Config API
-                'GET api/<version:\w+>/config/efectores' => '<version>/config/listar-efectores',
-                'OPTIONS api/<version:\w+>/config/efectores' => '<version>/config/listar-efectores',
-                'GET api/<version:\w+>/config/servicios' => '<version>/config/listar-servicios',
-                'OPTIONS api/<version:\w+>/config/servicios' => '<version>/config/listar-servicios',
-                'GET api/<version:\w+>/config/encounter-classes' => '<version>/config/listar-encounter-classes',
-                'OPTIONS api/<version:\w+>/config/encounter-classes' => '<version>/config/listar-encounter-classes',
-                'POST api/<version:\w+>/config/set-session' => '<version>/config/establecer-session',
-                'OPTIONS api/<version:\w+>/config/set-session' => '<version>/config/establecer-session',
+                // (Se eliminan endpoints de listados en ConfigController; ver Efectores/Rrhh/Catálogos/SesiónOperativa)
                 
                 // Efectores API - Búsqueda
                 'GET api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
                 'POST api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
                 'OPTIONS api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
+                'GET api/<version:\w+>/efectores/mis-efectores' => '<version>/efectores/mis-efectores',
+                'OPTIONS api/<version:\w+>/efectores/mis-efectores' => '<version>/efectores/mis-efectores',
                 
                 // Recursos Humanos API - Búsqueda
                 'GET api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',
                 'POST api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',
                 'OPTIONS api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',
+                'GET api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
                 'POST api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
                 'OPTIONS api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
+
+                // Catálogos API
+                'GET api/<version:\w+>/catalogos/encounter-classes' => '<version>/catalogos/encounter-classes',
+                'OPTIONS api/<version:\w+>/catalogos/encounter-classes' => '<version>/catalogos/encounter-classes',
+
+                // Sesión Operativa API
+                'POST api/<version:\w+>/sesion-operativa/establecer' => '<version>/sesion-operativa/establecer',
+                'OPTIONS api/<version:\w+>/sesion-operativa/establecer' => '<version>/sesion-operativa/establecer',
                 
                 // CRUD API
                 'GET api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',

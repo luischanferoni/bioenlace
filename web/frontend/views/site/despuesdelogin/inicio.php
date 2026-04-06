@@ -12,6 +12,7 @@ use frontend\assets\FormWizardAsset;
 FormWizardAsset::register($this);
 
 $urlServiciosPorRrhh = Url::to(['/api/v1/rrhh/servicios-por-rrhh'], true);
+$urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'], true);
 ?>
 
     <?php $form = ActiveForm::begin([
@@ -87,7 +88,7 @@ $urlServiciosPorRrhh = Url::to(['/api/v1/rrhh/servicios-por-rrhh'], true);
                 : {};
             $.ajax({
                 url: '.json_encode($urlServiciosPorRrhh).',
-                type: "POST",
+                type: "GET",
                 headers: headers,
                 dataType: "json",
                 data: {
@@ -96,8 +97,9 @@ $urlServiciosPorRrhh = Url::to(['/api/v1/rrhh/servicios-por-rrhh'], true);
                 success: function (res) {
                     var html = "";
                     var esc = function (t) { return $("<div>").text(t == null ? "" : String(t)).html(); };
-                    if (res.servicios && res.servicios.length) {
-                        res.servicios.forEach(function (s) {
+                    var servicios = (res && res.servicios) ? res.servicios : (res && res.data && res.data.servicios ? res.data.servicios : []);
+                    if (servicios && servicios.length) {
+                        servicios.forEach(function (s) {
                             var id = parseInt(s.id_servicio, 10);
                             html += "<input type=\"radio\" name=\"servicio\" class=\"btn-check\" id=\"btn-check-servicio-" + id + "\" value=\"" + id + "\">";
                             html += "<label class=\"btn btn-soft-primary p-5\" for=\"btn-check-servicio-" + id + "\"><h3>" + esc(s.nombre) + "</h3></label>";
@@ -128,17 +130,30 @@ $urlServiciosPorRrhh = Url::to(['/api/v1/rrhh/servicios-por-rrhh'], true);
         $("#formwizard_servicios .next").on("click", function(e){
             e.preventDefault();
 
-            $.ajax({
-                url: "'.Url::to(['site/establecer-session-final']).'",
-                type: "POST",
-                data: {
-                    idEfector: $("input[name=nombre_efector]:checked", "#grid_efectores").val(), 
-                    encounterClass: $("input[name=encounter_class]:checked").val(),
-                    servicio: $("input[name=servicio]:checked").val()
-                },
-                success: function (data) {
+            var headers = (typeof window.getBioenlaceApiClientHeaders === "function")
+                ? window.getBioenlaceApiClientHeaders({})
+                : {};
 
-                    window.location.replace(data);
+            $.ajax({
+                url: '.json_encode($urlEstablecerSesionOperativa).',
+                type: "POST",
+                headers: headers,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                data: JSON.stringify({
+                    efector_id: parseInt($("input[name=nombre_efector]:checked", "#grid_efectores").val(), 10),
+                    encounter_class: $("input[name=encounter_class]:checked").val(),
+                    servicio_id: parseInt($("input[name=servicio]:checked").val(), 10)
+                }),
+                success: function (res) {
+                    var redirectUrl = res && res.data && res.data.redirect_url ? res.data.redirect_url : null;
+                    if (redirectUrl) {
+                        window.location.replace(redirectUrl);
+                        return;
+                    }
+                    $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
+                        +"<i class=\'fa fa-exclamation fa-1x\'></i> No se pudo determinar URL de redirección</div>");
+                    window.setTimeout(function() { $(".alert").alert("close"); }, 6000);
                 },
                 error: function () {
                     $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"

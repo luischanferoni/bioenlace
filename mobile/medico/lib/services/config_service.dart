@@ -28,7 +28,7 @@ class ConfigService {
         queryParams['user_id'] = userId;
       }
       
-      final uri = Uri.parse('${AppConfig.apiUrl}/config/efectores').replace(
+      final uri = Uri.parse('${AppConfig.apiUrl}/efectores/mis-efectores').replace(
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       
@@ -52,7 +52,7 @@ class ConfigService {
       
       if (bodyTrimmed.startsWith('<!DOCTYPE') || bodyTrimmed.startsWith('<html')) {
         throw Exception('La API devolvió HTML en lugar de JSON. Esto puede indicar:\n'
-            '1. La URL está incorrecta: ${AppConfig.apiUrl}/config/efectores\n'
+            '1. La URL está incorrecta: ${AppConfig.apiUrl}/efectores/mis-efectores\n'
             '2. Falta autenticación o el token es inválido\n'
             '3. El servidor está redirigiendo a una página de login\n\n'
             'Verifique que:\n'
@@ -107,7 +107,7 @@ class ConfigService {
         queryParams['user_id'] = userId;
       }
       
-      final uri = Uri.parse('${AppConfig.apiUrl}/config/servicios').replace(
+      final uri = Uri.parse('${AppConfig.apiUrl}/rrhh/servicios-por-rrhh').replace(
         queryParameters: queryParams,
       );
 
@@ -140,7 +140,7 @@ class ConfigService {
   Future<List<EncounterClass>> getEncounterClasses() async {
     try {
       final response = await http.get(
-        Uri.parse('${AppConfig.apiUrl}/config/encounter-classes'),
+        Uri.parse('${AppConfig.apiUrl}/catalogos/encounter-classes'),
         headers: _headers,
       );
 
@@ -183,12 +183,12 @@ class ConfigService {
         body['user_id'] = userId;
       }
       
-      print('Request URL: ${AppConfig.apiUrl}/config/set-session');
+      print('Request URL: ${AppConfig.apiUrl}/sesion-operativa/establecer');
       print('Request body: $body');
       print('Headers: $_headers');
       
       final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/config/set-session'),
+        Uri.parse('${AppConfig.apiUrl}/sesion-operativa/establecer'),
         headers: _headers,
         body: json.encode(body),
       );

@@ -1,8 +1,4 @@
-<?php
-
-use common\models\ConsultasConfiguracion;
-
-?>
+<?php ?>
 
 <div class="card">
     <div class="card-body">

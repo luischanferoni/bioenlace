@@ -21,6 +21,46 @@ class EfectoresController extends BaseController
     }
 
     /**
+     * GET /api/v1/efectores/mis-efectores
+     * Devuelve los efectores disponibles para la persona autenticada.
+     */
+    public function actionMisEfectores()
+    {
+        try {
+            $efectores = Yii::$app->user->getEfectores() ?? [];
+            if (empty($efectores)) {
+                return $this->error('No se encontraron efectores asignados para este usuario', null, 404);
+            }
+
+            $formatted = [];
+            // Puede venir como lista (array de arrays) o como mapa [id => nombre]
+            if (isset($efectores[0]) && is_array($efectores[0])) {
+                foreach ($efectores as $efector) {
+                    $formatted[] = [
+                        'id_efector' => (int) ($efector['id_efector'] ?? 0),
+                        'id' => (int) ($efector['id_efector'] ?? 0),
+                        'nombre' => (string) ($efector['nombre'] ?? ''),
+                        'id_localidad' => isset($efector['id_localidad']) ? (int) $efector['id_localidad'] : null,
+                    ];
+                }
+            } else {
+                foreach ($efectores as $idEfector => $nombre) {
+                    $formatted[] = [
+                        'id_efector' => (int) $idEfector,
+                        'id' => (int) $idEfector,
+                        'nombre' => (string) $nombre,
+                    ];
+                }
+            }
+
+            return $this->success(['efectores' => $formatted]);
+        } catch (\Throwable $e) {
+            Yii::error('Error obteniendo mis efectores: ' . $e->getMessage());
+            return $this->error('Error al obtener efectores', null, 500);
+        }
+    }
+
+    /**
      * GET/POST /api/v1/efectores/buscar
      * Parámetros: q (opcional), id_localidad, id_departamento, id_servicio, dependencia, tipologia, estado,
      * latitud, longitud, radio_km, limit, sort_by, sort_order, etc.

@@ -341,7 +341,7 @@ class TurnosController extends BaseController
     {
         $idEfector = Yii::$app->user->getIdEfector();
         if (!$idEfector) {
-            throw new BadRequestHttpException('No se pudo determinar el efector; configure sesión operativa (config/set-session).');
+            throw new BadRequestHttpException('No se pudo determinar el efector; configure sesión operativa (sesion-operativa/establecer).');
         }
         $idPersona = (int) Yii::$app->user->getIdPersona();
         $svc = new \common\components\Services\Turnos\TurnoCancellationPolicyService();

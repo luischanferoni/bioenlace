@@ -12,6 +12,7 @@ use common\models\RrhhServicio;
 use common\models\User;
 use webvimark\modules\UserManagement\components\AuthHelper;
 use common\components\Actions\AllowedRoutesResolver;
+use Firebase\JWT\JWT;
 
 /**
  * Orquesta el establecimiento del "contexto operativo" en sesión (efector, RRHH, servicio y encounter class),
@@ -23,7 +24,7 @@ class SesionOperativaService extends Component
 {
     /**
      * @param array{efector_id:mixed, servicio_id:mixed, encounter_class:mixed} $body
-     * @return array{efector:array{id:int,nombre:string},servicio:array{id:int,nombre:string,id_rrhh_servicio:int},encounter_class:array{code:string,label:string},rrhh_id:int,redirect_url:string}
+     * @return array{efector:array{id:int,nombre:string},servicio:array{id:int,nombre:string,id_rrhh_servicio:int},encounter_class:array{code:string,label:string},rrhh_id:int,redirect_url:string,context_token:string}
      */
     public function establecer(array $body): array
     {
@@ -86,6 +87,22 @@ class SesionOperativaService extends Component
 
         $redirectUrl = Yii::$app->urlManager->createUrl($this->getRedirectRouteForCurrentUser());
 
+        // Token stateless con contexto operativo: permite que clientes móviles operen sin cookie de sesión.
+        $identity = Yii::$app->user->identity;
+        $payload = [
+            'user_id' => (int) ($identity->id ?? 0),
+            'email' => (string) ($identity->email ?? ''),
+            'id_persona' => (int) Yii::$app->user->getIdPersona(),
+            'id_efector' => (int) $rrhhEfector->id_efector,
+            'id_rr_hh' => (int) $rrhhEfector->id_rr_hh,
+            'servicio_actual' => (int) $servicioId,
+            'id_rrhh_servicio' => (int) $rrhhServicio->id,
+            'encounter_class' => (string) $encounterClass,
+            'iat' => time(),
+            'exp' => time() + (24 * 60 * 60),
+        ];
+        $contextToken = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
+
         return [
             'efector' => [
                 'id' => (int) $rrhhEfector->id_efector,
@@ -102,6 +119,7 @@ class SesionOperativaService extends Component
             ],
             'rrhh_id' => (int) $rrhhEfector->id_rr_hh,
             'redirect_url' => (string) $redirectUrl,
+            'context_token' => (string) $contextToken,
         ];
     }
 

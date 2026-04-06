@@ -137,6 +137,28 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             $session->set('efectores', RrhhEfector::getEfectores($persona->id_persona));
         }
 
+        // Contexto operativo stateless: si el token trae claims de sesión operativa, aplicarlos.
+        // Estos claims SOLO deben ser emitidos por el backend (SesionOperativaService) tras validar coherencia.
+        try {
+            if (isset($decoded->id_efector)) {
+                Yii::$app->user->setIdEfector((int) $decoded->id_efector);
+            }
+            if (isset($decoded->id_rr_hh)) {
+                Yii::$app->user->setIdRecursoHumano((int) $decoded->id_rr_hh);
+            }
+            if (isset($decoded->servicio_actual)) {
+                Yii::$app->user->setServicioActual((int) $decoded->servicio_actual);
+            }
+            if (isset($decoded->id_rrhh_servicio)) {
+                Yii::$app->user->setIdRrhhServicio((int) $decoded->id_rrhh_servicio);
+            }
+            if (isset($decoded->encounter_class)) {
+                Yii::$app->user->setEncounterClass((string) $decoded->encounter_class);
+            }
+        } catch (\Throwable $e) {
+            Yii::debug('No se pudo aplicar contexto desde JWT: ' . $e->getMessage(), 'auth.jwt');
+        }
+
         $user->setIdentity($userModel);
         // Igual que en frontend\components\UserConfig::afterLogin: updatePermissions trabaja sobre la identidad.
         // Si se pasa el componente Yii::$app->user, en algunos contextos no se hidratan __userRoutes/__userRoles

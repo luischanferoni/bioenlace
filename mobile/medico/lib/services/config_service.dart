@@ -118,14 +118,20 @@ class ConfigService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> jsonServicios = data['data']['servicios'] as List<dynamic>;
-          return jsonServicios
-              .map((json) => Servicio.fromJson(json as Map<String, dynamic>))
-              .toList();
+        // Este endpoint puede devolver:
+        // 1) Formato estándar: {success:true, data:{servicios:[...]}}
+        // 2) Formato legacy: {servicios:[...]} (sin wrapper)
+        List<dynamic> jsonServicios = [];
+        if (data is Map && data['success'] == true && data['data'] != null) {
+          jsonServicios = (data['data']['servicios'] as List<dynamic>? ?? []);
+        } else if (data is Map && data['servicios'] is List) {
+          jsonServicios = data['servicios'] as List<dynamic>;
         } else {
-          throw Exception(data['message'] ?? 'Error al obtener servicios');
+          throw Exception((data is Map ? data['message'] : null) ?? 'Error al obtener servicios');
         }
+        return jsonServicios
+            .map((json) => Servicio.fromJson(json as Map<String, dynamic>))
+            .toList();
       } else {
         final errorData = json.decode(response.body);
         throw Exception(errorData['message'] ?? 'Error al obtener servicios');
@@ -299,12 +305,14 @@ class SessionConfig {
   final Servicio servicio;
   final EncounterClass encounterClass;
   final int rrhhId;
+  final String? contextToken;
 
   SessionConfig({
     required this.efector,
     required this.servicio,
     required this.encounterClass,
     required this.rrhhId,
+    this.contextToken,
   });
 
   factory SessionConfig.fromJson(Map<String, dynamic> json) {
@@ -313,6 +321,7 @@ class SessionConfig {
       servicio: Servicio.fromJson(json['servicio'] as Map<String, dynamic>),
       encounterClass: EncounterClass.fromJson(json['encounter_class'] as Map<String, dynamic>),
       rrhhId: (json['rrhh_id'] as int?) ?? 0,
+      contextToken: json['context_token'] as String?,
     );
   }
 }

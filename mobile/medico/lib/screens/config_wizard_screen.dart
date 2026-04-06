@@ -191,6 +191,10 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setString('encounter_class_label', sessionConfig.encounterClass.label);
       await prefs.setInt('rrhh_id', sessionConfig.rrhhId);
       await prefs.setBool('config_completed', true);
+      // Usar el token con contexto operativo para el resto de llamadas (stateless; no depende de cookies).
+      if (sessionConfig.contextToken != null && sessionConfig.contextToken!.isNotEmpty) {
+        await prefs.setString('auth_token', sessionConfig.contextToken!);
+      }
 
       // Navegar al MainScreen
       if (mounted) {

@@ -28,12 +28,18 @@
             dataObj = {};
         } else if (typeof originalData === 'string') {
             try {
+                var trimmed = originalData.trim();
+                // Si es JSON, parsearlo (caso típico: $.ajax con contentType application/json y data = JSON.stringify(...))
+                if (trimmed && (trimmed[0] === '{' || trimmed[0] === '[')) {
+                    dataObj = JSON.parse(trimmed);
+                } else {
                 // intentar parsear querystring
                 originalData.split('&').forEach(function(pair){
                     if (!pair) return;
                     var parts = pair.split('=');
                     dataObj[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1] || '');
                 });
+                }
             } catch(e){
                 dataObj = { payload: originalData };
             }
@@ -67,6 +73,7 @@
 
                 var method = (options.method || options.type || 'GET').toUpperCase();
                 if (method === 'POST') {
+                    // Para JSON: si data es string JSON, mergeData lo parsea correctamente y evita claves "raras".
                     options.data = mergeData(options.data);
                     // if contentType is application/json and data is object, stringify
                     var contentType = options.contentType;

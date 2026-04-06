@@ -38,6 +38,13 @@ function getEventos(dia) {
   );
 }
 
+function bioHeaders() {
+  if (typeof window.getBioenlaceApiClientHeaders === "function") {
+    return window.getBioenlaceApiClientHeaders();
+  }
+  return {};
+}
+
 $(document).ready(function () {
 
   var hoy = new Date().toISOString().slice(0, 10);
@@ -156,13 +163,15 @@ $(document).ready(function () {
       }
       //$('#btn_turno_create').html('Cancelando turno..');
 
-      $.post(
-        turnos_url_delete + "/" + id_turno,
-        {
-          "Turno[estado_motivo]": motivo_cancelacion,
+      $.ajax({
+        url: turnos_url_cancelar_operativo_base + "/" + id_turno + "/cancelar-operativo",
+        type: "POST",
+        headers: bioHeaders(),
+        data: {
+          estado_motivo: motivo_cancelacion,
+          canal: "web",
         },
-        function (data) {}
-      )
+      })
         .done(function (data) {
           if (data.success == true) {
             alertaFlotante("Listo", "success");
@@ -181,19 +190,19 @@ $(document).ready(function () {
   $(document).on("click", "#btn_turno_sobreturno", function (e) {
     e.preventDefault();
     $("#btn_turno_sobreturno").prop("disabled", true);
-    $.post(
-      typeof turnos_url_crear_sobreturno !== "undefined"
-        ? turnos_url_crear_sobreturno
-        : turnos_url_create.replace("/create", "/crear-sobreturno"),
-      {
-        "Turno[fecha]": $("#fecha_input").val(),
-        "Turno[hora]": $("#hora_input").val(),
-        "Turno[id_rrhh_servicio_asignado]": turnos_id_rrhh_sa,
-        "Turno[id_servicio_asignado]": turnos_id_servicio,
-        "Turno[id_efector]": turnos_id_efector,
+    $.ajax({
+      url: turnos_url_crear_sobreturno,
+      type: "POST",
+      headers: bioHeaders(),
+      data: {
+        id_persona: turnos_id_persona,
+        fecha: $("#fecha_input").val(),
+        hora: $("#hora_input").val(),
+        id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
+        id_servicio_asignado: turnos_id_servicio,
+        id_efector: turnos_id_efector,
       },
-      function (data) {}
-    )
+    })
       .done(function (data) {
         if (data.success == true) {
           alertaFlotante("Sobreturno registrado", "success");
@@ -216,24 +225,25 @@ $(document).ready(function () {
 
     $("#btn_turno_create").prop("disabled", true);
     // $('#btn_turno_create').html('Creando turno..');
-    $.post(
-      turnos_url_create,
-      {
-        "Turno[fecha]": $("#fecha_input").val(),
-        "Turno[hora]": $("#hora_input").val(),
-        "Turno[id_rrhh_servicio_asignado]": turnos_id_rrhh_sa,
-        "Turno[id_servicio_asignado]": turnos_id_servicio,
-        "Turno[id_efector]": turnos_id_efector,
-        "Turno[motivo_cancelacion]": $("#motivo_cancelacion").val(),
+    $.ajax({
+      url: turnos_url_create,
+      type: "POST",
+      headers: bioHeaders(),
+      data: {
+        id_persona: turnos_id_persona,
+        fecha: $("#fecha_input").val(),
+        hora: $("#hora_input").val(),
+        id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
+        id_servicio_asignado: turnos_id_servicio,
+        id_efector: turnos_id_efector,
       },
-      function (data) {}
-    )
+    })
       .done(function (data) {
-        if (data.success == true) {
+        if (data.success == true || data.id) {
           alertaFlotante("Listo", "success");
           $("#modal-general").modal("hide");
         } else {
-          alertaFlotante(data.message, "danger");
+          alertaFlotante(data.message || "Error", "danger");
           $("#btn_turno_create").html("Crear turno");
           $("#btn_turno_create").prop("disabled", false);
         }

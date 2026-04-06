@@ -185,8 +185,9 @@ $this->registerJs(
       var nosepresento = $.ajax({
           type: 'post',
           async: true,
-          data:{id_turno:id_turno},
-          url: '" . Url::to(['turnos/no-se-presento']) . "'
+          url: '/api/v1/turnos/' + id_turno + '/no-se-presento',
+          headers: (typeof window.getBioenlaceApiClientHeaders === 'function') ? window.getBioenlaceApiClientHeaders() : {},
+          data: {}
       });
       nosepresento.done(function(response){   
         $('#no_se_presento').attr('disabled', true);

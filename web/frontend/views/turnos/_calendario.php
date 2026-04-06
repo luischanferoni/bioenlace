@@ -15,17 +15,19 @@ $period = new DatePeriod(
 
 $turnos_url_eventos = Url::to(['turnos/eventos']);
 $turnos_url_historial = Url::to(['turnos/historial']);
-$turnos_url_create = Url::to(['turnos/create']);
-$turnos_url_crear_sobreturno = Url::to(['turnos/crear-sobreturno']);
-$turnos_url_delete = Url::to(['turnos/delete']);
+$turnos_url_create = '/api/v1/turnos/para-paciente';
+$turnos_url_crear_sobreturno = '/api/v1/turnos/crear-sobreturno';
+$turnos_url_cancelar_operativo_base = '/api/v1/turnos';
 $turnos_id_efector = Yii::$app->user->getIdEfector();
+$turnos_id_persona = isset($persona) && isset($persona->id_persona) ? (int) $persona->id_persona : 0;
 $hoy = (new DateTime())->format('Y-m-d');
 
 $this->registerJsVar("turnos_url_eventos", $turnos_url_eventos);
 $this->registerJsVar("turnos_url_create", $turnos_url_create);
 $this->registerJsVar("turnos_url_crear_sobreturno", $turnos_url_crear_sobreturno);
-$this->registerJsVar("turnos_url_delete", $turnos_url_delete);
+$this->registerJsVar("turnos_url_cancelar_operativo_base", $turnos_url_cancelar_operativo_base);
 $this->registerJsVar("turnos_id_efector", $turnos_id_efector);
+$this->registerJsVar("turnos_id_persona", $turnos_id_persona);
 $this->registerJsVar("turnos_id_servicio", 0);
 $this->registerJsVar("turnos_id_rrhh_sa", 0);
 $this->registerJsFile(

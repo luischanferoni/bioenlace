@@ -20,6 +20,7 @@ use common\components\Services\Turnos\TurnoLifecycleService;
 use common\components\Services\Turnos\TurnoConfirmationService;
 use common\components\Services\Turnos\PolicyModeradaException;
 use common\components\Services\Turnos\BulkCancelDayService;
+use common\components\Services\Turnos\SobreturnoService;
 use common\models\EfectorTurnosConfig;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
@@ -276,7 +277,7 @@ class TurnosController extends BaseController
             }
         }
         if (!$model->save()) {
-            throw new BadRequestHttpException(implode(', ', $model->getFirstErrors()));
+            throw new BadRequestHttpException(implode(', ', $model->getErrorSummary(true)));
         }
         $idConsulta = null;
         $consulta = Consulta::createFromTurno($model);
@@ -379,6 +380,36 @@ class TurnosController extends BaseController
                 'message' => $e->getMessage(),
             ];
         }
+        return ['success' => true, 'message' => 'Turno cancelado'];
+    }
+
+    /**
+     * Cancelar turno en gestión operativa (staff). POST /api/v1/turnos/{id}/cancelar-operativo.
+     * Body: estado_motivo (opcional), canal (opcional).
+     * RBAC: /api/turnos/cancelar-operativo
+     */
+    public function actionCancelarOperativo($id)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idEfector = Yii::$app->user->getIdEfector();
+        if ($idEfector && (int) $turno->id_efector !== (int) $idEfector) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+
+        $req = Yii::$app->request;
+        $motivo = $req->post('estado_motivo');
+        if ($motivo === null) {
+            $motivo = $req->post('Turno')['estado_motivo'] ?? null;
+        }
+        if (!$motivo) {
+            $motivo = Turno::ESTADO_MOTIVO_CANCELADO_MEDICO;
+        }
+        $canal = $req->post('canal', 'web');
+
+        (new TurnoLifecycleService())->cancelar($turno, (string) $motivo, (string) $canal, Yii::$app->user->id ?? null);
         return ['success' => true, 'message' => 'Turno cancelado'];
     }
 
@@ -488,6 +519,40 @@ class TurnosController extends BaseController
     }
 
     /**
+     * Marcar "no se presentó" en gestión operativa (staff). POST /api/v1/turnos/{id}/no-se-presento.
+     * RBAC: /api/turnos/no-se-presento
+     */
+    public function actionNoSePresento($id)
+    {
+        $turno = Turno::findOne((int) $id);
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+
+        $idRrhhServicio = Yii::$app->user->getIdRrhhServicio();
+        $idServicio = Yii::$app->user->getServicioActual();
+
+        if (
+            $idRrhhServicio
+            && (int) $turno->id_rrhh_servicio_asignado === (int) $idRrhhServicio
+        ) {
+            Turno::NoSePresento($turno->id_turnos);
+            return ['success' => true, 'message' => 'El paciente no se presentó'];
+        }
+
+        if (
+            (int) $turno->id_rrhh_servicio_asignado === 0
+            && $idServicio
+            && (int) $turno->id_servicio_asignado === (int) $idServicio
+        ) {
+            Turno::NoSePresento($turno->id_turnos);
+            return ['success' => true, 'message' => 'El paciente no se presentó'];
+        }
+
+        throw new ForbiddenHttpException('No autorizado');
+    }
+
+    /**
      * Cancelación masiva del día en el efector (AdminEfector). POST …/cancelar-dia-efector.
      * RBAC: /api/turnos/cancelar-dia-efector
      */
@@ -505,6 +570,85 @@ class TurnosController extends BaseController
         $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
         $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id);
         return ['success' => true, 'cancelados' => $n];
+    }
+
+    /**
+     * Sobreturno urgente en gestión operativa (staff). POST /api/v1/turnos/crear-sobreturno.
+     * Body: id_persona, fecha, hora, id_rrhh_servicio_asignado, id_servicio_asignado, (id_efector opcional).
+     * RBAC: /api/turnos/crear-sobreturno
+     */
+    public function actionCrearSobreturno()
+    {
+        $req = Yii::$app->request;
+
+        $model = new Turno();
+        $model->load($req->post(), '');
+
+        if (!$model->id_persona) {
+            throw new BadRequestHttpException('El campo id_persona es obligatorio');
+        }
+        if (!$model->id_efector) {
+            $model->id_efector = Yii::$app->user->getIdEfector();
+        }
+        if (!$model->id_efector) {
+            throw new BadRequestHttpException('No se pudo determinar el efector');
+        }
+        if (!$model->id_rr_hh) {
+            $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        }
+        if (!$model->id_servicio) {
+            $model->id_servicio = Yii::$app->user->getServicioActual();
+        }
+
+        if (!$model->id_servicio_asignado) {
+            throw new BadRequestHttpException('El campo id_servicio_asignado es obligatorio');
+        }
+        if (!$model->fecha || !$model->hora) {
+            throw new BadRequestHttpException('fecha y hora son obligatorios');
+        }
+
+        $model->es_sobreturno = true;
+
+        $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
+            $model->id_persona,
+            $model->id_efector,
+            $model->id_servicio_asignado,
+            ConsultaDerivaciones::ESTADO_EN_ESPERA
+        );
+        if (count($cps) > 0) {
+            foreach ($cps as $cp) {
+                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
+                $cp->save();
+                $parent_id = $cp->id;
+            }
+            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+            $model->parent_id = $parent_id;
+        }
+
+        $servicioEfector = ServiciosEfector::find()
+            ->where(['id_servicio' => $model->id_servicio_asignado])
+            ->andWhere(['id_efector' => $model->id_efector])
+            ->one();
+        if ($servicioEfector) {
+            if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
+                $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
+            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
+                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
+                // Sobreturno: no se aplica límite de cupo (turno urgente).
+            }
+        }
+
+        if (!$model->save()) {
+            throw new BadRequestHttpException(implode(', ', $model->getFirstErrors()));
+        }
+        Consulta::createFromTurno($model);
+        try {
+            (new SobreturnoService())->notificarRetrasoPorSobreturno($model);
+            (new TurnoLifecycleService())->afterTurnoCreado($model);
+        } catch (\Throwable $e) {
+            Yii::warning('sobreturno post: ' . $e->getMessage(), 'api-turnos');
+        }
+        return ['success' => true, 'id_turno' => $model->id_turnos];
     }
 
     /**

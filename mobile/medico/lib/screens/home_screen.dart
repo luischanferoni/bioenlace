@@ -50,12 +50,16 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pacientesService.userId = widget.userId;
+    _init();
+  }
+
+  Future<void> _init() async {
     if (widget.authToken != null && widget.authToken!.isNotEmpty) {
       _pacientesService.authToken = widget.authToken;
     } else {
-      _loadAuthToken();
+      await _loadAuthToken();
     }
-    _loadEncounterAndData();
+    await _loadEncounterAndData();
   }
 
   Future<void> _loadAuthToken() async {
@@ -63,13 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
       if (token != null && token.isNotEmpty) {
-        setState(() {
-          _pacientesService.authToken = token;
-        });
+        _pacientesService.authToken = token;
       } else {
-        setState(() {
-          _pacientesService.userId = widget.userId;
-        });
+        _pacientesService.userId = widget.userId;
       }
     } catch (e) {
       setState(() {

@@ -23,8 +23,6 @@ use common\models\Persona;
 use common\models\User;
 use frontend\components\UserRequest;
 use common\components\Services\Turnos\TurnoSlotFinder;
-use common\components\Services\Turnos\SobreturnoService;
-use common\components\Services\Turnos\BulkCancelDayService;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.
@@ -36,14 +34,11 @@ class TurnosController extends Controller
     public static $verbs = [
         'index' => ['GET', 'HEAD', 'OPTIONS'],
         'view' => ['GET', 'HEAD', 'OPTIONS'],
-        'create' => ['POST', 'OPTIONS'],
         'update' => ['PUT', 'PATCH', 'OPTIONS'],
         'eventos' => ['GET', 'OPTIONS'],
         'como-paciente' => ['GET', 'OPTIONS'],
         'proximo-disponible' => ['GET', 'POST', 'OPTIONS'],
         'reprogramar' => ['GET', 'HEAD', 'OPTIONS'],
-        'bulk-cancel-dia' => ['POST', 'OPTIONS'],
-        'crear-sobreturno' => ['POST', 'OPTIONS'],
     ];
 
     /**
@@ -55,9 +50,6 @@ class TurnosController extends Controller
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
-                    'delete' => ['POST'],
-                    'bulk-cancel-dia' => ['POST'],
-                    'crear-sobreturno' => ['POST'],
                 ],
             ],
         ];
@@ -143,72 +135,8 @@ class TurnosController extends Controller
         ]);
     }
 
-    /**
-     * Crea un nuevo turno médico
-     * @entity Turnos
-     * @tags turno,cita,crear,agendar,solicitar,nuevo
-     * @keywords crear turno,agendar turno,solicitar turno,nuevo turno,crear cita,agendar cita
-     * @synonyms turno,cita,agenda,reserva,consulta
-     */
-    public function actionCreate()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        $model = new Turno();
-        $model->load(Yii::$app->request->post());
-
-        // Campos obligatorios recibidos por POST
-        $model->id_persona = UserRequest::requireUserParam('id_persona');
-        $model->id_rr_hh = UserRequest::requireUserParam('idRecursoHumano');
-        $model->id_efector = UserRequest::requireUserParam('idEfector');
-        $model->id_servicio = UserRequest::requireUserParam('servicio_actual');
-
-        $cps = ConsultaDerivaciones::getDerivacionesPorPersona($model->id_persona, $model->id_efector, $model->id_servicio_asignado, ConsultaDerivaciones::ESTADO_EN_ESPERA);
-        if (count($cps) > 0):
-            foreach ($cps as $cp) {
-                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
-                $cp->save();
-                $parent_id = $cp->id;
-            }
-            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
-            $model->parent_id = $parent_id;
-
-        endif;
-
-        if ($model->id_servicio_asignado == "" || $model->id_servicio_asignado == false) {
-            throw new BadRequestHttpException('Parametro servicio faltante');
-        }
-
-        $servicioEfector = ServiciosEfector::find()->where(['id_servicio' => $model->id_servicio_asignado])->andWhere(['id_efector' => $model->id_efector])->one();
-
-        if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
-            $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
-        } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
-            $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
-
-            //Aqui chequeo si el rrhh tiene cupo para atender un paciente mas.
-            $agenda = Agenda_rrhh::find()->andWhere(['id_rrhh_servicio_asignado' => $model->id_rrhh_servicio_asignado])->one();
-            $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgados($model->id_rrhh_servicio_asignado, $model->fecha);
-
-            if ($agenda->cupo_pacientes != 0 && $agenda->cupo_pacientes <= $cantTurnosOtorgados) {
-                return ["success" => false, "message" => "Ya se otorgaron todos los turnos correspondientes al limite establecido, por favor revise el historial de turnos del profesional"];
-            }
-        }
-
-        if ($model->save()) {
-            try {
-                (new \common\components\Services\Turnos\TurnoLifecycleService())->afterTurnoCreado($model);
-            } catch (\Throwable $e) {
-                \Yii::warning('afterTurnoCreado web: ' . $e->getMessage(), 'turnos');
-            }
-            return ["success" => true];
-        } else {
-            return ["success" => false, "message" => $model->getErrorSummary(true)];
-        }
-    }
-
-    // Nota: la creación "como paciente" y su UI definition viven en la API v1
-    // (ver /api/v1/ui/turnos/crear-mi-turno y /api/v1/turnos). No duplicar en controller web.
+    // Nota: la creación/cancelación/no-se-presentó/sobreturno viven en la API v1 (TurnosController API).
+    // En web, las vistas/JS deben llamar a /api/v1/turnos/... con Authorization header.
 
     /**
      * Se lo llama desde el index
@@ -550,28 +478,7 @@ class TurnosController extends Controller
         Yii::$app->end();
     }
 
-    /**
-     * Updates an existing Turno model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param string $id
-     * @return mixed
-     */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-
-        $date_arr = explode("-", $model->fecha);
-        $model->fecha = $date_arr[2] . '-' . $date_arr[1] . '-' . $date_arr[0];
-
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['index']);
-        } else {
-            return $this->render('update', [
-                'model' => $model,
-            ]);
-        }
-    }
+    // actionUpdate eliminado: la actualización de turnos vive en la API v1 (TurnosController::actionActualizarTurno).
 
     /**
      * UI separada de reprogramación (lista turnos futuros + enlace a API desde app/SPA).
@@ -597,106 +504,12 @@ class TurnosController extends Controller
     }
 
     /**
-     * Cancelación masiva del día (AdminEfector). POST JSON: fecha, id_rr_hh opcional.
-     */
-    public function actionBulkCancelDia()
-    {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        if (!User::hasRole('AdminEfector')) {
-            throw new \yii\web\ForbiddenHttpException('Solo administrador de efector');
-        }
-        $fecha = Yii::$app->request->post('fecha');
-        if (!$fecha) {
-            throw new BadRequestHttpException('fecha requerida');
-        }
-        $idRrhh = Yii::$app->request->post('id_rr_hh');
-        $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
-        $n = (new BulkCancelDayService())->cancelarDia(
-            Yii::$app->user->getIdEfector(),
-            $fecha,
-            $idRrhh,
-            Yii::$app->user->id
-        );
-        return ['success' => true, 'cancelados' => $n];
-    }
-
-    /**
-     * Sobreturno urgente: crea turno y notifica retraso a pacientes posteriores.
-     */
-    public function actionCrearSobreturno()
-    {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $model = new Turno();
-        $model->load(Yii::$app->request->post());
-        $model->id_persona = UserRequest::requireUserParam('id_persona');
-        $model->id_rr_hh = UserRequest::requireUserParam('idRecursoHumano');
-        $model->id_efector = UserRequest::requireUserParam('idEfector');
-        $model->id_servicio = UserRequest::requireUserParam('servicio_actual');
-        $model->es_sobreturno = true;
-
-        $cps = ConsultaDerivaciones::getDerivacionesPorPersona($model->id_persona, $model->id_efector, $model->id_servicio_asignado, ConsultaDerivaciones::ESTADO_EN_ESPERA);
-        if (count($cps) > 0) {
-            foreach ($cps as $cp) {
-                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
-                $cp->save();
-                $parent_id = $cp->id;
-            }
-            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
-            $model->parent_id = $parent_id;
-        }
-
-        if ($model->id_servicio_asignado == "" || $model->id_servicio_asignado == false) {
-            throw new BadRequestHttpException('Parametro servicio faltante');
-        }
-
-        $servicioEfector = ServiciosEfector::find()->where(['id_servicio' => $model->id_servicio_asignado])->andWhere(['id_efector' => $model->id_efector])->one();
-        if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
-            $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
-        } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
-            $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
-            // Sobreturno: no se aplica límite de cupo (turno urgente).
-        }
-
-        if (!$model->save()) {
-            return ['success' => false, 'message' => $model->getErrorSummary(true)];
-        }
-        Consulta::createFromTurno($model);
-        try {
-            (new SobreturnoService())->notificarRetrasoPorSobreturno($model);
-            (new \common\components\Services\Turnos\TurnoLifecycleService())->afterTurnoCreado($model);
-        } catch (\Throwable $e) {
-            Yii::warning('sobreturno post: ' . $e->getMessage(), 'turnos');
-        }
-        return ['success' => true, 'id_turno' => $model->id_turnos];
-    }
-
-    /**
      * Deletes an existing Turno model.
      * If deletion is successful, the browser will respond "OK" as this request only receives ajax.
      * @param string $id
      * @return mixed
      */
-    public function actionDelete($id)
-    {
-        if (\Yii::$app->request->isAjax) {
-            \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-            // esta modificacion es para cargar la propiedad motivo_cancelacion aparte del soft delete
-            $model = $this->findModel($id);
-            $model->load(Yii::$app->request->post());
-            $model->estado = 'CANCELADO';
-            $model->deleted_by = Yii::$app->user->id;
-            $model->deleted_at = new Expression('NOW()');
-
-            $success = true;
-            $msg = '';
-            if (! $model->save()) {
-                $success = false;
-                $msg = $model->getErrorSummary(true);
-            }
-            return ["success" => $success, "message" => $msg];
-        }
-    }
+    // actionDelete eliminado: la cancelación operativa vive en la API v1 (POST /api/v1/turnos/{id}/cancelar-operativo).
 
     /**
      * Finds the Turno model based on its primary key value.
@@ -731,37 +544,7 @@ class TurnosController extends Controller
         ]);
     }
 
-    public function actionNoSePresento()
-    {
-
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        $id_turno = Yii::$app->request->post('id_turno');
-
-        $turno = Turno::findOne($id_turno);
-        $idRrhhServicio = UserRequest::requireUserParam('id_rrhh_servicio');
-        $idServicio = UserRequest::requireUserParam('servicio_actual');
-
-        if ($turno->id_rrhh_servicio_asignado == $idRrhhServicio) {
-
-            Turno::NoSePresento($id_turno);
-            return [
-                'success' => true,
-                'msg' => '<p class="text-success">El paciente no se presentó</p>'
-            ];
-        } elseif ($turno->id_rrhh_servicio_asignado == 0 && $turno->id_servicio_asignado == $idServicio) {
-
-            Turno::NoSePresento($id_turno);
-            return [
-                'success' => true,
-                'msg' => '<p class="text-success">El paciente no se presentó</p>'
-            ];
-        }
-        return [
-            'success' => false,
-            'msg' => '<p class="text-danger">El estado del turno no se pudo modificar</p>'
-        ];
-    }
+    // actionNoSePresento eliminado: vive en API v1 (POST /api/v1/turnos/{id}/no-se-presento).
 
 
     //Metodo de acceso libre para mostrar turnos pendiente por DNI

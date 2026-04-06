@@ -297,18 +297,21 @@ $this->registerJs(
         window.setTimeout(function() { $('#turnos-alert-id').alert('close'); }, 3000);  
         return false;    
       }       
-      $.post('" . Url::to(['turnos/create']) . "',
-              { 
+      $.ajax({
+              url: '/api/v1/turnos/para-paciente',
+              type: 'POST',
+              headers: (typeof window.getBioenlaceApiClientHeaders === 'function') ? window.getBioenlaceApiClientHeaders() : {},
+              data: { 
                 fecha:$('#fechadesde').val(),
                 id_rr_hh:$('#id_rr_hh').val(),
-                id_servicio:$('#id_servicio').val(),
+                id_servicio_asignado:$('#id_servicio').val(),
                 id_persona:$('#id_persona').val(),
                 referencia:$('#id_referencia').val(),
                 nro_hc:$('#nro_hc').val(),
                 programado:$('#programado').is(':checked')?1:0
-              },
-              function(data){
-                if(data == 'OK'){                         
+              }
+      }).done(function(data){
+                if(data && (data.id || data.success === true)){                         
                   if($('#id_referencia').val() != ''){
                     delete ref_html[$('#id_servicio').val()][$('#id_referencia').val()];
                   }
@@ -336,11 +339,20 @@ $this->registerJs(
                   window.setTimeout(function() { $('#turnos-alert-id').alert('close'); }, 3000);                          
                 }else{
                     $('.alert-container').append('<div id=\"turnos-alert-id\" class=\"alert alert-danger\" role=\"alert\">'
-                                        + data + '</div>'); 
+                                        + (data && data.message ? data.message : 'Error al crear el turno') + '</div>'); 
                     window.setTimeout(function() { $('#turnos-alert-id').alert('close'); }, 3000);  
                     return false;                    
                 }
 
+      }).fail(function(xhr){
+                    var msg = 'Error al crear el turno';
+                    if(xhr && xhr.responseJSON && (xhr.responseJSON.message || xhr.responseJSON.error)){
+                      msg = xhr.responseJSON.message || xhr.responseJSON.error;
+                    }
+                    $('.alert-container').append('<div id=\"turnos-alert-id\" class=\"alert alert-danger\" role=\"alert\">'
+                                        + msg + '</div>');
+                    window.setTimeout(function() { $('#turnos-alert-id').alert('close'); }, 3000);
+                    return false;
       });
       return false;
     });

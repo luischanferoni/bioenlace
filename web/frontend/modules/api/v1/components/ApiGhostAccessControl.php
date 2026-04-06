@@ -119,11 +119,32 @@ class ApiGhostAccessControl extends ActionFilter
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
         Yii::$app->response->statusCode = 403;
-        Yii::$app->response->data = [
+        $data = [
             'success' => false,
             'message' => $message,
             'errors' => null,
         ];
+        // Diagnóstico opcional (no exponer por defecto). Activar enviando header: X-Bioenlace-Debug: 1
+        try {
+            $dbg = Yii::$app->request->getHeaders()->get('X-Bioenlace-Debug');
+            if ($dbg === '1' || $dbg === 1) {
+                $userId = Yii::$app->user->identity ? (int) Yii::$app->user->identity->id : null;
+                $roles = [];
+                if ($userId) {
+                    $roles = array_keys(Yii::$app->authManager->getRolesByUser($userId));
+                }
+                $allowedRoutes = Yii::$app->session->get(\webvimark\modules\UserManagement\components\AuthHelper::SESSION_PREFIX_ROUTES, []);
+                $data['debug'] = [
+                    'route' => Yii::$app->requestedRoute,
+                    'userId' => $userId,
+                    'roles' => $roles,
+                    'allowedRoutesCount' => is_array($allowedRoutes) ? count($allowedRoutes) : null,
+                ];
+            }
+        } catch (\Throwable $e) {
+            // noop
+        }
+        Yii::$app->response->data = $data;
         Yii::$app->response->send();
         Yii::$app->end();
     }

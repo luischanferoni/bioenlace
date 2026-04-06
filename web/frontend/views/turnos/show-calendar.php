@@ -156,8 +156,12 @@ $this->registerJs("
           var ev_id = $(this).attr('id');
           var r = confirm('Esta seguro?');
           if(r == true){
-            $.post('" . Url::to(['turnos/delete']) . "/'+ev_id,
-                  function(data){
+            $.ajax({
+              url: '/api/v1/turnos/' + ev_id + '/cancelar-operativo',
+              type: 'POST',
+              headers: (typeof window.getBioenlaceApiClientHeaders === 'function') ? window.getBioenlaceApiClientHeaders() : {},
+              data: {}
+            }).done(function(data){
                     $('#calendar').fullCalendar('removeEvents', ev_id);
                     $('body').append('<div class=\"alert alert-success\" role=\"alert\">El evento fue eliminado correctamente</div>'); 
                     window.setTimeout(function() { $('.alert').alert('close'); }, 3000);                               

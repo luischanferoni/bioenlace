@@ -26,7 +26,7 @@ class ActionDiscoveryService
     /**
      * Cache key para acciones descubiertas
      */
-    public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v6';
+    public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v7';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**
@@ -78,7 +78,8 @@ class ActionDiscoveryService
     }
 
     /**
-     * Acciones del módulo API v1: rutas alineadas con {@see ApiGhostAccessControl} (/api/&lt;controller&gt;/&lt;action&gt;).
+     * Acciones del módulo API v1: path HTTP versionado ({@see urlManager} `api/<version>/...`).
+     * RBAC/webvimark sigue usando `/api/&lt;controller&gt;/&lt;action&gt;` sin segmento de versión; véase {@see AllowedRoutesResolver::apiHttpPathToPermissionRoute}.
      */
     private static function discoverApiV1ControllerActions(): array
     {
@@ -155,11 +156,11 @@ class ActionDiscoveryService
     }
 
     /**
-     * Ruta de permiso igual que ApiGhostAccessControl: /api/{controller}/{action}
+     * Path HTTP bajo el prefijo `api/<version>/` del {@see \yii\web\UrlManager}.
      */
     private static function generateApiGhostRoute(string $controllerName, string $actionKebab): string
     {
-        return '/api/' . $controllerName . '/' . $actionKebab;
+        return '/api/v1/' . $controllerName . '/' . $actionKebab;
     }
 
     /**

@@ -609,8 +609,6 @@ class UniversalQueryAgent
                 $searchCriteria['query_type'] = 'list_all';
             }
 
-            $searchCriteria['__user_query'] = (string) $userQuery;
-
             // FASE 2.5: Si es data_query, buscar business query primero
             if ($searchCriteria['query_type'] === 'data_query') {
                 $businessQuery = \common\queries\BusinessQueryRegistry::findMatchingQuery($searchCriteria, $userQuery);
@@ -1239,45 +1237,7 @@ PROMPT;
             }
         }
 
-        $score += self::sessionContextAgendaScoreAdjustment($action, (string) ($criteria['__user_query'] ?? ''));
-
         return $score;
-    }
-
-    /**
-     * Con RRHH en sesión (contexto operativo típico del profesional), refuerza acciones de {@see AgendaController}
-     * y reduce autogestión *-como-paciente* cuando el texto menciona "agenda" sin señales de intención paciente.
-     */
-    private static function sessionContextAgendaScoreAdjustment(array $action, string $userText): float
-    {
-        if ($userText === '' || !Yii::$app->has('user') || Yii::$app->user->isGuest) {
-            return 0.0;
-        }
-        try {
-            $idRh = Yii::$app->user->getIdRecursoHumano();
-            if (empty($idRh)) {
-                return 0.0;
-            }
-        } catch (\Throwable $e) {
-            return 0.0;
-        }
-
-        $delta = 0.0;
-        $entityLower = strtolower((string) ($action['entity'] ?? ''));
-        $controllerLower = strtolower((string) ($action['controller'] ?? ''));
-        if ($entityLower === 'agendas' || $controllerLower === 'agenda') {
-            $delta += 14.0;
-        }
-
-        $route = (string) ($action['route'] ?? '');
-        if ($route !== '' && strpos($route, 'como-paciente') !== false) {
-            $ql = mb_strtolower($userText, 'UTF-8');
-            if (preg_match('/\bagenda\b/u', $ql) && !preg_match('/\b(turno|turnos|cita|citas|reserv|paciente)\b/u', $ql)) {
-                $delta -= 18.0;
-            }
-        }
-
-        return $delta;
     }
 
     /**

@@ -15,7 +15,7 @@ class ActionMappingService
     /**
      * Cache key para acciones por rol
      */
-    public const CACHE_KEY_PREFIX = 'actions_for_role_v5_';
+    public const CACHE_KEY_PREFIX = 'actions_for_role_v7_';
     public const CACHE_DURATION = 1800; // 30 minutos
 
     /**
@@ -177,7 +177,8 @@ class ActionMappingService
         }
 
         try {
-            if (Route::isFreeAccess($route)) {
+            $rbacPath = AllowedRoutesResolver::apiHttpPathToPermissionRoute($route);
+            if (Route::isFreeAccess($route) || ($rbacPath !== $route && Route::isFreeAccess($rbacPath))) {
                 return true;
             }
 

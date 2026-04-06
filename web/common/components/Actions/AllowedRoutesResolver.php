@@ -232,6 +232,10 @@ final class AllowedRoutesResolver
         if (isset($map[$actionRoute])) {
             return true;
         }
+        $permRoute = self::apiHttpPathToPermissionRoute($actionRoute);
+        if ($permRoute !== $actionRoute && isset($map[$permRoute])) {
+            return true;
+        }
         foreach (array_keys($map) as $allowed) {
             if (!is_string($allowed)) {
                 continue;
@@ -239,8 +243,23 @@ final class AllowedRoutesResolver
             if (RbacRoute::isSubRoute($allowed, $actionRoute)) {
                 return true;
             }
+            if ($permRoute !== $actionRoute && RbacRoute::isSubRoute($allowed, $permRoute)) {
+                return true;
+            }
         }
         return false;
+    }
+
+    /**
+     * Convierte el path HTTP versionado (`/api/v1/...`) al formato de ruta usado en permisos (`/api/...`).
+     */
+    public static function apiHttpPathToPermissionRoute(string $path): string
+    {
+        $p = '/' . ltrim($path, '/');
+        if (preg_match('#^/api/v\d+/#', $p)) {
+            return preg_replace('#^/api/v\d+/#', '/api/', $p, 1);
+        }
+        return $p;
     }
 
     /**

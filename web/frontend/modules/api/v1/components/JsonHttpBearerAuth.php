@@ -138,7 +138,10 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         }
 
         $user->setIdentity($userModel);
-        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions($user);
+        // Igual que en frontend\components\UserConfig::afterLogin: updatePermissions trabaja sobre la identidad.
+        // Si se pasa el componente Yii::$app->user, en algunos contextos no se hidratan __userRoutes/__userRoles
+        // como espera webvimark, y puede resultar en 403 aun con permisos asignados.
+        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions($userModel);
         AllowedRoutesResolver::markSessionRoutesOwner((int) $userModel->id);
 
         return $userModel;

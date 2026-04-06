@@ -25,23 +25,16 @@ AppAsset::register($this);
 <body class="boxed light theme-color-default">
     <?php $this->beginBody() ?>
 
-    <div class="boxed-inner">
-        <main class="main-content">
-            <div class="content-inner pb-0 container" id="page_layout">
-                <?= $content ?>
-            </div>
-        </main>
-    </div>
-    <?php $this->endBody() ?>
-
     <?php if (!Yii::$app->user->isGuest): ?>
     <script>
+    // Debe definirse ANTES de scripts POS_END (registerJs) para que AJAX incluya Bearer.
     window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
     window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')) ?>;
     </script>
     <?php endif; ?>
 
     <script>
+    // Helpers globales para consumir /api/v1 (web y wizard post-login)
     window.spaConfig = {
         baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
         csrfToken: '<?= Yii::$app->request->csrfToken ?>',
@@ -56,6 +49,15 @@ AppAsset::register($this);
         return Object.assign(base, extra || {});
     };
     </script>
+
+    <div class="boxed-inner">
+        <main class="main-content">
+            <div class="content-inner pb-0 container" id="page_layout">
+                <?= $content ?>
+            </div>
+        </main>
+    </div>
+    <?php $this->endBody() ?>
 </body>
 </html>
 <?php $this->endPage() ?>

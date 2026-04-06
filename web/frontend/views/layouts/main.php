@@ -75,6 +75,31 @@ if (Yii::$app->user->username) {
 <body class="boxed light theme-color-default">
     <?php $this->beginBody() ?>
 
+    <?php if (!Yii::$app->user->isGuest): ?>
+    <script>
+    // Debe definirse ANTES de scripts POS_END (registerJs) para que AJAX incluya Bearer.
+    window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
+    window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')); ?>;
+    </script>
+    <?php endif; ?>
+
+    <script>
+    // Helpers globales para consumir /api/v1 desde SPA web.
+    window.spaConfig = {
+        baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
+        csrfToken: '<?= Yii::$app->request->csrfToken ?>',
+        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>
+    };
+    window.getBioenlaceApiClientHeaders = function (extra) {
+        var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
+        var base = { 'X-App-Client': 'web-frontend', 'X-App-Version': ver };
+        if (window.apiAuthToken) {
+            base['Authorization'] = 'Bearer ' + window.apiAuthToken;
+        }
+        return Object.assign(base, extra || {});
+    };
+    </script>
+
     <div class="boxed-inner">
         <main class="main-content">
             <nav class="nav navbar navbar-expand-xl navbar-light iq-navbar bg-white border-2 border-dark border-bottom">
@@ -189,55 +214,6 @@ if (Yii::$app->user->username) {
         </main>
     </div>
     <?php $this->endBody() ?>
-    
-    <?php if (!Yii::$app->user->isGuest): ?>
-    <script>
-    // Inicializar userPerTabConfig para que esté disponible en todas las peticiones AJAX
-    window.userPerTabConfig = <?= \yii\helpers\Json::encode(Yii::$app->user->getPerTabSessions()) ?>;
-    // Token JWT para consumir la API v1 desde la SPA web
-    window.apiAuthToken = <?= json_encode(Yii::$app->session->get('apiJwtToken')); ?>;
-    </script>
-    <?php endif; ?>
-    
-    <script>
-    // Inicializar variables globales para la SPA
-    window.spaConfig = {
-        baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
-        csrfToken: '<?= Yii::$app->request->csrfToken ?>',
-        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>
-    };
-    /**
-     * Headers para API v1: compatibilidad de descriptores UI (UiDefinitionTemplateManager).
-     * Uso: fetch(url, { headers: window.getBioenlaceApiClientHeaders({ Accept: 'application/json' }) })
-     */
-    window.getBioenlaceApiClientHeaders = function (extra) {
-        var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
-        var base = { 'X-App-Client': 'web-frontend', 'X-App-Version': ver };
-        // Si el usuario está logueado en la web, se genera un JWT en sesión (UserConfig::afterLogin)
-        // para consumir /api/v1 igual que la app móvil. Incluirlo automáticamente evita 401.
-        if (window.apiAuthToken) {
-            base['Authorization'] = 'Bearer ' + window.apiAuthToken;
-        }
-        return Object.assign(base, extra || {});
-    };
-    
-    // Calcular y establecer la altura del navbar para el posicionamiento del sidebar
-    function updateNavbarHeight() {
-        const navbar = document.querySelector('.iq-navbar');
-        if (navbar) {
-            const height = navbar.offsetHeight;
-            document.documentElement.style.setProperty('--navbar-height', height + 'px');
-        }
-    }
-    
-    // Ejecutar al cargar y al redimensionar
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateNavbarHeight);
-    } else {
-        updateNavbarHeight();
-    }
-    window.addEventListener('resize', updateNavbarHeight);
-    </script>
     
     <?php if (!empty($listaEfectores) && count($listaEfectores) > 1): ?>
     <script>

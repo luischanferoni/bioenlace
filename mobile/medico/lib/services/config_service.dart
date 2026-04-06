@@ -267,7 +267,10 @@ class Servicio {
 
   factory Servicio.fromJson(Map<String, dynamic> json) {
     return Servicio(
-      id: (json['id'] as int?) ?? 0,
+      id: (json['id'] as int?) ??
+          (json['id_servicio'] as int?) ??
+          (json['id_servicio'] is String ? int.tryParse(json['id_servicio'] as String) : null) ??
+          0,
       nombre: json['nombre'] as String? ?? 'Sin nombre',
       idRrhhServicio: (json['id_rrhh_servicio'] as int?) ?? 0,
     );

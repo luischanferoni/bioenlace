@@ -67,6 +67,26 @@ class ApiGhostAccessControl extends ActionFilter
             return true;
         }
 
+        // Diagnóstico: cuando el móvil reporta 403, necesitamos ver qué ruta se chequea
+        // y qué identidad/roles quedaron cargados en esta request.
+        try {
+            $userId = Yii::$app->user->identity ? (int) Yii::$app->user->identity->id : null;
+            $roles = [];
+            if ($userId) {
+                $roles = array_keys(Yii::$app->authManager->getRolesByUser($userId));
+            }
+            $allowedRoutes = Yii::$app->session->get(\webvimark\modules\UserManagement\components\AuthHelper::SESSION_PREFIX_ROUTES, []);
+            Yii::info(
+                'ApiGhostAccessControl: deny 403 route=' . $route
+                . ' userId=' . ($userId ?? 'null')
+                . ' roles=' . json_encode($roles)
+                . ' allowedRoutesCount=' . (is_array($allowedRoutes) ? count($allowedRoutes) : 0),
+                'access-control'
+            );
+        } catch (\Throwable $e) {
+            Yii::debug('ApiGhostAccessControl: debug log failed: ' . $e->getMessage(), 'access-control');
+        }
+
         $this->denyAccessJson();
         return false;
     }

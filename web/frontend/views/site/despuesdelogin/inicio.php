@@ -174,7 +174,7 @@ $urlEncounterClasses = Url::to(['/api/v1/catalogos/encounter-classes'], true);
                 headers: bioHeaders(),
                 dataType: "json",
                 data: {
-                    id_efector: $("input[name=nombre_efector]:checked", "#grid_efectores").val()
+                    id_efector: $("input[name=nombre_efector]:checked").val()
                 },
                 success: function (res) {
                     var servicios = (res && res.servicios) ? res.servicios : (res && res.data && res.data.servicios ? res.data.servicios : []);
@@ -221,6 +221,20 @@ $urlEncounterClasses = Url::to(['/api/v1/catalogos/encounter-classes'], true);
         $("#formwizard_servicios .next").on("click", function(e){
             e.preventDefault();
 
+            var efectorIdRaw = $("input[name=nombre_efector]:checked").val();
+            var servicioIdRaw = $("input[name=servicio]:checked").val();
+            var encounterClass = $("input[name=encounter_class]:checked").val();
+
+            var efectorId = parseInt(efectorIdRaw, 10);
+            var servicioId = parseInt(servicioIdRaw, 10);
+
+            if (!efectorId || isNaN(efectorId) || !servicioId || isNaN(servicioId) || !encounterClass) {
+                $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
+                    +"<i class=\'fa fa-exclamation fa-1x\'></i> Seleccione efector, área y servicio para continuar</div>");
+                window.setTimeout(function() { $(".alert").alert("close"); }, 6000);
+                return;
+            }
+
             $.ajax({
                 url: '.json_encode($urlEstablecerSesionOperativa).',
                 type: "POST",
@@ -228,9 +242,9 @@ $urlEncounterClasses = Url::to(['/api/v1/catalogos/encounter-classes'], true);
                 contentType: "application/json; charset=utf-8",
                 dataType: "json",
                 data: JSON.stringify({
-                    efector_id: parseInt($("input[name=nombre_efector]:checked", "#grid_efectores").val(), 10),
-                    encounter_class: $("input[name=encounter_class]:checked").val(),
-                    servicio_id: parseInt($("input[name=servicio]:checked").val(), 10)
+                    efector_id: efectorId,
+                    encounter_class: encounterClass,
+                    servicio_id: servicioId
                 }),
                 success: function (res) {
                     var redirectUrl = res && res.data && res.data.redirect_url ? res.data.redirect_url : null;

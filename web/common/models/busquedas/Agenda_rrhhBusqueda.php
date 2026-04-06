@@ -58,24 +58,26 @@ class Agenda_rrhhBusqueda extends Agenda_rrhh
         }
 
         $id_efector = $this->id_efector ? $this->id_efector : Yii::$app->user->getIdEfector();
+        $t = Agenda_rrhh::tableName();
+        // Tras joinWith(rrhh→rrhh_efector), id_efector e id_rr_hh son ambiguos; calificar siempre con la tabla agenda.
         $query->andFilterWhere([
-            'id_agenda_rrhh' => $this->id_agenda_rrhh,
-            'id_rr_hh' => $this->id_rr_hh,
-            'hora_inicio' => $this->hora_inicio,
-            'hora_fin' => $this->hora_fin,
-            'id_tipo_dia' => $this->id_tipo_dia,
-            'fecha_inicio' => $this->fecha_inicio,
-            'fecha_fin' => $this->fecha_fin,
-            'id_efector' => $id_efector,
+            $t . '.id_agenda_rrhh' => $this->id_agenda_rrhh,
+            $t . '.id_rr_hh' => $this->id_rr_hh,
+            $t . '.hora_inicio' => $this->hora_inicio,
+            $t . '.hora_fin' => $this->hora_fin,
+            $t . '.id_tipo_dia' => $this->id_tipo_dia,
+            $t . '.fecha_inicio' => $this->fecha_inicio,
+            $t . '.fecha_fin' => $this->fecha_fin,
+            $t . '.id_efector' => $id_efector,
         ]);
 
-        $query->andFilterWhere(['like', 'lunes', $this->lunes])
-            ->andFilterWhere(['like', 'martes', $this->martes])
-            ->andFilterWhere(['like', 'miercoles', $this->miercoles])
-            ->andFilterWhere(['like', 'jueves', $this->jueves])
-            ->andFilterWhere(['like', 'viernes', $this->viernes])
-            ->andFilterWhere(['like', 'sabado', $this->sabado])
-            ->andFilterWhere(['like', 'domingo', $this->domingo]);
+        $query->andFilterWhere(['like', $t . '.lunes', $this->lunes])
+            ->andFilterWhere(['like', $t . '.martes', $this->martes])
+            ->andFilterWhere(['like', $t . '.miercoles', $this->miercoles])
+            ->andFilterWhere(['like', $t . '.jueves', $this->jueves])
+            ->andFilterWhere(['like', $t . '.viernes', $this->viernes])
+            ->andFilterWhere(['like', $t . '.sabado', $this->sabado])
+            ->andFilterWhere(['like', $t . '.domingo', $this->domingo]);
 
         $query->joinWith(['rrhh' => function($q) {
             $q->joinWith([

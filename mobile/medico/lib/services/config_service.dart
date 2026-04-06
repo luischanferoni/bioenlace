@@ -13,7 +13,7 @@ class ConfigService {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-    if (authToken != null) {
+    if (authToken != null && authToken!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $authToken';
     }
     return headers;

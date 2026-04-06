@@ -14,6 +14,7 @@ use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Persona;
 use common\models\Agenda_rrhh;
+use Firebase\JWT\JWT;
 
 class SiteController extends Controller
 {
@@ -99,6 +100,27 @@ class SiteController extends Controller
 
         if (!$idEfector || !$servicioActual || !$encounterClass) {
             $this->layout = 'main_sinmenuizquierda';
+
+            // La SPA web consume /api/v1 con Bearer JWT (igual que móvil). Si el usuario ya estaba logueado
+            // antes de que se genere el token en afterLogin, regenerarlo aquí para evitar 401 en el wizard.
+            $session = Yii::$app->session;
+            if (!$session->get('apiJwtToken') && !Yii::$app->user->isGuest) {
+                $identity = Yii::$app->user->identity;
+                if ($identity) {
+                    $persona = Persona::findOne(['id_user' => $identity->id]);
+                    if ($persona) {
+                        $payload = [
+                            'user_id' => $identity->id,
+                            'email' => $identity->email,
+                            'id_persona' => (int) $persona->id_persona,
+                            'iat' => time(),
+                            'exp' => time() + (24 * 60 * 60),
+                        ];
+                        $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
+                        $session->set('apiJwtToken', $token);
+                    }
+                }
+            }
 
             return $this->render('despuesdelogin/inicio');
         }

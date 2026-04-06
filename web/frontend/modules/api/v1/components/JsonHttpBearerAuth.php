@@ -52,8 +52,22 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         try {
             $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key(Yii::$app->params['jwtSecret'], 'HS256'));
         } catch (\Exception $e) {
+            // Diagnóstico: si el cliente envía un token inválido/expirado/firmado con otro secret,
+            // terminaremos aquí con 401. Loguear el tipo de error ayuda a depurar sin exponer el token.
+            Yii::warning(
+                'JWT inválido en JsonHttpBearerAuth: ' . get_class($e) . ' - ' . $e->getMessage(),
+                'auth.jwt'
+            );
             $this->challenge($response);
-            $this->handleFailure($response);
+
+            $response->statusCode = 401;
+            $response->data = [
+                'success' => false,
+                'message' => 'Token inválido o expirado',
+                'errors' => null,
+            ];
+            $response->send();
+            Yii::$app->end();
         }
 
         $userId = $decoded->user_id;

@@ -609,6 +609,8 @@ class UniversalQueryAgent
                 $searchCriteria['query_type'] = 'list_all';
             }
 
+            $searchCriteria['__user_query'] = (string) $userQuery;
+
             // FASE 2.5: Si es data_query, buscar business query primero
             if ($searchCriteria['query_type'] === 'data_query') {
                 $businessQuery = \common\queries\BusinessQueryRegistry::findMatchingQuery($searchCriteria, $userQuery);
@@ -1237,7 +1239,45 @@ PROMPT;
             }
         }
 
+        $score += self::sessionContextAgendaScoreAdjustment($action, (string) ($criteria['__user_query'] ?? ''));
+
         return $score;
+    }
+
+    /**
+     * Con RRHH en sesión (contexto operativo típico del profesional), refuerza acciones de {@see AgendaController}
+     * y reduce autogestión *-como-paciente* cuando el texto menciona "agenda" sin señales de intención paciente.
+     */
+    private static function sessionContextAgendaScoreAdjustment(array $action, string $userText): float
+    {
+        if ($userText === '' || !Yii::$app->has('user') || Yii::$app->user->isGuest) {
+            return 0.0;
+        }
+        try {
+            $idRh = Yii::$app->user->getIdRecursoHumano();
+            if (empty($idRh)) {
+                return 0.0;
+            }
+        } catch (\Throwable $e) {
+            return 0.0;
+        }
+
+        $delta = 0.0;
+        $entityLower = strtolower((string) ($action['entity'] ?? ''));
+        $controllerLower = strtolower((string) ($action['controller'] ?? ''));
+        if ($entityLower === 'agendas' || $controllerLower === 'agenda') {
+            $delta += 14.0;
+        }
+
+        $route = (string) ($action['route'] ?? '');
+        if ($route !== '' && strpos($route, 'como-paciente') !== false) {
+            $ql = mb_strtolower($userText, 'UTF-8');
+            if (preg_match('/\bagenda\b/u', $ql) && !preg_match('/\b(turno|turnos|cita|citas|reserv|paciente)\b/u', $ql)) {
+                $delta -= 18.0;
+            }
+        }
+
+        return $delta;
     }
 
     /**
@@ -1669,29 +1709,24 @@ PROMPT;
         }
 
         $queryLower = strtolower(trim($userQuery));
-        
-        // Obtener todas las acciones disponibles para el usuario
+
         $allActions = \common\components\Actions\ActionMappingService::getAvailableActionsForUser($userId);
-        
-        $bestMatch = null;
-        $bestScore = 0;
-        
+
+        $scored = [];
         foreach ($allActions as $action) {
             $score = 0;
-            
-            // Matching exacto en keywords
+
             if (!empty($action['keywords'])) {
                 foreach ($action['keywords'] as $keyword) {
                     $keywordLower = strtolower(trim($keyword));
                     if ($queryLower === $keywordLower) {
-                        $score += 20; // Coincidencia exacta
+                        $score += 20;
                     } elseif (stripos($queryLower, $keywordLower) !== false) {
-                        $score += 10; // Coincidencia parcial
+                        $score += 10;
                     }
                 }
             }
-            
-            // Matching en synonyms
+
             if (!empty($action['synonyms'])) {
                 foreach ($action['synonyms'] as $synonym) {
                     $synonymLower = strtolower(trim($synonym));
@@ -1702,8 +1737,7 @@ PROMPT;
                     }
                 }
             }
-            
-            // Matching en tags
+
             if (!empty($action['tags'])) {
                 foreach ($action['tags'] as $tag) {
                     $tagLower = strtolower(trim($tag));
@@ -1712,36 +1746,43 @@ PROMPT;
                     }
                 }
             }
-            
-            // Matching en display_name y description
+
             $displayNameLower = strtolower($action['display_name'] ?? '');
             $descriptionLower = strtolower($action['description'] ?? '');
-            if (stripos($displayNameLower, $queryLower) !== false || 
+            if (stripos($displayNameLower, $queryLower) !== false ||
                 stripos($queryLower, $displayNameLower) !== false) {
                 $score += 12;
             }
             if (stripos($descriptionLower, $queryLower) !== false) {
                 $score += 6;
             }
-            
-            // Matching en action_id (si el query contiene el action_id)
+
             $actionId = strtolower($action['action_id'] ?? '');
             if ($actionId && stripos($queryLower, $actionId) !== false) {
-                $score += 25; // Muy alto si coincide con action_id
+                $score += 25;
             }
-            
-            if ($score > $bestScore) {
-                $bestScore = $score;
-                $bestMatch = $action;
-            }
+
+            $scored[] = ['action' => $action, 'score' => $score];
         }
-        
-        // Umbral moderado: frases como "necesito un turno…" suelen sumar poco por keyword exacto
-        if ($bestScore >= 10) {
-            return $bestMatch;
+
+        usort($scored, static function ($a, $b) {
+            return $b['score'] <=> $a['score'];
+        });
+
+        if ($scored === [] || $scored[0]['score'] < 10) {
+            return null;
         }
-        
-        return null;
+        if (isset($scored[1]) && $scored[1]['score'] >= $scored[0]['score']) {
+            return null;
+        }
+
+        $route = (string) ($scored[0]['action']['route'] ?? '');
+        if ($route !== '' && strncmp($route, '/api/', 5) === 0) {
+            // Solo se ejecutan en fase 1 rutas web legacy (frontend\\controllers); el catálogo API v1 no aplica aquí.
+            return null;
+        }
+
+        return $scored[0]['action'];
     }
 
     /**

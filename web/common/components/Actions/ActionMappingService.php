@@ -15,7 +15,7 @@ class ActionMappingService
     /**
      * Cache key para acciones por rol
      */
-    public const CACHE_KEY_PREFIX = 'actions_for_role_v4_';
+    public const CACHE_KEY_PREFIX = 'actions_for_role_v5_';
     public const CACHE_DURATION = 1800; // 30 minutos
 
     /**

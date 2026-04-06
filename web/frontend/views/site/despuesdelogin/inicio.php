@@ -52,12 +52,7 @@ $urlEncounterClasses = Url::to(['/api/v1/catalogos/encounter-classes'], true);
 
     <fieldset class="formwizard_fieldset" id="formwizard_efectores">
         
-        <?= $this->render('indexuserefector', 
-                                [
-                                    'searchEfectores' => $searchEfectores,
-                                    'dataProviderEfectores' => $dataProviderEfectores,
-                                ]); 
-                                ?>
+        <?= $this->render('indexuserefector'); ?>
                            
         <button type="button" name="next" class="btn btn-primary next action-button float-end" value="Siguiente" disabled>Siguiente</button>
     </fieldset>

@@ -16,7 +16,8 @@ class AgendaController extends Controller
 {
     public function actionIndex()
     {
-        $this->layout = 'blanco';
+        // No usar layout `blanco`: no ejecuta head()/endBody() y los assets (jQuery, agenda-laboral.js) no se cargan.
+        $this->layout = 'main_sinmenuizquierda';
         $tiposDia = ArrayHelper::map(
             Tipo_dia::find()->orderBy(['nombre' => SORT_ASC])->all(),
             'id_tipo_dia',

@@ -949,28 +949,6 @@ class TurnosController extends Controller
         }
     }
 
-    public function actionEspera()
-    {
-        $fecha = Yii::$app->request->get('fecha') ? Yii::$app->request->get('fecha') : date("Y-m-d");
-
-        //para que lo vean desde el administrativo
-        if (Yii::$app->request->get('rrhh')) {
-            $rrhh = Yii::$app->request->get('rrhh');
-            $rrhhServicio = RrhhServicio::findOne(['id' => $rrhh]);
-            $idRrhh = $rrhhServicio->id_rr_hh;
-        } else {
-            $idRrhh = Yii::$app->user->getIdRecursoHumano();
-        }
-
-        $turnos = Turno::getTurnosPorRrhhPorFecha($fecha, $idRrhh);
-
-        if (Yii::$app->request->get('rrhh')) {
-            $this->layout = 'imprimir';
-        }
-
-        return $this->render('espera', ['turnos' => $turnos, 'fecha' => $fecha, 'profesional' => $rrhhServicio ?? '']);
-    }
-
     public function actionList()
     {
         $tfecha = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['fecha'] : date("Y-m-d") . ' - ' . date("Y-m-d");

@@ -101,7 +101,7 @@ class ConfigService {
     try {
       // Para desarrollo/simulación: incluir user_id como parámetro si no hay token válido
       final queryParams = <String, String>{
-        'efector_id': efectorId.toString(),
+        'id_efector': efectorId.toString(),
       };
       if (userId != null && (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
         queryParams['user_id'] = userId;

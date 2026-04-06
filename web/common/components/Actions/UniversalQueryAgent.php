@@ -728,6 +728,7 @@ IMPORTANTE:
 - En "extracted_data.dates" coloca fechas mencionadas
 - "filters.custom" solo debe usarse para filtros personalizados específicos del sistema, NO para valores/parámetros extraídos
 - SERVICIO PARA TURNOS: Si el usuario pide un turno (crear/agendar/solicitar) y menciona una especialidad, parte del cuerpo o tema (ej. piel, vista, dientes, corazón, médico de pies), debes elegir el servicio que mejor coincida de la lista "Servicios disponibles para turnos" y poner su nombre EXACTO en extracted_data.servicio y su id numérico en extracted_data.id_servicio. Usa SOLO valores de esa lista. Si no hay lista o no hay coincidencia clara, deja servicio e id_servicio en null.
+- Catálogo de acciones: cada ítem incluye route, action_id, title, description, keywords y a veces entity. Esos campos reflejan los docblocks de la API (incluye tags/sinónimos fusionados en keywords). Para search_keywords y entity_types, alinea la consulta con los ítems que mejor encajen; si hay varias entidades posibles, no fuerces una sola en entity_type (puede ser null).
 
 Usa tu conocimiento del lenguaje para extraer información relevante de la consulta.
 PROMPT;
@@ -917,7 +918,8 @@ PROMPT;
     }
 
     /**
-     * Refuerza search_keywords con tokens del texto del usuario (la IA a veces omite "turno", etc.).
+     * Añade a search_keywords los tokens del texto del usuario (sin sinónimos ni dominios inyectados:
+     * el desambiguado sale del catálogo/docblocks y del scoring sobre acciones descubiertas).
      *
      * @param string $userQuery
      * @param string[] $keywords
@@ -962,11 +964,6 @@ PROMPT;
                 continue;
             }
             $extra[] = $p;
-        }
-        // "agenda" sola suele ser paciente (reservar); agenda laboral/RRHH/profesional no debe empujar el dominio Turnos.
-        $agendaLaboral = (bool) preg_match('/\b(laboral|rrhh|recursos\s+humanos|horario|efector|profesional|mi\s+agenda\s+de\s+trabajo)\b/ui', $userQuery);
-        if (preg_match('/turno|cita|reserv/i', $userQuery) || (preg_match('/agenda/i', $userQuery) && !$agendaLaboral)) {
-            $extra[] = 'turno';
         }
 
         return array_values(array_unique(array_merge($keywords, $extra)));

@@ -32,6 +32,9 @@ final class MensajeCatalogItem
     /** critical|high|medium|low — mismo criterio que intent-categories. */
     public string $priority = 'low';
 
+    /** @see ActionDiscoveryService docblock @entity */
+    public ?string $entity = null;
+
     /**
      * @param string[] $keywords
      * @param string[] $patterns
@@ -45,7 +48,8 @@ final class MensajeCatalogItem
         array $patterns = [],
         ?string $category = null,
         ?string $intent = null,
-        string $priority = 'low'
+        string $priority = 'low',
+        ?string $entity = null
     ) {
         $this->route = $route;
         $this->action_id = $action_id;
@@ -56,6 +60,7 @@ final class MensajeCatalogItem
         $this->category = $category;
         $this->intent = $intent;
         $this->priority = $priority;
+        $this->entity = $entity;
     }
 
     public function isConversation(): bool
@@ -65,16 +70,21 @@ final class MensajeCatalogItem
 
     /**
      * Objeto enviado al modelo (sin patterns ni category/intent redundantes en exceso).
-     * @return array{route:string,action_id:string,title:string,description:string,keywords:string[]}
+     * @return array{route:string,action_id:string,title:string,description:string,keywords:string[],entity?:string}
      */
     public function toPromptArray(): array
     {
-        return [
+        $row = [
             'route' => $this->route,
             'action_id' => $this->action_id,
             'title' => $this->title,
             'description' => $this->description,
             'keywords' => $this->keywords,
         ];
+        if ($this->entity !== null && $this->entity !== '') {
+            $row['entity'] = $this->entity;
+        }
+
+        return $row;
     }
 }

@@ -80,7 +80,8 @@ final class MensajeCatalogBuilder
                     $patterns,
                     (string) $categoryKey,
                     (string) $intentKey,
-                    is_string($priority) ? $priority : 'low'
+                    is_string($priority) ? $priority : 'low',
+                    null
                 );
             }
         }
@@ -124,6 +125,11 @@ final class MensajeCatalogBuilder
             }
             $kw = array_values(array_unique($kw));
 
+            $entity = null;
+            if (!empty($action['entity']) && is_string($action['entity'])) {
+                $entity = $action['entity'];
+            }
+
             $items[] = new MensajeCatalogItem(
                 $route,
                 $actionId,
@@ -133,7 +139,8 @@ final class MensajeCatalogBuilder
                 [],
                 null,
                 null,
-                'low'
+                'low',
+                $entity
             );
         }
 

@@ -16,6 +16,22 @@ use webvimark\modules\UserManagement\models\User;
 class ApiGhostAccessControl extends ActionFilter
 {
     /**
+     * Rutas necesarias para el bootstrap de sesión operativa.
+     *
+     * Estos endpoints deben ser accesibles para cualquier usuario AUTENTICADO, incluso antes de que exista
+     * contexto RRHH/efector en sesión (roles por efector). No se chequea RBAC aquí: solo autenticación.
+     *
+     * Importante: Mantener la lista chica y específica.
+     *
+     * @var string[]
+     */
+    protected static array $authenticatedOnlyRoutes = [
+        '/api/efectores/mis-efectores',
+        '/api/rrhh/servicios-por-rrhh',
+        '/api/sesion-operativa/establecer',
+    ];
+
+    /**
      * Acciones que no requieren comprobación de permiso (p. ej. options).
      * Los controladores pueden sobrescribir en $accessControlExcept.
      */
@@ -61,6 +77,11 @@ class ApiGhostAccessControl extends ActionFilter
             Yii::$app->user->logout();
             $this->denyAccessJson('Usuario inactivo.');
             return false;
+        }
+
+        // Bootstrap: permitir a cualquier usuario autenticado, sin RBAC por rol/efector.
+        if (in_array($route, self::$authenticatedOnlyRoutes, true)) {
+            return true;
         }
 
         if (User::canRoute($route)) {

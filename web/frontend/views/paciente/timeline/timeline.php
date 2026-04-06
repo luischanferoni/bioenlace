@@ -73,69 +73,25 @@ $this->registerJsFile(
                         <div class="row">
                             <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
                                 <h6 class="mb-1 text-decoration-underline">DIAGNÓSTICOS RECIENTES</h6>
-                                <p class="mb-2">
-                                    <?php if (count($condicionesActivas) == 0) {
-                                        echo '<span class="ms-2">Sin datos</span>';
-                                    } else {
-                                        foreach ($condicionesActivas as $condicionActiva) {
-                                            if (!isset($condicionActiva->codigoSnomed)) continue;
-                                            echo '<span class="badge border border-info text-info me-1">' . strtoupper($condicionActiva->codigoSnomed->term) . '</span>';
-                                        }
-                                    } ?>
-                                </p>
+                                <p class="mb-2" id="tl_condiciones_activas"><span class="text-muted">Cargando...</span></p>
                             </div>
                             <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
                                 <h6 class="mb-1 text-decoration-underline">DIAGNÓSTICOS CRÓNICOS</h6>
-                                <p class="mb-2">
-                                    <?php if (!isset($condicionesCronicas) || count($condicionesCronicas) == 0) {
-                                        echo '<span class="ms-2">Sin datos</span>';
-                                    } else {
-                                        foreach ($condicionesCronicas as $condicionCronica) {
-                                            if (!isset($condicionCronica->codigoSnomed)) continue;
-                                            echo '<span class="badge border border-warning text-warning me-1">' . strtoupper($condicionCronica->codigoSnomed->term) . '</span>';
-                                        }
-                                    } ?>
-                                </p>
+                                <p class="mb-2" id="tl_condiciones_cronicas"><span class="text-muted">Cargando...</span></p>
                             </div>
                             <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
                                 <h6 class="mb-1 text-decoration-underline">ALERGIAS</h6>
-                                <p class="mb-2">
-                                    <?php if (count($hallazgos) == 0) {
-                                        echo '<span class="ms-2">Sin datos</span>';
-                                    } else {
-                                        foreach ($hallazgos as $hallazgo) {
-                                            echo '<span class="badge border border-warning text-warning me-1">' . strtoupper($hallazgo->codigoSnomed->term) . '</span>';
-                                        }
-                                    } ?>
-                                </p>
+                                <p class="mb-2" id="tl_hallazgos"><span class="text-muted">Cargando...</span></p>
                             </div>
                             <div class="col-lg-3 col-md-6 col-sm-12 mb-3">
                                 <h6 class="mb-1 text-decoration-underline">ANTECEDENTES</h6>
-                                <p class="mb-2">
-                                    <?php if (count($antecedentes_personales) == 0 && count($antecedentes_familiares) == 0) {
-                                        echo '<span class="ms-2">Sin datos</span>';
-                                    } else {
-                                        foreach ($antecedentes_personales as $antecedente) {
-                                            echo '<span class="badge border border-gray text-gray me-1">' . strtoupper($antecedente->snomedSituacion->term) . '</span>';
-                                        }
-                                        foreach ($antecedentes_familiares as $antecedente) {
-                                            echo '<span class="badge border border-gray text-gray me-1">' . strtoupper($antecedente->snomedSituacion->term) . '</span>';
-                                        }
-                                    } ?>
-                                </p>
+                                <p class="mb-2" id="tl_antecedentes"><span class="text-muted">Cargando...</span></p>
                             </div>
                         </div>
 
-                        <?php
-                        $textoMotivosTurno = $motivosConsultaTurno ?? null;
-                        ?>
                         <div class="mb-3 pb-2 border-bottom border-2">
                             <h6 class="mb-2 text-primary"><b>MOTIVOS DE ESTA CONSULTA</b></h6>
-                            <?php if ($textoMotivosTurno !== null && trim((string) $textoMotivosTurno) !== '') : ?>
-                                <p class="mb-0 text-body" style="white-space: pre-wrap;"><?= Html::encode($textoMotivosTurno) ?></p>
-                            <?php else : ?>
-                                <p class="mb-0 text-muted">Sin motivos registrados para esta consulta.</p>
-                            <?php endif; ?>
+                            <p class="mb-0 text-muted" id="tl_motivos_consulta">Cargando...</p>
                         </div>
 
                         <!-- Signos Vitales Actuales -->
@@ -277,9 +233,68 @@ Modal::end();
             curvasCrecimiento: <?= $persona->edad < 14 ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
             signosVitales: <?= json_encode(\yii\helpers\Url::to(['/v1/persona/signos-vitales', 'id' => (int) $persona->id_persona], true), JSON_UNESCAPED_SLASHES) ?>,
-            formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>'
+            formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
+            timeline: '/api/v1/personas/<?= (int) $persona->id_persona ?>/timeline'
         }
     };
+
+    function bioHeaders() {
+        if (typeof window.getBioenlaceApiClientHeaders === "function") {
+            return window.getBioenlaceApiClientHeaders();
+        }
+        return {};
+    }
+
+    function renderBadges(containerId, items, badgeClass) {
+        var el = document.getElementById(containerId);
+        if (!el) return;
+        if (!items || !items.length) {
+            el.innerHTML = '<span class="ms-2">Sin datos</span>';
+            return;
+        }
+        el.innerHTML = items
+            .filter(function (x) { return x && x.termino; })
+            .map(function (x) { return '<span class="badge ' + badgeClass + ' me-1">' + String(x.termino).toUpperCase() + '</span>'; })
+            .join('');
+    }
+
+    function renderMotivos(texto) {
+        var el = document.getElementById('tl_motivos_consulta');
+        if (!el) return;
+        if (texto && String(texto).trim() !== '') {
+            el.classList.remove('text-muted');
+            el.classList.add('text-body');
+            el.style.whiteSpace = 'pre-wrap';
+            el.textContent = String(texto);
+        } else {
+            el.classList.add('text-muted');
+            el.textContent = 'Sin motivos registrados para esta consulta.';
+        }
+    }
+
+    async function loadTimelineSummary() {
+        try {
+            var endpoints = timelineConfig.endpoints || {};
+            if (!endpoints.timeline) return;
+            var resp = await fetch(endpoints.timeline, { headers: bioHeaders() });
+            var payload = await resp.json();
+            if (!payload || payload.success !== true || !payload.data) {
+                throw new Error((payload && payload.message) ? payload.message : 'Error al cargar timeline');
+            }
+            var info = payload.data.informacion_medica || {};
+            renderBadges('tl_condiciones_activas', info.condiciones_activas || [], 'border border-info text-info');
+            renderBadges('tl_condiciones_cronicas', info.condiciones_cronicas || [], 'border border-warning text-warning');
+            renderBadges('tl_hallazgos', info.hallazgos || [], 'border border-warning text-warning');
+            renderBadges('tl_antecedentes', [].concat(info.antecedentes_personales || [], info.antecedentes_familiares || []), 'border border-gray text-gray');
+            renderMotivos(info.motivos_consulta || null);
+        } catch (e) {
+            renderBadges('tl_condiciones_activas', [], 'border border-info text-info');
+            renderBadges('tl_condiciones_cronicas', [], 'border border-warning text-warning');
+            renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
+            renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
+            renderMotivos(null);
+        }
+    }
 
     // Función para inicializar el timeline
     function inicializarTimeline() {
@@ -302,6 +317,7 @@ Modal::end();
             try {
                 // Siempre inicializar, incluso si ya se inicializó antes (para SPA)
                 window.TimelineJS.init(timelineConfig);
+                loadTimelineSummary();
                 console.log('Timeline inicializado correctamente');
                 return true;
             } catch (error) {

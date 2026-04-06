@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\models\Persona;
 use common\components\Services\Persona\PersonaSignosVitalesService;
+// Nota: el timeline clínico vive en PacientesController (persona en rol paciente).
 
 /**
  * API Persona: CRUD, signos vitales y timeline (historia clínica).
@@ -12,7 +13,7 @@ use common\components\Services\Persona\PersonaSignosVitalesService;
  */
 class PersonaController extends BaseController
 {
-    public static $authenticatorExcept = ['timeline'];
+    public static $authenticatorExcept = [];
 
     public function actions()
     {
@@ -45,7 +46,7 @@ class PersonaController extends BaseController
         foreach ($personas as $persona) {
             $formattedPersonas[] = [
                 'id' => $persona->id_persona,
-                'nombre' => $persona->getNombreCompleto(),
+                'nombre' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
                 'documento' => $persona->documento,
                 'edad' => $persona->edad,
                 'telefono' => $persona->telefono,
@@ -75,7 +76,7 @@ class PersonaController extends BaseController
         }
         return $this->success([
             'id' => $persona->id_persona,
-            'nombre' => $persona->getNombreCompleto(),
+            'nombre' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
             'documento' => $persona->documento,
             'fecha_nacimiento' => $persona->fecha_nacimiento,
             'edad' => $persona->edad,
@@ -110,14 +111,7 @@ class PersonaController extends BaseController
         return $this->success($payload, 'Signos vitales obtenidos');
     }
 
-    /**
-     * GET /api/v1/persona/timeline?id=...
-     */
-    public function actionTimeline($id)
-    {
-        // Endpoint deshabilitado: no necesitamos construir el timeline en este flujo.
-        return $this->error('Endpoint de timeline deshabilitado', null, 404);
-    }
+    // actionTimeline removida: usar GET /api/v1/personas/{id}/timeline (PacientesController::actionTimeline)
 
     /**
      * POST /api/v1/persona/create
@@ -133,7 +127,7 @@ class PersonaController extends BaseController
         }
         return $this->success([
             'id' => $persona->id_persona,
-            'nombre' => $persona->getNombreCompleto(),
+            'nombre' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
         ], 'Persona creada exitosamente', 201);
     }
 
@@ -154,7 +148,7 @@ class PersonaController extends BaseController
         }
         return $this->success([
             'id' => $persona->id_persona,
-            'nombre' => $persona->getNombreCompleto(),
+            'nombre' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
         ], 'Persona actualizada exitosamente');
     }
 

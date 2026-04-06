@@ -13,6 +13,9 @@ use common\models\RrhhEfector;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
 use common\models\Turno;
+use common\models\Alergias;
+use common\models\PersonasAntecedente;
+use common\models\DiagnosticoConsultaRepository as DCRepo;
 /**
  * Listado de pacientes por modalidad (encounter): ambulatorio, internación, guardia.
  */
@@ -94,6 +97,138 @@ class PacientesController extends BaseController
                     'fecha' => $fecha,
                 ];
         }
+    }
+
+    /**
+     * Timeline clínico de una persona (vista paciente).
+     *
+     * GET /api/v1/personas/{id}/timeline
+     * RBAC: /api/pacientes/timeline
+     */
+    public function actionTimeline($id)
+    {
+        $persona = Persona::findOne((int) $id);
+        if (!$persona) {
+            return $this->error('Persona no encontrada', null, 404);
+        }
+
+        // Diagnósticos recientes/crónicos
+        [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
+        $condicionesActivas = [];
+        foreach ($condActivas as $c) {
+            $term = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->term : null;
+            $code = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->conceptId : null;
+            $condicionesActivas[] = ['codigo' => $code, 'termino' => $term];
+        }
+        $condicionesCronicas = [];
+        foreach ($condCronicas as $c) {
+            $term = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->term : null;
+            $code = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->conceptId : null;
+            $condicionesCronicas[] = ['codigo' => $code, 'termino' => $term];
+        }
+
+        // Alergias
+        $hallazgos = [];
+        $alergias = Alergias::find()->where(['id_persona' => (int) $persona->id_persona])->all();
+        foreach ($alergias as $a) {
+            $term = isset($a->codigoSnomed) ? (string) $a->codigoSnomed->term : null;
+            $code = isset($a->codigoSnomed) ? (string) $a->codigoSnomed->conceptId : null;
+            $hallazgos[] = ['id' => (int) ($a->id ?? 0), 'codigo' => $code, 'termino' => $term];
+        }
+
+        // Antecedentes
+        $antecedentesPersonales = [];
+        $antecedentesFamiliares = [];
+        $ants = PersonasAntecedente::find()
+            ->where(['id_persona' => (int) $persona->id_persona])
+            ->all();
+        foreach ($ants as $ant) {
+            $term = isset($ant->snomedSituacion) ? (string) $ant->snomedSituacion->term : null;
+            $row = ['id' => (int) ($ant->id ?? 0), 'termino' => $term];
+            if (($ant->tipo_antecedente ?? null) === 'Familiar') {
+                $antecedentesFamiliares[] = $row;
+            } else {
+                $antecedentesPersonales[] = $row;
+            }
+        }
+
+        $idEfector = Yii::$app->user->getIdEfector();
+        $motivosConsulta = $idEfector ? Consulta::getUltimoMotivoConsultaTurno((int) $persona->id_persona, (int) $idEfector) : null;
+
+        // Timeline de eventos (mínimo viable: turnos + consultas).
+        $events = [];
+
+        $turnos = Turno::find()
+            ->where(['id_persona' => (int) $persona->id_persona])
+            ->andWhere(['is', 'deleted_at', null])
+            ->orderBy(['fecha' => SORT_DESC, 'hora' => SORT_DESC])
+            ->limit(200)
+            ->all();
+        foreach ($turnos as $t) {
+            $servicio = $t->servicio ? $t->servicio->nombre :
+                ($t->rrhhServicioAsignado ? $t->rrhhServicioAsignado->servicio->nombre : null);
+            $prof = $t->rrhh && $t->rrhh->persona ? $t->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : null;
+            $events[] = [
+                'id' => (int) $t->id_turnos,
+                'tipo' => 'Turno',
+                'fecha' => trim((string) ($t->fecha . ' ' . $t->hora)),
+                'resumen' => 'Turno',
+                'servicio' => $servicio,
+                'id_servicio' => $t->id_servicio_asignado ? (string) $t->id_servicio_asignado : null,
+                'parent_class' => $t->parent_class,
+                'parent_id' => $t->parent_id ? (int) $t->parent_id : (int) $t->id_turnos,
+                'profesional' => $prof,
+                'id_rr_hh' => $t->id_rr_hh ? (int) $t->id_rr_hh : null,
+                'efector' => null,
+                'tipo_detalle' => null,
+            ];
+        }
+
+        $consultas = Consulta::find()
+            ->where(['id_persona' => (int) $persona->id_persona])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit(200)
+            ->all();
+        foreach ($consultas as $c) {
+            $events[] = [
+                'id' => (int) $c->id_consulta,
+                'tipo' => 'Consulta',
+                'fecha' => (string) $c->created_at,
+                'resumen' => 'Consulta',
+                'servicio' => null,
+                'id_servicio' => null,
+                'parent_class' => $c->parent_class,
+                'parent_id' => $c->parent_id ? (int) $c->parent_id : null,
+                'profesional' => null,
+                'id_rr_hh' => $c->id_rr_hh ? (int) $c->id_rr_hh : null,
+                'efector' => null,
+                'tipo_detalle' => null,
+            ];
+        }
+
+        usort($events, function ($a, $b) {
+            return strcmp((string) $b['fecha'], (string) $a['fecha']);
+        });
+
+        return $this->success([
+            'persona' => [
+                'id' => (int) $persona->id_persona,
+                'nombre_completo' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
+                'documento' => $persona->documento,
+                'edad' => $persona->edad,
+                'fecha_nacimiento' => $persona->fecha_nacimiento,
+            ],
+            'informacion_medica' => [
+                'condiciones_activas' => $condicionesActivas,
+                'condiciones_cronicas' => $condicionesCronicas,
+                'hallazgos' => $hallazgos,
+                'antecedentes_personales' => $antecedentesPersonales,
+                'antecedentes_familiares' => $antecedentesFamiliares,
+                'motivos_consulta' => $motivosConsulta,
+            ],
+            'timeline' => $events,
+            'total_eventos' => count($events),
+        ], 'OK');
     }
 
     /**

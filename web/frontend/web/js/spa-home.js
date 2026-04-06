@@ -1351,10 +1351,7 @@
             if (pageElement) {
                 const content = pageElement.querySelector('.spa-page-content');
                 if (content) {
-                    // Filtrar scripts y CSS externos del HTML para evitar duplicados
-                    const filteredHtml = filtrarAssetsDuplicados(html);
-                    content.innerHTML = filteredHtml;
-                    initializePageContent(content, type);
+                    aplicarHtmlPaginaEnSpa(content, html, fullUrl, type);
                 } else {
                     console.error('No se encontró el contenedor .spa-page-content');
                 }
@@ -1379,15 +1376,10 @@
     }
 
     /**
-     * Filtrar assets duplicados (CSS y JS externos) del HTML
+     * Lista de fragmentos en href/src que ya existen en el shell SPA (no duplicar).
      */
-    function filtrarAssetsDuplicados(html) {
-        // Crear un elemento temporal para parsear el HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        
-        // Lista de assets que ya están cargados globalmente
-        const assetsCargados = [
+    function getSpaGlobalAssetKeywords() {
+        return [
             'bootstrap',
             'jquery',
             'yii.js',
@@ -1395,36 +1387,151 @@
             'bootstrap.min',
             'ajax-wrapper.js',
             'turnos.js',
-            'chat-inteligente.js'
-            // 'timeline.js' - deshabilitado temporalmente
+            'chat-inteligente.js',
         ];
-        
-        // Eliminar <link> tags de CSS que ya están cargados
-        const links = tempDiv.querySelectorAll('link[rel="stylesheet"]');
-        links.forEach(link => {
+    }
+
+    /**
+     * Filtrar assets duplicados dentro de un nodo (body fragment).
+     */
+    function filtrarAssetsDuplicadosEnElemento(root) {
+        if (!root) {
+            return;
+        }
+        const assetsCargados = getSpaGlobalAssetKeywords();
+        root.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
             const href = link.getAttribute('href') || '';
-            const deberiaEliminar = assetsCargados.some(asset => 
-                href.toLowerCase().includes(asset.toLowerCase())
-            );
-            if (deberiaEliminar) {
-                console.log('Eliminando CSS duplicado:', href);
+            if (assetsCargados.some(asset => href.toLowerCase().includes(asset.toLowerCase()))) {
                 link.remove();
             }
         });
-        
-        // Eliminar <script> tags externos que ya están cargados
-        const scripts = tempDiv.querySelectorAll('script[src]');
-        scripts.forEach(script => {
+        root.querySelectorAll('script[src]').forEach(script => {
             const src = script.getAttribute('src') || '';
-            const deberiaEliminar = assetsCargados.some(asset => 
-                src.toLowerCase().includes(asset.toLowerCase())
-            );
-            if (deberiaEliminar) {
-                console.log('Eliminando JS duplicado:', src);
+            if (assetsCargados.some(asset => src.toLowerCase().includes(asset.toLowerCase()))) {
                 script.remove();
             }
         });
-        
+    }
+
+    /**
+     * Inyecta en document.head los estilos del &lt;head&gt; de la página cargada (URLs absolutas).
+     * Evita perder flatpickr/sweetalert2/etc. al meter solo innerHTML del body.
+     */
+    function injectHeadStylesheetsFromParsedDoc(headEl, basePageUrl) {
+        if (!headEl) {
+            return;
+        }
+        const base = basePageUrl.split('#')[0];
+        headEl.querySelectorAll('link[rel="stylesheet"][href]').forEach(link => {
+            const raw = (link.getAttribute('href') || '').trim();
+            if (!raw || raw.startsWith('data:')) {
+                return;
+            }
+            let abs;
+            try {
+                abs = new URL(raw, base).href;
+            } catch (e) {
+                return;
+            }
+            const yaInyectado = [...document.querySelectorAll('link[rel="stylesheet"]')].some(
+                n => n.getAttribute('href') === abs || n.getAttribute('data-spa-injected-href') === abs
+            );
+            if (yaInyectado) {
+                return;
+            }
+            const l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = abs;
+            l.setAttribute('data-spa-injected-href', abs);
+            document.head.appendChild(l);
+        });
+    }
+
+    /**
+     * Los &lt;script src&gt; insertados con innerHTML no se ejecutan. Cargarlos en orden.
+     */
+    function loadExternalScriptsSequential(urls, done) {
+        let i = 0;
+        function next() {
+            if (i >= urls.length) {
+                if (typeof done === 'function') {
+                    done();
+                }
+                return;
+            }
+            const url = urls[i++];
+            const yaScript = [...document.querySelectorAll('script[data-spa-injected-src]')].some(
+                n => n.getAttribute('data-spa-injected-src') === url
+            );
+            if (yaScript) {
+                next();
+                return;
+            }
+            const el = document.createElement('script');
+            el.src = url;
+            el.async = false;
+            el.setAttribute('data-spa-injected-src', url);
+            el.onload = () => next();
+            el.onerror = () => {
+                console.error('[SPA] No se pudo cargar script:', url);
+                next();
+            };
+            document.body.appendChild(el);
+        }
+        next();
+    }
+
+    /**
+     * Respuesta HTML completa (layout Yii): parsear con DOMParser, inyectar CSS del head,
+     * poner body en el contenedor y ejecutar scripts externos + inline.
+     */
+    function aplicarHtmlPaginaEnSpa(content, html, fullPageUrl, type) {
+        const base = fullPageUrl.split('#')[0];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        if (doc.head) {
+            injectHeadStylesheetsFromParsedDoc(doc.head, base);
+        }
+
+        const bodyEl = doc.body;
+        if (!bodyEl) {
+            content.innerHTML = '<div class="alert alert-danger">La respuesta no es un documento HTML válido.</div>';
+            return;
+        }
+
+        const bodyWrap = document.createElement('div');
+        bodyWrap.innerHTML = bodyEl.innerHTML;
+        filtrarAssetsDuplicadosEnElemento(bodyWrap);
+
+        const externalSrcs = [];
+        bodyWrap.querySelectorAll('script[src]').forEach(s => {
+            const raw = (s.getAttribute('src') || '').trim();
+            if (raw) {
+                try {
+                    externalSrcs.push(new URL(raw, base).href);
+                } catch (e) {
+                    console.warn('[SPA] src de script inválido:', raw);
+                }
+            }
+            s.remove();
+        });
+
+        content.innerHTML = bodyWrap.innerHTML;
+
+        loadExternalScriptsSequential(externalSrcs, () => {
+            initializePageContent(content, type);
+        });
+    }
+
+    /**
+     * Filtrar assets duplicados (CSS y JS externos) del HTML
+     * @deprecated Preferir aplicarHtmlPaginaEnSpa para páginas completas Yii
+     */
+    function filtrarAssetsDuplicados(html) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        filtrarAssetsDuplicadosEnElemento(tempDiv);
         return tempDiv.innerHTML;
     }
 

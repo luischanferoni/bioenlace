@@ -302,6 +302,47 @@ function getSignosVitalesFetchHeaders() {
     return { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
 }
 
+/**
+ * Aplica el bloque de signos vitales (misma forma que data en GET .../signos-vitales).
+ * Guarda datos_sv en timelineVars para el modal sin segundo fetch.
+ * @param {object|null} d
+ */
+function applySignosVitalesPayload(d) {
+    const content = document.getElementById('signos-vitales-actuales-content');
+    if (!window.timelineVars) {
+        window.timelineVars = {};
+    }
+    if (!d) {
+        window.timelineVars.signosVitalesDatosSv = [];
+        if (content) {
+            content.innerHTML = '<div class="text-muted"><i class="bi bi-info-circle"></i> No se encontraron signos vitales registrados</div>';
+        }
+        const tituloEmpty = document.getElementById('signos-vitales-titulo');
+        if (tituloEmpty) {
+            tituloEmpty.textContent = 'SIGNOS VITALES ACTUALES';
+        }
+        const linkEmpty = document.getElementById('signos-vitales-link');
+        if (linkEmpty) {
+            linkEmpty.style.display = 'none';
+        }
+        return;
+    }
+    window.timelineVars.signosVitalesDatosSv = Array.isArray(d.datos_sv) ? d.datos_sv : [];
+    if (content) {
+        content.innerHTML = buildSignosVitalesActualesHtml(d.ultimos_sv);
+    }
+    const titulo = document.getElementById('signos-vitales-titulo');
+    if (titulo) {
+        titulo.textContent = d.fecha_titulo
+            ? 'SIGNOS VITALES ACTUALES (' + d.fecha_titulo + ')'
+            : 'SIGNOS VITALES ACTUALES';
+    }
+    const link = document.getElementById('signos-vitales-link');
+    if (link) {
+        link.style.display = d.tiene_mas_sv ? 'block' : 'none';
+    }
+}
+
 // Función para cargar los signos vitales actuales (API v1 JSON)
 async function loadSignosVitalesActuales() {
     const content = document.getElementById('signos-vitales-actuales-content');
@@ -384,7 +425,21 @@ async function loadTodosLosSignosVitales() {
     modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Cargando historial de signos vitales...</p></div>';
     
     try {
+        const cached =
+            window.timelineVars &&
+            Object.prototype.hasOwnProperty.call(window.timelineVars, 'signosVitalesDatosSv') &&
+            Array.isArray(window.timelineVars.signosVitalesDatosSv);
+        if (cached) {
+            modalContent.innerHTML = buildSignosVitalesModalHtml(window.timelineVars.signosVitalesDatosSv);
+            return;
+        }
+
         const endpoints = getEndpoints();
+        if (!endpoints || !endpoints.signosVitales) {
+            modalContent.innerHTML =
+                '<div class="alert alert-warning"><i class="bi bi-info-circle"></i> No hay historial de signos vitales cargado.</div>';
+            return;
+        }
         const url = endpoints.signosVitales;
         const response = await fetch(url, {
             method: 'GET',
@@ -555,13 +610,21 @@ function initTimeline(config) {
     // Cargar última vacuna
     //loadUltimaVacuna();
     
-    // Cargar signos vitales actuales (verificar que el elemento existe)
+    // Signos vitales: con historia-clinica se rellenan desde loadTimelineSummary en la vista; si no, endpoint dedicado.
+    const endpointsCfg = config.endpoints || {};
+    const signosDesdeHistoriaClinica = !!endpointsCfg.historiaClinica;
     const signosVitalesContent = document.getElementById('signos-vitales-actuales-content');
     if (signosVitalesContent) {
         console.log('Elemento signos-vitales-actuales-content encontrado, cargando...');
-        // Resetear el contenido a loading antes de cargar
         signosVitalesContent.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><span class="ms-2 text-muted">Cargando signos vitales...</span></div>';
-        loadSignosVitalesActuales();
+        if (signosDesdeHistoriaClinica) {
+            console.log('Signos vitales: pendiente de respuesta de historia-clínica');
+        } else if (endpointsCfg.signosVitales) {
+            loadSignosVitalesActuales();
+        } else {
+            signosVitalesContent.innerHTML =
+                '<div class="text-muted"><i class="bi bi-info-circle"></i> No hay fuente de signos vitales configurada</div>';
+        }
     } else {
         console.warn('Elemento signos-vitales-actuales-content no encontrado, reintentando en 500ms...');
         setTimeout(function() {
@@ -569,7 +632,15 @@ function initTimeline(config) {
             if (retryContent) {
                 console.log('Elemento encontrado en reintento, cargando signos vitales...');
                 retryContent.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><span class="ms-2 text-muted">Cargando signos vitales...</span></div>';
-                loadSignosVitalesActuales();
+                const ep = (config.endpoints || {});
+                if (ep.historiaClinica) {
+                    /* se completa con historia-clínica */
+                } else if (ep.signosVitales) {
+                    loadSignosVitalesActuales();
+                } else {
+                    retryContent.innerHTML =
+                        '<div class="text-muted"><i class="bi bi-info-circle"></i> No hay fuente de signos vitales configurada</div>';
+                }
             } else {
                 console.error('Elemento signos-vitales-actuales-content no encontrado después del reintento');
             }
@@ -604,6 +675,7 @@ if (!window.TimelineJS) {
         loadTodasLasVacunas,
         loadSignosVitalesActuales,
         loadTodosLosSignosVitales,
+        applySignosVitalesPayload,
         cargarFormularioConsulta,
         inicializarEventosFormulario
     };

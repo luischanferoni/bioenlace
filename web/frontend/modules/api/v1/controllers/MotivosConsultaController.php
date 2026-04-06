@@ -33,21 +33,7 @@ class MotivosConsultaController extends BaseController
             ->all();
 
         $baseUrl = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
-        $formattedMessages = [];
-        foreach ($messages as $message) {
-            $content = $message->content;
-            if (in_array($message->message_type, ['imagen', 'audio'], true) && $content !== '' && strpos($content, 'http') !== 0) {
-                $content = rtrim($baseUrl, '/') . '/' . ltrim($content, '/');
-            }
-            $formattedMessages[] = [
-                'id' => $message->id,
-                'content' => $content,
-                'user_id' => $message->user_id,
-                'user_name' => $message->user_name,
-                'message_type' => $message->message_type ?: 'texto',
-                'created_at' => $message->created_at,
-            ];
-        }
+        $formattedMessages = ConsultaMotivosMessage::serializeForApi($messages, $baseUrl);
 
         return [
             'success' => true,
@@ -87,7 +73,7 @@ class MotivosConsultaController extends BaseController
         $msg->consulta_id = (int) $consulta_id;
         $msg->user_id = $userId;
         $msg->user_name = $userName;
-        $msg->content = $message;
+        $msg->texto = $message;
         $msg->message_type = ConsultaMotivosMessage::TYPE_TEXTO;
 
         if (!$msg->save()) {
@@ -103,7 +89,7 @@ class MotivosConsultaController extends BaseController
             'message' => 'Mensaje enviado exitosamente',
             'data' => [
                 'id' => $msg->id,
-                'content' => $msg->content,
+                'content' => $msg->texto,
                 'user_id' => $msg->user_id,
                 'user_name' => $msg->user_name,
                 'message_type' => $msg->message_type,
@@ -165,7 +151,7 @@ class MotivosConsultaController extends BaseController
         $msg->consulta_id = (int) $consulta_id;
         $msg->user_id = $userId;
         $msg->user_name = $userName;
-        $msg->content = $relativePath;
+        $msg->texto = $relativePath;
         $msg->message_type = $messageType;
 
         if (!$msg->save()) {

@@ -127,9 +127,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                 // Información médica
                                 _buildInformacionMedica(
                                     _historiaClinicaData!.informacionMedica),
-                                // Motivos de esta consulta
-                                _buildMotivosConsulta(
-                                    _historiaClinicaData!.historiaClinica),
+                                _buildSignosVitales(
+                                    _historiaClinicaData!.signosVitales),
+                                // Motivos de esta consulta (API + app paciente)
+                                _buildMotivosConsulta(_historiaClinicaData!),
                               ],
                             ),
                           ),
@@ -168,6 +169,107 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         ],
       ),
     );
+  }
+
+  String? _signoValorNodo(dynamic node, String key) {
+    if (node is! Map) return null;
+    final v = node[key];
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
+  Widget _buildSignosVitales(SignosVitalesClinica sv) {
+    final u = sv.ultimosSv;
+    final peso = _signoValorNodo(u?['peso'], 'value');
+    final talla = _signoValorNodo(u?['talla'], 'value');
+    final imc = _signoValorNodo(u?['imc'], 'value');
+    String? tension;
+    final ta = u?['ta'];
+    if (ta is Map) {
+      final sys = ta['sistolica']?.toString().trim() ?? '';
+      final dia = ta['diastolica']?.toString().trim() ?? '';
+      if (sys.isNotEmpty && dia.isNotEmpty) {
+        tension = '$sys/$dia mmHg';
+      }
+    }
+    final hayResumen =
+        peso != null || talla != null || imc != null || tension != null;
+
+    final titulo = sv.fechaTitulo.isNotEmpty
+        ? 'SIGNOS VITALES ACTUALES (${sv.fechaTitulo})'
+        : 'SIGNOS VITALES ACTUALES';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16.0),
+      color: Colors.white,
+      margin: const EdgeInsets.only(bottom: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: AppTheme.h4Style.copyWith(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (!hayResumen)
+            Text(
+              'Sin datos',
+              style: AppTheme.subTitleStyle,
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (peso != null) Text('Peso: $peso kg', style: AppTheme.subTitleStyle),
+                if (talla != null) Text('Altura: $talla cm', style: AppTheme.subTitleStyle),
+                if (imc != null) Text('IMC: $imc', style: AppTheme.subTitleStyle),
+                if (tension != null)
+                  Text('Tensión arterial: $tension', style: AppTheme.subTitleStyle),
+              ],
+            ),
+          if (sv.datosSv.isNotEmpty && (sv.tieneMasSv || sv.datosSv.length > 1)) ...[
+            const SizedBox(height: 12),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text(
+                'Historial (${sv.totalSv} registros)',
+                style: AppTheme.h6Style,
+              ),
+              children: [
+                for (final row in sv.datosSv.take(12))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      _formatFilaSignosResumen(row),
+                      style: AppTheme.subTitleStyle.copyWith(fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _formatFilaSignosResumen(Map<String, dynamic> row) {
+    final fechaRaw = row['fecha_atencion'] ?? row['fecha'];
+    final partes = <String>[];
+    if (fechaRaw != null && '$fechaRaw'.trim().isNotEmpty) {
+      partes.add('$fechaRaw');
+    }
+    final ta = row['ta1_sistolica'] != null && row['ta1_diastolica'] != null
+        ? '${row['ta1_sistolica']}/${row['ta1_diastolica']}'
+        : row['ta']?.toString();
+    if (ta != null && ta.trim().isNotEmpty) partes.add('PA $ta');
+    if (row['peso'] != null) partes.add('Peso ${row['peso']}');
+    if (row['talla'] != null) partes.add('Talla ${row['talla']}');
+    return partes.isEmpty ? '—' : partes.join(' · ');
   }
 
   Widget _buildInformacionMedica(InformacionMedica info) {
@@ -256,15 +358,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Widget _buildMotivosConsulta(List<TimelineEvent> eventos) {
-    TimelineEvent? ultimoTurnoConMotivo;
-    for (var i = eventos.length - 1; i >= 0; i--) {
-      final e = eventos[i];
-      if (e.tipo == 'Turno' && e.resumen != null && e.resumen!.trim().isNotEmpty) {
-        ultimoTurnoConMotivo = e;
-        break;
-      }
-    }
+  Widget _buildMotivosConsulta(HistoriaClinicaResponse hc) {
+    final resumen = hc.informacionMedica.motivosConsulta;
+    final msgs = hc.motivosConsultaPaciente.messages;
+    final hayResumen = resumen != null && resumen.trim().isNotEmpty;
 
     return Container(
       width: double.infinity,
@@ -282,16 +379,83 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          if (ultimoTurnoConMotivo == null)
+          if (hayResumen)
             Text(
-              'Sin motivos registrados para esta consulta.',
+              resumen,
+              style: AppTheme.subTitleStyle,
+            )
+          else if (msgs.isNotEmpty)
+            Text(
+              'Aún no hay texto de motivo consolidado; revise los mensajes enviados por el paciente desde la app.',
               style: AppTheme.subTitleStyle,
             )
           else
             Text(
-              ultimoTurnoConMotivo.resumen!,
+              'Sin motivos registrados para esta consulta.',
               style: AppTheme.subTitleStyle,
             ),
+          if (msgs.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Mensajes del paciente (app)',
+              style: AppTheme.h6Style.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...msgs.map(_buildMotivoMensajeTile),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMotivoMensajeTile(MotivoConsultaMensajeApi m) {
+    final tipo = m.messageType.toLowerCase();
+    final uri = Uri.tryParse(m.content);
+    final esHttp = uri != null &&
+        (uri.isScheme('http') || uri.isScheme('https'));
+
+    Widget cuerpo;
+    if (tipo == 'texto') {
+      cuerpo = Text(
+        m.content,
+        style: AppTheme.subTitleStyle,
+      );
+    } else if (tipo == 'imagen' && esHttp) {
+      cuerpo = Image.network(
+        m.content,
+        height: 140,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => SelectableText(m.content),
+      );
+    } else if (tipo == 'audio' && esHttp) {
+      cuerpo = SelectableText(
+        'Audio: ${m.content}',
+        style: AppTheme.subTitleStyle,
+      );
+    } else {
+      cuerpo = SelectableText(
+        m.content,
+        style: AppTheme.subTitleStyle,
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (m.createdAt.isNotEmpty)
+            Text(
+              m.createdAt,
+              style: AppTheme.subTitleStyle.copyWith(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          cuerpo,
         ],
       ),
     );

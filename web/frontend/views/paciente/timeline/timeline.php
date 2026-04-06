@@ -92,6 +92,7 @@ $this->registerJsFile(
                         <div class="mb-3 pb-2 border-bottom border-2">
                             <h6 class="mb-2 text-primary"><b>MOTIVOS DE ESTA CONSULTA</b></h6>
                             <p class="mb-0 text-muted" id="tl_motivos_consulta">Cargando...</p>
+                            <div id="tl_motivos_consulta_mensajes" class="mt-2"></div>
                         </div>
 
                         <!-- Signos Vitales Actuales -->
@@ -232,7 +233,6 @@ Modal::end();
         endpoints: {
             curvasCrecimiento: <?= $persona->edad < 14 ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
-            signosVitales: <?= json_encode(\yii\helpers\Url::to(['/v1/persona/signos-vitales', 'id' => (int) $persona->id_persona], true), JSON_UNESCAPED_SLASHES) ?>,
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
             historiaClinica: '/api/v1/personas/<?= (int) $persona->id_persona ?>/historia-clinica'
         }
@@ -258,18 +258,63 @@ Modal::end();
             .join('');
     }
 
-    function renderMotivos(texto) {
+    function renderMotivos(texto, hayMensajesPacienteApp) {
         var el = document.getElementById('tl_motivos_consulta');
         if (!el) return;
+        hayMensajesPacienteApp = !!hayMensajesPacienteApp;
         if (texto && String(texto).trim() !== '') {
             el.classList.remove('text-muted');
             el.classList.add('text-body');
             el.style.whiteSpace = 'pre-wrap';
             el.textContent = String(texto);
+        } else if (hayMensajesPacienteApp) {
+            el.classList.remove('text-body');
+            el.classList.add('text-muted');
+            el.style.whiteSpace = 'normal';
+            el.textContent = 'Aún no hay texto de motivo consolidado; revise los mensajes enviados por el paciente desde la app.';
         } else {
             el.classList.add('text-muted');
+            el.style.whiteSpace = 'normal';
             el.textContent = 'Sin motivos registrados para esta consulta.';
         }
+    }
+
+    function escMotivosHtml(s) {
+        if (s == null) return '';
+        var d = document.createElement('div');
+        d.textContent = String(s);
+        return d.innerHTML;
+    }
+
+    function renderMotivosPacienteApp(mp) {
+        var box = document.getElementById('tl_motivos_consulta_mensajes');
+        if (!box) return;
+        var msgs = (mp && mp.messages) ? mp.messages : [];
+        if (!msgs.length) {
+            box.innerHTML = '';
+            return;
+        }
+        var html = '<div class="border rounded p-2 bg-light"><div class="small text-uppercase text-primary fw-bold mb-2">Mensajes del paciente (app)</div><ul class="list-unstyled mb-0">';
+        for (var i = 0; i < msgs.length; i++) {
+            var m = msgs[i];
+            var meta = escMotivosHtml(m.created_at || '');
+            var body = '';
+            var t = m.message_type || 'texto';
+            if (t === 'texto') {
+                body = '<span style="white-space:pre-wrap">' + escMotivosHtml(m.content || '') + '</span>';
+            } else if (t === 'imagen') {
+                var u = m.content || '';
+                body = '<a href="' + escMotivosHtml(u) + '" target="_blank" rel="noopener">Ver imagen</a>';
+            } else if (t === 'audio') {
+                var au = m.content || '';
+                body = '<audio controls preload="none" src="' + escMotivosHtml(au) + '" style="max-width:100%"></audio>';
+            } else {
+                body = escMotivosHtml(m.content || '');
+            }
+            html += '<li class="mb-2 pb-2 border-bottom border-light"><div class="small text-muted">' + meta + '</div>' + body + '</li>';
+        }
+        html += '</ul></div>';
+        box.innerHTML = html;
     }
 
     async function loadTimelineSummary() {
@@ -286,13 +331,23 @@ Modal::end();
             renderBadges('tl_condiciones_cronicas', info.condiciones_cronicas || [], 'border border-warning text-warning');
             renderBadges('tl_hallazgos', info.hallazgos || [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [].concat(info.antecedentes_personales || [], info.antecedentes_familiares || []), 'border border-gray text-gray');
-            renderMotivos(info.motivos_consulta || null);
+            var mp = payload.data.motivos_consulta_paciente || {};
+            var msgPac = (mp.messages && mp.messages.length) ? mp.messages.length : 0;
+            renderMotivos(info.motivos_consulta || null, msgPac > 0);
+            renderMotivosPacienteApp(mp);
+            if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
+                window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
+            }
         } catch (e) {
             renderBadges('tl_condiciones_activas', [], 'border border-info text-info');
             renderBadges('tl_condiciones_cronicas', [], 'border border-warning text-warning');
             renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
-            renderMotivos(null);
+            renderMotivos(null, false);
+            renderMotivosPacienteApp(null);
+            if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
+                window.TimelineJS.applySignosVitalesPayload(null);
+            }
         }
     }
 

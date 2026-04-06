@@ -16,6 +16,8 @@ use common\models\Turno;
 use common\models\Alergias;
 use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
+use common\models\ConsultaMotivosMessage;
+use common\components\Services\Persona\PersonaSignosVitalesService;
 /**
  * Listado de pacientes por modalidad (encounter): ambulatorio, internación, guardia.
  */
@@ -100,9 +102,10 @@ class PacientesController extends BaseController
     }
 
     /**
-     * Historia clínica agregada de una persona (vista paciente).
+     * Resumen de historia clínica (persona + información médica + signos vitales + mensajes de motivos de la app del paciente). No arma lista de eventos aquí.
      *
      * GET /api/v1/personas/{id}/historia-clinica
+     * Query (solo YII_DEBUG): simular_signos=1 — misma semántica que GET .../signos-vitales.
      * RBAC: /api/pacientes/historia-clinica
      */
     public function actionHistoriaClinica($id)
@@ -155,60 +158,35 @@ class PacientesController extends BaseController
         $idEfector = Yii::$app->user->getIdEfector();
         $motivosConsulta = $idEfector ? Consulta::getUltimoMotivoConsultaTurno((int) $persona->id_persona, (int) $idEfector) : null;
 
-        // Registros de historia clínica (mínimo viable: turnos + consultas).
-        $events = [];
-
-        $turnos = Turno::find()
-            ->where(['id_persona' => (int) $persona->id_persona])
-            ->andWhere(['is', 'deleted_at', null])
-            ->orderBy(['fecha' => SORT_DESC, 'hora' => SORT_DESC])
-            ->limit(200)
-            ->all();
-        foreach ($turnos as $t) {
-            $servicio = $t->servicio ? $t->servicio->nombre :
-                ($t->rrhhServicioAsignado ? $t->rrhhServicioAsignado->servicio->nombre : null);
-            $prof = $t->rrhh && $t->rrhh->persona ? $t->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : null;
-            $events[] = [
-                'id' => (int) $t->id_turnos,
-                'tipo' => 'Turno',
-                'fecha' => trim((string) ($t->fecha . ' ' . $t->hora)),
-                'resumen' => 'Turno',
-                'servicio' => $servicio,
-                'id_servicio' => $t->id_servicio_asignado ? (string) $t->id_servicio_asignado : null,
-                'parent_class' => $t->parent_class,
-                'parent_id' => $t->parent_id ? (int) $t->parent_id : (int) $t->id_turnos,
-                'profesional' => $prof,
-                'id_rr_hh' => $t->id_rr_hh ? (int) $t->id_rr_hh : null,
-                'efector' => null,
-                'tipo_detalle' => null,
-            ];
+        $motivosConsultaPaciente = [
+            'consulta_id' => null,
+            'messages' => [],
+        ];
+        if ($idEfector) {
+            $idConsultaMotivos = Consulta::getUltimaConsultaIdDesdeTurno((int) $persona->id_persona, (int) $idEfector);
+            if ($idConsultaMotivos) {
+                $consultaMotivos = Consulta::findOne($idConsultaMotivos);
+                if ($consultaMotivos && $this->canAccessConsultaMotivos($consultaMotivos)) {
+                    $mensajes = ConsultaMotivosMessage::find()
+                        ->where(['consulta_id' => $idConsultaMotivos])
+                        ->orderBy(['created_at' => SORT_ASC])
+                        ->all();
+                    $hostBase = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
+                    $motivosConsultaPaciente = [
+                        'consulta_id' => $idConsultaMotivos,
+                        'messages' => ConsultaMotivosMessage::serializeForApi($mensajes, $hostBase),
+                    ];
+                }
+            }
         }
 
-        $consultas = Consulta::find()
-            ->where(['id_persona' => (int) $persona->id_persona])
-            ->orderBy(['created_at' => SORT_DESC])
-            ->limit(200)
-            ->all();
-        foreach ($consultas as $c) {
-            $events[] = [
-                'id' => (int) $c->id_consulta,
-                'tipo' => 'Consulta',
-                'fecha' => (string) $c->created_at,
-                'resumen' => 'Consulta',
-                'servicio' => null,
-                'id_servicio' => null,
-                'parent_class' => $c->parent_class,
-                'parent_id' => $c->parent_id ? (int) $c->parent_id : null,
-                'profesional' => null,
-                'id_rr_hh' => $c->id_rr_hh ? (int) $c->id_rr_hh : null,
-                'efector' => null,
-                'tipo_detalle' => null,
-            ];
+        $simularSignos = false;
+        if (defined('YII_DEBUG') && YII_DEBUG) {
+            $simularSignos = (bool) Yii::$app->request->get('simular_signos', false);
         }
+        $signosVitales = (new PersonaSignosVitalesService())->getSignosVitalesData($persona, $simularSignos);
 
-        usort($events, function ($a, $b) {
-            return strcmp((string) $b['fecha'], (string) $a['fecha']);
-        });
+        // La línea de tiempo / eventos agregados no se construye aquí (otro endpoint o servicio cuando corresponda).
 
         return $this->success([
             'persona' => [
@@ -226,9 +204,25 @@ class PacientesController extends BaseController
                 'antecedentes_familiares' => $antecedentesFamiliares,
                 'motivos_consulta' => $motivosConsulta,
             ],
-            'historia_clinica' => $events,
-            'total_historia_clinica' => count($events),
+            'signos_vitales' => $signosVitales,
+            'motivos_consulta_paciente' => $motivosConsultaPaciente,
+            'historia_clinica' => [],
+            'total_historia_clinica' => 0,
         ], 'OK');
+    }
+
+    /**
+     * Misma regla que {@see MotivosConsultaController::canAccessConsulta} — mensajes solo si la consulta es del paciente en sesión o del mismo RRHH.
+     */
+    private function canAccessConsultaMotivos(Consulta $consulta): bool
+    {
+        if ((int) $consulta->id_persona === (int) Yii::$app->user->getIdPersona()) {
+            return true;
+        }
+        $idRrhhConsulta = (int) $consulta->id_rr_hh;
+        $idRrhhSesion = (int) Yii::$app->user->getIdRecursoHumano();
+
+        return $idRrhhConsulta > 0 && $idRrhhSesion > 0 && $idRrhhConsulta === $idRrhhSesion;
     }
 
     /**

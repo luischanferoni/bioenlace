@@ -68,7 +68,7 @@ class MotivosConsultaController extends Controller
             $parts = [];
             foreach ($messages as $msg) {
                 if ($msg->message_type === 'texto') {
-                    $parts[] = trim($msg->content);
+                    $parts[] = trim($msg->texto);
                 } elseif ($msg->message_type === 'audio') {
                     $parts[] = '[Audio]'; // TODO: transcribir con API de speech-to-text
                 } elseif ($msg->message_type === 'imagen') {

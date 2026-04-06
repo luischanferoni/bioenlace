@@ -523,6 +523,45 @@ class Consulta extends \yii\db\ActiveRecord
         return is_string($motivo) ? trim($motivo) : null;
     }
 
+    /**
+     * Última consulta ligada a turno (mismos joins que {@see getUltimoMotivoConsultaTurno}),
+     * sin exigir `motivo_consulta` — permite cargar mensajes de la app del paciente aunque el texto procesado aún no exista.
+     *
+     * @param int $personaId
+     * @param int|null $idEfector
+     * @return int|null id_consulta
+     */
+    public static function getUltimaConsultaIdDesdeTurno(int $personaId, ?int $idEfector = null): ?int
+    {
+        if ($personaId <= 0) {
+            return null;
+        }
+
+        $query = static::find()
+            ->alias('c')
+            ->select(['c.id_consulta'])
+            ->innerJoin('turnos t', 'c.id_turnos = t.id_turnos')
+            ->innerJoin('rrhh_servicio rs', 'rs.id = t.id_rrhh_servicio_asignado')
+            ->innerJoin('rrhh_efector re', 're.id_rr_hh = rs.id_rr_hh')
+            ->innerJoin('servicios s', 's.id_servicio = t.id_servicio_asignado')
+            ->innerJoin('efectores e', 'e.id_efector = t.id_efector')
+            ->innerJoin('servicios_efector as se', 'se.id_servicio = t.id_servicio_asignado and se.id_efector = t.id_efector')
+            ->leftJoin('servicios as pase_prev', 'pase_prev.id_servicio = se.pase_previo')
+            ->where(['t.id_persona' => $personaId])
+            ->andWhere('t.deleted_at IS NULL')
+            ->andWhere('c.deleted_at IS NULL')
+            ->orderBy(['t.fecha' => SORT_DESC, 't.hora' => SORT_DESC, 'c.id_consulta' => SORT_DESC])
+            ->limit(1);
+
+        if (!empty($idEfector)) {
+            $query->andWhere(['t.id_efector' => $idEfector]);
+        }
+
+        $id = $query->scalar();
+
+        return $id !== false && $id !== null ? (int) $id : null;
+    }
+
     public function getMostUseRrhh($medico)
     {
         $connection = Yii::$app->getDb();

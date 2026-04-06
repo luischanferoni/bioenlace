@@ -1429,7 +1429,7 @@
             return; // No hay contenedor para acciones comunes
         }
         
-        const url = window.spaConfig.baseUrl + '/site/get-common-actions';
+        const url = window.spaConfig.baseUrl + '/api/v1/acciones/comunes';
         fetch(url, {
             method: 'GET',
             headers: clientApiHeaders({

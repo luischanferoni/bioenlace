@@ -515,38 +515,38 @@ class SiteController extends Controller
     }
 
     /**
-     * Obtener acciones comunes para el usuario actual
+     * Obtener acciones comunes para el usuario actual (misma lógica que GET /api/v1/acciones/comunes).
      * @return \yii\web\Response
      */
     public function actionGetCommonActions()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
+        $userId = (int) Yii::$app->user->id;
+        if ($userId <= 0) {
+            return [
+                'success' => false,
+                'error' => 'No autenticado',
+                'actions' => [],
+            ];
+        }
+
         try {
-            // Obtener acciones disponibles para el usuario
-            $availableActions = \common\components\ActionMappingService::getAvailableActionsForUser();
-            
-            // Filtrar acciones comunes según el rol del usuario
-            $commonActions = self::filterCommonActions($availableActions);
-            
-            // Limitar a 12 acciones más comunes
-            $commonActions = array_slice($commonActions, 0, 12);
-            
-            // Formatear para respuesta
-            $formattedActions = [];
-            foreach ($commonActions as $action) {
-                $formattedActions[] = [
-                    'route' => $action['route'],
-                    'name' => $action['display_name'],
-                    'description' => $action['description'],
+            $actions = \common\components\Services\Actions\CommonActionsService::getFormattedForUser($userId);
+            $out = [];
+            foreach ($actions as $row) {
+                $out[] = [
+                    'route' => $row['route'],
+                    'name' => $row['name'],
+                    'description' => $row['description'],
                 ];
             }
 
             return [
                 'success' => true,
-                'actions' => $formattedActions,
+                'actions' => $out,
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Yii::error("Error obteniendo acciones comunes: " . $e->getMessage(), 'site-controller');
             return [
                 'success' => false,

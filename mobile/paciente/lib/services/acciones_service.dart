@@ -257,37 +257,48 @@ class AsistenteService {
     }
   }
 
-  /// Obtiene acciones comunes disponibles
+  /// GET /api/v1/acciones/comunes — mismas acciones que la SPA web (filtradas por permisos).
   Future<List<Map<String, dynamic>>> getCommonActions() async {
     try {
-      // Por ahora retornamos acciones comunes predefinidas
-      // En el futuro se puede obtener del backend
-      return [
-        {
-          'title': 'Ver mis consultas',
-          'description': 'Revisa tus consultas médicas',
-          'icon': 'medical_services',
-          'action': 'ver_consultas',
-        },
-        {
-          'title': 'Agendar turno',
-          'description': 'Solicita un turno médico',
-          'icon': 'event',
-          'action': 'agendar_turno',
-        },
-        {
-          'title': 'Ver resultados',
-          'description': 'Consulta tus estudios y resultados',
-          'icon': 'description',
-          'action': 'ver_resultados',
-        },
-        {
-          'title': 'Contactar médico',
-          'description': 'Comunícate con tu médico',
-          'icon': 'chat',
-          'action': 'contactar_medico',
-        },
-      ];
+      final uri = Uri.parse('${AppConfig.apiUrl}/acciones/comunes');
+      final headers = <String, String>{
+        'Accept': 'application/json',
+      };
+      if (authToken != null) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+
+      final responseData = json.decode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 200 || responseData['success'] != true) {
+        return [];
+      }
+
+      final raw = responseData['actions'];
+      if (raw is! List) {
+        return [];
+      }
+
+      final List<Map<String, dynamic>> out = [];
+      for (final item in raw) {
+        if (item is! Map) {
+          continue;
+        }
+        final m = Map<String, dynamic>.from(item);
+        final name = m['name']?.toString() ?? '';
+        out.add({
+          'title': name,
+          'description': m['description']?.toString() ?? '',
+          'route': m['route']?.toString() ?? '',
+          'action_id': m['action_id'],
+          'icon': m['icon']?.toString() ?? 'touch_app',
+          'action': m['action_id']?.toString() ?? m['route']?.toString() ?? '',
+        });
+      }
+      return out;
     } catch (e) {
       return [];
     }

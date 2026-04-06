@@ -222,6 +222,10 @@ return [
                 // Sesión Operativa API
                 'POST api/<version:\w+>/sesion-operativa/establecer' => '<version>/sesion-operativa/establecer',
                 'OPTIONS api/<version:\w+>/sesion-operativa/establecer' => '<version>/sesion-operativa/establecer',
+
+                // Acciones comunes (web SPA / móvil; filtrado por permisos en servicio)
+                'GET api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
+                'OPTIONS api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 
                 // CRUD API
                 'GET api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',

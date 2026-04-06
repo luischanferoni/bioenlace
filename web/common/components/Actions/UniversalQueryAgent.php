@@ -1759,7 +1759,7 @@ PROMPT;
         
         // Si es una sola acción (no array de arrays - verificar si tiene claves asociativas pero no índice numérico)
         if (isset($actions['action_id']) || (isset($actions['route']) && !isset($actions[0]))) {
-            return [
+            return AssistantClientOpenEnricher::enrich([
                 'action_id' => $actions['action_id'] ?? self::generateActionId($actions),
                 'display_name' => $actions['display_name'] ?? '',
                 'description' => $actions['description'] ?? '',
@@ -1767,21 +1767,21 @@ PROMPT;
                 // Campos extra para permitir navegación/ejecución desde UI sin romper compatibilidad
                 'route' => $actions['route'] ?? null,
                 'parameters' => $actions['parameters'] ?? [],
-            ];
+            ]);
         }
         
         // Si es array de acciones (tiene índice numérico)
         $formatted = [];
         foreach ($actions as $action) {
             if (is_array($action)) {
-                $formatted[] = [
+                $formatted[] = AssistantClientOpenEnricher::enrich([
                     'action_id' => $action['action_id'] ?? self::generateActionId($action),
                     'display_name' => $action['display_name'] ?? '',
                     'description' => $action['description'] ?? '',
                     'entity' => $action['entity'] ?? null,
                     'route' => $action['route'] ?? null,
                     'parameters' => $action['parameters'] ?? [],
-                ];
+                ]);
             }
         }
         

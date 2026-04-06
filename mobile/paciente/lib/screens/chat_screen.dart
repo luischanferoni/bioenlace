@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
@@ -163,7 +164,60 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Origen del sitio web (sin `/api/v1`) a partir de {@link AppConfig.apiUrl}.
+  static Uri _webBaseUriFromApiUrl(String apiUrl) {
+    var s = apiUrl.trim();
+    s = s.replaceAll(RegExp(r'/api/v\d+/?$', caseSensitive: false), '');
+    while (s.endsWith('/')) {
+      s = s.substring(0, s.length - 1);
+    }
+    return Uri.parse(s);
+  }
+
+  /// Si la acción trae `client_open` (pantalla Yii / web nativa), abre el navegador y no pasa por CRUD/wizard.
+  Future<bool> _tryOpenClientNative(Map<String, dynamic> action) async {
+    final co = action['client_open'];
+    if (co is! Map) {
+      return false;
+    }
+    final mobile = co['mobile'];
+    final web = co['web'];
+    final pathRaw = (mobile is Map ? mobile['path'] : null) ??
+        (web is Map ? web['path'] : null);
+    if (pathRaw is! String || pathRaw.isEmpty) {
+      return false;
+    }
+    final base = _webBaseUriFromApiUrl(AppConfig.apiUrl);
+    var target = base.replace(path: pathRaw);
+    final queryMap = (mobile is Map ? mobile['query'] : null) ??
+        (web is Map ? web['query'] : null);
+    if (queryMap is Map && queryMap.isNotEmpty) {
+      final q = <String, String>{...target.queryParameters};
+      queryMap.forEach((k, v) {
+        if (v != null && v.toString().isNotEmpty) {
+          q[k.toString()] = v.toString();
+        }
+      });
+      target = target.replace(queryParameters: q);
+    }
+    try {
+      if (await canLaunchUrl(target)) {
+        await launchUrl(target, mode: LaunchMode.externalApplication);
+        return true;
+      }
+      _showErrorSnackbar('No se pudo abrir la pantalla en el navegador.');
+      return true;
+    } catch (e) {
+      _showErrorSnackbar('No se pudo abrir: ${e.toString()}');
+      return true;
+    }
+  }
+
   Future<void> _executeAction(Map<String, dynamic> action) async {
+    if (await _tryOpenClientNative(action)) {
+      return;
+    }
+
     final actionId = action['action_id'];
 
     if (actionId == null || actionId.isEmpty) {

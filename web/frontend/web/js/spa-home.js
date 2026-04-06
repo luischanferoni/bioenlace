@@ -990,6 +990,39 @@
      * @param {Array} actions - Array de acciones
      * @param {boolean} includeHeader - Si incluir el header "Acciones sugeridas"
      */
+    /**
+     * URL de navegación SPA: prioriza client_open (pantalla Yii / módulo web) sobre la ruta API.
+     * @param {object} action
+     * @returns {{ url: string, fullPage: boolean|undefined, actionType: string|undefined }}
+     */
+    function resolveActionNavigation(action) {
+        const co = action && action.client_open;
+        const web = co && co.web;
+        if (web && typeof web.path === 'string' && web.path !== '') {
+            let url = web.path;
+            const q = web.query;
+            if (q && typeof q === 'object' && Object.keys(q).length > 0) {
+                url += '?' + new URLSearchParams(q).toString();
+            }
+            return {
+                url: url,
+                fullPage: true,
+                actionType: 'native_web',
+            };
+        }
+        const route = (action && (action.route || action.url)) || '';
+        let fullRoute = route;
+        if (action.params && Object.keys(action.params).length > 0) {
+            const params = new URLSearchParams(action.params);
+            fullRoute = route + '?' + params.toString();
+        }
+        return {
+            url: fullRoute,
+            fullPage: action.fullPage === true || shouldBeFullPage(route),
+            actionType: action.type || determineActionType(route),
+        };
+    }
+
     function renderActionCards(actions, includeHeader = true) {
         if (!actions || actions.length === 0) {
             return '';
@@ -1008,18 +1041,11 @@
             const actionName = action.name || action.display_name || 'Ver detalles';
             const actionDescription = action.description || '';
             
-            // Si hay params, construir la ruta completa
-            let fullRoute = route;
-            if (action.params && Object.keys(action.params).length > 0) {
-                const params = new URLSearchParams(action.params);
-                fullRoute = route + '?' + params.toString();
-            }
-            
-            // Determinar si debe ser expandable o fullPage
-            // Por defecto, las acciones son expandables a menos que se especifique lo contrario
-            const fullPage = action.fullPage === true || shouldBeFullPage(route);
+            const nav = resolveActionNavigation(action);
+            const fullRoute = nav.url || '';
+            const fullPage = nav.fullPage === true;
             const expandable = fullPage ? false : (action.expandable !== false);
-            const actionType = action.type || determineActionType(route);
+            const actionType = nav.actionType || action.type || determineActionType(route);
             
             html += `
                 <div class="col-12 col-md-6 col-lg-4">

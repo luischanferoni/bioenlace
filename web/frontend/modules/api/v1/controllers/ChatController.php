@@ -3,12 +3,12 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Actions\UniversalQueryAgent;
+use common\components\IntentEngine\IntentEngine;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 
 /**
- * Asistente conversacional: pipeline unificado vía {@see UniversalQueryAgent}.
+ * Asistente conversacional: pipeline unificado vía {@see IntentEngine}.
  *
  * - GET/OPTIONS `asistente/estado` — estado ligero para clientes que consultan historial vacío/plantilla.
  * - POST/OPTIONS `asistente/enviar` — JSON: `content` (texto; puede ir vacío si hay `action_id`), `action_id` opcional.
@@ -81,9 +81,9 @@ class ChatController extends BaseController
         }
 
         try {
-            $agentResult = UniversalQueryAgent::processQuery($content, $userId, $actionId);
+            $agentResult = IntentEngine::processQuery($content, (int) $userId, $actionId);
         } catch (\Throwable $e) {
-            Yii::error('UniversalQueryAgent en asistente/enviar: ' . $e->getMessage(), 'asistente');
+            Yii::error('IntentEngine en asistente/enviar: ' . $e->getMessage(), 'asistente');
             return $this->error('Error al procesar la consulta', null, 500);
         }
 

@@ -4,52 +4,45 @@ Este documento define el **payload estructurado** que devuelve el endpoint de ch
 
 ## Endpoint
 
-- `POST /api/v1/chat/recibir`
+- `POST /api/v1/asistente/enviar`
 
-El endpoint **mantiene compatibilidad** retornando siempre `content` como texto plano (para UIs antiguas), y además devuelve un bloque `router` con información estructurada.
+El endpoint devuelve un payload **estructurado** en `data` con el resultado del motor de intents.
 
 ## Respuesta (forma general)
 
 ```json
 {
   "success": true,
-  "id": "123",
-  "senderId": "BOT",
-  "senderName": "Bot",
-  "content": "Texto para mostrar al usuario",
-  "timestamp": "1710000000",
-  "router": {
+  "message": "Consulta procesada",
+  "data": {
     "success": true,
-    "needs_more_info": false,
-    "missing_params": [],
-    "response": {
-      "text": "Texto para mostrar al usuario",
-      "data": {}
-    },
-    "actions": [],
-    "suggestions": [],
-    "metadata": {
-      "category": "turnos",
-      "intent": "crear_turno",
-      "confidence": 0.92,
-      "detection_method": "rules",
-      "parameters_extracted": {}
-    },
-    "error": null
+    "kind": "ui_intent_match",
+    "explanation": "Abrir: Reservar turno",
+    "actions": [
+      {
+        "action_id": "turnos.crear-como-paciente",
+        "display_name": "Reservar turno",
+        "description": "UI JSON (screen) + submit unificado para autogestión.",
+        "route": "/api/v1/ui/turnos/crear-como-paciente",
+        "parameters": { "expected": [], "provided": {} },
+        "client_open": { "kind": "ui_json", "api": { "route": "/api/v1/ui/turnos/crear-como-paciente", "method": "GET|POST" } },
+        "client_interaction": "ui_asistente_json"
+      }
+    ]
   }
 }
 ```
 
-## Campo `router.actions`
+## Campo `data.actions`
 
-`router.actions` es un array de **acciones sugeridas** por el orquestador de intents. Las acciones se usan para renderizar **botones** o **deep links** en el cliente.
+`data.actions` es un array de **acciones UI** sugeridas por el motor (se renderizan como botones/atajos). Cada acción puede incluir `client_open` para que el cliente sepa cómo abrir la pantalla.
 
 ### Importante: “UI” vs “dominio”
 
 - **UI (en API)**: significa **descriptor de UI en JSON** (wizard/list/detail) y se obtiene por rutas dedicadas bajo **`/api/v1/ui/<entidad>/<accion>`**.
 - **Dominio/datos (en API)**: endpoints como `/api/v1/turnos`, `/api/v1/agenda/*`, etc. **no son UI**; son APIs de negocio consumidas por UIs nativas o por los descriptores.
 
-Regla de arquitectura: el backend no debe invocar controladores web (`frontend/controllers`) para construir UI. Las UIs JSON se sirven desde plantillas (`views/json/...`) vía los **controladores API por entidad** (ej. `TurnosController`) y `UiDefinitionTemplateManager`.
+Regla de arquitectura: el backend no debe invocar controladores web (`frontend/controllers`) para construir UI. Las UIs JSON se sirven desde plantillas (`views/json/...`) vía los **controladores API por entidad** (ej. `TurnosController`) y `UiDefinitionTemplateManager`/`UiScreenService`.
 
 ### Acción mínima (recomendada)
 
@@ -57,32 +50,28 @@ Los clientes deben soportar como mínimo este shape:
 
 ```json
 {
-  "type": "open_route",
-  "title": "Abrir formulario",
-  "route": "/internacion/create",
-  "params": { "id": 123 },
-  "prefill": {}
+  "action_id": "turnos.crear-como-paciente",
+  "display_name": "Reservar turno",
+  "route": "/api/v1/ui/turnos/crear-como-paciente",
+  "client_open": {
+    "kind": "ui_json",
+    "api": { "route": "/api/v1/ui/turnos/crear-como-paciente", "method": "GET|POST" }
+  }
 }
 ```
 
-- `type`: string. Tipos recomendados:
-  - `open_route`: navegar a una ruta (web) o deep link (app).
-  - `select_patient`: abrir selector/búsqueda de paciente.
-  - `open_form`: alias de `open_route` cuando el cliente necesita diferenciar navegación vs modal/form.
-- `title`: string, texto del botón.
-- `route`: string, ruta canónica. **Preferencia:** rutas de **UI JSON** bajo `/api/v1/ui/...` para que los clientes puedan renderizar pantallas desde descriptores. Las acciones generadas por [`ChatApiActionBuilder`](../common/components/Actions/ChatApiActionBuilder.php) deben apuntar a `/ui/` cuando existan descriptores.
-- `method`: string opcional (`GET`, `POST`, …) cuando la acción descubierta o el fallback no sea GET; el cliente debe invocar el endpoint con ese verbo.
-- `params`: objeto opcional. Query params para componer la URL final.
-- `prefill`: objeto opcional. Datos estructurados para **pre-poblar** el formulario (si el cliente lo soporta).
+- **`action_id`**: id estable `entidad.accion` (lowercase).
+- **`display_name`**: nombre humano para el botón.
+- **`route`**: ruta canónica. **Preferencia:** rutas de **UI JSON** bajo `/api/v1/ui/...`.
+- **`client_open`**: instrucción de apertura de pantalla. Para UIs JSON: `kind="ui_json"` con `api.route` y `api.method`.
+- **`client_interaction`**: string opcional para telemetría/UX (ej. `ui_asistente_json`).
 
-### Compatibilidad con acciones “legacy”
+### Fuente de verdad y clases relevantes
 
-Algunos handlers pueden devolver acciones descubiertas por `UniversalQueryAgent` con un formato distinto (ej. con `route`, `display_name`, `parameters`, etc.).
-
-Recomendación para clientes:
-- Si `action.type` no existe pero `action.route` sí existe, tratarla como `type="open_route"` y usar:
-  - `title`: `display_name` o `name` o fallback `"Abrir"`
-  - `route`: `route`
+- Motor de intents: `web/common/components/IntentEngine/IntentEngine.php`
+- Catálogo UI (RBAC + existencia de templates): `web/common/components/IntentCatalog/IntentCatalogService.php`
+- Enriquecimiento para apertura en clientes: `web/common/components/Actions/AssistantClientOpenEnricher.php`
+- API chat: `web/frontend/modules/api/v1/controllers/ChatController.php`
 
 ## `needs_more_info` y `missing_params`
 
@@ -93,8 +82,7 @@ Si `needs_more_info` es `true`, el cliente debe:
 
 ## Archivos relevantes
 
-- Orquestación: `web/common/components/ConsultaIntentRouter.php`
-- Categorías/intents: `web/common/config/chatbot/intent-categories.php`
-- Parámetros por intent: `web/common/config/chatbot/intent-parameters.php`
 - API chat: `web/frontend/modules/api/v1/controllers/ChatController.php`
+- Motor de intents: `web/common/components/IntentEngine/IntentEngine.php`
+- Catálogo UI: `web/common/components/IntentCatalog/IntentCatalogService.php`
 

@@ -9,7 +9,7 @@
   - `web/frontend/views/guardia/*`
 - **Orquestación conversacional**:
   - Handler: `web/common/components/intent_handlers/EmergenciasHandler.php`
-  - Router: `web/common/components/ConsultaIntentRouter.php`
+  - Router: (pendiente) unificación en `web/common/components/IntentEngine/IntentEngine.php` si se decide disparar UIs desde el asistente para urgencias.
 
 ## Qué parece cubrir hoy
 

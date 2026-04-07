@@ -36,8 +36,7 @@ Una carga corresponde a Nivel 2 cuando:
 Referencias en el repo:
 - `web/frontend/views/site/asistente.php` (chat del asistente para CRUD guiado)
 - `web/frontend/modules/api/v1/controllers/ChatController.php` (`chat/recibir`) (si el flujo usa dialogos/mensajes persistidos)
-- `web/common/components/Chatbot/ConsultaIntentRouter.php` (orquestacion: clasifica, extrae parametros, enruta a handler)
-- `web/common/components/Chatbot/IntentHandlers/Handlers/TurnosHandler.php` (ejemplo de handler de intents)
+- `web/common/components/IntentEngine/IntentEngine.php` (motor de intents: clasifica y sugiere UIs)
 
 Nota importante sobre Turnos (ejemplo):
 - En "Turnos", el intent devuelve un formulario precargado con el servicio y el resto de campos a cargar.

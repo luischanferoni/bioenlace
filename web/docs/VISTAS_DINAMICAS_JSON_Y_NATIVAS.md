@@ -147,6 +147,8 @@ Para que los clientes (web y Flutter) sepan que una respuesta contiene una **def
 - **Rutas dedicadas a UI dinámica** (por ejemplo, bajo `/api/v1/ui/...`).
 - **Metadatos en el JSON** (`kind`, `ui_type`, etc.).
 
+En el contexto del **asistente**, además se incluye `client_open` en las acciones sugeridas para indicar explícitamente que se debe abrir una pantalla UI JSON (ver `web/docs/CHAT_ACTIONS_CONTRACT.md`).
+
 ### 5.1. Convención de rutas
 
 **Implementado en `frontend/config/main.php`:**

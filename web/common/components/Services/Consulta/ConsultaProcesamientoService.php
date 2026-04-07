@@ -525,15 +525,6 @@ HTML;
     public function analizarConsultaConIA($texto, $servicio, $categorias)
     {
         try {
-            $similitudMinima = Yii::$app->params['similitud_minima_respuestas'] ?? 0.85;
-            $respuestaPredefinida = \common\components\Chatbot\RespuestaPredefinidaManager::obtenerRespuesta($texto, $servicio, $similitudMinima);
-
-            if ($respuestaPredefinida) {
-                Yii::info('Respuesta predefinida encontrada para consulta similar (sin GPU)', 'consulta-ia');
-                \common\components\Chatbot\RespuestaPredefinidaManager::incrementarUsos($respuestaPredefinida['id']);
-                return $respuestaPredefinida['respuesta_json'];
-            }
-
             $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias);
 
             if ($promptData === null) {
@@ -552,11 +543,6 @@ HTML;
             $resultado = $this->intentarAnalisisConIA($promptData['prompt'], $texto, $categorias);
 
             if ($resultado && !isset($resultado['error'])) {
-                try {
-                    \common\components\Chatbot\RespuestaPredefinidaManager::guardarRespuesta($texto, $resultado, $servicio);
-                } catch (\Exception $e) {
-                    Yii::warning('No se pudo guardar respuesta predefinida: ' . $e->getMessage(), 'respuestas-predefinidas');
-                }
                 return $resultado;
             }
 

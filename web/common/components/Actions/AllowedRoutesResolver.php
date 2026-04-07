@@ -30,7 +30,7 @@ final class AllowedRoutesResolver
     public const SESSION_ROUTES_OWNER_KEY = '__bioenlace_user_routes_owner_id';
 
     /**
-     * Mapa route => true a partir de roles (misma lógica que Actions\UniversalQueryAgent).
+     * Mapa route => true a partir de roles (misma lógica que el motor de actions/mapping).
      *
      * @param string[] $roles
      * @return array<string, true>

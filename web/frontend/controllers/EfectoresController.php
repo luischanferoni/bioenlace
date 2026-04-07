@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -39,8 +39,9 @@ class EfectoresController extends Controller
     /**
      * Lists all Efector models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new EfectorBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -56,7 +57,8 @@ class EfectoresController extends Controller
      * Displays a single Efector model.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -69,7 +71,8 @@ class EfectoresController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -104,7 +107,8 @@ class EfectoresController extends Controller
      * @tags efectores,listar,ver todos
      * @keywords listar,ver todos,mostrar,efectores
      * @synonyms efectores,centros de salud,establecimientos
-     */
+    */
+
     public function actionIndexuserefector()
     {
         $this->layout = 'main_sinmenuizquierda';

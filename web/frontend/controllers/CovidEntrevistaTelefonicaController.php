@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -36,8 +36,9 @@ class CovidEntrevistaTelefonicaController extends Controller
     /**
      * Lists all CovidEntrevistaTelefonica models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new CovidEntrevistaTelefonicaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -53,7 +54,8 @@ class CovidEntrevistaTelefonicaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         $model = $this->findModel($id);
@@ -68,7 +70,8 @@ class CovidEntrevistaTelefonicaController extends Controller
      * Creates a new CovidEntrevistaTelefonica model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate($id_persona)
     {
         $model_persona = Persona::findOne($id_persona);
@@ -129,7 +132,8 @@ class CovidEntrevistaTelefonicaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -188,7 +192,8 @@ class CovidEntrevistaTelefonicaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -200,7 +205,7 @@ class CovidEntrevistaTelefonicaController extends Controller
      * Lists all CovidEntrevistaTelefonica models for a persona.
      * @param integer $id_persona
      * @return mixed
-     */
+    */
 
     public function actionListado($id_persona)
     {

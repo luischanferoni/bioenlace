@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -75,7 +75,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
                     
                     list($guardado, $piezaError, $msgsError, $idsEnPostEstados) = $this->guardarEstados($modelConsulta->id_consulta, $modelosOdontoConsultaEstados);
                     if (!$guardado) {
-                        throw new \Exception("Error en la pieza N° (" . $piezaError . "): " . $msgsError);
+                        throw new \Exception("Error en la pieza NÂ° (" . $piezaError . "): " . $msgsError);
                     }
                 }
 
@@ -83,7 +83,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
                     
                     list($guardado, $piezaError, $msgsError, $idsEnPostDiagnosticos) = $this->guardarDiagnosticos($modelConsulta->id_consulta, $modelosOdontoConsultaDiagnosticos);
                     if (!$guardado) {   
-                        throw new \Exception("Error en la pieza N° (" . $piezaError . "): " . $msgsError);
+                        throw new \Exception("Error en la pieza NÂ° (" . $piezaError . "): " . $msgsError);
                     }
                 }
 
@@ -91,7 +91,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
 
                     list($guardado, $piezaError, $msgsError, $idsEnPostPracticas) = $this->guardarPracticas($modelConsulta->id_consulta, $modelosOdontoConsultaPracticas);
                     if (!$guardado) {
-                        throw new \Exception("Error en la pieza N° (" . $piezaError . "): " . $msgsError);
+                        throw new \Exception("Error en la pieza NÂ° (" . $piezaError . "): " . $msgsError);
                     }
                 }
 
@@ -103,7 +103,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
                     $nuevoConsultaOdontoPracticas->tipo = 'BOCA';
                     $nuevoConsultaOdontoPracticas->tiempo =  'PRESENTE';
                     if (!$nuevoConsultaOdontoPracticas->save()) {
-                        throw new \Exception("Error en la pieza N° (" . $piezaError . "): " . $nuevoConsultaOdontoPracticas->getFirstError());
+                        throw new \Exception("Error en la pieza NÂ° (" . $piezaError . "): " . $nuevoConsultaOdontoPracticas->getFirstError());
                     }
                 }
                 
@@ -127,7 +127,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
                     //var_dump($th->getMessage());die;
                     Yii::error($th->getMessage());
                     if (strpos($th->getMessage(), "Error en la pieza") === false) {
-                        $errores[] = "Ocurrió un error, no se pudieron guardar los cambios";
+                        $errores[] = "OcurriÃ³ un error, no se pudieron guardar los cambios";
                     } else {
                         $errores[] = $th->getMessage();
                     }
@@ -261,7 +261,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
     {
         $odonto_codigo = array(
             'NE' => 'No Erupcionada',
-            'C' => 'Caries', 'P' => 'Perdido', 'O' => 'Obturado', 'COR' => 'Corona', 'PF' => 'Prótesis Fija', 'E' => 'Extraído', 'PR' => 'Prótesis Removible'
+            'C' => 'Caries', 'P' => 'Perdido', 'O' => 'Obturado', 'COR' => 'Corona', 'PF' => 'PrÃ³tesis Fija', 'E' => 'ExtraÃ­do', 'PR' => 'PrÃ³tesis Removible'
         );
         $historial = '';
 
@@ -433,7 +433,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
                 $creacionEstado = $this->dispararCreacionEstados($practica, $idConsulta, $modelosOdontoConsultaPracticas);
 
                 if (!$creacionEstado) {
-                    return [false, $practica->pieza, "Ocurrió un error al intentar cambiar el estado de la práctica", []];
+                    return [false, $practica->pieza, "OcurriÃ³ un error al intentar cambiar el estado de la prÃ¡ctica", []];
                 }                
                 continue;
             }
@@ -452,7 +452,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
                 $vueltaAtrasEstado = $this->volverAtrasEstados($practica, $idConsulta, $modelosOdontoConsultaPracticas);
 
                 if (!$vueltaAtrasEstado) {
-                    return [false, $practica->pieza, "Ocurrió un error al intentar volver atras la práctica", []];
+                    return [false, $practica->pieza, "OcurriÃ³ un error al intentar volver atras la prÃ¡ctica", []];
                 }
 
             } else {
@@ -480,7 +480,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
             $creacionEstado = $this->dispararCreacionEstados($practica, $idConsulta, $modelosOdontoConsultaPracticas);
 
             if (!$creacionEstado) {
-                return [false, $practica->pieza, "Ocurrió un error al intentar cambiar el estado de la práctica", []];
+                return [false, $practica->pieza, "OcurriÃ³ un error al intentar cambiar el estado de la prÃ¡ctica", []];
             }
 
             if (!$nuevoConsultaOdontoPracticas->save()) {

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -145,8 +145,9 @@ class PersonasController extends Controller
      * @keywords listar,ver todos,mostrar,personas,pacientes
      * @synonyms paciente,persona,listado
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new PersonaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -185,7 +186,8 @@ class PersonasController extends Controller
      * @keywords buscar,encontrar,localizar,dni,documento,persona
      * @synonyms paciente,persona,documento,cedula,identificación
      * @return mixed
-     */
+    */
+
     public function actionBuscarPersona()
     {
         $session = Yii::$app->session;
@@ -278,7 +280,8 @@ class PersonasController extends Controller
      * @keywords ver,mostrar,detalle,historia clínica
      * @synonyms paciente,persona,historia clínica
      * @param int $id ID de la persona
-     */
+    */
+
     public function actionView($id)
     {
         //$this->layout = 'dos_columnas';
@@ -314,7 +317,7 @@ class PersonasController extends Controller
             'num_hc' =>  $num_hc
         ]);
     }
-    
+
     public function actionDatosPersonales($id)
     {
         $this->_mpi_api = new MpiApiController;
@@ -403,7 +406,7 @@ class PersonasController extends Controller
 
         return $this->renderAjax('curvas_crecimiento', $context);
     }
-    
+
     public function actionSignosVitales($id)
     {
         $persona = $this->findModel($id);
@@ -496,7 +499,8 @@ class PersonasController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -537,7 +541,8 @@ class PersonasController extends Controller
     /**
      * Action para mostrar el listado de personas con sus datos de rrhh
      * 
-     */
+    */
+
     public function actionIndexpersonarrhh()
     {
         $searchModel = new PersonaBusqueda();
@@ -565,7 +570,8 @@ class PersonasController extends Controller
     /**
      * 
      * Funcion para crear el select dependiente de Departamentos
-     */
+    */
+
     public function actionSubcat()
     {
         $out = [];
@@ -600,7 +606,8 @@ class PersonasController extends Controller
     /**
      * 
      * Funcion para crear el select dependiente de localidades
-     */
+    */
+
     public function actionLoc()
     {
         $out = [];
@@ -637,7 +644,8 @@ class PersonasController extends Controller
 
     /**
      * Funcion para crear el select dependiente de barrios
-     */
+    */
+
     public function actionBarrio()
     {
         $out = [];
@@ -700,6 +708,7 @@ class PersonasController extends Controller
     }
 
     //View PUCO
+
     public function actionViewpuco()
     {
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
@@ -831,7 +840,7 @@ class PersonasController extends Controller
      * actionReporteCdentral() y actionReportesestadisticosCentral creada para
      *  mostrar los reportes sin filtro de efector
      * @autor: Mercedes Diaz
-     */
+    */
     public function actionReporteCentral()
     {
         return $this->render('reporte_central');
@@ -1471,7 +1480,8 @@ class PersonasController extends Controller
     /**
      * Para la busqueda de personas desde el index
      * @return mixed
-     */
+    */
+
     public function actionBuscarhome()
     {
         $personas = Persona::find()

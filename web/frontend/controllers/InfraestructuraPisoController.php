@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -35,8 +35,8 @@ class InfraestructuraPisoController extends Controller
     /**
      * Lists all InfraestructuraPiso models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+public function actionIndex()
     {
         $searchModel = new InfraestructuraPisoBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -52,7 +52,8 @@ class InfraestructuraPisoController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -64,7 +65,8 @@ class InfraestructuraPisoController extends Controller
      * Creates a new InfraestructuraPiso model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new InfraestructuraPiso();
@@ -84,7 +86,8 @@ class InfraestructuraPisoController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -104,7 +107,8 @@ class InfraestructuraPisoController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

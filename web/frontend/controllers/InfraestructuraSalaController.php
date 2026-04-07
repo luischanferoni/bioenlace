@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -35,8 +35,9 @@ class InfraestructuraSalaController extends Controller
     /**
      * Lists all InfraestructuraSala models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new InfraestructuraSalaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -52,7 +53,8 @@ class InfraestructuraSalaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -64,7 +66,8 @@ class InfraestructuraSalaController extends Controller
      * Creates a new InfraestructuraSala model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new InfraestructuraSala();
@@ -84,7 +87,8 @@ class InfraestructuraSalaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -104,7 +108,8 @@ class InfraestructuraSalaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -131,7 +136,8 @@ class InfraestructuraSalaController extends Controller
      /**
      * 
      * Funcion para crear el select dependiente de Departamentos
-     */
+    */
+
     public function actionSalasPorPiso() {
         $out = [];
         $prueba = json_encode($_POST['depdrop_parents']);

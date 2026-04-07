@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -37,8 +37,9 @@ class DomiciliosController extends Controller
     /**
      * Lists all domicilio models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new DomicilioBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -53,7 +54,8 @@ class DomiciliosController extends Controller
      * Displays a single domicilio model.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionView($id)
     {
         $model_persona_domicilio = new Persona_domicilio();
@@ -67,6 +69,7 @@ class DomiciliosController extends Controller
                     'model_localidad' => $model_localidad,
         ]);
     }
+
     public function actionView_nuevo_domicilio($id)
     {
         $model_persona_domicilio = new Persona_domicilio();
@@ -85,7 +88,8 @@ class DomiciliosController extends Controller
      * Creates a new domicilio model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate($idp)
     {
         $model = new domicilio();
@@ -138,7 +142,8 @@ class DomiciliosController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id, $idp)
     {
         $model = $this->findModel($id);
@@ -169,7 +174,8 @@ class DomiciliosController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

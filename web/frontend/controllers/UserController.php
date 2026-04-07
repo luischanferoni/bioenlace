@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -34,8 +34,9 @@ class UserController extends \webvimark\modules\UserManagement\controllers\UserC
 
 	/**
 	 * @return mixed|string|\yii\web\Response
-	 */    
-    public function actionCrear()
+*/
+
+public function actionCrear()
     {
         $model = new User(['scenario'=>'newUser']);
 
@@ -79,7 +80,8 @@ class UserController extends \webvimark\modules\UserManagement\controllers\UserC
 	 * @param integer $id
 	 *
 	 * @return mixed
-	 */
+	*/
+
 	public function actionUpdate($id)
 	{
         $persona = Yii::$app->session['persona'];

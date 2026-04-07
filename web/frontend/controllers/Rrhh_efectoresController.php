@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -41,7 +41,8 @@ class Rrhh_efectoresController extends Controller
     /**
      * @param integer $id_rr_hh
      * @param integer $id_efector
-     */
+    */
+
     public function actionView($id_rr_hh, $id_efector)
     {
         return $this->render('view', [
@@ -65,7 +66,8 @@ class Rrhh_efectoresController extends Controller
     /**
      * @param integer $id_rr_hh
      * @param integer $id_efector
-     */
+    */
+
     public function actionUpdate($id_rr_hh, $id_efector)
     {
         $model = $this->findModel($id_rr_hh, $id_efector);
@@ -82,7 +84,8 @@ class Rrhh_efectoresController extends Controller
     /**
      * @param integer $id_rr_hh
      * @param integer $id_efector
-     */
+    */
+
     public function actionDelete($id_rr_hh, $id_efector)
     {
         $this->findModel($id_rr_hh, $id_efector)->delete();

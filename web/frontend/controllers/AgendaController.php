@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -14,6 +14,7 @@ use yii\web\Controller;
  */
 class AgendaController extends Controller
 {
+
     public function actionIndex()
     {
         // No usar layout `blanco`: no ejecuta head()/endBody() y los assets (jQuery, agenda-laboral.js) no se cargan.

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -48,8 +48,8 @@ class RrhhEfectorController extends Controller
     /**
      * Lists all RrhhEfector models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+public function actionIndex()
     {
         $searchModel = new RrhhEfectorBusqueda();
 
@@ -73,7 +73,8 @@ class RrhhEfectorController extends Controller
      * @param integer $id_efector
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id_rr_hh)
     {
         $model = $this->findModel($id_rr_hh);
@@ -97,7 +98,8 @@ class RrhhEfectorController extends Controller
      * Creates a new RrhhEfector model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate($id_persona)
     {
         #$persona = Yii::$app->session['persona'];
@@ -284,7 +286,8 @@ class RrhhEfectorController extends Controller
      * @param integer $id_rr_hh
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id_rr_hh)
     {
         $rrhhEfector = $this->findModel($id_rr_hh);
@@ -483,7 +486,8 @@ class RrhhEfectorController extends Controller
      * @param integer $id_rr_hh     
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id_rr_hh)
     {
         $model = $this->findModel($id_rr_hh);
@@ -516,7 +520,8 @@ class RrhhEfectorController extends Controller
 
     /**
      * Vuelve deleted_at y deleted_by a null al rrhh y todos sus servicios
-     */
+    */
+
     public function actionReactivar($id_rr_hh)
     {
         $model = $this->findModel($id_rr_hh);

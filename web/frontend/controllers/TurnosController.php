@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -61,8 +61,9 @@ class TurnosController extends Controller
      * @tags turno,cita,listar,ver,agenda
      * @keywords listar,ver turnos,citas,agenda
      * @synonyms turno,cita,agenda,reserva
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $session = Yii::$app->getSession();
         $session_persona = unserialize($session['persona']);
@@ -127,7 +128,8 @@ class TurnosController extends Controller
      * Displays a single Turno model.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionView($id_persona)
     {
         return $this->render('view', [
@@ -142,7 +144,8 @@ class TurnosController extends Controller
      * Se lo llama desde el index
      *
      * Recibe id_rrhh_servicio_asignado e id_servicio
-     */
+    */
+
     public function actionCalendario()
     {
         $this->layout = 'blanco';
@@ -170,7 +173,8 @@ class TurnosController extends Controller
      * Se lo llama desde js despues de llamar a turnos/calendario
      *
      * Recibe id_rrhh_servicio_asignado e id_servicio
-     */
+    */
+
     public function actionEventos()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -482,7 +486,8 @@ class TurnosController extends Controller
 
     /**
      * UI separada de reprogramación (lista turnos futuros + enlace a API desde app/SPA).
-     */
+    */
+
     public function actionReprogramar()
     {
         $session = Yii::$app->getSession();
@@ -548,6 +553,7 @@ class TurnosController extends Controller
 
 
     //Metodo de acceso libre para mostrar turnos pendiente por DNI
+
     public function actionListTurnos()
     {
         $this->layout = 'publico/turnos';

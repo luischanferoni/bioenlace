@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -32,8 +32,9 @@ class EventsController extends Controller
      * Displays a single Event model.
      * @param integer $id
      * @return mixed
-     */
-    public function actionView($id)
+*/
+
+public function actionView($id)
     {
         return $this->render('view', [
             'model' => $this->findModel($id),
@@ -44,7 +45,8 @@ class EventsController extends Controller
      * Creates a new Event model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new Event();
@@ -63,7 +65,8 @@ class EventsController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -82,7 +85,8 @@ class EventsController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -109,7 +113,8 @@ class EventsController extends Controller
     /**
      * Lists all Event models.
      * @return mixed
-     */
+    */
+
     public function actionIndex()
     {
         $events = Event::find()->all();

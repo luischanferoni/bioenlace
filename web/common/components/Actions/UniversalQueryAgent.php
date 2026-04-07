@@ -7,6 +7,7 @@ use common\components\Ai\IAManager;
 use common\components\MensajeIntent\MensajeCatalogBuilder;
 use common\components\MensajeIntent\MensajeCatalogItem;
 use common\components\Chatbot\ParameterQuestionRegistry;
+use common\components\IntentCatalog\IntentCatalogService;
 
 /**
  * Agente CRUD completamente genérico y dinámico
@@ -979,8 +980,9 @@ PROMPT;
      */
     private static function findActionsByCriteria($criteria, $userId = null)
     {
-        // Obtener todas las acciones disponibles para el usuario (ya filtradas por permisos)
-        $allActions = \common\components\Actions\ActionMappingService::getAvailableActionsForUser($userId);
+        // Obtener todas las **UIs** disponibles para el usuario (ya filtradas por permisos)
+        // Definición: UI = `/api/v1/ui/...` (descriptor JSON) o pantalla HTML del frontend expuesta vía UiController.
+        $allActions = IntentCatalogService::getAvailableUiForUser((int) $userId, true);
         
         // Log para debugging (el userId debe venir dado por capas previas)
         $currentUserId = $userId ?? 'no-especificado';

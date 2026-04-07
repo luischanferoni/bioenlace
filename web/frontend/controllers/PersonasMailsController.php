@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -31,8 +31,9 @@ class PersonasMailsController extends Controller
     /**
      * Lists all persona_mails models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new Persona_mailsBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -47,7 +48,8 @@ class PersonasMailsController extends Controller
      * Displays a single persona_mails model.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -59,7 +61,8 @@ class PersonasMailsController extends Controller
      * Creates a new persona_mails model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate($idp)
     {
         $model = new Persona_mails();
@@ -83,7 +86,8 @@ class PersonasMailsController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -102,7 +106,8 @@ class PersonasMailsController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

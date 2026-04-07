@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -106,7 +106,8 @@ class FormController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionRender($id)
     {
         $userId = Yii::$app->request->get('id_user') ? Yii::$app->request->get('id_user') : Yii::$app->user->id;
@@ -312,7 +313,8 @@ class FormController extends Controller
     /**
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionInstancias($id)
     {
         $userId = Yii::$app->request->get('id_user') ? Yii::$app->request->get('id_user') : Yii::$app->user->id;
@@ -423,7 +425,8 @@ class FormController extends Controller
     /**
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionVerinstancia($id)
     {
         $client = new Client();

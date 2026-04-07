@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -34,8 +34,9 @@ class InfraestructuraCamaController extends Controller
     /**
      * Lists all InfraestructuraCama models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new InfraestructuraCamaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -51,7 +52,8 @@ class InfraestructuraCamaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -63,7 +65,8 @@ class InfraestructuraCamaController extends Controller
      * Creates a new InfraestructuraCama model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new InfraestructuraCama();
@@ -83,7 +86,8 @@ class InfraestructuraCamaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -103,7 +107,8 @@ class InfraestructuraCamaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -132,7 +137,8 @@ class InfraestructuraCamaController extends Controller
      * @modificacion: 22/08/2022
      * actionReporte() 
      * @autor: 
-     */
+    */
+
     public function actionReportecamasocupadas() {
         $searchModel = new InfraestructuraCamaBusqueda();
         $searchModel->estado = 'ocupada';
@@ -149,7 +155,8 @@ class InfraestructuraCamaController extends Controller
      * @modificacion: 22/08/2022
      * actionReporte() 
      * @autor: 
-     */
+    */
+
     public function actionReportecamas() {
         $searchModel = new InfraestructuraCamaBusqueda();
         //$searchModel->estado = 'ocupada';

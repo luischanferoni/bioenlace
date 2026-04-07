@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -47,8 +47,10 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
     /**
      * Lists all ConsultaPracticasOftalmologia models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+
+public function actionIndex()
     {
         $searchModel = new ConsultaPracticasOftalmologiaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -64,7 +66,8 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -77,7 +80,8 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionViewMedico($id)
     {
         $arrayC = [252832004 => 'Presión intraocular', 252886007 => 'Refracción', 55468007 => 'Lámpara de hendidura', 410455004 => 'Fondo de ojo con lámpara de hendidura'];
@@ -90,7 +94,7 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
     {
             return self::createMedico($modelConsulta);
     }
-    
+
     public function actionCreateCrud($id_consulta)
     {
         /* @var $consulta Consulta */
@@ -203,7 +207,8 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
      * Creates a new ConsultaPracticasOftalmologia model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreateEstudiosComplementarios($id_consulta, $form_steps=true)
     {
 
@@ -307,7 +312,8 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdateMedico($id)
     {
         $model = $this->findModel($id);
@@ -332,7 +338,8 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -356,7 +363,8 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -38,8 +38,9 @@ class ConsultasRecetaLentesController extends DefaultConsultaController
     /**
      * Lists all ConsultasRecetaLentes models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new ConsultasRecetaLentesBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -55,7 +56,8 @@ class ConsultasRecetaLentesController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -238,7 +240,8 @@ class ConsultasRecetaLentesController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -258,7 +261,8 @@ class ConsultasRecetaLentesController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -39,8 +39,9 @@ class GuardiaController extends Controller
     /**
      * Lists all Guardia models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new GuardiaBusqueda();
         $dataProvider = $searchModel->searchNoFinalizadas(Yii::$app->request->queryParams);
@@ -54,7 +55,8 @@ class GuardiaController extends Controller
     /**
      * Libro de Guardia.
      * @return mixed
-     */
+    */
+
     public function actionLibroGuardia()
     {
         $searchModel = new GuardiaBusqueda();
@@ -71,7 +73,8 @@ class GuardiaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -83,7 +86,8 @@ class GuardiaController extends Controller
      * Creates a new Guardia model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new Guardia();
@@ -161,7 +165,8 @@ class GuardiaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionFinalizar($id)
     {
         $model = $this->findModel($id);
@@ -189,7 +194,8 @@ class GuardiaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

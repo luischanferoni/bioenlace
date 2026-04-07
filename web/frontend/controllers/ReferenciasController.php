@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -37,8 +37,9 @@ class ReferenciasController extends Controller
     /**
      * Lists all referencia models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $efector = Yii::$app->user->getIdEfector();
         $servicio = Yii::$app->user->getServicioActual();
@@ -57,7 +58,8 @@ class ReferenciasController extends Controller
      * Displays a single referencia model.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionView($id,$idc)
     {
          $model = new Referencia();
@@ -72,7 +74,8 @@ class ReferenciasController extends Controller
      * Creates a new referencia model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate($idc)
     {
         $model = new Referencia();
@@ -98,7 +101,8 @@ class ReferenciasController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id, $idc)
     {
         $model = $this->findModel($id);
@@ -119,7 +123,8 @@ class ReferenciasController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

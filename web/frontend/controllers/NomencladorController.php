@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -20,6 +20,7 @@ use yii\web\BadRequestHttpException;
 
 class NomencladorController extends \yii\web\Controller
 {
+
     public function actionMotivos()
     {
         $servicio = Yii::$app->user->getServicioActual();
@@ -75,7 +76,6 @@ class NomencladorController extends \yii\web\Controller
             'servicio' => $servicio,
         ]);
     }
-
 
     public function actionPracticas()
     {

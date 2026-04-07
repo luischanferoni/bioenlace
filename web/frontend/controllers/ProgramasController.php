@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -30,8 +30,9 @@ class ProgramasController extends Controller
     /**
      * Lists all Programa models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new ProgramasBusquedas();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -46,7 +47,8 @@ class ProgramasController extends Controller
      * Displays a single Programa model.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -58,7 +60,8 @@ class ProgramasController extends Controller
      * Creates a new Programa model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new Programa();
@@ -77,7 +80,8 @@ class ProgramasController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -96,7 +100,8 @@ class ProgramasController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

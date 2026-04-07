@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -63,8 +63,9 @@ class ConsultaMotivosChatController extends Controller
 
     /**
      * GET mensajes de motivos de una consulta.
-     */
-    public function actionMessages($id)
+*/
+
+public function actionMessages($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -93,7 +94,8 @@ class ConsultaMotivosChatController extends Controller
 
     /**
      * POST enviar mensaje de texto.
-     */
+    */
+
     public function actionSend()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -151,7 +153,8 @@ class ConsultaMotivosChatController extends Controller
 
     /**
      * POST subir archivo (imagen o audio).
-     */
+    */
+
     public function actionUpload()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;

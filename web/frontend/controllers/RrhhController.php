@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -34,8 +34,9 @@ class RrhhController extends Controller
 
     /**
      * Lista todos los modelos RrhhEfector.
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new RrhhEfectorBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -48,7 +49,8 @@ class RrhhController extends Controller
 
     /**
      * Muestra un modelo RrhhEfector.
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -58,7 +60,8 @@ class RrhhController extends Controller
 
     /**
      * Crea un nuevo RrhhEfector.
-     */
+    */
+
     public function actionCreate($idp = null)
     {
         $model = new RrhhEfector();
@@ -79,7 +82,8 @@ class RrhhController extends Controller
 
     /**
      * Actualiza un RrhhEfector existente.
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -96,7 +100,8 @@ class RrhhController extends Controller
 
     /**
      * Elimina un RrhhEfector.
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -118,7 +123,8 @@ class RrhhController extends Controller
 
     /**
      * Select dependiente: servicios por efector.
-     */
+    */
+
     public function actionSubcatservicios()
     {
         $out = [];

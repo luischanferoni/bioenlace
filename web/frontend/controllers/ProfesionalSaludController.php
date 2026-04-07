@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -44,8 +44,9 @@ class ProfesionalSaludController extends Controller
     /**
      * Lists all ProfesionalSalud models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new ProfesionalSaludBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -61,7 +62,8 @@ class ProfesionalSaludController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -77,7 +79,8 @@ class ProfesionalSaludController extends Controller
      * El profesional puede tener asociado una profesion sin una especialidad 
      * 
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $persona = Yii::$app->session['persona'];
@@ -198,7 +201,8 @@ class ProfesionalSaludController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -218,7 +222,8 @@ class ProfesionalSaludController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -245,7 +250,8 @@ class ProfesionalSaludController extends Controller
      /**
      * Funcion para ejecutar los select dependientes de profesiones y especialidades
      * @return type
-     */
+    */
+
     public function actionEspecialidades()
     {
         $out = [];

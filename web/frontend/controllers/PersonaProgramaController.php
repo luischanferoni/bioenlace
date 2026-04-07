@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -40,8 +40,9 @@ class PersonaProgramaController extends Controller
     /**
      * Lists all PersonaPrograma models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
             'query' => PersonaPrograma::find(),
@@ -57,7 +58,8 @@ class PersonaProgramaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -69,7 +71,8 @@ class PersonaProgramaController extends Controller
      * Creates a new PersonaPrograma model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new PersonaPrograma();
@@ -124,7 +127,8 @@ class PersonaProgramaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -144,7 +148,8 @@ class PersonaProgramaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

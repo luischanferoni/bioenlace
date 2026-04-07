@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -71,8 +71,9 @@ class SiteController extends Controller
             $this->enableCsrfValidation = false;
         }
         return parent::beforeAction($action);
-    }*/
-
+    }
+    */
+    
     public function actions()
     {
         return [
@@ -91,7 +92,8 @@ class SiteController extends Controller
      * Post-login: si falta efector, servicio o encounter class en sesión, muestra el asistente de selección
      * (vistas despuesdelogin/*). Si ya está completo, redirige al listado de pacientes.
      * No es equivalente a actionPacientes: aquí se resuelve contexto de sesión, allí se lista la agenda del día.
-     */
+    */
+
     public function actionInicio()
     {
         $idEfector = Yii::$app->user->getIdEfector();
@@ -139,7 +141,9 @@ class SiteController extends Controller
 
     /**
      * Vista HTML del listado de pacientes (datos vía API /api/v1/pacientes/*).
-     */
+    */
+
+
     public function actionPacientes()
     {
         $fechaParam = Yii::$app->request->get('fecha');
@@ -211,7 +215,8 @@ class SiteController extends Controller
     /**
      * Llega hasta aqui despues de elegir el efector con el que desea trabajar
      * setea en session el efector elegido y redirige a elegir el encounter class
-     */
+    */
+
     public function actionSessionEfectorRedireccionar()
     {
         return $this->redirect(['site/inicio']);
@@ -226,7 +231,8 @@ class SiteController extends Controller
         $url = self::establecerSessionFinal();
 
         return $this->redirect($url);
-    }*/
+    }
+    */
 
     public function actionCambiarEncounterClass($codigo)
     {
@@ -517,7 +523,8 @@ class SiteController extends Controller
     /**
      * Obtener acciones comunes para el usuario actual (misma lógica que GET /api/v1/acciones/comunes).
      * @return \yii\web\Response
-     */
+    */
+
     public function actionGetCommonActions()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

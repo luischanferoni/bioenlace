@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -29,8 +29,9 @@ class RecibidosController extends Controller {
     /**
      * Lists all Recibidos models.
      * @return mixed
-     */
-    public function actionIndex() {
+*/
+
+public function actionIndex() {
         $searchModel = new RecibidosBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
@@ -44,7 +45,8 @@ class RecibidosController extends Controller {
      * Displays a single Recibidos model.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionView($id) {
         return $this->render('view', [
                     'model' => $this->findModel($id),
@@ -55,7 +57,8 @@ class RecibidosController extends Controller {
      * Creates a new Recibidos model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate() {
         $model = new Recibidos();
 
@@ -73,7 +76,8 @@ class RecibidosController extends Controller {
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id) {
         $model = $this->findModel($id);
 
@@ -91,7 +95,8 @@ class RecibidosController extends Controller {
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id) {
         $this->findModel($id)->delete();
 

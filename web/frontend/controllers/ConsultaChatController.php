@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -12,7 +12,7 @@ use common\models\Persona;
 use common\models\RrhhEfector;
 
 /**
- * Chat médico–paciente por consulta.
+ * Chat médicoâ€“paciente por consulta.
  */
 class ConsultaChatController extends Controller
 {

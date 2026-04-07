@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -43,8 +43,9 @@ class ConsultaBalanceHidricoController extends DefaultConsultaController
     /**
      * Lists all SegNivelInternacionBalancehidrico models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $id_consulta = $this->getPersistentParameter('id_consulta');
         $consulta = $this->findConsultaModel($id_consulta);
@@ -70,7 +71,8 @@ class ConsultaBalanceHidricoController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         $context = [
@@ -98,7 +100,8 @@ class ConsultaBalanceHidricoController extends DefaultConsultaController
      * Creates a new SegNivelInternacionBalancehidrico model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreateCrud($id_consulta)
     {
         /* @var $consulta Consulta */
@@ -192,7 +195,8 @@ class ConsultaBalanceHidricoController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

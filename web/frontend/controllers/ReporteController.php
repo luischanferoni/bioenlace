@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -23,7 +23,7 @@ class ReporteController extends Controller
 
     public function behaviors()
     {
-         //control de acceso mediante la extensión
+         //control de acceso mediante la extensiÃ³n
          return [
             'verbs' => [
                 'class' => VerbFilter::className(),
@@ -114,15 +114,15 @@ class ReporteController extends Controller
                     if($mismoDia){
                         $mensaje =  "No se encontraron atenciones para el profesional ".$nombreMedico." el dia ".$diaD." ".$mesD." ".$anioD;
                     }else{
-                        $mensaje =  "No se encontraron atenciones para el profesional ".$nombreMedico." el período desde ".$diaD." ".$mesD." ".$anioD." a ".$diaH." ".$mesH." ".$anioH;
+                        $mensaje =  "No se encontraron atenciones para el profesional ".$nombreMedico." el perÃ­odo desde ".$diaD." ".$mesD." ".$anioD." a ".$diaH." ".$mesH." ".$anioH;
                     } 
                     
                 }
             }else{
-                $mensaje = "Debe especificar servicio, médico y tipo de atencion para realizar esta consulta.";             
+                $mensaje = "Debe especificar servicio, mÃ©dico y tipo de atencion para realizar esta consulta.";             
             }                
         }
-        // Se omité el servicio de odontología
+        // Se omitÃ© el servicio de odontologÃ­a
         $servicios = array_filter($serviciosXEfector, function($item){
             if ($item['id_servicio']== 2) return false;   
             return true;
@@ -167,9 +167,9 @@ class ReporteController extends Controller
                 if(count($resultados) > 0){                
 
                     // Array de dias para poder mostrar los datos
-                    // Obtener el número de días en el mes dado
+                    // Obtener el nÃºmero de dÃ­as en el mes dado
                     $diasEnMes = cal_days_in_month(CAL_GREGORIAN, $mes, $anio);                
-                    // Inicializar el array de días del mes
+                    // Inicializar el array de dÃ­as del mes
                     $arrayResultadosPorDia = [];            
                     
                     foreach (range(1, $diasEnMes) as $dia) {
@@ -200,14 +200,14 @@ class ReporteController extends Controller
                         'options' => ['title' => 'Planilla 5 - Ministerio de Salud de SDE'],                    
                         'methods' => [ 
                             'SetHeader'=>['Planilla 5 - Ministerio de Salud de SDE'], 
-                            'SetFooter' => ['SECRETARIA TÉCNICA DE ESTADÍSTICAS - DIRECCIÓN GENERAL DE MEDICINA PREVENTIVA.']
+                            'SetFooter' => ['SECRETARIA TÃ‰CNICA DE ESTADÃSTICAS - DIRECCIÃ“N GENERAL DE MEDICINA PREVENTIVA.']
                             //'SetFooter'=>['{PAGENO}'],
                         ]
                     ]);                
                     
                     return $pdf->render();
                 }else{
-                    $mensaje =  "No se encontraron atenciones registradas para el servicio ".$nombreServicio." el período ".$mes." ".$anio;
+                    $mensaje =  "No se encontraron atenciones registradas para el servicio ".$nombreServicio." el perÃ­odo ".$mes." ".$anio;
                 } 
             }else{
                 $mensaje = "Debe especificar servicio y fecha para realizar este reporte"; 
@@ -288,7 +288,7 @@ class ReporteController extends Controller
                         $mensaje =  "No se encontraron resultados para el dia ".date('d-m-Y', strtotime($fecha));
                     }
                 }else{
-                    $mensaje = "Debe especificar servicio, fecha y tipo de atención para realizar este reporte.";
+                    $mensaje = "Debe especificar servicio, fecha y tipo de atenciÃ³n para realizar este reporte.";
                 }
         }
         return $this->render('formReporteFarmacia', [
@@ -349,16 +349,16 @@ class ReporteController extends Controller
                     'content' => $content,                   
                     'cssFile' => '@vendor/kartik-v/yii2-mpdf/src/assets/kv-mpdf-bootstrap.min.css',                    
                     'cssInline' => '.kv-heading-1{font-size:18px}',                    
-                    'options' => ['title' => 'Reporte de Odontología - Ministerio de Salud de SDE'],                    
+                    'options' => ['title' => 'Reporte de OdontologÃ­a - Ministerio de Salud de SDE'],                    
                     'methods' => [ 
-                        'SetHeader'=>['Reporte de Odontología - Ministerio de Salud de SDE'], 
+                        'SetHeader'=>['Reporte de OdontologÃ­a - Ministerio de Salud de SDE'], 
                         'SetFooter'=>['{PAGENO}'],
                     ]
                 ]);                
                 
                 return $pdf->render(); 
             }else{
-                $mensaje =  "No se encontraron practicas para el período ".$fecha;
+                $mensaje =  "No se encontraron practicas para el perÃ­odo ".$fecha;
             }
                 
         }
@@ -446,10 +446,10 @@ class ReporteController extends Controller
                     
                     return $pdf->render();
                 }else{
-                    $mensaje =  "No se encontraron atenciones para el profesional ".$nombreMedico." el período desde ".$diaD." ".$mesD." ".$anioD." a ".$diaH." ".$mesH." ".$anioH;
+                    $mensaje =  "No se encontraron atenciones para el profesional ".$nombreMedico." el perÃ­odo desde ".$diaD." ".$mesD." ".$anioD." a ".$diaH." ".$mesH." ".$anioH;
                 } 
             }else{
-                $mensaje =  "Debe seleccionar médico y tipo de atención.";
+                $mensaje =  "Debe seleccionar mÃ©dico y tipo de atenciÃ³n.";
                
             }
                 

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -45,8 +45,10 @@ class ConsultaRegimenController extends DefaultConsultaController
     /**
      * Lists all ConsultaRegimen models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+
+public function actionIndex()
     {
         $id_consulta = $this->getPersistentParameter('id_consulta');
         $consulta = $this->findConsultaModel($id_consulta);
@@ -72,7 +74,8 @@ class ConsultaRegimenController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -186,7 +189,8 @@ class ConsultaRegimenController extends DefaultConsultaController
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

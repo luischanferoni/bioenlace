@@ -152,13 +152,12 @@ class ActionDiscoveryService
                         continue;
                     }
 
-                    // Default: incluir en catálogo salvo exclusión explícita.
-                    $intentCatalog = (bool) ($metadata['intent_catalog'] ?? true);
-                    if (!$intentCatalog) {
+                    // Default include; allow explicit exclusion tag.
+                    $doc = (string) ($method->getDocComment() ?: '');
+                    if ($doc !== '' && preg_match('/@no_intent_catalog\b/i', $doc) === 1) {
                         continue;
                     }
 
-                    // Marcar origen para consumidores.
                     $metadata['intent_catalog'] = true;
                     $metadata['intent_catalog_source'] = 'frontend-controller';
                     $out[] = $metadata;

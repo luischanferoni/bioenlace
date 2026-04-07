@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -41,15 +41,15 @@ class AtencionesEnfermeriaController extends Controller
      * Displays a single AtencionesEnfermeria model.
      * @param integer $id
      * @return mixed
-     */
-    public function actionView($id)
+*/
+
+public function actionView($id)
     {
         return $this->renderAjax('/consulta-atenciones-enfermeria/view', [
             'model' => \common\models\Persona::findOne($id),
         ]);
     }
 
-     
     public function actionGenerarReporte()
     {
 

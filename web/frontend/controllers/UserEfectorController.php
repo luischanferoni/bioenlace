@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -31,8 +31,9 @@ class UserEfectorController extends Controller {
     /**
      * Lists all UserEfector models.
      * @return mixed
-     */
-    public function actionIndex() {
+*/
+
+public function actionIndex() {
         $dataProvider = new ActiveDataProvider([
             'query' => UserEfector::find(),
         ]);
@@ -47,7 +48,8 @@ class UserEfectorController extends Controller {
      * @param integer $id_user
      * @param integer $id_efector
      * @return mixed
-     */
+    */
+
     public function actionView($id_user, $id_efector) {
         return $this->render('view', [
                     'model' => $this->findModel($id_user, $id_efector),
@@ -58,7 +60,8 @@ class UserEfectorController extends Controller {
      * Creates a new UserEfector model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate() {
         $model = new UserEfector();
 
@@ -77,7 +80,8 @@ class UserEfectorController extends Controller {
      * @param integer $id_user
      * @param integer $id_efector
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id_user, $id_efector) {
         $model = $this->findModel($id_user, $id_efector);
 
@@ -103,7 +107,7 @@ class UserEfectorController extends Controller {
      * @param integer $id_user
      * @param integer $id_efector
      * @return mixed
-     */
+    */
     public function actionDelete($id_user, $id_efector) {
         $this->findModel($id_user, $id_efector)->delete();
 

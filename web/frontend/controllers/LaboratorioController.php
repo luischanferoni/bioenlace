@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -66,6 +66,7 @@ class LaboratorioController extends Controller
     }
 
     // Busqueda interna, sin el captcha
+
     public function actionReporteDengue() 
     {
         $searchModel = new LaboratorioBusqueda();
@@ -92,6 +93,7 @@ class LaboratorioController extends Controller
 
 
     // Busqueda publica
+
     public function actionBusqueda()
     {
         $this->layout = 'publico/main';
@@ -184,6 +186,7 @@ class LaboratorioController extends Controller
      * revisar el/los modelos de models/file
     */
     /*
+
     public function actionImportar()
     {
         $model = new CSVForm;

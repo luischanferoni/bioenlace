@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -32,8 +32,9 @@ class MensajesController extends Controller
     /**
      * Lists all Mensajes models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new MensajesBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -52,7 +53,12 @@ class MensajesController extends Controller
      * Displays a single Mensajes model.
      * @param integer $id
      * @return mixed
-     */
+    */
+  
+  
+   
+    
+   
     public function actionView($id)
     {
         return $this->render('view', [
@@ -64,7 +70,8 @@ class MensajesController extends Controller
      * Creates a new Mensajes model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new Mensajes();
@@ -83,7 +90,8 @@ class MensajesController extends Controller
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -102,7 +110,8 @@ class MensajesController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -36,8 +36,9 @@ class InternacionAtencionesEnfermeriaController extends Controller
     /**
      * Lists all SegNivelInternacionAtencionesEnfermeria models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new SegNivelInternacionAtencionesEnfermeriaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -53,7 +54,8 @@ class InternacionAtencionesEnfermeriaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -65,7 +67,8 @@ class InternacionAtencionesEnfermeriaController extends Controller
      * Creates a new SegNivelInternacionAtencionesEnfermeria model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new SegNivelInternacionAtencionesEnfermeria();
@@ -177,7 +180,8 @@ class InternacionAtencionesEnfermeriaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -197,7 +201,8 @@ class InternacionAtencionesEnfermeriaController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

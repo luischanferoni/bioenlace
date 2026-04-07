@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -38,8 +38,9 @@ class ConsultaInternacionSuministroMedicamentoController extends Controller
     /**
      * Lists all SegNivelInternacionMedicamento models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new ConsultaSuministroMedicamentoBusqueda();
         $get = Yii::$app->request->get();
@@ -65,7 +66,8 @@ class ConsultaInternacionSuministroMedicamentoController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -77,7 +79,8 @@ class ConsultaInternacionSuministroMedicamentoController extends Controller
      * Creates a new SuministroMedicamento model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $session = Yii::$app->getSession();

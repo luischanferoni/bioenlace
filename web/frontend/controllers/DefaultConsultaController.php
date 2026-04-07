@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -58,7 +58,7 @@ class DefaultConsultaController extends Controller
             ],
         ];
     }
- 
+
     public function actionCreate()
     {
         $session = Yii::$app->getSession();

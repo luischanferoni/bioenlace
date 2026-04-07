@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -32,8 +32,9 @@ class ServiciosEfectoresController extends Controller
     /**
      * Lists all ServiciosEfector models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new ServiciosEfectorBusqueda();
         $searchModel->id_efector = Yii::$app->user->getIdEfector();
@@ -53,7 +54,8 @@ class ServiciosEfectoresController extends Controller
      * @param string $id_servicio
      * @param integer $id_efector
      * @return mixed
-     */
+    */
+
     public function actionView($id_servicio, $id_efector)
     {
         return $this->render('view', [
@@ -65,7 +67,8 @@ class ServiciosEfectoresController extends Controller
      * Creates a new ServiciosEfector model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new ServiciosEfector();
@@ -86,7 +89,8 @@ class ServiciosEfectoresController extends Controller
      * @param string $id_servicio
      * @param integer $id_efector
      * @return mixed
-     */
+    */
+
     public function actionUpdate($id_servicio, $id_efector)
     {
         $model = $this->findModel($id_servicio, $id_efector);
@@ -106,7 +110,8 @@ class ServiciosEfectoresController extends Controller
      * @param string $id_servicio
      * @param integer $id_efector
      * @return mixed
-     */
+    */
+
     public function actionDelete($id_servicio, $id_efector)
     {
 
@@ -156,7 +161,8 @@ class ServiciosEfectoresController extends Controller
      /**
      * Vuelve deleted_at y deleted_by a null al servicio
      */
-    public function actionReactivar($id_servicio, $id_efector)
+
+     public function actionReactivar($id_servicio, $id_efector)
     {
         $model = $this->findModel($id_servicio, $id_efector);
         if ($model->id_efector !== Yii::$app->user->getIdEfector()) {

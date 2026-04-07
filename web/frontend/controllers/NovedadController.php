@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -32,8 +32,9 @@ class NovedadController extends Controller
     /**
      * Lists all Novedad models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new NovedadBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -49,7 +50,8 @@ class NovedadController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [

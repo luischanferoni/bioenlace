@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -36,8 +36,9 @@ class LaboratorioNbuSnomedController extends Controller
     /**
      * Lists all LaboratorioNbuSnomed models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new LaboratorioNbuSnomedBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -53,7 +54,8 @@ class LaboratorioNbuSnomedController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -65,7 +67,8 @@ class LaboratorioNbuSnomedController extends Controller
      * Creates a new LaboratorioNbuSnomed model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new LaboratorioNbuSnomed();
@@ -83,8 +86,9 @@ class LaboratorioNbuSnomedController extends Controller
      * Creates several new LaboratorioNbuSnomed model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
-    public function actionCreateMasivo()
+      */
+
+      public function actionCreateMasivo()
     {
         
         
@@ -105,7 +109,7 @@ class LaboratorioNbuSnomedController extends Controller
                    $model = new LaboratorioNbuSnomed();
                    $model->codigo = $value['codigo'];
                    $model->conceptId = $value['conceptId'];
-                   $model->created_at = date("Y-m-d H:i:s");
+                   $model->created_at = date("Y-m-d H:i:s");
                    $model->user_id = Yii::$app->user->id;
                         if ($model->validate()) {
                             $model->save();
@@ -146,7 +150,9 @@ class LaboratorioNbuSnomedController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -166,7 +172,8 @@ class LaboratorioNbuSnomedController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

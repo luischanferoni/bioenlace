@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -70,8 +70,9 @@ class EncuestaParchesMamariosController extends Controller
     /**
      * Lists all EncuestaParchesMamarios models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new EncuestaParchesMamariosBusqueda();
         if(Yii::$app->user->getIdEfector() != 811){
@@ -91,7 +92,8 @@ class EncuestaParchesMamariosController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->renderAjax('view', [
@@ -103,7 +105,8 @@ class EncuestaParchesMamariosController extends Controller
      * Creates a new EncuestaParchesMamarios model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new EncuestaParchesMamarios();
@@ -240,7 +243,8 @@ class EncuestaParchesMamariosController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);

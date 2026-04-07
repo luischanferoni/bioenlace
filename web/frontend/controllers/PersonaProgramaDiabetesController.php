@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -32,8 +32,9 @@ class PersonaProgramaDiabetesController extends Controller
     /**
      * Lists all PersonaProgramaDiabetes models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
             'query' => PersonaProgramaDiabetes::find(),
@@ -49,7 +50,8 @@ class PersonaProgramaDiabetesController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -61,7 +63,8 @@ class PersonaProgramaDiabetesController extends Controller
      * Creates a new PersonaProgramaDiabetes model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new PersonaProgramaDiabetes();
@@ -83,7 +86,8 @@ class PersonaProgramaDiabetesController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -103,7 +107,8 @@ class PersonaProgramaDiabetesController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

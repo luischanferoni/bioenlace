@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -36,8 +36,8 @@ class InternacionDiagnosticoController extends Controller
     /**
      * Lists all SegNivelInternacionDiagnostico models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+public function actionIndex()
     {
         $searchModel = new SegNivelInternacionDiagnosticoBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -54,7 +54,8 @@ class InternacionDiagnosticoController extends Controller
      * @param integer $id_internacion
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id, $id_internacion)
     {
         return $this->render('view', [
@@ -66,7 +67,8 @@ class InternacionDiagnosticoController extends Controller
      * Creates a new SegNivelInternacionDiagnostico model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $models = [new SegNivelInternacionDiagnostico];
@@ -140,7 +142,8 @@ class InternacionDiagnosticoController extends Controller
      * @param integer $id_internacion
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id, $id_internacion)
     {
         $model = $this->findModel($id, $id_internacion);
@@ -161,7 +164,8 @@ class InternacionDiagnosticoController extends Controller
      * @param integer $id_internacion
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id, $id_internacion)
     {
         $this->findModel($id, $id_internacion)->delete();

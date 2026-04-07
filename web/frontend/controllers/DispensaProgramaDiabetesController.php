@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -32,8 +32,9 @@ class DispensaProgramaDiabetesController extends Controller
     /**
      * Lists all DispensaProgramaDiabetes models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
             'query' => DispensaProgramaDiabetes::find(),
@@ -49,7 +50,8 @@ class DispensaProgramaDiabetesController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         return $this->render('view', [
@@ -61,7 +63,8 @@ class DispensaProgramaDiabetesController extends Controller
      * Creates a new DispensaProgramaDiabetes model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
+
     public function actionCreate()
     {
         $model = new DispensaProgramaDiabetes();
@@ -81,7 +84,8 @@ class DispensaProgramaDiabetesController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -101,7 +105,8 @@ class DispensaProgramaDiabetesController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

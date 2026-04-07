@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -49,10 +49,11 @@ class ConsultasController extends Controller
      * @entity Consultas
      * @tags consulta,atencion,listar,ver todos
      * @keywords listar,ver todos,mostrar,consultas,atenciones
-     * @synonyms consulta,atencion,visita,cita médica
+     * @synonyms consulta,atencion,visita,cita mÃ©dica
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
         $searchModel = new ConsultaBusqueda();
         $searchModel->id_efector = Yii::$app->user->getIdEfector();
@@ -70,7 +71,8 @@ class ConsultasController extends Controller
      * @tags consulta,atencion,crear,nuevo
      * @keywords crear,nuevo,agregar,consulta,atencion
      * @synonyms consulta,atencion,visita
-     */
+    */
+
     public function actionCreate()
     {
 
@@ -92,7 +94,8 @@ class ConsultasController extends Controller
      * @tags consulta,atencion,editar,modificar,actualizar
      * @keywords editar,modificar,actualizar,consulta
      * @synonyms consulta,atencion
-     */
+    */
+
     public function actionUpdate()
     {
         $idConsulta = Yii::$app->request->get('id_consulta');
@@ -103,7 +106,7 @@ class ConsultasController extends Controller
         try {
             $idRrhh = UserRequest::requireUserParam('idRecursoHumano');
         } catch (\yii\web\BadRequestHttpException $e) {
-            Yii::$app->session->setFlash('error', 'Falta parámetro idRecursoHumano');
+            Yii::$app->session->setFlash('error', 'Falta parÃ¡metro idRecursoHumano');
             return $this->redirect(['historialconsultas']);
         }
 
@@ -159,7 +162,8 @@ class ConsultasController extends Controller
     /**
      * Lists all Consulta models.
      * @return mixed
-     */
+    */
+
     public function actionListadoSumar()
     {
 
@@ -192,6 +196,7 @@ class ConsultasController extends Controller
     }
 
     //Index Historial
+
     public function actionHistorialconsultas()
     {
         $searchModel = new ConsultaBusqueda();
@@ -231,6 +236,7 @@ class ConsultasController extends Controller
     }
 
     //Index Historial Antecedentes
+
     public function actionHistorialantecedentes()
     {
         $id_persona = Yii::$app->getRequest()->getQueryParam('id');
@@ -264,7 +270,8 @@ class ConsultasController extends Controller
      * Displays a single Consulta model.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionView($id_consulta)
     {
         $idConsulta = $id_consulta;
@@ -336,7 +343,8 @@ class ConsultasController extends Controller
      * Displays a single Consulta model.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionImprimirreceta($id)
     {
         $consulta = $this->findModel($id);
@@ -351,7 +359,8 @@ class ConsultasController extends Controller
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -457,7 +466,7 @@ class ConsultasController extends Controller
 
             $transaction->rollBack();
             Yii::error(sprintf("Error al clonar consulta Id %s  ", $ex->getMessage()));
-            Yii::$app->session->setFlash('error', "Error al intentar editar la consulta, comuníquese con los administradores de SISSE");
+            Yii::$app->session->setFlash('error', "Error al intentar editar la consulta, comunÃ­quese con los administradores de SISSE");
         }
     }
 
@@ -519,7 +528,7 @@ class ConsultasController extends Controller
 
         if (!$newChild->save()) {
             $newChild->validate();
-            $log = sprintf("Error Nuevo hijo Único- %s - %s ", $relacion, $newChild->errors);
+            $log = sprintf("Error Nuevo hijo Ãšnico- %s - %s ", $relacion, $newChild->errors);
             Yii::error($log);
             $error = true;
         }
@@ -581,6 +590,7 @@ class ConsultasController extends Controller
 
     // el listado definitivo para todo el que realiza alguna atencion/consulta 
     // a un paciente
+
     public function actionListados()
     {
         $adminEfector = false;

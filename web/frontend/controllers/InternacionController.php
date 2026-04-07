@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -61,8 +61,9 @@ class InternacionController extends Controller
     /**
      * Lists all SegNivelInternacion models.
      * @return mixed
-     */
-    public function actionIndex()
+*/
+
+public function actionIndex()
     {
 
         $persona = Yii::$app->session['persona'];
@@ -100,7 +101,8 @@ class InternacionController extends Controller
     /**
      * Rondas all SegNivelInternacion models.
      * @return mixed
-     */
+    */
+
     public function actionRonda()
     {
         $persona = Yii::$app->session['persona'];
@@ -143,7 +145,8 @@ class InternacionController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionView($id)
     {
         $persona = Yii::$app->session['persona'];
@@ -279,7 +282,7 @@ class InternacionController extends Controller
      * Creates a new SegNivelInternacion model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
-     */
+    */
     public function actionCreate()
     {
         $persona = Yii::$app->session['persona'];
@@ -392,7 +395,8 @@ class InternacionController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -437,7 +441,8 @@ class InternacionController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
+
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -464,7 +469,8 @@ class InternacionController extends Controller
     /**
      * Lists all SegNivelInternacion models.
      * @return mixed
-     */
+    */
+
     public function actionFinalizadas()
     {
         $searchModel = new SegNivelInternacionBusqueda();
@@ -480,7 +486,8 @@ class InternacionController extends Controller
     /**
      * Lists SegNivelInternacion por persona models.
      * @return mixed
-     */
+    */
+
     public function actionPorpersona($idpersona)
     {
         if (!$idpersona) return $this->redirect(['/personas/view', 'id' => $idpersona]);
@@ -496,7 +503,6 @@ class InternacionController extends Controller
             'persona' => $model_persona
         ]);
     }
-
 
     public function actionMostrarDatosAcompaniante($id_internacion)
     {

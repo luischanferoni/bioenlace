@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace frontend\controllers;
 
@@ -17,8 +17,9 @@ class RecetaController extends Controller
     /**
      * Prueba de recetas.
      * @return mixed
-     */
-    public function actionCreate()
+*/
+
+public function actionCreate()
     {
         $arrayDiagnostico = [
             25064002 => 'cefalea', 

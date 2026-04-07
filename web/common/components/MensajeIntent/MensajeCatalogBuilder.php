@@ -3,7 +3,7 @@
 namespace common\components\MensajeIntent;
 
 use Yii;
-use common\components\Actions\ActionMappingService;
+use common\components\IntentCatalog\IntentCatalogService;
 
 /**
  * Arma el catálogo de destinos permitidos para clasificar un mensaje.
@@ -100,7 +100,7 @@ final class MensajeCatalogBuilder
             return [];
         }
 
-        $actions = ActionMappingService::getAvailableActionsForUser($uid, true);
+        $actions = IntentCatalogService::getAvailableUiForUser($uid, true);
         $items = [];
 
         foreach ($actions as $action) {
@@ -165,7 +165,7 @@ final class MensajeCatalogBuilder
             if (!is_string($r) || $r === '') {
                 continue;
             }
-            if (ActionMappingService::userIdCanAccessRoute($uid, $r)) {
+            if (\common\components\Actions\ActionMappingService::userIdCanAccessRoute($uid, $r)) {
                 return true;
             }
         }

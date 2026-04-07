@@ -44,6 +44,11 @@ El endpoint **mantiene compatibilidad** retornando siempre `content` como texto 
 
 `router.actions` es un array de **acciones sugeridas** por el orquestador de intents. Las acciones se usan para renderizar **botones** o **deep links** en el cliente.
 
+### Importante: “UI” vs “dominio”
+
+- **UI (en API)**: significa **descriptor de UI en JSON** (wizard/list/detail) y se obtiene por rutas dedicadas bajo **`/api/v1/ui/<entidad>/<accion>`**.
+- **Dominio/datos (en API)**: endpoints como `/api/v1/turnos`, `/api/v1/agenda/*`, etc. **no son UI**; son APIs de negocio consumidas por UIs nativas o por los descriptores.
+
 ### Acción mínima (recomendada)
 
 Los clientes deben soportar como mínimo este shape:
@@ -63,7 +68,7 @@ Los clientes deben soportar como mínimo este shape:
   - `select_patient`: abrir selector/búsqueda de paciente.
   - `open_form`: alias de `open_route` cuando el cliente necesita diferenciar navegación vs modal/form.
 - `title`: string, texto del botón.
-- `route`: string, ruta canónica. **Preferencia:** rutas **API** bajo `/api/v1/...` (o las descubiertas que contengan `/api/`) para apps y web que consumen el backend vía REST. Las acciones generadas por [`ChatApiActionBuilder`](../common/components/Actions/ChatApiActionBuilder.php) priorizan endpoints API permitidos por RBAC.
+- `route`: string, ruta canónica. **Preferencia:** rutas de **UI JSON** bajo `/api/v1/ui/...` para que los clientes puedan renderizar pantallas desde descriptores. Las acciones generadas por [`ChatApiActionBuilder`](../common/components/Actions/ChatApiActionBuilder.php) deben apuntar a `/ui/` cuando existan descriptores.
 - `method`: string opcional (`GET`, `POST`, …) cuando la acción descubierta o el fallback no sea GET; el cliente debe invocar el endpoint con ese verbo.
 - `params`: objeto opcional. Query params para componer la URL final.
 - `prefill`: objeto opcional. Datos estructurados para **pre-poblar** el formulario (si el cliente lo soporta).

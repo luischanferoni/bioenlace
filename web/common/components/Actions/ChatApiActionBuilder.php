@@ -3,10 +3,28 @@
 namespace common\components\Actions;
 
 /**
- * Construye acciones tipo open_route hacia endpoints API, filtradas por RBAC vía ActionMappingService.
+ * Construye acciones tipo open_route hacia **UIs** (descriptores JSON bajo `/api/v1/ui/...`),
+ * filtradas por RBAC vía ActionMappingService.
+ *
+ * Nota de terminología:
+ * - “UI en API” = descriptor JSON (ruta `/api/v1/ui/...`).
+ * - Endpoints de dominio (turnos/agenda/etc.) no son “UI”; son APIs de negocio.
  */
 final class ChatApiActionBuilder
 {
+    private static function uiDescriptorRouteForDiscoveredAction(array $action): string
+    {
+        $controller = isset($action['controller']) ? (string) $action['controller'] : '';
+        $actionName = isset($action['action']) ? (string) $action['action'] : '';
+        $controller = trim(strtolower($controller));
+        $actionName = trim(strtolower($actionName));
+        if ($controller === '' || $actionName === '') {
+            return '';
+        }
+
+        return '/api/v1/ui/' . rawurlencode($controller) . '/' . rawurlencode($actionName);
+    }
+
     /** Prefijos de ruta considerados API para el chat */
     private static function isApiRoute(string $route): bool
     {
@@ -23,13 +41,15 @@ final class ChatApiActionBuilder
      */
     public static function discoveredActionToOpenRoute(array $action, string $title): array
     {
-        $route = isset($action['route']) ? (string) $action['route'] : '';
-        $route = preg_replace('#^(GET|POST|PUT|PATCH|DELETE|OPTIONS)\s+#i', '', trim($route));
-        $route = '/' . ltrim($route, '/');
-        $method = 'GET';
-        if (preg_match('#^(GET|POST|PUT|PATCH|DELETE)\s+#i', (string) ($action['route'] ?? ''), $m)) {
-            $method = strtoupper($m[1]);
+        // Para “UI en API” siempre apuntamos al descriptor bajo /ui/
+        $route = self::uiDescriptorRouteForDiscoveredAction($action);
+        if ($route === '') {
+            // Fallback conservador: ruta descubierta (puede ser dominio)
+            $route = isset($action['route']) ? (string) $action['route'] : '';
+            $route = preg_replace('#^(GET|POST|PUT|PATCH|DELETE|OPTIONS)\s+#i', '', trim($route));
+            $route = '/' . ltrim($route, '/');
         }
+        $method = 'GET';
 
         $out = [
             'type' => 'open_route',
@@ -37,10 +57,6 @@ final class ChatApiActionBuilder
             'route' => $route,
             'params' => [],
         ];
-        if ($method !== 'GET') {
-            $out['method'] = $method;
-        }
-
         return $out;
     }
 

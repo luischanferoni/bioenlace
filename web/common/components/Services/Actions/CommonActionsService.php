@@ -2,10 +2,14 @@
 
 namespace common\components\Services\Actions;
 
-use common\components\ActionMappingService;
+use common\components\IntentCatalog\IntentCatalogService;
 
 /**
- * Atajos de inicio: subconjunto ordenado de acciones API ya filtradas por RBAC.
+ * Atajos de inicio: subconjunto ordenado de **UIs**.
+ *
+ * Importante:
+ * - UI en API = descriptor JSON bajo `/api/v1/ui/<entidad>/<accion>`.
+ * - Endpoints de dominio (turnos/agenda/etc.) no son UI; esta lista intenta apuntar a `/ui/`.
  */
 final class CommonActionsService
 {
@@ -27,7 +31,7 @@ final class CommonActionsService
             $limit = 50;
         }
 
-        $available = ActionMappingService::getAvailableActionsForUser($userId);
+        $available = IntentCatalogService::getAvailableUiForUser($userId, true);
         $ordered = self::prioritizeForCommonShortcuts($available);
         $ordered = array_slice($ordered, 0, $limit);
 

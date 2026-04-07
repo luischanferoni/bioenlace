@@ -27,6 +27,7 @@ class ActionDiscoveryService
      * Cache key para acciones descubiertas
      */
     public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v7';
+    public const CACHE_KEY_FRONTEND_UI = 'discovered_frontend_ui_v1_intent_catalog_v1';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**
@@ -75,6 +76,102 @@ class ActionDiscoveryService
         }
 
         return $actions;
+    }
+
+    /**
+     * Descubre **UIs HTML/JSON** implementadas en controladores web del frontend (`frontend/controllers`).
+     *
+     * Importante de terminología:
+     * - Esto NO descubre endpoints de dominio de la API.
+     * - Estos métodos representan pantallas (HTML) o definiciones de UI (arrays) que serán expuestas como
+     *   descriptores bajo `/api/v1/ui/<controller>/<action>` (ver {@see \frontend\modules\api\v1\controllers\UiController}).
+     *
+     * Convención de tagging:
+     * - Por defecto, toda `action*` del frontend se considera parte del catálogo.
+     * - Para excluir manualmente: agregar `@no_intent_catalog` en el docblock del método.
+     * - Opcionalmente se puede usar `@intent_catalog` (no requerido si se usa el default).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function discoverFrontendUiDefinitions(bool $useCache = true): array
+    {
+        $useCache = ActionCatalogSettings::shouldUseCache($useCache);
+        $cache = Yii::$app->cache;
+        $cacheKey = self::CACHE_KEY_FRONTEND_UI;
+        if ($useCache && $cache) {
+            $cached = $cache->get($cacheKey);
+            if ($cached !== false && is_array($cached)) {
+                return $cached;
+            }
+        }
+
+        $alias = '@frontend/controllers';
+        $realPath = Yii::getAlias($alias);
+        if (!is_dir($realPath)) {
+            return [];
+        }
+
+        $files = FileHelper::findFiles($realPath, [
+            'only' => ['*Controller.php'],
+            'recursive' => false,
+        ]);
+
+        $out = [];
+        foreach ($files as $file) {
+            $className = self::getClassNameFromFile($file);
+            if (!$className) {
+                continue;
+            }
+            try {
+                $reflection = new ReflectionClass($className);
+                if (
+                    !$reflection->isSubclassOf('yii\web\Controller') &&
+                    !$reflection->isSubclassOf('yii\rest\Controller')
+                ) {
+                    continue;
+                }
+                if ($reflection->isAbstract()) {
+                    continue;
+                }
+
+                $controllerName = self::getControllerName($reflection->getShortName());
+                $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
+                foreach ($methods as $method) {
+                    $methodName = $method->getName();
+                    if (strpos($methodName, 'action') !== 0 || $methodName === 'actions') {
+                        continue;
+                    }
+                    $methodName = str_replace('action', '', $methodName);
+                    $actionName = Inflector::camel2id($methodName);
+
+                    // Este route es el "destino UI" (no confundir con APIs de dominio).
+                    $route = '/api/v1/ui/' . $controllerName . '/' . $actionName;
+
+                    $metadata = self::extractActionMetadata($method, $route, $controllerName, $actionName);
+                    if (!$metadata) {
+                        continue;
+                    }
+
+                    // Default: incluir en catálogo salvo exclusión explícita.
+                    $intentCatalog = (bool) ($metadata['intent_catalog'] ?? true);
+                    if (!$intentCatalog) {
+                        continue;
+                    }
+
+                    // Marcar origen para consumidores.
+                    $metadata['intent_catalog'] = true;
+                    $metadata['intent_catalog_source'] = 'frontend-controller';
+                    $out[] = $metadata;
+                }
+            } catch (\Throwable $e) {
+                Yii::error("Error extrayendo UIs frontend de {$file}: " . $e->getMessage(), 'action-discovery');
+            }
+        }
+
+        if ($cache) {
+            $cache->set($cacheKey, $out, self::CACHE_DURATION);
+        }
+        return $out;
     }
 
     /**
@@ -375,6 +472,7 @@ class ActionDiscoveryService
             'tags' => $customMetadata['tags'],
             'keywords' => $customMetadata['keywords'],
             'synonyms' => $customMetadata['synonyms'],
+            'intent_catalog' => $customMetadata['intent_catalog'],
         ];
     }
 
@@ -504,6 +602,8 @@ class ActionDiscoveryService
             // Nombre "humano" explícito para UI / execute-action.
             // Se expone como action_name y tiene prioridad sobre display_name.
             'action_name' => null,
+            // Si false, la acción NO debe aparecer en el catálogo de UIs.
+            'intent_catalog' => true,
         ];
 
         if (!$docComment) {
@@ -518,6 +618,14 @@ class ActionDiscoveryService
 
         foreach ($lines as $line) {
             $line = trim($line);
+
+            // @intent_catalog / @no_intent_catalog
+            if (preg_match('/@no_intent_catalog\b/i', $line)) {
+                $metadata['intent_catalog'] = false;
+            }
+            if (preg_match('/@intent_catalog\b/i', $line)) {
+                $metadata['intent_catalog'] = true;
+            }
 
             // @action_name "Reservar turno"
             // @display_name "Reservar turno" (alias, útil para migraciones)

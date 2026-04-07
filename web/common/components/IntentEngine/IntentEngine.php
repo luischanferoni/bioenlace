@@ -118,6 +118,14 @@ final class IntentEngine
             'parameters' => $item->parameters,
         ];
 
+        if ($item->client_open !== null) {
+            $action['client_open'] = $item->client_open;
+        }
+        if ($item->client_interaction !== null && $item->client_interaction !== '') {
+            $action['client_interaction'] = $item->client_interaction;
+        }
+
+        // Para UIs JSON (/api/v*/ui/...) el enrich agrega client_open si no vino explícito.
         return AssistantClientOpenEnricher::enrich($action);
     }
 

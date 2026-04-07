@@ -3,6 +3,8 @@
 namespace common\components\Services\Actions;
 
 use common\components\IntentCatalog\IntentCatalogService;
+use common\components\Actions\ActionDiscoveryService;
+use webvimark\modules\UserManagement\models\User;
 
 /**
  * Atajos de inicio: subconjunto ordenado de **UIs**.
@@ -31,11 +33,17 @@ final class CommonActionsService
             $limit = 50;
         }
 
+        // UIs nativas (frontend/controllers): se incluyen todas por defecto y se excluyen manualmente con @no_intent_catalog.
+        // Se devuelven como "screens" nativas (no /api/v1/ui/...), con client_open.
+        $native = self::nativeFrontendShortcuts();
+
         $available = IntentCatalogService::getAvailableUiForUser($userId, true);
         $ordered = self::prioritizeForCommonShortcuts($available);
-        $ordered = array_slice($ordered, 0, $limit);
 
         $out = [];
+        foreach ($native as $n) {
+            $out[] = $n;
+        }
         foreach ($ordered as $action) {
             $name = !empty($action['action_name'])
                 ? (string) $action['action_name']
@@ -46,6 +54,63 @@ final class CommonActionsService
                 'name' => $name,
                 'description' => (string) ($action['description'] ?? ''),
                 'action_id' => isset($action['action_id']) ? (string) $action['action_id'] : null,
+            ];
+        }
+
+        return array_slice($out, 0, $limit);
+    }
+
+    /**
+     * @return list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>
+     */
+    private static function nativeFrontendShortcuts(): array
+    {
+        $defs = ActionDiscoveryService::discoverFrontendUiDefinitions(true);
+        if ($defs === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($defs as $d) {
+            $controller = (string) ($d['controller'] ?? '');
+            $action = (string) ($d['action'] ?? '');
+            $actionId = isset($d['action_id']) ? (string) $d['action_id'] : null;
+            if ($controller === '' || $action === '') {
+                continue;
+            }
+
+            // Filtrado RBAC por ruta nativa web.
+            $rbacRoute = '/' . $controller . '/' . $action;
+            if ($action === 'index') {
+                $rbacRoute = '/' . $controller . '/index';
+            }
+            if (!User::canRoute($rbacRoute)) {
+                continue;
+            }
+
+            // Ruta nativa web: /<controller>[/<action>] (index => /<controller>)
+            $path = '/' . rawurlencode($controller);
+            if ($action !== 'index') {
+                $path .= '/' . rawurlencode($action);
+            }
+
+            $name = (string) ($d['action_name'] ?? $d['display_name'] ?? '');
+            if ($name === '' || strncmp($name, 'RBAC:', 5) === 0) {
+                $name = $controller . '/' . $action;
+            }
+
+            $out[] = [
+                'route' => $path,
+                'name' => $name,
+                'description' => (string) ($d['description'] ?? ''),
+                'action_id' => $actionId,
+                'client_open' => [
+                    'kind' => 'ui_native',
+                    'screen_id' => strtolower($controller . '.' . $action),
+                    'web' => ['path' => $path],
+                    'mobile' => ['screen_id' => strtolower($controller . '.' . $action)],
+                ],
+                'client_interaction' => 'ui_asistente_native',
             ];
         }
 

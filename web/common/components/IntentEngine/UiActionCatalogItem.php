@@ -19,6 +19,12 @@ final class UiActionCatalogItem
     /** @var array<string, mixed> */
     public array $parameters;
 
+    /** @var array<string, mixed>|null Instrucción explícita para abrir UI (web/mobile). */
+    public ?array $client_open = null;
+
+    /** @var string|null Etiqueta de interacción (ej. ui_asistente_json|ui_asistente_native). */
+    public ?string $client_interaction = null;
+
     /**
      * @param string[] $keywords
      * @param array<string, mixed> $parameters
@@ -30,7 +36,9 @@ final class UiActionCatalogItem
         ?string $entity,
         string $route,
         array $keywords,
-        array $parameters
+        array $parameters,
+        ?array $client_open = null,
+        ?string $client_interaction = null
     ) {
         $this->action_id = $action_id;
         $this->display_name = $display_name;
@@ -39,6 +47,8 @@ final class UiActionCatalogItem
         $this->route = $route;
         $this->keywords = $keywords;
         $this->parameters = $parameters;
+        $this->client_open = $client_open;
+        $this->client_interaction = $client_interaction;
     }
 
     /**

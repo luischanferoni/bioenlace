@@ -2,24 +2,27 @@
 
 namespace common\components\IntentCatalog;
 
-use common\components\Actions\ActionDiscoveryService;
+use Yii;
 use common\components\Actions\ActionMappingService;
-use common\components\Actions\AllowedRoutesResolver;
+use common\components\UiDefinitionTemplateManager;
 
 /**
  * Catálogo de **UIs** sugeribles (intents UI).
  *
  * Definición de UI en este proyecto:
- * - **API UI**: descriptor JSON bajo `/api/v1/ui/<controller>/<action>` (ver UiController).
- * - **HTML UI**: rutas web del frontend (controladores `frontend/controllers`) que renderizan vistas.
+ * - **API UI**: descriptor JSON bajo `/api/v1/ui/<entity>/<action>` cargado desde templates JSON (ver UiController).
  *
  * Este servicio NO incluye endpoints de dominio (turnos/agenda/etc.) porque no son UI.
  */
 final class IntentCatalogService
 {
     /**
-     * UIs del frontend, expuestas como rutas `/api/v1/ui/<controller>/<action>`.
-     * Se filtran por RBAC usando action_id permitido del usuario (cuando aplica).
+     * UIs disponibles para un usuario.
+     *
+     * Fuente: acciones permitidas por RBAC (ActionMappingService) mapeadas a rutas de descriptor UI:
+     * `/api/v1/ui/<controller>/<action>`.
+     *
+     * Nota: esto NO enumera endpoints de dominio; los convierte a “destinos UI” (descriptor) bajo `/ui/`.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -29,42 +32,38 @@ final class IntentCatalogService
             return [];
         }
 
-        // 1) action_ids permitidos (dominio) según RBAC actual.
-        $allowedActionIds = [];
-        foreach (ActionMappingService::getAvailableActionsForUser($userId, $useCache) as $a) {
+        $actions = ActionMappingService::getAvailableActionsForUser($userId, $useCache);
+        $byId = [];
+        foreach ($actions as $a) {
             $id = isset($a['action_id']) ? (string) $a['action_id'] : '';
             if ($id !== '') {
-                $allowedActionIds[$id] = true;
+                $byId[$id] = $a;
             }
         }
 
-        // 2) Definiciones UI implementadas en frontend/controllers (taggeables/excluibles).
-        $uiDefs = ActionDiscoveryService::discoverFrontendUiDefinitions($useCache);
+        // Enumerar templates JSON existentes (excepto common/*).
+        $base = Yii::getAlias(UiDefinitionTemplateManager::TEMPLATE_BASE_PATH);
+        $files = glob($base . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*.json') ?: [];
 
-        // 3) Filtrado final:
-        // - Si el usuario tiene el action_id permitido, la UI entra.
-        // - Si no lo tiene, igual puede entrar si la ruta es de acceso libre (pantallas públicas).
-        $routeMap = null;
         $out = [];
-        foreach ($uiDefs as $ui) {
-            $actionId = isset($ui['action_id']) ? (string) $ui['action_id'] : '';
-            $route = isset($ui['route']) ? (string) $ui['route'] : '';
-            if ($route === '' || $route === '/') {
+        foreach ($files as $path) {
+            $entity = basename(dirname($path));
+            if ($entity === 'common') {
+                continue;
+            }
+            $action = basename($path, '.json');
+            $actionId = strtolower($entity . '.' . $action);
+
+            // Sólo listar si el usuario tiene la acción permitida por RBAC.
+            if (!isset($byId[$actionId])) {
                 continue;
             }
 
-            if ($actionId !== '' && isset($allowedActionIds[$actionId])) {
-                $out[] = $ui;
-                continue;
-            }
-
-            // Pantallas públicas: respetar mapa de rutas (free access / subroutes).
-            if ($routeMap === null) {
-                $routeMap = AllowedRoutesResolver::getTargetRoutesMapForUserId($userId, $useCache);
-            }
-            if (AllowedRoutesResolver::routeAllowedByMap($route, $routeMap)) {
-                $out[] = $ui;
-            }
+            $a = $byId[$actionId];
+            $a['controller'] = $entity;
+            $a['action'] = $action;
+            $a['route'] = '/api/v1/ui/' . rawurlencode($entity) . '/' . rawurlencode($action);
+            $out[] = $a;
         }
 
         return $out;

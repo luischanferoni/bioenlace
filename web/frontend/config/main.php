@@ -149,41 +149,19 @@ return [
                 'OPTIONS api/<version:\w+>/agenda/eliminar-para-recurso/<id:\d+>' => '<version>/agenda/eliminar-para-recurso',
                 'DELETE api/<version:\w+>/agenda/eliminar/<id:\d+>' => '<version>/agenda/eliminar',
                 'OPTIONS api/<version:\w+>/agenda/eliminar/<id:\d+>' => '<version>/agenda/eliminar',
-                'GET api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
-                'OPTIONS api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
+                
+                // Turnos UI screens (descriptor + submit): usar /api/<v>/ui/turnos/* (ver regla /ui/ más abajo)
                 'GET api/<version:\w+>/turnos/slots-disponibles-como-paciente' => '<version>/turnos/slots-disponibles-como-paciente',
                 'POST api/<version:\w+>/turnos/slots-disponibles-como-paciente' => '<version>/turnos/slots-disponibles-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos/slots-disponibles-como-paciente' => '<version>/turnos/slots-disponibles-como-paciente',
-                'GET api/<version:\w+>/turnos/politica-como-paciente' => '<version>/turnos/politica-como-paciente',
-                'OPTIONS api/<version:\w+>/turnos/politica-como-paciente' => '<version>/turnos/politica-como-paciente',
-                'POST api/<version:\w+>/turnos/cancelar-dia-efector' => '<version>/turnos/cancelar-dia-efector',
-                'OPTIONS api/<version:\w+>/turnos/cancelar-dia-efector' => '<version>/turnos/cancelar-dia-efector',
-                'GET api/<version:\w+>/turnos/<id:\d+>/slots-alternativos' => '<version>/turnos/slots-alternativos-como-paciente',
-                'OPTIONS api/<version:\w+>/turnos/<id:\d+>/slots-alternativos' => '<version>/turnos/slots-alternativos-como-paciente',
-                'POST api/<version:\w+>/turnos/<id:\d+>/cancelar' => '<version>/turnos/cancelar-como-paciente',
-                'OPTIONS api/<version:\w+>/turnos/<id:\d+>/cancelar' => '<version>/turnos/cancelar-como-paciente',
-                'POST api/<version:\w+>/turnos/<id:\d+>/cancelar-operativo' => '<version>/turnos/cancelar-operativo',
-                'OPTIONS api/<version:\w+>/turnos/<id:\d+>/cancelar-operativo' => '<version>/turnos/cancelar-operativo',
-                'POST api/<version:\w+>/turnos/<id:\d+>/no-se-presento' => '<version>/turnos/no-se-presento',
-                'OPTIONS api/<version:\w+>/turnos/<id:\d+>/no-se-presento' => '<version>/turnos/no-se-presento',
-                'POST api/<version:\w+>/turnos/<id:\d+>/confirmar-asistencia' => '<version>/turnos/confirmar-asistencia-como-paciente',
-                'OPTIONS api/<version:\w+>/turnos/<id:\d+>/confirmar-asistencia' => '<version>/turnos/confirmar-asistencia-como-paciente',
-                'POST api/<version:\w+>/turnos/<id:\d+>/reprogramar' => '<version>/turnos/reprogramar-como-paciente',
-                'OPTIONS api/<version:\w+>/turnos/<id:\d+>/reprogramar' => '<version>/turnos/reprogramar-como-paciente',
-                'GET api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/ver-turno',
                 'GET api/<version:\w+>/turnos/eventos' => '<version>/turnos/consultar-ocupacion-dia',
                 'POST api/<version:\w+>/turnos/eventos' => '<version>/turnos/consultar-ocupacion-dia',
                 'OPTIONS api/<version:\w+>/turnos/eventos' => '<version>/turnos/consultar-ocupacion-dia',
                 'GET api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'POST api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'OPTIONS api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
-                'POST api/<version:\w+>/turnos/para-paciente' => '<version>/turnos/crear-para-paciente',
-                'OPTIONS api/<version:\w+>/turnos/para-paciente' => '<version>/turnos/crear-para-paciente',
-                'POST api/<version:\w+>/turnos/crear-sobreturno' => '<version>/turnos/crear-sobreturno',
-                'OPTIONS api/<version:\w+>/turnos/crear-sobreturno' => '<version>/turnos/crear-sobreturno',
-                'POST api/<version:\w+>/turnos' => '<version>/turnos/crear-como-paciente',
-                'PUT api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/actualizar-turno',
-                'PATCH api/<version:\w+>/turnos/<id:\d+>' => '<version>/turnos/actualizar-turno',
+                // (Se eliminan reglas /turnos/* que mapeaban a screens; se consumen por /ui/turnos/*)
+
                 'POST api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
                 'OPTIONS api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
                 'GET api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/listar',
@@ -227,14 +205,11 @@ return [
                 'GET api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 'OPTIONS api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 
-                // CRUD API
-                'GET api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',
-                'POST api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',
-                'OPTIONS api/<version:\w+>/crud/ejecutar-accion' => '<version>/crud/ejecutar-accion',
-
-                // Descriptores de UI dinámica (JSON: wizards, etc.) — mismo action_id que crud/execute-action
-                'GET api/<version:\w+>/ui/<entity:[\w-]+>/<action:[\w-]+>' => '<version>/ui/descriptor',
-                'OPTIONS api/<version:\w+>/ui/<entity:[\w-]+>/<action:[\w-]+>' => '<version>/ui/options',
+                // UI dinámica (JSON): cada entidad renderiza su descriptor desde views/json/*
+                // Ejemplo: GET|POST /api/v1/ui/turnos/crear-como-paciente => v1/turnos/crear-como-paciente
+                'GET api/<version:\w+>/ui/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
+                'POST api/<version:\w+>/ui/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
+                'OPTIONS api/<version:\w+>/ui/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
                 
                 // Audio API (Speech-to-Text)
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',

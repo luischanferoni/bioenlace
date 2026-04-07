@@ -1,0 +1,21 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Política de autogestión",
+      "fields": ["id_efector"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id_efector",
+      "label": "Efector (obligatorio si no hay sesión operativa)",
+      "type": "text",
+      "required": false
+    }
+  ]
+}

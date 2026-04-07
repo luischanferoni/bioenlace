@@ -38,7 +38,7 @@ class UiDefinitionTemplateManager
      * Cargar y combinar plantillas y devolver un array con `wizard_config` (u otras claves mergeadas).
      *
      * @param string $entity ej. 'turnos'
-     * @param string $action ej. 'crear-mi-turno'
+     * @param string $action ej. 'crear-como-paciente'
      * @param array $params variables (today, query params, etc.)
      * @return array
      */

@@ -1,6 +1,6 @@
 ## Vistas dinámicas JSON vs vistas nativas (Web / Flutter)
 
-Este documento resume **cuándo usamos vistas dinámicas basadas en JSON** (por ejemplo `frontend/modules/api/v1/views/json/turnos/crear-mi-turno.json`) y **cuándo preferimos vistas nativas**:
+Este documento resume **cuándo usamos vistas dinámicas basadas en JSON** (por ejemplo `frontend/modules/api/v1/views/json/turnos/crear-como-paciente.json`) y **cuándo preferimos vistas nativas**:
 
 - **Web**: vistas PHP/HTML de Yii2 (`views/.../*.php`, componentes JS/SPA).
 - **Móvil**: pantallas nativas Flutter (widgets y layouts propios de la app).
@@ -21,7 +21,7 @@ Las vistas JSON representan **descriptores de UI** que se consumen desde la API.
 En el backend se cargan con **`UiDefinitionTemplateManager`** (antes se usaba el nombre `FormConfigTemplateManager`, deprecado: no se trata solo de “formularios”, sino de **definiciones de UI**):
 
 ```php
-$config = \common\components\UiDefinitionTemplateManager::render('turnos', 'crear-mi-turno', $params);
+$config = \common\components\UiDefinitionTemplateManager::render('turnos', 'crear-como-paciente', $params);
 // devuelve ['wizard_config' => [...]]
 ```
 
@@ -40,7 +40,7 @@ Usar vistas dinámicas JSON cuando el flujo cumple la mayoría de estas condicio
   - Formularios o wizards multi‑paso, con campos relativamente estándar: texto, select, autocomplete, fechas, etc.
   - Listas de datos con filtros sencillos.
   - Vistas de detalle simples (título + pares label/valor + algunas acciones).
-  - Ejemplo: *“Crear mi turno”* (`turnos/crear-mi-turno`), donde el JSON define:
+  - Ejemplo: *“Crear mi turno”* (`turnos/crear-como-paciente`), donde el JSON define:
     - paso 0: servicio + efector,
     - paso 1: profesional,
     - paso 2: fecha + hora,
@@ -151,22 +151,22 @@ Para que los clientes (web y Flutter) sepan que una respuesta contiene una **def
 
 **Implementado en `frontend/config/main.php`:**
 
-- `GET /api/v1/ui/<entidad>/<accion>` → `UiController::actionDescriptor` (ej. `GET /api/v1/ui/turnos/crear-mi-turno`)
-- `OPTIONS /api/v1/ui/<entidad>/<accion>` → CORS (`UiController::actionOptions`)
+- `GET /api/v1/ui/<entidad>/<accion>` → `v1/<entidad>/<accion>` (descriptor UI JSON renderizado por el controller de la entidad)
+- `OPTIONS /api/v1/ui/<entidad>/<accion>` → CORS / options del controller de la entidad
 
-El permiso sigue el mismo `action_id` que `crud/ejecutar-accion` (`entidad.accion`). En RBAC suelen registrarse rutas como `/api/ui/descriptor` y `/api/ui/options` para quien deba consumir descriptores.
-
-**Alternativa:** `GET /api/v1/crud/ejecutar-accion?action_id=turnos.crear-mi-turno` (respuesta móvil con `form_config` / `wizard_steps` y metadatos `kind`, `ui_type`, `compatibility`).
+El permiso sigue el mismo `action_id` (`entidad.accion`).
 
 Ejemplos de URLs:
 
-- `GET /api/v1/ui/turnos/crear-mi-turno`
+- `GET /api/v1/ui/turnos/crear-como-paciente`
 - `GET /api/v1/ui/personas/actualizar-datos` (cuando exista la acción descubierta)
 
 Los clientes pueden asumir que:
 
 - Si llaman a una ruta bajo `/ui/...`, la respuesta será un **descriptor de UI**.
 - Si llaman a rutas “normales” (no `/ui/...`), la respuesta será data de negocio o resultados de acciones.
+
+**Importante (arquitectura):** `/api/v1/ui/...` **solo** devuelve definiciones de UI en JSON desde plantillas (`views/json/...`) y **no** invoca controladores web del frontend (`frontend/controllers`). El render se hace en el controller API de cada entidad (por ejemplo `TurnosController::actionCrearComoPaciente` para `turnos/crear-como-paciente`).
 
 ### 5.2. Metadatos en el JSON
 

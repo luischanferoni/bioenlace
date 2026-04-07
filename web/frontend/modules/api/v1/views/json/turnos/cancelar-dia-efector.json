@@ -1,0 +1,27 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Cancelar día en efector",
+      "fields": ["fecha", "id_rr_hh"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "fecha",
+      "label": "Fecha",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "id_rr_hh",
+      "label": "Profesional (opcional, todo el día si vacío)",
+      "type": "text",
+      "required": false
+    }
+  ]
+}

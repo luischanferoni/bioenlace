@@ -1,0 +1,45 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Ocupación del día",
+      "fields": ["dia", "id_rrhh_servicio_asignado", "id_servicio", "id_rr_hh", "formato"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "dia",
+      "label": "Fecha",
+      "type": "date",
+      "required": false
+    },
+    {
+      "name": "id_rrhh_servicio_asignado",
+      "label": "ID agenda rrhh servicio",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "id_servicio",
+      "label": "Servicio (si no hay agenda)",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "id_rr_hh",
+      "label": "Profesional (resolver agenda con servicio)",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "formato",
+      "label": "formato slots (valor: slots)",
+      "type": "text",
+      "required": false
+    }
+  ]
+}

@@ -35,7 +35,6 @@ Una carga corresponde a Nivel 2 cuando:
 
 Referencias en el repo:
 - `web/frontend/views/site/asistente.php` (chat del asistente para CRUD guiado)
-- `web/frontend/modules/api/v1/controllers/CrudController.php` (`crud/procesar-interaccion`, request `interaccion_usuario.texto`)
 - `web/frontend/modules/api/v1/controllers/ChatController.php` (`chat/recibir`) (si el flujo usa dialogos/mensajes persistidos)
 - `web/common/components/Chatbot/ConsultaIntentRouter.php` (orquestacion: clasifica, extrae parametros, enruta a handler)
 - `web/common/components/Chatbot/IntentHandlers/Handlers/TurnosHandler.php` (ejemplo de handler de intents)
@@ -105,7 +104,6 @@ Regla (robusta):
   - Si no existe un registro chat persistido en esa etapa, usar el destino final una vez que se guarda (ej: `turnos`, `cirugia` u otro registro destino).
 
 Referencias en el repo:
-- `web/frontend/modules/api/v1/controllers/CrudController.php` (`crud/procesar-interaccion`) (chat de “acciones” con guardado en submit)
 - `web/frontend/modules/api/v1/controllers/ChatController.php` (crea/usa `Dialogo` y guarda mensajes)
 - `web/common/models/AsistenteConversacion.php` (`asistente_conversacion`)
 - `web/common/models/AsistenteInteraccion.php` (`asistente_interaccion`)
@@ -119,7 +117,7 @@ En esta doc se fija lo minimo:
 
 ## Reglas para "no mezclar" responsabilidades
 1. Nivel 1: la logica pesada de interpretacion + persistencia se implementa en `ConsultaProcesamientoService` y se basa en `ConsultasConfiguracion`.
-2. Nivel 2: la logica conversacional de intents y el armado de formulario precargado se implementa en handlers (ej: `TurnosHandler`) y/o orquestadores de CRUD guiado (ej: `CrudController::actionProcesarConsulta` / `UniversalQueryAgent`).
+2. Nivel 2: la logica conversacional de intents y el armado de formulario precargado se implementa en handlers (ej: `TurnosHandler`) y en el endpoint UI JSON (`/api/v1/ui/...`) usando `UiDefinitionTemplateManager`.
 3. El unmapped se guarda en `ai_unmapped_data`, pero el origen (que parte no mapea) se detecta en:
    - Nivel 1: en el mapper de `guardarDatosCategoria` / `mapearDatosAModelo`.
    - Nivel 2: en el parser que arma params del intent y/o en el armado del formulario precargado (segun que "resto" no se convierte en campos esperados).

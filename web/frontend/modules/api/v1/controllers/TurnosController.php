@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
+use yii\web\ServerErrorHttpException;
 use common\models\Consulta;
 use common\models\Turno;
 use common\models\Agenda_rrhh;
@@ -14,14 +15,17 @@ use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
+use common\components\UiDefinitionTemplateManager;
+use common\components\UiScreenService;
 use common\components\Services\Turnos\TurnoSlotFinder;
 use common\components\Services\Turnos\TurnoSlotOfferService;
+use common\components\Services\Turnos\TurnoPersistService;
+use common\components\Services\Turnos\TurnoCreacionContext;
 use common\components\Services\Turnos\TurnoLifecycleService;
 use common\components\Services\Turnos\TurnoConfirmationService;
 use common\components\Services\Turnos\PolicyModeradaException;
 use common\components\Services\Turnos\BulkCancelDayService;
 use common\components\Services\Turnos\SobreturnoService;
-use common\models\EfectorTurnosConfig;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 /**
@@ -37,6 +41,35 @@ class TurnosController extends BaseController
     }
 
     /**
+     * UI JSON (screen) + submit unificado para autogestión.
+     *
+     * GET  /api/v1/ui/turnos/crear-como-paciente => descriptor UI JSON
+     * POST /api/v1/ui/turnos/crear-como-paciente => submit; si falla devuelve UI + errors
+     *
+     * @action_name Reservar turno
+     * @entity Turnos
+     * @tags turnos, paciente, reserva, cita, autogestión
+     * @keywords reservar turno, agendar cita, sacar turno, pedir turno
+     */
+    public function actionCrearComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'crear-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post): array {
+                $model = new Turno();
+                $model->load($post, '');
+                $model->id_persona = (int) Yii::$app->user->getIdPersona();
+
+                return $this->ejecutarCreacionTurno($model);
+            }
+        );
+    }
+
+    /**
      * Turnos donde el usuario es paciente. GET /api/v1/turnos/listar-como-paciente (fecha_desde, fecha_hasta opcionales).
      *
      * @action_name Mis turnos y citas (paciente)
@@ -46,52 +79,18 @@ class TurnosController extends BaseController
      */
     public function actionListarComoPaciente()
     {
-        $idPersona = Yii::$app->user->getIdPersona();
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'listar-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($req): array {
+                $params = array_merge($req->get(), $post);
 
-        $request = Yii::$app->request;
-        $fechaDesde = $request->get('fecha_desde', date('Y-m-d'));
-        $fechaHasta = $request->get('fecha_hasta', date('Y-m-d', strtotime('+3 months')));
-
-        $turnos = Turno::find()
-            ->where(['id_persona' => $idPersona])
-            ->andWhere(['>=', 'fecha', $fechaDesde])
-            ->andWhere(['<=', 'fecha', $fechaHasta])
-            ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
-            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
-            ->all();
-
-        $formattedTurnos = [];
-        foreach ($turnos as $turno) {
-            $servicio = $turno->servicio ? $turno->servicio->nombre :
-                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
-            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
-            $profesional = $turno->rrhh && $turno->rrhh->persona
-                ? $turno->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
-                : null;
-            $formattedTurnos[] = [
-                'id' => $turno->id_turnos,
-                'id_persona' => $turno->id_persona,
-                'fecha' => $turno->fecha,
-                'hora' => $turno->hora,
-                'servicio' => $servicio,
-                'id_servicio_asignado' => $turno->id_servicio_asignado,
-                'estado' => $turno->estado,
-                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
-                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
-                'id_consulta' => $consulta ? $consulta->id_consulta : null,
-                'profesional' => $profesional,
-                'created_at' => $turno->created_at,
-            ];
-        }
-
-        return [
-            'success' => true,
-            'message' => 'OK',
-            'data' => [
-                'turnos' => $formattedTurnos,
-                'total' => count($formattedTurnos),
-            ],
-        ];
+                return ['data' => $this->listarComoPacienteData($params)];
+            }
+        );
     }
 
     /**
@@ -125,60 +124,23 @@ class TurnosController extends BaseController
     /**
      * Detalle de un turno por id. GET /api/v1/turnos/{id}. RBAC: /api/turnos/ver-turno
      */
-    public function actionVerTurno($id)
+    public function actionVerTurno($id = null)
     {
-        $turno = Turno::findOne($id);
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
-        $paciente = $turno->persona;
-        $servicio = $turno->servicio ? $turno->servicio->nombre :
-            ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
-        return [
-            'id' => $turno->id_turnos,
-            'id_persona' => $turno->id_persona,
-            'paciente' => [
-                'id' => $paciente ? $paciente->id_persona : null,
-                'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
-                'documento' => $paciente ? $paciente->documento : null,
-                'fecha_nacimiento' => $paciente ? $paciente->fecha_nacimiento : null,
-                'edad' => $paciente ? $paciente->edad : null,
-            ],
-            'fecha' => $turno->fecha,
-            'hora' => $turno->hora,
-            'servicio' => $servicio,
-            'id_servicio_asignado' => $turno->id_servicio_asignado,
-            'id_rrhh_servicio_asignado' => $turno->id_rrhh_servicio_asignado,
-            'estado' => $turno->estado,
-            'estado_label' => $turno->estado ? (Turno::ESTADOS[$turno->estado] ?? 'Sin estado') : 'Sin estado',
-            'estado_motivo' => $turno->estado_motivo,
-            'atendido' => $turno->atendido,
-            'id_efector' => $turno->id_efector,
-            'parent_class' => $turno->parent_class,
-            'parent_id' => $turno->parent_id,
-            'created_at' => $turno->created_at,
-            'updated_at' => $turno->updated_at,
-        ];
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'ver-turno',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+
+                return ['data' => $this->buildVerTurnoPayload($tid)];
+            }
+        );
     }
 
-    /**
-     * Alta de turno en autogestión (“como paciente”): el beneficiario es siempre la persona del usuario autenticado.
-     *
-     * @action_name Reservar turno
-     * @entity Turnos
-     * @tags turnos, paciente, reserva, cita, autogestión
-     * @keywords reservar turno, agendar cita, sacar turno, pedir turno
-     * HTTP: POST /api/v1/turnos. RBAC: /api/turnos/crear-como-paciente. Ignora id_persona en el cuerpo.
-     */
-    public function actionCrearComoPaciente()
-    {
-        $request = Yii::$app->request;
-        $model = new Turno();
-        $model->load($request->post(), '');
-        $model->id_persona = (int) Yii::$app->user->getIdPersona();
-
-        return $this->persistTurnoCreacion($model);
-    }
+    // (actionCrearComoPaciente unificado como screen UI JSON + submit; ver arriba)
 
     /**
      * Alta de turno en gestión operativa: el beneficiario es el paciente indicado en el cuerpo (id_persona obligatorio).
@@ -187,159 +149,77 @@ class TurnosController extends BaseController
      */
     public function actionCrearParaPaciente()
     {
-        $request = Yii::$app->request;
-        $model = new Turno();
-        $model->load($request->post(), '');
-        if (!$model->id_persona) {
-            throw new BadRequestHttpException('El campo id_persona es obligatorio');
-        }
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'crear-para-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post): array {
+                $model = new Turno();
+                $model->load($post, '');
 
-        return $this->persistTurnoCreacion($model);
+                return $this->ejecutarCreacionTurno($model);
+            }
+        );
     }
 
     /**
-     * Persistencia y reglas comunes tras armar el modelo (id_persona ya resuelto).
+     * Delega en {@see TurnoPersistService}; traduce excepciones de dominio a HTTP.
+     *
      * @return array{id: int, fecha: mixed, hora: mixed, id_consulta: int|null}
      */
-    protected function persistTurnoCreacion(Turno $model): array
+    protected function ejecutarCreacionTurno(Turno $model): array
     {
-        if (empty($model->tipo_atencion)) {
-            $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
-        }
-        if ($model->tipo_atencion === Turno::TIPO_ATENCION_TELECONSULTA) {
-            $idRrhhServicio = $model->id_rrhh_servicio_asignado;
-            if (!$idRrhhServicio && $model->id_rr_hh && $model->id_servicio_asignado) {
-                $rs = \common\models\RrhhServicio::find()
-                    ->andWhere(['id_rr_hh' => $model->id_rr_hh, 'id_servicio' => $model->id_servicio_asignado])
-                    ->select('id')->one();
-                $idRrhhServicio = $rs ? $rs->id : null;
-            }
-            if ($idRrhhServicio) {
-                $aceptaOnline = Agenda_rrhh::find()
-                    ->andWhere(['id_rrhh_servicio_asignado' => $idRrhhServicio])
-                    ->andWhere(['acepta_consultas_online' => true])
-                    ->exists();
-                if (!$aceptaOnline) {
-                    throw new BadRequestHttpException('El profesional seleccionado no acepta consultas por chat. Elegí atención presencial u otro profesional.');
-                }
-            } elseif ($model->id_rrhh_servicio_asignado || $model->id_rr_hh) {
-                throw new BadRequestHttpException('No se encontró la agenda del profesional para el servicio.');
-            }
-        }
-        if (!$model->id_efector) {
-            $model->id_efector = Yii::$app->user->getIdEfector();
-        }
-        if (!$model->id_efector) {
-            throw new BadRequestHttpException('No se pudo determinar el efector');
-        }
-        $authPersona = Yii::$app->user->getIdPersona();
-        if ($authPersona && (int) $model->id_persona === (int) $authPersona) {
-            $pol = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
-            if ($pol->autogestionBloqueada((int) $model->id_persona, (int) $model->id_efector)) {
-                throw new ConflictHttpException('Reserva por app no disponible por política de cancelaciones: acercate al efector o llamá.');
-            }
-        }
-        if (!$model->id_rr_hh) {
-            $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
-        }
-        if ($model->id_servicio_asignado && $model->id_persona && $model->id_efector) {
-            $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
-                $model->id_persona,
-                $model->id_efector,
-                $model->id_servicio_asignado,
-                ConsultaDerivaciones::ESTADO_EN_ESPERA
-            );
-            if (count($cps) > 0) {
-                foreach ($cps as $cp) {
-                    $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
-                    $cp->save();
-                    $parent_id = $cp->id;
-                }
-                $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
-                $model->parent_id = $parent_id;
-            }
-        }
-        if (!$model->id_servicio_asignado) {
-            throw new BadRequestHttpException('El campo id_servicio_asignado es obligatorio');
-        }
-        $servicioEfector = ServiciosEfector::find()
-            ->where(['id_servicio' => $model->id_servicio_asignado])
-            ->andWhere(['id_efector' => $model->id_efector])
-            ->one();
-        if ($servicioEfector) {
-            if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
-                $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
-            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
-                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
-                if ($model->id_rrhh_servicio_asignado) {
-                    $agenda = Agenda_rrhh::find()
-                        ->andWhere(['id_rrhh_servicio_asignado' => $model->id_rrhh_servicio_asignado])
-                        ->one();
-                    if ($agenda) {
-                        $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgados($model->id_rrhh_servicio_asignado, $model->fecha);
-                        if ($agenda->cupo_pacientes != 0 && $agenda->cupo_pacientes <= $cantTurnosOtorgados) {
-                            throw new BadRequestHttpException('Ya se otorgaron todos los turnos correspondientes al límite establecido');
-                        }
-                    }
-                }
-            }
-        }
-        if (!$model->save()) {
-            throw new BadRequestHttpException(implode(', ', $model->getErrorSummary(true)));
-        }
-        $idConsulta = null;
-        $consulta = Consulta::createFromTurno($model);
-        if ($consulta) {
-            $idConsulta = (int)$consulta->id_consulta;
-        }
         try {
-            (new TurnoLifecycleService())->afterTurnoCreado($model);
-        } catch (\Throwable $e) {
-            Yii::warning('afterTurnoCreado: ' . $e->getMessage(), 'api-turnos');
+            return (new TurnoPersistService())->crear($model, TurnoCreacionContext::fromCurrentUser());
+        } catch (PolicyModeradaException $e) {
+            throw new ConflictHttpException($e->getMessage());
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
         }
-        return [
-            'id' => $model->id_turnos,
-            'fecha' => $model->fecha,
-            'hora' => $model->hora,
-            'id_consulta' => $idConsulta,
-        ];
     }
 
     /**
      * Actualizar turno existente. PUT/PATCH /api/v1/turnos/{id}. RBAC: /api/turnos/actualizar-turno
      */
-    public function actionActualizarTurno($id)
+    public function actionActualizarTurno($id = null)
     {
-        $turno = Turno::findOne($id);
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
-        $oldTipo = $turno->tipo_atencion;
-        $turno->load(Yii::$app->request->post(), '');
-        if ($turno->tipo_atencion !== $oldTipo && $turno->tipo_atencion === Turno::TIPO_ATENCION_TELECONSULTA) {
-            $cfg = EfectorTurnosConfig::getOrCreateForEfector((int) $turno->id_efector);
-            if (!$cfg->permitir_cambio_modalidad) {
-                throw new BadRequestHttpException('Cambio de modalidad no permitido en este efector');
-            }
-            $idRrhhServicio = $turno->id_rrhh_servicio_asignado;
-            if ($idRrhhServicio) {
-                $aceptaOnline = Agenda_rrhh::find()
-                    ->andWhere(['id_rrhh_servicio_asignado' => $idRrhhServicio])
-                    ->andWhere(['acepta_consultas_online' => true])
-                    ->exists();
-                if (!$aceptaOnline) {
-                    throw new BadRequestHttpException('El profesional no acepta teleconsulta para esta agenda');
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'actualizar-turno',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
                 }
+                $turno = Turno::findOne($tid);
+                if (!$turno) {
+                    throw new NotFoundHttpException('Turno no encontrado');
+                }
+                $oldTipo = $turno->tipo_atencion;
+                $turno->load($post, '');
+                try {
+                    (new TurnoPersistService())->validateUpdateTeleconsultaTransition($turno, $oldTipo);
+                } catch (\InvalidArgumentException $e) {
+                    throw new BadRequestHttpException($e->getMessage());
+                }
+                if (!$turno->save()) {
+                    throw new BadRequestHttpException(implode(', ', $turno->getErrorSummary(true)));
+                }
+
+                return [
+                    'data' => [
+                        'id' => $turno->id_turnos,
+                        'estado' => $turno->estado,
+                        'tipo_atencion' => $turno->tipo_atencion,
+                    ],
+                ];
             }
-        }
-        if (!$turno->save()) {
-            throw new BadRequestHttpException(implode(', ', $turno->getFirstErrors()));
-        }
-        return [
-            'id' => $turno->id_turnos,
-            'estado' => $turno->estado,
-            'tipo_atencion' => $turno->tipo_atencion,
-        ];
+        );
     }
 
     /**
@@ -348,47 +228,51 @@ class TurnosController extends BaseController
      */
     public function actionPoliticaComoPaciente()
     {
-        $idEfector = Yii::$app->user->getIdEfector();
-        if (!$idEfector) {
-            throw new BadRequestHttpException('No se pudo determinar el efector; configure sesión operativa (sesion-operativa/establecer).');
-        }
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        $svc = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
-        return array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, $idEfector));
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'politica-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($req): array {
+                $idEfector = $post['id_efector'] ?? $req->get('id_efector');
+                if ($idEfector === null || $idEfector === '') {
+                    $idEfector = Yii::$app->user->getIdEfector();
+                }
+                if (!$idEfector) {
+                    throw new BadRequestHttpException(
+                        'Indicá id_efector en el formulario o establecé sesión operativa (sesion-operativa/establecer).'
+                    );
+                }
+                $idPersona = (int) Yii::$app->user->getIdPersona();
+                $svc = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
+
+                return ['data' => array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, (int) $idEfector))];
+            }
+        );
     }
 
     /**
      * Cancelar turno propio (autogestión). POST …/turnos/{id}/cancelar. Body: estado_motivo, canal.
      * RBAC: /api/turnos/cancelar-como-paciente
      */
-    public function actionCancelarComoPaciente($id)
+    public function actionCancelarComoPaciente($id = null)
     {
-        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
-        $idPersona = Yii::$app->user->getIdPersona();
-        if ((int) $turno->id_persona !== (int) $idPersona) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
         $req = Yii::$app->request;
-        $motivo = $req->post('estado_motivo', Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE);
-        $canal = $req->post('canal', 'app');
-        if (!in_array($motivo, [Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE, Turno::ESTADO_MOTIVO_CANCELADO_MEDICO], true)) {
-            $motivo = Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE;
-        }
-        $life = new TurnoLifecycleService();
-        try {
-            $life->cancelar($turno, $motivo, $canal, Yii::$app->user->id ?? null);
-        } catch (PolicyModeradaException $e) {
-            Yii::$app->response->statusCode = 409;
-            return [
-                'success' => false,
-                'code' => 'CANCEL_POLICY_MODERADA',
-                'message' => $e->getMessage(),
-            ];
-        }
-        return ['success' => true, 'message' => 'Turno cancelado'];
+        return UiScreenService::handleScreen(
+            'turnos',
+            'cancelar-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+
+                return ['data' => $this->cancelarComoPacienteCore($tid, $post)];
+            }
+        );
     }
 
     /**
@@ -396,168 +280,148 @@ class TurnosController extends BaseController
      * Body: estado_motivo (opcional), canal (opcional).
      * RBAC: /api/turnos/cancelar-operativo
      */
-    public function actionCancelarOperativo($id)
+    public function actionCancelarOperativo($id = null)
     {
-        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
-        $idEfector = Yii::$app->user->getIdEfector();
-        if ($idEfector && (int) $turno->id_efector !== (int) $idEfector) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
-
         $req = Yii::$app->request;
-        $motivo = $req->post('estado_motivo');
-        if ($motivo === null) {
-            $motivo = $req->post('Turno')['estado_motivo'] ?? null;
-        }
-        if (!$motivo) {
-            $motivo = Turno::ESTADO_MOTIVO_CANCELADO_MEDICO;
-        }
-        $canal = $req->post('canal', 'web');
+        return UiScreenService::handleScreen(
+            'turnos',
+            'cancelar-operativo',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+                $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+                if (!$turno) {
+                    throw new NotFoundHttpException('Turno no encontrado');
+                }
+                $idEfector = Yii::$app->user->getIdEfector();
+                if ($idEfector && (int) $turno->id_efector !== (int) $idEfector) {
+                    throw new ForbiddenHttpException('No autorizado');
+                }
+                $motivo = $post['estado_motivo'] ?? Turno::ESTADO_MOTIVO_CANCELADO_MEDICO;
+                if (!$motivo) {
+                    $motivo = Turno::ESTADO_MOTIVO_CANCELADO_MEDICO;
+                }
+                $canal = $post['canal'] ?? 'web';
+                (new TurnoLifecycleService())->cancelar(
+                    $turno,
+                    (string) $motivo,
+                    (string) $canal,
+                    Yii::$app->user->id ?? null
+                );
 
-        (new TurnoLifecycleService())->cancelar($turno, (string) $motivo, (string) $canal, Yii::$app->user->id ?? null);
-        return ['success' => true, 'message' => 'Turno cancelado'];
+                return ['data' => ['success' => true, 'message' => 'Turno cancelado']];
+            }
+        );
     }
 
     /**
      * Slots alternativos para reprogramar turno propio. GET …/turnos/{id}/slots-alternativos.
      * RBAC: /api/turnos/slots-alternativos-como-paciente
      */
-    public function actionSlotsAlternativosComoPaciente($id)
+    public function actionSlotsAlternativosComoPaciente($id = null)
     {
-        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
-        $idPersona = Yii::$app->user->getIdPersona();
-        if ((int) $turno->id_persona !== (int) $idPersona) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
         $req = Yii::$app->request;
-        $limit = (int) $req->get('limit', 15);
-        $mismoProf = $req->get('mismo_profesional', '1') === '1' || $req->get('mismo_profesional') === true;
-        $criteria = [
-            'id_servicio' => (int) $turno->id_servicio_asignado,
-            'id_efector' => (int) $turno->id_efector,
-            'fecha_desde' => date('Y-m-d'),
-            'max_dias' => (int) $req->get('max_dias', 45),
-        ];
-        if ($mismoProf && (int) $turno->id_rrhh_servicio_asignado > 0) {
-            $criteria['id_rrhh_servicio_asignado'] = (int) $turno->id_rrhh_servicio_asignado;
-        }
-        $slots = TurnoSlotFinder::findAvailableSlots($criteria, max(1, $limit));
-        return ['success' => true, 'slots' => $slots];
+        return UiScreenService::handleScreen(
+            'turnos',
+            'slots-alternativos-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+                $params = array_merge($req->get(), $post);
+
+                return ['data' => $this->buildSlotsAlternativosPayload($tid, $params)];
+            }
+        );
     }
 
     /**
      * Confirmar asistencia al turno propio. POST …/turnos/{id}/confirmar-asistencia (body token opcional).
      * RBAC: /api/turnos/confirmar-asistencia-como-paciente
      */
-    public function actionConfirmarAsistenciaComoPaciente($id)
+    public function actionConfirmarAsistenciaComoPaciente($id = null)
     {
-        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
-        $idPersona = Yii::$app->user->getIdPersona();
-        if ((int) $turno->id_persona !== (int) $idPersona) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
-        $token = Yii::$app->request->post('token');
-        if ($token && $turno->confirmacion_token && !hash_equals((string) $turno->confirmacion_token, (string) $token)) {
-            throw new BadRequestHttpException('Token inválido');
-        }
-        (new TurnoConfirmationService())->confirmarAsistencia($turno, Yii::$app->user->id ?? null);
-        return ['success' => true, 'message' => 'Asistencia confirmada'];
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'confirmar-asistencia-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+                $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+                if (!$turno) {
+                    throw new NotFoundHttpException('Turno no encontrado');
+                }
+                $idPersona = Yii::$app->user->getIdPersona();
+                if ((int) $turno->id_persona !== (int) $idPersona) {
+                    throw new ForbiddenHttpException('No autorizado');
+                }
+                $token = $post['token'] ?? null;
+                if ($token && $turno->confirmacion_token && !hash_equals((string) $turno->confirmacion_token, (string) $token)) {
+                    throw new BadRequestHttpException('Token inválido');
+                }
+                (new TurnoConfirmationService())->confirmarAsistencia($turno, Yii::$app->user->id ?? null);
+
+                return ['data' => ['success' => true, 'message' => 'Asistencia confirmada']];
+            }
+        );
     }
 
     /**
      * Reprogramar turno propio. POST …/turnos/{id}/reprogramar. RBAC: /api/turnos/reprogramar-como-paciente
      */
-    public function actionReprogramarComoPaciente($id)
+    public function actionReprogramarComoPaciente($id = null)
     {
-        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
-        $idPersona = Yii::$app->user->getIdPersona();
-        if ((int) $turno->id_persona !== (int) $idPersona) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
-        $policy = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
-        if ($policy->autogestionBloqueada($idPersona, (int) $turno->id_efector)) {
-            Yii::$app->response->statusCode = 409;
-            return [
-                'success' => false,
-                'code' => 'REPROGRAM_POLICY_MODERADA',
-                'message' => 'Reprogramación por app no disponible: acercate al efector o llamá.',
-            ];
-        }
         $req = Yii::$app->request;
-        $fecha = $req->post('fecha');
-        $hora = $req->post('hora');
-        $idRrsa = (int) $req->post('id_rrhh_servicio_asignado', $turno->id_rrhh_servicio_asignado);
-        if (!$fecha || !$hora) {
-            throw new BadRequestHttpException('fecha y hora requeridos');
-        }
-        if (Turno::estaOcupadoSlot($idRrsa, $fecha, $hora)) {
-            throw new BadRequestHttpException('El horario ya no está disponible');
-        }
-        $turno->fecha = $fecha;
-        $turno->hora = $hora;
-        $turno->id_rrhh_servicio_asignado = $idRrsa;
-        $rr = RrhhServicio::findOne($idRrsa);
-        if ($rr) {
-            $turno->id_rr_hh = $rr->id_rr_hh;
-        }
-        if (!$turno->save()) {
-            throw new BadRequestHttpException(implode(', ', $turno->getFirstErrors()));
-        }
-        \common\models\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
-        try {
-            $conf = new TurnoConfirmationService();
-            $conf->ensureConfirmacionToken($turno);
-            $conf->programarNotificaciones($turno);
-        } catch (\Throwable $e) {
-            Yii::warning('reprogramar notif: ' . $e->getMessage(), 'api-turnos');
-        }
-        return ['success' => true, 'id' => $turno->id_turnos, 'fecha' => $turno->fecha, 'hora' => $turno->hora];
+        return UiScreenService::handleScreen(
+            'turnos',
+            'reprogramar-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+
+                return ['data' => $this->reprogramarComoPacienteCore($tid, $post, true)];
+            }
+        );
     }
 
     /**
      * Marcar "no se presentó" en gestión operativa (staff). POST /api/v1/turnos/{id}/no-se-presento.
      * RBAC: /api/turnos/no-se-presento
      */
-    public function actionNoSePresento($id)
+    public function actionNoSePresento($id = null)
     {
-        $turno = Turno::findOne((int) $id);
-        if (!$turno) {
-            throw new NotFoundHttpException('Turno no encontrado');
-        }
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'no-se-presento',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+                $this->noSePresentoCore($tid);
 
-        $idRrhhServicio = Yii::$app->user->getIdRrhhServicio();
-        $idServicio = Yii::$app->user->getServicioActual();
-
-        if (
-            $idRrhhServicio
-            && (int) $turno->id_rrhh_servicio_asignado === (int) $idRrhhServicio
-        ) {
-            Turno::NoSePresento($turno->id_turnos);
-            return ['success' => true, 'message' => 'El paciente no se presentó'];
-        }
-
-        if (
-            (int) $turno->id_rrhh_servicio_asignado === 0
-            && $idServicio
-            && (int) $turno->id_servicio_asignado === (int) $idServicio
-        ) {
-            Turno::NoSePresento($turno->id_turnos);
-            return ['success' => true, 'message' => 'El paciente no se presentó'];
-        }
-
-        throw new ForbiddenHttpException('No autorizado');
+                return ['data' => ['success' => true, 'message' => 'El paciente no se presentó']];
+            }
+        );
     }
 
     /**
@@ -569,15 +433,25 @@ class TurnosController extends BaseController
         if (!\common\models\User::hasRole('AdminEfector')) {
             throw new ForbiddenHttpException('Solo administrador de efector');
         }
-        $fecha = Yii::$app->request->post('fecha');
-        if (!$fecha) {
-            throw new BadRequestHttpException('fecha requerida');
-        }
-        $idEfector = Yii::$app->user->getIdEfector();
-        $idRrhh = Yii::$app->request->post('id_rr_hh');
-        $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
-        $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id);
-        return ['success' => true, 'cancelados' => $n];
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'cancelar-dia-efector',
+            $req->get(),
+            $req->post(),
+            function (array $post): array {
+                $fecha = $post['fecha'] ?? null;
+                if (!$fecha) {
+                    throw new BadRequestHttpException('fecha requerida');
+                }
+                $idEfector = Yii::$app->user->getIdEfector();
+                $idRrhh = $post['id_rr_hh'] ?? null;
+                $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
+                $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id);
+
+                return ['data' => ['success' => true, 'cancelados' => $n]];
+            }
+        );
     }
 
     /**
@@ -588,75 +462,15 @@ class TurnosController extends BaseController
     public function actionCrearSobreturno()
     {
         $req = Yii::$app->request;
-
-        $model = new Turno();
-        $model->load($req->post(), '');
-
-        if (!$model->id_persona) {
-            throw new BadRequestHttpException('El campo id_persona es obligatorio');
-        }
-        if (!$model->id_efector) {
-            $model->id_efector = Yii::$app->user->getIdEfector();
-        }
-        if (!$model->id_efector) {
-            throw new BadRequestHttpException('No se pudo determinar el efector');
-        }
-        if (!$model->id_rr_hh) {
-            $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
-        }
-        if (!$model->id_servicio) {
-            $model->id_servicio = Yii::$app->user->getServicioActual();
-        }
-
-        if (!$model->id_servicio_asignado) {
-            throw new BadRequestHttpException('El campo id_servicio_asignado es obligatorio');
-        }
-        if (!$model->fecha || !$model->hora) {
-            throw new BadRequestHttpException('fecha y hora son obligatorios');
-        }
-
-        $model->es_sobreturno = true;
-
-        $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
-            $model->id_persona,
-            $model->id_efector,
-            $model->id_servicio_asignado,
-            ConsultaDerivaciones::ESTADO_EN_ESPERA
+        return UiScreenService::handleScreen(
+            'turnos',
+            'crear-sobreturno',
+            $req->get(),
+            $req->post(),
+            function (array $post): array {
+                return ['data' => $this->crearSobreturnoCore($post)];
+            }
         );
-        if (count($cps) > 0) {
-            foreach ($cps as $cp) {
-                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
-                $cp->save();
-                $parent_id = $cp->id;
-            }
-            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
-            $model->parent_id = $parent_id;
-        }
-
-        $servicioEfector = ServiciosEfector::find()
-            ->where(['id_servicio' => $model->id_servicio_asignado])
-            ->andWhere(['id_efector' => $model->id_efector])
-            ->one();
-        if ($servicioEfector) {
-            if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
-                $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
-            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
-                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
-                // Sobreturno: no se aplica límite de cupo (turno urgente).
-            }
-        }
-
-        if (!$model->save()) {
-            throw new BadRequestHttpException(implode(', ', $model->getFirstErrors()));
-        }
-        Consulta::createFromTurno($model);
-        try {
-            (new SobreturnoService())->notificarRetrasoPorSobreturno($model);
-            (new TurnoLifecycleService())->afterTurnoCreado($model);
-        } catch (\Throwable $e) {
-            Yii::warning('sobreturno post: ' . $e->getMessage(), 'api-turnos');
-        }
-        return ['success' => true, 'id_turno' => $model->id_turnos];
     }
 
     /**
@@ -757,22 +571,359 @@ class TurnosController extends BaseController
      */
     public function actionConsultarOcupacionDia()
     {
-        $request = Yii::$app->request;
-        $dia = $request->get('dia') ?: $request->post('dia') ?: date('Y-m-d');
-        $id_rrhh_servicio_asignado = (int)($request->get('id_rrhh_servicio_asignado') ?: $request->post('id_rrhh_servicio_asignado') ?: 0);
-        $id_servicio = $request->get('id_servicio') ?: $request->post('id_servicio');
-        $id_rr_hh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'consultar-ocupacion-dia',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($req): array {
+                $params = array_merge($req->get(), $post);
+
+                return ['data' => $this->buildConsultarOcupacionDiaPayload($params)];
+            }
+        );
+    }
+
+    /**
+     * @param int|string|null $routeId id desde regla REST
+     * @param array<string, mixed> $post
+     * @return int|null
+     */
+    protected function resolveTurnoId($routeId, array $post, $req = null)
+    {
+        if ($routeId !== null && $routeId !== '') {
+            return (int) $routeId;
+        }
+        if ($req === null) {
+            $req = Yii::$app->request;
+        }
+        $v = $post['id'] ?? $req->get('id');
+
+        return $v !== null && $v !== '' ? (int) $v : null;
+    }
+
+    /**
+     * @param array<string, mixed> $params query o post mezclados
+     * @return array{turnos: array<int, array<string, mixed>>, total: int}
+     */
+    protected function listarComoPacienteData(array $params): array
+    {
+        $idPersona = Yii::$app->user->getIdPersona();
+        $fechaDesde = isset($params['fecha_desde']) && $params['fecha_desde'] !== ''
+            ? $params['fecha_desde'] : date('Y-m-d');
+        $fechaHasta = isset($params['fecha_hasta']) && $params['fecha_hasta'] !== ''
+            ? $params['fecha_hasta'] : date('Y-m-d', strtotime('+3 months'));
+
+        $turnos = Turno::find()
+            ->where(['id_persona' => $idPersona])
+            ->andWhere(['>=', 'fecha', $fechaDesde])
+            ->andWhere(['<=', 'fecha', $fechaHasta])
+            ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
+            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
+            ->all();
+
+        $formattedTurnos = [];
+        foreach ($turnos as $turno) {
+            $servicio = $turno->servicio ? $turno->servicio->nombre :
+                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+            $profesional = $turno->rrhh && $turno->rrhh->persona
+                ? $turno->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                : null;
+            $formattedTurnos[] = [
+                'id' => $turno->id_turnos,
+                'id_persona' => $turno->id_persona,
+                'fecha' => $turno->fecha,
+                'hora' => $turno->hora,
+                'servicio' => $servicio,
+                'id_servicio_asignado' => $turno->id_servicio_asignado,
+                'estado' => $turno->estado,
+                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+                'id_consulta' => $consulta ? $consulta->id_consulta : null,
+                'profesional' => $profesional,
+                'created_at' => $turno->created_at,
+            ];
+        }
+
+        return [
+            'turnos' => $formattedTurnos,
+            'total' => count($formattedTurnos),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function buildVerTurnoPayload($id)
+    {
+        if (!$id) {
+            throw new BadRequestHttpException('id del turno requerido');
+        }
+        $turno = Turno::findOne($id);
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $paciente = $turno->persona;
+        $servicio = $turno->servicio ? $turno->servicio->nombre :
+            ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+        return [
+            'id' => $turno->id_turnos,
+            'id_persona' => $turno->id_persona,
+            'paciente' => [
+                'id' => $paciente ? $paciente->id_persona : null,
+                'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
+                'documento' => $paciente ? $paciente->documento : null,
+                'fecha_nacimiento' => $paciente ? $paciente->fecha_nacimiento : null,
+                'edad' => $paciente ? $paciente->edad : null,
+            ],
+            'fecha' => $turno->fecha,
+            'hora' => $turno->hora,
+            'servicio' => $servicio,
+            'id_servicio_asignado' => $turno->id_servicio_asignado,
+            'id_rrhh_servicio_asignado' => $turno->id_rrhh_servicio_asignado,
+            'estado' => $turno->estado,
+            'estado_label' => $turno->estado ? (Turno::ESTADOS[$turno->estado] ?? 'Sin estado') : 'Sin estado',
+            'estado_motivo' => $turno->estado_motivo,
+            'atendido' => $turno->atendido,
+            'id_efector' => $turno->id_efector,
+            'parent_class' => $turno->parent_class,
+            'parent_id' => $turno->parent_id,
+            'created_at' => $turno->created_at,
+            'updated_at' => $turno->updated_at,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array{success: bool, slots: mixed}
+     */
+    protected function buildSlotsAlternativosPayload($id, array $params)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idPersona = Yii::$app->user->getIdPersona();
+        if ((int) $turno->id_persona !== (int) $idPersona) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+        $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : 15;
+        $mismoRaw = $params['mismo_profesional'] ?? '1';
+        $mismoProf = $mismoRaw === '1' || $mismoRaw === 1 || $mismoRaw === true;
+        $criteria = [
+            'id_servicio' => (int) $turno->id_servicio_asignado,
+            'id_efector' => (int) $turno->id_efector,
+            'fecha_desde' => date('Y-m-d'),
+            'max_dias' => isset($params['max_dias']) && $params['max_dias'] !== '' ? (int) $params['max_dias'] : 45,
+        ];
+        if ($mismoProf && (int) $turno->id_rrhh_servicio_asignado > 0) {
+            $criteria['id_rrhh_servicio_asignado'] = (int) $turno->id_rrhh_servicio_asignado;
+        }
+        $slots = TurnoSlotFinder::findAvailableSlots($criteria, max(1, $limit));
+        return ['success' => true, 'slots' => $slots];
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    protected function cancelarComoPacienteCore($id, array $post)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idPersona = Yii::$app->user->getIdPersona();
+        if ((int) $turno->id_persona !== (int) $idPersona) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+        $motivo = $post['estado_motivo'] ?? Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE;
+        $canal = $post['canal'] ?? 'app';
+        if (!in_array($motivo, [Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE, Turno::ESTADO_MOTIVO_CANCELADO_MEDICO], true)) {
+            $motivo = Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE;
+        }
+        $life = new TurnoLifecycleService();
+        try {
+            $life->cancelar($turno, $motivo, $canal, Yii::$app->user->id ?? null);
+        } catch (PolicyModeradaException $e) {
+            throw $e;
+        }
+        return ['success' => true, 'message' => 'Turno cancelado'];
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    protected function reprogramarComoPacienteCore($id, array $post, $forUiSubmit = false)
+    {
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $idPersona = Yii::$app->user->getIdPersona();
+        if ((int) $turno->id_persona !== (int) $idPersona) {
+            throw new ForbiddenHttpException('No autorizado');
+        }
+        $policy = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
+        if ($policy->autogestionBloqueada($idPersona, (int) $turno->id_efector)) {
+            if ($forUiSubmit) {
+                throw new PolicyModeradaException('Reprogramación por app no disponible: acercate al efector o llamá.');
+            }
+            Yii::$app->response->statusCode = 409;
+            return [
+                'success' => false,
+                'code' => 'REPROGRAM_POLICY_MODERADA',
+                'message' => 'Reprogramación por app no disponible: acercate al efector o llamá.',
+            ];
+        }
+        $fecha = $post['fecha'] ?? null;
+        $hora = $post['hora'] ?? null;
+        $idRrsa = isset($post['id_rrhh_servicio_asignado']) && $post['id_rrhh_servicio_asignado'] !== ''
+            ? (int) $post['id_rrhh_servicio_asignado'] : (int) $turno->id_rrhh_servicio_asignado;
+        if (!$fecha || !$hora) {
+            throw new BadRequestHttpException('fecha y hora requeridos');
+        }
+        if (Turno::estaOcupadoSlot($idRrsa, $fecha, $hora)) {
+            throw new BadRequestHttpException('El horario ya no está disponible');
+        }
+        $turno->fecha = $fecha;
+        $turno->hora = $hora;
+        $turno->id_rrhh_servicio_asignado = $idRrsa;
+        $rr = RrhhServicio::findOne($idRrsa);
+        if ($rr) {
+            $turno->id_rr_hh = $rr->id_rr_hh;
+        }
+        if (!$turno->save()) {
+            throw new BadRequestHttpException(implode(', ', $turno->getErrorSummary(true)));
+        }
+        \common\models\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
+        try {
+            $conf = new TurnoConfirmationService();
+            $conf->ensureConfirmacionToken($turno);
+            $conf->programarNotificaciones($turno);
+        } catch (\Throwable $e) {
+            Yii::warning('reprogramar notif: ' . $e->getMessage(), 'api-turnos');
+        }
+        return ['success' => true, 'id' => $turno->id_turnos, 'fecha' => $turno->fecha, 'hora' => $turno->hora];
+    }
+
+    protected function noSePresentoCore($id)
+    {
+        $turno = Turno::findOne((int) $id);
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+
+        $idRrhhServicio = Yii::$app->user->getIdRrhhServicio();
+        $idServicio = Yii::$app->user->getServicioActual();
+
+        if (
+            $idRrhhServicio
+            && (int) $turno->id_rrhh_servicio_asignado === (int) $idRrhhServicio
+        ) {
+            Turno::NoSePresento($turno->id_turnos);
+            return;
+        }
+
+        if (
+            (int) $turno->id_rrhh_servicio_asignado === 0
+            && $idServicio
+            && (int) $turno->id_servicio_asignado === (int) $idServicio
+        ) {
+            Turno::NoSePresento($turno->id_turnos);
+            return;
+        }
+
+        throw new ForbiddenHttpException('No autorizado');
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    protected function crearSobreturnoCore(array $post)
+    {
+        $model = new Turno();
+        $model->load($post, '');
+
+        if (!$model->id_efector) {
+            $model->id_efector = Yii::$app->user->getIdEfector();
+        }
+        if (!$model->id_rr_hh) {
+            $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        }
+        if (!$model->id_servicio) {
+            $model->id_servicio = Yii::$app->user->getServicioActual();
+        }
+
+        $model->es_sobreturno = true;
+
+        $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
+            $model->id_persona,
+            $model->id_efector,
+            $model->id_servicio_asignado,
+            ConsultaDerivaciones::ESTADO_EN_ESPERA
+        );
+        if (count($cps) > 0) {
+            $parent_id = null;
+            foreach ($cps as $cp) {
+                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
+                $cp->save();
+                $parent_id = $cp->id;
+            }
+            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+            $model->parent_id = $parent_id;
+        }
+
+        $servicioEfector = ServiciosEfector::find()
+            ->where(['id_servicio' => $model->id_servicio_asignado])
+            ->andWhere(['id_efector' => $model->id_efector])
+            ->one();
+        if ($servicioEfector) {
+            if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
+                $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
+            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
+                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
+            }
+        }
+
+        if (!$model->save()) {
+            throw new BadRequestHttpException(implode(', ', $model->getErrorSummary(true)));
+        }
+        Consulta::createFromTurno($model);
+        try {
+            (new SobreturnoService())->notificarRetrasoPorSobreturno($model);
+            (new TurnoLifecycleService())->afterTurnoCreado($model);
+        } catch (\Throwable $e) {
+            Yii::warning('sobreturno post: ' . $e->getMessage(), 'api-turnos');
+        }
+        return ['success' => true, 'id_turno' => $model->id_turnos];
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    protected function buildConsultarOcupacionDiaPayload(array $params)
+    {
+        $dia = $params['dia'] ?? date('Y-m-d');
+        $id_rrhh_servicio_asignado = isset($params['id_rrhh_servicio_asignado']) ? (int) $params['id_rrhh_servicio_asignado'] : 0;
+        $id_servicio = $params['id_servicio'] ?? null;
+        $id_rr_hh = $params['id_rr_hh'] ?? null;
 
         if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio) {
             $resolved = RrhhServicio::obtenerIdRrhhServicio($id_rr_hh, $id_servicio);
             if ($resolved) {
-                $id_rrhh_servicio_asignado = (int)$resolved;
+                $id_rrhh_servicio_asignado = (int) $resolved;
             }
         }
 
         $id_efector = Yii::$app->user->getIdEfector();
 
-        $formatoSlots = ($request->get('formato') ?: $request->post('formato')) === 'slots';
+        $formatoSlots = isset($params['formato']) && $params['formato'] === 'slots';
 
         $turnosQuery = Turno::findActive();
         if ($id_rrhh_servicio_asignado) {

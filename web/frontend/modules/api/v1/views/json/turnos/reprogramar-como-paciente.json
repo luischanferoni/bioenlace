@@ -1,0 +1,39 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Reprogramar",
+      "fields": ["id", "fecha", "hora", "id_rrhh_servicio_asignado"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID turno",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "fecha",
+      "label": "Nueva fecha",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "hora",
+      "label": "Nueva hora",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "id_rrhh_servicio_asignado",
+      "label": "Agenda (opcional, default actual)",
+      "type": "text",
+      "required": false
+    }
+  ]
+}

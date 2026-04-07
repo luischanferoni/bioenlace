@@ -93,7 +93,7 @@ class UniversalQueryAgent
 
     /**
      * Descubrir acciones solo para rutas específicas
-     * @param array $targetRoutes Array de rutas objetivo (ej: ["/frontend/turnos/crear-mi-turno" => true])
+     * @param array $targetRoutes Array de rutas objetivo (ej: ["/frontend/turnos/crear-como-paciente" => true])
      * @param bool $useCache Usar cache si está disponible
      * @return array Array de acciones que coinciden con las rutas objetivo
      */

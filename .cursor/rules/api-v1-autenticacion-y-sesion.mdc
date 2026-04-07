@@ -11,8 +11,15 @@ alwaysApply: true
 - **Contexto operativo** (`idEfector`, `idRecursoHumano`, `nombreEfector`, `servicio_actual`, `id_rrhh_servicio`, `encounterClass`, `servicios`, etc.): se **valida al fijarlo** en `web/frontend/modules/api/v1/controllers/ConfigController.php`, acción `actionEstablecerSession()` (`POST /api/v1/config/set-session`): comprueba `encounter_class`, que el efector pertenezca a la persona (`getIdPersona()`), que el servicio corresponda al `rrhh`, y recién entonces llama a los `set*` de `web/frontend/components/BaseUserConfig.php` (lectura vía `getIdEfector()`, `getEncounterClass()`, …).
 - **Login web** que también hidrata sesión (misma idea de una sola capa): `web/frontend/components/ApiUser.php` (`afterLogin`).
 
+### Paciente / app móvil sin `set-session`
+
+- Un **paciente** autenticado (JWT + `idPersona`) puede **no** ejecutar nunca `set-session`: no hay efector/servicio/encounter “actual” en sesión.
+- **`getIdEfector()`, `getIdRecursoHumano()`, `getEncounterClass()`, etc. pueden estar vacíos** aunque el token sea válido; eso es normal, no un fallo de auth.
+- Los endpoints que necesitan efector u otro contexto operativo deben obtenerlo del **dominio** (body/query del pedido, recurso elegido en el flujo, etc.) o devolver **400** pidiendo ese dato — **no** asumir que la sesión lo trae.
+- El **staff** en un efector sí suele fijar contexto con `set-session`; ahí está bien usar `getIdEfector()` como valor por defecto cuando el body no lo envía.
+
 ## Qué hacer en controladores y servicios API
 
-- **Confiar** en `Yii::$app->user->getIdPersona()`, `getEfectores()`, `getIdEfector()`, `getEncounterClass()`, etc. **No** “reverificar la corrección” del valor ya garantizado arriba: no `Persona::findOne(['id_user' => …])` para rellenar identidad, no `if (getIdPersona() === 0)` / `if (!$idPersona)` como comprobación de login, no reconsultar BD solo para comprobar que la sesión “sigue siendo válida” para esos campos.
-- **Sí** está permitido comprobar **ausencia de un paso de flujo** (p. ej. el cliente no llamó a `set-session` y `getIdEfector()` está vacío): eso no es revalidar identidad, es exigir contexto operativo; responder 400 con mensaje claro.
+- **Confiar** en `Yii::$app->user->getIdPersona()`, `getEfectores()`, `getIdEfector()`, `getEncounterClass()`, etc. cuando el flujo del producto **garantiza** que ese contexto fue fijado (p. ej. pantalla de gestión tras `set-session`). **No** “reverificar la corrección” del valor ya garantizado arriba: no `Persona::findOne(['id_user' => …])` para rellenar identidad, no `if (getIdPersona() === 0)` / `if (!$idPersona)` como comprobación de login, no reconsultar BD solo para comprobar que la sesión “sigue siendo válida” para esos campos.
+- **Sí** está permitido comprobar **ausencia de un paso de flujo** (p. ej. hace falta `id_efector` y no viene en el request ni en sesión porque el usuario es paciente móvil): eso no es revalidar identidad; responder 400 con mensaje claro.
 - **Autorización de recurso** (dueño del turno, `Consulta`, etc.): usar los mismos criterios que la sesión ya fijó: p. ej. en chat de consulta / motivos, paciente si `consulta.id_persona === getIdPersona()`; profesional si `consulta.id_rr_hh === getIdRecursoHumano()` (contexto de `set-session`). No revalidar con `RrhhEfector::find()` solo para “comprobar” el vínculo.

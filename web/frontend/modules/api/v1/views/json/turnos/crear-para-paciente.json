@@ -1,0 +1,139 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Paciente",
+      "fields": ["id_persona"]
+    },
+    {
+      "step": 1,
+      "title": "Seleccionar Servicio y Efector",
+      "fields": ["id_servicio_asignado", "id_efector"]
+    },
+    {
+      "step": 2,
+      "title": "Seleccionar Profesional",
+      "fields": ["id_rr_hh"]
+    },
+    {
+      "step": 3,
+      "title": "Seleccionar turno disponible",
+      "fields": ["hora"]
+    },
+    {
+      "step": 4,
+      "title": "Tipo de atención",
+      "fields": ["tipo_atencion"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id_persona",
+      "label": "ID persona (paciente)",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "id_servicio_asignado",
+      "label": "Servicio",
+      "type": "select",
+      "required": true,
+      "options": "{{options}}",
+      "option_config": {
+        "source": "servicios",
+        "filter": "efector_servicios"
+      }
+    },
+    {
+      "name": "id_efector",
+      "label": "Efector",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/efectores/buscar",
+      "depends_on": "id_servicio_asignado",
+      "params": { "id_servicio": "id_servicio_asignado" },
+      "auto_load": true,
+      "option_config": {
+        "source": "efectores",
+        "filter": "user_efectores"
+      }
+    },
+    {
+      "name": "id_rr_hh",
+      "label": "Profesional",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/rrhh/autocomplete",
+      "depends_on": ["id_efector", "id_servicio_asignado"],
+      "params": {
+        "id_servicio": "id_servicio_asignado",
+        "id_efector": "id_efector"
+      },
+      "auto_load": true,
+      "option_config": {
+        "source": "rrhh",
+        "filter": "efector_rrhh"
+      }
+    },
+    {
+      "name": "fecha",
+      "type": "hidden",
+      "required": false,
+      "include_in_submit": true
+    },
+    {
+      "name": "hora",
+      "label": "Horarios disponibles",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/turnos/slots-disponibles-como-paciente",
+      "depends_on": ["id_rr_hh"],
+      "params": {
+        "id_servicio": "id_servicio_asignado",
+        "id_efector": "id_efector",
+        "id_rr_hh": "id_rr_hh"
+      },
+      "auto_load": true,
+      "show_search": false,
+      "filters": [
+        {
+          "id": "dia",
+          "label": "Día",
+          "type": "chips",
+          "default_first": true,
+          "source": { "from": "response", "path": "available_filters.dias" }
+        },
+        {
+          "id": "franja",
+          "label": "Franja",
+          "type": "chips",
+          "default_first": true,
+          "source": { "from": "response", "path": "available_filters.franjas" }
+        }
+      ],
+      "slot_selection": {
+        "separator": "|",
+        "parts": ["id_rrhh_servicio_asignado", "fecha", "hora"]
+      },
+      "option_config": {
+        "source": "slots_disponibles_paciente",
+        "filter": null
+      }
+    },
+    {
+      "name": "tipo_atencion",
+      "label": "Tipo de atención",
+      "type": "select",
+      "required": true,
+      "default": "presencial",
+      "options": [
+        { "value": "presencial", "label": "Presencial" },
+        { "value": "teleconsulta", "label": "Por chat / teleconsulta" }
+      ]
+    }
+  ]
+}

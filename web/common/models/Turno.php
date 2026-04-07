@@ -20,6 +20,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $confirmado
  * @property string $referenciado
  * @property integer $id_consulta_referencia
+ * @property int|null $id_efector
  * @property string $id_servicio
  * @property string $usuario_alta
  * @property string $fecha_alta
@@ -181,10 +182,10 @@ class Turno extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_persona', 'hora', 'fecha'], 'required'],
+            [['id_persona', 'hora', 'fecha', 'id_efector', 'id_servicio_asignado'], 'required'],
             [['id_rrhh_servicio_asignado'], 'required', 'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH],
             [['id_servicio_asignado'], 'required', 'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS],
-            [['id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_rrhh_servicio_asignado', 'programado'], 'integer'],
+            [['id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_rrhh_servicio_asignado', 'id_efector', 'programado'], 'integer'],
             // no deja crear un turno para la misma persona para el mismo recurso en el mismo dia
             [
                 ['fecha', 'id_persona', 'id_rrhh_servicio_asignado'], 'unique',

@@ -1,0 +1,42 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Horarios alternativos",
+      "fields": ["id", "limit", "max_dias", "mismo_profesional"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID turno a reprogramar",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "limit",
+      "label": "Cantidad máxima de opciones",
+      "type": "text",
+      "required": false,
+      "default": "15"
+    },
+    {
+      "name": "max_dias",
+      "label": "Días hacia adelante",
+      "type": "text",
+      "required": false,
+      "default": "45"
+    },
+    {
+      "name": "mismo_profesional",
+      "label": "Mismo profesional (1 o 0)",
+      "type": "text",
+      "required": false,
+      "default": "1"
+    }
+  ]
+}

@@ -64,7 +64,7 @@ class ActionParameterAnalyzer
                 return $params;
             }
             
-            // Convertir nombre de acción de kebab-case (crear-mi-turno) a camelCase (crearMiTurno)
+            // Convertir nombre de acción de kebab-case (crear-como-paciente) a camelCase (crearComoPaciente)
             $actionName = $action['action'];
             $actionCamelCase = Inflector::id2camel($actionName, '-');
             $methodName = 'action' . $actionCamelCase;

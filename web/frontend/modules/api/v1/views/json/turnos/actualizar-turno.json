@@ -1,0 +1,61 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Actualizar turno",
+      "fields": ["id", "estado", "tipo_atencion", "fecha", "hora", "id_rrhh_servicio_asignado", "atendido"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "label": "ID turno",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "estado",
+      "label": "Estado",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "tipo_atencion",
+      "label": "Tipo de atención",
+      "type": "select",
+      "required": false,
+      "options": [
+        { "value": "presencial", "label": "Presencial" },
+        { "value": "teleconsulta", "label": "Teleconsulta" }
+      ]
+    },
+    {
+      "name": "fecha",
+      "label": "Fecha",
+      "type": "date",
+      "required": false
+    },
+    {
+      "name": "hora",
+      "label": "Hora",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "id_rrhh_servicio_asignado",
+      "label": "Agenda (rrhh servicio)",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "atendido",
+      "label": "Atendido",
+      "type": "text",
+      "required": false
+    }
+  ]
+}

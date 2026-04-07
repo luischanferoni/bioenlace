@@ -1,5 +1,4 @@
-﻿<?php
-
+<?php 
 namespace frontend\controllers;
 
 use Yii;
@@ -43,7 +42,7 @@ class AtencionesEnfermeriaController extends Controller
      * @return mixed
 */
 
-public function actionView($id)
+    public function actionView($id)
     {
         return $this->renderAjax('/consulta-atenciones-enfermeria/view', [
             'model' => \common\models\Persona::findOne($id),

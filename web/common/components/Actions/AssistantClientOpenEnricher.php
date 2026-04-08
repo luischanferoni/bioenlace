@@ -19,6 +19,11 @@ final class AssistantClientOpenEnricher
         // Si la acción ya trae client_open.kind (ej. nativas descubiertas por catálogo), respetarlo,
         // pero asegurarnos de que la estructura mínima exista.
         if (isset($action['client_open']) && is_array($action['client_open'])) {
+            $co = &$action['client_open'];
+            if (!isset($co['presentation']) || !is_string($co['presentation']) || $co['presentation'] === '') {
+                $kind = isset($co['kind']) ? (string) $co['kind'] : '';
+                $co['presentation'] = ($kind === 'native') ? 'inline' : 'fullscreen';
+            }
             return $action;
         }
 
@@ -27,6 +32,7 @@ final class AssistantClientOpenEnricher
         if ($route !== '' && preg_match('#^/api/v\\d+/ui/#', $route) === 1) {
             $action['client_open'] = [
                 'kind' => 'ui_json',
+                'presentation' => 'fullscreen',
                 'api' => [
                     'route' => $route,
                     'method' => 'GET|POST',

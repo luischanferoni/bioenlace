@@ -188,7 +188,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final web = co['web'];
 
     // UIs nativas (web+flutter) por screen_id: el móvil construye su propia pantalla.
-    if (kind == 'native_fragment' || kind == 'native_page') {
+    if (kind == 'native') {
       final screenId = (mobile is Map ? mobile['screen_id'] : null) ??
           co['screen_id'];
       if (screenId is! String || screenId.isEmpty) {

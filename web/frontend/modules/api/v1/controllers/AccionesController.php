@@ -19,14 +19,9 @@ class AccionesController extends BaseController
      */
     public function actionComunes()
     {
+        // Autenticación: se valida en la capa de auth del módulo API (filters/behaviors).
+        // Los controllers asumen usuario autenticado; no re-chequear aquí.
         $userId = (int) Yii::$app->user->id;
-        if ($userId <= 0) {
-            return [
-                'success' => false,
-                'error' => 'No autenticado',
-                'actions' => [],
-            ];
-        }
 
         try {
             $limit = (int) Yii::$app->request->get('limit', CommonActionsService::DEFAULT_LIMIT);

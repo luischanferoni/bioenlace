@@ -28,10 +28,6 @@ final class IntentCatalogService
      */
     public static function getAvailableUiForUser(int $userId, bool $useCache = true): array
     {
-        if ($userId <= 0) {
-            return [];
-        }
-
         $actions = ActionMappingService::getAvailableActionsForUser($userId, $useCache);
         $byId = [];
         foreach ($actions as $a) {

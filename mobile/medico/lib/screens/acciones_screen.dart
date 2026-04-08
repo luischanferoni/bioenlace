@@ -181,7 +181,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
                                       final mobile = co['mobile'];
                                       final screenId = (mobile is Map ? mobile['screen_id'] : null) ??
                                           co['screen_id'];
-                                      if ((kind == 'native_fragment' || kind == 'native_page') &&
+                                      if (kind == 'native' &&
                                           screenId is String &&
                                           screenId.isNotEmpty) {
                                         NativeScreenRouter.open(

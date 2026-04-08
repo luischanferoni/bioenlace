@@ -25,7 +25,7 @@ El endpoint devuelve un payload **estructurado** en `data` con el resultado del 
         "description": "UI JSON (screen) + submit unificado para autogestión.",
         "route": "/api/v1/ui/turnos/crear-como-paciente",
         "parameters": { "expected": [], "provided": {} },
-        "client_open": { "kind": "ui_json", "api": { "route": "/api/v1/ui/turnos/crear-como-paciente", "method": "GET|POST" } },
+        "client_open": { "kind": "ui_json", "presentation": "fullscreen", "api": { "route": "/api/v1/ui/turnos/crear-como-paciente", "method": "GET|POST" } },
         "client_interaction": "ui_asistente_json"
       }
     ]
@@ -57,6 +57,7 @@ Los clientes deben soportar como mínimo este shape:
   "route": "/api/v1/ui/turnos/crear-como-paciente",
   "client_open": {
     "kind": "ui_json",
+    "presentation": "fullscreen",
     "api": { "route": "/api/v1/ui/turnos/crear-como-paciente", "method": "GET|POST" }
   }
 }
@@ -69,22 +70,28 @@ Los clientes deben soportar como mínimo este shape:
 
 #### `client_open.kind` (obligatorio)
 
-Valores soportados:
-
-- **`ui_json`**: abrir una UI dinámica (descriptor JSON) desde `/api/v1/ui/...`.
+- **`ui_json`**: UI dinámica (descriptor JSON) bajo `/api/v1/ui/...`.
   - `client_open.api.route` (string) requerido.
   - `client_open.api.method` (string) sugerido `GET|POST`.
 
-- **`native_fragment`**: abrir un **fragmento embebible** (componente nativo) dentro del shell SPA (expandable).
-  - `client_open.web.path` (string) requerido (endpoint que devuelve solo fragment markup, sin layout).
-  - `client_open.assets` opcional: `{ css: string[], js: string[] }` para que el shell cargue assets 1 vez.
-  - El HTML debe incluir un root `[data-native-component="<name>"]` y el JS debe exponer `window.BioenlaceNativeComponents[<name>].init(rootEl)`.
-  - En móvil, abrir por `client_open.mobile.screen_id` y renderizar pantalla Flutter equivalente.
+- **`native`**: HTML de una **UI nativa web sin layout Yii** (partial / componente), pensada para fetch + inyección en el shell SPA (no iframe).
+  - `client_open.web.path` (string) requerido: URL que devuelve **solo** el markup del componente.
+  - `client_open.assets` opcional: `{ css: string[], js: string[] }` para cargar assets una vez.
+  - El HTML debe incluir un root `[data-native-component="<name>"]` y el JS `window.BioenlaceNativeComponents[<name>].init(rootEl)`.
+  - En móvil: `client_open.mobile.screen_id` → pantalla Flutter equivalente (sin WebView).
 
-- **`native_page`**: abrir una página nativa (por ejemplo vista Yii completa) dentro del stack SPA (pantalla completa).
-  - `client_open.web.path` (string) requerido.
+#### `client_open.presentation` (obligatorio para `ui_json` y `native` vía asistente)
 
-#### Ejemplo `native_fragment` (Agenda embebible)
+Indica **cómo** abre el shell SPA el mismo contenido (el payload sigue siendo sin layout):
+
+- **`inline`**: panel expandido dentro de la card / área actual.
+- **`fullscreen`**: capa/stack que ocupa toda la ventana del shell (sigue siendo fetch del mismo partial o JSON; no es “página Yii con `<html>` completo”).
+
+Valores por defecto si falta el campo: `ui_json` → `fullscreen`; `native` → `inline`.
+
+**Navegación “con layout” de sitio (browser completo)** no forma parte de este contrato: enlaces normales o `@no_intent_catalog` según producto.
+
+#### Ejemplo `native` + `inline` (Agenda en card)
 
 ```json
 {
@@ -92,7 +99,8 @@ Valores soportados:
   "display_name": "Agenda laboral",
   "route": "/agenda",
   "client_open": {
-    "kind": "native_fragment",
+    "kind": "native",
+    "presentation": "inline",
     "web": { "path": "/agenda/embed" },
     "mobile": { "screen_id": "agenda.index" },
     "assets": {
@@ -103,14 +111,18 @@ Valores soportados:
 }
 ```
 
-### Cómo declarar `native_fragment` sin hardcode
+### Cómo declarar `native` en el catálogo (metadata en docblock)
 
-El catálogo de UIs nativas web se descubre desde `frontend/controllers/*Controller.php`. Para declarar que una acción tiene un embed (fragment) y sus assets, usar tags en el docblock del método:
+El catálogo se descubre desde `frontend/controllers/*Controller.php`. Tags:
 
-- `@native_embed_path /<controller>/embed`
+- `@native_ui_path /<ruta>` — endpoint que devuelve el partial (sin layout).
+- `@spa_presentation inline` o `@spa_presentation fullscreen`
 - `@native_assets_css /css/a.css,/css/b.css`
 - `@native_assets_js /js/a.js,/js/b.js`
-- `@mobile_screen_id <controller>.<action>` (opcional; default `<controller>.<action>`)
+- `@mobile_screen_id agenda.index` (opcional; default `<controller>.<action>` kebab-case como en catálogo)
+
+Sin `@native_ui_path`, la acción **no** recibe `client_open` desde el catálogo nativo (apertura vía asistente/SPA no definida; navegación browser aparte).
+
 - **`client_interaction`**: string opcional para telemetría/UX (ej. `ui_asistente_json`).
 
 ### Fuente de verdad y clases relevantes

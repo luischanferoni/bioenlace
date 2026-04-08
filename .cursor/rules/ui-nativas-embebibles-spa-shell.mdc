@@ -9,7 +9,7 @@ alwaysApply: false
 ## Principio (0 hardcode)
 
 - **Cero lógica particular por pantalla** (sin `if agenda.index`, sin regex por URL).
-- Variaciones deben venir de **metadata** (docblock/definición descubierta) y el cliente solo mapea `kind → loader`.
+- Variaciones deben venir de **metadata** (docblock/definición descubierta) y el cliente usa `kind` + `presentation` (sin heurísticas por URL).
 
 ## Markup en PHP vs JS (regla práctica)
 
@@ -28,21 +28,21 @@ alwaysApply: false
 
 ## Contrato backend → frontend (acciones del asistente)
 
-- El backend **siempre** debe enviar `action.client_open.kind` en cada acción sugerida.
-- El frontend **no** debe inferir comportamiento por URL/regex; solo mapea `kind → loader`.
+- El backend **siempre** debe enviar `action.client_open.kind` (y `presentation` cuando aplica).
+- El frontend **no** debe inferir modo de apertura por URL/regex.
 
-### `client_open.kind` soportados
+### `client_open.kind`
 
-- **`ui_json`**: UI dinámica JSON bajo `/api/v1/ui/...`.
-  - Usar `client_open.api.route` + `method`.
-- **`native_fragment`**: componente nativo embebible (expandable).
-  - `client_open.web.path`: endpoint que devuelve **solo fragment HTML** (sin layout).
-  - `client_open.assets` opcional: `{ css: string[], js: string[] }` para que el shell cargue assets **una sola vez**.
-- En **móvil**, el equivalente debe abrirse por `client_open.mobile.screen_id` y renderizarse como pantalla Flutter nativa.
-- **`native_page`**: página nativa (por ejemplo vista Yii completa) a cargar como pantalla completa dentro del stack SPA.
-  - `client_open.web.path`.
+- **`ui_json`**: descriptor bajo `/api/v1/ui/...` (`client_open.api.route` + `method`).
+- **`native`**: HTML **sin layout Yii** (partial) servido por `frontend/controllers`; el shell hace fetch e inyección (no iframe).
 
-## Reglas para componentes nativos embebibles (`native_fragment`)
+### `client_open.presentation`
+
+- **`inline`**: dentro de la card / área expandida.
+- **`fullscreen`**: stack del shell a pantalla completa; el **payload sigue siendo** JSON o partial sin layout.
+- En **móvil**, `client_open.mobile.screen_id` → pantalla Flutter nativa.
+
+## Reglas para UIs nativas (`kind: native`)
 
 - El endpoint debe renderizar un **partial** (no layout). Evitar `<head>`, `<body>`, `<script src>`, y assets duplicados.
 - El markup debe venir envuelto en un root:
@@ -56,18 +56,17 @@ alwaysApply: false
 
 ## Cómo declarar metadata (sin hardcode en catálogo)
 
-Para que el catálogo detecte `native_fragment` y sus assets, declarar en el docblock del método `actionIndex` (o el que corresponda) en `frontend/controllers/*Controller.php`:
+En el docblock de la acción catalogada (`frontend/controllers/*Controller.php`):
 
-- `@native_embed_path /<controller>/embed`
-- `@native_assets_css /css/a.css,/css/b.css`
-- `@native_assets_js /js/a.js,/js/b.js`
-- `@mobile_screen_id <controller>.<action>` (opcional; default `<controller>.<action>`)
+- `@native_ui_path /<ruta-partial>` (obligatorio para que el asistente genere `client_open`)
+- `@spa_presentation inline` o `fullscreen`
+- `@native_assets_css` / `@native_assets_js`
+- `@mobile_screen_id` (opcional)
 
-## Ejemplo (Agenda laboral embebible)
+## Ejemplo (Agenda laboral)
 
-- Acción:
-  - `client_open.kind="native_fragment"`
-  - `client_open.web.path="/agenda/embed"`
-  - `client_open.assets.css=["/css/scheduler.css"]`
-  - `client_open.assets.js=["/js/scheduler.js","/js/agenda-laboral.js"]`
+- `client_open.kind="native"`
+- `client_open.presentation="inline"`
+- `client_open.web.path="/agenda/embed"`
+- `client_open.assets`: scheduler + agenda-laboral
 

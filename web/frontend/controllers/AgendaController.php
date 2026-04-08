@@ -18,7 +18,8 @@ class AgendaController extends Controller
     /**
      * Agenda laboral (web nativa) + metadata para catálogo de intents.
      *
-     * @native_embed_path /agenda/embed
+     * @native_ui_path /agenda/embed
+     * @spa_presentation inline
      * @native_assets_css /css/scheduler.css
      * @native_assets_js /js/scheduler.js,/js/agenda-laboral.js
      * @mobile_screen_id agenda.index

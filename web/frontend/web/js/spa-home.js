@@ -21,6 +21,21 @@
         );
     }
 
+    /** URL absoluta para fetch desde el shell (misma regla que loadPageContent). */
+    function resolveSpaFetchUrl(url) {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            return url;
+        }
+        if (url.startsWith('/api/')) {
+            return window.location.origin + url;
+        }
+        if (url.startsWith('/')) {
+            return window.spaConfig.baseUrl + url;
+        }
+        return window.spaConfig.baseUrl + '/' + url;
+    }
+
     // Referencias a elementos DOM
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
@@ -995,6 +1010,23 @@
         return (action && action.client_open && action.client_open.kind) ? String(action.client_open.kind) : '';
     }
 
+    /**
+     * inline | fullscreen — cómo abre el shell SPA (ambos sin layout Yii en el fetch).
+     */
+    function getClientOpenPresentation(action) {
+        const co = action && action.client_open ? action.client_open : {};
+        if (co.presentation && typeof co.presentation === 'string' && co.presentation !== '') {
+            const p = String(co.presentation).toLowerCase();
+            if (p === 'inline' || p === 'fullscreen') {
+                return p;
+            }
+        }
+        const k = getClientOpenKind(action);
+        if (k === 'native') return 'inline';
+        if (k === 'ui_json') return 'fullscreen';
+        return 'fullscreen';
+    }
+
     function buildClientOpenUrl(action) {
         const co = action && action.client_open ? action.client_open : {};
         const kind = getClientOpenKind(action);
@@ -1004,7 +1036,7 @@
             return api.route || action.route || action.url || '';
         }
 
-        if (kind === 'native_fragment' || kind === 'native_page') {
+        if (kind === 'native') {
             if (co.web && typeof co.web.path === 'string' && co.web.path !== '') {
                 let url = co.web.path;
                 const q = co.web.query;
@@ -1094,12 +1126,18 @@
             const kind = getClientOpenKind(action);
             const url = buildClientOpenUrl(action);
             const assets = getClientOpenAssets(action);
-            const expandable = kind === 'native_fragment';
-            const fullPage = kind === 'ui_json' || kind === 'native_page';
-            
+            let presentation = 'inline';
+            let expandable = false;
+            let fullPage = false;
+            if (kind === 'native' || kind === 'ui_json') {
+                presentation = getClientOpenPresentation(action);
+                expandable = presentation === 'inline';
+                fullPage = presentation === 'fullscreen';
+            }
+ 
             html += `
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-action-url="${escapeHtml(url)}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
+                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-spa-presentation="${escapeHtml(presentation)}" data-action-url="${escapeHtml(url)}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
                         <div class="card-body">
                             <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(actionName)}</h6>
                             <p class="card-text text-muted small mb-0">${escapeHtml(actionDescription)}</p>
@@ -1125,7 +1163,7 @@
         const pageId = generatePageId(url);
         const cardTitle = title || 'Cargando...';
         navigateTo(pageId, cardTitle, '<p>Cargando...</p>', { url: url });
-        loadPageContent(url, pageId);
+        loadPageContent(url, pageId, 'html', null);
     }
 
     window.spaNavigateToUrl = spaNavigateToUrl;
@@ -1165,9 +1203,11 @@
                     // Abrir nueva página
                     const titleEl = this.querySelector('.card-title');
                     if (kind === 'ui_json') {
-                        openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', 'ui');
+                        openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', 'ui', assets);
+                    } else if (kind === 'native') {
+                        openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', 'native', assets);
                     } else {
-                        openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', 'native_page');
+                        openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', 'html', assets);
                     }
                 } else if (expandable) {
                     // Expandir in-place
@@ -1227,8 +1267,39 @@
             return;
         }
 
+        const fullUrl = resolveSpaFetchUrl(url);
+
+        if (kind === 'ui_json') {
+            fetch(fullUrl, {
+                method: 'GET',
+                headers: clientApiHeaders({
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al cargar UI JSON');
+                }
+                return response.json();
+            })
+            .then(json => {
+                container.innerHTML = '';
+                if (json && json.kind === 'ui_definition') {
+                    renderDynamicUi(json, container, { url: fullUrl });
+                } else {
+                    container.innerHTML = '<div class="alert alert-warning">La respuesta no es una definición de UI válida.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando UI JSON (inline):', error);
+                container.innerHTML = '<div class="alert alert-danger">Error al cargar la UI</div>';
+            });
+            return;
+        }
+
         ensureAssetsLoaded(assets).then(() => {
-            return fetch(url, {
+            return fetch(fullUrl, {
                 method: 'GET',
                 headers: clientApiHeaders({
                     'X-Requested-With': 'XMLHttpRequest'
@@ -1289,16 +1360,16 @@
     /**
      * Abrir página completa
      */
-    function openFullPage(url, title, type) {
+    function openFullPage(url, title, type, assets) {
         const pageId = generatePageId(url);
-        navigateTo(pageId, title, '<div class="d-flex align-items-center justify-content-center py-5"><div class="spinner-border text-primary"></div></div>', { url: url });
-        loadPageContent(url, pageId, type);
+        navigateTo(pageId, title, '<div class="d-flex align-items-center justify-content-center py-5"><div class="spinner-border text-primary"></div></div>', { url: url, assets: assets || null });
+        loadPageContent(url, pageId, type, assets || null);
     }
 
     /**
      * Cargar contenido de página vía AJAX
      */
-    function loadPageContent(url, pageId, type) {
+    function loadPageContent(url, pageId, type, assets) {
         if (!url) {
             const pageElement = document.getElementById(`spa-page-${pageId}`);
             if (pageElement) {
@@ -1310,24 +1381,7 @@
             return;
         }
 
-        // Construir URL completa si es relativa:
-        // - Si la URL ya es absoluta (http), usarla tal cual.
-        // - Si empieza con /api/, siempre usar window.location.origin para evitar duplicar /api
-        //   cuando la app se publica bajo /api (baseUrl = https://host/api).
-        // - Si es relativa y empieza con / (no API), concatenar con baseUrl.
-        // - Si es relativa sin /, concatenar con baseUrl + '/'.
-        let fullUrl;
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-            fullUrl = url;
-        } else if (url.startsWith('/api/')) {
-            fullUrl = window.location.origin + url;
-        } else if (url.startsWith('/')) {
-            // URL relativa que empieza con / - usar baseUrl + url
-            fullUrl = window.spaConfig.baseUrl + url;
-        } else {
-            // URL relativa sin / - usar baseUrl + / + url
-            fullUrl = window.spaConfig.baseUrl + '/' + url;
-        }
+        let fullUrl = resolveSpaFetchUrl(url);
 
         // Si es una UI dinámica (JSON), usar el renderizador de UI
         if (type === 'ui') {
@@ -1387,7 +1441,46 @@
             return;
         }
 
-        // Caso normal: cargar HTML tradicional
+        // Nativo SPA: HTML partial (sin layout), luego init de componentes.
+        if (type === 'native') {
+            ensureAssetsLoaded(assets).then(() => {
+                return fetch(fullUrl, {
+                    method: 'GET',
+                    headers: clientApiHeaders({
+                        'X-Requested-With': 'XMLHttpRequest'
+                    })
+                });
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                }
+                throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+            })
+            .then(html => {
+                const pageElement = document.getElementById(`spa-page-${pageId}`);
+                if (pageElement) {
+                    const content = pageElement.querySelector('.spa-page-content');
+                    if (content) {
+                        content.innerHTML = html;
+                        initializeNativeFragments(content);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error cargando página nativa:', error);
+                const pageElement = document.getElementById(`spa-page-${pageId}`);
+                if (pageElement) {
+                    const content = pageElement.querySelector('.spa-page-content');
+                    if (content) {
+                        content.innerHTML = `<div class="alert alert-danger">Error al cargar el contenido<br>${escapeHtml(error.message)}</div>`;
+                    }
+                }
+            });
+            return;
+        }
+
+        // Documento HTML completo (p. ej. navegación secundaria): parsear head/body.
         fetch(fullUrl, {
             method: 'GET',
             headers: clientApiHeaders({

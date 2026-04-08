@@ -22,10 +22,6 @@ final class CommonActionsService
      */
     public static function getFormattedForUser(int $userId, int $limit = self::DEFAULT_LIMIT): array
     {
-        if ($userId <= 0) {
-            return [];
-        }
-
         if ($limit < 1) {
             $limit = self::DEFAULT_LIMIT;
         }
@@ -99,19 +95,42 @@ final class CommonActionsService
                 $name = $controller . '/' . $action;
             }
 
-            $out[] = [
+            $uiPath = isset($d['native_ui_path']) && is_string($d['native_ui_path']) ? trim($d['native_ui_path']) : '';
+            $presentation = isset($d['spa_presentation']) && is_string($d['spa_presentation'])
+                ? strtolower(trim($d['spa_presentation']))
+                : 'inline';
+            if ($presentation !== 'inline' && $presentation !== 'fullscreen') {
+                $presentation = 'inline';
+            }
+            $mobileScreenId = isset($d['mobile_screen_id']) && is_string($d['mobile_screen_id']) && $d['mobile_screen_id'] !== ''
+                ? (string) $d['mobile_screen_id']
+                : strtolower($controller . '.' . $action);
+            $css = isset($d['native_assets_css']) && is_array($d['native_assets_css']) ? $d['native_assets_css'] : [];
+            $js = isset($d['native_assets_js']) && is_array($d['native_assets_js']) ? $d['native_assets_js'] : [];
+
+            $row = [
                 'route' => $path,
                 'name' => $name,
                 'description' => (string) ($d['description'] ?? ''),
                 'action_id' => $actionId,
-                'client_open' => [
-                    'kind' => 'ui_native',
-                    'screen_id' => strtolower($controller . '.' . $action),
-                    'web' => ['path' => $path],
-                    'mobile' => ['screen_id' => strtolower($controller . '.' . $action)],
-                ],
-                'client_interaction' => 'ui_asistente_native',
             ];
+            if ($uiPath !== '') {
+                $co = [
+                    'kind' => 'native',
+                    'presentation' => $presentation,
+                    'web' => ['path' => $uiPath],
+                    'mobile' => ['screen_id' => $mobileScreenId],
+                ];
+                if ($css !== [] || $js !== []) {
+                    $co['assets'] = [
+                        'css' => array_values(array_filter($css)),
+                        'js' => array_values(array_filter($js)),
+                    ];
+                }
+                $row['client_open'] = $co;
+                $row['client_interaction'] = 'ui_asistente_native';
+            }
+            $out[] = $row;
         }
 
         return $out;

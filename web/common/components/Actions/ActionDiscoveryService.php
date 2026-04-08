@@ -27,7 +27,7 @@ class ActionDiscoveryService
      * Cache key para acciones descubiertas
      */
     public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v7';
-    public const CACHE_KEY_FRONTEND_UI = 'discovered_frontend_ui_v1_intent_catalog_v1';
+    public const CACHE_KEY_FRONTEND_UI = 'discovered_frontend_ui_v2_intent_catalog_presentation';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**
@@ -474,7 +474,8 @@ class ActionDiscoveryService
             'keywords' => $customMetadata['keywords'],
             'synonyms' => $customMetadata['synonyms'],
             'intent_catalog' => $customMetadata['intent_catalog'],
-            'native_embed_path' => $customMetadata['native_embed_path'],
+            'native_ui_path' => $customMetadata['native_ui_path'],
+            'spa_presentation' => $customMetadata['spa_presentation'],
             'native_assets_css' => $customMetadata['native_assets_css'],
             'native_assets_js' => $customMetadata['native_assets_js'],
             'mobile_screen_id' => $customMetadata['mobile_screen_id'],
@@ -609,12 +610,14 @@ class ActionDiscoveryService
             'action_name' => null,
             // Si false, la acción NO debe aparecer en el catálogo de UIs.
             'intent_catalog' => true,
-            // UI nativa embebible (fragment) y assets a cargar por el shell.
-            // Se rellena vía docblock:
-            // - @native_embed_path /agenda/embed
+            // UI nativa para shell SPA: HTML sin layout (partial) + presentación.
+            // Docblock:
+            // - @native_ui_path /agenda/embed  (markup partial; misma URL browser ≠ este contrato)
+            // - @spa_presentation inline|fullscreen
             // - @native_assets_css /css/a.css,/css/b.css
             // - @native_assets_js /js/a.js,/js/b.js
-            'native_embed_path' => null,
+            'native_ui_path' => null,
+            'spa_presentation' => 'inline',
             'native_assets_css' => [],
             'native_assets_js' => [],
             // Identificador de pantalla nativa en móvil (Flutter).
@@ -682,12 +685,20 @@ class ActionDiscoveryService
                 }));
             }
 
-            // @native_embed_path /agenda/embed
-            if (preg_match('/@native_embed_path\s+(.+)/i', $line, $matches)) {
+            // @native_ui_path /agenda/embed
+            if (preg_match('/@native_ui_path\s+(.+)/i', $line, $matches)) {
                 $value = trim($matches[1]);
                 $value = trim($value, "\"'");
                 if ($value !== '') {
-                    $metadata['native_embed_path'] = $value;
+                    $metadata['native_ui_path'] = $value;
+                }
+            }
+
+            // @spa_presentation inline|fullscreen
+            if (preg_match('/@spa_presentation\s+(.+)/i', $line, $matches)) {
+                $value = strtolower(trim(trim($matches[1]), "\"'"));
+                if ($value === 'inline' || $value === 'fullscreen') {
+                    $metadata['spa_presentation'] = $value;
                 }
             }
 

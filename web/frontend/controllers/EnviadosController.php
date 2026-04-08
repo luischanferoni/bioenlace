@@ -29,9 +29,9 @@ class EnviadosController extends Controller
     /**
      * Lists all Enviados models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new EnviadosBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -46,8 +46,8 @@ public function actionIndex()
      * Displays a single Enviados model.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -59,8 +59,8 @@ public function actionIndex()
      * Creates a new Enviados model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $model = new Enviados();
@@ -79,8 +79,8 @@ public function actionIndex()
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -99,8 +99,8 @@ public function actionIndex()
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -114,7 +114,7 @@ public function actionIndex()
      * @param integer $id
      * @return Enviados the loaded model
      * @throws NotFoundHttpException if the model cannot be found
-     */
+    */
     protected function findModel($id)
     {
         if (($model = Enviados::findOne($id)) !== null) {

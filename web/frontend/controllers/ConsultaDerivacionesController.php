@@ -111,6 +111,9 @@ class ConsultaDerivacionesController extends DefaultConsultaController
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionEliminarAdjunto($id)
     {
         $this->eliminarArchivo($id);

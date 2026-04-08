@@ -47,10 +47,9 @@ class ConsultaPracticasOftalmologiaController extends DefaultConsultaController
     /**
      * Lists all ConsultaPracticasOftalmologia models.
      * @return mixed
-*/
-
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new ConsultaPracticasOftalmologiaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -66,8 +65,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -80,8 +79,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionViewMedico($id)
     {
         $arrayC = [252832004 => 'Presión intraocular', 252886007 => 'Refracción', 55468007 => 'Lámpara de hendidura', 410455004 => 'Fondo de ojo con lámpara de hendidura'];
@@ -95,6 +94,9 @@ public function actionIndex()
             return self::createMedico($modelConsulta);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionCreateCrud($id_consulta)
     {
         /* @var $consulta Consulta */
@@ -207,8 +209,8 @@ public function actionIndex()
      * Creates a new ConsultaPracticasOftalmologia model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreateEstudiosComplementarios($id_consulta, $form_steps=true)
     {
 
@@ -312,8 +314,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionUpdateMedico($id)
     {
         $model = $this->findModel($id);
@@ -338,8 +340,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -363,8 +365,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

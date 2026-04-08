@@ -57,9 +57,9 @@ class PacienteController extends Controller
      * Obtiene el historial de un paciente específico.
      * @param integer $paciente_id
      * @return mixed
-*/
-
-public function actionHistoria($id)
+     * @no_intent_catalog
+    */
+    public function actionHistoria($id)
     {
         $this->layout = 'blanco';
 
@@ -453,8 +453,8 @@ public function actionHistoria($id)
      * Endpoint AJAX para obtener el estado del formulario y mensajes.
      * @param integer $id ID del paciente
      * @return Response JSON con HTML del formulario y mensajes
+     * @no_intent_catalog
     */
-
     public function actionFormularioConsulta($id)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -538,6 +538,9 @@ public function actionHistoria($id)
         }
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function getForms($id_persona)
     {
         $respuesta = false;

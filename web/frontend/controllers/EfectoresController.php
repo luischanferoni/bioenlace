@@ -39,9 +39,9 @@ class EfectoresController extends Controller
     /**
      * Lists all Efector models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new EfectorBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -57,8 +57,8 @@ public function actionIndex()
      * Displays a single Efector model.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -71,8 +71,8 @@ public function actionIndex()
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -92,6 +92,7 @@ public function actionIndex()
      * @param integer $id
      * @return Efector the loaded model
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
      */
     protected function findModel($id)
     {
@@ -107,8 +108,8 @@ public function actionIndex()
      * @tags efectores,listar,ver todos
      * @keywords listar,ver todos,mostrar,efectores
      * @synonyms efectores,centros de salud,establecimientos
+     * @no_intent_catalog
     */
-
     public function actionIndexuserefector()
     {
         $this->layout = 'main_sinmenuizquierda';

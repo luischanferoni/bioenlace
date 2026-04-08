@@ -34,9 +34,9 @@ class UserController extends \webvimark\modules\UserManagement\controllers\UserC
 
 	/**
 	 * @return mixed|string|\yii\web\Response
-*/
-
-public function actionCrear()
+    * @no_intent_catalog
+    */
+    public function actionCrear()
     {
         $model = new User(['scenario'=>'newUser']);
 
@@ -76,12 +76,11 @@ public function actionCrear()
 	/**
 	 * Updates an existing model.
 	 * If update is successful, the browser will be redirected to the 'view' page.
-	 *
+	 * @no_intent_catalog
 	 * @param integer $id
 	 *
 	 * @return mixed
 	*/
-
 	public function actionUpdate($id)
 	{
         $persona = Yii::$app->session['persona'];

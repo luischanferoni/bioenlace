@@ -77,8 +77,9 @@
         setLoadingState(true);
         hideResponse();
 
-        // Usar endpoint de la API
-        const asistenteUrl = window.spaConfig.baseUrl + '/api/v1/asistente/enviar';
+        // Usar endpoint de la API. Importante: en entornos donde el frontend vive bajo /api,
+        // window.spaConfig.baseUrl puede ser https://host/api y concatenar "/api/..." duplica.
+        const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
         fetch(asistenteUrl, {
             method: 'POST',
             headers: clientApiHeaders({
@@ -1260,13 +1261,17 @@
             return;
         }
 
-        // Construir URL completa si es relativa
-        // Si la URL ya es absoluta (empieza con http), usarla tal cual
-        // Si es relativa y empieza con /, concatenar con baseUrl
-        // Si es relativa sin /, también concatenar con baseUrl
+        // Construir URL completa si es relativa:
+        // - Si la URL ya es absoluta (http), usarla tal cual.
+        // - Si empieza con /api/, siempre usar window.location.origin para evitar duplicar /api
+        //   cuando la app se publica bajo /api (baseUrl = https://host/api).
+        // - Si es relativa y empieza con / (no API), concatenar con baseUrl.
+        // - Si es relativa sin /, concatenar con baseUrl + '/'.
         let fullUrl;
         if (url.startsWith('http://') || url.startsWith('https://')) {
             fullUrl = url;
+        } else if (url.startsWith('/api/')) {
+            fullUrl = window.location.origin + url;
         } else if (url.startsWith('/')) {
             // URL relativa que empieza con / - usar baseUrl + url
             fullUrl = window.spaConfig.baseUrl + url;
@@ -1562,7 +1567,8 @@
             return; // No hay contenedor para acciones comunes
         }
         
-        const url = window.spaConfig.baseUrl + '/api/v1/acciones/comunes';
+        // API: ver nota de duplicación /api arriba.
+        const url = window.location.origin + '/api/v1/acciones/comunes';
         fetch(url, {
             method: 'GET',
             headers: clientApiHeaders({

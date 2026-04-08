@@ -19,6 +19,9 @@ class SnowstormController extends Controller
         ];
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionMedicamentos($q = null)
     {        
         $out = ['results' => ['id' => '', 'text' => '']];
@@ -31,6 +34,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionMedicamentosAnmat($q = null)
     {        
         $out = ['results' => ['id' => '', 'text' => '']];
@@ -43,6 +49,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionDiagnosticos($q = null)
     {
         // $id_persona = Yii::$app->getRequest()->getQueryParam('id');
@@ -56,6 +65,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionPracticas($q = null)
     {
         // $id_persona = Yii::$app->getRequest()->getQueryParam('id');
@@ -69,6 +81,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionAntecedentespersonales($q = null)
     {
         // $id_persona = Yii::$app->getRequest()->getQueryParam('id');
@@ -82,6 +97,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionAntecedentesfamiliares($q = null)
     {
         // $id_persona = Yii::$app->getRequest()->getQueryParam('id');
@@ -95,6 +113,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionAlergias($q = null)
     {
         $out = ['results' => ['id' => '', 'text' => '']];
@@ -107,6 +128,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionMotivosDeConsulta($q = null)
     {
         $out = ['results' => ['id' => '', 'text' => '']];
@@ -119,6 +143,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionSintomas($q = null)
     {
         $out = ['results' => ['id' => '', 'text' => '']];
@@ -131,6 +158,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionDiagnosticosOdontologia($q = null)
     {
         $out = ['results' => ['id' => '', 'text' => '']];
@@ -143,6 +173,9 @@ class SnowstormController extends Controller
         return Json::encode(['results' => array_values($data)]);
     }
 
+    /**
+    * @no_intent_catalog
+    */
     public function actionPracticasOdontologia($q = null)
     {
         $out = ['results' => ['id' => '', 'text' => '']];

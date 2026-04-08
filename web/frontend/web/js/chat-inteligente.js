@@ -158,11 +158,8 @@
     }
 
     async callAnalyzeEndpoint(consultationText) {
-        // Obtener baseUrl desde window.spaConfig o usar URL relativa como fallback
-        const baseUrl = (window.spaConfig && window.spaConfig.baseUrl) 
-            ? window.spaConfig.baseUrl 
-            : window.location.origin;
-        const url = `${baseUrl}/api/v1/consulta/analizar`;
+        // API: usar origin para evitar duplicar "/api" si el frontend está publicado bajo /api.
+        const url = `${window.location.origin}/api/v1/consulta/analizar`;
         
         // Usar el wrapper para enviar datos con userPerTabConfig
         const data = {

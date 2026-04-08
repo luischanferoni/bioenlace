@@ -16,7 +16,7 @@ use webvimark\modules\UserManagement\models\User;
  */
 final class CommonActionsService
 {
-    public const DEFAULT_LIMIT = 12;
+    public const DEFAULT_LIMIT = 20;
 
     /**
      * @return list<array{route: string, name: string, description: string, action_id: string|null}>

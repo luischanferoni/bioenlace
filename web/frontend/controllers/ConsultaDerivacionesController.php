@@ -26,7 +26,6 @@ class ConsultaDerivacionesController extends DefaultConsultaController
     use \frontend\controllers\traits\ConsultaTrait;
     use \frontend\controllers\traits\AdjuntoTrait;
 
-
     public function createCore($modelConsulta)
     {
         $idsBDPrevioPost = [];

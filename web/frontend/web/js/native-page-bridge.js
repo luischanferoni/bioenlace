@@ -1,0 +1,75 @@
+/**
+ * Bridge para páginas nativas (tipo 1): helpers reutilizables para:
+ * - headers API (X-App-Client/X-App-Version)
+ * - construir URLs de /api/v1 sin duplicar "/api"
+ * - navegación opcional dentro del shell SPA vía data-spa-nav
+ */
+(function () {
+  'use strict';
+
+  function apiHeaders(extra) {
+    if (typeof window.getBioenlaceApiClientHeaders === 'function') {
+      return window.getBioenlaceApiClientHeaders(extra || {});
+    }
+    var v = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
+    return Object.assign({ 'X-App-Client': 'web-frontend', 'X-App-Version': v }, extra || {});
+  }
+
+  /**
+   * Construye URL absoluta a /api/v1/<path> evitando duplicación "/api/api".
+   * @param {string} path e.g. "pacientes" o "/pacientes"
+   */
+  function apiV1Url(path) {
+    var p = String(path || '');
+    if (!p) return window.location.origin + '/api/v1';
+    if (!p.startsWith('/')) p = '/' + p;
+    // Si ya viene /api/v1/..., usar origin + eso.
+    if (p.startsWith('/api/v1/')) return window.location.origin + p;
+    return window.location.origin + '/api/v1' + p;
+  }
+
+  async function fetchJson(url, options) {
+    var opts = Object.assign({}, options || {});
+    opts.headers = apiHeaders(Object.assign({ 'Accept': 'application/json' }, opts.headers || {}));
+    opts.credentials = opts.credentials || 'same-origin';
+    var res = await fetch(url, opts);
+    var ct = (res.headers.get('content-type') || '').toLowerCase();
+    if (!ct.includes('application/json')) {
+      var text = await res.text();
+      throw new Error('Se esperaba JSON. Recibido: ' + text.slice(0, 120));
+    }
+    var json = await res.json();
+    if (!res.ok) {
+      throw new Error((json && (json.message || json.error)) ? (json.message || json.error) : ('HTTP ' + res.status));
+    }
+    return json;
+  }
+
+  /**
+   * Convención: links con data-spa-nav="1" intentan navegar dentro del shell SPA si existe.
+   * Si no existe shell, se comportan como link normal.
+   */
+  function bindSpaNavLinks(root) {
+    var base = root && typeof root.addEventListener === 'function' ? root : document;
+    base.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a[data-spa-nav="1"]') : null;
+      if (!a) return;
+      if (a.hasAttribute('download') || a.getAttribute('target') === '_blank') return;
+      var href = a.getAttribute('href') || '';
+      if (!href || href === '#') return;
+
+      if (typeof window.spaNavigateToUrl === 'function') {
+        e.preventDefault();
+        var title = a.getAttribute('data-spa-title') || a.textContent || 'Cargando...';
+        window.spaNavigateToUrl(href, title);
+      }
+    }, true);
+  }
+
+  window.BioenlaceNativePage = window.BioenlaceNativePage || {};
+  window.BioenlaceNativePage.apiHeaders = apiHeaders;
+  window.BioenlaceNativePage.apiV1Url = apiV1Url;
+  window.BioenlaceNativePage.fetchJson = fetchJson;
+  window.BioenlaceNativePage.bindSpaNavLinks = bindSpaNavLinks;
+})();
+

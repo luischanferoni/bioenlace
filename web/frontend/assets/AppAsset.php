@@ -39,6 +39,8 @@ class AppAsset extends AssetBundle
         // Usar Url::to para generar las URLs correctas
         $jsFiles = [
             'ajax-wrapper.js',
+            // Bridge reutilizable para páginas nativas (tipo 1)
+            'native-page-bridge.js',
             'turnos.js',
             'chat-inteligente.js',
             'timeline.js'

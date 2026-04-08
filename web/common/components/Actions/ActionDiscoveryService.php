@@ -113,7 +113,9 @@ class ActionDiscoveryService
 
         $files = FileHelper::findFiles($realPath, [
             'only' => ['*Controller.php'],
-            'recursive' => false,
+            // Importante: incluir controladores en subcarpetas (frontend/controllers/**).
+            // El catálogo debe considerar todas las actions públicas del frontend (salvo @no_intent_catalog).
+            'recursive' => true,
         ]);
 
         $out = [];

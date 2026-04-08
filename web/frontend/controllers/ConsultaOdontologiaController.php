@@ -175,6 +175,9 @@ class ConsultaOdontologiaController extends DefaultConsultaController
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionDetalle()
     {
         $modelConsulta = Consulta::findOne(Yii::$app->request->get('id_consulta'));

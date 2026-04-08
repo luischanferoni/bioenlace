@@ -5,6 +5,7 @@ namespace common\components\IntentEngine;
 use Yii;
 use webvimark\modules\UserManagement\models\User;
 use common\components\Actions\ActionDiscoveryService;
+use common\components\Actions\AllowedRoutesResolver;
 use common\components\IntentCatalog\IntentCatalogService;
 
 /**
@@ -110,13 +111,7 @@ final class UiActionCatalog
                 continue;
             }
 
-            // Permiso RBAC sobre ruta web nativa (el usuario puede asignar permisos a estas URLs).
-            $rbacRoute = '/' . $controller . '/' . $action;
-            if ($action === 'index') {
-                $rbacRoute = '/' . $controller . '/index';
-            }
-
-            if (!self::userCanRoute($userId, $rbacRoute)) {
+            if (!self::userCanNativeFrontendWeb($userId, $controller, $action)) {
                 continue;
             }
 
@@ -209,19 +204,23 @@ final class UiActionCatalog
         return $out;
     }
 
-    private static function userCanRoute(int $userId, string $route): bool
+    /**
+     * RBAC para descubiertas de `frontend/controllers`: varias formas de ruta en webvimark ({@see AllowedRoutesResolver::nativeFrontendWebRbacRouteCandidates}).
+     */
+    private static function userCanNativeFrontendWeb(int $userId, string $controller, string $action): bool
     {
-        // En API v1 con JWT, AuthHelper::updatePermissions ya se ejecuta en authenticate() del bearer auth.
-        // webvimark resuelve canRoute en base a rutas cargadas para el user.
-        $route = '/' . ltrim($route, '/');
-
-        // Superadmin.
         $u = User::findOne($userId);
         if ($u && (int) $u->superadmin === 1) {
             return true;
         }
 
-        return User::canRoute($route);
+        foreach (AllowedRoutesResolver::nativeFrontendWebRbacRouteCandidates($controller, $action) as $rbacRoute) {
+            if (User::canRoute($rbacRoute)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
 

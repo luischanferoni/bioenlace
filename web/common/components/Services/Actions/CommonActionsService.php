@@ -2,8 +2,9 @@
 
 namespace common\components\Services\Actions;
 
-use common\components\IntentCatalog\IntentCatalogService;
 use common\components\Actions\ActionDiscoveryService;
+use common\components\Actions\AllowedRoutesResolver;
+use common\components\IntentCatalog\IntentCatalogService;
 use webvimark\modules\UserManagement\models\User;
 
 /**
@@ -75,12 +76,15 @@ final class CommonActionsService
                 continue;
             }
 
-            // Filtrado RBAC por ruta nativa web.
-            $rbacRoute = '/' . $controller . '/' . $action;
-            if ($action === 'index') {
-                $rbacRoute = '/' . $controller . '/index';
+            // Filtrado RBAC: probar rutas como en BD (p. ej. /agenda/crear y /frontend/agenda/crear).
+            $allowedNative = false;
+            foreach (AllowedRoutesResolver::nativeFrontendWebRbacRouteCandidates($controller, $action) as $rbacRoute) {
+                if (User::canRoute($rbacRoute)) {
+                    $allowedNative = true;
+                    break;
+                }
             }
-            if (!User::canRoute($rbacRoute)) {
+            if (!$allowedNative) {
                 continue;
             }
 

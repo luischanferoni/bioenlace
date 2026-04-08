@@ -263,6 +263,43 @@ final class AllowedRoutesResolver
     }
 
     /**
+     * Rutas candidatas para comprobar {@see User::canRoute} sobre controladores en `frontend/controllers`.
+     *
+     * En webvimark a veces el permiso figura como `/agenda/crear` y otras como `/frontend/agenda/crear`
+     * (según cómo se generó/registró la ruta). Hay que probar ambas para no filtrar UIs nativas en vano.
+     *
+     * @return list<string>
+     */
+    public static function nativeFrontendWebRbacRouteCandidates(string $controller, string $action): array
+    {
+        $controller = trim($controller, '/');
+        $action = trim($action, '/');
+        if ($controller === '' || $action === '') {
+            return [];
+        }
+
+        $candidates = $action === 'index'
+            ? [
+                '/' . $controller . '/index',
+                '/frontend/' . $controller . '/index',
+                '/' . $controller,
+                '/frontend/' . $controller,
+            ]
+            : [
+                '/' . $controller . '/' . $action,
+                '/frontend/' . $controller . '/' . $action,
+            ];
+
+        $uniq = [];
+        foreach ($candidates as $c) {
+            $c = '/' . ltrim((string) $c, '/');
+            $uniq[$c] = true;
+        }
+
+        return array_keys($uniq);
+    }
+
+    /**
      * Invalida caché de rutas para un usuario (p.ej. tras cambio de rol).
      */
     public static function invalidateUserCache(int $userId): void

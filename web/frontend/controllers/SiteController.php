@@ -17,63 +17,7 @@ use common\models\Agenda_rrhh;
 use Firebase\JWT\JWT;
 
 class SiteController extends Controller
-{
-    /*
-    public function behaviors()
-    {
-        return [
-            'access' => [
-                'class' => AccessControl::className(),
-                'only' => ['logout'],
-                'rules' => [
-                    [
-                        'actions' => ['logout'],
-                        'allow' => true,
-                        'roles' => ['@'],
-                    ],
-                ],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'logout' => ['post'],
-                ],
-            ],
-        ];
-    }
-    */
-    
-    /**
-     * Deshabilitar CSRF para el método de prueba
-     */
-  /*  public function behaviors()
-    {
-        $behaviors = parent::behaviors();
-        
-        // Deshabilitar CSRF para test-action-matching
-        $behaviors[] = [
-            'class' => \yii\filters\ContentNegotiator::class,
-            'only' => ['test-action-matching'],
-            'formats' => [
-                'application/json' => \yii\web\Response::FORMAT_JSON,
-            ],
-        ];
-        
-        return $behaviors;
-    }*/
-    
-    /**
-     * Deshabilitar validación CSRF para métodos específicos
-     */
-   /* public function beforeAction($action)
-    {
-        if ($action->id === 'test-action-matching') {
-            $this->enableCsrfValidation = false;
-        }
-        return parent::beforeAction($action);
-    }
-    */
-    
+{    
     public function actions()
     {
         return [

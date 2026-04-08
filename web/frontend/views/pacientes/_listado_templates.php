@@ -1,7 +1,7 @@
 <?php
 /**
  * Plantillas HTML del listado de pacientes (turnos / internados / guardia).
- * El JS clona estos <template> y asigna textos, URLs y data-*; añade spa-card cuando corresponde.
+ * El JS clona estos <template> y asigna textos y URLs (página web común; sin SPA shell).
  */
 
 use yii\helpers\Html;
@@ -39,6 +39,7 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
                     <small class="text-muted" data-field="observaciones"></small>
                 </div>
                 <div class="mt-3"><span class="badge" data-field="estado-badge"></span></div>
+                <a href="#" class="stretched-link" data-role="link-historia" aria-label="Ver historia clínica"></a>
             </div>
         </div>
     </div>
@@ -57,11 +58,7 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
 </template>
 
 <template id="tpl-paciente-internado-row">
-    <div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded spa-card"
-         data-expandable="false"
-         data-full-page="true"
-         data-action-type="default"
-         data-role="internado-row">
+    <div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded" data-role="internado-row">
         <div class="ms-3" style="flex:1;">
             <h5 class="card-title mb-0" data-field="nombre"></h5>
             <p class="mb-1">
@@ -70,8 +67,8 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
                 <strong>Cama:</strong> <span data-field="cama"></span>
             </p>
             <div class="d-flex flex-wrap gap-2 mt-2">
-                <span class="p-2 btn btn-success btn-sm">Atender paciente</span>
-                <a href="#" class="p-2 btn btn-outline-primary btn-sm d-none" data-spa-no-card="1" data-role="link-historia">Historia clínica</a>
+                <a href="#" class="p-2 btn btn-success btn-sm" data-role="link-atender">Atender paciente</a>
+                <a href="#" class="p-2 btn btn-outline-primary btn-sm d-none" data-role="link-historia">Historia clínica</a>
             </div>
         </div>
     </div>
@@ -95,7 +92,7 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
             <h5 class="card-title mb-0" data-field="nombre"></h5>
             <p class="mb-1"><span data-field="documento-line"></span></p>
         </div>
-        <span class="btn btn-dark btn-sm me-2" data-role="cta-atender"><i class="bi bi-chevron-right"></i> Atender</span>
+        <a class="btn btn-dark btn-sm me-2" href="#" data-role="cta-atender"><i class="bi bi-chevron-right"></i> Atender</a>
     </div>
 </template>
 
@@ -117,6 +114,7 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
                     <strong><i class="bi bi-clock me-2"></i>Inicio:</strong> <span data-field="inicio"></span>
                 </div>
                 <div class="mt-3"><span class="badge" data-field="estado-badge"></span></div>
+                <a href="#" class="stretched-link" data-role="link-historia" aria-label="Ver historia clínica"></a>
             </div>
         </div>
     </div>

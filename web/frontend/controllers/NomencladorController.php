@@ -20,7 +20,9 @@ use yii\web\BadRequestHttpException;
 
 class NomencladorController extends \yii\web\Controller
 {
-
+    /**
+     * @no_intent_catalog
+    */
     public function actionMotivos()
     {
         $servicio = Yii::$app->user->getServicioActual();
@@ -35,6 +37,9 @@ class NomencladorController extends \yii\web\Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionMedicamentos()
     {
         $servicio = Yii::$app->user->getServicioActual();
@@ -49,6 +54,9 @@ class NomencladorController extends \yii\web\Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionAntecedentesp()
     {
         $servicio = Yii::$app->user->getServicioActual();
@@ -63,6 +71,9 @@ class NomencladorController extends \yii\web\Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionAntecedentesf()
     {
         $servicio = Yii::$app->user->getServicioActual();
@@ -77,6 +88,9 @@ class NomencladorController extends \yii\web\Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionPracticas()
     {
         $servicio = Yii::$app->user->getServicioActual();
@@ -91,6 +105,9 @@ class NomencladorController extends \yii\web\Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionDiagnosticos()
     {
         $servicio = Yii::$app->user->getServicioActual();
@@ -105,6 +122,9 @@ class NomencladorController extends \yii\web\Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionAlergias()
     {
         $servicio = Yii::$app->user->getServicioActual();

@@ -36,8 +36,8 @@ class SiteController extends Controller
      * Post-login: si falta efector, servicio o encounter class en sesión, muestra el asistente de selección
      * (vistas despuesdelogin/*). Si ya está completo, redirige al listado de pacientes.
      * No es equivalente a actionPacientes: aquí se resuelve contexto de sesión, allí se lista la agenda del día.
+     * @no_intent_catalog
     */
-
     public function actionInicio()
     {
         $idEfector = Yii::$app->user->getIdEfector();
@@ -77,6 +77,9 @@ class SiteController extends Controller
         return $this->redirect(['site/pacientes', 'fecha' => $fecha]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionAsistente()
     {
         return $this->render('asistente');
@@ -85,9 +88,8 @@ class SiteController extends Controller
 
     /**
      * Vista HTML del listado de pacientes (datos vía API /api/v1/pacientes/*).
+     * @no_intent_catalog
     */
-
-
     public function actionPacientes()
     {
         $fechaParam = Yii::$app->request->get('fecha');
@@ -100,6 +102,9 @@ class SiteController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function buscarInternados($pisos_efector, $sala)
     {
         $internados = array();
@@ -159,8 +164,8 @@ class SiteController extends Controller
     /**
      * Llega hasta aqui despues de elegir el efector con el que desea trabajar
      * setea en session el efector elegido y redirige a elegir el encounter class
+     * @no_intent_catalog
     */
-
     public function actionSessionEfectorRedireccionar()
     {
         return $this->redirect(['site/inicio']);
@@ -178,6 +183,9 @@ class SiteController extends Controller
     }
     */
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionCambiarEncounterClass($codigo)
     {
         Yii::$app->user->setEncounterClass($codigo);
@@ -185,6 +193,9 @@ class SiteController extends Controller
         return $this->redirect(self::generarUrlUsurioEfectorAredireccionar());
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionCambiarServicio($id_servicio)
     {
         Yii::$app->user->setServicioActual($id_servicio);
@@ -200,11 +211,17 @@ class SiteController extends Controller
         return $this->redirect(self::generarUrlUsurioEfectorAredireccionar());
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionGuiaServicios()
     {
         return $this->render('guia-servicios');
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionCentrosSalud($id)
     {
         if (isset($id) and $id != 0) {
@@ -212,6 +229,9 @@ class SiteController extends Controller
         }
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionVerCentroSalud($id)
     {
         $efector = Efector::findOne($id);
@@ -309,6 +329,9 @@ class SiteController extends Controller
         return ['consultas/tipoatencion'];
     }*/
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionEstablecerSessionFinal()
     {
         $encounterClass = Yii::$app->request->post('encounterClass');
@@ -340,6 +363,7 @@ class SiteController extends Controller
 
         return \yii\helpers\Url::to(self::generarUrlUsurioEfectorAredireccionar());
     }
+
     /*
     * Despues de elegir el Efector se lo redirige al usuario a diferentes paginas 
     * dependiendo del rol/profesion que disponga
@@ -416,6 +440,9 @@ class SiteController extends Controller
         Yii::$app->user->setServicioYhorarioDeTurno($servicios);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionImpersonate()
     {
         $path = Yii::getAlias('@runtime') . '/impersonation/a.txt';
@@ -454,6 +481,9 @@ class SiteController extends Controller
         }
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionError()
     {
         $exception = Yii::$app->errorHandler->exception;
@@ -466,9 +496,9 @@ class SiteController extends Controller
 
     /**
      * Obtener acciones comunes para el usuario actual (misma lógica que GET /api/v1/acciones/comunes).
+     * @no_intent_catalog
      * @return \yii\web\Response
-    */
-
+     */
     public function actionGetCommonActions()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

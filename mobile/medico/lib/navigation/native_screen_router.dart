@@ -27,7 +27,7 @@ class NativeScreenRouter {
   }) {
     final id = screenId.trim().toLowerCase();
     switch (id) {
-      case 'agenda.index':
+      case 'agenda.crear':
         return MaterialPageRoute(
           builder: (_) => _PlaceholderNativeScreen(
             title: title ?? 'Agenda laboral',

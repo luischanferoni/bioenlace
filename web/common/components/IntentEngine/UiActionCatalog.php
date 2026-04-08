@@ -4,8 +4,8 @@ namespace common\components\IntentEngine;
 
 use Yii;
 use webvimark\modules\UserManagement\models\User;
-use common\components\IntentCatalog\IntentCatalogService;
 use common\components\Actions\ActionDiscoveryService;
+use common\components\IntentCatalog\IntentCatalogService;
 
 /**
  * Catálogo de UIs disponibles para un usuario (templates JSON existentes + RBAC).
@@ -146,7 +146,7 @@ final class UiActionCatalog
             $kw[] = $action;
             $kw = array_values(array_unique(array_filter($kw)));
 
-            // Web: `client_open` solo si hay `@native_ui_path` (markup sin layout para el shell).
+            // Web: `native` siempre con path canónico o `@native_ui_path` override.
             $clientOpen = self::buildNativeWebClientOpen($d, $controller, $action);
 
             $out[] = new UiActionCatalogItem(
@@ -158,7 +158,7 @@ final class UiActionCatalog
                 $kw,
                 ['expected' => $d['parameters'] ?? [], 'provided' => []],
                 $clientOpen,
-                $clientOpen !== null ? 'ui_asistente_native' : null
+                'ui_asistente_native'
             );
         }
 
@@ -167,20 +167,17 @@ final class UiActionCatalog
 
     /**
      * Construye client_open para UIs web nativas consumidas por el shell SPA.
-     * Requiere `@native_ui_path` (HTML sin layout). Sin eso: null (navegación browser / fuera del contrato SPA).
+     * Path por defecto: ruta canónica Yii de la acción (HTML sin layout); override con `@native_ui_path`.
      *
-     * @return array<string, mixed>|null
+     * @return array<string, mixed>
      */
-    private static function buildNativeWebClientOpen(array $def, string $controller, string $action): ?array
+    private static function buildNativeWebClientOpen(array $def, string $controller, string $action): array
     {
         $mobileScreenId = isset($def['mobile_screen_id']) && is_string($def['mobile_screen_id']) && $def['mobile_screen_id'] !== ''
             ? (string) $def['mobile_screen_id']
             : strtolower($controller . '.' . $action);
 
-        $uiPath = isset($def['native_ui_path']) && is_string($def['native_ui_path']) ? trim($def['native_ui_path']) : '';
-        if ($uiPath === '') {
-            return null;
-        }
+        $uiPath = ActionDiscoveryService::resolveNativeWebFetchPath($def, $controller, $action);
 
         $presentation = isset($def['spa_presentation']) && is_string($def['spa_presentation'])
             ? strtolower(trim($def['spa_presentation']))

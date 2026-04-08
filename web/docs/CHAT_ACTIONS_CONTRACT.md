@@ -95,14 +95,14 @@ Valores por defecto si falta el campo: `ui_json` → `fullscreen`; `native` → 
 
 ```json
 {
-  "action_id": "native.agenda.index",
+  "action_id": "native.agenda.crear",
   "display_name": "Agenda laboral",
-  "route": "/agenda",
+  "route": "/agenda/crear",
   "client_open": {
     "kind": "native",
     "presentation": "inline",
-    "web": { "path": "/agenda/embed" },
-    "mobile": { "screen_id": "agenda.index" },
+    "web": { "path": "/agenda/crear" },
+    "mobile": { "screen_id": "agenda.crear" },
     "assets": {
       "css": ["/css/scheduler.css"],
       "js": ["/js/scheduler.js", "/js/agenda-laboral.js"]
@@ -111,17 +111,17 @@ Valores por defecto si falta el campo: `ui_json` → `fullscreen`; `native` → 
 }
 ```
 
+`client_open.web.path` se resuelve con **`Url::to()`** sobre la ruta canónica `/<controller>/<action>` de la acción descubierta (misma convención que Yii). **`/agenda`** puede mapear a la misma acción si el controlador define `defaultAction = 'crear'`.
+
 ### Cómo declarar `native` en el catálogo (metadata en docblock)
 
-El catálogo se descubre desde `frontend/controllers/*Controller.php`. Tags:
+El catálogo se descubre desde `frontend/controllers/*Controller.php`. El motor asume que estas acciones devuelven **HTML sin layout** (partial). Tags:
 
-- `@native_ui_path /<ruta>` — endpoint que devuelve el partial (sin layout).
+- `@native_ui_path /<ruta>` — **opcional**; sobrescribe el path por defecto si el fetch debe ser distinta a la ruta canónica.
 - `@spa_presentation inline` o `@spa_presentation fullscreen`
 - `@native_assets_css /css/a.css,/css/b.css`
 - `@native_assets_js /js/a.js,/js/b.js`
-- `@mobile_screen_id agenda.index` (opcional; default `<controller>.<action>` kebab-case como en catálogo)
-
-Sin `@native_ui_path`, la acción **no** recibe `client_open` desde el catálogo nativo (apertura vía asistente/SPA no definida; navegación browser aparte).
+- `@mobile_screen_id agenda.crear` (opcional; default `<controller>.<action>`)
 
 - **`client_interaction`**: string opcional para telemetría/UX (ej. `ui_asistente_json`).
 
@@ -129,6 +129,9 @@ Sin `@native_ui_path`, la acción **no** recibe `client_open` desde el catálogo
 
 - Motor de intents: `web/common/components/IntentEngine/IntentEngine.php`
 - Catálogo UI (RBAC + existencia de templates): `web/common/components/IntentCatalog/IntentCatalogService.php`
+- Path fetch HTML nativo (canónico + `@native_ui_path`): `web/common/components/Actions/ActionDiscoveryService::resolveNativeWebFetchPath()`
+- Catálogo nativo + `client_open`: `web/common/components/IntentEngine/UiActionCatalog.php`
+- Atajos inicio (acciones comunes): `web/common/components/Services/Actions/CommonActionsService.php`
 - Enriquecimiento para apertura en clientes: `web/common/components/Actions/AssistantClientOpenEnricher.php`
 - API chat: `web/frontend/modules/api/v1/controllers/ChatController.php`
 

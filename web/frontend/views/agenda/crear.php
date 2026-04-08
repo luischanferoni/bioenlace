@@ -1,12 +1,12 @@
 <?php
 
 /**
- * Fragmento embebible de Agenda laboral.
+ * Agenda laboral — componente nativo (sin layout Yii).
  *
  * Requisitos:
  * - El contenedor root define el scope para querySelector de agenda-laboral.js (no IDs globales).
- * - Los assets (css/scheduler.css, js/scheduler.js, js/agenda-laboral.js) deben estar cargados
- *   por el caller (shell SPA o la vista index).
+ * - Los assets (css/scheduler.css, js/scheduler.js, js/agenda-laboral.js) los carga el shell SPA
+ *   vía `client_open.assets` del catálogo.
  *
  * @var array<int|string, string> $tiposDia
  */
@@ -46,4 +46,3 @@
         </div>
     </template>
 </div>
-

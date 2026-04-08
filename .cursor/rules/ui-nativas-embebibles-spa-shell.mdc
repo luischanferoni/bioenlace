@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## Principio (0 hardcode)
 
-- **Cero lógica particular por pantalla** (sin `if agenda.index`, sin regex por URL).
+- **Cero lógica particular por pantalla** (sin `if agenda.crear`, sin regex por URL).
 - Variaciones deben venir de **metadata** (docblock/definición descubierta) y el cliente usa `kind` + `presentation` (sin heurísticas por URL).
 
 ## Markup en PHP vs JS (regla práctica)
@@ -58,7 +58,7 @@ alwaysApply: false
 
 En el docblock de la acción catalogada (`frontend/controllers/*Controller.php`):
 
-- `@native_ui_path /<ruta-partial>` (obligatorio para que el asistente genere `client_open`)
+- `@native_ui_path /<ruta>` (opcional; override si difiere de la ruta canónica `Url::to` de la acción)
 - `@spa_presentation inline` o `fullscreen`
 - `@native_assets_css` / `@native_assets_js`
 - `@mobile_screen_id` (opcional)
@@ -67,6 +67,6 @@ En el docblock de la acción catalogada (`frontend/controllers/*Controller.php`)
 
 - `client_open.kind="native"`
 - `client_open.presentation="inline"`
-- `client_open.web.path="/agenda/embed"`
+- `client_open.web.path` — canónico `/agenda/crear` (acción `actionCrear`) salvo override
 - `client_open.assets`: scheduler + agenda-laboral
 

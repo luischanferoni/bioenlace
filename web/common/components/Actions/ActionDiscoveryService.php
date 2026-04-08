@@ -27,7 +27,7 @@ class ActionDiscoveryService
      * Cache key para acciones descubiertas
      */
     public const CACHE_KEY_ACTIONS = 'discovered_actions_api_v1_only_v7';
-    public const CACHE_KEY_FRONTEND_UI = 'discovered_frontend_ui_v2_intent_catalog_presentation';
+    public const CACHE_KEY_FRONTEND_UI = 'discovered_frontend_ui_v3_native_path_infer';
     public const CACHE_DURATION = 3600; // 1 hora
 
     /**
@@ -407,6 +407,36 @@ class ActionDiscoveryService
     }
 
     /**
+     * URL para fetch del HTML nativo (sin layout) del shell SPA.
+     *
+     * Por defecto se arma con {@see Url::to()} y la ruta canónica `/<controller>/<action>`
+     * (o `/<controller>/index`). Override opcional vía `@native_ui_path` en el docblock.
+     *
+     * @param array<string, mixed> $def Metadata descubierta (incl. `native_ui_path` opcional).
+     */
+    public static function resolveNativeWebFetchPath(array $def, string $controller, string $action): string
+    {
+        $override = isset($def['native_ui_path']) && is_string($def['native_ui_path'])
+            ? trim($def['native_ui_path'])
+            : '';
+        if ($override !== '') {
+            return $override;
+        }
+
+        $route = $action === 'index' ? $controller . '/index' : $controller . '/' . $action;
+        if (Yii::$app->has('urlManager')) {
+            return Url::to(['/' . $route]);
+        }
+
+        $path = '/' . rawurlencode($controller);
+        if ($action !== 'index') {
+            $path .= '/' . rawurlencode($action);
+        }
+
+        return $path;
+    }
+
+    /**
      * Extraer metadatos de una acción
      * @param ReflectionMethod $method
      * @param string $route
@@ -612,7 +642,7 @@ class ActionDiscoveryService
             'intent_catalog' => true,
             // UI nativa para shell SPA: HTML sin layout (partial) + presentación.
             // Docblock:
-            // - @native_ui_path /agenda/embed  (markup partial; misma URL browser ≠ este contrato)
+            // - @native_ui_path /ruta/explicita  (opcional; por defecto Url::to + controller/action)
             // - @spa_presentation inline|fullscreen
             // - @native_assets_css /css/a.css,/css/b.css
             // - @native_assets_js /js/a.js,/js/b.js
@@ -621,7 +651,7 @@ class ActionDiscoveryService
             'native_assets_css' => [],
             'native_assets_js' => [],
             // Identificador de pantalla nativa en móvil (Flutter).
-            // - @mobile_screen_id agenda.index
+            // - @mobile_screen_id agenda.crear
             'mobile_screen_id' => null,
         ];
 
@@ -685,7 +715,7 @@ class ActionDiscoveryService
                 }));
             }
 
-            // @native_ui_path /agenda/embed
+            // @native_ui_path /ruta/explicita (opcional; default Url::to canonical)
             if (preg_match('/@native_ui_path\s+(.+)/i', $line, $matches)) {
                 $value = trim($matches[1]);
                 $value = trim($value, "\"'");
@@ -718,7 +748,7 @@ class ActionDiscoveryService
                 }));
             }
 
-            // @mobile_screen_id agenda.index
+            // @mobile_screen_id agenda.crear
             if (preg_match('/@mobile_screen_id\s+(.+)/i', $line, $matches)) {
                 $value = trim($matches[1]);
                 $value = trim($value, "\"'");

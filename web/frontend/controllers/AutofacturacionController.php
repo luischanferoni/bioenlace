@@ -33,6 +33,9 @@ class AutofacturacionController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionIndex()
     {
         $searchModel = new ConsultaBusqueda();
@@ -51,6 +54,9 @@ class AutofacturacionController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionMapearSumar()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;       
@@ -233,6 +239,9 @@ class AutofacturacionController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionEnviarSumar()
     {
 
@@ -265,6 +274,9 @@ class AutofacturacionController extends Controller
         return ['error' => false, 'message' => 'La consulta fue enviada a sumar'];
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionConsultasEnviadas()
     {
         $searchModel = new ConsultaBusqueda();
@@ -289,6 +301,9 @@ class AutofacturacionController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionConsultasNoProcesadas()
     {
         $searchModel = new ConsultaBusqueda();

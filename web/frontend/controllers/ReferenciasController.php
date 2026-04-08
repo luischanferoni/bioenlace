@@ -37,9 +37,9 @@ class ReferenciasController extends Controller
     /**
      * Lists all referencia models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $efector = Yii::$app->user->getIdEfector();
         $servicio = Yii::$app->user->getServicioActual();
@@ -58,8 +58,8 @@ public function actionIndex()
      * Displays a single referencia model.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id,$idc)
     {
          $model = new Referencia();
@@ -74,8 +74,8 @@ public function actionIndex()
      * Creates a new referencia model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate($idc)
     {
         $model = new Referencia();
@@ -101,8 +101,8 @@ public function actionIndex()
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id, $idc)
     {
         $model = $this->findModel($id);
@@ -123,8 +123,8 @@ public function actionIndex()
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -148,6 +148,9 @@ public function actionIndex()
         }
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionServicios() {
         $id_efector_referenciado = $_POST['id_efector_referenciado'];
         $id = isset($_POST['id_servicio']) ? $_POST['id_servicio'] : NULL;

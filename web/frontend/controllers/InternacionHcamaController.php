@@ -36,9 +36,9 @@ class InternacionHcamaController extends Controller
     /**
      * Lists all SegNivelInternacionHcama models.
      * @return mixed
-*/
-
-public function actionIndex($id)
+     * @no_intent_catalog
+    */
+    public function actionIndex($id)
     {
         $internacion = $this->findModelInternacion($id);
         $dataProvider = new ActiveDataProvider([
@@ -62,8 +62,8 @@ public function actionIndex($id)
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -75,8 +75,8 @@ public function actionIndex($id)
      * Creates a new SegNivelInternacionHcama model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate($id)
     {
         // Se utiliza esta accion para realizar el cambio de cama
@@ -128,8 +128,8 @@ public function actionIndex($id)
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -149,8 +149,8 @@ public function actionIndex($id)
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

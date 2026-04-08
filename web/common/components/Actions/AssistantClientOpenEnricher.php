@@ -16,6 +16,12 @@ final class AssistantClientOpenEnricher
     {
         $route = (string) ($action['route'] ?? '');
 
+        // Si la acción ya trae client_open.kind (ej. nativas descubiertas por catálogo), respetarlo,
+        // pero asegurarnos de que la estructura mínima exista.
+        if (isset($action['client_open']) && is_array($action['client_open'])) {
+            return $action;
+        }
+
         // UI JSON (screens): si la acción ya apunta a /api/v*/ui/..., el cliente debe abrirla como pantalla dinámica.
         // No se hardcodean pantallas nativas aquí (eso debe venir explícito desde catálogo/metadata, ej. screen_id).
         if ($route !== '' && preg_match('#^/api/v\\d+/ui/#', $route) === 1) {
@@ -28,6 +34,7 @@ final class AssistantClientOpenEnricher
             ];
             // Nomenclatura sugerida: UI disparada por el asistente (JSON).
             $action['client_interaction'] = 'ui_asistente_json';
+            return $action;
         }
 
         return $action;

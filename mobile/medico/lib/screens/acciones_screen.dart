@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../navigation/native_screen_router.dart';
+
 class AccionesScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -173,7 +175,27 @@ class _AccionesScreenState extends State<AccionesScreen> {
                                   leading: const Icon(Icons.arrow_forward),
                                   title: Text(action['title'] ?? 'Acción'),
                                   onTap: () {
-                                    // TODO: Implementar acción
+                                    final co = action['client_open'];
+                                    if (co is Map) {
+                                      final kind = co['kind']?.toString();
+                                      final mobile = co['mobile'];
+                                      final screenId = (mobile is Map ? mobile['screen_id'] : null) ??
+                                          co['screen_id'];
+                                      if ((kind == 'native_fragment' || kind == 'native_page') &&
+                                          screenId is String &&
+                                          screenId.isNotEmpty) {
+                                        NativeScreenRouter.open(
+                                          context,
+                                          screenId: screenId,
+                                          title: (action['display_name'] ?? action['title'] ?? 'Pantalla').toString(),
+                                          args: Map<String, dynamic>.from(action),
+                                        );
+                                        return;
+                                      }
+                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Acción no soportada aún')),
+                                    );
                                   },
                                 ),
                               )),

@@ -150,13 +150,10 @@ final class UiActionCatalog
             $kw[] = $action;
             $kw = array_values(array_unique(array_filter($kw)));
 
-            $clientOpen = [
-                'kind' => 'ui_native',
-                // En móvil se usa screen_id; en web se usa path.
-                'screen_id' => strtolower($controller . '.' . $action),
-                'web' => ['path' => $webPath],
-                'mobile' => ['screen_id' => strtolower($controller . '.' . $action)],
-            ];
+            // Web: abrimos pantallas nativas explícitamente sin heurísticas del frontend.
+            // Default: html_page (se abre dentro del stack SPA y carga HTML).
+            // Special cases: algunas pantallas exponen un embed como html_fragment.
+            $clientOpen = self::buildNativeWebClientOpen($d, $controller, $action, $webPath);
 
             $out[] = new UiActionCatalogItem(
                 $actionId,
@@ -172,6 +169,51 @@ final class UiActionCatalog
         }
 
         return $out;
+    }
+
+    /**
+     * Construye client_open para UIs web nativas (Yii).
+     *
+     * @return array<string, mixed>
+     */
+    private static function buildNativeWebClientOpen(array $def, string $controller, string $action, string $webPath): array
+    {
+        $mobileScreenId = isset($def['mobile_screen_id']) && is_string($def['mobile_screen_id']) && $def['mobile_screen_id'] !== ''
+            ? (string) $def['mobile_screen_id']
+            : strtolower($controller . '.' . $action);
+
+        $embedPath = isset($def['native_embed_path']) && is_string($def['native_embed_path']) ? trim($def['native_embed_path']) : '';
+        $css = isset($def['native_assets_css']) && is_array($def['native_assets_css']) ? $def['native_assets_css'] : [];
+        $js = isset($def['native_assets_js']) && is_array($def['native_assets_js']) ? $def['native_assets_js'] : [];
+
+        if ($embedPath !== '') {
+            $out = [
+                'kind' => 'native_fragment',
+                'web' => [
+                    'path' => $embedPath,
+                ],
+                'mobile' => [
+                    'screen_id' => $mobileScreenId,
+                ],
+            ];
+            if ($css !== [] || $js !== []) {
+                $out['assets'] = [
+                    'css' => array_values(array_filter($css)),
+                    'js' => array_values(array_filter($js)),
+                ];
+            }
+            return $out;
+        }
+
+        return [
+            'kind' => 'native_page',
+            'web' => [
+                'path' => $webPath,
+            ],
+            'mobile' => [
+                'screen_id' => $mobileScreenId,
+            ],
+        ];
     }
 
     private static function userCanRoute(int $userId, string $route): bool

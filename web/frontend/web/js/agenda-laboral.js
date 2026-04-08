@@ -1,6 +1,13 @@
 /**
- * Agenda laboral (vista /agenda): listado API, autosave PATCH y grid semanal vía jQuery scheduler.
- * Requiere: jQuery, scheduler.js, #al_list, template #al_agenda_card_tpl.
+ * Agenda laboral embebible.
+ *
+ * Contrato:
+ * - El HTML debe estar contenido en un root (HTMLElement) que tenga dentro:
+ *   - [data-al-loading], [data-al-list], [data-al-error], [data-al-reload], [data-al-card-template]
+ * - Requiere: jQuery + scheduler.js cargados en la página.
+ *
+ * Exposición:
+ * - window.BioenlaceNativeComponents.agenda_laboral.init(rootEl)
  */
 (function ($) {
   'use strict';
@@ -345,13 +352,13 @@
     });
   }
 
-  function initAgendaLaboralPage(rootDocument) {
-    var doc = rootDocument || document;
-    var elLoading = doc.getElementById('al_loading');
-    var elList = doc.getElementById('al_list');
-    var elError = doc.getElementById('al_error');
-    var btnReload = doc.getElementById('al_reload');
-    var tpl = doc.getElementById('al_agenda_card_tpl');
+  function initAgendaLaboralEmbed(rootEl) {
+    var root = rootEl && rootEl.nodeType === 1 ? rootEl : document;
+    var elLoading = root.querySelector('[data-al-loading]');
+    var elList = root.querySelector('[data-al-list]');
+    var elError = root.querySelector('[data-al-error]');
+    var btnReload = root.querySelector('[data-al-reload]');
+    var tpl = root.querySelector('[data-al-card-template]');
 
     if (!elList || !tpl) return;
 
@@ -410,13 +417,8 @@
     load();
   }
 
-  window.BioenlaceAgendaLaboral = {
-    init: initAgendaLaboralPage,
+  window.BioenlaceNativeComponents = window.BioenlaceNativeComponents || {};
+  window.BioenlaceNativeComponents.agenda_laboral = {
+    init: initAgendaLaboralEmbed,
   };
-
-  $(function () {
-    if (document.getElementById('al_list')) {
-      initAgendaLaboralPage(document);
-    }
-  });
 })(jQuery);

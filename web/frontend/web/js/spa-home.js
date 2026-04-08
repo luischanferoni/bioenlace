@@ -991,37 +991,87 @@
      * @param {Array} actions - Array de acciones
      * @param {boolean} includeHeader - Si incluir el header "Acciones sugeridas"
      */
-    /**
-     * URL de navegación SPA: prioriza client_open (pantalla Yii / módulo web) sobre la ruta API.
-     * @param {object} action
-     * @returns {{ url: string, fullPage: boolean|undefined, actionType: string|undefined }}
-     */
-    function resolveActionNavigation(action) {
-        const co = action && action.client_open;
-        const web = co && co.web;
-        if (web && typeof web.path === 'string' && web.path !== '') {
-            let url = web.path;
-            const q = web.query;
-            if (q && typeof q === 'object' && Object.keys(q).length > 0) {
-                url += '?' + new URLSearchParams(q).toString();
+    function getClientOpenKind(action) {
+        return (action && action.client_open && action.client_open.kind) ? String(action.client_open.kind) : '';
+    }
+
+    function buildClientOpenUrl(action) {
+        const co = action && action.client_open ? action.client_open : {};
+        const kind = getClientOpenKind(action);
+
+        if (kind === 'ui_json') {
+            const api = co.api || {};
+            return api.route || action.route || action.url || '';
+        }
+
+        if (kind === 'native_fragment' || kind === 'native_page') {
+            if (co.web && typeof co.web.path === 'string' && co.web.path !== '') {
+                let url = co.web.path;
+                const q = co.web.query;
+                if (q && typeof q === 'object' && Object.keys(q).length > 0) {
+                    url += '?' + new URLSearchParams(q).toString();
+                }
+                return url;
             }
-            return {
-                url: url,
-                fullPage: true,
-                actionType: 'native_web',
-            };
+            const api = co.api || {};
+            const route = api.route || action.route || action.url || '';
+            if (api.query && typeof api.query === 'object' && Object.keys(api.query).length > 0) {
+                return route + '?' + new URLSearchParams(api.query).toString();
+            }
+            return route;
         }
-        const route = (action && (action.route || action.url)) || '';
-        let fullRoute = route;
-        if (action.params && Object.keys(action.params).length > 0) {
-            const params = new URLSearchParams(action.params);
-            fullRoute = route + '?' + params.toString();
-        }
-        return {
-            url: fullRoute,
-            fullPage: action.fullPage === true || shouldBeFullPage(route),
-            actionType: action.type || determineActionType(route),
-        };
+
+        return action && (action.route || action.url) ? (action.route || action.url) : '';
+    }
+
+    function getClientOpenAssets(action) {
+        const co = action && action.client_open ? action.client_open : {};
+        return co.assets && typeof co.assets === 'object' ? co.assets : null;
+    }
+
+    function ensureAssetsLoaded(assets) {
+        if (!assets) return Promise.resolve();
+        const css = Array.isArray(assets.css) ? assets.css : [];
+        const js = Array.isArray(assets.js) ? assets.js : [];
+
+        css.forEach(href => {
+            if (!href) return;
+            const abs = new URL(href, window.location.origin).href;
+            const exists = [...document.querySelectorAll('link[rel="stylesheet"]')].some(l => l.href === abs);
+            if (exists) return;
+            const l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = abs;
+            l.setAttribute('data-spa-asset', '1');
+            document.head.appendChild(l);
+        });
+
+        return new Promise((resolve) => {
+            let pending = 0;
+            function doneOne() {
+                pending--;
+                if (pending <= 0) resolve();
+            }
+            if (!js.length) {
+                resolve();
+                return;
+            }
+            js.forEach(src => {
+                if (!src) return;
+                const abs = new URL(src, window.location.origin).href;
+                const exists = [...document.querySelectorAll('script[src]')].some(s => s.src === abs);
+                if (exists) return;
+                pending++;
+                const s = document.createElement('script');
+                s.src = abs;
+                s.async = false;
+                s.setAttribute('data-spa-asset', '1');
+                s.onload = doneOne;
+                s.onerror = doneOne;
+                document.body.appendChild(s);
+            });
+            if (pending === 0) resolve();
+        });
     }
 
     function renderActionCards(actions, includeHeader = true) {
@@ -1036,21 +1086,20 @@
 
         actions.forEach((action, index) => {
             const cardId = `action-card-${Date.now()}-${index}`;
-            const route = action.route || action.url || '';
             
             // Generar nombre y descripción si no existen
             const actionName = action.name || action.display_name || 'Ver detalles';
             const actionDescription = action.description || '';
             
-            const nav = resolveActionNavigation(action);
-            const fullRoute = nav.url || '';
-            const fullPage = nav.fullPage === true;
-            const expandable = fullPage ? false : (action.expandable !== false);
-            const actionType = nav.actionType || action.type || determineActionType(route);
+            const kind = getClientOpenKind(action);
+            const url = buildClientOpenUrl(action);
+            const assets = getClientOpenAssets(action);
+            const expandable = kind === 'native_fragment';
+            const fullPage = kind === 'ui_json' || kind === 'native_page';
             
             html += `
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-action-type="${actionType}" data-action-url="${escapeHtml(fullRoute)}">
+                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-action-url="${escapeHtml(url)}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
                         <div class="card-body">
                             <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(actionName)}</h6>
                             <p class="card-text text-muted small mb-0">${escapeHtml(actionDescription)}</p>
@@ -1104,30 +1153,28 @@
                 const expandable = this.dataset.expandable === 'true';
                 const fullPage = this.dataset.fullPage === 'true';
                 const actionUrl = this.dataset.actionUrl;
-                const actionType = this.dataset.actionType;
+                const kind = this.dataset.openKind || '';
+                let assets = null;
+                try {
+                    assets = this.dataset.actionAssets ? JSON.parse(this.dataset.actionAssets) : null;
+                } catch (e) {
+                    assets = null;
+                }
 
                 if (fullPage) {
                     // Abrir nueva página
                     const titleEl = this.querySelector('.card-title');
-                    openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', actionType);
+                    if (kind === 'ui_json') {
+                        openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', 'ui');
+                    } else {
+                        openFullPage(actionUrl, titleEl ? titleEl.textContent : 'Cargando...', 'native_page');
+                    }
                 } else if (expandable) {
                     // Expandir in-place
-                    toggleCardExpansion(cardId, actionUrl, actionType);
+                    toggleCardExpansion(cardId, actionUrl, kind, assets);
                 } else {
-                    // Comportamiento por defecto: navegar directamente
                     if (actionUrl) {
-                        if (actionUrl.startsWith('http') || actionUrl.startsWith('/')) {
-                            // Generar pageId basado en la URL para reutilizar páginas
-                            const pageId = generatePageId(actionUrl);
-                            const cardTitle = this.querySelector('.card-title') ? this.querySelector('.card-title').textContent : 'Cargando...';
-                            navigateTo(pageId, cardTitle, '<p>Cargando...</p>', { url: actionUrl });
-                            loadPageContent(actionUrl, pageId);
-                        } else {
-                            const pageId = generatePageId(actionUrl);
-                            const cardTitle = this.querySelector('.card-title') ? this.querySelector('.card-title').textContent : 'Cargando...';
-                            navigateTo(pageId, cardTitle, '<p>Cargando...</p>', { url: actionUrl });
-                            loadPageContent(actionUrl, pageId);
-                        }
+                        window.location.href = actionUrl;
                     }
                 }
             });
@@ -1139,7 +1186,7 @@
     /**
      * Alternar expansión de card
      */
-    function toggleCardExpansion(cardId, actionUrl, actionType) {
+    function toggleCardExpansion(cardId, actionUrl, kind, assets) {
         const card = document.querySelector(`[data-card-id="${cardId}"]`);
         if (!card) return;
 
@@ -1159,7 +1206,7 @@
             // Si no tiene contenido, cargarlo
             if (!expandContent.innerHTML || expandContent.innerHTML.trim() === '') {
                 expandContent.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
-                loadCardContent(actionUrl, actionType, expandContent, cardId);
+                loadCardContent(actionUrl, kind, assets, expandContent);
             }
 
             // Animación
@@ -1174,29 +1221,29 @@
     /**
      * Cargar contenido de card vía AJAX
      */
-    function loadCardContent(url, type, container, cardId) {
+    function loadCardContent(url, kind, assets, container) {
         if (!url) {
             container.innerHTML = '<div class="alert alert-warning">No hay contenido disponible</div>';
             return;
         }
 
-        fetch(url, {
-            method: 'GET',
-            headers: clientApiHeaders({
-                'X-Requested-With': 'XMLHttpRequest'
-            })
+        ensureAssetsLoaded(assets).then(() => {
+            return fetch(url, {
+                method: 'GET',
+                headers: clientApiHeaders({
+                    'X-Requested-With': 'XMLHttpRequest'
+                })
+            });
         })
         .then(response => {
-            if (response.ok) {
-                return response.text();
+            if (!response.ok) {
+                throw new Error('Error al cargar contenido');
             }
-            throw new Error('Error al cargar contenido');
+            return response.text();
         })
         .then(html => {
             container.innerHTML = html;
-            
-            // Re-inicializar scripts si es necesario
-            initializeCardContent(container, type);
+            initializeNativeFragments(container);
         })
         .catch(error => {
             console.error('Error cargando contenido:', error);
@@ -1205,21 +1252,23 @@
     }
 
     /**
-     * Inicializar contenido del card (para formularios, etc.)
+     * Inicializar fragments nativos embebibles.
+     * Busca roots con data-native-component y llama a window.BioenlaceNativeComponents[name].init(root).
      */
-    function initializeCardContent(container, type) {
-        // Aquí se pueden inicializar componentes específicos según el tipo
-        // Por ejemplo, inicializar date pickers, select2, etc.
-        
-        // Re-ejecutar scripts inline si existen
-        const scripts = container.querySelectorAll('script');
-        scripts.forEach(oldScript => {
-            const newScript = document.createElement('script');
-            Array.from(oldScript.attributes).forEach(attr => {
-                newScript.setAttribute(attr.name, attr.value);
-            });
-            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-            oldScript.parentNode.replaceChild(newScript, oldScript);
+    function initializeNativeFragments(container) {
+        if (!container) return;
+        const roots = container.querySelectorAll('[data-native-component]');
+        roots.forEach(root => {
+            const name = root.getAttribute('data-native-component');
+            if (!name) return;
+            const registry = window.BioenlaceNativeComponents || {};
+            const comp = registry[name];
+            if (!comp || typeof comp.init !== 'function') return;
+            try {
+                comp.init(root);
+            } catch (e) {
+                console.error('[SPA] Error init native component', name, e);
+            }
         });
     }
 
@@ -1636,44 +1685,6 @@
             sendIcon.classList.remove('d-none');
             sendText.textContent = 'Enviar';
         }
-    }
-
-    /**
-     * Determinar si una ruta debe abrirse en página completa
-     * Rutas que típicamente requieren página completa: listados grandes, vistas complejas
-     */
-    function shouldBeFullPage(route) {
-        if (!route) return false;
-        
-        // Patrones que indican que debe ser página completa
-        const fullPagePatterns = [
-            /\/api\/v1\/ui\//i,      // Endpoints de UI dinámica
-            /\/index$/i,           // Listados
-            /\/view\//i,           // Vistas de detalle
-            /\/create$/i,          // Formularios de creación
-            /\/update\//i,         // Formularios de edición
-            /\/reporte/i,          // Reportes
-            // /\/timeline/i,      // Timelines - deshabilitado temporalmente
-            /\/historial/i         // Historiales
-        ];
-        
-        return fullPagePatterns.some(pattern => pattern.test(route));
-    }
-
-    /**
-     * Determinar el tipo de acción basándose en la ruta
-     */
-    function determineActionType(route) {
-        if (!route) return 'default';
-        
-        if (/\/api\/v1\/ui\//i.test(route)) return 'ui';
-        if (/\/index$/i.test(route)) return 'list';
-        if (/\/create$/i.test(route)) return 'form';
-        if (/\/view\//i.test(route)) return 'detail';
-        if (/\/update\//i.test(route)) return 'form';
-        if (/\/reporte/i.test(route)) return 'report';
-        
-        return 'default';
     }
 
     /**

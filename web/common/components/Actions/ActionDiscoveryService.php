@@ -472,6 +472,10 @@ class ActionDiscoveryService
             'keywords' => $customMetadata['keywords'],
             'synonyms' => $customMetadata['synonyms'],
             'intent_catalog' => $customMetadata['intent_catalog'],
+            'native_embed_path' => $customMetadata['native_embed_path'],
+            'native_assets_css' => $customMetadata['native_assets_css'],
+            'native_assets_js' => $customMetadata['native_assets_js'],
+            'mobile_screen_id' => $customMetadata['mobile_screen_id'],
         ];
     }
 
@@ -603,6 +607,17 @@ class ActionDiscoveryService
             'action_name' => null,
             // Si false, la acción NO debe aparecer en el catálogo de UIs.
             'intent_catalog' => true,
+            // UI nativa embebible (fragment) y assets a cargar por el shell.
+            // Se rellena vía docblock:
+            // - @native_embed_path /agenda/embed
+            // - @native_assets_css /css/a.css,/css/b.css
+            // - @native_assets_js /js/a.js,/js/b.js
+            'native_embed_path' => null,
+            'native_assets_css' => [],
+            'native_assets_js' => [],
+            // Identificador de pantalla nativa en móvil (Flutter).
+            // - @mobile_screen_id agenda.index
+            'mobile_screen_id' => null,
         ];
 
         if (!$docComment) {
@@ -663,6 +678,40 @@ class ActionDiscoveryService
                 $metadata['synonyms'] = array_values(array_filter($synonyms, static function ($synonym) {
                     return !empty($synonym);
                 }));
+            }
+
+            // @native_embed_path /agenda/embed
+            if (preg_match('/@native_embed_path\s+(.+)/i', $line, $matches)) {
+                $value = trim($matches[1]);
+                $value = trim($value, "\"'");
+                if ($value !== '') {
+                    $metadata['native_embed_path'] = $value;
+                }
+            }
+
+            // @native_assets_css /css/a.css,/css/b.css
+            if (preg_match('/@native_assets_css\s+(.+)/i', $line, $matches)) {
+                $arr = array_map('trim', explode(',', $matches[1]));
+                $metadata['native_assets_css'] = array_values(array_filter($arr, static function ($v) {
+                    return is_string($v) && trim($v) !== '';
+                }));
+            }
+
+            // @native_assets_js /js/a.js,/js/b.js
+            if (preg_match('/@native_assets_js\s+(.+)/i', $line, $matches)) {
+                $arr = array_map('trim', explode(',', $matches[1]));
+                $metadata['native_assets_js'] = array_values(array_filter($arr, static function ($v) {
+                    return is_string($v) && trim($v) !== '';
+                }));
+            }
+
+            // @mobile_screen_id agenda.index
+            if (preg_match('/@mobile_screen_id\s+(.+)/i', $line, $matches)) {
+                $value = trim($matches[1]);
+                $value = trim($value, "\"'");
+                if ($value !== '') {
+                    $metadata['mobile_screen_id'] = strtolower($value);
+                }
             }
         }
 

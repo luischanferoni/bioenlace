@@ -98,11 +98,11 @@ class _ChatScreenState extends State<ChatScreen> {
         final suggestedQuery = data['interaccion_sugerida']?['texto'];
         final queryType = data['query_type'];
         final matchedBy = data['matched_by']; // 'action_id', 'semantic', o null (LLM)
-        final needsUserInput = data['needs_user_input'] ?? false;
+        // final needsUserInput = data['needs_user_input'] ?? false;
         final actionAnalysisRaw = data['action_analysis'];
-        final actionAnalysis = (actionAnalysisRaw is Map) 
-            ? Map<String, dynamic>.from(actionAnalysisRaw) 
-            : null;
+        // final actionAnalysis = (actionAnalysisRaw is Map)
+        //     ? Map<String, dynamic>.from(actionAnalysisRaw)
+        //     : null;
 
         setState(() {
           _isSending = false;
@@ -115,8 +115,10 @@ class _ChatScreenState extends State<ChatScreen> {
             'suggested_query': suggestedQuery,
             'query_type': queryType,
             'matched_by': matchedBy,
-            'needs_user_input': needsUserInput,
-            'action_analysis': actionAnalysis,
+            'needs_user_input': data['needs_user_input'] ?? false,
+            'action_analysis': (actionAnalysisRaw is Map)
+                ? Map<String, dynamic>.from(actionAnalysisRaw)
+                : null,
             'parameters': data['parameters'],
             'timestamp': DateTime.now(),
           });
@@ -124,9 +126,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
         // Si es una acción directa (action_id o semantic) y solo hay una acción, ejecutarla automáticamente
         // PERO solo si no necesita input del usuario
-        if ((matchedBy == 'action_id' || matchedBy == 'semantic') && 
-            actions != null && 
-            actions.length == 1 && 
+        final needsUserInput = data['needs_user_input'] ?? false;
+        if ((matchedBy == 'action_id' || matchedBy == 'semantic') &&
+            actions != null &&
+            actions.length == 1 &&
             queryType == 'direct_action' &&
             !needsUserInput) {
           // Ejecutar la acción automáticamente después de un breve delay
@@ -180,17 +183,31 @@ class _ChatScreenState extends State<ChatScreen> {
     if (co is! Map) {
       return false;
     }
+    final kind = co['kind']?.toString();
     final mobile = co['mobile'];
     final web = co['web'];
-    final pathRaw = (mobile is Map ? mobile['path'] : null) ??
-        (web is Map ? web['path'] : null);
+
+    // UIs nativas (web+flutter) por screen_id: el móvil construye su propia pantalla.
+    if (kind == 'native_fragment' || kind == 'native_page') {
+      final screenId = (mobile is Map ? mobile['screen_id'] : null) ??
+          co['screen_id'];
+      if (screenId is! String || screenId.isEmpty) {
+        _showErrorSnackbar('Acción nativa sin screen_id para móvil.');
+        return true;
+      }
+      // TODO: mapear screen_id -> pantalla Flutter.
+      // Por ahora, avisar claramente en UI para no abrir navegador/webview.
+      _showErrorSnackbar('Pantalla nativa móvil pendiente: $screenId');
+      return true;
+    }
+
+    final pathRaw = (web is Map ? web['path'] : null);
     if (pathRaw is! String || pathRaw.isEmpty) {
       return false;
     }
     final base = _webBaseUriFromApiUrl(AppConfig.apiUrl);
     var target = base.replace(path: pathRaw);
-    final queryMap = (mobile is Map ? mobile['query'] : null) ??
-        (web is Map ? web['query'] : null);
+    final queryMap = (web is Map ? web['query'] : null);
     if (queryMap is Map && queryMap.isNotEmpty) {
       final q = <String, String>{...target.queryParameters};
       queryMap.forEach((k, v) {
@@ -201,11 +218,12 @@ class _ChatScreenState extends State<ChatScreen> {
       target = target.replace(queryParameters: q);
     }
     try {
+      // Fallback legacy: abrir en navegador externo.
       if (await canLaunchUrl(target)) {
         await launchUrl(target, mode: LaunchMode.externalApplication);
         return true;
       }
-      _showErrorSnackbar('No se pudo abrir la pantalla en el navegador.');
+      _showErrorSnackbar('No se pudo abrir la pantalla.');
       return true;
     } catch (e) {
       _showErrorSnackbar('No se pudo abrir: ${e.toString()}');
@@ -572,11 +590,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 final actions = message['actions'] as List<Map<String, dynamic>>?;
                 final suggestedQuery = message['suggested_query'] as String?;
                 final timestamp = message['timestamp'] as DateTime;
-                final needsUserInput = message['needs_user_input'] as bool? ?? false;
-                final actionAnalysisRaw = message['action_analysis'];
-                final actionAnalysis = (actionAnalysisRaw is Map) 
-                    ? Map<String, dynamic>.from(actionAnalysisRaw) 
-                    : null;
+                // final needsUserInput = message['needs_user_input'] as bool? ?? false;
+                // final actionAnalysisRaw = message['action_analysis'];
+                // final actionAnalysis = (actionAnalysisRaw is Map)
+                //     ? Map<String, dynamic>.from(actionAnalysisRaw)
+                //     : null;
 
                 // Verificar si hay form_config para ocultar el mensaje de chat
                 final hasFormConfig = message['form_config'] != null;
@@ -685,7 +703,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           final wizardSteps = message['wizard_steps'];
                           final actionIdFromMessage = message['action_id'];
                           final actionName = message['action_name'];
-                          final parametersFromMessage = message['parameters'];
+      // final parametersFromMessage = message['parameters'];
                           
                           if (formConfig != null && formConfig is Map) {
                             // Card tappable: un solo tap abre directamente el formulario en modal

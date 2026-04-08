@@ -15,6 +15,14 @@ use yii\web\Controller;
 class AgendaController extends Controller
 {
 
+    /**
+     * Agenda laboral (web nativa) + metadata para catálogo de intents.
+     *
+     * @native_embed_path /agenda/embed
+     * @native_assets_css /css/scheduler.css
+     * @native_assets_js /js/scheduler.js,/js/agenda-laboral.js
+     * @mobile_screen_id agenda.index
+     */
     public function actionIndex()
     {
         // No usar layout `blanco`: no ejecuta head()/endBody() y los assets (jQuery, agenda-laboral.js) no se cargan.
@@ -26,6 +34,23 @@ class AgendaController extends Controller
         );
 
         return $this->render('index', [
+            'tiposDia' => $tiposDia,
+        ]);
+    }
+
+    /**
+     * Fragmento embebible (sin layout) para shell SPA.
+     * Devuelve solo el HTML del componente; los assets deben ser cargados por el caller.
+     */
+    public function actionEmbed()
+    {
+        $tiposDia = ArrayHelper::map(
+            Tipo_dia::find()->orderBy(['nombre' => SORT_ASC])->all(),
+            'id_tipo_dia',
+            'nombre'
+        );
+
+        return $this->renderPartial('_embed', [
             'tiposDia' => $tiposDia,
         ]);
     }

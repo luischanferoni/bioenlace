@@ -20,3 +20,5 @@ alwaysApply: true
 - **Lógica transversal** en API: `BaseController` / `ActionFilter` / `behavior`; no copiar `canAccess…` en cada acción.
 
 - **Yii2**: filters, behaviors, `AccessControl` antes de patrones ad hoc; componentes propios solo si Yii2 no alcanza.
+
+- **0 hardcode en navegación UI (asistente)**: evitar `if/switch` por pantalla en catálogos/enriquecedores/loaders. Si una UI necesita comportamiento/asset distinto, declararlo como **metadata** (definición descubierta) y consumirlo genéricamente.

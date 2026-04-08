@@ -34,10 +34,10 @@ class InfraestructuraSalaController extends Controller
 
     /**
      * Lists all InfraestructuraSala models.
+     * @no_intent_catalog
      * @return mixed
-*/
-
-public function actionIndex()
+    */
+    public function actionIndex()
     {
         $searchModel = new InfraestructuraSalaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -50,11 +50,11 @@ public function actionIndex()
 
     /**
      * Displays a single InfraestructuraSala model.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -65,9 +65,9 @@ public function actionIndex()
     /**
      * Creates a new InfraestructuraSala model.
      * If creation is successful, the browser will be redirected to the 'view' page.
+     * @no_intent_catalog
      * @return mixed
     */
-
     public function actionCreate()
     {
         $model = new InfraestructuraSala();
@@ -84,11 +84,11 @@ public function actionIndex()
     /**
      * Updates an existing InfraestructuraSala model.
      * If update is successful, the browser will be redirected to the 'view' page.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -105,11 +105,11 @@ public function actionIndex()
     /**
      * Deletes an existing InfraestructuraSala model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -120,6 +120,7 @@ public function actionIndex()
     /**
      * Finds the InfraestructuraSala model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
+     * @no_intent_catalog
      * @param integer $id
      * @return InfraestructuraSala the loaded model
      * @throws NotFoundHttpException if the model cannot be found
@@ -136,8 +137,8 @@ public function actionIndex()
      /**
      * 
      * Funcion para crear el select dependiente de Departamentos
+     * @no_intent_catalog
     */
-
     public function actionSalasPorPiso() {
         $out = [];
         $prueba = json_encode($_POST['depdrop_parents']);

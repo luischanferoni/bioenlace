@@ -34,9 +34,10 @@ class InfraestructuraPisoController extends Controller
 
     /**
      * Lists all InfraestructuraPiso models.
+     * @no_intent_catalog
      * @return mixed
-*/
-public function actionIndex()
+    */
+    public function actionIndex()
     {
         $searchModel = new InfraestructuraPisoBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -49,11 +50,11 @@ public function actionIndex()
 
     /**
      * Displays a single InfraestructuraPiso model.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -64,9 +65,9 @@ public function actionIndex()
     /**
      * Creates a new InfraestructuraPiso model.
      * If creation is successful, the browser will be redirected to the 'view' page.
+     * @no_intent_catalog
      * @return mixed
     */
-
     public function actionCreate()
     {
         $model = new InfraestructuraPiso();
@@ -83,11 +84,11 @@ public function actionIndex()
     /**
      * Updates an existing InfraestructuraPiso model.
      * If update is successful, the browser will be redirected to the 'view' page.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -104,11 +105,11 @@ public function actionIndex()
     /**
      * Deletes an existing InfraestructuraPiso model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -119,6 +120,7 @@ public function actionIndex()
     /**
      * Finds the InfraestructuraPiso model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
+     * @no_intent_catalog
      * @param integer $id
      * @return InfraestructuraPiso the loaded model
      * @throws NotFoundHttpException if the model cannot be found

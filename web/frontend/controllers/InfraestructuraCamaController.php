@@ -33,10 +33,10 @@ class InfraestructuraCamaController extends Controller
 
     /**
      * Lists all InfraestructuraCama models.
+     * @no_intent_catalog
      * @return mixed
-*/
-
-public function actionIndex()
+    */
+    public function actionIndex()
     {
         $searchModel = new InfraestructuraCamaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -49,11 +49,11 @@ public function actionIndex()
 
     /**
      * Displays a single InfraestructuraCama model.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -64,9 +64,9 @@ public function actionIndex()
     /**
      * Creates a new InfraestructuraCama model.
      * If creation is successful, the browser will be redirected to the 'view' page.
+     * @no_intent_catalog
      * @return mixed
     */
-
     public function actionCreate()
     {
         $model = new InfraestructuraCama();
@@ -83,11 +83,11 @@ public function actionIndex()
     /**
      * Updates an existing InfraestructuraCama model.
      * If update is successful, the browser will be redirected to the 'view' page.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -104,11 +104,11 @@ public function actionIndex()
     /**
      * Deletes an existing InfraestructuraCama model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -119,6 +119,7 @@ public function actionIndex()
     /**
      * Finds the InfraestructuraCama model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
+     * @no_intent_catalog
      * @param integer $id
      * @return InfraestructuraCama the loaded model
      * @throws NotFoundHttpException if the model cannot be found
@@ -137,8 +138,8 @@ public function actionIndex()
      * @modificacion: 22/08/2022
      * actionReporte() 
      * @autor: 
+     * @no_intent_catalog
     */
-
     public function actionReportecamasocupadas() {
         $searchModel = new InfraestructuraCamaBusqueda();
         $searchModel->estado = 'ocupada';
@@ -155,8 +156,8 @@ public function actionIndex()
      * @modificacion: 22/08/2022
      * actionReporte() 
      * @autor: 
+     * @no_intent_catalog
     */
-
     public function actionReportecamas() {
         $searchModel = new InfraestructuraCamaBusqueda();
         //$searchModel->estado = 'ocupada';

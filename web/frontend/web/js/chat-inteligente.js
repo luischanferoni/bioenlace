@@ -691,17 +691,10 @@
             const formAction = form.action
             const formMethod = form.method;
 
-            const apiHeaders = (typeof window.getBioenlaceApiClientHeaders === 'function')
-                ? window.getBioenlaceApiClientHeaders({ 'X-Requested-With': 'XMLHttpRequest' })
-                : Object.assign({
-                    'X-App-Client': 'web-frontend',
-                    'X-App-Version': (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0',
-                    'X-Requested-With': 'XMLHttpRequest'
-                });
             const response = await fetch(formAction, {
                 method: formMethod,
                 body: formData,
-                headers: apiHeaders
+                headers: window.BioenlaceApiClient.mergeHeaders({ 'X-Requested-With': 'XMLHttpRequest' })
             });
 
             let result;

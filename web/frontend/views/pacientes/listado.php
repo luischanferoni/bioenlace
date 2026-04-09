@@ -1,5 +1,6 @@
 <?php
 
+use frontend\assets\AppAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\Json;
@@ -88,5 +89,6 @@ $this->title = 'Pacientes';
 <?= $this->render('_listado_templates') ?>
 
 <?php
-$this->registerJsFile('@web/js/pacientes-listado.js', ['depends' => [\yii\web\JqueryAsset::class]]);
+// Tras AppAsset: BioenlaceApiClient.mergeHeaders + native-page-bridge (BioenlaceNativePage).
+$this->registerJsFile('@web/js/pacientes-listado.js', ['depends' => [AppAsset::class]]);
 ?>

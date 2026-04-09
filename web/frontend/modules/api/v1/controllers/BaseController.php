@@ -16,7 +16,7 @@ class BaseController extends Controller
     public $enableCsrfValidation = false;
 
     /**
-     * Acciones que no requieren autenticaci?n (solo para controladores API que no mapean a frontend, ej. AuthController).
+     * Acciones que no requieren autenticación (solo para controladores API que no mapean a frontend, ej. AuthController).
      * Los controladores mapeadores usan $frontendControllerClass y toman except del controlador frontend.
      */
     public static $authenticatorExcept = [];
@@ -85,9 +85,9 @@ class BaseController extends Controller
     }
 
     /**
-     * Respuesta de ?xito est?ndar
+     * Respuesta de éxito estándar
      */
-    protected function success($data = null, $message = 'Operaci?n exitosa', $code = 200)
+    protected function success($data = null, $message = 'Operación exitosa', $code = 200)
     {
         Yii::$app->response->statusCode = $code;
         return [
@@ -98,9 +98,9 @@ class BaseController extends Controller
     }
 
     /**
-     * Respuesta de error est?ndar
+     * Respuesta de error estándar
      */
-    protected function error($message = 'Error en la operaci?n', $errors = null, $code = 400)
+    protected function error($message = 'Error en la operación', $errors = null, $code = 400)
     {
         Yii::$app->response->statusCode = $code;
         return [

@@ -24,13 +24,6 @@
     'domingo_2',
   ];
 
-  function apiHeaders() {
-    if (typeof window.getBioenlaceApiClientHeaders === 'function') {
-      return window.getBioenlaceApiClientHeaders();
-    }
-    return {};
-  }
-
   function isDaySi(v) {
     if (v === true || v === 1) return true;
     var s = String(v || '').toUpperCase();
@@ -286,7 +279,7 @@
       try {
         var resp = await fetch(url, {
           method: 'PATCH',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, apiHeaders()),
+          headers: Object.assign({ 'Content-Type': 'application/json' }, window.BioenlaceApiClient.mergeHeaders({})),
           body: JSON.stringify(body),
         });
         var payload = await resp.json().catch(function () {
@@ -395,7 +388,7 @@
       clearError();
       setLoading(true);
       try {
-        var resp = await fetch('/api/v1/agenda/listar?per-page=100', { headers: apiHeaders() });
+        var resp = await fetch('/api/v1/agenda/listar?per-page=100', { headers: window.BioenlaceApiClient.mergeHeaders({}) });
         var payload = await resp.json();
         if (!resp.ok || !payload || payload.success !== true) {
           var msg =

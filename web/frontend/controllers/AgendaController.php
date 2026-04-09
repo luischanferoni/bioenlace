@@ -22,7 +22,7 @@ class AgendaController extends Controller
      *
      * @spa_presentation inline
      * @native_assets_css /css/scheduler.css
-     * @native_assets_js /js/scheduler.js,/js/agenda-laboral.js
+     * @native_assets_js /js/bioenlace-api-client.js,/js/scheduler.js,/js/agenda-laboral.js
      * @mobile_screen_id agenda.crear
      */
     public function actionCrear()

@@ -242,7 +242,7 @@
 
         var json = await api.fetchJson(u.toString(), {
           method: 'GET',
-          headers: api.apiHeaders({ 'X-Requested-With': 'XMLHttpRequest' }),
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
 
         var payload = json.data || json;

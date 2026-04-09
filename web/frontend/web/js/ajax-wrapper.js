@@ -94,12 +94,7 @@
     // Exponer helper para fetch/fetch wrapper
     function fetchPost(url, data, fetchOptions) {
         var merged = mergeData(data);
-        var defaultClient = (typeof window.getBioenlaceApiClientHeaders === 'function')
-            ? window.getBioenlaceApiClientHeaders({})
-            : {
-                'X-App-Client': 'web-frontend',
-                'X-App-Version': (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0'
-            };
+        var defaultClient = window.BioenlaceApiClient.mergeHeaders({});
         var headers = Object.assign({}, defaultClient, (fetchOptions && fetchOptions.headers) || {});
         headers['X-CSRF-Token'] = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 

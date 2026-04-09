@@ -6,21 +6,6 @@
 (function() {
     'use strict';
 
-    /**
-     * Headers X-App-Client / X-App-Version para /api/v1 (compatibilidad UI en backend).
-     * Si existe window.getBioenlaceApiClientHeaders (layout main), lo usa.
-     */
-    function clientApiHeaders(extra) {
-        if (typeof window.getBioenlaceApiClientHeaders === 'function') {
-            return window.getBioenlaceApiClientHeaders(extra || {});
-        }
-        var v = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
-        return Object.assign(
-            { 'X-App-Client': 'web-frontend', 'X-App-Version': v },
-            extra || {}
-        );
-    }
-
     /** URL absoluta para fetch desde el shell (misma regla que loadPageContent). */
     function resolveSpaFetchUrl(url) {
         if (!url) return '';
@@ -97,7 +82,7 @@
         const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
         fetch(asistenteUrl, {
             method: 'POST',
-            headers: clientApiHeaders({
+            headers: window.BioenlaceApiClient.mergeHeaders({
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -518,7 +503,7 @@
                 try {
                     const url = new URL(endpoint, window.location.origin);
                     Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
-                    const res = await fetch(url.toString(), { headers: clientApiHeaders({ 'Accept': 'application/json' }) });
+                    const res = await fetch(url.toString(), { headers: window.BioenlaceApiClient.mergeHeaders({ 'Accept': 'application/json' }) });
                     const data = await res.json();
 
                     // Soporte slots-disponibles-como-paciente (por_dia)
@@ -821,7 +806,7 @@
         fetch(action, {
             method: 'POST',
             body: formData,
-            headers: clientApiHeaders({
+            headers: window.BioenlaceApiClient.mergeHeaders({
                 'X-Requested-With': 'XMLHttpRequest'
             })
         })
@@ -863,7 +848,7 @@
         
         fetch(route, {
             method: 'POST',
-            headers: clientApiHeaders({
+            headers: window.BioenlaceApiClient.mergeHeaders({
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-Requested-With': 'XMLHttpRequest'
             }),
@@ -1272,7 +1257,7 @@
         if (kind === 'ui_json') {
             fetch(fullUrl, {
                 method: 'GET',
-                headers: clientApiHeaders({
+                headers: window.BioenlaceApiClient.mergeHeaders({
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 })
@@ -1301,7 +1286,7 @@
         ensureAssetsLoaded(assets).then(() => {
             return fetch(fullUrl, {
                 method: 'GET',
-                headers: clientApiHeaders({
+                headers: window.BioenlaceApiClient.mergeHeaders({
                     'X-Requested-With': 'XMLHttpRequest'
                 })
             });
@@ -1387,7 +1372,7 @@
         if (type === 'ui') {
             fetch(fullUrl, {
                 method: 'GET',
-                headers: clientApiHeaders({
+                headers: window.BioenlaceApiClient.mergeHeaders({
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 })
@@ -1446,7 +1431,7 @@
             ensureAssetsLoaded(assets).then(() => {
                 return fetch(fullUrl, {
                     method: 'GET',
-                    headers: clientApiHeaders({
+                    headers: window.BioenlaceApiClient.mergeHeaders({
                         'X-Requested-With': 'XMLHttpRequest'
                     })
                 });
@@ -1483,7 +1468,7 @@
         // Documento HTML completo (p. ej. navegación secundaria): parsear head/body.
         fetch(fullUrl, {
             method: 'GET',
-            headers: clientApiHeaders({
+            headers: window.BioenlaceApiClient.mergeHeaders({
                 'X-Requested-With': 'XMLHttpRequest'
             })
         })
@@ -1713,7 +1698,7 @@
         const url = window.location.origin + '/api/v1/acciones/comunes';
         fetch(url, {
             method: 'GET',
-            headers: clientApiHeaders({
+            headers: window.BioenlaceApiClient.mergeHeaders({
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             })

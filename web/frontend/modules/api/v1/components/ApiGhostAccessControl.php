@@ -26,8 +26,6 @@ class ApiGhostAccessControl extends ActionFilter
      * @var string[]
      */
     protected static array $authenticatedOnlyRoutes = [
-        '/api/efectores/mis-efectores',
-        '/api/rrhh/servicios-por-rrhh',
         '/api/sesion-operativa/establecer',
         '/api/acciones/comunes',
     ];

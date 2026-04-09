@@ -1,19 +1,11 @@
 /**
  * Bridge para páginas nativas (tipo 1): helpers reutilizables para:
- * - headers API (X-App-Client/X-App-Version)
- * - construir URLs de /api/v1 sin duplicar "/api"
+ * - URLs de /api/v1 sin duplicar "/api"
+ * - fetch JSON con headers vía {@link window.BioenlaceApiClient.mergeHeaders}
  * - navegación opcional dentro del shell SPA vía data-spa-nav
  */
 (function () {
   'use strict';
-
-  function apiHeaders(extra) {
-    if (typeof window.getBioenlaceApiClientHeaders === 'function') {
-      return window.getBioenlaceApiClientHeaders(extra || {});
-    }
-    var v = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
-    return Object.assign({ 'X-App-Client': 'web-frontend', 'X-App-Version': v }, extra || {});
-  }
 
   /**
    * Construye URL absoluta a /api/v1/<path> evitando duplicación "/api/api".
@@ -23,14 +15,15 @@
     var p = String(path || '');
     if (!p) return window.location.origin + '/api/v1';
     if (!p.startsWith('/')) p = '/' + p;
-    // Si ya viene /api/v1/..., usar origin + eso.
     if (p.startsWith('/api/v1/')) return window.location.origin + p;
     return window.location.origin + '/api/v1' + p;
   }
 
   async function fetchJson(url, options) {
     var opts = Object.assign({}, options || {});
-    opts.headers = apiHeaders(Object.assign({ 'Accept': 'application/json' }, opts.headers || {}));
+    opts.headers = window.BioenlaceApiClient.mergeHeaders(
+      Object.assign({ Accept: 'application/json' }, opts.headers || {})
+    );
     opts.credentials = opts.credentials || 'same-origin';
     var res = await fetch(url, opts);
     var ct = (res.headers.get('content-type') || '').toLowerCase();
@@ -45,10 +38,6 @@
     return json;
   }
 
-  /**
-   * Convención: links con data-spa-nav="1" intentan navegar dentro del shell SPA si existe.
-   * Si no existe shell, se comportan como link normal.
-   */
   function bindSpaNavLinks(root) {
     var base = root && typeof root.addEventListener === 'function' ? root : document;
     base.addEventListener('click', function (e) {
@@ -67,9 +56,9 @@
   }
 
   window.BioenlaceNativePage = window.BioenlaceNativePage || {};
-  window.BioenlaceNativePage.apiHeaders = apiHeaders;
+  window.BioenlaceNativePage.mergeHeaders = window.BioenlaceApiClient.mergeHeaders;
+  window.BioenlaceNativePage.apiHeaders = window.BioenlaceApiClient.mergeHeaders;
   window.BioenlaceNativePage.apiV1Url = apiV1Url;
   window.BioenlaceNativePage.fetchJson = fetchJson;
   window.BioenlaceNativePage.bindSpaNavLinks = bindSpaNavLinks;
 })();
-

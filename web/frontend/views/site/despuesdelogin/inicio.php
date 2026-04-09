@@ -1,20 +1,14 @@
 <?php
 
 use yii\helpers\Url;
-use yii\bootstrap5\Modal;
-use yii\web\JsExpression;
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
-use yii\helpers\ArrayHelper; 
 
-use frontend\assets\FormWizardAsset;
+use frontend\assets\SesionOperativaPostloginWizardAsset;
 
-FormWizardAsset::register($this);
+SesionOperativaPostloginWizardAsset::register($this);
 
-$urlServiciosPorRrhh = Url::to(['/api/v1/rrhh/servicios-por-rrhh'], true);
 $urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'], true);
-$urlMisEfectores = Url::to(['/api/v1/efectores/mis-efectores'], true);
-$urlEncounterClasses = Url::to(['/api/v1/catalogos/encounter-classes'], true);
 ?>
 
     <?php $form = ActiveForm::begin([
@@ -77,193 +71,8 @@ $urlEncounterClasses = Url::to(['/api/v1/catalogos/encounter-classes'], true);
 
     <?php ActiveForm::end(); ?>
 
-<?php
-    $this->registerJs('
-        function bioHeaders() {
-            return (typeof window.getBioenlaceApiClientHeaders === "function")
-                ? window.getBioenlaceApiClientHeaders({})
-                : {};
-        }
-
-        function renderEfectores(efectores) {
-            var container = document.getElementById("grid_efectores");
-            var tmpl = document.getElementById("tmpl_efector_radio");
-            if (!container || !tmpl) return;
-            container.innerHTML = "";
-            (efectores || []).forEach(function (e) {
-                var id = parseInt(e.id_efector || e.id, 10);
-                var nombre = e.nombre == null ? "" : String(e.nombre);
-                if (!id) return;
-                var node = document.importNode(tmpl.content, true);
-                var input = node.querySelector("input[name=nombre_efector]");
-                var label = node.querySelector("label");
-                var inputId = "efector_" + id;
-                input.id = inputId;
-                input.value = String(id);
-                label.setAttribute("for", inputId);
-                label.textContent = nombre;
-                container.appendChild(node);
-            });
-        }
-
-        function renderEncounterClasses(list) {
-            var container = document.getElementById("encounter_classes_container");
-            var tmpl = document.getElementById("tmpl_encounter_class");
-            if (!container || !tmpl) return;
-            container.innerHTML = "";
-            (list || []).forEach(function (c, idx) {
-                var code = c.code == null ? "" : String(c.code);
-                var labelTxt = c.label == null ? "" : String(c.label);
-                if (!code) return;
-                var node = document.importNode(tmpl.content, true);
-                var input = node.querySelector("input[name=encounter_class]");
-                var label = node.querySelector("label");
-                var h3 = node.querySelector("h3");
-                var inputId = "encounter_class_" + idx + "_" + code;
-                input.id = inputId;
-                input.value = code;
-                label.setAttribute("for", inputId);
-                h3.textContent = labelTxt;
-                container.appendChild(node);
-            });
-        }
-
-        function cargarEfectores() {
-            $.ajax({
-                url: '.json_encode($urlMisEfectores).',
-                type: "GET",
-                headers: bioHeaders(),
-                dataType: "json",
-                success: function (res) {
-                    var efectores = (res && res.data && res.data.efectores) ? res.data.efectores : [];
-                    renderEfectores(efectores);
-                },
-                error: function () {
-                    $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
-                        +"<i class=\'fa fa-exclamation fa-1x\'></i> Error cargando efectores</div>");
-                    window.setTimeout(function() { $(".alert").alert("close"); }, 6000);
-                }
-            });
-        }
-
-        function cargarEncounterClasses() {
-            $.ajax({
-                url: '.json_encode($urlEncounterClasses).',
-                type: "GET",
-                headers: bioHeaders(),
-                dataType: "json",
-                success: function (res) {
-                    var list = (res && res.data && res.data.encounter_classes) ? res.data.encounter_classes : [];
-                    renderEncounterClasses(list);
-                },
-                error: function () {
-                    $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
-                        +"<i class=\'fa fa-exclamation fa-1x\'></i> Error cargando áreas</div>");
-                    window.setTimeout(function() { $(".alert").alert("close"); }, 6000);
-                }
-            });
-        }
-
-        cargarEfectores();
-        cargarEncounterClasses();
-
-        $(".a-servicio").on("click", function(e) {
-            $.ajax({
-                url: '.json_encode($urlServiciosPorRrhh).',
-                type: "GET",
-                headers: bioHeaders(),
-                dataType: "json",
-                data: {
-                    id_efector: $("input[name=nombre_efector]:checked").val()
-                },
-                success: function (res) {
-                    var servicios = (res && res.servicios) ? res.servicios : (res && res.data && res.data.servicios ? res.data.servicios : []);
-                    var container = document.getElementById("div_servicios");
-                    var tmpl = document.getElementById("tmpl_servicio");
-                    if (!container || !tmpl) return;
-                    container.innerHTML = "";
-                    (servicios || []).forEach(function (s, idx) {
-                        var id = parseInt(s.id_servicio, 10);
-                        var nombre = s.nombre == null ? "" : String(s.nombre);
-                        if (!id) return;
-                        var node = document.importNode(tmpl.content, true);
-                        var input = node.querySelector("input[name=servicio]");
-                        var label = node.querySelector("label");
-                        var h3 = node.querySelector("h3");
-                        var inputId = "btn-check-servicio-" + idx + "-" + id;
-                        input.id = inputId;
-                        input.value = String(id);
-                        label.setAttribute("for", inputId);
-                        h3.textContent = nombre;
-                        container.appendChild(node);
-                    });
-                },
-                error: function () {
-                    $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
-                        +"<i class=\'fa fa-exclamation fa-1x\'></i> Error inesperado</div>"); 
-                    window.setTimeout(function() { $(".alert").alert("close"); }, 6000); 
-                }
-            });
-        });
-
-        $(document).on("click", "input[name=nombre_efector]", function(e){
-            $("#formwizard_efectores .next").prop("disabled", false);
-        });
-
-        $(document).on("click", "input[name=encounter_class]", function(e){
-            $("#formwizard_encounter .next").prop("disabled", false);
-        });
-
-        $(document).on("click", "input[name=servicio]", function(e) {
-            $("#formwizard_servicios .next").prop("disabled", false);
-        });
-
-        $("#formwizard_servicios .next").on("click", function(e){
-            e.preventDefault();
-
-            var efectorIdRaw = $("input[name=nombre_efector]:checked").val();
-            var servicioIdRaw = $("input[name=servicio]:checked").val();
-            var encounterClass = $("input[name=encounter_class]:checked").val();
-
-            var efectorId = parseInt(efectorIdRaw, 10);
-            var servicioId = parseInt(servicioIdRaw, 10);
-
-            if (!efectorId || isNaN(efectorId) || !servicioId || isNaN(servicioId) || !encounterClass) {
-                $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
-                    +"<i class=\'fa fa-exclamation fa-1x\'></i> Seleccione efector, área y servicio para continuar</div>");
-                window.setTimeout(function() { $(".alert").alert("close"); }, 6000);
-                return;
-            }
-
-            $.ajax({
-                url: '.json_encode($urlEstablecerSesionOperativa).',
-                type: "POST",
-                headers: bioHeaders(),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
-                data: JSON.stringify({
-                    efector_id: efectorId,
-                    encounter_class: encounterClass,
-                    servicio_id: servicioId
-                }),
-                success: function (res) {
-                    var redirectUrl = res && res.data && res.data.redirect_url ? res.data.redirect_url : null;
-                    if (redirectUrl) {
-                        window.location.replace(redirectUrl);
-                        return;
-                    }
-                    $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
-                        +"<i class=\'fa fa-exclamation fa-1x\'></i> No se pudo determinar URL de redirección</div>");
-                    window.setTimeout(function() { $(".alert").alert("close"); }, 6000);
-                },
-                error: function () {
-                    $("body").append("<div class=\'alert alert-error\' role=\'alert\'>"
-                        +"<i class=\'fa fa-exclamation fa-1x\'></i> Error inesperado</div>"); 
-                    window.setTimeout(function() { $(".alert").alert("close"); }, 6000); 
-                }
-            });       
-        });               
-    ',
-    yii\web\View::POS_END
-)
-?>
+<?= Html::tag('div', '', [
+    'id' => 'sesion-operativa-wizard-config',
+    'class' => 'd-none',
+    'data-establecer-url' => $urlEstablecerSesionOperativa,
+]) ?>

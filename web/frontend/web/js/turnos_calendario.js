@@ -38,13 +38,6 @@ function getEventos(dia) {
   );
 }
 
-function bioHeaders() {
-  if (typeof window.getBioenlaceApiClientHeaders === "function") {
-    return window.getBioenlaceApiClientHeaders();
-  }
-  return {};
-}
-
 $(document).ready(function () {
 
   var hoy = new Date().toISOString().slice(0, 10);
@@ -166,7 +159,7 @@ $(document).ready(function () {
       $.ajax({
         url: turnos_url_cancelar_operativo_base + "/" + id_turno + "/cancelar-operativo",
         type: "POST",
-        headers: bioHeaders(),
+        headers: window.BioenlaceApiClient.mergeHeaders({}),
         data: {
           estado_motivo: motivo_cancelacion,
           canal: "web",
@@ -193,7 +186,7 @@ $(document).ready(function () {
     $.ajax({
       url: turnos_url_crear_sobreturno,
       type: "POST",
-      headers: bioHeaders(),
+      headers: window.BioenlaceApiClient.mergeHeaders({}),
       data: {
         id_persona: turnos_id_persona,
         fecha: $("#fecha_input").val(),
@@ -228,7 +221,7 @@ $(document).ready(function () {
     $.ajax({
       url: turnos_url_create,
       type: "POST",
-      headers: bioHeaders(),
+      headers: window.BioenlaceApiClient.mergeHeaders({}),
       data: {
         id_persona: turnos_id_persona,
         fecha: $("#fecha_input").val(),

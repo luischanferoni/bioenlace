@@ -13,6 +13,7 @@ alwaysApply: false
 
 ## Markup en PHP vs JS (regla práctica)
 
+- **Sin `registerJs` extensos**: el comportamiento de pantalla va en **`frontend/web/js`** + `AssetBundle`; en la vista PHP, preferir `data-*` (o config mínima) para parametrizar URLs/IDs. Ver también la regla global de arquitectura Yii (JS en archivos).
 - La **estructura HTML** (cards, grids, wrappers, textos estáticos) vive en **vistas PHP** (`views/...`), idealmente en **partials** reutilizables.
 - Para ítems que vienen de un **array JSON** (API), **no concatenar HTML largo en JavaScript**.
 - Patrón recomendado: definir **`<template>`** en un partial y en JS solo clonar y rellenar:

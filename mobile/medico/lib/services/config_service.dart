@@ -3,6 +3,53 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
+/// Respuesta del modo «opciones» de POST /sesion-operativa/establecer (body vacío).
+class SessionWizardOptions {
+  final List<Efector> efectores;
+  final Map<int, List<Servicio>> serviciosPorEfector;
+  final List<EncounterClass> encounterClasses;
+  final List<EfectorConProblema> efectoresConProblemas;
+
+  SessionWizardOptions({
+    required this.efectores,
+    required this.serviciosPorEfector,
+    required this.encounterClasses,
+    required this.efectoresConProblemas,
+  });
+}
+
+class EfectorConProblema {
+  final int? idEfector;
+  final String? nombre;
+  final String message;
+  final List<String> contactosNombreCompleto;
+
+  EfectorConProblema({
+    this.idEfector,
+    this.nombre,
+    required this.message,
+    this.contactosNombreCompleto = const [],
+  });
+
+  factory EfectorConProblema.fromJson(Map<String, dynamic> json) {
+    final rawContact = json['contact'];
+    final contactos = <String>[];
+    if (rawContact is List) {
+      for (final c in rawContact) {
+        if (c is Map && c['nombre_completo'] != null) {
+          contactos.add(c['nombre_completo'].toString());
+        }
+      }
+    }
+    return EfectorConProblema(
+      idEfector: json['id_efector'] as int?,
+      nombre: json['nombre'] as String?,
+      message: (json['message'] as String?) ?? '',
+      contactosNombreCompleto: contactos,
+    );
+  }
+}
+
 class ConfigService {
   String? authToken;
 
@@ -12,6 +59,7 @@ class ConfigService {
     final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      'X-Client': 'mobile',
     };
     if (authToken != null && authToken!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $authToken';
@@ -19,155 +67,107 @@ class ConfigService {
     return headers;
   }
 
-  /// Obtener efectores del usuario autenticado
-  Future<List<Efector>> getEfectores({String? userId}) async {
-    try {
-      // Para desarrollo/simulación: incluir user_id como parámetro si no hay token válido
-      final queryParams = <String, String>{};
-      if (userId != null && (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
-        queryParams['user_id'] = userId;
-      }
-      
-      final uri = Uri.parse('${AppConfig.apiUrl}/efectores/mis-efectores').replace(
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
-      );
-      
-      print('Request URL: $uri');
-      print('Headers: $_headers');
-      
-      final response = await http.get(
-        uri,
-        headers: _headers,
-      );
-
-      print('Response status: ${response.statusCode}');
-      print('Response headers: ${response.headers}');
-      final bodyPreview = response.body.length > 200 
-          ? response.body.substring(0, 200) 
-          : response.body;
-      print('Response body (first 200 chars): $bodyPreview');
-
-      // Verificar que la respuesta sea JSON, no HTML
-      final bodyTrimmed = response.body.trim();
-      
-      if (bodyTrimmed.startsWith('<!DOCTYPE') || bodyTrimmed.startsWith('<html')) {
-        throw Exception('La API devolvió HTML en lugar de JSON. Esto puede indicar:\n'
-            '1. La URL está incorrecta: ${AppConfig.apiUrl}/efectores/mis-efectores\n'
-            '2. Falta autenticación o el token es inválido\n'
-            '3. El servidor está redirigiendo a una página de login\n\n'
-            'Verifique que:\n'
-            '- La URL base sea correcta: ${AppConfig.apiUrl}\n'
-            '- El token de autenticación esté configurado\n'
-            '- El endpoint exista en el servidor');
-      }
-
-      if (response.statusCode == 200) {
-        try {
-          final data = json.decode(response.body);
-          if (data['success'] == true && data['data'] != null) {
-            final List<dynamic> jsonEfectores = data['data']['efectores'] as List<dynamic>;
-            return jsonEfectores
-                .map((json) => Efector.fromJson(json as Map<String, dynamic>))
-                .toList();
-          } else {
-            throw Exception(data['message'] ?? 'Error al obtener efectores');
-          }
-        } catch (e) {
-          if (e is FormatException) {
-            throw Exception('Error al parsear respuesta JSON. La API puede estar devolviendo HTML. Respuesta: $bodyPreview');
-          }
-          rethrow;
-        }
-      } else {
-        // Intentar parsear el error como JSON, pero si falla, mostrar el cuerpo completo
-        try {
-          final errorData = json.decode(response.body);
-          throw Exception(errorData['message'] ?? 'Error al obtener efectores (${response.statusCode})');
-        } catch (e) {
-          final bodyPreview = response.body.length > 200 
-              ? response.body.substring(0, 200) 
-              : response.body;
-          throw Exception('Error ${response.statusCode}: $bodyPreview');
-        }
-      }
-    } catch (e) {
-      print('Error fetching efectores: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtener servicios de un efector
-  Future<List<Servicio>> getServicios(int efectorId, {String? userId}) async {
-    try {
-      // Para desarrollo/simulación: incluir user_id como parámetro si no hay token válido
-      final queryParams = <String, String>{
-        'id_efector': efectorId.toString(),
-      };
-      if (userId != null && (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
-        queryParams['user_id'] = userId;
-      }
-      
-      final uri = Uri.parse('${AppConfig.apiUrl}/rrhh/servicios-por-rrhh').replace(
-        queryParameters: queryParams,
-      );
-
-      print('Request URL: $uri');
-      print('Headers: $_headers');
-      
-      final response = await http.get(uri, headers: _headers);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Este endpoint puede devolver:
-        // 1) Formato estándar: {success:true, data:{servicios:[...]}}
-        // 2) Formato legacy: {servicios:[...]} (sin wrapper)
-        List<dynamic> jsonServicios = [];
-        if (data is Map && data['success'] == true && data['data'] != null) {
-          jsonServicios = (data['data']['servicios'] as List<dynamic>? ?? []);
-        } else if (data is Map && data['servicios'] is List) {
-          jsonServicios = data['servicios'] as List<dynamic>;
-        } else {
-          throw Exception((data is Map ? data['message'] : null) ?? 'Error al obtener servicios');
-        }
-        return jsonServicios
-            .map((json) => Servicio.fromJson(json as Map<String, dynamic>))
-            .toList();
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Error al obtener servicios');
-      }
-    } catch (e) {
-      print('Error fetching servicios: $e');
-      rethrow;
-    }
-  }
-
-  /// Obtener encounter classes disponibles
+  /// Catálogo público de encounter classes (pantallas que no pasan por el wizard).
   Future<List<EncounterClass>> getEncounterClasses() async {
-    try {
-      final response = await http.get(
-        Uri.parse('${AppConfig.apiUrl}/catalogos/encounter-classes'),
-        headers: _headers,
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> jsonClasses = data['data']['encounter_classes'] as List<dynamic>;
-          return jsonClasses
-              .map((json) => EncounterClass.fromJson(json as Map<String, dynamic>))
-              .toList();
-        } else {
-          throw Exception(data['message'] ?? 'Error al obtener encounter classes');
-        }
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Error al obtener encounter classes');
-      }
-    } catch (e) {
-      print('Error fetching encounter classes: $e');
-      rethrow;
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiUrl}/catalogos/encounter-classes'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) {
+      final errorData = json.decode(response.body) as Map<String, dynamic>?;
+      throw Exception(errorData?['message'] ?? 'Error al obtener encounter classes');
     }
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    if (data['success'] != true || data['data'] == null) {
+      throw Exception(data['message'] ?? 'Error al obtener encounter classes');
+    }
+    final raw = data['data']['encounter_classes'] as List<dynamic>? ?? [];
+    return raw
+        .map((c) => EncounterClass.fromJson(c as Map<String, dynamic>))
+        .where((c) => c.code.isNotEmpty)
+        .toList();
+  }
+
+  /// Modo opciones: un solo POST sin selección (mismo endpoint que establecer sesión).
+  Future<SessionWizardOptions> loadSessionWizardOptions({String? userId}) async {
+    final body = <String, dynamic>{};
+    if (userId != null &&
+        (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
+      body['user_id'] = userId;
+    }
+
+    final uri = Uri.parse('${AppConfig.apiUrl}/sesion-operativa/establecer');
+    print('Request URL: $uri (wizard options)');
+    print('Headers: $_headers');
+
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode(body),
+    );
+
+    print('Response status: ${response.statusCode}');
+
+    final bodyTrimmed = response.body.trim();
+    if (bodyTrimmed.startsWith('<!DOCTYPE') || bodyTrimmed.startsWith('<html')) {
+      throw Exception(
+          'La API devolvió HTML en lugar de JSON. Verifique URL y autenticación: $uri');
+    }
+
+    if (response.statusCode != 200) {
+      try {
+        final err = json.decode(response.body) as Map<String, dynamic>?;
+        throw Exception(err?['message'] ?? 'Error ${response.statusCode}');
+      } catch (_) {
+        throw Exception('Error ${response.statusCode}: ${response.body}');
+      }
+    }
+
+    final data = json.decode(response.body) as Map<String, dynamic>;
+    if (data['success'] != true || data['data'] == null) {
+      throw Exception(data['message'] ?? 'Error al cargar opciones de sesión');
+    }
+
+    final payload = data['data'] as Map<String, dynamic>;
+    final rawEfectores = payload['efectores'] as List<dynamic>? ?? [];
+    final efectores = <Efector>[];
+    final serviciosPorEfector = <int, List<Servicio>>{};
+
+    for (final e in rawEfectores) {
+      if (e is! Map<String, dynamic>) continue;
+      final ef = Efector.fromJson(e);
+      if (ef.id <= 0) continue;
+      efectores.add(ef);
+      final rawServ = e['servicios'] as List<dynamic>? ?? [];
+      final servicios = rawServ
+          .map((s) => Servicio.fromJson(s as Map<String, dynamic>))
+          .where((s) => s.id > 0)
+          .toList();
+      serviciosPorEfector[ef.id] = servicios;
+    }
+
+    final rawEc = payload['encounter_classes'] as List<dynamic>? ?? [];
+    final encounterClasses = rawEc
+        .map((c) => EncounterClass.fromJson(c as Map<String, dynamic>))
+        .where((c) => c.code.isNotEmpty)
+        .toList();
+
+    final rawProb = payload['efectores_con_problemas'] as List<dynamic>? ?? [];
+    final problemas = rawProb
+        .map((p) => EfectorConProblema.fromJson(p as Map<String, dynamic>))
+        .toList();
+
+    return SessionWizardOptions(
+      efectores: efectores,
+      serviciosPorEfector: serviciosPorEfector,
+      encounterClasses: encounterClasses,
+      efectoresConProblemas: problemas,
+    );
+  }
+
+  /// Obtener servicios de un efector (desde caché del wizard; no llama a servicios-por-rrhh).
+  List<Servicio> serviciosParaEfector(int efectorId, SessionWizardOptions options) {
+    return options.serviciosPorEfector[efectorId] ?? [];
   }
 
   /// Establecer configuración de sesión
@@ -178,21 +178,21 @@ class ConfigService {
     String? userId,
   }) async {
     try {
-      final body = {
+      final body = <String, dynamic>{
         'efector_id': efectorId,
         'servicio_id': servicioId,
         'encounter_class': encounterClass,
       };
-      
-      // Para desarrollo/simulación: incluir user_id si no hay token válido
-      if (userId != null && (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
+
+      if (userId != null &&
+          (authToken == null || authToken!.isEmpty || authToken!.startsWith('simulated_'))) {
         body['user_id'] = userId;
       }
-      
+
       print('Request URL: ${AppConfig.apiUrl}/sesion-operativa/establecer');
       print('Request body: $body');
       print('Headers: $_headers');
-      
+
       final response = await http.post(
         Uri.parse('${AppConfig.apiUrl}/sesion-operativa/establecer'),
         headers: _headers,
@@ -201,11 +201,11 @@ class ConfigService {
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
-      
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(response.body) as Map<String, dynamic>;
         print('Parsed data: $data');
-        
+
         if (data['success'] == true && data['data'] != null) {
           try {
             return SessionConfig.fromJson(data['data'] as Map<String, dynamic>);
@@ -218,8 +218,20 @@ class ConfigService {
           throw Exception(data['message'] ?? 'Error al establecer configuración');
         }
       } else {
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Error al establecer configuración');
+        final errorData = json.decode(response.body) as Map<String, dynamic>;
+        var msg = errorData['message']?.toString() ?? 'Error al establecer configuración';
+        final contact = errorData['contact'];
+        if (contact is List && contact.isNotEmpty) {
+          final nombres = contact
+              .map((c) => c is Map ? c['nombre_completo']?.toString() : null)
+              .whereType<String>()
+              .where((s) => s.isNotEmpty)
+              .toList();
+          if (nombres.isNotEmpty) {
+            msg += ' Contacto administración: ${nombres.join(', ')}';
+          }
+        }
+        throw Exception(msg);
       }
     } catch (e) {
       print('Error setting session: $e');
@@ -241,17 +253,15 @@ class Efector {
   });
 
   factory Efector.fromJson(Map<String, dynamic> json) {
-    // Manejar el caso donde nombre puede ser un String o un Map
     String nombreStr;
     if (json['nombre'] is String) {
       nombreStr = json['nombre'] as String;
     } else if (json['nombre'] is Map) {
-      // Si nombre es un objeto, extraer el campo 'nombre' del objeto
       nombreStr = (json['nombre'] as Map)['nombre'] as String? ?? 'Sin nombre';
     } else {
       nombreStr = 'Sin nombre';
     }
-    
+
     return Efector(
       id: json['id_efector'] as int? ?? json['id'] as int? ?? 0,
       nombre: nombreStr,
@@ -325,4 +335,3 @@ class SessionConfig {
     );
   }
 }
-

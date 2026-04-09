@@ -31,10 +31,12 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   bool _isLoading = false;
   String _errorMessage = '';
 
-  // Datos disponibles
+  // Datos disponibles (modo opciones unificado vía POST sesion-operativa/establecer)
+  SessionWizardOptions? _wizardOptions;
   List<Efector> _efectores = [];
   List<Servicio> _servicios = [];
   List<EncounterClass> _encounterClasses = [];
+  List<EfectorConProblema> _efectoresConProblemas = [];
 
   // Selecciones
   Efector? _selectedEfector;
@@ -61,16 +63,14 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     });
 
     try {
-      // Cargar efectores y encounter classes en paralelo
-      // Pasar userId para desarrollo/simulaci?n
-      final efectoresFuture = _configService.getEfectores(userId: widget.userId);
-      final encounterClassesFuture = _configService.getEncounterClasses();
-
-      final results = await Future.wait([efectoresFuture, encounterClassesFuture]);
+      final options =
+          await _configService.loadSessionWizardOptions(userId: widget.userId);
 
       setState(() {
-        _efectores = results[0] as List<Efector>;
-        _encounterClasses = results[1] as List<EncounterClass>;
+        _wizardOptions = options;
+        _efectores = options.efectores;
+        _encounterClasses = options.encounterClasses;
+        _efectoresConProblemas = options.efectoresConProblemas;
         _isLoading = false;
       });
 
@@ -95,8 +95,11 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     });
 
     try {
-      // Pasar userId para desarrollo/simulaci?n
-      final servicios = await _configService.getServicios(efectorId, userId: widget.userId);
+      final opts = _wizardOptions;
+      if (opts == null) {
+        throw Exception('Opciones de sesión no cargadas');
+      }
+      final servicios = _configService.serviciosParaEfector(efectorId, opts);
       setState(() {
         _servicios = servicios;
         _isLoading = false;
@@ -395,6 +398,41 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             style: AppTheme.h2Style,
           ),
           const SizedBox(height: 8),
+          if (_efectoresConProblemas.isNotEmpty) ...[
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Algunos efectores requieren configuración',
+                    style: AppTheme.subTitleStyle.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ..._efectoresConProblemas.map((p) {
+                    var t = p.message;
+                    if (p.nombre != null && p.nombre!.isNotEmpty) {
+                      t += ' (${p.nombre})';
+                    }
+                    if (p.contactosNombreCompleto.isNotEmpty) {
+                      t += '\nContacto: ${p.contactosNombreCompleto.join(', ')}';
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(t, style: AppTheme.subTitleStyle.copyWith(fontSize: 13)),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else

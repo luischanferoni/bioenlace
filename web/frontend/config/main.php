@@ -182,8 +182,6 @@ return [
                 'GET api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
                 'POST api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
                 'OPTIONS api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
-                'GET api/<version:\w+>/efectores/mis-efectores' => '<version>/efectores/mis-efectores',
-                'OPTIONS api/<version:\w+>/efectores/mis-efectores' => '<version>/efectores/mis-efectores',
                 
                 // Recursos Humanos API - Búsqueda
                 'GET api/<version:\w+>/rrhh/autocomplete' => '<version>/rrhh/autocomplete',

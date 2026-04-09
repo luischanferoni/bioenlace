@@ -92,7 +92,11 @@ if (Yii::$app->user->username) {
     };
     window.getBioenlaceApiClientHeaders = function (extra) {
         var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
-        var base = { 'X-App-Client': 'web-frontend', 'X-App-Version': ver };
+        var base = {
+            'X-App-Client': 'web-frontend',
+            'X-App-Version': ver,
+            'X-Client': 'web'
+        };
         if (window.apiAuthToken) {
             base['Authorization'] = 'Bearer ' + window.apiAuthToken;
         }

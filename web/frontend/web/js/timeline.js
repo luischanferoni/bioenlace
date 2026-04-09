@@ -295,12 +295,8 @@ function buildSignosVitalesModalHtml(datosSv) {
     );
 }
 
-function getSignosVitalesFetchHeaders() {
-    if (typeof window.getBioenlaceApiClientHeaders === 'function') {
-        return window.getBioenlaceApiClientHeaders({ Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' });
-    }
-    return { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
-}
+/** Extra fijo para fetch JSON de signos vitales (solo se pasa a {@link window.BioenlaceApiClient.mergeHeaders}). */
+var TIMELINE_SIGNOS_VITALES_FETCH_EXTRA = { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' };
 
 /**
  * Aplica el bloque de signos vitales (misma forma que data en GET .../signos-vitales).
@@ -367,7 +363,7 @@ async function loadSignosVitalesActuales() {
         
         const response = await fetch(url, {
             method: 'GET',
-            headers: getSignosVitalesFetchHeaders(),
+            headers: window.BioenlaceApiClient.mergeHeaders(TIMELINE_SIGNOS_VITALES_FETCH_EXTRA),
             credentials: 'same-origin'
         });
         
@@ -443,7 +439,7 @@ async function loadTodosLosSignosVitales() {
         const url = endpoints.signosVitales;
         const response = await fetch(url, {
             method: 'GET',
-            headers: getSignosVitalesFetchHeaders(),
+            headers: window.BioenlaceApiClient.mergeHeaders(TIMELINE_SIGNOS_VITALES_FETCH_EXTRA),
             credentials: 'same-origin'
         });
         

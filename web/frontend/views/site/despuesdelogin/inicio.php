@@ -2,7 +2,6 @@
 
 use yii\helpers\Url;
 use yii\helpers\Html;
-use yii\widgets\ActiveForm;
 
 use frontend\assets\SesionOperativaPostloginWizardAsset;
 
@@ -11,11 +10,14 @@ SesionOperativaPostloginWizardAsset::register($this);
 $urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'], true);
 ?>
 
-    <?php $form = ActiveForm::begin([
-        'id' => 'dynamic-form',
-        'options' => ['class' => 'form-wizard']
-        ]);
-    ?>
+<style>
+/* Misma idea que #form-wizard1 en plantilla legacy: solo el primer paso hasta avanzar. */
+.form-wizard#dynamic-form .formwizard_fieldset:not(:first-of-type) {
+    display: none;
+}
+</style>
+
+    <div id="dynamic-form" class="form-wizard">
 
     <ul id="top-tab-list" class="p-0 row list-inline mb-0">
         <li id="paso1" class="mb-2 col text-start active">
@@ -69,7 +71,7 @@ $urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'],
         </div>        
     </fieldset>
 
-    <?php ActiveForm::end(); ?>
+    </div>
 
 <?= Html::tag('div', '', [
     'id' => 'sesion-operativa-wizard-config',

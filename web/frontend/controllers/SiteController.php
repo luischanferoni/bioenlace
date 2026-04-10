@@ -34,7 +34,9 @@ class SiteController extends Controller
 
     /**
      * Post-login: si falta efector, servicio o encounter class en sesión, muestra el asistente de selección
-     * (vistas despuesdelogin/*). Si ya está completo, redirige al listado de pacientes.
+     * (vistas despuesdelogin/*). El listado de efectores, encounter classes y `efectores_con_problemas` los
+     * obtiene el cliente con POST `/api/v1/sesion-operativa/establecer` (cuerpo vacío), no desde PHP.
+     * Si ya está completo, redirige al listado de pacientes.
      * No es equivalente a actionPacientes: aquí se resuelve contexto de sesión, allí se lista la agenda del día.
      * @no_intent_catalog
     */

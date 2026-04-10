@@ -20,6 +20,98 @@
 
   var wizardEfectorServicios = {};
 
+  function escapeHtml(s) {
+    if (s == null) {
+      return '';
+    }
+    var d = document.createElement('div');
+    d.textContent = String(s);
+    return d.innerHTML;
+  }
+
+  function resetWizardLayoutConEfectores() {
+    var fieldsets = document.querySelectorAll('#dynamic-form .formwizard_fieldset');
+    fieldsets.forEach(function (fs, i) {
+      fs.style.display = i === 0 ? 'block' : 'none';
+    });
+    var topTab = document.getElementById('top-tab-list');
+    if (topTab) {
+      topTab.classList.remove('d-none');
+    }
+    $('#formwizard_efectores .next').removeClass('d-none').prop('disabled', true);
+  }
+
+  function aplicarEstadoSinEfectoresOperables(apiMessage, problemas) {
+    var box = document.getElementById('sesion-operativa-estado-vacio');
+    var lead = document.getElementById('sesion-operativa-estado-vacio-lead');
+    var body = document.getElementById('sesion-operativa-estado-vacio-body');
+    if (lead) {
+      lead.textContent = apiMessage ? String(apiMessage) : '';
+    }
+    if (body) {
+      body.innerHTML = '';
+      if (problemas && problemas.length) {
+        var ul = document.createElement('ul');
+        ul.className = 'mb-0 ps-3';
+        problemas.forEach(function (p) {
+          var li = document.createElement('li');
+          li.className = 'mb-2';
+          var msg = p.message != null ? String(p.message) : '';
+          var nom = p.nombre != null ? String(p.nombre) : '';
+          var line = document.createElement('span');
+          line.innerHTML =
+            escapeHtml(msg) +
+            (nom ? ' <span class="text-muted">— ' + escapeHtml(nom) + '</span>' : '');
+          li.appendChild(line);
+          if (p.contact && p.contact.length) {
+            var nombres = p.contact
+              .map(function (c) {
+                return c.nombre_completo || '';
+              })
+              .filter(Boolean);
+            if (nombres.length) {
+              var strong = document.createElement('div');
+              strong.className = 'small mt-1';
+              strong.innerHTML =
+                '<strong>Contacto administración:</strong> ' +
+                nombres.map(escapeHtml).join(', ');
+              li.appendChild(strong);
+            }
+          }
+          ul.appendChild(li);
+        });
+        body.appendChild(ul);
+      }
+    }
+    if (box) {
+      box.classList.remove('d-none');
+    }
+    var topTab = document.getElementById('top-tab-list');
+    if (topTab) {
+      topTab.classList.add('d-none');
+    }
+    var step2 = document.getElementById('formwizard_encounter');
+    var step3 = document.getElementById('formwizard_servicios');
+    if (step2) {
+      step2.style.display = 'none';
+    }
+    if (step3) {
+      step3.style.display = 'none';
+    }
+    var step1 = document.getElementById('formwizard_efectores');
+    if (step1) {
+      step1.style.display = 'block';
+    }
+    $('#formwizard_efectores .next').prop('disabled', true).addClass('d-none');
+  }
+
+  function ocultarEstadoSinEfectoresOperables() {
+    var box = document.getElementById('sesion-operativa-estado-vacio');
+    if (box) {
+      box.classList.add('d-none');
+    }
+  }
+
   function renderEfectores(efectores) {
     var container = document.getElementById('grid_efectores');
     var tmpl = document.getElementById('tmpl_efector_radio');
@@ -73,16 +165,34 @@
 
   function mostrarAlerta(texto, esError) {
     var cls = esError ? 'alert-danger' : 'alert-info';
-    $('body').append(
-      '<div class="alert ' +
-        cls +
-        ' alert-dismissible" role="alert">' +
-        '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
-        texto +
-        '</div>'
-    );
+    var wrap = document.createElement('div');
+    wrap.className =
+      'alert ' + cls + ' alert-dismissible fade show sesion-op-toast-alert';
+    wrap.setAttribute('role', 'alert');
+    wrap.style.cssText =
+      'position:fixed;top:1rem;right:1rem;z-index:1080;max-width:min(420px,92vw);';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-close';
+    btn.setAttribute('data-bs-dismiss', 'alert');
+    btn.setAttribute('aria-label', 'Close');
+    wrap.appendChild(btn);
+    var content = document.createElement('div');
+    content.innerHTML = texto;
+    wrap.appendChild(content);
+    document.body.appendChild(wrap);
     window.setTimeout(function () {
-      $('.alert').alert('close');
+      if (window.bootstrap && window.bootstrap.Alert) {
+        try {
+          window.bootstrap.Alert.getOrCreateInstance(wrap).close();
+          return;
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      if (wrap.parentNode) {
+        wrap.parentNode.removeChild(wrap);
+      }
     }, 12000);
   }
 
@@ -92,8 +202,10 @@
     }
     var lineas = [];
     lista.forEach(function (p) {
-      var m = p.message ? String(p.message) : '';
-      var nom = p.nombre ? ' — ' + String(p.nombre) : '';
+      var m = escapeHtml(p.message ? String(p.message) : '');
+      var nom = p.nombre
+        ? ' <span class="text-muted">— ' + escapeHtml(String(p.nombre)) + '</span>'
+        : '';
       var cts = '';
       if (p.contact && p.contact.length) {
         var nombres = p.contact
@@ -102,7 +214,9 @@
           })
           .filter(Boolean);
         if (nombres.length) {
-          cts = ' <strong>Contacto administración:</strong> ' + nombres.join(', ');
+          cts =
+            ' <strong>Contacto administración:</strong> ' +
+            nombres.map(escapeHtml).join(', ');
         }
       }
       lineas.push('<li>' + m + nom + cts + '</li>');
@@ -139,9 +253,16 @@
         });
         renderEfectores(efectores);
         renderEncounterClasses(data.encounter_classes || []);
-        mostrarEfectoresConProblemas(data.efectores_con_problemas || []);
-        if ((!efectores || !efectores.length) && res.message) {
-          mostrarAlerta(String(res.message), true);
+
+        if (!efectores.length) {
+          aplicarEstadoSinEfectoresOperables(
+            res.message || '',
+            data.efectores_con_problemas || []
+          );
+        } else {
+          ocultarEstadoSinEfectoresOperables();
+          resetWizardLayoutConEfectores();
+          mostrarEfectoresConProblemas(data.efectores_con_problemas || []);
         }
       },
       error: function (xhr) {

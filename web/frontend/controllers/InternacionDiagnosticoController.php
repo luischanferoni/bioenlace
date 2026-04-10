@@ -36,8 +36,9 @@ class InternacionDiagnosticoController extends Controller
     /**
      * Lists all SegNivelInternacionDiagnostico models.
      * @return mixed
-*/
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new SegNivelInternacionDiagnosticoBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -50,12 +51,12 @@ public function actionIndex()
 
     /**
      * Displays a single SegNivelInternacionDiagnostico model.
+     * @no_intent_catalog
      * @param integer $id
      * @param integer $id_internacion
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
     */
-
     public function actionView($id, $id_internacion)
     {
         return $this->render('view', [
@@ -67,8 +68,8 @@ public function actionIndex()
      * Creates a new SegNivelInternacionDiagnostico model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $models = [new SegNivelInternacionDiagnostico];
@@ -142,8 +143,8 @@ public function actionIndex()
      * @param integer $id_internacion
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id, $id_internacion)
     {
         $model = $this->findModel($id, $id_internacion);
@@ -164,8 +165,8 @@ public function actionIndex()
      * @param integer $id_internacion
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionDelete($id, $id_internacion)
     {
         $this->findModel($id, $id_internacion)->delete();

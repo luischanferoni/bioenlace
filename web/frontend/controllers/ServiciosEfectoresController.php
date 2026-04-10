@@ -32,9 +32,9 @@ class ServiciosEfectoresController extends Controller
     /**
      * Lists all ServiciosEfector models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new ServiciosEfectorBusqueda();
         $searchModel->id_efector = Yii::$app->user->getIdEfector();
@@ -54,8 +54,8 @@ public function actionIndex()
      * @param string $id_servicio
      * @param integer $id_efector
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id_servicio, $id_efector)
     {
         return $this->render('view', [
@@ -67,8 +67,8 @@ public function actionIndex()
      * Creates a new ServiciosEfector model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $model = new ServiciosEfector();
@@ -89,8 +89,8 @@ public function actionIndex()
      * @param string $id_servicio
      * @param integer $id_efector
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id_servicio, $id_efector)
     {
         $model = $this->findModel($id_servicio, $id_efector);
@@ -110,11 +110,10 @@ public function actionIndex()
      * @param string $id_servicio
      * @param integer $id_efector
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionDelete($id_servicio, $id_efector)
     {
-
         // si el servicio tiene rrhh asignado y activo, le pedimos que primero los elimine y lluego vuelva a eliminar el servicio
         $cantidadRrhhServicio = \common\models\RrhhServicio::findActive()
         ->leftJoin('rrhh_efector', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
@@ -130,6 +129,9 @@ public function actionIndex()
         return $this->asJson(['error' => false, 'msg' => 'El Servicio fue eliminado correctamente.']);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionEfectoresPorServicio()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -160,9 +162,9 @@ public function actionIndex()
 
      /**
      * Vuelve deleted_at y deleted_by a null al servicio
-     */
-
-     public function actionReactivar($id_servicio, $id_efector)
+     * @no_intent_catalog
+    */
+    public function actionReactivar($id_servicio, $id_efector)
     {
         $model = $this->findModel($id_servicio, $id_efector);
         if ($model->id_efector !== Yii::$app->user->getIdEfector()) {

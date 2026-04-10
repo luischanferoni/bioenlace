@@ -19,8 +19,6 @@ use common\models\RrhhEfector;
 
 class ReporteController extends Controller
 {
-
-
     public function behaviors()
     {
          //control de acceso mediante la extensiÃ³n
@@ -35,6 +33,9 @@ class ReporteController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionPlanilla4()
     {
 
@@ -137,6 +138,9 @@ class ReporteController extends Controller
 
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionPlanilla5()
     {
         $session = Yii::$app->getSession();        
@@ -225,6 +229,9 @@ class ReporteController extends Controller
 
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionReportefarmacia()
     {
 
@@ -301,6 +308,9 @@ class ReporteController extends Controller
 
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionPlanilla9()
     {
 
@@ -372,6 +382,9 @@ class ReporteController extends Controller
 
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionPlanillac7()
     {
 

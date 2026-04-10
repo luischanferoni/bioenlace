@@ -35,9 +35,9 @@ class RrhhController extends Controller
 
     /**
      * Lista todos los modelos RrhhEfector.
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new RrhhEfectorBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -50,8 +50,8 @@ public function actionIndex()
 
     /**
      * Muestra un modelo RrhhEfector.
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -61,8 +61,8 @@ public function actionIndex()
 
     /**
      * Crea un nuevo RrhhEfector.
+     * @no_intent_catalog
     */
-
     public function actionCreate($idp = null)
     {
         $model = new RrhhEfector();
@@ -83,8 +83,8 @@ public function actionIndex()
 
     /**
      * Actualiza un RrhhEfector existente.
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -101,8 +101,8 @@ public function actionIndex()
 
     /**
      * Elimina un RrhhEfector.
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -124,8 +124,8 @@ public function actionIndex()
 
     /**
      * Select dependiente: servicios por efector.
+     * @no_intent_catalog
     */
-
     public function actionSubcatservicios()
     {
         $out = [];
@@ -167,6 +167,7 @@ public function actionIndex()
 
     /**
      * DepDrop: profesionales por efector + servicio (JSON).
+     * @no_intent_catalog
      */
     public function actionProfesionalesPorServicioEfector()
     {
@@ -194,6 +195,7 @@ public function actionIndex()
 
     /**
      * Autocomplete Select2 (misma forma que API /api/v1/rrhh/autocomplete).
+     * @no_intent_catalog
      */
     public function actionRrhhAutocomplete($q = null)
     {

@@ -26,6 +26,9 @@ class RrhhEfectoresController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionIndex()
     {
         $searchModel = new RrhhEfectorBusqueda();
@@ -37,6 +40,9 @@ class RrhhEfectoresController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionView($id_rr_hh, $id_efector)
     {
         return $this->render('view', [
@@ -44,6 +50,9 @@ class RrhhEfectoresController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionCreate()
     {
         $model = new RrhhEfector();
@@ -57,6 +66,9 @@ class RrhhEfectoresController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionUpdate($id_rr_hh, $id_efector)
     {
         $model = $this->findModel($id_rr_hh, $id_efector);
@@ -70,6 +82,9 @@ class RrhhEfectoresController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionDelete($id_rr_hh, $id_efector)
     {
         $this->findModel($id_rr_hh, $id_efector)->delete();

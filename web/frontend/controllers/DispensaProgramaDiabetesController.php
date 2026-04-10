@@ -32,8 +32,8 @@ class DispensaProgramaDiabetesController extends Controller
     /**
      * Lists all DispensaProgramaDiabetes models.
      * @return mixed
-*/
-
+     * @no_intent_catalog
+    */
 public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
@@ -50,8 +50,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -63,8 +63,8 @@ public function actionIndex()
      * Creates a new DispensaProgramaDiabetes model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $model = new DispensaProgramaDiabetes();
@@ -84,8 +84,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -105,8 +105,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

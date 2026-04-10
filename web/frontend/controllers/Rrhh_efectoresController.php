@@ -27,6 +27,9 @@ class Rrhh_efectoresController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionIndex()
     {
         $searchModel = new RrhhEfectorBusqueda();
@@ -41,8 +44,8 @@ class Rrhh_efectoresController extends Controller
     /**
      * @param integer $id_rr_hh
      * @param integer $id_efector
+     * @no_intent_catalog
     */
-
     public function actionView($id_rr_hh, $id_efector)
     {
         return $this->render('view', [
@@ -50,6 +53,9 @@ class Rrhh_efectoresController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionCreate()
     {
         $model = new RrhhEfector();
@@ -66,8 +72,8 @@ class Rrhh_efectoresController extends Controller
     /**
      * @param integer $id_rr_hh
      * @param integer $id_efector
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id_rr_hh, $id_efector)
     {
         $model = $this->findModel($id_rr_hh, $id_efector);
@@ -84,8 +90,8 @@ class Rrhh_efectoresController extends Controller
     /**
      * @param integer $id_rr_hh
      * @param integer $id_efector
+     * @no_intent_catalog
     */
-
     public function actionDelete($id_rr_hh, $id_efector)
     {
         $this->findModel($id_rr_hh, $id_efector)->delete();
@@ -106,6 +112,9 @@ class Rrhh_efectoresController extends Controller
         throw new NotFoundHttpException('The requested page does not exist.');
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionProfesionalesPorEfector()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

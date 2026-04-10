@@ -4,6 +4,7 @@ namespace common\components\Services\Actions;
 
 use common\components\Actions\ActionDiscoveryService;
 use common\components\Actions\AllowedRoutesResolver;
+use common\components\Actions\AssistantClientOpenEnricher;
 use common\components\IntentCatalog\IntentCatalogService;
 use webvimark\modules\UserManagement\models\User;
 
@@ -19,7 +20,7 @@ final class CommonActionsService
     public const DEFAULT_LIMIT = 50;
 
     /**
-     * @return list<array{route: string, name: string, description: string, action_id: string|null}>
+     * @return list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>
      */
     public static function getFormattedForUser(int $userId, int $limit = self::DEFAULT_LIMIT): array
     {
@@ -39,19 +40,23 @@ final class CommonActionsService
 
         $out = [];
         foreach ($native as $n) {
-            $out[] = $n;
+            $out[] = AssistantClientOpenEnricher::enrich($n);
         }
         foreach ($ordered as $action) {
             $name = !empty($action['action_name'])
                 ? (string) $action['action_name']
                 : (string) ($action['display_name'] ?? $action['route'] ?? '');
 
-            $out[] = [
+            $row = [
                 'route' => (string) ($action['route'] ?? ''),
                 'name' => $name,
                 'description' => (string) ($action['description'] ?? ''),
                 'action_id' => isset($action['action_id']) ? (string) $action['action_id'] : null,
             ];
+            if (isset($action['spa_presentation']) && is_string($action['spa_presentation']) && $action['spa_presentation'] !== '') {
+                $row['spa_presentation'] = $action['spa_presentation'];
+            }
+            $out[] = AssistantClientOpenEnricher::enrich($row);
         }
 
         return array_slice($out, 0, $limit);

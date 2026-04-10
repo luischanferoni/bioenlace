@@ -289,6 +289,7 @@ class RrhhController extends BaseController
      * @entity Rrhh
      * @tags rrhh, agenda, servicios, condiciones laborales, staff
      * @keywords editar agenda profesional, horarios por servicio, condición laboral
+     * @spa_presentation fullscreen
      */
     public function actionEditarAgenda(): array
     {

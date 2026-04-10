@@ -30,9 +30,16 @@ final class AssistantClientOpenEnricher
         // UI JSON (screens): si la acción ya apunta a /api/v*/ui/..., el cliente debe abrirla como pantalla dinámica.
         // No se hardcodean pantallas nativas aquí (eso debe venir explícito desde catálogo/metadata, ej. screen_id).
         if ($route !== '' && preg_match('#^/api/v\\d+/ui/#', $route) === 1) {
+            $presentation = 'fullscreen';
+            if (isset($action['spa_presentation'])) {
+                $sp = strtolower(trim((string) $action['spa_presentation']));
+                if ($sp === 'inline' || $sp === 'fullscreen') {
+                    $presentation = $sp;
+                }
+            }
             $action['client_open'] = [
                 'kind' => 'ui_json',
-                'presentation' => 'fullscreen',
+                'presentation' => $presentation,
                 'api' => [
                     'route' => $route,
                     'method' => 'GET|POST',
@@ -40,6 +47,8 @@ final class AssistantClientOpenEnricher
             ];
             // Nomenclatura sugerida: UI disparada por el asistente (JSON).
             $action['client_interaction'] = 'ui_asistente_json';
+            unset($action['spa_presentation']);
+
             return $action;
         }
 

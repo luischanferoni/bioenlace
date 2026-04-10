@@ -31,6 +31,9 @@ class QuirofanoController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionIndex()
     {
         $searchModel = new CirugiaBusqueda();
@@ -45,6 +48,9 @@ class QuirofanoController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionCreateSala()
     {
         $idEfector = (int) Yii::$app->request->get('id_efector', Yii::$app->user->getIdEfector());
@@ -53,6 +59,9 @@ class QuirofanoController extends Controller
         return $this->render('create_sala', ['idEfector' => $idEfector]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionCreateCirugia()
     {
         $idEfector = (int) Yii::$app->request->get('id_efector', Yii::$app->user->getIdEfector());

@@ -30,9 +30,9 @@ class TipoDiasController extends Controller
     /**
      * Lists all Tipo_dia models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new Tipo_diaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -47,8 +47,8 @@ public function actionIndex()
      * Displays a single Tipo_dia model.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -60,8 +60,8 @@ public function actionIndex()
      * Creates a new Tipo_dia model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $model = new Tipo_dia();
@@ -80,8 +80,8 @@ public function actionIndex()
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -100,8 +100,8 @@ public function actionIndex()
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

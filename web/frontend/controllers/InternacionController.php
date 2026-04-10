@@ -61,9 +61,9 @@ class InternacionController extends Controller
     /**
      * Lists all SegNivelInternacion models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
 
         $persona = Yii::$app->session['persona'];
@@ -101,8 +101,8 @@ public function actionIndex()
     /**
      * Rondas all SegNivelInternacion models.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionRonda()
     {
         $persona = Yii::$app->session['persona'];
@@ -145,8 +145,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         $persona = Yii::$app->session['persona'];
@@ -282,6 +282,7 @@ public function actionIndex()
      * Creates a new SegNivelInternacion model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
     public function actionCreate()
     {
@@ -395,8 +396,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -441,8 +442,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -469,8 +470,8 @@ public function actionIndex()
     /**
      * Lists all SegNivelInternacion models.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionFinalizadas()
     {
         $searchModel = new SegNivelInternacionBusqueda();
@@ -486,8 +487,8 @@ public function actionIndex()
     /**
      * Lists SegNivelInternacion por persona models.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionPorpersona($idpersona)
     {
         if (!$idpersona) return $this->redirect(['/personas/view', 'id' => $idpersona]);
@@ -504,6 +505,9 @@ public function actionIndex()
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionMostrarDatosAcompaniante($id_internacion)
     {
         $model = $this->findModel($id_internacion);
@@ -513,6 +517,9 @@ public function actionIndex()
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionListado()
     {
         $persona = Yii::$app->session['persona'];

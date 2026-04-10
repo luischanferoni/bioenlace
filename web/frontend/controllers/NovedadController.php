@@ -32,9 +32,9 @@ class NovedadController extends Controller
     /**
      * Lists all Novedad models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new NovedadBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -50,16 +50,14 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
             'model' => $this->findModel($id),
         ]);
     }
-
-   
 
     /**
      * Finds the Novedad model based on its primary key value.

@@ -31,6 +31,9 @@ class FormController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionForms()
     {
 
@@ -104,10 +107,10 @@ class FormController extends Controller
     /**
      * Updates an existing Tipo_dia model.
      * If update is successful, the browser will be redirected to the 'view' page.
+     * @no_intent_catalog
      * @param string $id
      * @return mixed
     */
-
     public function actionRender($id)
     {
         $userId = Yii::$app->request->get('id_user') ? Yii::$app->request->get('id_user') : Yii::$app->user->id;
@@ -313,8 +316,8 @@ class FormController extends Controller
     /**
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionInstancias($id)
     {
         $userId = Yii::$app->request->get('id_user') ? Yii::$app->request->get('id_user') : Yii::$app->user->id;
@@ -425,8 +428,8 @@ class FormController extends Controller
     /**
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionVerinstancia($id)
     {
         $client = new Client();
@@ -505,7 +508,5 @@ class FormController extends Controller
 
             ));
         }
-
-
     }
 }

@@ -136,6 +136,9 @@ class SesionOperativaService extends Component
         if (User::hasRole(['Administrativo'])) {
             return ['/site/pacientes'];
         }
+        if (User::hasRole(['AdminEfector'])) {
+            return ['/site/pacientes'];
+        }
         if (User::hasRole(['Enfermeria'])) {
             return ['/personas/buscar-persona'];
         }

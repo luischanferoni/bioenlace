@@ -69,53 +69,80 @@ class RrhhController extends BaseController
     }
 
     /**
-     * POST /api/v1/rrhh/servicios-por-rrhh
-     * Parámetros: id_efector (o idEfector). Devuelve los servicios del RRHH de la persona autenticada en ese efector,
-     * filtrados como en el flujo web (servicio activo en el efector o nombre «ADMINISTRAR EFECTOR»).
+     * GET|POST /api/v1/rrhh/mis-servicios-en-efector
+     *
+     * Lista servicios asignados al RRHH de la persona autenticada, filtrados como en el flujo web
+     * (servicio activo en el efector o servicio con item_name AdminEfector).
+     *
+     * Resolución del vínculo RRHH–efector:
+     * - Si viene `id_efector` o `idEfector` (query/body): se usa la fila `rrhh_efector` de esa persona en ese efector
+     *   (p. ej. wizard post-login antes de tener sesión operativa completa).
+     * - Si no viene efector: se usa `id_rr_hh` de la sesión operativa (`getIdRecursoHumano`) y la fila correspondiente
+     *   debe pertenecer a la misma persona.
      *
      * @return array{servicios: list<array{id_servicio: int, nombre: string}>}
      */
-    public function actionServiciosPorRrhh()
+    public function actionMisServiciosEnEfector()
     {
         $request = Yii::$app->request;
-        $idEfector = $request->post('id_efector') ?: $request->post('idEfector')
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+
+        $idEfectorRaw = $request->post('id_efector') ?: $request->post('idEfector')
             ?: $request->get('id_efector') ?: $request->get('idEfector');
-        if ($idEfector === null || $idEfector === '') {
-            throw new BadRequestHttpException('id_efector es requerido');
-        }
-        $idEfector = (int) $idEfector;
+        $tieneEfectorEnPedido = $idEfectorRaw !== null && $idEfectorRaw !== '';
+        $idEfectorPedido = $tieneEfectorEnPedido ? (int) $idEfectorRaw : 0;
 
-        $rrhhEfector = RrhhEfector::find()
-            ->where([
-                'id_efector' => $idEfector,
-                'id_persona' => Yii::$app->user->getIdPersona(),
-            ])
-            ->one();
-
-        $servicios = [];
-        if ($rrhhEfector !== null) {
-            $rrhhServicios = $rrhhEfector->getRrhhServicio()->with('servicio')->all();
-            foreach ($rrhhServicios as $rrhhServicio) {
-                $servicioEfector = ServiciosEfector::findActive()
+        $rrhhEfector = null;
+        if ($idEfectorPedido > 0) {
+            $rrhhEfector = RrhhEfector::findActive()
+                ->where([
+                    'id_efector' => $idEfectorPedido,
+                    'id_persona' => $idPersona,
+                ])
+                ->one();
+        } else {
+            $idRrHhSesion = (int) Yii::$app->user->getIdRecursoHumano();
+            if ($idRrHhSesion > 0) {
+                $rrhhEfector = RrhhEfector::findActive()
                     ->where([
-                        'id_efector' => $idEfector,
-                        'id_servicio' => $rrhhServicio->id_servicio,
+                        'id_rr_hh' => $idRrHhSesion,
+                        'id_persona' => $idPersona,
                     ])
                     ->one();
+            }
+        }
 
-                $nombreServicio = $rrhhServicio->servicio !== null
-                    ? (string) $rrhhServicio->servicio->nombre
-                    : '';
+        if ($rrhhEfector === null) {
+            throw new BadRequestHttpException(
+                'Indique id_efector o fije contexto operativo en sesión (recurso humano / efector) para listar servicios.'
+            );
+        }
 
-                if (
-                    ($servicioEfector !== null && $servicioEfector->deleted_at === null)
-                    || $nombreServicio === 'ADMINISTRAR EFECTOR'
-                ) {
-                    $servicios[] = [
-                        'id_servicio' => (int) $rrhhServicio->id_servicio,
-                        'nombre' => $nombreServicio,
-                    ];
-                }
+        $idEfector = (int) $rrhhEfector->id_efector;
+        $servicios = [];
+        $rrhhServicios = $rrhhEfector->getRrhhServicio()->with('servicio')->all();
+        foreach ($rrhhServicios as $rrhhServicio) {
+            $servicioEfector = ServiciosEfector::findActive()
+                ->where([
+                    'id_efector' => $idEfector,
+                    'id_servicio' => $rrhhServicio->id_servicio,
+                ])
+                ->one();
+
+            $nombreServicio = $rrhhServicio->servicio !== null
+                ? (string) $rrhhServicio->servicio->nombre
+                : '';
+            $esAdminEfector = $rrhhServicio->servicio !== null
+                && (string) $rrhhServicio->servicio->item_name === 'AdminEfector';
+
+            if (
+                ($servicioEfector !== null && $servicioEfector->deleted_at === null)
+                || $esAdminEfector
+            ) {
+                $servicios[] = [
+                    'id_servicio' => (int) $rrhhServicio->id_servicio,
+                    'nombre' => $nombreServicio,
+                ];
             }
         }
 

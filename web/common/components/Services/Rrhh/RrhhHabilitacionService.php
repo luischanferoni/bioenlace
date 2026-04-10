@@ -19,8 +19,8 @@ use common\models\ServiciosEfector;
  */
 class RrhhHabilitacionService extends Component
 {
-    /** Servicio de administración del efector (excluido del wizard clínico). */
-    private const LEGACY_ADMIN_SERVICIO_ID = 62;
+    /** {@see Servicio::item_name} del servicio que otorga rol AdminEfector (excluido del listado clínico del wizard). */
+    private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';
 
     /**
      * @return array{
@@ -76,61 +76,72 @@ class RrhhHabilitacionService extends Component
                 continue;
             }
 
-            $candidatos = [];
+            $candidatosClinicos = [];
+            $candidatosAdmin = [];
             foreach ($re->getRrhhServicio()->with(['servicio'])->all() as $rs) {
                 if ($rs->servicio === null) {
-                    continue;
-                }
-                if ($this->isServicioAdministracionEfector($rs->servicio)) {
                     continue;
                 }
                 if (!$this->pasaFiltroServicioEnEfector($rs, $idEfector)) {
                     continue;
                 }
-                $candidatos[] = $rs;
-            }
-
-            if ($candidatos === []) {
-                $problemas[] = [
-                    'id_efector' => $idEfector,
-                    'nombre' => $nombreEfector,
-                    'message' => 'No hay servicios clínicos habilitados para su usuario en este efector, o el servicio no está activo en el efector.',
-                    'contact' => $contact,
-                ];
-                continue;
+                if ($this->isServicioAdministracionEfector($rs->servicio)) {
+                    $candidatosAdmin[] = $rs;
+                    continue;
+                }
+                $candidatosClinicos[] = $rs;
             }
 
             $validServicios = [];
             $agendasParaValidar = [];
-            foreach ($candidatos as $rs) {
-                $ag = Agenda_rrhh::findActive()
-                    ->andWhere(['id_rrhh_servicio_asignado' => $rs->id])
-                    ->one();
-                if ($ag === null) {
-                    continue;
-                }
-                if (!$this->agendaCompletaParaServicio($rs->servicio, $ag)) {
-                    continue;
-                }
-                $agendasParaValidar[] = $ag;
-                $validServicios[] = $rs;
-            }
 
-            if ($agendasParaValidar !== [] && !Agenda_rrhh::validarGrupodeAgendas($agendasParaValidar)) {
+            if ($candidatosClinicos !== []) {
+                foreach ($candidatosClinicos as $rs) {
+                    $ag = Agenda_rrhh::findActive()
+                        ->andWhere(['id_rrhh_servicio_asignado' => $rs->id])
+                        ->one();
+                    if ($ag === null) {
+                        continue;
+                    }
+                    if (!$this->agendaCompletaParaServicio($rs->servicio, $ag)) {
+                        continue;
+                    }
+                    $agendasParaValidar[] = $ag;
+                    $validServicios[] = $rs;
+                }
+
+                if ($agendasParaValidar !== [] && !Agenda_rrhh::validarGrupodeAgendas($agendasParaValidar)) {
+                    $problemas[] = [
+                        'id_efector' => $idEfector,
+                        'nombre' => $nombreEfector,
+                        'message' => 'La agenda tiene días solapados entre varios servicios en este efector. Corrija la configuración de agendas.',
+                        'contact' => $contact,
+                    ];
+                    continue;
+                }
+
+                if ($validServicios === []) {
+                    if ($candidatosAdmin !== []) {
+                        // Mismo efector: rol clínico sin agenda válida pero también AdminEfector.
+                        $validServicios = $candidatosAdmin;
+                    } else {
+                        $problemas[] = [
+                            'id_efector' => $idEfector,
+                            'nombre' => $nombreEfector,
+                            'message' => 'Falta configuración de agenda o cupos para los servicios asignados (mismos requisitos que el alta de RRHH).',
+                            'contact' => $contact,
+                        ];
+                        continue;
+                    }
+                }
+            } elseif ($candidatosAdmin !== []) {
+                // Solo AdminEfector (o sin servicios clínicos elegibles): permitir fijar sesión sin agenda clínica.
+                $validServicios = $candidatosAdmin;
+            } else {
                 $problemas[] = [
                     'id_efector' => $idEfector,
                     'nombre' => $nombreEfector,
-                    'message' => 'La agenda tiene días solapados entre varios servicios en este efector. Corrija la configuración de agendas.',
-                    'contact' => $contact,
-                ];
-                continue;
-            }
-
-            if ($validServicios === []) {
-                $problemas[] = [
-                    'id_efector' => $idEfector,
-                    'nombre' => $nombreEfector,
-                    'message' => 'Falta configuración de agenda o cupos para los servicios asignados (mismos requisitos que el alta de RRHH).',
+                    'message' => 'No hay servicios habilitados para su usuario en este efector, o el servicio no está activo en el efector.',
                     'contact' => $contact,
                 ];
                 continue;
@@ -183,10 +194,7 @@ class RrhhHabilitacionService extends Component
      */
     public function getContactosAdministradorEfector(int $idEfector): array
     {
-        $adminServicio = Servicio::find()->where(['item_name' => 'AdminEfector'])->one();
-        if ($adminServicio === null) {
-            $adminServicio = Servicio::find()->where(['nombre' => 'ADMINISTRAR EFECTOR'])->one();
-        }
+        $adminServicio = Servicio::find()->where(['item_name' => self::ITEM_NAME_SERVICIO_ADMIN_EFECTOR])->one();
         if ($adminServicio === null) {
             return [];
         }
@@ -238,17 +246,7 @@ class RrhhHabilitacionService extends Component
 
     private function isServicioAdministracionEfector(Servicio $s): bool
     {
-        if ((int) $s->id_servicio === self::LEGACY_ADMIN_SERVICIO_ID) {
-            return true;
-        }
-        if (strcasecmp((string) $s->nombre, 'ADMINISTRAR EFECTOR') === 0) {
-            return true;
-        }
-        if (($s->item_name ?? '') === 'AdminEfector') {
-            return true;
-        }
-
-        return false;
+        return (string) $s->item_name === self::ITEM_NAME_SERVICIO_ADMIN_EFECTOR;
     }
 
     private function pasaFiltroServicioEnEfector(RrhhServicio $rs, int $idEfector): bool
@@ -260,10 +258,10 @@ class RrhhHabilitacionService extends Component
             ])
             ->one();
 
-        $nombreServicio = $rs->servicio !== null ? (string) $rs->servicio->nombre : '';
+        $esAdminEfector = $rs->servicio !== null
+            && (string) $rs->servicio->item_name === self::ITEM_NAME_SERVICIO_ADMIN_EFECTOR;
 
-        return ($servicioEfector !== null && $servicioEfector->deleted_at === null)
-            || $nombreServicio === 'ADMINISTRAR EFECTOR';
+        return ($servicioEfector !== null && $servicioEfector->deleted_at === null) || $esAdminEfector;
     }
 
     private function agendaCompletaParaServicio(Servicio $servicio, Agenda_rrhh $ag): bool

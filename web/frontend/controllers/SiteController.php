@@ -379,6 +379,8 @@ class SiteController extends Controller
 
         if (User::hasRole(['Administrativo'])) {
             $url = ['/site/pacientes'];
+        } elseif (User::hasRole(['AdminEfector'])) {
+            $url = ['/site/pacientes'];
         } elseif (User::hasRole(['Enfermeria'])) {
             $url = ['/personas/buscar-persona'];
         } else {

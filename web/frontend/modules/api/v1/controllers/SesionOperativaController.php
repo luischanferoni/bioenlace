@@ -11,7 +11,7 @@ use common\components\Services\SesionOperativa\SesionOperativaService;
  * API Sesión Operativa: contexto operativo en sesión y opciones validadas para el wizard.
  *
  * POST /api/v1/sesion-operativa/establecer
- * Header opcional: X-Client: web | mobile (en mobile solo Medico / Enfermería, salvo superadmin).
+ * Header opcional: X-Client: web | mobile (en mobile: Médico, Enfermería o AdminEfector, salvo superadmin).
  *
  * Sin selección (sin cuerpo, JSON vacío o faltan efector_id / servicio_id / encounter_class):
  *   respuesta con encounter_classes, efectores (con servicios validados), efectores_con_problemas.
@@ -32,7 +32,7 @@ class SesionOperativaController extends BaseController
     {
         $client = strtolower((string) Yii::$app->request->headers->get('X-Client', 'web'));
         if ($client === 'mobile' && !Yii::$app->user->isSuperadmin) {
-            if (!User::hasRole(['Medico', 'Enfermeria'])) {
+            if (!User::hasRole(['Medico', 'Enfermeria', 'AdminEfector'])) {
                 return $this->error(
                     'La aplicación móvil no está disponible para este rol.',
                     null,

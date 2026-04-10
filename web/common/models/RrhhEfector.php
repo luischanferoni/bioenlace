@@ -17,7 +17,7 @@ use Yii;
  * @property int|null $updated_by
  * @property int|null $deleted_by
  *
- * @property Efector $efector
+ * @property Efector|null $efector
  * @property Persona $persona
  */
 class RrhhEfector extends \yii\db\ActiveRecord
@@ -86,20 +86,13 @@ class RrhhEfector extends \yii\db\ActiveRecord
     }
 
     /**
+     * Relación estándar: Yii solo expone `$model->efector` si el getter devuelve {@see \yii\db\ActiveQuery}.
+     *
      * @return \yii\db\ActiveQuery
      */
     public function getEfector()
     {
-        $efector = Efector::find()->andWhere(['id_efector' => $this->id_efector])->one();
-
-        if (!$efector){
-            $efectorVacio = new Efector();
-            $efectorVacio->nombre = 'SIN EFECTOR';
-            return $efectorVacio;
-        }
-
-        return $efector;
-        //return $this->hasOne(Efector::className(), ['id_efector' => 'id_efector']);
+        return $this->hasOne(Efector::className(), ['id_efector' => 'id_efector']);
     }
 
     /**

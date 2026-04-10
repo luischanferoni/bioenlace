@@ -7,11 +7,13 @@ import '../navigation/native_screen_router.dart';
 class AccionesScreen extends StatefulWidget {
   final String userId;
   final String userName;
+  final String? authToken;
 
   const AccionesScreen({
     Key? key,
     required this.userId,
     required this.userName,
+    this.authToken,
   }) : super(key: key);
 
   @override
@@ -178,6 +180,22 @@ class _AccionesScreenState extends State<AccionesScreen> {
                                     final co = action['client_open'];
                                     if (co is Map) {
                                       final kind = co['kind']?.toString();
+                                      if (kind == 'ui_json') {
+                                        final api = co['api'];
+                                        final route = api is Map ? api['route']?.toString() : null;
+                                        if (route != null && route.isNotEmpty) {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute<void>(
+                                              builder: (_) => UiJsonWizardScreen(
+                                                apiAbsoluteUrl: resolveApiAbsoluteUrl(route),
+                                                authToken: widget.authToken,
+                                                appClient: 'bioenlace-medico',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                      }
                                       final mobile = co['mobile'];
                                       final screenId = (mobile is Map ? mobile['screen_id'] : null) ??
                                           co['screen_id'];

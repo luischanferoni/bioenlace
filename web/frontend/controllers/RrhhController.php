@@ -8,6 +8,7 @@ use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\Json;
+use yii\helpers\ArrayHelper;
 
 use common\models\RrhhEfector;
 use common\models\busquedas\RrhhEfectorBusqueda;
@@ -162,5 +163,56 @@ public function actionIndex()
             return;
         }
         echo Json::encode(['output' => '', 'selected' => '']);
+    }
+
+    /**
+     * DepDrop: profesionales por efector + servicio (JSON).
+     */
+    public function actionProfesionalesPorServicioEfector()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $out = [];
+
+        if (isset($_POST['depdrop_parents'])) {
+            $parents = $_POST['depdrop_parents'];
+            if ($parents != null) {
+                $idEfector = $parents[0];
+                $idServicio = $parents[1];
+
+                $profesionales = RrhhEfector::obtenerMedicosPorServicioEfector($idEfector, $idServicio);
+                $arrayEfectores = ArrayHelper::map($profesionales, 'id_rr_hh', 'datos');
+
+                foreach ($arrayEfectores as $key => $value) {
+                    $out[] = ['id' => $key, 'name' => $value];
+                }
+
+                return ['output' => $out, 'selected' => ''];
+            }
+        }
+        return ['output' => '', 'selected' => ''];
+    }
+
+    /**
+     * Autocomplete Select2 (misma forma que API /api/v1/rrhh/autocomplete).
+     */
+    public function actionRrhhAutocomplete($q = null)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $request = Yii::$app->request;
+        $idEfector = $request->get('id_efector') ?: $request->post('id_efector');
+        $idServicio = $request->get('id_servicio') ?: $request->post('id_servicio');
+        if ($idEfector === null || $idEfector === '' || $idServicio === null || $idServicio === '') {
+            return ['results' => []];
+        }
+        $q = $q ?? $request->get('q') ?? $request->post('q');
+        if ($q === null || trim((string) $q) === '') {
+            return ['results' => []];
+        }
+        $filters = [
+            'id_efector' => $idEfector,
+            'id_servicio' => $idServicio,
+        ];
+
+        return ['results' => array_values(RrhhEfector::autocompleteRrhh($q, $filters))];
     }
 }

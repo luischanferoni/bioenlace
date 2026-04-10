@@ -362,6 +362,24 @@ class UiDefinitionTemplateManager
                         }
                     }
                 }
+
+                if (isset($field['type']) && $field['type'] === 'custom_widget') {
+                    $valueFields = $field['value_fields'] ?? null;
+                    if (is_array($valueFields) && $valueFields !== []) {
+                        $initial = [];
+                        foreach ($valueFields as $vn) {
+                            if (!is_string($vn) || $vn === '') {
+                                continue;
+                            }
+                            if (array_key_exists($vn, $params) && $params[$vn] !== null && $params[$vn] !== '') {
+                                $initial[$vn] = $params[$vn];
+                            }
+                        }
+                        if ($initial !== []) {
+                            $field['initial_values'] = $initial;
+                        }
+                    }
+                }
             }
         }
 

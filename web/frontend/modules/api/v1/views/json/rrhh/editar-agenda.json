@@ -1,0 +1,132 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": {
+        "min_app_version": "1.0.0"
+      }
+    }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Seleccionar profesional (RRHH)",
+      "fields": ["id_efector", "id_rr_hh"]
+    },
+    {
+      "step": 1,
+      "title": "Servicio y agenda semanal",
+      "fields": [
+        "id_servicio",
+        "cupo_pacientes",
+        "duracion_slot_minutos",
+        "formas_atencion",
+        "weekly_scheduler_widget"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Condición laboral",
+      "fields": ["id_condicion_laboral", "fecha_inicio", "fecha_fin"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id_efector",
+      "label": "",
+      "type": "hidden",
+      "required": false
+    },
+    {
+      "name": "id_rr_hh",
+      "label": "Profesional",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/api/v1/rrhh/listar-por-efector",
+      "params": { "id_efector": "id_efector" },
+      "auto_load": false
+    },
+    {
+      "name": "id_servicio",
+      "label": "Servicio asignado",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/api/v1/rrhh/servicios-asignados",
+      "depends_on": ["id_rr_hh"],
+      "params": { "id_rr_hh": "id_rr_hh" },
+      "auto_load": false
+    },
+    {
+      "name": "cupo_pacientes",
+      "label": "Cupo de pacientes",
+      "type": "select",
+      "required": false,
+      "options": [
+        { "value": "0", "label": "Sin cupo" },
+        { "value": "5", "label": "5" },
+        { "value": "10", "label": "10" },
+        { "value": "15", "label": "15" },
+        { "value": "20", "label": "20" },
+        { "value": "25", "label": "25" },
+        { "value": "30", "label": "30" }
+      ]
+    },
+    {
+      "name": "duracion_slot_minutos",
+      "label": "Minutos por turno (opcional)",
+      "type": "number",
+      "required": false
+    },
+    {
+      "name": "formas_atencion",
+      "label": "Forma de atención de turnos",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
+        { "value": "TURNO", "label": "Programado" },
+        { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
+      ]
+    },
+    {
+      "name": "weekly_scheduler_widget",
+      "label": "Horarios por día",
+      "type": "custom_widget",
+      "widget_id": "weekly_scheduler",
+      "required": false,
+      "value_fields": [
+        "lunes_2",
+        "martes_2",
+        "miercoles_2",
+        "jueves_2",
+        "viernes_2",
+        "sabado_2",
+        "domingo_2"
+      ],
+      "assets": {
+        "css": ["/css/scheduler.css"],
+        "js": ["/js/scheduler.js", "/js/widgets/ui-widget-weekly-scheduler.js"]
+      }
+    },
+    {
+      "name": "id_condicion_laboral",
+      "label": "Condición laboral",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/api/v1/rrhh/condiciones-laborales-catalogo",
+      "auto_load": true
+    },
+    {
+      "name": "fecha_inicio",
+      "label": "Fecha inicio",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "fecha_fin",
+      "label": "Fecha fin (opcional)",
+      "type": "date",
+      "required": false
+    }
+  ]
+}

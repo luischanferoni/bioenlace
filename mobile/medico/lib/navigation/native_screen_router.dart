@@ -31,7 +31,8 @@ class NativeScreenRouter {
         return MaterialPageRoute(
           builder: (_) => _PlaceholderNativeScreen(
             title: title ?? 'Agenda laboral',
-            body: 'TODO: Implementar pantalla Flutter equivalente a Agenda (web).',
+            body:
+                'Obsoleto: usar UI JSON /api/v1/ui/rrhh/editar-agenda (UiJsonWizardScreen). Ajustar el intent o implementar redirección.',
           ),
         );
       default:

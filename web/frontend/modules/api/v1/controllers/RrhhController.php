@@ -4,7 +4,12 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
+use common\components\Services\Rrhh\RrhhAgendaUiService;
+use common\components\UiScreenService;
+use common\models\Condiciones_laborales;
+use common\models\Persona;
 use common\models\RrhhEfector;
+use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 
 /**
@@ -115,5 +120,166 @@ class RrhhController extends BaseController
         }
 
         return ['servicios' => $servicios];
+    }
+
+    /**
+     * GET/POST /api/v1/rrhh/listar-por-efector
+     * RRHH del efector (staff). Parámetros: id_efector (opcional, default sesión), q, limit.
+     *
+     * @return array{results: list<array{id: int, text: string}>}
+     */
+    public function actionListarPorEfector($q = null)
+    {
+        $request = Yii::$app->request;
+        $idEfector = $request->get('id_efector') ?: $request->post('id_efector');
+        if ($idEfector === null || $idEfector === '') {
+            $idEfector = Yii::$app->user->getIdEfector();
+        }
+        $idEfector = (int) $idEfector;
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('id_efector es requerido');
+        }
+
+        $q = $q ?? $request->get('q') ?? $request->post('q');
+        $limit = (int) ($request->get('limit') ?: $request->post('limit') ?: 50);
+        if ($limit < 1) {
+            $limit = 50;
+        }
+        if ($limit > 200) {
+            $limit = 200;
+        }
+
+        $query = RrhhEfector::find()
+            ->alias('re')
+            ->with('persona')
+            ->where(['re.id_efector' => $idEfector])
+            ->andWhere(['re.deleted_at' => null]);
+
+        if ($q !== null && trim((string) $q) !== '') {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], trim((string) $q)) . '%';
+            $query->joinWith('persona p')
+                ->andWhere([
+                    'or',
+                    ['like', 'p.apellido', $term, false],
+                    ['like', 'p.nombre', $term, false],
+                    ['like', 'p.documento', $term, false],
+                ]);
+        }
+
+        $rows = $query->orderBy(['re.id_rr_hh' => SORT_ASC])->limit($limit)->all();
+
+        $results = [];
+        foreach ($rows as $re) {
+            $nombre = $re->persona !== null ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : ('RRHH #' . $re->id_rr_hh);
+            $results[] = [
+                'id' => (int) $re->id_rr_hh,
+                'text' => $nombre,
+            ];
+        }
+
+        return ['results' => $results];
+    }
+
+    /**
+     * GET/POST /api/v1/rrhh/servicios-asignados
+     * Servicios ya asignados al RRHH (para edición de agenda). Requiere id_rr_hh.
+     *
+     * @return array{results: list<array{id: int, text: string, meta: array<string, int}>}
+     */
+    public function actionServiciosAsignados()
+    {
+        $request = Yii::$app->request;
+        $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+        if ($idRrHh === null || $idRrHh === '') {
+            throw new BadRequestHttpException('id_rr_hh es requerido');
+        }
+        $idRrHh = (int) $idRrHh;
+
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('No hay efector en sesión.');
+        }
+
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($re === null) {
+            throw new BadRequestHttpException('RRHH no válido para este efector.');
+        }
+
+        $servicios = RrhhServicio::find()
+            ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
+            ->with('servicio')
+            ->orderBy(['id_servicio' => SORT_ASC])
+            ->all();
+
+        $results = [];
+        foreach ($servicios as $rs) {
+            if ((int) $rs->id_servicio === 62) {
+                continue;
+            }
+            $nombre = $rs->servicio !== null ? (string) $rs->servicio->nombre : ('Servicio #' . $rs->id_servicio);
+            $results[] = [
+                'id' => (int) $rs->id_servicio,
+                'text' => $nombre,
+                'meta' => [
+                    'id_rrhh_servicio' => (int) $rs->id,
+                ],
+            ];
+        }
+
+        return ['results' => $results];
+    }
+
+    /**
+     * GET /api/v1/rrhh/condiciones-laborales-catalogo
+     *
+     * @return array{results: list<array{id: int, text: string}>}
+     */
+    public function actionCondicionesLaboralesCatalogo()
+    {
+        $rows = Condiciones_laborales::find()
+            ->orderBy(['nombre' => SORT_ASC])
+            ->all();
+
+        $results = [];
+        foreach ($rows as $row) {
+            $results[] = [
+                'id' => (int) $row->id_condicion_laboral,
+                'text' => (string) $row->nombre,
+            ];
+        }
+
+        return ['results' => $results];
+    }
+
+    /**
+     * UI JSON: wizard RRHH → agenda por servicio → condición laboral.
+     *
+     * GET|POST /api/v1/ui/rrhh/editar-agenda
+     *
+     * @action_name Editar agenda y condición laboral (RRHH)
+     * @entity Rrhh
+     * @tags rrhh, agenda, servicios, condiciones laborales, staff
+     * @keywords editar agenda profesional, horarios por servicio, condición laboral
+     */
+    public function actionEditarAgenda(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $defaults = RrhhAgendaUiService::buildFieldValuesForGet($idEfector, $fromClient);
+        $paramsForRender = array_merge($defaults, $fromClient);
+
+        return UiScreenService::handleScreen(
+            'rrhh',
+            'editar-agenda',
+            $paramsForRender,
+            $req->post(),
+            function (array $post) use ($idEfector): array {
+                return RrhhAgendaUiService::submit($idEfector, $post);
+            }
+        );
     }
 }

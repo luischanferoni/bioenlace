@@ -265,7 +265,7 @@
         switch (uiType) {
             case 'wizard':
                 if (json.wizard_config) {
-                    renderWizard(json.wizard_config, container, options);
+                    renderWizard(json.wizard_config, container, Object.assign({}, options, { definition: json }));
                 } else {
                     container.innerHTML = '<div class="alert alert-warning">No se encontró configuración de wizard.</div>';
                 }
@@ -281,6 +281,61 @@
      * @param {HTMLElement} container - Contenedor donde se debe renderizar
      * @param {Object} options - Opciones adicionales (por ejemplo, { url: fullUrl })
      */
+    function readWizardAccumFromForm(form, accum) {
+        if (!form || !accum) return;
+        const fd = new FormData(form);
+        fd.forEach((value, key) => {
+            accum[key] = value;
+        });
+    }
+
+    function applyWizardAccumToForm(form, accum) {
+        if (!form || !accum) return;
+        Object.keys(accum).forEach(k => {
+            const els = form.elements.namedItem(k);
+            if (!els) return;
+            const val = accum[k] === undefined || accum[k] === null ? '' : String(accum[k]);
+            if (els.length && els[0] && els[0].type === 'radio') {
+                for (let i = 0; i < els.length; i++) {
+                    els[i].checked = els[i].value === val;
+                }
+            } else if (els.length) {
+                for (let i = 0; i < els.length; i++) {
+                    if (els[i].type !== 'file') els[i].value = val;
+                }
+            } else if (els.type !== 'file') {
+                els.value = val;
+            }
+        });
+    }
+
+    function initWizardCustomWidgets(container, stepFields, getFieldConfigByName) {
+        const names = Array.isArray(stepFields) ? stepFields : [];
+        names.forEach(fieldName => {
+            const fd = typeof fieldName === 'string' ? getFieldConfigByName(fieldName) : null;
+            if (!fd || fd.type !== 'custom_widget' || !fd.widget_id) return;
+            const assets = fd.assets && typeof fd.assets === 'object' ? fd.assets : null;
+            const run = () => {
+                container.querySelectorAll('.bio-ui-custom-widget').forEach(el => {
+                    if (el.getAttribute('data-bio-ui-widget') !== fd.widget_id) return;
+                    const w = window.BioenlaceUiWidgets && window.BioenlaceUiWidgets[fd.widget_id];
+                    if (w && typeof w.init === 'function') {
+                        try {
+                            w.init(el, fd);
+                        } catch (err) {
+                            console.error('[SPA] custom_widget init', fd.widget_id, err);
+                        }
+                    }
+                });
+            };
+            if (assets) {
+                ensureAssetsLoaded(assets).then(run);
+            } else {
+                run();
+            }
+        });
+    }
+
     function renderWizard(config, container, options = {}) {
         if (!config || !container) {
             return;
@@ -290,6 +345,21 @@
         const fieldsConfig = Array.isArray(config.fields) ? config.fields : [];
         let currentStep = typeof config.initial_step === 'number' ? config.initial_step : 0;
         const submitUrl = options.url || null;
+        const wizardAccum = {};
+
+        fieldsConfig.forEach(f => {
+            if (f && f.name && f.value !== undefined && f.value !== null && f.value !== '') {
+                wizardAccum[f.name] = String(f.value);
+            }
+            if (f && f.type === 'custom_widget' && Array.isArray(f.value_fields) && f.initial_values && typeof f.initial_values === 'object') {
+                f.value_fields.forEach(n => {
+                    const iv = f.initial_values[n];
+                    if (iv !== undefined && iv !== null && iv !== '') {
+                        wizardAccum[n] = String(iv);
+                    }
+                });
+            }
+        });
 
         function getFieldConfigByName(name) {
             return fieldsConfig.find(f => f.name === name);
@@ -304,14 +374,12 @@
 
             let html = '<div class="wizard-step">';
 
-            // Título del paso
             if (step.title) {
                 html += '<h5 class="mb-3">' + escapeHtml(step.title) + '</h5>';
             }
 
             html += '<form id="wizard-form">';
 
-            // Campos del paso
             const stepFields = Array.isArray(step.fields) ? step.fields : [];
             stepFields.forEach(fieldName => {
                 const fieldDef = typeof fieldName === 'string' ? getFieldConfigByName(fieldName) : fieldName;
@@ -320,7 +388,6 @@
                 }
             });
 
-            // Navegación
             html += '<div class="mt-3 d-flex justify-content-between">';
             if (currentStep > 0) {
                 html += '<button type="button" class="btn btn-outline-secondary" data-action="prev">Anterior</button>';
@@ -345,43 +412,88 @@
                 return;
             }
 
-            // Autocomplete (opciones remotas) y filtros
+            applyWizardAccumToForm(form, wizardAccum);
+
             attachAutocompleteHandlers(container);
 
-            form.addEventListener('click', function(e) {
-                const action = e.target.dataset.action;
-                if (!action) {
-                    return;
+            stepFields.forEach(fn => {
+                const fd = typeof fn === 'string' ? getFieldConfigByName(fn) : null;
+                if (fd && fd.type === 'autocomplete' && fd.auto_load) {
+                    form.querySelectorAll('button[data-ac-open]').forEach(btn => {
+                        if (btn.getAttribute('data-ac-field') === fn) {
+                            setTimeout(() => btn.click(), 0);
+                        }
+                    });
                 }
+            });
+
+            initWizardCustomWidgets(container, stepFields, getFieldConfigByName);
+
+            form.addEventListener('click', function wizardNavClick(e) {
+                const action = e.target.dataset ? e.target.dataset.action : null;
+                if (!action) return;
                 e.preventDefault();
 
                 if (action === 'next') {
-                    // TODO: validaciones simples antes de avanzar
+                    readWizardAccumFromForm(form, wizardAccum);
                     if (currentStep < steps.length - 1) {
                         currentStep++;
+                        form.removeEventListener('click', wizardNavClick);
                         renderCurrentStep();
                     }
                 } else if (action === 'prev') {
+                    readWizardAccumFromForm(form, wizardAccum);
                     if (currentStep > 0) {
                         currentStep--;
+                        form.removeEventListener('click', wizardNavClick);
                         renderCurrentStep();
                     }
                 }
             });
 
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', function wizardSubmit(e) {
                 e.preventDefault();
+                readWizardAccumFromForm(form, wizardAccum);
 
-                // Recolectar valores del formulario del último paso (por ahora)
-                const formData = new FormData(form);
-                const payload = {};
-                formData.forEach((value, key) => {
-                    payload[key] = value;
+                if (!submitUrl) {
+                    console.warn('[SPA] wizard sin submitUrl');
+                    return;
+                }
+
+                const payload = Object.assign({}, wizardAccum);
+                const body = new URLSearchParams();
+                Object.keys(payload).forEach(k => {
+                    if (payload[k] !== undefined && payload[k] !== null) {
+                        body.set(k, payload[k]);
+                    }
                 });
 
-                // Por ahora solo logueamos; más adelante se puede enviar a submitUrl
-                console.log('Valores del wizard (último paso):', payload, 'submitUrl:', submitUrl);
-                alert('Este wizard aún no envía los datos al servidor. Implementar POST cuando se defina el flujo completo.');
+                fetch(submitUrl, {
+                    method: 'POST',
+                    headers: window.BioenlaceApiClient.mergeHeaders({
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }),
+                    credentials: 'same-origin',
+                    body
+                })
+                    .then(r => r.json().then(j => ({ ok: r.ok, status: r.status, json: j })))
+                    .then(({ ok, json }) => {
+                        if (json && json.kind === 'ui_submit_result' && json.success) {
+                            const msg = (json.data && json.data.message) ? json.data.message : 'Guardado.';
+                            container.innerHTML = '<div class="alert alert-success">' + escapeHtml(String(msg)) + '</div>';
+                            return;
+                        }
+                        if (json && json.kind === 'ui_definition') {
+                            renderDynamicUi(json, container, { url: submitUrl });
+                            return;
+                        }
+                        container.innerHTML = '<div class="alert alert-danger">Error al guardar.</div>';
+                    })
+                    .catch(err => {
+                        console.error('[SPA] wizard submit', err);
+                        container.innerHTML = '<div class="alert alert-danger">Error de red al guardar.</div>';
+                    });
             });
         }
 
@@ -391,9 +503,37 @@
     /**
      * Renderizar campo de formulario
      */
+    function renderCustomWidgetField(field) {
+        const wid = field.widget_id || '';
+        let html = '<div class="mb-3 bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
+        if (field.label) {
+            html += '<label class="form-label">' + escapeHtml(field.label);
+            if (field.required) {
+                html += ' <span class="text-danger">*</span>';
+            }
+            html += '</label>';
+        }
+        const initial = field.initial_values && typeof field.initial_values === 'object' ? field.initial_values : {};
+        (field.value_fields || []).forEach(name => {
+            const v = initial[name] !== undefined && initial[name] !== null ? String(initial[name]) : '';
+            html += '<input type="hidden" name="' + escapeHtml(name) + '" value="' + escapeHtml(v) + '">';
+        });
+        html += '<div class="table-responsive"><table class="w-100" data-weekly-scheduler-mount></table></div>';
+        html += '</div>';
+        return html;
+    }
+
     function renderFormField(field) {
+        if (field.type === 'hidden') {
+            const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
+            return '<input type="hidden" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '">';
+        }
+        if (field.type === 'custom_widget') {
+            return renderCustomWidgetField(field);
+        }
+
         let html = '<div class="mb-3">';
-        html += '<label class="form-label">' + escapeHtml(field.label);
+        html += '<label class="form-label">' + escapeHtml(field.label || '');
         if (field.required) {
             html += ' <span class="text-danger">*</span>';
         }
@@ -442,7 +582,7 @@
         html += '<input type="hidden" name="' + escapeHtml(field.name) + '" id="' + id + '_value" value="' + escapeHtml(field.value || '') + '">';
         html += '<div class="input-group">';
         html += '<input type="text" class="form-control" id="' + id + '_text" placeholder="Seleccionar..." readonly>';
-        html += '<button type="button" class="btn btn-outline-primary" data-ac-open="' + id + '">Elegir</button>';
+        html += '<button type="button" class="btn btn-outline-primary" data-ac-field="' + escapeHtml(field.name || '') + '" data-ac-open="' + id + '">Elegir</button>';
         html += '</div>';
         html += '<div class="mt-2 d-none" data-ac-panel="' + id + '"></div>';
 
@@ -612,13 +752,15 @@
      * Renderizar campo select
      */
     function renderSelectField(field) {
+        const fv = field.value !== undefined && field.value !== null ? String(field.value) : '';
         let html = '<select class="form-select" name="' + escapeHtml(field.name) + '"' + (field.required ? ' required' : '') + '>';
         html += '<option value="">Seleccione...</option>';
         if (field.options) {
             field.options.forEach(option => {
                 const value = typeof option === 'object' ? option.value : option;
                 const label = typeof option === 'object' ? option.label : option;
-                html += '<option value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</option>';
+                const sel = String(value) === fv ? ' selected' : '';
+                html += '<option value="' + escapeHtml(value) + '"' + sel + '>' + escapeHtml(label) + '</option>';
             });
         }
         html += '</select>';
@@ -636,7 +778,8 @@
                 const label = typeof option === 'object' ? option.label : option;
                 const id = field.name + '_' + value;
                 html += '<div class="form-check">';
-                html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + id + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + '>';
+                const checked = field.value !== undefined && field.value !== null && String(value) === String(field.value) ? ' checked' : '';
+                html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + id + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
                 html += '<label class="form-check-label" for="' + id + '">' + escapeHtml(label) + '</label>';
                 html += '</div>';
             });
@@ -1352,6 +1495,30 @@
     }
 
     /**
+     * Abre UI JSON fullscreen si la URL trae ?spa_open_ui_json=/api/v1/ui/... (p. ej. redirect desde Yii).
+     */
+    function tryOpenUiJsonFromQuery() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const raw = params.get('spa_open_ui_json');
+            if (!raw || !String(raw).trim()) {
+                return;
+            }
+            let path = String(raw).trim();
+            if (!path.startsWith('http://') && !path.startsWith('https://')) {
+                if (!path.startsWith('/')) {
+                    path = '/' + path;
+                }
+                path = window.location.origin + path;
+            }
+            const title = params.get('spa_open_ui_title') || 'Formulario';
+            openFullPage(path, title, 'ui', null);
+        } catch (e) {
+            console.warn('[SPA] spa_open_ui_json', e);
+        }
+    }
+
+    /**
      * Cargar contenido de página vía AJAX
      */
     function loadPageContent(url, pageId, type, assets) {
@@ -1795,13 +1962,13 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             init();
-            // Adjuntar listeners a cards que ya están en el DOM (como el card de prueba)
             attachCardListeners();
+            tryOpenUiJsonFromQuery();
         });
     } else {
         init();
-        // Adjuntar listeners a cards que ya están en el DOM (como el card de prueba)
         attachCardListeners();
+        tryOpenUiJsonFromQuery();
     }
 
 })();

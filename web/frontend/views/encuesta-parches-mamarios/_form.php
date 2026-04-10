@@ -62,7 +62,7 @@ use yii\web\JsExpression;
                             'allowClear' => true,
                             'minimumInputLength' => 3,
                             'ajax' => [
-                                'url' => Url::to(['rrhh-efector/rrhh-autocomplete']),
+                                'url' => Url::to(['rrhh/rrhh-autocomplete']),
                                 'dataType' => 'json',
                                 'data' => new JsExpression('function(params) { return {q:params.term}; }'),
                             ],

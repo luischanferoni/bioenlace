@@ -33,7 +33,7 @@ use yii\widgets\ActiveForm;
                             'pluginOptions' => [
                                 'initialize' => true,
                                 'depends' => [ ['idEfector'],['servicio']],
-                                'url' => Url::to(['/rrhh-efector/profesionales-por-servicio-efector']),
+                                'url' => Url::to(['/rrhh/profesionales-por-servicio-efector']),
                                 'loadingText' => 'Cargando medicos ...',
                                 'params' => ['medico_seleccionado']
                             ]

@@ -399,7 +399,7 @@ $this->registerJsFile(
                         </g>
                     </svg>
                 </div>
-                <?php if (User::canRoute(['/rrhh-efector/create'])) { ?>
+                <?php if (User::canRoute(['/user/crear']) || ($model->id_user !== null && (int) $model->id_user > 0)) { ?>
                     <div class="card-body">
                         <h4 class="mb-2">Acceso al Sistema</h4>
                         <div class="row">
@@ -418,9 +418,9 @@ $this->registerJsFile(
                                 );
 
                                 echo SisseGhostHtml::a(
-                                    'Administrar RRHH',
-                                    ['/rrhh-efector/create', 'id_persona' => $model->id_persona],
-                                    ['class' => 'ms-2', 'title' => 'Administrar persona como recurso humano']
+                                    'Flujos staff (asistente)',
+                                    ['/site/asistente'],
+                                    ['class' => 'ms-2', 'title' => 'Abrir el asistente (agenda RRHH, etc.)']
                                 );
                             }
                             ?>

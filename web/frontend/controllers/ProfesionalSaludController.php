@@ -179,7 +179,7 @@ class ProfesionalSaludController extends Controller
                 }
 
                 $transaction->commit();
-                return $this->redirect(['rrhh-efector/create', 'id_persona' => $persona->id_persona]);
+                return $this->redirect(['/site/asistente']);
 
             } catch (Exception $e) {
                 echo "sdfsd";

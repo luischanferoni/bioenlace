@@ -46,6 +46,7 @@ class _MainScreenState extends State<MainScreen> {
       AccionesScreen(
         userId: widget.userId,
         userName: widget.userName,
+        authToken: widget.authToken,
       ),
       ConfiguracionScreen(
         userId: widget.userId,

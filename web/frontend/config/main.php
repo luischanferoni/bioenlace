@@ -190,6 +190,14 @@ return [
                 'GET api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
                 'POST api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
                 'OPTIONS api/<version:\w+>/rrhh/servicios-por-rrhh' => '<version>/rrhh/servicios-por-rrhh',
+                'GET api/<version:\w+>/rrhh/listar-por-efector' => '<version>/rrhh/listar-por-efector',
+                'POST api/<version:\w+>/rrhh/listar-por-efector' => '<version>/rrhh/listar-por-efector',
+                'OPTIONS api/<version:\w+>/rrhh/listar-por-efector' => '<version>/rrhh/listar-por-efector',
+                'GET api/<version:\w+>/rrhh/servicios-asignados' => '<version>/rrhh/servicios-asignados',
+                'POST api/<version:\w+>/rrhh/servicios-asignados' => '<version>/rrhh/servicios-asignados',
+                'OPTIONS api/<version:\w+>/rrhh/servicios-asignados' => '<version>/rrhh/servicios-asignados',
+                'GET api/<version:\w+>/rrhh/condiciones-laborales-catalogo' => '<version>/rrhh/condiciones-laborales-catalogo',
+                'OPTIONS api/<version:\w+>/rrhh/condiciones-laborales-catalogo' => '<version>/rrhh/condiciones-laborales-catalogo',
 
                 // Catálogos API
                 'GET api/<version:\w+>/catalogos/encounter-classes' => '<version>/catalogos/encounter-classes',

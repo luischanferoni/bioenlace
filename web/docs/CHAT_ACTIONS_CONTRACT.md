@@ -78,7 +78,12 @@ Los clientes deben soportar como mínimo este shape:
   - `client_open.web.path` (string) requerido: URL que devuelve **solo** el markup del componente.
   - `client_open.assets` opcional: `{ css: string[], js: string[] }` para cargar assets una vez.
   - El HTML debe incluir un root `[data-native-component="<name>"]` y el JS `window.BioenlaceNativeComponents[<name>].init(rootEl)`.
-  - En móvil: `client_open.mobile.screen_id` → pantalla Flutter equivalente (sin WebView).
+  - **Móvil:** solo `client_open.mobile.screen_id` (u otra instrucción explícita de pantalla). La app **no** hace fetch del HTML ni de `assets` web para renderizar ese flujo; implementación **100 % nativa** en Flutter.
+
+### Móvil: `ui_json` y `custom_widget`
+
+- Con `client_open.kind === "ui_json"`, el cliente llama a `client_open.api.route` (GET/POST) y renderiza el JSON con su motor (p. ej. `UiJsonWizardScreen` en `mobile/packages/shared`).
+- Los campos `type: "custom_widget"` se resuelven **solo en el cliente** según `widget_id`. La clave `assets` del descriptor es **irrelevante en móvil** (no se descargan esas URLs para ejecutar JS/CSS).
 
 #### `client_open.presentation` (obligatorio para `ui_json` y `native` vía asistente)
 
@@ -91,27 +96,49 @@ Valores por defecto si falta el campo: `ui_json` → `fullscreen`; `native` → 
 
 **Navegación “con layout” de sitio (browser completo)** no forma parte de este contrato: enlaces normales o `@no_intent_catalog` según producto.
 
-#### Ejemplo `native` + `inline` (Agenda en card)
+#### Ejemplo `ui_json` (editar agenda laboral por wizard API)
+
+Flujo equivalente sustituye antiguas pantallas Yii-only; la ruta canónica es la **UI JSON**:
 
 ```json
 {
-  "action_id": "native.agenda.crear",
-  "display_name": "Agenda laboral",
-  "route": "/agenda/crear",
+  "action_id": "rrhh.editar-agenda",
+  "display_name": "Editar agenda laboral",
+  "route": "/api/v1/ui/rrhh/editar-agenda",
   "client_open": {
-    "kind": "native",
-    "presentation": "inline",
-    "web": { "path": "/agenda/crear" },
-    "mobile": { "screen_id": "agenda.crear" },
-    "assets": {
-      "css": ["/css/scheduler.css"],
-      "js": ["/js/scheduler.js", "/js/agenda-laboral.js"]
+    "kind": "ui_json",
+    "presentation": "fullscreen",
+    "api": {
+      "route": "/api/v1/ui/rrhh/editar-agenda",
+      "method": "GET|POST"
     }
   }
 }
 ```
 
-`client_open.web.path` se resuelve con **`Url::to()`** sobre la ruta canónica `/<controller>/<action>` de la acción descubierta (misma convención que Yii). **`/agenda`** puede mapear a la misma acción si el controlador define `defaultAction = 'crear'`.
+En **web**, el mismo endpoint alimenta la SPA (wizard dinámico). En **móvil**, solo se consume el JSON; el `weekly_scheduler` del descriptor se implementa en Dart compartido, no vía assets del servidor.
+
+#### Ejemplo `native` + `inline` (solo web SPA)
+
+```json
+{
+  "action_id": "native.ejemplo.inline",
+  "display_name": "Componente nativo web",
+  "route": "/algun-controlador/alguna-accion",
+  "client_open": {
+    "kind": "native",
+    "presentation": "inline",
+    "web": { "path": "/algun-controlador/alguna-accion" },
+    "mobile": { "screen_id": "algun.screen.id" },
+    "assets": {
+      "css": ["/css/ejemplo.css"],
+      "js": ["/js/ejemplo.js"]
+    }
+  }
+}
+```
+
+`client_open.web.path` se resuelve con **`Url::to()`** sobre la ruta canónica `/<controller>/<action>` cuando el catálogo descubre esa acción. En móvil aplica solo `screen_id` (sin fetch del partial ni de `assets`).
 
 ### Cómo declarar `native` en el catálogo (metadata en docblock)
 
@@ -134,6 +161,7 @@ El catálogo se descubre desde `frontend/controllers/*Controller.php`. El motor 
 - Atajos inicio (acciones comunes): `web/common/components/Services/Actions/CommonActionsService.php`
 - Enriquecimiento para apertura en clientes: `web/common/components/Actions/AssistantClientOpenEnricher.php`
 - API chat: `web/frontend/modules/api/v1/controllers/ChatController.php`
+- Campos `custom_widget` en wizards UI JSON: `web/docs/UI_JSON_CUSTOM_WIDGET.md`
 
 ## `needs_more_info` y `missing_params`
 

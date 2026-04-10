@@ -31,6 +31,9 @@ class ConsultaObstetriciaController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionCreate()
     {
         $session = Yii::$app->getSession();

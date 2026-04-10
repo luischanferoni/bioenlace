@@ -67,8 +67,8 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
     /**
      * Lists all Especialidades models.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionIndex()
     {
         /*$searchModel = new AtencionesEnfermeriaBusqueda();
@@ -86,8 +86,8 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
      * Displays a single AtencionesEnfermeria model.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -284,9 +284,8 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -300,6 +299,9 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
         }
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionGenerarReporte()
     {
 
@@ -312,6 +314,9 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
         }
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionReporte($mes, $anio)
     {
         $this->layout = 'imprimir';
@@ -325,10 +330,10 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
     /**
      * Deletes an existing Especialidades model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
     */
-
     public function actionDelete($id)
     {
         $atencion_enfermeria = $this->findModel($id);
@@ -342,7 +347,7 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
      * @return Especialidades the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws NotFoundHttpException if the model cannot be found     * 
      */
     protected function findModel($id)
     {

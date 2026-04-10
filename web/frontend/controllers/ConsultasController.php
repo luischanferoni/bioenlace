@@ -51,9 +51,9 @@ class ConsultasController extends Controller
      * @keywords listar,ver todos,mostrar,consultas,atenciones
      * @synonyms consulta,atencion,visita,cita mÃ©dica
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new ConsultaBusqueda();
         $searchModel->id_efector = Yii::$app->user->getIdEfector();
@@ -71,8 +71,8 @@ public function actionIndex()
      * @tags consulta,atencion,crear,nuevo
      * @keywords crear,nuevo,agregar,consulta,atencion
      * @synonyms consulta,atencion,visita
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
 
@@ -94,8 +94,8 @@ public function actionIndex()
      * @tags consulta,atencion,editar,modificar,actualizar
      * @keywords editar,modificar,actualizar,consulta
      * @synonyms consulta,atencion
+     * @no_intent_catalog
     */
-
     public function actionUpdate()
     {
         $idConsulta = Yii::$app->request->get('id_consulta');
@@ -137,6 +137,9 @@ public function actionIndex()
         return $this->renderAjax('update', ['consulta' => $modelConsulta]);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionContinuarConsulta()
     {
         $idConsulta = Yii::$app->request->get('id_consulta');
@@ -162,8 +165,8 @@ public function actionIndex()
     /**
      * Lists all Consulta models.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionListadoSumar()
     {
 
@@ -197,6 +200,9 @@ public function actionIndex()
 
     //Index Historial
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionHistorialconsultas()
     {
         $searchModel = new ConsultaBusqueda();
@@ -237,6 +243,9 @@ public function actionIndex()
 
     //Index Historial Antecedentes
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionHistorialantecedentes()
     {
         $id_persona = Yii::$app->getRequest()->getQueryParam('id');
@@ -256,6 +265,9 @@ public function actionIndex()
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionViewDetail($id)
     {
         $consulta = $this->findModel($id);
@@ -271,7 +283,9 @@ public function actionIndex()
      * @param string $id
      * @return mixed
     */
-
+    /**
+     * @no_intent_catalog
+     */
     public function actionView($id_consulta)
     {
         $idConsulta = $id_consulta;
@@ -341,10 +355,10 @@ public function actionIndex()
 
     /**
      * Displays a single Consulta model.
+     * @no_intent_catalog
      * @param string $id
      * @return mixed
     */
-
     public function actionImprimirreceta($id)
     {
         $consulta = $this->findModel($id);
@@ -359,8 +373,8 @@ public function actionIndex()
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -384,6 +398,9 @@ public function actionIndex()
         }
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionObjetos($id)
     {
         $rows = Consulta::getObjetosPrestacion($id);
@@ -401,6 +418,9 @@ public function actionIndex()
         return $droptions;
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionPrescripcionesMedicasPorConsulta()
     {
         $dataProvider = Consulta::getConsultasConPrescripcion();
@@ -536,6 +556,9 @@ public function actionIndex()
         return $error;
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionIpsHistoriaClinica($id)
     {
         /*$searchModel = new ConsultaBusqueda();
@@ -552,17 +575,26 @@ public function actionIndex()
         return $this->renderAjax('ipshistoriaclinica');
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionIpsDocumentReference($id, $dominio)
     {
         return $json = Yii::$app->ips->getDocumentReference($id, $dominio);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionIpsBundle($content)
     {
         $arr = explode("/", $content);
         return Yii::$app->ips->getHistoriaClinica($content);
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionIpsPatientLocation($id)
     {
         $mpi_api = new MpiApiController;
@@ -591,6 +623,9 @@ public function actionIndex()
     // el listado definitivo para todo el que realiza alguna atencion/consulta 
     // a un paciente
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionListados()
     {
         $adminEfector = false;

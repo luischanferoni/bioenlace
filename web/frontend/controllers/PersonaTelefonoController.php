@@ -31,9 +31,9 @@ class PersonaTelefonoController extends Controller
     /**
      * Lists all persona_telefono models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new PersonaTelefonoBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
@@ -48,8 +48,8 @@ public function actionIndex()
      * Displays a single persona_telefono model.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -61,8 +61,8 @@ public function actionIndex()
      * Creates a new persona_telefono model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate($idp)
     {
         $model = new PersonaTelefono();
@@ -84,8 +84,8 @@ public function actionIndex()
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -104,8 +104,8 @@ public function actionIndex()
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

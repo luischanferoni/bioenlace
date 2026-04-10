@@ -39,9 +39,9 @@ class GuardiaController extends Controller
     /**
      * Lists all Guardia models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new GuardiaBusqueda();
         $dataProvider = $searchModel->searchNoFinalizadas(Yii::$app->request->queryParams);
@@ -55,8 +55,8 @@ public function actionIndex()
     /**
      * Libro de Guardia.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionLibroGuardia()
     {
         $searchModel = new GuardiaBusqueda();
@@ -73,8 +73,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -86,8 +86,8 @@ public function actionIndex()
      * Creates a new Guardia model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $model = new Guardia();
@@ -165,8 +165,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionFinalizar($id)
     {
         $model = $this->findModel($id);
@@ -194,8 +194,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

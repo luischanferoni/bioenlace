@@ -31,9 +31,9 @@ class UserEfectorController extends Controller {
     /**
      * Lists all UserEfector models.
      * @return mixed
-*/
-
-public function actionIndex() {
+     * @no_intent_catalog
+    */
+    public function actionIndex() {
         $dataProvider = new ActiveDataProvider([
             'query' => UserEfector::find(),
         ]);
@@ -48,8 +48,8 @@ public function actionIndex() {
      * @param integer $id_user
      * @param integer $id_efector
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id_user, $id_efector) {
         return $this->render('view', [
                     'model' => $this->findModel($id_user, $id_efector),
@@ -60,8 +60,8 @@ public function actionIndex() {
      * Creates a new UserEfector model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate() {
         $model = new UserEfector();
 
@@ -80,8 +80,8 @@ public function actionIndex() {
      * @param integer $id_user
      * @param integer $id_efector
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id_user, $id_efector) {
         $model = $this->findModel($id_user, $id_efector);
 
@@ -107,6 +107,7 @@ public function actionIndex() {
      * @param integer $id_user
      * @param integer $id_efector
      * @return mixed
+     * @no_intent_catalog
     */
     public function actionDelete($id_user, $id_efector) {
         $this->findModel($id_user, $id_efector)->delete();

@@ -45,10 +45,9 @@ class ConsultaRegimenController extends DefaultConsultaController
     /**
      * Lists all ConsultaRegimen models.
      * @return mixed
-*/
-
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $id_consulta = $this->getPersistentParameter('id_consulta');
         $consulta = $this->findConsultaModel($id_consulta);
@@ -71,6 +70,7 @@ public function actionIndex()
 
     /**
      * Displays a single ConsultaRegimen model.
+     * @no_intent_catalog
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
@@ -88,6 +88,9 @@ public function actionIndex()
         return $model;
     }
 
+    /**
+     * @no_intent_catalog
+     */
     public function actionCreateCrud($id_consulta)
     {
         /* @var $consulta Consulta */
@@ -95,6 +98,9 @@ public function actionIndex()
         return $this->doActionCreate($consulta);
     }
     
+    /**
+     * @no_intent_catalog
+     */
     public function createCore($modelConsulta)
     {
         return $this->doActionCreate($modelConsulta, True);
@@ -189,8 +195,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();

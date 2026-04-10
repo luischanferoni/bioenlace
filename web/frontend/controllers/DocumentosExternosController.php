@@ -33,6 +33,9 @@ class DocumentosExternosController extends Controller
         ];
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionCreate()
     {
         $modelDocumentoExterno = new DocumentosExternos;
@@ -93,6 +96,9 @@ class DocumentosExternosController extends Controller
         ]);
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionEliminarAdjunto($id)
     {
         $this->eliminarArchivo($id);

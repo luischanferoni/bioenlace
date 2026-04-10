@@ -38,9 +38,9 @@ class ConsultaInternacionSuministroMedicamentoController extends Controller
     /**
      * Lists all SegNivelInternacionMedicamento models.
      * @return mixed
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $searchModel = new ConsultaSuministroMedicamentoBusqueda();
         $get = Yii::$app->request->get();
@@ -66,8 +66,8 @@ public function actionIndex()
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @no_intent_catalog
     */
-
     public function actionView($id)
     {
         return $this->render('view', [
@@ -79,8 +79,8 @@ public function actionIndex()
      * Creates a new SuministroMedicamento model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $session = Yii::$app->getSession();
@@ -196,7 +196,6 @@ public function actionIndex()
         
        
     }
-
  
 
     /**

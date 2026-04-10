@@ -61,9 +61,9 @@ class TurnosController extends Controller
      * @tags turno,cita,listar,ver,agenda
      * @keywords listar,ver turnos,citas,agenda
      * @synonyms turno,cita,agenda,reserva
-*/
-
-public function actionIndex()
+     * @no_intent_catalog
+    */
+    public function actionIndex()
     {
         $session = Yii::$app->getSession();
         $session_persona = unserialize($session['persona']);
@@ -128,8 +128,8 @@ public function actionIndex()
      * Displays a single Turno model.
      * @param string $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id_persona)
     {
         return $this->render('view', [
@@ -144,8 +144,8 @@ public function actionIndex()
      * Se lo llama desde el index
      *
      * Recibe id_rrhh_servicio_asignado e id_servicio
+     * @no_intent_catalog
     */
-
     public function actionCalendario()
     {
         $this->layout = 'blanco';
@@ -173,8 +173,8 @@ public function actionIndex()
      * Se lo llama desde js despues de llamar a turnos/calendario
      *
      * Recibe id_rrhh_servicio_asignado e id_servicio
+     * @no_intent_catalog
     */
-
     public function actionEventos()
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -412,8 +412,6 @@ public function actionIndex()
         return $resp;
     }
 
-
-
     public function crearSlots($horariosAgenda, $cupoPacientes, $minutosXPaciente, $agregoSegundos)
     {
         // Inicializar el array para los intervalos
@@ -461,6 +459,9 @@ public function actionIndex()
         return $slots;
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionRrhh($id_servicio)
     {
         $idEfector = Yii::$app->user->getIdEfector();
@@ -486,8 +487,8 @@ public function actionIndex()
 
     /**
      * UI separada de reprogramación (lista turnos futuros + enlace a API desde app/SPA).
+     * @no_intent_catalog
     */
-
     public function actionReprogramar()
     {
         $session = Yii::$app->getSession();
@@ -509,14 +510,6 @@ public function actionIndex()
     }
 
     /**
-     * Deletes an existing Turno model.
-     * If deletion is successful, the browser will respond "OK" as this request only receives ajax.
-     * @param string $id
-     * @return mixed
-     */
-    // actionDelete eliminado: la cancelación operativa vive en la API v1 (POST /api/v1/turnos/{id}/cancelar-operativo).
-
-    /**
      * Finds the Turno model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param string $id
@@ -532,6 +525,9 @@ public function actionIndex()
         }
     }
 
+    /**
+     * @no_intent_catalog
+    */
     public function actionList()
     {
         $tfecha = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['fecha'] : date("Y-m-d") . ' - ' . date("Y-m-d");
@@ -549,11 +545,10 @@ public function actionIndex()
         ]);
     }
 
-    // actionNoSePresento eliminado: vive en API v1 (POST /api/v1/turnos/{id}/no-se-presento).
-
-
-    //Metodo de acceso libre para mostrar turnos pendiente por DNI
-
+    /**
+     * Metodo de acceso libre para mostrar turnos pendiente por DNI
+     * @no_intent_catalog
+    */
     public function actionListTurnos()
     {
         $this->layout = 'publico/turnos';

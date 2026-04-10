@@ -32,9 +32,9 @@ class EventsController extends Controller
      * Displays a single Event model.
      * @param integer $id
      * @return mixed
-*/
-
-public function actionView($id)
+     * @no_intent_catalog
+    */
+    public function actionView($id)
     {
         return $this->render('view', [
             'model' => $this->findModel($id),
@@ -45,8 +45,8 @@ public function actionView($id)
      * Creates a new Event model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate()
     {
         $model = new Event();
@@ -65,8 +65,8 @@ public function actionView($id)
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
@@ -85,8 +85,8 @@ public function actionView($id)
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionDelete($id)
     {
         $this->findModel($id)->delete();
@@ -113,8 +113,8 @@ public function actionView($id)
     /**
      * Lists all Event models.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionIndex()
     {
         $events = Event::find()->all();

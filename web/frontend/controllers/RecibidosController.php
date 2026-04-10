@@ -29,9 +29,10 @@ class RecibidosController extends Controller {
     /**
      * Lists all Recibidos models.
      * @return mixed
-*/
-
-public function actionIndex() {
+     * @no_intent_catalog
+    */
+    public function actionIndex() 
+    {
         $searchModel = new RecibidosBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
@@ -45,8 +46,8 @@ public function actionIndex() {
      * Displays a single Recibidos model.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionView($id) {
         return $this->render('view', [
                     'model' => $this->findModel($id),
@@ -57,8 +58,8 @@ public function actionIndex() {
      * Creates a new Recibidos model.
      * If creation is successful, the browser will be redirected to the 'view' page.
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionCreate() {
         $model = new Recibidos();
 
@@ -76,8 +77,8 @@ public function actionIndex() {
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
     public function actionUpdate($id) {
         $model = $this->findModel($id);
 
@@ -95,15 +96,20 @@ public function actionIndex() {
      * If deletion is successful, the browser will be redirected to the 'index' page.
      * @param integer $id
      * @return mixed
+     * @no_intent_catalog
     */
-
-    public function actionDelete($id) {
+    public function actionDelete($id) 
+    {
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
     }
 
-    public function actionColumn() {
+    /**
+     * @no_intent_catalog
+    */
+    public function actionColumn() 
+    {
         $template = '{view} {delete}';
     }
 

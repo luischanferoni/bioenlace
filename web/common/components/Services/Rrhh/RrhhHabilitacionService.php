@@ -193,8 +193,10 @@ class RrhhHabilitacionService extends Component
 
         $sid = (int) $adminServicio->id_servicio;
 
-        return RrhhEfector::findActive()
+        // No usar findActive() aquí: añade `rrhh_efector.deleted_at`, incompatible con ->alias('re') en MySQL.
+        return RrhhEfector::find()
             ->alias('re')
+            ->andWhere(['re.deleted_at' => null])
             ->select(['p.nombre', 'p.apellido'])
             ->innerJoin(
                 ['rs' => RrhhServicio::tableName()],

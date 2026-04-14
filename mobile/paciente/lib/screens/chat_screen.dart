@@ -94,8 +94,18 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (result['success'] == true) {
         final data = result['data'];
-        final explanation = data['explanation'] ?? 'Consulta procesada';
+        final kind = data['kind']?.toString();
         final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
+        String explanation = data['explanation']?.toString() ?? 'Consulta procesada';
+        if (kind == 'ui_intent_match' && actions is List && actions.isNotEmpty) {
+          final a0 = actions[0];
+          if (a0 is Map) {
+            final dn = a0['display_name']?.toString();
+            if (dn != null && dn.isNotEmpty) {
+              explanation = 'Puedo ayudarte con “$dn”.';
+            }
+          }
+        }
         final suggestedQuery = data['interaccion_sugerida']?['texto'];
         final queryType = data['query_type'];
         final matchedBy = data['matched_by']; // 'action_id', 'semantic', o null (LLM)
@@ -135,7 +145,7 @@ class _ChatScreenState extends State<ChatScreen> {
             !needsUserInput) {
           // Ejecutar la acción automáticamente después de un breve delay
           Future.delayed(Duration(milliseconds: 500), () {
-            _executeAction(actions[0]);
+            _executeAction(actions[0], messageIndex: _chatHistory.length - 1);
           });
         }
       } else {
@@ -179,7 +189,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// Si la acción trae `client_open` (pantalla Yii / web nativa), abre el navegador y no pasa por CRUD/wizard.
-  Future<bool> _tryOpenClientNative(Map<String, dynamic> action) async {
+  Future<bool> _tryOpenClientNative(Map<String, dynamic> action, {int? messageIndex}) async {
     final co = action['client_open'];
     if (co is! Map) {
       return false;
@@ -206,19 +216,31 @@ class _ChatScreenState extends State<ChatScreen> {
       );
 
       if (presentation == 'inline') {
-        // Inline: embebido dentro del chat (burbuja), no modal.
+        // Inline: embebido dentro del chat (en la misma burbuja si tenemos índice).
         final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';
         setState(() {
-          _chatHistory.add({
-            'type': 'bot',
-            'content': title,
-            'inline_ui': {
+          if (messageIndex != null && messageIndex >= 0 && messageIndex < _chatHistory.length) {
+            final m = _chatHistory[messageIndex];
+            m['inline_ui'] = {
               'title': title,
               'route': route,
               'provided': provided,
-            },
-            'timestamp': DateTime.now(),
-          });
+            };
+            if ((m['content']?.toString() ?? '').trim().isEmpty) {
+              m['content'] = title;
+            }
+          } else {
+            _chatHistory.add({
+              'type': 'bot',
+              'content': title,
+              'inline_ui': {
+                'title': title,
+                'route': route,
+                'provided': provided,
+              },
+              'timestamp': DateTime.now(),
+            });
+          }
         });
         _scrollToBottom();
       } else {
@@ -273,8 +295,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _executeAction(Map<String, dynamic> action) async {
-    if (await _tryOpenClientNative(action)) {
+  Future<void> _executeAction(Map<String, dynamic> action, {int? messageIndex}) async {
+    if (await _tryOpenClientNative(action, messageIndex: messageIndex)) {
       return;
     }
 
@@ -515,7 +537,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 Icons.touch_app,
                                 size: 16,
                               ),
-                              onPressed: () => _executeAction(action),
+                              onPressed: () => _executeAction(action, messageIndex: index),
                               backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                               labelStyle: TextStyle(
                                 color: Theme.of(context).primaryColor,

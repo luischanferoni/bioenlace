@@ -41,7 +41,12 @@ class RrhhController extends BaseController
             throw new BadRequestHttpException('id_efector e id_servicio son requeridos');
         }
         $out = ['results' => ['id' => '', 'text' => '']];
+        // Para flujos UI JSON con auto_load, es válido consultar sin `q` y listar
+        // profesionales disponibles para un efector+servicio.
         $q = $q ?? $request->get('q') ?? $request->post('q');
+        if ($q === null) {
+            $q = '';
+        }
         $filters = [
             'id_efector' => $idEfector,
             'id_servicio' => $idServicio,
@@ -60,9 +65,6 @@ class RrhhController extends BaseController
         }
         if ($request->get('sort_order') || $request->post('sort_order')) {
             $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
-        }
-        if ($q === null && count($filters) <= 2) {
-            return $out;
         }
         $out['results'] = array_values(RrhhEfector::autocompleteRrhh($q, $filters));
         return $out;

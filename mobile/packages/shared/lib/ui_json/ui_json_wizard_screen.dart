@@ -16,9 +16,14 @@ String resolveApiAbsoluteUrl(String routeOrPath) {
   if (r.startsWith('/api/v1/')) {
     return base + r.substring('/api/v1'.length);
   }
-  final origin = Uri.parse('$base/').origin;
   if (r.startsWith('/')) {
-    return origin + r;
+    // En este proyecto los endpoints del descriptor (p. ej. `/efectores/buscar`) son relativos a `/api/v1`.
+    // Si ya viniera una ruta absoluta de API (`/api/...`), usar origin.
+    final origin = Uri.parse('$base/').origin;
+    if (r.startsWith('/api/')) {
+      return origin + r;
+    }
+    return base + r;
   }
   return '$base/$r';
 }
@@ -81,6 +86,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   int _step = 0;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
+  final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
 
   Map<String, dynamic>? get _wc =>
       _root != null && _root!['wizard_config'] is Map
@@ -244,41 +250,13 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
     return results.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
-  Future<void> _pickAutocomplete(Map<String, dynamic> field) async {
-    if (!_depsOk(field)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(field['message']?.toString() ?? 'Complete los pasos anteriores.')),
-      );
-      return;
+  String _autocompleteCacheKey(Map<String, dynamic> field) {
+    final name = field['name']?.toString() ?? '';
+    final keyParts = <String>[name];
+    for (final dep in _dependsOn(field)) {
+      keyParts.add('${dep}=${_accum[dep] ?? ''}');
     }
-    try {
-      final items = await _fetchAutocomplete(field);
-      if (!mounted) return;
-      final name = field['name']?.toString() ?? '';
-      final picked = await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        builder: (ctx) {
-          return ListView(
-            children: items
-                .map(
-                  (it) => ListTile(
-                    title: Text(it['text']?.toString() ?? ''),
-                    onTap: () => Navigator.pop(ctx, it),
-                  ),
-                )
-                .toList(),
-          );
-        },
-      );
-      if (picked != null) {
-        setState(() {
-          _accum[name] = picked['id']?.toString() ?? '';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
+    return keyParts.join('&');
   }
 
   Future<void> _pickDate(Map<String, dynamic> field) async {
@@ -304,17 +282,20 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   Future<List<Map<String, dynamic>>> _autoLoadAutocomplete(Map<String, dynamic> field) async {
     final name = field['name']?.toString() ?? '';
     if (name.isEmpty) return [];
-    final keyParts = <String>[name];
-    for (final dep in _dependsOn(field)) {
-      keyParts.add('${dep}=${_accum[dep] ?? ''}');
+    final cacheKey = _autocompleteCacheKey(field);
+    if (_autoFutureCache.containsKey(cacheKey)) {
+      return _autoFutureCache[cacheKey]!;
     }
-    final cacheKey = keyParts.join('&');
-    if (_autoCache.containsKey(cacheKey)) {
-      return _autoCache[cacheKey]!;
-    }
-    final items = await _fetchAutocomplete(field);
-    _autoCache[cacheKey] = items;
-    return items;
+    final fut = () async {
+      if (_autoCache.containsKey(cacheKey)) {
+        return _autoCache[cacheKey]!;
+      }
+      final items = await _fetchAutocomplete(field);
+      _autoCache[cacheKey] = items;
+      return items;
+    }();
+    _autoFutureCache[cacheKey] = fut;
+    return fut;
   }
 
   Widget _buildField(Map<String, dynamic> field) {
@@ -422,59 +403,96 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
         );
       case 'autocomplete':
         final id = _accum[name] ?? '';
-        final auto = field['auto_load'] == true;
-        if (auto && _depsOk(field) && id.isEmpty) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ListTile(
-                title: Text(required ? '$label *' : label),
-                subtitle: const Text('Seleccione una opción'),
-                trailing: const Icon(Icons.search),
-                onTap: () => _pickAutocomplete(field),
-              ),
-              FutureBuilder<List<Map<String, dynamic>>>(
-                future: _autoLoadAutocomplete(field),
-                builder: (ctx, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: LinearProgressIndicator(),
-                    );
-                  }
-                  final items = snap.data ?? [];
-                  if (items.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Text('Sin resultados.'),
-                    );
-                  }
-                  final show = items.take(8).toList();
-                  return Column(
-                    children: show
-                        .map(
-                          (it) => ListTile(
-                            dense: true,
-                            title: Text(it['text']?.toString() ?? ''),
-                            onTap: () {
-                              setState(() {
-                                _accum[name] = it['id']?.toString() ?? '';
-                              });
-                            },
-                          ),
-                        )
-                        .toList(),
-                  );
-                },
-              ),
-            ],
+        if (!_depsOk(field)) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              field['message']?.toString() ?? 'Complete: ${_dependsOn(field).join(", ")}',
+              style: TextStyle(color: Colors.orange[800], fontSize: 13),
+            ),
           );
         }
-        return ListTile(
-          title: Text(required ? '$label *' : label),
-          subtitle: Text(id.isEmpty ? 'Sin selección' : 'id: $id'),
-          trailing: const Icon(Icons.search),
-          onTap: () => _pickAutocomplete(field),
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(required ? '$label *' : label, style: const TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            FutureBuilder<List<Map<String, dynamic>>>(
+              future: _autoLoadAutocomplete(field),
+              builder: (ctx, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: LinearProgressIndicator(),
+                  );
+                }
+                final items = snap.data ?? [];
+                if (items.isEmpty) {
+                  return const Text('Sin resultados.');
+                }
+
+                // Listado horizontal en cards (sin search).
+                final show = items.take(30).toList();
+                final cacheKey = _autocompleteCacheKey(field);
+                return SizedBox(
+                  height: 96,
+                  child: ListView.separated(
+                    key: PageStorageKey<String>('ui_json.autocomplete:$cacheKey'),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: show.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (_, idx) {
+                      final it = show[idx];
+                      final tid = it['id']?.toString() ?? '';
+                      final text = it['text']?.toString() ?? tid;
+                      final selected = tid.isNotEmpty && tid == id;
+                      final borderColor =
+                          selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor;
+                      return SizedBox(
+                        width: 280,
+                        child: Card(
+                          elevation: 0,
+                          margin: EdgeInsets.zero,
+                          color: selected ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: borderColor, width: 1),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              if (tid.isEmpty) return;
+                              if (tid == id) return;
+                              setState(() => _accum[name] = tid);
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      text,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (selected) ...[
+                                    const SizedBox(width: 8),
+                                    Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
         );
       default:
         return TextFormField(

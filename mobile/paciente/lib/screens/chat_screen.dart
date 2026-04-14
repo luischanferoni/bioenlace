@@ -8,6 +8,7 @@ import '../services/acciones_service.dart';
 import '../components/dynamic_form.dart';
 import 'mis_turnos_screen.dart';
 import 'chat_motivos_screen.dart';
+import 'package:shared/shared.dart' show UiJsonWizardScreen, applyProvidedParamsToRoute;
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -195,15 +196,36 @@ class _ChatScreenState extends State<ChatScreen> {
         _showErrorSnackbar('Acción UI JSON sin api.route.');
         return true;
       }
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => UiJsonWizardScreen(
-            apiAbsoluteUrl: resolveApiAbsoluteUrl(route),
-            authToken: _asistenteService.authToken,
-            appClient: 'bioenlace-paciente',
-          ),
-        ),
+      final provided = (action['parameters'] is Map) ? (action['parameters'] as Map)['provided'] : null;
+      final presentation = co['presentation']?.toString() ?? 'fullscreen';
+      final widget = UiJsonWizardScreen(
+        apiAbsoluteUrl: applyProvidedParamsToRoute(route, provided is Map ? Map<String, dynamic>.from(provided) : null),
+        authToken: _asistenteService.authToken,
+        appClient: 'bioenlace-paciente',
+        title: action['display_name']?.toString() ?? action['action_id']?.toString(),
       );
+
+      if (presentation == 'inline') {
+        // Inline: embebido dentro del chat (burbuja), no modal.
+        final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';
+        setState(() {
+          _chatHistory.add({
+            'type': 'bot',
+            'content': title,
+            'inline_ui': {
+              'title': title,
+              'route': route,
+              'provided': provided,
+            },
+            'timestamp': DateTime.now(),
+          });
+        });
+        _scrollToBottom();
+      } else {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => widget),
+        );
+      }
       return true;
     }
 
@@ -397,6 +419,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 final actions = message['actions'] as List<Map<String, dynamic>>?;
                 final suggestedQuery = message['suggested_query'] as String?;
                 final timestamp = message['timestamp'] as DateTime;
+                final inlineUi = message['inline_ui'];
                 // final needsUserInput = message['needs_user_input'] as bool? ?? false;
                 // final actionAnalysisRaw = message['action_analysis'];
                 // final actionAnalysis = (actionAnalysisRaw is Map)
@@ -499,6 +522,32 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             );
                           }).toList(),
+                        ),
+                      ),
+                    ],
+                    // Inline UI JSON embebida en chat
+                    if (!isUser && inlineUi is Map) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.75,
+                          ),
+                          child: AnimatedSize(
+                            duration: const Duration(milliseconds: 180),
+                            curve: Curves.easeOut,
+                            child: UiJsonWizardScreen(
+                              apiAbsoluteUrl: applyProvidedParamsToRoute(
+                                inlineUi['route']?.toString() ?? '',
+                                inlineUi['provided'] is Map ? Map<String, dynamic>.from(inlineUi['provided'] as Map) : null,
+                              ),
+                              authToken: _asistenteService.authToken,
+                              appClient: 'bioenlace-paciente',
+                              title: inlineUi['title']?.toString(),
+                              embedded: true,
+                            ),
+                          ),
                         ),
                       ),
                     ],

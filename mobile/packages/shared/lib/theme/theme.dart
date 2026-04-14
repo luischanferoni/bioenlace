@@ -83,6 +83,11 @@ class AppTheme {
         fontSize: 14,
         fontWeight: FontWeight.w400,
       ),
+      labelStyle: GoogleFonts.openSans(
+        color: dark,
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+      ),
       filled: true,
       fillColor: cardColor,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -95,6 +100,11 @@ class AppTheme {
         borderSide: BorderSide(color: primaryColor, width: 1.5),
       ),
     ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: dark,
+      contentTextStyle: GoogleFonts.openSans(color: Colors.white),
+      behavior: SnackBarBehavior.floating,
+    ),
     colorScheme: ColorScheme(
         primary: primaryColor,
         primaryContainer: primaryColor,
@@ -104,10 +114,10 @@ class AppTheme {
         background: backgroundColor,
         error: dangerColor,
         onPrimary: primaryColorDark,
-        onSecondary: backgroundColor,
-        onSurface: primaryColorDark,
-        onBackground: titleTextColor,
-        onError: titleTextColor,
+        onSecondary: Colors.white,
+        onSurface: dark,
+        onBackground: dark,
+        onError: Colors.white,
         brightness: Brightness.light),
   );
 

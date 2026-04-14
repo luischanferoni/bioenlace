@@ -182,17 +182,31 @@ class _AccionesScreenState extends State<AccionesScreen> {
                                       final kind = co['kind']?.toString();
                                       if (kind == 'ui_json') {
                                         final api = co['api'];
+                                        final presentation = co['presentation']?.toString() ?? 'fullscreen';
                                         final route = api is Map ? api['route']?.toString() : null;
                                         if (route != null && route.isNotEmpty) {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute<void>(
-                                              builder: (_) => UiJsonWizardScreen(
-                                                apiAbsoluteUrl: resolveApiAbsoluteUrl(route),
-                                                authToken: widget.authToken,
-                                                appClient: 'bioenlace-medico',
-                                              ),
-                                            ),
+                                          final w = UiJsonWizardScreen(
+                                            apiAbsoluteUrl: resolveApiAbsoluteUrl(route),
+                                            authToken: widget.authToken,
+                                            appClient: 'bioenlace-medico',
+                                            title: (action['display_name'] ?? action['title'] ?? 'Formulario').toString(),
+                                            prefillText: null,
                                           );
+                                          if (presentation == 'inline') {
+                                            showModalBottomSheet(
+                                              context: context,
+                                              useSafeArea: true,
+                                              isScrollControlled: true,
+                                              builder: (_) => SizedBox(
+                                                height: MediaQuery.of(context).size.height * 0.9,
+                                                child: w,
+                                              ),
+                                            );
+                                          } else {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute<void>(builder: (_) => w),
+                                            );
+                                          }
                                           return;
                                         }
                                       }

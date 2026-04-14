@@ -23,6 +23,27 @@ String resolveApiAbsoluteUrl(String routeOrPath) {
   return '$base/$r';
 }
 
+/// Aplica parámetros `provided` (formato backend: {k: {value,source}}) al route `/api/v1/ui/...`.
+String applyProvidedParamsToRoute(String routeOrPath, Map<String, dynamic>? provided) {
+  if (provided == null || provided.isEmpty) return routeOrPath;
+  final base = resolveApiAbsoluteUrl(routeOrPath);
+  Uri uri = Uri.parse(base);
+  final qp = <String, String>{...uri.queryParameters};
+  provided.forEach((k, v) {
+    if (k.toString().isEmpty) return;
+    dynamic value = v;
+    if (v is Map && v.containsKey('value')) {
+      value = v['value'];
+    }
+    if (value == null) return;
+    final s = value.toString();
+    if (s.isEmpty) return;
+    qp[k.toString()] = s;
+  });
+  uri = uri.replace(queryParameters: qp);
+  return uri.toString();
+}
+
 /// Wizard mínimo para respuestas `kind: ui_definition` (GET descriptor + POST submit).
 ///
 /// Los `custom_widget` se resuelven **solo en el cliente** según `widget_id` (p. ej. `weekly_scheduler`).
@@ -34,11 +55,19 @@ class UiJsonWizardScreen extends StatefulWidget {
   /// Valor de cabecera `X-App-Client` (p. ej. `bioenlace-medico`, `bioenlace-paciente`).
   final String appClient;
 
+  /// Título visible para el usuario (por ejemplo action_name/display_name).
+  final String? title;
+
+  /// Si true, renderiza sin Scaffold/AppBar para embebido en chat.
+  final bool embedded;
+
   const UiJsonWizardScreen({
     Key? key,
     required this.apiAbsoluteUrl,
     this.authToken,
     this.appClient = 'bioenlace-flutter',
+    this.title,
+    this.embedded = false,
   }) : super(key: key);
 
   @override
@@ -51,6 +80,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   Map<String, dynamic>? _root;
   int _step = 0;
   final Map<String, String> _accum = {};
+  final Map<String, List<Map<String, dynamic>>> _autoCache = {};
 
   Map<String, dynamic>? get _wc =>
       _root != null && _root!['wizard_config'] is Map
@@ -271,6 +301,22 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
     }
   }
 
+  Future<List<Map<String, dynamic>>> _autoLoadAutocomplete(Map<String, dynamic> field) async {
+    final name = field['name']?.toString() ?? '';
+    if (name.isEmpty) return [];
+    final keyParts = <String>[name];
+    for (final dep in _dependsOn(field)) {
+      keyParts.add('${dep}=${_accum[dep] ?? ''}');
+    }
+    final cacheKey = keyParts.join('&');
+    if (_autoCache.containsKey(cacheKey)) {
+      return _autoCache[cacheKey]!;
+    }
+    final items = await _fetchAutocomplete(field);
+    _autoCache[cacheKey] = items;
+    return items;
+  }
+
   Widget _buildField(Map<String, dynamic> field) {
     final name = field['name']?.toString() ?? '';
     final label = field['label']?.toString() ?? name;
@@ -314,18 +360,44 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       case 'select':
         final opts = (field['options'] as List?) ?? [];
         final current = _accum[name];
-        final effective = (current != null && current.isNotEmpty) ? current : null;
+        final currentTrimmed = current?.trim();
+
+        // Normalizar y deduplicar opciones por value para evitar:
+        // - value vacío ("") considerado como selección real
+        // - valores duplicados que rompen DropdownButtonFormField (assert de "exactly one item")
+        final seen = <String>{};
+        final items = <DropdownMenuItem<String>>[];
+        for (final o in opts) {
+          final om = o is Map ? Map<String, dynamic>.from(o) : {'value': o, 'label': o};
+          // Soportar variantes comunes:
+          // - {value,label} (estándar)
+          // - {id,name} (catálogos legacy)
+          final v = (om['value']?.toString() ?? om['id']?.toString() ?? '').trim();
+          if (v.isEmpty) continue;
+          if (seen.contains(v)) continue;
+          seen.add(v);
+          final lab = (om['label']?.toString() ?? om['name']?.toString() ?? v).trim();
+          items.add(DropdownMenuItem<String>(value: v, child: Text(lab)));
+        }
+
+        String? effective = (currentTrimmed != null && currentTrimmed.isNotEmpty) ? currentTrimmed : null;
+        if (effective != null && !seen.contains(effective)) {
+          effective = null;
+        }
+        if (items.isEmpty) {
+          return ListTile(
+            title: Text(required ? '$label *' : label),
+            subtitle: const Text('Sin opciones disponibles'),
+          );
+        }
         return DropdownButtonFormField<String>(
           decoration: InputDecoration(labelText: required ? '$label *' : label),
           // ignore: deprecated_member_use
           value: effective,
           hint: const Text('Seleccione...'),
-          items: opts.map((o) {
-            final om = o is Map ? Map<String, dynamic>.from(o) : {'value': o, 'label': o};
-            final v = om['value']?.toString() ?? '';
-            final lab = om['label']?.toString() ?? v;
-            return DropdownMenuItem<String>(value: v, child: Text(lab));
-          }).toList(),
+          items: items,
+          iconEnabledColor: Theme.of(context).colorScheme.primary,
+          dropdownColor: Theme.of(context).colorScheme.surface,
           onChanged: (v) => setState(() {
             if (v != null) _accum[name] = v;
           }),
@@ -336,6 +408,8 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
           initialValue: _accum[name] ?? '',
           decoration: InputDecoration(labelText: required ? '$label *' : label),
           keyboardType: TextInputType.number,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          cursorColor: Theme.of(context).colorScheme.primary,
           onChanged: (v) => _accum[name] = v,
           validator: required ? (v) => (v == null || v.isEmpty) ? 'Requerido' : null : null,
         );
@@ -348,6 +422,54 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
         );
       case 'autocomplete':
         final id = _accum[name] ?? '';
+        final auto = field['auto_load'] == true;
+        if (auto && _depsOk(field) && id.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                title: Text(required ? '$label *' : label),
+                subtitle: const Text('Seleccione una opción'),
+                trailing: const Icon(Icons.search),
+                onTap: () => _pickAutocomplete(field),
+              ),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: _autoLoadAutocomplete(field),
+                builder: (ctx, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: LinearProgressIndicator(),
+                    );
+                  }
+                  final items = snap.data ?? [];
+                  if (items.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Text('Sin resultados.'),
+                    );
+                  }
+                  final show = items.take(8).toList();
+                  return Column(
+                    children: show
+                        .map(
+                          (it) => ListTile(
+                            dense: true,
+                            title: Text(it['text']?.toString() ?? ''),
+                            onTap: () {
+                              setState(() {
+                                _accum[name] = it['id']?.toString() ?? '';
+                              });
+                            },
+                          ),
+                        )
+                        .toList(),
+                  );
+                },
+              ),
+            ],
+          );
+        }
         return ListTile(
           title: Text(required ? '$label *' : label),
           subtitle: Text(id.isEmpty ? 'Sin selección' : 'id: $id'),
@@ -358,6 +480,8 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
         return TextFormField(
           initialValue: _accum[name] ?? '',
           decoration: InputDecoration(labelText: required ? '$label *' : label),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          cursorColor: Theme.of(context).colorScheme.primary,
           onChanged: (v) => _accum[name] = v,
           validator: required ? (v) => (v == null || v.isEmpty) ? 'Requerido' : null : null,
         );
@@ -437,78 +561,88 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading && _root == null) {
+    Widget wrap({required Widget body, required String title}) {
+      if (widget.embedded) {
+        return Card(margin: EdgeInsets.zero, child: body);
+      }
       return Scaffold(
-        appBar: AppBar(title: const Text('Cargando…')),
+        appBar: AppBar(title: Text(title)),
+        body: body,
+      );
+    }
+
+    if (_loading && _root == null) {
+      return wrap(
+        title: widget.title ?? 'Cargando…',
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     if (_error != null && _root == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Error')),
+      return wrap(
+        title: widget.title ?? 'Error',
         body: Center(child: Text(_error!)),
       );
     }
     final wc = _wc;
     if (wc == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('UI')),
+      return wrap(
+        title: widget.title ?? 'UI',
         body: const Center(child: Text('Sin wizard_config')),
       );
     }
     final stepMeta = _step < _steps.length && _steps[_step] is Map ? _steps[_step] as Map : null;
     final title = stepMeta?['title']?.toString() ?? 'Paso ${_step + 1}';
 
-    return Scaffold(
-      appBar: AppBar(title: Text(_root?['action_id']?.toString() ?? 'Formulario')),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: _steps.isEmpty ? 0 : (_step + 1) / _steps.length,
-                  ),
-                  const SizedBox(height: 16),
-                  ..._stepFieldNames().map((fn) {
-                    final f = _fieldByName(fn);
-                    if (f == null) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildField(f),
-                    );
-                  }),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      if (_step > 0)
-                        TextButton(
-                          onPressed: () => setState(() => _step--),
-                          child: const Text('Anterior'),
-                        ),
-                      const Spacer(),
-                      if (_step < _steps.length - 1)
-                        ElevatedButton(
-                          onPressed: () {
-                            if (!_validateStep()) return;
-                            setState(() => _step++);
-                          },
-                          child: const Text('Siguiente'),
-                        )
-                      else
-                        ElevatedButton(
-                          onPressed: _submit,
-                          child: const Text('Confirmar'),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+    final screenTitle = widget.title ?? _root?['action_id']?.toString() ?? 'Formulario';
+    final body = _loading
+        ? const Center(child: CircularProgressIndicator())
+        : SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: _steps.isEmpty ? 0 : (_step + 1) / _steps.length,
+                ),
+                const SizedBox(height: 16),
+                ..._stepFieldNames().map((fn) {
+                  final f = _fieldByName(fn);
+                  if (f == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _buildField(f),
+                  );
+                }),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    if (_step > 0)
+                      TextButton(
+                        onPressed: () => setState(() => _step--),
+                        child: const Text('Anterior'),
+                      ),
+                    const Spacer(),
+                    if (_step < _steps.length - 1)
+                      ElevatedButton(
+                        onPressed: () {
+                          if (!_validateStep()) return;
+                          setState(() => _step++);
+                        },
+                        child: const Text('Siguiente'),
+                      )
+                    else
+                      ElevatedButton(
+                        onPressed: _submit,
+                        child: const Text('Confirmar'),
+                      ),
+                  ],
+                ),
+              ],
             ),
-    );
+          );
+
+    return wrap(title: screenTitle, body: body);
   }
 }

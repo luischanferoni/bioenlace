@@ -26,6 +26,12 @@ final class UiActionCatalogItem
     public ?string $client_interaction = null;
 
     /**
+     * Presentación sugerida para shell SPA / cliente.
+     * En UIs JSON se usa para `client_open.presentation` (inline|fullscreen).
+     */
+    public ?string $spa_presentation = null;
+
+    /**
      * @param string[] $keywords
      * @param array<string, mixed> $parameters
      */
@@ -38,7 +44,8 @@ final class UiActionCatalogItem
         array $keywords,
         array $parameters,
         ?array $client_open = null,
-        ?string $client_interaction = null
+        ?string $client_interaction = null,
+        ?string $spa_presentation = null
     ) {
         $this->action_id = $action_id;
         $this->display_name = $display_name;
@@ -49,6 +56,7 @@ final class UiActionCatalogItem
         $this->parameters = $parameters;
         $this->client_open = $client_open;
         $this->client_interaction = $client_interaction;
+        $this->spa_presentation = $spa_presentation;
     }
 
     /**

@@ -66,6 +66,14 @@ final class UiActionCatalog
                 'provided' => [],
             ];
 
+            $spaPresentation = null;
+            if (isset($a['spa_presentation']) && is_string($a['spa_presentation'])) {
+                $sp = strtolower(trim($a['spa_presentation']));
+                if ($sp === 'inline' || $sp === 'fullscreen') {
+                    $spaPresentation = $sp;
+                }
+            }
+
             $item = new UiActionCatalogItem(
                 $actionId,
                 $display,
@@ -73,7 +81,10 @@ final class UiActionCatalog
                 $entity !== '' ? $entity : null,
                 $route,
                 $kw,
-                $params
+                $params,
+                null,
+                null,
+                $spaPresentation
             );
 
             $items[] = $item;

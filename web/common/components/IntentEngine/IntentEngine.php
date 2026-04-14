@@ -117,6 +117,9 @@ final class IntentEngine
             'route' => $item->route,
             'parameters' => $item->parameters,
         ];
+        if ($item->spa_presentation !== null && $item->spa_presentation !== '') {
+            $action['spa_presentation'] = $item->spa_presentation;
+        }
 
         if ($item->client_open !== null) {
             $action['client_open'] = $item->client_open;

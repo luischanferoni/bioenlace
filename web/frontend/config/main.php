@@ -151,6 +151,10 @@ return [
                 'OPTIONS api/<version:\w+>/agenda/eliminar/<id:\d+>' => '<version>/agenda/eliminar',
                 
                 // Turnos UI screens (descriptor + submit): usar /api/<v>/ui/turnos/* (ver regla /ui/ más abajo)
+                // Alias histórico: algunos clientes consumen /api/<v>/turnos/* aunque la pantalla sea UI JSON.
+                'GET api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
+                'POST api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
+                'OPTIONS api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'GET api/<version:\w+>/turnos/slots-disponibles-como-paciente' => '<version>/turnos/slots-disponibles-como-paciente',
                 'POST api/<version:\w+>/turnos/slots-disponibles-como-paciente' => '<version>/turnos/slots-disponibles-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos/slots-disponibles-como-paciente' => '<version>/turnos/slots-disponibles-como-paciente',
@@ -167,7 +171,6 @@ return [
                 'GET api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/listar',
                 'OPTIONS api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/listar',
                 'POST api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/crear',
-                'OPTIONS api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/crear',
                 
                 // Personas Timeline API (historia clínica)
                 'GET api/<version:\w+>/personas/<id:\d+>/signos-vitales' => '<version>/persona/signos-vitales',

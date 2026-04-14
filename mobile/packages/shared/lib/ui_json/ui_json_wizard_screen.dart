@@ -87,6 +87,11 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
+  final Map<String, ValueNotifier<String>> _fieldValueNotifiers = {};
+
+  ValueNotifier<String> _notifierFor(String name) {
+    return _fieldValueNotifiers.putIfAbsent(name, () => ValueNotifier<String>(_accum[name] ?? ''));
+  }
 
   Map<String, dynamic>? get _wc =>
       _root != null && _root!['wizard_config'] is Map
@@ -101,6 +106,15 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    for (final n in _fieldValueNotifiers.values) {
+      n.dispose();
+    }
+    _fieldValueNotifiers.clear();
+    super.dispose();
   }
 
   Map<String, String> _headers({bool json = false}) {
@@ -402,7 +416,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
           onTap: () => _pickDate(field),
         );
       case 'autocomplete':
-        final id = _accum[name] ?? '';
+        final n = _notifierFor(name);
         if (!_depsOk(field)) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -435,60 +449,66 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
                 // Listado horizontal en cards (sin search).
                 final show = items.take(30).toList();
                 final cacheKey = _autocompleteCacheKey(field);
-                return SizedBox(
-                  height: 96,
-                  child: ListView.separated(
-                    key: PageStorageKey<String>('ui_json.autocomplete:$cacheKey'),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: show.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 10),
-                    itemBuilder: (_, idx) {
-                      final it = show[idx];
-                      final tid = it['id']?.toString() ?? '';
-                      final text = it['text']?.toString() ?? tid;
-                      final selected = tid.isNotEmpty && tid == id;
-                      final borderColor =
-                          selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor;
-                      return SizedBox(
-                        width: 280,
-                        child: Card(
-                          elevation: 0,
-                          margin: EdgeInsets.zero,
-                          color: selected ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: borderColor, width: 1),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
-                              if (tid.isEmpty) return;
-                              if (tid == id) return;
-                              setState(() => _accum[name] = tid);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      text,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                return ValueListenableBuilder<String>(
+                  valueListenable: n,
+                  builder: (_, id, __) {
+                    return SizedBox(
+                      height: 96,
+                      child: ListView.separated(
+                        key: PageStorageKey<String>('ui_json.autocomplete:$cacheKey'),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: show.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (_, idx) {
+                          final it = show[idx];
+                          final tid = it['id']?.toString() ?? '';
+                          final text = it['text']?.toString() ?? tid;
+                          final selected = tid.isNotEmpty && tid == id;
+                          final borderColor =
+                              selected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor;
+                          return SizedBox(
+                            width: 280,
+                            child: Card(
+                              elevation: 0,
+                              margin: EdgeInsets.zero,
+                              color: selected ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: borderColor, width: 1),
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  if (tid.isEmpty) return;
+                                  if (tid == id) return;
+                                  _accum[name] = tid;
+                                  n.value = tid;
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          text,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (selected) ...[
+                                        const SizedBox(width: 8),
+                                        Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
+                                      ],
+                                    ],
                                   ),
-                                  if (selected) ...[
-                                    const SizedBox(width: 8),
-                                    Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary),
-                                  ],
-                                ],
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 );
               },
             ),

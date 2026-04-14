@@ -76,6 +76,7 @@ class TurnosController extends BaseController
      * @entity Turnos
      * @tags turnos, paciente, citas, calendario, autogestión
      * @keywords mis citas como paciente, calendario de turnos, próximos turnos, ver mis turnos pendientes
+     * @spa_presentation inline
      */
     public function actionListarComoPaciente()
     {

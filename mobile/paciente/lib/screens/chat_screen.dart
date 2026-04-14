@@ -187,6 +187,26 @@ class _ChatScreenState extends State<ChatScreen> {
     final mobile = co['mobile'];
     final web = co['web'];
 
+    // UI JSON (descriptor + submit): abrir con el motor UI JSON compartido.
+    if (kind == 'ui_json') {
+      final api = co['api'];
+      final route = api is Map ? api['route']?.toString() : null;
+      if (route == null || route.isEmpty) {
+        _showErrorSnackbar('Acción UI JSON sin api.route.');
+        return true;
+      }
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => UiJsonWizardScreen(
+            apiAbsoluteUrl: resolveApiAbsoluteUrl(route),
+            authToken: _asistenteService.authToken,
+            appClient: 'bioenlace-paciente',
+          ),
+        ),
+      );
+      return true;
+    }
+
     // UIs nativas (web+flutter) por screen_id: el móvil construye su propia pantalla.
     if (kind == 'native') {
       final screenId = (mobile is Map ? mobile['screen_id'] : null) ??
@@ -236,228 +256,15 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    final actionId = action['action_id'];
-
-    if (actionId == null || actionId.isEmpty) {
-      _showErrorSnackbar('Error: No se pudo identificar la acción');
-      return;
-    }
-
-    // Parámetros ya obtenidos por process-query (ej. id_servicio_asignado) para incluir en la URL execute-action
-    Map<String, dynamic> params = {};
-    final actionParams = action['parameters'];
-    if (actionParams != null && actionParams is Map) {
-      final providedRaw = (actionParams as Map<String, dynamic>)['provided'];
-      if (providedRaw != null && providedRaw is Map) {
-        final provided = providedRaw as Map<String, dynamic>;
-        provided.forEach((key, value) {
-          if (value != null) params[key] = value;
-        });
-      }
-    }
-
-    // Completar con action_analysis del mensaje en el historial si existe
-    for (int i = _chatHistory.length - 1; i >= 0; i--) {
-      final message = _chatHistory[i];
-      if (message['type'] == 'bot') {
-        // Buscar en action_analysis
-        final actionAnalysisRaw = message['action_analysis'];
-        if (actionAnalysisRaw != null && actionAnalysisRaw is Map) {
-          final analysisMap = actionAnalysisRaw as Map<String, dynamic>;
-          if (analysisMap['action_id'] == actionId) {
-            // Extraer parámetros proporcionados del action_analysis
-            final parameters = analysisMap['parameters'];
-            if (parameters != null && parameters is Map) {
-              final parametersMap = parameters as Map<String, dynamic>;
-              final providedParamsRaw = parametersMap['provided'];
-              
-              // Manejar tanto Map como List (por si acaso)
-              if (providedParamsRaw != null) {
-                if (providedParamsRaw is Map) {
-                  final providedMap = providedParamsRaw as Map<String, dynamic>;
-                  providedMap.forEach((key, value) {
-                    if (params.containsKey(key)) return; // Prioridad a params de la acción
-                    // El valor puede venir como {'value': X, 'source': 'extracted'}
-                    if (value is Map) {
-                      final valueMap = value as Map<String, dynamic>;
-                      // Extraer el valor real del objeto
-                      if (valueMap.containsKey('value')) {
-                        params[key] = valueMap['value'];
-                      } else {
-                        params[key] = value;
-                      }
-                    } else {
-                      params[key] = value;
-                    }
-                  });
-                } else if (providedParamsRaw is List) {
-                  // Si es una lista, convertir a mapa si es posible
-                  for (var item in providedParamsRaw) {
-                    if (item is Map) {
-                      final itemMap = item as Map<String, dynamic>;
-                      final key = itemMap['name'] ?? itemMap['key'];
-                      if (key != null && !params.containsKey(key)) {
-                        params[key.toString()] = itemMap['value'];
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            
-            // También buscar en extracted_data si está disponible directamente
-            final extractedData = analysisMap['extracted_data'];
-            if (extractedData != null && extractedData is Map) {
-              final extractedMap = extractedData as Map<String, dynamic>;
-              // Agregar id_servicio y servicio_actual si están presentes
-              if (extractedMap.containsKey('id_servicio') && !params.containsKey('id_servicio')) {
-                params['id_servicio'] = extractedMap['id_servicio'];
-              }
-              if (extractedMap.containsKey('servicio_actual') && !params.containsKey('servicio_actual')) {
-                params['servicio_actual'] = extractedMap['servicio_actual'];
-              }
-            }
-            
-            break;
-          }
-        }
-        
-        // También buscar en parameters del mensaje (puede venir de form_config previo)
-        final messageParameters = message['parameters'];
-        if (messageParameters != null && messageParameters is Map) {
-          final parametersMap = messageParameters as Map<String, dynamic>;
-          final providedParamsRaw = parametersMap['provided'];
-          
-          if (providedParamsRaw != null && providedParamsRaw is Map) {
-            final providedMap = providedParamsRaw as Map<String, dynamic>;
-            providedMap.forEach((key, value) {
-              // El valor puede venir como {'value': X, 'source': 'extracted'}
-              if (value is Map) {
-                final valueMap = value as Map<String, dynamic>;
-                if (valueMap.containsKey('value') && !params.containsKey(key)) {
-                  params[key] = valueMap['value'];
-                }
-              } else if (!params.containsKey(key)) {
-                params[key] = value;
-              }
-            });
-          }
-        }
-      }
-    }
-    
-    // Debug: imprimir parámetros extraídos (solo en desarrollo)
-    print('Parámetros extraídos para $actionId: $params');
-
-    // Obtener configuración del formulario/wizard usando GET
-    setState(() {
-      _isSending = true;
-    });
-
-    try {
-      // Llamar a GET para obtener el form_config (wizard)
-      final result = await _asistenteService.getActionFormConfig(actionId, params: params);
-
-      if (result['success'] == true) {
-        final data = result['data'];
-        final formConfig = data['form_config'];
-        final wizardSteps = data['wizard_steps'];
-        final initialStep = data['initial_step'] ?? 0;
-        final actionName = data['action_name'];
-
-        setState(() {
-          _isSending = false;
-        });
-
-        // Si hay formulario, abrirlo directamente en modal (sin crear mensaje en el chat)
-        if (formConfig != null && formConfig is Map) {
-          _showFormModal(
-            context: context,
-            formConfig: Map<String, dynamic>.from(formConfig),
-            wizardSteps: wizardSteps != null ? List<Map<String, dynamic>>.from(wizardSteps.map((step) => Map<String, dynamic>.from(step))) : null,
-            initialStep: initialStep,
-            title: actionName ?? 'Completa la información',
-            authToken: _asistenteService.authToken,
-            onSubmit: (formValues) async {
-              await _executeActionWithParams(actionId, formValues);
-            },
-            onCancel: () {},
-          );
-        }
-      } else {
-        setState(() {
-          _isSending = false;
-        });
-        // Mostrar alerta flotante en lugar de crear mensaje de chat
-        _showErrorSnackbar(result['message'] ?? 'No se pudo obtener la configuración del formulario. Por favor, intente nuevamente más tarde.');
-      }
-      _scrollToBottom();
-    } catch (e) {
-      setState(() {
-        _isSending = false;
-        _chatHistory.add({
-          'type': 'bot',
-          'content': 'Error al obtener el formulario. Por favor, intenta nuevamente.',
-          'timestamp': DateTime.now(),
-        });
-      });
-      _showErrorSnackbar('Error: ${e.toString()}');
-      _scrollToBottom();
-    }
+    // Desde la migración a UI JSON, el backend debe enviar `client_open` para abrir la pantalla.
+    // Si no vino, evitamos llamar endpoints legacy (/crud/ejecutar-accion) que ya no existen.
+    _showErrorSnackbar('Acción sin client_open: no se puede abrir en esta versión.');
   }
 
   Future<void> _executeActionWithParams(String actionId, Map<String, dynamic> params) async {
-    setState(() {
-      _isSending = true;
-    });
-
-    // Log para debug: ver qué parámetros se están enviando
-    print('Executing action: $actionId');
-    print('Params being sent: $params');
-    
-    // Filtrar valores nulos o vacíos si es necesario, pero mantener los que tienen valor
-    final filteredParams = <String, dynamic>{};
-    params.forEach((key, value) {
-      if (value != null && value != '') {
-        filteredParams[key] = value;
-      }
-    });
-    
-    if (filteredParams.isNotEmpty) {
-      print('Filtered params: $filteredParams');
-    } else {
-      print('WARNING: No params to send (all were null or empty)');
-    }
-
-    try {
-      final result = await _asistenteService.executeAction(actionId, params: filteredParams);
-
-      setState(() {
-        _isSending = false;
-      });
-
-      if (result['success'] == true) {
-        final data = result['data'];
-        final explanation = data['explanation'] ?? 'Acción ejecutada exitosamente';
-
-        setState(() {
-          _chatHistory.add({
-            'type': 'bot',
-            'content': explanation,
-            'data': data,
-            'timestamp': DateTime.now(),
-          });
-        });
-      } else {
-        _showErrorSnackbar(result['message'] ?? 'Error al ejecutar la acción');
-      }
-      _scrollToBottom();
-    } catch (e) {
-      setState(() {
-        _isSending = false;
-      });
-      _showErrorSnackbar('Error: ${e.toString()}');
-    }
+    // Legacy: antes se posteaba a /crud/ejecutar-accion. Ese endpoint ya no existe.
+    // La ejecución/submit ahora ocurre dentro de la pantalla UI JSON (UiJsonWizardScreen).
+    _showErrorSnackbar('Submit legacy no soportado. Abrí la pantalla desde client_open.');
   }
 
   /// Despliega el formulario dinámico en un modal (bottom sheet) para móvil.

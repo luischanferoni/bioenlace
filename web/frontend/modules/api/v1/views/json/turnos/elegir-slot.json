@@ -1,0 +1,31 @@
+{
+  "kind": "ui_definition",
+  "ui_type": "picker",
+  "ui_meta": {
+    "picker": {
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "chips": [
+        { "id": "next_available", "label": "Próximo disponible" },
+        { "id": "morning", "label": "Mañana" },
+        { "id": "afternoon", "label": "Tarde" }
+      ],
+      "list": { "item_kind": "slot", "id_field": "id", "label_field": "label" }
+    },
+    "assistant_embed": { "presentation": "inline" }
+  },
+  "wizard_config": {
+    "title": "Elegir horario",
+    "steps": [
+      { "id": "pick", "title": "Horario", "fields": ["slot_id"] }
+    ],
+    "fields": [
+      {
+        "name": "slot_id",
+        "label": "Horario",
+        "type": "text",
+        "required": true
+      }
+    ]
+  }
+}
+

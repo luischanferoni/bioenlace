@@ -28,7 +28,7 @@ String resolveApiAbsoluteUrl(String routeOrPath) {
   return '$base/$r';
 }
 
-/// Aplica parámetros `provided` (formato backend: {k: {value,source}}) al route `/api/v1/ui/...`.
+/// Aplica parámetros `provided` (formato backend: {k: {value,source}}) al route `/api/v1/views/...`.
 String applyProvidedParamsToRoute(String routeOrPath, Map<String, dynamic>? provided) {
   if (provided == null || provided.isEmpty) return routeOrPath;
   final base = resolveApiAbsoluteUrl(routeOrPath);

@@ -1,0 +1,50 @@
+{
+  "kind": "ui_definition",
+  "ui_type": "picker",
+  "ui_meta": {
+    "picker": {
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "chips": [
+        { "id": "nearby", "label": "Cerca" }
+      ],
+      "list": { "item_kind": "efector", "id_field": "id", "label_field": "name" }
+    },
+    "assistant_embed": { "presentation": "inline" }
+  },
+  "wizard_config": {
+    "title": "Efectores cercanos",
+    "steps": [
+      { "id": "pick", "title": "Efector", "fields": ["id_efector", "latitud", "longitud", "radio_km"] }
+    ],
+    "fields": [
+      {
+        "name": "latitud",
+        "label": "Latitud",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "longitud",
+        "label": "Longitud",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "radio_km",
+        "label": "Radio (km)",
+        "type": "text",
+        "required": false,
+        "value": "10"
+      },
+      {
+        "name": "id_efector",
+        "label": "Efector",
+        "type": "select",
+        "required": true,
+        "options": "{{options}}",
+        "option_config": { "source": "efectores" }
+      }
+    ]
+  }
+}
+

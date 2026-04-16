@@ -1495,7 +1495,7 @@
     }
 
     /**
-     * Abre UI JSON fullscreen si la URL trae ?spa_open_ui_json=/api/v1/ui/... (p. ej. redirect desde Yii).
+     * Abre view JSON fullscreen si la URL trae ?spa_open_ui_json=/api/v1/views/... (p. ej. redirect desde Yii).
      */
     function tryOpenUiJsonFromQuery() {
         try {

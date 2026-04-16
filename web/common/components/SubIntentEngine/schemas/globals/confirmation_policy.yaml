@@ -1,0 +1,16 @@
+id: confirmation_policy.v1
+version: 1
+
+rules:
+  selection_requires_confirmation: true
+  apply_draft_delta_only_on_confirm: true
+
+ui:
+  confirm_interaction:
+    kind: confirm_selection
+    buttons:
+      - id: confirm
+        label: "Confirmar"
+      - id: cancel
+        label: "Cambiar"
+

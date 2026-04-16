@@ -22,6 +22,9 @@ const String _timeoutErrorMessage =
 class AsistenteService {
   String userId;
   final String? authToken;
+  String? currentIntentId;
+  String? currentSubintentId;
+  Map<String, dynamic> draft = {};
 
   AsistenteService({
     required this.userId,
@@ -54,9 +57,19 @@ class AsistenteService {
         headers['Authorization'] = 'Bearer $authToken';
       }
 
-      final body = <String, dynamic>{
-        'content': textoInteraccionUsuario,
-      };
+      final body = <String, dynamic>{};
+
+      // Modo intent: si hay intent activo, enviar snapshot.
+      if (currentIntentId != null && currentIntentId!.isNotEmpty) {
+        body['intent_id'] = currentIntentId;
+        if (currentSubintentId != null && currentSubintentId!.isNotEmpty) {
+          body['subintent_id'] = currentSubintentId;
+        }
+        body['draft'] = draft;
+        body['content'] = textoInteraccionUsuario;
+      } else {
+        body['content'] = textoInteraccionUsuario;
+      }
       
       // Agregar action_id si se proporciona (opcional)
       if (actionId != null && actionId.isNotEmpty) {
@@ -76,6 +89,22 @@ class AsistenteService {
       if (response.statusCode == 200) {
         // La respuesta puede venir envuelta en 'data' o directamente
         final data = responseData['data'] ?? responseData;
+
+        // Si viene respuesta modo intent, sincronizar estado local.
+        if (data is Map<String, dynamic>) {
+          final iid = data['intent_id']?.toString();
+          final sid = data['subintent_id']?.toString();
+          if (iid != null && iid.isNotEmpty) {
+            currentIntentId = iid;
+          }
+          if (sid != null && sid.isNotEmpty) {
+            currentSubintentId = sid;
+          }
+          final dd = data['draft_delta'];
+          if (dd is Map) {
+            draft = {...draft, ...Map<String, dynamic>.from(dd)};
+          }
+        }
         
         // Si tiene explanation, es una respuesta válida aunque success sea false
         // (por compatibilidad con versiones anteriores de la API)
@@ -301,6 +330,47 @@ class AsistenteService {
       return out;
     } catch (e) {
       return [];
+    }
+  }
+
+  /// Enviar una interacción tipada (confirmación, chip_select, request_location, etc.)
+  Future<Map<String, dynamic>> enviarInteraction(Map<String, dynamic> interaction) async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}/asistente/enviar');
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (authToken != null) {
+        headers['Authorization'] = 'Bearer $authToken';
+      }
+      final body = <String, dynamic>{
+        'intent_id': currentIntentId,
+        'subintent_id': currentSubintentId,
+        'draft': draft,
+        'interaction': interaction,
+      };
+      final response = await http.post(
+        uri,
+        headers: headers,
+        body: json.encode(body),
+      ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+
+      final responseData = json.decode(response.body);
+      final data = responseData['data'] ?? responseData;
+      if (data is Map<String, dynamic>) {
+        final dd = data['draft_delta'];
+        if (dd is Map) {
+          draft = {...draft, ...Map<String, dynamic>.from(dd)};
+        }
+      }
+      return {
+        'success': response.statusCode == 200 && responseData['success'] == true,
+        'data': data,
+        'message': responseData['message'],
+      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
     }
   }
 }

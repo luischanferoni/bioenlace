@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\components\IntentEngine\IntentEngine;
+use common\components\SubIntentEngine\SubIntentEngine;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 
@@ -11,7 +12,9 @@ use common\models\AsistenteInteraccion;
  * Asistente conversacional: pipeline unificado vía {@see IntentEngine}.
  *
  * - GET/OPTIONS `asistente/estado` — estado ligero para clientes que consultan historial vacío/plantilla.
- * - POST/OPTIONS `asistente/enviar` — JSON: `content` (texto; puede ir vacío si hay `action_id`), `action_id` opcional.
+ * - POST/OPTIONS `asistente/enviar` — contrato único:
+ *   - Root (IntentEngine): `content` o `action_id`.
+ *   - Dentro de intent (SubIntentEngine): `intent_id`, `subintent_id`, `draft`, y `content` o `interaction`.
  *   Identidad: usuario autenticado (Yii). `senderId` opcional; si se envía, debe coincidir con el usuario.
  *   Respuesta estándar v1: `success`, `message`, `data` (payload del agente), HTTP 200.
  */
@@ -32,6 +35,26 @@ class ChatController extends BaseController
     public function actionRecibir()
     {
         $body = Yii::$app->request->getBodyParams();
+        $intentId = isset($body['intent_id']) ? trim((string) $body['intent_id']) : '';
+
+        // Modo intent (SubIntentEngine): no hay retrocompatibilidad/legacy aquí.
+        if ($intentId !== '') {
+            $userId = (int) Yii::$app->user->id;
+            try {
+                $out = SubIntentEngine::process(is_array($body) ? $body : [], $userId);
+            } catch (\Throwable $e) {
+                Yii::error('SubIntentEngine en asistente/enviar: ' . $e->getMessage(), 'asistente');
+                return $this->error('Error al procesar el intent', null, 500);
+            }
+
+            if (empty($out['success'])) {
+                $err = isset($out['error']) ? (string) $out['error'] : 'Error';
+                return $this->error($err, $out, 400);
+            }
+
+            return $this->success($out, 'Consulta procesada', 200);
+        }
+
         $content = isset($body['content']) ? trim((string) $body['content']) : '';
         $actionId = $body['action_id'] ?? null;
         if ($actionId !== null && $actionId !== '') {
@@ -41,7 +64,7 @@ class ChatController extends BaseController
         }
 
         if ($content === '' && $actionId === null) {
-            return $this->error('Se requiere content o action_id', null, 400);
+            return $this->error('Se requiere content o action_id (o intent_id)', null, 400);
         }
 
         $userId = Yii::$app->user->id;

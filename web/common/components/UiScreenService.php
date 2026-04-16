@@ -6,7 +6,7 @@ use Yii;
 use yii\web\ServerErrorHttpException;
 
 /**
- * Helper para endpoints de UI JSON (screens) bajo `/api/v1/ui/...`.
+ * Helper para endpoints de definiciones de vistas JSON bajo `/api/v1/views/...`.
  *
  * - GET  => devuelve definición de UI (wizard/list/detail) desde templates JSON (`views/json/...`).
  * - POST => ejecuta submit específico (callable); si falla devuelve la misma UI con `success=false` + `errors` + `values`.

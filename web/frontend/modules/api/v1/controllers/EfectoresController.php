@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
+use common\components\UiScreenService;
 use common\models\Efector;
 
 /**
@@ -78,5 +79,53 @@ class EfectoresController extends BaseController
         }
         $data = Efector::liveSearch($q, $filters);
         return ['results' => array_values($data)];
+    }
+
+    /**
+     * Vista embebible: elegir efector.
+     *
+     * GET|POST /api/v1/views/efectores/elegir
+     *
+     * @action_name Elegir efector
+     * @entity Efectores
+     * @tags views, ui, efector
+     * @keywords elegir efector, hospital, centro de salud, efector
+     */
+    public function actionElegir(): array
+    {
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'efectores',
+            'elegir',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+    }
+
+    /**
+     * Vista embebible: elegir efector cercano (usa latitud/longitud del cliente).
+     *
+     * GET|POST /api/v1/views/efectores/elegir-nearby
+     *
+     * @action_name Elegir efector cercano
+     * @entity Efectores
+     * @tags views, ui, efector, geolocalización
+     * @keywords efectores cercanos, cerca, cerca de casa, hospital cercano, centro de salud cercano
+     */
+    public function actionElegirNearby(): array
+    {
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'efectores',
+            'elegir-nearby',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
     }
 }

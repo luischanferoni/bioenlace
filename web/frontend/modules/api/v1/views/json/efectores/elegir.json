@@ -1,0 +1,29 @@
+{
+  "kind": "ui_definition",
+  "ui_type": "picker",
+  "ui_meta": {
+    "picker": {
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "chips": [],
+      "list": { "item_kind": "efector", "id_field": "id", "label_field": "name" }
+    },
+    "assistant_embed": { "presentation": "inline" }
+  },
+  "wizard_config": {
+    "title": "Elegir efector",
+    "steps": [
+      { "id": "pick", "title": "Efector", "fields": ["id_efector"] }
+    ],
+    "fields": [
+      {
+        "name": "id_efector",
+        "label": "Efector",
+        "type": "select",
+        "required": true,
+        "options": "{{options}}",
+        "option_config": { "source": "efectores" }
+      }
+    ]
+  }
+}
+

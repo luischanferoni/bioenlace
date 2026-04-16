@@ -43,8 +43,8 @@ class TurnosController extends BaseController
     /**
      * UI JSON (screen) + submit unificado para autogestión.
      *
-     * GET  /api/v1/ui/turnos/crear-como-paciente => descriptor UI JSON
-     * POST /api/v1/ui/turnos/crear-como-paciente => submit; si falla devuelve UI + errors
+     * GET  /api/v1/views/turnos/crear-como-paciente => descriptor view JSON
+     * POST /api/v1/views/turnos/crear-como-paciente => submit; si falla devuelve UI + errors
      *
      * @action_name Reservar turno
      * @entity Turnos
@@ -65,6 +65,30 @@ class TurnosController extends BaseController
                 $model->id_persona = (int) Yii::$app->user->getIdPersona();
 
                 return $this->ejecutarCreacionTurno($model);
+            }
+        );
+    }
+
+    /**
+     * Vista embebible: elegir slot/horario (para flujos conversacionales).
+     *
+     * GET|POST /api/v1/views/turnos/elegir-slot
+     *
+     * @action_name Elegir horario (turnos)
+     * @entity Turnos
+     * @tags views, ui, slot, horario, turnos
+     * @keywords elegir horario, elegir turno, seleccionar horario
+     */
+    public function actionElegirSlot(): array
+    {
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'turnos',
+            'elegir-slot',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
             }
         );
     }

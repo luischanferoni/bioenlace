@@ -27,9 +27,9 @@ final class AssistantClientOpenEnricher
             return $action;
         }
 
-        // UI JSON (screens): si la acción ya apunta a /api/v*/ui/..., el cliente debe abrirla como pantalla dinámica.
+        // Views JSON (screens): si la acción ya apunta a /api/v*/views/..., el cliente debe abrirla como pantalla dinámica.
         // No se hardcodean pantallas nativas aquí (eso debe venir explícito desde catálogo/metadata, ej. screen_id).
-        if ($route !== '' && preg_match('#^/api/v\\d+/ui/#', $route) === 1) {
+        if ($route !== '' && preg_match('#^/api/v\\d+/views/#', $route) === 1) {
             $presentation = 'fullscreen';
             if (isset($action['spa_presentation'])) {
                 $sp = strtolower(trim((string) $action['spa_presentation']));

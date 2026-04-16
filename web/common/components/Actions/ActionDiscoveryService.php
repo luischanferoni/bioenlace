@@ -84,7 +84,7 @@ class ActionDiscoveryService
      * Importante de terminología:
      * - Esto NO descubre endpoints de dominio de la API.
      * - Estos métodos representan pantallas (HTML) o definiciones de UI (arrays) que serán expuestas como
-     *   descriptores bajo `/api/v1/ui/<controller>/<action>` (ver {@see \frontend\modules\api\v1\controllers\UiController}).
+     *   descriptores bajo `/api/v1/views/<controller>/<action>`.
      *
      * Convención de tagging:
      * - Por defecto, toda `action*` del frontend se considera parte del catálogo.
@@ -147,7 +147,7 @@ class ActionDiscoveryService
                     $actionName = Inflector::camel2id($methodName);
 
                     // Este route es el "destino UI" (no confundir con APIs de dominio).
-                    $route = '/api/v1/ui/' . $controllerName . '/' . $actionName;
+                    $route = '/api/v1/views/' . $controllerName . '/' . $actionName;
 
                     $metadata = self::extractActionMetadata($method, $route, $controllerName, $actionName);
                     if (!$metadata) {

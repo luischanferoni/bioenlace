@@ -283,9 +283,33 @@ class RrhhController extends BaseController
     }
 
     /**
+     * Vista embebible: elegir profesional (RRHH) para un efector/servicio.
+     *
+     * GET|POST /api/v1/views/rrhh/elegir
+     *
+     * @action_name Elegir profesional (RRHH)
+     * @entity Rrhh
+     * @tags views, ui, rrhh, profesional
+     * @keywords elegir profesional, elegir médico, elegir especialista
+     */
+    public function actionElegir(): array
+    {
+        $req = Yii::$app->request;
+        return UiScreenService::handleScreen(
+            'rrhh',
+            'elegir',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+    }
+
+    /**
      * UI JSON: wizard RRHH → agenda por servicio → condición laboral.
      *
-     * GET|POST /api/v1/ui/rrhh/editar-agenda
+     * GET|POST /api/v1/views/rrhh/editar-agenda
      *
      * @action_name Editar agenda y condición laboral (RRHH)
      * @entity Rrhh

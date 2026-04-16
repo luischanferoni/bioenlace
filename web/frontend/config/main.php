@@ -99,7 +99,7 @@ return [
 
                 // sign up
                 'POST api/<version:\w+>/signup' => '<version>/signup/registrar',
-                //'OPTIONS api/<version:\w+>/signup' => '<version>/signup/recibir',
+                // OPTIONS: cubierto por behaviors del controller (CORS/preflight) si aplica
                 // login
                 'POST api/<version:\w+>/login' => '<version>/login/login',
                 // registro simulado de paciente (Mercedes Diaz) para pruebas móviles
@@ -150,8 +150,8 @@ return [
                 'DELETE api/<version:\w+>/agenda/eliminar/<id:\d+>' => '<version>/agenda/eliminar',
                 'OPTIONS api/<version:\w+>/agenda/eliminar/<id:\d+>' => '<version>/agenda/eliminar',
                 
-                // Turnos UI screens (descriptor + submit): usar /api/<v>/ui/turnos/* (ver regla /ui/ más abajo)
-                // Alias histórico: algunos clientes consumen /api/<v>/turnos/* aunque la pantalla sea UI JSON.
+                // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
+                // aunque el descriptor de vista JSON viva bajo /api/<v>/views/turnos/*.
                 'GET api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'POST api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
@@ -164,7 +164,7 @@ return [
                 'GET api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'POST api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'OPTIONS api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
-                // (Se eliminan reglas /turnos/* que mapeaban a screens; se consumen por /ui/turnos/*)
+                // Nota: la convención actual para descriptores es /api/<v>/views/<entidad>/<accion>.
 
                 'POST api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
                 'OPTIONS api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
@@ -214,11 +214,11 @@ return [
                 'GET api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 'OPTIONS api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 
-                // UI dinámica (JSON): cada entidad renderiza su descriptor desde views/json/*
-                // Ejemplo: GET|POST /api/v1/ui/turnos/crear-como-paciente => v1/turnos/crear-como-paciente
-                'GET api/<version:\w+>/ui/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
-                'POST api/<version:\w+>/ui/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
-                'OPTIONS api/<version:\w+>/ui/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
+                // Vistas dinámicas (JSON): cada entidad renderiza su descriptor desde views/json/*
+                // Ejemplo: GET|POST /api/v1/views/turnos/crear-como-paciente => v1/turnos/crear-como-paciente
+                'GET api/<version:\w+>/views/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
+                'POST api/<version:\w+>/views/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
+                'OPTIONS api/<version:\w+>/views/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
                 
                 // Audio API (Speech-to-Text)
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',

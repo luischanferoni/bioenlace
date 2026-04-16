@@ -39,7 +39,8 @@
     "yiisoft/yii2-authclient": "~2.1.0",
     "kartik-v/yii2-widget-fileinput": "dev-master",
     "stitchua/yii2-dynamicform": "dev-master",
-    "firebase/php-jwt": "^6.0"
+    "firebase/php-jwt": "^6.0",
+    "symfony/yaml": "3.4"
   },
   "require-dev": {
     "codeception/codeception": "^4.0",

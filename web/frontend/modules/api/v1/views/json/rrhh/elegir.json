@@ -1,0 +1,27 @@
+{
+  "kind": "ui_definition",
+  "ui_type": "picker",
+  "ui_meta": {
+    "picker": {
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "chips": [],
+      "list": { "item_kind": "rrhh", "id_field": "id", "label_field": "name" }
+    },
+    "assistant_embed": { "presentation": "inline" }
+  },
+  "wizard_config": {
+    "title": "Elegir profesional",
+    "steps": [
+      { "id": "pick", "title": "Profesional", "fields": ["id_rr_hh"] }
+    ],
+    "fields": [
+      {
+        "name": "id_rr_hh",
+        "label": "Profesional",
+        "type": "text",
+        "required": true
+      }
+    ]
+  }
+}
+

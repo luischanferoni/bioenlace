@@ -1,0 +1,69 @@
+intent_id: turnos.crear-como-paciente
+version: 1
+
+imports:
+  - globals/confirmation_policy.yaml
+  - globals/temporal_normalization.yaml
+  - globals/location_acquisition.yaml
+
+prompt_context:
+  # Esto define qué se adjunta al prompt del LLM (cuando se use IA).
+  include:
+    - intent_id
+    - current_subintent_id
+    - allowed_open_ui_action_ids
+    - required_draft_fields
+    - draft_summary
+    - last_user_message
+
+subintents:
+  - id: select_servicio
+    requires: []
+    provides:
+      - draft.id_servicio
+    next: select_efector
+    open_ui:
+      action_id: servicios.elegir
+
+  - id: select_efector
+    requires:
+      - draft.id_servicio
+    provides:
+      - draft.id_efector
+    next: select_rrhh
+    chooser:
+      when_user_says_nearby:
+        # si el usuario pide "cerca" el motor usará esquema global de ubicación.
+        uses_global: location_acquisition.v1
+        open_ui:
+          action_id: efectores.elegir-nearby
+      otherwise:
+        open_ui:
+          action_id: efectores.elegir
+
+  - id: select_rrhh
+    requires:
+      - draft.id_efector
+      - draft.id_servicio
+    provides:
+      - draft.id_rrhh
+    next: select_slot
+    open_ui:
+      action_id: rrhh.elegir
+
+  - id: select_slot
+    requires:
+      - draft.id_rrhh
+    provides:
+      - draft.slot_id
+    next: confirm
+    open_ui:
+      action_id: turnos.elegir-slot
+
+  - id: confirm
+    requires:
+      - draft.slot_id
+    provides: []
+    submit:
+      action_id: turnos.crear-como-paciente
+

@@ -116,7 +116,7 @@ En esta doc se fija lo minimo:
 
 ## Reglas para "no mezclar" responsabilidades
 1. Nivel 1: la logica pesada de interpretacion + persistencia se implementa en `ConsultaProcesamientoService` y se basa en `ConsultasConfiguracion`.
-2. Nivel 2: la logica conversacional de intents y el armado de formulario precargado se implementa en handlers (ej: `TurnosHandler`) y en el endpoint UI JSON (`/api/v1/ui/...`) usando `UiDefinitionTemplateManager`.
+2. Nivel 2: la logica conversacional de intents y el armado de formulario precargado se implementa en handlers (ej: `TurnosHandler`) y en el endpoint de view JSON (`/api/v1/views/...`) usando `UiDefinitionTemplateManager`.
 3. El unmapped se guarda en `ai_unmapped_data`, pero el origen (que parte no mapea) se detecta en:
    - Nivel 1: en el mapper de `guardarDatosCategoria` / `mapearDatosAModelo`.
    - Nivel 2: en el parser que arma params del intent y/o en el armado del formulario precargado (segun que "resto" no se convierte en campos esperados).

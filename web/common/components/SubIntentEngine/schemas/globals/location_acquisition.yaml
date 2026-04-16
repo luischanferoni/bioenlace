@@ -1,0 +1,21 @@
+id: location_acquisition.v1
+version: 1
+
+policy:
+  # A/B/C: el cliente puede proveer ubicación, o pedir permiso, o elegir un domicilio guardado.
+  strategies:
+    - id: provided_by_client
+      requires:
+        - draft.user_location
+    - id: ask_permission
+      interaction:
+        kind: request_location
+        reason: "Para sugerirte efectores cercanos necesito tu ubicación."
+    - id: choose_saved_address
+      open_ui:
+        action_id: domicilios.elegir
+
+output:
+  draft_fields:
+    - user_location
+

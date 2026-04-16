@@ -34,6 +34,26 @@ if ! git pull; then
 fi
 echo -e "${GREEN}Git pull completado exitosamente${NC}"
 
+# Paso 1.5: Composer (dependencias PHP)
+echo -e "${YELLOW}Instalando dependencias PHP (composer)...${NC}"
+cd "$REPO_DIR" || exit 1
+if [ -f "composer.lock" ]; then
+    if composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
+        echo -e "${GREEN}Composer install completado exitosamente${NC}"
+    else
+        echo -e "${RED}Error: composer install falló${NC}"
+        exit 1
+    fi
+else
+    echo -e "${YELLOW}Advertencia: composer.lock no existe; ejecutando composer update...${NC}"
+    if composer update --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
+        echo -e "${GREEN}Composer update completado exitosamente${NC}"
+    else
+        echo -e "${RED}Error: composer update falló${NC}"
+        exit 1
+    fi
+fi
+
 # Paso 2: Ejecutar migraciones
 echo -e "${YELLOW}Ejecutando migraciones de base de datos...${NC}"
 if php yii migrate --migrationPath=@common/migrations --interactive=0; then

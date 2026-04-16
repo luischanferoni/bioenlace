@@ -29,9 +29,10 @@ class QuirofanoController extends BaseController
         $this->agenda = new CirugiaAgendaService();
     }
 
-    public function actionOptions()
+    public function actionOptions(): array
     {
-        return $this->success(null, 'OK');
+        // Preflight CORS: debe ser compatible con BaseController::actionOptions()
+        return parent::actionOptions();
     }
 
     /**

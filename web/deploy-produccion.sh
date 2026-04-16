@@ -24,10 +24,14 @@ FRONTEND_FOLDERS=("css" "custom-template" "images" "js")
 BACKEND_FOLDERS=("css" "js" "images")
 
 SKIP_COMPOSER=0
+COMPOSER_DEV=0
 for arg in "$@"; do
     case "$arg" in
         --skip-composer|--no-composer)
             SKIP_COMPOSER=1
+            ;;
+        --composer-dev|--with-dev)
+            COMPOSER_DEV=1
             ;;
     esac
 done
@@ -49,8 +53,15 @@ if [ "$SKIP_COMPOSER" -eq 1 ]; then
 else
     echo -e "${YELLOW}Instalando dependencias PHP (composer)...${NC}"
     cd "$REPO_DIR" || exit 1
+    if [ "$COMPOSER_DEV" -eq 1 ]; then
+        echo -e "${YELLOW}Composer: instalando dependencias DEV (incluye yii2-debug/gii)${NC}"
+        COMPOSER_NO_DEV_FLAG=""
+    else
+        echo -e "${YELLOW}Composer: instalando dependencias PROD (--no-dev)${NC}"
+        COMPOSER_NO_DEV_FLAG="--no-dev"
+    fi
     if [ -f "composer.lock" ]; then
-        if composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
+        if composer install --no-interaction --prefer-dist $COMPOSER_NO_DEV_FLAG --optimize-autoloader; then
             echo -e "${GREEN}Composer install completado exitosamente${NC}"
         else
             echo -e "${RED}Error: composer install falló${NC}"
@@ -58,7 +69,7 @@ else
         fi
     else
         echo -e "${YELLOW}Advertencia: composer.lock no existe; ejecutando composer update...${NC}"
-        if composer update --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
+        if composer update --no-interaction --prefer-dist $COMPOSER_NO_DEV_FLAG --optimize-autoloader; then
             echo -e "${GREEN}Composer update completado exitosamente${NC}"
         else
             echo -e "${RED}Error: composer update falló${NC}"

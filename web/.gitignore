@@ -1,6 +1,7 @@
 # Vendor y dependencias
 /vendor
-/composer.lock
+# Importante: en apps (Yii2) el lock NO se ignora; asegura deploys reproducibles.
+# `composer install` en producción debe respetar este archivo.
 
 # Yii Framework
 /yii

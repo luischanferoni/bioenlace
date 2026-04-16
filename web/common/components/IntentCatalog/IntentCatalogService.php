@@ -10,7 +10,7 @@ use common\components\UiDefinitionTemplateManager;
  * Catálogo de **UIs** sugeribles (intents UI).
  *
  * Definición de UI en este proyecto:
- * - **API views**: descriptor JSON bajo `/api/v1/views/<entity>/<action>` cargado desde templates JSON.
+ * - **API UI JSON**: descriptor JSON bajo `/api/v1/<entity>/<action>` cargado desde templates JSON.
  *
  * Este servicio NO incluye endpoints de dominio (turnos/agenda/etc.) porque no son UI.
  */
@@ -20,9 +20,9 @@ final class IntentCatalogService
      * UIs disponibles para un usuario.
      *
      * Fuente: acciones permitidas por RBAC (ActionMappingService) mapeadas a rutas de descriptor UI:
-     * `/api/v1/views/<controller>/<action>`.
+     * `/api/v1/<controller>/<action>`.
      *
-     * Nota: esto NO enumera endpoints de dominio; los convierte a “destinos view” (descriptor) bajo `/views/`.
+     * Nota: esto NO enumera endpoints de dominio; los convierte a “destinos UI” (descriptor) bajo `/api/v1/<entidad>/<accion>`.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -58,7 +58,7 @@ final class IntentCatalogService
             $a = $byId[$actionId];
             $a['controller'] = $entity;
             $a['action'] = $action;
-            $a['route'] = '/api/v1/views/' . rawurlencode($entity) . '/' . rawurlencode($action);
+            $a['route'] = '/api/v1/' . rawurlencode($entity) . '/' . rawurlencode($action);
             $out[] = $a;
         }
 

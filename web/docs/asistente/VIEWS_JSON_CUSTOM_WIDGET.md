@@ -1,6 +1,6 @@
 # Views JSON: `custom_widget` (contrato mínimo)
 
-Los wizards servidos bajo `/api/v1/views/<entidad>/<accion>` pueden incluir campos que no son inputs HTML estándar. El **descriptor JSON** es la única pieza común entre clientes; la **implementación visual** es siempre **local** en cada plataforma.
+Los wizards servidos bajo `/api/v1/<entidad>/<accion>` pueden incluir campos que no son inputs HTML estándar. El **descriptor JSON** es la única pieza común entre clientes; la **implementación visual** es siempre **local** en cada plataforma.
 
 ## Estructura del campo
 
@@ -22,5 +22,5 @@ Los wizards servidos bajo `/api/v1/views/<entidad>/<accion>` pueden incluir camp
 
 ## Enlaces desde Yii con layout
 
-- Para abrir el wizard en el shell SPA: query `spa_open_ui_json=/api/v1/views/<entidad>/<accion>` (ver `spa-home.js`).
+- Para abrir el wizard en el shell SPA: query `spa_open_ui_json=/api/v1/<entidad>/<accion>` (ver `spa-home.js`).
 

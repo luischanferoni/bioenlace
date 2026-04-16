@@ -2,6 +2,8 @@
 
 namespace common\components\Actions;
 
+use common\components\UiDefinitionTemplateManager;
+
 /**
  * Enriquece acciones del asistente con {@see $action['client_open']} para que web y apps
  * abran pantallas nativas en lugar de tratar la URL de API como destino de navegación.
@@ -27,9 +29,11 @@ final class AssistantClientOpenEnricher
             return $action;
         }
 
-        // Views JSON (screens): si la acción ya apunta a /api/v*/views/..., el cliente debe abrirla como pantalla dinámica.
-        // No se hardcodean pantallas nativas aquí (eso debe venir explícito desde catálogo/metadata, ej. screen_id).
-        if ($route !== '' && preg_match('#^/api/v\\d+/views/#', $route) === 1) {
+        // UI JSON (descriptores): si la ruta apunta a un template existente bajo `views/json/{entidad}/{accion}.json`,
+        // el cliente debe abrirla como pantalla dinámica (`ui_json`).
+        //
+        // Importante: NO inferir por “ser /api/v1/...” porque también hay endpoints de dominio.
+        if ($route !== '' && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
             $presentation = 'fullscreen';
             if (isset($action['spa_presentation'])) {
                 $sp = strtolower(trim((string) $action['spa_presentation']));

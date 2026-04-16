@@ -1,6 +1,5 @@
 {
-  "kind": "ui_definition",
-  "ui_type": "picker",
+  "ui_type": "embed",
   "ui_meta": {
     "picker": {
       "selection": { "mode": "single", "requires_confirmation": true },

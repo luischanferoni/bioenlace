@@ -32,7 +32,7 @@ class NativeScreenRouter {
           builder: (_) => _PlaceholderNativeScreen(
             title: title ?? 'Agenda laboral',
             body:
-                'Obsoleto: usar view JSON /api/v1/views/rrhh/editar-agenda (UiJsonWizardScreen). Ajustar el intent o implementar redirección.',
+                'Obsoleto: usar UI JSON /api/v1/rrhh/editar-agenda (UiJsonWizardScreen). Ajustar el intent o implementar redirección.',
           ),
         );
       default:

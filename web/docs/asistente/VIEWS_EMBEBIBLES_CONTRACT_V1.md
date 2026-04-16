@@ -4,7 +4,7 @@ Este documento define el contrato para **views JSON embebibles** que se renderiz
 
 ### 1. Objetivo
 
-Una view embebible es un descriptor JSON servido bajo `/api/v1/views/<entidad>/<accion>` que:
+Una view embebible es un descriptor JSON servido bajo `/api/v1/<entidad>/<accion>` que:
 
 - puede mostrar **chips/filtros** opcionales
 - puede mostrar un **listado** de ítems seleccionables (patrón “picker”)
@@ -47,7 +47,7 @@ Una view embebible es un descriptor JSON servido bajo `/api/v1/views/<entidad>/<
     "client_open": {
       "kind": "ui_json",
       "presentation": "inline",
-      "api": { "route": "/api/v1/views/efectores/elegir", "method": "GET|POST" }
+      "api": { "route": "/api/v1/efectores/elegir", "method": "GET|POST" }
     }
   },
   "draft_delta": {}

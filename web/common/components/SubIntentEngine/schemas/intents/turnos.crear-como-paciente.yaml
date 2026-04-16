@@ -18,16 +18,17 @@ prompt_context:
 
 subintents:
   - id: select_servicio
-    requires: []
-    provides:
-      - draft.id_servicio
+    assistant_text: "Decime qué servicio necesitás (o elegilo de la lista)."
+    requires:
+      - draft.id_servicio_asignado
     next: select_efector
     open_ui:
       action_id: servicios.elegir
 
   - id: select_efector
+    assistant_text: "Ahora elegí el efector (centro) donde querés atenderte."
     requires:
-      - draft.id_servicio
+      - draft.id_servicio_asignado
     provides:
       - draft.id_efector
     next: select_rrhh
@@ -42,18 +43,20 @@ subintents:
           action_id: efectores.elegir
 
   - id: select_rrhh
+    assistant_text: "Elegí el profesional con el que querés el turno."
     requires:
       - draft.id_efector
-      - draft.id_servicio
+      - draft.id_servicio_asignado
     provides:
-      - draft.id_rrhh
+      - draft.id_rr_hh
     next: select_slot
     open_ui:
       action_id: rrhh.elegir
 
   - id: select_slot
+    assistant_text: "Elegí un horario disponible."
     requires:
-      - draft.id_rrhh
+      - draft.id_rr_hh
     provides:
       - draft.slot_id
     next: confirm
@@ -61,6 +64,7 @@ subintents:
       action_id: turnos.elegir-slot
 
   - id: confirm
+    assistant_text: "Listo: confirmá los datos y lo enviamos."
     requires:
       - draft.slot_id
     provides: []

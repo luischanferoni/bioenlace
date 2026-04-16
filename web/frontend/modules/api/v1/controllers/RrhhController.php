@@ -285,7 +285,7 @@ class RrhhController extends BaseController
     /**
      * Vista embebible: elegir profesional (RRHH) para un efector/servicio.
      *
-     * GET|POST /api/v1/views/rrhh/elegir
+     * GET|POST /api/v1/rrhh/elegir
      *
      * @action_name Elegir profesional (RRHH)
      * @entity Rrhh
@@ -309,7 +309,7 @@ class RrhhController extends BaseController
     /**
      * UI JSON: wizard RRHH → agenda por servicio → condición laboral.
      *
-     * GET|POST /api/v1/views/rrhh/editar-agenda
+     * GET|POST /api/v1/rrhh/editar-agenda
      *
      * @action_name Editar agenda y condición laboral (RRHH)
      * @entity Rrhh

@@ -1,6 +1,6 @@
 ---
 name: step-intent-engine
-overview: Actualizar el diseño hacia SubIntents + views embebibles granulares por `action_id`, sin wizard monolítico como skeleton y sin retrocompatibilidad. El YAML por intent es fuente de verdad de conversación (pasos, dependencias, confirmación, normalización) y el catálogo `/api/v1/views/...` + RBAC sigue siendo fuente de verdad de acciones UI disponibles.
+overview: Actualizar el diseño hacia SubIntents + views embebibles granulares por `action_id`, sin wizard monolítico como skeleton y sin retrocompatibilidad. El YAML por intent es fuente de verdad de conversación (pasos, dependencias, confirmación, normalización) y el catálogo `/api/v1/...` + RBAC sigue siendo fuente de verdad de acciones UI disponibles.
 todos:
   - id: yaml-intents-and-globals
     content: Definir YAML por `intent_id` (action_id) y YAML globales/comunes (p. ej. adquisición de ubicación, normalización temporal, política de confirmación) en `schemas/` (carpeta nueva).
@@ -28,7 +28,7 @@ isProject: false
 ### 1) Alcance y separación con IntentEngine
 
 - **IntentEngine (root)**:
-  - Sigue siendo el **clasificador inicial** (texto → `action_id` permitido) usando el catálogo `/api/v1/views/...` filtrado por RBAC.
+  - Sigue siendo el **clasificador inicial** (texto → `action_id` permitido) usando el catálogo `/api/v1/...` filtrado por RBAC.
   - No conoce reglas conversacionales; solo elige “qué UI/intent abrir” inicialmente.
 
 - **SubIntentEngine (dentro del intent)** — foco de este plan:
@@ -53,7 +53,7 @@ isProject: false
 
 ### 3) Catálogo de UIs (action_id → view concreta)
 
-- Se mantiene el catálogo existente: templates JSON bajo `/api/v1/views/<entity>/<action>` + RBAC.
+- Se mantiene el catálogo existente: templates JSON bajo `/api/v1/<entity>/<action>` + RBAC.
 - Cada view embebible es una **acción UI individual** (`<entidad>.<accion>`) con su template, keywords y permiso.
 - El motor conversacional solo referencia `action_id`; la resolución a `route/client_open` la hace el catálogo existente.
 

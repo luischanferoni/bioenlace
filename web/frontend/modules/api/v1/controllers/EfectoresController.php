@@ -84,7 +84,7 @@ class EfectoresController extends BaseController
     /**
      * Vista embebible: elegir efector.
      *
-     * GET|POST /api/v1/views/efectores/elegir
+     * GET|POST /api/v1/efectores/elegir
      *
      * @action_name Elegir efector
      * @entity Efectores
@@ -108,7 +108,7 @@ class EfectoresController extends BaseController
     /**
      * Vista embebible: elegir efector cercano (usa latitud/longitud del cliente).
      *
-     * GET|POST /api/v1/views/efectores/elegir-nearby
+     * GET|POST /api/v1/efectores/elegir-nearby
      *
      * @action_name Elegir efector cercano
      * @entity Efectores

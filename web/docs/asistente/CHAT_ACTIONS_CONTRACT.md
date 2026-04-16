@@ -23,12 +23,12 @@ El endpoint devuelve un payload **estructurado** en `data` con el resultado del 
         "action_id": "turnos.crear-como-paciente",
         "display_name": "Reservar turno",
         "description": "Vista JSON (screen) + submit unificado para autogestión.",
-        "route": "/api/v1/views/turnos/crear-como-paciente",
+        "route": "/api/v1/turnos/crear-como-paciente",
         "parameters": { "expected": [], "provided": {} },
         "client_open": {
           "kind": "ui_json",
           "presentation": "fullscreen",
-          "api": { "route": "/api/v1/views/turnos/crear-como-paciente", "method": "GET|POST" }
+          "api": { "route": "/api/v1/turnos/crear-como-paciente", "method": "GET|POST" }
         },
         "client_interaction": "ui_asistente_json"
       }
@@ -45,7 +45,7 @@ Regla actual: **toda acción debe incluir `client_open.kind`** para que el front
 
 ### Importante: “view” vs “dominio”
 
-- **View (en API)**: significa **descriptor de UI en JSON** (wizard/list/detail) y se obtiene por rutas dedicadas bajo **`/api/v1/views/<entidad>/<accion>`**.
+- **View (en API)**: significa **descriptor de UI en JSON** (wizard/list/detail) y se obtiene por rutas dedicadas bajo **`/api/v1/<entidad>/<accion>`**.
 - **Dominio/datos (en API)**: endpoints como `/api/v1/turnos`, `/api/v1/agenda/*`, etc. **no son views**; son APIs de negocio consumidas por UIs nativas o por los descriptores.
 
 Regla de arquitectura: el backend no debe invocar controladores web (`frontend/controllers`) para construir UI. Las views JSON se sirven desde plantillas (`views/json/...`) vía los **controladores API por entidad** (ej. `TurnosController`) y `UiDefinitionTemplateManager`/`UiScreenService`.
@@ -58,23 +58,23 @@ Los clientes deben soportar como mínimo este shape:
 {
   "action_id": "turnos.crear-como-paciente",
   "display_name": "Reservar turno",
-  "route": "/api/v1/views/turnos/crear-como-paciente",
+  "route": "/api/v1/turnos/crear-como-paciente",
   "client_open": {
     "kind": "ui_json",
     "presentation": "fullscreen",
-    "api": { "route": "/api/v1/views/turnos/crear-como-paciente", "method": "GET|POST" }
+    "api": { "route": "/api/v1/turnos/crear-como-paciente", "method": "GET|POST" }
   }
 }
 ```
 
 - **`action_id`**: id estable `entidad.accion` (lowercase).
 - **`display_name`**: nombre humano para el botón.
-- **`route`**: ruta canónica. **Preferencia:** rutas de **views JSON** bajo `/api/v1/views/...`.
+- **`route`**: ruta canónica. **Preferencia:** rutas de **views JSON** bajo `/api/v1/...`.
 - **`client_open`**: instrucción de apertura de pantalla. El cliente **no debe inferir** cómo abrir basándose en la URL.
 
 #### `client_open.kind` (obligatorio)
 
-- **`ui_json`**: UI dinámica (descriptor JSON) bajo `/api/v1/views/...`.
+- **`ui_json`**: UI dinámica (descriptor JSON) bajo `/api/v1/...`.
   - `client_open.api.route` (string) requerido.
   - `client_open.api.method` (string) sugerido `GET|POST`.
 
@@ -104,11 +104,11 @@ Valores por defecto si falta el campo: `ui_json` → `fullscreen`; `native` → 
 {
   "action_id": "rrhh.editar-agenda",
   "display_name": "Editar agenda laboral",
-  "route": "/api/v1/views/rrhh/editar-agenda",
+  "route": "/api/v1/rrhh/editar-agenda",
   "client_open": {
     "kind": "ui_json",
     "presentation": "fullscreen",
-    "api": { "route": "/api/v1/views/rrhh/editar-agenda", "method": "GET|POST" }
+    "api": { "route": "/api/v1/rrhh/editar-agenda", "method": "GET|POST" }
   }
 }
 ```

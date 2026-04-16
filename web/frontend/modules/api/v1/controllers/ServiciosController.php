@@ -20,7 +20,7 @@ class ServiciosController extends BaseController
     /**
      * View embebible: elegir servicio.
      *
-     * GET|POST /api/v1/views/servicios/elegir
+     * GET|POST /api/v1/servicios/elegir
      *
      * @action_name Elegir servicio
      * @entity Servicios

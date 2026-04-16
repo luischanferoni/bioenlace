@@ -155,7 +155,7 @@ return [
                 'OPTIONS api/<version:\w+>/agenda/eliminar/<id:\d+>' => '<version>/agenda/eliminar',
                 
                 // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
-                // aunque el descriptor de vista JSON viva bajo /api/<v>/views/turnos/*.
+                // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.
                 'GET api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'POST api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
@@ -168,8 +168,6 @@ return [
                 'GET api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'POST api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'OPTIONS api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
-                // Nota: la convención actual para descriptores es /api/<v>/views/<entidad>/<accion>.
-
                 'POST api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
                 'OPTIONS api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
                 'GET api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/listar',
@@ -218,11 +216,13 @@ return [
                 'GET api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 'OPTIONS api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 
-                // Vistas dinámicas (JSON): cada entidad renderiza su descriptor desde views/json/*
-                // Ejemplo: GET|POST /api/v1/views/turnos/crear-como-paciente => v1/turnos/crear-como-paciente
-                'GET api/<version:\w+>/views/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
-                'POST api/<version:\w+>/views/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
-                'OPTIONS api/<version:\w+>/views/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
+                // Descriptores JSON (plantillas en `frontend/modules/api/v1/views/json/{entidad}/{accion}.json`)
+                // se exponen como endpoints normales: `/api/v1/<entidad>/<accion>`.
+                //
+                // Importante: las reglas explícitas de API (arriba) tienen prioridad; esta regla “catch-all”
+                // solo aplica a rutas no declaradas explícitamente.
+                'GET api/<version:\w+>/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
+                'POST api/<version:\w+>/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
                 
                 // Audio API (Speech-to-Text)
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',

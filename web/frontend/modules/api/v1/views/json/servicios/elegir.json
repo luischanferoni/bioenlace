@@ -1,6 +1,5 @@
 {
-  "kind": "ui_definition",
-  "ui_type": "picker",
+  "ui_type": "embed",
   "ui_meta": {
     "picker": {
       "selection": { "mode": "single", "requires_confirmation": true },
@@ -12,11 +11,11 @@
   "wizard_config": {
     "title": "Elegir servicio",
     "steps": [
-      { "id": "pick", "title": "Servicio", "fields": ["id_servicio"] }
+      { "id": "pick", "title": "Servicio", "fields": ["id_servicio_asignado"] }
     ],
     "fields": [
       {
-        "name": "id_servicio",
+        "name": "id_servicio_asignado",
         "label": "Servicio",
         "type": "select",
         "required": true,

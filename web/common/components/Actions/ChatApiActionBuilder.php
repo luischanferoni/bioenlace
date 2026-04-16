@@ -3,11 +3,11 @@
 namespace common\components\Actions;
 
 /**
- * Construye acciones tipo open_route hacia **views JSON** (descriptores JSON bajo `/api/v1/views/...`),
+ * Construye acciones tipo open_route hacia **UI JSON** (descriptores JSON bajo `/api/v1/<entidad>/<accion>`),
  * filtradas por RBAC vía ActionMappingService.
  *
  * Nota de terminología:
- * - “view en API” = descriptor JSON (ruta `/api/v1/views/...`).
+ * - “UI en API” = descriptor JSON (ruta `/api/v1/<entidad>/<accion>`).
  * - Endpoints de dominio (turnos/agenda/etc.) no son “UI”; son APIs de negocio.
  */
 final class ChatApiActionBuilder
@@ -22,7 +22,7 @@ final class ChatApiActionBuilder
             return '';
         }
 
-        return '/api/v1/views/' . rawurlencode($controller) . '/' . rawurlencode($actionName);
+        return '/api/v1/' . rawurlencode($controller) . '/' . rawurlencode($actionName);
     }
 
     /** Prefijos de ruta considerados API para el chat */
@@ -41,7 +41,7 @@ final class ChatApiActionBuilder
      */
     public static function discoveredActionToOpenRoute(array $action, string $title): array
     {
-        // Para “views en API” siempre apuntamos al descriptor bajo /views/
+        // Descriptores JSON viven en `views/json/...`, pero se exponen como endpoints normales `/api/v1/<entidad>/<accion>`.
         $route = self::uiDescriptorRouteForDiscoveredAction($action);
         if ($route === '') {
             // Fallback conservador: ruta descubierta (puede ser dominio)

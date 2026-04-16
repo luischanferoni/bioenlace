@@ -35,6 +35,36 @@ class UiDefinitionTemplateManager
     public const LOG_CATEGORY = 'ui-definition-template';
 
     /**
+     * ¿Existe un template JSON para una ruta canónica de API tipo `/api/v1/<entidad>/<accion>`?
+     *
+     * Se usa para heurísticas seguras (p.ej. enriquecer `client_open` solo cuando realmente hay descriptor).
+     */
+    public static function hasTemplateForApiRoute(string $route): bool
+    {
+        $route = trim($route);
+        if ($route === '') {
+            return false;
+        }
+
+        // Soportar querystring accidental
+        $path = parse_url($route, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            $path = $route;
+        }
+
+        if (preg_match('#^/api/v\d+/([\\w-]+)/([\\w-]+)$#', $path, $m) !== 1) {
+            return false;
+        }
+
+        $entity = strtolower((string) $m[1]);
+        $action = (string) $m[2];
+
+        $templatePath = Yii::getAlias(self::TEMPLATE_BASE_PATH . '/' . $entity . '/' . $action . '.json');
+
+        return is_string($templatePath) && $templatePath !== '' && file_exists($templatePath);
+    }
+
+    /**
      * Cargar y combinar plantillas y devolver un array con `wizard_config` (u otras claves mergeadas).
      *
      * @param string $entity ej. 'turnos'

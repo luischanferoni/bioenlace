@@ -88,16 +88,6 @@ class BaseController extends Controller
     }
 
     /**
-     * true cuando la URL es `/api/<versión>/views/...` (descriptor + submit de vista JSON).
-     */
-    protected function isApiUiRequest(): bool
-    {
-        $path = Yii::$app->request->getPathInfo();
-
-        return is_string($path) && strpos($path, '/views/') !== false;
-    }
-
-    /**
      * Respuesta de éxito estándar
      */
     protected function success($data = null, $message = 'Operación exitosa', $code = 200)

@@ -5,12 +5,15 @@ namespace common\components\IntentEngine;
 use Yii;
 use common\components\IntentCatalog\IntentCatalogService;
 use common\components\Actions\AssistantClientOpenEnricher;
+use common\components\SubIntentEngine\SubIntentEngine;
+use common\components\UiDefinitionTemplateManager;
 use common\models\Servicio;
+use yii\helpers\Json;
 
 /**
  * Motor único de intents para el asistente.
  *
- * Fuente de verdad de destinos: UIs JSON bajo `/api/v1/ui/<entity>/<action>` (templates existentes + RBAC).
+ * Fuente de verdad de destinos: UIs JSON bajo `/api/v1/<entity>/<action>` (templates existentes + RBAC).
  */
 final class IntentEngine
 {
@@ -42,7 +45,7 @@ final class IntentEngine
                     'actions' => [],
                 ];
             }
-            return self::buildSingleActionResponse($item, 'action_id', 1.0, $content);
+            return self::buildSingleActionResponse($item, 'action_id', 1.0, $content, $userId);
         }
 
         // Consulta vacía no debería llegar aquí (lo valida el controller), pero toleramos.
@@ -85,14 +88,50 @@ final class IntentEngine
             $classification['item'],
             (string) ($classification['method'] ?? 'unknown'),
             (float) ($classification['confidence'] ?? 0.0),
-            $content
+            $content,
+            $userId
         );
     }
 
-    private static function buildSingleActionResponse(UiActionCatalogItem $item, string $method, float $confidence = 1.0, string $content = ''): array
+    private static function buildSingleActionResponse(UiActionCatalogItem $item, string $method, float $confidence = 1.0, string $content = '', int $userId = 0): array
     {
         $action = self::formatActionForClient($item);
         $action = self::enrichProvidedParamsFromQuery($action, $content);
+
+        // Si el descriptor JSON declara `ui_type=flow`, el asistente debe arrancar en modo conversacional (SubIntentEngine),
+        // no abriendo el wizard monolítico del descriptor.
+        if ($userId > 0 && self::isFlowUiTemplateForCatalogItem($item)) {
+            $draft = self::draftFromAssistantActionParameters($action);
+            $flow = SubIntentEngine::process(
+                [
+                    'intent_id' => $item->action_id,
+                    'subintent_id' => '',
+                    'draft' => $draft,
+                    'content' => $content,
+                    'interaction' => null,
+                ],
+                $userId
+            );
+
+            if (!empty($flow['success']) && is_array($flow)) {
+                // Mantener `kind=ui_intent_match` por compat, pero hidratar el payload “modo intent”.
+                unset($flow['success']);
+                $base = [
+                    'success' => true,
+                    'kind' => 'ui_intent_match',
+                    'explanation' => $item->display_name !== '' ? ('Abrir: ' . $item->display_name) : 'Acción disponible.',
+                    'actions' => [$action],
+                    'match' => [
+                        'action_id' => $item->action_id,
+                        'confidence' => max(0.0, min(1.0, $confidence)),
+                        'method' => $method,
+                    ],
+                ];
+
+                return array_merge($base, $flow);
+            }
+        }
+
         return [
             'success' => true,
             'kind' => 'ui_intent_match',
@@ -104,6 +143,78 @@ final class IntentEngine
                 'method' => $method,
             ],
         ];
+    }
+
+    private static function isFlowUiTemplateForCatalogItem(UiActionCatalogItem $item): bool
+    {
+        $route = trim((string) $item->route);
+        if ($route === '') {
+            return false;
+        }
+        $path = parse_url($route, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            $path = $route;
+        }
+        if (preg_match('#^/api/v\d+/([\\w-]+)/([\\w-]+)$#', $path, $m) !== 1) {
+            return false;
+        }
+
+        $entity = strtolower((string) $m[1]);
+        $action = (string) $m[2];
+        $file = Yii::getAlias(UiDefinitionTemplateManager::TEMPLATE_BASE_PATH . '/' . $entity . '/' . $action . '.json');
+        if (!is_string($file) || $file === '' || !is_file($file)) {
+            return false;
+        }
+
+        $raw = @file_get_contents($file);
+        if (!is_string($raw) || $raw === '') {
+            return false;
+        }
+
+        try {
+            $decoded = Json::decode($raw);
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        if (!is_array($decoded)) {
+            return false;
+        }
+
+        return isset($decoded['ui_type']) && is_string($decoded['ui_type']) && strtolower($decoded['ui_type']) === 'flow';
+    }
+
+    /**
+     * @param array<string, mixed> $action
+     * @return array<string, mixed>
+     */
+    private static function draftFromAssistantActionParameters(array $action): array
+    {
+        $params = isset($action['parameters']) && is_array($action['parameters']) ? $action['parameters'] : [];
+        $provided = isset($params['provided']) && is_array($params['provided']) ? $params['provided'] : [];
+
+        $draft = [];
+        foreach ($provided as $k => $v) {
+            $key = is_string($k) ? trim($k) : '';
+            if ($key === '') {
+                continue;
+            }
+            if (is_array($v) && array_key_exists('value', $v)) {
+                $val = $v['value'];
+            } else {
+                $val = $v;
+            }
+            if ($val === null) {
+                continue;
+            }
+            $s = trim((string) $val);
+            if ($s === '') {
+                continue;
+            }
+            $draft[$key] = $s;
+        }
+
+        return $draft;
     }
 
     /**
@@ -167,7 +278,7 @@ final class IntentEngine
             $action['client_interaction'] = $item->client_interaction;
         }
 
-        // Para UIs JSON (/api/v*/ui/...) el enrich agrega client_open si no vino explícito.
+        // Para UIs JSON (descriptor en `views/json/...`) el enrich agrega client_open si no vino explícito.
         return AssistantClientOpenEnricher::enrich($action);
     }
 

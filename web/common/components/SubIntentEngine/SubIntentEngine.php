@@ -60,14 +60,14 @@ final class SubIntentEngine
         // Determinar qué falta según requires.
         $missing = self::missingDraftFields($current, $draft);
         if ($missing !== []) {
-            // Abrir el picker del subintent actual.
-            $open = isset($current['open_ui']) && is_array($current['open_ui']) ? $current['open_ui'] : null;
+            // Abrir mini-UI del subintent actual (si está declarada).
+            $open = self::resolveOpenUiForSubintent($current, $content);
             if ($open && !empty($open['action_id'])) {
                 return self::buildOpenUiResponse(
                     $intentId,
                     $currentId,
                     (string) $open['action_id'],
-                    'Necesito que selecciones un valor para continuar.',
+                    self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
                     $userId
                 );
             }
@@ -86,13 +86,13 @@ final class SubIntentEngine
         if ($next !== '') {
             $nextSub = self::findSubintent($subintents, $next);
             if (is_array($nextSub)) {
-                $open = isset($nextSub['open_ui']) && is_array($nextSub['open_ui']) ? $nextSub['open_ui'] : null;
+                $open = self::resolveOpenUiForSubintent($nextSub, $content);
                 if ($open && !empty($open['action_id'])) {
                     return self::buildOpenUiResponse(
                         $intentId,
                         (string) $nextSub['id'],
                         (string) $open['action_id'],
-                        'Ok, sigamos.',
+                        self::assistantTextForPrompt($nextSub, 'Perfecto, sigamos con el siguiente paso.'),
                         $userId
                     );
                 }
@@ -233,6 +233,68 @@ final class SubIntentEngine
             'open_ui' => self::resolveClientOpen($actionId, $userId),
             'draft_delta' => (object) [],
         ];
+    }
+
+    /**
+     * Resuelve `open_ui` considerando ramas declarativas (p.ej. “cerca” vs listado normal).
+     *
+     * @param array<string, mixed> $subintent
+     * @return array<string, mixed>|null
+     */
+    private static function resolveOpenUiForSubintent(array $subintent, string $content): ?array
+    {
+        $direct = isset($subintent['open_ui']) && is_array($subintent['open_ui']) ? $subintent['open_ui'] : null;
+        $chooser = isset($subintent['chooser']) && is_array($subintent['chooser']) ? $subintent['chooser'] : null;
+        if ($chooser === null) {
+            return $direct;
+        }
+
+        $near = isset($chooser['when_user_says_nearby']) && is_array($chooser['when_user_says_nearby'])
+            ? $chooser['when_user_says_nearby']
+            : null;
+        $otherwise = isset($chooser['otherwise']) && is_array($chooser['otherwise']) ? $chooser['otherwise'] : null;
+
+        if ($near !== null && self::userWantsNearby($content)) {
+            $open = isset($near['open_ui']) && is_array($near['open_ui']) ? $near['open_ui'] : null;
+            if ($open && !empty($open['action_id'])) {
+                return $open;
+            }
+        }
+
+        if ($otherwise !== null) {
+            $open = isset($otherwise['open_ui']) && is_array($otherwise['open_ui']) ? $otherwise['open_ui'] : null;
+            if ($open && !empty($open['action_id'])) {
+                return $open;
+            }
+        }
+
+        return $direct;
+    }
+
+    private static function userWantsNearby(string $content): bool
+    {
+        $s = mb_strtolower(trim($content), 'UTF-8');
+        if ($s === '') {
+            return false;
+        }
+
+        // Heurística MVP (español): “cerca”, “cercano”, “cercanos”, “cercanía”, “cercania”.
+        return preg_match('/\b(cerca|cercanos|cercano|cercanas|cercana|cercanía|cercania)\b/u', $s) === 1;
+    }
+
+    /**
+     * Texto corto para el chat. Preferimos metadata YAML (`assistant_text`) para evitar hardcode por pantalla.
+     *
+     * @param array<string, mixed> $subintent
+     */
+    private static function assistantTextForPrompt(array $subintent, string $fallback): string
+    {
+        $t = isset($subintent['assistant_text']) ? trim((string) $subintent['assistant_text']) : '';
+        if ($t !== '') {
+            return $t;
+        }
+
+        return $fallback;
     }
 
     /**

@@ -43,8 +43,8 @@ class TurnosController extends BaseController
     /**
      * UI JSON (screen) + submit unificado para autogestión.
      *
-     * GET  /api/v1/views/turnos/crear-como-paciente => descriptor view JSON
-     * POST /api/v1/views/turnos/crear-como-paciente => submit; si falla devuelve UI + errors
+     * GET  /api/v1/turnos/crear-como-paciente => descriptor UI JSON
+     * POST /api/v1/turnos/crear-como-paciente => submit; si falla devuelve UI + errors
      *
      * @action_name Reservar turno
      * @entity Turnos
@@ -72,7 +72,7 @@ class TurnosController extends BaseController
     /**
      * Vista embebible: elegir slot/horario (para flujos conversacionales).
      *
-     * GET|POST /api/v1/views/turnos/elegir-slot
+     * GET|POST /api/v1/turnos/elegir-slot
      *
      * @action_name Elegir horario (turnos)
      * @entity Turnos

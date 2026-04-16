@@ -6,7 +6,8 @@ use Yii;
 use yii\web\ServerErrorHttpException;
 
 /**
- * Helper para endpoints de definiciones de vistas JSON bajo `/api/v1/views/...`.
+ * Helper para endpoints de definiciones de vistas JSON (plantillas en `frontend/modules/api/v1/views/json/...`)
+ * expuestos como rutas normales bajo `/api/v1/<entidad>/<accion>`.
  *
  * - GET  => devuelve definición de UI (wizard/list/detail) desde templates JSON (`views/json/...`).
  * - POST => ejecuta submit específico (callable); si falla devuelve la misma UI con `success=false` + `errors` + `values`.
@@ -82,11 +83,18 @@ final class UiScreenService
             $compat = UiDefinitionTemplateManager::evaluateClientCompatibility($wizardConfig, $h['client'], $h['version']);
         }
 
+        $uiType = null;
+        if (isset($config['ui_type']) && is_string($config['ui_type']) && $config['ui_type'] !== '') {
+            $uiType = $config['ui_type'];
+        } elseif ($wizardConfig !== null) {
+            $uiType = 'wizard';
+        }
+
         return array_merge(
             [
                 'success' => true,
                 'kind' => 'ui_definition',
-                'ui_type' => $wizardConfig !== null ? 'wizard' : null,
+                'ui_type' => $uiType,
                 'action_id' => strtolower($entity . '.' . $action),
                 'compatibility' => $compat,
             ],

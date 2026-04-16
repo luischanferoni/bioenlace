@@ -101,27 +101,31 @@ class _ChatScreenState extends State<ChatScreen> {
         final actions = (data is Map) ? (data['actions'] ?? (data['action'] != null ? [data['action']] : null)) : null;
         String explanation = (data is Map ? (data['explanation']?.toString()) : null) ?? 'Consulta procesada';
 
-        // Modo intent (SubIntentEngine): text + open_ui + draft_delta
-        if (data is Map && data['text'] != null) {
-          explanation = data['text']?.toString() ?? explanation;
+        // Modo intent (SubIntentEngine) / arranque conversacional desde IntentEngine:
+        // puede venir `text` + `open_ui` + `draft_delta` incluso cuando `kind` sigue siendo `ui_intent_match`.
+        if (data is Map) {
+          final text = data['text']?.toString();
+          if (text != null && text.trim().isNotEmpty) {
+            explanation = text.trim();
+          }
+
           final iid = data['intent_id']?.toString();
           final sid = data['subintent_id']?.toString();
-          if (iid != null && iid.isNotEmpty) _intentId = iid;
-          if (sid != null && sid.isNotEmpty) _subintentId = sid;
-          // Sincronizar en el service para que el próximo envío use snapshot intent.
-          if (_intentId != null && _intentId!.isNotEmpty) {
+          if (iid != null && iid.isNotEmpty) {
+            _intentId = iid;
             _asistenteService.currentIntentId = _intentId;
           }
-          if (_subintentId != null && _subintentId!.isNotEmpty) {
+          if (sid != null && sid.isNotEmpty) {
+            _subintentId = sid;
             _asistenteService.currentSubintentId = _subintentId;
           }
+
           final dd = data['draft_delta'];
-          if (dd is Map) {
+          if (dd is Map && dd.isNotEmpty) {
             _draft = {..._draft, ...Map<String, dynamic>.from(dd)};
             _asistenteService.draft = _draft;
           }
 
-          // Si viene open_ui, abrir UI JSON inline/fullscreen usando el mismo mecanismo de actions.
           final openUi = data['open_ui'];
           if (openUi is Map) {
             final co = openUi['client_open'];
@@ -133,7 +137,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 'client_open': Map<String, dynamic>.from(co),
                 'parameters': {'provided': _draft},
               };
-              // Agregar el bot message primero; luego abrir inline/fullscreen.
               setState(() {
                 _isSending = false;
                 _chatHistory.add({

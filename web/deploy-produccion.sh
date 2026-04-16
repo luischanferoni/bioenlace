@@ -23,6 +23,15 @@ BACKEND_DEST_DIR="$BASE_DIR/public_html/app/admin"
 FRONTEND_FOLDERS=("css" "custom-template" "images" "js")
 BACKEND_FOLDERS=("css" "js" "images")
 
+SKIP_COMPOSER=0
+for arg in "$@"; do
+    case "$arg" in
+        --skip-composer|--no-composer)
+            SKIP_COMPOSER=1
+            ;;
+    esac
+done
+
 echo -e "${YELLOW}Iniciando despliegue del frontend y backend...${NC}"
 
 # Paso 1: Git pull
@@ -35,22 +44,26 @@ fi
 echo -e "${GREEN}Git pull completado exitosamente${NC}"
 
 # Paso 1.5: Composer (dependencias PHP)
-echo -e "${YELLOW}Instalando dependencias PHP (composer)...${NC}"
-cd "$REPO_DIR" || exit 1
-if [ -f "composer.lock" ]; then
-    if composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
-        echo -e "${GREEN}Composer install completado exitosamente${NC}"
-    else
-        echo -e "${RED}Error: composer install falló${NC}"
-        exit 1
-    fi
+if [ "$SKIP_COMPOSER" -eq 1 ]; then
+    echo -e "${YELLOW}Omitiendo composer por parámetro (--skip-composer)${NC}"
 else
-    echo -e "${YELLOW}Advertencia: composer.lock no existe; ejecutando composer update...${NC}"
-    if composer update --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
-        echo -e "${GREEN}Composer update completado exitosamente${NC}"
+    echo -e "${YELLOW}Instalando dependencias PHP (composer)...${NC}"
+    cd "$REPO_DIR" || exit 1
+    if [ -f "composer.lock" ]; then
+        if composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
+            echo -e "${GREEN}Composer install completado exitosamente${NC}"
+        else
+            echo -e "${RED}Error: composer install falló${NC}"
+            exit 1
+        fi
     else
-        echo -e "${RED}Error: composer update falló${NC}"
-        exit 1
+        echo -e "${YELLOW}Advertencia: composer.lock no existe; ejecutando composer update...${NC}"
+        if composer update --no-interaction --prefer-dist --no-dev --optimize-autoloader; then
+            echo -e "${GREEN}Composer update completado exitosamente${NC}"
+        else
+            echo -e "${RED}Error: composer update falló${NC}"
+            exit 1
+        fi
     fi
 fi
 

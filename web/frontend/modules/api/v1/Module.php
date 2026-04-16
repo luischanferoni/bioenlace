@@ -54,7 +54,17 @@ class Module extends \yii\base\Module
 
         // Si se solicita, incluir el origen de la petición actual
         if ($includeCurrentOrigin) {
-            $origin = Yii::$app->request->getOrigin();
+            // Preferir el header crudo (algunos proxies no preservan getOrigin correctamente)
+            $origin = (string) Yii::$app->request->headers->get('Origin', '');
+            if ($origin === '') {
+                $origin = (string) (Yii::$app->request->getOrigin() ?: '');
+            }
+            if ($origin === '') {
+                $origin = (string) (Yii::$app->request->getHeaders()->get('origin', '') ?: '');
+            }
+            if ($origin === '' && isset($_SERVER['HTTP_ORIGIN'])) {
+                $origin = (string) $_SERVER['HTTP_ORIGIN'];
+            }
             if (empty($origin)) {
                 $origin = Yii::$app->request->getHostInfo();
             }
@@ -64,13 +74,18 @@ class Module extends \yii\base\Module
         }
 
         // Agregar puertos comunes de desarrollo si es localhost
-        $origin = Yii::$app->request->getOrigin();
-        if (empty($origin)) {
-            $origin = Yii::$app->request->getHostInfo();
+        $origin = (string) Yii::$app->request->headers->get('Origin', '');
+        if ($origin === '') {
+            $origin = (string) (Yii::$app->request->getOrigin() ?: '');
+        }
+        if ($origin === '') {
+            $origin = (string) Yii::$app->request->getHostInfo();
         }
         if (strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false) {
             $allowedOrigins[] = 'http://localhost:8080';
             $allowedOrigins[] = 'http://127.0.0.1:8080';
+            $allowedOrigins[] = 'http://localhost:3000';
+            $allowedOrigins[] = 'http://127.0.0.1:3000';
         }
 
         // Eliminar duplicados y valores vacíos

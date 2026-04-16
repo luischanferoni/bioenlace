@@ -90,6 +90,10 @@ return [
                 'OPTIONS api/<version:\w+>/asistente/estado' => '<version>/chat/estado',
                 'POST api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
                 'OPTIONS api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
+
+                // Preflight CORS genérico (evita declarar OPTIONS por endpoint)
+                'OPTIONS api/<version:\w+>/<controller:[\\w-]+>' => '<version>/<controller>/options',
+                'OPTIONS api/<version:\w+>/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/options',
                 // analisis de la consulta
                 'POST api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
                 'OPTIONS api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',

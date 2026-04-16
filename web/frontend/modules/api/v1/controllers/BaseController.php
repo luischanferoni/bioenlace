@@ -75,6 +75,19 @@ class BaseController extends Controller
     }
 
     /**
+     * Respuesta estándar para preflight CORS (OPTIONS).
+     *
+     * Se usa por reglas de URL genéricas para evitar declarar OPTIONS por endpoint.
+     *
+     * @return array<string, mixed>
+     */
+    public function actionOptions(): array
+    {
+        Yii::$app->response->statusCode = 204;
+        return [];
+    }
+
+    /**
      * true cuando la URL es `/api/<versión>/views/...` (descriptor + submit de vista JSON).
      */
     protected function isApiUiRequest(): bool

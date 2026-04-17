@@ -1,5 +1,6 @@
 {
   "ui_type": "ui_json",
+  "title": "Elegir efector",
   "ui_meta": {
     "list": {
       "selection": { "mode": "single", "requires_confirmation": true },
@@ -7,23 +8,16 @@
       "draft_field": "id_efector",
       "item": { "kind": "efector", "id_field": "id", "label_field": "name" }
     },
-    "assistant_embed": { }
+    "assistant_embed": {}
   },
-  "wizard_config": {
-    "title": "Elegir efector",
-    "steps": [
-      { "id": "pick", "title": "Efector", "fields": ["id_efector"] }
-    ],
-    "fields": [
-      {
-        "name": "id_efector",
-        "label": "Efector",
-        "type": "select",
-        "required": true,
-        "options": "{{options}}",
-        "option_config": { "source": "efectores" }
-      }
-    ]
-  }
+  "fields": [
+    {
+      "name": "id_efector",
+      "label": "Efector",
+      "type": "select",
+      "required": true,
+      "options": "{{options}}",
+      "option_config": { "source": "efectores" }
+    }
+  ]
 }
-

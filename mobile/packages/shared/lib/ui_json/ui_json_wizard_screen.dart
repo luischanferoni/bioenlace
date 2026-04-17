@@ -181,7 +181,10 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
 
   void _seedAccum(Map<String, dynamic> def) {
     _accum.clear();
-    final fields = def['wizard_config'] is Map ? (def['wizard_config']['fields'] as List?) : null;
+    final wcFields =
+        def['wizard_config'] is Map ? (def['wizard_config']['fields'] as List?) : null;
+    final rootFields = def['fields'] is List ? def['fields'] as List? : null;
+    final fields = wcFields ?? rootFields;
     if (fields == null) return;
     for (final raw in fields) {
       if (raw is! Map) continue;

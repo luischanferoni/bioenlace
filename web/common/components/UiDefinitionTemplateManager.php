@@ -4,7 +4,6 @@ namespace common\components;
 
 use Yii;
 use yii\helpers\Json;
-use yii\helpers\Inflector;
 
 /**
  * Gestor de plantillas JSON que describen **definiciones de UI** (wizards, listas, detalles, etc.).
@@ -92,9 +91,15 @@ class UiDefinitionTemplateManager
                 $params
             );
             $processedConfig['wizard_config']['initial_step'] = $initialStep;
-        } else {
+        } elseif (
+            ($processedConfig['ui_type'] ?? null) === 'ui_json'
+            && isset($processedConfig['fields'])
+            && is_array($processedConfig['fields'])
+        ) {
+            // Paso embebible: fields en raíz, sin steps internos.
+        } elseif (isset($processedConfig['wizard_config'])) {
             Yii::warning(
-                'No se encontraron steps o fields en wizard_config después del merge. Steps: '
+                'wizard_config incompleto tras merge (faltan steps o fields). Steps: '
                 . (isset($processedConfig['wizard_config']['steps']) ? 'existe' : 'no existe')
                 . ', Fields: '
                 . (isset($processedConfig['wizard_config']['fields']) ? 'existe' : 'no existe'),
@@ -246,7 +251,8 @@ class UiDefinitionTemplateManager
 
         Yii::info('Template específico decodificado: ' . json_encode($decoded), self::LOG_CATEGORY);
 
-        if (isset($decoded['steps']) || isset($decoded['fields'])) {
+        // Legacy: JSON plano sin `ui_type` (solo steps/fields) → se envuelve en wizard_config.
+        if ((isset($decoded['steps']) || isset($decoded['fields'])) && !isset($decoded['ui_type'])) {
             Yii::info('Envolviendo template específico en wizard_config', self::LOG_CATEGORY);
             return ['wizard_config' => $decoded];
         }
@@ -257,7 +263,11 @@ class UiDefinitionTemplateManager
 
     private static function mergeConfigs($common, $specific)
     {
-        $result = $common;
+        $skipCommonWizard = isset($specific['ui_type']) && is_string($specific['ui_type'])
+            && in_array($specific['ui_type'], ['ui_json', 'flow'], true);
+
+        // `ui_json` / `flow`: descriptor propio; no mezclar fragmentos “wizard” del común.
+        $result = $skipCommonWizard ? [] : $common;
 
         Yii::info('Iniciando merge. Common tiene wizard_config: ' . (isset($result['wizard_config']) ? 'sí' : 'no'), self::LOG_CATEGORY);
         Yii::info('Specific tiene wizard_config: ' . (isset($specific['wizard_config']) ? 'sí' : 'no'), self::LOG_CATEGORY);
@@ -284,15 +294,25 @@ class UiDefinitionTemplateManager
                     Yii::info("Agregado nuevo key: {$key}", self::LOG_CATEGORY);
                 }
             }
-        } else {
+        } elseif (!$skipCommonWizard) {
             Yii::warning('Specific no tiene wizard_config, no se puede hacer merge', self::LOG_CATEGORY);
+        }
+
+        // Claves de raíz del template específico (`ui_type`, `ui_meta`, `fields`, `title`, …).
+        foreach ($specific as $key => $value) {
+            if ($key === 'wizard_config') {
+                continue;
+            }
+            $result[$key] = $value;
         }
 
         Yii::info(
             'Resultado del merge - tiene steps: '
             . (isset($result['wizard_config']['steps']) ? 'sí (' . count($result['wizard_config']['steps']) . ')' : 'no')
             . ', tiene fields: '
-            . (isset($result['wizard_config']['fields']) ? 'sí (' . count($result['wizard_config']['fields']) . ')' : 'no'),
+            . (isset($result['wizard_config']['fields']) ? 'sí (' . count($result['wizard_config']['fields']) . ')' : 'no')
+            . ', fields raíz: '
+            . (isset($result['fields']) && is_array($result['fields']) ? 'sí (' . count($result['fields']) . ')' : 'no'),
             self::LOG_CATEGORY
         );
 
@@ -364,56 +384,72 @@ class UiDefinitionTemplateManager
             Yii::info('Parámetros recibidos en processVariables: ' . json_encode($params), self::LOG_CATEGORY);
         }
 
-        if (isset($config['wizard_config']['fields'])) {
-            foreach ($config['wizard_config']['fields'] as &$field) {
-                $fieldName = $field['name'] ?? null;
+        if (isset($config['wizard_config']['fields']) && is_array($config['wizard_config']['fields'])) {
+            self::processFieldsList($config['wizard_config']['fields'], $params);
+        }
+        if (isset($config['fields']) && is_array($config['fields'])) {
+            self::processFieldsList($config['fields'], $params);
+        }
 
-                if ($fieldName && isset($params[$fieldName]) && $params[$fieldName] !== null && $params[$fieldName] !== '') {
-                    $field['value'] = $params[$fieldName];
-                    if (YII_DEBUG) {
-                        Yii::info("Inyectando valor '{$params[$fieldName]}' en campo '{$fieldName}'", self::LOG_CATEGORY);
+        return $config;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $fields
+     * @param array<string, mixed> $params
+     */
+    private static function processFieldsList(array &$fields, array $params): void
+    {
+        foreach ($fields as &$field) {
+            if (!is_array($field)) {
+                continue;
+            }
+            $fieldName = $field['name'] ?? null;
+
+            if ($fieldName && isset($params[$fieldName]) && $params[$fieldName] !== null && $params[$fieldName] !== '') {
+                $field['value'] = $params[$fieldName];
+                if (YII_DEBUG) {
+                    Yii::info("Inyectando valor '{$params[$fieldName]}' en campo '{$fieldName}'", self::LOG_CATEGORY);
+                }
+            }
+
+            if (isset($field['min']) && $field['min'] === 'today') {
+                $field['min'] = $params['today'] ?? date('Y-m-d');
+            }
+            if (isset($field['max']) && $field['max'] === 'today') {
+                $field['max'] = $params['today'] ?? date('Y-m-d');
+            }
+
+            if (isset($field['type']) && $field['type'] === 'select') {
+                if (isset($field['options']) && $field['options'] === '{{options}}') {
+                    $options = self::getOptionsForField($field, $params);
+                    if ($options !== null) {
+                        $field['options'] = $options;
+                    } else {
+                        unset($field['options']);
                     }
                 }
+            }
 
-                if (isset($field['min']) && $field['min'] === 'today') {
-                    $field['min'] = $params['today'] ?? date('Y-m-d');
-                }
-                if (isset($field['max']) && $field['max'] === 'today') {
-                    $field['max'] = $params['today'] ?? date('Y-m-d');
-                }
-
-                if (isset($field['type']) && $field['type'] === 'select') {
-                    if (isset($field['options']) && $field['options'] === '{{options}}') {
-                        $options = self::getOptionsForField($field, $params);
-                        if ($options !== null) {
-                            $field['options'] = $options;
-                        } else {
-                            unset($field['options']);
+            if (isset($field['type']) && $field['type'] === 'custom_widget') {
+                $valueFields = $field['value_fields'] ?? null;
+                if (is_array($valueFields) && $valueFields !== []) {
+                    $initial = [];
+                    foreach ($valueFields as $vn) {
+                        if (!is_string($vn) || $vn === '') {
+                            continue;
+                        }
+                        if (array_key_exists($vn, $params) && $params[$vn] !== null && $params[$vn] !== '') {
+                            $initial[$vn] = $params[$vn];
                         }
                     }
-                }
-
-                if (isset($field['type']) && $field['type'] === 'custom_widget') {
-                    $valueFields = $field['value_fields'] ?? null;
-                    if (is_array($valueFields) && $valueFields !== []) {
-                        $initial = [];
-                        foreach ($valueFields as $vn) {
-                            if (!is_string($vn) || $vn === '') {
-                                continue;
-                            }
-                            if (array_key_exists($vn, $params) && $params[$vn] !== null && $params[$vn] !== '') {
-                                $initial[$vn] = $params[$vn];
-                            }
-                        }
-                        if ($initial !== []) {
-                            $field['initial_values'] = $initial;
-                        }
+                    if ($initial !== []) {
+                        $field['initial_values'] = $initial;
                     }
                 }
             }
         }
-
-        return $config;
+        unset($field);
     }
 
     private static function getOptionsForField($field, $params)

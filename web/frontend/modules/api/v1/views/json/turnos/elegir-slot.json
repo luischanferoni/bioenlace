@@ -1,5 +1,6 @@
 {
   "ui_type": "ui_json",
+  "title": "Elegir horario",
   "ui_meta": {
     "list": {
       "selection": { "mode": "single", "requires_confirmation": true },
@@ -11,21 +12,14 @@
       "draft_field": "slot_id",
       "item": { "kind": "slot", "id_field": "id", "label_field": "label" }
     },
-    "assistant_embed": { }
+    "assistant_embed": {}
   },
-  "wizard_config": {
-    "title": "Elegir horario",
-    "steps": [
-      { "id": "pick", "title": "Horario", "fields": ["slot_id"] }
-    ],
-    "fields": [
-      {
-        "name": "slot_id",
-        "label": "Horario",
-        "type": "text",
-        "required": true
-      }
-    ]
-  }
+  "fields": [
+    {
+      "name": "slot_id",
+      "label": "Horario",
+      "type": "text",
+      "required": true
+    }
+  ]
 }
-

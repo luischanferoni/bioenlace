@@ -61,14 +61,15 @@ final class SubIntentEngine
         $missing = self::missingDraftFields($current, $draft);
         if ($missing !== []) {
             // Abrir mini-UI del subintent actual (si está declarada).
-            $open = self::resolveOpenUiForSubintent($current, $content);
+            $open = self::resolveOpenUiForSubintent($current, $content, $draft);
             if ($open && !empty($open['action_id'])) {
                 return self::buildOpenUiResponse(
                     $intentId,
                     $currentId,
                     (string) $open['action_id'],
                     self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
-                    $userId
+                    $userId,
+                    $open
                 );
             }
             return [
@@ -86,14 +87,15 @@ final class SubIntentEngine
         if ($next !== '') {
             $nextSub = self::findSubintent($subintents, $next);
             if (is_array($nextSub)) {
-                $open = self::resolveOpenUiForSubintent($nextSub, $content);
+                $open = self::resolveOpenUiForSubintent($nextSub, $content, $draft);
                 if ($open && !empty($open['action_id'])) {
                     return self::buildOpenUiResponse(
                         $intentId,
                         (string) $nextSub['id'],
                         (string) $open['action_id'],
                         self::assistantTextForPrompt($nextSub, 'Perfecto, sigamos con el siguiente paso.'),
-                        $userId
+                        $userId,
+                        $open
                     );
                 }
             }
@@ -223,14 +225,54 @@ final class SubIntentEngine
         ];
     }
 
-    private static function buildOpenUiResponse(string $intentId, string $subintentId, string $actionId, string $text, int $userId): array
+    /**
+     * @param array<string, mixed> $openUiDef
+     */
+    private static function buildOpenUiResponse(string $intentId, string $subintentId, string $actionId, string $text, int $userId, array $openUiDef = []): array
     {
+        $open = self::resolveClientOpen($actionId, $userId);
+
+        // Parametrización declarativa: mapear draft -> query params del open_ui.
+        // YAML: open_ui.params: { id_servicio: "draft.id_servicio_asignado" }
+        $paramsMap = isset($openUiDef['params']) && is_array($openUiDef['params']) ? $openUiDef['params'] : null;
+        if ($paramsMap && isset($open['client_open']) && is_array($open['client_open'])) {
+            $co = $open['client_open'];
+            if (isset($co['api']) && is_array($co['api'])) {
+                $draft = isset($openUiDef['__draft']) && is_array($openUiDef['__draft']) ? $openUiDef['__draft'] : [];
+                $query = [];
+                foreach ($paramsMap as $k => $v) {
+                    $key = is_string($k) ? trim($k) : '';
+                    if ($key === '') {
+                        continue;
+                    }
+                    $vv = is_string($v) ? trim($v) : '';
+                    if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+                        continue;
+                    }
+                    $field = substr($vv, 6);
+                    if ($field === '') {
+                        continue;
+                    }
+                    if (!isset($draft[$field]) || $draft[$field] === null || $draft[$field] === '') {
+                        continue;
+                    }
+                    $query[$key] = (string) $draft[$field];
+                }
+                if ($query !== []) {
+                    $api = $co['api'];
+                    $api['query'] = $query;
+                    $co['api'] = $api;
+                    $open['client_open'] = $co;
+                }
+            }
+        }
+
         return [
             'success' => true,
             'text' => $text,
             'intent_id' => $intentId,
             'subintent_id' => $subintentId,
-            'open_ui' => self::resolveClientOpen($actionId, $userId),
+            'open_ui' => $open,
             'draft_delta' => (object) [],
         ];
     }
@@ -241,11 +283,14 @@ final class SubIntentEngine
      * @param array<string, mixed> $subintent
      * @return array<string, mixed>|null
      */
-    private static function resolveOpenUiForSubintent(array $subintent, string $content): ?array
+    private static function resolveOpenUiForSubintent(array $subintent, string $content, array $draft): ?array
     {
         $direct = isset($subintent['open_ui']) && is_array($subintent['open_ui']) ? $subintent['open_ui'] : null;
         $chooser = isset($subintent['chooser']) && is_array($subintent['chooser']) ? $subintent['chooser'] : null;
         if ($chooser === null) {
+            if (is_array($direct)) {
+                $direct['__draft'] = $draft;
+            }
             return $direct;
         }
 
@@ -257,6 +302,7 @@ final class SubIntentEngine
         if ($near !== null && self::userWantsNearby($content)) {
             $open = isset($near['open_ui']) && is_array($near['open_ui']) ? $near['open_ui'] : null;
             if ($open && !empty($open['action_id'])) {
+                $open['__draft'] = $draft;
                 return $open;
             }
         }
@@ -264,10 +310,14 @@ final class SubIntentEngine
         if ($otherwise !== null) {
             $open = isset($otherwise['open_ui']) && is_array($otherwise['open_ui']) ? $otherwise['open_ui'] : null;
             if ($open && !empty($open['action_id'])) {
+                $open['__draft'] = $draft;
                 return $open;
             }
         }
 
+        if (is_array($direct)) {
+            $direct['__draft'] = $draft;
+        }
         return $direct;
     }
 

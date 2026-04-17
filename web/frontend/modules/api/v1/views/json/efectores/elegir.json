@@ -1,10 +1,11 @@
 {
-  "ui_type": "embed",
+  "ui_type": "ui_json",
   "ui_meta": {
-    "picker": {
+    "list": {
       "selection": { "mode": "single", "requires_confirmation": true },
       "chips": [],
-      "list": { "item_kind": "efector", "id_field": "id", "label_field": "name" }
+      "draft_field": "id_efector",
+      "item": { "kind": "efector", "id_field": "id", "label_field": "name" }
     },
     "assistant_embed": { }
   },

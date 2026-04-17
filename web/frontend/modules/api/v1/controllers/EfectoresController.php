@@ -14,6 +14,91 @@ class EfectoresController extends BaseController
 {
     public static $authenticatorExcept = ['search'];
 
+    private function reqParam(string $name): ?string
+    {
+        $req = Yii::$app->request;
+        $v = $req->get($name);
+        if ($v === null || $v === '') {
+            $v = $req->post($name);
+        }
+        if ($v === null) {
+            return null;
+        }
+        $s = trim((string) $v);
+        return $s === '' ? null : $s;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildEfectoresSearchFilters(bool $nearby = false): array
+    {
+        $filters = [];
+
+        foreach ([
+            'id_localidad',
+            'id_departamento',
+            'localidad_nombre',
+            'departamento_nombre',
+            'id_servicio',
+            'dependencia',
+            'tipologia',
+            'estado',
+        ] as $k) {
+            $v = $this->reqParam($k);
+            if ($v !== null) {
+                $filters[$k] = $v;
+            }
+        }
+
+        // Alias común de UI JSON: id_servicio_asignado => id_servicio (para turnos flow).
+        $idServAsignado = $this->reqParam('id_servicio_asignado');
+        if (!isset($filters['id_servicio']) && $idServAsignado !== null) {
+            $filters['id_servicio'] = $idServAsignado;
+        }
+
+        if ($nearby) {
+            $lat = $this->reqParam('latitud');
+            $lng = $this->reqParam('longitud');
+            if ($lat !== null && $lng !== null) {
+                $filters['latitud'] = $lat;
+                $filters['longitud'] = $lng;
+                $filters['radio_km'] = $this->reqParam('radio_km') ?? '10';
+                $filters['sort_by'] = 'distancia';
+                $filters['sort_order'] = 'ASC';
+            }
+        }
+
+        // Para listados UI: aumentar límite por defecto.
+        $filters['limit'] = $this->reqParam('limit') ?? '200';
+
+        return $filters;
+    }
+
+    /**
+     * @return array<int, array{id: string, name: string}>
+     */
+    private function efectoresItemsForUi(?string $q, array $filters): array
+    {
+        $rows = Efector::liveSearch($q, $filters);
+        $out = [];
+        foreach ($rows as $r) {
+            if (!is_array($r)) {
+                continue;
+            }
+            $id = isset($r['id']) ? trim((string) $r['id']) : '';
+            $name = isset($r['text']) ? trim((string) $r['text']) : '';
+            if ($id === '') {
+                continue;
+            }
+            $out[] = [
+                'id' => $id,
+                'name' => $name !== '' ? $name : $id,
+            ];
+        }
+        return $out;
+    }
+
     public function actions()
     {
         $actions = parent::actions();
@@ -32,49 +117,9 @@ class EfectoresController extends BaseController
         if ($q === null) {
             $q = Yii::$app->request->get('q') ?: Yii::$app->request->post('q');
         }
-        $request = Yii::$app->request;
-        $filters = [];
-        if ($request->get('id_localidad') || $request->post('id_localidad')) {
-            $filters['id_localidad'] = $request->get('id_localidad') ?: $request->post('id_localidad');
-        }
-        if ($request->get('id_departamento') || $request->post('id_departamento')) {
-            $filters['id_departamento'] = $request->get('id_departamento') ?: $request->post('id_departamento');
-        }
-        if ($request->get('localidad_nombre') || $request->post('localidad_nombre')) {
-            $filters['localidad_nombre'] = $request->get('localidad_nombre') ?: $request->post('localidad_nombre');
-        }
-        if ($request->get('departamento_nombre') || $request->post('departamento_nombre')) {
-            $filters['departamento_nombre'] = $request->get('departamento_nombre') ?: $request->post('departamento_nombre');
-        }
-        if ($request->get('id_servicio') || $request->post('id_servicio')) {
-            $filters['id_servicio'] = $request->get('id_servicio') ?: $request->post('id_servicio');
-        }
-        if ($request->get('dependencia') || $request->post('dependencia')) {
-            $filters['dependencia'] = $request->get('dependencia') ?: $request->post('dependencia');
-        }
-        if ($request->get('tipologia') || $request->post('tipologia')) {
-            $filters['tipologia'] = $request->get('tipologia') ?: $request->post('tipologia');
-        }
-        if ($request->get('estado') || $request->post('estado')) {
-            $filters['estado'] = $request->get('estado') ?: $request->post('estado');
-        }
-        $lat = $request->get('latitud') ?: $request->post('latitud');
-        $lng = $request->get('longitud') ?: $request->post('longitud');
-        if ($lat && $lng) {
-            $filters['latitud'] = $lat;
-            $filters['longitud'] = $lng;
-            $filters['radio_km'] = $request->get('radio_km') ?: $request->post('radio_km') ?: 10;
-        }
-        if ($request->get('limit') || $request->post('limit')) {
-            $filters['limit'] = $request->get('limit') ?: $request->post('limit');
-        }
-        if ($request->get('sort_by') || $request->post('sort_by')) {
-            $filters['sort_by'] = $request->get('sort_by') ?: $request->post('sort_by');
-        }
-        if ($request->get('sort_order') || $request->post('sort_order')) {
-            $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
-        }
-        if (is_null($q) && empty($filters)) {
+        $filters = $this->buildEfectoresSearchFilters(false);
+        // buildEfectoresSearchFilters() siempre aporta al menos limit, así que este guard deja de aplicar.
+        if ($q === null && $filters === []) {
             return $out;
         }
         $data = Efector::liveSearch($q, $filters);
@@ -94,7 +139,7 @@ class EfectoresController extends BaseController
     public function actionElegir(): array
     {
         $req = Yii::$app->request;
-        return UiScreenService::handleScreen(
+        $ui = UiScreenService::handleScreen(
             'efectores',
             'elegir',
             $req->get(),
@@ -103,6 +148,14 @@ class EfectoresController extends BaseController
                 return ['data' => ['ok' => true]];
             }
         );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $filters = $this->buildEfectoresSearchFilters(false);
+            $q = $this->reqParam('q');
+            $ui['items'] = $this->efectoresItemsForUi($q, $filters);
+        }
+
+        return $ui;
     }
 
     /**
@@ -118,7 +171,7 @@ class EfectoresController extends BaseController
     public function actionElegirNearby(): array
     {
         $req = Yii::$app->request;
-        return UiScreenService::handleScreen(
+        $ui = UiScreenService::handleScreen(
             'efectores',
             'elegir-nearby',
             $req->get(),
@@ -127,5 +180,13 @@ class EfectoresController extends BaseController
                 return ['data' => ['ok' => true]];
             }
         );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $filters = $this->buildEfectoresSearchFilters(true);
+            $q = $this->reqParam('q');
+            $ui['items'] = $this->efectoresItemsForUi($q, $filters);
+        }
+
+        return $ui;
     }
 }

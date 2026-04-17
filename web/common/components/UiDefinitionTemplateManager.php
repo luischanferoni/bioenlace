@@ -468,13 +468,29 @@ class UiDefinitionTemplateManager
     {
         $userId = Yii::$app->user->id ?? null;
 
+        // Si viene id_servicio, listar sólo efectores que ofrezcan ese servicio.
+        // Este filtro se usa en flows de turnos (crear-como-paciente) para evitar mostrar efectores irrelevantes.
+        $idServicio = null;
+        if (isset($params['id_servicio']) && $params['id_servicio'] !== null && $params['id_servicio'] !== '') {
+            $idServicio = (int) $params['id_servicio'];
+        } elseif (isset($params['id_servicio_asignado']) && $params['id_servicio_asignado'] !== null && $params['id_servicio_asignado'] !== '') {
+            // alias común de UI JSON
+            $idServicio = (int) $params['id_servicio_asignado'];
+        }
+
         if ($filter === 'user_efectores' && $userId) {
-            $efectores = \common\models\UserEfector::find()
+            $q = \common\models\UserEfector::find()
                 ->joinWith('idEfector')
                 ->where(['user_efector.id_user' => $userId])
-                ->andWhere('efectores.deleted_at IS NULL')
-                ->orderBy('efectores.nombre')
-                ->all();
+                ->andWhere('efectores.deleted_at IS NULL');
+
+            if ($idServicio) {
+                $q->innerJoin('servicios_efector se', 'se.id_efector = efectores.id_efector')
+                    ->andWhere(['se.id_servicio' => $idServicio])
+                    ->distinct();
+            }
+
+            $efectores = $q->orderBy('efectores.nombre')->all();
 
             $options = [];
             foreach ($efectores as $efector) {
@@ -486,10 +502,20 @@ class UiDefinitionTemplateManager
             return $options;
         }
 
-        $efectores = \common\models\Efector::find()
-            ->where('deleted_at IS NULL')
-            ->orderBy('nombre')
-            ->all();
+        if ($idServicio) {
+            $efectores = \common\models\Efector::find()
+                ->innerJoin('servicios_efector se', 'se.id_efector = efectores.id_efector')
+                ->where('efectores.deleted_at IS NULL')
+                ->andWhere(['se.id_servicio' => $idServicio])
+                ->distinct()
+                ->orderBy('efectores.nombre')
+                ->all();
+        } else {
+            $efectores = \common\models\Efector::find()
+                ->where('deleted_at IS NULL')
+                ->orderBy('nombre')
+                ->all();
+        }
 
         $options = [];
         foreach ($efectores as $efector) {
@@ -504,18 +530,18 @@ class UiDefinitionTemplateManager
     private static function getServiciosOptions($filter, $params)
     {
         if ($filter === 'efector_servicios' && isset($params['id_efector']) && $params['id_efector'] !== null && $params['id_efector'] !== '') {
-            $servicios = \common\models\ServiciosEfector::find()
-                ->joinWith('idServicio')
-                ->where(['servicios_efector.id_efector' => $params['id_efector']])
+            $servicios = \common\models\Servicio::find()
+                ->innerJoin('servicios_efector se', 'se.id_servicio = servicios.id_servicio')
+                ->where(['se.id_efector' => $params['id_efector']])
                 ->andWhere('servicios.deleted_at IS NULL')
                 ->orderBy('servicios.nombre')
                 ->all();
 
             $options = [];
-            foreach ($servicios as $servicioEfector) {
+            foreach ($servicios as $servicio) {
                 $options[] = [
-                    'id' => (string) $servicioEfector->idServicio->id_servicio,
-                    'name' => $servicioEfector->idServicio->nombre,
+                    'id' => (string) $servicio->id_servicio,
+                    'name' => $servicio->nombre,
                 ];
             }
             return $options;

@@ -38,9 +38,13 @@ subintents:
         uses_global: location_acquisition.v1
         open_ui:
           action_id: efectores.elegir-nearby
+          params:
+            id_servicio: "draft.id_servicio_asignado"
       otherwise:
         open_ui:
           action_id: efectores.elegir
+          params:
+            id_servicio: "draft.id_servicio_asignado"
 
   - id: select_rrhh
     assistant_text: "Elegí el profesional con el que querés el turno."

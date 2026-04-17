@@ -7,11 +7,11 @@ Este documento define el contrato para **views JSON embebibles** que se renderiz
 Una view embebible es un descriptor JSON servido bajo `/api/v1/<entidad>/<accion>` que:
 
 - puede mostrar **chips/filtros** opcionales
-- puede mostrar un **listado** de ítems seleccionables (patrón “picker”)
+- puede mostrar un **listado** de ítems seleccionables (cards/chips)
 - exige **confirmación obligatoria** antes de aplicar cambios al `draft`
 - al confirmar, produce un `draft_delta` (parcial) que el cliente aplica localmente y reenvía en el snapshot siguiente
 
-> Nota: “picker” deja de ser una categoría del sistema. Es un **patrón de UI** cuando el descriptor incluye `ui_meta.picker`.
+> Nota: no usamos el término “picker”. El patrón es un **listado** cuando el descriptor incluye `ui_meta.list`.
 
 ### 2. Principios
 
@@ -70,17 +70,18 @@ Una view embebible es un descriptor JSON servido bajo `/api/v1/<entidad>/<accion
 }
 ```
 
-### 5. Patrón “picker” (nivel descriptor UI JSON)
+### 5. Patrón “listado” (nivel descriptor UI JSON)
 
-Cuando una view embebible es un picker, debe exponer en su descriptor `ui_meta.picker`:
+Cuando una view embebible es un listado, debe exponer en su descriptor `ui_meta.list`:
 
 ```json
 {
   "ui_meta": {
-    "picker": {
+    "list": {
       "selection": { "mode": "single", "requires_confirmation": true },
       "chips": [{ "id": "nearby", "label": "Cerca" }],
-      "list": { "item_kind": "efector", "id_field": "id", "label_field": "nombre" }
+      "draft_field": "id_efector",
+      "item": { "kind": "efector", "id_field": "id", "label_field": "nombre" }
     }
   }
 }

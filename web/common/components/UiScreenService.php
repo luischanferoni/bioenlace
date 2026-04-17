@@ -78,9 +78,12 @@ final class UiScreenService
 
         $wizardConfig = isset($config['wizard_config']) && is_array($config['wizard_config']) ? $config['wizard_config'] : null;
         $compat = null;
+        $h = UiDefinitionTemplateManager::getClientHeadersFromRequest();
         if ($wizardConfig !== null) {
-            $h = UiDefinitionTemplateManager::getClientHeadersFromRequest();
             $compat = UiDefinitionTemplateManager::evaluateClientCompatibility($wizardConfig, $h['client'], $h['version']);
+        } elseif (isset($config['ui_meta']) && is_array($config['ui_meta']) && isset($config['ui_meta']['clients'])) {
+            // Compat también puede vivir en raíz (ui_meta) para UIs no-wizard (embed/flow).
+            $compat = UiDefinitionTemplateManager::evaluateClientCompatibility(['ui_meta' => $config['ui_meta']], $h['client'], $h['version']);
         }
 
         $uiType = null;
@@ -88,6 +91,46 @@ final class UiScreenService
             $uiType = $config['ui_type'];
         } elseif ($wizardConfig !== null) {
             $uiType = 'wizard';
+        }
+
+        // Normalización: UIs JSON tipo "ui_json" (listados embebibles) se devuelven como lista (no wizard_config),
+        // manteniendo `kind=ui_definition` para que el cliente las renderice con su motor.
+        if ($uiType === 'ui_json' && isset($config['ui_meta']) && is_array($config['ui_meta']) && isset($config['ui_meta']['list']) && is_array($config['ui_meta']['list'])) {
+            $listMeta = $config['ui_meta']['list'];
+            $draftField = isset($listMeta['draft_field']) && is_string($listMeta['draft_field']) ? trim($listMeta['draft_field']) : '';
+
+            $items = [];
+            if ($wizardConfig !== null && isset($wizardConfig['fields']) && is_array($wizardConfig['fields'])) {
+                foreach ($wizardConfig['fields'] as $f) {
+                    if (!is_array($f)) {
+                        continue;
+                    }
+                    $name = isset($f['name']) ? (string) $f['name'] : '';
+                    if ($draftField !== '' && $name !== $draftField) {
+                        continue;
+                    }
+                    if (isset($f['options']) && is_array($f['options'])) {
+                        $items = $f['options'];
+                        break;
+                    }
+                }
+                // Fallback: primer field con options[].
+                if ($items === []) {
+                    foreach ($wizardConfig['fields'] as $f) {
+                        if (is_array($f) && isset($f['options']) && is_array($f['options'])) {
+                            $items = $f['options'];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // No exponer estructura wizard legacy en listados ui_json.
+            unset($config['wizard_config']);
+            $config['items'] = $items;
+            if ($draftField !== '') {
+                $config['ui_meta']['list']['draft_field'] = $draftField;
+            }
         }
 
         return array_merge(

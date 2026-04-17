@@ -639,6 +639,26 @@ class _ChatScreenState extends State<ChatScreen> {
                               appClient: 'bioenlace-paciente',
                               title: inlineUi['title']?.toString(),
                               embedded: true,
+                              onDraftDelta: (dd) async {
+                                _draft = {..._draft, ...dd};
+                                _asistenteService.draft = _draft;
+                                // Avanzar el flow automáticamente (snapshot) sin texto.
+                                final res = await _asistenteService.procesarInteraccion('');
+                                if (!mounted) return;
+                                if (res['success'] == true) {
+                                  final data = res['data'];
+                                  final t = (data is Map ? data['text']?.toString() : null) ?? 'Ok.';
+                                  setState(() {
+                                    _chatHistory.add({
+                                      'type': 'bot',
+                                      'content': t,
+                                      'actions': null,
+                                      'timestamp': DateTime.now(),
+                                    });
+                                  });
+                                  _scrollToBottom();
+                                }
+                              },
                             ),
                           ),
                         ),

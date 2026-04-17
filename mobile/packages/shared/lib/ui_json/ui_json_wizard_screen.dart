@@ -13,13 +13,14 @@ String resolveApiAbsoluteUrl(String routeOrPath) {
     return r;
   }
   final base = AppConfig.apiUrl.replaceAll(RegExp(r'/$'), '');
+  final origin = Uri.parse('$base/').origin;
   if (r.startsWith('/api/v1/')) {
-    return base + r.substring('/api/v1'.length);
+    // Ruta absoluta de API: resolver siempre contra el origin (evita duplicar /api/v1 según configuración de base).
+    return origin + r;
   }
   if (r.startsWith('/')) {
     // En este proyecto los endpoints del descriptor (p. ej. `/efectores/buscar`) son relativos a `/api/v1`.
     // Si ya viniera una ruta absoluta de API (`/api/...`), usar origin.
-    final origin = Uri.parse('$base/').origin;
     if (r.startsWith('/api/')) {
       return origin + r;
     }
@@ -30,8 +31,11 @@ String resolveApiAbsoluteUrl(String routeOrPath) {
 
 /// Aplica parámetros `provided` (formato backend: {k: {value,source}}) al route `/api/v1/<entidad>/<accion>`.
 String applyProvidedParamsToRoute(String routeOrPath, Map<String, dynamic>? provided) {
-  if (provided == null || provided.isEmpty) return routeOrPath;
+  // Importante (Flutter Web): si devolvemos un path relativo (`/api/v1/...`),
+  // el navegador lo resuelve contra el origin actual (p. ej. http://localhost:55275).
+  // Por eso SIEMPRE resolvemos a URL absoluta primero.
   final base = resolveApiAbsoluteUrl(routeOrPath);
+  if (provided == null || provided.isEmpty) return base;
   Uri uri = Uri.parse(base);
   final qp = <String, String>{...uri.queryParameters};
   provided.forEach((k, v) {
@@ -66,6 +70,9 @@ class UiJsonWizardScreen extends StatefulWidget {
   /// Si true, renderiza sin Scaffold/AppBar para embebido en chat.
   final bool embedded;
 
+  /// Callback opcional para listados inline: aplicar draft_delta en el host (chat) y continuar flow.
+  final Future<void> Function(Map<String, dynamic> draftDelta)? onDraftDelta;
+
   const UiJsonWizardScreen({
     Key? key,
     required this.apiAbsoluteUrl,
@@ -73,6 +80,7 @@ class UiJsonWizardScreen extends StatefulWidget {
     this.appClient = 'bioenlace-flutter',
     this.title,
     this.embedded = false,
+    this.onDraftDelta,
   }) : super(key: key);
 
   @override
@@ -621,6 +629,97 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
         body: Center(child: Text(_error!)),
       );
     }
+
+    // UI JSON (listado inline, no-wizard): items horizontales.
+    if (_root != null && _root!['kind'] == 'ui_definition' && _root!['ui_type']?.toString() == 'ui_json' && _root!['wizard_config'] == null) {
+      final uiMeta = _root!['ui_meta'] is Map ? Map<String, dynamic>.from(_root!['ui_meta'] as Map) : null;
+      final list = (uiMeta != null && uiMeta['list'] is Map) ? Map<String, dynamic>.from(uiMeta['list'] as Map) : null;
+      final itemsRaw = _root!['items'];
+      final items = itemsRaw is List ? itemsRaw : const [];
+      final selection = (list != null && list['selection'] is Map)
+          ? Map<String, dynamic>.from(list['selection'] as Map)
+          : const <String, dynamic>{};
+      final requiresConfirmation = selection['requires_confirmation'] == true;
+      final draftField = list != null ? (list['draft_field']?.toString() ?? '') : '';
+
+      if (list == null || draftField.isEmpty) {
+        return wrap(
+          title: widget.title ?? 'UI',
+          body: const Center(child: Text('UI inválida: falta ui_meta.list.draft_field')),
+        );
+      }
+
+      final screenTitle = widget.title ?? _root?['action_id']?.toString() ?? 'Seleccionar';
+      return wrap(
+        title: screenTitle,
+        body: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.all(12),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: items.length,
+                  itemBuilder: (context, idx) {
+                    final it = items[idx];
+                    if (it is! Map) return const SizedBox.shrink();
+                    final m = Map<String, dynamic>.from(it);
+                    final id = m['id']?.toString() ?? '';
+                    final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
+                    if (id.isEmpty) return const SizedBox.shrink();
+                    return SizedBox(
+                      width: 260,
+                      child: Card(
+                        child: InkWell(
+                          onTap: () async {
+                            if (requiresConfirmation) {
+                              final ok = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Confirmar'),
+                                  content: Text(name),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(ctx).pop(false),
+                                      child: const Text('Cancelar'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.of(ctx).pop(true),
+                                      child: const Text('Elegir'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (ok != true) return;
+                            }
+
+                            final cb = widget.onDraftDelta;
+                            if (cb != null) {
+                              await cb({draftField: id});
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(name, maxLines: 3, overflow: TextOverflow.ellipsis),
+                                const Spacer(),
+                                Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: Text(id, style: Theme.of(context).textTheme.bodySmall),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+      );
+    }
+
     final wc = _wc;
     if (wc == null) {
       return wrap(

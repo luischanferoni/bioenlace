@@ -1,14 +1,15 @@
 {
-  "ui_type": "embed",
+  "ui_type": "ui_json",
   "ui_meta": {
-    "picker": {
+    "list": {
       "selection": { "mode": "single", "requires_confirmation": true },
       "chips": [
         { "id": "next_available", "label": "Próximo disponible" },
         { "id": "morning", "label": "Mañana" },
         { "id": "afternoon", "label": "Tarde" }
       ],
-      "list": { "item_kind": "slot", "id_field": "id", "label_field": "label" }
+      "draft_field": "slot_id",
+      "item": { "kind": "slot", "id_field": "id", "label_field": "label" }
     },
     "assistant_embed": { }
   },

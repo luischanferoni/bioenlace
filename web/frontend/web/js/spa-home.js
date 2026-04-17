@@ -351,6 +351,19 @@
         const uiType = json.ui_type || 'wizard';
 
         switch (uiType) {
+            case 'ui_json':
+                // UI JSON inline tipo listado (sin wizard_config).
+                if (!json.wizard_config && Array.isArray(json.items) && json.ui_meta && json.ui_meta.list) {
+                    renderUiJsonList(json, container, options);
+                    break;
+                }
+                // Si trae wizard_config, usar renderer legacy.
+                if (json.wizard_config) {
+                    renderWizard(json.wizard_config, container, Object.assign({}, options, { definition: json }));
+                    break;
+                }
+                container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin configuración soportada.</div>';
+                break;
             case 'wizard':
                 if (json.wizard_config) {
                     renderWizard(json.wizard_config, container, Object.assign({}, options, { definition: json }));
@@ -361,6 +374,66 @@
             default:
                 container.innerHTML = '<div class="alert alert-info">Este tipo de UI aún no está soportado en la web: ' + escapeHtml(uiType) + '</div>';
         }
+    }
+
+    /**
+     * UI JSON (listado inline): listado de cards + confirmación opcional.
+     * Espera:
+     * - json.ui_meta.list.{draft_field,selection, chips?, item}
+     * - json.items = [{id,name}, ...]
+     */
+    function renderUiJsonList(json, container, options = {}) {
+        const list = json.ui_meta && json.ui_meta.list ? json.ui_meta.list : null;
+        const items = Array.isArray(json.items) ? json.items : [];
+        if (!list) {
+            container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin ui_meta.list.</div>';
+            return;
+        }
+        const draftField = list.draft_field ? String(list.draft_field) : '';
+        const requiresConfirmation = list.selection && list.selection.requires_confirmation === true;
+
+        let html = '<div class="bio-ui-json-list">';
+        html += '<div class="d-flex gap-2 overflow-auto pb-2">';
+        items.forEach((it, idx) => {
+            const id = it && it.id !== undefined ? String(it.id) : '';
+            const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
+            if (!id) return;
+            html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">' + escapeHtml(name) + '</button>';
+        });
+        html += '</div>';
+        html += '</div>';
+        container.innerHTML = html;
+
+        container.querySelectorAll('button[data-embed-pick="1"]').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.getAttribute('data-embed-id') || '';
+                const label = this.getAttribute('data-embed-label') || id;
+                if (!id) return;
+
+                if (requiresConfirmation) {
+                    const ok = window.confirm('¿Confirmás la selección?\\n\\n' + label);
+                    if (!ok) return;
+                }
+
+                if (!draftField) {
+                    console.warn('[SPA] ui_json list sin draft_field');
+                    return;
+                }
+
+                // Aplicar draft local y avanzar el flow automáticamente.
+                try {
+                    draft = Object.assign({}, draft || {}, { [draftField]: id });
+                } catch (e) { /* ignore */ }
+
+                // Disparar siguiente paso del flow sin texto (solo snapshot).
+                setTimeout(() => {
+                    if (queryInput) {
+                        queryInput.value = '';
+                    }
+                    handleSendQuery();
+                }, 0);
+            });
+        });
     }
 
     /**

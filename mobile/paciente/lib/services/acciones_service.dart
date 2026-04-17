@@ -67,6 +67,11 @@ class AsistenteService {
         }
         body['draft'] = draft;
         body['content'] = textoInteraccionUsuario;
+        // SubIntentEngine también lee claves planas del body (merge al draft).
+        final idServ = draft['id_servicio_asignado'] ?? draft['id_servicio'];
+        if (idServ != null && idServ.toString().trim().isNotEmpty) {
+          body['id_servicio_asignado'] = idServ;
+        }
       } else {
         body['content'] = textoInteraccionUsuario;
       }
@@ -350,6 +355,10 @@ class AsistenteService {
         'draft': draft,
         'interaction': interaction,
       };
+      final idServ = draft['id_servicio_asignado'] ?? draft['id_servicio'];
+      if (idServ != null && idServ.toString().trim().isNotEmpty) {
+        body['id_servicio_asignado'] = idServ;
+      }
       final response = await http.post(
         uri,
         headers: headers,

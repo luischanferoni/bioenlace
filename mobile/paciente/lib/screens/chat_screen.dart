@@ -622,14 +622,17 @@ class _ChatScreenState extends State<ChatScreen> {
                       const SizedBox(height: 12),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.of(context).size.height * 0.75,
-                          ),
-                          child: AnimatedSize(
-                            duration: const Duration(milliseconds: 180),
-                            curve: Curves.easeOut,
-                            child: UiJsonWizardScreen(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width - 32,
+                            ),
+                            child: AnimatedSize(
+                              duration: const Duration(milliseconds: 180),
+                              curve: Curves.easeOut,
+                              alignment: Alignment.topLeft,
+                              child: UiJsonWizardScreen(
                               apiAbsoluteUrl: applyProvidedParamsToRoute(
                                 inlineUi['route']?.toString() ?? '',
                                 inlineUi['provided'] is Map ? Map<String, dynamic>.from(inlineUi['provided'] as Map) : null,
@@ -676,6 +679,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   _scrollToBottom();
                                 }
                               },
+                            ),
                             ),
                           ),
                         ),

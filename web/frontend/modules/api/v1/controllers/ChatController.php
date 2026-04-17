@@ -15,6 +15,7 @@ use common\models\AsistenteInteraccion;
  * - POST/OPTIONS `asistente/enviar` — contrato único:
  *   - Root (IntentEngine): `content` o `action_id`.
  *   - Dentro de intent (SubIntentEngine): `intent_id`, `subintent_id`, `draft`, y `content` o `interaction`.
+ *     Opcional: claves planas del mismo cuerpo (p. ej. `id_servicio_asignado` / `id_servicio`) se fusionan al `draft` antes de evaluar `requires`.
  *   Identidad: usuario autenticado (Yii). `senderId` opcional; si se envía, debe coincidir con el usuario.
  *   Respuesta estándar v1: `success`, `message`, `data` (payload del agente), HTTP 200.
  */

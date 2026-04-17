@@ -4,6 +4,7 @@ namespace common\components\SubIntentEngine;
 
 use common\components\IntentEngine\UiActionCatalog;
 use common\components\Actions\AssistantClientOpenEnricher;
+use common\models\ServiciosEfector;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -33,6 +34,7 @@ final class SubIntentEngine
 
         $subintentId = isset($snapshot['subintent_id']) ? trim((string) $snapshot['subintent_id']) : '';
         $draft = isset($snapshot['draft']) && is_array($snapshot['draft']) ? $snapshot['draft'] : [];
+        $draft = self::mergeFlowSnapshotIntoDraft($snapshot, $draft);
         $content = isset($snapshot['content']) ? trim((string) $snapshot['content']) : '';
         $interaction = isset($snapshot['interaction']) && is_array($snapshot['interaction']) ? $snapshot['interaction'] : null;
 
@@ -123,6 +125,70 @@ final class SubIntentEngine
             'subintent_id' => $currentId,
             'draft_delta' => (object) [],
         ];
+    }
+
+    /**
+     * Completa `draft` desde claves planas del snapshot (p. ej. apps que mandan `id_servicio` fuera de `draft`)
+     * y, si aplica, infiere un único `id_servicio_asignado` para un `id_efector` ya elegido.
+     *
+     * @param array<string, mixed> $snapshot
+     * @param array<string, mixed> $draft
+     * @return array<string, mixed>
+     */
+    private static function mergeFlowSnapshotIntoDraft(array $snapshot, array $draft): array
+    {
+        if (!self::draftFieldNonEmpty($draft, 'id_servicio_asignado')) {
+            foreach (['id_servicio_asignado', 'id_servicio'] as $k) {
+                if (isset($snapshot[$k]) && self::scalarNonEmpty($snapshot[$k])) {
+                    $draft['id_servicio_asignado'] = trim((string) $snapshot[$k]);
+                    break;
+                }
+            }
+        }
+
+        if (!self::draftFieldNonEmpty($draft, 'id_servicio_asignado') && self::draftFieldNonEmpty($draft, 'id_efector')) {
+            $idEf = (int) $draft['id_efector'];
+            if ($idEf > 0) {
+                $inferred = self::inferUniqueServicioIdForEfector($idEf);
+                if ($inferred !== null) {
+                    $draft['id_servicio_asignado'] = $inferred;
+                }
+            }
+        }
+
+        return $draft;
+    }
+
+    private static function draftFieldNonEmpty(array $draft, string $field): bool
+    {
+        if (!isset($draft[$field]) || $draft[$field] === null) {
+            return false;
+        }
+
+        return trim((string) $draft[$field]) !== '';
+    }
+
+    private static function scalarNonEmpty($v): bool
+    {
+        if ($v === null) {
+            return false;
+        }
+
+        return trim((string) $v) !== '';
+    }
+
+    private static function inferUniqueServicioIdForEfector(int $idEfector): ?string
+    {
+        $ids = ServiciosEfector::find()
+            ->select(['id_servicio'])
+            ->where(['id_efector' => $idEfector])
+            ->distinct()
+            ->column();
+        if (!is_array($ids) || count($ids) !== 1) {
+            return null;
+        }
+
+        return (string) (int) $ids[0];
     }
 
     /**

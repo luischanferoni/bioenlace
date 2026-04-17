@@ -631,16 +631,30 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       );
     }
 
+    Widget embeddedLoading() => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          child: SizedBox(
+            height: 28,
+            width: 28,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        );
+
     if (_loading && _root == null) {
       return wrap(
         title: widget.title ?? 'Cargando…',
-        body: const Center(child: CircularProgressIndicator()),
+        body: widget.embedded ? embeddedLoading() : const Center(child: CircularProgressIndicator()),
       );
     }
     if (_error != null && _root == null) {
       return wrap(
         title: widget.title ?? 'Error',
-        body: Center(child: Text(_error!)),
+        body: widget.embedded
+            ? Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(_error!, style: Theme.of(context).textTheme.bodySmall),
+              )
+            : Center(child: Text(_error!)),
       );
     }
 
@@ -671,7 +685,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       return wrap(
         title: screenTitle,
         body: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? (widget.embedded ? embeddedLoading() : const Center(child: CircularProgressIndicator()))
             : Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
                 child: Column(

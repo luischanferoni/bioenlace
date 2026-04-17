@@ -91,6 +91,8 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   bool _loading = true;
   String? _error;
   Map<String, dynamic>? _root;
+  /// Selección pendiente en listados `ui_json` embebidos (antes de Confirmar).
+  String? _listEmbedSelectedId;
   int _step = 0;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
@@ -166,6 +168,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       _seedAccum(m);
       setState(() {
         _root = m;
+        _listEmbedSelectedId = null;
         _step = (m['wizard_config'] is Map && (m['wizard_config']['initial_step'] is int))
             ? m['wizard_config']['initial_step'] as int
             : 0;
@@ -585,6 +588,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
         _seedAccum(m);
         setState(() {
           _root = m;
+          _listEmbedSelectedId = null;
           _loading = false;
           _step = (m['wizard_config'] is Map && (m['wizard_config']['initial_step'] is int))
               ? m['wizard_config']['initial_step'] as int
@@ -605,6 +609,13 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       setState(() => _loading = false);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  Future<void> _applyListEmbedDraft(String draftField, String id) async {
+    final cb = widget.onDraftDelta;
+    if (cb != null) {
+      await cb({draftField: id});
     }
   }
 
@@ -653,71 +664,111 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       }
 
       final screenTitle = widget.title ?? _root?['action_id']?.toString() ?? 'Seleccionar';
+      const double listRowHeight = 88;
+      const double cardWidth = 148;
+      final theme = Theme.of(context);
+
       return wrap(
         title: screenTitle,
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : Padding(
-                padding: const EdgeInsets.all(12),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: items.length,
-                  itemBuilder: (context, idx) {
-                    final it = items[idx];
-                    if (it is! Map) return const SizedBox.shrink();
-                    final m = Map<String, dynamic>.from(it);
-                    final id = m['id']?.toString() ?? '';
-                    final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
-                    if (id.isEmpty) return const SizedBox.shrink();
-                    return SizedBox(
-                      width: 260,
-                      child: Card(
-                        child: InkWell(
-                          onTap: () async {
-                            if (requiresConfirmation) {
-                              final ok = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Confirmar'),
-                                  content: Text(name),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(ctx).pop(false),
-                                      child: const Text('Cancelar'),
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      height: listRowHeight,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.zero,
+                        itemCount: items.length,
+                        itemBuilder: (context, idx) {
+                          final it = items[idx];
+                          if (it is! Map) return const SizedBox.shrink();
+                          final m = Map<String, dynamic>.from(it);
+                          final id = m['id']?.toString() ?? '';
+                          final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
+                          if (id.isEmpty) return const SizedBox.shrink();
+                          final selected = _listEmbedSelectedId == id;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: SizedBox(
+                              width: cardWidth,
+                              child: Material(
+                                elevation: selected ? 2 : 0,
+                                borderRadius: BorderRadius.circular(10),
+                                color: selected
+                                    ? theme.colorScheme.primaryContainer
+                                        .withAlpha((0.35 * 255).round())
+                                    : theme.colorScheme.surfaceContainerHighest
+                                        .withAlpha((0.55 * 255).round()),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () async {
+                                    if (requiresConfirmation) {
+                                      setState(() => _listEmbedSelectedId = id);
+                                    } else {
+                                      await _applyListEmbedDraft(draftField, id);
+                                    }
+                                  },
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: selected
+                                            ? theme.colorScheme.primary
+                                            : theme.dividerColor,
+                                        width: selected ? 2 : 1,
+                                      ),
                                     ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.of(ctx).pop(true),
-                                      child: const Text('Elegir'),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 8,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          name,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 3,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            fontWeight:
+                                                selected ? FontWeight.w600 : FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ],
+                                  ),
                                 ),
-                              );
-                              if (ok != true) return;
-                            }
-
-                            final cb = widget.onDraftDelta;
-                            if (cb != null) {
-                              await cb({draftField: id});
-                            }
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(name, maxLines: 3, overflow: TextOverflow.ellipsis),
-                                const Spacer(),
-                                Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Text(id, style: Theme.of(context).textTheme.bodySmall),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                    if (requiresConfirmation) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Spacer(),
+                          FilledButton(
+                            onPressed: _listEmbedSelectedId == null
+                                ? null
+                                : () async {
+                                    final id = _listEmbedSelectedId!;
+                                    await _applyListEmbedDraft(draftField, id);
+                                    if (mounted) {
+                                      setState(() => _listEmbedSelectedId = null);
+                                    }
+                                  },
+                            child: const Text('Confirmar'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
       );

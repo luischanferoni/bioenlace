@@ -8,7 +8,6 @@ import '../services/acciones_service.dart';
 import '../components/dynamic_form.dart';
 import 'mis_turnos_screen.dart';
 import 'chat_motivos_screen.dart';
-import 'package:shared/shared.dart' show UiJsonWizardScreen, applyProvidedParamsToRoute;
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -641,7 +640,25 @@ class _ChatScreenState extends State<ChatScreen> {
                               embedded: true,
                               onDraftDelta: (dd) async {
                                 _draft = {..._draft, ...dd};
-                                _asistenteService.draft = _draft;
+                                // El descriptor GET puede llevar filtros en query (`id_servicio`, …) vía `provided`;
+                                // si el draft local no tiene aún `id_servicio_asignado`, lo tomamos de la URL resuelta
+                                // para que SubIntentEngine no vuelva a abrir la misma UI por draft incompleto.
+                                final routeRaw = inlineUi['route']?.toString() ?? '';
+                                final providedMap = inlineUi['provided'] is Map
+                                    ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
+                                    : null;
+                                if (routeRaw.isNotEmpty) {
+                                  final resolved = applyProvidedParamsToRoute(routeRaw, providedMap);
+                                  final u = Uri.tryParse(resolved);
+                                  if (u != null) {
+                                    final idServicio = u.queryParameters['id_servicio_asignado'] ??
+                                        u.queryParameters['id_servicio'];
+                                    if (idServicio != null && idServicio.isNotEmpty) {
+                                      _draft.putIfAbsent('id_servicio_asignado', () => idServicio);
+                                    }
+                                  }
+                                }
+                                _asistenteService.draft = Map<String, dynamic>.from(_draft);
                                 // Avanzar el flow automáticamente (snapshot) sin texto.
                                 final res = await _asistenteService.procesarInteraccion('');
                                 if (!mounted) return;

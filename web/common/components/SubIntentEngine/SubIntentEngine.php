@@ -209,11 +209,30 @@ final class SubIntentEngine
             ];
         }
 
-        // MVP: el cliente envía selection.id + selection.draft_delta opcional.
+        // `selection.draft_delta` explícito, o inferencia desde `provides` del subintent + `selection.id`.
         $draftDelta = isset($selection['draft_delta']) && is_array($selection['draft_delta']) ? $selection['draft_delta'] : [];
         if ($draftDelta === []) {
-            // Compat mínima: si solo hay id, no sabemos qué campo; no aplicamos.
-            $draftDelta = [];
+            $selId = $selection['id'] ?? null;
+            if ($selId !== null && (is_string($selId) || is_int($selId))) {
+                $sidStr = trim((string) $selId);
+                if ($sidStr !== '') {
+                    $intent = self::loadIntentYaml($intentId);
+                    $sub = is_array($intent) ? self::findSubintent($intent['subintents'] ?? [], $subintentId) : null;
+                    $provides = is_array($sub) && isset($sub['provides']) && is_array($sub['provides']) ? $sub['provides'] : [];
+                    foreach ($provides as $p) {
+                        $p = is_string($p) ? trim($p) : '';
+                        if ($p === '' || strncmp($p, 'draft.', 6) !== 0) {
+                            continue;
+                        }
+                        $field = substr($p, 6);
+                        if ($field === '') {
+                            continue;
+                        }
+                        $draftDelta[$field] = $sidStr;
+                        break;
+                    }
+                }
+            }
         }
 
         return [

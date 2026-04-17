@@ -29,6 +29,7 @@ subintents:
     assistant_text: "Ahora elegí el efector (centro) donde querés atenderte."
     requires:
       - draft.id_servicio_asignado
+      - draft.id_efector
     provides:
       - draft.id_efector
     next: select_rrhh

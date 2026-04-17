@@ -10,7 +10,7 @@
       ],
       "list": { "item_kind": "slot", "id_field": "id", "label_field": "label" }
     },
-    "assistant_embed": { "presentation": "inline" }
+    "assistant_embed": { }
   },
   "wizard_config": {
     "title": "Elegir horario",

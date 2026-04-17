@@ -150,8 +150,38 @@ class _ChatScreenState extends State<ChatScreen> {
               await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
               return;
             }
+
+            // Si el backend envía open_ui pero no puede resolver client_open, es un error de catálogo/permisos.
+            if (actionId != null && actionId.isNotEmpty && co == null) {
+              setState(() {
+                _isSending = false;
+                _chatHistory.add({
+                  'type': 'bot',
+                  'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). Falta permiso/catálogo para esta acción.',
+                  'actions': null,
+                  'timestamp': DateTime.now(),
+                });
+              });
+              _scrollToBottom();
+              return;
+            }
           }
         }
+        // En `intent_flow` no se deben renderizar acciones/botones.
+        if (kind == 'intent_flow') {
+          setState(() {
+            _isSending = false;
+            _chatHistory.add({
+              'type': 'bot',
+              'content': explanation,
+              'actions': null,
+              'timestamp': DateTime.now(),
+            });
+          });
+          _scrollToBottom();
+          return;
+        }
+
         if (kind == 'ui_intent_match' && actions is List && actions.isNotEmpty) {
           final a0 = actions[0];
           if (a0 is Map) {
@@ -262,47 +292,33 @@ class _ChatScreenState extends State<ChatScreen> {
         return true;
       }
       final provided = (action['parameters'] is Map) ? (action['parameters'] as Map)['provided'] : null;
-      final presentation = co['presentation']?.toString() ?? 'fullscreen';
-      final widget = UiJsonWizardScreen(
-        apiAbsoluteUrl: applyProvidedParamsToRoute(route, provided is Map ? Map<String, dynamic>.from(provided) : null),
-        authToken: _asistenteService.authToken,
-        appClient: 'bioenlace-paciente',
-        title: action['display_name']?.toString() ?? action['action_id']?.toString(),
-      );
-
-      if (presentation == 'inline') {
-        // Inline: embebido dentro del chat (en la misma burbuja si tenemos índice).
-        final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';
-        setState(() {
-          if (messageIndex != null && messageIndex >= 0 && messageIndex < _chatHistory.length) {
-            final m = _chatHistory[messageIndex];
-            m['inline_ui'] = {
+      // Contrato nuevo: el motor abre SIEMPRE inline automáticamente.
+      final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';
+      setState(() {
+        if (messageIndex != null && messageIndex >= 0 && messageIndex < _chatHistory.length) {
+          final m = _chatHistory[messageIndex];
+          m['inline_ui'] = {
+            'title': title,
+            'route': route,
+            'provided': provided,
+          };
+          if ((m['content']?.toString() ?? '').trim().isEmpty) {
+            m['content'] = title;
+          }
+        } else {
+          _chatHistory.add({
+            'type': 'bot',
+            'content': title,
+            'inline_ui': {
               'title': title,
               'route': route,
               'provided': provided,
-            };
-            if ((m['content']?.toString() ?? '').trim().isEmpty) {
-              m['content'] = title;
-            }
-          } else {
-            _chatHistory.add({
-              'type': 'bot',
-              'content': title,
-              'inline_ui': {
-                'title': title,
-                'route': route,
-                'provided': provided,
-              },
-              'timestamp': DateTime.now(),
-            });
-          }
-        });
-        _scrollToBottom();
-      } else {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => widget),
-        );
-      }
+            },
+            'timestamp': DateTime.now(),
+          });
+        }
+      });
+      _scrollToBottom();
       return true;
     }
 

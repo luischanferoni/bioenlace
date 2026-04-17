@@ -197,7 +197,6 @@ final class UiActionCatalog
 
         $out = [
             'kind' => 'native',
-            'presentation' => $presentation,
             'web' => [
                 'path' => $uiPath,
             ],

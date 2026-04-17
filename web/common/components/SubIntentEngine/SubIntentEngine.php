@@ -308,7 +308,6 @@ final class SubIntentEngine
             return [
                 'action_id' => $actionId,
                 'client_open' => null,
-                'route' => null,
             ];
         }
         $action = [
@@ -327,7 +326,6 @@ final class SubIntentEngine
         return [
             'action_id' => $actionId,
             'client_open' => $action['client_open'] ?? null,
-            'route' => $action['route'] ?? null,
         ];
     }
 }

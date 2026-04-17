@@ -21,11 +21,6 @@ final class AssistantClientOpenEnricher
         // Si la acción ya trae client_open.kind (ej. nativas descubiertas por catálogo), respetarlo,
         // pero asegurarnos de que la estructura mínima exista.
         if (isset($action['client_open']) && is_array($action['client_open'])) {
-            $co = &$action['client_open'];
-            if (!isset($co['presentation']) || !is_string($co['presentation']) || $co['presentation'] === '') {
-                $kind = isset($co['kind']) ? (string) $co['kind'] : '';
-                $co['presentation'] = ($kind === 'native') ? 'inline' : 'fullscreen';
-            }
             return $action;
         }
 
@@ -34,16 +29,8 @@ final class AssistantClientOpenEnricher
         //
         // Importante: NO inferir por “ser /api/v1/...” porque también hay endpoints de dominio.
         if ($route !== '' && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
-            $presentation = 'fullscreen';
-            if (isset($action['spa_presentation'])) {
-                $sp = strtolower(trim((string) $action['spa_presentation']));
-                if ($sp === 'inline' || $sp === 'fullscreen') {
-                    $presentation = $sp;
-                }
-            }
             $action['client_open'] = [
                 'kind' => 'ui_json',
-                'presentation' => $presentation,
                 'api' => [
                     'route' => $route,
                     'method' => 'GET|POST',

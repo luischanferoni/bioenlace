@@ -46,7 +46,6 @@ Una view embebible es un descriptor JSON servido bajo `/api/v1/<entidad>/<accion
     "action_id": "efectores.elegir",
     "client_open": {
       "kind": "ui_json",
-      "presentation": "inline",
       "api": { "route": "/api/v1/efectores/elegir", "method": "GET|POST" }
     }
   },

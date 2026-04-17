@@ -52,7 +52,9 @@ class ChatController extends BaseController
                 return $this->error($err, $out, 400);
             }
 
-            return $this->success($out, 'Consulta procesada', 200);
+            // Contrato chat v2: no envolver en {success,message,data}; devolver payload del motor directamente.
+            // (Evita doble `success`, `message` genérico, y deja `kind` en raíz del payload.)
+            return $out;
         }
 
         $content = isset($body['content']) ? trim((string) $body['content']) : '';
@@ -125,6 +127,7 @@ class ChatController extends BaseController
             Yii::error('No se pudo guardar interacción bot: ' . json_encode($interaccionBot->errors), 'asistente');
         }
 
-        return $this->success($agentResult, 'Consulta procesada', 200);
+        // Contrato chat v2: devolver payload directo (sin wrapper).
+        return $agentResult;
     }
 }

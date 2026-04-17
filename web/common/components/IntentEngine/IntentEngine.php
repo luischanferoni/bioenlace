@@ -114,13 +114,15 @@ final class IntentEngine
             );
 
             if (!empty($flow['success']) && is_array($flow)) {
-                // Mantener `kind=ui_intent_match` por compat, pero hidratar el payload “modo intent”.
+                // Flow conversacional: el cliente NO debe renderizar botones "abrir UI".
+                // Devolvemos `kind=intent_flow` y omitimos `actions`.
                 unset($flow['success']);
                 $base = [
                     'success' => true,
-                    'kind' => 'ui_intent_match',
-                    'explanation' => $item->display_name !== '' ? ('Abrir: ' . $item->display_name) : 'Acción disponible.',
-                    'actions' => [$action],
+                    'kind' => 'intent_flow',
+                    // `text` viene del SubIntentEngine. `explanation` queda solo para compat/telemetría.
+                    'explanation' => $item->display_name !== '' ? ('Iniciar: ' . $item->display_name) : 'Iniciar flujo.',
+                    'flow_action_id' => $item->action_id,
                     'match' => [
                         'action_id' => $item->action_id,
                         'confidence' => max(0.0, min(1.0, $confidence)),

@@ -8,7 +8,7 @@
       ],
       "list": { "item_kind": "efector", "id_field": "id", "label_field": "name" }
     },
-    "assistant_embed": { "presentation": "inline" }
+    "assistant_embed": { }
   },
   "wizard_config": {
     "title": "Efectores cercanos",

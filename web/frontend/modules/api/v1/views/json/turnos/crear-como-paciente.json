@@ -21,7 +21,7 @@
         "select_slot": { "action_id": "turnos.elegir-slot" }
       }
     },
-    "assistant_embed": { "presentation": "inline" },
+    "assistant_embed": { },
     "clients": {
       "*": { "min_app_version": "1.0.0" }
     }

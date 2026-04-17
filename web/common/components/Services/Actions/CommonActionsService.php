@@ -119,7 +119,6 @@ final class CommonActionsService
 
             $co = [
                 'kind' => 'native',
-                'presentation' => $presentation,
                 'web' => ['path' => $fetchPath],
                 'mobile' => ['screen_id' => $mobileScreenId],
             ];

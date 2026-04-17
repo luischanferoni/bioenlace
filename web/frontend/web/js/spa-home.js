@@ -34,6 +34,11 @@
     // Estado de cards expandidos
     const expandedCards = new Map();
 
+    // Estado conversacional (flow) — similar al cliente Flutter.
+    let currentIntentId = null;
+    let currentSubintentId = null;
+    let draft = {};
+
     /**
      * Inicialización
      */
@@ -80,6 +85,20 @@
         // Usar endpoint de la API. Importante: en entornos donde el frontend vive bajo /api,
         // window.spaConfig.baseUrl puede ser https://host/api y concatenar "/api/..." duplica.
         const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
+        const body = {};
+
+        // Modo flow: si hay intent activo, enviar snapshot.
+        if (currentIntentId) {
+            body.intent_id = currentIntentId;
+            if (currentSubintentId) {
+                body.subintent_id = currentSubintentId;
+            }
+            body.draft = draft || {};
+            body.content = query;
+        } else {
+            body.content = query;
+        }
+
         fetch(asistenteUrl, {
             method: 'POST',
             headers: window.BioenlaceApiClient.mergeHeaders({
@@ -88,9 +107,7 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }),
             credentials: 'same-origin', // Incluir cookies de sesión
-            body: JSON.stringify({
-                content: query
-            })
+            body: JSON.stringify(body)
         })
         .then(response => {
             // Si la respuesta no es exitosa, manejar el error
@@ -123,10 +140,81 @@
             return response.json();
         })
         .then(data => {
-            // Respuesta API v1 asistente/enviar: { success, message, data } donde data es el payload del agente.
+            // Compat: antes venía { success, message, data }, ahora el endpoint devuelve el payload directo.
             let result = data;
             if (data.data && typeof data.data === 'object' && (data.data.success !== undefined || data.data.explanation !== undefined || data.data.action !== undefined)) {
                 result = data.data;
+            }
+
+            // Normalizar flow: si viene `kind=intent_flow` usamos `text` como respuesta principal.
+            const kind = result && result.kind ? String(result.kind) : '';
+            const flowText = result && typeof result.text === 'string' ? result.text : null;
+            const explanationText = typeof result.explanation === 'string' ? result.explanation : null;
+            const primaryText = (flowText && flowText.trim() !== '') ? flowText.trim() : (explanationText || '');
+
+            // Si trae intent_id/subintent_id, sincronizar estado conversacional.
+            if (result && result.intent_id) {
+                currentIntentId = String(result.intent_id);
+            }
+            if (result && result.subintent_id) {
+                currentSubintentId = String(result.subintent_id);
+            }
+            if (result && result.draft_delta && typeof result.draft_delta === 'object') {
+                try {
+                    draft = Object.assign({}, draft || {}, result.draft_delta || {});
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            // Flow conversacional: no renderizar cards/botones; renderizar mini-UI inline si viene open_ui.
+            if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
+                explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
+                actionsDiv.innerHTML = '';
+
+                const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
+                const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
+                const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
+                if (!okUiJson) {
+                    if (openUi && openUi.action_id) {
+                        actionsDiv.innerHTML = '<div class="alert alert-warning mb-0">No se puede abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>';
+                    }
+                    responseSection.classList.remove('d-none');
+                    setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+                    return;
+                }
+
+                const route = String(co.api.route || '');
+                const fullUrl = resolveSpaFetchUrl(route);
+                actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+                fetch(fullUrl, {
+                    method: 'GET',
+                    headers: window.BioenlaceApiClient.mergeHeaders({
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    })
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al cargar UI JSON');
+                    return r.json();
+                })
+                .then(json => {
+                    actionsDiv.innerHTML = '';
+                    if (json && json.kind === 'ui_definition') {
+                        renderDynamicUi(json, actionsDiv, { url: fullUrl });
+                    } else {
+                        actionsDiv.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error cargando UI JSON (flow):', err);
+                    actionsDiv.innerHTML = '<div class="alert alert-danger mb-0">Error al cargar la UI</div>';
+                })
+                .finally(() => {
+                    responseSection.classList.remove('d-none');
+                    setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+                });
+                return;
             }
             
             // Si tiene explicación, mostrar respuesta (incluso si success es false)
@@ -1142,17 +1230,8 @@
      * inline | fullscreen — cómo abre el shell SPA (ambos sin layout Yii en el fetch).
      */
     function getClientOpenPresentation(action) {
-        const co = action && action.client_open ? action.client_open : {};
-        if (co.presentation && typeof co.presentation === 'string' && co.presentation !== '') {
-            const p = String(co.presentation).toLowerCase();
-            if (p === 'inline' || p === 'fullscreen') {
-                return p;
-            }
-        }
-        const k = getClientOpenKind(action);
-        if (k === 'native') return 'inline';
-        if (k === 'ui_json') return 'fullscreen';
-        return 'fullscreen';
+        // Contrato nuevo: por defecto el motor abre inline. Fullscreen solo manual (por link).
+        return 'inline';
     }
 
     function buildClientOpenUrl(action) {
@@ -1254,18 +1333,17 @@
             const kind = getClientOpenKind(action);
             const url = buildClientOpenUrl(action);
             const assets = getClientOpenAssets(action);
-            let presentation = 'inline';
             let expandable = false;
             let fullPage = false;
             if (kind === 'native' || kind === 'ui_json') {
-                presentation = getClientOpenPresentation(action);
-                expandable = presentation === 'inline';
-                fullPage = presentation === 'fullscreen';
+                // Contrato nuevo: el motor abre inline; fullscreen solo manual por link fuera del motor.
+                expandable = true;
+                fullPage = false;
             }
  
             html += `
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-spa-presentation="${escapeHtml(presentation)}" data-action-url="${escapeHtml(url)}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
+                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-action-url="${escapeHtml(url)}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
                         <div class="card-body">
                             <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(actionName)}</h6>
                             <p class="card-text text-muted small mb-0">${escapeHtml(actionDescription)}</p>

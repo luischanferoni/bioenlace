@@ -27,7 +27,8 @@ final class UiActionCatalogItem
 
     /**
      * Presentación sugerida para shell SPA / cliente.
-     * En UIs JSON se usa para `client_open.presentation` (inline|fullscreen).
+     * Nota histórica: antes se emitía como `client_open.presentation` (inline|fullscreen).
+     * El contrato actual abre inline por defecto y ya no emite `presentation`.
      */
     public ?string $spa_presentation = null;
 

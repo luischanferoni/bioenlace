@@ -27,7 +27,6 @@ El endpoint devuelve un payload **estructurado** en `data` con el resultado del 
         "parameters": { "expected": [], "provided": {} },
         "client_open": {
           "kind": "ui_json",
-          "presentation": "fullscreen",
           "api": { "route": "/api/v1/turnos/crear-como-paciente", "method": "GET|POST" }
         },
         "client_interaction": "ui_asistente_json"
@@ -61,7 +60,6 @@ Los clientes deben soportar como mínimo este shape:
   "route": "/api/v1/turnos/crear-como-paciente",
   "client_open": {
     "kind": "ui_json",
-    "presentation": "fullscreen",
     "api": { "route": "/api/v1/turnos/crear-como-paciente", "method": "GET|POST" }
   }
 }
@@ -89,14 +87,9 @@ Los clientes deben soportar como mínimo este shape:
 - Con `client_open.kind === "ui_json"`, el cliente llama a `client_open.api.route` (GET/POST) y renderiza el JSON con su motor (p. ej. `UiJsonWizardScreen` en `mobile/packages/shared`).
 - Los campos `type: "custom_widget"` se resuelven **solo en el cliente** según `widget_id`. La clave `assets` del descriptor es **irrelevante en móvil** (no se descargan esas URLs para ejecutar JS/CSS).
 
-#### `client_open.presentation` (obligatorio para `ui_json` y `native` vía asistente)
+#### `client_open.presentation` (DEPRECADO)
 
-Indica **cómo** abre el shell SPA el mismo contenido (el payload sigue siendo sin layout):
-
-- **`inline`**: panel expandido dentro de la card / área actual.
-- **`fullscreen`**: capa/stack que ocupa toda la ventana del shell (sigue siendo fetch del mismo partial o JSON; no es “página Yii con `<html>` completo”).
-
-Valores por defecto si falta el campo: `ui_json` → `fullscreen`; `native` → `inline`.
+Ya no se emite. Los motores abren **inline por defecto**. Fullscreen es una acción manual (link) fuera del motor.
 
 #### Ejemplo `ui_json` (editar agenda laboral por wizard API)
 
@@ -107,7 +100,6 @@ Valores por defecto si falta el campo: `ui_json` → `fullscreen`; `native` → 
   "route": "/api/v1/rrhh/editar-agenda",
   "client_open": {
     "kind": "ui_json",
-    "presentation": "fullscreen",
     "api": { "route": "/api/v1/rrhh/editar-agenda", "method": "GET|POST" }
   }
 }

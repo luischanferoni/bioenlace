@@ -1,6 +1,10 @@
 intent_id: turnos.crear-como-paciente
 version: 1
 
+# Claves opcionales del draft usadas por clientes sin aparecer en requires/provides del YAML.
+draft_keys_extra:
+  - tipo_atencion
+
 imports:
   - globals/confirmation_policy.yaml
   - globals/temporal_normalization.yaml
@@ -38,12 +42,12 @@ subintents:
         # si el usuario pide "cerca" el motor usará esquema global de ubicación.
         uses_global: location_acquisition.v1
         open_ui:
-          action_id: efectores.elegir-nearby
+          action_id: efectores.listar-por-servicio-cercano
           params:
             id_servicio: "draft.id_servicio_asignado"
       otherwise:
         open_ui:
-          action_id: efectores.elegir
+          action_id: efectores.listar-por-servicio
           params:
             id_servicio: "draft.id_servicio_asignado"
 

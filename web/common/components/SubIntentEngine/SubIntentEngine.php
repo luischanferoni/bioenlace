@@ -2,6 +2,7 @@
 
 namespace common\components\SubIntentEngine;
 
+use common\components\FlowManifest\FlowManifest;
 use common\components\IntentEngine\UiActionCatalog;
 use common\components\Actions\AssistantClientOpenEnricher;
 use common\models\ServiciosEfector;
@@ -74,14 +75,14 @@ final class SubIntentEngine
                     $open
                 );
             }
-            return [
+            return self::withFlowManifest([
                 'success' => true,
                 'text' => 'Necesito más información para continuar.',
                 'intent_id' => $intentId,
                 'subintent_id' => $currentId,
                 'required_draft_fields' => $missing,
                 'draft_delta' => (object) [],
-            ];
+            ], $intentId, $currentId);
         }
 
         // Si el subintent provee algo y ya está en draft, avanzar al siguiente.
@@ -107,24 +108,41 @@ final class SubIntentEngine
         if (isset($current['submit']['action_id'])) {
             $submitActionId = trim((string) $current['submit']['action_id']);
             if ($submitActionId !== '') {
-                return [
+                return self::withFlowManifest([
                     'success' => true,
                     'text' => 'Confirmemos y enviemos.',
                     'intent_id' => $intentId,
                     'subintent_id' => $currentId,
                     'open_ui' => self::resolveClientOpen($submitActionId, $userId),
                     'draft_delta' => (object) [],
-                ];
+                ], $intentId, $currentId);
             }
         }
 
-        return [
+        return self::withFlowManifest([
             'success' => true,
             'text' => 'Listo.',
             'intent_id' => $intentId,
             'subintent_id' => $currentId,
             'draft_delta' => (object) [],
-        ];
+        ], $intentId, $currentId);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private static function withFlowManifest(array $payload, string $intentId, string $activeSubintentId): array
+    {
+        if (empty($payload['success'])) {
+            return $payload;
+        }
+        $slice = FlowManifest::buildActiveSliceForSubintent($intentId, $activeSubintentId);
+        if ($slice !== null) {
+            $payload['flow_manifest'] = $slice;
+        }
+
+        return $payload;
     }
 
     /**
@@ -266,13 +284,13 @@ final class SubIntentEngine
         $selection = isset($interaction['selection']) && is_array($interaction['selection']) ? $interaction['selection'] : [];
 
         if ($decision !== 'confirm') {
-            return [
+            return self::withFlowManifest([
                 'success' => true,
                 'text' => 'Ok, cambiemos la selección.',
                 'intent_id' => $intentId,
                 'subintent_id' => $subintentId,
                 'draft_delta' => (object) [],
-            ];
+            ], $intentId, $subintentId);
         }
 
         // `selection.draft_delta` explícito, o inferencia desde `provides` del subintent + `selection.id`.
@@ -301,13 +319,13 @@ final class SubIntentEngine
             }
         }
 
-        return [
+        return self::withFlowManifest([
             'success' => true,
             'text' => 'Perfecto.',
             'intent_id' => $intentId,
             'subintent_id' => $subintentId,
             'draft_delta' => $draftDelta === [] ? (object) [] : $draftDelta,
-        ];
+        ], $intentId, $subintentId);
     }
 
     /**
@@ -352,14 +370,14 @@ final class SubIntentEngine
             }
         }
 
-        return [
+        return self::withFlowManifest([
             'success' => true,
             'text' => $text,
             'intent_id' => $intentId,
             'subintent_id' => $subintentId,
             'open_ui' => $open,
             'draft_delta' => (object) [],
-        ];
+        ], $intentId, $subintentId);
     }
 
     /**

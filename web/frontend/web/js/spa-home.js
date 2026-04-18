@@ -21,6 +21,85 @@
         return window.spaConfig.baseUrl + '/' + url;
     }
 
+    function mergeApiQueryIntoUrl(baseUrl, apiObj) {
+        if (!apiObj || !apiObj.query || typeof apiObj.query !== 'object') {
+            return baseUrl;
+        }
+        try {
+            const u = new URL(baseUrl);
+            Object.keys(apiObj.query).forEach(function (k) {
+                const v = apiObj.query[k];
+                if (v != null && String(v) !== '') {
+                    u.searchParams.set(k, String(v));
+                }
+            });
+            return u.toString();
+        } catch (e) {
+            return baseUrl;
+        }
+    }
+
+    function buildUrlForFlowTab(tab) {
+        if (!tab || !tab.route) {
+            return '';
+        }
+        const base = resolveSpaFetchUrl(String(tab.route));
+        try {
+            const u = new URL(base);
+            const params = tab.params && typeof tab.params === 'object' ? tab.params : {};
+            Object.keys(params).forEach(function (k) {
+                const spec = String(params[k] || '');
+                if (spec.indexOf('draft.') === 0) {
+                    const f = spec.slice(6);
+                    const dv = draft[f];
+                    if (dv != null && String(dv) !== '') {
+                        u.searchParams.set(k, String(dv));
+                    }
+                }
+            });
+            return u.toString();
+        } catch (e) {
+            return base;
+        }
+    }
+
+    function flowTabNeedsGeo(tab) {
+        return tab && Array.isArray(tab.requires_client) && tab.requires_client.indexOf('geolocation') !== -1;
+    }
+
+    function fetchFlowUiDefinition(fullUrl, mountEl, responseSection) {
+        mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+        fetch(fullUrl, {
+            method: 'GET',
+            headers: window.BioenlaceApiClient.mergeHeaders({
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            })
+        })
+            .then(function (r) {
+                if (!r.ok) throw new Error('Error al cargar UI JSON');
+                return r.json();
+            })
+            .then(function (json) {
+                mountEl.innerHTML = '';
+                if (json && json.kind === 'ui_definition') {
+                    renderDynamicUi(json, mountEl, { url: fullUrl });
+                } else {
+                    mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+                }
+            })
+            .catch(function (err) {
+                console.error('Error cargando UI JSON (flow):', err);
+                mountEl.innerHTML = '<div class="alert alert-danger mb-0">Error al cargar la UI</div>';
+            })
+            .finally(function () {
+                responseSection.classList.remove('d-none');
+                setTimeout(function () {
+                    responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 100);
+            });
+    }
+
     // Referencias a elementos DOM
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
@@ -185,7 +264,80 @@
                 }
 
                 const route = String(co.api.route || '');
-                const fullUrl = resolveSpaFetchUrl(route);
+                const fullUrl = mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api);
+                const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
+                const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
+                const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
+                const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
+
+                if (tabs.length >= 2) {
+                    actionsDiv.innerHTML = '';
+                    const tabRow = document.createElement('div');
+                    tabRow.className = 'd-flex flex-wrap gap-2 mb-2';
+                    const mountEl = document.createElement('div');
+                    actionsDiv.appendChild(tabRow);
+                    actionsDiv.appendChild(mountEl);
+
+                    const defaultTabId = uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
+                    let firstDefaultIdx = 0;
+                    for (let ti = 0; ti < tabs.length; ti++) {
+                        if (String(tabs[ti].id) === defaultTabId) {
+                            firstDefaultIdx = ti;
+                            break;
+                        }
+                    }
+
+                    function activateTab(tab) {
+                        const isDefault = defaultTabId !== '' && tab && String(tab.id) === defaultTabId;
+                        let url;
+                        if (isDefault) {
+                            url = fullUrl;
+                        } else if (flowTabNeedsGeo(tab)) {
+                            if (!navigator.geolocation) {
+                                mountEl.innerHTML = '<div class="alert alert-warning mb-0">Geolocalización no disponible en este navegador.</div>';
+                                return;
+                            }
+                            mountEl.innerHTML = '<div class="d-flex align-items-center gap-2 py-2 text-muted"><div class="spinner-border spinner-border-sm"></div> Ubicación…</div>';
+                            navigator.geolocation.getCurrentPosition(function (pos) {
+                                const u = new URL(buildUrlForFlowTab(tab));
+                                u.searchParams.set('latitud', String(pos.coords.latitude));
+                                u.searchParams.set('longitud', String(pos.coords.longitude));
+                                fetchFlowUiDefinition(u.toString(), mountEl, responseSection);
+                            }, function () {
+                                mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
+                            });
+                            return;
+                        } else {
+                            url = buildUrlForFlowTab(tab);
+                        }
+                        if (!url) {
+                            mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
+                            return;
+                        }
+                        fetchFlowUiDefinition(url, mountEl, responseSection);
+                    }
+
+                    tabs.forEach(function (tab, idx) {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'btn btn-sm btn-outline-primary';
+                        b.textContent = (tab && tab.label) ? String(tab.label) : ('Vista ' + (idx + 1));
+                        b.addEventListener('click', function () {
+                            tabRow.querySelectorAll('button').forEach(function (x) { x.classList.remove('active'); });
+                            b.classList.add('active');
+                            activateTab(tab);
+                        });
+                        tabRow.appendChild(b);
+                    });
+
+                    const firstBtn = tabRow.querySelectorAll('button')[firstDefaultIdx];
+                    if (firstBtn) {
+                        firstBtn.classList.add('active');
+                        activateTab(tabs[firstDefaultIdx]);
+                    }
+                    return;
+                }
+
                 actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 fetch(fullUrl, {
                     method: 'GET',

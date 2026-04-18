@@ -45,5 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Usamos tu ubicación para mostrar centros de salud cercanos cuando elegís la pestaña &quot;Cerca&quot; en el asistente.</string>
 </dict>
 </plist>

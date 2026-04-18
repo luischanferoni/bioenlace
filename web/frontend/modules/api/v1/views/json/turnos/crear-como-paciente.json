@@ -1,48 +1,189 @@
 {
-  "ui_type": "flow",
-  "ui_meta": {
-    "schema_version": "1",
-    "flow": {
-      "intent_id": "turnos.crear-como-paciente",
-      "mode": "conversational",
-      "entry_subintent_id": "select_servicio",
-      "draft_keys": [
-        "id_servicio_asignado",
-        "id_efector",
-        "id_rr_hh",
-        "slot_id",
-        "tipo_atencion"
-      ],
-      "open_ui_hints": {
-        "select_servicio": { "action_id": "servicios.elegir" },
-        "select_efector": { "action_id": "efectores.elegir" },
-        "select_efector_nearby": { "action_id": "efectores.elegir-nearby" },
-        "select_rrhh": { "action_id": "rrhh.elegir" },
-        "select_slot": { "action_id": "turnos.elegir-slot" }
-      }
+    "ui_type": "flow",
+    "ui_meta": {
+        "schema_version": "1",
+        "flow": {
+            "intent_id": "turnos.crear-como-paciente",
+            "mode": "conversational",
+            "entry_subintent_id": "select_servicio",
+            "draft_keys": [
+                "id_servicio_asignado",
+                "id_efector",
+                "id_rr_hh",
+                "slot_id",
+                "tipo_atencion"
+            ],
+            "open_ui_hints": {
+                "select_servicio": {
+                    "action_id": "servicios.elegir"
+                },
+                "select_efector": {
+                    "action_id": "efectores.listar-por-servicio"
+                },
+                "select_efector_nearby": {
+                    "action_id": "efectores.listar-por-servicio-cercano"
+                },
+                "select_rrhh": {
+                    "action_id": "rrhh.elegir"
+                },
+                "select_slot": {
+                    "action_id": "turnos.elegir-slot"
+                }
+            },
+            "steps": [
+                {
+                    "id": "select_servicio",
+                    "assistant_text": "Decime qué servicio necesitás (o elegilo de la lista).",
+                    "requires": [
+                        "draft.id_servicio_asignado"
+                    ],
+                    "provides": [],
+                    "next": "select_efector",
+                    "ui": {
+                        "default_tab": "default",
+                        "tabs": [
+                            {
+                                "id": "default",
+                                "label": "Elegir",
+                                "action_id": "servicios.elegir",
+                                "route": "/api/v1/servicios/elegir",
+                                "params": {},
+                                "requires_client": []
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "select_efector",
+                    "assistant_text": "Ahora elegí el efector (centro) donde querés atenderte.",
+                    "requires": [
+                        "draft.id_servicio_asignado",
+                        "draft.id_efector"
+                    ],
+                    "provides": [
+                        "draft.id_efector"
+                    ],
+                    "next": "select_rrhh",
+                    "ui": {
+                        "default_tab": "por_servicio",
+                        "tabs": [
+                            {
+                                "id": "por_servicio",
+                                "label": "Por servicio",
+                                "action_id": "efectores.listar-por-servicio",
+                                "route": "/api/v1/efectores/listar-por-servicio",
+                                "params": {
+                                    "id_servicio": "draft.id_servicio_asignado"
+                                },
+                                "requires_client": []
+                            },
+                            {
+                                "id": "cercano",
+                                "label": "Cerca",
+                                "action_id": "efectores.listar-por-servicio-cercano",
+                                "route": "/api/v1/efectores/listar-por-servicio-cercano",
+                                "params": {
+                                    "id_servicio": "draft.id_servicio_asignado",
+                                    "latitud": "client.latitud",
+                                    "longitud": "client.longitud"
+                                },
+                                "requires_client": [
+                                    "geolocation"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "select_rrhh",
+                    "assistant_text": "Elegí el profesional con el que querés el turno.",
+                    "requires": [
+                        "draft.id_efector",
+                        "draft.id_servicio_asignado"
+                    ],
+                    "provides": [
+                        "draft.id_rr_hh"
+                    ],
+                    "next": "select_slot",
+                    "ui": {
+                        "default_tab": "default",
+                        "tabs": [
+                            {
+                                "id": "default",
+                                "label": "Elegir",
+                                "action_id": "rrhh.elegir",
+                                "route": "/api/v1/rrhh/elegir",
+                                "params": {},
+                                "requires_client": []
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "select_slot",
+                    "assistant_text": "Elegí un horario disponible.",
+                    "requires": [
+                        "draft.id_rr_hh"
+                    ],
+                    "provides": [
+                        "draft.slot_id"
+                    ],
+                    "next": "confirm",
+                    "ui": {
+                        "default_tab": "default",
+                        "tabs": [
+                            {
+                                "id": "default",
+                                "label": "Elegir",
+                                "action_id": "turnos.elegir-slot",
+                                "route": "/api/v1/turnos/elegir-slot",
+                                "params": {},
+                                "requires_client": []
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "confirm",
+                    "assistant_text": "Listo: confirmá los datos y lo enviamos.",
+                    "requires": [
+                        "draft.slot_id"
+                    ],
+                    "provides": [],
+                    "next": "",
+                    "ui": {
+                        "default_tab": "default",
+                        "tabs": []
+                    }
+                }
+            ]
+        },
+        "assistant_embed": {},
+        "clients": {
+            "*": {
+                "min_app_version": "1.0.0"
+            }
+        }
     },
-    "assistant_embed": { },
-    "clients": {
-      "*": { "min_app_version": "1.0.0" }
+    "wizard_config": {
+        "title": "Reservar turno (flujo por chat)",
+        "steps": [
+            {
+                "step": 0,
+                "title": "Guía",
+                "fields": [
+                    "_flow_notice"
+                ]
+            }
+        ],
+        "fields": [
+            {
+                "name": "_flow_notice",
+                "label": "Cómo continuar",
+                "type": "textarea",
+                "required": false,
+                "value": "Este flujo ya no es un wizard monolítico: el asistente te va pidiendo cada dato y, cuando corresponda, embebe mini-UIs (por ejemplo, elegir efector). Si ves esto en una pantalla legacy, actualizá el cliente para renderizar `ui_type=flow` + `ui_meta.flow`."
+            }
+        ]
     }
-  },
-  "wizard_config": {
-    "title": "Reservar turno (flujo por chat)",
-    "steps": [
-      {
-        "step": 0,
-        "title": "Guía",
-        "fields": ["_flow_notice"]
-      }
-    ],
-    "fields": [
-      {
-        "name": "_flow_notice",
-        "label": "Cómo continuar",
-        "type": "textarea",
-        "required": false,
-        "value": "Este flujo ya no es un wizard monolítico: el asistente te va pidiendo cada dato y, cuando corresponda, embebe mini-UIs (por ejemplo, elegir efector). Si ves esto en una pantalla legacy, actualizá el cliente para renderizar `ui_type=flow` + `ui_meta.flow`."
-      }
-    ]
-  }
 }

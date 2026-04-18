@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -142,6 +143,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   'type': 'bot',
                   'content': explanation,
                   'actions': null,
+                  if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
                   'timestamp': DateTime.now(),
                 });
               });
@@ -272,6 +274,93 @@ class _ChatScreenState extends State<ChatScreen> {
     return Uri.parse(s);
   }
 
+  /// Resuelve `client_open.api.route` + `query` del backend a URL absoluta de API.
+  String _clientOpenUiJsonAbsoluteUrl(Map co) {
+    final api = co['api'];
+    if (api is! Map) {
+      return '';
+    }
+    final route = api['route']?.toString() ?? '';
+    if (route.isEmpty) {
+      return '';
+    }
+    var base = resolveApiAbsoluteUrl(route);
+    final q = api['query'];
+    if (q is Map && q.isNotEmpty) {
+      final u = Uri.parse(base);
+      final qp = Map<String, String>.from(u.queryParameters);
+      q.forEach((k, v) {
+        if (v != null && v.toString().isNotEmpty) {
+          qp[k.toString()] = v.toString();
+        }
+      });
+      base = u.replace(queryParameters: qp).toString();
+    }
+    return base;
+  }
+
+  Future<String?> _absoluteUrlForFlowManifestTab(Map<String, dynamic> tab) async {
+    final route = tab['route']?.toString() ?? '';
+    if (route.isEmpty) {
+      return null;
+    }
+    final params = tab['params'];
+    final qp = <String, String>{};
+    if (params is Map) {
+      for (final e in params.entries) {
+        final spec = e.value?.toString() ?? '';
+        if (spec.startsWith('draft.')) {
+          final f = spec.substring(6);
+          final v = _draft[f];
+          if (v != null && v.toString().isNotEmpty) {
+            qp[e.key.toString()] = v.toString();
+          }
+        }
+      }
+    }
+    final needsGeo = tab['requires_client'] is List &&
+        (tab['requires_client'] as List).map((e) => e.toString()).contains('geolocation');
+    if (needsGeo) {
+      var perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+        throw Exception('Se necesita permiso de ubicación para listar efectores cercanos.');
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      qp['latitud'] = '${pos.latitude}';
+      qp['longitud'] = '${pos.longitude}';
+    }
+    var u = Uri.parse(resolveApiAbsoluteUrl(route));
+    u = u.replace(queryParameters: {...u.queryParameters, ...qp});
+    return u.toString();
+  }
+
+  Future<void> _onFlowManifestTabSelected(int messageIndex, Map<String, dynamic> tab) async {
+    try {
+      final url = await _absoluteUrlForFlowManifestTab(tab);
+      if (url == null || url.isEmpty) {
+        _showErrorSnackbar('No se pudo armar la URL del listado.');
+        return;
+      }
+      setState(() {
+        final m = _chatHistory[messageIndex];
+        m['flow_selected_tab_id'] = tab['id']?.toString();
+        final inline = m['inline_ui'];
+        if (inline is Map<String, dynamic>) {
+          inline['api_absolute_url'] = url;
+          final r = tab['route']?.toString();
+          if (r != null && r.isNotEmpty) {
+            inline['route'] = r;
+          }
+        }
+      });
+    } catch (e) {
+      _showErrorSnackbar(e.toString());
+    }
+  }
+
   /// Si la acción trae `client_open` (pantalla Yii / web nativa), abre el navegador y no pasa por CRUD/wizard.
   Future<bool> _tryOpenClientNative(Map<String, dynamic> action, {int? messageIndex}) async {
     final co = action['client_open'];
@@ -291,6 +380,7 @@ class _ChatScreenState extends State<ChatScreen> {
         return true;
       }
       final provided = (action['parameters'] is Map) ? (action['parameters'] as Map)['provided'] : null;
+      final apiAbs = _clientOpenUiJsonAbsoluteUrl(co);
       // Contrato nuevo: el motor abre SIEMPRE inline automáticamente.
       final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';
       setState(() {
@@ -300,7 +390,20 @@ class _ChatScreenState extends State<ChatScreen> {
             'title': title,
             'route': route,
             'provided': provided,
+            if (apiAbs.isNotEmpty) 'api_absolute_url': apiAbs,
           };
+          final fm = m['flow_manifest'];
+          if (fm is Map) {
+            final step = fm['active_step'];
+            if (step is Map) {
+              final ui = step['ui'];
+              if (ui is Map && ui['tabs'] is List && (ui['tabs'] as List).length >= 2) {
+                m['flow_tabs'] = ui['tabs'];
+                m['flow_default_tab'] = ui['default_tab']?.toString() ?? '';
+                m['flow_selected_tab_id'] = m['flow_default_tab'];
+              }
+            }
+          }
           if ((m['content']?.toString() ?? '').trim().isEmpty) {
             m['content'] = title;
           }
@@ -312,6 +415,7 @@ class _ChatScreenState extends State<ChatScreen> {
               'title': title,
               'route': route,
               'provided': provided,
+              if (apiAbs.isNotEmpty) 'api_absolute_url': apiAbs,
             },
             'timestamp': DateTime.now(),
           });
@@ -620,6 +724,35 @@ class _ChatScreenState extends State<ChatScreen> {
                     // Inline UI JSON embebida en chat
                     if (!isUser && inlineUi is Map) ...[
                       const SizedBox(height: 12),
+                      if (message['flow_tabs'] is List && (message['flow_tabs'] as List).length >= 2) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: (message['flow_tabs'] as List).map((tab) {
+                                if (tab is! Map) {
+                                  return const SizedBox.shrink();
+                                }
+                                final tm = Map<String, dynamic>.from(tab);
+                                final id = tm['id']?.toString() ?? '';
+                                final label = tm['label']?.toString() ?? id;
+                                final def = message['flow_default_tab']?.toString() ?? '';
+                                final sel = message['flow_selected_tab_id']?.toString() ?? def;
+                                final selected = id.isNotEmpty && sel == id;
+                                return ChoiceChip(
+                                  label: Text(label, style: const TextStyle(fontSize: 12)),
+                                  selected: selected,
+                                  onSelected: (_) => _onFlowManifestTabSelected(index, tm),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Align(
@@ -633,10 +766,15 @@ class _ChatScreenState extends State<ChatScreen> {
                               curve: Curves.easeOut,
                               alignment: Alignment.topLeft,
                               child: UiJsonWizardScreen(
-                              apiAbsoluteUrl: applyProvidedParamsToRoute(
-                                inlineUi['route']?.toString() ?? '',
-                                inlineUi['provided'] is Map ? Map<String, dynamic>.from(inlineUi['provided'] as Map) : null,
+                              key: ValueKey(
+                                '${inlineUi['api_absolute_url']?.toString() ?? ''}|${inlineUi['route']?.toString() ?? ''}',
                               ),
+                              apiAbsoluteUrl: (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty
+                                  ? inlineUi['api_absolute_url']!.toString()
+                                  : applyProvidedParamsToRoute(
+                                      inlineUi['route']?.toString() ?? '',
+                                      inlineUi['provided'] is Map ? Map<String, dynamic>.from(inlineUi['provided'] as Map) : null,
+                                    ),
                               authToken: _asistenteService.authToken,
                               appClient: 'bioenlace-paciente',
                               title: inlineUi['title']?.toString(),
@@ -646,12 +784,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                 // El descriptor GET puede llevar filtros en query (`id_servicio`, …) vía `provided`;
                                 // si el draft local no tiene aún `id_servicio_asignado`, lo tomamos de la URL resuelta
                                 // para que SubIntentEngine no vuelva a abrir la misma UI por draft incompleto.
+                                final absRaw = inlineUi['api_absolute_url']?.toString() ?? '';
                                 final routeRaw = inlineUi['route']?.toString() ?? '';
                                 final providedMap = inlineUi['provided'] is Map
                                     ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
                                     : null;
-                                if (routeRaw.isNotEmpty) {
-                                  final resolved = applyProvidedParamsToRoute(routeRaw, providedMap);
+                                final resolved = absRaw.trim().isNotEmpty
+                                    ? absRaw
+                                    : (routeRaw.isNotEmpty ? applyProvidedParamsToRoute(routeRaw, providedMap) : '');
+                                if (resolved.isNotEmpty) {
                                   final u = Uri.tryParse(resolved);
                                   if (u != null) {
                                     final idServicio = u.queryParameters['id_servicio_asignado'] ??

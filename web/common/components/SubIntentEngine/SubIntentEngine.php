@@ -5,6 +5,8 @@ namespace common\components\SubIntentEngine;
 use common\components\FlowManifest\FlowManifest;
 use common\components\IntentEngine\UiActionCatalog;
 use common\components\Actions\AssistantClientOpenEnricher;
+use common\components\Actions\AllowedRoutesResolver;
+use common\components\UiDefinitionTemplateManager;
 use common\models\ServiciosEfector;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
@@ -197,11 +199,14 @@ final class SubIntentEngine
 
     private static function inferUniqueServicioIdForEfector(int $idEfector): ?string
     {
-        $ids = ServiciosEfector::find()
+        // Usar Query directo para evitar dependencias de AR en este helper.
+        $ids = (new \yii\db\Query())
             ->select(['id_servicio'])
+            ->from(ServiciosEfector::tableName())
             ->where(['id_efector' => $idEfector])
             ->distinct()
             ->column();
+        $ids = array_values(array_unique(array_map(static fn($v) => (int) $v, is_array($ids) ? $ids : [])));
         if (!is_array($ids) || count($ids) !== 1) {
             return null;
         }
@@ -458,6 +463,32 @@ final class SubIntentEngine
         $catalog = UiActionCatalog::forUser($userId);
         $item = $catalog->byActionId[$actionId] ?? null;
         if ($item === null) {
+            // Dentro de un flow, el YAML puede referenciar UIs embebibles que no estén en el catálogo UI global,
+            // pero sí existan como templates y estén permitidas por RBAC por ruta.
+            // Resolvemos de forma determinística: action_id "rrhh.elegir" => "/api/v1/rrhh/elegir".
+            $route = null;
+            if (preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
+                $route = '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
+            }
+            if ($route && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
+                $map = AllowedRoutesResolver::getTargetRoutesMapForUserId($userId, true);
+                if (AllowedRoutesResolver::routeAllowedByMap($route, $map)) {
+                    $action = [
+                        'action_id' => $actionId,
+                        'display_name' => $actionId,
+                        'description' => '',
+                        'entity' => null,
+                        'route' => $route,
+                        'parameters' => ['expected' => [], 'provided' => []],
+                    ];
+                    $action = AssistantClientOpenEnricher::enrich($action);
+                    return [
+                        'action_id' => $actionId,
+                        'client_open' => $action['client_open'] ?? null,
+                    ];
+                }
+            }
+
             return [
                 'action_id' => $actionId,
                 'client_open' => null,

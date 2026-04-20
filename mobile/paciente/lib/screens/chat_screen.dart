@@ -131,6 +131,27 @@ class _ChatScreenState extends State<ChatScreen> {
             final co = openUi['client_open'];
             final actionId = openUi['action_id']?.toString();
             if (co is Map && actionId != null && actionId.isNotEmpty) {
+              // Validación mínima: si el backend mandó client_open pero está incompleto,
+              // no intentes abrir "en silencio": devolvé un mensaje visible.
+              final kindCo = co['kind']?.toString();
+              final api = co['api'];
+              final mobile = co['mobile'];
+              final hasUiJsonRoute = (kindCo == 'ui_json') && (api is Map) && (api['route']?.toString().isNotEmpty ?? false);
+              final hasNativeScreen = (kindCo == 'native') && (mobile is Map) && (mobile['screen_id']?.toString().isNotEmpty ?? false);
+              if (!(hasUiJsonRoute || hasNativeScreen)) {
+                setState(() {
+                  _isSending = false;
+                  _chatHistory.add({
+                    'type': 'bot',
+                    'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId): client_open inválido o incompleto.',
+                    'actions': null,
+                    'timestamp': DateTime.now(),
+                  });
+                });
+                _scrollToBottom();
+                return;
+              }
+
               final pseudoAction = <String, dynamic>{
                 'action_id': actionId,
                 'display_name': actionId,
@@ -158,7 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 _isSending = false;
                 _chatHistory.add({
                   'type': 'bot',
-                  'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). Falta permiso/catálogo para esta acción.',
+                  'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). Puede ser falta de permisos o de catálogo para esta acción.',
                   'actions': null,
                   'timestamp': DateTime.now(),
                 });

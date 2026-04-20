@@ -256,7 +256,14 @@
                 const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
                 if (!okUiJson) {
                     if (openUi && openUi.action_id) {
-                        actionsDiv.innerHTML = '<div class="alert alert-warning mb-0">No se puede abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>';
+                        // No dejar el flow "silencioso": si el backend no pudo resolver client_open
+                        // (permisos/catálogo/template), mostrar un error visible al usuario.
+                        explanationDiv.innerHTML =
+                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' +
+                            '<div class="alert alert-danger mb-0">' +
+                            'No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + '). ' +
+                            'Puede ser falta de permisos o de catálogo para esta acción.' +
+                            '</div>';
                     }
                     responseSection.classList.remove('d-none');
                     setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);

@@ -6,6 +6,21 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import 'weekly_scheduler_widget.dart';
 
+String _messageFromErrorBody(http.Response res) {
+  try {
+    final json = jsonDecode(utf8.decode(res.bodyBytes));
+    if (json is Map) {
+      final msg = json['message']?.toString();
+      if (msg != null && msg.trim().isNotEmpty) {
+        return msg.trim();
+      }
+    }
+  } catch (_) {
+    // ignore
+  }
+  return 'HTTP ${res.statusCode}';
+}
+
 /// Resuelve ruta devuelta por el backend (`/api/v1/...`) contra [AppConfig.apiUrl].
 String resolveApiAbsoluteUrl(String routeOrPath) {
   final r = routeOrPath.trim();
@@ -157,7 +172,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
           .get(uri, headers: _headers())
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
       if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw Exception('HTTP ${res.statusCode}');
+        throw Exception(_messageFromErrorBody(res));
       }
       final json = jsonDecode(utf8.decode(res.bodyBytes));
       if (json is! Map) {
@@ -571,6 +586,9 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       final res = await http
           .post(uri, headers: _headers(), body: _accum)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        throw Exception(_messageFromErrorBody(res));
+      }
       final j = jsonDecode(utf8.decode(res.bodyBytes));
       if (j is! Map) throw Exception('Respuesta inválida');
       final m = Map<String, dynamic>.from(j);

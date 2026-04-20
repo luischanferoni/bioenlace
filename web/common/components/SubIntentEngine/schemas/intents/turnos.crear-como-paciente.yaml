@@ -60,7 +60,7 @@ subintents:
       - draft.id_rr_hh
     next: select_slot
     open_ui:
-      action_id: rrhh.elegir
+      action_id: rrhh.listar-por-efector-servicio
       params:
         id_efector: "draft.id_efector"
         id_servicio: "draft.id_servicio_asignado"

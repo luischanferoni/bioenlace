@@ -21,6 +21,68 @@ class RrhhController extends BaseController
 {
     public static $authenticatorExcept = ['autocomplete'];
 
+    private function reqParamRaw(string $name): ?string
+    {
+        $req = Yii::$app->request;
+        $v = $req->get($name);
+        if ($v === null || $v === '') {
+            $v = $req->post($name);
+        }
+        if ($v === null) {
+            return null;
+        }
+        $s = trim((string) $v);
+
+        return $s === '' ? null : $s;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildRrhhAutocompleteFilters(string $idEfector, string $idServicio): array
+    {
+        $req = Yii::$app->request;
+        $filters = [
+            'id_efector' => $idEfector,
+            'id_servicio' => $idServicio,
+            // Para listados UI JSON: devolver suficiente sin paginar de más.
+            'limit' => 200,
+        ];
+        if ($req->get('sort_by') || $req->post('sort_by')) {
+            $filters['sort_by'] = $req->get('sort_by') ?: $req->post('sort_by');
+        }
+        if ($req->get('sort_order') || $req->post('sort_order')) {
+            $filters['sort_order'] = $req->get('sort_order') ?: $req->post('sort_order');
+        }
+
+        return $filters;
+    }
+
+    /**
+     * @return array<int, array{id: string, name: string}>
+     */
+    private function rrhhItemsForUi(?string $q, array $filters): array
+    {
+        $rows = RrhhEfector::autocompleteRrhh($q ?? '', $filters);
+        $out = [];
+        foreach ($rows as $r) {
+            if (!is_array($r)) {
+                continue;
+            }
+            $id = isset($r['id']) ? trim((string) $r['id']) : '';
+            $text = isset($r['text']) ? trim((string) $r['text']) : $id;
+            if ($id === '') {
+                continue;
+            }
+            $out[] = [
+                'id' => $id,
+                'name' => $text !== '' ? $text : $id,
+            ];
+        }
+
+        return $out;
+    }
+
     public function actions()
     {
         $actions = parent::actions();
@@ -119,10 +181,13 @@ class RrhhController extends BaseController
                 'Indique id_efector o fije contexto operativo en sesión (recurso humano / efector) para listar servicios.'
             );
         }
+        /** @var RrhhEfector $rrhhEfector */
 
         $idEfector = (int) $rrhhEfector->id_efector;
         $servicios = [];
-        $rrhhServicios = $rrhhEfector->getRrhhServicio()->with('servicio')->all();
+        /** @var \yii\db\ActiveQuery $q */
+        $q = $rrhhEfector->getRrhhServicio();
+        $rrhhServicios = $q->with('servicio')->all();
         foreach ($rrhhServicios as $rrhhServicio) {
             $servicioEfector = ServiciosEfector::findActive()
                 ->where([
@@ -178,8 +243,9 @@ class RrhhController extends BaseController
             $limit = 200;
         }
 
-        $query = RrhhEfector::find()
-            ->alias('re')
+        /** @var \yii\db\ActiveQuery $query */
+        $query = RrhhEfector::find();
+        $query->alias('re')
             ->with('persona')
             ->where(['re.id_efector' => $idEfector])
             ->andWhere(['re.deleted_at' => null]);
@@ -229,18 +295,20 @@ class RrhhController extends BaseController
             throw new BadRequestHttpException('No hay efector en sesión.');
         }
 
-        $re = RrhhEfector::find()
+        /** @var RrhhEfector|null $re */
+        $re = RrhhEfector::findActive()
             ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->one();
         if ($re === null) {
             throw new BadRequestHttpException('RRHH no válido para este efector.');
         }
 
-        $servicios = RrhhServicio::find()
-            ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
+        /** @var \yii\db\ActiveQuery $serviciosQ */
+        $serviciosQ = RrhhServicio::find();
+        $serviciosQ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
             ->with('servicio')
-            ->orderBy(['id_servicio' => SORT_ASC])
-            ->all();
+            ->orderBy(['id_servicio' => SORT_ASC]);
+        $servicios = $serviciosQ->all();
 
         $results = [];
         foreach ($servicios as $rs) {
@@ -283,18 +351,60 @@ class RrhhController extends BaseController
     }
 
     /**
+     * Vista embebible: listar profesionales (RRHH) por efector y servicio (obligatorios).
+     *
+     * GET|POST /api/v1/rrhh/listar-por-efector-servicio
+     *
+     * @action_name Listar profesionales por efector y servicio
+     * @entity Rrhh
+     * @tags views, ui, rrhh, profesional
+     * @keywords listar profesional, elegir médico, elegir especialista, efector, servicio
+     */
+    public function actionListarPorEfectorServicio(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = $this->reqParamRaw('id_efector');
+        $idServicio = $this->reqParamRaw('id_servicio');
+        if ($idEfector === null || $idServicio === null) {
+            throw new BadRequestHttpException('id_efector e id_servicio son requeridos');
+        }
+
+        $ui = UiScreenService::handleScreen(
+            'rrhh',
+            'listar-por-efector-servicio',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $filters = $this->buildRrhhAutocompleteFilters($idEfector, $idServicio);
+            $q = $this->reqParamRaw('q');
+            $ui['items'] = $this->rrhhItemsForUi($q, $filters);
+        }
+
+        return $ui;
+    }
+
+    /**
      * Vista embebible: elegir profesional (RRHH) para un efector/servicio.
      *
      * GET|POST /api/v1/rrhh/elegir
      *
-     * @action_name Elegir profesional (RRHH)
-     * @entity Rrhh
-     * @tags views, ui, rrhh, profesional
-     * @keywords elegir profesional, elegir médico, elegir especialista
+     * @deprecated Preferir listar-por-efector-servicio en nuevos flujos.
      */
     public function actionElegir(): array
     {
         $req = Yii::$app->request;
+        // Mantener compatibilidad: redirigir al listado explícito si llegan los parámetros requeridos.
+        $idEfector = $this->reqParamRaw('id_efector');
+        $idServicio = $this->reqParamRaw('id_servicio');
+        if ($idEfector !== null && $idServicio !== null) {
+            return $this->actionListarPorEfectorServicio();
+        }
+
         return UiScreenService::handleScreen(
             'rrhh',
             'elegir',

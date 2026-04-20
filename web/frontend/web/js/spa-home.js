@@ -77,7 +77,19 @@
             })
         })
             .then(function (r) {
-                if (!r.ok) throw new Error('Error al cargar UI JSON');
+                if (!r.ok) {
+                    return r.text().then(function (t) {
+                        try {
+                            const j = JSON.parse(t);
+                            if (j && typeof j.message === 'string' && j.message.trim() !== '') {
+                                throw new Error(j.message.trim());
+                            }
+                        } catch (e) {
+                            // ignore parse error; use generic below
+                        }
+                        throw new Error('HTTP ' + r.status);
+                    });
+                }
                 return r.json();
             })
             .then(function (json) {
@@ -90,7 +102,8 @@
             })
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
-                mountEl.innerHTML = '<div class="alert alert-danger mb-0">Error al cargar la UI</div>';
+                const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
+                mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
             })
             .finally(function () {
                 responseSection.classList.remove('d-none');
@@ -372,7 +385,19 @@
                     })
                 })
                 .then(r => {
-                    if (!r.ok) throw new Error('Error al cargar UI JSON');
+                    if (!r.ok) {
+                        return r.text().then(function (t) {
+                            try {
+                                const j = JSON.parse(t);
+                                if (j && typeof j.message === 'string' && j.message.trim() !== '') {
+                                    throw new Error(j.message.trim());
+                                }
+                            } catch (e) {
+                                // ignore
+                            }
+                            throw new Error('HTTP ' + r.status);
+                        });
+                    }
                     return r.json();
                 })
                 .then(json => {
@@ -385,7 +410,8 @@
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
-                    actionsDiv.innerHTML = '<div class="alert alert-danger mb-0">Error al cargar la UI</div>';
+                    const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
+                    actionsDiv.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
                 })
                 .finally(() => {
                     responseSection.classList.remove('d-none');

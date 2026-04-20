@@ -1,0 +1,24 @@
+{
+  "ui_type": "ui_json",
+  "title": "Elegir profesional (por efector y servicio)",
+  "ui_meta": {
+    "list": {
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "chips": [],
+      "draft_field": "id_rr_hh",
+      "item": { "kind": "rrhh", "id_field": "id", "label_field": "name" }
+    },
+    "assistant_embed": {}
+  },
+  "fields": [
+    {
+      "name": "id_rr_hh",
+      "label": "Profesional",
+      "type": "select",
+      "required": true,
+      "options": "{{options}}",
+      "option_config": { "source": "rrhh" }
+    }
+  ]
+}
+

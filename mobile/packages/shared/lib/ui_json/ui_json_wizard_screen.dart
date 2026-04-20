@@ -93,6 +93,8 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   Map<String, dynamic>? _root;
   /// Selección pendiente en listados `ui_json` embebidos (antes de Confirmar).
   String? _listEmbedSelectedId;
+  /// Cuando se confirma/aplica un ítem, bloquear nuevas selecciones en este embed.
+  bool _listEmbedLocked = false;
   int _step = 0;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
@@ -169,6 +171,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       setState(() {
         _root = m;
         _listEmbedSelectedId = null;
+        _listEmbedLocked = false;
         _step = (m['wizard_config'] is Map && (m['wizard_config']['initial_step'] is int))
             ? m['wizard_config']['initial_step'] as int
             : 0;
@@ -720,10 +723,17 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(10),
                                   onTap: () async {
+                                    if (_listEmbedLocked) return;
                                     if (requiresConfirmation) {
                                       setState(() => _listEmbedSelectedId = id);
                                     } else {
                                       await _applyListEmbedDraft(draftField, id);
+                                      if (mounted) {
+                                        setState(() {
+                                          _listEmbedLocked = true;
+                                          _listEmbedSelectedId = null;
+                                        });
+                                      }
                                     }
                                   },
                                   child: DecoratedBox(
@@ -768,13 +778,16 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
                         children: [
                           const Spacer(),
                           FilledButton(
-                            onPressed: _listEmbedSelectedId == null
+                            onPressed: (_listEmbedLocked || _listEmbedSelectedId == null)
                                 ? null
                                 : () async {
                                     final id = _listEmbedSelectedId!;
                                     await _applyListEmbedDraft(draftField, id);
                                     if (mounted) {
-                                      setState(() => _listEmbedSelectedId = null);
+                                      setState(() {
+                                        _listEmbedLocked = true;
+                                        _listEmbedSelectedId = null;
+                                      });
                                     }
                                   },
                             child: const Text('Confirmar'),

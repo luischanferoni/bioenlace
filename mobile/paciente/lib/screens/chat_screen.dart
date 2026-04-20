@@ -173,13 +173,60 @@ class _ChatScreenState extends State<ChatScreen> {
               return;
             }
 
-            // Si el backend envía open_ui pero no puede resolver client_open, es un error de catálogo/permisos.
+            // Flow: si `client_open` viene null, usar `flow_manifest.active_step.ui.tabs[*].route` como fuente.
             if (actionId != null && actionId.isNotEmpty && co == null) {
+              final fm = data['flow_manifest'];
+              String? route;
+              if (fm is Map) {
+                final step = fm['active_step'];
+                if (step is Map) {
+                  final ui = step['ui'];
+                  if (ui is Map && ui['tabs'] is List) {
+                    final tabs = ui['tabs'] as List;
+                    final defId = ui['default_tab']?.toString() ?? '';
+                    Map? picked;
+                    for (final t in tabs) {
+                      if (t is Map && defId.isNotEmpty && t['id']?.toString() == defId) {
+                        picked = t;
+                        break;
+                      }
+                    }
+                    picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
+                    route = picked is Map ? picked['route']?.toString() : null;
+                  }
+                }
+              }
+
+              if (route != null && route.isNotEmpty) {
+                final pseudoAction = <String, dynamic>{
+                  'action_id': actionId,
+                  'display_name': actionId,
+                  'client_open': {
+                    'kind': 'ui_json',
+                    'api': {'route': route, 'method': 'GET|POST'},
+                  },
+                  'parameters': {'provided': _draft},
+                };
+                setState(() {
+                  _isSending = false;
+                  _chatHistory.add({
+                    'type': 'bot',
+                    'content': explanation,
+                    'actions': null,
+                    if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+                    'timestamp': DateTime.now(),
+                  });
+                });
+                _scrollToBottom();
+                await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+                return;
+              }
+
               setState(() {
                 _isSending = false;
                 _chatHistory.add({
                   'type': 'bot',
-                  'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). Puede ser falta de permisos o de catálogo para esta acción.',
+                  'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). No vino client_open ni pude derivar route desde flow_manifest.',
                   'actions': null,
                   'timestamp': DateTime.now(),
                 });
@@ -829,16 +876,107 @@ class _ChatScreenState extends State<ChatScreen> {
                                 if (!mounted) return;
                                 if (res['success'] == true) {
                                   final data = res['data'];
-                                  final t = (data is Map ? data['text']?.toString() : null) ?? 'Ok.';
-                                  setState(() {
-                                    _chatHistory.add({
-                                      'type': 'bot',
-                                      'content': t,
-                                      'actions': null,
-                                      'timestamp': DateTime.now(),
+                                  if (data is Map) {
+                                    // Sincronizar estado flow local.
+                                    final iid = data['intent_id']?.toString();
+                                    final sid = data['subintent_id']?.toString();
+                                    if (iid != null && iid.isNotEmpty) {
+                                      _intentId = iid;
+                                      _asistenteService.currentIntentId = _intentId;
+                                    }
+                                    if (sid != null && sid.isNotEmpty) {
+                                      _subintentId = sid;
+                                      _asistenteService.currentSubintentId = _subintentId;
+                                    }
+                                    final dd2 = data['draft_delta'];
+                                    if (dd2 is Map && dd2.isNotEmpty) {
+                                      _draft = {..._draft, ...Map<String, dynamic>.from(dd2)};
+                                      _asistenteService.draft = _draft;
+                                    }
+
+                                    final t = data['text']?.toString();
+                                    final msgText = (t != null && t.trim().isNotEmpty) ? t.trim() : 'Ok.';
+                                    setState(() {
+                                      _chatHistory.add({
+                                        'type': 'bot',
+                                        'content': msgText,
+                                        'actions': null,
+                                        if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+                                        'timestamp': DateTime.now(),
+                                      });
                                     });
-                                  });
-                                  _scrollToBottom();
+                                    _scrollToBottom();
+
+                                    // Si el paso siguiente trae open_ui, abrirla inline.
+                                    final openUi = data['open_ui'];
+                                    if (openUi is Map) {
+                                      final actionId = openUi['action_id']?.toString();
+                                      final co = openUi['client_open'];
+                                      if (actionId != null && actionId.isNotEmpty) {
+                                        Map<String, dynamic>? pseudoAction;
+                                        if (co is Map) {
+                                          pseudoAction = <String, dynamic>{
+                                            'action_id': actionId,
+                                            'display_name': actionId,
+                                            'client_open': Map<String, dynamic>.from(co),
+                                            'parameters': {'provided': _draft},
+                                          };
+                                        } else {
+                                          // Fallback flow: usar route del active_step/tab default.
+                                          final fm = data['flow_manifest'];
+                                          String? route;
+                                          if (fm is Map) {
+                                            final step = fm['active_step'];
+                                            if (step is Map) {
+                                              final ui = step['ui'];
+                                              if (ui is Map && ui['tabs'] is List) {
+                                                final tabs = ui['tabs'] as List;
+                                                final defId = ui['default_tab']?.toString() ?? '';
+                                                Map? picked;
+                                                for (final tt in tabs) {
+                                                  if (tt is Map && defId.isNotEmpty && tt['id']?.toString() == defId) {
+                                                    picked = tt;
+                                                    break;
+                                                  }
+                                                }
+                                                picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
+                                                route = picked is Map ? picked['route']?.toString() : null;
+                                              }
+                                            }
+                                          }
+                                          if (route != null && route.isNotEmpty) {
+                                            pseudoAction = <String, dynamic>{
+                                              'action_id': actionId,
+                                              'display_name': actionId,
+                                              'client_open': {
+                                                'kind': 'ui_json',
+                                                'api': {'route': route, 'method': 'GET|POST'},
+                                              },
+                                              'parameters': {'provided': _draft},
+                                            };
+                                          }
+                                        }
+
+                                        if (pseudoAction != null) {
+                                          await _tryOpenClientNative(
+                                            pseudoAction,
+                                            messageIndex: _chatHistory.length - 1,
+                                          );
+                                        }
+                                      }
+                                    }
+                                  } else {
+                                    final t = (data is Map ? data['text']?.toString() : null) ?? 'Ok.';
+                                    setState(() {
+                                      _chatHistory.add({
+                                        'type': 'bot',
+                                        'content': t,
+                                        'actions': null,
+                                        'timestamp': DateTime.now(),
+                                      });
+                                    });
+                                    _scrollToBottom();
+                                  }
                                 }
                               },
                             ),

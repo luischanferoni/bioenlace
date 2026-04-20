@@ -61,6 +61,9 @@ subintents:
     next: select_slot
     open_ui:
       action_id: rrhh.elegir
+      params:
+        id_efector: "draft.id_efector"
+        id_servicio: "draft.id_servicio_asignado"
 
   - id: select_slot
     assistant_text: "Elegí un horario disponible."

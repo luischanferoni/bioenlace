@@ -113,7 +113,10 @@
                                 "label": "Elegir",
                                 "action_id": "rrhh.elegir",
                                 "route": "/api/v1/rrhh/elegir",
-                                "params": {},
+                                "params": {
+                                    "id_efector": "draft.id_efector",
+                                    "id_servicio": "draft.id_servicio_asignado"
+                                },
                                 "requires_client": []
                             }
                         ]

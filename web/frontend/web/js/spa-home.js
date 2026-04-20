@@ -152,7 +152,8 @@
     function handleSendQuery() {
         const query = queryInput.value.trim();
         
-        if (!query) {
+        // En flows, se permite avanzar con `content=''` (solo snapshot draft/intento).
+        if (!query && !currentIntentId) {
             showError('Por favor, ingresa una consulta');
             return;
         }
@@ -253,29 +254,47 @@
 
                 const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
+                const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
+                const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
+                const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
+                const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
+                const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
+
+                // En flows, la fuente de verdad para abrir la UI es `flow_manifest.active_step.ui.tabs[*].route`.
+                // `open_ui.client_open` puede venir null (p. ej. por permisos/catálogo), pero igual podemos intentar
+                // abrir vía route y dejar que el server autorice (403) si corresponde.
                 const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
-                if (!okUiJson) {
+                let fullUrl = '';
+                if (okUiJson) {
+                    const route = String(co.api.route || '');
+                    fullUrl = mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api);
+                } else if (tabs.length >= 1) {
+                    let defIdx = 0;
+                    for (let ti = 0; ti < tabs.length; ti++) {
+                        if (defaultTabId !== '' && String(tabs[ti].id) === defaultTabId) {
+                            defIdx = ti;
+                            break;
+                        }
+                    }
+                    fullUrl = buildUrlForFlowTab(tabs[defIdx]);
+                }
+
+                if (!fullUrl) {
                     if (openUi && openUi.action_id) {
-                        // No dejar el flow "silencioso": si el backend no pudo resolver client_open
-                        // (permisos/catálogo/template), mostrar un error visible al usuario.
                         explanationDiv.innerHTML =
                             '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' +
                             '<div class="alert alert-danger mb-0">' +
-                            'No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + '). ' +
-                            'Puede ser falta de permisos o de catálogo para esta acción.' +
+                            'No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').' +
                             '</div>';
+                    } else {
+                        explanationDiv.innerHTML =
+                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' +
+                            '<div class="alert alert-danger mb-0">No puedo determinar la UI a abrir para este paso.</div>';
                     }
                     responseSection.classList.remove('d-none');
                     setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
                     return;
                 }
-
-                const route = String(co.api.route || '');
-                const fullUrl = mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api);
-                const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
-                const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
-                const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
-                const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
 
                 if (tabs.length >= 2) {
                     actionsDiv.innerHTML = '';
@@ -285,7 +304,6 @@
                     actionsDiv.appendChild(tabRow);
                     actionsDiv.appendChild(mountEl);
 
-                    const defaultTabId = uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
                     let firstDefaultIdx = 0;
                     for (let ti = 0; ti < tabs.length; ti++) {
                         if (String(tabs[ti].id) === defaultTabId) {
@@ -550,6 +568,7 @@
         }
         const draftField = list.draft_field ? String(list.draft_field) : '';
         const requiresConfirmation = list.selection && list.selection.requires_confirmation === true;
+        let locked = false;
 
         let html = '<div class="bio-ui-json-list">';
         html += '<div class="d-flex gap-2 overflow-auto pb-2">';
@@ -565,6 +584,7 @@
 
         container.querySelectorAll('button[data-embed-pick="1"]').forEach(btn => {
             btn.addEventListener('click', function () {
+                if (locked) return;
                 const id = this.getAttribute('data-embed-id') || '';
                 const label = this.getAttribute('data-embed-label') || id;
                 if (!id) return;
@@ -578,6 +598,15 @@
                     console.warn('[SPA] ui_json list sin draft_field');
                     return;
                 }
+
+                // Bloquear el listado una vez confirmada la selección (evita re-seleccionar un ítem viejo).
+                locked = true;
+                try {
+                    container.querySelectorAll('button[data-embed-pick="1"]').forEach(b => {
+                        b.disabled = true;
+                        b.classList.add('disabled');
+                    });
+                } catch (e) { /* ignore */ }
 
                 // Aplicar draft local y avanzar el flow automáticamente.
                 try {

@@ -21,6 +21,13 @@ String _messageFromErrorBody(http.Response res) {
   return 'HTTP ${res.statusCode}';
 }
 
+String _humanizeExceptionMessage(Object e) {
+  var s = e.toString().trim();
+  // Dart suele formatear Exception como "Exception: <msg>" (o a veces "Exception. <msg>").
+  s = s.replaceFirst(RegExp(r'^Exception\s*[:.]\s*', caseSensitive: false), '');
+  return s.trim();
+}
+
 /// Resuelve ruta devuelta por el backend (`/api/v1/...`) contra [AppConfig.apiUrl].
 String resolveApiAbsoluteUrl(String routeOrPath) {
   final r = routeOrPath.trim();
@@ -194,7 +201,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = _humanizeExceptionMessage(e);
         _loading = false;
       });
     }
@@ -629,7 +636,9 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_humanizeExceptionMessage(e))),
+      );
     }
   }
 

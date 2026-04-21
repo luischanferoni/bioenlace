@@ -48,10 +48,10 @@ class PersonaBusqueda extends persona
         ]);
 
         // this is to return an empty search result by default
-        if(!isset($params['PersonaBusqueda'])) {
+        /*if(!isset($params['PersonaBusqueda'])) {
             $query->where('0=1');
             return $dataProvider;
-        }
+        }*/
 
         $this->load($params);
 

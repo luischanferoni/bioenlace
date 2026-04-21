@@ -130,12 +130,14 @@ class PersonasController extends Controller {
     public function actionIndex() {
         $searchModel = new PersonaBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+        $dataProvider->setPagination(['pageSize' => 20]);
 
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
     }
+    
     public function actionBuscarRenaper($parametros = []){
         $this->_mpi_api = new MpiApiController;
         $respuesta = [];

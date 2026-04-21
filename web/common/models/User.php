@@ -55,10 +55,12 @@ class User extends webvimarkUser {
     {
         parent::afterSave($insert, $changedAttributes);
 
-        if (Yii::$app->getRequest()->getQueryParam('id')) {
-            $idpersona = Yii::$app->getRequest()->getQueryParam('id');
-            $iduser = $this->id;
-            self::actualizarIduserpersona($idpersona, $iduser);
+        $request = Yii::$app->getRequest();
+        if ($request instanceof \yii\web\Request) {
+            $idpersona = $request->getQueryParam('id');
+            if ($idpersona !== null && $idpersona !== '') {
+                self::actualizarIduserpersona($idpersona, $this->id);
+            }
         }
     }
 

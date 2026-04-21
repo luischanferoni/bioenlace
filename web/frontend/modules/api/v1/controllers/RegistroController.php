@@ -165,9 +165,9 @@ class RegistroController extends BaseController
      */
     public function actionSimularPacienteMercedes()
     {
-        $dni = '29558371';
-        $nombre = 'Mercedes';
-        $apellido = 'Diaz';
+        $dni = '29486884';
+        $nombre = 'Luis';
+        $apellido = 'Chanferoni';
 
         // Buscar o crear Persona
         $persona = Persona::findOne(['documento' => $dni]);
@@ -182,13 +182,13 @@ class RegistroController extends BaseController
         $persona->nombre = $nombre;
         $persona->apellido = $apellido;
         $persona->documento = $dni;
-        $persona->fecha_nacimiento = $persona->fecha_nacimiento ?: '1984-01-01';
+        $persona->fecha_nacimiento = $persona->fecha_nacimiento ?: '1982-07-14';
         $persona->id_tipodoc = $persona->id_tipodoc ?: 1;
         $persona->id_estado_civil = $persona->id_estado_civil ?: 1;
         $persona->acredita_identidad = 1; // Simula registro con identidad acreditada (Didit)
         if ($persona->sexo_biologico === null && $persona->genero === null) {
-            $persona->sexo_biologico = 1;
-            $persona->genero = 1;
+            $persona->sexo_biologico = 2;
+            $persona->genero = 2;
         }
 
         if (!$persona->save()) {

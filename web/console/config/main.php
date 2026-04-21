@@ -5,6 +5,15 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'console\controllers',
+    /**
+     * webvimark User (common\models\User) usa tableName() vía este módulo.
+     * Sin registrarlo, comandos que crean usuarios fallan con "user_table on null".
+     */
+    'modules' => [
+        'user-management' => [
+            'class' => \webvimark\modules\UserManagement\UserManagementModule::class,
+        ],
+    ],
     'components' => [
         'log' => [
             'targets' => [

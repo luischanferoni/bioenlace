@@ -258,8 +258,12 @@ final class SubIntentEngine
     private static function missingDraftFields(array $subintent, array $draft): array
     {
         $requires = isset($subintent['requires']) && is_array($subintent['requires']) ? $subintent['requires'] : [];
+        // Para subintents “de selección”, lo que el paso **provee** (draft.*) también es obligatorio
+        // para poder considerarlo completo y avanzar.
+        $provides = isset($subintent['provides']) && is_array($subintent['provides']) ? $subintent['provides'] : [];
+        $needs = array_merge($requires, $provides);
         $missing = [];
-        foreach ($requires as $r) {
+        foreach ($needs as $r) {
             $k = trim((string) $r);
             if ($k === '') {
                 continue;
@@ -275,7 +279,7 @@ final class SubIntentEngine
                 }
             }
         }
-        return $missing;
+        return array_values(array_unique($missing));
     }
 
     /**

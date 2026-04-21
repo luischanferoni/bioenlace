@@ -73,7 +73,11 @@ subintents:
       - draft.slot_id
     next: confirm
     open_ui:
-      action_id: turnos.elegir-slot
+      action_id: turnos.slots-disponibles-como-paciente
+      params:
+        id_servicio: "draft.id_servicio_asignado"
+        id_efector: "draft.id_efector"
+        id_rr_hh: "draft.id_rr_hh"
 
   - id: confirm
     assistant_text: "Listo: confirmá los datos y lo enviamos."

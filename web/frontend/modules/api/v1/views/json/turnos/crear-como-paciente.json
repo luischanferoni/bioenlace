@@ -27,7 +27,7 @@
                     "action_id": "rrhh.listar-por-efector-servicio"
                 },
                 "select_slot": {
-                    "action_id": "turnos.elegir-slot"
+                    "action_id": "turnos.slots-disponibles-como-paciente"
                 }
             },
             "steps": [
@@ -138,9 +138,13 @@
                             {
                                 "id": "default",
                                 "label": "Elegir",
-                                "action_id": "turnos.elegir-slot",
-                                "route": "/api/v1/turnos/elegir-slot",
-                                "params": {},
+                                "action_id": "turnos.slots-disponibles-como-paciente",
+                                "route": "/api/v1/turnos/slots-disponibles-como-paciente",
+                                "params": {
+                                    "id_servicio": "draft.id_servicio_asignado",
+                                    "id_efector": "draft.id_efector",
+                                    "id_rr_hh": "draft.id_rr_hh"
+                                },
                                 "requires_client": []
                             }
                         ]

@@ -70,30 +70,6 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Vista embebible: elegir slot/horario (para flujos conversacionales).
-     *
-     * GET|POST /api/v1/turnos/elegir-slot
-     *
-     * @action_name Elegir horario (turnos)
-     * @entity Turnos
-     * @tags views, ui, slot, horario, turnos
-     * @keywords elegir horario, elegir turno, seleccionar horario
-     */
-    public function actionElegirSlot(): array
-    {
-        $req = Yii::$app->request;
-        return UiScreenService::handleScreen(
-            'turnos',
-            'elegir-slot',
-            $req->get(),
-            $req->post(),
-            static function (array $post): array {
-                return ['data' => ['ok' => true]];
-            }
-        );
-    }
-
-    /**
      * Turnos donde el usuario es paciente. GET /api/v1/turnos/listar-como-paciente (fecha_desde, fecha_hasta opcionales).
      *
      * @action_name Mis turnos y citas (paciente)
@@ -515,79 +491,118 @@ class TurnosController extends BaseController
     public function actionSlotsDisponiblesComoPaciente()
     {
         $req = Yii::$app->request;
-        $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
-        if (!$idServicio) {
-            throw new BadRequestHttpException('id_servicio es obligatorio');
-        }
-        $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
-        if (!$idEfector) {
-            $idEfector = Yii::$app->user->getIdEfector();
-        }
-        if (!$idEfector) {
-            throw new BadRequestHttpException('No se pudo determinar id_efector');
-        }
-
-        $criteria = [
-            'id_servicio' => (int) $idServicio,
-            'id_efector' => (int) $idEfector,
-            'fecha_desde' => date('Y-m-d'),
-        ];
-
-        $idRrsa = (int) ($req->get('id_rrhh_servicio_asignado') ?: $req->post('id_rrhh_servicio_asignado') ?: 0);
-        $idRrhh = $req->get('id_rr_hh') ?: $req->post('id_rr_hh');
-        if ($idRrsa <= 0 && $idRrhh) {
-            $resolved = RrhhServicio::obtenerIdRrhhServicio((int) $idRrhh, (int) $idServicio);
-            if ($resolved) {
-                $idRrsa = (int) $resolved;
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'slots-disponibles-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
             }
-        }
-        if ($idRrsa > 0) {
-            $criteria['id_rrhh_servicio_asignado'] = $idRrsa;
-        }
+        );
 
-        $restr = $req->get('restricciones') ?: $req->post('restricciones');
-        if (is_string($restr) && $restr !== '') {
-            $decoded = json_decode($restr, true);
-            if (is_array($decoded)) {
-                $criteria['restricciones'] = $decoded;
+        // Inyectar listado de slots como `items` para UI JSON inline.
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
+            $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
+            if (!$idServicio) {
+                throw new BadRequestHttpException('id_servicio es obligatorio');
             }
-        } elseif (is_array($restr)) {
-            $criteria['restricciones'] = $restr;
-        }
+            $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
+            if (!$idEfector) {
+                $idEfector = Yii::$app->user->getIdEfector();
+            }
+            if (!$idEfector) {
+                throw new BadRequestHttpException('No se pudo determinar id_efector');
+            }
 
-        $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
-        $p = Yii::$app->params['turnosPaciente'] ?? [];
-        $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
-
-        $limiteRaw = $req->get('limite') ?: $req->post('limite');
-        $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
-        $limite = max(1, min($maxCliente, $limite));
-
-        $maxDias = (int) $defaults['max_dias'];
-        $maxDias = max(1, min(90, $maxDias));
-
-        $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
-        $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
-        if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
-            $franja = $defaults['franja_tarde_desde'];
-        }
-
-        try {
-            $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
-        } catch (\InvalidArgumentException $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        } catch (\RuntimeException $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        }
-
-        return array_merge(['success' => true], $grouped, [
-            'criterios' => [
+            $criteria = [
                 'id_servicio' => (int) $idServicio,
                 'id_efector' => (int) $idEfector,
-                'id_rrhh_servicio_asignado' => $criteria['id_rrhh_servicio_asignado'] ?? null,
-                'fecha_desde' => $criteria['fecha_desde'],
-            ],
-        ]);
+                'fecha_desde' => date('Y-m-d'),
+            ];
+
+            $idRrsa = (int) ($req->get('id_rrhh_servicio_asignado') ?: $req->post('id_rrhh_servicio_asignado') ?: 0);
+            $idRrhh = $req->get('id_rr_hh') ?: $req->post('id_rr_hh');
+            if ($idRrsa <= 0 && $idRrhh) {
+                $resolved = RrhhServicio::obtenerIdRrhhServicio((int) $idRrhh, (int) $idServicio);
+                if ($resolved) {
+                    $idRrsa = (int) $resolved;
+                }
+            }
+            if ($idRrsa > 0) {
+                $criteria['id_rrhh_servicio_asignado'] = $idRrsa;
+            }
+
+            $restr = $req->get('restricciones') ?: $req->post('restricciones');
+            if (is_string($restr) && $restr !== '') {
+                $decoded = json_decode($restr, true);
+                if (is_array($decoded)) {
+                    $criteria['restricciones'] = $decoded;
+                }
+            } elseif (is_array($restr)) {
+                $criteria['restricciones'] = $restr;
+            }
+
+            $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+            $p = Yii::$app->params['turnosPaciente'] ?? [];
+            $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
+
+            $limiteRaw = $req->get('limite') ?: $req->post('limite');
+            $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
+            $limite = max(1, min($maxCliente, $limite));
+
+            $maxDias = (int) $defaults['max_dias'];
+            $maxDias = max(1, min(90, $maxDias));
+
+            $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
+            $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
+            if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
+                $franja = $defaults['franja_tarde_desde'];
+            }
+
+            try {
+                $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
+            } catch (\InvalidArgumentException $e) {
+                throw new BadRequestHttpException($e->getMessage());
+            } catch (\RuntimeException $e) {
+                throw new BadRequestHttpException($e->getMessage());
+            }
+
+            $items = [];
+            $porDia = isset($grouped['por_dia']) && is_array($grouped['por_dia']) ? $grouped['por_dia'] : [];
+            foreach ($porDia as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $fecha = isset($row['fecha']) ? (string) $row['fecha'] : '';
+                $manana = isset($row['manana']) && is_array($row['manana']) ? $row['manana'] : [];
+                $tarde = isset($row['tarde']) && is_array($row['tarde']) ? $row['tarde'] : [];
+                foreach (array_merge($manana, $tarde) as $slot) {
+                    if (!is_array($slot)) {
+                        continue;
+                    }
+                    $hora = isset($slot['hora']) ? (string) $slot['hora'] : '';
+                    $idRrsaSlot = isset($slot['id_rrhh_servicio_asignado']) ? (string) (int) $slot['id_rrhh_servicio_asignado'] : '';
+                    if ($fecha === '' || $hora === '' || $idRrsaSlot === '') {
+                        continue;
+                    }
+                    $id = $idRrsaSlot . '|' . $fecha . '|' . $hora;
+                    $items[] = [
+                        'id' => $id,
+                        'label' => $fecha . ' ' . $hora,
+                        'meta' => [
+                            'fecha' => $fecha,
+                            'hora' => $hora,
+                            'id_rrhh_servicio_asignado' => (int) $idRrsaSlot,
+                        ],
+                    ];
+                }
+            }
+
+            $out['items'] = $items;
+        }
+
+        return $out;
     }
 
     /**

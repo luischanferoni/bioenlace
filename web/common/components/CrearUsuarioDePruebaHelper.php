@@ -13,9 +13,9 @@ use webvimark\modules\UserManagement\models\rbacDB\Role;
 final class CrearUsuarioDePruebaHelper
 {
     /** Documento reservado para entornos de desarrollo; cambiar si ya existe en tu base. */
-    public const DOCUMENTO = '29486884';
-    public const NOMBRE = 'Luis';
-    public const APELLIDO = 'Chanferoni';
+    public const DOCUMENTO = '39999901';
+    public const NOMBRE = 'Admin';
+    public const APELLIDO = 'Efector';
 
     /**
      * @return array{ok:bool, message:string, persona?:array, user?:array|null, errors?:mixed}
@@ -47,11 +47,11 @@ final class CrearUsuarioDePruebaHelper
             $persona->nombre = self::NOMBRE;
             $persona->apellido = self::APELLIDO;
             $persona->documento = $dni;
-            $persona->fecha_nacimiento = '1982-07-14';
+            $persona->fecha_nacimiento = '1984-01-01';
             $persona->id_tipodoc = 1;
             $persona->id_estado_civil = 1;
             $persona->acredita_identidad = 1;
-            $persona->sexo_biologico = 2;
+            $persona->sexo_biologico = 1;
             $persona->genero = 1;
 
             if (!$persona->save()) {

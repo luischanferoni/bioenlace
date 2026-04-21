@@ -54,9 +54,6 @@ class LoginScreen extends StatefulWidget {
   /// Si es null, se usa solo la biometría local del dispositivo.
   final String? diditBiometricWorkflowId;
 
-  /// Callback opcional para una acción de simulación (por ejemplo, crear paciente de prueba).
-  final Function(BuildContext context)? onSimulateCreatePaciente;
-
   const LoginScreen({
     Key? key,
     this.appTitle = 'Bienvenido a BioEnlace',
@@ -72,7 +69,6 @@ class LoginScreen extends StatefulWidget {
     this.goToHomeButtonText,
     this.biometricAvailableText,
     this.diditBiometricWorkflowId,
-    this.onSimulateCreatePaciente,
   }) : super(key: key);
 
   @override
@@ -479,25 +475,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       elevation: 3,
-                    ),
-                  ),
-                ),
-              ],
-
-              // Botón de simulación de paciente (solo si se proporciona callback)
-              if (widget.onSimulateCreatePaciente != null) ...[
-                const SizedBox(height: 12),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.warningColor,
-                  ),
-                  onPressed: () => widget.onSimulateCreatePaciente!(context),
-                  child: Text(
-                    'Crear paciente (simulación)',
-                    style: AppTheme.subTitleStyle.copyWith(
-                      color: AppTheme.warningColor,
-                      fontSize: 14,
-                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),

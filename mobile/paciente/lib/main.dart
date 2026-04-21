@@ -57,48 +57,6 @@ class MyApp extends StatelessWidget {
               signupButtonText: '¿No tienes cuenta? Regístrate aquí',
               goToHomeButtonText: 'Ir al inicio de la app',
               diditBiometricWorkflowId: AppConfig.diditPacienteBiometricWorkflowId,
-              onSimulateCreatePaciente: (loginContext) async {
-                try {
-                  final uri = Uri.parse(
-                    '${AppConfig.apiUrl}/registro/simular-paciente-mercedes',
-                  );
-                  final response = await http
-                      .post(uri)
-                      .timeout(Duration(seconds: 15));
-
-                  final data = json.decode(response.body);
-                  if (response.statusCode >= 200 &&
-                      response.statusCode < 300 &&
-                      data['success'] == true) {
-                    ScaffoldMessenger.of(loginContext).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Paciente de prueba "Mercedes Diaz" (DNI 29558371) creado/actualizado.',
-                        ),
-                        backgroundColor: AppTheme.successColor,
-                      ),
-                    );
-                  } else {
-                    final message = data['message'] ??
-                        'No se pudo crear el paciente simulado.';
-                    ScaffoldMessenger.of(loginContext).showSnackBar(
-                      SnackBar(
-                        content: Text(message),
-                        backgroundColor: AppTheme.dangerColor,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  ScaffoldMessenger.of(loginContext).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Error al crear paciente simulado: ${e.toString()}',
-                      ),
-                      backgroundColor: AppTheme.dangerColor,
-                    ),
-                  );
-                }
-              },
               onLoginSuccess: (userId, userName, loginContext) async {
                 // Token puede haber sido guardado por el flujo de login (ej. biometría)
                 final prefs = await SharedPreferences.getInstance();

@@ -106,8 +106,6 @@ return [
                 // OPTIONS: cubierto por behaviors del controller (CORS/preflight) si aplica
                 // login
                 'POST api/<version:\w+>/login' => '<version>/login/login',
-                // registro simulado de paciente (Mercedes Diaz) para pruebas móviles
-                'POST api/<version:\w+>/registro/simular-paciente-mercedes' => '<version>/registro/simular-paciente-mercedes',
                 // login biométrico con Didit
                 'POST api/<version:\w+>/auth/login-biometrico' => '<version>/auth/login-biometrico',
                 // generar token de prueba para paciente por DNI

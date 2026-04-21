@@ -132,45 +132,16 @@ Este documento describe el **nuevo flujo de registración vía API con Verifik +
 
 ---
 
-## 3. Script de consola de prueba (Mercedes Díaz)
+## 3. Comparación con registro manual Web
 
-- **Controlador**: `console\controllers\RegistroController`
-- **Comando**:
-
-```bash
-php yii registro/simular-mercedes
-```
-
-### 3.1. Datos simulados
-
-- Nombre: `Mercedes`
-- Apellido: `Diaz`
-- DNI: `29486884`
-- Tipo: `paciente`
-
-### 3.2. Comportamiento
-
-1. Construye el payload anterior.
-2. Llama a `RegistroService::registrar()` (el mismo servicio que usa la API).
-3. Muestra en consola:
-   - `id_persona`,
-   - nombre y apellido,
-   - DNI,
-   - estado de Verifik (`status`),
-   - si MPI está empadronado o no.
-
----
-
-## 4. Comparación con registro manual Web
-
-### 4.1. Registro manual desde Web
+### 3.1. Registro manual desde Web
 
 - Se realiza desde formularios en `frontend\controllers\PersonaController` (acciones como `create`, `update`).
 - El operador administrativo carga los datos a mano:
   - Identificación, contacto, domicilio, etc.
 - No intervienen Verifik, MPI ni REFEPS en forma automática.
 
-### 4.2. Diferencias clave
+### 3.2. Diferencias clave
 
 - **Fuente de datos**:
   - Web manual: datos ingresados manualmente por personal administrativo.

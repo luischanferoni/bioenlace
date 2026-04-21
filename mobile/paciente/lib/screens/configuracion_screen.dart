@@ -1,8 +1,5 @@
 // lib/screens/configuracion_screen.dart
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
@@ -225,42 +222,6 @@ class ConfiguracionScreen extends StatelessWidget {
             content: Text('Usá el botón "Ir al inicio" desde la pantalla de login.'),
           ),
         );
-      },
-      onSimulateCreatePaciente: (loginContext) async {
-        try {
-          final uri = Uri.parse(
-            '${AppConfig.apiUrl}/registro/simular-paciente-mercedes',
-          );
-          final response = await http.post(uri).timeout(const Duration(seconds: 15));
-          final data = json.decode(response.body);
-          if (response.statusCode >= 200 &&
-              response.statusCode < 300 &&
-              data['success'] == true) {
-            ScaffoldMessenger.of(loginContext).showSnackBar(
-              SnackBar(
-                content: const Text(
-                  'Paciente de prueba "Mercedes Diaz" (DNI 29558371) creado/actualizado.',
-                ),
-                backgroundColor: AppTheme.successColor,
-              ),
-            );
-          } else {
-            final message = data['message'] ?? 'No se pudo crear el paciente simulado.';
-            ScaffoldMessenger.of(loginContext).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: AppTheme.dangerColor,
-              ),
-            );
-          }
-        } catch (e) {
-          ScaffoldMessenger.of(loginContext).showSnackBar(
-            SnackBar(
-              content: Text('Error al crear paciente simulado: $e'),
-              backgroundColor: AppTheme.dangerColor,
-            ),
-          );
-        }
       },
     );
   }

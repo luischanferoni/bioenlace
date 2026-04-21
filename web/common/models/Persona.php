@@ -835,10 +835,22 @@ class Persona extends \yii\db\ActiveRecord
 
         if ($insert) {
             $this->fecha_alta = date("Y-m-d");
-            $this->usuario_alta = Yii::$app->user->userName;
+            if (Yii::$app->has('user', true) && !Yii::$app->user->isGuest) {
+                $this->usuario_alta = Yii::$app->user->userName;
+            } else {
+                $this->usuario_alta = $this->usuario_alta !== null && $this->usuario_alta !== ''
+                    ? $this->usuario_alta
+                    : 'consola';
+            }
         } else {
             $this->fecha_mod = date("Y-m-d");
-            $this->usuario_mod =  Yii::$app->user->userName;
+            if (Yii::$app->has('user', true) && !Yii::$app->user->isGuest) {
+                $this->usuario_mod = Yii::$app->user->userName;
+            } else {
+                $this->usuario_mod = $this->usuario_mod !== null && $this->usuario_mod !== ''
+                    ? $this->usuario_mod
+                    : 'consola';
+            }
         }
 
         return parent::beforeSave($insert);

@@ -39,22 +39,17 @@
     },
     {
       "name": "id_rr_hh",
-      "label": "Profesional",
-      "type": "autocomplete",
+      "label": "",
+      "type": "hidden",
       "required": true,
-      "endpoint": "/api/v1/rrhh/listar-por-efector",
-      "params": { "id_efector": "id_efector" },
-      "auto_load": false
+      "include_in_submit": true
     },
     {
       "name": "id_servicio",
-      "label": "Servicio asignado",
-      "type": "autocomplete",
+      "label": "",
+      "type": "hidden",
       "required": true,
-      "endpoint": "/api/v1/rrhh/servicios-asignados",
-      "depends_on": ["id_rr_hh"],
-      "params": { "id_rr_hh": "id_rr_hh" },
-      "auto_load": false
+      "include_in_submit": true
     },
     {
       "name": "cupo_pacientes",

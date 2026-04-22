@@ -12,7 +12,7 @@
             ],
             "open_ui_hints": {
                 "select_rrhh": {
-                    "action_id": "rrhh.listar-por-efector-ui"
+                    "action_id": "rrhh.listar-por-efector"
                 },
                 "select_servicio": {
                     "action_id": "rrhh.listar-servicios-asignados"
@@ -38,8 +38,8 @@
                             {
                                 "id": "default",
                                 "label": "Elegir",
-                                "action_id": "rrhh.listar-por-efector-ui",
-                                "route": "/api/v1/rrhh/listar-por-efector-ui",
+                                "action_id": "rrhh.listar-por-efector",
+                                "route": "/api/v1/rrhh/listar-por-efector",
                                 "params": {},
                                 "requires_client": []
                             }

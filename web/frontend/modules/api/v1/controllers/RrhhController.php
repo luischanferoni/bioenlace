@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
+use common\components\Services\Rrhh\RrhhPickerService;
 use common\components\UiScreenService;
 use common\models\Condiciones_laborales;
 use common\models\Persona;
@@ -216,82 +217,23 @@ class RrhhController extends BaseController
     }
 
     /**
-     * GET/POST /api/v1/rrhh/listar-por-efector
-     * RRHH del efector (staff). Parámetros: id_efector (opcional, default sesión), q, limit.
-     *
-     * @return array{results: list<array{id: int, text: string}>}
-     */
-    public function actionListarPorEfector($q = null)
-    {
-        $request = Yii::$app->request;
-        $idEfector = $request->get('id_efector') ?: $request->post('id_efector');
-        if ($idEfector === null || $idEfector === '') {
-            $idEfector = Yii::$app->user->getIdEfector();
-        }
-        $idEfector = (int) $idEfector;
-        if ($idEfector <= 0) {
-            throw new BadRequestHttpException('id_efector es requerido');
-        }
-
-        $q = $q ?? $request->get('q') ?? $request->post('q');
-        $limit = (int) ($request->get('limit') ?: $request->post('limit') ?: 50);
-        if ($limit < 1) {
-            $limit = 50;
-        }
-        if ($limit > 200) {
-            $limit = 200;
-        }
-
-        /** @var \yii\db\ActiveQuery $query */
-        $query = RrhhEfector::find();
-        $query->alias('re')
-            ->with('persona')
-            ->where(['re.id_efector' => $idEfector])
-            ->andWhere(['re.deleted_at' => null]);
-
-        if ($q !== null && trim((string) $q) !== '') {
-            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], trim((string) $q)) . '%';
-            $query->joinWith('persona p')
-                ->andWhere([
-                    'or',
-                    ['like', 'p.apellido', $term, false],
-                    ['like', 'p.nombre', $term, false],
-                    ['like', 'p.documento', $term, false],
-                ]);
-        }
-
-        $rows = $query->orderBy(['re.id_rr_hh' => SORT_ASC])->limit($limit)->all();
-
-        $results = [];
-        foreach ($rows as $re) {
-            $nombre = $re->persona !== null ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : ('RRHH #' . $re->id_rr_hh);
-            $results[] = [
-                'id' => (int) $re->id_rr_hh,
-                'text' => $nombre,
-            ];
-        }
-
-        return ['results' => $results];
-    }
-
-    /**
      * Vista embebible: listar RRHH (profesionales) de un efector como `ui_json`.
      *
-     * GET|POST /api/v1/rrhh/listar-por-efector-ui
+     * GET|POST /api/v1/rrhh/listar-por-efector
      *
      * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
      *
-     * @action_name Listar profesionales por efector (UI)
+     * @action_name Listar profesionales por efector
      * @entity Rrhh
      * @tags views, ui, rrhh, profesional
      * @keywords elegir profesional, listar médicos, listar especialistas, efector
      */
-    public function actionListarPorEfectorUi(): array
+    public function actionListarPorEfector(): array
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
             'rrhh',
-            'listar-por-efector-ui',
+            'listar-por-efector',
             $req->get(),
             $req->post(),
             static function (array $post): array {
@@ -300,7 +242,6 @@ class RrhhController extends BaseController
         );
 
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
-            // Reusar la misma query de listar-por-efector (datos) y mapear a items.
             $q = $req->get('q') ?: $req->post('q');
             $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
             if ($idEfector === null || $idEfector === '') {
@@ -319,34 +260,11 @@ class RrhhController extends BaseController
                 $limit = 200;
             }
 
-            /** @var \yii\db\ActiveQuery $query */
-            $query = RrhhEfector::find();
-            $query->alias('re')
-                ->with('persona')
-                ->where(['re.id_efector' => $idEfector])
-                ->andWhere(['re.deleted_at' => null]);
-
-            if ($q !== null && trim((string) $q) !== '') {
-                $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], trim((string) $q)) . '%';
-                $query->joinWith('persona p')
-                    ->andWhere([
-                        'or',
-                        ['like', 'p.apellido', $term, false],
-                        ['like', 'p.nombre', $term, false],
-                        ['like', 'p.documento', $term, false],
-                    ]);
+            try {
+                $ui['items'] = RrhhPickerService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit);
+            } catch (\InvalidArgumentException $e) {
+                throw new BadRequestHttpException($e->getMessage());
             }
-
-            $rows = $query->orderBy(['re.id_rr_hh' => SORT_ASC])->limit($limit)->all();
-            $items = [];
-            foreach ($rows as $re) {
-                $id = (string) (int) $re->id_rr_hh;
-                $name = $re->persona !== null
-                    ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
-                    : ('RRHH #' . $id);
-                $items[] = ['id' => $id, 'name' => $name];
-            }
-            $ui['items'] = $items;
         }
 
         return $ui;

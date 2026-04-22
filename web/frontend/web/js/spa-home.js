@@ -171,6 +171,34 @@
     }
 
     /**
+     * Append de burbujas al chat (no reemplazar historial).
+     * @param {"user"|"bot"|"system"} role
+     * @param {string} html
+     * @returns {HTMLDivElement|null}
+     */
+    function appendChatBubble(role, html) {
+        if (!chatMessagesDiv) {
+            return null;
+        }
+        const row = document.createElement('div');
+        row.className = 'd-flex mb-2 ' + (role === 'user' ? 'justify-content-end' : 'justify-content-start');
+
+        const bubble = document.createElement('div');
+        const base = 'p-2 rounded-3';
+        const theme = role === 'user'
+            ? ' bg-primary text-white'
+            : (role === 'system' ? ' bg-light text-muted border' : ' bg-white border');
+        bubble.className = base + theme;
+        bubble.style.maxWidth = '85%';
+        bubble.innerHTML = html;
+
+        row.appendChild(bubble);
+        chatMessagesDiv.appendChild(row);
+        setTimeout(scrollChatToBottom, 10);
+        return bubble;
+    }
+
+    /**
      * Manejar envío de consulta
      */
     function handleSendQuery() {
@@ -187,6 +215,11 @@
         hideResponse();
         if (chatEmptyHint) {
             chatEmptyHint.classList.add('d-none');
+        }
+
+        // En modo chat, agregar burbuja de usuario antes de enviar (si hay texto).
+        if (chatMessagesDiv && query !== '') {
+            appendChatBubble('user', '<div>' + escapeHtml(query) + '</div>');
         }
 
         // Usar endpoint de la API. Importante: en entornos donde el frontend vive bajo /api,
@@ -276,8 +309,15 @@
 
             // Flow conversacional: no renderizar cards/botones; renderizar mini-UI inline si viene open_ui.
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
-                explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
-                actionsDiv.innerHTML = '';
+                // En web queremos UX tipo chat: NO borrar historial; append de burbuja bot.
+                let botBubble = null;
+                if (chatMessagesDiv) {
+                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>');
+                } else {
+                    // Fallback legacy (sin contenedor chat)
+                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
+                    actionsDiv.innerHTML = '';
+                }
 
                 const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
@@ -307,29 +347,34 @@
                 }
 
                 if (!fullUrl) {
-                    if (openUi && openUi.action_id) {
-                        explanationDiv.innerHTML =
-                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' +
-                            '<div class="alert alert-danger mb-0">' +
-                            'No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').' +
-                            '</div>';
+                    const errHtml = openUi && openUi.action_id
+                        ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
+                        : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
+                    if (botBubble) {
+                        botBubble.innerHTML += errHtml;
+                        setTimeout(scrollChatToBottom, 20);
                     } else {
                         explanationDiv.innerHTML =
-                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' +
-                            '<div class="alert alert-danger mb-0">No puedo determinar la UI a abrir para este paso.</div>';
+                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' + errHtml;
+                        responseSection.classList.remove('d-none');
+                        setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
                     }
-                    responseSection.classList.remove('d-none');
-                    setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
                     return;
                 }
 
+                // Host para renderizar la mini-UI del paso (idealmente dentro de la burbuja).
+                const mountHost = botBubble ? botBubble : actionsDiv;
+
                 if (tabs.length >= 2) {
-                    actionsDiv.innerHTML = '';
+                    if (!botBubble) {
+                        actionsDiv.innerHTML = '';
+                    }
                     const tabRow = document.createElement('div');
-                    tabRow.className = 'd-flex flex-wrap gap-2 mb-2';
+                    tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2';
                     const mountEl = document.createElement('div');
-                    actionsDiv.appendChild(tabRow);
-                    actionsDiv.appendChild(mountEl);
+                    mountEl.className = 'mt-1';
+                    mountHost.appendChild(tabRow);
+                    mountHost.appendChild(mountEl);
 
                     let firstDefaultIdx = 0;
                     for (let ti = 0; ti < tabs.length; ti++) {
@@ -390,7 +435,14 @@
                     return;
                 }
 
-                actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+                if (!botBubble) {
+                    actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+                } else {
+                    const loading = document.createElement('div');
+                    loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
+                    loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
+                    mountHost.appendChild(loading);
+                }
                 fetch(fullUrl, {
                     method: 'GET',
                     headers: window.BioenlaceApiClient.mergeHeaders({
@@ -415,21 +467,42 @@
                     return r.json();
                 })
                 .then(json => {
-                    actionsDiv.innerHTML = '';
-                    if (json && json.kind === 'ui_definition') {
-                        renderDynamicUi(json, actionsDiv, { url: fullUrl });
+                    if (!botBubble) {
+                        actionsDiv.innerHTML = '';
                     } else {
-                        actionsDiv.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+                        // limpiar loaders dentro de la burbuja
+                        try {
+                            Array.from(mountHost.querySelectorAll('.spinner-border')).forEach(function (s) {
+                                const wrap = s.closest('div');
+                                if (wrap && wrap.textContent && wrap.textContent.toLowerCase().includes('cargando')) {
+                                    wrap.remove();
+                                }
+                            });
+                        } catch (e) {
+                            // ignore
+                        }
+                    }
+                    if (json && json.kind === 'ui_definition') {
+                        const target = botBubble ? mountHost : actionsDiv;
+                        renderDynamicUi(json, target, { url: fullUrl });
+                    } else {
+                        const target = botBubble ? mountHost : actionsDiv;
+                        target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
                     }
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    actionsDiv.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
+                    const target = botBubble ? mountHost : actionsDiv;
+                    target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
                 })
                 .finally(() => {
-                    responseSection.classList.remove('d-none');
-                    setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+                    if (!chatMessagesDiv) {
+                        responseSection.classList.remove('d-none');
+                        setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+                    } else {
+                        setTimeout(scrollChatToBottom, 20);
+                    }
                 });
                 return;
             }

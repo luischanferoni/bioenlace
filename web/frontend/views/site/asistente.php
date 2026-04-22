@@ -10,48 +10,70 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 
-<div class="container-fluid py-4">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-10">
-
-            <!-- Chat del asistente -->
-            <div class="mb-4">
-                <textarea 
-                    id="spa-query-input" 
-                    class="form-control form-control-lg" 
-                    rows="3" 
-                    placeholder="Escribe lo que necesitas... Ejemplo: 'Necesito buscar una persona' o 'Quiero ver los reportes disponibles'"
-                    style="resize: none;"
-                ></textarea>
-                <div class="d-flex justify-content-end flex-wrap gap-2 mt-3">
-                    <button type="button" id="spa-what-can-i-do-btn" class="btn btn-outline-secondary btn-lg">
-                        ¿Qué puedo hacer?
-                    </button>
-                    <button type="button" id="spa-send-btn" class="btn btn-primary btn-lg d-flex align-items-center gap-2">
-                        <span class="spa-send-icon">→</span>
-                        <span class="spa-send-text">Enviar</span>
-                        <span class="spa-spinner d-none">
-                            <span class="spinner-border spinner-border-sm" role="status"></span>
-                        </span>
-                    </button>
+<div class="container-fluid py-3">
+    <div class="row g-3 align-items-stretch">
+        <!-- Columna izquierda: sugerencias -->
+        <div class="col-12 col-lg-4 col-xl-3">
+            <div id="spa-common-actions" class="card shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <div class="fw-semibold text-dark">Sugerencias del asistente</div>
+                    <div class="text-muted small">Atajos para tareas frecuentes</div>
                 </div>
-            </div>
-
-            <!-- Respuesta del asistente -->
-            <div id="spa-response-section" class="mb-4 d-none">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <div id="spa-explanation" class="mb-3"></div>
-                        <div id="spa-actions" class="row g-3"></div>
+                <div class="card-body overflow-auto">
+                    <div id="spa-common-actions-grid" class="row g-3">
+                        <!-- Se llena dinámicamente con JavaScript -->
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Sugerencias iniciales -->
-            <div id="spa-common-actions" class="mt-5">
-                <h3 class="text-center mb-4 fw-semibold text-dark">Sugerencias del asistente</h3>
-                <div id="spa-common-actions-grid" class="row g-3">
-                    <!-- Se llenará dinámicamente con JavaScript -->
+        <!-- Columna derecha: chat -->
+        <div class="col-12 col-lg-8 col-xl-9">
+            <div class="card shadow-sm h-100 d-flex flex-column">
+                <div class="card-header bg-white d-flex align-items-center justify-content-between">
+                    <div class="fw-semibold">Chat</div>
+                    <button type="button" id="spa-what-can-i-do-btn" class="btn btn-outline-secondary btn-sm">
+                        ¿Qué puedo hacer?
+                    </button>
+                </div>
+
+                <div class="card-body flex-grow-1 overflow-auto bg-light" id="spa-chat-messages">
+                    <!-- Respuesta del asistente (se muestra/oculta desde JS) -->
+                    <div id="spa-response-section" class="d-none">
+                        <div class="d-flex justify-content-start mb-3">
+                            <div class="bg-white border rounded-4 p-3 w-100">
+                                <div id="spa-explanation" class="mb-3"></div>
+                                <div id="spa-actions" class="row g-3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estado inicial -->
+                    <div class="d-flex justify-content-center" id="spa-chat-empty-hint">
+                        <div class="text-muted small text-center">
+                            Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-white">
+                    <div class="d-flex gap-2 align-items-end">
+                        <textarea
+                            id="spa-query-input"
+                            class="form-control"
+                            rows="2"
+                            placeholder="Escribe tu mensaje…"
+                            style="resize: none;"
+                        ></textarea>
+                        <button type="button" id="spa-send-btn" class="btn btn-primary d-flex align-items-center gap-2">
+                            <span class="spa-send-icon">→</span>
+                            <span class="spa-send-text">Enviar</span>
+                            <span class="spa-spinner d-none">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="text-muted small mt-2">Enter para enviar, Shift+Enter para salto de línea.</div>
                 </div>
             </div>
         </div>

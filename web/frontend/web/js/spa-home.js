@@ -122,6 +122,8 @@
     const actionsDiv = document.getElementById('spa-actions');
     const commonActionsDiv = document.getElementById('spa-common-actions-grid');
     const commonActionsSection = document.getElementById('spa-common-actions');
+    const chatMessagesDiv = document.getElementById('spa-chat-messages');
+    const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
 
     // Estado de cards expandidos
     const expandedCards = new Map();
@@ -159,6 +161,15 @@
         }
     }
 
+    function scrollChatToBottom() {
+        if (!chatMessagesDiv) return;
+        try {
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        } catch (e) {
+            // ignore
+        }
+    }
+
     /**
      * Manejar envío de consulta
      */
@@ -174,6 +185,9 @@
         // Deshabilitar botón y mostrar loading
         setLoadingState(true);
         hideResponse();
+        if (chatEmptyHint) {
+            chatEmptyHint.classList.add('d-none');
+        }
 
         // Usar endpoint de la API. Importante: en entornos donde el frontend vive bajo /api,
         // window.spaConfig.baseUrl puede ser https://host/api y concatenar "/api/..." duplica.
@@ -506,11 +520,16 @@
 
         // Mostrar sección de respuesta
         responseSection.classList.remove('d-none');
-        
-        // Scroll suave a la respuesta
-        setTimeout(() => {
-            responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
+
+        // En modo chat, mantener el scroll dentro del panel.
+        if (chatMessagesDiv) {
+            setTimeout(scrollChatToBottom, 50);
+        } else {
+            // Layout legacy: scroll hacia la card de respuesta
+            setTimeout(() => {
+                responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
     }
 
     /**
@@ -1495,6 +1514,9 @@
         explanationDiv.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(message) + '</div>';
         actionsDiv.innerHTML = '';
         responseSection.classList.remove('d-none');
+        if (chatMessagesDiv) {
+            setTimeout(scrollChatToBottom, 50);
+        }
     }
 
     /**

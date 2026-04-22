@@ -1,6 +1,15 @@
 intent_id: turnos.crear-como-paciente
 version: 1
 
+action_name: "Reservar turno"
+description: "Flujo conversacional para autogestión de turno: servicio, efector, profesional, horario y tipo de atención."
+keywords:
+  - turno
+  - sacar turno
+  - reservar turno
+  - pedir turno
+  - autogestión
+
 # Claves opcionales del draft usadas por clientes sin aparecer en requires/provides del YAML.
 draft_keys_extra:
   - tipo_atencion

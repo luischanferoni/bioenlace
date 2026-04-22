@@ -9,11 +9,11 @@ use common\components\IntentCatalog\IntentCatalogService;
 use webvimark\modules\UserManagement\models\User;
 
 /**
- * Atajos de inicio: subconjunto ordenado de **UIs**.
+ * Atajos de inicio: subconjunto ordenado de acciones.
  *
  * Importante:
- * - UI en API = descriptor JSON bajo `/api/v1/ui/<entidad>/<accion>`.
- * - Endpoints de dominio (turnos/agenda/etc.) no son UI; esta lista intenta apuntar a `/ui/`.
+ * - Para flows conversacionales, la acción se ejecuta vía `/api/v1/asistente/enviar` con `action_id`.
+ * - Para pantallas web nativas, se expone `client_open.kind=native`.
  */
 final class CommonActionsService
 {
@@ -56,6 +56,16 @@ final class CommonActionsService
             if (isset($action['spa_presentation']) && is_string($action['spa_presentation']) && $action['spa_presentation'] !== '') {
                 $row['spa_presentation'] = $action['spa_presentation'];
             }
+
+            // Yaml intents (flows) no tienen un endpoint UI propio para abrir; se disparan como intent por action_id.
+            if (!empty($row['action_id'])) {
+                $row['client_open'] = [
+                    'kind' => 'intent',
+                    'intent_id' => (string) $row['action_id'],
+                ];
+                $row['client_interaction'] = 'intent_flow';
+            }
+
             $out[] = AssistantClientOpenEnricher::enrich($row);
         }
 

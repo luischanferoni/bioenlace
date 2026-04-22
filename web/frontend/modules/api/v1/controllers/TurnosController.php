@@ -209,7 +209,7 @@ class TurnosController extends BaseController
                     throw new BadRequestHttpException($e->getMessage());
                 }
                 if (!$turno->save()) {
-                    throw new BadRequestHttpException(implode(', ', $turno->getErrorSummary(true)));
+                    return $this->error('Validación fallida.', $turno->errors, 422);
                 }
 
                 return [
@@ -475,17 +475,25 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Próximos slots libres agrupados por día y por franja (mañana / tarde). Autogestión paciente.
+     * Vista embebible: listar slots disponibles (autogestión paciente) como `ui_definition` (`ui_json`).
      *
-     * GET|POST …/turnos/slots-disponibles-como-paciente. Query/body:
-     * - id_servicio (obligatorio), id_efector (opcional, sesión), id_rr_hh opcional, id_rrhh_servicio_asignado opcional,
-     * - limite y franja_tarde_desde (opcionales; defaults en params `turnosPaciente`),
-     * - restricciones (JSON array, mismo formato que {@see TurnoSlotFinder::findAvailableSlots}).
+     * GET|POST /api/v1/turnos/slots-disponibles-como-paciente
+     *
+     * Parámetros (query/body):
+     * - id_servicio (obligatorio)
+     * - id_efector (opcional; si falta, usa sesión)
+     * - id_rr_hh (opcional; se resuelve a id_rrhh_servicio_asignado)
+     * - id_rrhh_servicio_asignado (opcional; más preciso)
+     * - limite, franja_tarde_desde (opcionales; defaults `turnosPaciente`)
+     * - restricciones (JSON array; mismo formato que {@see TurnoSlotFinder::findAvailableSlots})
      *
      * Nota: la búsqueda siempre inicia desde la fecha actual y usa max_dias de configuración;
      * `fecha_desde` y `max_dias` del cliente se ignoran para mantener comportamiento consistente.
      *
-     * RBAC: /api/turnos/slots-disponibles-como-paciente. Firma JSON: `views/json/turnos/slots-disponibles-como-paciente.example.json`.
+     * @action_name Listar horarios disponibles (paciente)
+     * @entity Turnos
+     * @tags views, ui, slot, horario, turnos, paciente
+     * @keywords horarios disponibles, slots libres, próximo turno disponible, elegir horario
      * {@see TurnoSlotOfferService}
      */
     public function actionSlotsDisponiblesComoPaciente()
@@ -655,13 +663,14 @@ class TurnosController extends BaseController
         $fechaHasta = isset($params['fecha_hasta']) && $params['fecha_hasta'] !== ''
             ? $params['fecha_hasta'] : date('Y-m-d', strtotime('+3 months'));
 
-        $turnos = Turno::find()
-            ->where(['id_persona' => $idPersona])
+        /** @var \yii\db\ActiveQuery $turnosQ */
+        $turnosQ = Turno::find();
+        $turnosQ->where(['id_persona' => $idPersona])
             ->andWhere(['>=', 'fecha', $fechaDesde])
             ->andWhere(['<=', 'fecha', $fechaHasta])
             ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
-            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
-            ->all();
+            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC]);
+        $turnos = $turnosQ->all();
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
@@ -837,7 +846,7 @@ class TurnosController extends BaseController
             $turno->id_rr_hh = $rr->id_rr_hh;
         }
         if (!$turno->save()) {
-            throw new BadRequestHttpException(implode(', ', $turno->getErrorSummary(true)));
+            throw new BadRequestHttpException('No se pudo guardar el turno.');
         }
         \common\models\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
         try {
@@ -901,12 +910,13 @@ class TurnosController extends BaseController
 
         $model->es_sobreturno = true;
 
-        $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
+        $cpsQ = ConsultaDerivaciones::getDerivacionesPorPersona(
             $model->id_persona,
             $model->id_efector,
             $model->id_servicio_asignado,
             ConsultaDerivaciones::ESTADO_EN_ESPERA
         );
+        $cps = $cpsQ instanceof \yii\db\ActiveQuery ? $cpsQ->all() : (is_array($cpsQ) ? $cpsQ : []);
         if (count($cps) > 0) {
             $parent_id = null;
             foreach ($cps as $cp) {
@@ -918,10 +928,12 @@ class TurnosController extends BaseController
             $model->parent_id = $parent_id;
         }
 
-        $servicioEfector = ServiciosEfector::find()
-            ->where(['id_servicio' => $model->id_servicio_asignado])
+        /** @var \yii\db\ActiveQuery $seQ */
+        $seQ = ServiciosEfector::find();
+        $seQ->where(['id_servicio' => $model->id_servicio_asignado])
             ->andWhere(['id_efector' => $model->id_efector])
-            ->one();
+            ->andWhere(['deleted_at' => null]);
+        $servicioEfector = $seQ->one();
         if ($servicioEfector) {
             if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
                 $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
@@ -931,7 +943,7 @@ class TurnosController extends BaseController
         }
 
         if (!$model->save()) {
-            throw new BadRequestHttpException(implode(', ', $model->getErrorSummary(true)));
+            throw new BadRequestHttpException('No se pudo guardar el turno.');
         }
         Consulta::createFromTurno($model);
         try {

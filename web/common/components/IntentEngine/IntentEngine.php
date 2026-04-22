@@ -4,6 +4,7 @@ namespace common\components\IntentEngine;
 
 use Yii;
 use common\components\IntentCatalog\IntentCatalogService;
+use common\components\IntentCatalog\YamlIntentCatalogService;
 use common\components\Actions\AssistantClientOpenEnricher;
 use common\components\SubIntentEngine\SubIntentEngine;
 use common\components\UiDefinitionTemplateManager;
@@ -149,6 +150,11 @@ final class IntentEngine
 
     private static function isFlowUiTemplateForCatalogItem(UiActionCatalogItem $item): bool
     {
+        // Fuente de verdad: si existe YAML para ese intent_id, es un flow conversacional.
+        if (YamlIntentCatalogService::intentExists($item->action_id)) {
+            return true;
+        }
+
         $route = trim((string) $item->route);
         if ($route === '') {
             return false;

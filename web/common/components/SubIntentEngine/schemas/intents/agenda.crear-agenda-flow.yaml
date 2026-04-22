@@ -1,0 +1,51 @@
+intent_id: agenda.crear-agenda-flow
+version: 1
+
+action_name: "Crear agenda"
+description: "Guía conversacional para seleccionar profesional y servicio, y abrir la carga de agenda."
+keywords:
+  - agenda
+  - crear agenda
+  - cargar agenda
+  - horarios
+  - condición laboral
+
+draft_keys_extra: []
+
+subintents:
+  - id: select_rrhh
+    assistant_text: "Elegí el profesional al que querés crearle (o completarle) la agenda."
+    requires:
+      - draft.id_rr_hh
+    provides:
+      - draft.id_rr_hh
+    next: select_servicio
+    open_ui:
+      action_id: rrhh.listar-por-efector-ui
+
+  - id: select_servicio
+    assistant_text: "Ahora elegí el servicio asignado."
+    requires:
+      - draft.id_rr_hh
+      - draft.id_servicio
+    provides:
+      - draft.id_servicio
+    next: open_wizard
+    open_ui:
+      action_id: rrhh.listar-servicios-asignados
+      params:
+        id_rr_hh: "draft.id_rr_hh"
+
+  - id: open_wizard
+    assistant_text: "Listo. Abrí la pantalla para cargar la agenda (horarios y condición laboral)."
+    requires:
+      - draft.id_rr_hh
+      - draft.id_servicio
+    provides: []
+    next: ""
+    open_ui:
+      action_id: agenda.editar-agenda
+      params:
+        id_rr_hh: "draft.id_rr_hh"
+        id_servicio: "draft.id_servicio"
+

@@ -1620,17 +1620,22 @@
             const kind = getClientOpenKind(action);
             const url = buildClientOpenUrl(action);
             const assets = getClientOpenAssets(action);
+            const actionId = action.action_id || '';
             let expandable = false;
             let fullPage = false;
             if (kind === 'native' || kind === 'ui_json') {
                 // Contrato nuevo: el motor abre inline; fullscreen solo manual por link fuera del motor.
                 expandable = true;
                 fullPage = false;
+            } else if (kind === 'intent') {
+                // Intent conversacional: se dispara vía /api/v1/asistente/enviar con action_id.
+                expandable = false;
+                fullPage = false;
             }
  
             html += `
                 <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-action-url="${escapeHtml(url)}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
+                    <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-action-url="${escapeHtml(url)}" data-action-id="${escapeHtml(String(actionId))}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
                         <div class="card-body">
                             <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(actionName)}</h6>
                             <p class="card-text text-muted small mb-0">${escapeHtml(actionDescription)}</p>
@@ -1685,11 +1690,51 @@
                 const fullPage = this.dataset.fullPage === 'true';
                 const actionUrl = this.dataset.actionUrl;
                 const kind = this.dataset.openKind || '';
+                const actionId = this.dataset.actionId || '';
                 let assets = null;
                 try {
                     assets = this.dataset.actionAssets ? JSON.parse(this.dataset.actionAssets) : null;
                 } catch (e) {
                     assets = null;
+                }
+
+                if (kind === 'intent') {
+                    // Disparar intent conversacional por action_id.
+                    const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
+                    if (!actionId) {
+                        alert('Acción inválida: falta action_id');
+                        return;
+                    }
+                    setLoadingState(true);
+                    fetch(asistenteUrl, {
+                        method: 'POST',
+                        headers: window.BioenlaceApiClient.mergeHeaders({
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }),
+                        body: JSON.stringify({ action_id: String(actionId) })
+                    })
+                    .then(async (res) => {
+                        const ct = res.headers.get('content-type') || '';
+                        const payload = ct.includes('application/json') ? await res.json() : null;
+                        if (!res.ok) {
+                            const msg = payload && payload.message ? String(payload.message) : ('Error HTTP ' + res.status);
+                            throw new Error(msg);
+                        }
+                        if (!payload || typeof payload !== 'object') {
+                            throw new Error('Respuesta inválida del servidor');
+                        }
+                        // Reusar la misma tubería de render de mensajes del asistente.
+                        handleAssistantResponse(payload);
+                    })
+                    .catch((e) => {
+                        alert(e && e.message ? e.message : 'No se pudo ejecutar la acción');
+                    })
+                    .finally(() => {
+                        setLoadingState(false);
+                    });
+                    return;
                 }
 
                 if (fullPage) {

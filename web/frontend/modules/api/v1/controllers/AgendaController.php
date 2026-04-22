@@ -8,6 +8,8 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Services\Agenda\AgendaRrhhCrudService;
+use common\components\Services\Rrhh\RrhhAgendaUiService;
+use common\components\UiScreenService;
 use common\models\Agenda_rrhh;
 
 /**
@@ -26,6 +28,37 @@ use common\models\Agenda_rrhh;
  */
 class AgendaController extends BaseController
 {
+    /**
+     * UI JSON: wizard agenda (RRHH → servicio → agenda semanal → condición laboral).
+     *
+     * GET|POST /api/v1/agenda/editar-agenda
+     *
+     * @action_name Editar agenda y condición laboral (agenda)
+     * @entity Agendas
+     * @tags agenda, rrhh, servicios, condiciones laborales, staff
+     * @keywords editar agenda profesional, horarios por servicio, condición laboral
+     * @spa_presentation fullscreen
+     */
+    public function actionEditarAgenda(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $defaults = RrhhAgendaUiService::buildFieldValuesForGet($idEfector, $fromClient);
+        $paramsForRender = array_merge($defaults, $fromClient);
+
+        return UiScreenService::handleScreen(
+            'agenda',
+            'editar-agenda',
+            $paramsForRender,
+            $req->post(),
+            function (array $post) use ($idEfector): array {
+                return RrhhAgendaUiService::submit($idEfector, $post);
+            }
+        );
+    }
+
     /**
      * Citas del día (vista operativa). RBAC: /api/agenda/dia
      *
@@ -125,6 +158,8 @@ class AgendaController extends BaseController
      *
      * @action_name Actualizar agenda de un profesional (staff)
      * @entity Agendas
+     * @tags agenda,staff,actualizar,editar
+     * @keywords actualizar agenda profesional, editar horarios por servicio
      * @param int $id id_agenda_rrhh
      */
     public function actionActualizarParaRecurso($id)
@@ -150,6 +185,8 @@ class AgendaController extends BaseController
      *
      * @action_name Eliminar agenda de un profesional (staff)
      * @entity Agendas
+     * @tags agenda,staff,eliminar,baja
+     * @keywords eliminar agenda profesional, baja agenda por servicio
      * @param int $id id_agenda_rrhh
      */
     public function actionEliminarParaRecurso($id)

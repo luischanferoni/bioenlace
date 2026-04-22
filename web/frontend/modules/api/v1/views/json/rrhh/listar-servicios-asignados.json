@@ -1,0 +1,22 @@
+{
+  "ui_type": "ui_json",
+  "title": "Elegir servicio",
+  "ui_meta": {
+    "list": {
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "chips": [],
+      "draft_field": "id_servicio",
+      "item": { "kind": "servicio", "id_field": "id", "label_field": "name" }
+    },
+    "assistant_embed": {}
+  },
+  "fields": [
+    {
+      "name": "id_servicio",
+      "label": "Servicio",
+      "type": "text",
+      "required": true
+    }
+  ]
+}
+

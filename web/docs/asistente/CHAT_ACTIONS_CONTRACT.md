@@ -95,12 +95,12 @@ Ya no se emite. Los motores abren **inline por defecto**. Fullscreen es una acci
 
 ```json
 {
-  "action_id": "rrhh.editar-agenda",
+  "action_id": "agenda.editar-agenda",
   "display_name": "Editar agenda laboral",
-  "route": "/api/v1/rrhh/editar-agenda",
+  "route": "/api/v1/agenda/editar-agenda",
   "client_open": {
     "kind": "ui_json",
-    "api": { "route": "/api/v1/rrhh/editar-agenda", "method": "GET|POST" }
+    "api": { "route": "/api/v1/agenda/editar-agenda", "method": "GET|POST" }
   }
 }
 ```

@@ -3,8 +3,6 @@
 namespace common\components\IntentCatalog;
 
 use Yii;
-use common\components\Actions\ActionMappingService;
-use common\components\UiDefinitionTemplateManager;
 
 /**
  * Catálogo de **UIs** sugeribles (intents UI).
@@ -28,41 +26,9 @@ final class IntentCatalogService
      */
     public static function getAvailableUiForUser(int $userId, bool $useCache = true): array
     {
-        $actions = ActionMappingService::getAvailableActionsForUser($userId, $useCache);
-        $byId = [];
-        foreach ($actions as $a) {
-            $id = isset($a['action_id']) ? (string) $a['action_id'] : '';
-            if ($id !== '') {
-                $byId[$id] = $a;
-            }
-        }
-
-        // Enumerar templates JSON existentes (excepto common/*).
-        $base = Yii::getAlias(UiDefinitionTemplateManager::TEMPLATE_BASE_PATH);
-        $files = glob($base . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*.json') ?: [];
-
-        $out = [];
-        foreach ($files as $path) {
-            $entity = basename(dirname($path));
-            if ($entity === 'common') {
-                continue;
-            }
-            $action = basename($path, '.json');
-            $actionId = strtolower($entity . '.' . $action);
-
-            // Sólo listar si el usuario tiene la acción permitida por RBAC.
-            if (!isset($byId[$actionId])) {
-                continue;
-            }
-
-            $a = $byId[$actionId];
-            $a['controller'] = $entity;
-            $a['action'] = $action;
-            $a['route'] = '/api/v1/' . rawurlencode($entity) . '/' . rawurlencode($action);
-            $out[] = $a;
-        }
-
-        return $out;
+        // Nuevo: el asistente sugiere intents conversacionales desde YAML (fuente de verdad).
+        // No depende de enumerar templates JSON en views/json.
+        return YamlIntentCatalogService::discoverAll($useCache);
     }
 }
 

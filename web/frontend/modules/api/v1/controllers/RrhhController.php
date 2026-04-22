@@ -4,7 +4,6 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Services\Rrhh\RrhhAgendaUiService;
 use common\components\UiScreenService;
 use common\models\Condiciones_laborales;
 use common\models\Persona;
@@ -276,6 +275,84 @@ class RrhhController extends BaseController
     }
 
     /**
+     * Vista embebible: listar RRHH (profesionales) de un efector como `ui_json`.
+     *
+     * GET|POST /api/v1/rrhh/listar-por-efector-ui
+     *
+     * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
+     *
+     * @action_name Listar profesionales por efector (UI)
+     * @entity Rrhh
+     * @tags views, ui, rrhh, profesional
+     * @keywords elegir profesional, listar médicos, listar especialistas, efector
+     */
+    public function actionListarPorEfectorUi(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'rrhh',
+            'listar-por-efector-ui',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            // Reusar la misma query de listar-por-efector (datos) y mapear a items.
+            $q = $req->get('q') ?: $req->post('q');
+            $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
+            if ($idEfector === null || $idEfector === '') {
+                $idEfector = Yii::$app->user->getIdEfector();
+            }
+            $idEfector = (int) $idEfector;
+            if ($idEfector <= 0) {
+                throw new BadRequestHttpException('id_efector es requerido');
+            }
+
+            $limit = (int) ($req->get('limit') ?: $req->post('limit') ?: 200);
+            if ($limit < 1) {
+                $limit = 200;
+            }
+            if ($limit > 200) {
+                $limit = 200;
+            }
+
+            /** @var \yii\db\ActiveQuery $query */
+            $query = RrhhEfector::find();
+            $query->alias('re')
+                ->with('persona')
+                ->where(['re.id_efector' => $idEfector])
+                ->andWhere(['re.deleted_at' => null]);
+
+            if ($q !== null && trim((string) $q) !== '') {
+                $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], trim((string) $q)) . '%';
+                $query->joinWith('persona p')
+                    ->andWhere([
+                        'or',
+                        ['like', 'p.apellido', $term, false],
+                        ['like', 'p.nombre', $term, false],
+                        ['like', 'p.documento', $term, false],
+                    ]);
+            }
+
+            $rows = $query->orderBy(['re.id_rr_hh' => SORT_ASC])->limit($limit)->all();
+            $items = [];
+            foreach ($rows as $re) {
+                $id = (string) (int) $re->id_rr_hh;
+                $name = $re->persona !== null
+                    ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                    : ('RRHH #' . $id);
+                $items[] = ['id' => $id, 'name' => $name];
+            }
+            $ui['items'] = $items;
+        }
+
+        return $ui;
+    }
+
+    /**
      * GET/POST /api/v1/rrhh/servicios-asignados
      * Servicios ya asignados al RRHH (para edición de agenda). Requiere id_rr_hh.
      *
@@ -326,6 +403,80 @@ class RrhhController extends BaseController
         }
 
         return ['results' => $results];
+    }
+
+    /**
+     * Vista embebible: listar servicios asignados a un RRHH como `ui_json`.
+     *
+     * GET|POST /api/v1/rrhh/listar-servicios-asignados
+     *
+     * Parámetros: id_rr_hh (obligatorio).
+     *
+     * @action_name Listar servicios asignados (UI)
+     * @entity Rrhh
+     * @tags views, ui, rrhh, servicios
+     * @keywords elegir servicio, servicios asignados, agenda por servicio
+     */
+    public function actionListarServiciosAsignados(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'rrhh',
+            'listar-servicios-asignados',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            // Reusar lógica del endpoint de datos `servicios-asignados`.
+            $request = Yii::$app->request;
+            $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+            if ($idRrHh === null || $idRrHh === '') {
+                throw new BadRequestHttpException('id_rr_hh es requerido');
+            }
+            $idRrHh = (int) $idRrHh;
+
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+            if ($idEfector <= 0) {
+                throw new BadRequestHttpException('No hay efector en sesión.');
+            }
+
+            /** @var RrhhEfector|null $re */
+            $re = RrhhEfector::findActive()
+                ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
+                ->one();
+            if ($re === null) {
+                throw new BadRequestHttpException('RRHH no válido para este efector.');
+            }
+
+            /** @var \yii\db\ActiveQuery $serviciosQ */
+            $serviciosQ = RrhhServicio::find();
+            $serviciosQ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
+                ->with('servicio')
+                ->orderBy(['id_servicio' => SORT_ASC]);
+            $servicios = $serviciosQ->all();
+
+            $items = [];
+            foreach ($servicios as $rs) {
+                if ((int) $rs->id_servicio === 62) {
+                    continue;
+                }
+                $nombre = $rs->servicio !== null ? (string) $rs->servicio->nombre : ('Servicio #' . $rs->id_servicio);
+                $items[] = [
+                    'id' => (string) (int) $rs->id_servicio,
+                    'name' => $nombre,
+                    'meta' => [
+                        'id_rrhh_servicio' => (int) $rs->id,
+                    ],
+                ];
+            }
+            $ui['items'] = $items;
+        }
+
+        return $ui;
     }
 
     /**
@@ -412,37 +563,6 @@ class RrhhController extends BaseController
             $req->post(),
             static function (array $post): array {
                 return ['data' => ['ok' => true]];
-            }
-        );
-    }
-
-    /**
-     * UI JSON: wizard RRHH → agenda por servicio → condición laboral.
-     *
-     * GET|POST /api/v1/rrhh/editar-agenda
-     *
-     * @action_name Editar agenda y condición laboral (RRHH)
-     * @entity Rrhh
-     * @tags rrhh, agenda, servicios, condiciones laborales, staff
-     * @keywords editar agenda profesional, horarios por servicio, condición laboral
-     * @spa_presentation fullscreen
-     */
-    public function actionEditarAgenda(): array
-    {
-        $req = Yii::$app->request;
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-
-        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-        $defaults = RrhhAgendaUiService::buildFieldValuesForGet($idEfector, $fromClient);
-        $paramsForRender = array_merge($defaults, $fromClient);
-
-        return UiScreenService::handleScreen(
-            'rrhh',
-            'editar-agenda',
-            $paramsForRender,
-            $req->post(),
-            function (array $post) use ($idEfector): array {
-                return RrhhAgendaUiService::submit($idEfector, $post);
             }
         );
     }

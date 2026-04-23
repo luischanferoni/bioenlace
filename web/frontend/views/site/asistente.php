@@ -19,7 +19,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                     <div class="fw-semibold text-dark">Sugerencias del asistente</div>
                     <div class="text-muted small">Atajos para tareas frecuentes</div>
                 </div>
-                <div class="card-body overflow-auto">
+                <div class="card-body overflow-auto" style="max-height: calc(100vh - 180px);">
                     <div id="spa-common-actions-grid" class="row g-3">
                         <!-- Se llena dinámicamente con JavaScript -->
                     </div>
@@ -31,7 +31,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
         <div class="col-12 col-lg-8 col-xl-9">
             <div class="card shadow-sm h-100 d-flex flex-column">
                 <div class="card-header bg-white d-flex align-items-center justify-content-between">
-                    <div class="fw-semibold">Chat</div>
+                    <div class="fw-semibold"></div>
                     <button type="button" id="spa-what-can-i-do-btn" class="btn btn-outline-secondary btn-sm">
                         ¿Qué puedo hacer?
                     </button>

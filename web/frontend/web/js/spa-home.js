@@ -1729,7 +1729,7 @@
             }
  
             html += `
-                <div class="col-12 col-md-6 col-lg-4">
+                <div class="col-12">
                     <div class="card h-100 spa-card shadow-sm" data-card-id="${cardId}" data-expandable="${expandable}" data-full-page="${fullPage}" data-open-kind="${escapeHtml(kind)}" data-action-url="${escapeHtml(url)}" data-action-id="${escapeHtml(String(actionId))}" data-action-assets='${assets ? escapeHtml(JSON.stringify(assets)) : ""}'>
                         <div class="card-body">
                             <h6 class="card-title text-primary fw-semibold mb-2">${escapeHtml(actionName)}</h6>

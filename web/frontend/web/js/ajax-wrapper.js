@@ -128,7 +128,7 @@
     'use strict';
 
     function injectPerTabIntoForm(form) {
-        if (!form || form.__vitamind_pertab_injected) return;
+        if (!form || form.__bioenlace_pertab_injected) return;
         var perTab = window.userPerTabConfig || {};
         try {
             var existing = form.querySelector('input[name="userPerTabConfig"]');
@@ -145,7 +145,7 @@
             // noop
         }
         // marcar para no duplicar en submit programáticos
-        form.__vitamind_pertab_injected = true;
+        form.__bioenlace_pertab_injected = true;
     }
 
     // Interceptar submit nativo

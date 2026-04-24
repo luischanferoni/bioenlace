@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Bioenlace concept 1b: two nodes with two parallel arches (strong link). -->
+<svg
+   width="128mm"
+   height="128mm"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg-root"
+   inkscape:version="1.4"
+   sodipodi:docname="concept-1b-nodos-doble-puente.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.4"
+     inkscape:cx="256"
+     inkscape:cy="256"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer-marca" />
+  <title>Bioenlace 1b double bridge</title>
+  <desc>Same nodes as 1a with two curves between them.</desc>
+  <defs id="defs">
+    <style type="text/css"><![CDATA[
+      .nodo { fill: #38be7f; stroke: #093e4d; stroke-width: 6; }
+      .puente { fill: none; stroke: #093e4d; stroke-width: 18; stroke-linecap: round; stroke-linejoin: round; }
+      .puente-alt { fill: none; stroke: #ff6b6b; stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+    ]]></style>
+  </defs>
+  <g inkscape:groupmode="layer" inkscape:label="Fondo" id="layer-fondo" sodipodi:insensitive="true">
+    <rect width="512" height="512" fill="#ffffff" id="bg" />
+  </g>
+  <g inkscape:groupmode="layer" inkscape:label="Marca" id="layer-marca">
+    <g id="marca" inkscape:label="Double link icon">
+      <path id="puente-inferior" class="puente" d="M 132 288 Q 256 120 380 288" />
+      <path id="puente-superior" class="puente-alt" d="M 132 256 Q 256 72 380 256" />
+      <circle id="nodo-izq" class="nodo" cx="132" cy="272" r="48" />
+      <circle id="nodo-der" class="nodo" cx="380" cy="272" r="48" />
+    </g>
+  </g>
+</svg>

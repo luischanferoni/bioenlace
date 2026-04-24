@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Bioenlace concept 6c: rings plus small bridge between two dots (blend of 1 and 6). -->
+<svg
+   width="128mm"
+   height="128mm"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg-root"
+   inkscape:version="1.4"
+   sodipodi:docname="concept-6c-ondas-y-enlace.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.4"
+     inkscape:cx="256"
+     inkscape:cy="256"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer-marca" />
+  <title>Bioenlace 6c waves and mini bridge</title>
+  <defs id="defs">
+    <style type="text/css"><![CDATA[
+      .onda { fill: none; stroke: #093e4d; stroke-width: 12; opacity: 0.45; }
+      .onda-int { fill: none; stroke: #38be7f; stroke-width: 14; opacity: 0.75; }
+      .puente { fill: none; stroke: #093e4d; stroke-width: 22; stroke-linecap: round; }
+      .punto { fill: #ff6b6b; stroke: #093e4d; stroke-width: 4; }
+    ]]></style>
+  </defs>
+  <g inkscape:groupmode="layer" inkscape:label="Fondo" id="layer-fondo" sodipodi:insensitive="true">
+    <rect width="512" height="512" fill="#ffffff" id="bg" />
+  </g>
+  <g inkscape:groupmode="layer" inkscape:label="Marca" id="layer-marca">
+    <g id="marca" inkscape:label="Waves plus bridge">
+      <circle id="o3" class="onda" cx="256" cy="256" r="188" />
+      <circle id="o2" class="onda-int" cx="256" cy="256" r="132" />
+      <circle id="o1" class="onda" cx="256" cy="256" r="76" />
+      <path id="puente" class="puente" d="M 176 288 Q 256 200 336 288" />
+      <circle id="p-izq" class="punto" cx="176" cy="288" r="20" />
+      <circle id="p-der" class="punto" cx="336" cy="288" r="20" />
+    </g>
+  </g>
+</svg>

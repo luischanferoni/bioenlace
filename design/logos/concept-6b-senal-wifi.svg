@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Bioenlace concept 6b: signal-like arches from a bottom dot. -->
+<svg
+   width="128mm"
+   height="128mm"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg-root"
+   inkscape:version="1.4"
+   sodipodi:docname="concept-6b-senal-wifi.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="false"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.4"
+     inkscape:cx="256"
+     inkscape:cy="256"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer-marca" />
+  <title>Bioenlace 6b signal and dot</title>
+  <defs id="defs">
+    <style type="text/css"><![CDATA[
+      .arco { fill: none; stroke: #093e4d; stroke-width: 18; stroke-linecap: round; }
+      .arco-suave { fill: none; stroke: #38be7f; stroke-width: 16; stroke-linecap: round; opacity: 0.95; }
+      .punto { fill: #ff6b6b; stroke: #093e4d; stroke-width: 4; }
+    ]]></style>
+  </defs>
+  <g inkscape:groupmode="layer" inkscape:label="Fondo" id="layer-fondo" sodipodi:insensitive="true">
+    <rect width="512" height="512" fill="#ffffff" id="bg" />
+  </g>
+  <g inkscape:groupmode="layer" inkscape:label="Marca" id="layer-marca">
+    <g id="marca" inkscape:label="Emitter arcs">
+      <path id="arco-grande" class="arco" d="M 112 328 Q 256 96 400 328" />
+      <path id="arco-medio" class="arco-suave" d="M 152 328 Q 256 152 360 328" />
+      <path id="arco-chico" class="arco" d="M 192 328 Q 256 208 320 328" />
+      <circle id="punto" class="punto" cx="256" cy="344" r="22" />
+    </g>
+  </g>
+</svg>

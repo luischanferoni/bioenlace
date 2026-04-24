@@ -101,9 +101,9 @@
     --bs-muted-border-subtle: rgba(102, 102, 102, 0.2);
 
     /* Radios (valores dominantes en bootstrap_bootstrap_build.css) */
-    --bs-border-radius: 0.5rem;
-    --bs-border-radius-sm: 0.25rem;
-    --bs-border-radius-lg: 0.5rem;
+    --bs-border-radius: 1rem;
+    --bs-border-radius-sm: 1rem;
+    --bs-border-radius-lg: 1rem;
     --bs-border-radius-xl: 1rem;
     --bs-border-radius-xxl: 1rem;
     --bs-border-radius-pill: 10rem;

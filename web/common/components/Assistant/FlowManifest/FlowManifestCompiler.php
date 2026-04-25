@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\FlowManifest;
+namespace common\components\Assistant\FlowManifest;
 
 use Symfony\Component\Yaml\Yaml;
 use Yii;

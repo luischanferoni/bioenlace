@@ -1,12 +1,12 @@
 <?php
 
-namespace common\components\IntentEngine;
+namespace common\components\Assistant\IntentEngine;
 
 use Yii;
 use webvimark\modules\UserManagement\models\User;
-use common\components\Actions\ActionDiscoveryService;
-use common\components\Actions\AllowedRoutesResolver;
-use common\components\IntentCatalog\IntentCatalogService;
+use common\components\Assistant\UiActions\ActionDiscoveryService;
+use common\components\Assistant\UiActions\AllowedRoutesResolver;
+use common\components\Assistant\Catalog\IntentCatalogService;
 
 /**
  * Catálogo de UIs disponibles para un usuario (templates JSON existentes + RBAC).

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\IntentEngine;
+namespace common\components\Assistant\IntentEngine;
 
 /**
  * DTO de una UI sugerible para el asistente.

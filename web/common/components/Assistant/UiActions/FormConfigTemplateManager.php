@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components;
+namespace common\components\Assistant\UiActions;
 
 /**
  * @deprecated Usar {@see UiDefinitionTemplateManager}. El nombre anterior sugería solo formularios;
@@ -14,6 +14,6 @@ class FormConfigTemplateManager
      */
     public static function render($entity, $action, $params = [])
     {
-        return UiDefinitionTemplateManager::render($entity, $action, $params);
+        return \common\components\UiDefinitionTemplateManager::render($entity, $action, $params);
     }
 }

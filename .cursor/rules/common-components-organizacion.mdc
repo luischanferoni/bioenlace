@@ -1,0 +1,17 @@
+---
+description: Organización y responsabilidades de `web/common/components`
+alwaysApply: true
+---
+
+# common/components: organización
+
+- **Agrupar por responsabilidad**. Evitar carpetas top-level “sueltas” sin dominio claro.
+- **`Services/`**: lógica de negocio reutilizable (API, consola, jobs). Evitar mezclar detalles HTTP/UI aquí.
+- **`Assistant/`**: todo el stack del asistente (intents UI + flows + RBAC + discovery). No dispersar piezas del asistente fuera de este feature.
+- **`Integrations/`**: integraciones con sistemas externos (clientes/adaptadores).
+- **`Ai/`**, **`Infra/`**, **`Text/`**, **`Terminology/`**, **`Logging/`**: utilidades transversales por área técnica.
+
+## Regla práctica
+
+- Si un cambio toca el asistente, preferir ubicarlo bajo `web/common/components/Assistant/` (o referenciarlo desde ahí) y documentarlo en `web/common/components/Assistant/README.md`.
+

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\FlowManifest;
+namespace common\components\Assistant\FlowManifest;
 
 use Yii;
 use yii\helpers\Json;

@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\FlowManifest\FlowManifestCompiler;
+use common\components\Assistant\FlowManifest\FlowManifestCompiler;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

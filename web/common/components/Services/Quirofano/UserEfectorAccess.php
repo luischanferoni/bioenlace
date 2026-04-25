@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Quirofano;
+namespace common\components\Services\Quirofano;
 
 use Yii;
 use yii\web\ForbiddenHttpException;

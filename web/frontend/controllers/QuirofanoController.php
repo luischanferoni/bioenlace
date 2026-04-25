@@ -7,7 +7,7 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use common\models\busquedas\CirugiaBusqueda;
 use common\models\busquedas\QuirofanoSalaBusqueda;
-use common\components\Quirofano\UserEfectorAccess;
+use common\components\Services\Quirofano\UserEfectorAccess;
 use frontend\filters\QuirofanoEfectorAccessFilter;
 
 /**

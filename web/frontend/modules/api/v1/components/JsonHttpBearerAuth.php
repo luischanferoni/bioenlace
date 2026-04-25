@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\components;
 
 use Yii;
-use common\components\Actions\AllowedRoutesResolver;
+use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\models\Persona;
 use common\models\RrhhEfector;
 use yii\filters\auth\HttpBearerAuth;

@@ -274,49 +274,21 @@ class RrhhController extends BaseController
      * GET/POST /api/v1/rrhh/servicios-asignados
      * Servicios ya asignados al RRHH (para edición de agenda). Requiere id_rr_hh.
      *
+     * @deprecated Usar {@see actionListarServiciosAsignados} (vista embebible `ui_json`).
      * @return array{results: list<array{id: int, text: string, meta: array<string, int}>}
      */
     public function actionServiciosAsignados()
     {
-        $request = Yii::$app->request;
-        $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
-        if ($idRrHh === null || $idRrHh === '') {
-            throw new BadRequestHttpException('id_rr_hh es requerido');
-        }
-        $idRrHh = (int) $idRrHh;
+        $idRrHh = $this->requireIdRrHh();
+        $idEfector = $this->requireIdEfectorFromSession();
 
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        if ($idEfector <= 0) {
-            throw new BadRequestHttpException('No hay efector en sesión.');
-        }
-
-        /** @var RrhhEfector|null $re */
-        $re = RrhhEfector::findActive()
-            ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->one();
-        if ($re === null) {
-            throw new BadRequestHttpException('RRHH no válido para este efector.');
-        }
-
-        /** @var \yii\db\ActiveQuery $serviciosQ */
-        $serviciosQ = RrhhServicio::find();
-        $serviciosQ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
-            ->with('servicio')
-            ->orderBy(['id_servicio' => SORT_ASC]);
-        $servicios = $serviciosQ->all();
-
+        $items = $this->serviciosAsignadosItems($idRrHh, $idEfector);
         $results = [];
-        foreach ($servicios as $rs) {
-            if ((int) $rs->id_servicio === 62) {
-                continue;
-            }
-            $nombre = $rs->servicio !== null ? (string) $rs->servicio->nombre : ('Servicio #' . $rs->id_servicio);
+        foreach ($items as $it) {
             $results[] = [
-                'id' => (int) $rs->id_servicio,
-                'text' => $nombre,
-                'meta' => [
-                    'id_rrhh_servicio' => (int) $rs->id,
-                ],
+                'id' => (int) $it['id'],
+                'text' => (string) $it['name'],
+                'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
             ];
         }
 
@@ -349,52 +321,81 @@ class RrhhController extends BaseController
         );
 
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
-            // Reusar lógica del endpoint de datos `servicios-asignados`.
-            $request = Yii::$app->request;
-            $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
-            if ($idRrHh === null || $idRrHh === '') {
-                throw new BadRequestHttpException('id_rr_hh es requerido');
-            }
-            $idRrHh = (int) $idRrHh;
+            $idRrHh = $this->requireIdRrHh();
+            $idEfector = $this->requireIdEfectorFromSession();
 
-            $idEfector = (int) Yii::$app->user->getIdEfector();
-            if ($idEfector <= 0) {
-                throw new BadRequestHttpException('No hay efector en sesión.');
-            }
-
-            /** @var RrhhEfector|null $re */
-            $re = RrhhEfector::findActive()
-                ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
-                ->one();
-            if ($re === null) {
-                throw new BadRequestHttpException('RRHH no válido para este efector.');
-            }
-
-            /** @var \yii\db\ActiveQuery $serviciosQ */
-            $serviciosQ = RrhhServicio::find();
-            $serviciosQ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
-                ->with('servicio')
-                ->orderBy(['id_servicio' => SORT_ASC]);
-            $servicios = $serviciosQ->all();
-
-            $items = [];
-            foreach ($servicios as $rs) {
-                if ((int) $rs->id_servicio === 62) {
-                    continue;
-                }
-                $nombre = $rs->servicio !== null ? (string) $rs->servicio->nombre : ('Servicio #' . $rs->id_servicio);
-                $items[] = [
-                    'id' => (string) (int) $rs->id_servicio,
-                    'name' => $nombre,
-                    'meta' => [
-                        'id_rrhh_servicio' => (int) $rs->id,
-                    ],
+            $items = $this->serviciosAsignadosItems($idRrHh, $idEfector);
+            $uiItems = [];
+            foreach ($items as $it) {
+                $uiItems[] = [
+                    'id' => (string) (int) $it['id'],
+                    'name' => (string) $it['name'],
+                    'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
                 ];
             }
-            $ui['items'] = $items;
+            $ui['items'] = $uiItems;
         }
 
         return $ui;
+    }
+
+    private function requireIdRrHh(): int
+    {
+        $request = Yii::$app->request;
+        $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+        if ($idRrHh === null || $idRrHh === '') {
+            throw new BadRequestHttpException('id_rr_hh es requerido');
+        }
+
+        return (int) $idRrHh;
+    }
+
+    private function requireIdEfectorFromSession(): int
+    {
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('No hay efector en sesión.');
+        }
+
+        return $idEfector;
+    }
+
+    /**
+     * @return list<array{id:int,name:string,meta:array{id_rrhh_servicio:int}}>
+     */
+    private function serviciosAsignadosItems(int $idRrHh, int $idEfector): array
+    {
+        /** @var RrhhEfector|null $re */
+        $re = RrhhEfector::findActive()
+            ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($re === null) {
+            throw new BadRequestHttpException('RRHH no válido para este efector.');
+        }
+
+        /** @var \yii\db\ActiveQuery $serviciosQ */
+        $serviciosQ = RrhhServicio::find();
+        $serviciosQ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
+            ->with('servicio')
+            ->orderBy(['id_servicio' => SORT_ASC]);
+        $servicios = $serviciosQ->all();
+
+        $items = [];
+        foreach ($servicios as $rs) {
+            if ((int) $rs->id_servicio === 62) {
+                continue;
+            }
+            $nombre = $rs->servicio !== null ? (string) $rs->servicio->nombre : ('Servicio #' . $rs->id_servicio);
+            $items[] = [
+                'id' => (int) $rs->id_servicio,
+                'name' => $nombre,
+                'meta' => [
+                    'id_rrhh_servicio' => (int) $rs->id,
+                ],
+            ];
+        }
+
+        return $items;
     }
 
     /**

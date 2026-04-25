@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components;
+namespace common\components\Assistant\UiActions;
 
 use Yii;
 use yii\helpers\FileHelper;

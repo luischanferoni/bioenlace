@@ -11,7 +11,7 @@ use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\User;
 use webvimark\modules\UserManagement\components\AuthHelper;
-use common\components\Actions\AllowedRoutesResolver;
+use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use Firebase\JWT\JWT;
 
 /**

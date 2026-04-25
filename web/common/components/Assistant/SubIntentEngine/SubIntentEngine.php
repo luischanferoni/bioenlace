@@ -1,11 +1,11 @@
 <?php
 
-namespace common\components\SubIntentEngine;
+namespace common\components\Assistant\SubIntentEngine;
 
-use common\components\FlowManifest\FlowManifest;
-use common\components\IntentEngine\UiActionCatalog;
-use common\components\Actions\AssistantClientOpenEnricher;
-use common\components\Actions\AllowedRoutesResolver;
+use common\components\Assistant\FlowManifest\FlowManifest;
+use common\components\Assistant\IntentEngine\UiActionCatalog;
+use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\UiDefinitionTemplateManager;
 use common\models\ServiciosEfector;
 use Symfony\Component\Yaml\Yaml;

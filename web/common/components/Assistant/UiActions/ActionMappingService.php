@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Actions;
+namespace common\components\Assistant\UiActions;
 
 use Yii;
 use webvimark\modules\UserManagement\models\User;

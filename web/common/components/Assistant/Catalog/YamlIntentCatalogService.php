@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\IntentCatalog;
+namespace common\components\Assistant\Catalog;
 
 use Symfony\Component\Yaml\Yaml;
 use Yii;

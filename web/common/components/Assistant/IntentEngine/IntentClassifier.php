@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\IntentEngine;
+namespace common\components\Assistant\IntentEngine;
 
 use Yii;
 use common\components\Ai\IAManager;

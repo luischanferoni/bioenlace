@@ -1,12 +1,12 @@
 <?php
 
-namespace common\components\IntentEngine;
+namespace common\components\Assistant\IntentEngine;
 
 use Yii;
-use common\components\IntentCatalog\IntentCatalogService;
-use common\components\IntentCatalog\YamlIntentCatalogService;
-use common\components\Actions\AssistantClientOpenEnricher;
-use common\components\SubIntentEngine\SubIntentEngine;
+use common\components\Assistant\Catalog\IntentCatalogService;
+use common\components\Assistant\Catalog\YamlIntentCatalogService;
+use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 use common\components\UiDefinitionTemplateManager;
 use common\models\Servicio;
 use yii\helpers\Json;

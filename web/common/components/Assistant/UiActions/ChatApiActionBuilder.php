@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Actions;
+namespace common\components\Assistant\UiActions;
 
 /**
  * Construye acciones tipo open_route hacia **UI JSON** (descriptores JSON bajo `/api/v1/<entidad>/<accion>`),

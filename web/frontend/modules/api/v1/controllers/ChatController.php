@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\IntentEngine\IntentEngine;
-use common\components\SubIntentEngine\SubIntentEngine;
+use common\components\Assistant\IntentEngine\IntentEngine;
+use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 

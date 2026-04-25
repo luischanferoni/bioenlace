@@ -438,10 +438,15 @@
                 if (!botBubble) {
                     actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 } else {
+                    // Importante: no renderizar la UI sobre el root de la burbuja porque renderDynamicUi()
+                    // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo.
+                    var flowUiMount = document.createElement('div');
+                    flowUiMount.className = 'mt-2';
                     const loading = document.createElement('div');
                     loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
                     loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
-                    mountHost.appendChild(loading);
+                    flowUiMount.appendChild(loading);
+                    mountHost.appendChild(flowUiMount);
                 }
                 fetch(fullUrl, {
                     method: 'GET',
@@ -483,17 +488,23 @@
                         }
                     }
                     if (json && json.kind === 'ui_definition') {
-                        const target = botBubble ? mountHost : actionsDiv;
+                        const target = botBubble
+                            ? (mountHost.querySelector('.mt-2') || mountHost)
+                            : actionsDiv;
                         renderDynamicUi(json, target, { url: fullUrl });
                     } else {
-                        const target = botBubble ? mountHost : actionsDiv;
+                        const target = botBubble
+                            ? (mountHost.querySelector('.mt-2') || mountHost)
+                            : actionsDiv;
                         target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
                     }
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    const target = botBubble ? mountHost : actionsDiv;
+                    const target = botBubble
+                        ? (mountHost.querySelector('.mt-2') || mountHost)
+                        : actionsDiv;
                     target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
                 })
                 .finally(() => {

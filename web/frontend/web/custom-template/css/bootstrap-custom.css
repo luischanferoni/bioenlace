@@ -101,11 +101,11 @@
     --bs-muted-border-subtle: rgba(102, 102, 102, 0.2);
 
     /* Radios (valores dominantes en bootstrap_bootstrap_build.css) */
-    --bs-border-radius: 1rem;
-    --bs-border-radius-sm: 1rem;
-    --bs-border-radius-lg: 1rem;
-    --bs-border-radius-xl: 1rem;
-    --bs-border-radius-xxl: 1rem;
+    --bs-border-radius: 0.9rem;
+    --bs-border-radius-sm: 0.9rem;
+    --bs-border-radius-lg: 0.9rem;
+    --bs-border-radius-xl: 0.9rem;
+    --bs-border-radius-xxl: 0.9rem;
     --bs-border-radius-pill: 10rem;
 }
 
@@ -424,6 +424,22 @@
     position: sticky;
     top: 0;
     z-index: 1030;
+}
+
+.navbar .brand-logo {
+    height: 32px;
+    width: auto;
+    max-width: 220px;
+    display: block;
+    object-fit: contain;
+}
+
+@media (min-width: 768px) {
+    .navbar .brand-logo { height: 40px; }
+}
+
+@media (min-width: 1200px) {
+    .navbar .brand-logo { height: 44px; }
 }
 
 .navbar-brand {

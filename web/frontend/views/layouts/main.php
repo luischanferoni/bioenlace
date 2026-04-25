@@ -110,7 +110,7 @@ if (Yii::$app->user->username) {
                 <div class="container-fluid">
                     <div class="d-flex justify-content-between w-100 align-items-center">
                         <div class="d-flex align-items-center">
-                            <img class="img-fluid" src="<?php echo Yii::getAlias('@web').'/'?>images/logo_small.png">
+                            <img class="brand-logo" src="<?= Yii::getAlias('@web') ?>/images/logo.svg" alt="Bioenlace">
                         </div>
                         
                         <?php if (!Yii::$app->user->isGuest): ?>

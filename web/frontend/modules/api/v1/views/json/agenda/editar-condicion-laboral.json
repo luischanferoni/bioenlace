@@ -1,0 +1,58 @@
+{
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": {
+        "min_app_version": "1.0.0"
+      }
+    }
+  },
+  "steps": [
+    {
+      "step": 0,
+      "title": "Seleccionar profesional (RRHH)",
+      "fields": ["id_efector", "id_rr_hh"]
+    },
+    {
+      "step": 1,
+      "title": "Condición laboral",
+      "fields": ["id_condicion_laboral", "fecha_inicio", "fecha_fin"]
+    }
+  ],
+  "fields": [
+    {
+      "name": "id_efector",
+      "label": "",
+      "type": "hidden",
+      "required": false
+    },
+    {
+      "name": "id_rr_hh",
+      "label": "",
+      "type": "hidden",
+      "required": true,
+      "include_in_submit": true
+    },
+    {
+      "name": "id_condicion_laboral",
+      "label": "Condición laboral",
+      "type": "autocomplete",
+      "required": true,
+      "endpoint": "/api/v1/rrhh/condiciones-laborales-catalogo",
+      "auto_load": true
+    },
+    {
+      "name": "fecha_inicio",
+      "label": "Fecha inicio",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "fecha_fin",
+      "label": "Fecha fin (opcional)",
+      "type": "date",
+      "required": false
+    }
+  ]
+}
+

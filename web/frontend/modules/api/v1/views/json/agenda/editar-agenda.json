@@ -23,11 +23,6 @@
         "formas_atencion",
         "weekly_scheduler_widget"
       ]
-    },
-    {
-      "step": 2,
-      "title": "Condición laboral",
-      "fields": ["id_condicion_laboral", "fecha_inicio", "fecha_fin"]
     }
   ],
   "fields": [
@@ -102,26 +97,6 @@
         "css": ["/css/scheduler.css"],
         "js": ["/js/scheduler.js", "/js/widgets/ui-widget-weekly-scheduler.js"]
       }
-    },
-    {
-      "name": "id_condicion_laboral",
-      "label": "Condición laboral",
-      "type": "autocomplete",
-      "required": true,
-      "endpoint": "/api/v1/rrhh/condiciones-laborales-catalogo",
-      "auto_load": true
-    },
-    {
-      "name": "fecha_inicio",
-      "label": "Fecha inicio",
-      "type": "date",
-      "required": true
-    },
-    {
-      "name": "fecha_fin",
-      "label": "Fecha fin (opcional)",
-      "type": "date",
-      "required": false
     }
   ]
 }

@@ -135,7 +135,7 @@ class RrhhController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/rrhh/mis-servicios-en-efector
+     * GET|POST /api/v1/rrhh/listar-servicios-en-efector
      *
      * Lista servicios asignados al RRHH de la persona autenticada, filtrados como en el flujo web
      * (servicio activo en el efector o servicio con item_name AdminEfector).
@@ -148,7 +148,7 @@ class RrhhController extends BaseController
      *
      * @return array{servicios: list<array{id_servicio: int, nombre: string}>}
      */
-    public function actionMisServiciosEnEfector()
+    public function actionListarServiciosEnEfector()
     {
         $request = Yii::$app->request;
         $idPersona = (int) Yii::$app->user->getIdPersona();
@@ -325,31 +325,6 @@ class RrhhController extends BaseController
         }
 
         return $ui;
-    }
-
-    /**
-     * GET/POST /api/v1/rrhh/servicios-asignados
-     * Servicios ya asignados al RRHH (para edición de agenda). Requiere id_rr_hh.
-     *
-     * @deprecated Usar {@see actionListarServiciosAsignados} (vista embebible `ui_json`).
-     * @return array{results: list<array{id: int, text: string, meta: array<string, int}>}
-     */
-    public function actionServiciosAsignados()
-    {
-        $idRrHh = $this->requireIdRrHh();
-        $idEfector = $this->requireIdEfectorFromSession();
-
-        $items = $this->serviciosAsignadosItems($idRrHh, $idEfector);
-        $results = [];
-        foreach ($items as $it) {
-            $results[] = [
-                'id' => (int) $it['id'],
-                'text' => (string) $it['name'],
-                'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
-            ];
-        }
-
-        return ['results' => $results];
     }
 
     /**

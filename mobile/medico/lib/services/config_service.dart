@@ -165,7 +165,7 @@ class ConfigService {
     );
   }
 
-  /// Obtener servicios de un efector (desde caché del wizard; no llama a mis-servicios-en-efector).
+  /// Obtener servicios de un efector (desde caché del wizard; no llama a listar-servicios-en-efector).
   List<Servicio> serviciosParaEfector(int efectorId, SessionWizardOptions options) {
     return options.serviciosPorEfector[efectorId] ?? [];
   }

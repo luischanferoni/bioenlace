@@ -197,3 +197,31 @@
         padding-bottom: 100px !important;
     }
 }
+
+/* Chat input: botón overlay dentro del textarea (estilo libre, no dependiente de Bootstrap). */
+.spa-chat-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.spa-chat-input {
+    resize: none;
+    padding-right: 3.25rem; /* espacio para el botón */
+    padding-bottom: 0.85rem;
+}
+
+.spa-chat-send-btn {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 0.55rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    padding: 0;
+    line-height: 1;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+}
+
+.spa-chat-send-btn .spa-spinner {
+    line-height: 0;
+}

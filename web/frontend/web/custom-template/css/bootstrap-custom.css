@@ -101,11 +101,11 @@
     --bs-muted-border-subtle: rgba(102, 102, 102, 0.2);
 
     /* Radios (valores dominantes en bootstrap_bootstrap_build.css) */
-    --bs-border-radius: 0.9rem;
-    --bs-border-radius-sm: 0.9rem;
-    --bs-border-radius-lg: 0.9rem;
-    --bs-border-radius-xl: 0.9rem;
-    --bs-border-radius-xxl: 0.9rem;
+    --bs-border-radius: 1.1rem;
+    --bs-border-radius-sm: 1.1rem;
+    --bs-border-radius-lg: 1.1rem;
+    --bs-border-radius-xl: 1.1rem;
+    --bs-border-radius-xxl: 1.1rem;
     --bs-border-radius-pill: 10rem;
 }
 

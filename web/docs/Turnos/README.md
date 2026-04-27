@@ -9,7 +9,7 @@ Esta carpeta describe flujos de negocio del **sistema de turnos** (agenda, estad
 | [Cancelación por el paciente](cancelacion-paciente.md) | Flujo cuando la baja corresponde al paciente (`CANCELADO_X_PACIENTE`). |
 | [Cancelación por el médico / efector](cancelacion-medico.md) | Flujo cuando la baja la realiza el profesional o el establecimiento (`CANCELADO_X_MEDICO`). |
 | [Política autogestión / cancelaciones](politica-cancelacion-autogestion.md) | Umbrales suave y moderada, liberación presencial/teléfono. |
-| [Confirmación y recordatorios](confirmacion-y-recordatorios.md) | Push, cron, tokens, ubicación stub. |
+| [Notificaciones](confirmacion-y-recordatorios.md) | Push, cron, tokens, ubicación stub. |
 | [Sobreturno](sobreturno.md) | Turno urgente y notificaciones de demora. |
 | [Cancelación masiva](cancelacion-masiva.md) | Por día, AdminEfector. |
 | [Solicitudes entre médicos](solicitudes-medicos.md) | Módulo `solicitud_rrhh` y modos. |

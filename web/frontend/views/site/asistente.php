@@ -57,17 +57,15 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 </div>
 
                 <div class="card-footer bg-white">
-                    <div class="d-flex gap-2 align-items-end">
+                    <div class="spa-chat-input-wrap">
                         <textarea
                             id="spa-query-input"
-                            class="form-control"
+                            class="form-control spa-chat-input"
                             rows="2"
                             placeholder="Escribe tu mensaje…"
-                            style="resize: none;"
                         ></textarea>
-                        <button type="button" id="spa-send-btn" class="btn btn-primary d-flex align-items-center gap-2">
-                            <span class="spa-send-icon">→</span>
-                            <span class="spa-send-text">Enviar</span>
+                        <button type="button" id="spa-send-btn" class="btn btn-primary spa-chat-send-btn d-flex align-items-center justify-content-center">
+                            <span class="spa-send-text">→</span>
                             <span class="spa-spinner d-none">
                                 <span class="spinner-border spinner-border-sm" role="status"></span>
                             </span>

@@ -32,7 +32,7 @@ subintents:
       - draft.id_servicio
     next: open_wizard
     open_ui:
-      action_id: rrhh.listar-servicios-asignados
+      action_id: rrhh.listar-servicios-en-efector
       params:
         id_rr_hh: "draft.id_rr_hh"
 

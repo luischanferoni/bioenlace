@@ -135,7 +135,7 @@ class RrhhController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/rrhh/listar-servicios-en-efector
+     * GET|POST /api/v1/rrhh/listar-mis-servicios-en-efector
      *
      * Lista servicios asignados al RRHH de la persona autenticada, filtrados como en el flujo web
      * (servicio activo en el efector o servicio con item_name AdminEfector).
@@ -148,7 +148,7 @@ class RrhhController extends BaseController
      *
      * @return array{servicios: list<array{id_servicio: int, nombre: string}>}
      */
-    public function actionListarServiciosEnEfector()
+    public function actionListarMisServiciosEnEfector()
     {
         $request = Yii::$app->request;
         $idPersona = (int) Yii::$app->user->getIdPersona();
@@ -330,21 +330,21 @@ class RrhhController extends BaseController
     /**
      * Vista embebible: listar servicios asignados a un RRHH como `ui_json`.
      *
-     * GET|POST /api/v1/rrhh/listar-servicios-asignados
+     * GET|POST /api/v1/rrhh/listar-servicios-en-efector
      *
      * Parámetros: id_rr_hh (obligatorio).
      *
-     * @action_name Listar servicios asignados (UI)
+     * @action_name Listar servicios de un profesional (en efector)
      * @entity Rrhh
      * @tags views, ui, rrhh, servicios
-     * @keywords elegir servicio, servicios asignados, agenda por servicio
+     * @keywords elegir servicio, servicios asignados, agenda por servicio, efector
      */
-    public function actionListarServiciosAsignados(): array
+    public function actionListarServiciosEnEfector(): array
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
             'rrhh',
-            'listar-servicios-asignados',
+            'listar-servicios-en-efector',
             $req->get(),
             $req->post(),
             static function (array $post): array {

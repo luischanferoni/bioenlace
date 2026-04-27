@@ -15,7 +15,7 @@
                     "action_id": "rrhh.listar-por-efector-acepta-turnos"
                 },
                 "select_servicio": {
-                    "action_id": "rrhh.listar-servicios-asignados"
+                    "action_id": "rrhh.listar-servicios-en-efector"
                 },
                 "open_wizard": {
                     "action_id": "agenda.editar-agenda"
@@ -63,8 +63,8 @@
                             {
                                 "id": "default",
                                 "label": "Elegir",
-                                "action_id": "rrhh.listar-servicios-asignados",
-                                "route": "/api/v1/rrhh/listar-servicios-asignados",
+                                "action_id": "rrhh.listar-servicios-en-efector",
+                                "route": "/api/v1/rrhh/listar-servicios-en-efector",
                                 "params": {
                                     "id_rr_hh": "draft.id_rr_hh"
                                 },

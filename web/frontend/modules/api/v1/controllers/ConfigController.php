@@ -7,7 +7,7 @@ namespace frontend\modules\api\v1\controllers;
  *
  * Reemplazado por:
  * - `SesionOperativaController::actionEstablecer`   (POST `/api/v1/sesion-operativa/establecer`, modo opciones sin body o modo fijar con selección)
- * - `RrhhController::actionListarServiciosEnEfector`   (GET|POST `/api/v1/rrhh/listar-servicios-en-efector`; `id_efector` opcional si hay sesión RRHH)
+ * - `RrhhController::actionListarMisServiciosEnEfector`   (GET|POST `/api/v1/rrhh/listar-mis-servicios-en-efector`; `id_efector` opcional si hay sesión RRHH)
  * - `CatalogosController::actionEncounterClasses`   (GET `/api/v1/catalogos/encounter-classes`)
  */
 class ConfigController extends BaseController

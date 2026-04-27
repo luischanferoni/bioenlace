@@ -14,16 +14,18 @@ use yii\web\BadRequestHttpException;
  *
  * Una fila = agenda de un servicio (vía {@see Agenda_rrhh::id_rrhh_servicio_asignado}) para un RRHH en un efector.
  */
-class AgendaRrhhCrudService
+class AgendaRrhhService
 {
     /**
      * Agenda en el efector (cualquier RRHH). Uso: personal con permiso para-recurso (CRUD sobre terceros).
      */
     public static function findOwnedByEfector(int $idAgenda, int $idEfector): ?Agenda_rrhh
     {
-        return Agenda_rrhh::find()
-            ->where(['id_agenda_rrhh' => $idAgenda, 'id_efector' => $idEfector])
-            ->one();
+        /** @var Agenda_rrhh|null $model */
+        /** @var \yii\db\ActiveQuery $q */
+        $q = Agenda_rrhh::find();
+        $model = $q->where(['id_agenda_rrhh' => $idAgenda, 'id_efector' => $idEfector])->one();
+        return $model;
     }
 
     /**
@@ -31,13 +33,15 @@ class AgendaRrhhCrudService
      */
     public static function findOwnedByProfesional(int $idAgenda, int $idEfector, int $idRrhh): ?Agenda_rrhh
     {
-        return Agenda_rrhh::find()
-            ->where([
-                'id_agenda_rrhh' => $idAgenda,
-                'id_efector' => $idEfector,
-                'id_rr_hh' => $idRrhh,
-            ])
-            ->one();
+        /** @var Agenda_rrhh|null $model */
+        /** @var \yii\db\ActiveQuery $q */
+        $q = Agenda_rrhh::find();
+        $model = $q->where([
+            'id_agenda_rrhh' => $idAgenda,
+            'id_efector' => $idEfector,
+            'id_rr_hh' => $idRrhh,
+        ])->one();
+        return $model;
     }
 
     /**

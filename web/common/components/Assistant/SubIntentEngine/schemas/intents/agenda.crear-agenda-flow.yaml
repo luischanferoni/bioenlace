@@ -21,7 +21,7 @@ subintents:
       - draft.id_rr_hh
     next: select_servicio
     open_ui:
-      action_id: rrhh.listar-por-efector
+      action_id: rrhh.listar-por-efector-acepta-turnos
 
   - id: select_servicio
     assistant_text: "Ahora elegí el servicio asignado."

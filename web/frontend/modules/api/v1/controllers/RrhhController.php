@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Services\Rrhh\RrhhPickerService;
+use common\components\Services\Rrhh\RrhhService;
 use common\components\UiScreenService;
 use common\models\Condiciones_laborales;
 use common\models\Persona;
@@ -263,7 +263,62 @@ class RrhhController extends BaseController
             }
 
             try {
-                $ui['items'] = RrhhPickerService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit);
+                $ui['items'] = RrhhService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit);
+            } catch (\InvalidArgumentException $e) {
+                throw new BadRequestHttpException($e->getMessage());
+            }
+        }
+
+        return $ui;
+    }
+
+    /**
+     * Vista embebible: listar RRHH (profesionales) de un efector como `ui_json`,
+     * filtrando a RRHH que tengan servicios con `servicios.acepta_turnos = SI`.
+     *
+     * GET|POST /api/v1/rrhh/listar-por-efector-acepta-turnos
+     *
+     * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
+     *
+     * @action_name Listar profesionales (acepta turnos) por efector
+     * @entity Rrhh
+     * @tags views, ui, rrhh, profesional
+     * @keywords elegir profesional, listar médicos, listar especialistas, efector, acepta turnos
+     */
+    public function actionListarPorEfectorAceptaTurnos(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'rrhh',
+            'listar-por-efector-acepta-turnos',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $q = $req->get('q') ?: $req->post('q');
+            $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
+            if ($idEfector === null || $idEfector === '') {
+                $idEfector = Yii::$app->user->getIdEfector();
+            }
+            $idEfector = (int) $idEfector;
+            if ($idEfector <= 0) {
+                throw new BadRequestHttpException('id_efector es requerido');
+            }
+
+            $limit = (int) ($req->get('limit') ?: $req->post('limit') ?: 200);
+            if ($limit < 1) {
+                $limit = 200;
+            }
+            if ($limit > 200) {
+                $limit = 200;
+            }
+
+            try {
+                $ui['items'] = RrhhService::listarPorEfectorAceptaTurnos($idEfector, is_string($q) ? $q : null, $limit);
             } catch (\InvalidArgumentException $e) {
                 throw new BadRequestHttpException($e->getMessage());
             }

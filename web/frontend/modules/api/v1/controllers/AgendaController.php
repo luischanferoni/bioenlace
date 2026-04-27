@@ -7,7 +7,7 @@ use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Services\Agenda\AgendaRrhhCrudService;
+use common\components\Services\Agenda\AgendaRrhhService;
 use common\components\Services\Rrhh\RrhhAgendaUiService;
 use common\components\UiScreenService;
 use common\models\Agenda_rrhh;
@@ -87,7 +87,7 @@ class AgendaController extends BaseController
         $params = Yii::$app->request->queryParams;
         unset($params['id_rr_hh'], $params['id_efector']);
 
-        $dp = AgendaRrhhCrudService::searchForProfesional($params, $idRrhh);
+        $dp = AgendaRrhhService::searchForProfesional($params, $idRrhh);
 
         return $this->paginatedListResponse($dp);
     }
@@ -109,9 +109,9 @@ class AgendaController extends BaseController
             throw new BadRequestHttpException('id_efector e id_rr_hh son obligatorios.');
         }
         $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
-        AgendaRrhhCrudService::assertRrhhPerteneceAEfector($idRrhh, $idEfector);
+        AgendaRrhhService::assertRrhhPerteneceAEfector($idRrhh, $idEfector);
 
-        $dp = AgendaRrhhCrudService::searchParaRecurso($params, $idEfector, $idRrhh);
+        $dp = AgendaRrhhService::searchParaRecurso($params, $idEfector, $idRrhh);
 
         return $this->paginatedListResponse($dp);
     }
@@ -229,7 +229,7 @@ class AgendaController extends BaseController
     {
         $items = [];
         foreach ($dp->getModels() as $model) {
-            $items[] = AgendaRrhhCrudService::toApiArray($model);
+            $items[] = AgendaRrhhService::toApiArray($model);
         }
 
         return [
@@ -248,7 +248,7 @@ class AgendaController extends BaseController
     {
         $body = Yii::$app->request->getBodyParams();
 
-        return AgendaRrhhCrudService::normalizeDayFieldsForLoad(is_array($body) ? $body : []);
+        return AgendaRrhhService::normalizeDayFieldsForLoad(is_array($body) ? $body : []);
     }
 
     /**
@@ -272,7 +272,7 @@ class AgendaController extends BaseController
                 throw new BadRequestHttpException('id_efector e id_rr_hh son requeridos para crear agenda para otro recurso.');
             }
             $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
-            AgendaRrhhCrudService::assertRrhhPerteneceAEfector($idRrhh, $idEfector);
+            AgendaRrhhService::assertRrhhPerteneceAEfector($idRrhh, $idEfector);
         } else {
             $idEfector = $this->requireEfectorId();
             $idRrhh = $this->requireRecursoHumanoId();
@@ -286,7 +286,7 @@ class AgendaController extends BaseController
         $model->id_rr_hh = $idRrhh;
         $model->load($body, '');
 
-        AgendaRrhhCrudService::assertServicioAsignadoParaRrhhEfector(
+        AgendaRrhhService::assertServicioAsignadoParaRrhhEfector(
             self::nullablePositiveInt($model->id_rrhh_servicio_asignado),
             $idRrhh,
             $idEfector
@@ -304,7 +304,7 @@ class AgendaController extends BaseController
         return [
             'success' => true,
             'message' => 'Agenda creada.',
-            'data' => AgendaRrhhCrudService::toApiArray($model),
+            'data' => AgendaRrhhService::toApiArray($model),
         ];
     }
 
@@ -315,9 +315,9 @@ class AgendaController extends BaseController
     {
         $idEfector = $this->requireEfectorId();
         if ($paraRecurso) {
-            $model = AgendaRrhhCrudService::findOwnedByEfector($idAgenda, $idEfector);
+            $model = AgendaRrhhService::findOwnedByEfector($idAgenda, $idEfector);
         } else {
-            $model = AgendaRrhhCrudService::findOwnedByProfesional($idAgenda, $idEfector, $this->requireRecursoHumanoId());
+            $model = AgendaRrhhService::findOwnedByProfesional($idAgenda, $idEfector, $this->requireRecursoHumanoId());
         }
         if ($model === null) {
             throw new NotFoundHttpException('Agenda no encontrada.');
@@ -332,7 +332,7 @@ class AgendaController extends BaseController
         $model->id_efector = $lockedEfector;
         $model->id_rr_hh = $lockedRrhh;
 
-        AgendaRrhhCrudService::assertServicioAsignadoParaRrhhEfector(
+        AgendaRrhhService::assertServicioAsignadoParaRrhhEfector(
             self::nullablePositiveInt($model->id_rrhh_servicio_asignado),
             $lockedRrhh,
             $idEfector
@@ -348,7 +348,7 @@ class AgendaController extends BaseController
         return [
             'success' => true,
             'message' => 'Agenda actualizada.',
-            'data' => AgendaRrhhCrudService::toApiArray($model),
+            'data' => AgendaRrhhService::toApiArray($model),
         ];
     }
 
@@ -359,9 +359,9 @@ class AgendaController extends BaseController
     {
         $idEfector = $this->requireEfectorId();
         if ($paraRecurso) {
-            $model = AgendaRrhhCrudService::findOwnedByEfector($idAgenda, $idEfector);
+            $model = AgendaRrhhService::findOwnedByEfector($idAgenda, $idEfector);
         } else {
-            $model = AgendaRrhhCrudService::findOwnedByProfesional($idAgenda, $idEfector, $this->requireRecursoHumanoId());
+            $model = AgendaRrhhService::findOwnedByProfesional($idAgenda, $idEfector, $this->requireRecursoHumanoId());
         }
         if ($model === null) {
             throw new NotFoundHttpException('Agenda no encontrada.');

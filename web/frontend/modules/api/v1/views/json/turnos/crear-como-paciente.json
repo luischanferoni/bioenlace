@@ -24,7 +24,7 @@
                     "action_id": "efectores.listar-por-servicio-cercano"
                 },
                 "select_rrhh": {
-                    "action_id": "rrhh.listar-por-efector-servicio"
+                    "action_id": "rrhh.listar-por-efector-servicio-acepta-turnos"
                 },
                 "select_slot": {
                     "action_id": "turnos.slots-disponibles-como-paciente"
@@ -111,8 +111,8 @@
                             {
                                 "id": "default",
                                 "label": "Elegir",
-                                "action_id": "rrhh.listar-por-efector-servicio",
-                                "route": "/api/v1/rrhh/listar-por-efector-servicio",
+                                "action_id": "rrhh.listar-por-efector-servicio-acepta-turnos",
+                                "route": "/api/v1/rrhh/listar-por-efector-servicio-acepta-turnos",
                                 "params": {
                                     "id_efector": "draft.id_efector",
                                     "id_servicio": "draft.id_servicio_asignado"

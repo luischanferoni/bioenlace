@@ -368,6 +368,9 @@ class RrhhEfector extends \yii\db\ActiveRecord
         if (!empty($filters['servicio_nombre'])) {
             $query->andWhere(['like', 'servicios.nombre', '%' . $filters['servicio_nombre'] . '%', false]);
         }
+        if (!empty($filters['acepta_turnos'])) {
+            $query->andWhere(['servicios.acepta_turnos' => (string) $filters['acepta_turnos']]);
+        }
 
         $query->groupBy(['rrhh_efector.id_rr_hh']);
 

@@ -45,6 +45,8 @@ class RrhhController extends BaseController
         $filters = [
             'id_efector' => $idEfector,
             'id_servicio' => $idServicio,
+            // Esta vista se usa para elegir profesional en flujos de turnos: solo servicios que aceptan turnos.
+            'acepta_turnos' => 'SI',
             // Para listados UI JSON: devolver suficiente sin paginar de más.
             'limit' => 200,
         ];
@@ -421,16 +423,17 @@ class RrhhController extends BaseController
     }
 
     /**
-     * Vista embebible: listar profesionales (RRHH) por efector y servicio (obligatorios).
+     * Vista embebible: listar profesionales (RRHH) por efector y servicio (obligatorios),
+     * filtrando a servicios que aceptan turnos (`servicios.acepta_turnos = SI`).
      *
-     * GET|POST /api/v1/rrhh/listar-por-efector-servicio
+     * GET|POST /api/v1/rrhh/listar-por-efector-servicio-acepta-turnos
      *
-     * @action_name Listar profesionales por efector y servicio
+     * @action_name Listar profesionales (acepta turnos) por efector y servicio
      * @entity Rrhh
      * @tags views, ui, rrhh, profesional
-     * @keywords listar profesional, elegir médico, elegir especialista, efector, servicio
+     * @keywords listar profesional, elegir médico, elegir especialista, efector, servicio, acepta turnos
      */
-    public function actionListarPorEfectorServicio(): array
+    public function actionListarPorEfectorServicioAceptaTurnos(): array
     {
         $req = Yii::$app->request;
         $idEfector = $this->reqParamRaw('id_efector');
@@ -441,7 +444,7 @@ class RrhhController extends BaseController
 
         $ui = UiScreenService::handleScreen(
             'rrhh',
-            'listar-por-efector-servicio',
+            'listar-por-efector-servicio-acepta-turnos',
             $req->get(),
             $req->post(),
             static function (array $post): array {
@@ -463,7 +466,7 @@ class RrhhController extends BaseController
      *
      * GET|POST /api/v1/rrhh/elegir
      *
-     * @deprecated Preferir listar-por-efector-servicio en nuevos flujos.
+     * @deprecated Preferir listar-por-efector-servicio-acepta-turnos en nuevos flujos.
      */
     public function actionElegir(): array
     {
@@ -472,7 +475,7 @@ class RrhhController extends BaseController
         $idEfector = $this->reqParamRaw('id_efector');
         $idServicio = $this->reqParamRaw('id_servicio');
         if ($idEfector !== null && $idServicio !== null) {
-            return $this->actionListarPorEfectorServicio();
+            return $this->actionListarPorEfectorServicioAceptaTurnos();
         }
 
         return UiScreenService::handleScreen(

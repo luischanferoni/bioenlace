@@ -698,9 +698,11 @@
         const draftField = list.draft_field ? String(list.draft_field) : '';
         const requiresConfirmation = list.selection && list.selection.requires_confirmation === true;
         let locked = false;
+        let selectedId = '';
+        let selectedLabel = '';
 
         let html = '<div class="bio-ui-json-list">';
-        html += '<div class="d-flex gap-2 overflow-auto pb-2">';
+        html += '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap">';
         items.forEach((it, idx) => {
             const id = it && it.id !== undefined ? String(it.id) : '';
             const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
@@ -708,49 +710,87 @@
             html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">' + escapeHtml(name) + '</button>';
         });
         html += '</div>';
+        if (requiresConfirmation) {
+            html += '<div class="d-flex justify-content-end pt-2">';
+            html += '<button type="button" class="btn btn-primary btn-sm" data-embed-confirm="1" disabled>Confirmar</button>';
+            html += '</div>';
+        }
         html += '</div>';
         container.innerHTML = html;
 
-        container.querySelectorAll('button[data-embed-pick="1"]').forEach(btn => {
+        const pickButtons = Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
+        const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
+
+        function setSelected(btn, id, label) {
+            selectedId = id || '';
+            selectedLabel = label || selectedId;
+            pickButtons.forEach(b => b.classList.remove('bio-ui-selected'));
+            if (btn) {
+                btn.classList.add('bio-ui-selected');
+            }
+            if (confirmBtn) {
+                confirmBtn.disabled = !selectedId;
+            }
+        }
+
+        function confirmSelection() {
+            if (locked) return;
+            if (!draftField) {
+                console.warn('[SPA] ui_json list sin draft_field');
+                return;
+            }
+            if (!selectedId) {
+                return;
+            }
+
+            // Bloquear el listado una vez confirmada la selección (evita re-seleccionar un ítem viejo).
+            locked = true;
+            try {
+                pickButtons.forEach(b => {
+                    b.disabled = true;
+                    b.classList.add('disabled');
+                });
+                if (confirmBtn) {
+                    confirmBtn.disabled = true;
+                }
+            } catch (e) { /* ignore */ }
+
+            // Aplicar draft local y avanzar el flow automáticamente.
+            try {
+                draft = Object.assign({}, draft || {}, { [draftField]: selectedId });
+            } catch (e) { /* ignore */ }
+
+            // Disparar siguiente paso del flow sin texto (solo snapshot).
+            setTimeout(() => {
+                if (queryInput) {
+                    queryInput.value = '';
+                }
+                handleSendQuery();
+            }, 0);
+        }
+
+        pickButtons.forEach(btn => {
             btn.addEventListener('click', function () {
                 if (locked) return;
                 const id = this.getAttribute('data-embed-id') || '';
                 const label = this.getAttribute('data-embed-label') || id;
                 if (!id) return;
 
-                if (requiresConfirmation) {
-                    const ok = window.confirm('¿Confirmás la selección?\\n\\n' + label);
-                    if (!ok) return;
+                setSelected(this, id, label);
+
+                // Si no requiere confirmación explícita, confirmar inmediatamente (sin alerts).
+                if (!requiresConfirmation) {
+                    confirmSelection();
                 }
-
-                if (!draftField) {
-                    console.warn('[SPA] ui_json list sin draft_field');
-                    return;
-                }
-
-                // Bloquear el listado una vez confirmada la selección (evita re-seleccionar un ítem viejo).
-                locked = true;
-                try {
-                    container.querySelectorAll('button[data-embed-pick="1"]').forEach(b => {
-                        b.disabled = true;
-                        b.classList.add('disabled');
-                    });
-                } catch (e) { /* ignore */ }
-
-                // Aplicar draft local y avanzar el flow automáticamente.
-                try {
-                    draft = Object.assign({}, draft || {}, { [draftField]: id });
-                } catch (e) { /* ignore */ }
-
-                // Disparar siguiente paso del flow sin texto (solo snapshot).
-                setTimeout(() => {
-                    if (queryInput) {
-                        queryInput.value = '';
-                    }
-                    handleSendQuery();
-                }, 0);
             });
         });
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function () {
+                if (locked) return;
+                confirmSelection();
+            });
+        }
     }
 
     /**

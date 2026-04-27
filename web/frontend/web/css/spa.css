@@ -225,3 +225,9 @@
 .spa-chat-send-btn .spa-spinner {
     line-height: 0;
 }
+
+/* UI JSON list (embebible): selección + confirmación */
+.bio-ui-json-list [data-embed-pick="1"].bio-ui-selected {
+    border-color: var(--bs-primary, #0d6efd) !important;
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.25);
+}

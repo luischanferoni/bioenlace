@@ -201,8 +201,11 @@
     /**
      * Manejar envío de consulta
      */
-    function handleSendQuery() {
-        const query = queryInput.value.trim();
+    function handleSendQuery(contentOverride) {
+        const raw = (typeof contentOverride === 'string')
+            ? contentOverride
+            : (queryInput ? queryInput.value : '');
+        const query = String(raw || '').trim();
         
         // En flows, se permite avanzar con `content=''` (solo snapshot draft/intento).
         if (!query && !currentIntentId) {
@@ -217,16 +220,19 @@
             chatEmptyHint.classList.add('d-none');
         }
 
-        // Limpiar el textarea inmediatamente (UX tipo chat)
-        try {
-            queryInput.value = '';
-            handleInput();
-        } catch (e) {
-            // ignore
+        // Limpiar el textarea inmediatamente (UX tipo chat) solo si el input existe
+        // y el envío vino del textarea (no por override programático).
+        if (typeof contentOverride !== 'string') {
+            try {
+                queryInput.value = '';
+                handleInput();
+            } catch (e) {
+                // ignore
+            }
         }
 
         // En modo chat, agregar burbuja de usuario antes de enviar (si hay texto).
-        if (chatMessagesDiv && query !== '') {
+        if (chatMessagesDiv && query !== '' && typeof contentOverride !== 'string') {
             appendChatBubble('user', '<div>' + escapeHtml(query) + '</div>');
         }
 
@@ -1018,17 +1024,10 @@
                             // Si estamos en un flow conversacional, avanzar automáticamente al siguiente paso.
                             // En el wizard no hay draft_delta; usamos snapshot actual (intent_id/subintent_id/draft) y content vacío.
                             if (currentIntentId && typeof handleSendQuery === 'function') {
-                                try {
-                                    if (queryInput) {
-                                        queryInput.value = '';
-                                        handleInput();
-                                    }
-                                } catch (e) {
-                                    // ignore
-                                }
                                 setTimeout(() => {
                                     try {
-                                        handleSendQuery();
+                                        // Avanzar flow sin depender del textarea.
+                                        handleSendQuery('');
                                     } catch (e) {
                                         // ignore
                                     }

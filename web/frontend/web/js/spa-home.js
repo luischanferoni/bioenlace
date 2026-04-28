@@ -935,7 +935,8 @@
             if (currentStep < steps.length - 1) {
                 html += '<button type="button" class="btn btn-primary" data-action="next">Siguiente</button>';
             } else {
-                html += '<button type="submit" class="btn btn-success">Confirmar</button>';
+                // No usar submit nativo (puede refrescar si el listener no está enganchado).
+                html += '<button type="button" class="btn btn-success" data-action="submit">Confirmar</button>';
             }
             html += '</div>';
 
@@ -966,30 +967,7 @@
 
             initWizardCustomWidgets(container, stepFields, getFieldConfigByName);
 
-            form.addEventListener('click', function wizardNavClick(e) {
-                const action = e.target.dataset ? e.target.dataset.action : null;
-                if (!action) return;
-                e.preventDefault();
-
-                if (action === 'next') {
-                    readWizardAccumFromForm(form, wizardAccum);
-                    if (currentStep < steps.length - 1) {
-                        currentStep++;
-                        form.removeEventListener('click', wizardNavClick);
-                        renderCurrentStep();
-                    }
-                } else if (action === 'prev') {
-                    readWizardAccumFromForm(form, wizardAccum);
-                    if (currentStep > 0) {
-                        currentStep--;
-                        form.removeEventListener('click', wizardNavClick);
-                        renderCurrentStep();
-                    }
-                }
-            });
-
-            form.addEventListener('submit', function wizardSubmit(e) {
-                e.preventDefault();
+            function doWizardSubmit() {
                 readWizardAccumFromForm(form, wizardAccum);
 
                 if (!submitUrl) {
@@ -1068,6 +1046,30 @@
                         console.error('[SPA] wizard submit', err);
                         container.innerHTML = '<div class="alert alert-danger">Error de red al guardar.</div>';
                     });
+            }
+
+            form.addEventListener('click', function wizardNavClick(e) {
+                const action = e.target.dataset ? e.target.dataset.action : null;
+                if (!action) return;
+                e.preventDefault();
+
+                if (action === 'next') {
+                    readWizardAccumFromForm(form, wizardAccum);
+                    if (currentStep < steps.length - 1) {
+                        currentStep++;
+                        form.removeEventListener('click', wizardNavClick);
+                        renderCurrentStep();
+                    }
+                } else if (action === 'prev') {
+                    readWizardAccumFromForm(form, wizardAccum);
+                    if (currentStep > 0) {
+                        currentStep--;
+                        form.removeEventListener('click', wizardNavClick);
+                        renderCurrentStep();
+                    }
+                } else if (action === 'submit') {
+                    doWizardSubmit();
+                }
             });
         }
 

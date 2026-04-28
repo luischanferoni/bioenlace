@@ -217,6 +217,14 @@
             chatEmptyHint.classList.add('d-none');
         }
 
+        // Limpiar el textarea inmediatamente (UX tipo chat)
+        try {
+            queryInput.value = '';
+            handleInput();
+        } catch (e) {
+            // ignore
+        }
+
         // En modo chat, agregar burbuja de usuario antes de enviar (si hay texto).
         if (chatMessagesDiv && query !== '') {
             appendChatBubble('user', '<div>' + escapeHtml(query) + '</div>');
@@ -868,6 +876,7 @@
             return;
         }
 
+        const wizardInstanceId = 'wiz_' + Math.floor(Math.random() * 1000000) + '_' + Date.now();
         const steps = Array.isArray(config.steps) ? config.steps : [];
         const fieldsConfig = Array.isArray(config.fields) ? config.fields : [];
         let currentStep = typeof config.initial_step === 'number' ? config.initial_step : 0;
@@ -905,7 +914,8 @@
                 html += '<h5 class="mb-3">' + escapeHtml(step.title) + '</h5>';
             }
 
-            html += '<form id="wizard-form">';
+            // No usar id fijo (puede haber múltiples wizards en el chat).
+            html += '<form data-wizard-form="1" data-wizard-id="' + escapeHtml(String(wizardInstanceId)) + '">';
 
             const stepFields = Array.isArray(step.fields) ? step.fields : [];
             stepFields.forEach(fieldName => {
@@ -934,7 +944,7 @@
 
             container.innerHTML = html;
 
-            const form = document.getElementById('wizard-form');
+            const form = container.querySelector('form[data-wizard-form="1"][data-wizard-id="' + String(wizardInstanceId) + '"]');
             if (!form) {
                 return;
             }

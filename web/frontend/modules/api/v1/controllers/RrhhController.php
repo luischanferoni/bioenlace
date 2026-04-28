@@ -484,6 +484,38 @@ class RrhhController extends BaseController
     }
 
     /**
+     * UI JSON: crear condición laboral (vigencia) de un RRHH.
+     * Nota: el submit es un upsert; este endpoint existe por claridad de intención.
+     *
+     * GET|POST /api/v1/rrhh/crear-condicion-laboral
+     *
+     * @action_name Crear condición laboral (RRHH)
+     * @entity Rrhh
+     * @tags rrhh, condicion-laboral, staff
+     * @keywords crear condición laboral, alta condición laboral, vigencia rrhh
+     */
+    public function actionCrearCondicionLaboral(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        // Precarga si existe (upsert). Para "crear", esto también ayuda a no duplicar.
+        $defaults = RrhhAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
+        $paramsForRender = array_merge($defaults, $fromClient);
+
+        return UiScreenService::handleScreen(
+            'rrhh',
+            'crear-condicion-laboral',
+            $paramsForRender,
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                return RrhhAgendaUiService::submitCondicionLaboral($idEfector, $post);
+            }
+        );
+    }
+
+    /**
      * Vista embebible: listar profesionales (RRHH) por efector y servicio (obligatorios),
      * filtrando a servicios que aceptan turnos (`servicios.acepta_turnos = SI`).
      *

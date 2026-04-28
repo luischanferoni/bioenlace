@@ -157,6 +157,9 @@ return [
                 'GET api/<version:\w+>/rrhh/editar-condicion-laboral' => '<version>/rrhh/editar-condicion-laboral',
                 'POST api/<version:\w+>/rrhh/editar-condicion-laboral' => '<version>/rrhh/editar-condicion-laboral',
                 'OPTIONS api/<version:\w+>/rrhh/editar-condicion-laboral' => '<version>/rrhh/editar-condicion-laboral',
+                'GET api/<version:\w+>/rrhh/crear-condicion-laboral' => '<version>/rrhh/crear-condicion-laboral',
+                'POST api/<version:\w+>/rrhh/crear-condicion-laboral' => '<version>/rrhh/crear-condicion-laboral',
+                'OPTIONS api/<version:\w+>/rrhh/crear-condicion-laboral' => '<version>/rrhh/crear-condicion-laboral',
                 
                 // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
                 // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.

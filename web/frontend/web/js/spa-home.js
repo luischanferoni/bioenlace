@@ -2530,7 +2530,20 @@
         const spinner = sendBtn.querySelector('.spa-spinner');
         const sendIcon = sendBtn.querySelector('.spa-send-icon');
         const sendText = sendBtn.querySelector('.spa-send-text');
+        // Fallback: si el botón no tiene la estructura esperada, degradar a HTML swap.
         if (!spinner || !sendIcon || !sendText) {
+            try {
+                if (!sendBtn.dataset.originalHtml) {
+                    sendBtn.dataset.originalHtml = sendBtn.innerHTML;
+                }
+                if (loading) {
+                    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                } else if (sendBtn.dataset.originalHtml) {
+                    sendBtn.innerHTML = sendBtn.dataset.originalHtml;
+                }
+            } catch (e) {
+                // ignore
+            }
             return;
         }
         if (loading) {

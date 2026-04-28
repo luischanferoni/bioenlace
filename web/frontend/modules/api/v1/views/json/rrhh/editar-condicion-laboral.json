@@ -10,13 +10,8 @@
   "steps": [
     {
       "step": 0,
-      "title": "RRHH",
-      "fields": ["id_efector", "id_rr_hh"]
-    },
-    {
-      "step": 1,
       "title": "Condición laboral",
-      "fields": ["id_condicion_laboral", "fecha_inicio", "fecha_fin"]
+      "fields": ["id_efector", "id_rr_hh", "id_condicion_laboral", "fecha_inicio", "fecha_fin"]
     }
   ],
   "fields": [

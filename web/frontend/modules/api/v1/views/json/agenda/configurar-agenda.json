@@ -10,13 +10,11 @@
   "steps": [
     {
       "step": 0,
-      "title": "Profesional y servicio",
-      "fields": ["id_efector", "id_rr_hh", "id_servicio"]
-    },
-    {
-      "step": 1,
       "title": "Agenda semanal",
       "fields": [
+        "id_efector",
+        "id_rr_hh",
+        "id_servicio",
         "cupo_pacientes",
         "duracion_slot_minutos",
         "formas_atencion",

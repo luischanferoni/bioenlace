@@ -21,6 +21,33 @@ class RrhhLaboral extends \yii\db\ActiveRecord
     use \common\traits\SoftDeleteDateTimeTrait;
 
     /**
+     * Parse flexible para fechas recibidas desde UIs:
+     * - `Y-m-d` (HTML input type=date)
+     * - `d/m/Y` (formato histórico)
+     */
+    private function parseFechaUi(?string $raw): ?\DateTimeInterface
+    {
+        $s = trim((string)($raw ?? ''));
+        if ($s === '') {
+            return null;
+        }
+
+        // HTML date input (recomendado en UIs nuevas)
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $s)) {
+            $dt = \DateTime::createFromFormat('Y-m-d', $s);
+            return $dt instanceof \DateTimeInterface ? $dt : null;
+        }
+
+        // Formato histórico
+        if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $s)) {
+            $dt = \DateTime::createFromFormat('d/m/Y', $s);
+            return $dt instanceof \DateTimeInterface ? $dt : null;
+        }
+
+        return null;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public static function tableName()
@@ -113,10 +140,14 @@ class RrhhLaboral extends \yii\db\ActiveRecord
     public function validarFechaMayorQue()
     {
         if ($this->fecha_fin != null && $this->fecha_fin != "") {
-            $fecha_fin = date_create_from_format('d/m/Y', $this->fecha_fin);
-            $fecha_inicio = date_create_from_format('d/m/Y', $this->fecha_inicio);
-            
-            if(strtotime(date_format($fecha_fin, 'Y-m-d')) <= strtotime(date_format($fecha_inicio, 'Y-m-d'))) {
+            $fechaFin = $this->parseFechaUi((string)$this->fecha_fin);
+            $fechaInicio = $this->parseFechaUi((string)$this->fecha_inicio);
+            if ($fechaFin === null || $fechaInicio === null) {
+                // La validación de formato se reporta por separado.
+                return;
+            }
+
+            if (strtotime($fechaFin->format('Y-m-d')) <= strtotime($fechaInicio->format('Y-m-d'))) {
                 $this->addError('fecha_fin', 'Fecha de fin debería de ser mayor a fecha de inicio');
             }
         }
@@ -125,8 +156,13 @@ class RrhhLaboral extends \yii\db\ActiveRecord
     public function formatearFechaMysql($event, $attribute)
     {
         if ($this->$attribute != "" && $this->$attribute != null) {
-            $fecha = date_create_from_format('d/m/Y', $this->$attribute);
-            return date_format($fecha, 'Y-m-d');
+            $dt = $this->parseFechaUi((string)$this->$attribute);
+            // Si no parsea, no romper en behaviors: dejar valor como está para que el submit
+            // pueda devolver un error controlado.
+            if ($dt === null) {
+                return $this->$attribute;
+            }
+            return $dt->format('Y-m-d');
         }   
     }
 

@@ -371,6 +371,21 @@
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
                 const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
+                const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
+
+                // Flow terminado: si el step activo no tiene `next`, NO abrir mini-UI y limpiar estado.
+                if (nextId === '') {
+                    currentIntentId = null;
+                    currentSubintentId = null;
+                    draft = {};
+                    writeFlowState();
+                    if (botBubble) {
+                        setTimeout(scrollChatToBottom, 20);
+                    } else {
+                        responseSection.classList.remove('d-none');
+                    }
+                    return;
+                }
                 const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
@@ -1053,19 +1068,6 @@
                     .then(r => r.json().then(j => ({ ok: r.ok, status: r.status, json: j })))
                     .then(({ ok, json }) => {
                         if (json && json.kind === 'ui_submit_result' && json.success) {
-                            const msg = (json.data && json.data.message) ? json.data.message : 'Guardado.';
-                            // Mantener la UI visible pero bloqueada (no reemplazar por alert).
-                            try {
-                                const existing = container.querySelector('.alert.alert-success[data-wizard-saved="1"]');
-                                if (!existing) {
-                                    const a = document.createElement('div');
-                                    a.className = 'alert alert-success mb-2';
-                                    a.setAttribute('data-wizard-saved', '1');
-                                    a.textContent = String(msg);
-                                    container.insertBefore(a, container.firstChild);
-                                }
-                            } catch (e) { /* ignore */ }
-
                             try {
                                 // Deshabilitar todos los controles del wizard para evitar re-editar accidental.
                                 container.querySelectorAll('input, select, textarea, button').forEach(function (el) {

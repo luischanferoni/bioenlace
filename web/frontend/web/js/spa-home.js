@@ -1037,7 +1037,37 @@
                             return;
                         }
                         if (json && json.kind === 'ui_definition') {
-                            renderDynamicUi(json, container, { url: submitUrl });
+                            // En POST, ui_definition suele significar error de validación (success=false).
+                            // Si es success=true, es un contrato inesperado: evitar "refrescar" sin explicación.
+                            const isSuccess = json.success === true;
+                            const errors = (json && json.errors && typeof json.errors === 'object') ? json.errors : null;
+                            if (!isSuccess) {
+                                // Mostrar error humano arriba, manteniendo el wizard en pantalla.
+                                let msg = 'Error al guardar.';
+                                try {
+                                    const firstKey = errors ? Object.keys(errors)[0] : null;
+                                    const firstArr = firstKey ? errors[firstKey] : null;
+                                    if (Array.isArray(firstArr) && firstArr.length >= 1) {
+                                        msg = String(firstArr[0]);
+                                    }
+                                } catch (e) { /* ignore */ }
+
+                                try {
+                                    const existingErr = container.querySelector('.alert.alert-danger[data-wizard-error="1"]');
+                                    if (existingErr) existingErr.remove();
+                                    const a = document.createElement('div');
+                                    a.className = 'alert alert-danger mb-2';
+                                    a.setAttribute('data-wizard-error', '1');
+                                    a.textContent = msg;
+                                    container.insertBefore(a, container.firstChild);
+                                } catch (e) { /* ignore */ }
+
+                                // Re-render para que backend pueda inyectar values/errors si aplica.
+                                renderDynamicUi(json, container, { url: submitUrl });
+                                return;
+                            }
+
+                            container.innerHTML = '<div class="alert alert-danger">Respuesta inesperada: el backend devolvió ui_definition en un POST. Esperaba ui_submit_result.</div>';
                             return;
                         }
                         container.innerHTML = '<div class="alert alert-danger">Error al guardar.</div>';

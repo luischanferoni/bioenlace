@@ -56,7 +56,7 @@ subintents:
     provides: []
     next: ""
     open_ui:
-      action_id: agenda.editar-condicion-laboral
+      action_id: rrhh.editar-condicion-laboral
       params:
         id_rr_hh: "draft.id_rr_hh"
 

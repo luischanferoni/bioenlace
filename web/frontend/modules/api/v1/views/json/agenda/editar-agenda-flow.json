@@ -21,7 +21,7 @@
                     "action_id": "agenda.configurar-agenda"
                 },
                 "condicion_laboral": {
-                    "action_id": "agenda.editar-condicion-laboral"
+                    "action_id": "rrhh.editar-condicion-laboral"
                 }
             },
             "steps": [
@@ -116,8 +116,8 @@
                             {
                                 "id": "default",
                                 "label": "Elegir",
-                                "action_id": "agenda.editar-condicion-laboral",
-                                "route": "/api/v1/agenda/editar-condicion-laboral",
+                                "action_id": "rrhh.editar-condicion-laboral",
+                                "route": "/api/v1/rrhh/editar-condicion-laboral",
                                 "params": {
                                     "id_rr_hh": "draft.id_rr_hh"
                                 },

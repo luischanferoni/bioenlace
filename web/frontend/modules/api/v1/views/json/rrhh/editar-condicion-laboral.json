@@ -10,7 +10,7 @@
   "steps": [
     {
       "step": 0,
-      "title": "Seleccionar profesional (RRHH)",
+      "title": "RRHH",
       "fields": ["id_efector", "id_rr_hh"]
     },
     {

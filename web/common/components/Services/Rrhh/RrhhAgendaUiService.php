@@ -43,7 +43,9 @@ final class RrhhAgendaUiService
             return $out;
         }
 
-        $rrhhServicio = RrhhServicio::find()
+        /** @var \yii\db\ActiveQuery $rrhhServicioQ */
+        $rrhhServicioQ = RrhhServicio::find();
+        $rrhhServicio = $rrhhServicioQ
             ->where(['id_rr_hh' => $idRrHh, 'id_servicio' => $idServicio])
             ->andWhere(['deleted_at' => null])
             ->one();
@@ -54,7 +56,9 @@ final class RrhhAgendaUiService
 
         $out['id_servicio'] = (string) $idServicio;
 
-        $agenda = Agenda_rrhh::find()
+        /** @var \yii\db\ActiveQuery $agendaQ */
+        $agendaQ = Agenda_rrhh::find();
+        $agenda = $agendaQ
             ->where(['id_rrhh_servicio_asignado' => $rrhhServicio->id])
             ->andWhere(['deleted_at' => null])
             ->one();
@@ -68,7 +72,9 @@ final class RrhhAgendaUiService
             }
         }
 
-        $laboral = RrhhLaboral::find()
+        /** @var \yii\db\ActiveQuery $laboralQ */
+        $laboralQ = RrhhLaboral::find();
+        $laboral = $laboralQ
             ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
             ->orderBy(['id' => SORT_DESC])
             ->one();
@@ -83,12 +89,44 @@ final class RrhhAgendaUiService
     }
 
     /**
-     * Persistencia atómica: agenda del servicio seleccionado + una fila de condición laboral.
+     * Valores para precargar UI de condición laboral (solo RRHH).
+     *
+     * @return array<string, mixed>
+     */
+    public static function buildCondicionLaboralValuesForGet(int $idEfector, array $query): array
+    {
+        $idRrHh = isset($query['id_rr_hh']) ? (int) $query['id_rr_hh'] : 0;
+        $out = [
+            'id_efector' => (string) $idEfector,
+        ];
+        if ($idRrHh <= 0) {
+            return $out;
+        }
+        self::assertRrhhBelongsToEfector($idRrHh, $idEfector);
+        $out['id_rr_hh'] = (string) $idRrHh;
+
+        /** @var \yii\db\ActiveQuery $laboralQ */
+        $laboralQ = RrhhLaboral::find();
+        $laboral = $laboralQ
+            ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+        if ($laboral !== null) {
+            $out['id_condicion_laboral'] = (string) $laboral->id_condicion_laboral;
+            $out['fecha_inicio'] = (string) ($laboral->fecha_inicio ?? '');
+            $out['fecha_fin'] = (string) ($laboral->fecha_fin ?? '');
+        }
+
+        return $out;
+    }
+
+    /**
+     * Persistencia: agenda del servicio seleccionado (sin condición laboral).
      *
      * @param array<string, mixed> $post
      * @return array{message: string}
      */
-    public static function submit(int $idEfector, array $post): array
+    public static function submitAgendaConfig(int $idEfector, array $post): array
     {
         $idRrHh = (int) ($post['id_rr_hh'] ?? 0);
         $idServicio = (int) ($post['id_servicio'] ?? 0);
@@ -108,7 +146,9 @@ final class RrhhAgendaUiService
             throw new NotFoundHttpException('Servicio inexistente.');
         }
 
-        $rrhhServicio = RrhhServicio::find()
+        /** @var \yii\db\ActiveQuery $rrhhServicioQ */
+        $rrhhServicioQ = RrhhServicio::find();
+        $rrhhServicio = $rrhhServicioQ
             ->where(['id_rr_hh' => $idRrHh, 'id_servicio' => $idServicio])
             ->andWhere(['deleted_at' => null])
             ->one();
@@ -117,7 +157,9 @@ final class RrhhAgendaUiService
             throw new BadRequestHttpException('El RRHH no tiene asignado ese servicio.');
         }
 
-        $agenda = Agenda_rrhh::find()
+        /** @var \yii\db\ActiveQuery $agendaQ */
+        $agendaQ = Agenda_rrhh::find();
+        $agenda = $agendaQ
             ->where(['id_rrhh_servicio_asignado' => $rrhhServicio->id])
             ->andWhere(['deleted_at' => null])
             ->one();
@@ -138,16 +180,50 @@ final class RrhhAgendaUiService
             $agenda->formas_atencion = Agenda_rrhh::FORMA_ATENCION_SIN_ATENCION;
         }
 
+        $tx = Yii::$app->db->beginTransaction();
+        try {
+            if (!$agenda->validate()) {
+                throw new BadRequestHttpException(implode(' ', $agenda->getFirstErrors()));
+            }
+
+            if (!$agenda->save(false)) {
+                throw new \RuntimeException('No se pudo guardar la agenda.');
+            }
+
+            $tx->commit();
+        } catch (\Throwable $e) {
+            $tx->rollBack();
+            throw $e;
+        }
+
+        return ['message' => 'Agenda guardada.'];
+    }
+
+    /**
+     * Crear/editar condición laboral (upsert) de un RRHH (sin tocar agenda por servicio).
+     *
+     * @param array<string, mixed> $post
+     * @return array{message: string}
+     */
+    public static function submitCondicionLaboral(int $idEfector, array $post): array
+    {
+        $idRrHh = (int) ($post['id_rr_hh'] ?? 0);
+        if ($idRrHh <= 0) {
+            throw new BadRequestHttpException('id_rr_hh es obligatorio.');
+        }
+        self::assertRrhhBelongsToEfector($idRrHh, $idEfector);
+
         $idCondicion = isset($post['id_condicion_laboral']) ? (int) $post['id_condicion_laboral'] : 0;
         if ($idCondicion <= 0) {
             throw new BadRequestHttpException('id_condicion_laboral es obligatorio.');
         }
-
         if (!Condiciones_laborales::find()->where(['id_condicion_laboral' => $idCondicion])->exists()) {
             throw new BadRequestHttpException('Condición laboral inválida.');
         }
 
-        $laboral = RrhhLaboral::find()
+        /** @var \yii\db\ActiveQuery $laboralQ */
+        $laboralQ = RrhhLaboral::find();
+        $laboral = $laboralQ
             ->where([
                 'id_rr_hh' => $idRrHh,
                 'id_condicion_laboral' => $idCondicion,
@@ -164,31 +240,14 @@ final class RrhhAgendaUiService
         $laboral->fecha_inicio = (string) ($post['fecha_inicio'] ?? '');
         $laboral->fecha_fin = (string) ($post['fecha_fin'] ?? '');
 
-        $tx = Yii::$app->db->beginTransaction();
-        try {
-            if (!$agenda->validate()) {
-                throw new BadRequestHttpException(implode(' ', $agenda->getFirstErrors()));
-            }
-
-            if (!$agenda->save(false)) {
-                throw new \RuntimeException('No se pudo guardar la agenda.');
-            }
-
-            if (!$laboral->validate()) {
-                throw new BadRequestHttpException(implode(' ', $laboral->getFirstErrors()));
-            }
-
-            if (!$laboral->save(false)) {
-                throw new \RuntimeException('No se pudo guardar la condición laboral.');
-            }
-
-            $tx->commit();
-        } catch (\Throwable $e) {
-            $tx->rollBack();
-            throw $e;
+        if (!$laboral->validate()) {
+            throw new BadRequestHttpException(implode(' ', $laboral->getFirstErrors()));
+        }
+        if (!$laboral->save(false)) {
+            throw new \RuntimeException('No se pudo guardar la condición laboral.');
         }
 
-        return ['message' => 'Cambios guardados.'];
+        return ['message' => 'Condición laboral guardada.'];
     }
 
     private static function assertRrhhBelongsToEfector(int $idRrHh, int $idEfector): void
@@ -197,7 +256,9 @@ final class RrhhAgendaUiService
             throw new BadRequestHttpException('No hay efector en sesión.');
         }
 
-        $re = RrhhEfector::find()
+        /** @var \yii\db\ActiveQuery $reQ */
+        $reQ = RrhhEfector::find();
+        $re = $reQ
             ->where([
                 'id_rr_hh' => $idRrHh,
                 'id_efector' => $idEfector,

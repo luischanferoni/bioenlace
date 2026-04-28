@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Services\Rrhh\RrhhService;
+use common\components\Services\Rrhh\RrhhAgendaUiService;
 use common\components\UiScreenService;
 use common\models\Condiciones_laborales;
 use common\models\Persona;
@@ -450,6 +451,36 @@ class RrhhController extends BaseController
         }
 
         return ['results' => $results];
+    }
+
+    /**
+     * UI JSON: crear/editar condición laboral (vigencia) de un RRHH.
+     *
+     * GET|POST /api/v1/rrhh/editar-condicion-laboral
+     *
+     * @action_name Editar condición laboral (RRHH)
+     * @entity Rrhh
+     * @tags rrhh, condicion-laboral, staff
+     * @keywords condición laboral, vigencia, rrhh
+     */
+    public function actionEditarCondicionLaboral(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $defaults = RrhhAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
+        $paramsForRender = array_merge($defaults, $fromClient);
+
+        return UiScreenService::handleScreen(
+            'rrhh',
+            'editar-condicion-laboral',
+            $paramsForRender,
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                return RrhhAgendaUiService::submitCondicionLaboral($idEfector, $post);
+            }
+        );
     }
 
     /**

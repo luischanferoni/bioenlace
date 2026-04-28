@@ -154,9 +154,9 @@ return [
                 'GET api/<version:\w+>/agenda/configurar-agenda' => '<version>/agenda/configurar-agenda',
                 'POST api/<version:\w+>/agenda/configurar-agenda' => '<version>/agenda/configurar-agenda',
                 'OPTIONS api/<version:\w+>/agenda/configurar-agenda' => '<version>/agenda/configurar-agenda',
-                'GET api/<version:\w+>/agenda/editar-condicion-laboral' => '<version>/agenda/editar-condicion-laboral',
-                'POST api/<version:\w+>/agenda/editar-condicion-laboral' => '<version>/agenda/editar-condicion-laboral',
-                'OPTIONS api/<version:\w+>/agenda/editar-condicion-laboral' => '<version>/agenda/editar-condicion-laboral',
+                'GET api/<version:\w+>/rrhh/editar-condicion-laboral' => '<version>/rrhh/editar-condicion-laboral',
+                'POST api/<version:\w+>/rrhh/editar-condicion-laboral' => '<version>/rrhh/editar-condicion-laboral',
+                'OPTIONS api/<version:\w+>/rrhh/editar-condicion-laboral' => '<version>/rrhh/editar-condicion-laboral',
                 
                 // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
                 // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.

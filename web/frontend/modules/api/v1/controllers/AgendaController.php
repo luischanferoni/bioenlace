@@ -54,7 +54,7 @@ class AgendaController extends BaseController
             $paramsForRender,
             $req->post(),
             function (array $post) use ($idEfector): array {
-                return RrhhAgendaUiService::submit($idEfector, $post);
+                return RrhhAgendaUiService::submitAgendaConfig($idEfector, $post);
             }
         );
     }

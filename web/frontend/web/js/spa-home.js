@@ -707,7 +707,10 @@
             const id = it && it.id !== undefined ? String(it.id) : '';
             const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
             if (!id) return;
-            html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">' + escapeHtml(name) + '</button>';
+            html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
+            html += '<span class="bio-ui-pick-check position-absolute top-0 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
+            html += escapeHtml(name);
+            html += '</button>';
         });
         html += '</div>';
         if (requiresConfirmation) {
@@ -724,9 +727,15 @@
         function setSelected(btn, id, label) {
             selectedId = id || '';
             selectedLabel = label || selectedId;
-            pickButtons.forEach(b => b.classList.remove('bio-ui-selected'));
+            pickButtons.forEach(b => {
+                b.classList.remove('border', 'border-2', 'border-success');
+                const ck = b.querySelector('.bio-ui-pick-check');
+                if (ck) ck.classList.add('d-none');
+            });
             if (btn) {
-                btn.classList.add('bio-ui-selected');
+                btn.classList.add('border', 'border-2', 'border-success');
+                const ck = btn.querySelector('.bio-ui-pick-check');
+                if (ck) ck.classList.remove('d-none');
             }
             if (confirmBtn) {
                 confirmBtn.disabled = !selectedId;

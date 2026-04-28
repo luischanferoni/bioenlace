@@ -1022,6 +1022,24 @@
                         body.set(k, payload[k]);
                     }
                 });
+                // Si el submitUrl trae query (p. ej. id_rr_hh), propagarla al POST si falta.
+                // Esto evita que el backend "re-renderice" por campos hidden vacíos.
+                try {
+                    const u = new URL(submitUrl, window.location.origin);
+                    u.searchParams.forEach((v, k) => {
+                        if (!body.has(k) || String(body.get(k) || '').trim() === '') {
+                            if (v != null && String(v).trim() !== '') {
+                                body.set(k, String(v));
+                            }
+                        }
+                    });
+                } catch (e) { /* ignore */ }
+                // Yii: incluir CSRF para evitar que el server re-renderice la UI con error silencioso.
+                try {
+                    if (window.spaConfig && window.spaConfig.csrfToken) {
+                        body.set('_csrf', String(window.spaConfig.csrfToken));
+                    }
+                } catch (e) { /* ignore */ }
 
                 fetch(submitUrl, {
                     method: 'POST',
@@ -1104,6 +1122,8 @@
                                     }
                                 } catch (e) { /* ignore */ }
 
+                                // Re-render primero (esto reemplaza el innerHTML) y luego insertar el alert.
+                                renderDynamicUi(json, container, { url: submitUrl });
                                 try {
                                     const existingErr = container.querySelector('.alert.alert-danger[data-wizard-error="1"]');
                                     if (existingErr) existingErr.remove();
@@ -1113,9 +1133,6 @@
                                     a.textContent = msg;
                                     container.insertBefore(a, container.firstChild);
                                 } catch (e) { /* ignore */ }
-
-                                // Re-render para que backend pueda inyectar values/errors si aplica.
-                                renderDynamicUi(json, container, { url: submitUrl });
                                 return;
                             }
 

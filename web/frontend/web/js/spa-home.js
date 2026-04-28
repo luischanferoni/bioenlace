@@ -1000,6 +1000,25 @@
                         if (json && json.kind === 'ui_submit_result' && json.success) {
                             const msg = (json.data && json.data.message) ? json.data.message : 'Guardado.';
                             container.innerHTML = '<div class="alert alert-success">' + escapeHtml(String(msg)) + '</div>';
+                            // Si estamos en un flow conversacional, avanzar automáticamente al siguiente paso.
+                            // En el wizard no hay draft_delta; usamos snapshot actual (intent_id/subintent_id/draft) y content vacío.
+                            if (currentIntentId && typeof handleSendQuery === 'function') {
+                                try {
+                                    if (queryInput) {
+                                        queryInput.value = '';
+                                        handleInput();
+                                    }
+                                } catch (e) {
+                                    // ignore
+                                }
+                                setTimeout(() => {
+                                    try {
+                                        handleSendQuery();
+                                    } catch (e) {
+                                        // ignore
+                                    }
+                                }, 50);
+                            }
                             return;
                         }
                         if (json && json.kind === 'ui_definition') {

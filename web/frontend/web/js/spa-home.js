@@ -373,8 +373,20 @@
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
                 const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
 
-                // Flow terminado: si el step activo no tiene `next`, NO abrir mini-UI y limpiar estado.
-                if (nextId === '') {
+                const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
+                const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
+                const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
+
+                // Detectar fin real del flow:
+                // - El último step puede tener `next=""` pero igual requiere abrir una UI (tabs/open_ui).
+                // - Consideramos "terminado" cuando `next=""` y NO hay UI a abrir, típicamente con texto "Listo.".
+                const hasOpenUi = !!(openUi && openUi.action_id);
+                const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
+                const hasTabs = tabs.length >= 1;
+                const isTerminalStep = nextId === '';
+                const isDoneText = typeof primaryText === 'string' && /^listo\.?$/i.test(primaryText.trim());
+
+                if (isTerminalStep && !hasOpenUi && !okUiJson && !hasTabs && isDoneText) {
                     currentIntentId = null;
                     currentSubintentId = null;
                     draft = {};
@@ -386,14 +398,10 @@
                     }
                     return;
                 }
-                const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
-                const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
-                const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
                 // En flows, la fuente de verdad para abrir la UI es `flow_manifest.active_step.ui.tabs[*].route`.
                 // `open_ui.client_open` puede venir null (p. ej. por permisos/catálogo), pero igual podemos intentar
                 // abrir vía route y dejar que el server autorice (403) si corresponde.
-                const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
                 let fullUrl = '';
                 if (okUiJson) {
                     const route = String(co.api.route || '');

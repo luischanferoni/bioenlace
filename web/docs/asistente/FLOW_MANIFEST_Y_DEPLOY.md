@@ -2,13 +2,11 @@
 
 ## Rol de cada artefacto
 
-- **YAML** (`common/components/SubIntentEngine/schemas/intents/*.yaml`): fuente conversacional en **runtime**. `SubIntentEngine` la lee en cada interacción de `/asistente/enviar` (y equivalentes). No sustituye el JSON de flow.
+- **YAML** (`common/components/Assistant/SubIntentEngine/schemas/intents/*.yaml`): fuente conversacional en **runtime**. `SubIntentEngine` la lee en cada interacción de `/asistente/enviar` (y equivalentes). No sustituye el JSON de flow.
 - **JSON de flow** (`frontend/modules/api/v1/views/json/<entidad>/<accion>.json` con `ui_type: flow`): manifiesto para **cliente y alineación**: pasos, tabs por paso, rutas `GET` con `ui_definition`, `default_tab`, `requires` / `provides`, mapeo declarativo de `params` y metadatos como `requires_client` (p. ej. geolocalización). Se genera con el comando de consola y debe ir **versionado en el repositorio**.
-- **JSON por acción** (mismo directorio, otra `<accion>.json` con `ui_type: ui_json`): descriptor estático para cada `GET` que devuelve `kind: ui_definition`. `AssistantClientOpenEnricher` solo infiere `client_open` tipo `ui_json` si existe plantilla para esa ruta (`UiDefinitionTemplateManager::hasTemplateForApiRoute`).
+- **JSON por acción** (mismo directorio, otra `<accion>.json` con `ui_type: ui_json`): descriptor estático para cada `GET` que devuelve `kind: ui_definition`. `AssistantClientOpenEnricher` solo infiere `client_open` tipo `ui_json` si existe plantilla para esa ruta.
 
 ## Forma mínima del manifiesto servido al cliente
-
-En el descriptor raíz del intent (`turnos/crear-como-paciente.json`):
 
 - `ui_meta.schema_version`: versión del contrato del manifiesto.
 - `ui_meta.flow.intent_id`, `entry_subintent_id`, `draft_keys`.
@@ -30,17 +28,9 @@ php yii flow-manifest/compile --check
 - **compile**: lee los YAML de intents y regenera los JSON de flow correspondientes.
 - **check**: valida que el archivo en disco coincide con lo generado (útil en CI o antes de commit).
 
-También está disponible como script Composer (mismo directorio `web/`):
-
-```bash
-composer run flow-manifest-check
-```
-
-Equivalente en bash (por ejemplo para CI Linux): `web/scripts/check-flow-manifest.sh`.
-
 ## Despliegue en servidor
 
-Tras `git pull`, los JSON ya deben estar presentes y coherentes con el YAML del commit. El script `deploy-produccion.sh` **no** ejecuta el compilador: evita estados intermedios si el compile fallara o si faltara Symfony YAML en el entorno de hosting.
+Tras `git pull`, los JSON ya deben estar presentes y coherentes con el YAML del commit. El deploy **no** ejecuta el compilador.
 
 ## Rutas de dominio vs UI
 

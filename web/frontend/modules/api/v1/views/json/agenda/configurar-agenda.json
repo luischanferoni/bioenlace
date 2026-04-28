@@ -10,14 +10,13 @@
   "steps": [
     {
       "step": 0,
-      "title": "Seleccionar profesional (RRHH)",
-      "fields": ["id_efector", "id_rr_hh"]
+      "title": "Profesional y servicio",
+      "fields": ["id_efector", "id_rr_hh", "id_servicio"]
     },
     {
       "step": 1,
-      "title": "Servicio y agenda semanal",
+      "title": "Agenda semanal",
       "fields": [
-        "id_servicio",
         "cupo_pacientes",
         "duracion_slot_minutos",
         "formas_atencion",

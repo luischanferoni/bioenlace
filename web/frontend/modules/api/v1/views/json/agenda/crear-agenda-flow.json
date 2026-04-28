@@ -17,8 +17,11 @@
                 "select_servicio": {
                     "action_id": "rrhh.listar-servicios-en-efector"
                 },
-                "open_wizard": {
-                    "action_id": "agenda.editar-agenda"
+                "configurar_agenda": {
+                    "action_id": "agenda.configurar-agenda"
+                },
+                "condicion_laboral": {
+                    "action_id": "agenda.editar-condicion-laboral"
                 }
             },
             "steps": [
@@ -56,7 +59,7 @@
                     "provides": [
                         "draft.id_servicio"
                     ],
-                    "next": "open_wizard",
+                    "next": "configurar_agenda",
                     "ui": {
                         "default_tab": "default",
                         "tabs": [
@@ -74,11 +77,36 @@
                     }
                 },
                 {
-                    "id": "open_wizard",
-                    "assistant_text": "Listo. Abrí la pantalla para cargar la agenda (horarios y condición laboral).",
+                    "id": "configurar_agenda",
+                    "assistant_text": "Ahora cargá la agenda: cupo, forma de atención y horarios por día.",
                     "requires": [
                         "draft.id_rr_hh",
                         "draft.id_servicio"
+                    ],
+                    "provides": [],
+                    "next": "condicion_laboral",
+                    "ui": {
+                        "default_tab": "default",
+                        "tabs": [
+                            {
+                                "id": "default",
+                                "label": "Elegir",
+                                "action_id": "agenda.configurar-agenda",
+                                "route": "/api/v1/agenda/configurar-agenda",
+                                "params": {
+                                    "id_rr_hh": "draft.id_rr_hh",
+                                    "id_servicio": "draft.id_servicio"
+                                },
+                                "requires_client": []
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": "condicion_laboral",
+                    "assistant_text": "Por último, cargá la condición laboral (vigencia).",
+                    "requires": [
+                        "draft.id_rr_hh"
                     ],
                     "provides": [],
                     "next": "",
@@ -88,11 +116,10 @@
                             {
                                 "id": "default",
                                 "label": "Elegir",
-                                "action_id": "agenda.editar-agenda",
-                                "route": "/api/v1/agenda/editar-agenda",
+                                "action_id": "agenda.editar-condicion-laboral",
+                                "route": "/api/v1/agenda/editar-condicion-laboral",
                                 "params": {
-                                    "id_rr_hh": "draft.id_rr_hh",
-                                    "id_servicio": "draft.id_servicio"
+                                    "id_rr_hh": "draft.id_rr_hh"
                                 },
                                 "requires_client": []
                             }
@@ -101,32 +128,10 @@
                 }
             ]
         },
-        "assistant_embed": {},
         "clients": {
             "*": {
                 "min_app_version": "1.0.0"
             }
         }
-    },
-    "wizard_config": {
-        "title": "Reservar turno (flujo por chat)",
-        "steps": [
-            {
-                "step": 0,
-                "title": "Guía",
-                "fields": [
-                    "_flow_notice"
-                ]
-            }
-        ],
-        "fields": [
-            {
-                "name": "_flow_notice",
-                "label": "Cómo continuar",
-                "type": "textarea",
-                "required": false,
-                "value": "Este flujo ya no es un wizard monolítico: el asistente te va pidiendo cada dato y, cuando corresponda, embebe mini-UIs (por ejemplo, elegir efector). Si ves esto en una pantalla legacy, actualizá el cliente para renderizar `ui_type=flow` + `ui_meta.flow`."
-            }
-        ]
     }
 }

@@ -48,7 +48,7 @@ fi
 echo -e "${GREEN}Git pull completado exitosamente${NC}"
 
 # Manifiestos `ui_type=flow` (p. ej. turnos/crear-como-paciente.json) se versionan en git;
-# no ejecutar `php yii flow-manifest/compile` aquí: evita despliegues a medias si el compilador fallara.
+# el deploy no ejecuta el compilador para evitar estados intermedios si falla.
 
 # Paso 1.5: Composer (dependencias PHP)
 if [ "$SKIP_COMPOSER" -eq 1 ]; then

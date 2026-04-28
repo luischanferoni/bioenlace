@@ -29,17 +29,17 @@ use common\models\Agenda_rrhh;
 class AgendaController extends BaseController
 {
     /**
-     * UI JSON: wizard agenda (RRHH → servicio → agenda semanal → condición laboral).
+     * UI JSON: configurar agenda semanal por servicio (cupo, forma de atención y horarios).
      *
-     * GET|POST /api/v1/agenda/editar-agenda
+     * GET|POST /api/v1/agenda/configurar-agenda
      *
-     * @action_name Editar agenda y condición laboral (agenda)
+     * @action_name Configurar agenda (horarios/cupo/modo) por servicio
      * @entity Agendas
-     * @tags agenda, rrhh, servicios, condiciones laborales, staff
-     * @keywords editar agenda profesional, horarios por servicio, condición laboral
+     * @tags agenda, rrhh, servicios, horarios, cupo, staff
+     * @keywords configurar agenda profesional, horarios por servicio, cupo pacientes, forma de atención
      * @spa_presentation fullscreen
      */
-    public function actionEditarAgenda(): array
+    public function actionConfigurarAgenda(): array
     {
         $req = Yii::$app->request;
         $idEfector = (int) Yii::$app->user->getIdEfector();
@@ -50,7 +50,7 @@ class AgendaController extends BaseController
 
         return UiScreenService::handleScreen(
             'agenda',
-            'editar-agenda',
+            'configurar-agenda',
             $paramsForRender,
             $req->post(),
             function (array $post) use ($idEfector): array {

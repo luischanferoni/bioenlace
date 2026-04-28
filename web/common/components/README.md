@@ -17,7 +17,7 @@ Todo lo relativo al asistente vive en:
 - `Assistant/IntentEngine/`: entrypoint de clasificación y respuesta (UI match o flow).
 - `Assistant/Catalog/`: catálogo de intents/UI sugeribles.
 - `Assistant/SubIntentEngine/`: motor conversacional dentro de un intent (`schemas/*.yaml` como fuente de verdad).
-- `Assistant/FlowManifest/`: compilación YAML → JSON `ui_type=flow` bajo `frontend/modules/api/v1/views/json/...`.
+- `Assistant/FlowManifest/`: construcción de `flow_manifest` en runtime desde YAML (sin `ui_type=flow` en `views/json`).
 - `Assistant/UiActions/`: discovery + RBAC + enrichers (`client_open`, allowed routes, etc.).
 
 Documentación específica: ver `Assistant/README.md`.

@@ -95,12 +95,12 @@ Ya no se emite. Los motores abren **inline por defecto**. Fullscreen es una acci
 
 ```json
 {
-  "action_id": "agenda.editar-agenda",
-  "display_name": "Editar agenda laboral",
-  "route": "/api/v1/agenda/editar-agenda",
+  "action_id": "agenda.configurar-agenda",
+  "display_name": "Configurar agenda laboral",
+  "route": "/api/v1/agenda/configurar-agenda",
   "client_open": {
     "kind": "ui_json",
-    "api": { "route": "/api/v1/agenda/editar-agenda", "method": "GET|POST" }
+    "api": { "route": "/api/v1/agenda/configurar-agenda", "method": "GET|POST" }
   }
 }
 ```

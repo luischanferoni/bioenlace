@@ -99,8 +99,8 @@ final class IntentEngine
         $action = self::formatActionForClient($item);
         $action = self::enrichProvidedParamsFromQuery($action, $content);
 
-        // Si el descriptor JSON declara `ui_type=flow`, el asistente debe arrancar en modo conversacional (SubIntentEngine),
-        // no abriendo el wizard monolítico del descriptor.
+        // Si el action_id corresponde a un intent YAML, el asistente debe arrancar en modo conversacional (SubIntentEngine),
+        // no abriendo un wizard monolítico.
         if ($userId > 0 && self::isFlowUiTemplateForCatalogItem($item)) {
             $draft = self::draftFromAssistantActionParameters($action);
             $flow = SubIntentEngine::process(
@@ -150,46 +150,8 @@ final class IntentEngine
 
     private static function isFlowUiTemplateForCatalogItem(UiActionCatalogItem $item): bool
     {
-        // Fuente de verdad: si existe YAML para ese intent_id, es un flow conversacional.
-        if (YamlIntentCatalogService::intentExists($item->action_id)) {
-            return true;
-        }
-
-        $route = trim((string) $item->route);
-        if ($route === '') {
-            return false;
-        }
-        $path = parse_url($route, PHP_URL_PATH);
-        if (!is_string($path) || $path === '') {
-            $path = $route;
-        }
-        if (preg_match('#^/api/v\d+/([\\w-]+)/([\\w-]+)$#', $path, $m) !== 1) {
-            return false;
-        }
-
-        $entity = strtolower((string) $m[1]);
-        $action = (string) $m[2];
-        $file = Yii::getAlias(UiDefinitionTemplateManager::TEMPLATE_BASE_PATH . '/' . $entity . '/' . $action . '.json');
-        if (!is_string($file) || $file === '' || !is_file($file)) {
-            return false;
-        }
-
-        $raw = @file_get_contents($file);
-        if (!is_string($raw) || $raw === '') {
-            return false;
-        }
-
-        try {
-            $decoded = Json::decode($raw);
-        } catch (\Throwable $e) {
-            return false;
-        }
-
-        if (!is_array($decoded)) {
-            return false;
-        }
-
-        return isset($decoded['ui_type']) && is_string($decoded['ui_type']) && strtolower($decoded['ui_type']) === 'flow';
+        // Fuente de verdad: el flow es YAML. No existe `ui_type=flow` en `views/json`.
+        return YamlIntentCatalogService::intentExists($item->action_id);
     }
 
     /**

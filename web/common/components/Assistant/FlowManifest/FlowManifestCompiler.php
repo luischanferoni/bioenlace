@@ -118,12 +118,10 @@ final class FlowManifestCompiler
                     'open_ui_hints' => $openUiHints,
                     'steps' => $steps,
                 ],
-                'assistant_embed' => new \stdClass(),
                 'clients' => [
                     '*' => ['min_app_version' => '1.0.0'],
                 ],
             ],
-            'wizard_config' => self::wizardConfigStub(),
         ];
     }
 
@@ -354,31 +352,5 @@ final class FlowManifestCompiler
         }
 
         return $da == $db;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private static function wizardConfigStub(): array
-    {
-        return [
-            'title' => 'Reservar turno (flujo por chat)',
-            'steps' => [
-                [
-                    'step' => 0,
-                    'title' => 'Guía',
-                    'fields' => ['_flow_notice'],
-                ],
-            ],
-            'fields' => [
-                [
-                    'name' => '_flow_notice',
-                    'label' => 'Cómo continuar',
-                    'type' => 'textarea',
-                    'required' => false,
-                    'value' => 'Este flujo ya no es un wizard monolítico: el asistente te va pidiendo cada dato y, cuando corresponda, embebe mini-UIs (por ejemplo, elegir efector). Si ves esto en una pantalla legacy, actualizá el cliente para renderizar `ui_type=flow` + `ui_meta.flow`.',
-                ],
-            ],
-        ];
     }
 }

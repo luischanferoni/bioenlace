@@ -1008,7 +1008,25 @@
                     .then(({ ok, json }) => {
                         if (json && json.kind === 'ui_submit_result' && json.success) {
                             const msg = (json.data && json.data.message) ? json.data.message : 'Guardado.';
-                            container.innerHTML = '<div class="alert alert-success">' + escapeHtml(String(msg)) + '</div>';
+                            // Mantener la UI visible pero bloqueada (no reemplazar por alert).
+                            try {
+                                const existing = container.querySelector('.alert.alert-success[data-wizard-saved="1"]');
+                                if (!existing) {
+                                    const a = document.createElement('div');
+                                    a.className = 'alert alert-success mb-2';
+                                    a.setAttribute('data-wizard-saved', '1');
+                                    a.textContent = String(msg);
+                                    container.insertBefore(a, container.firstChild);
+                                }
+                            } catch (e) { /* ignore */ }
+
+                            try {
+                                // Deshabilitar todos los controles del wizard para evitar re-editar accidental.
+                                container.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+                                    el.disabled = true;
+                                });
+                            } catch (e) { /* ignore */ }
+
                             // Si estamos en un flow conversacional, avanzar automáticamente al siguiente paso.
                             // En el wizard no hay draft_delta; usamos snapshot actual (intent_id/subintent_id/draft) y content vacío.
                             if (currentIntentId && typeof handleSendQuery === 'function') {

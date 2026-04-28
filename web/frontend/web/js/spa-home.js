@@ -132,11 +132,42 @@
     let currentIntentId = null;
     let currentSubintentId = null;
     let draft = {};
+    // Persistencia simple en memoria global para evitar perder estado en re-renders complejos.
+    // (No es storage; solo evita depender de closures si se re-ejecuta parte del JS).
+    const FLOW_STATE_KEY = '__bio_spa_flow_state__';
+
+    function writeFlowState() {
+        try {
+            window[FLOW_STATE_KEY] = {
+                intent_id: currentIntentId,
+                subintent_id: currentSubintentId,
+                draft: draft || {}
+            };
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    function readFlowState() {
+        try {
+            const s = window[FLOW_STATE_KEY];
+            if (s && typeof s === 'object') {
+                if (s.intent_id) currentIntentId = String(s.intent_id);
+                if (s.subintent_id) currentSubintentId = String(s.subintent_id);
+                if (s.draft && typeof s.draft === 'object') draft = Object.assign({}, s.draft);
+            }
+        } catch (e) {
+            // ignore
+        }
+    }
 
     /**
      * Inicialización
      */
     function init() {
+        // Recuperar estado flow si existía.
+        readFlowState();
+
         // Cargar acciones comunes al inicio solo si existe el contenedor
         if (commonActionsDiv) {
             loadCommonActions();
@@ -309,13 +340,16 @@
             // Si trae intent_id/subintent_id, sincronizar estado conversacional.
             if (result && result.intent_id) {
                 currentIntentId = String(result.intent_id);
+                writeFlowState();
             }
             if (result && result.subintent_id) {
                 currentSubintentId = String(result.subintent_id);
+                writeFlowState();
             }
             if (result && result.draft_delta && typeof result.draft_delta === 'object') {
                 try {
                     draft = Object.assign({}, draft || {}, result.draft_delta || {});
+                    writeFlowState();
                 } catch (e) {
                     // ignore
                 }
@@ -1021,18 +1055,37 @@
                                 });
                             } catch (e) { /* ignore */ }
 
-                            // Si estamos en un flow conversacional, avanzar automáticamente al siguiente paso.
-                            // En el wizard no hay draft_delta; usamos snapshot actual (intent_id/subintent_id/draft) y content vacío.
-                            if (currentIntentId && typeof handleSendQuery === 'function') {
-                                setTimeout(() => {
+                            // Avanzar flow de forma determinista usando snapshot global (no depender del textarea).
+                            setTimeout(() => {
+                                try {
+                                    const s = window[FLOW_STATE_KEY];
+                                    const intent = s && s.intent_id ? String(s.intent_id) : (currentIntentId ? String(currentIntentId) : '');
+                                    const sub = s && s.subintent_id ? String(s.subintent_id) : (currentSubintentId ? String(currentSubintentId) : '');
+                                    const dr = s && s.draft && typeof s.draft === 'object' ? s.draft : (draft || {});
+                                    if (!intent) {
+                                        container.insertAdjacentHTML(
+                                            'afterbegin',
+                                            '<div class="alert alert-warning mb-2">Guardado OK, pero no hay un flow activo para continuar (intent_id vacío). Recargá el chat y reintentá.</div>'
+                                        );
+                                        return;
+                                    }
+                                    // Actualizar estado local antes de enviar.
+                                    currentIntentId = intent;
+                                    currentSubintentId = sub || currentSubintentId;
+                                    draft = Object.assign({}, dr || {});
+                                    writeFlowState();
+                                    handleSendQuery('');
+                                } catch (e) {
                                     try {
-                                        // Avanzar flow sin depender del textarea.
-                                        handleSendQuery('');
-                                    } catch (e) {
+                                        container.insertAdjacentHTML(
+                                            'afterbegin',
+                                            '<div class="alert alert-danger mb-2">Guardado OK, pero falló el avance del flow.</div>'
+                                        );
+                                    } catch (e2) {
                                         // ignore
                                     }
-                                }, 50);
-                            }
+                                }
+                            }, 50);
                             return;
                         }
                         if (json && json.kind === 'ui_definition') {

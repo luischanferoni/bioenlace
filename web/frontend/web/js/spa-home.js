@@ -2643,8 +2643,9 @@
         const spinner = sendBtn.querySelector('.spa-spinner');
         const sendIcon = sendBtn.querySelector('.spa-send-icon');
         const sendText = sendBtn.querySelector('.spa-send-text');
-        // Fallback: si el botón no tiene la estructura esperada, degradar a HTML swap.
-        if (!spinner || !sendIcon || !sendText) {
+        // Soportar botones "solo ícono": `.spa-send-icon` puede no existir.
+        // Fallback: si faltan spinner o texto, degradar a HTML swap.
+        if (!spinner || !sendText) {
             try {
                 if (!sendBtn.dataset.originalHtml) {
                     sendBtn.dataset.originalHtml = sendBtn.innerHTML;
@@ -2661,11 +2662,11 @@
         }
         if (loading) {
             spinner.classList.remove('d-none');
-            sendIcon.classList.add('d-none');
+            if (sendIcon) sendIcon.classList.add('d-none');
             sendText.textContent = 'Enviando...';
         } else {
             spinner.classList.add('d-none');
-            sendIcon.classList.remove('d-none');
+            if (sendIcon) sendIcon.classList.remove('d-none');
             sendText.textContent = 'Enviar';
         }
     }

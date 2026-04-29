@@ -118,6 +118,7 @@
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
     const shortcutsPanel = document.getElementById('spa-shortcuts-panel');
+    const shortcutsBackdrop = document.getElementById('spa-shortcuts-backdrop');
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
     const shortcutsCloseBtn = document.getElementById('spa-shortcuts-close-btn');
     const responseSection = document.getElementById('spa-response-section');
@@ -210,6 +211,18 @@
                 toggleShortcutsPanel(false);
             });
         }
+        if (shortcutsBackdrop) {
+            shortcutsBackdrop.addEventListener('click', function () {
+                toggleShortcutsPanel(false);
+            });
+        }
+        document.addEventListener('keydown', function (e) {
+            try {
+                if (e && e.key === 'Escape') {
+                    toggleShortcutsPanel(false);
+                }
+            } catch (err) { /* ignore */ }
+        });
     }
 
     function toggleShortcutsPanel(open) {
@@ -217,9 +230,14 @@
         const shouldOpen = open === true;
         if (shouldOpen) {
             shortcutsPanel.classList.remove('d-none');
-            setTimeout(scrollChatToBottom, 10);
+            try {
+                if (queryInput) queryInput.blur();
+            } catch (e) { /* ignore */ }
         } else {
             shortcutsPanel.classList.add('d-none');
+            try {
+                if (queryInput) queryInput.focus();
+            } catch (e) { /* ignore */ }
         }
     }
 

@@ -607,7 +607,7 @@ class TurnosController extends BaseController
                 }
             }
 
-            $out['items'] = $items;
+            $out = UiScreenService::withListBlockItems($out, $items);
         }
 
         return $out;

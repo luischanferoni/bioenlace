@@ -1,39 +1,40 @@
 {
+  "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
-  "steps": [
+  "blocks": [
     {
-      "step": 0,
+      "kind": "fields",
+      "id": "default",
       "title": "Cancelar turno",
-      "fields": ["id", "estado_motivo", "canal"]
-    }
-  ],
-  "fields": [
-    {
-      "name": "id",
-      "label": "ID turno",
-      "type": "text",
-      "required": true
-    },
-    {
-      "name": "estado_motivo",
-      "label": "Motivo",
-      "type": "select",
-      "required": false,
-      "default": "CANCELADO_X_PACIENTE",
-      "options": [
-        { "value": "CANCELADO_X_PACIENTE", "label": "Cancelado por paciente" },
-        { "value": "CANCELADO_X_MEDICO", "label": "Cancelado por médico" }
+      "fields": [
+        {
+          "name": "id",
+          "label": "ID turno",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "estado_motivo",
+          "label": "Motivo",
+          "type": "select",
+          "required": false,
+          "default": "CANCELADO_X_PACIENTE",
+          "options": [
+            { "value": "CANCELADO_X_PACIENTE", "label": "Cancelado por paciente" },
+            { "value": "CANCELADO_X_MEDICO", "label": "Cancelado por médico" }
+          ]
+        },
+        {
+          "name": "canal",
+          "label": "Canal",
+          "type": "text",
+          "required": false,
+          "default": "app"
+        }
       ]
-    },
-    {
-      "name": "canal",
-      "label": "Canal",
-      "type": "text",
-      "required": false,
-      "default": "app"
     }
   ]
 }

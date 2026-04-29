@@ -106,7 +106,7 @@ class EfectoresController extends BaseController
             $filters = EfectoresListadosService::extractFilters($req, false);
             $filters['id_servicio'] = $idServicio;
             $q = $this->reqParamRaw('q');
-            $ui['items'] = $this->efectoresItemsForUi($q, $filters);
+            $ui = UiScreenService::withListBlockItems($ui, $this->efectoresItemsForUi($q, $filters));
         }
 
         return $ui;
@@ -148,7 +148,7 @@ class EfectoresController extends BaseController
             $filters = EfectoresListadosService::extractFilters($req, true);
             $filters['id_servicio'] = $idServicio;
             $q = $this->reqParamRaw('q');
-            $ui['items'] = $this->efectoresItemsForUi($q, $filters);
+            $ui = UiScreenService::withListBlockItems($ui, $this->efectoresItemsForUi($q, $filters));
         }
 
         return $ui;
@@ -201,7 +201,7 @@ class EfectoresController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $filters = $this->buildEfectoresSearchFilters(false);
             $q = $this->reqParamRaw('q');
-            $ui['items'] = $this->efectoresItemsForUi($q, $filters);
+            $ui = UiScreenService::withListBlockItems($ui, $this->efectoresItemsForUi($q, $filters));
         }
 
         return $ui;
@@ -234,7 +234,7 @@ class EfectoresController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $filters = $this->buildEfectoresSearchFilters(true);
             $q = $this->reqParamRaw('q');
-            $ui['items'] = $this->efectoresItemsForUi($q, $filters);
+            $ui = UiScreenService::withListBlockItems($ui, $this->efectoresItemsForUi($q, $filters));
         }
 
         return $ui;

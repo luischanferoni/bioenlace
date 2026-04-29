@@ -264,7 +264,10 @@ class RrhhController extends BaseController
             }
 
             try {
-                $ui['items'] = RrhhService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit);
+                $ui = UiScreenService::withListBlockItems(
+                    $ui,
+                    RrhhService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit)
+                );
             } catch (\InvalidArgumentException $e) {
                 throw new BadRequestHttpException($e->getMessage());
             }
@@ -319,7 +322,10 @@ class RrhhController extends BaseController
             }
 
             try {
-                $ui['items'] = RrhhService::listarPorEfectorAceptaTurnos($idEfector, is_string($q) ? $q : null, $limit);
+                $ui = UiScreenService::withListBlockItems(
+                    $ui,
+                    RrhhService::listarPorEfectorAceptaTurnos($idEfector, is_string($q) ? $q : null, $limit)
+                );
             } catch (\InvalidArgumentException $e) {
                 throw new BadRequestHttpException($e->getMessage());
             }
@@ -366,7 +372,7 @@ class RrhhController extends BaseController
                     'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
                 ];
             }
-            $ui['items'] = $uiItems;
+            $ui = UiScreenService::withListBlockItems($ui, $uiItems);
         }
 
         return $ui;
@@ -548,7 +554,7 @@ class RrhhController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $filters = $this->buildRrhhAutocompleteFilters($idEfector, $idServicio);
             $q = $this->reqParamRaw('q');
-            $ui['items'] = $this->rrhhItemsForUi($q, $filters);
+            $ui = UiScreenService::withListBlockItems($ui, $this->rrhhItemsForUi($q, $filters));
         }
 
         return $ui;

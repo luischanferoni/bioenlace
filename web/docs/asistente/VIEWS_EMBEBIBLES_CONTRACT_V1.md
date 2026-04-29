@@ -1,5 +1,8 @@
 ## Views embebibles (chat) — contrato v1
 
+> Deprecado (corte total): el contrato vigente está en `UI_JSON_DESCRIPTOR_CONTRACT.md` y modela todo como
+> `ui_type: ui_json` + `blocks[]` (sin `ui_meta.list`, sin `wizard/steps`).
+
 Este documento define el contrato para **views JSON embebibles** que se renderizan dentro del chat (web y Flutter).
 
 ### 1. Objetivo

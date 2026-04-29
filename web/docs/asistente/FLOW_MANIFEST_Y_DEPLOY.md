@@ -9,6 +9,7 @@
 ## Forma mínima del manifiesto servido al cliente
 
 - `ui_meta.schema_version`: versión del contrato del manifiesto.
+- `ui_meta.clients`: compatibilidad por cliente (obligatorio, mismo contrato que `ui_json`).
 - `ui_meta.flow.intent_id`, `entry_subintent_id`, `draft_keys`.
 - `ui_meta.flow.steps[]`: cada paso incluye `id`, textos/requisitos del YAML y un bloque `ui` con `tabs[]` y `default_tab` cuando hay variantes de listado (p. ej. por servicio vs cercano).
 - Cada tab declara `action_id`, `route` (`/api/v1/...`), `params` (referencias `draft.*` o `client.*`) y opcionalmente `requires_client` (p. ej. `["geolocation"]`).

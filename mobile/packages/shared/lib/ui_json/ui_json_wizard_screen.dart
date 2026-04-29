@@ -95,6 +95,9 @@ class UiJsonWizardScreen extends StatefulWidget {
   /// Callback opcional para listados inline: aplicar draft_delta en el host (chat) y continuar flow.
   final Future<void> Function(Map<String, dynamic> draftDelta)? onDraftDelta;
 
+  /// Callback opcional para submits de formularios: permite que el host (chat) avance el flow.
+  final Future<void> Function(Map<String, dynamic> submitData)? onSubmitSuccess;
+
   const UiJsonWizardScreen({
     Key? key,
     required this.apiAbsoluteUrl,
@@ -103,6 +106,7 @@ class UiJsonWizardScreen extends StatefulWidget {
     this.title,
     this.embedded = false,
     this.onDraftDelta,
+    this.onSubmitSuccess,
   }) : super(key: key);
 
   @override
@@ -117,7 +121,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   String? _listEmbedSelectedId;
   /// Cuando se confirma/aplica un ítem, bloquear nuevas selecciones en este embed.
   bool _listEmbedLocked = false;
-  int _step = 0;
+  bool _formSubmitted = false;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
@@ -127,14 +131,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
     return _fieldValueNotifiers.putIfAbsent(name, () => ValueNotifier<String>(_accum[name] ?? ''));
   }
 
-  Map<String, dynamic>? get _wc =>
-      _root != null && _root!['wizard_config'] is Map
-          ? Map<String, dynamic>.from(_root!['wizard_config'] as Map)
-          : null;
-
-  List<dynamic> get _steps => _wc?['steps'] as List<dynamic>? ?? [];
-
-  List<dynamic> get _fields => _wc?['fields'] as List<dynamic>? ?? [];
+  List<dynamic> get _blocks => _root != null && _root!['blocks'] is List ? (_root!['blocks'] as List) : const [];
 
   @override
   void initState() {
@@ -194,9 +191,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
         _root = m;
         _listEmbedSelectedId = null;
         _listEmbedLocked = false;
-        _step = (m['wizard_config'] is Map && (m['wizard_config']['initial_step'] is int))
-            ? m['wizard_config']['initial_step'] as int
-            : 0;
+        _formSubmitted = false;
         _loading = false;
       });
     } catch (e) {
@@ -209,27 +204,30 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
 
   void _seedAccum(Map<String, dynamic> def) {
     _accum.clear();
-    final wcFields =
-        def['wizard_config'] is Map ? (def['wizard_config']['fields'] as List?) : null;
-    final rootFields = def['fields'] is List ? def['fields'] as List? : null;
-    final fields = wcFields ?? rootFields;
-    if (fields == null) return;
-    for (final raw in fields) {
-      if (raw is! Map) continue;
-      final f = Map<String, dynamic>.from(raw);
-      final name = f['name']?.toString();
-      if (name == null) continue;
-      final v = f['value'];
-      if (v != null && v.toString().isNotEmpty) {
-        _accum[name] = v.toString();
-      }
-      if (f['type'] == 'custom_widget' && f['initial_values'] is Map) {
-        final iv = Map<String, dynamic>.from(f['initial_values'] as Map);
-        iv.forEach((k, val) {
-          if (val != null && val.toString().isNotEmpty) {
-            _accum[k.toString()] = val.toString();
-          }
-        });
+    final blocks = def['blocks'] is List ? (def['blocks'] as List) : const [];
+    for (final bRaw in blocks) {
+      if (bRaw is! Map) continue;
+      final b = Map<String, dynamic>.from(bRaw);
+      if (b['kind']?.toString() != 'fields') continue;
+      final fields = b['fields'];
+      if (fields is! List) continue;
+      for (final raw in fields) {
+        if (raw is! Map) continue;
+        final f = Map<String, dynamic>.from(raw);
+        final name = f['name']?.toString();
+        if (name == null) continue;
+        final v = f['value'];
+        if (v != null && v.toString().isNotEmpty) {
+          _accum[name] = v.toString();
+        }
+        if (f['type'] == 'custom_widget' && f['initial_values'] is Map) {
+          final iv = Map<String, dynamic>.from(f['initial_values'] as Map);
+          iv.forEach((k, val) {
+            if (val != null && val.toString().isNotEmpty) {
+              _accum[k.toString()] = val.toString();
+            }
+          });
+        }
       }
     }
     final values = def['values'];
@@ -240,22 +238,20 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
     }
   }
 
-  Map<String, dynamic>? _fieldByName(String name) {
-    for (final raw in _fields) {
-      if (raw is Map && raw['name']?.toString() == name) {
-        return Map<String, dynamic>.from(raw);
+  List<Map<String, dynamic>> _allFieldDefs() {
+    final out = <Map<String, dynamic>>[];
+    for (final bRaw in _blocks) {
+      if (bRaw is! Map) continue;
+      final b = Map<String, dynamic>.from(bRaw);
+      if (b['kind']?.toString() != 'fields') continue;
+      final fields = b['fields'];
+      if (fields is! List) continue;
+      for (final raw in fields) {
+        if (raw is! Map) continue;
+        out.add(Map<String, dynamic>.from(raw));
       }
     }
-    return null;
-  }
-
-  List<String> _stepFieldNames() {
-    if (_step < 0 || _step >= _steps.length) return [];
-    final s = _steps[_step];
-    if (s is! Map) return [];
-    final flds = s['fields'];
-    if (flds is! List) return [];
-    return flds.map((e) => e.toString()).toList();
+    return out;
   }
 
   List<String> _dependsOn(Map<String, dynamic> f) {
@@ -565,10 +561,8 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
     }
   }
 
-  bool _validateStep() {
-    for (final fn in _stepFieldNames()) {
-      final f = _fieldByName(fn);
-      if (f == null) continue;
+  bool _validateRequiredFields() {
+    for (final f in _allFieldDefs()) {
       if (!_depsOk(f)) continue;
       if (f['type'] == 'hidden') continue;
       if (f['required'] == true) {
@@ -586,7 +580,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_validateStep()) return;
+    if (!_validateRequiredFields()) return;
     setState(() => _loading = true);
     try {
       final uri = Uri.parse(widget.apiAbsoluteUrl);
@@ -600,16 +594,23 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       if (j is! Map) throw Exception('Respuesta inválida');
       final m = Map<String, dynamic>.from(j);
       if (m['kind'] == 'ui_submit_result' && m['success'] == true) {
-        final data = m['data'];
-        String msg = 'Guardado.';
-        if (data is Map && data['message'] != null) {
-          msg = data['message'].toString();
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+          _formSubmitted = true;
+        });
+        final cb = widget.onSubmitSuccess;
+        if (cb != null) {
+          final data = m['data'];
+          if (data is Map) {
+            await cb(Map<String, dynamic>.from(data));
+          } else {
+            await cb({'ok': true});
+          }
         }
-        if (!mounted) return;
-        setState(() => _loading = false);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-        Navigator.of(context).pop();
+        if (!widget.embedded) {
+          Navigator.of(context).pop();
+        }
         return;
       }
       if (m['kind'] == 'ui_definition') {
@@ -618,9 +619,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
           _root = m;
           _listEmbedSelectedId = null;
           _loading = false;
-          _step = (m['wizard_config'] is Map && (m['wizard_config']['initial_step'] is int))
-              ? m['wizard_config']['initial_step'] as int
-              : _step;
+          _formSubmitted = false;
         });
         final err = m['errors'];
         if (err is Map && err.isNotEmpty) {
@@ -688,202 +687,180 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       );
     }
 
-    // UI JSON (listado inline, no-wizard): items horizontales.
-    if (_root != null && _root!['kind'] == 'ui_definition' && _root!['ui_type']?.toString() == 'ui_json' && _root!['wizard_config'] == null) {
-      final uiMeta = _root!['ui_meta'] is Map ? Map<String, dynamic>.from(_root!['ui_meta'] as Map) : null;
-      final list = (uiMeta != null && uiMeta['list'] is Map) ? Map<String, dynamic>.from(uiMeta['list'] as Map) : null;
-      final itemsRaw = _root!['items'];
+    if (_root == null || _root!['ui_type']?.toString() != 'ui_json') {
+      return wrap(
+        title: widget.title ?? 'UI',
+        body: const Center(child: Text('UI inválida')),
+      );
+    }
+
+    final screenTitle = widget.title ?? _root?['action_id']?.toString() ?? 'UI';
+    final blocks = _blocks;
+    final theme = Theme.of(context);
+
+    Widget renderListBlock(Map<String, dynamic> b) {
+      final itemsRaw = b['items'];
       final items = itemsRaw is List ? itemsRaw : const [];
-      final selection = (list != null && list['selection'] is Map)
-          ? Map<String, dynamic>.from(list['selection'] as Map)
-          : const <String, dynamic>{};
+      final selection = b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
       final requiresConfirmation = selection['requires_confirmation'] == true;
-      final draftField = list != null ? (list['draft_field']?.toString() ?? '') : '';
-
-      if (list == null || draftField.isEmpty) {
-        return wrap(
-          title: widget.title ?? 'UI',
-          body: const Center(child: Text('UI inválida: falta ui_meta.list.draft_field')),
-        );
-      }
-
-      final screenTitle = widget.title ?? _root?['action_id']?.toString() ?? 'Seleccionar';
+      final draftField = b['draft_field']?.toString() ?? '';
+      final title = b['title']?.toString();
       const double listRowHeight = 88;
       const double cardWidth = 148;
-      final theme = Theme.of(context);
-
-      return wrap(
-        title: screenTitle,
-        body: _loading
-            ? (widget.embedded ? embeddedLoading() : const Center(child: CircularProgressIndicator()))
-            : Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      height: listRowHeight,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: EdgeInsets.zero,
-                        itemCount: items.length,
-                        itemBuilder: (context, idx) {
-                          final it = items[idx];
-                          if (it is! Map) return const SizedBox.shrink();
-                          final m = Map<String, dynamic>.from(it);
-                          final id = m['id']?.toString() ?? '';
-                          final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
-                          if (id.isEmpty) return const SizedBox.shrink();
-                          final selected = _listEmbedSelectedId == id;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: SizedBox(
-                              width: cardWidth,
-                              child: Material(
-                                elevation: selected ? 2 : 0,
-                                borderRadius: BorderRadius.circular(10),
-                                color: selected
-                                    ? theme.colorScheme.primaryContainer
-                                        .withAlpha((0.35 * 255).round())
-                                    : theme.colorScheme.surfaceContainerHighest
-                                        .withAlpha((0.55 * 255).round()),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(10),
-                                  onTap: () async {
-                                    if (_listEmbedLocked) return;
-                                    if (requiresConfirmation) {
-                                      setState(() => _listEmbedSelectedId = id);
-                                    } else {
-                                      await _applyListEmbedDraft(draftField, id);
-                                      if (mounted) {
-                                        setState(() {
-                                          _listEmbedLocked = true;
-                                          _listEmbedSelectedId = null;
-                                        });
-                                      }
-                                    }
-                                  },
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: selected
-                                            ? theme.colorScheme.primary
-                                            : theme.dividerColor,
-                                        width: selected ? 2 : 1,
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 8,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          name,
-                                          textAlign: TextAlign.center,
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            fontWeight:
-                                                selected ? FontWeight.w600 : FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+      if (draftField.isEmpty) {
+        return const Text('UI inválida: falta draft_field');
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (title != null && title.trim().isNotEmpty) ...[
+            Text(title, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+          ],
+          SizedBox(
+            height: listRowHeight,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.zero,
+              itemCount: items.length,
+              itemBuilder: (context, idx) {
+                final it = items[idx];
+                if (it is! Map) return const SizedBox.shrink();
+                final m = Map<String, dynamic>.from(it);
+                final id = m['id']?.toString() ?? '';
+                final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
+                if (id.isEmpty) return const SizedBox.shrink();
+                final selected = _listEmbedSelectedId == id;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: SizedBox(
+                    width: cardWidth,
+                    child: Material(
+                      elevation: selected ? 2 : 0,
+                      borderRadius: BorderRadius.circular(10),
+                      color: selected
+                          ? theme.colorScheme.primaryContainer.withAlpha((0.35 * 255).round())
+                          : theme.colorScheme.surfaceContainerHighest.withAlpha((0.55 * 255).round()),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () async {
+                          if (_listEmbedLocked) return;
+                          if (requiresConfirmation) {
+                            setState(() => _listEmbedSelectedId = id);
+                          } else {
+                            await _applyListEmbedDraft(draftField, id);
+                            if (mounted) {
+                              setState(() {
+                                _listEmbedLocked = true;
+                                _listEmbedSelectedId = null;
+                              });
+                            }
+                          }
+                        },
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: selected ? theme.colorScheme.primary : theme.dividerColor,
+                              width: selected ? 2 : 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            child: Center(
+                              child: Text(
+                                name,
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                                 ),
                               ),
                             ),
-                          );
-                        },
+                          ),
+                        ),
                       ),
                     ),
-                    if (requiresConfirmation) ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Spacer(),
-                          FilledButton(
-                            onPressed: (_listEmbedLocked || _listEmbedSelectedId == null)
-                                ? null
-                                : () async {
-                                    final id = _listEmbedSelectedId!;
-                                    await _applyListEmbedDraft(draftField, id);
-                                    if (mounted) {
-                                      setState(() {
-                                        _listEmbedLocked = true;
-                                        _listEmbedSelectedId = null;
-                                      });
-                                    }
-                                  },
-                            child: const Text('Confirmar'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
+                  ),
+                );
+              },
+            ),
+          ),
+          if (requiresConfirmation) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Spacer(),
+                FilledButton(
+                  onPressed: (_listEmbedLocked || _listEmbedSelectedId == null)
+                      ? null
+                      : () async {
+                          final id = _listEmbedSelectedId!;
+                          await _applyListEmbedDraft(draftField, id);
+                          if (mounted) {
+                            setState(() {
+                              _listEmbedLocked = true;
+                              _listEmbedSelectedId = null;
+                            });
+                          }
+                        },
+                  child: Text(_listEmbedLocked ? 'Confirmado' : 'Confirmar'),
                 ),
+              ],
+            ),
+          ],
+        ],
+      );
+    }
+
+    Widget renderFieldsBlock(Map<String, dynamic> b) {
+      final title = b['title']?.toString();
+      final fieldsRaw = b['fields'];
+      final fields = fieldsRaw is List ? fieldsRaw : const [];
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (title != null && title.trim().isNotEmpty) ...[
+            Text(title, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+          ],
+          ...fields.map((raw) {
+            if (raw is! Map) return const SizedBox.shrink();
+            final f = Map<String, dynamic>.from(raw);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildField(f),
+            );
+          }),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Spacer(),
+              ElevatedButton(
+                onPressed: (_loading || _formSubmitted) ? null : _submit,
+                child: Text(_formSubmitted ? 'Confirmado' : 'Confirmar'),
               ),
+            ],
+          ),
+        ],
       );
     }
 
-    final wc = _wc;
-    if (wc == null) {
-      return wrap(
-        title: widget.title ?? 'UI',
-        body: const Center(child: Text('Sin wizard_config')),
-      );
-    }
-    final stepMeta = _step < _steps.length && _steps[_step] is Map ? _steps[_step] as Map : null;
-    final title = stepMeta?['title']?.toString() ?? 'Paso ${_step + 1}';
-
-    final screenTitle = widget.title ?? _root?['action_id']?.toString() ?? 'Formulario';
     final body = _loading
-        ? const Center(child: CircularProgressIndicator())
+        ? (widget.embedded ? embeddedLoading() : const Center(child: CircularProgressIndicator()))
         : SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: _steps.isEmpty ? 0 : (_step + 1) / _steps.length,
-                ),
-                const SizedBox(height: 16),
-                ..._stepFieldNames().map((fn) {
-                  final f = _fieldByName(fn);
-                  if (f == null) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildField(f),
-                  );
-                }),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    if (_step > 0)
-                      TextButton(
-                        onPressed: () => setState(() => _step--),
-                        child: const Text('Anterior'),
-                      ),
-                    const Spacer(),
-                    if (_step < _steps.length - 1)
-                      ElevatedButton(
-                        onPressed: () {
-                          if (!_validateStep()) return;
-                          setState(() => _step++);
-                        },
-                        child: const Text('Siguiente'),
-                      )
-                    else
-                      ElevatedButton(
-                        onPressed: _submit,
-                        child: const Text('Confirmar'),
-                      ),
+                for (final bRaw in blocks) ...[
+                  if (bRaw is Map) ...[
+                    if (bRaw['kind']?.toString() == 'list') renderListBlock(Map<String, dynamic>.from(bRaw)),
+                    if (bRaw['kind']?.toString() == 'fields') renderFieldsBlock(Map<String, dynamic>.from(bRaw)),
+                    const SizedBox(height: 16),
                   ],
-                ),
+                ],
               ],
             ),
           );

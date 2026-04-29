@@ -979,6 +979,61 @@ class _ChatScreenState extends State<ChatScreen> {
                                   }
                                 }
                               },
+                              onSubmitSuccess: (_) async {
+                                // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
+                                _asistenteService.draft = Map<String, dynamic>.from(_draft);
+                                final res = await _asistenteService.procesarInteraccion('');
+                                if (!mounted) return;
+                                if (res['success'] == true) {
+                                  final data = res['data'];
+                                  if (data is Map) {
+                                    final iid = data['intent_id']?.toString();
+                                    final sid = data['subintent_id']?.toString();
+                                    if (iid != null && iid.isNotEmpty) {
+                                      _intentId = iid;
+                                      _asistenteService.currentIntentId = _intentId;
+                                    }
+                                    if (sid != null && sid.isNotEmpty) {
+                                      _subintentId = sid;
+                                      _asistenteService.currentSubintentId = _subintentId;
+                                    }
+                                    final dd = data['draft_delta'];
+                                    if (dd is Map && dd.isNotEmpty) {
+                                      _draft = {..._draft, ...Map<String, dynamic>.from(dd)};
+                                      _asistenteService.draft = Map<String, dynamic>.from(_draft);
+                                    }
+                                    final text = data['text']?.toString();
+                                    final explanation = (text != null && text.trim().isNotEmpty)
+                                        ? text.trim()
+                                        : 'Listo.';
+                                    setState(() {
+                                      _chatHistory.add({
+                                        'type': 'bot',
+                                        'content': explanation,
+                                        'actions': null,
+                                        if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+                                        'timestamp': DateTime.now(),
+                                      });
+                                    });
+                                    _scrollToBottom();
+                                    // Si hay UI siguiente, abrirla.
+                                    final openUi = data['open_ui'];
+                                    if (openUi is Map) {
+                                      final actionId = openUi['action_id']?.toString();
+                                      final co = openUi['client_open'];
+                                      if (actionId != null && actionId.isNotEmpty && co is Map) {
+                                        final pseudoAction = <String, dynamic>{
+                                          'action_id': actionId,
+                                          'display_name': actionId,
+                                          'client_open': Map<String, dynamic>.from(co),
+                                          'parameters': {'provided': _draft},
+                                        };
+                                        await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+                                      }
+                                    }
+                                  }
+                                }
+                              },
                             ),
                             ),
                           ),

@@ -73,41 +73,12 @@ class UiDefinitionTemplateManager
      */
     public static function render($entity, $action, $params = [])
     {
-        $commonConfig = self::loadCommonTemplate();
-        Yii::info('Common config cargado: ' . json_encode($commonConfig), self::LOG_CATEGORY);
-
         $specificConfig = self::loadSpecificTemplate($entity, $action);
         Yii::info("Specific config cargado para {$entity}/{$action}: " . json_encode($specificConfig), self::LOG_CATEGORY);
 
-        $mergedConfig = self::mergeConfigs($commonConfig, $specificConfig);
-        Yii::info('Merged config: ' . json_encode($mergedConfig), self::LOG_CATEGORY);
-
-        $processedConfig = self::processVariables($mergedConfig, $params);
-
-        if (isset($processedConfig['wizard_config']['steps']) && isset($processedConfig['wizard_config']['fields'])) {
-            $initialStep = self::calculateInitialStep(
-                $processedConfig['wizard_config']['steps'],
-                $processedConfig['wizard_config']['fields'],
-                $params
-            );
-            $processedConfig['wizard_config']['initial_step'] = $initialStep;
-        } elseif (
-            ($processedConfig['ui_type'] ?? null) === 'ui_json'
-            && isset($processedConfig['fields'])
-            && is_array($processedConfig['fields'])
-        ) {
-            // Paso embebible: fields en raíz, sin steps internos.
-        } elseif (isset($processedConfig['wizard_config'])) {
-            Yii::warning(
-                'wizard_config incompleto tras merge (faltan steps o fields). Steps: '
-                . (isset($processedConfig['wizard_config']['steps']) ? 'existe' : 'no existe')
-                . ', Fields: '
-                . (isset($processedConfig['wizard_config']['fields']) ? 'existe' : 'no existe'),
-                self::LOG_CATEGORY
-            );
-        }
-
-        return $processedConfig;
+        // Corte total: no se mezclan fragmentos comunes de wizard_config.
+        // El descriptor válido debe declarar `ui_type` explícito y (para `ui_json`) usar `blocks`.
+        return self::processVariables($specificConfig, $params);
     }
 
     /**
@@ -250,73 +221,7 @@ class UiDefinitionTemplateManager
         }
 
         Yii::info('Template específico decodificado: ' . json_encode($decoded), self::LOG_CATEGORY);
-
-        // Legacy: JSON plano sin `ui_type` (solo steps/fields) → se envuelve en wizard_config.
-        if ((isset($decoded['steps']) || isset($decoded['fields'])) && !isset($decoded['ui_type'])) {
-            Yii::info('Envolviendo template específico en wizard_config', self::LOG_CATEGORY);
-            return ['wizard_config' => $decoded];
-        }
-
-        Yii::info('Template específico ya tiene estructura wizard_config o diferente', self::LOG_CATEGORY);
         return $decoded;
-    }
-
-    private static function mergeConfigs($common, $specific)
-    {
-        $skipCommonWizard = isset($specific['ui_type']) && is_string($specific['ui_type'])
-            && in_array($specific['ui_type'], ['ui_json', 'flow'], true);
-
-        // `ui_json` / `flow`: descriptor propio; no mezclar fragmentos “wizard” del común.
-        $result = $skipCommonWizard ? [] : $common;
-
-        Yii::info('Iniciando merge. Common tiene wizard_config: ' . (isset($result['wizard_config']) ? 'sí' : 'no'), self::LOG_CATEGORY);
-        Yii::info('Specific tiene wizard_config: ' . (isset($specific['wizard_config']) ? 'sí' : 'no'), self::LOG_CATEGORY);
-
-        if (isset($specific['wizard_config'])) {
-            if (!isset($result['wizard_config'])) {
-                $result['wizard_config'] = [];
-            }
-
-            foreach ($specific['wizard_config'] as $key => $value) {
-                Yii::info("Mergeando key: {$key}, existe en common: " . (isset($result['wizard_config'][$key]) ? 'sí' : 'no'), self::LOG_CATEGORY);
-
-                if (isset($result['wizard_config'][$key]) && is_array($result['wizard_config'][$key]) && is_array($value)) {
-                    if ($key === 'steps' || $key === 'fields') {
-                        $result['wizard_config'][$key] = $value;
-                        Yii::info("Reemplazado {$key} completamente con " . count($value) . ' elementos', self::LOG_CATEGORY);
-                    } elseif ($key === 'ui_meta') {
-                        $result['wizard_config'][$key] = self::mergeUiMeta($result['wizard_config'][$key], $value);
-                    } else {
-                        $result['wizard_config'][$key] = self::mergeArrays($result['wizard_config'][$key], $value);
-                    }
-                } else {
-                    $result['wizard_config'][$key] = $value;
-                    Yii::info("Agregado nuevo key: {$key}", self::LOG_CATEGORY);
-                }
-            }
-        } elseif (!$skipCommonWizard) {
-            Yii::warning('Specific no tiene wizard_config, no se puede hacer merge', self::LOG_CATEGORY);
-        }
-
-        // Claves de raíz del template específico (`ui_type`, `ui_meta`, `fields`, `title`, …).
-        foreach ($specific as $key => $value) {
-            if ($key === 'wizard_config') {
-                continue;
-            }
-            $result[$key] = $value;
-        }
-
-        Yii::info(
-            'Resultado del merge - tiene steps: '
-            . (isset($result['wizard_config']['steps']) ? 'sí (' . count($result['wizard_config']['steps']) . ')' : 'no')
-            . ', tiene fields: '
-            . (isset($result['wizard_config']['fields']) ? 'sí (' . count($result['wizard_config']['fields']) . ')' : 'no')
-            . ', fields raíz: '
-            . (isset($result['fields']) && is_array($result['fields']) ? 'sí (' . count($result['fields']) . ')' : 'no'),
-            self::LOG_CATEGORY
-        );
-
-        return $result;
     }
 
     /**
@@ -384,9 +289,21 @@ class UiDefinitionTemplateManager
             Yii::info('Parámetros recibidos en processVariables: ' . json_encode($params), self::LOG_CATEGORY);
         }
 
-        if (isset($config['wizard_config']['fields']) && is_array($config['wizard_config']['fields'])) {
-            self::processFieldsList($config['wizard_config']['fields'], $params);
+        // Nuevo contrato: `ui_type=ui_json` con `blocks`.
+        if (isset($config['blocks']) && is_array($config['blocks'])) {
+            foreach ($config['blocks'] as &$b) {
+                if (!is_array($b)) {
+                    continue;
+                }
+                $kind = isset($b['kind']) ? (string) $b['kind'] : '';
+                if ($kind === 'fields' && isset($b['fields']) && is_array($b['fields'])) {
+                    self::processFieldsList($b['fields'], $params);
+                }
+            }
+            unset($b);
         }
+
+        // Legacy mínimo (mientras se migra): si quedan `fields` en raíz, también inyectar.
         if (isset($config['fields']) && is_array($config['fields'])) {
             self::processFieldsList($config['fields'], $params);
         }

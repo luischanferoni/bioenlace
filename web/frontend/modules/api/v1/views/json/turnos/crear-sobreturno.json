@@ -1,69 +1,62 @@
 {
+  "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
-  "steps": [
+  "blocks": [
     {
-      "step": 0,
+      "kind": "fields",
+      "id": "default",
       "title": "Sobreturno urgente",
       "fields": [
-        "id_persona",
-        "fecha",
-        "hora",
-        "id_servicio_asignado",
-        "id_efector",
-        "id_rrhh_servicio_asignado",
-        "tipo_atencion"
-      ]
-    }
-  ],
-  "fields": [
-    {
-      "name": "id_persona",
-      "label": "ID persona",
-      "type": "text",
-      "required": true
-    },
-    {
-      "name": "fecha",
-      "label": "Fecha",
-      "type": "date",
-      "required": true
-    },
-    {
-      "name": "hora",
-      "label": "Hora",
-      "type": "text",
-      "required": true
-    },
-    {
-      "name": "id_servicio_asignado",
-      "label": "Servicio",
-      "type": "text",
-      "required": true
-    },
-    {
-      "name": "id_efector",
-      "label": "Efector (opcional si hay sesión)",
-      "type": "text",
-      "required": false
-    },
-    {
-      "name": "id_rrhh_servicio_asignado",
-      "label": "Agenda",
-      "type": "text",
-      "required": false
-    },
-    {
-      "name": "tipo_atencion",
-      "label": "Tipo de atención",
-      "type": "select",
-      "required": false,
-      "default": "presencial",
-      "options": [
-        { "value": "presencial", "label": "Presencial" },
-        { "value": "teleconsulta", "label": "Teleconsulta" }
+        {
+          "name": "id_persona",
+          "label": "ID persona",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "fecha",
+          "label": "Fecha",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "hora",
+          "label": "Hora",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "id_servicio_asignado",
+          "label": "Servicio",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "id_efector",
+          "label": "Efector (opcional si hay sesión)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "id_rrhh_servicio_asignado",
+          "label": "Agenda",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "tipo_atencion",
+          "label": "Tipo de atención",
+          "type": "select",
+          "required": false,
+          "default": "presencial",
+          "options": [
+            { "value": "presencial", "label": "Presencial" },
+            { "value": "teleconsulta", "label": "Teleconsulta" }
+          ]
+        }
       ]
     }
   ]

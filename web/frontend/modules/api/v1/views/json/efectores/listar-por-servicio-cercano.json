@@ -2,41 +2,20 @@
   "ui_type": "ui_json",
   "title": "Efectores cercanos (por servicio)",
   "ui_meta": {
-    "list": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "default",
       "selection": { "mode": "single", "requires_confirmation": true },
       "chips": [{ "id": "nearby", "label": "Cerca" }],
       "draft_field": "id_efector",
-      "item": { "kind": "efector", "id_field": "id", "label_field": "name" }
-    },
-    "assistant_embed": {}
-  },
-  "fields": [
-    {
-      "name": "latitud",
-      "label": "Latitud",
-      "type": "text",
-      "required": false
-    },
-    {
-      "name": "longitud",
-      "label": "Longitud",
-      "type": "text",
-      "required": false
-    },
-    {
-      "name": "radio_km",
-      "label": "Radio (km)",
-      "type": "text",
-      "required": false,
-      "value": "10"
-    },
-    {
-      "name": "id_efector",
-      "label": "Efector",
-      "type": "select",
-      "required": true,
-      "options": "{{options}}",
-      "option_config": { "source": "efectores" }
+      "item": { "kind": "efector", "id_field": "id", "label_field": "name" },
+      "items": []
     }
   ]
 }

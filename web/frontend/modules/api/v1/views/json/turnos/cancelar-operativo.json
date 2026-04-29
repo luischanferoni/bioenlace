@@ -1,34 +1,35 @@
 {
+  "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
-  "steps": [
+  "blocks": [
     {
-      "step": 0,
+      "kind": "fields",
+      "id": "default",
       "title": "Cancelar turno (operativo)",
-      "fields": ["id", "estado_motivo", "canal"]
-    }
-  ],
-  "fields": [
-    {
-      "name": "id",
-      "label": "ID turno",
-      "type": "text",
-      "required": true
-    },
-    {
-      "name": "estado_motivo",
-      "label": "Motivo",
-      "type": "text",
-      "required": false
-    },
-    {
-      "name": "canal",
-      "label": "Canal",
-      "type": "text",
-      "required": false,
-      "default": "web"
+      "fields": [
+        {
+          "name": "id",
+          "label": "ID turno",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "estado_motivo",
+          "label": "Motivo",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "canal",
+          "label": "Canal",
+          "type": "text",
+          "required": false,
+          "default": "web"
+        }
+      ]
     }
   ]
 }

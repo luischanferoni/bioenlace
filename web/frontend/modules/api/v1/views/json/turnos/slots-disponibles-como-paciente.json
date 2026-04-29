@@ -2,7 +2,15 @@
   "ui_type": "ui_json",
   "title": "Elegir horario",
   "ui_meta": {
-    "list": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "default",
       "selection": { "mode": "single", "requires_confirmation": true },
       "chips": [
         { "id": "next_available", "label": "Próximo disponible" },
@@ -10,16 +18,8 @@
         { "id": "afternoon", "label": "Tarde" }
       ],
       "draft_field": "slot_id",
-      "item": { "kind": "slot", "id_field": "id", "label_field": "label" }
-    },
-    "assistant_embed": {}
-  },
-  "fields": [
-    {
-      "name": "slot_id",
-      "label": "Horario",
-      "type": "text",
-      "required": true
+      "item": { "kind": "slot", "id_field": "id", "label_field": "label" },
+      "items": []
     }
   ]
 }

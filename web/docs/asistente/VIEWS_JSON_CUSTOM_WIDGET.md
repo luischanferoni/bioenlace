@@ -1,13 +1,13 @@
-# Views JSON: `custom_widget` (contrato mínimo)
+# UI JSON: `custom_widget` (dentro de `blocks[].kind="fields"`)
 
-Los wizards servidos bajo `/api/v1/<entidad>/<accion>` pueden incluir campos que no son inputs HTML estándar. El **descriptor JSON** es la única pieza común entre clientes; la **implementación visual** es siempre **local** en cada plataforma.
+Las UIs servidas bajo `/api/v1/<entidad>/<accion>` (`kind: ui_definition`, `ui_type: ui_json`) pueden incluir campos que no son inputs HTML estándar. El **descriptor JSON** es la única pieza común entre clientes; la **implementación visual** es siempre **local** en cada plataforma.
 
 ## Estructura del campo
 
 | Clave | Descripción |
 |--------|-------------|
 | `type` | `"custom_widget"` |
-| `name` | Identificador lógico del bloque en el wizard (no tiene que coincidir con las claves POST; los valores van en `value_fields`). |
+| `name` | Identificador lógico del campo (no tiene que coincidir con las claves POST; los valores van en `value_fields`). |
 | `widget_id` | Identificador estable del tipo de widget (ej. `weekly_scheduler`). Cada cliente debe mapear este id a su widget nativo. |
 | `value_fields` | Lista de nombres de parámetros que el widget lee y escribe al confirmar el paso (van en el POST del submit, igual que el resto de campos). |
 | `assets` | **Solo web (SPA).** `{ "css": ["/css/…"], "js": ["/js/…", "/js/widgets/…"] }` — rutas bajo el webroot del frontend; la SPA los carga con `ensureAssetsLoaded`. **Las apps móviles no descargan ni ejecutan estos assets.** |
@@ -22,5 +22,5 @@ Los wizards servidos bajo `/api/v1/<entidad>/<accion>` pueden incluir campos que
 
 ## Enlaces desde Yii con layout
 
-- Para abrir el wizard en el shell SPA: query `spa_open_ui_json=/api/v1/<entidad>/<accion>` (ver `spa-home.js`).
+- Para abrir la UI en el shell SPA: query `spa_open_ui_json=/api/v1/<entidad>/<accion>` (ver `spa-home.js`).
 

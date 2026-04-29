@@ -2,6 +2,9 @@
 
 Este documento define el **payload estructurado** que devuelve el endpoint de chat y cómo deben interpretarlo los clientes (web y apps móviles).
 
+> Nota: el contrato actual ya no envuelve el resultado en `data` ni usa `message: "Consulta procesada"` como campo útil.
+> El backend devuelve `kind` en raíz (p. ej. `kind: intent_flow`) y el texto conversacional va en `text`.
+
 ## Endpoint
 
 - `POST /api/v1/asistente/enviar`

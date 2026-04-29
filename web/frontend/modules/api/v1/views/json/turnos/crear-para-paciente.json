@@ -1,36 +1,15 @@
 {
+  "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
-  "steps": [
+  "blocks": [
     {
-      "step": 0,
-      "title": "Paciente",
-      "fields": ["id_persona"]
-    },
-    {
-      "step": 1,
-      "title": "Seleccionar Servicio y Efector",
-      "fields": ["id_servicio_asignado", "id_efector"]
-    },
-    {
-      "step": 2,
-      "title": "Seleccionar Profesional",
-      "fields": ["id_rr_hh"]
-    },
-    {
-      "step": 3,
-      "title": "Seleccionar turno disponible",
-      "fields": ["hora"]
-    },
-    {
-      "step": 4,
-      "title": "Tipo de atención",
-      "fields": ["tipo_atencion"]
-    }
-  ],
-  "fields": [
+      "kind": "fields",
+      "id": "default",
+      "title": "Crear turno para paciente",
+      "fields": [
     {
       "name": "id_persona",
       "label": "ID persona (paciente)",
@@ -133,6 +112,8 @@
       "options": [
         { "value": "presencial", "label": "Presencial" },
         { "value": "teleconsulta", "label": "Por chat / teleconsulta" }
+      ]
+    }
       ]
     }
   ]

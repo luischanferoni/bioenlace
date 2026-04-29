@@ -1,4 +1,5 @@
 {
+  "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
     "clients": {
@@ -7,93 +8,85 @@
       }
     }
   },
-  "steps": [
+  "blocks": [
     {
-      "step": 0,
+      "kind": "fields",
+      "id": "default",
       "title": "Agenda semanal",
       "fields": [
-        "id_efector",
-        "id_rr_hh",
-        "id_servicio",
-        "cupo_pacientes",
-        "duracion_slot_minutos",
-        "formas_atencion",
-        "weekly_scheduler_widget"
+        {
+          "name": "id_efector",
+          "label": "",
+          "type": "hidden",
+          "required": false
+        },
+        {
+          "name": "id_rr_hh",
+          "label": "",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_servicio",
+          "label": "",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "cupo_pacientes",
+          "label": "Cupo de pacientes",
+          "type": "select",
+          "required": false,
+          "options": [
+            { "value": "0", "label": "Sin cupo" },
+            { "value": "5", "label": "5" },
+            { "value": "10", "label": "10" },
+            { "value": "15", "label": "15" },
+            { "value": "20", "label": "20" },
+            { "value": "25", "label": "25" },
+            { "value": "30", "label": "30" }
+          ]
+        },
+        {
+          "name": "duracion_slot_minutos",
+          "label": "Minutos por turno (opcional)",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "formas_atencion",
+          "label": "Forma de atención de turnos",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
+            { "value": "TURNO", "label": "Programado" },
+            { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
+          ]
+        },
+        {
+          "name": "weekly_scheduler_widget",
+          "label": "Horarios por día",
+          "type": "custom_widget",
+          "widget_id": "weekly_scheduler",
+          "required": false,
+          "value_fields": [
+            "lunes_2",
+            "martes_2",
+            "miercoles_2",
+            "jueves_2",
+            "viernes_2",
+            "sabado_2",
+            "domingo_2"
+          ],
+          "assets": {
+            "css": ["/css/scheduler.css"],
+            "js": ["/js/scheduler.js", "/js/widgets/ui-widget-weekly-scheduler.js"]
+          }
+        }
       ]
-    }
-  ],
-  "fields": [
-    {
-      "name": "id_efector",
-      "label": "",
-      "type": "hidden",
-      "required": false
-    },
-    {
-      "name": "id_rr_hh",
-      "label": "",
-      "type": "hidden",
-      "required": true,
-      "include_in_submit": true
-    },
-    {
-      "name": "id_servicio",
-      "label": "",
-      "type": "hidden",
-      "required": true,
-      "include_in_submit": true
-    },
-    {
-      "name": "cupo_pacientes",
-      "label": "Cupo de pacientes",
-      "type": "select",
-      "required": false,
-      "options": [
-        { "value": "0", "label": "Sin cupo" },
-        { "value": "5", "label": "5" },
-        { "value": "10", "label": "10" },
-        { "value": "15", "label": "15" },
-        { "value": "20", "label": "20" },
-        { "value": "25", "label": "25" },
-        { "value": "30", "label": "30" }
-      ]
-    },
-    {
-      "name": "duracion_slot_minutos",
-      "label": "Minutos por turno (opcional)",
-      "type": "number",
-      "required": false
-    },
-    {
-      "name": "formas_atencion",
-      "label": "Forma de atención de turnos",
-      "type": "select",
-      "required": true,
-      "options": [
-        { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
-        { "value": "TURNO", "label": "Programado" },
-        { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
-      ]
-    },
-    {
-      "name": "weekly_scheduler_widget",
-      "label": "Horarios por día",
-      "type": "custom_widget",
-      "widget_id": "weekly_scheduler",
-      "required": false,
-      "value_fields": [
-        "lunes_2",
-        "martes_2",
-        "miercoles_2",
-        "jueves_2",
-        "viernes_2",
-        "sabado_2",
-        "domingo_2"
-      ],
-      "assets": {
-        "css": ["/css/scheduler.css"],
-        "js": ["/js/scheduler.js", "/js/widgets/ui-widget-weekly-scheduler.js"]
-      }
     }
   ]
 }

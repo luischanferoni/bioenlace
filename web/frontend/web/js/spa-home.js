@@ -734,7 +734,7 @@
 
     /**
      * Renderizar UI dinámica a partir de una definición genérica
-     * Actualmente soporta ui_type = "wizard" usando wizard_config.
+     * Contrato actual: `ui_type = "ui_json"` con `blocks`.
      * @param {Object} json - Respuesta completa de la API de UI
      * @param {HTMLElement} container - Contenedor donde se debe renderizar la UI
      * @param {Object} options - Opciones adicionales (por ejemplo, url original)
@@ -744,28 +744,15 @@
             return;
         }
 
-        const uiType = json.ui_type || 'wizard';
+        const uiType = json.ui_type || 'ui_json';
 
         switch (uiType) {
             case 'ui_json':
-                // UI JSON inline tipo listado (sin wizard_config).
-                if (!json.wizard_config && Array.isArray(json.items) && json.ui_meta && json.ui_meta.list) {
-                    renderUiJsonList(json, container, options);
+                if (Array.isArray(json.blocks)) {
+                    renderUiJsonBlocks(json, container, options);
                     break;
                 }
-                // Si trae wizard_config, usar renderer legacy.
-                if (json.wizard_config) {
-                    renderWizard(json.wizard_config, container, Object.assign({}, options, { definition: json }));
-                    break;
-                }
-                container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin configuración soportada.</div>';
-                break;
-            case 'wizard':
-                if (json.wizard_config) {
-                    renderWizard(json.wizard_config, container, Object.assign({}, options, { definition: json }));
-                } else {
-                    container.innerHTML = '<div class="alert alert-warning">No se encontró configuración de wizard.</div>';
-                }
+                container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON inválida: falta blocks.</div>';
                 break;
             default:
                 container.innerHTML = '<div class="alert alert-info">Este tipo de UI aún no está soportado en la web: ' + escapeHtml(uiType) + '</div>';
@@ -773,27 +760,105 @@
     }
 
     /**
-     * UI JSON (listado inline): listado de cards + confirmación opcional.
-     * Espera:
-     * - json.ui_meta.list.{draft_field,selection, chips?, item}
-     * - json.items = [{id,name}, ...]
+     * UI JSON (blocks): permite lista(s) + campos + custom_widgets en orden.
      */
-    function renderUiJsonList(json, container, options = {}) {
-        const list = json.ui_meta && json.ui_meta.list ? json.ui_meta.list : null;
-        const items = Array.isArray(json.items) ? json.items : [];
-        if (!list) {
-            container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin ui_meta.list.</div>';
+    function renderUiJsonBlocks(json, container, options = {}) {
+        const blocks = Array.isArray(json.blocks) ? json.blocks : [];
+        if (blocks.length < 1) {
+            container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin blocks.</div>';
             return;
         }
-        const draftField = list.draft_field ? String(list.draft_field) : '';
-        const requiresConfirmation = list.selection && list.selection.requires_confirmation === true;
+        let html = '<div class="bio-ui-json-blocks d-flex flex-column gap-3">';
+        blocks.forEach(function (b, idx) {
+            if (!b || typeof b !== 'object') return;
+            const kind = String(b.kind || '');
+            const bid = b.id ? String(b.id) : ('block_' + idx);
+            html += '<div class="bio-ui-json-block" data-block-kind="' + escapeHtml(kind) + '" data-block-id="' + escapeHtml(bid) + '"></div>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+
+        blocks.forEach(function (b, idx) {
+            if (!b || typeof b !== 'object') return;
+            const kind = String(b.kind || '');
+            const bid = b.id ? String(b.id) : ('block_' + idx);
+            const mount = container.querySelector('[data-block-id="' + CSS.escape(bid) + '"]');
+            if (!mount) return;
+            if (kind === 'list') {
+                renderUiJsonListBlock(b, mount, options);
+            } else if (kind === 'fields') {
+                renderUiJsonFieldsBlock(b, mount, options);
+            } else {
+                mount.innerHTML = '<div class="alert alert-warning mb-0">Block no soportado: ' + escapeHtml(kind) + '</div>';
+            }
+        });
+    }
+
+    function setInlineButtonSpinner(btn, loading) {
+        if (!btn) return;
+        try {
+            if (!btn.dataset.originalHtml) {
+                btn.dataset.originalHtml = btn.innerHTML;
+            }
+            if (loading) {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            } else if (btn.dataset.originalHtml) {
+                btn.innerHTML = btn.dataset.originalHtml;
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    function markInlineButtonConfirmed(btn) {
+        if (!btn) return;
+        try {
+            btn.disabled = true;
+            btn.classList.remove('btn-primary', 'btn-success');
+            btn.classList.add('btn-secondary');
+            btn.textContent = 'Confirmado';
+        } catch (e) { /* ignore */ }
+    }
+
+    function initCustomWidgetsInContainer(container, fields) {
+        const list = Array.isArray(fields) ? fields : [];
+        list.forEach(function (fd) {
+            if (!fd || typeof fd !== 'object') return;
+            if (String(fd.type || '') !== 'custom_widget') return;
+            const wid = fd.widget_id ? String(fd.widget_id) : '';
+            if (!wid) return;
+            const assets = fd.assets && typeof fd.assets === 'object' ? fd.assets : null;
+            const run = () => {
+                container.querySelectorAll('.bio-ui-custom-widget').forEach(el => {
+                    if (el.getAttribute('data-bio-ui-widget') !== wid) return;
+                    const w = window.BioenlaceUiWidgets && window.BioenlaceUiWidgets[wid];
+                    if (w && typeof w.init === 'function') {
+                        try { w.init(el, fd); } catch (err) { console.error('[SPA] custom_widget init', wid, err); }
+                    }
+                });
+            };
+            if (assets) {
+                ensureAssetsLoaded(assets).then(run);
+            } else {
+                run();
+            }
+        });
+    }
+
+    function renderUiJsonListBlock(block, container, options = {}) {
+        const title = block.title ? String(block.title) : '';
+        const items = Array.isArray(block.items) ? block.items : [];
+        const draftField = block.draft_field ? String(block.draft_field) : '';
+        const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
+        const requiresConfirmation = selection.requires_confirmation === true;
+
         let locked = false;
         let selectedId = '';
-        let selectedLabel = '';
 
         let html = '<div class="bio-ui-json-list">';
+        if (title) {
+            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+        }
         html += '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap">';
-        items.forEach((it, idx) => {
+        items.forEach((it) => {
             const id = it && it.id !== undefined ? String(it.id) : '';
             const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
             if (!id) return;
@@ -814,23 +879,8 @@
         const pickButtons = Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
         const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
 
-        function setInlineButtonSpinner(btn, loading) {
-            if (!btn) return;
-            try {
-                if (!btn.dataset.originalHtml) {
-                    btn.dataset.originalHtml = btn.innerHTML;
-                }
-                if (loading) {
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-                } else if (btn.dataset.originalHtml) {
-                    btn.innerHTML = btn.dataset.originalHtml;
-                }
-            } catch (e) { /* ignore */ }
-        }
-
-        function setSelected(btn, id, label) {
+        function setSelected(btn, id) {
             selectedId = id || '';
-            selectedLabel = label || selectedId;
             pickButtons.forEach(b => {
                 b.classList.remove('border', 'border-3');
                 const ck = b.querySelector('.bio-ui-pick-check');
@@ -841,49 +891,22 @@
                 const ck = btn.querySelector('.bio-ui-pick-check');
                 if (ck) ck.classList.remove('d-none');
             }
-            if (confirmBtn) {
-                confirmBtn.disabled = !selectedId;
-            }
+            if (confirmBtn) confirmBtn.disabled = !selectedId;
         }
 
         function confirmSelection() {
             if (locked) return;
-            if (!draftField) {
-                console.warn('[SPA] ui_json list sin draft_field');
-                return;
-            }
-            if (!selectedId) {
-                return;
-            }
-
-            // Loading visual en Confirmar mientras avanza el flow.
-            if (confirmBtn) {
-                setInlineButtonSpinner(confirmBtn, true);
-            }
-
-            // Bloquear el listado una vez confirmada la selección (evita re-seleccionar un ítem viejo).
+            if (!draftField) return;
+            if (!selectedId) return;
             locked = true;
             try {
-                pickButtons.forEach(b => {
-                    b.disabled = true;
-                    b.classList.add('disabled');
-                });
-                if (confirmBtn) {
-                    confirmBtn.disabled = true;
-                }
+                pickButtons.forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
-
-            // Aplicar draft local y avanzar el flow automáticamente.
-            try {
-                draft = Object.assign({}, draft || {}, { [draftField]: selectedId });
-            } catch (e) { /* ignore */ }
-
-            // Disparar siguiente paso del flow sin texto (solo snapshot).
+            if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
+            try { draft = Object.assign({}, draft || {}, { [draftField]: selectedId }); } catch (e) { /* ignore */ }
             setTimeout(() => {
-                if (queryInput) {
-                    queryInput.value = '';
-                }
-                handleSendQuery();
+                if (queryInput) queryInput.value = '';
+                handleSendQuery('');
             }, 0);
         }
 
@@ -891,18 +914,11 @@
             btn.addEventListener('click', function () {
                 if (locked) return;
                 const id = this.getAttribute('data-embed-id') || '';
-                const label = this.getAttribute('data-embed-label') || id;
                 if (!id) return;
-
-                setSelected(this, id, label);
-
-                // Si no requiere confirmación explícita, confirmar inmediatamente (sin alerts).
-                if (!requiresConfirmation) {
-                    confirmSelection();
-                }
+                setSelected(this, id);
+                if (!requiresConfirmation) confirmSelection();
             });
         });
-
         if (confirmBtn) {
             confirmBtn.addEventListener('click', function () {
                 if (locked) return;
@@ -911,330 +927,83 @@
         }
     }
 
-    /**
-     * Renderizar un wizard basado en wizard_config
-     * @param {Object} config - wizard_config devuelto por el backend
-     * @param {HTMLElement} container - Contenedor donde se debe renderizar
-     * @param {Object} options - Opciones adicionales (por ejemplo, { url: fullUrl })
-     */
-    function readWizardAccumFromForm(form, accum) {
-        if (!form || !accum) return;
-        const fd = new FormData(form);
-        fd.forEach((value, key) => {
-            accum[key] = value;
-        });
-    }
-
-    function applyWizardAccumToForm(form, accum) {
-        if (!form || !accum) return;
-        Object.keys(accum).forEach(k => {
-            const els = form.elements.namedItem(k);
-            if (!els) return;
-            const val = accum[k] === undefined || accum[k] === null ? '' : String(accum[k]);
-            if (els.length && els[0] && els[0].type === 'radio') {
-                for (let i = 0; i < els.length; i++) {
-                    els[i].checked = els[i].value === val;
-                }
-            } else if (els.length) {
-                for (let i = 0; i < els.length; i++) {
-                    if (els[i].type !== 'file') els[i].value = val;
-                }
-            } else if (els.type !== 'file') {
-                els.value = val;
-            }
-        });
-    }
-
-    function initWizardCustomWidgets(container, stepFields, getFieldConfigByName) {
-        const names = Array.isArray(stepFields) ? stepFields : [];
-        names.forEach(fieldName => {
-            const fd = typeof fieldName === 'string' ? getFieldConfigByName(fieldName) : null;
-            if (!fd || fd.type !== 'custom_widget' || !fd.widget_id) return;
-            const assets = fd.assets && typeof fd.assets === 'object' ? fd.assets : null;
-            const run = () => {
-                container.querySelectorAll('.bio-ui-custom-widget').forEach(el => {
-                    if (el.getAttribute('data-bio-ui-widget') !== fd.widget_id) return;
-                    const w = window.BioenlaceUiWidgets && window.BioenlaceUiWidgets[fd.widget_id];
-                    if (w && typeof w.init === 'function') {
-                        try {
-                            w.init(el, fd);
-                        } catch (err) {
-                            console.error('[SPA] custom_widget init', fd.widget_id, err);
-                        }
-                    }
-                });
-            };
-            if (assets) {
-                ensureAssetsLoaded(assets).then(run);
-            } else {
-                run();
-            }
-        });
-    }
-
-    function renderWizard(config, container, options = {}) {
-        if (!config || !container) {
-            return;
-        }
-
-        const wizardInstanceId = 'wiz_' + Math.floor(Math.random() * 1000000) + '_' + Date.now();
-        const steps = Array.isArray(config.steps) ? config.steps : [];
-        const fieldsConfig = Array.isArray(config.fields) ? config.fields : [];
-        let currentStep = typeof config.initial_step === 'number' ? config.initial_step : 0;
+    function renderUiJsonFieldsBlock(block, container, options = {}) {
+        const title = block.title ? String(block.title) : '';
+        const fields = Array.isArray(block.fields) ? block.fields : [];
         const submitUrl = options.url || null;
-        const wizardAccum = {};
 
-        fieldsConfig.forEach(f => {
-            if (f && f.name && f.value !== undefined && f.value !== null && f.value !== '') {
-                wizardAccum[f.name] = String(f.value);
-            }
-            if (f && f.type === 'custom_widget' && Array.isArray(f.value_fields) && f.initial_values && typeof f.initial_values === 'object') {
-                f.value_fields.forEach(n => {
-                    const iv = f.initial_values[n];
-                    if (iv !== undefined && iv !== null && iv !== '') {
-                        wizardAccum[n] = String(iv);
-                    }
-                });
-            }
+        let html = '<div class="bio-ui-json-fields">';
+        if (title) {
+            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+        }
+        html += '<form data-ui-json-form="1">';
+        fields.forEach(function (fd) {
+            html += renderFormField(fd);
         });
+        html += '<div class="d-flex justify-content-end pt-2">';
+        html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
+        html += '</div>';
+        html += '</form></div>';
+        container.innerHTML = html;
 
-        function getFieldConfigByName(name) {
-            return fieldsConfig.find(f => f.name === name);
-        }
+        const form = container.querySelector('form[data-ui-json-form="1"]');
+        const submitBtn = container.querySelector('button[data-ui-json-submit="1"]');
+        if (!form || !submitBtn || !submitUrl) return;
 
-        function renderCurrentStep() {
-            const step = steps[currentStep];
-            if (!step) {
-                container.innerHTML = '<div class="alert alert-warning">No se encontró el paso del wizard.</div>';
-                return;
-            }
+        initCustomWidgetsInContainer(container, fields);
+        attachAutocompleteHandlers(container);
 
-            let html = '<div class="wizard-step">';
+        submitBtn.addEventListener('click', function () {
+            if (submitBtn.disabled) return;
+            setInlineButtonSpinner(submitBtn, true);
+            submitBtn.disabled = true;
 
-            if (step.title) {
-                html += '<h5 class="mb-3">' + escapeHtml(step.title) + '</h5>';
-            }
-
-            // No usar id fijo (puede haber múltiples wizards en el chat).
-            html += '<form data-wizard-form="1" data-wizard-id="' + escapeHtml(String(wizardInstanceId)) + '">';
-
-            const stepFields = Array.isArray(step.fields) ? step.fields : [];
-            stepFields.forEach(fieldName => {
-                const fieldDef = typeof fieldName === 'string' ? getFieldConfigByName(fieldName) : fieldName;
-                if (fieldDef) {
-                    html += renderFormField(fieldDef);
+            const body = new URLSearchParams();
+            try {
+                const fd = new FormData(form);
+                fd.forEach((v, k) => { if (v != null && String(v) !== '') body.set(k, String(v)); });
+            } catch (e) { /* ignore */ }
+            try {
+                if (window.spaConfig && window.spaConfig.csrfToken) {
+                    body.set('_csrf', String(window.spaConfig.csrfToken));
                 }
-            });
+            } catch (e) { /* ignore */ }
 
-            html += '<div class="mt-3 d-flex justify-content-between">';
-            if (currentStep > 0) {
-                html += '<button type="button" class="btn btn-outline-secondary" data-action="prev">Anterior</button>';
-            } else {
-                html += '<span></span>';
-            }
-
-            if (currentStep < steps.length - 1) {
-                html += '<button type="button" class="btn btn-primary" data-action="next">Siguiente</button>';
-            } else {
-                // No usar submit nativo (puede refrescar si el listener no está enganchado).
-                html += '<button type="button" class="btn btn-success" data-action="submit">Confirmar</button>';
-            }
-            html += '</div>';
-
-            html += '</form>';
-            html += '</div>';
-
-            container.innerHTML = html;
-
-            const form = container.querySelector('form[data-wizard-form="1"][data-wizard-id="' + String(wizardInstanceId) + '"]');
-            if (!form) {
-                return;
-            }
-
-            applyWizardAccumToForm(form, wizardAccum);
-
-            attachAutocompleteHandlers(container);
-
-            stepFields.forEach(fn => {
-                const fd = typeof fn === 'string' ? getFieldConfigByName(fn) : null;
-                if (fd && fd.type === 'autocomplete' && fd.auto_load) {
-                    form.querySelectorAll('button[data-ac-open]').forEach(btn => {
-                        if (btn.getAttribute('data-ac-field') === fn) {
-                            setTimeout(() => btn.click(), 0);
+            fetch(submitUrl, {
+                method: 'POST',
+                headers: window.BioenlaceApiClient.mergeHeaders({
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }),
+                credentials: 'same-origin',
+                body
+            })
+                .then(r => r.json().then(j => ({ ok: r.ok, json: j })))
+                .then(({ ok, json }) => {
+                    if (json && json.kind === 'ui_submit_result' && json.success) {
+                        try {
+                            container.querySelectorAll('input, select, textarea, button').forEach(function (el) { el.disabled = true; });
+                        } catch (e) { /* ignore */ }
+                        markInlineButtonConfirmed(submitBtn);
+                        if (currentIntentId) {
+                            setTimeout(() => { try { handleSendQuery(''); } catch (e) { /* ignore */ } }, 50);
                         }
-                    });
-                }
-            });
-
-            initWizardCustomWidgets(container, stepFields, getFieldConfigByName);
-
-            function doWizardSubmit() {
-                readWizardAccumFromForm(form, wizardAccum);
-
-                if (!submitUrl) {
-                    console.warn('[SPA] wizard sin submitUrl');
-                    return;
-                }
-
-                // Loading visual en el botón confirmar del wizard.
-                try {
-                    const submitBtn = form.querySelector('button[data-action="submit"]');
-                    if (submitBtn) {
-                        if (!submitBtn.dataset.originalHtml) {
-                            submitBtn.dataset.originalHtml = submitBtn.innerHTML;
-                        }
-                        submitBtn.disabled = true;
-                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                        return;
                     }
-                } catch (e) { /* ignore */ }
-
-                const payload = Object.assign({}, wizardAccum);
-                const body = new URLSearchParams();
-                Object.keys(payload).forEach(k => {
-                    if (payload[k] !== undefined && payload[k] !== null) {
-                        body.set(k, payload[k]);
+                    if (json && json.kind === 'ui_definition') {
+                        // Error de validación: re-render (y el renderer mostrará errors vía renderFormField si aplica).
+                        renderDynamicUi(json, container, { url: submitUrl });
+                        return;
                     }
-                });
-                // Si el submitUrl trae query (p. ej. id_rr_hh), propagarla al POST si falta.
-                // Esto evita que el backend "re-renderice" por campos hidden vacíos.
-                try {
-                    const u = new URL(submitUrl, window.location.origin);
-                    u.searchParams.forEach((v, k) => {
-                        if (!body.has(k) || String(body.get(k) || '').trim() === '') {
-                            if (v != null && String(v).trim() !== '') {
-                                body.set(k, String(v));
-                            }
-                        }
-                    });
-                } catch (e) { /* ignore */ }
-                // Yii: incluir CSRF para evitar que el server re-renderice la UI con error silencioso.
-                try {
-                    if (window.spaConfig && window.spaConfig.csrfToken) {
-                        body.set('_csrf', String(window.spaConfig.csrfToken));
-                    }
-                } catch (e) { /* ignore */ }
-
-                fetch(submitUrl, {
-                    method: 'POST',
-                    headers: window.BioenlaceApiClient.mergeHeaders({
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }),
-                    credentials: 'same-origin',
-                    body
+                    container.innerHTML = '<div class="alert alert-danger mb-0">Error al guardar.</div>';
                 })
-                    .then(r => r.json().then(j => ({ ok: r.ok, status: r.status, json: j })))
-                    .then(({ ok, json }) => {
-                        if (json && json.kind === 'ui_submit_result' && json.success) {
-                            try {
-                                // Deshabilitar todos los controles del wizard para evitar re-editar accidental.
-                                container.querySelectorAll('input, select, textarea, button').forEach(function (el) {
-                                    el.disabled = true;
-                                });
-                            } catch (e) { /* ignore */ }
-
-                            // Avanzar flow de forma determinista usando snapshot global (no depender del textarea).
-                            setTimeout(() => {
-                                try {
-                                    const s = window[FLOW_STATE_KEY];
-                                    const intent = s && s.intent_id ? String(s.intent_id) : (currentIntentId ? String(currentIntentId) : '');
-                                    const sub = s && s.subintent_id ? String(s.subintent_id) : (currentSubintentId ? String(currentSubintentId) : '');
-                                    const dr = s && s.draft && typeof s.draft === 'object' ? s.draft : (draft || {});
-                                    if (!intent) {
-                                        container.insertAdjacentHTML(
-                                            'afterbegin',
-                                            '<div class="alert alert-warning mb-2">Guardado OK, pero no hay un flow activo para continuar (intent_id vacío). Recargá el chat y reintentá.</div>'
-                                        );
-                                        return;
-                                    }
-                                    // Actualizar estado local antes de enviar.
-                                    currentIntentId = intent;
-                                    currentSubintentId = sub || currentSubintentId;
-                                    draft = Object.assign({}, dr || {});
-                                    writeFlowState();
-                                    handleSendQuery('');
-                                } catch (e) {
-                                    try {
-                                        container.insertAdjacentHTML(
-                                            'afterbegin',
-                                            '<div class="alert alert-danger mb-2">Guardado OK, pero falló el avance del flow.</div>'
-                                        );
-                                    } catch (e2) {
-                                        // ignore
-                                    }
-                                }
-                            }, 50);
-                            return;
-                        }
-                        if (json && json.kind === 'ui_definition') {
-                            // En POST, ui_definition suele significar error de validación (success=false).
-                            // Si es success=true, es un contrato inesperado: evitar "refrescar" sin explicación.
-                            const isSuccess = json.success === true;
-                            const errors = (json && json.errors && typeof json.errors === 'object') ? json.errors : null;
-                            if (!isSuccess) {
-                                // Mostrar error humano arriba, manteniendo el wizard en pantalla.
-                                let msg = 'Error al guardar.';
-                                try {
-                                    const firstKey = errors ? Object.keys(errors)[0] : null;
-                                    const firstArr = firstKey ? errors[firstKey] : null;
-                                    if (Array.isArray(firstArr) && firstArr.length >= 1) {
-                                        msg = String(firstArr[0]);
-                                    }
-                                } catch (e) { /* ignore */ }
-
-                                // Re-render primero (esto reemplaza el innerHTML) y luego insertar el alert.
-                                renderDynamicUi(json, container, { url: submitUrl });
-                                try {
-                                    const existingErr = container.querySelector('.alert.alert-danger[data-wizard-error="1"]');
-                                    if (existingErr) existingErr.remove();
-                                    const a = document.createElement('div');
-                                    a.className = 'alert alert-danger mb-2';
-                                    a.setAttribute('data-wizard-error', '1');
-                                    a.textContent = msg;
-                                    container.insertBefore(a, container.firstChild);
-                                } catch (e) { /* ignore */ }
-                                return;
-                            }
-
-                            container.innerHTML = '<div class="alert alert-danger">Respuesta inesperada: el backend devolvió ui_definition en un POST. Esperaba ui_submit_result.</div>';
-                            return;
-                        }
-                        container.innerHTML = '<div class="alert alert-danger">Error al guardar.</div>';
-                    })
-                    .catch(err => {
-                        console.error('[SPA] wizard submit', err);
-                        container.innerHTML = '<div class="alert alert-danger">Error de red al guardar.</div>';
-                    });
-            }
-
-            form.addEventListener('click', function wizardNavClick(e) {
-                const action = e.target.dataset ? e.target.dataset.action : null;
-                if (!action) return;
-                e.preventDefault();
-
-                if (action === 'next') {
-                    readWizardAccumFromForm(form, wizardAccum);
-                    if (currentStep < steps.length - 1) {
-                        currentStep++;
-                        form.removeEventListener('click', wizardNavClick);
-                        renderCurrentStep();
-                    }
-                } else if (action === 'prev') {
-                    readWizardAccumFromForm(form, wizardAccum);
-                    if (currentStep > 0) {
-                        currentStep--;
-                        form.removeEventListener('click', wizardNavClick);
-                        renderCurrentStep();
-                    }
-                } else if (action === 'submit') {
-                    doWizardSubmit();
-                }
-            });
-        }
-
-        renderCurrentStep();
+                .catch(() => {
+                    container.innerHTML = '<div class="alert alert-danger mb-0">Error de red al guardar.</div>';
+                });
+        });
     }
 
+    // Nota: el soporte legacy de wizard/steps fue eliminado (corte total). Ver `renderUiJsonBlocks()`.
     /**
      * Renderizar campo de formulario
      */
@@ -2683,6 +2452,9 @@
         }
         if (whatCanIDoBtn) {
             whatCanIDoBtn.disabled = loading;
+        }
+        if (queryInput) {
+            queryInput.disabled = loading;
         }
         if (!sendBtn) {
             return;

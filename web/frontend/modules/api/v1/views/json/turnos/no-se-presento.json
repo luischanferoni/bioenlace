@@ -1,21 +1,22 @@
 {
+  "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
-  "steps": [
+  "blocks": [
     {
-      "step": 0,
+      "kind": "fields",
+      "id": "default",
       "title": "No se presentó",
-      "fields": ["id"]
-    }
-  ],
-  "fields": [
-    {
-      "name": "id",
-      "label": "ID turno",
-      "type": "text",
-      "required": true
+      "fields": [
+        {
+          "name": "id",
+          "label": "ID turno",
+          "type": "text",
+          "required": true
+        }
+      ]
     }
   ]
 }

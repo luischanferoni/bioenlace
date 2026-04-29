@@ -1,27 +1,28 @@
 {
+  "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
-  "steps": [
+  "blocks": [
     {
-      "step": 0,
+      "kind": "fields",
+      "id": "default",
       "title": "Confirmar asistencia",
-      "fields": ["id", "token"]
-    }
-  ],
-  "fields": [
-    {
-      "name": "id",
-      "label": "ID turno",
-      "type": "text",
-      "required": true
-    },
-    {
-      "name": "token",
-      "label": "Token (si aplica)",
-      "type": "text",
-      "required": false
+      "fields": [
+        {
+          "name": "id",
+          "label": "ID turno",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "token",
+          "label": "Token (si aplica)",
+          "type": "text",
+          "required": false
+        }
+      ]
     }
   ]
 }

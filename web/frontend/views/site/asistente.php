@@ -10,29 +10,26 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 
-<div class="container-fluid py-3">
+<div class="container-fluid py-3" style="min-height: 100vh;">
     <div class="row g-3 align-items-stretch">
         <div class="col-12">
-            <div class="card shadow-sm h-100 d-flex flex-column position-relative">
+            <div class="card shadow-sm d-flex flex-column position-relative" style="height: calc(100vh - 2rem);">
                 <div class="card-header bg-white d-flex align-items-center justify-content-between">
                     <div class="fw-semibold"></div>
-                    <button type="button" id="spa-shortcuts-toggle-btn" class="btn btn-outline-secondary btn-sm">
-                        Atajos
-                    </button>
-                </div>
-
-                <!-- Menú flotante Atajos (overlay) -->
-                <div id="spa-shortcuts-panel" class="d-none position-absolute top-0 start-0 w-100 h-100" style="z-index: 1050;">
-                    <div id="spa-shortcuts-backdrop" class="position-absolute top-0 start-0 w-100 h-100 bg-dark opacity-25"></div>
-                    <div class="position-absolute top-0 start-0 w-100 p-3">
-                        <div class="bg-white border rounded-4 p-3 w-100 shadow-sm">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="fw-semibold">Atajos</div>
-                                <button type="button" class="btn btn-link btn-sm text-decoration-none" id="spa-shortcuts-close-btn">
-                                    Cerrar
-                                </button>
-                            </div>
-                            <div class="text-muted small mb-3">Acciones disponibles según tus permisos.</div>
+                    <div class="dropdown">
+                        <button
+                            type="button"
+                            id="spa-shortcuts-toggle-btn"
+                            class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
+                            aria-expanded="false"
+                        >
+                            Atajos
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3 shadow-sm" style="width: min(720px, 92vw);">
+                            <div class="fw-semibold mb-1">Atajos</div>
+                            <div class="text-muted small mb-2">Acciones disponibles según tus permisos.</div>
                             <div id="spa-shortcuts-content" class="overflow-auto" style="max-height: 50vh;">
                                 <!-- Se llena dinámicamente con JavaScript -->
                             </div>

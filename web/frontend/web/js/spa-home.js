@@ -117,10 +117,7 @@
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
-    const shortcutsPanel = document.getElementById('spa-shortcuts-panel');
-    const shortcutsBackdrop = document.getElementById('spa-shortcuts-backdrop');
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
-    const shortcutsCloseBtn = document.getElementById('spa-shortcuts-close-btn');
     const responseSection = document.getElementById('spa-response-section');
     const explanationDiv = document.getElementById('spa-explanation');
     const actionsDiv = document.getElementById('spa-actions');
@@ -201,44 +198,7 @@
             queryInput.focus();
         }
 
-        if (shortcutsToggleBtn) {
-            shortcutsToggleBtn.addEventListener('click', function () {
-                toggleShortcutsPanel(true);
-            });
-        }
-        if (shortcutsCloseBtn) {
-            shortcutsCloseBtn.addEventListener('click', function () {
-                toggleShortcutsPanel(false);
-            });
-        }
-        if (shortcutsBackdrop) {
-            shortcutsBackdrop.addEventListener('click', function () {
-                toggleShortcutsPanel(false);
-            });
-        }
-        document.addEventListener('keydown', function (e) {
-            try {
-                if (e && e.key === 'Escape') {
-                    toggleShortcutsPanel(false);
-                }
-            } catch (err) { /* ignore */ }
-        });
-    }
-
-    function toggleShortcutsPanel(open) {
-        if (!shortcutsPanel) return;
-        const shouldOpen = open === true;
-        if (shouldOpen) {
-            shortcutsPanel.classList.remove('d-none');
-            try {
-                if (queryInput) queryInput.blur();
-            } catch (e) { /* ignore */ }
-        } else {
-            shortcutsPanel.classList.add('d-none');
-            try {
-                if (queryInput) queryInput.focus();
-            } catch (e) { /* ignore */ }
-        }
+        // El menú Atajos se maneja como dropdown Bootstrap (no modal).
     }
 
     function startFlowFromShortcut(intentId, displayName) {
@@ -257,7 +217,6 @@
         currentSubintentId = null;
         draft = {};
         writeFlowState();
-        toggleShortcutsPanel(false);
 
         // Enviar snapshot sin texto (override string para no agregar burbuja de usuario).
         handleSendQuery('');

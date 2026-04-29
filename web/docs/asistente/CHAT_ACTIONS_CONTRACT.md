@@ -85,6 +85,10 @@ Los clientes deben soportar como mínimo este shape:
   - El HTML debe incluir un root `[data-native-component="<name>"]` y el JS `window.BioenlaceNativeComponents[<name>].init(rootEl)`.
   - **Móvil:** solo `client_open.mobile.screen_id` (u otra instrucción explícita de pantalla). La app **no** hace fetch del HTML ni de `assets` web para renderizar ese flujo; implementación **100 % nativa** en Flutter.
 
+- **`intent`**: iniciar un flow conversacional por `intent_id` (YAML).
+  - `client_open.intent_id` (string) requerido.
+  - El cliente ejecuta el flow vía `POST /api/v1/asistente/enviar` con `intent_id` (y `subintent_id`/`draft` si ya hay estado).
+
 ### Móvil: `ui_json` y `custom_widget`
 
 - Con `client_open.kind === "ui_json"`, el cliente llama a `client_open.api.route` (GET/POST) y renderiza el JSON con su motor (p. ej. `UiJsonWizardScreen` en `mobile/packages/shared`).

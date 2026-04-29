@@ -25,11 +25,12 @@ class AccionesController extends BaseController
 
         try {
             $limit = (int) Yii::$app->request->get('limit', CommonActionsService::DEFAULT_LIMIT);
-            $actions = CommonActionsService::getFormattedForUser($userId, $limit);
+            $payload = CommonActionsService::getFormattedForUser($userId, $limit);
 
             return [
                 'success' => true,
-                'actions' => $actions,
+                'actions' => $payload['actions'] ?? [],
+                'categories' => $payload['categories'] ?? [],
             ];
         } catch (\Throwable $e) {
             Yii::error('actionComunes: ' . $e->getMessage(), __METHOD__);

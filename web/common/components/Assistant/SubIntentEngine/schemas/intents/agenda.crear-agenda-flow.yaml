@@ -3,6 +3,7 @@ version: 1
 
 action_name: "Crear agenda"
 description: "Guía conversacional para seleccionar profesional y servicio, y abrir la carga de agenda."
+rbac_route: "/api/agenda/crear-agenda-flow"
 keywords:
   - agenda
   - crear agenda

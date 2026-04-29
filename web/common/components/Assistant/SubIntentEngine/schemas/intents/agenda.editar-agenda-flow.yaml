@@ -3,6 +3,7 @@ version: 1
 
 action_name: "Editar agenda"
 description: "Guía conversacional para seleccionar profesional y servicio, y abrir la edición de agenda."
+rbac_route: "/api/agenda/editar-agenda-flow"
 keywords:
   - agenda
   - editar agenda

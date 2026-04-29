@@ -3,6 +3,7 @@ version: 1
 
 action_name: "Reservar turno"
 description: "Flujo conversacional para autogestión de turno: servicio, efector, profesional, horario y tipo de atención."
+rbac_route: "/api/turnos/crear-como-paciente"
 keywords:
   - turno
   - sacar turno

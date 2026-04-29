@@ -18,7 +18,7 @@ final class YamlIntentCatalogService
     public static function discoverAll(bool $useCache = true): array
     {
         $cache = Yii::$app->cache;
-        $cacheKey = 'yaml_intents_catalog_v1';
+        $cacheKey = 'yaml_intents_catalog_v2';
         if ($useCache && $cache) {
             $hit = $cache->get($cacheKey);
             if (is_array($hit)) {
@@ -57,6 +57,10 @@ final class YamlIntentCatalogService
                 $actionName = $intentId;
             }
             $desc = isset($data['description']) ? trim((string) $data['description']) : '';
+            $rbacRoute = isset($data['rbac_route']) ? trim((string) $data['rbac_route']) : '';
+            if ($rbacRoute !== '') {
+                $rbacRoute = '/' . ltrim($rbacRoute, '/');
+            }
 
             $kw = [];
             foreach (['keywords', 'synonyms', 'tags'] as $k) {
@@ -77,6 +81,7 @@ final class YamlIntentCatalogService
                 'display_name' => $actionName,
                 'description' => $desc,
                 'route' => '', // flows se ejecutan vía /asistente/enviar con action_id
+                'rbac_route' => $rbacRoute,
                 'keywords' => $kw,
                 'synonyms' => [],
                 'tags' => [],

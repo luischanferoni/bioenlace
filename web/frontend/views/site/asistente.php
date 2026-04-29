@@ -10,13 +10,13 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 
-<div class="container-fluid py-3" style="min-height: 100vh;">
+<div class="container-fluid py-3">
     <div class="row g-3 align-items-stretch">
         <div class="col-12">
-            <div class="card shadow-sm d-flex flex-column position-relative" style="height: calc(100vh - 2rem);">
+            <div id="spa-chat-card" class="card shadow-sm d-flex flex-column position-relative">
                 <div class="card-header bg-white d-flex align-items-center justify-content-between">
                     <div class="fw-semibold"></div>
-                    <div class="dropdown">
+                    <div class="dropdown position-static">
                         <button
                             type="button"
                             id="spa-shortcuts-toggle-btn"
@@ -27,9 +27,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                         >
                             Atajos
                         </button>
-                        <div class="dropdown-menu dropdown-menu-end p-3 shadow-sm" style="width: min(720px, 92vw);">
-                            <div class="fw-semibold mb-1">Atajos</div>
-                            <div class="text-muted small mb-2">Acciones disponibles según tus permisos.</div>
+                        <div class="dropdown-menu w-100 p-3 shadow-sm start-0 end-0">
                             <div id="spa-shortcuts-content" class="overflow-auto" style="max-height: 50vh;">
                                 <!-- Se llena dinámicamente con JavaScript -->
                             </div>

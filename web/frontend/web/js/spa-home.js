@@ -114,6 +114,7 @@
     }
 
     // Referencias a elementos DOM
+    const chatCard = document.getElementById('spa-chat-card');
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
@@ -166,6 +167,24 @@
     function init() {
         // Recuperar estado flow si existía.
         readFlowState();
+
+        // Ajustar altura real del chat al viewport (considera navbar/layout Yii).
+        // Evita hardcodear `100vh - X` en la vista.
+        function applyChatHeight() {
+            if (!chatCard) return;
+            try {
+                const rect = chatCard.getBoundingClientRect();
+                const top = rect.top;
+                const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+                const marginBottom = 12; // pequeño respiro para no pegar al borde
+                const h = Math.max(320, Math.floor(vh - top - marginBottom));
+                chatCard.style.height = h + 'px';
+            } catch (e) { /* ignore */ }
+        }
+        applyChatHeight();
+        window.addEventListener('resize', function () {
+            applyChatHeight();
+        });
 
         // Capturar el estado "idle" del botón enviar desde el DOM (evitar hardcode en JS).
         // Esto permite que el ícono/texto se defina en la vista (`asistente.php`) y el JS solo lo reutilice.

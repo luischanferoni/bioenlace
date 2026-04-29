@@ -801,6 +801,17 @@
             container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin blocks.</div>';
             return;
         }
+
+        // Si el backend devuelve `success=false` + `errors`, mostrar un banner humano arriba.
+        try {
+            if (json && json.success === false && json.errors && typeof json.errors === 'object') {
+                const msg = firstUiErrorMessage(json.errors);
+                if (msg) {
+                    container.innerHTML = '<div class="alert alert-danger mb-2" data-ui-json-error="1">' + escapeHtml(msg) + '</div>';
+                }
+            }
+        } catch (e) { /* ignore */ }
+
         let html = '<div class="bio-ui-json-blocks d-flex flex-column gap-3">';
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;
@@ -809,7 +820,10 @@
             html += '<div class="bio-ui-json-block" data-block-kind="' + escapeHtml(kind) + '" data-block-id="' + escapeHtml(bid) + '"></div>';
         });
         html += '</div>';
-        container.innerHTML = html;
+        // Preservar banner de error si existe
+        const existingErr = container.querySelector('[data-ui-json-error="1"]');
+        const errHtml = existingErr ? existingErr.outerHTML : '';
+        container.innerHTML = errHtml + html;
 
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;
@@ -825,6 +839,30 @@
                 mount.innerHTML = '<div class="alert alert-warning mb-0">Block no soportado: ' + escapeHtml(kind) + '</div>';
             }
         });
+    }
+
+    function firstUiErrorMessage(errors) {
+        try {
+            if (!errors || typeof errors !== 'object') return '';
+            // Preferir `_error` si existe
+            if (errors._error && Array.isArray(errors._error) && errors._error.length >= 1) {
+                const s = String(errors._error[0] || '').trim();
+                if (s) return s;
+            }
+            const ks = Object.keys(errors);
+            for (let i = 0; i < ks.length; i++) {
+                const k = ks[i];
+                const v = errors[k];
+                if (Array.isArray(v) && v.length >= 1) {
+                    const s = String(v[0] || '').trim();
+                    if (s) return s;
+                }
+                if (typeof v === 'string' && String(v).trim() !== '') {
+                    return String(v).trim();
+                }
+            }
+        } catch (e) { /* ignore */ }
+        return '';
     }
 
     function setInlineButtonSpinner(btn, loading) {
@@ -1024,7 +1062,7 @@
                         return;
                     }
                     if (json && json.kind === 'ui_definition') {
-                        // Error de validación: re-render (y el renderer mostrará errors vía renderFormField si aplica).
+                        // Error de validación: re-render y mostrar banner con `errors`.
                         renderDynamicUi(json, container, { url: submitUrl });
                         return;
                     }
@@ -2658,5 +2696,3 @@
     }
 
 })();
-
-

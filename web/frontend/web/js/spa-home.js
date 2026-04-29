@@ -2551,39 +2551,29 @@
             renderShortcutsEmpty();
             return;
         }
-        let html = '<div class="accordion" id="spa-shortcuts-accordion">';
+        let html = '<div class="d-flex flex-column gap-3">';
         cats.forEach(function (c, idx) {
-            const cid = c && c.id ? String(c.id) : ('cat_' + idx);
             const title = c && c.titulo ? String(c.titulo) : 'Atajos';
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
-            const collapseId = 'spa-shortcuts-collapse-' + idx;
-            const headingId = 'spa-shortcuts-heading-' + idx;
+            if (!actions || actions.length < 1) {
+                return;
+            }
 
-            html += '<div class="accordion-item">';
-            html += '<h2 class="accordion-header" id="' + escapeHtml(headingId) + '">';
-            html += '<button class="accordion-button ' + (idx === 0 ? '' : 'collapsed') + '" type="button" data-bs-toggle="collapse" data-bs-target="#' + escapeHtml(collapseId) + '" aria-expanded="' + (idx === 0 ? 'true' : 'false') + '" aria-controls="' + escapeHtml(collapseId) + '">';
-            html += escapeHtml(title);
-            html += '</button>';
-            html += '</h2>';
-            html += '<div id="' + escapeHtml(collapseId) + '" class="accordion-collapse collapse ' + (idx === 0 ? 'show' : '') + '" aria-labelledby="' + escapeHtml(headingId) + '" data-bs-parent="#spa-shortcuts-accordion">';
-            html += '<div class="accordion-body p-0">';
-            html += '<div class="list-group list-group-flush">';
+            html += '<div>';
+            html += '<h4 class="h6 text-decoration-underline mb-2">' + escapeHtml(title) + '</h4>';
+            html += '<div class="d-grid gap-2">';
             actions.forEach(function (a) {
                 const name = a && (a.name || a.display_name) ? String(a.name || a.display_name) : (a && a.action_id ? String(a.action_id) : '');
                 const desc = a && a.description ? String(a.description) : '';
                 const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
                 const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
                 if (!iid) return;
-                html += '<button type="button" class="list-group-item list-group-item-action" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
+                html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
                 html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
                 if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
                 html += '</button>';
             });
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
-            html += '</div>';
+            html += '</div></div>';
         });
         html += '</div>';
         shortcutsContent.innerHTML = html;

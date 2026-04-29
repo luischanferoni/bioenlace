@@ -220,7 +220,7 @@
             ? ' bg-primary text-white'
             : (role === 'system' ? ' bg-light text-muted border' : ' bg-white border');
         bubble.className = base + theme;
-        bubble.style.maxWidth = '85%';
+        bubble.style.maxWidth = '95%';
         bubble.innerHTML = html;
 
         row.appendChild(bubble);

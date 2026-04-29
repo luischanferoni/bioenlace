@@ -42,7 +42,6 @@ class AppAsset extends AssetBundle
             // Bridge reutilizable para páginas nativas (tipo 1)
             'native-page-bridge.js',
             'turnos.js',
-            'chat-inteligente.js',
             'timeline.js'
         ];
         

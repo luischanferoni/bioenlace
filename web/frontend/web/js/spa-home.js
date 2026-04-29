@@ -168,6 +168,22 @@
         // Recuperar estado flow si existía.
         readFlowState();
 
+        // Capturar el estado "idle" del botón enviar desde el DOM (evitar hardcode en JS).
+        // Esto permite que el ícono/texto se defina en la vista (`asistente.php`) y el JS solo lo reutilice.
+        try {
+            if (sendBtn && !sendBtn.dataset.sendIdleText) {
+                const st = sendBtn.querySelector('.spa-send-text');
+                if (st && st.textContent != null) {
+                    const idle = String(st.textContent);
+                    if (idle.trim() !== '') {
+                        sendBtn.dataset.sendIdleText = idle;
+                    }
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
         // Cargar acciones comunes al inicio solo si existe el contenedor
         if (commonActionsDiv) {
             loadCommonActions();
@@ -467,7 +483,8 @@
                                 mountEl.innerHTML = '<div class="alert alert-warning mb-0">Geolocalización no disponible en este navegador.</div>';
                                 return;
                             }
-                            mountEl.innerHTML = '<div class="d-flex align-items-center gap-2 py-2 text-muted"><div class="spinner-border spinner-border-sm"></div> Ubicación…</div>';
+                            // Loader genérico (no específico del dominio): mientras esperamos geolocalización.
+                            mountEl.innerHTML = '<div class="d-flex align-items-center gap-2 py-2 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                             navigator.geolocation.getCurrentPosition(function (pos) {
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
@@ -797,6 +814,20 @@
         const pickButtons = Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
         const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
 
+        function setInlineButtonSpinner(btn, loading) {
+            if (!btn) return;
+            try {
+                if (!btn.dataset.originalHtml) {
+                    btn.dataset.originalHtml = btn.innerHTML;
+                }
+                if (loading) {
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                } else if (btn.dataset.originalHtml) {
+                    btn.innerHTML = btn.dataset.originalHtml;
+                }
+            } catch (e) { /* ignore */ }
+        }
+
         function setSelected(btn, id, label) {
             selectedId = id || '';
             selectedLabel = label || selectedId;
@@ -823,6 +854,11 @@
             }
             if (!selectedId) {
                 return;
+            }
+
+            // Loading visual en Confirmar mientras avanza el flow.
+            if (confirmBtn) {
+                setInlineButtonSpinner(confirmBtn, true);
             }
 
             // Bloquear el listado una vez confirmada la selección (evita re-seleccionar un ítem viejo).
@@ -1039,6 +1075,18 @@
                     console.warn('[SPA] wizard sin submitUrl');
                     return;
                 }
+
+                // Loading visual en el botón confirmar del wizard.
+                try {
+                    const submitBtn = form.querySelector('button[data-action="submit"]');
+                    if (submitBtn) {
+                        if (!submitBtn.dataset.originalHtml) {
+                            submitBtn.dataset.originalHtml = submitBtn.innerHTML;
+                        }
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                    }
+                } catch (e) { /* ignore */ }
 
                 const payload = Object.assign({}, wizardAccum);
                 const body = new URLSearchParams();
@@ -2411,7 +2459,6 @@
             'bootstrap.min',
             'ajax-wrapper.js',
             'turnos.js',
-            'chat-inteligente.js',
         ];
     }
 
@@ -2663,11 +2710,19 @@
         if (loading) {
             spinner.classList.remove('d-none');
             if (sendIcon) sendIcon.classList.add('d-none');
-            sendText.textContent = 'Enviando...';
+            // UX: durante el envío, mostrar solo spinner (sin texto).
+            sendText.classList.add('d-none');
         } else {
             spinner.classList.add('d-none');
             if (sendIcon) sendIcon.classList.remove('d-none');
-            sendText.textContent = 'Enviar';
+            sendText.classList.remove('d-none');
+            // Mantener el botón como ícono/texto idle definido en la vista.
+            const idle = (sendBtn && sendBtn.dataset && sendBtn.dataset.sendIdleText)
+                ? String(sendBtn.dataset.sendIdleText)
+                : (sendText.textContent || '');
+            if (String(idle).trim() !== '') {
+                sendText.textContent = String(idle);
+            }
         }
     }
 

@@ -2525,19 +2525,21 @@
             renderShortcutsEmpty();
             return;
         }
-        let html = '<div class="list-group">';
+        let html = '<div>';
+        html += '<h4 class="h6 text-decoration-underline mb-2">Atajos</h4>';
+        html += '<div class="d-grid gap-2">';
         items.forEach(function (a) {
             const name = a && (a.name || a.display_name) ? String(a.name || a.display_name) : (a && a.action_id ? String(a.action_id) : '');
             const desc = a && a.description ? String(a.description) : '';
             const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
             const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
             if (!iid) return;
-            html += '<button type="button" class="list-group-item list-group-item-action" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
+            html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
             html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
             if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
             html += '</button>';
         });
-        html += '</div>';
+        html += '</div></div>';
         shortcutsContent.innerHTML = html;
         attachShortcutListeners();
     }

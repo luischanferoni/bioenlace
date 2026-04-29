@@ -781,7 +781,7 @@
             const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
             if (!id) return;
             html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
-            html += '<span class="bio-ui-pick-check position-absolute top-0 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
+            html += '<span class="bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
             html += escapeHtml(name);
             html += '</button>';
         });
@@ -801,12 +801,12 @@
             selectedId = id || '';
             selectedLabel = label || selectedId;
             pickButtons.forEach(b => {
-                b.classList.remove('border', 'border-2', 'border-success');
+                b.classList.remove('border', 'border-3');
                 const ck = b.querySelector('.bio-ui-pick-check');
                 if (ck) ck.classList.add('d-none');
             });
             if (btn) {
-                btn.classList.add('border', 'border-2', 'border-success');
+                btn.classList.add('border', 'border-3');
                 const ck = btn.querySelector('.bio-ui-pick-check');
                 if (ck) ck.classList.remove('d-none');
             }

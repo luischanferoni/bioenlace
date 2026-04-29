@@ -386,7 +386,9 @@
                 const isTerminalStep = nextId === '';
                 const isDoneText = typeof primaryText === 'string' && /^listo\.?$/i.test(primaryText.trim());
 
-                if (isTerminalStep && !hasOpenUi && !okUiJson && !hasTabs && isDoneText) {
+                // Regla prioritaria: si el bot dice "Listo." y no hay `open_ui` explícito, NO abrir UI por tabs.
+                // (El manifest puede seguir apuntando al último step, pero el flujo ya cerró.)
+                if (isDoneText && !hasOpenUi && !okUiJson) {
                     currentIntentId = null;
                     currentSubintentId = null;
                     draft = {};

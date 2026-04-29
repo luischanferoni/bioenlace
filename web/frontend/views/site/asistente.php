@@ -12,32 +12,32 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
 
 <div class="container-fluid py-3">
     <div class="row g-3 align-items-stretch">
-        <!-- Columna izquierda: sugerencias -->
-        <div class="col-12 col-lg-4 col-xl-3">
-            <div id="spa-common-actions" class="card shadow-sm h-100">
-                <div class="card-header bg-white">
-                    <div class="fw-semibold text-dark">Sugerencias del asistente</div>
-                    <div class="text-muted small">Atajos para tareas frecuentes</div>
-                </div>
-                <div class="card-body overflow-auto" style="max-height: calc(100vh - 180px);">
-                    <div id="spa-common-actions-grid" class="row g-3">
-                        <!-- Se llena dinámicamente con JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Columna derecha: chat -->
-        <div class="col-12 col-lg-8 col-xl-9">
+        <div class="col-12">
             <div class="card shadow-sm h-100 d-flex flex-column">
                 <div class="card-header bg-white d-flex align-items-center justify-content-between">
                     <div class="fw-semibold"></div>
-                    <button type="button" id="spa-what-can-i-do-btn" class="btn btn-outline-secondary btn-sm">
-                        ¿Qué puedo hacer?
+                    <button type="button" id="spa-shortcuts-toggle-btn" class="btn btn-outline-secondary btn-sm">
+                        Atajos
                     </button>
                 </div>
 
                 <div class="card-body flex-grow-1 overflow-auto bg-light" id="spa-chat-messages">
+                    <!-- Panel Atajos -->
+                    <div id="spa-shortcuts-panel" class="d-none mb-3">
+                        <div class="bg-white border rounded-4 p-3 w-100">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="fw-semibold">Atajos</div>
+                                <button type="button" class="btn btn-link btn-sm text-decoration-none" id="spa-shortcuts-close-btn">
+                                    Cerrar
+                                </button>
+                            </div>
+                            <div class="text-muted small mb-3">Acciones disponibles según tus permisos.</div>
+                            <div id="spa-shortcuts-content" class="overflow-auto" style="max-height: 50vh;">
+                                <!-- Se llena dinámicamente con JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Respuesta del asistente (se muestra/oculta desde JS) -->
                     <div id="spa-response-section" class="d-none">
                         <div class="d-flex justify-content-start mb-3">
@@ -74,7 +74,6 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                     <div class="text-muted small mt-2">Enter para enviar, Shift+Enter para salto de línea.</div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 

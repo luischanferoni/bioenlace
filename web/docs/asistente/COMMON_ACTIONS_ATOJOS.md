@@ -38,6 +38,13 @@ Este endpoint alimenta el panel “Atajos” de los clientes (web SPA y Flutter)
 - `categories` es el shape recomendado para render de panel/menú.
 - `actions` es un flatten de compatibilidad (clientes legacy que todavía renderizan grilla plana).
 
+## Web SPA (render)
+
+- Vista: `frontend/views/site/asistente.php` (botón “Atajos” + panel inline).
+- JS: `frontend/web/js/spa-home.js`:
+  - consume `categories` y renderiza acorde
+  - al click de un atajo inicia el flow de forma determinista enviando `intent_id` vía `/api/v1/asistente/enviar`
+
 ## RBAC (cómo se filtra)
 
 Cada YAML de intent debe declarar `rbac_route`:

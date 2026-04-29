@@ -116,12 +116,13 @@
     // Referencias a elementos DOM
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
-    const whatCanIDoBtn = document.getElementById('spa-what-can-i-do-btn');
+    const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
+    const shortcutsPanel = document.getElementById('spa-shortcuts-panel');
+    const shortcutsContent = document.getElementById('spa-shortcuts-content');
+    const shortcutsCloseBtn = document.getElementById('spa-shortcuts-close-btn');
     const responseSection = document.getElementById('spa-response-section');
     const explanationDiv = document.getElementById('spa-explanation');
     const actionsDiv = document.getElementById('spa-actions');
-    const commonActionsDiv = document.getElementById('spa-common-actions-grid');
-    const commonActionsSection = document.getElementById('spa-common-actions');
     const chatMessagesDiv = document.getElementById('spa-chat-messages');
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
 
@@ -184,8 +185,8 @@
             // ignore
         }
 
-        // Cargar acciones comunes al inicio solo si existe el contenedor
-        if (commonActionsDiv) {
+        // Cargar atajos (flows) al inicio solo si existe el panel
+        if (shortcutsContent) {
             loadCommonActions();
         }
 
@@ -199,13 +200,49 @@
             queryInput.focus();
         }
 
-        if (whatCanIDoBtn && queryInput) {
-            whatCanIDoBtn.addEventListener('click', function () {
-                queryInput.value = '¿Qué puedo hacer?';
-                handleInput();
-                handleSendQuery();
+        if (shortcutsToggleBtn) {
+            shortcutsToggleBtn.addEventListener('click', function () {
+                toggleShortcutsPanel(true);
             });
         }
+        if (shortcutsCloseBtn) {
+            shortcutsCloseBtn.addEventListener('click', function () {
+                toggleShortcutsPanel(false);
+            });
+        }
+    }
+
+    function toggleShortcutsPanel(open) {
+        if (!shortcutsPanel) return;
+        const shouldOpen = open === true;
+        if (shouldOpen) {
+            shortcutsPanel.classList.remove('d-none');
+            setTimeout(scrollChatToBottom, 10);
+        } else {
+            shortcutsPanel.classList.add('d-none');
+        }
+    }
+
+    function startFlowFromShortcut(intentId, displayName) {
+        const iid = String(intentId || '').trim();
+        if (!iid) return;
+        try {
+            // UX: dejar visible lo que se ejecutó (pero ejecutar en forma determinista, sin depender del clasificador).
+            if (queryInput) {
+                queryInput.value = String(displayName || iid);
+                handleInput();
+            }
+        } catch (e) { /* ignore */ }
+
+        // Reset estado anterior y disparar flow por snapshot.
+        currentIntentId = iid;
+        currentSubintentId = null;
+        draft = {};
+        writeFlowState();
+        toggleShortcutsPanel(false);
+
+        // Enviar snapshot sin texto (override string para no agregar burbuja de usuario).
+        handleSendQuery('');
     }
 
     function scrollChatToBottom() {
@@ -2398,8 +2435,8 @@
      * Cargar acciones comunes
      */
     function loadCommonActions() {
-        if (!commonActionsDiv) {
-            return; // No hay contenedor para acciones comunes
+        if (!shortcutsContent) {
+            return; // No hay panel de atajos
         }
         
         // API: ver nota de duplicación /api arriba.
@@ -2424,23 +2461,110 @@
             return response.json();
         })
         .then(data => {
-            if (data.success && data.actions) {
-                // Agregar las acciones al contenido existente (preservar el card de prueba)
-                const existingContent = commonActionsDiv.innerHTML;
-                // No incluir header porque ya hay contenido existente
-                const newActions = renderActionCards(data.actions, false);
-                commonActionsDiv.innerHTML = existingContent + newActions;
-                attachCardListeners();
-            } else {
-                // Si no hay acciones, mantener el contenido existente (card de prueba)
-                attachCardListeners();
+            if (data && data.success && Array.isArray(data.categories)) {
+                renderShortcutsCategories(data.categories);
+                return;
             }
+            if (data && data.success && Array.isArray(data.actions)) {
+                // Fallback compat: si el backend solo devuelve actions planas.
+                renderShortcutsFlat(data.actions);
+                return;
+            }
+            renderShortcutsEmpty();
         })
         .catch(error => {
             console.warn('No se pudieron cargar las acciones comunes:', error);
-            // Mantener el contenido existente (card de prueba) aunque falle la carga
-            attachCardListeners();
+            renderShortcutsEmpty('No se pudieron cargar los atajos.');
         });
+    }
+
+    function renderShortcutsEmpty(msg) {
+        if (!shortcutsContent) return;
+        const t = (msg && String(msg).trim() !== '') ? String(msg).trim() : 'No hay atajos disponibles.';
+        shortcutsContent.innerHTML = '<div class="text-muted small">' + escapeHtml(t) + '</div>';
+    }
+
+    function renderShortcutsFlat(actions) {
+        if (!shortcutsContent) return;
+        const items = Array.isArray(actions) ? actions : [];
+        if (items.length < 1) {
+            renderShortcutsEmpty();
+            return;
+        }
+        let html = '<div class="list-group">';
+        items.forEach(function (a) {
+            const name = a && (a.name || a.display_name) ? String(a.name || a.display_name) : (a && a.action_id ? String(a.action_id) : '');
+            const desc = a && a.description ? String(a.description) : '';
+            const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
+            const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
+            if (!iid) return;
+            html += '<button type="button" class="list-group-item list-group-item-action" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
+            html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
+            if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
+            html += '</button>';
+        });
+        html += '</div>';
+        shortcutsContent.innerHTML = html;
+        attachShortcutListeners();
+    }
+
+    function renderShortcutsCategories(categories) {
+        if (!shortcutsContent) return;
+        const cats = Array.isArray(categories) ? categories : [];
+        if (cats.length < 1) {
+            renderShortcutsEmpty();
+            return;
+        }
+        let html = '<div class="accordion" id="spa-shortcuts-accordion">';
+        cats.forEach(function (c, idx) {
+            const cid = c && c.id ? String(c.id) : ('cat_' + idx);
+            const title = c && c.titulo ? String(c.titulo) : 'Atajos';
+            const actions = c && Array.isArray(c.actions) ? c.actions : [];
+            const collapseId = 'spa-shortcuts-collapse-' + idx;
+            const headingId = 'spa-shortcuts-heading-' + idx;
+
+            html += '<div class="accordion-item">';
+            html += '<h2 class="accordion-header" id="' + escapeHtml(headingId) + '">';
+            html += '<button class="accordion-button ' + (idx === 0 ? '' : 'collapsed') + '" type="button" data-bs-toggle="collapse" data-bs-target="#' + escapeHtml(collapseId) + '" aria-expanded="' + (idx === 0 ? 'true' : 'false') + '" aria-controls="' + escapeHtml(collapseId) + '">';
+            html += escapeHtml(title);
+            html += '</button>';
+            html += '</h2>';
+            html += '<div id="' + escapeHtml(collapseId) + '" class="accordion-collapse collapse ' + (idx === 0 ? 'show' : '') + '" aria-labelledby="' + escapeHtml(headingId) + '" data-bs-parent="#spa-shortcuts-accordion">';
+            html += '<div class="accordion-body p-0">';
+            html += '<div class="list-group list-group-flush">';
+            actions.forEach(function (a) {
+                const name = a && (a.name || a.display_name) ? String(a.name || a.display_name) : (a && a.action_id ? String(a.action_id) : '');
+                const desc = a && a.description ? String(a.description) : '';
+                const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
+                const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
+                if (!iid) return;
+                html += '<button type="button" class="list-group-item list-group-item-action" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
+                html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
+                if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
+                html += '</button>';
+            });
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+        shortcutsContent.innerHTML = html;
+        attachShortcutListeners();
+    }
+
+    function attachShortcutListeners() {
+        if (!shortcutsContent) return;
+        try {
+            Array.from(shortcutsContent.querySelectorAll('button[data-shortcut-intent-id]')).forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const iid = this.getAttribute('data-shortcut-intent-id') || '';
+                    const name = this.getAttribute('data-shortcut-name') || '';
+                    startFlowFromShortcut(iid, name);
+                });
+            });
+        } catch (e) { /* ignore */ }
     }
 
     /**
@@ -2450,8 +2574,8 @@
         if (sendBtn) {
             sendBtn.disabled = loading;
         }
-        if (whatCanIDoBtn) {
-            whatCanIDoBtn.disabled = loading;
+        if (shortcutsToggleBtn) {
+            shortcutsToggleBtn.disabled = loading;
         }
         if (queryInput) {
             queryInput.disabled = loading;

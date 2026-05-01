@@ -226,6 +226,35 @@
     line-height: 0;
 }
 
+/* Flow en chat: título del paso (assistant_text) + UI a ancho completo (sin burbuja angosta). */
+.spa-chat-flow-row {
+    flex-shrink: 0;
+}
+
+.spa-chat-flow-turn {
+    max-width: 100%;
+}
+
+.spa-assistant-step-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.spa-chat-flow-ui {
+    max-width: 100%;
+}
+
+.spa-chat-embed-blocks {
+    max-width: 100%;
+}
+
 /* Asistente: panel de atajos (por defecto visible) + chat comprimido/expandible. */
 .spa-shortcuts-panel {
     flex: 1 1 auto;

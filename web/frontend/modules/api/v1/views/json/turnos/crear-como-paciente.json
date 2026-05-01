@@ -33,7 +33,7 @@
             "steps": [
                 {
                     "id": "select_servicio",
-                    "assistant_text": "Decime qué servicio necesitás (o elegilo de la lista).",
+                    "assistant_text": "Servicio",
                     "requires": [
                         "draft.id_servicio_asignado"
                     ],
@@ -55,7 +55,7 @@
                 },
                 {
                     "id": "select_efector",
-                    "assistant_text": "Ahora elegí el efector (centro) donde querés atenderte.",
+                    "assistant_text": "Efector",
                     "requires": [
                         "draft.id_servicio_asignado",
                         "draft.id_efector"
@@ -96,7 +96,7 @@
                 },
                 {
                     "id": "select_rrhh",
-                    "assistant_text": "Elegí el profesional con el que querés el turno.",
+                    "assistant_text": "Profesional",
                     "requires": [
                         "draft.id_efector",
                         "draft.id_servicio_asignado"
@@ -124,7 +124,7 @@
                 },
                 {
                     "id": "select_slot",
-                    "assistant_text": "Elegí un horario disponible.",
+                    "assistant_text": "Horario",
                     "requires": [
                         "draft.id_rr_hh"
                     ],
@@ -152,7 +152,7 @@
                 },
                 {
                     "id": "confirm",
-                    "assistant_text": "Listo: confirmá los datos y lo enviamos.",
+                    "assistant_text": "Confirmación",
                     "requires": [
                         "draft.slot_id"
                     ],

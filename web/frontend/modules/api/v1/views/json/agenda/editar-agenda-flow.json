@@ -27,7 +27,7 @@
             "steps": [
                 {
                     "id": "select_rrhh",
-                    "assistant_text": "Elegí el profesional al que querés editarle la agenda.",
+                    "assistant_text": "Profesional",
                     "requires": [
                         "draft.id_rr_hh"
                     ],
@@ -51,7 +51,7 @@
                 },
                 {
                     "id": "select_servicio",
-                    "assistant_text": "Ahora elegí el servicio asignado.",
+                    "assistant_text": "Servicio",
                     "requires": [
                         "draft.id_rr_hh",
                         "draft.id_servicio"
@@ -78,7 +78,7 @@
                 },
                 {
                     "id": "configurar_agenda",
-                    "assistant_text": "Ahora configurá la agenda: cupo, forma de atención y horarios por día.",
+                    "assistant_text": "Agenda",
                     "requires": [
                         "draft.id_rr_hh",
                         "draft.id_servicio"
@@ -104,7 +104,7 @@
                 },
                 {
                     "id": "condicion_laboral",
-                    "assistant_text": "Por último, cargá la condición laboral (vigencia).",
+                    "assistant_text": "Condición laboral",
                     "requires": [
                         "draft.id_rr_hh"
                     ],

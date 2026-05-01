@@ -305,6 +305,32 @@
     }
 
     /**
+     * Turno de asistente en flow: ancho completo del chat (sin burbuja estrecha).
+     * El título corresponde a `assistant_text` (viene en `text` del payload).
+     *
+     * @param {string} titleText
+     * @returns {HTMLDivElement|null} Contenedor interno donde montar tabs/UI (después del h4)
+     */
+    function appendFlowAssistantTurn(titleText) {
+        if (!chatMessagesDiv) {
+            return null;
+        }
+        const row = document.createElement('div');
+        row.className = 'w-100 mb-3 spa-chat-flow-row';
+        const inner = document.createElement('div');
+        inner.className = 'spa-chat-flow-turn w-100';
+        const h = document.createElement('h4');
+        h.className = 'spa-assistant-step-title';
+        const t = String(titleText || '').trim();
+        h.textContent = t !== '' ? t : 'Ok.';
+        inner.appendChild(h);
+        row.appendChild(inner);
+        chatMessagesDiv.appendChild(row);
+        setTimeout(scrollChatToBottom, 10);
+        return inner;
+    }
+
+    /**
      * Manejar envío de consulta
      */
     function handleSendQuery(contentOverride) {
@@ -436,13 +462,13 @@
 
             // Flow conversacional: no renderizar cards/botones; renderizar mini-UI inline si viene open_ui.
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
-                // En web queremos UX tipo chat: NO borrar historial; append de burbuja bot.
-                let botBubble = null;
+                // En web: turno a ancho completo + título (assistant_text) como h4; UI debajo sin burbuja angosta.
+                let flowTurnInner = null;
                 if (chatMessagesDiv) {
-                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>');
+                    flowTurnInner = appendFlowAssistantTurn(primaryText || 'Ok.');
                 } else {
                     // Fallback legacy (sin contenedor chat)
-                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
+                    explanationDiv.innerHTML = '<h4 class="spa-assistant-step-title">' + escapeHtml(primaryText || 'Ok.') + '</h4>';
                     actionsDiv.innerHTML = '';
                 }
 
@@ -472,7 +498,7 @@
                     currentSubintentId = null;
                     draft = {};
                     writeFlowState();
-                    if (botBubble) {
+                    if (flowTurnInner) {
                         setTimeout(scrollChatToBottom, 20);
                     } else {
                         responseSection.classList.remove('d-none');
@@ -502,29 +528,33 @@
                     const errHtml = openUi && openUi.action_id
                         ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
                         : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
-                    if (botBubble) {
-                        botBubble.innerHTML += errHtml;
+                    if (flowTurnInner) {
+                        const errWrap = document.createElement('div');
+                        errWrap.innerHTML = errHtml;
+                        while (errWrap.firstChild) {
+                            flowTurnInner.appendChild(errWrap.firstChild);
+                        }
                         setTimeout(scrollChatToBottom, 20);
                     } else {
                         explanationDiv.innerHTML =
-                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' + errHtml;
+                            '<h4 class="spa-assistant-step-title">' + escapeHtml(primaryText || 'Ok.') + '</h4>' + errHtml;
                         responseSection.classList.remove('d-none');
                         setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
                     }
                     return;
                 }
 
-                // Host para renderizar la mini-UI del paso (idealmente dentro de la burbuja).
-                const mountHost = botBubble ? botBubble : actionsDiv;
+                // Host para renderizar la mini-UI del paso (debajo del h4, ancho completo).
+                const mountHost = flowTurnInner ? flowTurnInner : actionsDiv;
 
                 if (tabs.length >= 2) {
-                    if (!botBubble) {
+                    if (!flowTurnInner) {
                         actionsDiv.innerHTML = '';
                     }
                     const tabRow = document.createElement('div');
-                    tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2';
+                    tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2 w-100';
                     const mountEl = document.createElement('div');
-                    mountEl.className = 'mt-1';
+                    mountEl.className = 'mt-1 w-100 spa-chat-flow-ui';
                     mountHost.appendChild(tabRow);
                     mountHost.appendChild(mountEl);
 
@@ -588,13 +618,14 @@
                     return;
                 }
 
-                if (!botBubble) {
+                if (!flowTurnInner) {
                     actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 } else {
-                    // Importante: no renderizar la UI sobre el root de la burbuja porque renderDynamicUi()
-                    // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo.
+                    // Importante: no renderizar la UI sobre el root del turno porque renderDynamicUi()
+                    // reemplaza innerHTML y borraría el h4. Siempre montar en un hijo marcado.
                     var flowUiMount = document.createElement('div');
-                    flowUiMount.className = 'mt-2';
+                    flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
+                    flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
                     const loading = document.createElement('div');
                     loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
                     loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
@@ -625,10 +656,10 @@
                     return r.json();
                 })
                 .then(json => {
-                    if (!botBubble) {
+                    if (!flowTurnInner) {
                         actionsDiv.innerHTML = '';
                     } else {
-                        // limpiar loaders dentro de la burbuja
+                        // limpiar loaders dentro del turno
                         try {
                             Array.from(mountHost.querySelectorAll('.spinner-border')).forEach(function (s) {
                                 const wrap = s.closest('div');
@@ -641,13 +672,13 @@
                         }
                     }
                     if (json && json.kind === 'ui_definition') {
-                        const target = botBubble
-                            ? (mountHost.querySelector('.mt-2') || mountHost)
+                        const target = flowTurnInner
+                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
                             : actionsDiv;
                         renderDynamicUi(json, target, { url: fullUrl });
                     } else {
-                        const target = botBubble
-                            ? (mountHost.querySelector('.mt-2') || mountHost)
+                        const target = flowTurnInner
+                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
                             : actionsDiv;
                         target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
                     }
@@ -655,8 +686,8 @@
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    const target = botBubble
-                        ? (mountHost.querySelector('.mt-2') || mountHost)
+                    const target = flowTurnInner
+                        ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
                         : actionsDiv;
                     target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
                 })
@@ -842,7 +873,7 @@
             }
         } catch (e) { /* ignore */ }
 
-        let html = '<div class="bio-ui-json-blocks d-flex flex-column gap-3">';
+        let html = '<div class="bio-ui-json-blocks spa-chat-embed-blocks d-flex flex-column gap-3 w-100">';
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;
             const kind = String(b.kind || '');

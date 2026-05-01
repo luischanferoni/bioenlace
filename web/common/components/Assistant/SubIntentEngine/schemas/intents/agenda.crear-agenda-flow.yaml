@@ -15,7 +15,7 @@ draft_keys_extra: []
 
 subintents:
   - id: select_rrhh
-    assistant_text: "Elegí el profesional al que querés crearle (o completarle) la agenda."
+    assistant_text: "Profesional"
     requires:
       - draft.id_rr_hh
     provides:
@@ -25,7 +25,7 @@ subintents:
       action_id: rrhh.listar-por-efector-acepta-turnos
 
   - id: select_servicio
-    assistant_text: "Ahora elegí el servicio asignado."
+    assistant_text: "Servicio"
     requires:
       - draft.id_rr_hh
       - draft.id_servicio
@@ -38,7 +38,7 @@ subintents:
         id_rr_hh: "draft.id_rr_hh"
 
   - id: configurar_agenda
-    assistant_text: "Ahora cargá la agenda: cupo, forma de atención y horarios por día."
+    assistant_text: "Agenda"
     requires:
       - draft.id_rr_hh
       - draft.id_servicio
@@ -51,7 +51,7 @@ subintents:
         id_servicio: "draft.id_servicio"
 
   - id: condicion_laboral
-    assistant_text: "Por último, cargá la condición laboral (vigencia)."
+    assistant_text: "Condición laboral"
     requires:
       - draft.id_rr_hh
     provides: []

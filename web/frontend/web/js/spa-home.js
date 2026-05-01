@@ -119,6 +119,7 @@
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
+    const shortcutsPanel = document.getElementById('spa-shortcuts-panel');
     const responseSection = document.getElementById('spa-response-section');
     const explanationDiv = document.getElementById('spa-explanation');
     const actionsDiv = document.getElementById('spa-actions');
@@ -212,33 +213,58 @@
             sendBtn.addEventListener('click', handleSendQuery);
             queryInput.addEventListener('keydown', handleKeyDown);
             queryInput.addEventListener('input', handleInput);
+            queryInput.addEventListener('focus', function () {
+                // Si el usuario empieza a interactuar con el input, priorizar el chat.
+                collapseShortcutsPanel();
+            });
 
             // Focus en textarea al cargar
             queryInput.focus();
         }
 
-        // El menú Atajos se maneja como dropdown Bootstrap (no modal).
+        // Panel Atajos: toggle manual (sin dropdown Bootstrap).
+        if (shortcutsToggleBtn) {
+            shortcutsToggleBtn.addEventListener('click', function () {
+                toggleShortcutsPanel();
+            });
+        }
     }
 
-    function startFlowFromShortcut(intentId, displayName) {
-        const iid = String(intentId || '').trim();
-        if (!iid) return;
+    function setShortcutsPanelExpanded(expanded) {
+        if (!chatCard) return;
+        const ex = !!expanded;
         try {
-            // UX: dejar visible lo que se ejecutó (pero ejecutar en forma determinista, sin depender del clasificador).
-            if (queryInput) {
-                queryInput.value = String(displayName || iid);
-                handleInput();
-            }
+            chatCard.classList.toggle('spa-shortcuts-collapsed', !ex);
         } catch (e) { /* ignore */ }
+        if (shortcutsToggleBtn) {
+            try { shortcutsToggleBtn.setAttribute('aria-expanded', ex ? 'true' : 'false'); } catch (e) { /* ignore */ }
+        }
+        if (shortcutsPanel) {
+            try { shortcutsPanel.style.display = ex ? '' : 'none'; } catch (e) { /* ignore */ }
+        }
+    }
 
-        // Reset estado anterior y disparar flow por snapshot.
-        currentIntentId = iid;
-        currentSubintentId = null;
-        draft = {};
-        writeFlowState();
+    function isShortcutsPanelExpanded() {
+        if (!chatCard) return false;
+        return !chatCard.classList.contains('spa-shortcuts-collapsed');
+    }
 
-        // Enviar snapshot sin texto (override string para no agregar burbuja de usuario).
-        handleSendQuery('');
+    function collapseShortcutsPanel() {
+        if (!chatCard || !shortcutsPanel) return;
+        if (!isShortcutsPanelExpanded()) return;
+        setShortcutsPanelExpanded(false);
+    }
+
+    function expandShortcutsPanel() {
+        if (!chatCard || !shortcutsPanel) return;
+        if (isShortcutsPanelExpanded()) return;
+        setShortcutsPanelExpanded(true);
+    }
+
+    function toggleShortcutsPanel() {
+        if (!chatCard || !shortcutsPanel) return;
+        setShortcutsPanelExpanded(!isShortcutsPanelExpanded());
+        // Si el usuario reabre el panel, no robamos el foco del textarea.
     }
 
     function scrollChatToBottom() {
@@ -282,6 +308,10 @@
      * Manejar envío de consulta
      */
     function handleSendQuery(contentOverride) {
+        // Si el usuario envía, priorizar chat y colapsar atajos.
+        if (typeof contentOverride !== 'string') {
+            collapseShortcutsPanel();
+        }
         const raw = (typeof contentOverride === 'string')
             ? contentOverride
             : (queryInput ? queryInput.value : '');
@@ -1608,6 +1638,12 @@
      * Manejar input en textarea
      */
     function handleInput() {
+        // Si el usuario empieza a escribir manualmente, colapsar atajos.
+        try {
+            if (queryInput && String(queryInput.value || '').trim() !== '') {
+                collapseShortcutsPanel();
+            }
+        } catch (e) { /* ignore */ }
         // Auto-resize textarea
         queryInput.style.height = 'auto';
         queryInput.style.height = queryInput.scrollHeight + 'px';
@@ -2534,7 +2570,8 @@
             const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
             const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
             if (!iid) return;
-            html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
+            // UX nuevo: el click solo “pega texto” en el textarea. Usamos `name` como prompt preparado.
+            html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-text="' + escapeHtml(name) + '">';
             html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
             if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
             html += '</button>';
@@ -2568,7 +2605,8 @@
                 const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
                 const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
                 if (!iid) return;
-                html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
+                // UX nuevo: el click solo “pega texto” en el textarea. Usamos `name` como prompt preparado.
+                html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-text="' + escapeHtml(name) + '">';
                 html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
                 if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
                 html += '</button>';
@@ -2583,11 +2621,13 @@
     function attachShortcutListeners() {
         if (!shortcutsContent) return;
         try {
-            Array.from(shortcutsContent.querySelectorAll('button[data-shortcut-intent-id]')).forEach(function (btn) {
+            Array.from(shortcutsContent.querySelectorAll('button[data-shortcut-text]')).forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    const iid = this.getAttribute('data-shortcut-intent-id') || '';
-                    const name = this.getAttribute('data-shortcut-name') || '';
-                    startFlowFromShortcut(iid, name);
+                    const text = this.getAttribute('data-shortcut-text') || '';
+                    if (!queryInput) return;
+                    queryInput.value = String(text || '').trim();
+                    handleInput();
+                    try { queryInput.focus(); } catch (e) { /* ignore */ }
                 });
             });
         } catch (e) { /* ignore */ }

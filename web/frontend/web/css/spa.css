@@ -226,4 +226,29 @@
     line-height: 0;
 }
 
+/* Asistente: panel de atajos (por defecto visible) + chat comprimido/expandible. */
+.spa-shortcuts-panel {
+    flex: 1 1 auto;
+    min-height: 0; /* permite overflow interno en flex */
+}
+
+.spa-shortcuts-content {
+    padding: 0.75rem;
+    max-height: 100%;
+}
+
+.spa-chat-region {
+    flex: 0 0 30%;
+    min-height: 260px;
+}
+
+/* Estado colapsado: ocultar panel y expandir chat. */
+#spa-chat-card.spa-shortcuts-collapsed .spa-shortcuts-panel {
+    display: none;
+}
+
+#spa-chat-card.spa-shortcuts-collapsed .spa-chat-region {
+    flex: 1 1 auto;
+}
+
 /* UI JSON list (embebible): estilos por Bootstrap (sin clases custom de selección) */

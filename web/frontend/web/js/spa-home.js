@@ -979,6 +979,7 @@
         const items = Array.isArray(block.items) ? block.items : [];
         const draftField = block.draft_field ? String(block.draft_field) : '';
         const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
+        // Solo `requires_confirmation === true` muestra Confirmar; si falta la clave, confirma al elegir ítem.
         const requiresConfirmation = selection.requires_confirmation === true;
 
         let locked = false;
@@ -993,7 +994,7 @@
             const id = it && it.id !== undefined ? String(it.id) : '';
             const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
             if (!id) return;
-            html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
+            html += '<button type="button" class="bio-ui-json-list-item btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
             html += '<span class="bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
             html += escapeHtml(name);
             html += '</button>';
@@ -1007,12 +1008,14 @@
         html += '</div>';
         container.innerHTML = html;
 
-        const pickButtons = Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
+        function pickButtons() {
+            return Array.from(container.querySelectorAll('button.bio-ui-json-list-item[data-embed-pick="1"]'));
+        }
         const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
 
         function setSelected(btn, id) {
             selectedId = id || '';
-            pickButtons.forEach(b => {
+            pickButtons().forEach(b => {
                 b.classList.remove('border', 'border-3');
                 const ck = b.querySelector('.bio-ui-pick-check');
                 if (ck) ck.classList.add('d-none');
@@ -1031,7 +1034,7 @@
             if (!selectedId) return;
             locked = true;
             try {
-                pickButtons.forEach(b => { b.disabled = true; b.classList.add('disabled'); });
+                pickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
             try { draft = Object.assign({}, draft || {}, { [draftField]: selectedId }); } catch (e) { /* ignore */ }
@@ -1041,15 +1044,21 @@
             }, 0);
         }
 
-        pickButtons.forEach(btn => {
-            btn.addEventListener('click', function () {
-                if (locked) return;
-                const id = this.getAttribute('data-embed-id') || '';
-                if (!id) return;
-                setSelected(this, id);
-                if (!requiresConfirmation) confirmSelection();
-            });
-        });
+        function onListPickClick(ev) {
+            const btn = ev.target && ev.target.closest ? ev.target.closest('button.bio-ui-json-list-item[data-embed-pick="1"]') : null;
+            if (!btn || !container.contains(btn)) return;
+            if (locked) return;
+            const id = btn.getAttribute('data-embed-id') || '';
+            if (!id) return;
+            setSelected(btn, id);
+            if (!requiresConfirmation) confirmSelection();
+        }
+
+        const prevPick = container._bioUiJsonListPickHandler;
+        if (prevPick) container.removeEventListener('click', prevPick);
+        container._bioUiJsonListPickHandler = onListPickClick;
+        container.addEventListener('click', onListPickClick);
+
         if (confirmBtn) {
             confirmBtn.addEventListener('click', function () {
                 if (locked) return;

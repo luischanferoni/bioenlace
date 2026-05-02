@@ -11,7 +11,7 @@
     {
       "kind": "list",
       "id": "default",
-      "selection": { "mode": "single", "requires_confirmation": true },
+      "selection": { "mode": "single" },
       "chips": [],
       "draft_field": "id_servicio_asignado",
       "item": { "kind": "servicio", "id_field": "id", "label_field": "name" },

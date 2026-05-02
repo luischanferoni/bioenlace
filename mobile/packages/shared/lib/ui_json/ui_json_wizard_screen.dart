@@ -501,6 +501,51 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
           }),
           validator: required ? (v) => v == null || v.isEmpty ? 'Requerido' : null : null,
         );
+      case 'radio':
+        final ropts = (field['options'] as List?) ?? [];
+        final rseen = <String>{};
+        final rentries = <MapEntry<String, String>>[];
+        for (final o in ropts) {
+          final om = o is Map ? Map<String, dynamic>.from(o) : {'value': o, 'label': o};
+          final v = (om['value']?.toString() ?? om['id']?.toString() ?? '').trim();
+          if (v.isEmpty || rseen.contains(v)) continue;
+          rseen.add(v);
+          final lab = (om['label']?.toString() ?? om['name']?.toString() ?? v).trim();
+          rentries.add(MapEntry(v, lab));
+        }
+        final gv = _accum[name]?.trim();
+        final effectiveRadio = (gv != null && gv.isNotEmpty && rseen.contains(gv)) ? gv : null;
+        if (rentries.isEmpty) {
+          return ListTile(
+            title: Text(required ? '$label *' : label),
+            subtitle: const Text('Sin opciones disponibles'),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (label.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  required ? '$label *' : label,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ...rentries.map(
+              (e) => RadioListTile<String>(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(e.value),
+                value: e.key,
+                groupValue: effectiveRadio,
+                onChanged: (val) => setState(() {
+                  if (val != null) _accum[name] = val;
+                }),
+              ),
+            ),
+          ],
+        );
       case 'number':
         return TextFormField(
           initialValue: _accum[name] ?? '',

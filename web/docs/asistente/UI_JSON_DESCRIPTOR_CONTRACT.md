@@ -67,7 +67,7 @@ Propiedades soportadas:
 
 Tipos comunes:
 
-- `text`, `number`, `date`, `hidden`, `select`, `autocomplete`
+- `text`, `number`, `date`, `hidden`, `select`, `radio` (lista de opciones visible; mismo `options` / `option_config` que `select`), `autocomplete`
 - `custom_widget` (ver abajo)
 
 #### Layout en grid (Bootstrap-like), opcional por campo

@@ -1586,16 +1586,25 @@
      * Renderizar campo radio (opciones seleccionables)
      */
     function renderRadioField(field) {
-        let html = '<div class="d-flex flex-wrap gap-2">';
+        let html = '<div class="d-flex flex-wrap gap-2 align-items-start" role="radiogroup" aria-label="' + escapeHtml(field.label || field.name || '') + '">';
         if (field.options) {
-            field.options.forEach(option => {
-                const value = typeof option === 'object' ? option.value : option;
-                const label = typeof option === 'object' ? option.label : option;
-                const id = field.name + '_' + value;
+            field.options.forEach(function (option, idx) {
+                let value;
+                let label;
+                if (typeof option === 'object' && option !== null) {
+                    value = option.value !== undefined && option.value !== null ? option.value : option.id;
+                    label = option.label !== undefined && option.label !== null ? option.label : option.name;
+                } else {
+                    value = option;
+                    label = option;
+                }
+                value = value !== undefined && value !== null ? String(value) : '';
+                label = label !== undefined && label !== null ? String(label) : value;
+                const rid = String(field.name || 'field').replace(/[^a-zA-Z0-9_-]/g, '_') + '_' + idx + '_' + String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
                 html += '<div class="form-check">';
                 const checked = field.value !== undefined && field.value !== null && String(value) === String(field.value) ? ' checked' : '';
-                html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + id + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
-                html += '<label class="form-check-label" for="' + id + '">' + escapeHtml(label) + '</label>';
+                html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + rid + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
+                html += '<label class="form-check-label" for="' + rid + '">' + escapeHtml(label) + '</label>';
                 html += '</div>';
             });
         }

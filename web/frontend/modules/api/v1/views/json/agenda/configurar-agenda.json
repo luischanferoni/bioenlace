@@ -46,13 +46,15 @@
             { "value": "20", "label": "20" },
             { "value": "25", "label": "25" },
             { "value": "30", "label": "30" }
-          ]
+          ],
+          "layout": { "col": 6, "breakpoint": "md" }
         },
         {
           "name": "duracion_slot_minutos",
           "label": "Minutos por turno (opcional)",
           "type": "number",
-          "required": false
+          "required": false,
+          "layout": { "col": 6, "breakpoint": "md" }
         },
         {
           "name": "formas_atencion",
@@ -63,7 +65,7 @@
             { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
             { "value": "TURNO", "label": "Programado" },
             { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
-          ]
+          ],
         },
         {
           "name": "weekly_scheduler_widget",

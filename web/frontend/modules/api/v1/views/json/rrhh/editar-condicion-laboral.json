@@ -29,7 +29,7 @@
         {
           "name": "id_condicion_laboral",
           "label": "Condición laboral",
-          "type": "select",
+          "type": "radio",
           "required": true,
           "options": "{{options}}",
           "option_config": {

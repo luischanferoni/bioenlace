@@ -377,7 +377,6 @@ class UiDefinitionTemplateManager
 
         $optionConfig = $field['option_config'];
         $source = $optionConfig['source'] ?? null;
-        $filter = $optionConfig['filter'] ?? null;
         $dependsOn = $field['depends_on'] ?? null;
 
         if (!$source) {
@@ -392,131 +391,18 @@ class UiDefinitionTemplateManager
             }
         }
 
-        $options = [];
-
         try {
-            switch ($source) {
-                case 'efectores':
-                    $options = self::getEfectoresOptions($filter, $params);
-                    break;
-                case 'servicios':
-                    $options = self::getServiciosOptions($filter, $params);
-                    break;
-                case 'rrhh':
-                    $options = self::getRrhhOptions($filter, $params);
-                    break;
-                default:
-                    Yii::warning("Fuente de opciones no soportada: {$source}", self::LOG_CATEGORY);
-                    return null;
+            $options = UiSelectOptionSourceResolver::resolve($source, $optionConfig, $params);
+            if ($options === null) {
+                return null;
             }
         } catch (\Exception $e) {
             Yii::error("Error obteniendo opciones para campo {$field['name']}: " . $e->getMessage(), self::LOG_CATEGORY);
+
             return null;
         }
 
         return $options;
-    }
-
-    private static function getEfectoresOptions($filter, $params)
-    {
-        $userId = Yii::$app->user->id ?? null;
-
-        // Si viene id_servicio, listar sólo efectores que ofrezcan ese servicio.
-        // Este filtro se usa en flows de turnos (crear-como-paciente) para evitar mostrar efectores irrelevantes.
-        $idServicio = null;
-        if (isset($params['id_servicio']) && $params['id_servicio'] !== null && $params['id_servicio'] !== '') {
-            $idServicio = (int) $params['id_servicio'];
-        } elseif (isset($params['id_servicio_asignado']) && $params['id_servicio_asignado'] !== null && $params['id_servicio_asignado'] !== '') {
-            // alias común de UI JSON
-            $idServicio = (int) $params['id_servicio_asignado'];
-        }
-
-        if ($filter === 'user_efectores' && $userId) {
-            $q = \common\models\UserEfector::find()
-                ->joinWith('idEfector')
-                ->where(['user_efector.id_user' => $userId])
-                ->andWhere('efectores.deleted_at IS NULL');
-
-            if ($idServicio) {
-                $q->innerJoin('servicios_efector se', 'se.id_efector = efectores.id_efector')
-                    ->andWhere(['se.id_servicio' => $idServicio])
-                    ->distinct();
-            }
-
-            $efectores = $q->orderBy('efectores.nombre')->all();
-
-            $options = [];
-            foreach ($efectores as $efector) {
-                $options[] = [
-                    'id' => $efector->idEfector->id_efector,
-                    'name' => $efector->idEfector->nombre,
-                ];
-            }
-            return $options;
-        }
-
-        if ($idServicio) {
-            $efectores = \common\models\Efector::find()
-                ->innerJoin('servicios_efector se', 'se.id_efector = efectores.id_efector')
-                ->where('efectores.deleted_at IS NULL')
-                ->andWhere(['se.id_servicio' => $idServicio])
-                ->distinct()
-                ->orderBy('efectores.nombre')
-                ->all();
-        } else {
-            $efectores = \common\models\Efector::find()
-                ->where('deleted_at IS NULL')
-                ->orderBy('nombre')
-                ->all();
-        }
-
-        $options = [];
-        foreach ($efectores as $efector) {
-            $options[] = [
-                'id' => $efector->id_efector,
-                'name' => $efector->nombre,
-            ];
-        }
-        return $options;
-    }
-
-    private static function getServiciosOptions($filter, $params)
-    {
-        if ($filter === 'efector_servicios' && isset($params['id_efector']) && $params['id_efector'] !== null && $params['id_efector'] !== '') {
-            $servicios = \common\models\Servicio::find()
-                ->innerJoin('servicios_efector se', 'se.id_servicio = servicios.id_servicio')
-                ->where(['se.id_efector' => $params['id_efector']])
-                ->andWhere('servicios.deleted_at IS NULL')
-                ->orderBy('servicios.nombre')
-                ->all();
-
-            $options = [];
-            foreach ($servicios as $servicio) {
-                $options[] = [
-                    'id' => (string) $servicio->id_servicio,
-                    'name' => $servicio->nombre,
-                ];
-            }
-            return $options;
-        }
-
-        $servicios = \common\models\Servicio::find()
-            ->orderBy('nombre')
-            ->all();
-
-        $options = [];
-        foreach ($servicios as $servicio) {
-            $options[] = [
-                'id' => (string) $servicio->id_servicio,
-                'name' => $servicio->nombre,
-            ];
-        }
-        return $options;
-    }
-
-    private static function getRrhhOptions($filter, $params)
-    {
-        return [];
     }
 
     private static function calculateInitialStep($wizardSteps, $fieldsConfig, $providedParams)

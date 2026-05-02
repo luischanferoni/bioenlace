@@ -70,6 +70,14 @@ Tipos comunes:
 - `text`, `number`, `date`, `hidden`, `select`, `autocomplete`
 - `custom_widget` (ver abajo)
 
+#### Layout en grid (Bootstrap-like), opcional por campo
+
+- **`layout`** (objeto, opcional): rejilla de **12 columnas**, mismo contrato en **web** (`spa-home.js`) y **Flutter** (`UiJsonWizardScreen`).
+  - `col` (número 1–12): fracción del ancho en una fila.
+  - `breakpoint` (opcional): `sm` \| `md` \| `lg` \| `xl` \| `xxl` (por defecto `md`). Por debajo del ancho mínimo de ese breakpoint, el campo ocupa ancho completo (equivalente a apilar).
+
+Si algún campo visible declara `layout.col`, el bloque arma filas; los `hidden` quedan fuera del grid.
+
 #### `custom_widget` dentro de fields
 
 Campo con:

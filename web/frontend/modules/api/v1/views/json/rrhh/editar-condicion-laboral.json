@@ -12,7 +12,6 @@
     {
       "kind": "fields",
       "id": "default",
-      "title": "Condición laboral",
       "fields": [
         {
           "name": "id_efector",
@@ -30,22 +29,27 @@
         {
           "name": "id_condicion_laboral",
           "label": "Condición laboral",
-          "type": "autocomplete",
+          "type": "select",
           "required": true,
-          "endpoint": "/api/v1/rrhh/condiciones-laborales-catalogo",
-          "auto_load": true
+          "options": "{{options}}",
+          "option_config": {
+            "source": "catalog",
+            "catalog": "condiciones_laborales"
+          }
         },
         {
           "name": "fecha_inicio",
           "label": "Fecha inicio",
           "type": "date",
-          "required": true
+          "required": true,
+          "layout": { "col": 6, "breakpoint": "md" }
         },
         {
           "name": "fecha_fin",
           "label": "Fecha fin (opcional)",
           "type": "date",
-          "required": false
+          "required": false,
+          "layout": { "col": 6, "breakpoint": "md" }
         }
       ]
     }

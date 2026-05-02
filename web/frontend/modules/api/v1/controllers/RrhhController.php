@@ -7,7 +7,7 @@ use yii\web\BadRequestHttpException;
 use common\components\Services\Rrhh\RrhhService;
 use common\components\Services\Rrhh\RrhhAgendaUiService;
 use common\components\UiScreenService;
-use common\models\Condiciones_laborales;
+use common\components\UiSelectOptionSourceResolver;
 use common\models\Persona;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
@@ -444,15 +444,15 @@ class RrhhController extends BaseController
      */
     public function actionCondicionesLaboralesCatalogo()
     {
-        $rows = Condiciones_laborales::find()
-            ->orderBy(['nombre' => SORT_ASC])
-            ->all();
-
+        $opts = UiSelectOptionSourceResolver::resolve('catalog', ['catalog' => 'condiciones_laborales'], []);
+        if (!is_array($opts)) {
+            $opts = [];
+        }
         $results = [];
-        foreach ($rows as $row) {
+        foreach ($opts as $o) {
             $results[] = [
-                'id' => (int) $row->id_condicion_laboral,
-                'text' => (string) $row->nombre,
+                'id' => (int) ($o['value'] ?? 0),
+                'text' => (string) ($o['label'] ?? ''),
             ];
         }
 

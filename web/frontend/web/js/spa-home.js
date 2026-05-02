@@ -1165,14 +1165,34 @@
         const fields = Array.isArray(block.fields) ? block.fields : [];
         const submitUrl = options.url || null;
 
+        const grid = fieldsBlockUsesBootstrapGrid(fields);
+        const hiddenFields = [];
+        const visibleFields = [];
+        fields.forEach(function (fd) {
+            if (fd && String(fd.type || '') === 'hidden') {
+                hiddenFields.push(fd);
+            } else {
+                visibleFields.push(fd);
+            }
+        });
+
         let html = '<div class="bio-ui-json-fields">';
         if (title) {
             html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
         }
         html += '<form data-ui-json-form="1">';
-        fields.forEach(function (fd) {
-            html += renderFormField(fd);
+        hiddenFields.forEach(function (fd) {
+            html += renderFormField(fd, { useGrid: false });
         });
+        if (grid) {
+            html += '<div class="row g-3">';
+        }
+        visibleFields.forEach(function (fd) {
+            html += renderFormField(fd, { useGrid: grid });
+        });
+        if (grid) {
+            html += '</div>';
+        }
         html += '<div class="d-flex justify-content-end pt-2">';
         html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
         html += '</div>';
@@ -1237,12 +1257,58 @@
     }
 
     // Nota: el soporte legacy de wizard/steps fue eliminado (corte total). Ver `renderUiJsonBlocks()`.
+
+    /**
+     * Grid Bootstrap (12 cols) por campo. Requiere ancestro `.row` ({@see fieldsBlockUsesBootstrapGrid}).
+     * `layout.col`: 1–12; `layout.breakpoint`: sm|md|lg|xl|xxl (default md → `col-md-*`).
+     */
+    function fieldBootstrapColClass(field, useGrid) {
+        if (!useGrid) {
+            return 'mb-3';
+        }
+        const layout = field.layout && typeof field.layout === 'object' ? field.layout : null;
+        if (layout && typeof layout.col === 'number') {
+            let n = Math.round(Number(layout.col));
+            if (!Number.isFinite(n)) {
+                return 'col-12 mb-3';
+            }
+            n = Math.min(12, Math.max(1, n));
+            let bp = layout.breakpoint != null ? String(layout.breakpoint).trim().toLowerCase() : 'md';
+            const allowed = { sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 };
+            if (!allowed[bp]) {
+                bp = 'md';
+            }
+            return 'col-' + bp + '-' + n + ' mb-3';
+        }
+        return 'col-12 mb-3';
+    }
+
+    function fieldsBlockUsesBootstrapGrid(fields) {
+        if (!Array.isArray(fields)) {
+            return false;
+        }
+        return fields.some(function (fd) {
+            if (!fd || typeof fd !== 'object') {
+                return false;
+            }
+            if (String(fd.type || '') === 'hidden') {
+                return false;
+            }
+            const layout = fd.layout;
+            return layout && typeof layout === 'object' && typeof layout.col === 'number';
+        });
+    }
+
     /**
      * Renderizar campo de formulario
+     * @param {object} opts - `{ useGrid?: boolean }` si el bloque fields usa `.row` (layout Bootstrap).
      */
-    function renderCustomWidgetField(field) {
+    function renderCustomWidgetField(field, opts) {
+        opts = opts || {};
+        const useGrid = opts.useGrid === true;
+        const outerClass = fieldBootstrapColClass(field, useGrid);
         const wid = field.widget_id || '';
-        let html = '<div class="mb-3 bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
+        let html = '<div class="' + outerClass + ' bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
         if (field.label) {
             html += '<label class="form-label">' + escapeHtml(field.label);
             if (field.required) {
@@ -1260,16 +1326,19 @@
         return html;
     }
 
-    function renderFormField(field) {
+    function renderFormField(field, opts) {
+        opts = opts || {};
+        const useGrid = opts.useGrid === true;
         if (field.type === 'hidden') {
             const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
             return '<input type="hidden" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '">';
         }
         if (field.type === 'custom_widget') {
-            return renderCustomWidgetField(field);
+            return renderCustomWidgetField(field, opts);
         }
 
-        let html = '<div class="mb-3">';
+        const outerClass = fieldBootstrapColClass(field, useGrid);
+        let html = '<div class="' + outerClass + '">';
         html += '<label class="form-label">' + escapeHtml(field.label || '');
         if (field.required) {
             html += ' <span class="text-danger">*</span>';
@@ -1494,8 +1563,17 @@
         html += '<option value="">Seleccione...</option>';
         if (field.options) {
             field.options.forEach(option => {
-                const value = typeof option === 'object' ? option.value : option;
-                const label = typeof option === 'object' ? option.label : option;
+                let value;
+                let label;
+                if (typeof option === 'object' && option !== null) {
+                    value = option.value !== undefined && option.value !== null ? option.value : option.id;
+                    label = option.label !== undefined && option.label !== null ? option.label : option.name;
+                } else {
+                    value = option;
+                    label = option;
+                }
+                value = value !== undefined && value !== null ? String(value) : '';
+                label = label !== undefined && label !== null ? String(label) : value;
                 const sel = String(value) === fv ? ' selected' : '';
                 html += '<option value="' + escapeHtml(value) + '"' + sel + '>' + escapeHtml(label) + '</option>';
             });

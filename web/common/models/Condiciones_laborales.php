@@ -52,4 +52,5 @@ class Condiciones_laborales extends \yii\db\ActiveRecord
     {
         return $this->hasMany(RrHhEfector::className(), ['id_condicion_laboral' => 'id_condicion_laboral']);
     }
+
 }

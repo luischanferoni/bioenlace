@@ -75,6 +75,74 @@ String applyProvidedParamsToRoute(String routeOrPath, Map<String, dynamic>? prov
   return uri.toString();
 }
 
+// --- Campo `layout` en descriptors UI JSON (rejilla 12 cols, alineado con SPA web) ---
+
+double _layoutBreakpointMinPx(String bp) {
+  switch (bp) {
+    case 'sm':
+      return 576;
+    case 'md':
+      return 768;
+    case 'lg':
+      return 992;
+    case 'xl':
+      return 1200;
+    case 'xxl':
+      return 1400;
+    default:
+      return 768;
+  }
+}
+
+bool _fieldsBlockUsesBootstrapGrid(List<dynamic> fields) {
+  for (final raw in fields) {
+    if (raw is! Map) continue;
+    final f = Map<String, dynamic>.from(raw);
+    if (f['type']?.toString() == 'hidden') continue;
+    final layout = f['layout'];
+    if (layout is Map && layout['col'] is num) return true;
+  }
+  return false;
+}
+
+/// Columnas efectivas 1–12; sin `layout.col` => 12. Si el ancho disponible es menor que el mínimo del breakpoint, fuerza 12 (stack como Bootstrap).
+int _effectiveLayoutCol(Map<String, dynamic> field, double parentWidth) {
+  final layout = field['layout'];
+  if (layout is! Map || layout['col'] is! num) {
+    return 12;
+  }
+  final n = (layout['col'] as num).round().clamp(1, 12);
+  final bpRaw = layout['breakpoint']?.toString().trim().toLowerCase() ?? 'md';
+  final minW = _layoutBreakpointMinPx(bpRaw);
+  if (parentWidth > 0 && parentWidth < minW) {
+    return 12;
+  }
+  return n;
+}
+
+List<List<Map<String, dynamic>>> _splitFieldsIntoBootstrapRows(
+  List<Map<String, dynamic>> visibleFields,
+  double parentWidth,
+) {
+  final rows = <List<Map<String, dynamic>>>[];
+  var current = <Map<String, dynamic>>[];
+  var sum = 0;
+  for (final f in visibleFields) {
+    final col = _effectiveLayoutCol(f, parentWidth);
+    if (sum + col > 12 && current.isNotEmpty) {
+      rows.add(current);
+      current = <Map<String, dynamic>>[];
+      sum = 0;
+    }
+    current.add(f);
+    sum += col;
+  }
+  if (current.isNotEmpty) {
+    rows.add(current);
+  }
+  return rows;
+}
+
 /// Wizard mínimo para respuestas `kind: ui_definition` (GET descriptor + POST submit).
 ///
 /// Los `custom_widget` se resuelven **solo en el cliente** según `widget_id` (p. ej. `weekly_scheduler`).
@@ -506,7 +574,7 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
                             child: Card(
                               elevation: 0,
                               margin: EdgeInsets.zero,
-                              color: selected ? Theme.of(context).colorScheme.primary.withOpacity(0.08) : null,
+                              color: selected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08) : null,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(color: borderColor, width: 1),
@@ -818,6 +886,20 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       final title = b['title']?.toString();
       final fieldsRaw = b['fields'];
       final fields = fieldsRaw is List ? fieldsRaw : const [];
+      final useGrid = _fieldsBlockUsesBootstrapGrid(fields);
+
+      final hiddenWidgets = <Widget>[];
+      final visibleFields = <Map<String, dynamic>>[];
+      for (final raw in fields) {
+        if (raw is! Map) continue;
+        final f = Map<String, dynamic>.from(raw);
+        if (f['type']?.toString() == 'hidden') {
+          hiddenWidgets.add(_buildField(f));
+        } else {
+          visibleFields.add(f);
+        }
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -825,14 +907,53 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
             Text(title, style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
           ],
-          ...fields.map((raw) {
-            if (raw is! Map) return const SizedBox.shrink();
-            final f = Map<String, dynamic>.from(raw);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildField(f),
-            );
-          }),
+          ...hiddenWidgets,
+          if (!useGrid)
+            ...visibleFields.map((f) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildField(f),
+              );
+            })
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final maxW = constraints.maxWidth;
+                final rows = _splitFieldsIntoBootstrapRows(visibleFields, maxW);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: rows.map((row) {
+                    final cols = row.map((f) => _effectiveLayoutCol(f, maxW)).toList();
+                    final sum = cols.fold<int>(0, (a, b) => a + b);
+                    final rowChildren = <Widget>[];
+                    for (var i = 0; i < row.length; i++) {
+                      rowChildren.add(
+                        Expanded(
+                          flex: cols[i],
+                          child: Padding(
+                            padding: EdgeInsets.only(
+                              left: i == 0 ? 0 : 6,
+                              right: i == row.length - 1 ? 0 : 6,
+                            ),
+                            child: _buildField(row[i]),
+                          ),
+                        ),
+                      );
+                    }
+                    if (sum < 12) {
+                      rowChildren.add(Expanded(flex: 12 - sum, child: const SizedBox.shrink()));
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: rowChildren,
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           const SizedBox(height: 8),
           Row(
             children: [

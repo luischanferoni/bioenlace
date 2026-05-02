@@ -126,6 +126,9 @@
     const chatMessagesDiv = document.getElementById('spa-chat-messages');
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
 
+    /** Evita colapsar Atajos en el `focus()` inicial del textarea (dejar panel abierto por defecto). */
+    let suppressShortcutsCollapseOnQueryFocus = false;
+
     // Estado de cards expandidos
     const expandedCards = new Map();
 
@@ -214,12 +217,18 @@
             queryInput.addEventListener('keydown', handleKeyDown);
             queryInput.addEventListener('input', handleInput);
             queryInput.addEventListener('focus', function () {
-                // Si el usuario empieza a interactuar con el input, priorizar el chat.
+                // Si el usuario enfoca el input, priorizar el chat (no en el focus programático al cargar).
+                if (suppressShortcutsCollapseOnQueryFocus) return;
                 collapseShortcutsPanel();
             });
 
-            // Focus en textarea al cargar
-            queryInput.focus();
+            // Focus en textarea al cargar (sin colapsar Atajos: el listener de focus corre antes con flag activo).
+            suppressShortcutsCollapseOnQueryFocus = true;
+            try {
+                queryInput.focus();
+            } finally {
+                suppressShortcutsCollapseOnQueryFocus = false;
+            }
         }
 
         // Panel Atajos: toggle manual (sin dropdown Bootstrap).
@@ -328,6 +337,76 @@
         chatMessagesDiv.appendChild(row);
         setTimeout(scrollChatToBottom, 10);
         return inner;
+    }
+
+    /**
+     * Referencia visual del plan: `flow_manifest.steps` + paso activo (`active_subintent_id`).
+     * El backend ya arma la lista desde el YAML; la SPA no la pintaba antes.
+     *
+     * @param {object|null} fm
+     * @returns {HTMLDivElement|null}
+     */
+    function buildFlowPlanStripElement(fm) {
+        if (!fm || typeof fm !== 'object') return null;
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        if (steps.length < 1) return null;
+
+        const activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id) : '';
+        let activeIdx = -1;
+        for (let i = 0; i < steps.length; i++) {
+            const sid = steps[i] && steps[i].id != null ? String(steps[i].id) : '';
+            if (sid !== '' && sid === activeId) {
+                activeIdx = i;
+                break;
+            }
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className = 'spa-flow-plan-wrap mb-2';
+        const label = document.createElement('div');
+        label.className = 'text-muted small mb-1';
+        label.textContent = 'Pasos del flujo';
+        const ul = document.createElement('ul');
+        ul.className = 'spa-flow-plan list-inline mb-0';
+        ul.setAttribute('aria-label', 'Pasos del flujo');
+
+        steps.forEach(function (st, idx) {
+            const title = st && st.assistant_text ? String(st.assistant_text).trim() : '';
+            const sid = st && st.id != null ? String(st.id) : '';
+            const display = title !== '' ? title : (sid !== '' ? sid : ('Paso ' + (idx + 1)));
+
+            const li = document.createElement('li');
+            li.className = 'list-inline-item mb-1';
+            const badge = document.createElement('span');
+            let cls = 'badge rounded-pill spa-flow-plan-badge ';
+            if (activeIdx >= 0) {
+                if (idx < activeIdx) cls += 'text-bg-success';
+                else if (idx === activeIdx) cls += 'text-bg-primary';
+                else cls += 'text-bg-light text-dark border';
+            } else if (activeId === '') {
+                cls += idx === 0 ? 'text-bg-primary' : 'text-bg-light text-dark border';
+            } else {
+                cls += 'text-bg-light text-dark border';
+            }
+            badge.className = cls;
+            badge.textContent = display;
+            li.appendChild(badge);
+            ul.appendChild(li);
+        });
+
+        wrap.appendChild(label);
+        wrap.appendChild(ul);
+        return wrap;
+    }
+
+    /**
+     * @param {HTMLElement|null} turnInner - div.spa-chat-flow-turn
+     * @param {object|null} fm
+     */
+    function prependFlowPlanStrip(turnInner, fm) {
+        const el = buildFlowPlanStripElement(fm);
+        if (!el || !turnInner) return;
+        turnInner.insertBefore(el, turnInner.firstChild);
     }
 
     /**
@@ -477,6 +556,20 @@
                 const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
                 const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
+
+                if (flowTurnInner) {
+                    prependFlowPlanStrip(flowTurnInner, fm);
+                } else if (explanationDiv && fm) {
+                    const planEl = buildFlowPlanStripElement(fm);
+                    if (planEl) {
+                        const h4 = explanationDiv.querySelector('h4.spa-assistant-step-title');
+                        if (h4) {
+                            explanationDiv.insertBefore(planEl, h4);
+                        } else {
+                            explanationDiv.insertBefore(planEl, explanationDiv.firstChild);
+                        }
+                    }
+                }
 
                 const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];

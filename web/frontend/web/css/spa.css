@@ -255,6 +255,15 @@
     max-width: 100%;
 }
 
+/* Plan de pasos (flow_manifest.steps) encima del título del paso */
+.spa-flow-plan-wrap .spa-flow-plan {
+    padding-left: 0;
+}
+
+.spa-flow-plan-wrap .spa-flow-plan-badge {
+    font-weight: 500;
+}
+
 /* Asistente: panel de atajos (por defecto visible) + chat comprimido/expandible. */
 .spa-shortcuts-panel {
     flex: 1 1 auto;

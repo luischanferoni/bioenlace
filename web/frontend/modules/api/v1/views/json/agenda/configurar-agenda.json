@@ -65,7 +65,7 @@
             { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
             { "value": "TURNO", "label": "Programado" },
             { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
-          ],
+          ]
         },
         {
           "name": "weekly_scheduler_widget",

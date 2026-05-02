@@ -16,8 +16,6 @@ draft_keys_extra: []
 subintents:
   - id: select_rrhh
     assistant_text: "Profesional"
-    requires:
-      - draft.id_rr_hh
     provides:
       - draft.id_rr_hh
     next: select_servicio
@@ -28,7 +26,6 @@ subintents:
     assistant_text: "Servicio"
     requires:
       - draft.id_rr_hh
-      - draft.id_servicio
     provides:
       - draft.id_servicio
     next: configurar_agenda
@@ -42,7 +39,6 @@ subintents:
     requires:
       - draft.id_rr_hh
       - draft.id_servicio
-    provides: []
     next: condicion_laboral
     open_ui:
       action_id: agenda.configurar-agenda
@@ -54,10 +50,8 @@ subintents:
     assistant_text: "Condición laboral"
     requires:
       - draft.id_rr_hh
-    provides: []
     next: ""
     open_ui:
       action_id: rrhh.editar-condicion-laboral
       params:
         id_rr_hh: "draft.id_rr_hh"
-

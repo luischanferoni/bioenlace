@@ -482,9 +482,8 @@
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
-                // Detectar fin real del flow:
-                // - El último step puede tener `next=""` pero igual requiere abrir una UI (tabs/open_ui).
-                // - Consideramos "terminado" cuando `next=""` y NO hay UI a abrir, típicamente con texto "Listo.".
+                // Fin del flow: sin más pasos / sin UI (motor suele devolver texto "Listo.").
+                // Si el siguiente paso solo tiene submit, el motor ya devuelve `open_ui` del submit (sin pantalla intermedia).
                 const hasOpenUi = !!(openUi && openUi.action_id);
                 const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
                 const hasTabs = tabs.length >= 1;

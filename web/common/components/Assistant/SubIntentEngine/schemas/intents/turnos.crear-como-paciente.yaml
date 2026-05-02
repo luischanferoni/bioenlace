@@ -33,7 +33,7 @@ prompt_context:
 subintents:
   - id: select_servicio
     assistant_text: "Servicio"
-    requires:
+    provides:
       - draft.id_servicio_asignado
     next: select_efector
     open_ui:
@@ -43,7 +43,6 @@ subintents:
     assistant_text: "Efector"
     requires:
       - draft.id_servicio_asignado
-      - draft.id_efector
     provides:
       - draft.id_efector
     next: select_rrhh
@@ -93,7 +92,5 @@ subintents:
     assistant_text: "Confirmación"
     requires:
       - draft.slot_id
-    provides: []
     submit:
       action_id: turnos.crear-como-paciente
-

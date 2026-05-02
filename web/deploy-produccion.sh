@@ -47,9 +47,6 @@ if ! git pull; then
 fi
 echo -e "${GREEN}Git pull completado exitosamente${NC}"
 
-# Manifiestos `ui_type=flow` (p. ej. turnos/crear-como-paciente.json) se versionan en git;
-# el deploy no ejecuta el compilador para evitar estados intermedios si falla.
-
 # Paso 1.5: Composer (dependencias PHP)
 if [ "$SKIP_COMPOSER" -eq 1 ]; then
     echo -e "${YELLOW}Omitiendo composer por parámetro (--skip-composer)${NC}"

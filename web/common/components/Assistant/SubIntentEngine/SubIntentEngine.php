@@ -103,6 +103,20 @@ final class SubIntentEngine
                         $open
                     );
                 }
+                // Siguiente paso sin mini-UI pero con submit (ej. confirm): cargar submit como ese paso, sin duplicar lógica en clientes.
+                $missingNext = self::missingDraftFields($nextSub, $draft);
+                $submitNext = isset($nextSub['submit']['action_id']) ? trim((string) $nextSub['submit']['action_id']) : '';
+                if ($missingNext === [] && $submitNext !== '') {
+                    $nextIdStr = (string) ($nextSub['id'] ?? '');
+                    return self::withFlowManifest([
+                        'success' => true,
+                        'text' => self::assistantTextForPrompt($nextSub, 'Confirmemos y enviemos.'),
+                        'intent_id' => $intentId,
+                        'subintent_id' => $nextIdStr,
+                        'open_ui' => self::resolveClientOpen($submitNext, $userId),
+                        'draft_delta' => (object) [],
+                    ], $intentId, $nextIdStr);
+                }
             }
         }
 

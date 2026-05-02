@@ -1,38 +1,18 @@
-# Manifiesto de flow compilado y despliegue
+# Manifiesto de flow (runtime)
 
-## Rol de cada artefacto
+## Fuente de verdad
 
-- **YAML** (`common/components/Assistant/SubIntentEngine/schemas/intents/*.yaml`): fuente conversacional en **runtime**. `SubIntentEngine` la lee en cada interacción de `/asistente/enviar` (y equivalentes). No sustituye el JSON de flow.
-- **JSON de flow** (`frontend/modules/api/v1/views/json/<entidad>/<accion>.json` con `ui_type: flow`): manifiesto para **cliente y alineación**: pasos, tabs por paso, rutas `GET` con `ui_definition`, `default_tab`, `requires` / `provides`, mapeo declarativo de `params` y metadatos como `requires_client` (p. ej. geolocalización). Se genera con el comando de consola y debe ir **versionado en el repositorio**.
-- **JSON por acción** (mismo directorio, otra `<accion>.json` con `ui_type: ui_json`): descriptor estático para cada `GET` que devuelve `kind: ui_definition`. `AssistantClientOpenEnricher` solo infiere `client_open` tipo `ui_json` si existe plantilla para esa ruta.
+- **YAML** (`common/components/Assistant/SubIntentEngine/schemas/intents/*.yaml`): única fuente del flujo conversacional. `SubIntentEngine` la lee en cada interacción con `intent_id` en `/api/v1/asistente/enviar`.
+- **`FlowManifest`**: arma el mismo contenido que antes vivía en JSON `ui_type: flow` **solo en memoria**, a partir del mismo YAML (pasos, `tabs`, rutas, `open_ui_hints`, `draft_keys`). **No** hay archivo compilado en `views/json` ni comando de compilación.
 
-## Forma mínima del manifiesto servido al cliente
+## Qué recibe el cliente
 
-- `ui_meta.schema_version`: versión del contrato del manifiesto.
-- `ui_meta.clients`: compatibilidad por cliente (obligatorio, mismo contrato que `ui_json`).
-- `ui_meta.flow.intent_id`, `entry_subintent_id`, `draft_keys`.
-- `ui_meta.flow.steps[]`: cada paso incluye `id`, textos/requisitos del YAML y un bloque `ui` con `tabs[]` y `default_tab` cuando hay variantes de listado (p. ej. por servicio vs cercano).
-- Cada tab declara `action_id`, `route` (`/api/v1/...`), `params` (referencias `draft.*` o `client.*`) y opcionalmente `requires_client` (p. ej. `["geolocation"]`).
-- `ui_meta.flow.open_ui_hints`: mapa auxiliar de hints (p. ej. `select_efector` / `select_efector_nearby`) alineado con ramas del motor.
+En respuestas exitosas del motor, el payload puede incluir **`flow_manifest`**: recorte con `active_subintent_id`, `active_step`, lista completa de `steps`, etc., equivalente al modelo anterior pero siempre coherente con el YAML del servidor.
 
-En las respuestas conversacionales exitosas, el backend puede adjuntar `flow_manifest`: recorte del manifiesto con `active_subintent_id` y `active_step` para que el cliente renderice tabs sin hardcodear rutas.
+## Despliegue
 
-## Compilación y comprobación
+No hay paso extra: al desplegar solo debe existir el YAML acorde en el repo. No se versionan JSON de flow derivados.
 
-Desde el directorio `web/` del proyecto:
+## UI JSON por ruta (no confundir)
 
-```bash
-php yii flow-manifest/compile
-php yii flow-manifest/compile --check
-```
-
-- **compile**: lee los YAML de intents y regenera los JSON de flow correspondientes.
-- **check**: valida que el archivo en disco coincide con lo generado (útil en CI o antes de commit).
-
-## Despliegue en servidor
-
-Tras `git pull`, los JSON ya deben estar presentes y coherentes con el YAML del commit. El deploy **no** ejecuta el compilador.
-
-## Rutas de dominio vs UI
-
-Los endpoints pensados solo para datos (sin plantilla en `views/json/...`) no deben tener archivo `<accion>.json`, para que no se les infiera `ui_json` por error. Las rutas de listado **por modo** (p. ej. `listar-por-servicio` y `listar-por-servicio-cercano`) son preferibles a una sola ruta con flags opacos.
+Los descriptores **`ui_type: ui_json`** bajo `frontend/modules/api/v1/views/json/<entidad>/<accion>.json` siguen siendo plantillas para endpoints concretos (formularios, listas embebibles). Son independientes del manifiesto de flujo.

@@ -255,7 +255,7 @@
     max-width: 100%;
 }
 
-/* Plan de pasos (flow_manifest.steps) encima del título del paso */
+/* Plan de pasos (flow_manifest.steps): una sola tira, centrada, debajo de la mini-UI del paso activo */
 .spa-flow-plan-wrap .spa-flow-plan {
     padding-left: 0;
 }

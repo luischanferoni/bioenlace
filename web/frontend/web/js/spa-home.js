@@ -99,11 +99,25 @@
                 } else {
                     mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
                 }
+                try {
+                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                    }
+                } catch (e) {
+                    // ignore
+                }
             })
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
                 const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
                 mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
+                try {
+                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                    }
+                } catch (e) {
+                    // ignore
+                }
             })
             .finally(function () {
                 responseSection.classList.remove('d-none');
@@ -136,6 +150,10 @@
     let currentIntentId = null;
     let currentSubintentId = null;
     let draft = {};
+    /** Una sola tira de plan en el DOM; se mueve al montaje activo del paso. */
+    let bioFlowPlanStripEl = null;
+    /** Contexto del último turno intent_flow para pintar la tira tras cargar la UI (`flow_manifest` + título). */
+    let bioFlowPlanPendingContext = null;
     // Persistencia simple en memoria global para evitar perder estado en re-renders complejos.
     // (No es storage; solo evita depender de closures si se re-ejecuta parte del JS).
     const FLOW_STATE_KEY = '__bio_spa_flow_state__';
@@ -344,9 +362,10 @@
      * El backend ya arma la lista desde el YAML; la SPA no la pintaba antes.
      *
      * @param {object|null} fm
+     * @param {string} [actionTitle] — `flow_manifest.action_name` (YAML); si falta, un texto corto genérico.
      * @returns {HTMLDivElement|null}
      */
-    function buildFlowPlanStripElement(fm) {
+    function buildFlowPlanStripElement(fm, actionTitle) {
         if (!fm || typeof fm !== 'object') return null;
         const steps = Array.isArray(fm.steps) ? fm.steps : [];
         if (steps.length < 1) return null;
@@ -362,13 +381,15 @@
         }
 
         const wrap = document.createElement('div');
-        wrap.className = 'spa-flow-plan-wrap mb-2';
+        wrap.className = 'spa-flow-plan-wrap text-center w-100 mt-3 pt-2 border-top border-light-subtle';
         const label = document.createElement('div');
         label.className = 'text-muted small mb-1';
-        label.textContent = 'Pasos del flujo';
+        const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
+        const labelText = titleStr !== '' ? titleStr : 'Flujo';
+        label.textContent = labelText;
         const ul = document.createElement('ul');
         ul.className = 'spa-flow-plan list-inline mb-0';
-        ul.setAttribute('aria-label', 'Pasos del flujo');
+        ul.setAttribute('aria-label', labelText);
 
         steps.forEach(function (st, idx) {
             const title = st && st.assistant_text ? String(st.assistant_text).trim() : '';
@@ -399,14 +420,23 @@
         return wrap;
     }
 
+    function removeFlowPlanStrip() {
+        if (bioFlowPlanStripEl && bioFlowPlanStripEl.parentNode) {
+            bioFlowPlanStripEl.parentNode.removeChild(bioFlowPlanStripEl);
+        }
+        bioFlowPlanStripEl = null;
+    }
+
     /**
-     * @param {HTMLElement|null} turnInner - div.spa-chat-flow-turn
-     * @param {object|null} fm
+     * Una sola tira: quita la anterior y la inserta justo debajo del montaje de UI del paso activo.
      */
-    function prependFlowPlanStrip(turnInner, fm) {
-        const el = buildFlowPlanStripElement(fm);
-        if (!el || !turnInner) return;
-        turnInner.insertBefore(el, turnInner.firstChild);
+    function attachFlowPlanBelowMount(mountEl, fm, actionTitle) {
+        if (!mountEl || !fm || typeof fm !== 'object') return;
+        removeFlowPlanStrip();
+        const strip = buildFlowPlanStripElement(fm, actionTitle);
+        if (!strip) return;
+        mountEl.insertAdjacentElement('afterend', strip);
+        bioFlowPlanStripEl = strip;
     }
 
     /**
@@ -557,19 +587,11 @@
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
                 const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
 
-                if (flowTurnInner) {
-                    prependFlowPlanStrip(flowTurnInner, fm);
-                } else if (explanationDiv && fm) {
-                    const planEl = buildFlowPlanStripElement(fm);
-                    if (planEl) {
-                        const h4 = explanationDiv.querySelector('h4.spa-assistant-step-title');
-                        if (h4) {
-                            explanationDiv.insertBefore(planEl, h4);
-                        } else {
-                            explanationDiv.insertBefore(planEl, explanationDiv.firstChild);
-                        }
-                    }
+                let flowActionTitle = '';
+                if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
+                    flowActionTitle = String(fm.action_name).trim();
                 }
+                bioFlowPlanPendingContext = fm ? { fm: fm, actionTitle: flowActionTitle } : null;
 
                 const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
@@ -590,6 +612,8 @@
                     currentSubintentId = null;
                     draft = {};
                     writeFlowState();
+                    removeFlowPlanStrip();
+                    bioFlowPlanPendingContext = null;
                     if (flowTurnInner) {
                         setTimeout(scrollChatToBottom, 20);
                     } else {
@@ -617,6 +641,8 @@
                 }
 
                 if (!fullUrl) {
+                    removeFlowPlanStrip();
+                    bioFlowPlanPendingContext = null;
                     const errHtml = openUi && openUi.action_id
                         ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
                         : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
@@ -774,6 +800,16 @@
                             : actionsDiv;
                         target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
                     }
+                    try {
+                        const mountAfter = flowTurnInner
+                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
+                            : actionsDiv;
+                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
@@ -782,6 +818,16 @@
                         ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
                         : actionsDiv;
                     target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
+                    try {
+                        const mountAfter = flowTurnInner
+                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
+                            : actionsDiv;
+                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
                 })
                 .finally(() => {
                     if (!chatMessagesDiv) {
@@ -793,6 +839,9 @@
                 });
                 return;
             }
+
+            removeFlowPlanStrip();
+            bioFlowPlanPendingContext = null;
             
             // Si tiene explicación, mostrar respuesta (incluso si success es false)
             if (result.explanation !== undefined) {
@@ -1074,6 +1123,8 @@
         const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
         // Solo `requires_confirmation === true` muestra Confirmar; si falta la clave, confirma al elegir ítem.
         const requiresConfirmation = selection.requires_confirmation === true;
+        // Una sola opción: avanzar sin clic (desactivar con `selection.auto_advance_single: false` en el bloque).
+        const autoAdvanceSingle = selection.auto_advance_single !== false;
 
         let locked = false;
         let selectedId = '';
@@ -1157,6 +1208,21 @@
                 if (locked) return;
                 confirmSelection();
             });
+        }
+
+        if (autoAdvanceSingle && items.length === 1 && draftField) {
+            const onlyBtn = container.querySelector('button.bio-ui-json-list-item[data-embed-pick="1"]');
+            const onlyId = onlyBtn ? String(onlyBtn.getAttribute('data-embed-id') || '').trim() : '';
+            if (onlyBtn && onlyId) {
+                setSelected(onlyBtn, onlyId);
+                setTimeout(function () {
+                    try {
+                        confirmSelection();
+                    } catch (e) {
+                        /* ignore */
+                    }
+                }, 0);
+            }
         }
     }
 

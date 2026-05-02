@@ -22,6 +22,12 @@ final class FlowManifest
         if ($root === null) {
             return null;
         }
+        $rawYaml = self::loadIntentYaml($intentId);
+        $actionName = '';
+        if (is_array($rawYaml) && isset($rawYaml['action_name'])) {
+            $actionName = trim((string) $rawYaml['action_name']);
+        }
+
         $uiMeta = isset($root['ui_meta']) && is_array($root['ui_meta']) ? $root['ui_meta'] : [];
         $flow = isset($uiMeta['flow']) && is_array($uiMeta['flow']) ? $uiMeta['flow'] : [];
         $steps = isset($flow['steps']) && is_array($flow['steps']) ? $flow['steps'] : [];
@@ -40,6 +46,7 @@ final class FlowManifest
         return [
             'schema_version' => isset($uiMeta['schema_version']) ? (string) $uiMeta['schema_version'] : '1',
             'intent_id' => isset($flow['intent_id']) ? (string) $flow['intent_id'] : $intentId,
+            'action_name' => $actionName,
             'draft_keys' => isset($flow['draft_keys']) && is_array($flow['draft_keys']) ? $flow['draft_keys'] : [],
             'entry_subintent_id' => isset($flow['entry_subintent_id']) ? (string) $flow['entry_subintent_id'] : '',
             'steps' => $steps,

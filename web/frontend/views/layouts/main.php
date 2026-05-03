@@ -211,7 +211,7 @@ if (Yii::$app->user->username) {
                 </aside>
                 
                 <!-- Contenido principal -->
-                <div class="container flex-grow-1 py-5 px-5">
+                <div class="container flex-grow-1 py-3 px-3">
                     <?= $content ?>
                 </div>
             </div>

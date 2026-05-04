@@ -10,9 +10,9 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 
-<div class="container-fluid px-0">
-    <div class="row g-0">
-        <div class="col-12">
+<div class="container-fluid px-0 spa-asistente-root">
+    <div class="row g-0 flex-grow-1">
+        <div class="col-12 d-flex flex-column spa-asistente-col">
             <div id="spa-chat-root" class="spa-chat-root d-flex flex-column">
                 <div id="spa-chat-toolbar" class="spa-chat-toolbar w-100">
                     <!-- Botón y .dropdown-menu como hermanos directos (Bootstrap y bootstrap-custom.js esperan nextElementSibling). -->

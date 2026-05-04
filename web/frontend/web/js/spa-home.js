@@ -179,21 +179,14 @@
         function applyChatHeight() {
             if (!chatRoot) return;
             try {
-                const rect = chatRoot.getBoundingClientRect();
-                const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-                const marginBottom = 4;
-                let h;
+                // Altura del chat: la define el flex (`.main-content:has(.spa-asistente-root)` + `.spa-chat-root`).
+                // Aquí solo alineamos el composer fijo al ancho de la columna.
                 if (chatComposer) {
                     const r = chatRoot.getBoundingClientRect();
                     chatComposer.style.left = Math.max(0, Math.round(r.left)) + 'px';
                     chatComposer.style.width = Math.max(0, Math.round(r.width)) + 'px';
-                    const cr = chatComposer.getBoundingClientRect();
-                    const composerTop = cr.top > 0 ? cr.top : (vh - (cr.height || 120));
-                    h = Math.floor(composerTop - rect.top - marginBottom);
-                } else {
-                    h = Math.floor(vh - rect.top - marginBottom);
                 }
-                chatRoot.style.height = Math.max(280, h) + 'px';
+                chatRoot.style.height = '';
             } catch (e) { /* ignore */ }
         }
         applyChatHeight();
@@ -365,19 +358,33 @@
             // Si la respuesta no es exitosa, manejar el error
             if (!response.ok) {
                 return response.text().then(text => {
-                    // Intentar parsear como JSON si es posible
-                    try {
-                        const jsonData = JSON.parse(text);
-                        throw new Error(jsonData.message || jsonData.error || `Error ${response.status}: ${response.statusText}`);
-                    } catch (e) {
-                        // Si no es JSON, es probablemente un error de validación
-                        if (response.status === 400) {
-                            throw new Error('Error de validación. Por favor, verifica tu consulta e intenta nuevamente.');
-                        } else if (response.status === 401) {
-                            throw new Error('Debes estar autenticado para usar esta funcionalidad.');
+                    // Cuerpo JSON típico API: { "success": false, "message": "...", "errors": ... }
+                    let msgFromBody = '';
+                    if (text && String(text).trim() !== '') {
+                        try {
+                            const j = JSON.parse(text);
+                            if (j && typeof j === 'object') {
+                                if (j.message != null && String(j.message).trim() !== '') {
+                                    msgFromBody = String(j.message).trim();
+                                } else if (j.error != null && String(j.error).trim() !== '') {
+                                    msgFromBody = String(j.error).trim();
+                                }
+                            }
+                        } catch (parseErr) {
+                            // No era JSON; seguimos con mensajes por código HTTP.
                         }
-                        throw new Error(`Error ${response.status}: ${response.statusText}`);
                     }
+                    if (msgFromBody) {
+                        throw new Error(msgFromBody);
+                    }
+                    if (response.status === 400) {
+                        throw new Error('Error de validación. Por favor, verifica tu consulta e intenta nuevamente.');
+                    }
+                    if (response.status === 401) {
+                        throw new Error('Debes estar autenticado para usar esta funcionalidad.');
+                    }
+                    const st = response.statusText ? String(response.statusText).trim() : '';
+                    throw new Error(st ? ('Error ' + response.status + ': ' + st) : ('Error ' + response.status));
                 });
             }
             

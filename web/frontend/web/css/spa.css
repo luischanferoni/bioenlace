@@ -196,6 +196,11 @@
     #page_layout {
         padding-bottom: 100px !important;
     }
+
+    /* Asistente: el composer ya se eleva (bottom: 88px); no sumar padding extra al layout. */
+    #page_layout:has(.spa-asistente-root) {
+        padding-bottom: 0 !important;
+    }
 }
 
 /* Asistente: sin card; mensajes con el fondo del layout; toolbar sticky; composer fijo abajo. */
@@ -204,9 +209,57 @@
     --spa-chat-toolbar-sticky-top: 6.75rem;
 }
 
+/* Shell: una pantalla sin scroll del documento; solo #spa-chat-messages hace scroll. */
+.main-content:has(.spa-asistente-root) {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.main-content:has(.spa-asistente-root) #page_layout {
+    flex: 1 1 auto;
+    min-height: 0 !important;
+    max-height: 100%;
+    overflow: visible;
+    align-items: stretch;
+}
+
+.main-content:has(.spa-asistente-root) #page_layout > .container.flex-grow-1 {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.spa-asistente-root {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.spa-asistente-root > .row {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.spa-asistente-col {
+    min-height: 0;
+}
+
 .spa-chat-root {
     position: relative;
-    min-height: 280px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .spa-chat-toolbar {

@@ -198,6 +198,46 @@
     }
 }
 
+/* Asistente: sin card; mensajes con el fondo del layout; toolbar sticky; composer fijo abajo. */
+.spa-chat-root {
+    position: relative;
+    min-height: 280px;
+}
+
+.spa-chat-toolbar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 5.25rem;
+    z-index: 1019;
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    background: transparent;
+}
+
+.spa-chat-shortcuts-btn {
+    border-radius: 999px;
+}
+
+.spa-chat-messages {
+    min-height: 0;
+}
+
+.spa-chat-composer {
+    position: fixed;
+    bottom: 0;
+    z-index: 1020;
+    padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+    background-color: var(--bs-body-bg, #fff);
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 768px) {
+    .spa-chat-composer {
+        bottom: 88px;
+        z-index: 150;
+    }
+}
+
 /* Chat input: botón overlay dentro del textarea (estilo libre, no dependiente de Bootstrap). */
 .spa-chat-input-wrap {
     position: relative;
@@ -224,69 +264,6 @@
 
 .spa-chat-send-btn .spa-spinner {
     line-height: 0;
-}
-
-/* Flow en chat: título del paso (assistant_text) + UI a ancho completo (sin burbuja angosta). */
-.spa-chat-flow-row {
-    flex-shrink: 0;
-}
-
-.spa-chat-flow-turn {
-    max-width: 100%;
-}
-
-.spa-assistant-step-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    line-height: 1.3;
-    margin: 0 0 0.75rem 0;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--bs-border-color, #dee2e6);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.spa-chat-flow-ui {
-    max-width: 100%;
-}
-
-.spa-chat-embed-blocks {
-    max-width: 100%;
-}
-
-/* Plan de pasos (flow_manifest.steps): una sola tira, centrada, debajo de la mini-UI del paso activo */
-.spa-flow-plan-wrap .spa-flow-plan {
-    padding-left: 0;
-}
-
-.spa-flow-plan-wrap .spa-flow-plan-badge {
-    font-weight: 500;
-}
-
-/* Asistente: panel de atajos (por defecto visible) + chat comprimido/expandible. */
-.spa-shortcuts-panel {
-    flex: 1 1 auto;
-    min-height: 0; /* permite overflow interno en flex */
-}
-
-.spa-shortcuts-content {
-    padding: 0.75rem;
-    max-height: 100%;
-}
-
-.spa-chat-region {
-    flex: 0 0 30%;
-    min-height: 260px;
-}
-
-/* Estado colapsado: ocultar panel y expandir chat. */
-#spa-chat-card.spa-shortcuts-collapsed .spa-shortcuts-panel {
-    display: none;
-}
-
-#spa-chat-card.spa-shortcuts-collapsed .spa-chat-region {
-    flex: 1 1 auto;
 }
 
 /* UI JSON list (embebible): estilos por Bootstrap (sin clases custom de selección) */

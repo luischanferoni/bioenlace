@@ -99,25 +99,11 @@
                 } else {
                     mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
                 }
-                try {
-                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                    }
-                } catch (e) {
-                    // ignore
-                }
             })
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
                 const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
                 mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
-                try {
-                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                    }
-                } catch (e) {
-                    // ignore
-                }
             })
             .finally(function () {
                 responseSection.classList.remove('d-none');
@@ -128,20 +114,17 @@
     }
 
     // Referencias a elementos DOM
-    const chatCard = document.getElementById('spa-chat-card');
+    const chatRoot = document.getElementById('spa-chat-root');
+    const chatComposer = document.getElementById('spa-chat-composer');
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
-    const shortcutsPanel = document.getElementById('spa-shortcuts-panel');
     const responseSection = document.getElementById('spa-response-section');
     const explanationDiv = document.getElementById('spa-explanation');
     const actionsDiv = document.getElementById('spa-actions');
     const chatMessagesDiv = document.getElementById('spa-chat-messages');
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
-
-    /** Evita colapsar Atajos en el `focus()` inicial del textarea (dejar panel abierto por defecto). */
-    let suppressShortcutsCollapseOnQueryFocus = false;
 
     // Estado de cards expandidos
     const expandedCards = new Map();
@@ -150,10 +133,6 @@
     let currentIntentId = null;
     let currentSubintentId = null;
     let draft = {};
-    /** Una sola tira de plan en el DOM; se mueve al montaje activo del paso. */
-    let bioFlowPlanStripEl = null;
-    /** Contexto del último turno intent_flow para pintar la tira tras cargar la UI (`flow_manifest` + título). */
-    let bioFlowPlanPendingContext = null;
     // Persistencia simple en memoria global para evitar perder estado en re-renders complejos.
     // (No es storage; solo evita depender de closures si se re-ejecuta parte del JS).
     const FLOW_STATE_KEY = '__bio_spa_flow_state__';
@@ -193,17 +172,29 @@
         // Ajustar altura real del chat al viewport (considera navbar/layout Yii).
         // Evita hardcodear `100vh - X` en la vista.
         function applyChatHeight() {
-            if (!chatCard) return;
+            if (!chatRoot) return;
             try {
-                const rect = chatCard.getBoundingClientRect();
-                const top = rect.top;
+                const rect = chatRoot.getBoundingClientRect();
                 const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-                const marginBottom = 12; // pequeño respiro para no pegar al borde
-                const h = Math.max(320, Math.floor(vh - top - marginBottom));
-                chatCard.style.height = h + 'px';
+                const marginBottom = 4;
+                let h;
+                if (chatComposer) {
+                    const r = chatRoot.getBoundingClientRect();
+                    chatComposer.style.left = Math.max(0, Math.round(r.left)) + 'px';
+                    chatComposer.style.width = Math.max(0, Math.round(r.width)) + 'px';
+                    const cr = chatComposer.getBoundingClientRect();
+                    const composerTop = cr.top > 0 ? cr.top : (vh - (cr.height || 120));
+                    h = Math.floor(composerTop - rect.top - marginBottom);
+                } else {
+                    h = Math.floor(vh - rect.top - marginBottom);
+                }
+                chatRoot.style.height = Math.max(280, h) + 'px';
             } catch (e) { /* ignore */ }
         }
         applyChatHeight();
+        requestAnimationFrame(function () {
+            applyChatHeight();
+        });
         window.addEventListener('resize', function () {
             applyChatHeight();
         });
@@ -234,64 +225,33 @@
             sendBtn.addEventListener('click', handleSendQuery);
             queryInput.addEventListener('keydown', handleKeyDown);
             queryInput.addEventListener('input', handleInput);
-            queryInput.addEventListener('focus', function () {
-                // Si el usuario enfoca el input, priorizar el chat (no en el focus programático al cargar).
-                if (suppressShortcutsCollapseOnQueryFocus) return;
-                collapseShortcutsPanel();
-            });
 
-            // Focus en textarea al cargar (sin colapsar Atajos: el listener de focus corre antes con flag activo).
-            suppressShortcutsCollapseOnQueryFocus = true;
-            try {
-                queryInput.focus();
-            } finally {
-                suppressShortcutsCollapseOnQueryFocus = false;
-            }
+            // Focus en textarea al cargar
+            queryInput.focus();
         }
 
-        // Panel Atajos: toggle manual (sin dropdown Bootstrap).
-        if (shortcutsToggleBtn) {
-            shortcutsToggleBtn.addEventListener('click', function () {
-                toggleShortcutsPanel();
-            });
-        }
+        // El menú Atajos se maneja como dropdown Bootstrap (no modal).
     }
 
-    function setShortcutsPanelExpanded(expanded) {
-        if (!chatCard) return;
-        const ex = !!expanded;
+    function startFlowFromShortcut(intentId, displayName) {
+        const iid = String(intentId || '').trim();
+        if (!iid) return;
         try {
-            chatCard.classList.toggle('spa-shortcuts-collapsed', !ex);
+            // UX: dejar visible lo que se ejecutó (pero ejecutar en forma determinista, sin depender del clasificador).
+            if (queryInput) {
+                queryInput.value = String(displayName || iid);
+                handleInput();
+            }
         } catch (e) { /* ignore */ }
-        if (shortcutsToggleBtn) {
-            try { shortcutsToggleBtn.setAttribute('aria-expanded', ex ? 'true' : 'false'); } catch (e) { /* ignore */ }
-        }
-        if (shortcutsPanel) {
-            try { shortcutsPanel.style.display = ex ? '' : 'none'; } catch (e) { /* ignore */ }
-        }
-    }
 
-    function isShortcutsPanelExpanded() {
-        if (!chatCard) return false;
-        return !chatCard.classList.contains('spa-shortcuts-collapsed');
-    }
+        // Reset estado anterior y disparar flow por snapshot.
+        currentIntentId = iid;
+        currentSubintentId = null;
+        draft = {};
+        writeFlowState();
 
-    function collapseShortcutsPanel() {
-        if (!chatCard || !shortcutsPanel) return;
-        if (!isShortcutsPanelExpanded()) return;
-        setShortcutsPanelExpanded(false);
-    }
-
-    function expandShortcutsPanel() {
-        if (!chatCard || !shortcutsPanel) return;
-        if (isShortcutsPanelExpanded()) return;
-        setShortcutsPanelExpanded(true);
-    }
-
-    function toggleShortcutsPanel() {
-        if (!chatCard || !shortcutsPanel) return;
-        setShortcutsPanelExpanded(!isShortcutsPanelExpanded());
-        // Si el usuario reabre el panel, no robamos el foco del textarea.
+        // Enviar snapshot sin texto (override string para no agregar burbuja de usuario).
+        handleSendQuery('');
     }
 
     function scrollChatToBottom() {
@@ -332,121 +292,9 @@
     }
 
     /**
-     * Turno de asistente en flow: ancho completo del chat (sin burbuja estrecha).
-     * El título corresponde a `assistant_text` (viene en `text` del payload).
-     *
-     * @param {string} titleText
-     * @returns {HTMLDivElement|null} Contenedor interno donde montar tabs/UI (después del h4)
-     */
-    function appendFlowAssistantTurn(titleText) {
-        if (!chatMessagesDiv) {
-            return null;
-        }
-        const row = document.createElement('div');
-        row.className = 'w-100 mb-3 spa-chat-flow-row';
-        const inner = document.createElement('div');
-        inner.className = 'spa-chat-flow-turn w-100';
-        const h = document.createElement('h4');
-        h.className = 'spa-assistant-step-title';
-        const t = String(titleText || '').trim();
-        h.textContent = t !== '' ? t : 'Ok.';
-        inner.appendChild(h);
-        row.appendChild(inner);
-        chatMessagesDiv.appendChild(row);
-        setTimeout(scrollChatToBottom, 10);
-        return inner;
-    }
-
-    /**
-     * Referencia visual del plan: `flow_manifest.steps` + paso activo (`active_subintent_id`).
-     * El backend ya arma la lista desde el YAML; la SPA no la pintaba antes.
-     *
-     * @param {object|null} fm
-     * @param {string} [actionTitle] — `flow_manifest.action_name` (YAML); si falta, un texto corto genérico.
-     * @returns {HTMLDivElement|null}
-     */
-    function buildFlowPlanStripElement(fm, actionTitle) {
-        if (!fm || typeof fm !== 'object') return null;
-        const steps = Array.isArray(fm.steps) ? fm.steps : [];
-        if (steps.length < 1) return null;
-
-        const activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id) : '';
-        let activeIdx = -1;
-        for (let i = 0; i < steps.length; i++) {
-            const sid = steps[i] && steps[i].id != null ? String(steps[i].id) : '';
-            if (sid !== '' && sid === activeId) {
-                activeIdx = i;
-                break;
-            }
-        }
-
-        const wrap = document.createElement('div');
-        wrap.className = 'spa-flow-plan-wrap text-center w-100 mt-3 pt-2 border-top border-light-subtle';
-        const label = document.createElement('div');
-        label.className = 'text-muted small mb-1';
-        const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
-        const labelText = titleStr !== '' ? titleStr : 'Flujo';
-        label.textContent = labelText;
-        const ul = document.createElement('ul');
-        ul.className = 'spa-flow-plan list-inline mb-0';
-        ul.setAttribute('aria-label', labelText);
-
-        steps.forEach(function (st, idx) {
-            const title = st && st.assistant_text ? String(st.assistant_text).trim() : '';
-            const sid = st && st.id != null ? String(st.id) : '';
-            const display = title !== '' ? title : (sid !== '' ? sid : ('Paso ' + (idx + 1)));
-
-            const li = document.createElement('li');
-            li.className = 'list-inline-item mb-1';
-            const badge = document.createElement('span');
-            let cls = 'badge rounded-pill spa-flow-plan-badge ';
-            if (activeIdx >= 0) {
-                if (idx < activeIdx) cls += 'text-bg-success';
-                else if (idx === activeIdx) cls += 'text-bg-primary';
-                else cls += 'text-bg-light text-dark border';
-            } else if (activeId === '') {
-                cls += idx === 0 ? 'text-bg-primary' : 'text-bg-light text-dark border';
-            } else {
-                cls += 'text-bg-light text-dark border';
-            }
-            badge.className = cls;
-            badge.textContent = display;
-            li.appendChild(badge);
-            ul.appendChild(li);
-        });
-
-        wrap.appendChild(label);
-        wrap.appendChild(ul);
-        return wrap;
-    }
-
-    function removeFlowPlanStrip() {
-        if (bioFlowPlanStripEl && bioFlowPlanStripEl.parentNode) {
-            bioFlowPlanStripEl.parentNode.removeChild(bioFlowPlanStripEl);
-        }
-        bioFlowPlanStripEl = null;
-    }
-
-    /**
-     * Una sola tira: quita la anterior y la inserta justo debajo del montaje de UI del paso activo.
-     */
-    function attachFlowPlanBelowMount(mountEl, fm, actionTitle) {
-        if (!mountEl || !fm || typeof fm !== 'object') return;
-        removeFlowPlanStrip();
-        const strip = buildFlowPlanStripElement(fm, actionTitle);
-        if (!strip) return;
-        mountEl.insertAdjacentElement('afterend', strip);
-        bioFlowPlanStripEl = strip;
-    }
-
-    /**
      * Manejar envío de consulta
      */
     function handleSendQuery(contentOverride) {
-        // Si el usuario envía, priorizar chat y colapsar atajos.
-        if (typeof contentOverride !== 'string') {
-            collapseShortcutsPanel();
-        }
         const raw = (typeof contentOverride === 'string')
             ? contentOverride
             : (queryInput ? queryInput.value : '');
@@ -571,13 +419,13 @@
 
             // Flow conversacional: no renderizar cards/botones; renderizar mini-UI inline si viene open_ui.
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
-                // En web: turno a ancho completo + título (assistant_text) como h4; UI debajo sin burbuja angosta.
-                let flowTurnInner = null;
+                // En web queremos UX tipo chat: NO borrar historial; append de burbuja bot.
+                let botBubble = null;
                 if (chatMessagesDiv) {
-                    flowTurnInner = appendFlowAssistantTurn(primaryText || 'Ok.');
+                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>');
                 } else {
                     // Fallback legacy (sin contenedor chat)
-                    explanationDiv.innerHTML = '<h4 class="spa-assistant-step-title">' + escapeHtml(primaryText || 'Ok.') + '</h4>';
+                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
                     actionsDiv.innerHTML = '';
                 }
 
@@ -587,18 +435,13 @@
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
                 const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
 
-                let flowActionTitle = '';
-                if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
-                    flowActionTitle = String(fm.action_name).trim();
-                }
-                bioFlowPlanPendingContext = fm ? { fm: fm, actionTitle: flowActionTitle } : null;
-
                 const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
-                // Fin del flow: sin más pasos / sin UI (motor suele devolver texto "Listo.").
-                // Si el siguiente paso solo tiene submit, el motor ya devuelve `open_ui` del submit (sin pantalla intermedia).
+                // Detectar fin real del flow:
+                // - El último step puede tener `next=""` pero igual requiere abrir una UI (tabs/open_ui).
+                // - Consideramos "terminado" cuando `next=""` y NO hay UI a abrir, típicamente con texto "Listo.".
                 const hasOpenUi = !!(openUi && openUi.action_id);
                 const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
                 const hasTabs = tabs.length >= 1;
@@ -612,9 +455,7 @@
                     currentSubintentId = null;
                     draft = {};
                     writeFlowState();
-                    removeFlowPlanStrip();
-                    bioFlowPlanPendingContext = null;
-                    if (flowTurnInner) {
+                    if (botBubble) {
                         setTimeout(scrollChatToBottom, 20);
                     } else {
                         responseSection.classList.remove('d-none');
@@ -641,38 +482,32 @@
                 }
 
                 if (!fullUrl) {
-                    removeFlowPlanStrip();
-                    bioFlowPlanPendingContext = null;
                     const errHtml = openUi && openUi.action_id
                         ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
                         : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
-                    if (flowTurnInner) {
-                        const errWrap = document.createElement('div');
-                        errWrap.innerHTML = errHtml;
-                        while (errWrap.firstChild) {
-                            flowTurnInner.appendChild(errWrap.firstChild);
-                        }
+                    if (botBubble) {
+                        botBubble.innerHTML += errHtml;
                         setTimeout(scrollChatToBottom, 20);
                     } else {
                         explanationDiv.innerHTML =
-                            '<h4 class="spa-assistant-step-title">' + escapeHtml(primaryText || 'Ok.') + '</h4>' + errHtml;
+                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' + errHtml;
                         responseSection.classList.remove('d-none');
                         setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
                     }
                     return;
                 }
 
-                // Host para renderizar la mini-UI del paso (debajo del h4, ancho completo).
-                const mountHost = flowTurnInner ? flowTurnInner : actionsDiv;
+                // Host para renderizar la mini-UI del paso (idealmente dentro de la burbuja).
+                const mountHost = botBubble ? botBubble : actionsDiv;
 
                 if (tabs.length >= 2) {
-                    if (!flowTurnInner) {
+                    if (!botBubble) {
                         actionsDiv.innerHTML = '';
                     }
                     const tabRow = document.createElement('div');
-                    tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2 w-100';
+                    tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2';
                     const mountEl = document.createElement('div');
-                    mountEl.className = 'mt-1 w-100 spa-chat-flow-ui';
+                    mountEl.className = 'mt-1';
                     mountHost.appendChild(tabRow);
                     mountHost.appendChild(mountEl);
 
@@ -736,14 +571,13 @@
                     return;
                 }
 
-                if (!flowTurnInner) {
+                if (!botBubble) {
                     actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 } else {
-                    // Importante: no renderizar la UI sobre el root del turno porque renderDynamicUi()
-                    // reemplaza innerHTML y borraría el h4. Siempre montar en un hijo marcado.
+                    // Importante: no renderizar la UI sobre el root de la burbuja porque renderDynamicUi()
+                    // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo.
                     var flowUiMount = document.createElement('div');
-                    flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
-                    flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
+                    flowUiMount.className = 'mt-2';
                     const loading = document.createElement('div');
                     loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
                     loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
@@ -774,10 +608,10 @@
                     return r.json();
                 })
                 .then(json => {
-                    if (!flowTurnInner) {
+                    if (!botBubble) {
                         actionsDiv.innerHTML = '';
                     } else {
-                        // limpiar loaders dentro del turno
+                        // limpiar loaders dentro de la burbuja
                         try {
                             Array.from(mountHost.querySelectorAll('.spinner-border')).forEach(function (s) {
                                 const wrap = s.closest('div');
@@ -790,44 +624,24 @@
                         }
                     }
                     if (json && json.kind === 'ui_definition') {
-                        const target = flowTurnInner
-                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
+                        const target = botBubble
+                            ? (mountHost.querySelector('.mt-2') || mountHost)
                             : actionsDiv;
                         renderDynamicUi(json, target, { url: fullUrl });
                     } else {
-                        const target = flowTurnInner
-                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
+                        const target = botBubble
+                            ? (mountHost.querySelector('.mt-2') || mountHost)
                             : actionsDiv;
                         target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
-                    }
-                    try {
-                        const mountAfter = flowTurnInner
-                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
-                            : actionsDiv;
-                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                        }
-                    } catch (e) {
-                        // ignore
                     }
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    const target = flowTurnInner
-                        ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
+                    const target = botBubble
+                        ? (mountHost.querySelector('.mt-2') || mountHost)
                         : actionsDiv;
                     target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
-                    try {
-                        const mountAfter = flowTurnInner
-                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || mountHost)
-                            : actionsDiv;
-                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
                 })
                 .finally(() => {
                     if (!chatMessagesDiv) {
@@ -839,9 +653,6 @@
                 });
                 return;
             }
-
-            removeFlowPlanStrip();
-            bioFlowPlanPendingContext = null;
             
             // Si tiene explicación, mostrar respuesta (incluso si success es false)
             if (result.explanation !== undefined) {
@@ -1014,7 +825,7 @@
             }
         } catch (e) { /* ignore */ }
 
-        let html = '<div class="bio-ui-json-blocks spa-chat-embed-blocks d-flex flex-column gap-3 w-100">';
+        let html = '<div class="bio-ui-json-blocks d-flex flex-column gap-3">';
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;
             const kind = String(b.kind || '');
@@ -1121,10 +932,7 @@
         const items = Array.isArray(block.items) ? block.items : [];
         const draftField = block.draft_field ? String(block.draft_field) : '';
         const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
-        // Solo `requires_confirmation === true` muestra Confirmar; si falta la clave, confirma al elegir ítem.
         const requiresConfirmation = selection.requires_confirmation === true;
-        // Una sola opción: avanzar sin clic (desactivar con `selection.auto_advance_single: false` en el bloque).
-        const autoAdvanceSingle = selection.auto_advance_single !== false;
 
         let locked = false;
         let selectedId = '';
@@ -1138,7 +946,7 @@
             const id = it && it.id !== undefined ? String(it.id) : '';
             const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
             if (!id) return;
-            html += '<button type="button" class="bio-ui-json-list-item btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
+            html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
             html += '<span class="bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
             html += escapeHtml(name);
             html += '</button>';
@@ -1152,14 +960,12 @@
         html += '</div>';
         container.innerHTML = html;
 
-        function pickButtons() {
-            return Array.from(container.querySelectorAll('button.bio-ui-json-list-item[data-embed-pick="1"]'));
-        }
+        const pickButtons = Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
         const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
 
         function setSelected(btn, id) {
             selectedId = id || '';
-            pickButtons().forEach(b => {
+            pickButtons.forEach(b => {
                 b.classList.remove('border', 'border-3');
                 const ck = b.querySelector('.bio-ui-pick-check');
                 if (ck) ck.classList.add('d-none');
@@ -1178,7 +984,7 @@
             if (!selectedId) return;
             locked = true;
             try {
-                pickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
+                pickButtons.forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
             try { draft = Object.assign({}, draft || {}, { [draftField]: selectedId }); } catch (e) { /* ignore */ }
@@ -1188,41 +994,20 @@
             }, 0);
         }
 
-        function onListPickClick(ev) {
-            const btn = ev.target && ev.target.closest ? ev.target.closest('button.bio-ui-json-list-item[data-embed-pick="1"]') : null;
-            if (!btn || !container.contains(btn)) return;
-            if (locked) return;
-            const id = btn.getAttribute('data-embed-id') || '';
-            if (!id) return;
-            setSelected(btn, id);
-            if (!requiresConfirmation) confirmSelection();
-        }
-
-        const prevPick = container._bioUiJsonListPickHandler;
-        if (prevPick) container.removeEventListener('click', prevPick);
-        container._bioUiJsonListPickHandler = onListPickClick;
-        container.addEventListener('click', onListPickClick);
-
+        pickButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (locked) return;
+                const id = this.getAttribute('data-embed-id') || '';
+                if (!id) return;
+                setSelected(this, id);
+                if (!requiresConfirmation) confirmSelection();
+            });
+        });
         if (confirmBtn) {
             confirmBtn.addEventListener('click', function () {
                 if (locked) return;
                 confirmSelection();
             });
-        }
-
-        if (autoAdvanceSingle && items.length === 1 && draftField) {
-            const onlyBtn = container.querySelector('button.bio-ui-json-list-item[data-embed-pick="1"]');
-            const onlyId = onlyBtn ? String(onlyBtn.getAttribute('data-embed-id') || '').trim() : '';
-            if (onlyBtn && onlyId) {
-                setSelected(onlyBtn, onlyId);
-                setTimeout(function () {
-                    try {
-                        confirmSelection();
-                    } catch (e) {
-                        /* ignore */
-                    }
-                }, 0);
-            }
         }
     }
 
@@ -1231,34 +1016,14 @@
         const fields = Array.isArray(block.fields) ? block.fields : [];
         const submitUrl = options.url || null;
 
-        const grid = fieldsBlockUsesBootstrapGrid(fields);
-        const hiddenFields = [];
-        const visibleFields = [];
-        fields.forEach(function (fd) {
-            if (fd && String(fd.type || '') === 'hidden') {
-                hiddenFields.push(fd);
-            } else {
-                visibleFields.push(fd);
-            }
-        });
-
         let html = '<div class="bio-ui-json-fields">';
         if (title) {
             html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
         }
         html += '<form data-ui-json-form="1">';
-        hiddenFields.forEach(function (fd) {
-            html += renderFormField(fd, { useGrid: false });
+        fields.forEach(function (fd) {
+            html += renderFormField(fd);
         });
-        if (grid) {
-            html += '<div class="row g-3">';
-        }
-        visibleFields.forEach(function (fd) {
-            html += renderFormField(fd, { useGrid: grid });
-        });
-        if (grid) {
-            html += '</div>';
-        }
         html += '<div class="d-flex justify-content-end pt-2">';
         html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
         html += '</div>';
@@ -1323,58 +1088,12 @@
     }
 
     // Nota: el soporte legacy de wizard/steps fue eliminado (corte total). Ver `renderUiJsonBlocks()`.
-
-    /**
-     * Grid Bootstrap (12 cols) por campo. Requiere ancestro `.row` ({@see fieldsBlockUsesBootstrapGrid}).
-     * `layout.col`: 1–12; `layout.breakpoint`: sm|md|lg|xl|xxl (default md → `col-md-*`).
-     */
-    function fieldBootstrapColClass(field, useGrid) {
-        if (!useGrid) {
-            return 'mb-3';
-        }
-        const layout = field.layout && typeof field.layout === 'object' ? field.layout : null;
-        if (layout && typeof layout.col === 'number') {
-            let n = Math.round(Number(layout.col));
-            if (!Number.isFinite(n)) {
-                return 'col-12 mb-3';
-            }
-            n = Math.min(12, Math.max(1, n));
-            let bp = layout.breakpoint != null ? String(layout.breakpoint).trim().toLowerCase() : 'md';
-            const allowed = { sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 };
-            if (!allowed[bp]) {
-                bp = 'md';
-            }
-            return 'col-' + bp + '-' + n + ' mb-3';
-        }
-        return 'col-12 mb-3';
-    }
-
-    function fieldsBlockUsesBootstrapGrid(fields) {
-        if (!Array.isArray(fields)) {
-            return false;
-        }
-        return fields.some(function (fd) {
-            if (!fd || typeof fd !== 'object') {
-                return false;
-            }
-            if (String(fd.type || '') === 'hidden') {
-                return false;
-            }
-            const layout = fd.layout;
-            return layout && typeof layout === 'object' && typeof layout.col === 'number';
-        });
-    }
-
     /**
      * Renderizar campo de formulario
-     * @param {object} opts - `{ useGrid?: boolean }` si el bloque fields usa `.row` (layout Bootstrap).
      */
-    function renderCustomWidgetField(field, opts) {
-        opts = opts || {};
-        const useGrid = opts.useGrid === true;
-        const outerClass = fieldBootstrapColClass(field, useGrid);
+    function renderCustomWidgetField(field) {
         const wid = field.widget_id || '';
-        let html = '<div class="' + outerClass + ' bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
+        let html = '<div class="mb-3 bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
         if (field.label) {
             html += '<label class="form-label">' + escapeHtml(field.label);
             if (field.required) {
@@ -1392,19 +1111,16 @@
         return html;
     }
 
-    function renderFormField(field, opts) {
-        opts = opts || {};
-        const useGrid = opts.useGrid === true;
+    function renderFormField(field) {
         if (field.type === 'hidden') {
             const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
             return '<input type="hidden" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '">';
         }
         if (field.type === 'custom_widget') {
-            return renderCustomWidgetField(field, opts);
+            return renderCustomWidgetField(field);
         }
 
-        const outerClass = fieldBootstrapColClass(field, useGrid);
-        let html = '<div class="' + outerClass + '">';
+        let html = '<div class="mb-3">';
         html += '<label class="form-label">' + escapeHtml(field.label || '');
         if (field.required) {
             html += ' <span class="text-danger">*</span>';
@@ -1629,17 +1345,8 @@
         html += '<option value="">Seleccione...</option>';
         if (field.options) {
             field.options.forEach(option => {
-                let value;
-                let label;
-                if (typeof option === 'object' && option !== null) {
-                    value = option.value !== undefined && option.value !== null ? option.value : option.id;
-                    label = option.label !== undefined && option.label !== null ? option.label : option.name;
-                } else {
-                    value = option;
-                    label = option;
-                }
-                value = value !== undefined && value !== null ? String(value) : '';
-                label = label !== undefined && label !== null ? String(label) : value;
+                const value = typeof option === 'object' ? option.value : option;
+                const label = typeof option === 'object' ? option.label : option;
                 const sel = String(value) === fv ? ' selected' : '';
                 html += '<option value="' + escapeHtml(value) + '"' + sel + '>' + escapeHtml(label) + '</option>';
             });
@@ -1652,25 +1359,16 @@
      * Renderizar campo radio (opciones seleccionables)
      */
     function renderRadioField(field) {
-        let html = '<div class="d-flex flex-wrap gap-2 align-items-start" role="radiogroup" aria-label="' + escapeHtml(field.label || field.name || '') + '">';
+        let html = '<div class="d-flex flex-wrap gap-2">';
         if (field.options) {
-            field.options.forEach(function (option, idx) {
-                let value;
-                let label;
-                if (typeof option === 'object' && option !== null) {
-                    value = option.value !== undefined && option.value !== null ? option.value : option.id;
-                    label = option.label !== undefined && option.label !== null ? option.label : option.name;
-                } else {
-                    value = option;
-                    label = option;
-                }
-                value = value !== undefined && value !== null ? String(value) : '';
-                label = label !== undefined && label !== null ? String(label) : value;
-                const rid = String(field.name || 'field').replace(/[^a-zA-Z0-9_-]/g, '_') + '_' + idx + '_' + String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
+            field.options.forEach(option => {
+                const value = typeof option === 'object' ? option.value : option;
+                const label = typeof option === 'object' ? option.label : option;
+                const id = field.name + '_' + value;
                 html += '<div class="form-check">';
                 const checked = field.value !== undefined && field.value !== null && String(value) === String(field.value) ? ' checked' : '';
-                html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + rid + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
-                html += '<label class="form-check-label" for="' + rid + '">' + escapeHtml(label) + '</label>';
+                html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + id + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
+                html += '<label class="form-check-label" for="' + id + '">' + escapeHtml(label) + '</label>';
                 html += '</div>';
             });
         }
@@ -1923,12 +1621,6 @@
      * Manejar input en textarea
      */
     function handleInput() {
-        // Si el usuario empieza a escribir manualmente, colapsar atajos.
-        try {
-            if (queryInput && String(queryInput.value || '').trim() !== '') {
-                collapseShortcutsPanel();
-            }
-        } catch (e) { /* ignore */ }
         // Auto-resize textarea
         queryInput.style.height = 'auto';
         queryInput.style.height = queryInput.scrollHeight + 'px';
@@ -2855,8 +2547,7 @@
             const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
             const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
             if (!iid) return;
-            // UX nuevo: el click solo “pega texto” en el textarea. Usamos `name` como prompt preparado.
-            html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-text="' + escapeHtml(name) + '">';
+            html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
             html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
             if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
             html += '</button>';
@@ -2890,8 +2581,7 @@
                 const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
                 const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
                 if (!iid) return;
-                // UX nuevo: el click solo “pega texto” en el textarea. Usamos `name` como prompt preparado.
-                html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-text="' + escapeHtml(name) + '">';
+                html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
                 html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
                 if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
                 html += '</button>';
@@ -2906,13 +2596,11 @@
     function attachShortcutListeners() {
         if (!shortcutsContent) return;
         try {
-            Array.from(shortcutsContent.querySelectorAll('button[data-shortcut-text]')).forEach(function (btn) {
+            Array.from(shortcutsContent.querySelectorAll('button[data-shortcut-intent-id]')).forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    const text = this.getAttribute('data-shortcut-text') || '';
-                    if (!queryInput) return;
-                    queryInput.value = String(text || '').trim();
-                    handleInput();
-                    try { queryInput.focus(); } catch (e) { /* ignore */ }
+                    const iid = this.getAttribute('data-shortcut-intent-id') || '';
+                    const name = this.getAttribute('data-shortcut-name') || '';
+                    startFlowFromShortcut(iid, name);
                 });
             });
         } catch (e) { /* ignore */ }

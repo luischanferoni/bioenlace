@@ -861,6 +861,11 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
                           if (requiresConfirmation) {
                             setState(() => _listEmbedSelectedId = id);
                           } else {
+                            // Un solo ítem: dar tiempo a percibir la UI antes de avanzar el flow.
+                            if (items.length == 1) {
+                              await Future<void>.delayed(const Duration(milliseconds: 480));
+                              if (!mounted || _listEmbedLocked) return;
+                            }
                             await _applyListEmbedDraft(draftField, id);
                             if (mounted) {
                               setState(() {

@@ -282,4 +282,13 @@
     line-height: 0;
 }
 
+/* Lista embebida UI JSON: transición suave al seleccionar ítem. */
+.bio-ui-json-list button[data-embed-pick="1"] {
+    transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.22s ease, opacity 0.22s ease;
+}
+
+.bio-ui-json-list button[data-embed-pick="1"]:not(:disabled):active {
+    transform: scale(0.98);
+}
+
 /* UI JSON list (embebible): estilos por Bootstrap (sin clases custom de selección) */

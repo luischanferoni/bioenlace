@@ -6,6 +6,11 @@
 (function() {
     'use strict';
 
+    /** Tras elegir en lista embebida: pausa antes del POST del snapshot (se ve borde/check). */
+    const SPA_LIST_PICK_TO_SEND_MS = 340;
+    /** Lista de un solo ítem sin confirmación: espera antes del click automático. */
+    const SPA_LIST_SINGLE_AUTO_INTRO_MS = 480;
+
     /** URL absoluta para fetch desde el shell (misma regla que loadPageContent). */
     function resolveSpaFetchUrl(url) {
         if (!url) return '';
@@ -988,14 +993,19 @@
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
             try { draft = Object.assign({}, draft || {}, { [draftField]: selectedId }); } catch (e) { /* ignore */ }
-            setTimeout(() => {
+            setTimeout(function () {
                 if (queryInput) queryInput.value = '';
                 handleSendQuery('');
-            }, 0);
+            }, SPA_LIST_PICK_TO_SEND_MS);
         }
 
+        let singleAutoTimer = null;
         pickButtons.forEach(btn => {
             btn.addEventListener('click', function () {
+                if (singleAutoTimer) {
+                    clearTimeout(singleAutoTimer);
+                    singleAutoTimer = null;
+                }
                 if (locked) return;
                 const id = this.getAttribute('data-embed-id') || '';
                 if (!id) return;
@@ -1008,6 +1018,16 @@
                 if (locked) return;
                 confirmSelection();
             });
+        }
+
+        if (pickButtons.length === 1 && !requiresConfirmation && draftField) {
+            singleAutoTimer = setTimeout(function () {
+                singleAutoTimer = null;
+                if (locked) return;
+                const only = pickButtons[0];
+                if (!only || only.disabled) return;
+                only.click();
+            }, SPA_LIST_SINGLE_AUTO_INTRO_MS);
         }
     }
 

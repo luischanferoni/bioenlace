@@ -304,6 +304,15 @@
     line-height: 0;
 }
 
+/* Franja de pasos del flujo (flow_manifest) al pie de la mini-UI embebida en el chat */
+.bio-ui-json-flow-rail {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: var(--bs-body-bg, #fff);
+    box-shadow: 0 -6px 12px rgba(0, 0, 0, 0.04);
+}
+
 /* Lista embebida UI JSON: transición suave al seleccionar ítem. */
 .bio-ui-json-list button[data-embed-pick="1"] {
     transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.22s ease, opacity 0.22s ease;

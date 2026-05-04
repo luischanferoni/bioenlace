@@ -72,7 +72,7 @@
         return tab && Array.isArray(tab.requires_client) && tab.requires_client.indexOf('geolocation') !== -1;
     }
 
-    function fetchFlowUiDefinition(fullUrl, mountEl, responseSection) {
+    function fetchFlowUiDefinition(fullUrl, mountEl, responseSection, uiRenderOptions) {
         mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
         fetch(fullUrl, {
             method: 'GET',
@@ -100,7 +100,7 @@
             .then(function (json) {
                 mountEl.innerHTML = '';
                 if (json && json.kind === 'ui_definition') {
-                    renderDynamicUi(json, mountEl, { url: fullUrl });
+                    renderDynamicUi(json, mountEl, Object.assign({ url: fullUrl }, uiRenderOptions || {}));
                 } else {
                     mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
                 }
@@ -555,7 +555,7 @@
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
                                 u.searchParams.set('longitud', String(pos.coords.longitude));
-                                fetchFlowUiDefinition(u.toString(), mountEl, responseSection);
+                                fetchFlowUiDefinition(u.toString(), mountEl, responseSection, { flowManifest: fm });
                             }, function () {
                                 mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
                             });
@@ -567,7 +567,7 @@
                             mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
                             return;
                         }
-                        fetchFlowUiDefinition(url, mountEl, responseSection);
+                        fetchFlowUiDefinition(url, mountEl, responseSection, { flowManifest: fm });
                     }
 
                     tabs.forEach(function (tab, idx) {
@@ -594,20 +594,6 @@
                 if (!botBubble) {
                     actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 } else {
-                    // Misma franja de contexto que multi-tab (chips), pero el manifiesto suele traer 1 solo tab
-                    // ("Elegir"): antes no se renderizaba fila y el indicador parecía "ausente".
-                    if (tabs.length === 1) {
-                        const tabRow = document.createElement('div');
-                        tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2';
-                        const b = document.createElement('button');
-                        b.type = 'button';
-                        b.className = 'btn btn-sm btn-outline-primary active pe-none';
-                        b.setAttribute('aria-current', 'step');
-                        b.tabIndex = -1;
-                        b.textContent = (tabs[0] && tabs[0].label) ? String(tabs[0].label) : 'Paso';
-                        tabRow.appendChild(b);
-                        mountHost.appendChild(tabRow);
-                    }
                     // Importante: no renderizar la UI sobre el root de la burbuja porque renderDynamicUi()
                     // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo dedicado.
                     flowUiMount = document.createElement('div');
@@ -649,7 +635,7 @@
                     }
                     if (json && json.kind === 'ui_definition') {
                         const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
-                        renderDynamicUi(json, target, { url: fullUrl });
+                        renderDynamicUi(json, target, { url: fullUrl, flowManifest: fm });
                     } else {
                         const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
                         target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
@@ -798,6 +784,54 @@
     }
 
     /**
+     * Indicador de flujo al pie de la mini-UI (labels de paso del YAML; paso activo resaltado).
+     * No es una barra de progreso: chips compactos. Requiere `options.flowManifest` desde la respuesta del asistente.
+     * @param {object|null|undefined} fm
+     * @returns {string}
+     */
+    function renderFlowManifestRailHtml(fm) {
+        if (!fm || typeof fm !== 'object') {
+            return '';
+        }
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        if (steps.length < 1) {
+            return '';
+        }
+        let activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id).trim() : '';
+        if (!activeId && fm.active_step && typeof fm.active_step === 'object' && fm.active_step.id != null) {
+            activeId = String(fm.active_step.id).trim();
+        }
+        const chips = [];
+        for (let i = 0; i < steps.length; i++) {
+            const st = steps[i];
+            if (!st || typeof st !== 'object') {
+                continue;
+            }
+            const sid = st.id != null ? String(st.id).trim() : '';
+            let label = sid;
+            const at = st.assistant_text;
+            if (at != null && String(at).trim() !== '') {
+                label = String(at).trim();
+            }
+            const isActive = activeId !== '' && sid !== '' && sid === activeId;
+            const cls = isActive
+                ? 'badge rounded-pill text-bg-primary'
+                : 'badge rounded-pill text-bg-light border text-muted';
+            chips.push('<span class="' + cls + '">' + escapeHtml(label) + '</span>');
+        }
+        if (chips.length < 1) {
+            return '';
+        }
+        const title = fm.action_name != null && String(fm.action_name).trim() !== ''
+            ? ('<span class="fw-semibold text-body me-1">' + escapeHtml(String(fm.action_name).trim()) + '</span>')
+            : '';
+        return '<div class="bio-ui-json-flow-rail small d-flex flex-wrap align-items-center gap-2 pt-2 mt-2 border-top" role="status" aria-label="Pasos del trámite">'
+            + title
+            + chips.join('<span class="text-muted user-select-none" aria-hidden="true">·</span>')
+            + '</div>';
+    }
+
+    /**
      * Renderizar UI dinámica a partir de una definición genérica
      * Contrato actual: `ui_type = "ui_json"` con `blocks`.
      * @param {Object} json - Respuesta completa de la API de UI
@@ -852,10 +886,12 @@
             html += '<div class="bio-ui-json-block" data-block-kind="' + escapeHtml(kind) + '" data-block-id="' + escapeHtml(bid) + '"></div>';
         });
         html += '</div>';
+        const rail = renderFlowManifestRailHtml(options.flowManifest);
+        const bodyHtml = rail ? ('<div class="bio-ui-json-embed d-flex flex-column">' + html + rail + '</div>') : html;
         // Preservar banner de error si existe
         const existingErr = container.querySelector('[data-ui-json-error="1"]');
         const errHtml = existingErr ? existingErr.outerHTML : '';
-        container.innerHTML = errHtml + html;
+        container.innerHTML = errHtml + bodyHtml;
 
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;

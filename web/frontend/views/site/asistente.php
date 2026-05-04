@@ -60,7 +60,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 <div class="spa-chat-input-wrap">
                     <textarea
                         id="spa-query-input"
-                        class="form-control spa-chat-input spa-chat-input--bare"
+                        class="form-control spa-chat-input spa-chat-input--bare border-2"
                         rows="2"
                         placeholder="Escribe tu mensaje…"
                     ></textarea>
@@ -71,7 +71,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                         </span>
                     </button>
                 </div>
-                <div class="text-muted small mt-2 mb-0">Enter para enviar, Shift+Enter para salto de línea.</div>
+                <div class="text-muted small mt-2 mb-0 ms-3">Enter para enviar, Shift+Enter para salto de línea.</div>
             </div>
         </div>
     </div>

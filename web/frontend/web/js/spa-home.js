@@ -295,6 +295,45 @@
     }
 
     /**
+     * Barra de progreso del flujo (flow_manifest.steps vs paso activo).
+     * @param {object|null} fm
+     * @returns {string} HTML seguro (textos escapados) o cadena vacía
+     */
+    function renderFlowManifestProgressHtml(fm) {
+        if (!fm || typeof fm !== 'object') {
+            return '';
+        }
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        if (steps.length < 1) {
+            return '';
+        }
+        let activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id).trim() : '';
+        if (!activeId && fm.active_step && typeof fm.active_step === 'object' && fm.active_step.id != null) {
+            activeId = String(fm.active_step.id).trim();
+        }
+        let stepIdx = -1;
+        for (let i = 0; i < steps.length; i++) {
+            const sid = steps[i] && steps[i].id != null ? String(steps[i].id).trim() : '';
+            if (sid !== '' && sid === activeId) {
+                stepIdx = i;
+                break;
+            }
+        }
+        if (stepIdx < 0) {
+            stepIdx = 0;
+        }
+        const current = stepIdx + 1;
+        const total = steps.length;
+        const pct = Math.max(6, Math.min(100, Math.round((current / total) * 100)));
+        const label = 'Paso ' + current + ' de ' + total;
+        return '<div class="spa-flow-progress mt-2 pt-2 border-top">'
+            + '<div class="small text-muted mb-1">' + escapeHtml(label) + '</div>'
+            + '<div class="progress" style="height:7px" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + escapeHtml(label) + '">'
+            + '<div class="progress-bar bg-primary" style="width:' + pct + '%"></div>'
+            + '</div></div>';
+    }
+
+    /**
      * Manejar envío de consulta
      */
     function handleSendQuery(contentOverride) {
@@ -436,19 +475,21 @@
 
             // Flow conversacional: no renderizar cards/botones; renderizar mini-UI inline si viene open_ui.
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
+                const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
+                const progressHtml = renderFlowManifestProgressHtml(fm);
+
                 // En web queremos UX tipo chat: NO borrar historial; append de burbuja bot.
                 let botBubble = null;
                 if (chatMessagesDiv) {
-                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>');
+                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>' + progressHtml);
                 } else {
                     // Fallback legacy (sin contenedor chat)
-                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
+                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>' + progressHtml;
                     actionsDiv.innerHTML = '';
                 }
 
                 const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
-                const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
                 const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
 

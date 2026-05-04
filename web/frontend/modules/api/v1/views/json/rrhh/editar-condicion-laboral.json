@@ -28,7 +28,7 @@
         },
         {
           "name": "id_condicion_laboral",
-          "label": "Condición laboral",
+          "label": "Tipos de contratos",
           "type": "radio",
           "required": true,
           "options": "{{options}}",

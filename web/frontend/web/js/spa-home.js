@@ -72,7 +72,7 @@
         return tab && Array.isArray(tab.requires_client) && tab.requires_client.indexOf('geolocation') !== -1;
     }
 
-    function fetchFlowUiDefinition(fullUrl, mountEl, responseSection, uiRenderOptions) {
+    function fetchFlowUiDefinition(fullUrl, mountEl, responseSection) {
         mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
         fetch(fullUrl, {
             method: 'GET',
@@ -100,15 +100,29 @@
             .then(function (json) {
                 mountEl.innerHTML = '';
                 if (json && json.kind === 'ui_definition') {
-                    renderDynamicUi(json, mountEl, Object.assign({ url: fullUrl }, uiRenderOptions || {}));
+                    renderDynamicUi(json, mountEl, { url: fullUrl });
                 } else {
                     mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+                }
+                try {
+                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                    }
+                } catch (e) {
+                    // ignore
                 }
             })
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
                 const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
                 mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
+                try {
+                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                    }
+                } catch (e) {
+                    // ignore
+                }
             })
             .finally(function () {
                 responseSection.classList.remove('d-none');
@@ -138,6 +152,10 @@
     let currentIntentId = null;
     let currentSubintentId = null;
     let draft = {};
+    /** Una sola tira de plan en el DOM; se mueve al montaje activo del paso. */
+    let bioFlowPlanStripEl = null;
+    /** Contexto del último paso `intent_flow` para pintar la tira tras cargar la UI (`flow_manifest` + título). */
+    let bioFlowPlanPendingContext = null;
     // Persistencia simple en memoria global para evitar perder estado en re-renders complejos.
     // (No es storage; solo evita depender de closures si se re-ejecuta parte del JS).
     const FLOW_STATE_KEY = '__bio_spa_flow_state__';
@@ -295,6 +313,113 @@
     }
 
     /**
+     * Bloque a ancho completo del panel de chat para respuestas `intent_flow`: encabezado + zona para mini-UI.
+     * No usa burbuja angosta; el JSON embebido se monta debajo del título (mismo patrón en todo el asistente SPA).
+     *
+     * @param {string} titleText - Texto principal del paso (p. ej. `text` / `explanation` del payload).
+     * @returns {HTMLDivElement|null} Contenedor interno: aquí se añaden pestañas, `[data-spa-flow-ui-mount]`, etc.
+     */
+    function appendAssistantFlowSection(titleText) {
+        if (!chatMessagesDiv) {
+            return null;
+        }
+        const row = document.createElement('div');
+        row.className = 'w-100 mb-3 spa-chat-flow-row';
+        const inner = document.createElement('div');
+        inner.className = 'spa-chat-flow-turn w-100';
+        const h = document.createElement('h4');
+        h.className = 'spa-assistant-step-title';
+        const t = String(titleText || '').trim();
+        h.textContent = t !== '' ? t : 'Ok.';
+        inner.appendChild(h);
+        row.appendChild(inner);
+        chatMessagesDiv.appendChild(row);
+        setTimeout(scrollChatToBottom, 10);
+        return inner;
+    }
+
+    /**
+     * Referencia visual del plan: `flow_manifest.steps` + paso activo (`active_subintent_id`).
+     *
+     * @param {object|null} fm
+     * @param {string} [actionTitle] — `flow_manifest.action_name` (YAML); si falta, un texto corto genérico.
+     * @returns {HTMLDivElement|null}
+     */
+    function buildFlowPlanStripElement(fm, actionTitle) {
+        if (!fm || typeof fm !== 'object') return null;
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        if (steps.length < 1) return null;
+
+        const activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id) : '';
+        let activeIdx = -1;
+        for (let i = 0; i < steps.length; i++) {
+            const sid = steps[i] && steps[i].id != null ? String(steps[i].id) : '';
+            if (sid !== '' && sid === activeId) {
+                activeIdx = i;
+                break;
+            }
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className = 'spa-flow-plan-wrap text-center w-100 mt-3 pt-2 border-top border-light-subtle';
+        const label = document.createElement('div');
+        label.className = 'text-muted small mb-1';
+        const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
+        const labelText = titleStr !== '' ? titleStr : 'Flujo';
+        label.textContent = labelText;
+        const ul = document.createElement('ul');
+        ul.className = 'spa-flow-plan list-inline mb-0';
+        ul.setAttribute('aria-label', labelText);
+
+        steps.forEach(function (st, idx) {
+            const title = st && st.assistant_text ? String(st.assistant_text).trim() : '';
+            const sid = st && st.id != null ? String(st.id) : '';
+            const display = title !== '' ? title : (sid !== '' ? sid : ('Paso ' + (idx + 1)));
+
+            const li = document.createElement('li');
+            li.className = 'list-inline-item mb-1';
+            const badge = document.createElement('span');
+            let cls = 'badge rounded-pill spa-flow-plan-badge ';
+            if (activeIdx >= 0) {
+                if (idx < activeIdx) cls += 'text-bg-success';
+                else if (idx === activeIdx) cls += 'text-bg-primary';
+                else cls += 'text-bg-light text-dark border';
+            } else if (activeId === '') {
+                cls += idx === 0 ? 'text-bg-primary' : 'text-bg-light text-dark border';
+            } else {
+                cls += 'text-bg-light text-dark border';
+            }
+            badge.className = cls;
+            badge.textContent = display;
+            li.appendChild(badge);
+            ul.appendChild(li);
+        });
+
+        wrap.appendChild(label);
+        wrap.appendChild(ul);
+        return wrap;
+    }
+
+    function removeFlowPlanStrip() {
+        if (bioFlowPlanStripEl && bioFlowPlanStripEl.parentNode) {
+            bioFlowPlanStripEl.parentNode.removeChild(bioFlowPlanStripEl);
+        }
+        bioFlowPlanStripEl = null;
+    }
+
+    /**
+     * Una sola tira: quita la anterior y la inserta justo debajo del montaje de UI del paso activo.
+     */
+    function attachFlowPlanBelowMount(mountEl, fm, actionTitle) {
+        if (!mountEl || !fm || typeof fm !== 'object') return;
+        removeFlowPlanStrip();
+        const strip = buildFlowPlanStripElement(fm, actionTitle);
+        if (!strip) return;
+        mountEl.insertAdjacentElement('afterend', strip);
+        bioFlowPlanStripEl = strip;
+    }
+
+    /**
      * Manejar envío de consulta
      */
     function handleSendQuery(contentOverride) {
@@ -434,14 +559,13 @@
                 }
             }
 
-            // Flow conversacional: no renderizar cards/botones; renderizar mini-UI inline si viene open_ui.
+            // Flow conversacional: no renderizar cards/botones; mini-UI en bloque a ancho completo (no burbuja angosta).
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
                 const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
 
-                // En web queremos UX tipo chat: NO borrar historial; append de burbuja bot.
-                let botBubble = null;
+                let flowSectionInner = null;
                 if (chatMessagesDiv) {
-                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>');
+                    flowSectionInner = appendAssistantFlowSection(primaryText || 'Ok.');
                 } else {
                     // Fallback legacy (sin contenedor chat)
                     explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
@@ -452,6 +576,12 @@
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
                 const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
+
+                let flowActionTitle = '';
+                if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
+                    flowActionTitle = String(fm.action_name).trim();
+                }
+                bioFlowPlanPendingContext = fm ? { fm: fm, actionTitle: flowActionTitle } : null;
 
                 const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
@@ -473,7 +603,9 @@
                     currentSubintentId = null;
                     draft = {};
                     writeFlowState();
-                    if (botBubble) {
+                    removeFlowPlanStrip();
+                    bioFlowPlanPendingContext = null;
+                    if (flowSectionInner) {
                         setTimeout(scrollChatToBottom, 20);
                     } else {
                         responseSection.classList.remove('d-none');
@@ -500,11 +632,16 @@
                 }
 
                 if (!fullUrl) {
+                    removeFlowPlanStrip();
+                    bioFlowPlanPendingContext = null;
                     const errHtml = openUi && openUi.action_id
                         ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
                         : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
-                    if (botBubble) {
-                        botBubble.innerHTML += errHtml;
+                    if (flowSectionInner) {
+                        const errWrap = document.createElement('div');
+                        errWrap.className = 'mt-2';
+                        errWrap.innerHTML = errHtml;
+                        flowSectionInner.appendChild(errWrap);
                         setTimeout(scrollChatToBottom, 20);
                     } else {
                         explanationDiv.innerHTML =
@@ -515,19 +652,19 @@
                     return;
                 }
 
-                // Host para renderizar la mini-UI del paso (idealmente dentro de la burbuja).
-                const mountHost = botBubble ? botBubble : actionsDiv;
-                /** Solo rama mini-UI en burbuja; si no, queda null. */
+                // Montaje: debajo del h4 del bloque a ancho completo (o `actionsDiv` en layout legacy).
+                const mountHost = flowSectionInner ? flowSectionInner : actionsDiv;
+                /** Nodo dedicado para `renderDynamicUi` (no sustituir el contenedor del título). */
                 let flowUiMount = null;
 
                 if (tabs.length >= 2) {
-                    if (!botBubble) {
+                    if (!flowSectionInner) {
                         actionsDiv.innerHTML = '';
                     }
                     const tabRow = document.createElement('div');
                     tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2';
                     const mountEl = document.createElement('div');
-                    mountEl.className = 'mt-1';
+                    mountEl.className = 'mt-1 w-100 spa-chat-flow-ui';
                     mountHost.appendChild(tabRow);
                     mountHost.appendChild(mountEl);
 
@@ -555,7 +692,7 @@
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
                                 u.searchParams.set('longitud', String(pos.coords.longitude));
-                                fetchFlowUiDefinition(u.toString(), mountEl, responseSection, { flowManifest: fm });
+                                fetchFlowUiDefinition(u.toString(), mountEl, responseSection);
                             }, function () {
                                 mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
                             });
@@ -567,7 +704,7 @@
                             mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
                             return;
                         }
-                        fetchFlowUiDefinition(url, mountEl, responseSection, { flowManifest: fm });
+                        fetchFlowUiDefinition(url, mountEl, responseSection);
                     }
 
                     tabs.forEach(function (tab, idx) {
@@ -591,13 +728,13 @@
                     return;
                 }
 
-                if (!botBubble) {
+                if (!flowSectionInner) {
                     actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 } else {
-                    // Importante: no renderizar la UI sobre el root de la burbuja porque renderDynamicUi()
-                    // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo dedicado.
+                    // No montar en el root del bloque: `renderDynamicUi` reemplaza innerHTML del hijo, no el h4.
                     flowUiMount = document.createElement('div');
-                    flowUiMount.className = 'mt-2 spa-flow-ui-mount';
+                    flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
+                    flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
                     const loading = document.createElement('div');
                     loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
                     loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
@@ -628,24 +765,44 @@
                     return r.json();
                 })
                 .then(json => {
-                    if (!botBubble) {
+                    if (!flowSectionInner) {
                         actionsDiv.innerHTML = '';
                     } else if (flowUiMount) {
                         flowUiMount.innerHTML = '';
                     }
                     if (json && json.kind === 'ui_definition') {
-                        const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
-                        renderDynamicUi(json, target, { url: fullUrl, flowManifest: fm });
+                        const target = (flowSectionInner && flowUiMount) ? flowUiMount : actionsDiv;
+                        renderDynamicUi(json, target, { url: fullUrl });
                     } else {
-                        const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
+                        const target = (flowSectionInner && flowUiMount) ? flowUiMount : actionsDiv;
                         target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
+                    }
+                    try {
+                        const mountAfter = (flowSectionInner && flowUiMount)
+                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount)
+                            : actionsDiv;
+                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                        }
+                    } catch (e) {
+                        // ignore
                     }
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
+                    const target = (flowSectionInner && flowUiMount) ? flowUiMount : actionsDiv;
                     target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
+                    try {
+                        const mountAfter = (flowSectionInner && flowUiMount)
+                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount)
+                            : actionsDiv;
+                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
                 })
                 .finally(() => {
                     setLoadingState(false);
@@ -658,6 +815,9 @@
                 });
                 return;
             }
+
+            removeFlowPlanStrip();
+            bioFlowPlanPendingContext = null;
             
             // Si tiene explicación, mostrar respuesta (incluso si success es false)
             if (result.explanation !== undefined) {
@@ -784,54 +944,6 @@
     }
 
     /**
-     * Indicador de flujo al pie de la mini-UI (labels de paso del YAML; paso activo resaltado).
-     * No es una barra de progreso: chips compactos. Requiere `options.flowManifest` desde la respuesta del asistente.
-     * @param {object|null|undefined} fm
-     * @returns {string}
-     */
-    function renderFlowManifestRailHtml(fm) {
-        if (!fm || typeof fm !== 'object') {
-            return '';
-        }
-        const steps = Array.isArray(fm.steps) ? fm.steps : [];
-        if (steps.length < 1) {
-            return '';
-        }
-        let activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id).trim() : '';
-        if (!activeId && fm.active_step && typeof fm.active_step === 'object' && fm.active_step.id != null) {
-            activeId = String(fm.active_step.id).trim();
-        }
-        const chips = [];
-        for (let i = 0; i < steps.length; i++) {
-            const st = steps[i];
-            if (!st || typeof st !== 'object') {
-                continue;
-            }
-            const sid = st.id != null ? String(st.id).trim() : '';
-            let label = sid;
-            const at = st.assistant_text;
-            if (at != null && String(at).trim() !== '') {
-                label = String(at).trim();
-            }
-            const isActive = activeId !== '' && sid !== '' && sid === activeId;
-            const cls = isActive
-                ? 'badge rounded-pill text-bg-primary'
-                : 'badge rounded-pill text-bg-light border text-muted';
-            chips.push('<span class="' + cls + '">' + escapeHtml(label) + '</span>');
-        }
-        if (chips.length < 1) {
-            return '';
-        }
-        const title = fm.action_name != null && String(fm.action_name).trim() !== ''
-            ? ('<span class="fw-semibold text-body me-1">' + escapeHtml(String(fm.action_name).trim()) + '</span>')
-            : '';
-        return '<div class="bio-ui-json-flow-rail small d-flex flex-wrap align-items-center gap-2 pt-2 mt-2 border-top" role="status" aria-label="Pasos del trámite">'
-            + title
-            + chips.join('<span class="text-muted user-select-none" aria-hidden="true">·</span>')
-            + '</div>';
-    }
-
-    /**
      * Renderizar UI dinámica a partir de una definición genérica
      * Contrato actual: `ui_type = "ui_json"` con `blocks`.
      * @param {Object} json - Respuesta completa de la API de UI
@@ -878,7 +990,7 @@
             }
         } catch (e) { /* ignore */ }
 
-        let html = '<div class="bio-ui-json-blocks d-flex flex-column gap-3">';
+        let html = '<div class="bio-ui-json-blocks spa-chat-embed-blocks d-flex flex-column gap-3 w-100">';
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;
             const kind = String(b.kind || '');
@@ -886,12 +998,10 @@
             html += '<div class="bio-ui-json-block" data-block-kind="' + escapeHtml(kind) + '" data-block-id="' + escapeHtml(bid) + '"></div>';
         });
         html += '</div>';
-        const rail = renderFlowManifestRailHtml(options.flowManifest);
-        const bodyHtml = rail ? ('<div class="bio-ui-json-embed d-flex flex-column">' + html + rail + '</div>') : html;
         // Preservar banner de error si existe
         const existingErr = container.querySelector('[data-ui-json-error="1"]');
         const errHtml = existingErr ? existingErr.outerHTML : '';
-        container.innerHTML = errHtml + bodyHtml;
+        container.innerHTML = errHtml + html;
 
         blocks.forEach(function (b, idx) {
             if (!b || typeof b !== 'object') return;
@@ -1086,14 +1196,34 @@
         const fields = Array.isArray(block.fields) ? block.fields : [];
         const submitUrl = options.url || null;
 
+        const grid = fieldsBlockUsesBootstrapGrid(fields);
+        const hiddenFields = [];
+        const visibleFields = [];
+        fields.forEach(function (fd) {
+            if (fd && String(fd.type || '') === 'hidden') {
+                hiddenFields.push(fd);
+            } else {
+                visibleFields.push(fd);
+            }
+        });
+
         let html = '<div class="bio-ui-json-fields">';
         if (title) {
             html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
         }
         html += '<form data-ui-json-form="1">';
-        fields.forEach(function (fd) {
-            html += renderFormField(fd);
+        hiddenFields.forEach(function (fd) {
+            html += renderFormField(fd, { useGrid: false });
         });
+        if (grid) {
+            html += '<div class="row g-3">';
+        }
+        visibleFields.forEach(function (fd) {
+            html += renderFormField(fd, { useGrid: grid });
+        });
+        if (grid) {
+            html += '</div>';
+        }
         html += '<div class="d-flex justify-content-end pt-2">';
         html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
         html += '</div>';
@@ -1158,12 +1288,58 @@
     }
 
     // Nota: el soporte legacy de wizard/steps fue eliminado (corte total). Ver `renderUiJsonBlocks()`.
+
+    /**
+     * Grid Bootstrap (12 cols) por campo. Requiere ancestro `.row` ({@see fieldsBlockUsesBootstrapGrid}).
+     * `layout.col`: 1–12; `layout.breakpoint`: sm|md|lg|xl|xxl (default md → `col-md-*`).
+     */
+    function fieldBootstrapColClass(field, useGrid) {
+        if (!useGrid) {
+            return 'mb-3';
+        }
+        const layout = field.layout && typeof field.layout === 'object' ? field.layout : null;
+        if (layout && typeof layout.col === 'number') {
+            let n = Math.round(Number(layout.col));
+            if (!Number.isFinite(n)) {
+                return 'col-12 mb-3';
+            }
+            n = Math.min(12, Math.max(1, n));
+            let bp = layout.breakpoint != null ? String(layout.breakpoint).trim().toLowerCase() : 'md';
+            const allowed = { sm: 1, md: 1, lg: 1, xl: 1, xxl: 1 };
+            if (!allowed[bp]) {
+                bp = 'md';
+            }
+            return 'col-' + bp + '-' + n + ' mb-3';
+        }
+        return 'col-12 mb-3';
+    }
+
+    function fieldsBlockUsesBootstrapGrid(fields) {
+        if (!Array.isArray(fields)) {
+            return false;
+        }
+        return fields.some(function (fd) {
+            if (!fd || typeof fd !== 'object') {
+                return false;
+            }
+            if (String(fd.type || '') === 'hidden') {
+                return false;
+            }
+            const layout = fd.layout;
+            return layout && typeof layout === 'object' && typeof layout.col === 'number';
+        });
+    }
+
     /**
      * Renderizar campo de formulario
+     * @param {object} opts - `{ useGrid?: boolean }` si el bloque fields usa `.row` (layout Bootstrap).
      */
-    function renderCustomWidgetField(field) {
+    function renderCustomWidgetField(field, opts) {
+        opts = opts || {};
+        const useGrid = opts.useGrid === true;
+        const outerClass = fieldBootstrapColClass(field, useGrid);
         const wid = field.widget_id || '';
-        let html = '<div class="mb-3 bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
+        let html = '<div class="' + outerClass + ' bio-ui-custom-widget" data-bio-ui-widget="' + escapeHtml(wid) + '">';
         if (field.label) {
             html += '<label class="form-label">' + escapeHtml(field.label);
             if (field.required) {
@@ -1181,16 +1357,19 @@
         return html;
     }
 
-    function renderFormField(field) {
+    function renderFormField(field, opts) {
+        opts = opts || {};
+        const useGrid = opts.useGrid === true;
         if (field.type === 'hidden') {
             const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
             return '<input type="hidden" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '">';
         }
         if (field.type === 'custom_widget') {
-            return renderCustomWidgetField(field);
+            return renderCustomWidgetField(field, opts);
         }
 
-        let html = '<div class="mb-3">';
+        const outerClass = fieldBootstrapColClass(field, useGrid);
+        let html = '<div class="' + outerClass + '">';
         html += '<label class="form-label">' + escapeHtml(field.label || '');
         if (field.required) {
             html += ' <span class="text-danger">*</span>';

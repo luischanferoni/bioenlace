@@ -304,13 +304,19 @@
     line-height: 0;
 }
 
-/* Franja de pasos del flujo (flow_manifest) al pie de la mini-UI embebida en el chat */
-.bio-ui-json-flow-rail {
-    position: sticky;
-    bottom: 0;
-    z-index: 2;
-    background: var(--bs-body-bg, #fff);
-    box-shadow: 0 -6px 12px rgba(0, 0, 0, 0.04);
+/* Bloque `intent_flow` a ancho completo (título h4 + mini-UI; no burbuja angosta) */
+.spa-chat-flow-row,
+.spa-chat-flow-turn {
+    max-width: 100%;
+}
+
+/* Plan de pasos (flow_manifest.steps): una sola tira, centrada, debajo de la mini-UI del paso activo */
+.spa-flow-plan-wrap .spa-flow-plan {
+    padding-left: 0;
+}
+
+.spa-flow-plan-wrap .spa-flow-plan-badge {
+    font-weight: 500;
 }
 
 /* Lista embebida UI JSON: transición suave al seleccionar ítem. */

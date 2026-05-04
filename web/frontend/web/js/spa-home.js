@@ -255,9 +255,14 @@
     function scrollChatToBottom() {
         if (!chatMessagesDiv) return;
         try {
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            const root = document.scrollingElement || document.documentElement;
+            if (root) {
+                root.scrollTo({ top: root.scrollHeight, behavior: 'smooth' });
+            }
         } catch (e) {
-            // ignore
+            try {
+                chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+            } catch (e2) { /* ignore */ }
         }
     }
 

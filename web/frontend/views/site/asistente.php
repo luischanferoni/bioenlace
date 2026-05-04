@@ -11,8 +11,8 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
 ?>
 
 <div class="container-fluid px-0 spa-asistente-root">
-    <div class="row g-0 flex-grow-1">
-        <div class="col-12 d-flex flex-column spa-asistente-col">
+    <div class="row g-0">
+        <div class="col-12">
             <div id="spa-chat-root" class="spa-chat-root d-flex flex-column">
                 <div id="spa-chat-toolbar" class="spa-chat-toolbar w-100">
                     <!-- Botón y .dropdown-menu como hermanos directos (Bootstrap y bootstrap-custom.js esperan nextElementSibling). -->
@@ -36,7 +36,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                     </div>
                 </div>
 
-                <div id="spa-chat-messages" class="spa-chat-messages flex-grow-1 overflow-auto px-0">
+                <div id="spa-chat-messages" class="spa-chat-messages flex-grow-1 px-0">
                     <!-- Respuesta del asistente (se muestra/oculta desde JS) -->
                     <div id="spa-response-section" class="d-none">
                         <div class="d-flex justify-content-start mb-3">

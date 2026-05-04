@@ -62,6 +62,7 @@ final class UiScreenService
 
         if ($req->isPost) {
             try {
+                $postParams = self::expandSlotIdForTurnosCrearComoPaciente($entity, $action, $postParams);
                 $submitResult = $submit($postParams);
                 return [
                     'success' => true,
@@ -99,6 +100,7 @@ final class UiScreenService
         if ($values !== null) {
             $params = array_merge($params, $values);
         }
+        $params = self::expandSlotIdForTurnosCrearComoPaciente($entity, $action, $params);
 
         $config = UiDefinitionTemplateManager::render($entity, $action, $params);
         if (!is_array($config) || $config === []) {
@@ -131,6 +133,42 @@ final class UiScreenService
             ],
             $config
         );
+    }
+
+    /**
+     * El flujo conversacional guarda el slot como `slot_id` = "id_rrhh_servicio_asignado|fecha|hora".
+     * Expande a campos que espera {@see Turno} y el POST del screen.
+     *
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private static function expandSlotIdForTurnosCrearComoPaciente(string $entity, string $action, array $params): array
+    {
+        if (strtolower($entity) !== 'turnos' || $action !== 'crear-como-paciente') {
+            return $params;
+        }
+        $slotId = $params['slot_id'] ?? null;
+        if (!is_string($slotId) || trim($slotId) === '') {
+            return $params;
+        }
+        $parts = explode('|', $slotId);
+        if (count($parts) !== 3) {
+            return $params;
+        }
+        $idRrsa = trim($parts[0]);
+        $fecha = trim($parts[1]);
+        $hora = trim($parts[2]);
+        if ($idRrsa !== '' && (!isset($params['id_rrhh_servicio_asignado']) || $params['id_rrhh_servicio_asignado'] === '' || $params['id_rrhh_servicio_asignado'] === null)) {
+            $params['id_rrhh_servicio_asignado'] = $idRrsa;
+        }
+        if ($fecha !== '' && (!isset($params['fecha']) || $params['fecha'] === '' || $params['fecha'] === null)) {
+            $params['fecha'] = $fecha;
+        }
+        if ($hora !== '' && (!isset($params['hora']) || $params['hora'] === '' || $params['hora'] === null)) {
+            $params['hora'] = $hora;
+        }
+
+        return $params;
     }
 }
 

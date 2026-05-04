@@ -26,6 +26,9 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  static const String _welcomeMessage =
+      '¡Hola! Soy tu asistente de BioEnlace. ¿En qué puedo ayudarte?';
+
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late AsistenteService _asistenteService;
@@ -35,6 +38,27 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _intentId;
   String? _subintentId;
 
+  /// Cierra el flujo del asistente sin persistir; vuelve al mensaje inicial (sin llamar a la API).
+  void _resetAssistantToWelcome() {
+    setState(() {
+      _chatHistory = [
+        {
+          'type': 'bot',
+          'content': _welcomeMessage,
+          'timestamp': DateTime.now(),
+        }
+      ];
+      _draft = {};
+      _intentId = null;
+      _subintentId = null;
+      _asistenteService.currentIntentId = null;
+      _asistenteService.currentSubintentId = null;
+      _asistenteService.draft = {};
+      _isSending = false;
+    });
+    _scrollToBottom();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,7 +67,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _chatHistory = [
       {
         'type': 'bot',
-        'content': '¡Hola! Soy tu asistente de BioEnlace. ¿En qué puedo ayudarte?',
+        'content': _welcomeMessage,
         'timestamp': DateTime.now(),
       }
     ];
@@ -476,7 +500,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  /// Query de UI JSON: el servidor a veces no envía `parameters.provided`; el draft local ya tiene id_*.
+  /// Query de UI JSON: el servidor a veces no envía `parameters.provided`; el draft local trae id_*,
+  /// `slot_id` (composite del paso horario) y `tipo_atencion` para la pantalla de confirmación.
   Map<String, dynamic> _mergeDraftIdsWithProvided(Object? providedRaw) {
     final out = <String, dynamic>{};
     for (final e in _draft.entries) {
@@ -488,6 +513,14 @@ class _ChatScreenState extends State<ChatScreen> {
       if (v != null && v.toString().trim().isNotEmpty) {
         out[k] = v;
       }
+    }
+    final slot = _draft['slot_id'];
+    if (slot != null && slot.toString().trim().isNotEmpty) {
+      out['slot_id'] = slot;
+    }
+    final tipo = _draft['tipo_atencion'];
+    if (tipo != null && tipo.toString().trim().isNotEmpty) {
+      out['tipo_atencion'] = tipo;
     }
     if (providedRaw is Map) {
       out.addAll(Map<String, dynamic>.from(providedRaw));
@@ -958,6 +991,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               appClient: 'bioenlace-paciente',
                               title: inlineUi['title']?.toString(),
                               embedded: true,
+                              onCancel: _resetAssistantToWelcome,
                               onDraftDelta: (dd) async {
                                 _draft = {..._draft, ...dd};
                                 // El descriptor GET puede llevar filtros en query (`id_servicio`, …) vía `provided`;

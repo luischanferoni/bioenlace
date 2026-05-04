@@ -1,0 +1,67 @@
+{
+  "ui_type": "ui_json",
+  "title": "Confirmar turno",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "default",
+      "title": "Revisá y confirmá",
+      "fields": [
+        {
+          "name": "id_servicio_asignado",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_efector",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_rr_hh",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_rrhh_servicio_asignado",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "fecha",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "hora",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "tipo_atencion",
+          "label": "Tipo de atención",
+          "type": "select",
+          "required": true,
+          "value": "presencial",
+          "default": "presencial",
+          "options": [
+            { "value": "presencial", "label": "Presencial" },
+            { "value": "teleconsulta", "label": "Por chat / teleconsulta" }
+          ]
+        }
+      ]
+    }
+  ]
+}

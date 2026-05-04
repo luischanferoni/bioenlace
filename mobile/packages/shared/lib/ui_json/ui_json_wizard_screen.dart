@@ -166,6 +166,9 @@ class UiJsonWizardScreen extends StatefulWidget {
   /// Callback opcional para submits de formularios: permite que el host (chat) avance el flow.
   final Future<void> Function(Map<String, dynamic> submitData)? onSubmitSuccess;
 
+  /// Embebido: cancelar sin POST (p. ej. volver al estado inicial del chat).
+  final VoidCallback? onCancel;
+
   const UiJsonWizardScreen({
     Key? key,
     required this.apiAbsoluteUrl,
@@ -175,6 +178,7 @@ class UiJsonWizardScreen extends StatefulWidget {
     this.embedded = false,
     this.onDraftDelta,
     this.onSubmitSuccess,
+    this.onCancel,
   }) : super(key: key);
 
   @override
@@ -839,6 +843,16 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               child: Text(msg, style: theme.textTheme.bodyMedium),
             ),
+            if (widget.embedded && widget.onCancel != null) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: widget.onCancel,
+                  child: const Text('Cancelar'),
+                ),
+              ),
+            ],
           ],
         );
       }
@@ -924,10 +938,25 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
               },
             ),
           ),
+          if (widget.embedded && widget.onCancel != null && !_listEmbedLocked && !requiresConfirmation) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: widget.onCancel,
+                child: const Text('Cancelar'),
+              ),
+            ),
+          ],
           if (requiresConfirmation) ...[
             const SizedBox(height: 12),
             Row(
               children: [
+                if (widget.embedded && widget.onCancel != null && !_listEmbedLocked)
+                  TextButton(
+                    onPressed: widget.onCancel,
+                    child: const Text('Cancelar'),
+                  ),
                 const Spacer(),
                 FilledButton(
                   onPressed: (_listEmbedLocked || _listEmbedSelectedId == null)
@@ -1026,6 +1055,11 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
           const SizedBox(height: 8),
           Row(
             children: [
+              if (widget.embedded && widget.onCancel != null)
+                TextButton(
+                  onPressed: (_loading || _formSubmitted) ? null : widget.onCancel,
+                  child: const Text('Cancelar'),
+                ),
               const Spacer(),
               ElevatedButton(
                 onPressed: (_loading || _formSubmitted) ? null : _submit,

@@ -305,6 +305,10 @@
 }
 
 /* Progreso del flujo (flow_manifest) dentro de la burbuja del chat */
+.spa-flow-progress {
+    margin-top: 0.5rem;
+}
+
 .spa-flow-progress .progress {
     width: 100%;
     min-width: 120px;

@@ -326,7 +326,8 @@
         const total = steps.length;
         const pct = Math.max(6, Math.min(100, Math.round((current / total) * 100)));
         const label = 'Paso ' + current + ' de ' + total;
-        return '<div class="spa-flow-progress mt-2 pt-2 border-top">'
+        /* Sin clase `mt-2` aquí: evita que sea el primer `.mt-2` del bubble y robe el mount de la mini-UI. */
+        return '<div class="spa-flow-progress pt-2 border-top">'
             + '<div class="small text-muted mb-1">' + escapeHtml(label) + '</div>'
             + '<div class="progress" style="height:7px" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + escapeHtml(label) + '">'
             + '<div class="progress-bar bg-primary" style="width:' + pct + '%"></div>'
@@ -557,6 +558,8 @@
 
                 // Host para renderizar la mini-UI del paso (idealmente dentro de la burbuja).
                 const mountHost = botBubble ? botBubble : actionsDiv;
+                /** Solo rama 1 tab + burbuja; si no, queda null (evita confundir el mount con `.spa-flow-progress`). */
+                let flowUiMount = null;
 
                 if (tabs.length >= 2) {
                     if (!botBubble) {
@@ -633,9 +636,9 @@
                     actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 } else {
                     // Importante: no renderizar la UI sobre el root de la burbuja porque renderDynamicUi()
-                    // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo.
-                    var flowUiMount = document.createElement('div');
-                    flowUiMount.className = 'mt-2';
+                    // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo dedicado.
+                    flowUiMount = document.createElement('div');
+                    flowUiMount.className = 'mt-2 spa-flow-ui-mount';
                     const loading = document.createElement('div');
                     loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
                     loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
@@ -668,40 +671,25 @@
                 .then(json => {
                     if (!botBubble) {
                         actionsDiv.innerHTML = '';
-                    } else {
-                        // limpiar loaders dentro de la burbuja
-                        try {
-                            Array.from(mountHost.querySelectorAll('.spinner-border')).forEach(function (s) {
-                                const wrap = s.closest('div');
-                                if (wrap && wrap.textContent && wrap.textContent.toLowerCase().includes('cargando')) {
-                                    wrap.remove();
-                                }
-                            });
-                        } catch (e) {
-                            // ignore
-                        }
+                    } else if (flowUiMount) {
+                        flowUiMount.innerHTML = '';
                     }
                     if (json && json.kind === 'ui_definition') {
-                        const target = botBubble
-                            ? (mountHost.querySelector('.mt-2') || mountHost)
-                            : actionsDiv;
+                        const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
                         renderDynamicUi(json, target, { url: fullUrl });
                     } else {
-                        const target = botBubble
-                            ? (mountHost.querySelector('.mt-2') || mountHost)
-                            : actionsDiv;
+                        const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
                         target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
                     }
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    const target = botBubble
-                        ? (mountHost.querySelector('.mt-2') || mountHost)
-                        : actionsDiv;
+                    const target = (botBubble && flowUiMount) ? flowUiMount : actionsDiv;
                     target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
                 })
                 .finally(() => {
+                    setLoadingState(false);
                     if (!chatMessagesDiv) {
                         responseSection.classList.remove('d-none');
                         setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);

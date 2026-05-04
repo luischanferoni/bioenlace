@@ -15,20 +15,20 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
         <div class="col-12">
             <div id="spa-chat-root" class="spa-chat-root d-flex flex-column">
                 <div id="spa-chat-toolbar" class="spa-chat-toolbar w-100">
-                    <div class="dropdown position-static w-100">
-                        <div class="d-flex justify-content-end">
-                            <button
-                                type="button"
-                                id="spa-shortcuts-toggle-btn"
-                                class="btn btn-outline-secondary btn-sm dropdown-toggle spa-chat-shortcuts-btn"
-                                data-bs-toggle="dropdown"
-                                data-bs-auto-close="outside"
-                                aria-expanded="false"
-                            >
-                                Atajos
-                            </button>
-                        </div>
-                        <div class="dropdown-menu w-100 p-3 shadow-sm start-0 end-0 mt-1 border-0">
+                    <!-- Botón y .dropdown-menu como hermanos directos (Bootstrap y bootstrap-custom.js esperan nextElementSibling). -->
+                    <div class="dropdown position-static w-100 d-flex flex-column align-items-end">
+                        <button
+                            type="button"
+                            id="spa-shortcuts-toggle-btn"
+                            class="btn btn-outline-secondary btn-sm dropdown-toggle spa-chat-shortcuts-btn"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
+                            data-bs-display="static"
+                            aria-expanded="false"
+                        >
+                            Atajos
+                        </button>
+                        <div class="dropdown-menu w-100 p-3 shadow-sm mt-1 border-0 spa-chat-shortcuts-menu">
                             <div id="spa-shortcuts-content" class="overflow-auto" style="max-height: 50vh;">
                                 <!-- Se llena dinámicamente con JavaScript -->
                             </div>
@@ -60,7 +60,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 <div class="spa-chat-input-wrap">
                     <textarea
                         id="spa-query-input"
-                        class="form-control spa-chat-input"
+                        class="form-control spa-chat-input spa-chat-input--bare"
                         rows="2"
                         placeholder="Escribe tu mensaje…"
                     ></textarea>

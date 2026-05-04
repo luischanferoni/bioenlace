@@ -8,7 +8,7 @@
     {
       "kind": "fields",
       "id": "default",
-      "title": "Cancelar día en efector",
+      "title": "Cancelar día en centro de salud",
       "fields": [
         {
           "name": "fecha",

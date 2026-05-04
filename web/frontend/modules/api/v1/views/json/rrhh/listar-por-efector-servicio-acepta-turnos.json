@@ -1,6 +1,6 @@
 {
   "ui_type": "ui_json",
-  "title": "Elegir profesional (por efector y servicio)",
+  "title": "Elegir profesional (por centro de salud y servicio)",
   "ui_meta": {
     "schema_version": "1",
     "clients": {

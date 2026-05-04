@@ -818,10 +818,29 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       final requiresConfirmation = selection['requires_confirmation'] == true;
       final draftField = b['draft_field']?.toString() ?? '';
       final title = b['title']?.toString();
+      final emptyMessage = (b['empty_message'] ?? b['list_empty_message'])?.toString().trim();
       const double listRowHeight = 88;
       const double cardWidth = 148;
       if (draftField.isEmpty) {
         return const Text('UI inválida: falta draft_field');
+      }
+      if (items.isEmpty && !_loading) {
+        final msg = (emptyMessage != null && emptyMessage.isNotEmpty)
+            ? emptyMessage
+            : 'No hay opciones para elegir en este momento. Si buscabas un servicio concreto, puede que aún no esté habilitado para turnos; consultá con tu centro de salud.';
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (title != null && title.trim().isNotEmpty) ...[
+              Text(title, style: theme.textTheme.titleSmall),
+              const SizedBox(height: 8),
+            ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: Text(msg, style: theme.textTheme.bodyMedium),
+            ),
+          ],
+        );
       }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

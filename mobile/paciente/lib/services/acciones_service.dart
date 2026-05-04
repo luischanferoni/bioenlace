@@ -8,6 +8,17 @@ import 'package:shared/shared.dart';
 const String _timeoutErrorMessage =
     'Hubo un error, por favor intente enviar el mensaje de nuevo en unos minutos.';
 
+/// Misma heurística que `SubIntentEngine::userWantsNearby` (PHP): el usuario pide listado por cercanía sin salir del paso.
+bool asistenteUserSaysNearbyForEfectorChooser(String content) {
+  final s = content.trim().toLowerCase();
+  if (s.isEmpty) return false;
+  final re = RegExp(
+    r'\b(cerca|cercanos|cercano|cercanas|cercana|cercanía|cercania)\b',
+    caseSensitive: false,
+  );
+  return re.hasMatch(s);
+}
+
 /// Servicio para procesar consultas en lenguaje natural y obtener acciones
 /// 
 /// Este servicio se conecta al mismo endpoint que usa:
@@ -44,6 +55,17 @@ class AsistenteService {
   /// [actionId] es opcional: si se proporciona, el backend intentará buscar la acción por ID primero
   Future<Map<String, dynamic>> procesarInteraccion(String textoInteraccionUsuario, {String? actionId}) async {
     try {
+      // Texto libre del usuario = nueva consulta al IntentEngine (no seguir atascado en SubIntentEngine
+      // repitiendo la misma mini-UI). Excepción: “cerca…” para ramificar listado cercano en el mismo paso.
+      final trimmedIn = textoInteraccionUsuario.trim();
+      if ((actionId == null || actionId.isEmpty) &&
+          trimmedIn.isNotEmpty &&
+          !asistenteUserSaysNearbyForEfectorChooser(textoInteraccionUsuario)) {
+        currentIntentId = null;
+        currentSubintentId = null;
+        draft = {};
+      }
+
       // Mismo endpoint que usa site/acciones.php en la web y la app del médico
       final uri = Uri.parse('${AppConfig.apiUrl}/asistente/enviar');
       

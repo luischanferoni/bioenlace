@@ -36,7 +36,7 @@
         },
         {
           "name": "id_efector",
-          "label": "Efector (opcional si hay sesión)",
+          "label": "Centro de salud (opcional si hay sesión)",
           "type": "text",
           "required": false
         },

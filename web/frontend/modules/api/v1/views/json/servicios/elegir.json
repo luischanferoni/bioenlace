@@ -14,6 +14,7 @@
       "selection": { "mode": "single" },
       "chips": [],
       "draft_field": "id_servicio_asignado",
+      "empty_message": "No hay servicios disponibles para sacar turno en este momento. Es posible que aún no estén cargados en el sistema; consultá con tu centro de salud o administración.",
       "item": { "kind": "servicio", "id_field": "id", "label_field": "name" },
       "items": []
     }

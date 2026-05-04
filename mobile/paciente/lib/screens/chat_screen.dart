@@ -92,6 +92,17 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
 
     try {
+      // Sin esto, cualquier mensaje seguía yendo a SubIntentEngine con el mismo intent y volvía a abrir
+      // el selector de efector (faltan draft.*). El texto libre debe re-enrutar al IntentEngine raíz.
+      if (!asistenteUserSaysNearbyForEfectorChooser(text)) {
+        _intentId = null;
+        _subintentId = null;
+        _draft = {};
+        _asistenteService.currentIntentId = null;
+        _asistenteService.currentSubintentId = null;
+        _asistenteService.draft = {};
+      }
+
       // Procesar interacción del usuario con el servicio de acciones
       final result = await _asistenteService.procesarInteraccion(text);
 
@@ -367,7 +378,42 @@ class _ChatScreenState extends State<ChatScreen> {
     return base;
   }
 
-  Future<String?> _absoluteUrlForFlowManifestTab(Map<String, dynamic> tab) async {
+  /// Combina `inline_ui.provided` del mensaje (snapshot al abrir el paso) con `_draft` vivo.
+  /// Así las pestañas siguen teniendo `id_servicio*` aunque `_draft` global se haya limpiado al escribir otra consulta.
+  Map<String, dynamic> _draftSnapshotForMessage(int messageIndex) {
+    final out = <String, dynamic>{};
+    if (messageIndex >= 0 && messageIndex < _chatHistory.length) {
+      final inline = _chatHistory[messageIndex]['inline_ui'];
+      if (inline is Map) {
+        if (inline['provided'] is Map) {
+          out.addAll(Map<String, dynamic>.from(inline['provided'] as Map));
+        }
+        final abs = inline['api_absolute_url']?.toString();
+        if (abs != null && abs.trim().isNotEmpty) {
+          final u = Uri.tryParse(abs);
+          final idA = u?.queryParameters['id_servicio_asignado'];
+          final idS = u?.queryParameters['id_servicio'];
+          if (idA != null && idA.isNotEmpty) {
+            out.putIfAbsent('id_servicio_asignado', () => idA);
+          }
+          if (idS != null && idS.isNotEmpty) {
+            out.putIfAbsent('id_servicio', () => idS);
+          }
+        }
+      }
+    }
+    _draft.forEach((k, v) {
+      if (v != null && v.toString().trim().isNotEmpty) {
+        out[k] = v;
+      }
+    });
+    return out;
+  }
+
+  Future<String?> _absoluteUrlForFlowManifestTab(
+    Map<String, dynamic> tab, {
+    required Map<String, dynamic> draftForQuery,
+  }) async {
     final route = tab['route']?.toString() ?? '';
     if (route.isEmpty) {
       return null;
@@ -379,7 +425,7 @@ class _ChatScreenState extends State<ChatScreen> {
         final spec = e.value?.toString() ?? '';
         if (spec.startsWith('draft.')) {
           final f = spec.substring(6);
-          final v = _draft[f];
+          final v = draftForQuery[f];
           if (v != null && v.toString().isNotEmpty) {
             qp[e.key.toString()] = v.toString();
           }
@@ -394,30 +440,89 @@ class _ChatScreenState extends State<ChatScreen> {
         perm = await Geolocator.requestPermission();
       }
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        throw Exception('Se necesita permiso de ubicación para listar efectores cercanos.');
+        throw Exception('Se necesita permiso de ubicación para listar centros de salud cercanos.');
       }
       final pos = await Geolocator.getCurrentPosition();
       qp['latitud'] = '${pos.latitude}';
       qp['longitud'] = '${pos.longitude}';
     }
     var u = Uri.parse(resolveApiAbsoluteUrl(route));
-    u = u.replace(queryParameters: {...u.queryParameters, ...qp});
+    final merged = <String, String>{...u.queryParameters, ...qp};
+    _ensureServicioQueryForEfectoresListado(route, merged, draftForQuery);
+    u = u.replace(queryParameters: merged);
     return u.toString();
+  }
+
+  /// El backend exige `id_servicio` o `id_servicio_asignado` en listar-por-servicio*;
+  /// la pestaña "cercano" puede traer solo lat/lng si el manifest no repite draft.*.
+  void _ensureServicioQueryForEfectoresListado(
+    String route,
+    Map<String, String> qp,
+    Map<String, dynamic> draft,
+  ) {
+    if (!route.contains('listar-por-servicio')) {
+      return;
+    }
+    bool has(String k) => (qp[k]?.trim().isNotEmpty ?? false);
+    if (has('id_servicio') || has('id_servicio_asignado')) {
+      return;
+    }
+    final a = draft['id_servicio_asignado'];
+    final s = draft['id_servicio'];
+    if (a != null && a.toString().trim().isNotEmpty) {
+      qp['id_servicio_asignado'] = a.toString().trim();
+    } else if (s != null && s.toString().trim().isNotEmpty) {
+      qp['id_servicio'] = s.toString().trim();
+    }
+  }
+
+  /// Query de UI JSON: el servidor a veces no envía `parameters.provided`; el draft local ya tiene id_*.
+  Map<String, dynamic> _mergeDraftIdsWithProvided(Object? providedRaw) {
+    final out = <String, dynamic>{};
+    for (final e in _draft.entries) {
+      final k = e.key.toString();
+      if (!k.startsWith('id_')) {
+        continue;
+      }
+      final v = e.value;
+      if (v != null && v.toString().trim().isNotEmpty) {
+        out[k] = v;
+      }
+    }
+    if (providedRaw is Map) {
+      out.addAll(Map<String, dynamic>.from(providedRaw));
+    }
+    return out;
   }
 
   Future<void> _onFlowManifestTabSelected(int messageIndex, Map<String, dynamic> tab) async {
     try {
-      final url = await _absoluteUrlForFlowManifestTab(tab);
+      final draftSnap = _draftSnapshotForMessage(messageIndex);
+      final url = await _absoluteUrlForFlowManifestTab(tab, draftForQuery: draftSnap);
       if (url == null || url.isEmpty) {
         _showErrorSnackbar('No se pudo armar la URL del listado.');
         return;
+      }
+      final route = tab['route']?.toString() ?? '';
+      if (route.contains('listar-por-servicio')) {
+        final u = Uri.tryParse(url);
+        final q = u?.queryParameters ?? {};
+        final hasServ = (q['id_servicio']?.trim().isNotEmpty ?? false) ||
+            (q['id_servicio_asignado']?.trim().isNotEmpty ?? false);
+        if (!hasServ) {
+          _showErrorSnackbar(
+            'Falta el servicio elegido para listar centros de salud. Volvé a elegir el servicio en el paso anterior o iniciá de nuevo el trámite de turno.',
+          );
+          return;
+        }
       }
       setState(() {
         final m = _chatHistory[messageIndex];
         m['flow_selected_tab_id'] = tab['id']?.toString();
         final inline = m['inline_ui'];
-        if (inline is Map<String, dynamic>) {
+        if (inline is Map) {
           inline['api_absolute_url'] = url;
+          inline['provided'] = draftSnap;
           final r = tab['route']?.toString();
           if (r != null && r.isNotEmpty) {
             inline['route'] = r;
@@ -447,8 +552,14 @@ class _ChatScreenState extends State<ChatScreen> {
         _showErrorSnackbar('Acción UI JSON sin api.route.');
         return true;
       }
-      final provided = (action['parameters'] is Map) ? (action['parameters'] as Map)['provided'] : null;
-      final apiAbs = _clientOpenUiJsonAbsoluteUrl(co);
+      final providedRaw = (action['parameters'] is Map) ? (action['parameters'] as Map)['provided'] : null;
+      final effectiveProvided = _mergeDraftIdsWithProvided(providedRaw);
+      // Igual que la SPA: `api.query` del descriptor + query desde draft/provided (p. ej. id_servicio_asignado).
+      var apiAbs = _clientOpenUiJsonAbsoluteUrl(co);
+      if (effectiveProvided.isNotEmpty) {
+        final base = apiAbs.trim().isNotEmpty ? apiAbs : resolveApiAbsoluteUrl(route);
+        apiAbs = applyProvidedParamsToRoute(base, effectiveProvided);
+      }
       // Contrato nuevo: el motor abre SIEMPRE inline automáticamente.
       final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';
       setState(() {
@@ -457,7 +568,7 @@ class _ChatScreenState extends State<ChatScreen> {
           m['inline_ui'] = {
             'title': title,
             'route': route,
-            'provided': provided,
+            'provided': effectiveProvided.isNotEmpty ? effectiveProvided : providedRaw,
             if (apiAbs.isNotEmpty) 'api_absolute_url': apiAbs,
           };
           final fm = m['flow_manifest'];
@@ -482,7 +593,7 @@ class _ChatScreenState extends State<ChatScreen> {
             'inline_ui': {
               'title': title,
               'route': route,
-              'provided': provided,
+              'provided': effectiveProvided.isNotEmpty ? effectiveProvided : providedRaw,
               if (apiAbs.isNotEmpty) 'api_absolute_url': apiAbs,
             },
             'timestamp': DateTime.now(),

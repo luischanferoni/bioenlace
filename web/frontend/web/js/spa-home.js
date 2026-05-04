@@ -152,6 +152,15 @@
     let currentIntentId = null;
     let currentSubintentId = null;
     let draft = {};
+
+    /**
+     * Alineado con SubIntentEngine::userWantsNearby (PHP): mantener el flow al pedir efectores cercanos.
+     */
+    function userSaysNearbyForEfectorChooser(content) {
+        var s = String(content || '').trim().toLowerCase();
+        if (!s) return false;
+        return /\b(cerca|cercanos|cercano|cercanas|cercana|cercanía|cercania)\b/i.test(s);
+    }
     /** Una sola tira de plan en el DOM; se mueve al montaje activo del paso. */
     let bioFlowPlanStripEl = null;
     /** Contexto del último paso `intent_flow` para pintar la tira tras cargar la UI (`flow_manifest` + título). */
@@ -561,6 +570,14 @@
         // window.spaConfig.baseUrl puede ser https://host/api y concatenar "/api/..." duplica.
         const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
         const body = {};
+
+        // Texto libre = nueva consulta al IntentEngine; se conserva el flow solo para “cerca…” (misma heurística que SubIntentEngine).
+        if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query)) {
+            currentIntentId = null;
+            currentSubintentId = null;
+            draft = {};
+            writeFlowState();
+        }
 
         // Modo flow: si hay intent activo, enviar snapshot.
         if (currentIntentId) {

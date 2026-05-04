@@ -29,7 +29,7 @@
     },
     {
       "name": "id_efector",
-      "label": "Efector",
+      "label": "Centro de salud",
       "type": "autocomplete",
       "required": true,
       "endpoint": "/efectores/buscar",

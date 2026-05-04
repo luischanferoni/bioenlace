@@ -1,6 +1,6 @@
 {
   "ui_type": "ui_json",
-  "title": "Efectores cercanos (por servicio)",
+  "title": "Centros de salud cercanos (por servicio)",
   "ui_meta": {
     "schema_version": "1",
     "clients": {

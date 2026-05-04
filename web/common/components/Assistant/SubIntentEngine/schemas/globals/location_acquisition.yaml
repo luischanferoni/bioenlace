@@ -10,7 +10,7 @@ policy:
     - id: ask_permission
       interaction:
         kind: request_location
-        reason: "Para sugerirte efectores cercanos necesito tu ubicación."
+        reason: "Para sugerirte centros de salud cercanos necesito tu ubicación."
     - id: choose_saved_address
       open_ui:
         action_id: domicilios.elegir

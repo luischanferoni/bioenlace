@@ -12,7 +12,7 @@
       "fields": [
         {
           "name": "id_efector",
-          "label": "Efector (obligatorio si no hay sesión operativa)",
+          "label": "Centro de salud (obligatorio si no hay sesión operativa)",
           "type": "text",
           "required": false
         }

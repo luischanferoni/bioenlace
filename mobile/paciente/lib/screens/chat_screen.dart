@@ -38,6 +38,31 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _intentId;
   String? _subintentId;
 
+  /// `turnos.crear-como-paciente` → `/api/v1/turnos/crear-como-paciente` (fallback si `client_open` viene null).
+  String? _apiRouteFromActionId(String actionId) {
+    final aid = actionId.trim().toLowerCase();
+    final dot = aid.indexOf('.');
+    if (dot <= 0 || dot >= aid.length - 1) {
+      return null;
+    }
+    final ent = aid.substring(0, dot);
+    final act = aid.substring(dot + 1);
+    if (ent.isEmpty || act.isEmpty) {
+      return null;
+    }
+    return '/api/v1/$ent/$act';
+  }
+
+  /// Solo el paso final de confirmación de turno (formulario POST), no listados previos.
+  bool _inlineUiIsConfirmacionTurno(Object? inline) {
+    if (inline is! Map) {
+      return false;
+    }
+    final route = (inline['route'] ?? '').toString();
+    final abs = (inline['api_absolute_url'] ?? '').toString();
+    return route.contains('crear-como-paciente') || abs.contains('crear-como-paciente');
+  }
+
   /// Cierra el flujo del asistente sin persistir; vuelve al mensaje inicial (sin llamar a la API).
   void _resetAssistantToWelcome() {
     setState(() {
@@ -231,6 +256,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   }
                 }
               }
+              route ??= _apiRouteFromActionId(actionId);
 
               if (route != null && route.isNotEmpty) {
                 final pseudoAction = <String, dynamic>{
@@ -991,7 +1017,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               appClient: 'bioenlace-paciente',
                               title: inlineUi['title']?.toString(),
                               embedded: true,
-                              onCancel: _resetAssistantToWelcome,
+                              onCancel: _inlineUiIsConfirmacionTurno(inlineUi) ? _resetAssistantToWelcome : null,
                               onDraftDelta: (dd) async {
                                 _draft = {..._draft, ...dd};
                                 // El descriptor GET puede llevar filtros en query (`id_servicio`, …) vía `provided`;
@@ -1089,6 +1115,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                               }
                                             }
                                           }
+                                          route ??= _apiRouteFromActionId(actionId);
                                           if (route != null && route.isNotEmpty) {
                                             pseudoAction = <String, dynamic>{
                                               'action_id': actionId,

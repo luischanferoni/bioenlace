@@ -156,6 +156,94 @@
     let bioFlowPlanStripEl = null;
     /** Contexto del último paso `intent_flow` para pintar la tira tras cargar la UI (`flow_manifest` + título). */
     let bioFlowPlanPendingContext = null;
+    let flowPlanStickySyncRaf = null;
+    let flowPlanStickyListenersBound = false;
+
+    function updateFlowPlanStickyBottomVar() {
+        if (!chatComposer) return;
+        try {
+            const h = Math.ceil(chatComposer.getBoundingClientRect().height);
+            document.documentElement.style.setProperty('--spa-flow-plan-sticky-bottom', (h + 12) + 'px');
+        } catch (e) { /* ignore */ }
+    }
+
+    function scheduleFlowPlanStickySync() {
+        if (flowPlanStickySyncRaf != null) return;
+        flowPlanStickySyncRaf = requestAnimationFrame(function () {
+            flowPlanStickySyncRaf = null;
+            syncFlowPlanStickyUi();
+        });
+    }
+
+    function bindFlowPlanStickyListeners() {
+        if (flowPlanStickyListenersBound) {
+            scheduleFlowPlanStickySync();
+            return;
+        }
+        flowPlanStickyListenersBound = true;
+        window.addEventListener('scroll', scheduleFlowPlanStickySync, { passive: true });
+        window.addEventListener('resize', scheduleFlowPlanStickySync);
+    }
+
+    function unbindFlowPlanStickyListeners() {
+        if (flowPlanStickySyncRaf != null) {
+            cancelAnimationFrame(flowPlanStickySyncRaf);
+            flowPlanStickySyncRaf = null;
+        }
+        if (!flowPlanStickyListenersBound) return;
+        window.removeEventListener('scroll', scheduleFlowPlanStickySync);
+        window.removeEventListener('resize', scheduleFlowPlanStickySync);
+        flowPlanStickyListenersBound = false;
+    }
+
+    /**
+     * Sticky del plan acotado al `.spa-chat-flow-row`: oculta si el bloque quedó arriba del viewport;
+     * `border-2` en el `<li>` del paso según la posición de lectura (línea sobre el composer).
+     */
+    function syncFlowPlanStickyUi() {
+        const strip = bioFlowPlanStripEl;
+        if (!strip || !strip.isConnected) return;
+        if (!strip.classList.contains('spa-flow-plan-wrap--sticky-enabled')) return;
+
+        updateFlowPlanStickyBottomVar();
+        const flowRow = strip.closest('.spa-chat-flow-row');
+        if (!flowRow) return;
+
+        const ul = strip.querySelector('ul.spa-flow-plan');
+        if (!ul) return;
+        const lis = [];
+        for (let c = ul.firstElementChild; c; c = c.nextElementSibling) {
+            if (c.tagName === 'LI') lis.push(c);
+        }
+        if (!lis.length) return;
+
+        const fr = flowRow.getBoundingClientRect();
+        if (fr.bottom <= 0) {
+            strip.classList.add('spa-flow-plan-wrap--hidden-above');
+        } else {
+            strip.classList.remove('spa-flow-plan-wrap--hidden-above');
+        }
+
+        let composerH = 120;
+        try {
+            composerH = chatComposer ? Math.ceil(chatComposer.getBoundingClientRect().height) : 120;
+        } catch (e) { /* ignore */ }
+        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+        const lineY = Math.max(0, vh - composerH - 8);
+        let ratio = (lineY - fr.top) / Math.max(1, fr.height);
+        if (ratio < 0) ratio = 0;
+        if (ratio > 1) ratio = 1;
+        const idx = Math.round(ratio * (lis.length - 1));
+
+        for (let i = 0; i < lis.length; i++) {
+            const li = lis[i];
+            li.classList.remove('spa-flow-plan-li--scroll-focus', 'border', 'border-2', 'border-primary', 'rounded');
+            if (i === idx) {
+                li.classList.add('spa-flow-plan-li--scroll-focus', 'border', 'border-2', 'border-primary', 'rounded');
+            }
+        }
+    }
+
     // Persistencia simple en memoria global para evitar perder estado en re-renders complejos.
     // (No es storage; solo evita depender de closures si se re-ejecuta parte del JS).
     const FLOW_STATE_KEY = '__bio_spa_flow_state__';
@@ -208,11 +296,16 @@
             } catch (e) { /* ignore */ }
         }
         applyChatHeight();
+        updateFlowPlanStickyBottomVar();
         requestAnimationFrame(function () {
             applyChatHeight();
+            updateFlowPlanStickyBottomVar();
+            scheduleFlowPlanStickySync();
         });
         window.addEventListener('resize', function () {
             applyChatHeight();
+            updateFlowPlanStickyBottomVar();
+            scheduleFlowPlanStickySync();
         });
 
         // Capturar el estado "idle" del botón enviar desde el DOM (evitar hardcode en JS).
@@ -401,6 +494,7 @@
     }
 
     function removeFlowPlanStrip() {
+        unbindFlowPlanStickyListeners();
         if (bioFlowPlanStripEl && bioFlowPlanStripEl.parentNode) {
             bioFlowPlanStripEl.parentNode.removeChild(bioFlowPlanStripEl);
         }
@@ -417,6 +511,12 @@
         if (!strip) return;
         mountEl.insertAdjacentElement('afterend', strip);
         bioFlowPlanStripEl = strip;
+        if (chatMessagesDiv && strip.closest && chatMessagesDiv.contains(strip)) {
+            strip.classList.add('spa-flow-plan-wrap--sticky-enabled');
+            updateFlowPlanStickyBottomVar();
+            bindFlowPlanStickyListeners();
+        }
+        scheduleFlowPlanStickySync();
     }
 
     /**

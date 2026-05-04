@@ -211,9 +211,10 @@
 :root {
     /* Separación del sticky “Atajos” respecto al borde superior del viewport (ajustar al gusto). */
     --spa-chat-toolbar-sticky-top: 6.75rem;
+    /* Altura del bloque fijo del composer + margen; la ajusta spa-home.js al medir #spa-chat-composer. */
+    --spa-flow-plan-sticky-bottom: 7.5rem;
 }
 
-/* Asistente: scroll de página (no contenedor de mensajes). Reserva inferior para composer fijo. */
 .spa-asistente-root {
     padding-bottom: calc(6.25rem + env(safe-area-inset-bottom, 0px));
 }
@@ -310,6 +311,18 @@
     max-width: 100%;
 }
 
+.spa-assistant-step-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 0.75rem 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--bs-border-color, #dee2e6);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 /* Plan de pasos (flow_manifest.steps): una sola tira, centrada, debajo de la mini-UI del paso activo */
 .spa-flow-plan-wrap .spa-flow-plan {
     padding-left: 0;
@@ -317,6 +330,27 @@
 
 .spa-flow-plan-wrap .spa-flow-plan-badge {
     font-weight: 500;
+}
+
+/* Sticky solo en chat asistente: encima del textarea, acotado al bloque `.spa-chat-flow-row`. */
+.spa-flow-plan-wrap.spa-flow-plan-wrap--sticky-enabled {
+    position: sticky;
+    bottom: var(--spa-flow-plan-sticky-bottom);
+    z-index: 1018;
+    align-self: stretch;
+    background: var(--bs-body-bg, #fff);
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.06);
+    transition: visibility 0.15s ease, opacity 0.15s ease;
+}
+
+.spa-flow-plan-wrap.spa-flow-plan-wrap--hidden-above {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.spa-flow-plan-wrap .spa-flow-plan > li.spa-flow-plan-li--scroll-focus {
+    padding: 0.125rem 0.25rem;
 }
 
 /* Lista embebida UI JSON: transición suave al seleccionar ítem. */

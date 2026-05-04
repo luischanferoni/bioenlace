@@ -295,46 +295,6 @@
     }
 
     /**
-     * Barra de progreso del flujo (flow_manifest.steps vs paso activo).
-     * @param {object|null} fm
-     * @returns {string} HTML seguro (textos escapados) o cadena vacía
-     */
-    function renderFlowManifestProgressHtml(fm) {
-        if (!fm || typeof fm !== 'object') {
-            return '';
-        }
-        const steps = Array.isArray(fm.steps) ? fm.steps : [];
-        if (steps.length < 1) {
-            return '';
-        }
-        let activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id).trim() : '';
-        if (!activeId && fm.active_step && typeof fm.active_step === 'object' && fm.active_step.id != null) {
-            activeId = String(fm.active_step.id).trim();
-        }
-        let stepIdx = -1;
-        for (let i = 0; i < steps.length; i++) {
-            const sid = steps[i] && steps[i].id != null ? String(steps[i].id).trim() : '';
-            if (sid !== '' && sid === activeId) {
-                stepIdx = i;
-                break;
-            }
-        }
-        if (stepIdx < 0) {
-            stepIdx = 0;
-        }
-        const current = stepIdx + 1;
-        const total = steps.length;
-        const pct = Math.max(6, Math.min(100, Math.round((current / total) * 100)));
-        const label = 'Paso ' + current + ' de ' + total;
-        /* Sin clase `mt-2` aquí: evita que sea el primer `.mt-2` del bubble y robe el mount de la mini-UI. */
-        return '<div class="spa-flow-progress pt-2 border-top">'
-            + '<div class="small text-muted mb-1">' + escapeHtml(label) + '</div>'
-            + '<div class="progress" style="height:7px" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="' + escapeHtml(label) + '">'
-            + '<div class="progress-bar bg-primary" style="width:' + pct + '%"></div>'
-            + '</div></div>';
-    }
-
-    /**
      * Manejar envío de consulta
      */
     function handleSendQuery(contentOverride) {
@@ -477,15 +437,14 @@
             // Flow conversacional: no renderizar cards/botones; renderizar mini-UI inline si viene open_ui.
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
                 const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
-                const progressHtml = renderFlowManifestProgressHtml(fm);
 
                 // En web queremos UX tipo chat: NO borrar historial; append de burbuja bot.
                 let botBubble = null;
                 if (chatMessagesDiv) {
-                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>' + progressHtml);
+                    botBubble = appendChatBubble('bot', '<div>' + escapeHtml(primaryText || 'Ok.') + '</div>');
                 } else {
                     // Fallback legacy (sin contenedor chat)
-                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>' + progressHtml;
+                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
                     actionsDiv.innerHTML = '';
                 }
 
@@ -558,7 +517,7 @@
 
                 // Host para renderizar la mini-UI del paso (idealmente dentro de la burbuja).
                 const mountHost = botBubble ? botBubble : actionsDiv;
-                /** Solo rama 1 tab + burbuja; si no, queda null (evita confundir el mount con `.spa-flow-progress`). */
+                /** Solo rama mini-UI en burbuja; si no, queda null. */
                 let flowUiMount = null;
 
                 if (tabs.length >= 2) {
@@ -635,6 +594,20 @@
                 if (!botBubble) {
                     actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
                 } else {
+                    // Misma franja de contexto que multi-tab (chips), pero el manifiesto suele traer 1 solo tab
+                    // ("Elegir"): antes no se renderizaba fila y el indicador parecía "ausente".
+                    if (tabs.length === 1) {
+                        const tabRow = document.createElement('div');
+                        tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2';
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'btn btn-sm btn-outline-primary active pe-none';
+                        b.setAttribute('aria-current', 'step');
+                        b.tabIndex = -1;
+                        b.textContent = (tabs[0] && tabs[0].label) ? String(tabs[0].label) : 'Paso';
+                        tabRow.appendChild(b);
+                        mountHost.appendChild(tabRow);
+                    }
                     // Importante: no renderizar la UI sobre el root de la burbuja porque renderDynamicUi()
                     // puede reemplazar innerHTML y borrar el texto del bot. Siempre montar en un hijo dedicado.
                     flowUiMount = document.createElement('div');

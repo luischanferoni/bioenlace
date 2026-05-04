@@ -304,22 +304,6 @@
     line-height: 0;
 }
 
-/* Progreso del flujo (flow_manifest) dentro de la burbuja del chat */
-.spa-flow-progress {
-    margin-top: 0.5rem;
-}
-
-.spa-flow-progress .progress {
-    width: 100%;
-    min-width: 120px;
-    background-color: rgba(var(--bs-secondary-rgb, 108, 117, 125), 0.2);
-}
-
-.spa-flow-progress .progress-bar {
-    min-width: 0;
-    transition: width 0.35s ease;
-}
-
 /* Lista embebida UI JSON: transición suave al seleccionar ítem. */
 .bio-ui-json-list button[data-embed-pick="1"] {
     transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.22s ease, opacity 0.22s ease;

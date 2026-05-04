@@ -232,8 +232,8 @@
     bottom: 0;
     z-index: 1020;
     padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
-    background-color: var(--bs-body-bg, #fff);
-    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.04);
+    background-color: transparent;
+    box-shadow: none;
 }
 
 @media (max-width: 768px) {
@@ -255,21 +255,21 @@
     padding-bottom: 0.85rem;
 }
 
-/* Textarea “sin caja”: sin borde ni sombra tipo form-control. */
+/* Textarea “sin caja”: sin borde; sombra en el campo (no en .spa-chat-composer). */
 .spa-chat-composer .spa-chat-input--bare {
     border: 0;
-    box-shadow: none;
     background-color: rgba(33, 37, 41, 0.06);
     background-color: rgba(var(--bs-body-color-rgb), 0.06);
     border-radius: 1.1rem;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.07);
 }
 
 .spa-chat-composer .spa-chat-input--bare:focus {
     border: 0;
-    box-shadow: none;
     outline: 0;
     background-color: rgba(33, 37, 41, 0.09);
     background-color: rgba(var(--bs-body-color-rgb), 0.09);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
 }
 
 .spa-chat-composer .spa-chat-input--bare::placeholder {

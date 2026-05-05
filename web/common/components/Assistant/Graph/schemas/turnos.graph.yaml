@@ -1,0 +1,129 @@
+version: 2
+
+# Grafo por entidades + links: métodos bajo entities; operaciones en links (keywords, submit, provider_gates).
+# El compilador deduce pasos vía requires/provides y orden topológico.
+
+domain: turnos
+
+entities:
+  Servicio:
+    id: Servicio
+    methods:
+      elegir_para_turnos:
+        browse: true
+        keywords:
+          - servicio
+          - servicios
+          - especialidad
+          - qué servicios
+          - que servicios
+          - listado de servicios
+        step:
+          id: select_servicio
+          label: "Servicio"
+        provides: [draft.id_servicio_asignado]
+        requires: []
+        ui:
+          action_id: servicios.elegir
+
+  Efector:
+    id: Efector
+    methods:
+      elegir_por_servicio:
+        step:
+          id: select_efector
+          label: "Centro de salud"
+          tab_id: por_servicio
+          tab_label: "Por servicio"
+        requires: [draft.id_servicio_asignado]
+        provides: [draft.id_efector]
+        ui:
+          action_id: efectores.listar-por-servicio
+          params:
+            id_servicio: draft.id_servicio_asignado
+
+      elegir_cercano_por_servicio:
+        step:
+          id: select_efector
+          label: "Centro de salud"
+          tab_id: cercano
+          tab_label: "Cerca"
+        requires: [draft.id_servicio_asignado]
+        provides: [draft.id_efector]
+        requires_client: [geolocation]
+        ui:
+          action_id: efectores.listar-por-servicio-cercano
+          params:
+            id_servicio: draft.id_servicio_asignado
+
+      elegir_todos:
+        step:
+          id: select_efector
+          label: "Centro de salud"
+          tab_id: todos
+          tab_label: "Todos"
+        requires: []
+        provides: [draft.id_efector]
+        ui:
+          action_id: efectores.elegir
+
+  Rrhh:
+    id: Rrhh
+    methods:
+      elegir_por_centro_y_servicio:
+        step:
+          id: select_rrhh
+          label: "Profesional"
+        requires: [draft.id_efector, draft.id_servicio_asignado]
+        provides: [draft.id_rr_hh]
+        ui:
+          action_id: rrhh.listar-por-efector-servicio-acepta-turnos
+          params:
+            id_efector: draft.id_efector
+            id_servicio: draft.id_servicio_asignado
+
+  Turno:
+    id: Turno
+    fields:
+      id_servicio_asignado: { type: int, required: true }
+      id_efector: { type: int, required: true }
+      id_rr_hh: { type: int, required: true }
+      slot_id: { type: string, required: true }
+      tipo_atencion: { type: string, required: false, default: presencial }
+    methods:
+      slots_disponibles_como_paciente:
+        step:
+          id: select_slot
+          label: "Horario"
+        requires: [draft.id_rr_hh, draft.id_efector, draft.id_servicio_asignado]
+        provides: [draft.slot_id]
+        ui:
+          action_id: turnos.slots-disponibles-como-paciente
+          params:
+            id_rr_hh: draft.id_rr_hh
+            id_efector: draft.id_efector
+            id_servicio: draft.id_servicio_asignado
+
+      confirmar_creacion_como_paciente:
+        step:
+          id: confirm
+          label: "Confirmación"
+        requires: [draft.slot_id]
+        provides: []
+        ui:
+          action_id: turnos.crear-como-paciente
+
+links:
+  turnos.crear-como-paciente:
+    action_name: "Reservar turno"
+    keywords:
+      - turno
+      - sacar turno
+      - reservar turno
+      - pedir turno
+      - autogestión
+    entity: Turno
+    submit_method: confirmar_creacion_como_paciente
+    provider_gates:
+      draft.id_efector:
+        require_resolver_requires: [draft.id_servicio_asignado]

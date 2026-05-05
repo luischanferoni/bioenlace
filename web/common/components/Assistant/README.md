@@ -8,6 +8,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - `Catalog/`: catálogo de UIs sugeribles (hoy basado en YAML).
 - `SubIntentEngine/`: motor conversacional *dentro* de un intent (`intent_flow`) basado en YAML.
 - `FlowManifest/`: construye `flow_manifest` **en runtime** a partir del YAML (sin artefactos `ui_type=flow` en `views/json`).
+- `Graph/` (**experimental / laboratorio**): grafo declarativo **entidades + métodos + links** y compilador a `flow_manifest` (deducción por `requires`/`provides`); no cableado al chat en producción; ver [`Graph/README.md`](Graph/README.md).
 - `UiActions/`: discovery + RBAC + enriquecedores para construir `client_open` y resolver rutas permitidas.
 
 ## Fuentes de verdad

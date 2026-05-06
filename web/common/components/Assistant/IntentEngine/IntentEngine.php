@@ -6,6 +6,7 @@ use Yii;
 use common\components\Assistant\Catalog\IntentCatalogService;
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Assistant\SubIntentEngine\IntentBusinessRules;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 use common\components\UiDefinitionTemplateManager;
 use common\models\Servicio;
@@ -103,6 +104,22 @@ final class IntentEngine
         // no abriendo un wizard monolítico.
         if ($userId > 0 && self::isFlowUiTemplateForCatalogItem($item)) {
             $draft = self::draftFromAssistantActionParameters($action);
+            $blocked = IntentBusinessRules::evaluatePreFlow($item->action_id, $content, $draft, $userId);
+            if ($blocked !== null) {
+                return [
+                    'success' => true,
+                    'kind' => 'intent_remediation',
+                    'text' => $blocked['text'],
+                    'candidate_intent_id' => $item->action_id,
+                    'rule_id' => $blocked['rule_id'],
+                    'remediation' => $blocked['remediation'],
+                    'match' => [
+                        'action_id' => $item->action_id,
+                        'confidence' => max(0.0, min(1.0, $confidence)),
+                        'method' => $method,
+                    ],
+                ];
+            }
             $flow = SubIntentEngine::process(
                 [
                     'intent_id' => $item->action_id,

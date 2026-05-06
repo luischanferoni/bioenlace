@@ -165,7 +165,7 @@ final class FlowManifest
             'assistant_text' => isset($sub['assistant_text']) ? (string) $sub['assistant_text'] : '',
             'requires' => self::stringList($sub['requires'] ?? null),
             'provides' => self::stringList($sub['provides'] ?? null),
-            'next' => isset($sub['next']) ? trim((string) $sub['next']) : '',
+            'next' => self::compileStepNextField($sub),
         ];
 
         $chooser = isset($sub['chooser']) && is_array($sub['chooser']) ? $sub['chooser'] : null;
@@ -239,6 +239,53 @@ final class FlowManifest
         }
 
         return $step;
+    }
+
+    /**
+     * Campo `next` en el manifiesto: `next` explícito del YAML o, si solo hay `next_routing`,
+     * el `next` de la regla `when.default: true` (fallback) o la primera regla con `next`.
+     *
+     * @param array<string, mixed> $sub
+     */
+    private static function compileStepNextField(array $sub): string
+    {
+        if (isset($sub['next'])) {
+            $n = trim((string) $sub['next']);
+            if ($n !== '') {
+                return $n;
+            }
+        }
+        $routing = isset($sub['next_routing']) && is_array($sub['next_routing']) ? $sub['next_routing'] : null;
+        if ($routing === null) {
+            return '';
+        }
+        $defaultNext = '';
+        foreach ($routing as $rule) {
+            if (!is_array($rule)) {
+                continue;
+            }
+            $when = isset($rule['when']) && is_array($rule['when']) ? $rule['when'] : null;
+            if ($when !== null && isset($when['default']) && $when['default'] === true) {
+                $nn = isset($rule['next']) ? trim((string) $rule['next']) : '';
+                if ($nn !== '') {
+                    $defaultNext = $nn;
+                }
+            }
+        }
+        if ($defaultNext !== '') {
+            return $defaultNext;
+        }
+        foreach ($routing as $rule) {
+            if (!is_array($rule)) {
+                continue;
+            }
+            $nn = isset($rule['next']) ? trim((string) $rule['next']) : '';
+            if ($nn !== '') {
+                return $nn;
+            }
+        }
+
+        return '';
     }
 
     /**

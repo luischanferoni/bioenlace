@@ -122,6 +122,302 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  /// Mensaje genérico post-intent (acciones sugeridas, etc.) cuando no aplicó open_ui / intent_flow / remedación.
+  void _appendGenericAsistenteBotMessage(Map<String, dynamic> data) {
+    final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
+    String explanation = (data['explanation']?.toString()) ?? 'Consulta procesada';
+    final textField = data['text']?.toString();
+    if (textField != null && textField.trim().isNotEmpty) {
+      explanation = textField.trim();
+    }
+
+    if (data['kind']?.toString() == 'ui_intent_match' && actions is List && actions.isNotEmpty) {
+      final a0 = actions[0];
+      if (a0 is Map) {
+        final dn = a0['display_name']?.toString();
+        if (dn != null && dn.isNotEmpty) {
+          explanation = 'Puedo ayudarte con “$dn”.';
+        }
+      }
+    }
+    final suggestedQuery = data['interaccion_sugerida']?['texto'];
+    final queryType = data['query_type'];
+    final matchedBy = data['matched_by'];
+    final actionAnalysisRaw = data['action_analysis'];
+
+    setState(() {
+      _isSending = false;
+      _chatHistory.add({
+        'type': 'bot',
+        'content': explanation,
+        'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
+        'suggested_query': suggestedQuery,
+        'query_type': queryType,
+        'matched_by': matchedBy,
+        'needs_user_input': data['needs_user_input'] ?? false,
+        'action_analysis': (actionAnalysisRaw is Map)
+            ? Map<String, dynamic>.from(actionAnalysisRaw)
+            : null,
+        'parameters': data['parameters'],
+        'timestamp': DateTime.now(),
+      });
+    });
+  }
+
+  void _maybeAutoExecuteSingleAction(Map<String, dynamic> data) {
+    final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
+    final matchedBy = data['matched_by'];
+    final queryType = data['query_type'];
+    final needsUserInput = data['needs_user_input'] ?? false;
+    if ((matchedBy == 'action_id' || matchedBy == 'semantic') &&
+        actions != null &&
+        actions.length == 1 &&
+        queryType == 'direct_action' &&
+        !needsUserInput) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _executeAction(actions[0], messageIndex: _chatHistory.length - 1);
+      });
+    }
+  }
+
+  /// `true` si ya se actualizó la UI y no debe ejecutarse el branch genérico de acciones.
+  Future<bool> _consumeAsistenteSuccessData(Map<String, dynamic> data) async {
+    final kind = data['kind']?.toString();
+    String explanation = (data['explanation']?.toString()) ?? 'Consulta procesada';
+    final textField = data['text']?.toString();
+    if (textField != null && textField.trim().isNotEmpty) {
+      explanation = textField.trim();
+    }
+
+    if (kind == 'intent_remediation') {
+      setState(() {
+        _isSending = false;
+        _intentId = null;
+        _subintentId = null;
+        _draft = {};
+        _asistenteService.currentIntentId = null;
+        _asistenteService.currentSubintentId = null;
+        _asistenteService.draft = {};
+        final rem = data['remediation'];
+        List<Map<String, dynamic>>? remList;
+        if (rem is List) {
+          remList = rem
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+        _chatHistory.add({
+          'type': 'bot',
+          'content': explanation,
+          'remediation': remList,
+          'timestamp': DateTime.now(),
+        });
+      });
+      _scrollToBottom();
+      return true;
+    }
+
+    final iid = data['intent_id']?.toString();
+    final sid = data['subintent_id']?.toString();
+    if (iid != null && iid.isNotEmpty) {
+      _intentId = iid;
+      _asistenteService.currentIntentId = _intentId;
+    }
+    if (sid != null && sid.isNotEmpty) {
+      _subintentId = sid;
+      _asistenteService.currentSubintentId = _subintentId;
+    }
+
+    final dd = data['draft_delta'];
+    if (dd is Map && dd.isNotEmpty) {
+      _draft = {..._draft, ...Map<String, dynamic>.from(dd)};
+      _asistenteService.draft = _draft;
+    }
+
+    final openUi = data['open_ui'];
+    if (openUi is Map) {
+      final co = openUi['client_open'];
+      final actionId = openUi['action_id']?.toString();
+      if (co is Map && actionId != null && actionId.isNotEmpty) {
+        final kindCo = co['kind']?.toString();
+        final api = co['api'];
+        final mobile = co['mobile'];
+        final hasUiJsonRoute = (kindCo == 'ui_json') && (api is Map) && (api['route']?.toString().isNotEmpty ?? false);
+        final hasNativeScreen = (kindCo == 'native') && (mobile is Map) && (mobile['screen_id']?.toString().isNotEmpty ?? false);
+        if (!(hasUiJsonRoute || hasNativeScreen)) {
+          setState(() {
+            _isSending = false;
+            _chatHistory.add({
+              'type': 'bot',
+              'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId): client_open inválido o incompleto.',
+              'actions': null,
+              'timestamp': DateTime.now(),
+            });
+          });
+          _scrollToBottom();
+          return true;
+        }
+
+        final pseudoAction = <String, dynamic>{
+          'action_id': actionId,
+          'display_name': actionId,
+          'client_open': Map<String, dynamic>.from(co),
+          'parameters': {'provided': _draft},
+        };
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': explanation,
+            'actions': null,
+            if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+            'timestamp': DateTime.now(),
+          });
+        });
+        _scrollToBottom();
+        await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+        return true;
+      }
+
+      if (actionId != null && actionId.isNotEmpty && co == null) {
+        final fm = data['flow_manifest'];
+        String? route;
+        if (fm is Map) {
+          final step = fm['active_step'];
+          if (step is Map) {
+            final ui = step['ui'];
+            if (ui is Map && ui['tabs'] is List) {
+              final tabs = ui['tabs'] as List;
+              final defId = ui['default_tab']?.toString() ?? '';
+              Map? picked;
+              for (final t in tabs) {
+                if (t is Map && defId.isNotEmpty && t['id']?.toString() == defId) {
+                  picked = t;
+                  break;
+                }
+              }
+              picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
+              route = picked is Map ? picked['route']?.toString() : null;
+            }
+          }
+        }
+        route ??= _apiRouteFromActionId(actionId);
+
+        if (route != null && route.isNotEmpty) {
+          final pseudoAction = <String, dynamic>{
+            'action_id': actionId,
+            'display_name': actionId,
+            'client_open': {
+              'kind': 'ui_json',
+              'api': {'route': route, 'method': 'GET|POST'},
+            },
+            'parameters': {'provided': _draft},
+          };
+          setState(() {
+            _isSending = false;
+            _chatHistory.add({
+              'type': 'bot',
+              'content': explanation,
+              'actions': null,
+              if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+              'timestamp': DateTime.now(),
+            });
+          });
+          _scrollToBottom();
+          await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+          return true;
+        }
+
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). No vino client_open ni pude derivar route desde flow_manifest.',
+            'actions': null,
+            'timestamp': DateTime.now(),
+          });
+        });
+        _scrollToBottom();
+        return true;
+      }
+    }
+
+    if (kind == 'intent_flow') {
+      setState(() {
+        _isSending = false;
+        _chatHistory.add({
+          'type': 'bot',
+          'content': explanation,
+          'actions': null,
+          if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+          'timestamp': DateTime.now(),
+        });
+      });
+      _scrollToBottom();
+      return true;
+    }
+
+    return false;
+  }
+
+  Future<void> _onRemediationChoice(Map<String, dynamic> opt) async {
+    final intentId = opt['intent_id']?.toString() ?? '';
+    if (intentId.isEmpty) return;
+    final resetFlow = opt['reset_flow'] == true;
+    setState(() => _isSending = true);
+    _scrollToBottom();
+    try {
+      if (resetFlow) {
+        _subintentId = null;
+        _draft = {};
+        _asistenteService.currentSubintentId = null;
+        _asistenteService.draft = {};
+      }
+      _intentId = intentId;
+      _asistenteService.currentIntentId = intentId;
+
+      final result = await _asistenteService.procesarInteraccion('');
+      if (!mounted) return;
+
+      if (result['success'] != true) {
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
+            'timestamp': DateTime.now(),
+          });
+        });
+        _scrollToBottom();
+        return;
+      }
+
+      final raw = result['data'];
+      if (raw is! Map) {
+        setState(() => _isSending = false);
+        return;
+      }
+      final data = Map<String, dynamic>.from(raw);
+      final consumed = await _consumeAsistenteSuccessData(data);
+      if (!consumed) {
+        _appendGenericAsistenteBotMessage(data);
+        _maybeAutoExecuteSingleAction(data);
+      }
+      _scrollToBottom();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSending = false;
+        _chatHistory.add({
+          'type': 'bot',
+          'content': 'Error al iniciar el flujo. Intentá de nuevo.',
+          'timestamp': DateTime.now(),
+        });
+      });
+      _scrollToBottom();
+    }
+  }
+
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
@@ -156,211 +452,22 @@ class _ChatScreenState extends State<ChatScreen> {
       final result = await _asistenteService.procesarInteraccion(text);
 
       if (result['success'] == true) {
-        final data = result['data'];
-        final kind = (data is Map) ? data['kind']?.toString() : null;
-        final actions = (data is Map) ? (data['actions'] ?? (data['action'] != null ? [data['action']] : null)) : null;
-        String explanation = (data is Map ? (data['explanation']?.toString()) : null) ?? 'Consulta procesada';
-
-        // Modo intent (SubIntentEngine) / arranque conversacional desde IntentEngine:
-        // puede venir `text` + `open_ui` + `draft_delta` incluso cuando `kind` sigue siendo `ui_intent_match`.
-        if (data is Map) {
-          final text = data['text']?.toString();
-          if (text != null && text.trim().isNotEmpty) {
-            explanation = text.trim();
+        final raw = result['data'];
+        if (raw is Map) {
+          final data = Map<String, dynamic>.from(raw);
+          final consumed = await _consumeAsistenteSuccessData(data);
+          if (!consumed) {
+            _appendGenericAsistenteBotMessage(data);
+            _maybeAutoExecuteSingleAction(data);
           }
-
-          final iid = data['intent_id']?.toString();
-          final sid = data['subintent_id']?.toString();
-          if (iid != null && iid.isNotEmpty) {
-            _intentId = iid;
-            _asistenteService.currentIntentId = _intentId;
-          }
-          if (sid != null && sid.isNotEmpty) {
-            _subintentId = sid;
-            _asistenteService.currentSubintentId = _subintentId;
-          }
-
-          final dd = data['draft_delta'];
-          if (dd is Map && dd.isNotEmpty) {
-            _draft = {..._draft, ...Map<String, dynamic>.from(dd)};
-            _asistenteService.draft = _draft;
-          }
-
-          final openUi = data['open_ui'];
-          if (openUi is Map) {
-            final co = openUi['client_open'];
-            final actionId = openUi['action_id']?.toString();
-            if (co is Map && actionId != null && actionId.isNotEmpty) {
-              // Validación mínima: si el backend mandó client_open pero está incompleto,
-              // no intentes abrir "en silencio": devolvé un mensaje visible.
-              final kindCo = co['kind']?.toString();
-              final api = co['api'];
-              final mobile = co['mobile'];
-              final hasUiJsonRoute = (kindCo == 'ui_json') && (api is Map) && (api['route']?.toString().isNotEmpty ?? false);
-              final hasNativeScreen = (kindCo == 'native') && (mobile is Map) && (mobile['screen_id']?.toString().isNotEmpty ?? false);
-              if (!(hasUiJsonRoute || hasNativeScreen)) {
-                setState(() {
-                  _isSending = false;
-                  _chatHistory.add({
-                    'type': 'bot',
-                    'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId): client_open inválido o incompleto.',
-                    'actions': null,
-                    'timestamp': DateTime.now(),
-                  });
-                });
-                _scrollToBottom();
-                return;
-              }
-
-              final pseudoAction = <String, dynamic>{
-                'action_id': actionId,
-                'display_name': actionId,
-                'client_open': Map<String, dynamic>.from(co),
-                'parameters': {'provided': _draft},
-              };
-              setState(() {
-                _isSending = false;
-                _chatHistory.add({
-                  'type': 'bot',
-                  'content': explanation,
-                  'actions': null,
-                  if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
-                  'timestamp': DateTime.now(),
-                });
-              });
-              _scrollToBottom();
-              await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
-              return;
-            }
-
-            // Flow: si `client_open` viene null, usar `flow_manifest.active_step.ui.tabs[*].route` como fuente.
-            if (actionId != null && actionId.isNotEmpty && co == null) {
-              final fm = data['flow_manifest'];
-              String? route;
-              if (fm is Map) {
-                final step = fm['active_step'];
-                if (step is Map) {
-                  final ui = step['ui'];
-                  if (ui is Map && ui['tabs'] is List) {
-                    final tabs = ui['tabs'] as List;
-                    final defId = ui['default_tab']?.toString() ?? '';
-                    Map? picked;
-                    for (final t in tabs) {
-                      if (t is Map && defId.isNotEmpty && t['id']?.toString() == defId) {
-                        picked = t;
-                        break;
-                      }
-                    }
-                    picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
-                    route = picked is Map ? picked['route']?.toString() : null;
-                  }
-                }
-              }
-              route ??= _apiRouteFromActionId(actionId);
-
-              if (route != null && route.isNotEmpty) {
-                final pseudoAction = <String, dynamic>{
-                  'action_id': actionId,
-                  'display_name': actionId,
-                  'client_open': {
-                    'kind': 'ui_json',
-                    'api': {'route': route, 'method': 'GET|POST'},
-                  },
-                  'parameters': {'provided': _draft},
-                };
-                setState(() {
-                  _isSending = false;
-                  _chatHistory.add({
-                    'type': 'bot',
-                    'content': explanation,
-                    'actions': null,
-                    if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
-                    'timestamp': DateTime.now(),
-                  });
-                });
-                _scrollToBottom();
-                await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
-                return;
-              }
-
-              setState(() {
-                _isSending = false;
-                _chatHistory.add({
-                  'type': 'bot',
-                  'content': '$explanation\n\nNo puedo abrir la mini-UI requerida ($actionId). No vino client_open ni pude derivar route desde flow_manifest.',
-                  'actions': null,
-                  'timestamp': DateTime.now(),
-                });
-              });
-              _scrollToBottom();
-              return;
-            }
-          }
-        }
-        // En `intent_flow` no se deben renderizar acciones/botones.
-        if (kind == 'intent_flow') {
+        } else {
           setState(() {
             _isSending = false;
             _chatHistory.add({
               'type': 'bot',
-              'content': explanation,
-              'actions': null,
+              'content': 'Consulta procesada',
               'timestamp': DateTime.now(),
             });
-          });
-          _scrollToBottom();
-          return;
-        }
-
-        if (kind == 'ui_intent_match' && actions is List && actions.isNotEmpty) {
-          final a0 = actions[0];
-          if (a0 is Map) {
-            final dn = a0['display_name']?.toString();
-            if (dn != null && dn.isNotEmpty) {
-              explanation = 'Puedo ayudarte con “$dn”.';
-            }
-          }
-        }
-        final suggestedQuery = data['interaccion_sugerida']?['texto'];
-        final queryType = data['query_type'];
-        final matchedBy = data['matched_by']; // 'action_id', 'semantic', o null (LLM)
-        // final needsUserInput = data['needs_user_input'] ?? false;
-        final actionAnalysisRaw = data['action_analysis'];
-        // final actionAnalysis = (actionAnalysisRaw is Map)
-        //     ? Map<String, dynamic>.from(actionAnalysisRaw)
-        //     : null;
-
-        setState(() {
-          _isSending = false;
-
-          // Agregar respuesta del bot al historial (parameters a nivel raíz para execute-action URL)
-          _chatHistory.add({
-            'type': 'bot',
-            'content': explanation,
-            'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
-            'suggested_query': suggestedQuery,
-            'query_type': queryType,
-            'matched_by': matchedBy,
-            'needs_user_input': data['needs_user_input'] ?? false,
-            'action_analysis': (actionAnalysisRaw is Map)
-                ? Map<String, dynamic>.from(actionAnalysisRaw)
-                : null,
-            'parameters': data['parameters'],
-            'timestamp': DateTime.now(),
-          });
-        });
-
-        // Si es una acción directa (action_id o semantic) y solo hay una acción, ejecutarla automáticamente
-        // PERO solo si no necesita input del usuario
-        final needsUserInput = data['needs_user_input'] ?? false;
-        if ((matchedBy == 'action_id' || matchedBy == 'semantic') &&
-            actions != null &&
-            actions.length == 1 &&
-            queryType == 'direct_action' &&
-            !needsUserInput) {
-          // Ejecutar la acción automáticamente después de un breve delay
-          Future.delayed(Duration(milliseconds: 500), () {
-            _executeAction(actions[0], messageIndex: _chatHistory.length - 1);
           });
         }
       } else {
@@ -951,6 +1058,41 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               onPressed: () => _executeAction(action, messageIndex: index),
                               backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                              labelStyle: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                    if (!isUser &&
+                        message['remediation'] is List &&
+                        (message['remediation'] as List).isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: (message['remediation'] as List).map((raw) {
+                            if (raw is! Map) {
+                              return const SizedBox.shrink();
+                            }
+                            final opt = Map<String, dynamic>.from(raw);
+                            final label = opt['label']?.toString() ??
+                                opt['intent_id']?.toString() ??
+                                'Opción';
+                            return ActionChip(
+                              label: Text(
+                                label,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              avatar: const Icon(Icons.alt_route, size: 16),
+                              onPressed: _isSending
+                                  ? null
+                                  : () => _onRemediationChoice(opt),
+                              backgroundColor: AppTheme.primaryColor.withOpacity(0.12),
                               labelStyle: TextStyle(
                                 color: Theme.of(context).primaryColor,
                               ),

@@ -16,6 +16,9 @@ use common\models\AsistenteInteraccion;
  *   - Root (IntentEngine): `content` o `action_id`.
  *   - Dentro de intent (SubIntentEngine): `intent_id`, `subintent_id`, `draft`, y `content` o `interaction`.
  *     Opcional: claves planas del mismo cuerpo (p. ej. `id_servicio_asignado` / `id_servicio`) se fusionan al `draft` antes de evaluar `requires`.
+ *   - Raíz (IntentEngine): si un intent YAML define `business_rules` (`when: pre_flow`), puede devolverse
+ *     `kind=intent_remediation` con `text`, `rule_id`, `remediation[]` (botones → nuevo `intent_id`; siguiente envío
+ *     suele ser `content: ""` en modo flow, sin burbuja de usuario en cliente).
  *   Identidad: usuario autenticado (Yii). `senderId` opcional; si se envía, debe coincidir con el usuario.
  *   Respuesta estándar v1: `success`, `message`, `data` (payload del agente), HTTP 200.
  */

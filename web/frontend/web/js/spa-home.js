@@ -658,6 +658,44 @@
             const explanationText = typeof result.explanation === 'string' ? result.explanation : null;
             const primaryText = (flowText && flowText.trim() !== '') ? flowText.trim() : (explanationText || '');
 
+            if (kind === 'intent_remediation') {
+                setLoadingState(false);
+                if (chatMessagesDiv) {
+                    const wrap = appendAssistantFlowSection(primaryText || 'Elegí una opción');
+                    if (wrap && Array.isArray(result.remediation) && result.remediation.length > 0) {
+                        const row = document.createElement('div');
+                        row.className = 'd-flex flex-wrap gap-2 mt-2 spa-intent-remediation';
+                        result.remediation.forEach(function (ch) {
+                            if (!ch || !ch.intent_id) {
+                                return;
+                            }
+                            const b = document.createElement('button');
+                            b.type = 'button';
+                            b.className = 'btn btn-sm btn-outline-primary';
+                            b.textContent = ch.label ? String(ch.label) : String(ch.intent_id);
+                            b.addEventListener('click', function () {
+                                row.querySelectorAll('button').forEach(function (x) {
+                                    x.classList.remove('active');
+                                });
+                                b.classList.add('active');
+                                currentIntentId = String(ch.intent_id);
+                                currentSubintentId = null;
+                                draft = {};
+                                writeFlowState();
+                                handleSendQuery('');
+                            });
+                            row.appendChild(b);
+                        });
+                        wrap.appendChild(row);
+                    }
+                    setTimeout(scrollChatToBottom, 20);
+                } else {
+                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || '') + '</p>';
+                    responseSection.classList.remove('d-none');
+                }
+                return;
+            }
+
             // Si trae intent_id/subintent_id, sincronizar estado conversacional.
             if (result && result.intent_id) {
                 currentIntentId = String(result.intent_id);

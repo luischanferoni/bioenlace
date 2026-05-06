@@ -7,6 +7,7 @@ use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\UiDefinitionTemplateManager;
+use common\models\Servicio;
 use common\models\ServiciosEfector;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
@@ -38,6 +39,7 @@ final class SubIntentEngine
         $subintentId = isset($snapshot['subintent_id']) ? trim((string) $snapshot['subintent_id']) : '';
         $draft = isset($snapshot['draft']) && is_array($snapshot['draft']) ? $snapshot['draft'] : [];
         $draft = self::mergeFlowSnapshotIntoDraft($snapshot, $draft);
+        $draft = self::hydrateDraftDerivedFromServicio($draft);
         $content = isset($snapshot['content']) ? trim((string) $snapshot['content']) : '';
         $interaction = isset($snapshot['interaction']) && is_array($snapshot['interaction']) ? $snapshot['interaction'] : null;
 
@@ -88,7 +90,7 @@ final class SubIntentEngine
         }
 
         // Si el subintent provee algo y ya está en draft, avanzar al siguiente.
-        $next = isset($current['next']) ? trim((string) $current['next']) : '';
+        $next = self::resolveNextSubintentId($current, $draft);
         if ($next !== '') {
             $nextSub = self::findSubintent($subintents, $next);
             if (is_array($nextSub)) {
@@ -191,6 +193,108 @@ final class SubIntentEngine
         }
 
         return $draft;
+    }
+
+    /**
+     * Deriva campos del draft usados en `next_routing` (p. ej. si el servicio acepta turnos).
+     *
+     * @param array<string, mixed> $draft
+     * @return array<string, mixed>
+     */
+    private static function hydrateDraftDerivedFromServicio(array $draft): array
+    {
+        if (!isset($draft['id_servicio']) || $draft['id_servicio'] === null || trim((string) $draft['id_servicio']) === '') {
+            return $draft;
+        }
+        $sid = (int) $draft['id_servicio'];
+        if ($sid <= 0) {
+            return $draft;
+        }
+        $servicio = Servicio::findOne($sid);
+        if ($servicio === null) {
+            return $draft;
+        }
+        $at = strtoupper(trim((string) ($servicio->acepta_turnos ?? '')));
+        $draft['servicio_acepta_turnos'] = $at === 'SI' ? 'SI' : 'NO';
+
+        return $draft;
+    }
+
+    /**
+     * Resuelve el siguiente subintent: `next_routing` (primera regla que coincide) o `next`.
+     *
+     * Regla soportada:
+     * - `when.draft_equals`: mapa campo draft (sin prefijo) => valor esperado (string).
+     * - `when.default: true`: comodín (convención: declararlo último en el YAML).
+     *
+     * @param array<string, mixed> $subintent
+     * @param array<string, mixed> $draft
+     */
+    private static function resolveNextSubintentId(array $subintent, array $draft): string
+    {
+        $routing = isset($subintent['next_routing']) && is_array($subintent['next_routing']) ? $subintent['next_routing'] : null;
+        if ($routing !== null) {
+            $fallback = '';
+            foreach ($routing as $rule) {
+                if (!is_array($rule)) {
+                    continue;
+                }
+                $when = isset($rule['when']) && is_array($rule['when']) ? $rule['when'] : null;
+                if ($when === null) {
+                    continue;
+                }
+                if (isset($when['default']) && $when['default'] === true) {
+                    $n = isset($rule['next']) ? trim((string) $rule['next']) : '';
+                    if ($n !== '') {
+                        $fallback = $n;
+                    }
+                    continue;
+                }
+                if (isset($when['draft_equals']) && is_array($when['draft_equals'])) {
+                    if (self::draftMatchesEquals($draft, $when['draft_equals'])) {
+                        $n = isset($rule['next']) ? trim((string) $rule['next']) : '';
+                        if ($n !== '') {
+                            return $n;
+                        }
+                    }
+                }
+            }
+            if ($fallback !== '') {
+                return $fallback;
+            }
+        }
+
+        return isset($subintent['next']) ? trim((string) $subintent['next']) : '';
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @param array<string, mixed> $expectedMap campo draft => valor esperado
+     */
+    private static function draftMatchesEquals(array $draft, array $expectedMap): bool
+    {
+        foreach ($expectedMap as $field => $expected) {
+            $k = is_string($field) ? trim($field) : '';
+            if ($k === '') {
+                continue;
+            }
+            $dv = isset($draft[$k]) ? trim((string) $draft[$k]) : '';
+            $ev = '';
+            if (is_string($expected)) {
+                $ev = trim($expected);
+            } elseif (is_int($expected) || is_float($expected)) {
+                $ev = trim((string) $expected);
+            } elseif ($expected === true) {
+                $ev = '1';
+            } elseif ($expected === false) {
+                $ev = '0';
+            }
+            if ($dv !== $ev) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static function draftFieldNonEmpty(array $draft, string $field): bool

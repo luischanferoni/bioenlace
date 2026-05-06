@@ -11,19 +11,8 @@ keywords:
   - pedir turno
   - autogestión
 
-# Claves opcionales del draft usadas por clientes sin aparecer en requires/provides del YAML.
 draft_keys_extra:
   - tipo_atencion
-
-prompt_context:
-  # Esto define qué se adjunta al prompt del LLM (cuando se use IA).
-  include:
-    - intent_id
-    - current_subintent_id
-    - allowed_open_ui_action_ids
-    - required_draft_fields
-    - draft_summary
-    - last_user_message
 
 subintents:
   - id: select_servicio
@@ -43,8 +32,6 @@ subintents:
     next: select_rrhh
     chooser:
       when_user_says_nearby:
-        # si el usuario pide "cerca" el motor usará esquema global de ubicación.
-        uses_global: location_acquisition.v1
         open_ui:
           action_id: efectores.listar-por-servicio-cercano
           params:

@@ -43,6 +43,11 @@ final class RrhhAgendaUiService
             return $out;
         }
 
+        $servicioPre = Servicio::findOne($idServicio);
+        if ($servicioPre !== null && strtoupper(trim((string) $servicioPre->acepta_turnos)) !== 'SI') {
+            throw new BadRequestHttpException('Este servicio no admite agenda de turnos; no corresponde abrir la configuración de agenda.');
+        }
+
         /** @var \yii\db\ActiveQuery $rrhhServicioQ */
         $rrhhServicioQ = RrhhServicio::find();
         $rrhhServicio = $rrhhServicioQ
@@ -157,6 +162,10 @@ final class RrhhAgendaUiService
             throw new BadRequestHttpException('El RRHH no tiene asignado ese servicio.');
         }
 
+        if (strtoupper(trim((string) $servicio->acepta_turnos)) !== 'SI') {
+            throw new BadRequestHttpException('Este servicio no admite agenda de turnos; no se puede guardar configuración de agenda.');
+        }
+
         /** @var \yii\db\ActiveQuery $agendaQ */
         $agendaQ = Agenda_rrhh::find();
         $agenda = $agendaQ
@@ -174,10 +183,6 @@ final class RrhhAgendaUiService
         $agenda->id_rrhh_servicio_asignado = $rrhhServicio->id;
         if (empty($agenda->id_efector)) {
             $agenda->id_efector = $idEfector;
-        }
-
-        if ($servicio->acepta_turnos === 'NO') {
-            $agenda->formas_atencion = Agenda_rrhh::FORMA_ATENCION_SIN_ATENCION;
         }
 
         $tx = Yii::$app->db->beginTransaction();

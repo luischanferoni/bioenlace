@@ -26,6 +26,33 @@ Campos típicos:
 - `keywords`: lista de frases para matching
 - `subintents`: lista ordenada de pasos conversacionales
 - `draft_keys_extra` (opcional): claves de draft usadas sin listarse en `requires`/`provides`
+- **`business_rules`** (opcional): reglas evaluadas **antes** de ejecutar el flow cuando el usuario entra al intent vía `IntentEngine` (mensaje raíz o `action_id`). Si una regla aplica, la API puede responder `kind=intent_remediation` en lugar de `intent_flow`.
+
+### `business_rules`
+
+Lista de reglas. Campos habituales:
+
+- **`id`**: identificador estable (telemetría / logs).
+- **`when`**: por ahora solo **`pre_flow`** (evaluación única al arrancar el intent desde el clasificador).
+- **`checker`**: nombre registrado en PHP (`IntentBusinessRules` + switch interno). Desconocido ⇒ se ignora con warning en log.
+- **`user_message`**: texto corto para el usuario (desambiguación / guía).
+- **`remediation`**: lista de opciones con:
+  - **`id`**: id de la opción (UI puede marcar selección).
+  - **`label`**: texto del botón.
+  - **`intent_id`**: intent YAML a iniciar al elegir (siguiente `POST` con `intent_id` + `content: ""` en modo flow).
+  - **`reset_flow`**: si es true, el cliente debe limpiar `subintent_id` y `draft` antes de enviar (recomendado).
+
+Checkers actuales (referencia):
+
+- **`agenda_alta_vs_solo_horarios`**: si el intent es `agenda.crear-rrhh-flow` y el mensaje suena a “solo agenda/horarios/médico” sin vocabulario de alta de RRHH, se pide elegir entre flujo completo y `agenda.editar-agenda-flow`.
+
+### Respuesta `kind=intent_remediation`
+
+Payload típico (raíz de `asistente/enviar` sin `intent_id` en el request):
+
+- `success`, `kind`, `text`, `rule_id`, `candidate_intent_id`, `remediation[]`, `match` (score del clasificador).
+
+El cliente muestra `text` y botones desde `remediation`; al pulsar, inicia el flow elegido **sin** simular burbuja de usuario (p. ej. `content: ""` con `intent_id` ya fijado).
 
 ## Subintent (paso)
 
@@ -36,6 +63,7 @@ Campos típicos por paso:
 - **`requires`**: prerequisitos (`draft.*`) que ya deben estar en el draft antes de dar el paso por completo (no repetir claves que ya están en `provides`)
 - **`provides`**: campos `draft.*` que completa el paso al elegir/guardar
 - **`next`**: id del siguiente paso (cadena vacía para terminar la cadena lineal)
+- **`next_routing`** (opcional): lista de reglas `{ when: { draft_equals: { campo: valor } } | { default: true }, next: subintent_id }`; el motor hidrata `draft.servicio_acepta_turnos` desde BD cuando hay `id_servicio`. Si está presente, tiene prioridad sobre `next` para decidir el siguiente paso.
 - **`open_ui`** / **`chooser`**: metadatos para abrir mini-UIs (`action_id`, `params` → `draft.*`)
 - **`submit`**: en el último paso, `action_id` del endpoint de negocio (cuando no hay `open_ui`, el motor puede exponer solo ese submit)
 

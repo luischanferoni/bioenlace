@@ -425,11 +425,13 @@ class RrhhController extends BaseController
                 continue;
             }
             $nombre = $rs->servicio !== null ? (string) $rs->servicio->nombre : ('Servicio #' . $rs->id_servicio);
+            $acepta = $rs->servicio !== null && strtoupper(trim((string) $rs->servicio->acepta_turnos)) === 'SI' ? 'SI' : 'NO';
             $items[] = [
                 'id' => (int) $rs->id_servicio,
                 'name' => $nombre,
                 'meta' => [
                     'id_rrhh_servicio' => (int) $rs->id,
+                    'acepta_turnos' => $acepta,
                 ],
             ];
         }

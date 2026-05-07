@@ -79,22 +79,16 @@ final class IntentEngine
         if ($classification === null) {
             // Diagnóstico en logs: ayuda a detectar catálogo vacío / YAML no desplegados / filtros.
             // No depende de YII_DEBUG; el síntoma es crítico para el producto.
-            try {
-                $actionIds = [];
-                foreach (array_slice($catalog->items, 0, 20) as $it) {
-                    $actionIds[] = $it->action_id;
-                }
-                Yii::warning(
-                    'IntentEngine: no_intent_match. items=' . count($catalog->items)
-                    . ' has_agenda_crear_rrhh_flow=' . (isset($catalog->byActionId['agenda.crear-rrhh-flow']) ? '1' : '0')
-                    . ' has_agenda_editar_agenda_flow=' . (isset($catalog->byActionId['agenda.editar-agenda-flow']) ? '1' : '0')
-                    . ' first_action_ids=' . Json::encode($actionIds)
-                    . ' content=' . Json::encode(mb_substr($content, 0, 220, 'UTF-8')),
-                    'asistente'
-                );
-            } catch (\Throwable $e) {
-                // ignore logging failure
+            $actionIds = [];
+            foreach (array_slice($catalog->items, 0, 20) as $it) {
+                $actionIds[] = $it->action_id;
             }
+            Yii::warning(
+                'IntentEngine: no_intent_match. items=' . count($catalog->items)
+                . ' first_action_ids=' . Json::encode($actionIds)
+                . ' content=' . Json::encode(mb_substr($content, 0, 220, 'UTF-8')),
+                'asistente'
+            );
 
             $suggest = [];
             foreach (IntentClassifier::suggestByRules($content, $catalog, 8) as $it) {

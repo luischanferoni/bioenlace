@@ -50,6 +50,7 @@ final class YamlIntentCatalogService
         $out = [];
         $loadedIds = [];
         $parseErrors = 0;
+        $parseErrorSamples = [];
 
         foreach ($files as $path) {
             if (!is_string($path) || $path === '' || !is_file($path)) {
@@ -60,12 +61,24 @@ final class YamlIntentCatalogService
             } catch (\Throwable $e) {
                 $parseErrors++;
                 // Usar categoría ya visible en producción.
-                Yii::warning('YamlIntentCatalogService: YAML intent inválido ' . $path . ': ' . $e->getMessage(), 'asistente');
+                $msg = 'YamlIntentCatalogService: YAML intent inválido ' . $path . ': ' . $e->getMessage();
+                // No esconder la excepción: log con trace por canales difíciles de filtrar.
+                Yii::error($msg . "\n" . $e->getTraceAsString(), 'application');
+                error_log($msg);
+                error_log($e->getTraceAsString());
+                if (count($parseErrorSamples) < 5) {
+                    $parseErrorSamples[] = $msg;
+                }
                 continue;
             }
             if (!is_array($data)) {
                 $parseErrors++;
-                Yii::warning('YamlIntentCatalogService: YAML intent no es mapa ' . $path, 'asistente');
+                $msg = 'YamlIntentCatalogService: YAML intent no es mapa ' . $path;
+                Yii::error($msg, 'application');
+                error_log($msg);
+                if (count($parseErrorSamples) < 5) {
+                    $parseErrorSamples[] = $msg;
+                }
                 continue;
             }
             $intentId = isset($data['intent_id']) ? trim((string) $data['intent_id']) : '';
@@ -132,20 +145,34 @@ final class YamlIntentCatalogService
             $loadedIds[] = $intentId;
         }
 
-        // Diagnóstico visible: lista acotada de intents detectados en disco (no depende de YII_DEBUG).
-        try {
-            $sample = array_slice($loadedIds, 0, 25);
-            Yii::info(
-                'YamlIntentCatalogService: intents cargados count=' . count($loadedIds)
-                . ' glob_count=' . $globCount
-                . ' parse_errors=' . $parseErrors
-                . ' sample=' . json_encode($sample, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                . ' base=' . $base,
-                'asistente'
-            );
-        } catch (\Throwable $e) {
-            // ignore
+        // Si hay archivos YAML en disco pero no se pudo cargar ninguno, NO romper (sin 500),
+        // pero sí reportar por canales difíciles de filtrar.
+        if ($globCount > 0 && $loadedIds === []) {
+            $sampleFiles = array_slice(array_map('basename', array_values($files)), 0, 10);
+            $detail = [
+                'base' => $base,
+                'glob_count' => $globCount,
+                'parse_errors' => $parseErrors,
+                'sample_files' => $sampleFiles,
+                'error_samples' => $parseErrorSamples,
+            ];
+            $msg = 'YamlIntentCatalogService: glob encontró YAML pero no se cargó ninguno. ' . json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            // 1) Yii error (si hay target)
+            Yii::error($msg, 'application');
+            // 2) PHP error log (fallback)
+            error_log($msg);
         }
+
+        // Diagnóstico visible: lista acotada de intents detectados en disco (no depende de YII_DEBUG).
+        $sample = array_slice($loadedIds, 0, 25);
+        Yii::info(
+            'YamlIntentCatalogService: intents cargados count=' . count($loadedIds)
+            . ' glob_count=' . $globCount
+            . ' parse_errors=' . $parseErrors
+            . ' sample=' . json_encode($sample, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            . ' base=' . $base,
+            'asistente'
+        );
 
         if ($useCache && $cache) {
             // Guardar por firma actual y también el último “base” para warm hits.

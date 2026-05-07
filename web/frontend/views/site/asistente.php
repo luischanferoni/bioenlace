@@ -37,16 +37,6 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 </div>
 
                 <div id="spa-chat-messages" class="spa-chat-messages flex-grow-1 px-0">
-                    <!-- Respuesta del asistente (se muestra/oculta desde JS) -->
-                    <div id="spa-response-section" class="d-none">
-                        <div class="d-flex justify-content-start mb-3">
-                            <div class="bg-white border rounded-4 p-3 w-100">
-                                <div id="spa-explanation" class="mb-3"></div>
-                                <div id="spa-actions" class="row g-3"></div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Estado inicial -->
                     <div class="d-flex justify-content-center" id="spa-chat-empty-hint">
                         <div class="text-muted small text-center">

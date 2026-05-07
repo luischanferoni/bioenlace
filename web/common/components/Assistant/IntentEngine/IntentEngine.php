@@ -9,7 +9,6 @@ use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\SubIntentEngine\IntentBusinessRules;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 use common\components\UiDefinitionTemplateManager;
-use common\models\Servicio;
 use yii\helpers\Json;
 
 /**
@@ -216,24 +215,6 @@ final class IntentEngine
         $actionId = (string) ($action['action_id'] ?? '');
         if ($content === '' || $actionId === '') {
             return $action;
-        }
-
-        // Turnos: prefill de servicio para wizard de autogestión.
-        if ($actionId === 'turnos.crear-como-paciente' || $actionId === 'turnos.crear-para-paciente') {
-            $idServicio = Servicio::extractFromQuery($content);
-            if ($idServicio) {
-                if (!isset($action['parameters']) || !is_array($action['parameters'])) {
-                    $action['parameters'] = ['expected' => [], 'provided' => []];
-                }
-                if (!isset($action['parameters']['provided']) || !is_array($action['parameters']['provided'])) {
-                    $action['parameters']['provided'] = [];
-                }
-                // UI JSON usa id_servicio_asignado como nombre de campo.
-                $action['parameters']['provided']['id_servicio_asignado'] = [
-                    'value' => (string) (int) $idServicio,
-                    'source' => 'extracted',
-                ];
-            }
         }
 
         return $action;

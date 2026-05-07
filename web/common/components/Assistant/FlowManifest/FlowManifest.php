@@ -185,8 +185,8 @@ final class FlowManifest
             if (is_array($otherwiseOpen) && !empty($otherwiseOpen['action_id'])) {
                 $aid = strtolower(trim((string) $otherwiseOpen['action_id']));
                 $tabs[] = [
-                    'id' => 'por_servicio',
-                    'label' => 'Por servicio',
+                    'id' => 'default',
+                    'label' => 'Lista',
                     'action_id' => $aid,
                     'route' => self::routeForActionId($aid),
                     'params' => self::normalizedParamsMap($otherwiseOpen['params'] ?? null),
@@ -199,7 +199,7 @@ final class FlowManifest
                 $params['latitud'] = 'client.latitud';
                 $params['longitud'] = 'client.longitud';
                 $tabs[] = [
-                    'id' => 'cercano',
+                    'id' => 'nearby',
                     'label' => 'Cerca',
                     'action_id' => $aid,
                     'route' => self::routeForActionId($aid),
@@ -208,7 +208,7 @@ final class FlowManifest
                 ];
             }
             $step['ui'] = [
-                'default_tab' => 'por_servicio',
+                'default_tab' => 'default',
                 'tabs' => $tabs,
             ];
 
@@ -404,7 +404,7 @@ final class FlowManifest
                     $hints[$sid] = ['action_id' => strtolower(trim((string) $otherwiseOpen['action_id']))];
                 }
                 if (is_array($nearOpen) && !empty($nearOpen['action_id'])) {
-                    $nearKey = $sid === 'select_efector' ? 'select_efector_nearby' : ($sid . '_nearby');
+                    $nearKey = $sid . '_nearby';
                     $hints[$nearKey] = ['action_id' => strtolower(trim((string) $nearOpen['action_id']))];
                 }
                 continue;

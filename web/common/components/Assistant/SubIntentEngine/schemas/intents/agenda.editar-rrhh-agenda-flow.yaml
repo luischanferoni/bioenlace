@@ -14,6 +14,28 @@ keywords:
 draft_keys_extra:
   - servicio_acepta_turnos
 
+business_rules:
+  - id: agenda_alta_vs_solo_horarios
+    when: pre_flow
+    checker: content_regex
+    require_any:
+      - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario)"
+      - "m[eé]dico|profesional|doctor"
+    forbid_any:
+      - "crear|agregar|nuevo|alta|asociar|recurso humano|rrhh"
+    user_message: >-
+      Parece que querés trabajar con agenda u horarios de un profesional.
+      ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?
+    remediation:
+      - id: solo_agenda
+        label: "Solo horarios (ya tiene servicio que acepta turnos)"
+        intent_id: agenda.editar-agenda-flow
+        reset_flow: true
+      - id: flujo_completo
+        label: "Flujo completo (profesional / servicio / agenda si aplica)"
+        intent_id: agenda.crear-rrhh-flow
+        reset_flow: true
+
 subintents:
   - id: select_rrhh
     assistant_text: "Profesional"

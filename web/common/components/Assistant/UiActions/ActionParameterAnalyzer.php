@@ -64,7 +64,7 @@ class ActionParameterAnalyzer
                 return $params;
             }
             
-            // Convertir nombre de acción de kebab-case (crear-como-paciente) a camelCase (crearComoPaciente)
+            // Convertir nombre de acción de kebab-case a camelCase
             $actionName = $action['action'];
             $actionCamelCase = Inflector::id2camel($actionName, '-');
             $methodName = 'action' . $actionCamelCase;
@@ -104,7 +104,7 @@ class ActionParameterAnalyzer
             }
             
             // NUEVO: Detectar parámetros documentados en docblock con @paramOption
-            // que no están en la firma del método (como servicio_actual que viene por POST)
+            // que no están en la firma del método (parámetros enviados por request)
             if ($docComment) {
                 $docblockParams = self::extractParametersFromDocblock($docComment);
                 foreach ($docblockParams as $docblockParam) {
@@ -153,13 +153,13 @@ class ActionParameterAnalyzer
         foreach ($lines as $line) {
             $line = trim($line);
             
-            // @paramOption servicio_actual select servicios|efector_servicios
+            // @paramOption <param> <tipo> <source>[|<filter>]
             if (preg_match('/@paramOption\s+(\w+)\s+(\w+)\s+(.+)/i', $line, $matches)) {
                 $paramName = trim($matches[1]);
                 $optionType = trim($matches[2]);
                 $optionConfig = trim($matches[3]);
                 
-                // Parsear configuración: "servicios|efector_servicios"
+                // Parsear configuración: "<source>|<filter>"
                 $parts = explode('|', $optionConfig);
                 
                 $paramInfo = [
@@ -169,8 +169,8 @@ class ActionParameterAnalyzer
                     'source' => 'docblock',
                     'option_type' => $optionType,
                     'option_config' => [
-                        'source' => $parts[0], // servicios, efectores, personas, etc.
-                        'filter' => $parts[1] ?? null, // efector_servicios, user_efectores, etc.
+                        'source' => $parts[0],
+                        'filter' => $parts[1] ?? null,
                     ],
                 ];
                 
@@ -197,9 +197,6 @@ class ActionParameterAnalyzer
         }
         if (stripos($name, 'fecha') !== false || stripos($name, 'date') !== false) {
             return 'date';
-        }
-        if (stripos($name, 'servicio') !== false) {
-            return 'integer'; // id_servicio
         }
         if (stripos($name, 'hora') !== false || stripos($name, 'time') !== false) {
             return 'time';
@@ -236,20 +233,20 @@ class ActionParameterAnalyzer
         foreach ($lines as $line) {
             $line = trim($line);
             
-            // @paramOption id_efector select efectores|user_efectores
+            // @paramOption <param> select <endpoint_absoluto_o_path>[|<filtro>]
             if (preg_match('/@paramOption\s+' . preg_quote($paramName) . '\s+(\w+)\s+(.+)/i', $line, $matches)) {
                 $metadata['option_type'] = trim($matches[1]); // select, autocomplete, date, etc.
                 $optionConfig = trim($matches[2]);
                 
-                // Parsear configuración: "efectores|user_efectores" o "servicios|efector_servicios"
+                // Parsear configuración: "<source>|<filter>"
                 $parts = explode('|', $optionConfig);
                 $metadata['option_config'] = [
-                    'source' => $parts[0], // efectores, servicios, personas, etc.
-                    'filter' => $parts[1] ?? null, // user_efectores, efector_servicios, etc.
+                    'source' => $parts[0],
+                    'filter' => $parts[1] ?? null,
                 ];
             }
             
-            // @paramFilter id_servicio servicio_especialidad odontologia
+            // @paramFilter <param> <tipo_filtro> <valor>
             if (preg_match('/@paramFilter\s+' . preg_quote($paramName) . '\s+(\w+)\s+(.+)/i', $line, $matches)) {
                 $filterType = trim($matches[1]);
                 $filterValue = trim($matches[2]);
@@ -259,12 +256,12 @@ class ActionParameterAnalyzer
                 ];
             }
             
-            // @paramDepends id_servicio id_efector
+            // @paramDepends <param> <depende_de>
             if (preg_match('/@paramDepends\s+' . preg_quote($paramName) . '\s+(\w+)/i', $line, $matches)) {
                 $metadata['depends_on'] = trim($matches[1]);
             }
             
-            // @paramEndpoint id_persona /api/v1/personas/search
+            // @paramEndpoint <param> <endpoint>
             if (preg_match('/@paramEndpoint\s+' . preg_quote($paramName) . '\s+(.+)/i', $line, $matches)) {
                 $metadata['endpoint'] = trim($matches[1]);
             }
@@ -308,11 +305,7 @@ class ActionParameterAnalyzer
         return 'string';
     }
     
-    /**
-     * Mapear datos extraídos a parámetros.
-     * Usa tipo semántico (EntityParameterResolver) para entidades; extractedData ya viene
-     * enriquecido por EntityParameterResolver con la clave canónica y la familia.
-     */
+    /** Mapear datos extraídos a parámetros (agnóstico de dominio). */
     private static function mapExtractedDataToParameters($extractedData, $requiredParams)
     {
         $mapped = [];
@@ -320,43 +313,17 @@ class ActionParameterAnalyzer
         foreach ($requiredParams as $param) {
             $paramName = $param['name'];
             $value = null;
-            
-            // 1) Tipo semántico: leer de clave canónica o del propio param (resolver ya propagó)
-            $semanticType = EntityParameterResolver::getSemanticType($paramName);
-            if ($semanticType !== null) {
-                $canonical = EntityParameterResolver::getCanonicalKey($semanticType);
-                $value = isset($extractedData[$canonical]) ? $extractedData[$canonical] : ($extractedData[$paramName] ?? null);
-                if ($value === null || $value === '') {
-                    $value = null;
-                }
+
+            // 1) Match directo por nombre de parámetro.
+            if (is_array($extractedData) && array_key_exists($paramName, $extractedData)) {
+                $value = $extractedData[$paramName];
             }
-            
-            // 2) Parámetros sin tipo semántico: mapeo por nombre
-            if ($value === null) {
-                if (stripos($paramName, 'fecha') !== false || stripos($paramName, 'date') !== false) {
-                    if (isset($extractedData['fecha'])) {
-                        $value = $extractedData['fecha'];
-                    } elseif (isset($extractedData['raw']['dates'])) {
-                        $value = $extractedData['raw']['dates'][0] ?? null;
-                    }
-                } elseif (stripos($paramName, 'nombre') !== false || stripos($paramName, 'name') !== false) {
-                    if (isset($extractedData['nombre'])) {
-                        $value = $extractedData['nombre'];
-                    } elseif (isset($extractedData['raw']['names'])) {
-                        $value = implode(' ', $extractedData['raw']['names']);
-                    }
-                } elseif (stripos($paramName, 'id') !== false && stripos($paramName, 'servicio') === false && stripos($paramName, 'efector') === false && stripos($paramName, 'rrhh') === false) {
-                    if (isset($extractedData['dni'])) {
-                        $value = $extractedData['dni'];
-                    } elseif (isset($extractedData['raw']['identifiers'])) {
-                        $value = $extractedData['raw']['identifiers'][0] ?? null;
-                    }
+
+            // 2) Heurística genérica: fechas.
+            if ($value === null && (stripos($paramName, 'fecha') !== false || stripos($paramName, 'date') !== false)) {
+                if (is_array($extractedData) && isset($extractedData['raw']['dates']) && is_array($extractedData['raw']['dates'])) {
+                    $value = $extractedData['raw']['dates'][0] ?? null;
                 }
-            }
-            
-            // 3) Fallback legacy: servicio por nombre (si no está en familia o resolver no rellenó)
-            if ($value === null && stripos($paramName, 'servicio') !== false) {
-                $value = self::mapServicioFromExtractedData($extractedData, $paramName);
             }
             
             if ($value !== null) {
@@ -368,72 +335,6 @@ class ActionParameterAnalyzer
         }
         
         return $mapped;
-    }
-    
-    /**
-     * Mapear servicio desde datos extraídos
-     * Busca nombres de servicios (como "odontologo") y los convierte a id_servicio
-     * 
-     * @param array $extractedData
-     * @param string $paramName Nombre del parámetro (servicio_actual, id_servicio, etc.)
-     * @return int|null ID del servicio encontrado
-     */
-    private static function mapServicioFromExtractedData($extractedData, $paramName)
-    {
-        $servicioValue = null;
-        
-        // 1. Buscar directamente en extractedData
-        // Prioridad: id_servicio > servicio > paramName específico (id_servicio_asignado, servicio_actual, etc.)
-        if (isset($extractedData['id_servicio'])) {
-            // Si ya viene como ID, devolverlo directamente (tiene prioridad)
-            return is_numeric($extractedData['id_servicio']) ? (int)$extractedData['id_servicio'] : null;
-        } elseif (isset($extractedData['servicio'])) {
-            $servicioValue = $extractedData['servicio'];
-        } elseif (isset($extractedData[$paramName])) {
-            $servicioValue = $extractedData[$paramName];
-        } elseif (isset($extractedData['servicio_actual'])) {
-            // También buscar servicio_actual como alias
-            $servicioValue = $extractedData['servicio_actual'];
-        }
-        
-        // 2. Buscar en raw data
-        if ($servicioValue === null && isset($extractedData['raw'])) {
-            if (isset($extractedData['raw']['servicio'])) {
-                $servicioValue = $extractedData['raw']['servicio'];
-            } elseif (isset($extractedData['raw']['names'])) {
-                // Buscar en nombres extraídos (puede venir como "odontologo" en names)
-                foreach ($extractedData['raw']['names'] as $name) {
-                    $servicioId = \common\models\Servicio::findByName($name);
-                    if ($servicioId !== null) {
-                        return $servicioId;
-                    }
-                }
-            }
-        }
-        
-        // 3. Si el valor es un número, asumir que es un ID
-        if ($servicioValue !== null && is_numeric($servicioValue)) {
-            return (int)$servicioValue;
-        }
-        
-        // 4. Si el valor es texto, buscar el servicio por nombre usando el modelo
-        if ($servicioValue !== null && is_string($servicioValue)) {
-            return \common\models\Servicio::findByName($servicioValue);
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Buscar servicio por nombre (delega en modelo; dinámico desde BD).
-     *
-     * @deprecated Usar \common\models\Servicio::findByName() en su lugar
-     * @param string $nombre Nombre del servicio (ej. "odontologo", "cardiología")
-     * @return int|null ID del servicio encontrado
-     */
-    private static function findServicioByName($nombre)
-    {
-        return \common\models\Servicio::findByName($nombre);
     }
     
     /**
@@ -538,34 +439,11 @@ class ActionParameterAnalyzer
      */
     private static function resolveSourceEndpoint($source, $filter, $filters, $dependsOn, $extractedData)
     {
-        $mapping = [
-            'efectores' => [
-                'endpoint' => '/efectores/buscar',
-                'input_type' => 'autocomplete',
-            ],
-            'servicios' => [
-                'endpoint' => '/servicios/search',
-                'input_type' => 'autocomplete',
-            ],
-            'personas' => [
-                'endpoint' => '/personas/autocomplete',
-                'input_type' => 'autocomplete',
-            ],
-            'rrhh' => [
-                'endpoint' => '/rrhh/autocomplete',
-                'input_type' => 'autocomplete',
-            ],
-            'especialidades' => [
-                'endpoint' => '/especialidades/search',
-                'input_type' => 'autocomplete',
-            ],
-        ];
-        
-        if (!isset($mapping[$source])) {
+        // Agnóstico de dominio: `source` debe ser un endpoint explícito o la regla no se puede resolver aquí.
+        $endpoint = is_string($source) ? trim($source) : '';
+        if ($endpoint === '' || $endpoint[0] !== '/') {
             return ['type' => 'endpoint', 'endpoint' => null];
         }
-        
-        $config = $mapping[$source];
         $params = [];
         
         // Si depende de otro parámetro, agregarlo a los params
@@ -580,8 +458,8 @@ class ActionParameterAnalyzer
         
         return [
             'type' => 'endpoint',
-            'endpoint' => $config['endpoint'],
-            'input_type' => $config['input_type'],
+            'endpoint' => $endpoint,
+            'input_type' => 'autocomplete',
             'params' => $params,
         ];
     }
@@ -593,27 +471,7 @@ class ActionParameterAnalyzer
     {
         $paramNameLower = strtolower($paramName);
         
-        if (stripos($paramNameLower, 'efector') !== false || stripos($paramNameLower, 'id_efector') !== false) {
-            return [
-                'type' => 'autocomplete',
-                'endpoint' => '/efectores/buscar',
-            ];
-        } elseif (stripos($paramNameLower, 'servicio') !== false || stripos($paramNameLower, 'id_servicio') !== false) {
-            return [
-                'type' => 'autocomplete',
-                'endpoint' => '/servicios/search',
-            ];
-        } elseif (stripos($paramNameLower, 'persona') !== false || stripos($paramNameLower, 'id_persona') !== false) {
-            return [
-                'type' => 'autocomplete',
-                'endpoint' => '/personas/autocomplete',
-            ];
-        } elseif (stripos($paramNameLower, 'rrhh') !== false || stripos($paramNameLower, 'id_rrhh') !== false) {
-            return [
-                'type' => 'autocomplete',
-                'endpoint' => '/rrhh/autocomplete',
-            ];
-        } elseif (stripos($paramNameLower, 'fecha') !== false || stripos($paramNameLower, 'date') !== false) {
+        if (stripos($paramNameLower, 'fecha') !== false || stripos($paramNameLower, 'date') !== false) {
             return [
                 'type' => 'date',
                 'format' => 'YYYY-MM-DD',

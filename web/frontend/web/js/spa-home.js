@@ -72,7 +72,7 @@
         return tab && Array.isArray(tab.requires_client) && tab.requires_client.indexOf('geolocation') !== -1;
     }
 
-    function fetchFlowUiDefinition(fullUrl, mountEl, responseSection) {
+    function fetchFlowUiDefinition(fullUrl, mountEl) {
         mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
         fetch(fullUrl, {
             method: 'GET',
@@ -125,10 +125,7 @@
                 }
             })
             .finally(function () {
-                responseSection.classList.remove('d-none');
-                setTimeout(function () {
-                    responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 100);
+                setTimeout(scrollChatToBottom, 10);
             });
     }
 
@@ -139,9 +136,6 @@
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
-    const responseSection = document.getElementById('spa-response-section');
-    const explanationDiv = document.getElementById('spa-explanation');
-    const actionsDiv = document.getElementById('spa-actions');
     const chatMessagesDiv = document.getElementById('spa-chat-messages');
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
 
@@ -441,6 +435,51 @@
     }
 
     /**
+     * Respuesta "ancha" (mensaje del asistente) que puede incluir cards sugeridas u otras UIs.
+     * Forma parte del historial conversacional: nunca se reemplaza ni se oculta.
+     *
+     * @param {Object} opts
+     * @param {string} [opts.explanationHtml] - HTML ya escapado/sanitizado por el llamador
+     * @param {string} [opts.actionsHtml] - HTML de cards en grilla `.row.g-3`
+     * @param {string} [opts.variant] - 'plain' | 'info' | 'danger'
+     * @returns {{row: HTMLDivElement, panel: HTMLDivElement, explanationEl: HTMLDivElement, actionsEl: HTMLDivElement}|null}
+     */
+    function appendAssistantResponsePanel(opts) {
+        if (!chatMessagesDiv) return null;
+        const o = opts && typeof opts === 'object' ? opts : {};
+        const explanationHtml = typeof o.explanationHtml === 'string' ? o.explanationHtml : '';
+        const actionsHtml = typeof o.actionsHtml === 'string' ? o.actionsHtml : '';
+        const variant = typeof o.variant === 'string' ? o.variant : 'plain';
+
+        const row = document.createElement('div');
+        row.className = 'd-flex justify-content-start mb-3';
+
+        const panel = document.createElement('div');
+        panel.className = 'bg-white border rounded-4 p-3 w-100';
+
+        const explanationEl = document.createElement('div');
+        explanationEl.className = 'mb-3';
+        if (variant === 'info') {
+            explanationEl.innerHTML = '<div class="alert alert-info mb-0">' + explanationHtml + '</div>';
+        } else if (variant === 'danger') {
+            explanationEl.innerHTML = '<div class="alert alert-danger mb-0">' + explanationHtml + '</div>';
+        } else {
+            explanationEl.innerHTML = '<p class="mb-0">' + explanationHtml + '</p>';
+        }
+
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'row g-3';
+        actionsEl.innerHTML = actionsHtml || '';
+
+        panel.appendChild(explanationEl);
+        panel.appendChild(actionsEl);
+        row.appendChild(panel);
+        chatMessagesDiv.appendChild(row);
+        setTimeout(scrollChatToBottom, 10);
+        return { row: row, panel: panel, explanationEl: explanationEl, actionsEl: actionsEl };
+    }
+
+    /**
      * Referencia visual del plan: `flow_manifest.steps` + paso activo (`active_subintent_id`).
      *
      * @param {object|null} fm
@@ -545,7 +584,6 @@
 
         // Deshabilitar botón y mostrar loading
         setLoadingState(true);
-        hideResponse();
         if (chatEmptyHint) {
             chatEmptyHint.classList.add('d-none');
         }
@@ -660,39 +698,34 @@
 
             if (kind === 'intent_remediation') {
                 setLoadingState(false);
-                if (chatMessagesDiv) {
-                    const wrap = appendAssistantFlowSection(primaryText || 'Elegí una opción');
-                    if (wrap && Array.isArray(result.remediation) && result.remediation.length > 0) {
-                        const row = document.createElement('div');
-                        row.className = 'd-flex flex-wrap gap-2 mt-2 spa-intent-remediation';
-                        result.remediation.forEach(function (ch) {
-                            if (!ch || !ch.intent_id) {
-                                return;
-                            }
-                            const b = document.createElement('button');
-                            b.type = 'button';
-                            b.className = 'btn btn-sm btn-outline-primary';
-                            b.textContent = ch.label ? String(ch.label) : String(ch.intent_id);
-                            b.addEventListener('click', function () {
-                                row.querySelectorAll('button').forEach(function (x) {
-                                    x.classList.remove('active');
-                                });
-                                b.classList.add('active');
-                                currentIntentId = String(ch.intent_id);
-                                currentSubintentId = null;
-                                draft = {};
-                                writeFlowState();
-                                handleSendQuery('');
+                const wrap = appendAssistantFlowSection(primaryText || 'Elegí una opción');
+                if (wrap && Array.isArray(result.remediation) && result.remediation.length > 0) {
+                    const row = document.createElement('div');
+                    row.className = 'd-flex flex-wrap gap-2 mt-2 spa-intent-remediation';
+                    result.remediation.forEach(function (ch) {
+                        if (!ch || !ch.intent_id) {
+                            return;
+                        }
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.className = 'btn btn-sm btn-outline-primary';
+                        b.textContent = ch.label ? String(ch.label) : String(ch.intent_id);
+                        b.addEventListener('click', function () {
+                            row.querySelectorAll('button').forEach(function (x) {
+                                x.classList.remove('active');
                             });
-                            row.appendChild(b);
+                            b.classList.add('active');
+                            currentIntentId = String(ch.intent_id);
+                            currentSubintentId = null;
+                            draft = {};
+                            writeFlowState();
+                            handleSendQuery('');
                         });
-                        wrap.appendChild(row);
-                    }
-                    setTimeout(scrollChatToBottom, 20);
-                } else {
-                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || '') + '</p>';
-                    responseSection.classList.remove('d-none');
+                        row.appendChild(b);
+                    });
+                    wrap.appendChild(row);
                 }
+                setTimeout(scrollChatToBottom, 20);
                 return;
             }
 
@@ -718,14 +751,7 @@
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
                 const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
 
-                let flowSectionInner = null;
-                if (chatMessagesDiv) {
-                    flowSectionInner = appendAssistantFlowSection(primaryText || 'Ok.');
-                } else {
-                    // Fallback legacy (sin contenedor chat)
-                    explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(primaryText || 'Ok.') + '</p>';
-                    actionsDiv.innerHTML = '';
-                }
+                const flowSectionInner = appendAssistantFlowSection(primaryText || 'Ok.');
 
                 const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
@@ -760,11 +786,7 @@
                     writeFlowState();
                     removeFlowPlanStrip();
                     bioFlowPlanPendingContext = null;
-                    if (flowSectionInner) {
-                        setTimeout(scrollChatToBottom, 20);
-                    } else {
-                        responseSection.classList.remove('d-none');
-                    }
+                    setTimeout(scrollChatToBottom, 20);
                     return;
                 }
 
@@ -792,30 +814,20 @@
                     const errHtml = openUi && openUi.action_id
                         ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
                         : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
-                    if (flowSectionInner) {
-                        const errWrap = document.createElement('div');
-                        errWrap.className = 'mt-2';
-                        errWrap.innerHTML = errHtml;
-                        flowSectionInner.appendChild(errWrap);
-                        setTimeout(scrollChatToBottom, 20);
-                    } else {
-                        explanationDiv.innerHTML =
-                            '<p class="mb-2">' + escapeHtml(primaryText || 'Ok.') + '</p>' + errHtml;
-                        responseSection.classList.remove('d-none');
-                        setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-                    }
+                    const errWrap = document.createElement('div');
+                    errWrap.className = 'mt-2';
+                    errWrap.innerHTML = errHtml;
+                    flowSectionInner.appendChild(errWrap);
+                    setTimeout(scrollChatToBottom, 20);
                     return;
                 }
 
-                // Montaje: debajo del h4 del bloque a ancho completo (o `actionsDiv` en layout legacy).
-                const mountHost = flowSectionInner ? flowSectionInner : actionsDiv;
+                // Montaje: debajo del h4 del bloque a ancho completo.
+                const mountHost = flowSectionInner;
                 /** Nodo dedicado para `renderDynamicUi` (no sustituir el contenedor del título). */
                 let flowUiMount = null;
 
                 if (tabs.length >= 2) {
-                    if (!flowSectionInner) {
-                        actionsDiv.innerHTML = '';
-                    }
                     const tabRow = document.createElement('div');
                     tabRow.className = 'd-flex flex-wrap gap-2 mb-2 mt-2';
                     const mountEl = document.createElement('div');
@@ -847,7 +859,7 @@
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
                                 u.searchParams.set('longitud', String(pos.coords.longitude));
-                                fetchFlowUiDefinition(u.toString(), mountEl, responseSection);
+                                fetchFlowUiDefinition(u.toString(), mountEl);
                             }, function () {
                                 mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
                             });
@@ -859,7 +871,7 @@
                             mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
                             return;
                         }
-                        fetchFlowUiDefinition(url, mountEl, responseSection);
+                        fetchFlowUiDefinition(url, mountEl);
                     }
 
                     tabs.forEach(function (tab, idx) {
@@ -883,19 +895,15 @@
                     return;
                 }
 
-                if (!flowSectionInner) {
-                    actionsDiv.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
-                } else {
-                    // No montar en el root del bloque: `renderDynamicUi` reemplaza innerHTML del hijo, no el h4.
-                    flowUiMount = document.createElement('div');
-                    flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
-                    flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
-                    const loading = document.createElement('div');
-                    loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
-                    loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
-                    flowUiMount.appendChild(loading);
-                    mountHost.appendChild(flowUiMount);
-                }
+                // No montar en el root del bloque: `renderDynamicUi` reemplaza innerHTML del hijo, no el h4.
+                flowUiMount = document.createElement('div');
+                flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
+                flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
+                const loading = document.createElement('div');
+                loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
+                loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
+                flowUiMount.appendChild(loading);
+                mountHost.appendChild(flowUiMount);
                 fetch(fullUrl, {
                     method: 'GET',
                     headers: window.BioenlaceApiClient.mergeHeaders({
@@ -920,22 +928,14 @@
                     return r.json();
                 })
                 .then(json => {
-                    if (!flowSectionInner) {
-                        actionsDiv.innerHTML = '';
-                    } else if (flowUiMount) {
-                        flowUiMount.innerHTML = '';
-                    }
+                    flowUiMount.innerHTML = '';
                     if (json && json.kind === 'ui_definition') {
-                        const target = (flowSectionInner && flowUiMount) ? flowUiMount : actionsDiv;
-                        renderDynamicUi(json, target, { url: fullUrl });
+                        renderDynamicUi(json, flowUiMount, { url: fullUrl });
                     } else {
-                        const target = (flowSectionInner && flowUiMount) ? flowUiMount : actionsDiv;
-                        target.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
+                        flowUiMount.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
                     }
                     try {
-                        const mountAfter = (flowSectionInner && flowUiMount)
-                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount)
-                            : actionsDiv;
+                        const mountAfter = mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount;
                         if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
                             attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
                         }
@@ -946,12 +946,9 @@
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    const target = (flowSectionInner && flowUiMount) ? flowUiMount : actionsDiv;
-                    target.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
+                    flowUiMount.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
                     try {
-                        const mountAfter = (flowSectionInner && flowUiMount)
-                            ? (mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount)
-                            : actionsDiv;
+                        const mountAfter = mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount;
                         if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
                             attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
                         }
@@ -961,12 +958,7 @@
                 })
                 .finally(() => {
                     setLoadingState(false);
-                    if (!chatMessagesDiv) {
-                        responseSection.classList.remove('d-none');
-                        setTimeout(() => responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-                    } else {
-                        setTimeout(scrollChatToBottom, 20);
-                    }
+                    setTimeout(scrollChatToBottom, 20);
                 });
                 return;
             }
@@ -1041,34 +1033,27 @@
      * Mostrar respuesta CRUD
      */
     function displayCrudResponse(data) {
-        // Mostrar explicación
-        explanationDiv.innerHTML = '<p class="mb-0">' + escapeHtml(data.explanation) + '</p>';
-        
+        const explanationHtml = escapeHtml(data.explanation || '');
+        let actionsHtml = '';
+
         // Si hay formulario, renderizarlo
         if (data.form && data.form.success) {
-            actionsDiv.innerHTML = renderCrudForm(data.form, data.intention, data.entity_id);
+            actionsHtml = renderCrudForm(data.form, data.intention, data.entity_id);
         } else if (data.action) {
             // Acción directa (navegación, eliminación, etc)
-            actionsDiv.innerHTML = renderCrudAction(data);
+            actionsHtml = renderCrudAction(data);
         } else if (data.suggested_actions && data.suggested_actions.length > 0) {
             // Acciones sugeridas cuando la entidad no existe
-            actionsDiv.innerHTML = renderActionCards(data.suggested_actions);
-            attachCardListeners();
+            actionsHtml = renderActionCards(data.suggested_actions);
         } else {
-            actionsDiv.innerHTML = '<div class="col-12"><p class="text-muted mb-0">' + escapeHtml(data.message || 'No hay acciones disponibles') + '</p></div>';
+            actionsHtml = '<div class="col-12"><p class="text-muted mb-0">' + escapeHtml(data.message || 'No hay acciones disponibles') + '</p></div>';
         }
 
-        // Mostrar sección de respuesta
-        responseSection.classList.remove('d-none');
-
-        // En modo chat, mantener el scroll dentro del panel.
-        if (chatMessagesDiv) {
-            setTimeout(scrollChatToBottom, 50);
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, variant: 'plain' });
+        if (panel && panel.actionsEl) {
+            attachCardListeners(panel.actionsEl);
         } else {
-            // Layout legacy: scroll hacia la card de respuesta
-            setTimeout(() => {
-                responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 100);
+            attachCardListeners();
         }
     }
 
@@ -2007,7 +1992,7 @@
      * Cancelar eliminación
      */
     window.cancelDelete = function() {
-        hideResponse();
+        // En modo conversacional no se ocultan mensajes previos.
     };
 
     /**
@@ -2041,23 +2026,17 @@
             // No contiene HTML, escapar el texto
             explanationHtml = escapeHtml(explanation);
         }
-        explanationDiv.innerHTML = '<p class="mb-0">' + explanationHtml + '</p>';
-        
-        // Mostrar acciones
-        if (actions && actions.length > 0) {
-            actionsDiv.innerHTML = renderActionCards(actions);
-            attachCardListeners();
-        } else {
-            actionsDiv.innerHTML = '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
-        }
 
-        // Mostrar sección de respuesta
-        responseSection.classList.remove('d-none');
-        
-        // Scroll suave a la respuesta
-        setTimeout(() => {
-            responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
+        const actionsHtml = (actions && actions.length > 0)
+            ? renderActionCards(actions)
+            : '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
+
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml, actionsHtml: actionsHtml, variant: 'plain' });
+        if (panel && panel.actionsEl) {
+            attachCardListeners(panel.actionsEl);
+        } else {
+            attachCardListeners();
+        }
     }
 
     /**
@@ -2069,14 +2048,19 @@
         if (explanation && !/<[a-z][\s\S]*>/i.test(explanation)) {
             explanationHtml = escapeHtml(explanation);
         }
-        
-        // Mostrar como información (no error)
-        explanationDiv.innerHTML = '<div class="alert alert-info mb-0">' + explanationHtml + '</div>';
-        
-        // Si hay consulta sugerida, agregarla
+
+        let extraHtml = '';
         if (suggestedQuery) {
-            explanationDiv.innerHTML += '<div class="mt-2"><small class="text-muted">Sugerencia: <button type="button" class="btn btn-link btn-sm p-0 align-baseline text-primary spa-suggested-query-btn">' + escapeHtml(suggestedQuery) + '</button></small></div>';
-            const b = explanationDiv.querySelector('.spa-suggested-query-btn');
+            extraHtml = '<div class="mt-2"><small class="text-muted">Sugerencia: <button type="button" class="btn btn-link btn-sm p-0 align-baseline text-primary spa-suggested-query-btn">' + escapeHtml(suggestedQuery) + '</button></small></div>';
+        }
+
+        const actionsHtml = (actions && actions.length > 0)
+            ? renderActionCards(actions)
+            : '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
+
+        const panel = appendAssistantResponsePanel({ explanationHtml: explanationHtml + extraHtml, actionsHtml: actionsHtml, variant: 'info' });
+        if (panel && panel.explanationEl && suggestedQuery) {
+            const b = panel.explanationEl.querySelector('.spa-suggested-query-btn');
             if (b) {
                 b.addEventListener('click', function () {
                     if (queryInput) {
@@ -2087,41 +2071,22 @@
                 });
             }
         }
-        
-        // Mostrar acciones si existen
-        if (actions && actions.length > 0) {
-            actionsDiv.innerHTML = renderActionCards(actions);
-            attachCardListeners();
+        if (panel && panel.actionsEl) {
+            attachCardListeners(panel.actionsEl);
         } else {
-            actionsDiv.innerHTML = '<div class="col-12"><p class="text-muted mb-0">No se encontraron acciones específicas para esta consulta.</p></div>';
+            attachCardListeners();
         }
-
-        // Mostrar sección de respuesta
-        responseSection.classList.remove('d-none');
-        
-        // Scroll suave a la respuesta
-        setTimeout(() => {
-            responseSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
     }
 
     /**
      * Mostrar error
      */
     function showError(message) {
-        explanationDiv.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(message) + '</div>';
-        actionsDiv.innerHTML = '';
-        responseSection.classList.remove('d-none');
-        if (chatMessagesDiv) {
-            setTimeout(scrollChatToBottom, 50);
-        }
-    }
-
-    /**
-     * Ocultar respuesta
-     */
-    function hideResponse() {
-        responseSection.classList.add('d-none');
+        appendAssistantResponsePanel({
+            explanationHtml: escapeHtml(message),
+            actionsHtml: '',
+            variant: 'danger'
+        });
     }
 
     /**

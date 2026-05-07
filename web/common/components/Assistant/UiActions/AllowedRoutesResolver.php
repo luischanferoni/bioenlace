@@ -265,7 +265,7 @@ final class AllowedRoutesResolver
     /**
      * Rutas candidatas para comprobar {@see User::canRoute} sobre controladores en `frontend/controllers`.
      *
-     * En webvimark a veces el permiso figura como `/agenda/crear` y otras como `/frontend/agenda/crear`
+     * En webvimark a veces el permiso figura con o sin prefijo de módulo (`/foo/bar` vs `/frontend/foo/bar`)
      * (según cómo se generó/registró la ruta). Hay que probar ambas para no filtrar UIs nativas en vano.
      *
      * @return list<string>

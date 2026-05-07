@@ -8,7 +8,7 @@ namespace common\components\Assistant\UiActions;
  *
  * Nota de terminología:
  * - “UI en API” = descriptor JSON (ruta `/api/v1/<entidad>/<accion>`).
- * - Endpoints de dominio (turnos/agenda/etc.) no son “UI”; son APIs de negocio.
+ * - Endpoints de negocio no son “UI”; son APIs de negocio.
  */
 final class ChatApiActionBuilder
 {
@@ -118,88 +118,6 @@ final class ChatApiActionBuilder
         return AllowedRoutesResolver::routeAllowedByMap($route, $map);
     }
 
-    /**
-     * Permiso para POST autogestión de turno (misma URL pública /api/v1/turnos).
-     * Acepta rutas de permiso nuevas y legadas durante migración RBAC.
-     */
-    private static function userCanCrearTurnoAutogestion(?int $userId): bool
-    {
-        if (!$userId) {
-            return false;
-        }
-        foreach (['/api/turnos/crear-como-paciente', '/api/turnos/create', '/api/v1/turnos'] as $r) {
-            if (self::userCanOpenApiRoute($userId, $r)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * CTA sacar / gestionar turno vía API.
-     *
-     * @return list<array<string, mixed>>
-     */
-    public static function buildTurnoActions(?int $userId): array
-    {
-        $title = 'Sacar turno';
-        $found = self::firstMatchingApiAction($userId, ['turno', 'crear', 'agendar', 'reservar', 'cita', 'nuevo']);
-        if ($found) {
-            return [self::discoveredActionToOpenRoute($found, $title)];
-        }
-        $postUrl = '/api/v1/turnos';
-        if (self::userCanCrearTurnoAutogestion($userId)) {
-            return [[
-                'type' => 'open_route',
-                'title' => $title,
-                'route' => $postUrl,
-                'method' => 'POST',
-                'params' => [],
-            ]];
-        }
-
-        return [];
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    public static function buildVacunacionActions(?int $userId): array
-    {
-        $found = self::firstMatchingApiAction($userId, ['vacun', 'vacuna', 'inmuniz']);
-        if ($found) {
-            return [self::discoveredActionToOpenRoute($found, 'Vacunación / turno')];
-        }
-        $postUrl = '/api/v1/turnos';
-        if (self::userCanCrearTurnoAutogestion($userId)) {
-            return [[
-                'type' => 'open_route',
-                'title' => 'Turno vacunación',
-                'route' => $postUrl,
-                'method' => 'POST',
-                'params' => ['servicio' => 'VACUNACION'],
-            ]];
-        }
-
-        return [];
-    }
-
-    /**
-     * Turno + contacto emergencia (no API médica; deep link tel).
-     *
-     * @return list<array<string, mixed>>
-     */
-    public static function buildCuandoConsultarActions(?int $userId): array
-    {
-        $out = self::buildTurnoActions($userId);
-        $out[] = [
-            'type' => 'open_route',
-            'title' => 'Emergencia (107)',
-            'route' => 'tel:107',
-            'params' => [],
-        ];
-
-        return $out;
-    }
+    // Nota: el motor Assistant debe ser agnóstico de dominio.
+    // Builders de CTAs específicos deben vivir fuera de este feature.
 }

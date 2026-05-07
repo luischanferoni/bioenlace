@@ -10,7 +10,7 @@ use Yii;
  * Definición de UI en este proyecto:
  * - **API UI JSON**: descriptor JSON bajo `/api/v1/<entity>/<action>` cargado desde templates JSON.
  *
- * Este servicio NO incluye endpoints de dominio (turnos/agenda/etc.) porque no son UI.
+ * Este servicio NO incluye endpoints de negocio porque no son UI.
  */
 final class IntentCatalogService
 {

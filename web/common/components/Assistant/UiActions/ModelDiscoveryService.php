@@ -260,11 +260,11 @@ class ModelDiscoveryService
     private static function findControllerForModel($modelName)
     {
         // Convertir nombre de modelo a nombre de controlador
-        // Ej: Persona -> persona, Consulta -> consulta
+        // Ej: FooBar -> foobar
         $controllerName = strtolower($modelName);
         
         // Buscar en acciones descubiertas
-        $actions = \common\components\Actions\ActionDiscoveryService::discoverAllActions(false);
+        $actions = \common\components\Assistant\UiActions\ActionDiscoveryService::discoverAllActions(false);
         
         foreach ($actions as $action) {
             if (stripos($action['controller'], $controllerName) !== false) {
@@ -317,7 +317,7 @@ class ModelDiscoveryService
     public static function getAvailableModelsForUser($userId = null)
     {
         $allModels = self::discoverAllModels();
-        $availableActions = \common\components\Actions\ActionMappingService::getAvailableActionsForUser($userId);
+        $availableActions = \common\components\Assistant\UiActions\ActionMappingService::getAvailableActionsForUser($userId);
         
         // Filtrar modelos que tienen acciones disponibles para el usuario
         $availableModels = [];

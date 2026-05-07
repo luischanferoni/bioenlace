@@ -7,8 +7,6 @@ use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\UiDefinitionTemplateManager;
-use common\models\Servicio;
-use common\models\ServiciosEfector;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -39,7 +37,6 @@ final class SubIntentEngine
         $subintentId = isset($snapshot['subintent_id']) ? trim((string) $snapshot['subintent_id']) : '';
         $draft = isset($snapshot['draft']) && is_array($snapshot['draft']) ? $snapshot['draft'] : [];
         $draft = self::mergeFlowSnapshotIntoDraft($snapshot, $draft);
-        $draft = self::hydrateDraftDerivedFromServicio($draft);
         $content = isset($snapshot['content']) ? trim((string) $snapshot['content']) : '';
         $interaction = isset($snapshot['interaction']) && is_array($snapshot['interaction']) ? $snapshot['interaction'] : null;
 
@@ -163,59 +160,35 @@ final class SubIntentEngine
         return $payload;
     }
 
-    /**
-     * Completa `draft` desde claves planas del snapshot (p. ej. apps que mandan `id_servicio` fuera de `draft`)
-     * y, si aplica, infiere un único `id_servicio_asignado` para un `id_efector` ya elegido.
-     *
-     * @param array<string, mixed> $snapshot
-     * @param array<string, mixed> $draft
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function mergeFlowSnapshotIntoDraft(array $snapshot, array $draft): array
     {
-        if (!self::draftFieldNonEmpty($draft, 'id_servicio_asignado')) {
-            foreach (['id_servicio_asignado', 'id_servicio'] as $k) {
-                if (isset($snapshot[$k]) && self::scalarNonEmpty($snapshot[$k])) {
-                    $draft['id_servicio_asignado'] = trim((string) $snapshot[$k]);
-                    break;
-                }
+        // Motor agnóstico: mergea valores escalares del snapshot al draft sin conocer claves de dominio.
+        // Solo completa claves que no existan aún en draft.
+        $reserved = [
+            'intent_id' => true,
+            'flow_key' => true,
+            'subintent_id' => true,
+            'draft' => true,
+            'content' => true,
+            'interaction' => true,
+        ];
+        foreach ($snapshot as $k => $v) {
+            if (!is_string($k)) {
+                continue;
             }
-        }
-
-        if (!self::draftFieldNonEmpty($draft, 'id_servicio_asignado') && self::draftFieldNonEmpty($draft, 'id_efector')) {
-            $idEf = (int) $draft['id_efector'];
-            if ($idEf > 0) {
-                $inferred = self::inferUniqueServicioIdForEfector($idEf);
-                if ($inferred !== null) {
-                    $draft['id_servicio_asignado'] = $inferred;
-                }
+            $key = trim($k);
+            if ($key === '' || isset($reserved[$key])) {
+                continue;
             }
+            if (isset($draft[$key]) && $draft[$key] !== null && trim((string) $draft[$key]) !== '') {
+                continue;
+            }
+            if (!self::scalarNonEmpty($v)) {
+                continue;
+            }
+            $draft[$key] = trim((string) $v);
         }
-
-        return $draft;
-    }
-
-    /**
-     * Deriva campos del draft usados en `next_routing` (p. ej. si el servicio acepta turnos).
-     *
-     * @param array<string, mixed> $draft
-     * @return array<string, mixed>
-     */
-    private static function hydrateDraftDerivedFromServicio(array $draft): array
-    {
-        if (!isset($draft['id_servicio']) || $draft['id_servicio'] === null || trim((string) $draft['id_servicio']) === '') {
-            return $draft;
-        }
-        $sid = (int) $draft['id_servicio'];
-        if ($sid <= 0) {
-            return $draft;
-        }
-        $servicio = Servicio::findOne($sid);
-        if ($servicio === null) {
-            return $draft;
-        }
-        $at = strtoupper(trim((string) ($servicio->acepta_turnos ?? '')));
-        $draft['servicio_acepta_turnos'] = $at === 'SI' ? 'SI' : 'NO';
 
         return $draft;
     }
@@ -313,23 +286,6 @@ final class SubIntentEngine
         }
 
         return trim((string) $v) !== '';
-    }
-
-    private static function inferUniqueServicioIdForEfector(int $idEfector): ?string
-    {
-        // Usar Query directo para evitar dependencias de AR en este helper.
-        $ids = (new \yii\db\Query())
-            ->select(['id_servicio'])
-            ->from(ServiciosEfector::tableName())
-            ->where(['id_efector' => $idEfector])
-            ->distinct()
-            ->column();
-        $ids = array_values(array_unique(array_map(static fn($v) => (int) $v, is_array($ids) ? $ids : [])));
-        if (!is_array($ids) || count($ids) !== 1) {
-            return null;
-        }
-
-        return (string) (int) $ids[0];
     }
 
     /**
@@ -463,7 +419,7 @@ final class SubIntentEngine
         $open = self::resolveClientOpen($actionId, $userId);
 
         // Parametrización declarativa: mapear draft -> query params del open_ui.
-        // YAML: open_ui.params: { id_servicio: "draft.id_servicio_asignado" }
+        // YAML: open_ui.params: { campo: "draft.campo" }
         $paramsMap = isset($openUiDef['params']) && is_array($openUiDef['params']) ? $openUiDef['params'] : null;
         if ($paramsMap && isset($open['client_open']) && is_array($open['client_open'])) {
             $co = $open['client_open'];
@@ -587,7 +543,7 @@ final class SubIntentEngine
         if ($item === null) {
             // Dentro de un flow, el YAML puede referenciar UIs embebibles que no estén en el catálogo UI global,
             // pero sí existan como templates y estén permitidas por RBAC por ruta.
-            // Resolvemos de forma determinística: action_id "rrhh.elegir" => "/api/v1/rrhh/elegir".
+            // Resolvemos de forma determinística: action_id "entidad.accion" => "/api/v1/entidad/accion".
             $route = null;
             if (preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
                 $route = '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);

@@ -5,6 +5,8 @@ action_name: "Crear recurso humano"
 rbac_route: "/api/agenda/crear-agenda-flow"
 keywords:
   - agenda
+  - cargar agenda
+  - cargar la agenda
   - crear recurso humano
   - agregar recurso humano
   - agregar profesional
@@ -19,7 +21,12 @@ draft_keys_extra:
 business_rules:
   - id: agenda_alta_vs_solo_horarios
     when: pre_flow
-    checker: agenda_alta_vs_solo_horarios
+    checker: content_regex
+    require_any:
+      - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario)"
+      - "m[eé]dico|profesional|doctor"
+    forbid_any:
+      - "crear|agregar|nuevo|alta|asociar|recurso humano|rrhh"
     user_message: >-
       Parece que querés trabajar con agenda u horarios de un profesional.
       ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?

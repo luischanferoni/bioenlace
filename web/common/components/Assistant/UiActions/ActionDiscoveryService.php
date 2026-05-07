@@ -651,7 +651,7 @@ class ActionDiscoveryService
             'native_assets_css' => [],
             'native_assets_js' => [],
             // Identificador de pantalla nativa en móvil (Flutter).
-            // - @mobile_screen_id agenda.crear
+            // - @mobile_screen_id <screen_id>
             'mobile_screen_id' => null,
         ];
 
@@ -676,8 +676,8 @@ class ActionDiscoveryService
                 $metadata['intent_catalog'] = true;
             }
 
-            // @action_name "Reservar turno"
-            // @display_name "Reservar turno" (alias, útil para migraciones)
+            // @action_name "<nombre humano>"
+            // @display_name "<alias>" (útil para migraciones)
             if (preg_match('/@(?:action_name|actionName|display_name|displayName)\s+(.+)/i', $line, $matches)) {
                 $value = trim($matches[1]);
                 $value = trim($value, "\"'"); // permitir comillas opcionales
@@ -686,7 +686,7 @@ class ActionDiscoveryService
                 }
             }
 
-            // @entity Turnos (también acepta @category para compatibilidad temporal durante migración)
+            // @entity "<categoria>" (también acepta @category para compatibilidad temporal durante migración)
             if (preg_match('/@(?:entity|category)\s+(.+)/i', $line, $matches)) {
                 $metadata['entity'] = trim($matches[1]);
             }
@@ -748,7 +748,7 @@ class ActionDiscoveryService
                 }));
             }
 
-            // @mobile_screen_id agenda.crear
+            // @mobile_screen_id <screen_id>
             if (preg_match('/@mobile_screen_id\s+(.+)/i', $line, $matches)) {
                 $value = trim($matches[1]);
                 $value = trim($value, "\"'");
@@ -779,47 +779,12 @@ class ActionDiscoveryService
      */
     private static function inferEntity($controllerName)
     {
-        $entityMapping = [
-            'persona' => 'Pacientes',
-            'personas' => 'Pacientes',
-            'paciente' => 'Pacientes',
-            'consulta' => 'Consultas',
-            'consultas' => 'Consultas',
-            'turno' => 'Turnos',
-            'turnos' => 'Turnos',
-            'licencia' => 'Licencias',
-            'licencias' => 'Licencias',
-            'efector' => 'Efectores',
-            'efectores' => 'Efectores',
-            'servicio' => 'Servicios',
-            'servicios' => 'Servicios',
-            'usuario' => 'Usuarios',
-            'usuarios' => 'Usuarios',
-            'reporte' => 'Reportes',
-            'reportes' => 'Reportes',
-            'guardia' => 'Guardias',
-            'internacion' => 'Internaciones',
-            'medicamento' => 'Medicamentos',
-            'medicamentos' => 'Medicamentos',
-            'rrhh' => 'Recursos Humanos',
-            'agenda' => 'Agendas',
-            'domicilio' => 'Domicilios',
-            'laboratorio' => 'Laboratorios',
-            'novedad' => 'Novedades',
-            'programa' => 'Programas',
-            'referencia' => 'Referencias',
-            'receta' => 'Recetas',
-        ];
-
-        $controllerLower = strtolower($controllerName);
-
-        foreach ($entityMapping as $key => $entity) {
-            if (stripos($controllerLower, $key) !== false) {
-                return $entity;
-            }
+        $s = trim((string) $controllerName);
+        if ($s === '') {
+            return 'General';
         }
-
-        return 'General';
+        // Agnóstico de dominio: inferencia mecánica. Nombres humanos deben declararse por docblock.
+        return ucfirst(strtolower($s));
     }
 
     /**
@@ -831,33 +796,13 @@ class ActionDiscoveryService
     private static function inferTags($controllerName, $actionName)
     {
         $tags = [];
-
-        // Tags desde controlador
-        $controllerLower = strtolower($controllerName);
-        if (stripos($controllerLower, 'persona') !== false) {
-            $tags[] = 'persona';
-            $tags[] = 'paciente';
-        }
-        if (stripos($controllerLower, 'consulta') !== false) {
-            $tags[] = 'consulta';
-            $tags[] = 'atencion';
-        }
-        if (stripos($controllerLower, 'turno') !== false) {
-            $tags[] = 'turno';
-            $tags[] = 'cita';
-        }
-        if (stripos($controllerLower, 'agenda') !== false) {
-            $tags[] = 'agenda';
-            $tags[] = 'rrhh';
-            $tags[] = 'laboral';
-        }
-        if (stripos($controllerLower, 'licencia') !== false) {
-            $tags[] = 'licencia';
-            $tags[] = 'permiso';
+        $controllerLower = strtolower(trim((string) $controllerName));
+        $actionLower = strtolower(trim((string) $actionName));
+        if ($controllerLower !== '') {
+            $tags[] = $controllerLower;
         }
 
         // Tags desde acción
-        $actionLower = strtolower($actionName);
         if (stripos($actionLower, 'buscar') !== false || stripos($actionLower, 'search') !== false) {
             $tags[] = 'buscar';
             $tags[] = 'busqueda';
@@ -948,20 +893,20 @@ class ActionDiscoveryService
         foreach ($lines as $line) {
             $line = trim($line);
 
-            // @paramOption id_efector select efectores|user_efectores
+            // @paramOption <param> select <source>[|<filter>]
             if (preg_match('/@paramOption\s+' . preg_quote($paramName) . '\s+(\w+)\s+(.+)/i', $line, $matches)) {
                 $metadata['option_type'] = trim($matches[1]); // select, autocomplete, date, etc.
                 $optionConfig = trim($matches[2]);
 
-                // Parsear configuración: "efectores|user_efectores" o "servicios|efector_servicios"
+                // Parsear configuración: "<source>|<filter>"
                 $parts = explode('|', $optionConfig);
                 $metadata['option_config'] = [
-                    'source' => $parts[0], // efectores, servicios, personas, etc.
-                    'filter' => $parts[1] ?? null, // user_efectores, efector_servicios, etc.
+                    'source' => $parts[0],
+                    'filter' => $parts[1] ?? null,
                 ];
             }
 
-            // @paramFilter id_servicio servicio_especialidad odontologia
+            // @paramFilter <param> <tipo> <valor>
             if (preg_match('/@paramFilter\s+' . preg_quote($paramName) . '\s+(\w+)\s+(.+)/i', $line, $matches)) {
                 $filterType = trim($matches[1]);
                 $filterValue = trim($matches[2]);
@@ -971,12 +916,12 @@ class ActionDiscoveryService
                 ];
             }
 
-            // @paramDepends id_servicio id_efector
+            // @paramDepends <param> <depende_de>
             if (preg_match('/@paramDepends\s+' . preg_quote($paramName) . '\s+(\w+)/i', $line, $matches)) {
                 $metadata['depends_on'] = trim($matches[1]);
             }
 
-            // @paramEndpoint id_persona /api/v1/personas/search
+            // @paramEndpoint <param> <endpoint>
             if (preg_match('/@paramEndpoint\s+' . preg_quote($paramName) . '\s+(.+)/i', $line, $matches)) {
                 $metadata['endpoint'] = trim($matches[1]);
             }

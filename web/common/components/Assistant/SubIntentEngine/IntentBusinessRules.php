@@ -99,8 +99,8 @@ final class IntentBusinessRules
     private static function isCheckerViolated(string $checker, array $rule, array $ctx): bool
     {
         switch ($checker) {
-            case 'agenda_alta_vs_solo_horarios':
-                return self::checkAgendaAltaVsSoloHorarios($ctx);
+            case 'content_regex':
+                return self::checkContentRegex($rule, $ctx);
             default:
                 Yii::warning('business_rules: checker desconocido: ' . $checker, __METHOD__);
 
@@ -109,27 +109,71 @@ final class IntentBusinessRules
     }
 
     /**
-     * Mensaje tipo “cargar agenda / horarios para un médico” sin vocabulario de alta de RRHH:
-     * conviene desambiguar entre flujo completo (crear/asociar) y solo edición de agenda.
+     * Checker genérico declarativo basado en regex sobre `content`.
      *
+     * YAML esperado (dentro de la regla):
+     * - `require_any`: lista de regex; al menos una debe matchear.
+     * - `require_all`: lista de regex; todas deben matchear.
+     * - `forbid_any`: lista de regex; ninguna debe matchear.
+     *
+     * Si no se provee ninguna condición, la regla NO aplica.
+     *
+     * @param array<string, mixed> $rule
      * @param array<string, mixed> $ctx
      */
-    private static function checkAgendaAltaVsSoloHorarios(array $ctx): bool
+    private static function checkContentRegex(array $rule, array $ctx): bool
     {
-        $intentId = (string) ($ctx['intent_id'] ?? '');
-        if ($intentId !== 'agenda.crear-rrhh-flow') {
-            return false;
-        }
         $content = mb_strtolower(trim((string) ($ctx['content'] ?? '')), 'UTF-8');
         if ($content === '') {
             return false;
         }
-        $mentionsAgenda = (bool) preg_match('/cargar|configurar|editar|modificar|actualizar/u', $content)
-            && (bool) preg_match('/agenda|horario/u', $content);
-        $mentionsMed = (bool) preg_match('/m[eé]dico|profesional|doctor/u', $content);
-        $mentionsAlta = (bool) preg_match('/crear|agregar|nuevo|alta|asociar|recurso humano/u', $content);
 
-        return ($mentionsAgenda || $mentionsMed) && !$mentionsAlta;
+        $requireAny = isset($rule['require_any']) && is_array($rule['require_any']) ? $rule['require_any'] : [];
+        $requireAll = isset($rule['require_all']) && is_array($rule['require_all']) ? $rule['require_all'] : [];
+        $forbidAny = isset($rule['forbid_any']) && is_array($rule['forbid_any']) ? $rule['forbid_any'] : [];
+
+        if ($requireAny === [] && $requireAll === [] && $forbidAny === []) {
+            return false;
+        }
+
+        foreach ($forbidAny as $re) {
+            $re = is_string($re) ? trim($re) : '';
+            if ($re === '') {
+                continue;
+            }
+            if (@preg_match('/' . $re . '/u', $content)) {
+                return false;
+            }
+        }
+
+        foreach ($requireAll as $re) {
+            $re = is_string($re) ? trim($re) : '';
+            if ($re === '') {
+                continue;
+            }
+            if (!@preg_match('/' . $re . '/u', $content)) {
+                return false;
+            }
+        }
+
+        if ($requireAny !== []) {
+            $matched = false;
+            foreach ($requireAny as $re) {
+                $re = is_string($re) ? trim($re) : '';
+                if ($re === '') {
+                    continue;
+                }
+                if (@preg_match('/' . $re . '/u', $content)) {
+                    $matched = true;
+                    break;
+                }
+            }
+            if (!$matched) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

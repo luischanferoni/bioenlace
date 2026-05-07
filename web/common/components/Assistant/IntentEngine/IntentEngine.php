@@ -77,12 +77,25 @@ final class IntentEngine
 
         $classification = IntentClassifier::classify($content, $catalog);
         if ($classification === null) {
-            return [
+            $out = [
                 'success' => true,
                 'kind' => 'no_intent_match',
                 'explanation' => 'No encontré una pantalla que encaje claramente con tu pedido.',
                 'actions' => [],
             ];
+            if (defined('YII_DEBUG') && YII_DEBUG) {
+                $actionIds = [];
+                foreach (array_slice($catalog->items, 0, 12) as $it) {
+                    $actionIds[] = $it->action_id;
+                }
+                $out['catalog_debug'] = [
+                    'items_count' => count($catalog->items),
+                    'first_action_ids' => $actionIds,
+                    'has_agenda_crear_rrhh_flow' => isset($catalog->byActionId['agenda.crear-rrhh-flow']),
+                    'has_agenda_editar_agenda_flow' => isset($catalog->byActionId['agenda.editar-agenda-flow']),
+                ];
+            }
+            return $out;
         }
 
         return self::buildSingleActionResponse(

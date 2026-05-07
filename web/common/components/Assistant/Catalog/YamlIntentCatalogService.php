@@ -29,6 +29,9 @@ final class YamlIntentCatalogService
 
         $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
         $files = glob($base . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
+        if ($files === []) {
+            Yii::warning('YamlIntentCatalogService: no se encontraron YAML intents en ' . $base, 'intent-catalog');
+        }
         $sigParts = [];
         foreach ($files as $p) {
             if (is_string($p) && $p !== '' && is_file($p)) {

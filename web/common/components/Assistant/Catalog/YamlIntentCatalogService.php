@@ -18,9 +18,10 @@ final class YamlIntentCatalogService
     public static function discoverAll(bool $useCache = true): array
     {
         $cache = Yii::$app->cache;
-        $cacheKey = 'yaml_intents_catalog_v2';
+        // Cache key debe cambiar cuando cambian los YAML (keywords/rules/etc.).
+        $cacheKeyBase = 'yaml_intents_catalog_v3';
         if ($useCache && $cache) {
-            $hit = $cache->get($cacheKey);
+            $hit = $cache->get($cacheKeyBase);
             if (is_array($hit)) {
                 return $hit;
             }
@@ -28,6 +29,19 @@ final class YamlIntentCatalogService
 
         $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
         $files = glob($base . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
+        $sigParts = [];
+        foreach ($files as $p) {
+            if (is_string($p) && $p !== '' && is_file($p)) {
+                $sigParts[] = basename($p) . ':' . (string) @filemtime($p);
+            }
+        }
+        $cacheKey = $cacheKeyBase . '_' . md5(implode('|', $sigParts));
+        if ($useCache && $cache) {
+            $hit = $cache->get($cacheKey);
+            if (is_array($hit)) {
+                return $hit;
+            }
+        }
         $out = [];
 
         foreach ($files as $path) {
@@ -92,7 +106,9 @@ final class YamlIntentCatalogService
         }
 
         if ($useCache && $cache) {
+            // Guardar por firma actual y también el último “base” para warm hits.
             $cache->set($cacheKey, $out, 300);
+            $cache->set($cacheKeyBase, $out, 60);
         }
 
         return $out;

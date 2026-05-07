@@ -4,6 +4,7 @@ version: 1
 action_name: "Crear recurso humano"
 rbac_route: "/api/agenda/crear-agenda-flow"
 keywords:
+  - agenda
   - crear recurso humano
   - agregar recurso humano
   - agregar profesional

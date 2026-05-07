@@ -21,8 +21,6 @@ final class IntentClassifier
      *   ai?:array{
      *     system_why?:string,
      *     user_text?:string,
-     *     user_help_guide?:string,
-     *     questions?:list<string>,
      *     assumptions?:list<string>
      *   },
      *   disambiguation?:array{
@@ -102,6 +100,31 @@ final class IntentClassifier
     }
 
     /**
+     * Sugerencias por reglas aunque no alcancen umbral (para `no_intent_match`).
+     *
+     * @return UiActionCatalogItem[]
+     */
+    public static function suggestByRules(string $message, UiActionCatalog $catalog, int $limit = 6): array
+    {
+        $messageLower = mb_strtolower(trim($message), 'UTF-8');
+        $scored = [];
+        foreach ($catalog->items as $it) {
+            $s = self::scoreItem($messageLower, $it);
+            if ($s > 0) {
+                $scored[] = ['s' => $s, 'it' => $it];
+            }
+        }
+        usort($scored, static function ($a, $b) {
+            return (int) $b['s'] <=> (int) $a['s'];
+        });
+        $out = [];
+        foreach (array_slice($scored, 0, max(0, $limit)) as $row) {
+            $out[] = $row['it'];
+        }
+        return $out;
+    }
+
+    /**
      * @return array{
      *   item:UiActionCatalogItem,
      *   confidence:float,
@@ -109,8 +132,6 @@ final class IntentClassifier
      *   ai?:array{
      *     system_why?:string,
      *     user_text?:string,
-     *     user_help_guide?:string,
-     *     questions?:list<string>,
      *     assumptions?:list<string>
      *   },
      *   disambiguation?:array{text:string,remediation:list<array{id:string,label:string,intent_id:string,reset_flow:bool}>}
@@ -153,8 +174,6 @@ Responde ÚNICAMENTE con JSON:
   "confidence": 0.0,
   "system_why": "1-3 frases para logs/telemetría. Debe citar goal/how/constraints cuando existan",
   "user_text": "1-2 frases aptas para mostrar al usuario",
-  "user_help_guide": "opcional: bullets en texto (máx 4) para guiar al usuario",
-  "questions": ["opcional: preguntas cortas si falta info (máx 3)"],
   "assumptions": ["..."],
   "needs_disambiguation": false,
   "question": "si needs_disambiguation=true, pregunta corta",
@@ -173,15 +192,6 @@ PROMPT;
             $confidence = isset($iaResponse['confidence']) ? (float) $iaResponse['confidence'] : 0.7;
             $systemWhy = isset($iaResponse['system_why']) && is_string($iaResponse['system_why']) ? trim($iaResponse['system_why']) : '';
             $userText = isset($iaResponse['user_text']) && is_string($iaResponse['user_text']) ? trim($iaResponse['user_text']) : '';
-            $userHelp = isset($iaResponse['user_help_guide']) && is_string($iaResponse['user_help_guide']) ? trim($iaResponse['user_help_guide']) : '';
-            $questions = [];
-            if (isset($iaResponse['questions']) && is_array($iaResponse['questions'])) {
-                foreach ($iaResponse['questions'] as $q) {
-                    if (is_string($q) && trim($q) !== '') {
-                        $questions[] = trim($q);
-                    }
-                }
-            }
             $assumptions = [];
             if (isset($iaResponse['assumptions']) && is_array($iaResponse['assumptions'])) {
                 foreach ($iaResponse['assumptions'] as $a) {
@@ -232,12 +242,10 @@ PROMPT;
                 'confidence' => max(0.0, min(1.0, $confidence)),
                 'method' => 'ai',
             ];
-            if ($systemWhy !== '' || $userText !== '' || $userHelp !== '' || $questions !== [] || $assumptions !== []) {
+            if ($systemWhy !== '' || $userText !== '' || $assumptions !== []) {
                 $out['ai'] = [
                     'system_why' => $systemWhy !== '' ? $systemWhy : null,
                     'user_text' => $userText !== '' ? $userText : null,
-                    'user_help_guide' => $userHelp !== '' ? $userHelp : null,
-                    'questions' => $questions,
                     'assumptions' => $assumptions,
                 ];
             }

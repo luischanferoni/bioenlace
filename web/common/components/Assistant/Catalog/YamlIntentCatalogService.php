@@ -33,6 +33,7 @@ final class YamlIntentCatalogService
             // Usar categoría ya visible en producción (evitar filtros por categoría).
             Yii::warning('YamlIntentCatalogService: no se encontraron YAML intents en ' . $base, 'asistente');
         }
+        $globCount = is_array($files) ? count($files) : 0;
         $sigParts = [];
         foreach ($files as $p) {
             if (is_string($p) && $p !== '' && is_file($p)) {
@@ -48,6 +49,7 @@ final class YamlIntentCatalogService
         }
         $out = [];
         $loadedIds = [];
+        $parseErrors = 0;
 
         foreach ($files as $path) {
             if (!is_string($path) || $path === '' || !is_file($path)) {
@@ -56,10 +58,14 @@ final class YamlIntentCatalogService
             try {
                 $data = Yaml::parseFile($path);
             } catch (\Throwable $e) {
-                Yii::warning('YAML intent inválido ' . $path . ': ' . $e->getMessage(), 'intent-catalog');
+                $parseErrors++;
+                // Usar categoría ya visible en producción.
+                Yii::warning('YamlIntentCatalogService: YAML intent inválido ' . $path . ': ' . $e->getMessage(), 'asistente');
                 continue;
             }
             if (!is_array($data)) {
+                $parseErrors++;
+                Yii::warning('YamlIntentCatalogService: YAML intent no es mapa ' . $path, 'asistente');
                 continue;
             }
             $intentId = isset($data['intent_id']) ? trim((string) $data['intent_id']) : '';
@@ -131,6 +137,8 @@ final class YamlIntentCatalogService
             $sample = array_slice($loadedIds, 0, 25);
             Yii::info(
                 'YamlIntentCatalogService: intents cargados count=' . count($loadedIds)
+                . ' glob_count=' . $globCount
+                . ' parse_errors=' . $parseErrors
                 . ' sample=' . json_encode($sample, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
                 . ' base=' . $base,
                 'asistente'

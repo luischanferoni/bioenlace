@@ -96,11 +96,17 @@ final class IntentEngine
                 // ignore logging failure
             }
 
+            $suggest = [];
+            foreach (IntentClassifier::suggestByRules($content, $catalog, 8) as $it) {
+                $suggest[] = self::formatActionForClient($it);
+            }
             $out = [
                 'success' => true,
                 'kind' => 'no_intent_match',
                 'explanation' => 'No encontré una pantalla que encaje claramente con tu pedido.',
-                'actions' => [],
+                // Sugerencias reales del catálogo (ids/labels declarados), para que el cliente
+                // pueda mostrar cards/botones que arrancan el intent con match 100%.
+                'actions' => $suggest,
             ];
             return $out;
         }

@@ -112,8 +112,6 @@ puede responder:
   - `match.ai` (opcional): metadatos explicativos:
     - `system_why`: razón para logs/sistema
     - `user_text`: texto apto para mostrar al usuario
-    - `user_help_guide`: guía corta (bullets) para el usuario
-    - `questions[]`: preguntas cortas si falta información
     - `assumptions[]`: supuestos del modelo
 
 El cliente debe renderizar `text` + botones desde `remediation`. Al elegir:

@@ -74,8 +74,6 @@ Notas:
 - `match.ai` (opcional): explicación de IA para debugging/telemetría:
   - `system_why`: razón para logs/sistema
   - `user_text`: texto apto para el usuario
-  - `user_help_guide`: guía corta (bullets) para el usuario
-  - `questions[]`: preguntas cortas si falta información
   - `assumptions[]`: supuestos que hizo el modelo
 
 El cliente muestra `text` y botones desde `remediation`; al pulsar, inicia el flow elegido **sin** simular burbuja de usuario (p. ej. `content: ""` con `intent_id` ya fijado).

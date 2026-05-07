@@ -109,7 +109,12 @@ puede responder:
 - `candidate_intent_id`: intent sugerido originalmente
 - `remediation[]`: opciones `{ id, label, intent_id, reset_flow }`
 - `match`: info de match `{ action_id, confidence, method, ai? }`
-  - `match.ai` (opcional): `{ why, assumptions[] }`
+  - `match.ai` (opcional): metadatos explicativos:
+    - `system_why`: razón para logs/sistema
+    - `user_text`: texto apto para mostrar al usuario
+    - `user_help_guide`: guía corta (bullets) para el usuario
+    - `questions[]`: preguntas cortas si falta información
+    - `assumptions[]`: supuestos del modelo
 
 El cliente debe renderizar `text` + botones desde `remediation`. Al elegir:
 

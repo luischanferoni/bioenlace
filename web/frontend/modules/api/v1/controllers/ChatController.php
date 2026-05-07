@@ -116,6 +116,11 @@ class ChatController extends BaseController
             return $this->error('Error al procesar la consulta', null, 500);
         }
 
+        // En hosting compartido con `wait_timeout` muy bajo (p. ej. 20s), la conexión MySQL puede cerrarse
+        // mientras el motor realiza llamadas externas (IA/HTTP). Reabrir evita `server has gone away` en el save siguiente.
+        Yii::$app->db->close();
+        Yii::$app->db->open();
+
         $replyText = (string) ($agentResult['explanation'] ?? $agentResult['error'] ?? 'Consulta procesada');
 
         $interaccionBot = new AsistenteInteraccion([

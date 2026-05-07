@@ -190,6 +190,21 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     if (kind == 'intent_remediation') {
+      // Preferir `match.ai.user_text` si existe (texto apto para UI); fallback a `text/explanation`.
+      try {
+        final match = data['match'];
+        if (match is Map) {
+          final ai = match['ai'];
+          if (ai is Map) {
+            final ut = ai['user_text']?.toString();
+            if (ut != null && ut.trim().isNotEmpty) {
+              explanation = ut.trim();
+            }
+          }
+        }
+      } catch (_) {
+        // ignore
+      }
       setState(() {
         _isSending = false;
         _intentId = null;

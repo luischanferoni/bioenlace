@@ -698,7 +698,16 @@
 
             if (kind === 'intent_remediation') {
                 setLoadingState(false);
-                const wrap = appendAssistantFlowSection(primaryText || 'Elegí una opción');
+                let remText = primaryText || 'Elegí una opción';
+                try {
+                    const ai = result && result.match && result.match.ai && typeof result.match.ai === 'object' ? result.match.ai : null;
+                    const ut = ai && typeof ai.user_text === 'string' ? ai.user_text.trim() : '';
+                    if (ut) {
+                        remText = ut;
+                    }
+                } catch (e) { /* ignore */ }
+
+                const wrap = appendAssistantFlowSection(remText);
                 if (wrap && Array.isArray(result.remediation) && result.remediation.length > 0) {
                     const row = document.createElement('div');
                     row.className = 'd-flex flex-wrap gap-2 mt-2 spa-intent-remediation';

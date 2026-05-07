@@ -114,6 +114,10 @@ puede responder:
     - `user_text`: texto apto para mostrar al usuario
     - `assumptions[]`: supuestos del modelo
 
+Notas:
+
+- **No existe `question`** en el contrato. Para IA, el texto que el cliente debe mostrar vive en `text` (y se recomienda que sea el mismo que `match.ai.user_text`).
+
 El cliente debe renderizar `text` + botones desde `remediation`. Al elegir:
 
 - fijar `intent_id = remediation[*].intent_id`

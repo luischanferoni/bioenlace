@@ -101,13 +101,3 @@ subintents:
       params:
         id_rr_hh: "draft.id_rr_hh"
         id_servicio: "draft.id_servicio"
-
-  - id: condicion_laboral
-    assistant_text: "Condición laboral"
-    requires:
-      - draft.id_rr_hh
-    next: ""
-    open_ui:
-      action_id: rrhh.editar-condicion-laboral
-      params:
-        id_rr_hh: "draft.id_rr_hh"

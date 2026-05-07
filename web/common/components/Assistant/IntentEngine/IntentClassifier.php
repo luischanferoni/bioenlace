@@ -176,7 +176,6 @@ Responde ÚNICAMENTE con JSON:
   "user_text": "1-2 frases aptas para mostrar al usuario",
   "assumptions": ["..."],
   "needs_disambiguation": false,
-  "question": "si needs_disambiguation=true, pregunta corta",
   "remediation": [
     { "id": "opcion", "label": "texto", "intent_id": "id", "reset_flow": true }
   ]
@@ -202,7 +201,6 @@ PROMPT;
             }
 
             $needsDisambiguation = !empty($iaResponse['needs_disambiguation']);
-            $question = isset($iaResponse['question']) && is_string($iaResponse['question']) ? trim($iaResponse['question']) : '';
             $remediation = [];
             if (isset($iaResponse['remediation']) && is_array($iaResponse['remediation'])) {
                 foreach ($iaResponse['remediation'] as $r) {
@@ -249,9 +247,10 @@ PROMPT;
                     'assumptions' => $assumptions,
                 ];
             }
-            if ($needsDisambiguation && $question !== '' && $remediation !== []) {
+            if ($needsDisambiguation && $remediation !== []) {
+                $text = $userText !== '' ? $userText : 'Elegí una opción.';
                 $out['disambiguation'] = [
-                    'text' => $question,
+                    'text' => $text,
                     'remediation' => $remediation,
                 ];
             }

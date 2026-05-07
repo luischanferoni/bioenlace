@@ -75,6 +75,7 @@ Notas:
   - `system_why`: razón para logs/sistema
   - `user_text`: texto apto para el usuario
   - `assumptions[]`: supuestos que hizo el modelo
+- **No existe `question`** en el contrato: el texto que el cliente muestra en desambiguación debe ir en `text` (y para IA debería ser el mismo que `match.ai.user_text`).
 
 El cliente muestra `text` y botones desde `remediation`; al pulsar, inicia el flow elegido **sin** simular burbuja de usuario (p. ej. `content: ""` con `intent_id` ya fijado).
 

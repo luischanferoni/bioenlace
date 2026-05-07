@@ -78,13 +78,6 @@ subintents:
           draft_equals:
             servicio_acepta_turnos: "SI"
         next: configurar_agenda
-      - when:
-          draft_equals:
-            servicio_acepta_turnos: "NO"
-        next: condicion_laboral
-      - when:
-          default: true
-        next: condicion_laboral
     open_ui:
       action_id: rrhh.listar-servicios-en-efector
       params:
@@ -95,7 +88,7 @@ subintents:
     requires:
       - draft.id_rr_hh
       - draft.id_servicio
-    next: condicion_laboral
+    next: ""
     open_ui:
       action_id: agenda.configurar-agenda
       params:

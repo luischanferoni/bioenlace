@@ -145,8 +145,8 @@ final class YamlIntentCatalogService
             $loadedIds[] = $intentId;
         }
 
-        // Si hay archivos YAML en disco pero no se pudo cargar ninguno, NO romper (sin 500),
-        // pero sí reportar por canales difíciles de filtrar.
+        // Si hay archivos YAML en disco pero no se pudo cargar ninguno, es un estado inválido:
+        // NO continuar con catálogo vacío (oculta errores y degrada el producto).
         if ($globCount > 0 && $loadedIds === []) {
             $sampleFiles = array_slice(array_map('basename', array_values($files)), 0, 10);
             $detail = [
@@ -157,10 +157,11 @@ final class YamlIntentCatalogService
                 'error_samples' => $parseErrorSamples,
             ];
             $msg = 'YamlIntentCatalogService: glob encontró YAML pero no se cargó ninguno. ' . json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-            // 1) Yii error (si hay target)
+            // Log por canales difíciles de filtrar.
             Yii::error($msg, 'application');
-            // 2) PHP error log (fallback)
             error_log($msg);
+
+            throw new \RuntimeException($msg);
         }
 
         // Diagnóstico visible: lista acotada de intents detectados en disco (no depende de YII_DEBUG).

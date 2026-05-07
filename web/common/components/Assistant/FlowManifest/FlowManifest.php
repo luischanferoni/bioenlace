@@ -32,6 +32,22 @@ final class FlowManifest
         $flow = isset($uiMeta['flow']) && is_array($uiMeta['flow']) ? $uiMeta['flow'] : [];
         $steps = isset($flow['steps']) && is_array($flow['steps']) ? $flow['steps'] : [];
 
+        // `steps` se usa principalmente para “plan” visual en clientes (lista de labels/orden).
+        // Para evitar payload duplicado, devolvemos una versión compacta sin `ui`.
+        $stepsCompact = [];
+        foreach ($steps as $step) {
+            if (!is_array($step) || empty($step['id'])) {
+                continue;
+            }
+            $stepsCompact[] = [
+                'id' => (string) $step['id'],
+                'assistant_text' => isset($step['assistant_text']) ? (string) $step['assistant_text'] : '',
+                'requires' => isset($step['requires']) && is_array($step['requires']) ? $step['requires'] : [],
+                'provides' => isset($step['provides']) && is_array($step['provides']) ? $step['provides'] : [],
+                'next' => isset($step['next']) ? (string) $step['next'] : '',
+            ];
+        }
+
         $activeStep = null;
         foreach ($steps as $step) {
             if (!is_array($step)) {
@@ -49,10 +65,10 @@ final class FlowManifest
             'action_name' => $actionName,
             'draft_keys' => isset($flow['draft_keys']) && is_array($flow['draft_keys']) ? $flow['draft_keys'] : [],
             'entry_subintent_id' => isset($flow['entry_subintent_id']) ? (string) $flow['entry_subintent_id'] : '',
-            'steps' => $steps,
+            'steps' => $stepsCompact,
             'active_subintent_id' => $activeSubintentId,
             'active_step' => $activeStep,
-            'open_ui_hints' => isset($flow['open_ui_hints']) && is_array($flow['open_ui_hints']) ? $flow['open_ui_hints'] : [],
+            // `open_ui_hints` se puede derivar desde YAML; clientes usan `active_step.ui` y/o `open_ui` del payload principal.
         ];
     }
 

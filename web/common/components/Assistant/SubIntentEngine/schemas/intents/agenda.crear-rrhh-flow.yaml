@@ -73,6 +73,7 @@ subintents:
       - draft.id_rr_hh
     provides:
       - draft.id_servicio
+    next: configurar_agenda
     next_routing:
       - when:
           draft_equals:

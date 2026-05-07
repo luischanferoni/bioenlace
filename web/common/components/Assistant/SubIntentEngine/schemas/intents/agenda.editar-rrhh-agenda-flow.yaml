@@ -11,6 +11,23 @@ keywords:
   - horarios
   - condición laboral
 
+intent_semantics:
+  goal: >-
+    Cargar o ajustar horarios de agenda de un profesional ya existente en el contexto de un servicio que habilite turnos.
+  how: >-
+    Selecciona profesional y servicio; si el servicio habilita turnos abre la configuración de agenda, si no guía a completar condiciones/asociación.
+  preconditions:
+    - El profesional ya existe y es seleccionable.
+    - Existe un servicio seleccionable en el efector.
+  constraints:
+    - Para configurar agenda, el servicio asociado debe habilitar turnos; si no, el flujo debe encaminar a resolver esa condición.
+  outcome:
+    - Horarios/agenda actualizados para el profesional cuando aplica.
+  keyphrases:
+    - editar horarios existentes
+    - ajustar disponibilidad en agenda
+    - configurar agenda de profesional ya asociado
+
 draft_keys_extra:
   - servicio_acepta_turnos
 

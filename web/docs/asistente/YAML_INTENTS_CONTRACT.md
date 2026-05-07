@@ -24,9 +24,23 @@ Campos típicos:
 - `description`: descripción para catálogo
 - `rbac_route`: ruta de permiso RBAC requerida para listar/ejecutar el flow (ej. `"/api/agenda/editar-agenda-flow"`).
 - `keywords`: lista de frases para matching
+- **`intent_semantics`** (opcional): semántica declarativa del intent para mejorar clasificación IA y explicación (`goal/how/preconditions/constraints/outcome/keyphrases`).
 - `subintents`: lista ordenada de pasos conversacionales
 - `draft_keys_extra` (opcional): claves de draft usadas sin listarse en `requires`/`provides`
 - **`business_rules`** (opcional): reglas evaluadas **antes** de ejecutar el flow cuando el usuario entra al intent vía `IntentEngine` (mensaje raíz o `action_id`). Si una regla aplica, la API puede responder `kind=intent_remediation` en lugar de `intent_flow`.
+
+### `intent_semantics`
+
+Bloque opcional para dar “señal” a la IA más allá de keywords literales.
+
+Campos sugeridos:
+
+- **`goal`**: objetivo del usuario que resuelve este flow.
+- **`how`**: cómo se logra el objetivo dentro del flow.
+- **`preconditions`**: lista de precondiciones (texto libre).
+- **`constraints`**: lista de restricciones de negocio relevantes.
+- **`outcome`**: lista de resultados/estado final.
+- **`keyphrases`**: lista corta de frases ancla (se agregan automáticamente a `keywords` del catálogo).
 
 ### `business_rules`
 
@@ -44,13 +58,20 @@ Lista de reglas. Campos habituales:
 
 Checkers actuales (referencia):
 
-- **`agenda_alta_vs_solo_horarios`**: si el intent es `agenda.crear-rrhh-flow` y el mensaje suena a “solo agenda/horarios/médico” sin vocabulario de alta de RRHH, se pide elegir entre flujo completo y `agenda.editar-agenda-flow`.
+- **`content_regex`**: checker genérico declarativo sobre `content` usando `require_any` / `require_all` / `forbid_any`.
 
 ### Respuesta `kind=intent_remediation`
 
 Payload típico (raíz de `asistente/enviar` sin `intent_id` en el request):
 
-- `success`, `kind`, `text`, `rule_id`, `candidate_intent_id`, `remediation[]`, `match` (score del clasificador).
+- `success`, `kind`, `text`, `rule_id`, `candidate_intent_id`, `remediation[]`, `match`.
+
+Notas:
+
+- **`rule_id`** puede ser:
+  - el `id` de una `business_rule` YAML (pre-flow), o
+  - **`ai_disambiguation`** cuando la desambiguación viene sugerida por IA (sin regla YAML).
+- `match.ai` (opcional): explicación de IA para debugging/telemetría: `{ why, assumptions[] }`.
 
 El cliente muestra `text` y botones desde `remediation`; al pulsar, inicia el flow elegido **sin** simular burbuja de usuario (p. ej. `content: ""` con `intent_id` ya fijado).
 

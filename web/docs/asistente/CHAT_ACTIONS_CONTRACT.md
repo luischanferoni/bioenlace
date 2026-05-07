@@ -98,6 +98,25 @@ Los clientes deben soportar como mínimo este shape:
 
 Ya no se emite. Los motores abren **inline por defecto**. Fullscreen es una acción manual (link) fuera del motor.
 
+## `kind=intent_remediation` (desambiguación)
+
+Cuando el backend detecta ambigüedad antes de ejecutar un flow (por reglas declarativas YAML o por IA),
+puede responder:
+
+- `kind: "intent_remediation"`
+- `text`: mensaje/pregunta para el usuario
+- `rule_id`: id de regla YAML o `"ai_disambiguation"`
+- `candidate_intent_id`: intent sugerido originalmente
+- `remediation[]`: opciones `{ id, label, intent_id, reset_flow }`
+- `match`: info de match `{ action_id, confidence, method, ai? }`
+  - `match.ai` (opcional): `{ why, assumptions[] }`
+
+El cliente debe renderizar `text` + botones desde `remediation`. Al elegir:
+
+- fijar `intent_id = remediation[*].intent_id`
+- si `reset_flow=true`, limpiar `draft` y `subintent_id`
+- enviar `POST /api/v1/asistente/enviar` con `content: ""` para iniciar el flow (sin burbuja de usuario adicional).
+
 #### Ejemplo `ui_json` (editar agenda laboral por wizard API)
 
 ```json

@@ -16,6 +16,13 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - **Piezas reutilizables**: `SubIntentEngine/schemas/globals/*.yaml`
 - **Mini-UIs** (`ui_json` / wizard): `frontend/modules/api/v1/views/json/<entidad>/<accion>.json`
 
+## Clasificación IA (señal semántica)
+
+Los intents YAML pueden declarar `intent_semantics` (`goal/how/preconditions/constraints/outcome/keyphrases`) para mejorar:
+
+- la clasificación por IA (cuando el texto no matchea keywords literales), y
+- la explicación (`match.ai.why`) y desambiguación (`kind=intent_remediation`, `rule_id=ai_disambiguation`).
+
 ## Entrypoints importantes
 
 - API chat: `web/frontend/modules/api/v1/controllers/ChatController.php`

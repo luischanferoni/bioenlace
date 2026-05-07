@@ -66,6 +66,11 @@ final class UiActionCatalog
                 'provided' => [],
             ];
 
+            $sem = null;
+            if (isset($a['intent_semantics']) && is_array($a['intent_semantics'])) {
+                $sem = $a['intent_semantics'];
+            }
+
             $spaPresentation = null;
             if (isset($a['spa_presentation']) && is_string($a['spa_presentation'])) {
                 $sp = strtolower(trim($a['spa_presentation']));
@@ -82,6 +87,7 @@ final class UiActionCatalog
                 $route,
                 $kw,
                 $params,
+                $sem,
                 null,
                 null,
                 $spaPresentation
@@ -163,6 +169,7 @@ final class UiActionCatalog
                 $webPath,
                 $kw,
                 ['expected' => $d['parameters'] ?? [], 'provided' => []],
+                null,
                 $clientOpen,
                 'ui_asistente_native'
             );

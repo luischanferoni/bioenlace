@@ -15,6 +15,24 @@ keywords:
   - horarios médico
   - horarios medico
 
+intent_semantics:
+  goal: >-
+    Configurar una agenda de atención para un profesional, asegurando que quede asociado a un servicio que habilite la gestión de turnos.
+  how: >-
+    Selecciona o incorpora el profesional, selecciona el servicio, y si el servicio habilita turnos continúa a configurar la agenda.
+  preconditions:
+    - Existe (o se puede seleccionar) el profesional/recurso humano.
+    - Se puede seleccionar un servicio en el efector.
+  constraints:
+    - La agenda se configura solo si el servicio asociado habilita turnos (si no, primero se debe completar la asociación/condición laboral).
+  outcome:
+    - Profesional asociado a un servicio.
+    - Agenda configurada si corresponde.
+  keyphrases:
+    - configurar disponibilidad del profesional
+    - asociar profesional a servicio con turnos
+    - alta y asociación antes de cargar horarios
+
 draft_keys_extra:
   - servicio_acepta_turnos
 

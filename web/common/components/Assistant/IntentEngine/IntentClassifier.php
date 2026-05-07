@@ -14,7 +14,13 @@ final class IntentClassifier
     private const RULES_HIGH_CONFIDENCE = 0.7;
 
     /**
-     * @return array{item:UiActionCatalogItem,confidence:float,method:string}|null
+     * @return array{
+     *   item:UiActionCatalogItem,
+     *   confidence:float,
+     *   method:string,
+     *   ai?:array{why?:string,assumptions?:list<string>},
+     *   disambiguation?:array{text:string,remediation:list<array{id:string,label:string,intent_id:string,reset_flow:bool}>}
+     * }|null
      */
     public static function classify(string $message, UiActionCatalog $catalog): ?array
     {
@@ -87,37 +93,56 @@ final class IntentClassifier
     }
 
     /**
-     * @return array{item:UiActionCatalogItem,confidence:float,method:string}|null
+     * @return array{
+     *   item:UiActionCatalogItem,
+     *   confidence:float,
+     *   method:string,
+     *   ai?:array{why?:string,assumptions?:list<string>},
+     *   disambiguation?:array{text:string,remediation:list<array{id:string,label:string,intent_id:string,reset_flow:bool}>}
+     * }|null
      */
     private static function classifyByAi(string $message, UiActionCatalog $catalog, ?array $rulesHint): ?array
     {
         try {
-            $list = array_map(static function (UiActionCatalogItem $i) {
-                return $i->toPromptArray();
+            $candidates = array_map(static function (UiActionCatalogItem $i) {
+                return $i->toAiCandidateArray();
             }, $catalog->items);
 
-            $catalogJson = json_encode($list, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-
-            $hintText = '';
-            if ($rulesHint !== null) {
-                $hintText = "\nPista reglas: action_id sugerido '{$rulesHint['item']->action_id}' (confianza {$rulesHint['confidence']}).";
-            }
+            $toon = json_encode(
+                [
+                    'm' => $message,
+                    'hint' => $rulesHint !== null ? [
+                        'id' => $rulesHint['item']->action_id,
+                        'confidence' => $rulesHint['confidence'],
+                    ] : null,
+                    'c' => $candidates,
+                ],
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+            );
 
             $prompt = <<<PROMPT
-Asocia el siguiente mensaje del usuario con EXACTAMENTE un elemento del catálogo JSON.
-Solo puedes elegir action_id que existan en el catálogo. Si no encaja ninguno, usa action_id "NONE".
+Tarea: elegir el mejor intent para el mensaje del usuario.
 
-Mensaje: "{$message}"
-{$hintText}
+Entrada TOON (JSON compacto):
+{$toon}
 
-Catálogo (lista completa permitida para este usuario):
-{$catalogJson}
+Reglas:
+- Solo puedes elegir un id que exista en c[*].id o "NONE".
+- Usa "NONE" solo si el mensaje NO corresponde a ninguno de los intents.
+- Usa s (intent_semantics) para razonar por objetivo, cómo se logra y restricciones. k son frases ancla.
+- Si dos intents son plausibles y falta una condición clave, marca needs_disambiguation y propone opciones.
 
-Responde ÚNICAMENTE con este JSON:
+Responde ÚNICAMENTE con JSON:
 {
-  "action_id": "valor exacto del catálogo o NONE",
+  "best_id": "id o NONE",
   "confidence": 0.0,
-  "reasoning": "breve"
+  "why": "1-3 frases, citando goal/how/constraints cuando existan",
+  "assumptions": ["..."],
+  "needs_disambiguation": false,
+  "question": "si needs_disambiguation=true, pregunta corta",
+  "remediation": [
+    { "id": "opcion", "label": "texto", "intent_id": "id", "reset_flow": true }
+  ]
 }
 PROMPT;
 
@@ -126,8 +151,43 @@ PROMPT;
                 return null;
             }
 
-            $actionId = $iaResponse['action_id'] ?? null;
+            $actionId = $iaResponse['best_id'] ?? null;
             $confidence = isset($iaResponse['confidence']) ? (float) $iaResponse['confidence'] : 0.7;
+            $why = isset($iaResponse['why']) && is_string($iaResponse['why']) ? trim($iaResponse['why']) : '';
+            $assumptions = [];
+            if (isset($iaResponse['assumptions']) && is_array($iaResponse['assumptions'])) {
+                foreach ($iaResponse['assumptions'] as $a) {
+                    if (is_string($a) && trim($a) !== '') {
+                        $assumptions[] = trim($a);
+                    }
+                }
+            }
+
+            $needsDisambiguation = !empty($iaResponse['needs_disambiguation']);
+            $question = isset($iaResponse['question']) && is_string($iaResponse['question']) ? trim($iaResponse['question']) : '';
+            $remediation = [];
+            if (isset($iaResponse['remediation']) && is_array($iaResponse['remediation'])) {
+                foreach ($iaResponse['remediation'] as $r) {
+                    if (!is_array($r)) {
+                        continue;
+                    }
+                    $rid = trim((string) ($r['id'] ?? ''));
+                    $label = trim((string) ($r['label'] ?? ''));
+                    $iid = trim((string) ($r['intent_id'] ?? ''));
+                    if ($label === '' || $iid === '') {
+                        continue;
+                    }
+                    if ($rid === '') {
+                        $rid = $iid;
+                    }
+                    $remediation[] = [
+                        'id' => $rid,
+                        'label' => $label,
+                        'intent_id' => $iid,
+                        'reset_flow' => !empty($r['reset_flow']),
+                    ];
+                }
+            }
 
             if ($actionId === 'NONE' || $actionId === null || $actionId === '') {
                 return null;
@@ -139,11 +199,24 @@ PROMPT;
                 return null;
             }
 
-            return [
+            $out = [
                 'item' => $item,
                 'confidence' => max(0.0, min(1.0, $confidence)),
                 'method' => 'ai',
             ];
+            if ($why !== '' || $assumptions !== []) {
+                $out['ai'] = [
+                    'why' => $why !== '' ? $why : null,
+                    'assumptions' => $assumptions,
+                ];
+            }
+            if ($needsDisambiguation && $question !== '' && $remediation !== []) {
+                $out['disambiguation'] = [
+                    'text' => $question,
+                    'remediation' => $remediation,
+                ];
+            }
+            return $out;
         } catch (\Throwable $e) {
             Yii::error('IntentClassifier: ' . $e->getMessage(), 'intent-engine');
             return null;

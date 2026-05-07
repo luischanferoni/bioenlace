@@ -77,34 +77,74 @@ final class IntentEngine
 
         $classification = IntentClassifier::classify($content, $catalog);
         if ($classification === null) {
+            // Diagnóstico en logs: ayuda a detectar catálogo vacío / YAML no desplegados / filtros.
+            // No depende de YII_DEBUG; el síntoma es crítico para el producto.
+            try {
+                $actionIds = [];
+                foreach (array_slice($catalog->items, 0, 20) as $it) {
+                    $actionIds[] = $it->action_id;
+                }
+                Yii::warning(
+                    'IntentEngine: no_intent_match. items=' . count($catalog->items)
+                    . ' has_agenda_crear_rrhh_flow=' . (isset($catalog->byActionId['agenda.crear-rrhh-flow']) ? '1' : '0')
+                    . ' has_agenda_editar_agenda_flow=' . (isset($catalog->byActionId['agenda.editar-agenda-flow']) ? '1' : '0')
+                    . ' first_action_ids=' . Json::encode($actionIds)
+                    . ' content=' . Json::encode(mb_substr($content, 0, 220, 'UTF-8')),
+                    'intent-engine'
+                );
+            } catch (\Throwable $e) {
+                // ignore logging failure
+            }
+
             $out = [
                 'success' => true,
                 'kind' => 'no_intent_match',
                 'explanation' => 'No encontré una pantalla que encaje claramente con tu pedido.',
                 'actions' => [],
             ];
-            if (defined('YII_DEBUG') && YII_DEBUG) {
-                $actionIds = [];
-                foreach (array_slice($catalog->items, 0, 12) as $it) {
-                    $actionIds[] = $it->action_id;
-                }
-                $out['catalog_debug'] = [
-                    'items_count' => count($catalog->items),
-                    'first_action_ids' => $actionIds,
-                    'has_agenda_crear_rrhh_flow' => isset($catalog->byActionId['agenda.crear-rrhh-flow']),
-                    'has_agenda_editar_agenda_flow' => isset($catalog->byActionId['agenda.editar-agenda-flow']),
-                ];
-            }
             return $out;
         }
 
-        return self::buildSingleActionResponse(
+        // Si la IA pide desambiguar, devolver intent_remediation antes de arrancar un flow.
+        if (isset($classification['disambiguation']) && is_array($classification['disambiguation'])) {
+            $d = $classification['disambiguation'];
+            $text = isset($d['text']) ? trim((string) $d['text']) : '';
+            $rem = isset($d['remediation']) && is_array($d['remediation']) ? $d['remediation'] : [];
+            if ($text !== '' && $rem !== []) {
+                $match = [
+                    'action_id' => $classification['item']->action_id,
+                    'confidence' => (float) ($classification['confidence'] ?? 0.0),
+                    'method' => (string) ($classification['method'] ?? 'unknown'),
+                ];
+                if (isset($classification['ai']) && is_array($classification['ai'])) {
+                    $match['ai'] = $classification['ai'];
+                }
+                return [
+                    'success' => true,
+                    'kind' => 'intent_remediation',
+                    'text' => $text,
+                    'candidate_intent_id' => $classification['item']->action_id,
+                    'rule_id' => 'ai_disambiguation',
+                    'remediation' => $rem,
+                    'match' => $match,
+                ];
+            }
+        }
+
+        $method = (string) ($classification['method'] ?? 'unknown');
+        $confidence = (float) ($classification['confidence'] ?? 0.0);
+        $out = self::buildSingleActionResponse(
             $classification['item'],
-            (string) ($classification['method'] ?? 'unknown'),
-            (float) ($classification['confidence'] ?? 0.0),
+            $method,
+            $confidence,
             $content,
             $userId
         );
+        // Propagar explicación IA (why/assumptions) al match para debug/telemetría.
+        if (isset($classification['ai']) && is_array($classification['ai']) && isset($out['match']) && is_array($out['match'])) {
+            $out['match']['ai'] = $classification['ai'];
+        }
+        return $out;
     }
 
     private static function buildSingleActionResponse(UiActionCatalogItem $item, string $method, float $confidence = 1.0, string $content = '', int $userId = 0): array

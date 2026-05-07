@@ -92,6 +92,20 @@ final class YamlIntentCatalogService
             $kw[] = $intentId;
             $kw = array_values(array_unique($kw));
 
+            $sem = null;
+            if (isset($data['intent_semantics']) && is_array($data['intent_semantics'])) {
+                $sem = $data['intent_semantics'];
+                // Si hay keyphrases semánticas, sumarlas a keywords para mejorar el scoring por reglas.
+                if (isset($sem['keyphrases']) && is_array($sem['keyphrases'])) {
+                    foreach ($sem['keyphrases'] as $ph) {
+                        if (is_string($ph) && trim($ph) !== '') {
+                            $kw[] = trim($ph);
+                        }
+                    }
+                    $kw = array_values(array_unique($kw));
+                }
+            }
+
             $out[] = [
                 'action_id' => $intentId,
                 'action_name' => $actionName,
@@ -103,6 +117,7 @@ final class YamlIntentCatalogService
                 'synonyms' => [],
                 'tags' => [],
                 'parameters' => [],
+                'intent_semantics' => $sem,
                 // Hint para clientes: item conversacional.
                 'kind' => 'intent_flow',
             ];

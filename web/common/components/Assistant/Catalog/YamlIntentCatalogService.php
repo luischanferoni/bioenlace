@@ -30,7 +30,8 @@ final class YamlIntentCatalogService
         $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
         $files = glob($base . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
         if ($files === []) {
-            Yii::warning('YamlIntentCatalogService: no se encontraron YAML intents en ' . $base, 'intent-catalog');
+            // Usar categoría ya visible en producción (evitar filtros por categoría).
+            Yii::warning('YamlIntentCatalogService: no se encontraron YAML intents en ' . $base, 'asistente');
         }
         $sigParts = [];
         foreach ($files as $p) {
@@ -46,6 +47,7 @@ final class YamlIntentCatalogService
             }
         }
         $out = [];
+        $loadedIds = [];
 
         foreach ($files as $path) {
             if (!is_string($path) || $path === '' || !is_file($path)) {
@@ -121,6 +123,20 @@ final class YamlIntentCatalogService
                 // Hint para clientes: item conversacional.
                 'kind' => 'intent_flow',
             ];
+            $loadedIds[] = $intentId;
+        }
+
+        // Diagnóstico visible: lista acotada de intents detectados en disco (no depende de YII_DEBUG).
+        try {
+            $sample = array_slice($loadedIds, 0, 25);
+            Yii::info(
+                'YamlIntentCatalogService: intents cargados count=' . count($loadedIds)
+                . ' sample=' . json_encode($sample, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                . ' base=' . $base,
+                'asistente'
+            );
+        } catch (\Throwable $e) {
+            // ignore
         }
 
         if ($useCache && $cache) {

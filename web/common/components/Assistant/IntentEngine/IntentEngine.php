@@ -90,7 +90,7 @@ final class IntentEngine
                     . ' has_agenda_editar_agenda_flow=' . (isset($catalog->byActionId['agenda.editar-agenda-flow']) ? '1' : '0')
                     . ' first_action_ids=' . Json::encode($actionIds)
                     . ' content=' . Json::encode(mb_substr($content, 0, 220, 'UTF-8')),
-                    'intent-engine'
+                    'asistente'
                 );
             } catch (\Throwable $e) {
                 // ignore logging failure

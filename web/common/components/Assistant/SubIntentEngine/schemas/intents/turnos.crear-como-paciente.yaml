@@ -11,6 +11,24 @@ keywords:
   - pedir turno
   - autogestión
 
+intent_semantics:
+  goal: >-
+    Reservar un turno de atención seleccionando servicio, centro de salud, profesional y un horario disponible.
+  how: >-
+    El flujo guía la selección de servicio → centro de salud (lista o cercano) → profesional → horario, y finaliza con confirmación/creación.
+  preconditions:
+    - El usuario puede autogestionar turnos.
+    - Existe disponibilidad (slots) para el servicio/centro/profesional elegidos.
+  constraints:
+    - Para ver horarios debe existir un profesional y un centro seleccionados.
+    - La opción “cercano” requiere geolocalización del cliente.
+  outcome:
+    - Turno creado/confirmado para el slot seleccionado.
+  keyphrases:
+    - reservar una cita
+    - sacar turno en un centro de salud
+    - elegir servicio y horario disponible
+
 draft_keys_extra:
   - tipo_atencion
 

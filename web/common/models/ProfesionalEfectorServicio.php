@@ -117,8 +117,40 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Guardia: `id_rrhh_asignado` puede ser `rrhh_servicio.id` o `rrhh_efector.id_rr_hh`.
+     * Primer `rrhh_servicio` del RRHH (orden por id); útil cuando el consumidor solo guarda `id_rr_hh`.
      */
+    public static function findIdByRrhhEfectorMinLegacyServicio(?int $idRrhh): ?int
+    {
+        if (!$idRrhh || $idRrhh <= 0) {
+            return null;
+        }
+        $rs = RrhhServicio::find()
+            ->where(['id_rr_hh' => $idRrhh, 'deleted_at' => null])
+            ->orderBy(['id' => SORT_ASC])
+            ->one();
+        return $rs ? static::findIdByLegacyRrhhServicioId((int) $rs->id) : null;
+    }
+
+    /**
+     * Como {@see findIdByRrhhEfectorMinLegacyServicio} pero exige que exista vínculo RRHH–efector coherente.
+     */
+    public static function findIdByRrhhAndEfectorMinLegacyServicio(?int $idRrhh, ?int $idEfector): ?int
+    {
+        if (!$idRrhh || $idRrhh <= 0) {
+            return null;
+        }
+        if ($idEfector) {
+            $ok = RrhhEfector::find()
+                ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector])
+                ->andWhere(['deleted_at' => null])
+                ->exists();
+            if (!$ok) {
+                return null;
+            }
+        }
+        return static::findIdByRrhhEfectorMinLegacyServicio($idRrhh);
+    }
+
     public static function resolvePesIdFromGuardiaAsignado(?int $idAsignado, ?int $idEfector): ?int
     {
         if (!$idAsignado || $idAsignado <= 0) {

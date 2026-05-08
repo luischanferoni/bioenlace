@@ -75,6 +75,22 @@ class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert
+            || $this->isAttributeChanged('id_rrhh_efector', false)
+            || $this->isAttributeChanged('id_efector', false)
+        ) {
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
+                $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null,
+                $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
+            );
+        }
+        return true;
+    }
 
     /**
      * {@inheritdoc}
@@ -84,7 +100,7 @@ class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
         return [
             [['id_persona_programa', 'tipo_diabetes'], 'required'],
             [['id_persona_programa', 'id_persona_autorizada', 'ins_lenta_nph', 'ins_lenta_lantus', 'ins_rapida_novorapid', 'metformina_500', 'metformina_850',
-             'glibenclamida', 'lanceta', 'id_rrhh_efector', 'hba1c', 'glucemia', 'id_efector', 'dni_persona_autorizada'], 'integer'],
+             'glibenclamida', 'lanceta', 'id_rrhh_efector', 'hba1c', 'glucemia', 'id_efector', 'id_profesional_efector_servicio', 'dni_persona_autorizada'], 'integer'],
             [['incluir_salud', 'tiras', 'monitor', 'nombre_persona_autorizada', 'apellido_persona_autorizada'], 'string'],
             [['fecha_laboratorio'], 'safe'],
             [['tipo_diabetes'], 'string', 'max' => 25],
@@ -151,6 +167,10 @@ class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona_autorizada']);
     }
 
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
+    }
 
     public function afterFind () {
 

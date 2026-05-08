@@ -35,6 +35,29 @@ class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
         return 'dispensa_programa_diabetes';
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert
+            || $this->isAttributeChanged('id_rrhh_efector', false)
+            || $this->isAttributeChanged('id_persona_programa_diabetes', false)
+        ) {
+            if (!$this->id_persona_programa_diabetes) {
+                $this->id_profesional_efector_servicio = null;
+            } else {
+                $ppd = PersonaProgramaDiabetes::findOne($this->id_persona_programa_diabetes);
+                $idEf = $ppd && $ppd->id_efector ? (int) $ppd->id_efector : null;
+                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
+                    $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null,
+                    $idEf
+                );
+            }
+        }
+        return true;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -42,7 +65,7 @@ class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
     {
         return [
             [['id_persona_programa_diabetes', 'id_persona_retira'], 'required'],
-            [['id_persona_programa_diabetes', 'id_persona_retira', 'ins_lenta_nph', 'ins_lenta_lantus', 'ins_rapida_novorapid', 'metformina_500', 'metformina_850', 'glibenclamida', 'monitor', 'lanceta', 'id_rrhh_efector'], 'integer'],
+            [['id_persona_programa_diabetes', 'id_persona_retira', 'ins_lenta_nph', 'ins_lenta_lantus', 'ins_rapida_novorapid', 'metformina_500', 'metformina_850', 'glibenclamida', 'monitor', 'lanceta', 'id_rrhh_efector', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha_retiro'], 'safe'],
             [['tiras'], 'string'],
             [['id_persona_programa_diabetes'], 'exist', 'skipOnError' => true, 'targetClass' => PersonaProgramaDiabetes::className(), 'targetAttribute' => ['id_persona_programa_diabetes' => 'id']],
@@ -91,5 +114,10 @@ class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
     public function getPersonaRetira()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona_retira']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 }

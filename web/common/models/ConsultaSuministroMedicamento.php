@@ -28,6 +28,46 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
         return 'consultas_suministro_medicamento';
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert
+            || $this->isAttributeChanged('id_consulta', false)
+            || $this->isAttributeChanged('id_rrhh', false)
+        ) {
+            $this->syncProfesionalEfectorServicioFromContext();
+        }
+        return true;
+    }
+
+    public function syncProfesionalEfectorServicioFromContext(): void
+    {
+        if ($this->id_consulta) {
+            $c = Consulta::findOne($this->id_consulta);
+            if ($c && (int) $c->id_profesional_efector_servicio > 0) {
+                $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
+                return;
+            }
+            if ($c && $this->id_rrhh && $c->id_efector && $c->id_servicio) {
+                $re = RrhhEfector::find()
+                    ->where(['id_rr_hh' => $this->id_rrhh, 'id_efector' => $c->id_efector])
+                    ->andWhere(['deleted_at' => null])
+                    ->one();
+                if ($re) {
+                    $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
+                        (int) $re->id_persona,
+                        (int) $c->id_efector,
+                        (int) $c->id_servicio
+                    );
+                    return;
+                }
+            }
+        }
+        $this->id_profesional_efector_servicio = null;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -35,7 +75,7 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
     {
         return [
             //[['id_internacion_medicamento'], 'required'],
-            [['id', 'id_internacion_medicamento', 'id_rrhh','id_consulta'], 'integer'],
+            [['id', 'id_internacion_medicamento', 'id_rrhh', 'id_consulta', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha', 'hora'], 'required'],
             [['observacion'], 'safe'],
             [['id'], 'unique'],
@@ -91,6 +131,11 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
     public function getConsulta()
     {
         return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
     
 }

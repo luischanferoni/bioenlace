@@ -156,7 +156,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
                 'consume_alcohol', 'consume_tabaco', 'terapia_remplazo_hormonal', 'resultado', 'resultado_indicado', 'id_operador', 'prueba_adicional'
             ], 'required'],
             [['paso_menospausia'], 'safe'],
-            [['id_operador', 'id_rr_hh', 'id_persona', 'id_efector', 'edad_primer_periodo', 'edad_primer_parto', 'edad_menospausia'], 'integer'],
+            [['id_operador', 'id_rr_hh', 'id_persona', 'id_efector', 'id_profesional_efector_servicio', 'edad_primer_periodo', 'edad_primer_parto', 'edad_menospausia'], 'integer'],
             ['edad_primer_periodo', 'in', 'range' => range(7, 19)],
             ['edad_primer_parto', 'in', 'range' => range(9, 60)],
             ['edad_primer_parto', 'required', 'when' => function ($model) {
@@ -447,6 +447,21 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             $this->resultado = self::RESULTADO_NO_SIGNIFICATIVA;
         }
 
+        if ($insert
+            || $this->isAttributeChanged('id_rr_hh', false)
+            || $this->isAttributeChanged('id_efector', false)
+        ) {
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
+                $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null,
+                $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
+            );
+        }
+
         return true;
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 }

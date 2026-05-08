@@ -37,6 +37,19 @@ class AbreviaturasMedicos extends ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert || $this->isAttributeChanged('id_rr_hh', false)) {
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+                $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null
+            );
+        }
+        return true;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -44,7 +57,7 @@ class AbreviaturasMedicos extends ActiveRecord
     {
         return [
             [['abreviatura_id', 'id_rr_hh'], 'required'],
-            [['abreviatura_id', 'id_rr_hh', 'frecuencia_uso', 'activo'], 'integer'],
+            [['abreviatura_id', 'id_rr_hh', 'frecuencia_uso', 'activo', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha_primer_uso', 'fecha_ultimo_uso'], 'safe'],
             [['abreviatura_id', 'id_rr_hh'], 'unique', 'targetAttribute' => ['abreviatura_id', 'id_rr_hh']],
         ];
@@ -72,6 +85,11 @@ class AbreviaturasMedicos extends ActiveRecord
     public function getAbreviatura()
     {
         return $this->hasOne(AbreviaturasMedicas::class, ['id' => 'abreviatura_id']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     /**

@@ -6,7 +6,9 @@
 --   2) Aplicar `m260508_000002_turnos_id_profesional_efector_servicio` (columna + backfill turnos).
 --   3) Aplicar `m260508_000003_consumidores_id_profesional_efector_servicio` (consultas, consultas_derivaciones,
 --      documentos_externos, guardia + backfills documentados en la migración).
---   4) Re-ejecutar bloques de verificación / UPDATE de este archivo solo si hace falta en un entorno ya parcialmente migrado.
+--   4) Aplicar `m260508_000004_consumidores_pes_lote2` (atenciones_enfermeria, suministro medicación, internación,
+--      encuesta parches, programas/diabetes, sumar autofacturación, abreviaturas_rrhh, prácticas internación).
+--   5) Re-ejecutar bloques de verificación / UPDATE de este archivo solo si hace falta en un entorno ya parcialmente migrado.
 --
 -- Esquema de referencia producción: u257309594_bioenlace (reemplazar en USE si aplica).
 -- =============================================================================

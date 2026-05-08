@@ -50,6 +50,42 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         ];
     }
 
+    public function syncProfesionalEfectorServicioFromContext(): void
+    {
+        if ($this->id_consulta) {
+            $c = Consulta::findOne($this->id_consulta);
+            if ($c && (int) $c->id_profesional_efector_servicio > 0) {
+                $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
+                return;
+            }
+        }
+        if ((int) $this->id_rrhh_servicio > 0) {
+            $id = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $this->id_rrhh_servicio);
+            if ($id !== null) {
+                $this->id_profesional_efector_servicio = $id;
+                return;
+            }
+        }
+        if ($this->id_rr_hh && $this->id_consulta) {
+            $c = Consulta::findOne($this->id_consulta);
+            if ($c && $c->id_efector && $c->id_servicio) {
+                $re = RrhhEfector::find()
+                    ->where(['id_rr_hh' => $this->id_rr_hh, 'id_efector' => $c->id_efector])
+                    ->andWhere(['deleted_at' => null])
+                    ->one();
+                if ($re) {
+                    $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
+                        (int) $re->id_persona,
+                        (int) $c->id_efector,
+                        (int) $c->id_servicio
+                    );
+                    return;
+                }
+            }
+        }
+        $this->id_profesional_efector_servicio = null;
+    }
+
     /**
      * @inheritdoc
      */
@@ -57,7 +93,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
         return [
             [['fecha_creacion', 'hora_creacion'], 'safe'],
-            [['id_consulta', 'id_persona', 'id_user', 'id_rr_hh', 'id_rrhh_servicio'], 'integer'],
+            [['id_consulta', 'id_persona', 'id_user', 'id_rr_hh', 'id_rrhh_servicio', 'id_profesional_efector_servicio'], 'integer'],
             [['datos', 'id_consulta'], 'required'],
             [['datos'], 'validarDatos'],
             [['id_rrhh_servicio'], 'default', 'value' => 0],
@@ -124,6 +160,11 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     public function getRrhhEfector()
     {
         return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     /**
@@ -709,6 +750,14 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
 
         if ($this->isRelationPopulated('parentConsulta')) {
             $this->parent_class = get_class($this->parentConsulta);
+        }
+
+        if ($insert
+            || $this->isAttributeChanged('id_consulta', false)
+            || $this->isAttributeChanged('id_rr_hh', false)
+            || $this->isAttributeChanged('id_rrhh_servicio', false)
+        ) {
+            $this->syncProfesionalEfectorServicioFromContext();
         }
 
         return true;

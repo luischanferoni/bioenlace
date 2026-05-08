@@ -89,7 +89,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             [
                 [['fecha_inicio','hora_inicio', 'fecha_fin', 'hora_fin'], 'safe'],
                 [['observaciones_alta', 'condiciones_derivacion', 'situacion_al_ingresar', 'ingresa_en', 'ingresa_con', 'datos_contacto_nombre', 'datos_contacto_tel'], 'string'],
-                [['id_tipo_alta', 'id_efector_derivacion', 'id_cama', 'id_persona', 'id_rrhh', 'created_by', 'updated_by', 'obra_social'], 'integer'],
+                [['id_tipo_alta', 'id_efector_derivacion', 'id_cama', 'id_persona', 'id_rrhh', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'obra_social'], 'integer'],
                 [['id_cama'], 'exist', 'skipOnError' => true, 'targetClass' => InfraestructuraCama::className(), 'targetAttribute' => ['id_cama' => 'id']],
                 [['id_tipo_alta'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacionTipoAlta::className(), 'targetAttribute' => ['id_tipo_alta' => 'id']],
                 [['id_efector_derivacion'], 'exist', 'skipOnError' => true, 'targetClass' => Efector::className(), 'targetAttribute' => ['id_efector_derivacion' => 'id_efector']],
@@ -318,6 +318,11 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         return $this->hasOne(RrhhServicio::className(), ['id' => 'id_rrhh']);
     }
 
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
+    }
+
     /**
      * Obtiene las internaciones en curso
      */
@@ -413,6 +418,12 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             $fechaFin = date_create_from_format('d/m/Y', $this->fecha_fin);
             $fechaFinFormateada = date_format($fechaFin, 'Y-m-d');
             $this->fecha_fin = $fechaFinFormateada;
+        }
+
+        if ($insert || $this->isAttributeChanged('id_rrhh', false)) {
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId(
+                (int) $this->id_rrhh
+            );
         }
 
         return true;

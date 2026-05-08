@@ -35,6 +35,24 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
         return 'seg_nivel_internacion_practica';
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert || $this->isAttributeChanged('id_rrhh_solicita', false)) {
+            $this->id_profesional_efector_servicio_solicita = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+                $this->id_rrhh_solicita !== null && $this->id_rrhh_solicita !== '' ? (int) $this->id_rrhh_solicita : null
+            );
+        }
+        if ($insert || $this->isAttributeChanged('id_rrhh_realiza', false)) {
+            $this->id_profesional_efector_servicio_realiza = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+                $this->id_rrhh_realiza !== null && $this->id_rrhh_realiza !== '' ? (int) $this->id_rrhh_realiza : null
+            );
+        }
+        return true;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -42,7 +60,7 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
     {
         return [
             [['id_internacion','conceptId'], 'required'],
-            [['id', 'id_rrhh_solicita', 'id_rrhh_realiza', 'id_internacion'], 'integer'],
+            [['id', 'id_rrhh_solicita', 'id_rrhh_realiza', 'id_internacion', 'id_profesional_efector_servicio_solicita', 'id_profesional_efector_servicio_realiza'], 'integer'],
             [['informe', 'fileName'], 'string'],
             [['imageFile'], 'file',
               'skipOnEmpty' => true,
@@ -117,5 +135,15 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
     public function getRrhhRealiza()
     {
         return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rrhh_realiza']);
-    }       
+    }
+
+    public function getProfesionalEfectorServicioSolicita()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio_solicita']);
+    }
+
+    public function getProfesionalEfectorServicioRealiza()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio_realiza']);
+    }
 }

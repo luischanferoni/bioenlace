@@ -73,6 +73,19 @@ class PersonaPrograma extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert || $this->isAttributeChanged('id_rrhh_efector', false)) {
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+                $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null
+            );
+        }
+        return true;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -80,7 +93,7 @@ class PersonaPrograma extends \yii\db\ActiveRecord
     {
         return [
             [['id_persona', 'id_programa', 'id_rrhh_efector'], 'required'],
-            [['id_persona', 'id_programa', 'id_rrhh_efector'], 'integer'],
+            [['id_persona', 'id_programa', 'id_rrhh_efector', 'id_profesional_efector_servicio'], 'integer'],
             [['activo', 'tipo_empadronamiento'], 'string'],
             [['fecha', 'fecha_baja'], 'safe'],
             [['clave_beneficiario'], 'string', 'max' => 16],
@@ -137,6 +150,11 @@ class PersonaPrograma extends \yii\db\ActiveRecord
     public function getPersonaProgramaDiabetes()
     {
         return $this->hasMany(PersonaProgramaDiabetes::className(), ['id_persona_programa' => 'id']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     public function afterFind () {

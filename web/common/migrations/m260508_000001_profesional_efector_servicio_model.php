@@ -28,7 +28,8 @@ class m260508_000001_profesional_efector_servicio_model extends Migration
                 'id_persona' => $this->integer()->notNull(),
                 'id_profesional_salud' => $this->integer()->null(),
                 'id_efector' => $this->integer()->notNull(),
-                'id_servicio' => $this->integer()->notNull(),
+                // Debe coincidir con servicios.id_servicio (INT UNSIGNED); integer() firmado falla el FK (errno 150).
+                'id_servicio' => $this->unsignedInteger()->notNull(),
 
                 // Backfill/compat: apunta a `rrhh_servicio.id` cuando proviene del modelo viejo
                 'legacy_rrhh_servicio_id' => $this->integer()->null(),

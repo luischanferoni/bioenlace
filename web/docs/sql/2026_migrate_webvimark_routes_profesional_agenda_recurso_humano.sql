@@ -52,6 +52,10 @@ UPDATE auth_item SET name = '/api/profesional-agenda/configurar-agenda'         
 UPDATE auth_item SET name = '/api/profesional-agenda/crear-agenda-flow'             WHERE name = '/api/agenda/crear-agenda-flow';
 UPDATE auth_item SET name = '/api/profesional-agenda/editar-agenda-flow'            WHERE name = '/api/agenda/editar-agenda-flow';
 
+-- Wildcards y OPTIONS (permisos agrupados / CORS); si quedan viejos, el chequeo RBAC no coincide con rutas nuevas.
+UPDATE auth_item SET name = '/api/profesional-agenda/*'     WHERE name = '/api/agenda/*';
+UPDATE auth_item SET name = '/api/profesional-agenda/options' WHERE name = '/api/agenda/options';
+
 -- ---------------------------------------------------------------------------
 -- Recurso humano (antes /api/rrhh/)
 -- ---------------------------------------------------------------------------
@@ -66,6 +70,9 @@ UPDATE auth_item SET name = '/api/recurso-humano/editar-condicion-laboral'      
 UPDATE auth_item SET name = '/api/recurso-humano/crear-condicion-laboral'              WHERE name = '/api/rrhh/crear-condicion-laboral';
 UPDATE auth_item SET name = '/api/recurso-humano/listar-por-efector-servicio-acepta-turnos' WHERE name = '/api/rrhh/listar-por-efector-servicio-acepta-turnos';
 UPDATE auth_item SET name = '/api/recurso-humano/elegir'                               WHERE name = '/api/rrhh/elegir';
+
+UPDATE auth_item SET name = '/api/recurso-humano/*'       WHERE name = '/api/rrhh/*';
+UPDATE auth_item SET name = '/api/recurso-humano/options' WHERE name = '/api/rrhh/options';
 
 COMMIT;
 

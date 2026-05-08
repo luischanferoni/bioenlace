@@ -42,7 +42,7 @@
       }
     },
     {
-      "name": "id_rr_hh",
+      "name": "id_profesional_efector_servicio",
       "label": "Profesional",
       "type": "autocomplete",
       "required": true,
@@ -70,11 +70,11 @@
       "type": "autocomplete",
       "required": true,
       "endpoint": "/turnos/slots-disponibles-como-paciente",
-      "depends_on": ["id_rr_hh"],
+      "depends_on": ["id_profesional_efector_servicio"],
       "params": {
         "id_servicio": "id_servicio_asignado",
         "id_efector": "id_efector",
-        "id_rr_hh": "id_rr_hh"
+        "id_profesional_efector_servicio": "id_profesional_efector_servicio"
       },
       "auto_load": true,
       "show_search": false,

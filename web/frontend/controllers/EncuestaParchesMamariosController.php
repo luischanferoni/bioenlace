@@ -13,6 +13,8 @@ use frontend\filters\SisseActionFilter;
 use common\models\AtencionesEnfermeria;
 use common\models\EncuestaParchesMamarios;
 use common\models\PersonasAntecedente;
+use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
 use common\models\busquedas\EncuestaParchesMamariosBusqueda;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\Consulta;
@@ -120,8 +122,28 @@ class EncuestaParchesMamariosController extends Controller
                 'modelAtencionEnfermeria' => isset($model_a_enf) ? $model_a_enf : NULL
             ]);
         }
-        // Se guarda el id de la tabla rrhh_efector
-        $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        // id_rr_hh en sesión o, en transición PES, derivado del profesional_efector_servicio activo
+        $idRrhhSesion = Yii::$app->user->getIdRecursoHumano();
+        if ($idRrhhSesion !== null && $idRrhhSesion !== '') {
+            $model->id_rr_hh = (int) $idRrhhSesion;
+        } else {
+            $pesRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
+            if ($pesRaw !== null && $pesRaw !== '') {
+                $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
+                if ($pes !== null) {
+                    $re = RrhhEfector::find()
+                        ->where([
+                            'id_persona' => $pes->id_persona,
+                            'id_efector' => $pes->id_efector,
+                            'deleted_at' => null,
+                        ])
+                        ->one();
+                    if ($re !== null) {
+                        $model->id_rr_hh = (int) $re->id_rr_hh;
+                    }
+                }
+            }
+        }
 
         $transaction = \Yii::$app->db->beginTransaction();
         try {

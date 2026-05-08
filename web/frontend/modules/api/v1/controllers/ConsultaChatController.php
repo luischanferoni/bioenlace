@@ -7,6 +7,7 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\models\ConsultaChatMessage;
 use common\models\Consulta;
+use common\components\Services\Consulta\ConsultaAccessService;
 
 /**
  * API chat de consulta (mensajes, envío, subida, estado).
@@ -232,18 +233,11 @@ class ConsultaChatController extends BaseController
 
     /**
      * Paciente: `consulta.id_persona` === sesión `idPersona` ({@see JsonHttpBearerAuth}).
-     * Médico: `consulta.id_rr_hh` === sesión `idRecursoHumano` ({@see ConfigController::actionEstablecerSession}, `getIdRecursoHumano()`).
+     * Médico: mismo RRHH y/o misma PES que en sesión operativa ({@see ConsultaAccessService::userCanAccessConsultaApi}).
      */
     protected function canAccessConsulta(Consulta $consulta): bool
     {
-        if ((int) $consulta->id_persona === (int) Yii::$app->user->getIdPersona()) {
-            return true;
-        }
-
-        $idRrhhConsulta = (int) $consulta->id_rr_hh;
-        $idRrhhSesion = (int) Yii::$app->user->getIdRecursoHumano();
-
-        return $idRrhhConsulta > 0 && $idRrhhSesion > 0 && $idRrhhConsulta === $idRrhhSesion;
+        return ConsultaAccessService::userCanAccessConsultaApi($consulta);
     }
 
     /**

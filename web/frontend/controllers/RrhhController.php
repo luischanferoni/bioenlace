@@ -11,6 +11,7 @@ use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
 
 use common\models\RrhhEfector;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\models\busquedas\RrhhEfectorBusqueda;
 use common\models\Persona;
 use common\models\Efector;
@@ -215,6 +216,6 @@ class RrhhController extends Controller
             'id_servicio' => $idServicio,
         ];
 
-        return ['results' => array_values(RrhhEfector::autocompleteRrhh($q, $filters))];
+        return ['results' => array_values(ProfesionalEnEfectorListadoUiService::autocompletePorEfectorServicio((string) $q, $filters))];
     }
 }

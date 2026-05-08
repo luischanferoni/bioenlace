@@ -10,7 +10,6 @@ use common\models\Consulta;
 use common\models\Turno;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
@@ -103,19 +102,27 @@ class TurnosController extends BaseController
     {
         $request = Yii::$app->request;
         $fecha = $request->get('fecha', date('Y-m-d'));
-        $rrhhId = $request->get('rrhh_id');
-        if (!$rrhhId) {
-            $rrhhId = Yii::$app->user->getIdRecursoHumano();
+        $rrhhRaw = $request->get('rrhh_id');
+        $rrhhId = $rrhhRaw !== null && $rrhhRaw !== ''
+            ? (int) $rrhhRaw
+            : (int) (Yii::$app->user->getIdRecursoHumano() ?: 0);
+
+        $pesOverride = $request->get('id_profesional_efector_servicio');
+        $pesId = ($pesOverride !== null && $pesOverride !== '') ? (int) $pesOverride : null;
+        if ($pesId !== null && $pesId <= 0) {
+            $pesId = null;
         }
-        if (!$rrhhId) {
-            throw new BadRequestHttpException('No se pudo determinar el recurso humano. Proporcione rrhh_id o user_id para desarrollo.');
-        }
-        $rrhh = RrhhEfector::findOne($rrhhId);
-        if (!$rrhh) {
-            throw new NotFoundHttpException('Recurso humano no encontrado.');
+
+        $pesSesion = Yii::$app->user->getIdProfesionalEfectorServicio();
+        $pesEfectivo = $pesId ?? ($pesSesion !== null && $pesSesion !== '' ? (int) $pesSesion : 0);
+
+        if ($rrhhId <= 0 && $pesEfectivo <= 0) {
+            throw new BadRequestHttpException(
+                'Indique contexto de agenda: rrhh_id y/o id_profesional_efector_servicio, o fije sesión operativa (recurso/PES).'
+            );
         }
         try {
-            return PacientesController::agendaAmbulatorioJson($fecha, (int) $rrhhId, true);
+            return PacientesController::agendaAmbulatorioJson($fecha, $rrhhId, true, $pesId);
         } catch (\Throwable $e) {
             Yii::error('TurnosController::agendaDiaResponse: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
             throw new \yii\web\ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
@@ -446,9 +453,21 @@ class TurnosController extends BaseController
                     throw new BadRequestHttpException('fecha requerida');
                 }
                 $idEfector = Yii::$app->user->getIdEfector();
+                $idPesRaw = $post['id_profesional_efector_servicio'] ?? null;
+                $idPes = $idPesRaw !== null && $idPesRaw !== '' ? (int) $idPesRaw : null;
+                if ($idPes !== null && $idPes <= 0) {
+                    $idPes = null;
+                }
                 $idRrhh = $post['id_rr_hh'] ?? null;
                 $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
-                $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id);
+                if ($idRrhh !== null && $idRrhh <= 0) {
+                    $idRrhh = null;
+                }
+                try {
+                    $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id, $idPes);
+                } catch (\InvalidArgumentException $e) {
+                    throw new BadRequestHttpException($e->getMessage());
+                }
 
                 return ['data' => ['success' => true, 'cancelados' => $n]];
             }
@@ -482,7 +501,8 @@ class TurnosController extends BaseController
      * Parámetros (query/body):
      * - id_servicio (obligatorio)
      * - id_efector (opcional; si falta, usa sesión)
-     * - id_rr_hh (opcional; se resuelve a id_rrhh_servicio_asignado)
+     * - id_profesional_efector_servicio (opcional; se resuelve a id_rrhh_servicio_asignado)
+     * - id_rr_hh (opcional, legacy; se resuelve a id_rrhh_servicio_asignado)
      * - id_rrhh_servicio_asignado (opcional; más preciso)
      * - limite, franja_tarde_desde (opcionales; defaults `turnosPaciente`)
      * - restricciones (JSON array; mismo formato que {@see TurnoSlotFinder::findAvailableSlots})
@@ -529,6 +549,8 @@ class TurnosController extends BaseController
                 'fecha_desde' => date('Y-m-d'),
             ];
 
+            $idPesReq = (int) ($req->get('id_profesional_efector_servicio') ?: $req->post('id_profesional_efector_servicio') ?: 0);
+
             $idRrsa = (int) ($req->get('id_rrhh_servicio_asignado') ?: $req->post('id_rrhh_servicio_asignado') ?: 0);
             $idRrhh = $req->get('id_rr_hh') ?: $req->post('id_rr_hh');
             if ($idRrsa <= 0 && $idRrhh) {
@@ -537,11 +559,23 @@ class TurnosController extends BaseController
                     $idRrsa = (int) $resolved;
                 }
             }
+            if ($idRrsa <= 0 && $idPesReq > 0) {
+                $pesSlot = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
+                if (
+                    $pesSlot
+                    && (int) $pesSlot->id_efector === (int) $idEfector
+                    && (int) $pesSlot->id_servicio === (int) $idServicio
+                ) {
+                    $compat = $pesSlot->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                    if ($compat) {
+                        $idRrsa = (int) $compat;
+                    }
+                }
+            }
             if ($idRrsa > 0) {
                 $criteria['id_rrhh_servicio_asignado'] = $idRrsa;
             }
 
-            $idPesReq = (int) ($req->get('id_profesional_efector_servicio') ?: $req->post('id_profesional_efector_servicio') ?: 0);
             if ($idPesReq > 0) {
                 $criteria['id_profesional_efector_servicio'] = $idPesReq;
             }
@@ -865,6 +899,14 @@ class TurnosController extends BaseController
         if ($rr) {
             $turno->id_rr_hh = $rr->id_rr_hh;
         }
+        $idEfectorTurno = (int) $turno->id_efector;
+        if ($idEfectorTurno <= 0) {
+            $idEfectorTurno = (int) Yii::$app->user->getIdEfector();
+        }
+        $idPesReprograma = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idRrsa, $idEfectorTurno);
+        if ($idPesReprograma !== null) {
+            $turno->id_profesional_efector_servicio = $idPesReprograma;
+        }
         if (!$turno->save()) {
             throw new BadRequestHttpException('No se pudo guardar el turno.');
         }
@@ -888,6 +930,15 @@ class TurnosController extends BaseController
 
         $idRrhhServicio = Yii::$app->user->getIdRrhhServicio();
         $idServicio = Yii::$app->user->getServicioActual();
+        $idPesSesion = (int) Yii::$app->user->getIdProfesionalEfectorServicio();
+
+        if (
+            $idPesSesion > 0
+            && (int) $turno->id_profesional_efector_servicio === $idPesSesion
+        ) {
+            Turno::NoSePresento($turno->id_turnos);
+            return;
+        }
 
         if (
             $idRrhhServicio
@@ -926,6 +977,24 @@ class TurnosController extends BaseController
         }
         if (!$model->id_servicio) {
             $model->id_servicio = Yii::$app->user->getServicioActual();
+        }
+        if (!$model->id_profesional_efector_servicio) {
+            $idPesSess = Yii::$app->user->getIdProfesionalEfectorServicio();
+            if ($idPesSess) {
+                $model->id_profesional_efector_servicio = (int) $idPesSess;
+            } else {
+                $idServicioParaPes = (int) ($model->id_servicio_asignado ?: $model->id_servicio);
+                if ($model->id_efector && $idServicioParaPes && Yii::$app->user->getIdPersona()) {
+                    $idFound = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
+                        (int) Yii::$app->user->getIdPersona(),
+                        (int) $model->id_efector,
+                        $idServicioParaPes
+                    );
+                    if ($idFound) {
+                        $model->id_profesional_efector_servicio = $idFound;
+                    }
+                }
+            }
         }
 
         $model->es_sobreturno = true;
@@ -985,11 +1054,28 @@ class TurnosController extends BaseController
         $id_rrhh_servicio_asignado = isset($params['id_rrhh_servicio_asignado']) ? (int) $params['id_rrhh_servicio_asignado'] : 0;
         $id_servicio = $params['id_servicio'] ?? null;
         $id_rr_hh = $params['id_rr_hh'] ?? null;
+        $idPesParam = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
+        if ($idPesParam <= 0) {
+            $sPes = Yii::$app->user->getIdProfesionalEfectorServicio();
+            $idPesParam = $sPes !== null && $sPes !== '' ? (int) $sPes : 0;
+        }
 
         if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio) {
             $resolved = RrhhServicio::obtenerIdRrhhServicio($id_rr_hh, $id_servicio);
             if ($resolved) {
                 $id_rrhh_servicio_asignado = (int) $resolved;
+            }
+        }
+        if ($id_rrhh_servicio_asignado === 0 && $idPesParam > 0) {
+            $pesOcup = ProfesionalEfectorServicio::findOne(['id' => $idPesParam, 'deleted_at' => null]);
+            if (
+                $pesOcup
+                && (int) $pesOcup->id_persona === (int) Yii::$app->user->getIdPersona()
+            ) {
+                $resolvedPes = $pesOcup->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                if ($resolvedPes) {
+                    $id_rrhh_servicio_asignado = (int) $resolvedPes;
+                }
             }
         }
 
@@ -1000,6 +1086,8 @@ class TurnosController extends BaseController
         $turnosQuery = Turno::findActive();
         if ($id_rrhh_servicio_asignado) {
             $turnosQuery->andWhere(['id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado]);
+        } elseif ($idPesParam > 0) {
+            $turnosQuery->andWhere(['id_profesional_efector_servicio' => $idPesParam]);
         } else {
             $turnosQuery->andWhere(['id_efector' => $id_efector])
                 ->andWhere(['id_servicio_asignado' => $id_servicio]);

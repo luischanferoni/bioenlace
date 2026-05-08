@@ -12,6 +12,9 @@ use yii\helpers\ArrayHelper;
 
 use common\models\CoberturaMedica;
 use common\models\Telefono;
+use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
+use common\models\RrhhServicio;
 
 /**
  * GuardiaController implements the CRUD actions for Guardia model.
@@ -120,7 +123,7 @@ class GuardiaController extends Controller
         }
         
         $model->id_efector = Yii::$app->user->getIdEfector();
-        $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        $this->prefillIdRrhhAsignadoDesdeSesion($model);
         $model->fecha = date("d/m/Y");
         $telefono = new Telefono();
 
@@ -201,6 +204,75 @@ class GuardiaController extends Controller
         $this->findModel($id)->delete();
 
         return $this->redirect(['index']);
+    }
+
+    /**
+     * Valores del Select2 de profesional: {@see RrhhEfector::obtenerMedicosPorEfector} usa `rrhh_servicio.id` como `id`.
+     */
+    protected function prefillIdRrhhAsignadoDesdeSesion(Guardia $model): void
+    {
+        $idEfector = (int) $model->id_efector;
+        if ($idEfector <= 0) {
+            return;
+        }
+
+        $idRrhhServicio = Yii::$app->user->getIdRrhhServicio();
+        if ($idRrhhServicio !== null && $idRrhhServicio !== '') {
+            $model->id_rrhh_asignado = (int) $idRrhhServicio;
+
+            return;
+        }
+
+        $idRrhh = Yii::$app->user->getIdRecursoHumano();
+        if ($idRrhh !== null && $idRrhh !== '') {
+            $row = RrhhServicio::find()
+                ->alias('rs')
+                ->innerJoin(['re' => 'rrhh_efector'], 're.id_rr_hh = rs.id_rr_hh')
+                ->where([
+                    're.id_rr_hh' => (int) $idRrhh,
+                    're.id_efector' => $idEfector,
+                    'rs.deleted_at' => null,
+                ])
+                ->orderBy(['rs.id' => SORT_ASC])
+                ->select(['rs.id'])
+                ->asArray()
+                ->one();
+            if ($row !== null && isset($row['id'])) {
+                $model->id_rrhh_asignado = (int) $row['id'];
+
+                return;
+            }
+        }
+
+        $pesRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
+        if ($pesRaw === null || $pesRaw === '') {
+            return;
+        }
+        $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
+        if ($pes === null) {
+            return;
+        }
+        $re = RrhhEfector::find()
+            ->where([
+                'id_persona' => $pes->id_persona,
+                'id_efector' => $pes->id_efector,
+                'deleted_at' => null,
+            ])
+            ->one();
+        if ($re === null) {
+            return;
+        }
+        $rs = RrhhServicio::find()
+            ->where([
+                'id_rr_hh' => $re->id_rr_hh,
+                'id_servicio' => $pes->id_servicio,
+                'deleted_at' => null,
+            ])
+            ->orderBy(['id' => SORT_ASC])
+            ->one();
+        if ($rs !== null) {
+            $model->id_rrhh_asignado = (int) $rs->id;
+        }
     }
 
     /**

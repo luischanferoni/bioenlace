@@ -17,7 +17,7 @@ use Yii;
 final class ProfesionalEfectorServicioAltaService
 {
     /**
-     * @return array{id_rr_hh: int, id_servicio: int, servicio_acepta_turnos: string}
+     * @return array{id_rr_hh: int, id_profesional_efector_servicio: int, id_servicio: int, servicio_acepta_turnos: string}
      */
     public static function ensurePersonaServicioEnEfector(int $idPersona, int $idEfector, int $idServicio): array
     {
@@ -101,6 +101,7 @@ final class ProfesionalEfectorServicioAltaService
 
         return [
             'id_rr_hh' => (int) $re->id_rr_hh,
+            'id_profesional_efector_servicio' => (int) $pes->id,
             'id_servicio' => $idServicio,
             'servicio_acepta_turnos' => $acepta,
         ];

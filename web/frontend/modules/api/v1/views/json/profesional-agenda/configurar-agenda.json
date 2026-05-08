@@ -20,10 +20,10 @@
           "required": false
         },
         {
-          "name": "id_rr_hh",
+          "name": "id_profesional_efector_servicio",
           "label": "",
           "type": "hidden",
-          "required": true,
+          "required": false,
           "include_in_submit": true
         },
         {

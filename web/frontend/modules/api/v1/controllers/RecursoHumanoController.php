@@ -11,7 +11,6 @@ use common\components\UiSelectOptionSourceResolver;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 
 /**
@@ -67,7 +66,7 @@ class RecursoHumanoController extends BaseController
      */
     private function rrhhItemsForUi(?string $q, array $filters): array
     {
-        $rows = RrhhEfector::autocompleteRrhh($q ?? '', $filters);
+        $rows = ProfesionalEnEfectorListadoUiService::autocompletePorEfectorServicio($q ?? '', $filters);
         $out = [];
         foreach ($rows as $r) {
             if (!is_array($r)) {
@@ -78,10 +77,14 @@ class RecursoHumanoController extends BaseController
             if ($id === '') {
                 continue;
             }
-            $out[] = [
+            $item = [
                 'id' => $id,
                 'name' => $text !== '' ? $text : $id,
             ];
+            if (isset($r['id_rr_hh']) && (int) $r['id_rr_hh'] > 0) {
+                $item['meta'] = ['id_rr_hh' => (int) $r['id_rr_hh']];
+            }
+            $out[] = $item;
         }
 
         return $out;
@@ -132,7 +135,7 @@ class RecursoHumanoController extends BaseController
         if ($request->get('sort_order') || $request->post('sort_order')) {
             $filters['sort_order'] = $request->get('sort_order') ?: $request->post('sort_order');
         }
-        $out['results'] = array_values(RrhhEfector::autocompleteRrhh($q, $filters));
+        $out['results'] = array_values(ProfesionalEnEfectorListadoUiService::autocompletePorEfectorServicio((string) $q, $filters));
         return $out;
     }
 
@@ -142,11 +145,9 @@ class RecursoHumanoController extends BaseController
      * Lista servicios asignados al RRHH de la persona autenticada, filtrados como en el flujo web
      * (servicio activo en el efector o servicio con item_name AdminEfector).
      *
-     * Resolución del vínculo RRHH–efector:
-     * - Si viene `id_efector` o `idEfector` (query/body): se usa la fila `rrhh_efector` de esa persona en ese efector
-     *   (p. ej. wizard post-login antes de tener sesión operativa completa).
-     * - Si no viene efector: se usa `id_rr_hh` de la sesión operativa (`getIdRecursoHumano`) y la fila correspondiente
-     *   debe pertenecer a la misma persona.
+     * Resolución del efector:
+     * - Si viene `id_efector` o `idEfector`: se usa ese efector con la persona autenticada (asignaciones PES).
+     * - Si no: se intenta por `id_rr_hh` en sesión → `rrhh_efector`, o en último término `getIdEfector()` de sesión.
      *
      * @return array{servicios: list<array{id_servicio: int, nombre: string}>}
      */
@@ -160,14 +161,9 @@ class RecursoHumanoController extends BaseController
         $tieneEfectorEnPedido = $idEfectorRaw !== null && $idEfectorRaw !== '';
         $idEfectorPedido = $tieneEfectorEnPedido ? (int) $idEfectorRaw : 0;
 
-        $rrhhEfector = null;
+        $idEfector = 0;
         if ($idEfectorPedido > 0) {
-            $rrhhEfector = RrhhEfector::findActive()
-                ->where([
-                    'id_efector' => $idEfectorPedido,
-                    'id_persona' => $idPersona,
-                ])
-                ->one();
+            $idEfector = $idEfectorPedido;
         } else {
             $idRrHhSesion = (int) Yii::$app->user->getIdRecursoHumano();
             if ($idRrHhSesion > 0) {
@@ -177,41 +173,58 @@ class RecursoHumanoController extends BaseController
                         'id_persona' => $idPersona,
                     ])
                     ->one();
+                if ($rrhhEfector !== null) {
+                    $idEfector = (int) $rrhhEfector->id_efector;
+                }
+            }
+            if ($idEfector <= 0) {
+                $idEfector = (int) Yii::$app->user->getIdEfector();
             }
         }
 
-        if ($rrhhEfector === null) {
+        if ($idEfector <= 0) {
             throw new BadRequestHttpException(
-                'Indique id_efector o fije contexto operativo en sesión (recurso humano / efector) para listar servicios.'
+                'Indique id_efector o fije contexto operativo en sesión (efector / recurso humano) para listar servicios.'
             );
         }
-        /** @var RrhhEfector $rrhhEfector */
 
-        $idEfector = (int) $rrhhEfector->id_efector;
+        $pesRows = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
+            ->with('servicio')
+            ->orderBy(['id_servicio' => SORT_ASC])
+            ->all();
+
         $servicios = [];
-        /** @var \yii\db\ActiveQuery $q */
-        $q = $rrhhEfector->getRrhhServicio();
-        $rrhhServicios = $q->with('servicio')->all();
-        foreach ($rrhhServicios as $rrhhServicio) {
+        $vistos = [];
+        foreach ($pesRows as $pes) {
+            $idServicio = (int) $pes->id_servicio;
+            if (isset($vistos[$idServicio])) {
+                continue;
+            }
             $servicioEfector = ServiciosEfector::findActive()
                 ->where([
                     'id_efector' => $idEfector,
-                    'id_servicio' => $rrhhServicio->id_servicio,
+                    'id_servicio' => $idServicio,
                 ])
                 ->one();
 
-            $nombreServicio = $rrhhServicio->servicio !== null
-                ? (string) $rrhhServicio->servicio->nombre
+            $nombreServicio = $pes->servicio !== null
+                ? (string) $pes->servicio->nombre
                 : '';
-            $esAdminEfector = $rrhhServicio->servicio !== null
-                && (string) $rrhhServicio->servicio->item_name === 'AdminEfector';
+            $esAdminEfector = $pes->servicio !== null
+                && (string) $pes->servicio->item_name === 'AdminEfector';
 
             if (
                 ($servicioEfector !== null && $servicioEfector->deleted_at === null)
                 || $esAdminEfector
             ) {
+                $vistos[$idServicio] = true;
                 $servicios[] = [
-                    'id_servicio' => (int) $rrhhServicio->id_servicio,
+                    'id_servicio' => $idServicio,
                     'nombre' => $nombreServicio,
                 ];
             }
@@ -340,7 +353,7 @@ class RecursoHumanoController extends BaseController
      *
      * GET|POST /api/v1/recurso-humano/listar-servicios-en-efector
      *
-     * Parámetros: id_rr_hh (obligatorio).
+     * Parámetros: id_rr_hh o id_profesional_efector_servicio (uno obligatorio) para anclar el profesional en el efector de sesión.
      *
      * @action_name Listar servicios de un profesional (en efector)
      * @entity Rrhh
@@ -361,10 +374,10 @@ class RecursoHumanoController extends BaseController
         );
 
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
-            $idRrHh = $this->requireIdRrHh();
             $idEfector = $this->requireIdEfectorFromSession();
+            [$idPersonaProf] = $this->resolvePersonaYEfectorParaServiciosProfesional($idEfector);
 
-            $items = $this->serviciosAsignadosItems($idRrHh, $idEfector);
+            $items = $this->serviciosAsignadosItemsForPersonaEfector($idPersonaProf, $idEfector);
             $uiItems = [];
             foreach ($items as $it) {
                 $uiItems[] = [
@@ -427,15 +440,43 @@ class RecursoHumanoController extends BaseController
         return $ui;
     }
 
-    private function requireIdRrHh(): int
+    /**
+     * Ancla el profesional vía `id_profesional_efector_servicio` o `id_rr_hh` + efector de sesión.
+     *
+     * @return array{0: int, 1: int} id_persona del profesional, id_efector
+     */
+    private function resolvePersonaYEfectorParaServiciosProfesional(int $idEfectorSesion): array
     {
         $request = Yii::$app->request;
-        $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
-        if ($idRrHh === null || $idRrHh === '') {
-            throw new BadRequestHttpException('id_rr_hh es requerido');
+        $idPesRaw = $request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio');
+        if ($idPesRaw !== null && $idPesRaw !== '') {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $idPesRaw, 'deleted_at' => null]);
+            if ($pes === null) {
+                throw new BadRequestHttpException('id_profesional_efector_servicio inválido.');
+            }
+            if ((int) $pes->id_efector !== (int) $idEfectorSesion) {
+                throw new BadRequestHttpException('La PES no corresponde al efector de sesión.');
+            }
+
+            return [(int) $pes->id_persona, (int) $pes->id_efector];
         }
 
-        return (int) $idRrHh;
+        $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+        if ($idRrHh === null || $idRrHh === '') {
+            throw new BadRequestHttpException('Indique id_rr_hh o id_profesional_efector_servicio.');
+        }
+        $re = RrhhEfector::findActive()
+            ->where([
+                'id_rr_hh' => (int) $idRrHh,
+                'id_efector' => $idEfectorSesion,
+                'deleted_at' => null,
+            ])
+            ->one();
+        if ($re === null) {
+            throw new BadRequestHttpException('RRHH no válido para este efector.');
+        }
+
+        return [(int) $re->id_persona, (int) $re->id_efector];
     }
 
     private function requireIdEfectorFromSession(): int
@@ -451,40 +492,32 @@ class RecursoHumanoController extends BaseController
     /**
      * @return list<array{id:int,name:string,meta:array{id_rrhh_servicio:int, id_profesional_efector_servicio:int|null, acepta_turnos:string}}>
      */
-    private function serviciosAsignadosItems(int $idRrHh, int $idEfector): array
+    private function serviciosAsignadosItemsForPersonaEfector(int $idPersona, int $idEfector): array
     {
-        /** @var RrhhEfector|null $re */
-        $re = RrhhEfector::findActive()
-            ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->one();
-        if ($re === null) {
-            throw new BadRequestHttpException('RRHH no válido para este efector.');
-        }
-
-        /** @var \yii\db\ActiveQuery $serviciosQ */
-        $serviciosQ = RrhhServicio::find();
-        $serviciosQ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
+        $pesRows = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
             ->with('servicio')
-            ->orderBy(['id_servicio' => SORT_ASC]);
-        $servicios = $serviciosQ->all();
+            ->orderBy(['id_servicio' => SORT_ASC])
+            ->all();
 
         $items = [];
-        foreach ($servicios as $rs) {
-            if ((int) $rs->id_servicio === 62) {
+        foreach ($pesRows as $pes) {
+            if ((int) $pes->id_servicio === 62) {
                 continue;
             }
-            $nombre = $rs->servicio !== null ? (string) $rs->servicio->nombre : ('Servicio #' . $rs->id_servicio);
-            $acepta = $rs->servicio !== null && strtoupper(trim((string) $rs->servicio->acepta_turnos)) === 'SI' ? 'SI' : 'NO';
+            $nombre = $pes->servicio !== null ? (string) $pes->servicio->nombre : ('Servicio #' . $pes->id_servicio);
+            $acepta = $pes->servicio !== null && strtoupper(trim((string) $pes->servicio->acepta_turnos)) === 'SI' ? 'SI' : 'NO';
+            $idRrsa = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
             $items[] = [
-                'id' => (int) $rs->id_servicio,
+                'id' => (int) $pes->id_servicio,
                 'name' => $nombre,
                 'meta' => [
-                    'id_rrhh_servicio' => (int) $rs->id,
-                    'id_profesional_efector_servicio' => ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                        (int) $re->id_persona,
-                        $idEfector,
-                        (int) $rs->id_servicio
-                    ),
+                    'id_rrhh_servicio' => $idRrsa !== null ? (int) $idRrsa : 0,
+                    'id_profesional_efector_servicio' => (int) $pes->id,
                     'acepta_turnos' => $acepta,
                 ],
             ];

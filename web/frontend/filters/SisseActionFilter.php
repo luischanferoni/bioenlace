@@ -84,7 +84,11 @@ class SisseActionFilter extends ActionFilter
         }
 
         if (in_array(self::FILTRO_RECURSO_HUMANO, $this->filtrosExtra)) {
-            if (!Yii::$app->user->getIdRecursoHumano()) {
+            $idRrhh = Yii::$app->user->getIdRecursoHumano();
+            $idPes = Yii::$app->user->getIdProfesionalEfectorServicio();
+            $tieneContextoProfesional = ($idRrhh !== null && $idRrhh !== '')
+                || ($idPes !== null && $idPes !== '');
+            if (!$tieneContextoProfesional) {
                 throw new ForbiddenHttpException(
                     "Ocurrió un error con el recurso humano asociado con su usuario. Su usuario debe estar asignado a un efector como recurso humano");
             }

@@ -74,6 +74,7 @@ class ReporteController extends Controller
 
                 $searchModel = new ConsultaBusqueda();
                 $searchModel->id_efector = $idEfector;
+                // $medico = id_rr_hh del DepDrop; la búsqueda incluye consultas con id_profesional_efector_servicio alineado (PES)
                 $resultados = $searchModel->searchParaReporteC4($idEfector,$servicio,$medico, $desde, $hasta, $tipoAtencion);
 
                 
@@ -415,6 +416,7 @@ class ReporteController extends Controller
 
                 $searchModel = new ConsultaBusqueda();
                 $searchModel->id_efector = $idEfector;
+                // $medico = id_rr_hh del DepDrop; la búsqueda incluye consultas con PES alineado
                 $resultados = $searchModel->searchParaReporteC4($idEfector, $servicio, $medico, $desde, $hasta, $tipoAtencion);
 
                 $diaD = date("d",strtotime($desde));

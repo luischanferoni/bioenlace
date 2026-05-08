@@ -5,7 +5,7 @@ namespace frontend\components;
 use Yii;
 use yii\web\NotFoundHttpException;
 use common\models\Persona;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 
 /**
  * Componente user para la API (JWT; sesión solo para datos derivados como idPersona).
@@ -25,8 +25,7 @@ class ApiUser extends BaseUserConfig
                 $session->set('idPersona', $persona->id_persona);
                 $session->set('apellidoUsuario', $persona->apellido);
                 $session->set('nombreUsuario', $persona->nombre);
-                $rrhhEfectores = RrhhEfector::getEfectores($persona->id_persona);
-                $session->set('efectores', $rrhhEfectores);
+                $session->set('efectores', ProfesionalEfectorServicio::getEfectoresParaSesion((int) $persona->id_persona));
             } else {
                 throw new NotFoundHttpException('Hubo un error con su usuario, comuníquese con los encargados del sistema.');
             }

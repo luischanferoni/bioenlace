@@ -6,10 +6,9 @@ use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 use common\models\Persona;
-use common\models\RrhhEfector;
-use common\models\RrhhServicio;
+use common\models\ProfesionalEfectorServicio;
 use Firebase\JWT\JWT;
-use frontend\controllers\SiteController;
+use common\components\Services\SesionOperativa\SesionOperativaService;
 
 /**
  * Componente user para la aplicación web (sesión, cookie, login por formulario).
@@ -76,7 +75,7 @@ class UserConfig extends BaseUserConfig
             return;
         }
 
-        $efectores = RrhhEfector::getEfectores($persona->id_persona);
+        $efectores = ProfesionalEfectorServicio::getEfectoresParaSesion((int) $persona->id_persona);
         if (count($efectores) !== 1) {
             return;
         }
@@ -86,10 +85,22 @@ class UserConfig extends BaseUserConfig
         Yii::$app->user->setNombreEfector($row['nombre']);
         Yii::$app->user->setIdRecursoHumano($row['id_rr_hh']);
 
-        $rrhhServicio = RrhhServicio::findActive()->andWhere(['id_rr_hh' => $row['id_rr_hh']])->all();
-        Yii::$app->user->setServicios(ArrayHelper::map($rrhhServicio, 'id_servicio', 'servicio.nombre'));
+        $pesEnEfector = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => $persona->id_persona,
+                'id_efector' => (int) $row['id_efector'],
+                'deleted_at' => null,
+            ])
+            ->all();
+        Yii::$app->user->setServicios(ArrayHelper::map(
+            $pesEnEfector,
+            'id_servicio',
+            static function ($p) {
+                return $p->servicio !== null ? (string) $p->servicio->nombre : '';
+            }
+        ));
         Yii::$app->user->setEfectores(ArrayHelper::map($efectores, 'id_efector', 'nombre'));
 
-        SiteController::establecerAgendaDisponible($row['id_rr_hh']);
+        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
     }
 }

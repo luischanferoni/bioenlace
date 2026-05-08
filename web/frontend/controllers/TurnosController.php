@@ -185,6 +185,9 @@ class TurnosController extends Controller
         $id_rrhh_servicio_asignado = (int) ($request->get('id_rrhh_servicio_asignado') ?: $request->post('id_rrhh_servicio_asignado') ?: 0);
         $id_servicio = $request->get('id_servicio') ?: $request->post('id_servicio');
         $id_rr_hh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+        $idPesReq = (int) ($request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio') ?: 0);
+
+        $id_efector = Yii::$app->user->getIdEfector();
 
         if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio) {
             $resolved = RrhhServicio::obtenerIdRrhhServicio($id_rr_hh, $id_servicio);
@@ -192,14 +195,33 @@ class TurnosController extends Controller
                 $id_rrhh_servicio_asignado = (int) $resolved;
             }
         }
-
-        $id_efector = Yii::$app->user->getIdEfector();
+        if ($id_rrhh_servicio_asignado === 0 && $idPesReq > 0 && $id_servicio && $id_efector) {
+            $pesSlot = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
+            if (
+                $pesSlot
+                && (int) $pesSlot->id_efector === (int) $id_efector
+                && (int) $pesSlot->id_servicio === (int) $id_servicio
+            ) {
+                $compat = $pesSlot->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                if ($compat) {
+                    $id_rrhh_servicio_asignado = (int) $compat;
+                }
+            }
+        }
 
         $formatoSlots = ($request->get('formato') ?: $request->post('formato')) === 'slots';
 
         $turnosQuery = Turno::findActive();
         if ($id_rrhh_servicio_asignado) {
             $turnosQuery->andWhere(['id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado]);
+        } elseif ($idPesReq > 0) {
+            $pesFiltro = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
+            if ($pesFiltro && (int) $pesFiltro->id_efector === (int) $id_efector) {
+                $turnosQuery->andWhere(['id_profesional_efector_servicio' => $idPesReq]);
+            } else {
+                $turnosQuery->andWhere(['id_efector' => $id_efector])
+                    ->andWhere(['id_servicio_asignado' => $id_servicio]);
+            }
         } else {
             $turnosQuery->andWhere(['id_efector' => $id_efector])
                 ->andWhere(['id_servicio_asignado' => $id_servicio]);
@@ -273,10 +295,22 @@ class TurnosController extends Controller
 
             $cupoPacientes = count($horariosAgenda) * 5;
         } else {
-            $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                (int) $id_rrhh_servicio_asignado,
-                (int) $id_efector
-            );
+            $idPes = $id_rrhh_servicio_asignado > 0
+                ? ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                    (int) $id_rrhh_servicio_asignado,
+                    (int) $id_efector
+                )
+                : null;
+            if ($idPes === null && $idPesReq > 0 && $id_efector) {
+                $pesAgenda = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
+                if (
+                    $pesAgenda
+                    && (int) $pesAgenda->id_efector === (int) $id_efector
+                    && (!$id_servicio || (int) $pesAgenda->id_servicio === (int) $id_servicio)
+                ) {
+                    $idPes = $idPesReq;
+                }
+            }
             $agenda = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
             if ($agenda === null) {
                 $mensajeSinTurnosDisponibles = '<p class="fst-italic ps-5">Sin turnos disponibles.</p>';

@@ -10,6 +10,7 @@ use common\models\InfraestructuraPiso;
 use common\models\Persona;
 use common\models\QuirofanoSala;
 use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
 use common\models\Turno;
@@ -18,6 +19,7 @@ use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\ConsultaMotivosMessage;
 use common\components\Services\Persona\PersonaSignosVitalesService;
+use common\components\Services\Consulta\ConsultaAccessService;
 /**
  * Listado de pacientes por modalidad (encounter): ambulatorio, internación, guardia.
  */
@@ -212,17 +214,11 @@ class PacientesController extends BaseController
     }
 
     /**
-     * Misma regla que {@see MotivosConsultaController::canAccessConsulta} — mensajes solo si la consulta es del paciente en sesión o del mismo RRHH.
+     * Misma regla que {@see MotivosConsultaController::canAccessConsulta}.
      */
     private function canAccessConsultaMotivos(Consulta $consulta): bool
     {
-        if ((int) $consulta->id_persona === (int) Yii::$app->user->getIdPersona()) {
-            return true;
-        }
-        $idRrhhConsulta = (int) $consulta->id_rr_hh;
-        $idRrhhSesion = (int) Yii::$app->user->getIdRecursoHumano();
-
-        return $idRrhhConsulta > 0 && $idRrhhSesion > 0 && $idRrhhConsulta === $idRrhhSesion;
+        return ConsultaAccessService::userCanAccessConsultaApi($consulta);
     }
 
     /**
@@ -230,30 +226,69 @@ class PacientesController extends BaseController
      *
      * @return array{turnos: array, fecha: string, total: int}
      */
-    public static function agendaAmbulatorioJson(string $fecha, int $rrhhId, bool $conTurnoPrueba): array
+    public static function agendaAmbulatorioJson(string $fecha, int $rrhhId, bool $conTurnoPrueba, ?int $pesId = null): array
     {
         $c = new self('pacientes', Yii::$app->getModule('v1'));
-        return $c->turnosAmbulatorioMedico($fecha, $rrhhId, $conTurnoPrueba);
+        return $c->turnosAmbulatorioMedico($fecha, $rrhhId, $conTurnoPrueba, $pesId);
     }
 
     /**
      * @return array{turnos: array, fecha: string, total: int}
      */
-    private function turnosAmbulatorioMedico(string $fecha, ?int $rrhhId, bool $agregarTurnoPruebaSiHoy): array
+    private function turnosAmbulatorioMedico(string $fecha, ?int $rrhhId, bool $agregarTurnoPruebaSiHoy, ?int $pesIdParam = null): array
     {
-        if ($rrhhId === null) {
-            $rrhhId = Yii::$app->user->getIdRecursoHumano();
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+
+        $pesId = $pesIdParam !== null && (int) $pesIdParam > 0 ? (int) $pesIdParam : 0;
+        if ($pesId <= 0) {
+            $s = Yii::$app->user->getIdProfesionalEfectorServicio();
+            $pesId = $s !== null && $s !== '' ? (int) $s : 0;
         }
-        if (!$rrhhId || !RrhhEfector::findOne($rrhhId)) {
+
+        $pes = null;
+        if ($pesId > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $pesId, 'deleted_at' => null]);
+            if (!$pes || (int) $pes->id_persona !== $idPersona) {
+                $pes = null;
+                $pesId = 0;
+            }
+        }
+
+        if ($rrhhId === null || (int) $rrhhId <= 0) {
+            $rh = Yii::$app->user->getIdRecursoHumano();
+            $rrhhId = $rh !== null && $rh !== '' ? (int) $rh : 0;
+        } else {
+            $rrhhId = (int) $rrhhId;
+        }
+
+        $rrhhOk = $rrhhId > 0 && RrhhEfector::find()
+            ->where(['id_rr_hh' => $rrhhId, 'id_persona' => $idPersona])
+            ->andWhere(['deleted_at' => null])
+            ->exists();
+
+        if ($pesId <= 0 && !$rrhhOk) {
             return ['turnos' => [], 'fecha' => $fecha, 'total' => 0];
         }
 
-        $turnos = Turno::findActive()
-            ->andWhere(['id_rr_hh' => (int) $rrhhId, 'fecha' => $fecha])
+        $turnosQuery = Turno::findActive()
+            ->andWhere(['fecha' => $fecha])
             ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
             ->andWhere(['is', 'atendido', null])
-            ->orderBy('hora')
-            ->all();
+            ->orderBy('hora');
+
+        if ($pesId > 0 && $rrhhId > 0) {
+            $turnosQuery->andWhere([
+                'or',
+                ['id_profesional_efector_servicio' => $pesId],
+                ['id_rr_hh' => $rrhhId],
+            ]);
+        } elseif ($pesId > 0) {
+            $turnosQuery->andWhere(['id_profesional_efector_servicio' => $pesId]);
+        } else {
+            $turnosQuery->andWhere(['id_rr_hh' => $rrhhId]);
+        }
+
+        $turnos = $turnosQuery->all();
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
@@ -288,9 +323,19 @@ class PacientesController extends BaseController
             if ($pacientePrueba) {
                 $servicioPrueba = null;
                 $idServicioAsignado = null;
-                $rrhhEfector = RrhhEfector::findOne($rrhhId);
-                if ($rrhhEfector && $rrhhEfector->id_efector) {
-                    $servicioEfector = ServiciosEfector::find()->where(['id_efector' => $rrhhEfector->id_efector])->one();
+                $idEfectorPrueba = null;
+                if ($pes !== null) {
+                    $idEfectorPrueba = (int) $pes->id_efector;
+                } elseif ($rrhhId > 0) {
+                    $rrhhEfector = RrhhEfector::find()
+                        ->where(['id_rr_hh' => $rrhhId, 'id_persona' => $idPersona, 'deleted_at' => null])
+                        ->one();
+                    if ($rrhhEfector) {
+                        $idEfectorPrueba = (int) $rrhhEfector->id_efector;
+                    }
+                }
+                if ($idEfectorPrueba) {
+                    $servicioEfector = ServiciosEfector::find()->where(['id_efector' => $idEfectorPrueba])->one();
                     if ($servicioEfector) {
                         $servicioPrueba = $servicioEfector->servicio ? $servicioEfector->servicio->nombre : 'Consulta General';
                         $idServicioAsignado = $servicioEfector->id_servicio;

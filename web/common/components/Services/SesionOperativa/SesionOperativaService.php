@@ -8,6 +8,7 @@ use yii\helpers\ArrayHelper;
 use common\models\ConsultasConfiguracion;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Servicio;
@@ -20,10 +21,19 @@ use Firebase\JWT\JWT;
  * Orquesta el establecimiento del "contexto operativo" en sesión (efector, RRHH, servicio y encounter class),
  * alineado con el flujo histórico de la web.
  *
- * Nota: si un usuario tiene roles por efector pero no tiene fila en rrhh_efector, por ahora devolvemos error.
+ * La asignación operativa canónica es {@see ProfesionalEfectorServicio}; `id_rr_hh` / `id_rrhh_servicio` se
+ * mantienen solo como compatibilidad cuando aún existen filas legacy.
  */
 class SesionOperativaService extends Component
 {
+    /**
+     * Hidrata `servicioYhorarioDeTurno` y `idRrhhServicio` (si aplica) desde PES + agendas en el efector actual.
+     */
+    public static function aplicarAgendaDisponibleDesdeContextoUsuario(): void
+    {
+        (new self())->establecerAgendaDisponiblePorContextoSesion();
+    }
+
     /**
      * @param array{efector_id:mixed, servicio_id:mixed, encounter_class:mixed} $body
      * @return array{efector:array{id:int,nombre:string},servicio:array{id:int,nombre:string,id_rrhh_servicio:int},encounter_class:array{code:string,label:string},rrhh_id:int,redirect_url:string,context_token:string}
@@ -47,45 +57,64 @@ class SesionOperativaService extends Component
             throw new \InvalidArgumentException('Encounter class inválido');
         }
 
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $efectorId, $servicioId);
+        if ($pes === null) {
+            try {
+                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+                    $idPersona,
+                    $efectorId,
+                    $servicioId
+                );
+                $pes = ProfesionalEfectorServicio::findOne(['id' => $out['id_profesional_efector_servicio'], 'deleted_at' => null]);
+            } catch (\InvalidArgumentException $e) {
+                throw new \InvalidArgumentException($e->getMessage(), 0, $e);
+            }
+        }
+        if ($pes === null) {
+            throw new \RuntimeException('No se encontró asignación profesional-efector-servicio para la persona autenticada');
+        }
+
         $rrhhEfector = RrhhEfector::find()
             ->where([
                 'id_efector' => $efectorId,
-                'id_persona' => Yii::$app->user->getIdPersona(),
+                'id_persona' => $idPersona,
+                'deleted_at' => null,
             ])
             ->one();
+        $idRrhh = $rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0;
 
-        if ($rrhhEfector === null) {
-            // Por ahora no soportamos usuarios con roles x efector sin RRHH asociado.
-            throw new \RuntimeException('No se encontró relación RRHH-Efector para la persona autenticada');
-        }
-
-        $rrhhServicio = RrhhServicio::find()
-            ->where([
-                'id_servicio' => $servicioId,
-                'id_rr_hh' => $rrhhEfector->id_rr_hh,
-            ])
-            ->one();
-
-        if ($rrhhServicio === null) {
-            throw new \InvalidArgumentException('El servicio especificado no está disponible para este efector');
-        }
+        $idRrhhServicio = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
 
         Yii::$app->user->setEncounterClass($encounterClass);
         Yii::$app->user->setServicioActual($servicioId);
 
-        Yii::$app->user->setIdEfector($rrhhEfector->id_efector);
-        Yii::$app->user->setNombreEfector($rrhhEfector->efector->nombre);
-        Yii::$app->user->setIdRecursoHumano($rrhhEfector->id_rr_hh);
+        Yii::$app->user->setIdEfector($pes->id_efector);
+        Yii::$app->user->setNombreEfector($pes->efector !== null ? (string) $pes->efector->nombre : '');
+        Yii::$app->user->setIdRecursoHumano($idRrhh);
+        Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
 
-        Yii::$app->user->setIdRrhhServicio($rrhhServicio->id);
+        Yii::$app->user->setIdRrhhServicio($idRrhhServicio !== null ? (int) $idRrhhServicio : 0);
 
-        // Servicios disponibles en el efector (para el RRHH)
-        Yii::$app->user->setServicios(ArrayHelper::map($rrhhEfector->rrhhServicio, 'id_servicio', 'servicio.nombre'));
+        $pesEnEfector = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => $idPersona,
+                'id_efector' => $efectorId,
+                'deleted_at' => null,
+            ])
+            ->all();
+        Yii::$app->user->setServicios(ArrayHelper::map(
+            $pesEnEfector,
+            'id_servicio',
+            static function ($p) {
+                return $p->servicio !== null ? (string) $p->servicio->nombre : '';
+            }
+        ));
 
         AuthHelper::updatePermissions(Yii::$app->user->identity);
         AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
-        $this->establecerAgendaDisponible((int) $rrhhEfector->id_rr_hh);
+        $this->establecerAgendaDisponiblePorContextoSesion();
 
         $redirectUrl = Yii::$app->urlManager->createUrl($this->getRedirectRouteForCurrentUser());
 
@@ -94,11 +123,12 @@ class SesionOperativaService extends Component
         $payload = [
             'user_id' => (int) ($identity->id ?? 0),
             'email' => (string) ($identity->email ?? ''),
-            'id_persona' => (int) Yii::$app->user->getIdPersona(),
-            'id_efector' => (int) $rrhhEfector->id_efector,
-            'id_rr_hh' => (int) $rrhhEfector->id_rr_hh,
+            'id_persona' => $idPersona,
+            'id_efector' => (int) $pes->id_efector,
+            'id_rr_hh' => $idRrhh,
+            'id_profesional_efector_servicio' => (int) $pes->id,
             'servicio_actual' => (int) $servicioId,
-            'id_rrhh_servicio' => (int) $rrhhServicio->id,
+            'id_rrhh_servicio' => (int) ($idRrhhServicio ?? 0),
             'encounter_class' => (string) $encounterClass,
             'iat' => time(),
             'exp' => time() + (24 * 60 * 60),
@@ -107,19 +137,19 @@ class SesionOperativaService extends Component
 
         return [
             'efector' => [
-                'id' => (int) $rrhhEfector->id_efector,
-                'nombre' => (string) $rrhhEfector->efector->nombre,
+                'id' => (int) $pes->id_efector,
+                'nombre' => (string) ($pes->efector->nombre ?? ''),
             ],
             'servicio' => [
                 'id' => (int) $servicioId,
-                'nombre' => (string) $rrhhServicio->servicio->nombre,
-                'id_rrhh_servicio' => (int) $rrhhServicio->id,
+                'nombre' => (string) ($pes->servicio->nombre ?? ''),
+                'id_rrhh_servicio' => (int) ($idRrhhServicio ?? 0),
             ],
             'encounter_class' => [
                 'code' => (string) $encounterClass,
                 'label' => (string) ConsultasConfiguracion::ENCOUNTER_CLASS[$encounterClass],
             ],
-            'rrhh_id' => (int) $rrhhEfector->id_rr_hh,
+            'rrhh_id' => $idRrhh,
             'redirect_url' => (string) $redirectUrl,
             'context_token' => (string) $contextToken,
         ];
@@ -148,19 +178,27 @@ class SesionOperativaService extends Component
     }
 
     /**
-     * Hidratación de agenda disponible (mismo comportamiento que la web).
+     * Hidratación de agenda disponible a partir de todas las PES de la persona en el efector de sesión.
      */
-    private function establecerAgendaDisponible(int $idRrHh): void
+    private function establecerAgendaDisponiblePorContextoSesion(): void
     {
-        $serviciosDelRrhh = RrhhServicio::find()
-            ->select(['id', 'id_servicio'])
-            ->andWhere(['id_rr_hh' => $idRrHh])
-            ->asArray()
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona <= 0 || $idEfector <= 0) {
+            return;
+        }
+
+        $pesRows = ProfesionalEfectorServicio::find()
+            ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->all();
 
-        foreach ($serviciosDelRrhh as $servicioDelRrhh) {
-            if ((int) Yii::$app->user->getServicioActual() === (int) $servicioDelRrhh['id_servicio']) {
-                Yii::$app->user->setIdRrhhServicio((int) $servicioDelRrhh['id']);
+        $servicioActual = Yii::$app->user->getServicioActual();
+        foreach ($pesRows as $pesRow) {
+            if ((int) $servicioActual === (int) $pesRow->id_servicio) {
+                $compatId = $pesRow->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                if ($compatId !== null) {
+                    Yii::$app->user->setIdRrhhServicio((int) $compatId);
+                }
             }
         }
 
@@ -168,16 +206,10 @@ class SesionOperativaService extends Component
         $nroDiaDeSemanaManiana = $nroDiaDeSemana === 6 ? 0 : $nroDiaDeSemana + 1;
         $columnasAgenda = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
 
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        $idsPes = [];
-        if ($idEfector > 0) {
-            foreach ($serviciosDelRrhh as $row) {
-                $pid = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId((int) $row['id'], $idEfector);
-                if ($pid !== null) {
-                    $idsPes[] = $pid;
-                }
-            }
-        }
+        $idsPes = array_map(static function ($p) {
+            return (int) $p->id;
+        }, $pesRows);
+
         $agendas = $idsPes !== []
             ? array_values(ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes))
             : [];
@@ -220,4 +252,3 @@ class SesionOperativaService extends Component
         Yii::$app->user->setServicioYhorarioDeTurno($servicios);
     }
 }
-

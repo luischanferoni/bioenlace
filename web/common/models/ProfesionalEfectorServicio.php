@@ -119,6 +119,45 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
+     * Efectores donde la persona tiene al menos una PES activa (misma forma que {@see RrhhEfector::getEfectores}).
+     *
+     * @return array<int, array{id_rr_hh:int, id_efector:int, nombre:string, id_localidad:int}>
+     */
+    public static function getEfectoresParaSesion(int $idPersona): array
+    {
+        if ($idPersona <= 0) {
+            return [];
+        }
+
+        $idEfectores = static::find()
+            ->select(['id_efector'])
+            ->distinct()
+            ->where(['id_persona' => $idPersona, 'deleted_at' => null])
+            ->column();
+        if ($idEfectores === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($idEfectores as $idEfector) {
+            $idEfector = (int) $idEfector;
+            $re = RrhhEfector::find()
+                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                ->one();
+            $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+            $ef = Efector::findOne($idEfector);
+            $out[] = [
+                'id_rr_hh' => $idRrhh,
+                'id_efector' => $idEfector,
+                'nombre' => $ef !== null ? (string) $ef->nombre : '',
+                'id_localidad' => $ef !== null ? (int) $ef->id_localidad : 0,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * @return self[]
      */
     public static function findAllActivosPorServicioEfector(int $idServicio, int $idEfector): array

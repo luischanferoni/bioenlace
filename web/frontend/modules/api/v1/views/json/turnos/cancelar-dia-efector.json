@@ -17,8 +17,8 @@
           "required": true
         },
         {
-          "name": "id_rr_hh",
-          "label": "Profesional (opcional, todo el día si vacío)",
+          "name": "id_profesional_efector_servicio",
+          "label": "Profesional–servicio PES (opcional; todo el día del efector si vacío)",
           "type": "text",
           "required": false
         }

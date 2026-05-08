@@ -21,7 +21,7 @@ intent_semantics:
     y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
   how: >-
     Buscar persona en el padrón, elegir un servicio habilitado para el efector en sesión;
-    el sistema crea entonces el RRHH y el vínculo al servicio; solo si acepta_turnos es SI se continúa a la UI de agenda.
+    el sistema persiste la asignación profesional–efector–servicio (PES) y vínculos legacy si aplican; solo si acepta_turnos es SI se continúa a la UI de agenda.
   preconditions:
     - Efector operativo en sesión.
     - Permisos para dar de alta asignaciones en el efector.
@@ -93,17 +93,17 @@ subintents:
   - id: configurar_agenda
     assistant_text: "Agenda"
     requires:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
       - draft.id_servicio
     next: ""
     open_ui:
       action_id: profesional-agenda.configurar-agenda
       params:
-        id_rr_hh: "draft.id_rr_hh"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
 
   - id: asignacion_sin_agenda_listo
     assistant_text: "Listo. La persona quedó asignada al servicio; este servicio no usa agenda de turnos."
     requires:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
     next: ""

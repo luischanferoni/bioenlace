@@ -20,12 +20,12 @@ use common\models\Consulta;
 use common\models\ConsultasConfiguracion;
 use common\models\busquedas\ConsultaBusqueda;
 use common\models\ConsultaAtencionesEnfermeria;
+use common\components\Services\Consulta\ConsultaAccessService;
 
 use common\models\ValoracionNutricional;
 use common\models\TensionArterial;
 use common\models\Persona;
 use Exception;
-use frontend\components\UserRequest;
 
 /**
  * ConsultasController implements the CRUD actions for Consulta model.
@@ -103,14 +103,7 @@ class ConsultasController extends Controller
 
         $modelConsulta = $this->findModel($idConsulta);
 
-        try {
-            $idRrhh = UserRequest::requireUserParam('idRecursoHumano');
-        } catch (\yii\web\BadRequestHttpException $e) {
-            Yii::$app->session->setFlash('error', 'Falta parÃ¡metro idRecursoHumano');
-            return $this->redirect(['historialconsultas']);
-        }
-
-        if ($idRrhh != $modelConsulta->id_rr_hh) {
+        if (!ConsultaAccessService::userIsProfesionalAsignadoConsultaWeb($modelConsulta)) {
             Yii::$app->session->setFlash('error', 'No tiene autorizacion para editar esta consulta');
             return $this->redirect(['historialconsultas']);
         }

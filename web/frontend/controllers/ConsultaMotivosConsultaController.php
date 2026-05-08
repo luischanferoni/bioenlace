@@ -29,8 +29,9 @@ class ConsultaMotivosConsultaController extends DefaultConsultaController
         $idsBDPrevioPost = [];
         $mapCodigoId = [];
         $motivos = [];
-        if (count($modelConsulta->getMostUseRrhh($modelConsulta->id_rr_hh)) > 3) {
-            $motivos = $modelConsulta->getMostUseRrhh($modelConsulta->id_rr_hh);
+        $idRrhhMotivos = $modelConsulta->resolveIdRrhhParaMotivos();
+        if ($idRrhhMotivos > 0 && count($modelConsulta->getMostUseRrhh($idRrhhMotivos)) > 3) {
+            $motivos = $modelConsulta->getMostUseRrhh($idRrhhMotivos);
         } else {
             $motivos = $modelConsulta->getMostUseServicio($modelConsulta->id_servicio);
         }

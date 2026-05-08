@@ -4,7 +4,6 @@ namespace frontend\controllers;
 
 use Yii;
 use yii\web\Controller;
-use frontend\components\UserRequest;
 use yii\filters\VerbFilter;
 use yii\base\Exception;
 
@@ -15,6 +14,7 @@ use common\models\Persona;
 use common\models\Consulta;
 use common\models\ConsultaDerivaciones;
 use common\models\Turno;
+use common\components\Services\Consulta\ConsultaAccessService;
 
 class DefaultConsultaController extends Controller
 {
@@ -35,18 +35,14 @@ class DefaultConsultaController extends Controller
                     $parent =  Yii::$app->request->get('parent');
 
                     $consulta = Consulta::findOne($idConsulta);
-                    
+
                     // o es la continuacion de pasos con id_consulta existente
                     // o es el primer paso con parent inexistente
-                    if (is_null($consulta) || isset($parent)){
+                    if (is_null($consulta) || isset($parent)) {
                         return true;
-                    }                    
-                        
-                    if ($consulta->id_rr_hh == UserRequest::requireUserParam('idRecursoHumano')) {
-                            return true;
                     }
 
-                    return false;
+                    return ConsultaAccessService::userCanAccessConsultaWeb($consulta);
                 },
                 'errorMessage' => 'Ocurrió un error con la consulta',
             ],

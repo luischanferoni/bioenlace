@@ -613,6 +613,34 @@ class Consulta extends \yii\db\ActiveRecord
         return $id !== false && $id !== null ? (int) $id : null;
     }
 
+    /**
+     * `id_rr_hh` para estadísticas de motivos; si la consulta solo tiene PES, resuelve RRHH en el mismo efector.
+     */
+    public function resolveIdRrhhParaMotivos(): int
+    {
+        $id = (int) $this->id_rr_hh;
+        if ($id > 0) {
+            return $id;
+        }
+        $idPes = (int) ($this->id_profesional_efector_servicio ?? 0);
+        if ($idPes <= 0) {
+            return 0;
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null) {
+            return 0;
+        }
+        $re = RrhhEfector::find()
+            ->where([
+                'id_persona' => $pes->id_persona,
+                'id_efector' => $pes->id_efector,
+                'deleted_at' => null,
+            ])
+            ->one();
+
+        return $re !== null ? (int) $re->id_rr_hh : 0;
+    }
+
     public function getMostUseRrhh($medico)
     {
         $connection = Yii::$app->getDb();

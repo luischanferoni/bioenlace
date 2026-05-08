@@ -109,6 +109,16 @@ abstract class BaseUserConfig extends User
         return Yii::$app->session->get('id_rrhh_servicio');
     }
 
+    public function setIdProfesionalEfectorServicio($id)
+    {
+        Yii::$app->session->set('idProfesionalEfectorServicio', $id);
+    }
+
+    public function getIdProfesionalEfectorServicio()
+    {
+        return Yii::$app->session->get('idProfesionalEfectorServicio');
+    }
+
     public function setServicioYhorarioDeTurno($servicios)
     {
         Yii::$app->session->set('servicioYhorarioDeTurno', $servicios);
@@ -143,6 +153,7 @@ abstract class BaseUserConfig extends User
             'nombreEfector' => $s->get('nombreEfector'),
             'servicio_actual' => $s->get('servicio_actual'),
             'id_rrhh_servicio' => $s->get('id_rrhh_servicio'),
+            'idProfesionalEfectorServicio' => $s->get('idProfesionalEfectorServicio'),
             'encounterClass' => $s->get('encounterClass'),
         ];
     }

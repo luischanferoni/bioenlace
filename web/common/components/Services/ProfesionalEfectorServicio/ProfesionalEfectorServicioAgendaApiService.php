@@ -105,6 +105,61 @@ class ProfesionalEfectorServicioAgendaApiService
     /**
      * @throws BadRequestHttpException
      */
+    public static function assertProfesionalEfectorServicioEnEfector(int $idPes, int $idEfector): ProfesionalEfectorServicio
+    {
+        if ($idPes <= 0 || $idEfector <= 0) {
+            throw new BadRequestHttpException('id_efector e id_profesional_efector_servicio deben ser válidos.');
+        }
+        /** @var ProfesionalEfectorServicio|null $pes */
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+            throw new BadRequestHttpException('La asignación profesional no pertenece al efector indicado.');
+        }
+
+        return $pes;
+    }
+
+    /**
+     * Valida (y opcionalmente resuelve) `rrhh_servicio` respecto de una fila PES del mismo efector.
+     *
+     * @param int|null $idRrhhServicioAsignado si null o 0, intenta {@see ProfesionalEfectorServicio::resolveRrhhServicioAsignadoIdForTurnoCompat}
+     * @return int id_rrhh_servicio_asignado efectivo
+     * @throws BadRequestHttpException
+     */
+    public static function assertRrhhServicioAsignadoAlineadoConPes(
+        ?int $idRrhhServicioAsignado,
+        ProfesionalEfectorServicio $pes,
+        int $idEfector
+    ): int {
+        if ($idEfector <= 0 || (int) $pes->id_efector !== $idEfector) {
+            throw new BadRequestHttpException('La asignación profesional no pertenece al efector.');
+        }
+        $idRrsa = $idRrhhServicioAsignado !== null && $idRrhhServicioAsignado > 0
+            ? (int) $idRrhhServicioAsignado
+            : (int) ($pes->resolveRrhhServicioAsignadoIdForTurnoCompat() ?: 0);
+        if ($idRrsa <= 0) {
+            throw new BadRequestHttpException('Indique id_rrhh_servicio_asignado o una PES con vínculo de servicio asignado.');
+        }
+        $rs = RrhhServicio::findOne(['id' => $idRrsa, 'deleted_at' => null]);
+        if ($rs === null) {
+            throw new BadRequestHttpException('Servicio asignado no encontrado.');
+        }
+        if ((int) $rs->id_servicio !== (int) $pes->id_servicio) {
+            throw new BadRequestHttpException('El servicio asignado no coincide con la asignación profesional.');
+        }
+        $re = RrhhEfector::find()
+            ->where(['id_persona' => $pes->id_persona, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($re !== null && (int) $rs->id_rr_hh !== (int) $re->id_rr_hh) {
+            throw new BadRequestHttpException('El servicio asignado no corresponde al recurso humano de esta persona en el efector.');
+        }
+
+        return $idRrsa;
+    }
+
+    /**
+     * @throws BadRequestHttpException
+     */
     public static function assertServicioAsignadoParaRecursoHumanoEnEfector(?int $idRrhhServicioAsignado, int $idRrhh, int $idEfector): void
     {
         if ($idRrhhServicioAsignado === null || $idRrhhServicioAsignado <= 0) {

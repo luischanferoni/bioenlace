@@ -26,7 +26,7 @@
           "include_in_submit": true
         },
         {
-          "name": "id_rr_hh",
+          "name": "id_profesional_efector_servicio",
           "type": "hidden",
           "required": false,
           "include_in_submit": true

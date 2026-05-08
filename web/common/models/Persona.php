@@ -874,24 +874,45 @@ class Persona extends \yii\db\ActiveRecord
         return false; //no hay internaciones activas
     }
 
-    public function turnoHoy($idServicio, $idRrhh, $idEfector)
+    /**
+     * Turno del día pendiente alineado con servicio en sesión, línea legacy (`id_rrhh_servicio_asignado` vs id RRHH en sesión)
+     * y/o `id_profesional_efector_servicio` del turno (sesión o `$idProfesionalEfectorServicio`).
+     *
+     * @param int|string|null $idServicio
+     * @param int|string|null $idRrhh id recurso humano en sesión (comparación histórica con `id_rrhh_servicio_asignado`)
+     * @param int|string|null $idEfector
+     * @param int|string|null $idProfesionalEfectorServicio si null y hay `Yii::$app->user`, se usa `getIdProfesionalEfectorServicio()`
+     */
+    public function turnoHoy($idServicio, $idRrhh, $idEfector, $idProfesionalEfectorServicio = null)
     {
+        $idPes = 0;
+        if ($idProfesionalEfectorServicio !== null && $idProfesionalEfectorServicio !== '') {
+            $idPes = (int) $idProfesionalEfectorServicio;
+        } elseif (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+            $raw = Yii::$app->user->getIdProfesionalEfectorServicio();
+            $idPes = $raw !== null && $raw !== '' ? (int) $raw : 0;
+        }
 
         $turnos = Turno::pacienteEsperandoTurno($this->id_persona);
 
         foreach ($turnos as $key => $turno) {
             if ($turno->fecha == date('Y-m-d') && $turno->atendido != 'SI') {
 
-                if (($turno->id_servicio_asignado == $idServicio || $turno->id_rrhh_servicio_asignado == $idRrhh)
+                $matchPes = $idPes > 0
+                    && $turno->id_profesional_efector_servicio !== null
+                    && (int) $turno->id_profesional_efector_servicio === $idPes;
+
+                if (($turno->id_servicio_asignado == $idServicio || $turno->id_rrhh_servicio_asignado == $idRrhh || $matchPes)
                     && $turno->id_efector == $idEfector
                 ) {
-                    return $turno; // el paciente tiene un turno en el efector, en el servicio o con el rrhh en sesion
-                } else {
-                    return false; //El paciente tiene turno en otro efector
+                    return $turno;
                 }
+
+                return false;
             }
         }
-        return false; //no tiene turnos hoy
+
+        return false;
     }
 
     public function GuardiaActiva()

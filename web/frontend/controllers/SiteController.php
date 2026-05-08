@@ -4,6 +4,7 @@ namespace frontend\controllers;
 
 use Yii;
 use yii\web\Controller;
+use yii\web\BadRequestHttpException;
 use yii\helpers\ArrayHelper;
 
 //use webvimark\modules\UserManagement\UserManagementModule;
@@ -14,8 +15,8 @@ use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\Servicio;
+use common\components\Services\SesionOperativa\SesionOperativaService;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use Firebase\JWT\JWT;
 
 class SiteController extends Controller
@@ -204,13 +205,26 @@ class SiteController extends Controller
     {
         Yii::$app->user->setServicioActual($id_servicio);
 
-        $servicioDelRrhh = RrhhServicio::find()
-            ->select(['id'])
-            ->andWhere(['id_servicio' => $id_servicio])
-            ->andWhere(['id_rr_hh' => Yii::$app->user->getIdRecursoHumano()])
-            ->one();
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idServicio = (int) $id_servicio;
+        $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
+        if ($pes !== null) {
+            Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
+            $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+            Yii::$app->user->setIdRrhhServicio($compat !== null ? (int) $compat : 0);
+        } else {
+            $servicioDelRrhh = RrhhServicio::find()
+                ->select(['id'])
+                ->andWhere(['id_servicio' => $id_servicio])
+                ->andWhere(['id_rr_hh' => Yii::$app->user->getIdRecursoHumano()])
+                ->one();
+            if ($servicioDelRrhh !== null) {
+                Yii::$app->user->setIdRrhhServicio((int) $servicioDelRrhh->id);
+            }
+        }
 
-        Yii::$app->user->setIdRrhhServicio($servicioDelRrhh->id);
+        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
 
         return $this->redirect(self::generarUrlUsurioEfectorAredireccionar());
     }
@@ -250,7 +264,7 @@ class SiteController extends Controller
     private static function establecerSessionInicial()
     {
         // Confirmamos que el usuario no este asociado a un efector
-        $rrhh_efectores = RrhhEfector::getEfectores(Yii::$app->user->getIdPersona());
+        $rrhh_efectores = ProfesionalEfectorServicio::getEfectoresParaSesion((int) Yii::$app->user->getIdPersona());
 
         // Si el usuario no esta en ningun efector se puede tratar de un usuario con permisos para todos los efectores o ninguno
         if (count($rrhh_efectores) == 0) {
@@ -344,26 +358,66 @@ class SiteController extends Controller
         $servicio = Yii::$app->request->post('servicio');
         Yii::$app->user->setServicioActual($servicio);
 
-        $idEfector = Yii::$app->request->post('idEfector');
+        $idEfector = (int) Yii::$app->request->post('idEfector');
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $idServicio = (int) $servicio;
+
+        $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
         $rrhhEfector = RrhhEfector::find()
             ->where([
                 'id_efector' => $idEfector,
-                'id_persona' => Yii::$app->user->getIdPersona()
+                'id_persona' => $idPersona,
+                'deleted_at' => null,
             ])
             ->one();
 
-        Yii::$app->user->setIdEfector($rrhhEfector->id_efector);
-        Yii::$app->user->setNombreEfector($rrhhEfector->efector->nombre);
-        Yii::$app->user->setIdRecursoHumano($rrhhEfector->id_rr_hh);
+        if ($pes !== null) {
+            $efector = Efector::findOne($idEfector);
+            Yii::$app->user->setIdEfector($idEfector);
+            Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
+            Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
+            $idRrhh = $rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0;
+            Yii::$app->user->setIdRecursoHumano($idRrhh);
+            $idRrhhServicio = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+            Yii::$app->user->setIdRrhhServicio($idRrhhServicio !== null ? (int) $idRrhhServicio : 0);
 
-        // Todos los servicios que tiene disponibles para este efector
-        Yii::$app->user->setServicios(ArrayHelper::map($rrhhEfector->rrhhServicio, 'id_servicio', 'servicio.nombre'));
-        // AuthHelper::updatePermissions recibe como parametro id_user pero no lo utiliza
-        // debido al cambio en config/web.php 'components' => ['authManager'...
+            $pesEnEfector = ProfesionalEfectorServicio::find()
+                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                ->all();
+            Yii::$app->user->setServicios(ArrayHelper::map(
+                $pesEnEfector,
+                'id_servicio',
+                static function ($p) {
+                    return $p->servicio !== null ? (string) $p->servicio->nombre : '';
+                }
+            ));
+        } elseif ($rrhhEfector !== null) {
+            Yii::$app->user->setIdEfector($rrhhEfector->id_efector);
+            Yii::$app->user->setNombreEfector($rrhhEfector->efector->nombre);
+            Yii::$app->user->setIdRecursoHumano($rrhhEfector->id_rr_hh);
+            Yii::$app->user->setServicios(ArrayHelper::map($rrhhEfector->rrhhServicio, 'id_servicio', 'servicio.nombre'));
+            try {
+                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
+                Yii::$app->user->setIdProfesionalEfectorServicio((int) $out['id_profesional_efector_servicio']);
+                $pesRow = ProfesionalEfectorServicio::findOne(['id' => $out['id_profesional_efector_servicio'], 'deleted_at' => null]);
+                $idRrhhServicio = $pesRow !== null ? $pesRow->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
+                Yii::$app->user->setIdRrhhServicio($idRrhhServicio !== null ? (int) $idRrhhServicio : 0);
+            } catch (\Throwable $e) {
+                Yii::warning(
+                    'establecerSessionFinal (rama rrhh_efector): no se pudo asegurar PES: ' . $e->getMessage(),
+                    __METHOD__
+                );
+                Yii::$app->user->setIdProfesionalEfectorServicio(null);
+                Yii::$app->user->setIdRrhhServicio(0);
+            }
+        } else {
+            throw new BadRequestHttpException('No hay asignación en el efector seleccionado para este usuario.');
+        }
+
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
-        self::establecerAgendaDisponible($rrhhEfector->id_rr_hh);
+        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
 
         return \yii\helpers\Url::to(self::generarUrlUsurioEfectorAredireccionar());
     }
@@ -395,71 +449,12 @@ class SiteController extends Controller
     /**
      * Establece en session un array que nos va a pemitir saber la agenda del dia actual
      */
+    /**
+     * @param mixed $id_rr_hh ignorado; la agenda se resuelve por PES en sesión (persona + efector).
+     */
     public static function establecerAgendaDisponible($id_rr_hh)
     {
-        $serviciosDelRrhh = RrhhServicio::find()
-            ->select(['id', 'id_servicio'])
-            ->andWhere(['id_rr_hh' => $id_rr_hh])
-            ->asArray()
-            ->all();
-
-        foreach ($serviciosDelRrhh as $servicioDelRrhh) {
-            if (Yii::$app->user->getServicioActual() == $servicioDelRrhh["id_servicio"]) {
-                Yii::$app->user->setIdRrhhServicio($servicioDelRrhh["id"]);
-            }
-        }
-
-        $nroDiaDeSemana = date('N') - 1;
-        $nroDiaDeSemanaManiana = $nroDiaDeSemana == 6 ? 0 : $nroDiaDeSemana + 1;
-        $columnasAgenda = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        $idsPes = [];
-        if ($idEfector > 0) {
-            foreach ($serviciosDelRrhh as $row) {
-                $pid = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId((int) $row['id'], $idEfector);
-                if ($pid !== null) {
-                    $idsPes[] = $pid;
-                }
-            }
-        }
-        $agendas = $idsPes !== []
-            ? array_values(ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes))
-            : [];
-
-        $servicios = [$nroDiaDeSemana => [], ($nroDiaDeSemana + 1) => []];
-        foreach ($agendas as $agenda) {
-            if (($agenda->{$columnasAgenda[$nroDiaDeSemana]} == null || $agenda->{$columnasAgenda[$nroDiaDeSemana]} == '')
-                && ($agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]} == null || $agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]} == '')
-            ) {
-                continue;
-            }
-
-            $pes = $agenda->asignacion;
-            if ($pes === null) {
-                continue;
-            }
-            $servicioModel = Servicio::findOne($pes->id_servicio);
-            $nombreServicio = $servicioModel !== null ? (string) $servicioModel->nombre : '';
-
-            $horasDeAgendaHoy = explode(',', (string) $agenda->{$columnasAgenda[$nroDiaDeSemana]});
-            $servicios[$nroDiaDeSemana] = [
-                $pes->id_servicio => [
-                    'nombreServicio' => $nombreServicio,
-                    'horaInicial' => $horasDeAgendaHoy[0],
-                    'horaFinal' => $horasDeAgendaHoy[count($horasDeAgendaHoy) - 1],
-                ],
-            ];
-            $horasDeAgendaManiana = explode(',', (string) $agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]});
-            $servicios[$nroDiaDeSemana + 1] = [
-                $pes->id_servicio => [
-                    'nombreServicio' => $nombreServicio,
-                    'horaInicial' => $horasDeAgendaManiana[0],
-                    'horaFinal' => $horasDeAgendaManiana[count($horasDeAgendaManiana) - 1],
-                ],
-            ];
-        }
-
-        Yii::$app->user->setServicioYhorarioDeTurno($servicios);
+        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
     }
 
     /**

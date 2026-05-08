@@ -285,10 +285,17 @@ class Guardia extends \yii\db\ActiveRecord
             || $this->isAttributeChanged('id_rrhh_asignado', false)
             || $this->isAttributeChanged('id_efector', false)
         ) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::resolvePesIdFromGuardiaAsignado(
+            $idPes = ProfesionalEfectorServicio::resolvePesIdFromGuardiaAsignado(
                 $this->id_rrhh_asignado !== null && $this->id_rrhh_asignado !== '' ? (int) $this->id_rrhh_asignado : null,
                 $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
             );
+            if (($idPes === null || $idPes <= 0) && Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+                $raw = Yii::$app->user->getIdProfesionalEfectorServicio();
+                if ($raw !== null && $raw !== '') {
+                    $idPes = (int) $raw;
+                }
+            }
+            $this->id_profesional_efector_servicio = ($idPes !== null && $idPes > 0) ? $idPes : null;
         }
 
         return true;

@@ -4,6 +4,7 @@ namespace common\components\Services\Turnos;
 
 use Yii;
 use yii\db\Expression;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Turno;
 use common\models\EfectorTurnosConfig;
 use common\models\TurnoEventoAudit;
@@ -16,11 +17,12 @@ class BulkCancelDayService
      *
      * @param int $idEfector
      * @param string $fecha Y-m-d
-     * @param int|null $idRrhh
+     * @param int|null $idRrhh filtro legacy (todo el profesional en el efector)
      * @param int|null $idUser
+     * @param int|null $idPes filtro por fila PES (más acotado que idRrhh)
      * @return int cantidad cancelados
      */
-    public function cancelarDia($idEfector, $fecha, $idRrhh = null, $idUser = null)
+    public function cancelarDia($idEfector, $fecha, $idRrhh = null, $idUser = null, $idPes = null)
     {
         $cfg = EfectorTurnosConfig::getOrCreateForEfector((int) $idEfector);
         if (!$cfg->cancelacion_masiva) {
@@ -30,7 +32,13 @@ class BulkCancelDayService
         $q = Turno::findActive()
             ->andWhere(['id_efector' => (int) $idEfector, 'fecha' => $fecha, 'estado' => Turno::ESTADO_PENDIENTE]);
 
-        if ($idRrhh) {
+        if ($idPes) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $idPes, 'deleted_at' => null]);
+            if ($pes === null || (int) $pes->id_efector !== (int) $idEfector) {
+                throw new \InvalidArgumentException('id_profesional_efector_servicio inválido para este efector.');
+            }
+            $q->andWhere(['id_profesional_efector_servicio' => (int) $idPes]);
+        } elseif ($idRrhh) {
             $q->andWhere(['id_rr_hh' => (int) $idRrhh]);
         }
 

@@ -474,6 +474,7 @@ class PacienteController extends Controller
                     $parent = Consulta::PARENT_TURNO;
                     $parentId = (int) $idTurnoGet;
                 } elseif (Yii::$app->user->getEncounterClass() === Consulta::ENCOUNTER_CLASS_AMB) {
+                    // turnoHoy también coincide por id_profesional_efector_servicio en sesión (PES)
                     $turnoSesion = $paciente->turnoHoy(
                         Yii::$app->user->getServicioActual(),
                         Yii::$app->user->getIdRecursoHumano(),

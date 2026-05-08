@@ -3,14 +3,19 @@
 namespace frontend\modules\api\v1\controllers;
 
 /**
- * (DEPRECADO) Controller histórico de Config en API v1.
+ * Reemplazo del histórico `ConfigController` de API v1 (sin rutas activas en `urlManager`).
  *
- * Reemplazado por:
- * - `SesionOperativaController::actionEstablecer`   (POST `/api/v1/sesion-operativa/establecer`, modo opciones sin body o modo fijar con selección)
- * - `RecursoHumanoController::actionListarMisServiciosEnEfector`   (GET|POST `/api/v1/recurso-humano/listar-mis-servicios-en-efector`; `id_efector` opcional si hay sesión RRHH)
- * - `CatalogosController::actionEncounterClasses`   (GET `/api/v1/catalogos/encounter-classes`)
+ * **Fijar contexto operativo (efector + servicio + encounter + PES en sesión):**
+ * - `POST /api/v1/sesion-operativa/establecer`
+ * - Cuerpo: `{ "efector_id", "servicio_id", "encounter_class" }` (también acepta `id_efector` como alias del primero).
+ * - Implementación: {@see \common\components\Services\SesionOperativa\SesionOperativaService::establecer} — resuelve o asegura fila
+ *   {@see \common\models\ProfesionalEfectorServicio} vía {@see \common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService}
+ *   cuando faltaba PES pero el servicio está habilitado en el efector (paridad con `SiteController::actionEstablecerSessionFinal`).
+ *
+ * **Opciones del wizard (sin fijar):** mismo `POST` con cuerpo incompleto → {@see \frontend\modules\api\v1\controllers\SesionOperativaController::actionEstablecer}.
+ *
+ * **Catálogos / listados:** `CatalogosController`, `RecursoHumanoController`, etc.
  */
 class ConfigController extends BaseController
 {
 }
-

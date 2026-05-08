@@ -29,8 +29,8 @@
           "required": false
         },
         {
-          "name": "id_rr_hh",
-          "label": "Profesional (resolver agenda con servicio)",
+          "name": "id_profesional_efector_servicio",
+          "label": "Profesional (PES; resolver agenda)",
           "type": "text",
           "required": false
         },

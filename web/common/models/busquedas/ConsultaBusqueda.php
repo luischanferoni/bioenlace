@@ -6,6 +6,8 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Consulta;
+use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
 
 /**
  * ConsultaBusqueda represents the model behind the search form about `common\models\Consulta`.
@@ -269,6 +271,50 @@ class ConsultaBusqueda extends Consulta
     }
 
     /**
+     * Filtro por profesional en reportes C4/C7: el formulario envía `id_rr_hh`; las consultas pueden
+     * tener solo `id_profesional_efector_servicio` alineado a la misma persona en efector + servicio.
+     *
+     * @param int|string $id_efector
+     * @param int|string $idServicio
+     * @param int|string $idMedico id_rr_hh (DepDrop reportes)
+     * @return array condición para {@see \yii\db\Query::andWhere}
+     */
+    private static function reporteProfesionalFilterParaConsulta($id_efector, $idServicio, $idMedico): array
+    {
+        $idEfector = (int) $id_efector;
+        $idServ = (int) $idServicio;
+        $idRrhh = (int) $idMedico;
+        if ($idRrhh <= 0) {
+            return ['consultas.id_rr_hh' => $idRrhh];
+        }
+        $idPersona = (int) RrhhEfector::find()
+            ->select(['id_persona'])
+            ->where(['id_rr_hh' => $idRrhh])
+            ->scalar();
+        $pesIds = [];
+        if ($idPersona > 0 && $idEfector > 0 && $idServ > 0) {
+            $pesIds = ProfesionalEfectorServicio::find()
+                ->select(['id'])
+                ->where([
+                    'id_persona' => $idPersona,
+                    'id_efector' => $idEfector,
+                    'id_servicio' => $idServ,
+                    'deleted_at' => null,
+                ])
+                ->column();
+        }
+        if ($pesIds === []) {
+            return ['consultas.id_rr_hh' => $idRrhh];
+        }
+
+        return [
+            'or',
+            ['consultas.id_rr_hh' => $idRrhh],
+            ['consultas.id_profesional_efector_servicio' => $pesIds],
+        ];
+    }
+
+    /**
      * Creates data provider instance with search query applied
      *
      * @param array $params
@@ -277,6 +323,7 @@ class ConsultaBusqueda extends Consulta
      */
     public function searchParaReporteC4($id_efector, $idServicio, $idMedico,  $desde, $hasta, $tipoAtencion)
     {
+        $filtroProfesional = static::reporteProfesionalFilterParaConsulta($id_efector, $idServicio, $idMedico);
         if($tipoAtencion == 'AMB'){
             $genericoAMB = '%GenericoAMB';
             $turno = '%Turno';
@@ -295,7 +342,7 @@ class ConsultaBusqueda extends Consulta
                         ->andWhere('consultas.id_efector = :id_efector',[':id_efector' => $id_efector])
                         ->andWhere('turnos.fecha >= :desde',[':desde' => $desde])
                         ->andWhere('turnos.fecha <= :hasta',[':hasta' => $hasta])
-                        ->andWhere('consultas.id_rr_hh = :idrrhhasigando',[':idrrhhasigando' => $idMedico])
+                        ->andWhere($filtroProfesional)
                         ->andWhere('consultas.id_servicio = :idServicio',[':idServicio' => $idServicio])
                         ;
                     $query2 = (new \yii\db\Query())
@@ -312,7 +359,7 @@ class ConsultaBusqueda extends Consulta
                                     ->andWhere('consultas.id_efector = :id_efector',[':id_efector' => $id_efector])
                                     ->andWhere('DATE_FORMAT(consultas.created_at, "%Y-%m-%d") >= :desde',[':desde' => $desde])
                                     ->andWhere('DATE_FORMAT(consultas.created_at, "%Y-%m-%d") <= :hasta',[':hasta' => $hasta])
-                                    ->andWhere('consultas.id_rr_hh = :idrrhhasigando',[':idrrhhasigando' => $idMedico])
+                                    ->andWhere($filtroProfesional)
                                     ->andWhere('consultas.id_servicio = :idServicio',[':idServicio' => $idServicio])
                                     ->andWhere('`consultas`.`parent_class` like "'.$genericoAMB.'"')
                                     ;        
@@ -342,7 +389,7 @@ class ConsultaBusqueda extends Consulta
                         ->andWhere('consultas.id_efector = :id_efector',[':id_efector' => $id_efector])
                         ->andWhere('guardia.fecha >= :desde',[':desde' => $desde])
                         ->andWhere('guardia.fecha <= :hasta',[':hasta' => $hasta])
-                        ->andWhere('consultas.id_rr_hh = :idrrhhasigando',[':idrrhhasigando' => $idMedico])
+                        ->andWhere($filtroProfesional)
                         ->andWhere('consultas.id_servicio = :idServicio',[':idServicio' => $idServicio])
                         ;
                     $query2 = (new \yii\db\Query())
@@ -359,7 +406,7 @@ class ConsultaBusqueda extends Consulta
                                     ->andWhere('consultas.id_efector = :id_efector',[':id_efector' => $id_efector])
                                     ->andWhere('DATE_FORMAT(consultas.created_at, "%Y-%m-%d") >= :desde',[':desde' => $desde])
                                     ->andWhere('DATE_FORMAT(consultas.created_at, "%Y-%m-%d") <= :hasta',[':hasta' => $hasta])
-                                    ->andWhere('consultas.id_rr_hh = :idrrhhasigando',[':idrrhhasigando' => $idMedico])
+                                    ->andWhere($filtroProfesional)
                                     ->andWhere('consultas.id_servicio = :idServicio',[':idServicio' => $idServicio])
                                     ->andWhere('`consultas`.`parent_class` like "'.$genericoEMER.'"')
                                     ;        
@@ -490,7 +537,6 @@ class ConsultaBusqueda extends Consulta
                         ->leftJoin('personas', '`consultas`.`id_persona` = `personas`.`id_persona`')
                         ->andWhere('consultas.id_efector = :id_efector',[':id_efector' => $id_efector])
                         ->andWhere('guardia.fecha = :fecha',[':fecha' => $fecha])
-                        ->andWhere('consultas.id_rr_hh = :idrrhhasigando',[':idrrhhasigando' => $idMedico])
                         ->andWhere('consultas.id_servicio = :idServicio',[':idServicio' => $idServicio])
                         ;
                     $query2 = (new \yii\db\Query())
@@ -506,7 +552,6 @@ class ConsultaBusqueda extends Consulta
                                     ->leftJoin('personas', '`consultas`.`id_persona` = `personas`.`id_persona`')
                                     ->andWhere('consultas.id_efector = :id_efector',[':id_efector' => $id_efector])
                                     ->andWhere('DATE_FORMAT(consultas.created_at, "%Y-%m-%d") = :fecha',[':fecha' => $fecha])
-                                    ->andWhere('consultas.id_rr_hh = :idrrhhasigando',[':idrrhhasigando' => $idMedico])
                                     ->andWhere('consultas.id_servicio = :idServicio',[':idServicio' => $idServicio])
                                     ->andWhere('`consultas`.`parent_class` like "'.$genericoEMER.'"')
                                     ;        

@@ -66,7 +66,7 @@ subintents:
       - draft.id_efector
       - draft.id_servicio_asignado
     provides:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
     next: select_slot
     open_ui:
       action_id: recurso-humano.listar-por-efector-servicio-acepta-turnos
@@ -77,7 +77,7 @@ subintents:
   - id: select_slot
     assistant_text: "Horario"
     requires:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
     provides:
       - draft.slot_id
     next: confirm
@@ -86,7 +86,7 @@ subintents:
       params:
         id_servicio: "draft.id_servicio_asignado"
         id_efector: "draft.id_efector"
-        id_rr_hh: "draft.id_rr_hh"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
   - id: confirm
     assistant_text: "Confirmación"

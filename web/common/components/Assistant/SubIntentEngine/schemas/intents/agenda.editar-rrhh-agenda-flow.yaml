@@ -57,7 +57,7 @@ subintents:
   - id: select_rrhh
     assistant_text: "Profesional"
     provides:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
     next: select_servicio
     open_ui:
       action_id: recurso-humano.listar-por-efector-acepta-turnos
@@ -65,7 +65,7 @@ subintents:
   - id: select_servicio
     assistant_text: "Servicio"
     requires:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
     provides:
       - draft.id_servicio
     next_routing:
@@ -83,26 +83,26 @@ subintents:
     open_ui:
       action_id: recurso-humano.listar-servicios-en-efector
       params:
-        id_rr_hh: "draft.id_rr_hh"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
   - id: configurar_agenda
     assistant_text: "Agenda"
     requires:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
       - draft.id_servicio
     next: condicion_laboral
     open_ui:
       action_id: profesional-agenda.configurar-agenda
       params:
-        id_rr_hh: "draft.id_rr_hh"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
 
   - id: condicion_laboral
     assistant_text: "Condición laboral"
     requires:
-      - draft.id_rr_hh
+      - draft.id_profesional_efector_servicio
     next: ""
     open_ui:
       action_id: recurso-humano.editar-condicion-laboral
       params:
-        id_rr_hh: "draft.id_rr_hh"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

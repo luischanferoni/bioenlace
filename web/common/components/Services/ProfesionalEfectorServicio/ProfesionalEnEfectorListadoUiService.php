@@ -3,8 +3,11 @@
 namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\Persona;
+use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
+use yii\db\Expression;
+use yii\db\Query;
 
 /**
  * Listado/búsqueda de profesionales (RRHH) en un efector para mini-UIs (ui_json).
@@ -28,17 +31,17 @@ final class ProfesionalEnEfectorListadoUiService
             $limit = 200;
         }
 
-        /** @var \yii\db\ActiveQuery $query */
-        $query = RrhhEfector::find();
-        $query->alias('re')
-            ->with('persona')
-            ->where(['re.id_efector' => $idEfector])
-            ->andWhere(['re.deleted_at' => null]);
+        $qNorm = $q !== null ? trim((string) $q) : '';
 
-        $q = $q !== null ? trim((string) $q) : '';
-        if ($q !== '') {
-            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
-            $query->joinWith('persona p')
+        /** @var \yii\db\ActiveQuery $query */
+        $query = ProfesionalEfectorServicio::find()->alias('pes')
+            ->with(['persona'])
+            ->where(['pes.id_efector' => $idEfector])
+            ->andWhere(['pes.deleted_at' => null]);
+
+        if ($qNorm !== '') {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $qNorm) . '%';
+            $query->joinWith(['persona p'])
                 ->andWhere([
                     'or',
                     ['like', 'p.apellido', $term, false],
@@ -47,17 +50,39 @@ final class ProfesionalEnEfectorListadoUiService
                 ]);
         }
 
-        $rows = $query->orderBy(['re.id_rr_hh' => SORT_ASC])->limit($limit)->all();
-        $items = [];
-        foreach ($rows as $re) {
-            $id = (string) (int) $re->id_rr_hh;
-            $name = $re->persona !== null
-                ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
-                : ('RRHH #' . $id);
-            $items[] = ['id' => $id, 'name' => $name];
+        $query->limit(min(500, max(200, $limit * 5)));
+
+        /** @var ProfesionalEfectorServicio[] $all */
+        $all = $query->all();
+        $byPersona = [];
+        foreach ($all as $pes) {
+            $pid = (int) $pes->id_persona;
+            if (!isset($byPersona[$pid]) || (int) $pes->id < (int) $byPersona[$pid]->id) {
+                $byPersona[$pid] = $pes;
+            }
         }
 
-        return $items;
+        $items = [];
+        foreach ($byPersona as $pid => $pesRep) {
+            $re = RrhhEfector::find()
+                ->where(['id_persona' => $pid, 'id_efector' => $idEfector, 'deleted_at' => null])
+                ->one();
+            $id = (string) (int) $pesRep->id;
+            $name = $pesRep->persona !== null
+                ? $pesRep->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                : ('Profesional #' . $id);
+            $meta = [
+                'id_profesional_efector_servicio' => (int) $pesRep->id,
+                'id_rr_hh' => $re !== null ? (int) $re->id_rr_hh : null,
+            ];
+            $items[] = ['id' => $id, 'name' => $name, 'meta' => $meta];
+        }
+
+        usort($items, static function ($a, $b) {
+            return strcasecmp((string) $a['name'], (string) $b['name']);
+        });
+
+        return array_slice($items, 0, $limit);
     }
 
     /**
@@ -77,26 +102,18 @@ final class ProfesionalEnEfectorListadoUiService
             $limit = 200;
         }
 
-        /** @var \yii\db\ActiveQuery $query */
-        $query = RrhhEfector::find();
-        $query->alias('re')
-            ->with('persona')
-            ->innerJoin(
-                'rrhh_servicio rs',
-                'rs.id_rr_hh = re.id_rr_hh AND rs.deleted_at IS NULL'
-            )
-            ->innerJoin(
-                'servicios s',
-                's.id_servicio = rs.id_servicio AND s.acepta_turnos = "SI"'
-            )
-            ->where(['re.id_efector' => $idEfector])
-            ->andWhere(['re.deleted_at' => null])
-            ->groupBy(['re.id_rr_hh']);
+        $qNorm = $q !== null ? trim((string) $q) : '';
 
-        $q = $q !== null ? trim((string) $q) : '';
-        if ($q !== '') {
-            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
-            $query->joinWith('persona p')
+        /** @var \yii\db\ActiveQuery $query */
+        $query = ProfesionalEfectorServicio::find()->alias('pes')
+            ->with(['persona'])
+            ->innerJoin(['s' => 'servicios'], 's.id_servicio = pes.id_servicio AND s.acepta_turnos = "SI"')
+            ->where(['pes.id_efector' => $idEfector])
+            ->andWhere(['pes.deleted_at' => null]);
+
+        if ($qNorm !== '') {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $qNorm) . '%';
+            $query->joinWith(['persona p'])
                 ->andWhere([
                     'or',
                     ['like', 'p.apellido', $term, false],
@@ -105,17 +122,148 @@ final class ProfesionalEnEfectorListadoUiService
                 ]);
         }
 
-        $rows = $query->orderBy(['re.id_rr_hh' => SORT_ASC])->limit($limit)->all();
-        $items = [];
-        foreach ($rows as $re) {
-            $id = (string) (int) $re->id_rr_hh;
-            $name = $re->persona !== null
-                ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
-                : ('RRHH #' . $id);
-            $items[] = ['id' => $id, 'name' => $name];
+        $query->limit(min(500, max(200, $limit * 5)));
+
+        /** @var ProfesionalEfectorServicio[] $all */
+        $all = $query->all();
+        $byPersona = [];
+        foreach ($all as $pes) {
+            $pid = (int) $pes->id_persona;
+            if (!isset($byPersona[$pid]) || (int) $pes->id < (int) $byPersona[$pid]->id) {
+                $byPersona[$pid] = $pes;
+            }
         }
 
-        return $items;
+        $items = [];
+        foreach ($byPersona as $pid => $pesRep) {
+            $re = RrhhEfector::find()
+                ->where(['id_persona' => $pid, 'id_efector' => $idEfector, 'deleted_at' => null])
+                ->one();
+            $id = (string) (int) $pesRep->id;
+            $name = $pesRep->persona !== null
+                ? $pesRep->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                : ('Profesional #' . $id);
+            $meta = [
+                'id_profesional_efector_servicio' => (int) $pesRep->id,
+                'id_rr_hh' => $re !== null ? (int) $re->id_rr_hh : null,
+            ];
+            $items[] = ['id' => $id, 'name' => $name, 'meta' => $meta];
+        }
+
+        usort($items, static function ($a, $b) {
+            return strcasecmp((string) $a['name'], (string) $b['name']);
+        });
+
+        return array_slice($items, 0, $limit);
+    }
+
+    /**
+     * Autocomplete por efector + servicio (misma forma que {@see RrhhEfector::autocompleteRrhh}):
+     * filas desde `profesional_efector_servicio`; `id` = id PES (string); `id_rr_hh` opcional si existe vínculo legacy.
+     *
+     * @param array<string, mixed> $filters id_efector, id_servicio|id_servicio_asignado, acepta_turnos?, efector_nombre?, servicio_nombre?, sort_by?, sort_order?, limit?
+     * @return list<array{id: string, text: string, id_rr_hh?: int|null}>
+     */
+    public static function autocompletePorEfectorServicio(string $q, array $filters): array
+    {
+        $q = trim($q);
+
+        $query = (new Query())
+            ->select([
+                'pes.id AS pes_id',
+                're.id_rr_hh AS id_rr_hh',
+                new Expression(
+                    'CONCAT(COALESCE(p.apellido,""), ", ", COALESCE(p.nombre,""), " ", COALESCE(p.otro_nombre,""), " - ", COALESCE(s.nombre, "")) AS text'
+                ),
+            ])
+            ->from(['pes' => 'profesional_efector_servicio'])
+            ->innerJoin(['p' => 'personas'], 'p.id_persona = pes.id_persona')
+            ->innerJoin(['s' => 'servicios'], 's.id_servicio = pes.id_servicio')
+            ->leftJoin(['e' => 'efectores'], 'e.id_efector = pes.id_efector')
+            ->leftJoin(
+                ['re' => 'rrhh_efector'],
+                're.id_persona = pes.id_persona AND re.id_efector = pes.id_efector AND re.deleted_at IS NULL'
+            )
+            ->where(['pes.deleted_at' => null]);
+
+        if (!empty($filters['id_efector'])) {
+            $query->andWhere(['pes.id_efector' => $filters['id_efector']]);
+        }
+        $idServicio = $filters['id_servicio'] ?? $filters['id_servicio_asignado'] ?? null;
+        if (!empty($idServicio)) {
+            $query->andWhere(['pes.id_servicio' => $idServicio]);
+        }
+        if (!empty($filters['acepta_turnos'])) {
+            $query->andWhere(['s.acepta_turnos' => (string) $filters['acepta_turnos']]);
+        }
+        if (!empty($filters['efector_nombre'])) {
+            $query->andWhere(['like', 'e.nombre', '%' . $filters['efector_nombre'] . '%', false]);
+        }
+        if (!empty($filters['servicio_nombre'])) {
+            $query->andWhere(['like', 's.nombre', '%' . $filters['servicio_nombre'] . '%', false]);
+        }
+
+        if ($q !== '') {
+            $query->andWhere([
+                'or',
+                ['like', new Expression('CONCAT(p.apellido, " ", p.nombre)'), '%' . $q . '%', false],
+                ['like', new Expression('CONCAT(p.nombre, " ", p.apellido)'), '%' . $q . '%', false],
+                ['like', new Expression('CONCAT(p.nombre, " ", COALESCE(p.otro_nombre,""))'), '%' . $q . '%', false],
+                ['like', new Expression('CONCAT(p.nombre, " ", COALESCE(p.otro_nombre,""), " ", p.apellido)'), '%' . $q . '%', false],
+                ['like', 'p.nombre', '%' . $q . '%', false],
+                ['like', 'p.otro_nombre', '%' . $q . '%', false],
+                ['like', 'p.apellido', '%' . $q . '%', false],
+                ['like', 'p.documento', '%' . $q . '%', false],
+            ]);
+        }
+
+        $sortBy = $filters['sort_by'] ?? 'apellido';
+        $sortOrder = isset($filters['sort_order']) && strtoupper((string) $filters['sort_order']) === 'DESC' ? SORT_DESC : SORT_ASC;
+        switch ($sortBy) {
+            case 'nombre':
+                $orderBy = ['p.nombre' => $sortOrder, 'p.apellido' => SORT_ASC];
+                break;
+            case 'efector':
+                $orderBy = ['e.nombre' => $sortOrder, 'p.apellido' => SORT_ASC, 'p.nombre' => SORT_ASC];
+                break;
+            case 'servicio':
+                $orderBy = ['s.nombre' => $sortOrder, 'p.apellido' => SORT_ASC, 'p.nombre' => SORT_ASC];
+                break;
+            case 'apellido':
+            default:
+                $orderBy = ['p.apellido' => $sortOrder, 'p.nombre' => SORT_ASC];
+                break;
+        }
+        $query->orderBy($orderBy);
+
+        $limit = isset($filters['limit']) ? min((int) $filters['limit'], 200) : 5;
+        if ($limit < 1) {
+            $limit = 5;
+        }
+        $query->limit($limit);
+
+        $rows = $query->all();
+        $out = [];
+        foreach ($rows as $row) {
+            $pesId = (int) ($row['pes_id'] ?? 0);
+            if ($pesId <= 0) {
+                continue;
+            }
+            $idRrhh = isset($row['id_rr_hh']) && $row['id_rr_hh'] !== null && $row['id_rr_hh'] !== ''
+                ? (int) $row['id_rr_hh']
+                : null;
+            $item = [
+                'id' => (string) $pesId,
+                'text' => trim((string) ($row['text'] ?? '')) !== '' ? trim((string) $row['text']) : ('PES #' . $pesId),
+            ];
+            if ($idRrhh !== null && $idRrhh > 0) {
+                $item['id_rr_hh'] = $idRrhh;
+            }
+
+            $out[] = $item;
+        }
+
+        return array_values($out);
     }
 
     /**

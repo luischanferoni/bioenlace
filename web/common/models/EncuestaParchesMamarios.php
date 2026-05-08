@@ -451,10 +451,21 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             || $this->isAttributeChanged('id_rr_hh', false)
             || $this->isAttributeChanged('id_efector', false)
         ) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
-                $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null,
-                $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
-            );
+            $idPesSesion = null;
+            if (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+                $raw = Yii::$app->user->getIdProfesionalEfectorServicio();
+                if ($raw !== null && $raw !== '') {
+                    $idPesSesion = (int) $raw;
+                }
+            }
+            if ($idPesSesion > 0) {
+                $this->id_profesional_efector_servicio = $idPesSesion;
+            } else {
+                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
+                    $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null,
+                    $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
+                );
+            }
         }
 
         return true;

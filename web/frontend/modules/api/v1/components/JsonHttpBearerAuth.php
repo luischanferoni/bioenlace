@@ -5,7 +5,7 @@ namespace frontend\modules\api\v1\components;
 use Yii;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\models\Persona;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\UnauthorizedHttpException;
 use yii\web\Response;
@@ -134,7 +134,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             $session->set('idPersona', (int) $persona->id_persona);
             $session->set('apellidoUsuario', $persona->apellido);
             $session->set('nombreUsuario', $persona->nombre);
-            $session->set('efectores', RrhhEfector::getEfectores($persona->id_persona));
+            $session->set('efectores', ProfesionalEfectorServicio::getEfectoresParaSesion((int) $persona->id_persona));
         }
 
         // Contexto operativo stateless: si el token trae claims de sesión operativa, aplicarlos.
@@ -151,6 +151,9 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             }
             if (isset($decoded->id_rrhh_servicio)) {
                 Yii::$app->user->setIdRrhhServicio((int) $decoded->id_rrhh_servicio);
+            }
+            if (isset($decoded->id_profesional_efector_servicio)) {
+                Yii::$app->user->setIdProfesionalEfectorServicio((int) $decoded->id_profesional_efector_servicio);
             }
             if (isset($decoded->encounter_class)) {
                 Yii::$app->user->setEncounterClass((string) $decoded->encounter_class);

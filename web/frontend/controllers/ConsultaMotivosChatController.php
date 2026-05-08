@@ -8,8 +8,7 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\models\ConsultaMotivosMessage;
 use common\models\Consulta;
-use common\models\Persona;
-use common\models\RrhhEfector;
+use common\components\Services\Consulta\ConsultaAccessService;
 
 /**
  * Chat de motivos de consulta (paciente envía texto, audio, fotos).
@@ -29,19 +28,7 @@ class ConsultaMotivosChatController extends Controller
      */
     protected function canAccessConsulta(Consulta $consulta)
     {
-        $userId = Yii::$app->user->id;
-        if (!$userId) {
-            return false;
-        }
-        $persona = Persona::findOne(['id_user' => $userId]);
-        if (!$persona) {
-            return false;
-        }
-        if ((int) $consulta->id_persona === (int) $persona->id_persona) {
-            return true;
-        }
-        $rrhhEfector = RrhhEfector::find()->where(['id_rr_hh' => $consulta->id_rr_hh])->one();
-        return $rrhhEfector && (int) $rrhhEfector->id_persona === (int) $persona->id_persona;
+        return ConsultaAccessService::userCanAccessConsultaWeb($consulta);
     }
 
     /**

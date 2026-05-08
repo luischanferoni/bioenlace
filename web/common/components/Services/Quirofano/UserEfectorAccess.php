@@ -5,7 +5,7 @@ namespace common\components\Services\Quirofano;
 use Yii;
 use yii\web\ForbiddenHttpException;
 use common\models\Persona;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 
 /**
  * Acceso a datos de quirófano acotado por efectores asignados al usuario (RRHH).
@@ -50,7 +50,7 @@ final class UserEfectorAccess
             }
         }
         if ($idPersona) {
-            $list = RrhhEfector::getEfectores($idPersona);
+            $list = ProfesionalEfectorServicio::getEfectoresParaSesion((int) $idPersona);
             if (!empty($list)) {
                 Yii::$app->user->setEfectores($list);
             }

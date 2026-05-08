@@ -21,7 +21,7 @@ use common\models\ProfesionalEfectorServicioAgenda;
  *
  * **RBAC (alineado a Turnos: ámbito propio vs operativo sobre tercero):**
  * - **`listar`, `crear`, `actualizar`, `eliminar`:** RRHH del usuario en sesión; efector desde sesión (no se aceptan `id_rr_hh` / `id_efector` en query para ampliar alcance).
- * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; listar exige **siempre** `id_efector` e `id_rr_hh` en query; alta exige ambos en cuerpo o query.
+ * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; listar exige **`id_efector`** y **`id_profesional_efector_servicio`** *o* **`id_rr_hh`**; alta para recurso: **`id_efector`** + **`id_profesional_efector_servicio`** (opcional `id_rrhh_servicio_asignado`) *o* **`id_rr_hh`** + **`id_rrhh_servicio_asignado`**.
  *
  * Permisos `/api/profesional-agenda/...` (sin `v1` en webvimark):
  * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso
@@ -93,7 +93,7 @@ class ProfesionalAgendaController extends BaseController
     }
 
     /**
-     * Listado de un médico concreto. Query obligatorio: id_efector, id_rr_hh. RBAC: /api/profesional-agenda/listar-para-recurso
+     * Listado de un médico concreto. Query obligatorio: `id_efector` y `id_profesional_efector_servicio` *o* `id_rr_hh`. RBAC: /api/profesional-agenda/listar-para-recurso
      *
      * @action_name Listar agendas de un recurso en un efector
      * @entity Agendas
@@ -104,14 +104,24 @@ class ProfesionalAgendaController extends BaseController
     {
         $params = Yii::$app->request->queryParams;
         $idEfector = (int) ($params['id_efector'] ?? 0);
+        $idPes = (int) ($params['id_profesional_efector_servicio'] ?? 0);
         $idRrhh = (int) ($params['id_rr_hh'] ?? 0);
-        if ($idEfector <= 0 || $idRrhh <= 0) {
-            throw new BadRequestHttpException('id_efector e id_rr_hh son obligatorios.');
+        if ($idEfector <= 0 || ($idRrhh <= 0 && $idPes <= 0)) {
+            throw new BadRequestHttpException(
+                'id_efector e id_profesional_efector_servicio, o id_efector e id_rr_hh, son obligatorios.'
+            );
         }
         $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
-        ProfesionalEfectorServicioAgendaApiService::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
-
-        $dp = ProfesionalEfectorServicioAgendaApiService::searchParaRecursoHumanoEnEfector($params, $idEfector, $idRrhh);
+        if ($idPes > 0) {
+            ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
+            unset($params['id_rr_hh']);
+            $params['id_profesional_efector_servicio'] = $idPes;
+            $params['id_efector'] = $idEfector;
+            $dp = ProfesionalEfectorServicioAgendaApiService::search($params);
+        } else {
+            ProfesionalEfectorServicioAgendaApiService::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
+            $dp = ProfesionalEfectorServicioAgendaApiService::searchParaRecursoHumanoEnEfector($params, $idEfector, $idRrhh);
+        }
 
         return $this->paginatedListResponse($dp);
     }
@@ -129,7 +139,7 @@ class ProfesionalAgendaController extends BaseController
     }
 
     /**
-     * Alta para otro RRHH (id_efector + id_rr_hh en body o query). RBAC: /api/profesional-agenda/crear-para-recurso
+     * Alta para otro profesional: `id_efector` + `id_profesional_efector_servicio` (y opcional `id_rrhh_servicio_asignado`) *o* `id_efector` + `id_rr_hh` + `id_rrhh_servicio_asignado` (body o query). RBAC: /api/profesional-agenda/crear-para-recurso
      *
      * @action_name Crear agenda para un profesional (staff)
      * @entity Agendas
@@ -260,6 +270,7 @@ class ProfesionalAgendaController extends BaseController
 
         if ($paraRecurso) {
             $idEfector = (int) ($body['id_efector'] ?? Yii::$app->request->get('id_efector') ?? 0);
+            $idPes = (int) ($body['id_profesional_efector_servicio'] ?? Yii::$app->request->get('id_profesional_efector_servicio') ?? 0);
             $idRrhh = (int) ($body['id_rr_hh'] ?? 0);
             if ($idRrhh <= 0) {
                 $legacy = Yii::$app->request->get('id_rr_hh') ?: Yii::$app->request->get('id');
@@ -267,30 +278,61 @@ class ProfesionalAgendaController extends BaseController
                     $idRrhh = (int) $legacy;
                 }
             }
-            unset($body['id_efector'], $body['id_rr_hh']);
-            if ($idEfector <= 0 || $idRrhh <= 0) {
-                throw new BadRequestHttpException('id_efector e id_rr_hh son requeridos para crear agenda para otro recurso.');
+            unset($body['id_efector'], $body['id_rr_hh'], $body['id_profesional_efector_servicio']);
+
+            if ($idPes > 0) {
+                if ($idEfector <= 0) {
+                    throw new BadRequestHttpException('id_efector es requerido para crear agenda para otro recurso.');
+                }
+                $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
+                $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
+                $idRrsa = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
+                try {
+                    $idRrsa = ProfesionalEfectorServicioAgendaApiService::assertRrhhServicioAsignadoAlineadoConPes(
+                        $idRrsa,
+                        $pes,
+                        $idEfector
+                    );
+                } catch (BadRequestHttpException $e) {
+                    return $this->error($e->getMessage(), ['id_rrhh_servicio_asignado' => [$e->getMessage()]], 422);
+                }
+            } else {
+                if ($idEfector <= 0 || $idRrhh <= 0) {
+                    throw new BadRequestHttpException(
+                        'id_efector e id_rr_hh, o id_efector e id_profesional_efector_servicio, son requeridos para crear agenda para otro recurso.'
+                    );
+                }
+                $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
+                ProfesionalEfectorServicioAgendaApiService::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
+                $idRrsa = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
+                ProfesionalEfectorServicioAgendaApiService::assertServicioAsignadoParaRecursoHumanoEnEfector(
+                    $idRrsa,
+                    $idRrhh,
+                    $idEfector
+                );
+                if ($idRrsa === null) {
+                    return $this->error('id_rrhh_servicio_asignado es obligatorio.', ['id_rrhh_servicio_asignado' => ['Requerido']], 422);
+                }
+                $pes = ProfesionalEfectorServicioAgendaApiService::obtenerOCrearPesParaRrhhServicioEnEfector($idRrsa, $idRrhh, $idEfector);
             }
-            $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
-            ProfesionalEfectorServicioAgendaApiService::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
         } else {
             $idEfector = $this->requireEfectorId();
             $idRrhh = $this->requireRecursoHumanoId();
-            unset($body['id_efector'], $body['id_rr_hh']);
+            unset($body['id_efector'], $body['id_rr_hh'], $body['id_profesional_efector_servicio']);
+
+            $idRrsa = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
+            ProfesionalEfectorServicioAgendaApiService::assertServicioAsignadoParaRecursoHumanoEnEfector(
+                $idRrsa,
+                $idRrhh,
+                $idEfector
+            );
+            if ($idRrsa === null) {
+                return $this->error('id_rrhh_servicio_asignado es obligatorio.', ['id_rrhh_servicio_asignado' => ['Requerido']], 422);
+            }
+            $pes = ProfesionalEfectorServicioAgendaApiService::obtenerOCrearPesParaRrhhServicioEnEfector($idRrsa, $idRrhh, $idEfector);
         }
 
         unset($body['id_agenda_rrhh']);
-
-        $idRrsa = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
-        ProfesionalEfectorServicioAgendaApiService::assertServicioAsignadoParaRecursoHumanoEnEfector(
-            $idRrsa,
-            $idRrhh,
-            $idEfector
-        );
-        if ($idRrsa === null) {
-            return $this->error('id_rrhh_servicio_asignado es obligatorio.', ['id_rrhh_servicio_asignado' => ['Requerido']], 422);
-        }
-        $pes = ProfesionalEfectorServicioAgendaApiService::obtenerOCrearPesParaRrhhServicioEnEfector($idRrsa, $idRrhh, $idEfector);
         if (ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id) !== null) {
             return $this->error('Ya existe una agenda para este servicio.', [], 422);
         }

@@ -17,6 +17,8 @@ use common\models\snomed\SnomedProcedimientos;
  * @property int|null $id_rrhh_solicita
  * @property int|null $id_rrhh_realiza
  * @property int|null $id_internacion
+ * @property int|null $id_profesional_efector_servicio_solicita
+ * @property int|null $id_profesional_efector_servicio_realiza
  *
  * @property SegNivelInternacion $internacion
  */

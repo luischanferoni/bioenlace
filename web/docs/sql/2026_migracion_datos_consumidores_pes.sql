@@ -7,8 +7,9 @@
 --   3) Aplicar `m260508_000003_consumidores_id_profesional_efector_servicio` (consultas, consultas_derivaciones,
 --      documentos_externos, guardia + backfills documentados en la migración).
 --   4) Aplicar `m260508_000004_consumidores_pes_lote2` (atenciones_enfermeria, suministro medicación, internación,
---      encuesta parches, programas/diabetes, sumar autofacturación, abreviaturas_rrhh, prácticas internación).
---   5) Re-ejecutar bloques de verificación / UPDATE de este archivo solo si hace falta en un entorno ya parcialmente migrado.
+--      encuesta parches, programas/diabetes, sumar autofacturación, abreviaturas_rrhh, prácticas internación si la tabla existe).
+--   5) Si falta DDL: `m260508_000005_create_seg_nivel_internacion_practica` (tabla + FK a internación + backfill PES vacío o existente).
+--   6) Re-ejecutar bloques de verificación / UPDATE de este archivo solo si hace falta en un entorno ya parcialmente migrado.
 --
 -- Esquema de referencia producción: u257309594_bioenlace (reemplazar en USE si aplica).
 -- =============================================================================

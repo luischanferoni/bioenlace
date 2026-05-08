@@ -9,6 +9,7 @@ use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServ
 use common\components\UiScreenService;
 use common\components\UiSelectOptionSourceResolver;
 use common\models\Persona;
+use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
@@ -448,7 +449,7 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * @return list<array{id:int,name:string,meta:array{id_rrhh_servicio:int}}>
+     * @return list<array{id:int,name:string,meta:array{id_rrhh_servicio:int, id_profesional_efector_servicio:int|null, acepta_turnos:string}}>
      */
     private function serviciosAsignadosItems(int $idRrHh, int $idEfector): array
     {
@@ -479,6 +480,7 @@ class RecursoHumanoController extends BaseController
                 'name' => $nombre,
                 'meta' => [
                     'id_rrhh_servicio' => (int) $rs->id,
+                    'id_profesional_efector_servicio' => ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $rs->id),
                     'acepta_turnos' => $acepta,
                 ],
             ];

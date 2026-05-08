@@ -5,6 +5,7 @@ namespace common\components\Services\Turnos;
 use Yii;
 use common\models\Turno;
 use common\models\Agenda_rrhh;
+use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhServicio;
 
 /**
@@ -76,6 +77,7 @@ class TurnoSlotFinder
      *   'hora' => 'HH:MM',
      *   'id_rr_hh' => int,
      *   'id_rrhh_servicio_asignado' => int,
+     *   'id_profesional_efector_servicio' => int|null,
      *   'id_efector' => int,
      *   'id_servicio' => int,
      * ]
@@ -89,6 +91,7 @@ class TurnoSlotFinder
     /**
      * Lista hasta $limit slots libres (mismo criterio que findFirstAvailable).
      * Criterio opcional: id_rrhh_servicio_asignado — limita a esa agenda/profesional.
+     * Criterio opcional: id_profesional_efector_servicio — mismo efecto (resuelve a rrhh_servicio legacy).
      *
      * @param array $criteria
      * @param int $limit
@@ -119,6 +122,22 @@ class TurnoSlotFinder
         $soloRrhhServicio = isset($criteria['id_rrhh_servicio_asignado'])
             ? (int) $criteria['id_rrhh_servicio_asignado']
             : null;
+        if ($soloRrhhServicio !== null && $soloRrhhServicio <= 0) {
+            $soloRrhhServicio = null;
+        }
+
+        if (!empty($criteria['id_profesional_efector_servicio'])) {
+            $idPes = (int) $criteria['id_profesional_efector_servicio'];
+            $resolved = ProfesionalEfectorServicio::resolveRrhhServicioIdForSlotCriteria(
+                $idPes,
+                (int) $idServicio,
+                (int) $idEfector
+            );
+            if ($resolved === null) {
+                return [];
+            }
+            $soloRrhhServicio = $resolved;
+        }
 
         $diasSemanaExcluidos = self::buildDiasSemanaExcluidos($restricciones);
         $franjasExcluidas = self::buildFranjasExcluidas($restricciones);
@@ -188,11 +207,13 @@ class TurnoSlotFinder
                         continue;
                     }
 
+                    $idRrsaAgenda = (int) $agenda->id_rrhh_servicio_asignado;
                     $out[] = [
                         'fecha' => $dia,
                         'hora' => $hora,
                         'id_rr_hh' => (int) $rrhhServ->id_rr_hh,
-                        'id_rrhh_servicio_asignado' => (int) $agenda->id_rrhh_servicio_asignado,
+                        'id_rrhh_servicio_asignado' => $idRrsaAgenda,
+                        'id_profesional_efector_servicio' => ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrsaAgenda),
                         'id_efector' => (int) $idEfector,
                         'id_servicio' => (int) $idServicio,
                     ];

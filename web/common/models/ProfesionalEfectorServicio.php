@@ -97,6 +97,43 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
+     * Para búsqueda de slots sobre agenda legacy (`agenda_rrhh`): id de `rrhh_servicio` coherente con el PES.
+     */
+    public static function resolveRrhhServicioIdForSlotCriteria(int $idPes, int $idServicio, int $idEfector): ?int
+    {
+        if ($idPes <= 0 || $idServicio <= 0 || $idEfector <= 0) {
+            return null;
+        }
+        /** @var self|null $pes */
+        $pes = static::find()
+            ->where([
+                'id' => $idPes,
+                'id_servicio' => $idServicio,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
+            ->one();
+        if (!$pes) {
+            return null;
+        }
+        if ($pes->legacy_rrhh_servicio_id) {
+            return (int) $pes->legacy_rrhh_servicio_id;
+        }
+        $re = RrhhEfector::find()
+            ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
+            ->one();
+        if (!$re) {
+            return null;
+        }
+        $rs = RrhhServicio::find()
+            ->where(['id_rr_hh' => $re->id_rr_hh, 'id_servicio' => $pes->id_servicio, 'deleted_at' => null])
+            ->orderBy(['id' => SORT_ASC])
+            ->one();
+
+        return $rs ? (int) $rs->id : null;
+    }
+
+    /**
      * PES para contexto profesional (id_rr_hh) + efector + servicio, sin usar legacy en la fila consumidora.
      */
     public static function findIdByPersonaEfectorServicio(int $idPersona, int $idEfector, int $idServicio): ?int

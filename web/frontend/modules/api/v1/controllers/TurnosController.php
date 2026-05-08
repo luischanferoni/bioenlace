@@ -10,6 +10,7 @@ use common\models\Consulta;
 use common\models\Turno;
 use common\models\Agenda_rrhh;
 use common\models\AgendaFeriados;
+use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
@@ -541,6 +542,11 @@ class TurnosController extends BaseController
                 $criteria['id_rrhh_servicio_asignado'] = $idRrsa;
             }
 
+            $idPesReq = (int) ($req->get('id_profesional_efector_servicio') ?: $req->post('id_profesional_efector_servicio') ?: 0);
+            if ($idPesReq > 0) {
+                $criteria['id_profesional_efector_servicio'] = $idPesReq;
+            }
+
             $restr = $req->get('restricciones') ?: $req->post('restricciones');
             if (is_string($restr) && $restr !== '') {
                 $decoded = json_decode($restr, true);
@@ -595,14 +601,19 @@ class TurnosController extends BaseController
                         continue;
                     }
                     $id = $idRrsaSlot . '|' . $fecha . '|' . $hora;
+                    $idPesSlot = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $idRrsaSlot);
+                    $meta = [
+                        'fecha' => $fecha,
+                        'hora' => $hora,
+                        'id_rrhh_servicio_asignado' => (int) $idRrsaSlot,
+                    ];
+                    if ($idPesSlot !== null) {
+                        $meta['id_profesional_efector_servicio'] = $idPesSlot;
+                    }
                     $items[] = [
                         'id' => $id,
                         'label' => $fecha . ' ' . $hora,
-                        'meta' => [
-                            'fecha' => $fecha,
-                            'hora' => $hora,
-                            'id_rrhh_servicio_asignado' => (int) $idRrsaSlot,
-                        ],
+                        'meta' => $meta,
                     ];
                 }
             }
@@ -768,8 +779,12 @@ class TurnosController extends BaseController
             'fecha_desde' => date('Y-m-d'),
             'max_dias' => isset($params['max_dias']) && $params['max_dias'] !== '' ? (int) $params['max_dias'] : 45,
         ];
-        if ($mismoProf && (int) $turno->id_rrhh_servicio_asignado > 0) {
-            $criteria['id_rrhh_servicio_asignado'] = (int) $turno->id_rrhh_servicio_asignado;
+        if ($mismoProf) {
+            if ((int) $turno->id_profesional_efector_servicio > 0) {
+                $criteria['id_profesional_efector_servicio'] = (int) $turno->id_profesional_efector_servicio;
+            } elseif ((int) $turno->id_rrhh_servicio_asignado > 0) {
+                $criteria['id_rrhh_servicio_asignado'] = (int) $turno->id_rrhh_servicio_asignado;
+            }
         }
         $slots = TurnoSlotFinder::findAvailableSlots($criteria, max(1, $limit));
         return ['success' => true, 'slots' => $slots];

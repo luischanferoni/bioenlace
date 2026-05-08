@@ -707,23 +707,28 @@
                     }
                 } catch (e) { /* ignore */ }
 
-                const wrap = appendAssistantFlowSection(remText);
+                // Remediation es conversacional, pero no es "flow": usar burbuja para el texto (no bloque ancho).
+                const wrap = appendChatBubble('bot', '<p class="mb-0" style="font-size:1.2rem">' + escapeHtml(remText) + '</p>');
                 if (wrap && Array.isArray(result.remediation) && result.remediation.length > 0) {
                     const row = document.createElement('div');
-                    row.className = 'd-flex flex-wrap gap-2 mt-2 spa-intent-remediation';
+                    row.className = 'd-flex flex-wrap justify-content-center gap-2 mt-2 spa-intent-remediation';
                     result.remediation.forEach(function (ch) {
                         if (!ch || !ch.intent_id) {
                             return;
                         }
                         const b = document.createElement('button');
                         b.type = 'button';
-                        b.className = 'btn btn-sm btn-outline-primary';
+                        b.className = 'btn btn-sm btn-outline-secondary';
                         b.textContent = ch.label ? String(ch.label) : String(ch.intent_id);
                         b.addEventListener('click', function () {
+                            // Al elegir una opción: deshabilitar todas y marcar la seleccionada.
                             row.querySelectorAll('button').forEach(function (x) {
-                                x.classList.remove('active');
+                                x.disabled = true;
+                                x.classList.remove('btn-secondary');
+                                x.classList.add('btn-outline-secondary');
                             });
-                            b.classList.add('active');
+                            b.classList.remove('btn-outline-secondary');
+                            b.classList.add('btn-secondary');
                             currentIntentId = String(ch.intent_id);
                             currentSubintentId = null;
                             draft = {};
@@ -732,7 +737,13 @@
                         });
                         row.appendChild(b);
                     });
-                    wrap.appendChild(row);
+                    // Insertar el row como "mensaje" separado debajo de la burbuja.
+                    if (chatMessagesDiv) {
+                        const rowWrap = document.createElement('div');
+                        rowWrap.className = 'd-flex justify-content-start mb-3';
+                        rowWrap.appendChild(row);
+                        chatMessagesDiv.appendChild(rowWrap);
+                    }
                 }
                 setTimeout(scrollChatToBottom, 20);
                 return;

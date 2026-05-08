@@ -4,6 +4,8 @@ namespace common\components\Services\Rrhh;
 
 use common\models\Agenda_rrhh;
 use common\models\Condiciones_laborales;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
 use common\models\RrhhLaboral;
 use common\models\RrhhServicio;
@@ -62,11 +64,27 @@ final class RrhhAgendaUiService
         $out['id_servicio'] = (string) $idServicio;
 
         /** @var \yii\db\ActiveQuery $agendaQ */
-        $agendaQ = Agenda_rrhh::find();
-        $agenda = $agendaQ
-            ->where(['id_rrhh_servicio_asignado' => $rrhhServicio->id])
-            ->andWhere(['deleted_at' => null])
+        $agenda = null;
+
+        // Preferir la agenda nueva (por asignación profesional-efector-servicio) si existe.
+        /** @var ProfesionalEfectorServicio|null $pes */
+        $pes = ProfesionalEfectorServicio::findActive()
+            ->where(['legacy_rrhh_servicio_id' => (int) $rrhhServicio->id, 'deleted_at' => null])
             ->one();
+        if ($pes !== null) {
+            /** @var ProfesionalEfectorServicioAgenda|null $agenda */
+            $agenda = ProfesionalEfectorServicioAgenda::findActive()
+                ->where(['id_profesional_efector_servicio' => (int) $pes->id, 'deleted_at' => null])
+                ->one();
+        }
+        // Fallback legacy mientras se completa la migración de lectura.
+        if ($agenda === null) {
+            $agendaQ = Agenda_rrhh::find();
+            $agenda = $agendaQ
+                ->where(['id_rrhh_servicio_asignado' => $rrhhServicio->id])
+                ->andWhere(['deleted_at' => null])
+                ->one();
+        }
 
         if ($agenda !== null) {
             $out['cupo_pacientes'] = (string) $agenda->cupo_pacientes;
@@ -167,32 +185,78 @@ final class RrhhAgendaUiService
         }
 
         /** @var \yii\db\ActiveQuery $agendaQ */
-        $agendaQ = Agenda_rrhh::find();
-        $agenda = $agendaQ
+        $agendaLegacy = null;
+        $agendaLegacyQ = Agenda_rrhh::find();
+        $agendaLegacy = $agendaLegacyQ
             ->where(['id_rrhh_servicio_asignado' => $rrhhServicio->id])
             ->andWhere(['deleted_at' => null])
             ->one();
 
-        if ($agenda === null) {
-            $agenda = new Agenda_rrhh();
-            $agenda->id_rrhh_servicio_asignado = $rrhhServicio->id;
-            $agenda->id_efector = $idEfector;
+        // Asegurar registro PES para esta asignación (si migración/backfill no lo creó aún).
+        $rrhhEfector = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($rrhhEfector === null) {
+            throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
+        }
+        /** @var ProfesionalEfectorServicio|null $pes */
+        $pes = ProfesionalEfectorServicio::find()
+            ->where(['legacy_rrhh_servicio_id' => (int) $rrhhServicio->id, 'deleted_at' => null])
+            ->one();
+        if ($pes === null) {
+            $pes = new ProfesionalEfectorServicio();
+            $pes->id_persona = (int) $rrhhEfector->id_persona;
+            $pes->id_efector = (int) $idEfector;
+            $pes->id_servicio = (int) $idServicio;
+            $pes->legacy_rrhh_servicio_id = (int) $rrhhServicio->id;
+            if (!$pes->save()) {
+                throw new \RuntimeException('No se pudo crear la asignación profesional-efector-servicio.');
+            }
         }
 
-        $agenda->load($post, '');
-        $agenda->id_rrhh_servicio_asignado = $rrhhServicio->id;
-        if (empty($agenda->id_efector)) {
-            $agenda->id_efector = $idEfector;
+        /** @var ProfesionalEfectorServicioAgenda|null $agendaNew */
+        $agendaNew = ProfesionalEfectorServicioAgenda::findActive()
+            ->where(['id_profesional_efector_servicio' => (int) $pes->id, 'deleted_at' => null])
+            ->one();
+
+        // Legacy agenda: mantener por ahora para no romper consumidores existentes.
+        if ($agendaLegacy === null) {
+            $agendaLegacy = new Agenda_rrhh();
+            $agendaLegacy->id_rrhh_servicio_asignado = $rrhhServicio->id;
+            $agendaLegacy->id_efector = $idEfector;
+        }
+        $agendaLegacy->load($post, '');
+        $agendaLegacy->id_rrhh_servicio_asignado = $rrhhServicio->id;
+        if (empty($agendaLegacy->id_efector)) {
+            $agendaLegacy->id_efector = $idEfector;
+        }
+
+        // Nueva agenda por asignación.
+        if ($agendaNew === null) {
+            $agendaNew = new ProfesionalEfectorServicioAgenda();
+            $agendaNew->id_profesional_efector_servicio = (int) $pes->id;
+            $agendaNew->id_efector = (int) $idEfector;
+        }
+        $agendaNew->load($post, '');
+        $agendaNew->id_profesional_efector_servicio = (int) $pes->id;
+        if (empty($agendaNew->id_efector)) {
+            $agendaNew->id_efector = (int) $idEfector;
         }
 
         $tx = Yii::$app->db->beginTransaction();
         try {
-            if (!$agenda->validate()) {
-                throw new BadRequestHttpException(implode(' ', $agenda->getFirstErrors()));
+            if (!$agendaLegacy->validate()) {
+                throw new BadRequestHttpException(implode(' ', $agendaLegacy->getFirstErrors()));
+            }
+            if (!$agendaNew->validate()) {
+                throw new BadRequestHttpException(implode(' ', $agendaNew->getFirstErrors()));
             }
 
-            if (!$agenda->save(false)) {
+            if (!$agendaLegacy->save(false)) {
                 throw new \RuntimeException('No se pudo guardar la agenda.');
+            }
+            if (!$agendaNew->save(false)) {
+                throw new \RuntimeException('No se pudo guardar la agenda (nuevo modelo).');
             }
 
             $tx->commit();

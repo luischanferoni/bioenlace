@@ -96,7 +96,7 @@ trait SoftDeleteDateTimeTrait {
     /**
      * Override default find() behavior in order to find only active
      *
-     * @return boolean Returns TRUE if the record was soft deleted, FALSE otherwise
+     * @return \yii\db\ActiveQuery The ActiveQuery instance.
      */
     public static function find()
     {

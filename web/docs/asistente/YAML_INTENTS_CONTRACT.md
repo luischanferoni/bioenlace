@@ -88,7 +88,7 @@ Campos típicos por paso:
 - **`requires`**: prerequisitos (`draft.*`) que ya deben estar en el draft antes de dar el paso por completo (no repetir claves que ya están en `provides`)
 - **`provides`**: campos `draft.*` que completa el paso al elegir/guardar
 - **`next`**: id del siguiente paso (cadena vacía para terminar la cadena lineal)
-- **`next_routing`** (opcional): lista de reglas `{ when: { draft_equals: { campo: valor } } | { default: true }, next: subintent_id }`; el motor hidrata `draft.servicio_acepta_turnos` desde BD cuando hay `id_servicio`. Si está presente, tiene prioridad sobre `next` para decidir el siguiente paso.
+- **`next_routing`** (opcional): lista de reglas `{ when: { draft_equals: { campo: valor } } | { default: true }, next: subintent_id }`. El motor **no** hidrata campos desde BD automáticamente: si una regla depende de `draft.servicio_acepta_turnos` (u otra), el cliente debe enviarlo en el `draft` o el flow debe incluir un paso/submit que lo complete. Si `next_routing` está presente, tiene prioridad sobre `next` para decidir el siguiente paso.
 - **`open_ui`** / **`chooser`**: metadatos para abrir mini-UIs (`action_id`, `params` → `draft.*`)
 - **`submit`**: en el último paso, `action_id` del endpoint de negocio (cuando no hay `open_ui`, el motor puede exponer solo ese submit)
 

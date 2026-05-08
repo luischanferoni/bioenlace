@@ -4,7 +4,9 @@
 -- Orden sugerido:
 --   1) Aplicar migración Yii `m260508_000001_profesional_efector_servicio_model` (PES + backfill desde rrhh_*).
 --   2) Aplicar `m260508_000002_turnos_id_profesional_efector_servicio` (columna + backfill turnos).
---   3) Re-ejecutar bloques de verificación / UPDATE de este archivo solo si hace falta en un entorno ya parcialmente migrado.
+--   3) Aplicar `m260508_000003_consumidores_id_profesional_efector_servicio` (consultas, consultas_derivaciones,
+--      documentos_externos, guardia + backfills documentados en la migración).
+--   4) Re-ejecutar bloques de verificación / UPDATE de este archivo solo si hace falta en un entorno ya parcialmente migrado.
 --
 -- Esquema de referencia producción: u257309594_bioenlace (reemplazar en USE si aplica).
 -- =============================================================================

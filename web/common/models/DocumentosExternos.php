@@ -13,6 +13,7 @@ use Yii;
  * @property integer $id_efector
  * @property integer $id_persona
  * @property integer $id_rrhh_servicio
+ * @property int|null $id_profesional_efector_servicio
  * @property integer $fecha
  * 
  */
@@ -74,6 +75,19 @@ class DocumentosExternos extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert || $this->isAttributeChanged('id_rrhh_servicio', false)) {
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId(
+                (int) $this->id_rrhh_servicio
+            );
+        }
+        return true;
+    }
+
     /**
      * @inheritdoc
      */
@@ -81,7 +95,7 @@ class DocumentosExternos extends \yii\db\ActiveRecord
     {
         return [
             [['titulo', 'tipo', 'id_efector', 'id_persona', 'id_rrhh_servicio', 'fecha', 'archivos_adjuntos'], 'required'],
-            [['id_efector', 'id_persona', 'id_rrhh_servicio'], 'integer'],
+            [['id_efector', 'id_persona', 'id_rrhh_servicio', 'id_profesional_efector_servicio'], 'integer'],
             [['titulo', 'tipo'], 'string'],
             [['fecha'], 'date', 'max' => time(), 'tooBig' => 'Fecha futura no esta permitida'],
             [['archivos_adjuntos'], 'file',
@@ -102,7 +116,13 @@ class DocumentosExternos extends \yii\db\ActiveRecord
             'id_efector' => 'Efector',
             'id_persona' => 'Paciente',
             'id_rrhh_servicio' => 'Profesional',
+            'id_profesional_efector_servicio' => 'Asignación PES',
             'fecha' => 'Fecha',
         ];
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 }

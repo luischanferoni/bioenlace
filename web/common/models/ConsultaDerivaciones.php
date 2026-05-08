@@ -39,6 +39,41 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
         return 'consultas_derivaciones';
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert
+            || $this->isAttributeChanged('id_rr_hh', false)
+            || $this->isAttributeChanged('id_efector', false)
+            || $this->isAttributeChanged('id_servicio', false)
+        ) {
+            $this->syncProfesionalEfectorServicioFromContext();
+        }
+        return true;
+    }
+
+    public function syncProfesionalEfectorServicioFromContext(): void
+    {
+        if (!$this->id_rr_hh || !$this->id_efector || !$this->id_servicio) {
+            $this->id_profesional_efector_servicio = null;
+            return;
+        }
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $this->id_rr_hh, 'id_efector' => $this->id_efector])
+            ->andWhere(['deleted_at' => null])
+            ->one();
+        if (!$re) {
+            $this->id_profesional_efector_servicio = null;
+            return;
+        }
+        $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
+            (int) $re->id_persona,
+            (int) $this->id_efector,
+            (int) $this->id_servicio
+        );
+    }
 
     /**
      * @inheritdoc
@@ -48,7 +83,7 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
         return [
             [['id_servicio', 'id_consulta_solicitante', 'id_efector'], 'required'],
             ['select2_codigo', 'each', 'rule' => ['string']],
-            [['id_rr_hh'], 'integer'],
+            [['id_rr_hh', 'id_profesional_efector_servicio'], 'integer'],
             [['tipo', 'indicaciones', 'codigo', 'tipo_solicitud'], 'string'],
         ];
     }
@@ -172,6 +207,11 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
     public function getRrhhDerivado()
     {
         return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     /**

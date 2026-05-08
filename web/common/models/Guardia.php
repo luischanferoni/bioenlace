@@ -16,6 +16,7 @@ use yii\helpers\Console;
  * @property string|null $hora_fin
  * @property string|null $estado
  * @property int|null $id_rrhh_asignado
+ * @property int|null $id_profesional_efector_servicio
  * @property string|null $cobertura
  * @property string|null $situacion_al_ingresar
  * @property int|null $id_efector_derivacion
@@ -78,7 +79,7 @@ class Guardia extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_persona', 'id_rrhh_asignado', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
+            [['id_persona', 'id_rrhh_asignado', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
             [['fecha', 'hora', 'fecha_fin', 'hora_fin', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['ingresa_con', 'ingresa_en', 'estado', 'situacion_al_ingresar', 'condiciones_derivacion', 'datos_contacto_tel'], 'string'],
             [['cobertura'], 'string', 'max' => 100],
@@ -160,6 +161,11 @@ class Guardia extends \yii\db\ActiveRecord
     public function getRrhhServicio()
     {
         return $this->hasOne(RrhhServicio::className(), ['id' => 'id_rrhh_asignado']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     public function validarCombinacionUnica($attribute, $params, $validator)
@@ -273,6 +279,16 @@ class Guardia extends \yii\db\ActiveRecord
             $this->fecha_fin = $fechaFinFormateada;
             $this->updated_at = date('Y-m-d H:i:s');
             $this->estado = 'finalizada';
+        }
+
+        if ($insert
+            || $this->isAttributeChanged('id_rrhh_asignado', false)
+            || $this->isAttributeChanged('id_efector', false)
+        ) {
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::resolvePesIdFromGuardiaAsignado(
+                $this->id_rrhh_asignado !== null && $this->id_rrhh_asignado !== '' ? (int) $this->id_rrhh_asignado : null,
+                $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
+            );
         }
 
         return true;

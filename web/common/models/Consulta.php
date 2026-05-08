@@ -149,6 +149,51 @@ class Consulta extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert
+            || $this->isAttributeChanged('id_turnos', false)
+            || $this->isAttributeChanged('id_rr_hh', false)
+            || $this->isAttributeChanged('id_efector', false)
+            || $this->isAttributeChanged('id_servicio', false)
+        ) {
+            $this->syncProfesionalEfectorServicioFromContext();
+        }
+        return true;
+    }
+
+    /**
+     * Mantiene PES alineado con turno o con tupla id_rr_hh + id_efector + id_servicio.
+     */
+    public function syncProfesionalEfectorServicioFromContext(): void
+    {
+        if ($this->id_turnos) {
+            $t = Turno::findOne($this->id_turnos);
+            if ($t && (int) $t->id_profesional_efector_servicio > 0) {
+                $this->id_profesional_efector_servicio = (int) $t->id_profesional_efector_servicio;
+                return;
+            }
+        }
+        if ($this->id_rr_hh && $this->id_efector && $this->id_servicio) {
+            $re = RrhhEfector::find()
+                ->where(['id_rr_hh' => $this->id_rr_hh, 'id_efector' => $this->id_efector])
+                ->andWhere(['deleted_at' => null])
+                ->one();
+            if ($re) {
+                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
+                    (int) $re->id_persona,
+                    (int) $this->id_efector,
+                    (int) $this->id_servicio
+                );
+                return;
+            }
+        }
+        $this->id_profesional_efector_servicio = null;
+    }
+
     /**
      * @inheritdoc
      */
@@ -179,7 +224,8 @@ class Consulta extends \yii\db\ActiveRecord
             [['id_turnos', 'id_tipo_consulta'], 'integer'],
             [['hora'], 'safe'],
             [['consulta_inicial', 'motivo_consulta', 'observacion', 'control_embarazo'], 'string'],
-            [['id_turnos','id_tipo_consulta'], 'default', 'value'=> 0]
+            [['id_turnos','id_tipo_consulta'], 'default', 'value'=> 0],
+            [['id_profesional_efector_servicio'], 'integer'],
         ];
     }
 
@@ -234,6 +280,11 @@ class Consulta extends \yii\db\ActiveRecord
     public function getRrhhEfector()
     {
         return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     /**

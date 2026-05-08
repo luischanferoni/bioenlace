@@ -98,5 +98,5 @@ Mientras haya consumidores de `agenda_rrhh`/`rrhh_servicio`, se puede mantener u
 ### Fase consumidores (datos)
 
 1. **Turnos**: migración Yii `m260508_000002_turnos_id_profesional_efector_servicio` añade `turnos.id_profesional_efector_servicio`, índice y backfill por `legacy_rrhh_servicio_id`. El modelo `Turno` sincroniza esa columna al crear/actualizar vía ActiveRecord cuando cambia `id_rrhh_servicio_asignado`; los `UPDATE` directos deben mantener ambas columnas o repetir el backfill SQL.
-2. **Resto del inventario** (consultas, guardia, documentos_externos, etc.): ver comentarios y consultas de diagnóstico en el mismo SQL de webvimark y plantillas de `UPDATE` en `web/docs/sql/2026_migracion_datos_consumidores_pes.sql`. Orden recomendado: columnas que ya referencian `rrhh_servicio.id` → PES; luego las que solo tienen `id_rr_hh` (resolver vía `rrhh_servicio` o tupla persona/efector/servicio).
+2. **Consumidores adicionales**: migración Yii `m260508_000003_consumidores_id_profesional_efector_servicio` agrega `id_profesional_efector_servicio` y backfill en `consultas`, `consultas_derivaciones`, `documentos_externos`, `guardia` (los modelos sincronizan PES al guardar). Resto del inventario: mismo SQL de webvimark + `2026_migracion_datos_consumidores_pes.sql`.
 

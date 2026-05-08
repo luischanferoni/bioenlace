@@ -29,7 +29,7 @@ use common\components\Services\Turnos\SobreturnoService;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 /**
- * {@see AgendaController} — GET /api/v1/agenda/dia (permiso /api/agenda/dia).
+ * {@see ProfesionalAgendaController} — GET /api/v1/profesional-agenda/dia (permiso /api/profesional-agenda/dia).
  */
 class TurnosController extends BaseController
 {
@@ -95,7 +95,7 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Respuesta JSON agenda del día (profesional). Usado por {@see AgendaController::actionDia}.
+     * Respuesta JSON agenda del día (profesional). Usado por {@see ProfesionalAgendaController::actionDia}.
      *
      * @return array<string, mixed>
      */
@@ -732,6 +732,7 @@ class TurnosController extends BaseController
             'servicio' => $servicio,
             'id_servicio_asignado' => $turno->id_servicio_asignado,
             'id_rrhh_servicio_asignado' => $turno->id_rrhh_servicio_asignado,
+            'id_profesional_efector_servicio' => $turno->id_profesional_efector_servicio,
             'estado' => $turno->estado,
             'estado_label' => $turno->estado ? (Turno::ESTADOS[$turno->estado] ?? 'Sin estado') : 'Sin estado',
             'estado_motivo' => $turno->estado_motivo,

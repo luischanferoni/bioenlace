@@ -38,7 +38,7 @@ class TurnosService {
         queryParams['user_id'] = userId!;
       }
 
-      final uri = Uri.parse('${AppConfig.apiUrl}/agenda/dia').replace(
+      final uri = Uri.parse('${AppConfig.apiUrl}/profesional-agenda/dia').replace(
         queryParameters: queryParams,
       );
 

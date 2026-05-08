@@ -1,16 +1,17 @@
 <?php
 
-namespace common\components\Services\Rrhh;
+namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\Persona;
 use common\models\RrhhEfector;
+use common\models\ServiciosEfector;
 
 /**
- * Servicios de listado/búsqueda de RRHH para mini-UIs (ui_json) y endpoints de apoyo.
+ * Listado/búsqueda de profesionales (RRHH) en un efector para mini-UIs (ui_json).
  *
- * Importante: sin HTTP (no HttpException). Validaciones por argumentos.
+ * Sin HttpException: validaciones por \InvalidArgumentException.
  */
-final class RrhhService
+final class ProfesionalEnEfectorListadoUiService
 {
     /**
      * @return list<array{id: string, name: string}>
@@ -116,5 +117,57 @@ final class RrhhService
 
         return $items;
     }
-}
 
+    /**
+     * Servicios habilitados en el efector (tabla {@see ServiciosEfector}), para elegir asignación sin RRHH previo.
+     * Sin query no devuelve ítems (el cliente muestra solo el buscador).
+     *
+     * @return list<array{id: string, name: string, meta: array{acepta_turnos: string}}>
+     */
+    public static function listarServiciosHabilitadosPorEfector(int $idEfector, ?string $q = null, int $limit = 200): array
+    {
+        if ($idEfector <= 0) {
+            throw new \InvalidArgumentException('idEfector inválido.');
+        }
+        if ($limit < 1) {
+            $limit = 200;
+        }
+        if ($limit > 200) {
+            $limit = 200;
+        }
+
+        $q = $q !== null ? trim((string) $q) : '';
+        if ($q === '') {
+            return [];
+        }
+
+        $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
+
+        /** @var \yii\db\ActiveQuery $query */
+        $query = ServiciosEfector::findActive()->alias('se');
+        $query->innerJoin(['s' => 'servicios'], 's.id_servicio = se.id_servicio')
+            ->where(['se.id_efector' => $idEfector])
+            ->andWhere(['like', 's.nombre', $term, false])
+            ->orderBy(['s.nombre' => SORT_ASC])
+            ->limit($limit);
+
+        $rows = $query->all();
+        $items = [];
+        foreach ($rows as $se) {
+            $idServicio = (int) $se->id_servicio;
+            if ($idServicio === 62) {
+                continue;
+            }
+            $srv = $se->servicio;
+            $nombre = $srv !== null ? (string) $srv->nombre : ('Servicio #' . $idServicio);
+            $acepta = $srv !== null && strtoupper(trim((string) $srv->acepta_turnos)) === 'SI' ? 'SI' : 'NO';
+            $items[] = [
+                'id' => (string) $idServicio,
+                'name' => $nombre,
+                'meta' => ['acepta_turnos' => $acepta],
+            ];
+        }
+
+        return $items;
+    }
+}

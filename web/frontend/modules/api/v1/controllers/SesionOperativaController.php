@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\User;
-use common\components\Services\Rrhh\RrhhHabilitacionService;
+use common\components\Services\SesionOperativa\SesionOperativaProfesionalHabilitacionService;
 use common\components\Services\SesionOperativa\SesionOperativaService;
 
 /**
@@ -49,10 +49,10 @@ class SesionOperativaController extends BaseController
             }
 
             if ($this->isModoOpciones($body)) {
-                /** @var RrhhHabilitacionService $hab */
-                $hab = Yii::$container->has(RrhhHabilitacionService::class)
-                    ? Yii::$container->get(RrhhHabilitacionService::class)
-                    : new RrhhHabilitacionService();
+                /** @var SesionOperativaProfesionalHabilitacionService $hab */
+                $hab = Yii::$container->has(SesionOperativaProfesionalHabilitacionService::class)
+                    ? Yii::$container->get(SesionOperativaProfesionalHabilitacionService::class)
+                    : new SesionOperativaProfesionalHabilitacionService();
 
                 $idPersona = (int) Yii::$app->user->getIdPersona();
                 $data = $hab->buildOpcionesIniciales($idPersona);
@@ -138,10 +138,10 @@ class SesionOperativaController extends BaseController
             return null;
         }
 
-        /** @var RrhhHabilitacionService $hab */
-        $hab = Yii::$container->has(RrhhHabilitacionService::class)
-            ? Yii::$container->get(RrhhHabilitacionService::class)
-            : new RrhhHabilitacionService();
+        /** @var SesionOperativaProfesionalHabilitacionService $hab */
+        $hab = Yii::$container->has(SesionOperativaProfesionalHabilitacionService::class)
+            ? Yii::$container->get(SesionOperativaProfesionalHabilitacionService::class)
+            : new SesionOperativaProfesionalHabilitacionService();
 
         return $hab->contactForEfectorPayload($idEfector);
     }

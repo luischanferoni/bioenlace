@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Editar agenda"
 description: "Guía conversacional para seleccionar profesional y servicio, y abrir la edición de agenda."
-rbac_route: "/api/agenda/editar-agenda-flow"
+rbac_route: "/api/profesional-agenda/editar-agenda-flow"
 keywords:
   - agenda
   - editar agenda
@@ -60,7 +60,7 @@ subintents:
       - draft.id_rr_hh
     next: select_servicio
     open_ui:
-      action_id: rrhh.listar-por-efector-acepta-turnos
+      action_id: recurso-humano.listar-por-efector-acepta-turnos
 
   - id: select_servicio
     assistant_text: "Servicio"
@@ -81,7 +81,7 @@ subintents:
           default: true
         next: condicion_laboral
     open_ui:
-      action_id: rrhh.listar-servicios-en-efector
+      action_id: recurso-humano.listar-servicios-en-efector
       params:
         id_rr_hh: "draft.id_rr_hh"
 
@@ -92,7 +92,7 @@ subintents:
       - draft.id_servicio
     next: condicion_laboral
     open_ui:
-      action_id: agenda.configurar-agenda
+      action_id: profesional-agenda.configurar-agenda
       params:
         id_rr_hh: "draft.id_rr_hh"
         id_servicio: "draft.id_servicio"
@@ -103,6 +103,6 @@ subintents:
       - draft.id_rr_hh
     next: ""
     open_ui:
-      action_id: rrhh.editar-condicion-laboral
+      action_id: recurso-humano.editar-condicion-laboral
       params:
         id_rr_hh: "draft.id_rr_hh"

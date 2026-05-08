@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Services\Agenda;
+namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\Agenda_rrhh;
 use common\models\busquedas\Agenda_rrhhBusqueda;
@@ -10,11 +10,12 @@ use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 
 /**
- * Listado y serialización de agendas laborales (tabla agenda_rrhh) para la API.
+ * Listado, búsqueda y serialización de agendas laborales (tabla `agenda_rrhh`) para la API REST.
  *
+ * Complementa {@see ProfesionalEfectorServicioAgendaUiService} (wizard ui_json).
  * Una fila = agenda de un servicio (vía {@see Agenda_rrhh::id_rrhh_servicio_asignado}) para un RRHH en un efector.
  */
-class AgendaRrhhService
+class ProfesionalEfectorServicioAgendaApiService
 {
     /**
      * Agenda en el efector (cualquier RRHH). Uso: personal con permiso para-recurso (CRUD sobre terceros).
@@ -25,13 +26,14 @@ class AgendaRrhhService
         /** @var \yii\db\ActiveQuery $q */
         $q = Agenda_rrhh::find();
         $model = $q->where(['id_agenda_rrhh' => $idAgenda, 'id_efector' => $idEfector])->one();
+
         return $model;
     }
 
     /**
      * Agenda del profesional autenticado (mismo efector y mismo id_rr_hh).
      */
-    public static function findOwnedByProfesional(int $idAgenda, int $idEfector, int $idRrhh): ?Agenda_rrhh
+    public static function findOwnedByRecursoHumano(int $idAgenda, int $idEfector, int $idRrhh): ?Agenda_rrhh
     {
         /** @var Agenda_rrhh|null $model */
         /** @var \yii\db\ActiveQuery $q */
@@ -41,6 +43,7 @@ class AgendaRrhhService
             'id_efector' => $idEfector,
             'id_rr_hh' => $idRrhh,
         ])->one();
+
         return $model;
     }
 
@@ -64,7 +67,7 @@ class AgendaRrhhService
     /**
      * Listado acotado al RRHH del profesional (ignora id_rr_hh en query si viniera malicioso).
      */
-    public static function searchForProfesional(array $queryParams, int $idRrhh, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
+    public static function searchForRecursoHumano(array $queryParams, int $idRrhh, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
     {
         $queryParams['id_rr_hh'] = $idRrhh;
 
@@ -74,7 +77,7 @@ class AgendaRrhhService
     /**
      * Listado forzando efector y RRHH (staff). Los params no pueden cambiar el ámbito vía id_rr_hh/id_efector en query.
      */
-    public static function searchParaRecurso(
+    public static function searchParaRecursoHumanoEnEfector(
         array $queryParams,
         int $idEfector,
         int $idRrhh,
@@ -90,7 +93,7 @@ class AgendaRrhhService
     /**
      * @throws BadRequestHttpException
      */
-    public static function assertRrhhPerteneceAEfector(int $idRrhh, int $idEfector): void
+    public static function assertRecursoHumanoPerteneceAEfector(int $idRrhh, int $idEfector): void
     {
         if ($idRrhh <= 0 || $idEfector <= 0) {
             throw new BadRequestHttpException('id_efector e id_rr_hh deben ser válidos.');
@@ -106,7 +109,7 @@ class AgendaRrhhService
      *
      * @throws BadRequestHttpException
      */
-    public static function assertServicioAsignadoParaRrhhEfector(?int $idRrhhServicioAsignado, int $idRrhh, int $idEfector): void
+    public static function assertServicioAsignadoParaRecursoHumanoEnEfector(?int $idRrhhServicioAsignado, int $idRrhh, int $idEfector): void
     {
         if ($idRrhhServicioAsignado === null || $idRrhhServicioAsignado <= 0) {
             return;

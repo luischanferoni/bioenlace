@@ -2,7 +2,7 @@ intent_id: agenda.crear-rrhh-flow
 version: 1
 
 action_name: "Crear recurso humano"
-rbac_route: "/api/agenda/crear-agenda-flow"
+rbac_route: "/api/profesional-agenda/crear-agenda-flow"
 keywords:
   - agenda
   - cargar agenda
@@ -17,24 +17,28 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Configurar una agenda de atención para un profesional, asegurando que quede asociado a un servicio que habilite la gestión de turnos.
+    Dar de alta la asignación de una persona a un servicio del efector (persona + efector + servicio)
+    y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
   how: >-
-    Selecciona o incorpora el profesional, selecciona el servicio, y si el servicio habilita turnos continúa a configurar la agenda.
+    Buscar persona en el padrón, elegir un servicio habilitado para el efector en sesión;
+    el sistema crea entonces el RRHH y el vínculo al servicio; solo si acepta_turnos es SI se continúa a la UI de agenda.
   preconditions:
-    - Existe (o se puede seleccionar) el profesional/recurso humano.
-    - Se puede seleccionar un servicio en el efector.
+    - Efector operativo en sesión.
+    - Permisos para dar de alta asignaciones en el efector.
   constraints:
-    - La agenda se configura solo si el servicio asociado habilita turnos (si no, primero se debe completar la asociación/condición laboral).
+    - Sin texto de búsqueda no se listan personas ni servicios (solo cuadro de filtro).
+    - Agenda solo si servicios.acepta_turnos = SI.
   outcome:
-    - Profesional asociado a un servicio.
-    - Agenda configurada si corresponde.
+    - Asignación persona–efector–servicio persistida.
+    - Agenda configurada cuando el servicio acepta turnos.
   keyphrases:
-    - configurar disponibilidad del profesional
-    - asociar profesional a servicio con turnos
-    - alta y asociación antes de cargar horarios
+    - alta de profesional en efector y servicio
+    - asociar persona a servicio del efector
+    - configurar disponibilidad si el servicio tiene turnos
 
 draft_keys_extra:
   - servicio_acepta_turnos
+  - id_persona
 
 business_rules:
   - id: agenda_alta_vs_solo_horarios
@@ -59,30 +63,32 @@ business_rules:
         reset_flow: true
 
 subintents:
-  - id: select_rrhh
-    assistant_text: "Profesional"
+  - id: select_persona
+    assistant_text: "Persona"
     provides:
-      - draft.id_rr_hh
+      - draft.id_persona
     next: select_servicio
     open_ui:
-      action_id: rrhh.listar-por-efector-acepta-turnos
+      action_id: persona.buscar-para-asistente
+      pass_content_as_query: q
 
   - id: select_servicio
     assistant_text: "Servicio"
     requires:
-      - draft.id_rr_hh
+      - draft.id_persona
     provides:
       - draft.id_servicio
-    next: configurar_agenda
     next_routing:
       - when:
           draft_equals:
             servicio_acepta_turnos: "SI"
         next: configurar_agenda
+      - when:
+          default: true
+        next: asignacion_sin_agenda_listo
     open_ui:
-      action_id: rrhh.listar-servicios-en-efector
-      params:
-        id_rr_hh: "draft.id_rr_hh"
+      action_id: recurso-humano.listar-servicios-habilitados-efector
+      pass_content_as_query: q
 
   - id: configurar_agenda
     assistant_text: "Agenda"
@@ -91,7 +97,13 @@ subintents:
       - draft.id_servicio
     next: ""
     open_ui:
-      action_id: agenda.configurar-agenda
+      action_id: profesional-agenda.configurar-agenda
       params:
         id_rr_hh: "draft.id_rr_hh"
         id_servicio: "draft.id_servicio"
+
+  - id: asignacion_sin_agenda_listo
+    assistant_text: "Listo. La persona quedó asignada al servicio; este servicio no usa agenda de turnos."
+    requires:
+      - draft.id_rr_hh
+    next: ""

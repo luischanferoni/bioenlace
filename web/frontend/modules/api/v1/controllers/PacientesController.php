@@ -226,7 +226,7 @@ class PacientesController extends BaseController
     }
 
     /**
-     * Misma respuesta que GET /api/v1/agenda/dia (incl. turno prueba si aplica).
+     * Misma respuesta que GET /api/v1/profesional-agenda/dia (incl. turno prueba si aplica).
      *
      * @return array{turnos: array, fecha: string, total: int}
      */

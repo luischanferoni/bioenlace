@@ -77,5 +77,23 @@ class ProfesionalEfectorServicio extends ActiveRecord
         return $this->hasOne(ProfesionalEfectorServicioAgenda::class, ['id_profesional_efector_servicio' => 'id'])
             ->andOnCondition(['profesional_efector_servicio_agenda.deleted_at' => null]);
     }
+
+    /**
+     * Resuelve el id de PES vigente a partir del id legacy `rrhh_servicio.id` (transición).
+     */
+    public static function findIdByLegacyRrhhServicioId(?int $legacyRrhhServicioId): ?int
+    {
+        if (!$legacyRrhhServicioId) {
+            return null;
+        }
+        $id = static::find()
+            ->select(['id'])
+            ->where([
+                'legacy_rrhh_servicio_id' => $legacyRrhhServicioId,
+                'deleted_at' => null,
+            ])
+            ->scalar();
+        return $id !== false && $id !== null ? (int) $id : null;
+    }
 }
 

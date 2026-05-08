@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\components\Assistant\IntentEngine\IntentEngine;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 
@@ -44,8 +45,18 @@ class ChatController extends BaseController
         // Modo intent (SubIntentEngine): no hay retrocompatibilidad/legacy aquí.
         if ($intentId !== '') {
             $userId = (int) Yii::$app->user->id;
+            $body = is_array($body) ? $body : [];
+            if ($intentId === 'agenda.crear-rrhh-flow') {
+                try {
+                    ProfesionalEfectorServicioCrearFlowDraftHydrator::hydrate($body);
+                } catch (\InvalidArgumentException $e) {
+                    return $this->error($e->getMessage(), null, 400);
+                } catch (\RuntimeException $e) {
+                    return $this->error($e->getMessage(), null, 400);
+                }
+            }
             try {
-                $out = SubIntentEngine::process(is_array($body) ? $body : [], $userId);
+                $out = SubIntentEngine::process($body, $userId);
             } catch (\Throwable $e) {
                 Yii::error('SubIntentEngine en asistente/enviar: ' . $e->getMessage(), 'asistente');
                 return $this->error('Error al procesar el intent', null, 500);

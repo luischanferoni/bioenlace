@@ -273,7 +273,7 @@
 
     async function saveField(field, value) {
       setStatus(cardEl, 'Guardando…', 'warn');
-      var url = '/api/v1/agenda/actualizar/' + encodeURIComponent(String(id));
+      var url = '/api/v1/profesional-agenda/actualizar/' + encodeURIComponent(String(id));
       var body = {};
       body[field] = value;
       try {
@@ -388,7 +388,7 @@
       clearError();
       setLoading(true);
       try {
-        var resp = await fetch('/api/v1/agenda/listar?per-page=100', { headers: window.BioenlaceApiClient.mergeHeaders({}) });
+        var resp = await fetch('/api/v1/profesional-agenda/listar?per-page=100', { headers: window.BioenlaceApiClient.mergeHeaders({}) });
         var payload = await resp.json();
         if (!resp.ok || !payload || payload.success !== true) {
           var msg =

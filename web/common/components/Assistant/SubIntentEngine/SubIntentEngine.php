@@ -73,7 +73,8 @@ final class SubIntentEngine
                     (string) $open['action_id'],
                     self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
                     $userId,
-                    $open
+                    $open,
+                    $content
                 );
             }
             return self::withFlowManifest([
@@ -99,7 +100,8 @@ final class SubIntentEngine
                         (string) $open['action_id'],
                         self::assistantTextForPrompt($nextSub, 'Perfecto, sigamos con el siguiente paso.'),
                         $userId,
-                        $open
+                        $open,
+                        $content
                     );
                 }
                 // Siguiente paso sin mini-UI pero con submit (ej. confirm): cargar submit como ese paso, sin duplicar lógica en clientes.
@@ -115,6 +117,21 @@ final class SubIntentEngine
                         'open_ui' => self::resolveClientOpen($submitNext, $userId),
                         'draft_delta' => (object) [],
                     ], $intentId, $nextIdStr);
+                }
+                // Paso siguiente sin mini-UI ni submit (p. ej. cierre tras rama sin agenda).
+                if ($missingNext === [] && $submitNext === '') {
+                    $hasOpenAction = is_array($open) && !empty($open['action_id']);
+                    $nextNext = isset($nextSub['next']) ? trim((string) $nextSub['next']) : '';
+                    if (!$hasOpenAction && $nextNext === '') {
+                        $nextIdStr = (string) ($nextSub['id'] ?? '');
+                        return self::withFlowManifest([
+                            'success' => true,
+                            'text' => self::assistantTextForPrompt($nextSub, 'Listo.'),
+                            'intent_id' => $intentId,
+                            'subintent_id' => $nextIdStr,
+                            'draft_delta' => (object) [],
+                        ], $intentId, $nextIdStr);
+                    }
                 }
             }
         }
@@ -414,7 +431,7 @@ final class SubIntentEngine
     /**
      * @param array<string, mixed> $openUiDef
      */
-    private static function buildOpenUiResponse(string $intentId, string $subintentId, string $actionId, string $text, int $userId, array $openUiDef = []): array
+    private static function buildOpenUiResponse(string $intentId, string $subintentId, string $actionId, string $text, int $userId, array $openUiDef = [], string $flowUserContent = ''): array
     {
         $open = self::resolveClientOpen($actionId, $userId);
 
@@ -450,6 +467,21 @@ final class SubIntentEngine
                     $co['api'] = $api;
                     $open['client_open'] = $co;
                 }
+            }
+        }
+
+        // YAML opcional: open_ui.pass_content_as_query: q — envía el último texto del usuario como filtro inicial.
+        $passContentKey = isset($openUiDef['pass_content_as_query']) ? trim((string) $openUiDef['pass_content_as_query']) : '';
+        $flowContent = trim($flowUserContent);
+        if ($passContentKey !== '' && $flowContent !== '' && isset($open['client_open']) && is_array($open['client_open'])) {
+            $co = $open['client_open'];
+            if (isset($co['api']) && is_array($co['api'])) {
+                $api = $co['api'];
+                $qq = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
+                $qq[$passContentKey] = $flowContent;
+                $api['query'] = $qq;
+                $co['api'] = $api;
+                $open['client_open'] = $co;
             }
         }
 

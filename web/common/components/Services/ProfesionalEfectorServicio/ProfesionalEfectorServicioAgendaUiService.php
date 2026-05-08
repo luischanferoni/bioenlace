@@ -1,10 +1,10 @@
 <?php
 
-namespace common\components\Services\Rrhh;
+namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\Agenda_rrhh;
 use common\models\Condiciones_laborales;
-use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
 use common\models\RrhhLaboral;
@@ -16,9 +16,10 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
- * Submit y pre-carga para el wizard UI JSON {@see \frontend\modules\api\v1\controllers\RrhhController::actionEditarAgenda}.
+ * Pre-carga y persistencia de agenda / condición laboral para UI JSON
+ * ({@see \frontend\modules\api\v1\controllers\ProfesionalAgendaController::actionConfigurarAgenda}, recurso humano).
  */
-final class RrhhAgendaUiService
+final class ProfesionalEfectorServicioAgendaUiService
 {
     /**
      * Valores para inyectar en campos del descriptor (query + merge en GET).
@@ -38,7 +39,7 @@ final class RrhhAgendaUiService
             return $out;
         }
 
-        self::assertRrhhBelongsToEfector($idRrHh, $idEfector);
+        self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
         $out['id_rr_hh'] = (string) $idRrHh;
 
         if ($idServicio <= 0) {
@@ -66,9 +67,8 @@ final class RrhhAgendaUiService
         /** @var \yii\db\ActiveQuery $agendaQ */
         $agenda = null;
 
-        // Preferir la agenda nueva (por asignación profesional-efector-servicio) si existe.
-        /** @var ProfesionalEfectorServicio|null $pes */
-        $pes = ProfesionalEfectorServicio::findActive()
+        /** @var ProfesionalEfectorServicioRecord|null $pes */
+        $pes = ProfesionalEfectorServicioRecord::findActive()
             ->where(['legacy_rrhh_servicio_id' => (int) $rrhhServicio->id, 'deleted_at' => null])
             ->one();
         if ($pes !== null) {
@@ -77,7 +77,6 @@ final class RrhhAgendaUiService
                 ->where(['id_profesional_efector_servicio' => (int) $pes->id, 'deleted_at' => null])
                 ->one();
         }
-        // Fallback legacy mientras se completa la migración de lectura.
         if ($agenda === null) {
             $agendaQ = Agenda_rrhh::find();
             $agenda = $agendaQ
@@ -125,7 +124,7 @@ final class RrhhAgendaUiService
         if ($idRrHh <= 0) {
             return $out;
         }
-        self::assertRrhhBelongsToEfector($idRrHh, $idEfector);
+        self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
         $out['id_rr_hh'] = (string) $idRrHh;
 
         /** @var \yii\db\ActiveQuery $laboralQ */
@@ -158,7 +157,7 @@ final class RrhhAgendaUiService
             throw new BadRequestHttpException('id_rr_hh e id_servicio son obligatorios.');
         }
 
-        self::assertRrhhBelongsToEfector($idRrHh, $idEfector);
+        self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
 
         if ($idServicio === 62) {
             throw new BadRequestHttpException('Servicio no editable en este flujo.');
@@ -192,19 +191,18 @@ final class RrhhAgendaUiService
             ->andWhere(['deleted_at' => null])
             ->one();
 
-        // Asegurar registro PES para esta asignación (si migración/backfill no lo creó aún).
         $rrhhEfector = RrhhEfector::find()
             ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->one();
         if ($rrhhEfector === null) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
         }
-        /** @var ProfesionalEfectorServicio|null $pes */
-        $pes = ProfesionalEfectorServicio::find()
+        /** @var ProfesionalEfectorServicioRecord|null $pes */
+        $pes = ProfesionalEfectorServicioRecord::find()
             ->where(['legacy_rrhh_servicio_id' => (int) $rrhhServicio->id, 'deleted_at' => null])
             ->one();
         if ($pes === null) {
-            $pes = new ProfesionalEfectorServicio();
+            $pes = new ProfesionalEfectorServicioRecord();
             $pes->id_persona = (int) $rrhhEfector->id_persona;
             $pes->id_efector = (int) $idEfector;
             $pes->id_servicio = (int) $idServicio;
@@ -219,7 +217,6 @@ final class RrhhAgendaUiService
             ->where(['id_profesional_efector_servicio' => (int) $pes->id, 'deleted_at' => null])
             ->one();
 
-        // Legacy agenda: mantener por ahora para no romper consumidores existentes.
         if ($agendaLegacy === null) {
             $agendaLegacy = new Agenda_rrhh();
             $agendaLegacy->id_rrhh_servicio_asignado = $rrhhServicio->id;
@@ -231,7 +228,6 @@ final class RrhhAgendaUiService
             $agendaLegacy->id_efector = $idEfector;
         }
 
-        // Nueva agenda por asignación.
         if ($agendaNew === null) {
             $agendaNew = new ProfesionalEfectorServicioAgenda();
             $agendaNew->id_profesional_efector_servicio = (int) $pes->id;
@@ -280,7 +276,7 @@ final class RrhhAgendaUiService
         if ($idRrHh <= 0) {
             throw new BadRequestHttpException('id_rr_hh es obligatorio.');
         }
-        self::assertRrhhBelongsToEfector($idRrHh, $idEfector);
+        self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
 
         $idCondicion = isset($post['id_condicion_laboral']) ? (int) $post['id_condicion_laboral'] : 0;
         if ($idCondicion <= 0) {
@@ -319,7 +315,7 @@ final class RrhhAgendaUiService
         return ['message' => 'Condición laboral guardada.'];
     }
 
-    private static function assertRrhhBelongsToEfector(int $idRrHh, int $idEfector): void
+    private static function assertRecursoHumanoPerteneceAEfector(int $idRrHh, int $idEfector): void
     {
         if ($idEfector <= 0) {
             throw new BadRequestHttpException('No hay efector en sesión.');

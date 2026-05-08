@@ -51,7 +51,7 @@ Cada YAML de intent debe declarar `rbac_route`:
 
 ```yaml
 intent_id: agenda.editar-agenda-flow
-rbac_route: "/api/agenda/editar-agenda-flow"
+rbac_route: "/api/profesional-agenda/editar-agenda-flow"
 ```
 
 El backend filtra los flows con:

@@ -17,6 +17,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $fech
  * @property string $hora
  * @property string $id_rr_hh
+ * @property int|null $id_profesional_efector_servicio
  * @property string $confirmado
  * @property string $referenciado
  * @property integer $id_consulta_referencia
@@ -176,6 +177,30 @@ class Turno extends \yii\db\ActiveRecord
         ];
     }
 
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+        if ($insert || $this->isAttributeChanged('id_rrhh_servicio_asignado', false)) {
+            $this->syncProfesionalEfectorServicioFromLegacy();
+        }
+        return true;
+    }
+
+    /**
+     * Mantiene `id_profesional_efector_servicio` alineado con `id_rrhh_servicio_asignado` mientras exista el legado.
+     */
+    public function syncProfesionalEfectorServicioFromLegacy(): void
+    {
+        $legacy = (int) $this->id_rrhh_servicio_asignado;
+        if ($legacy <= 0) {
+            $this->id_profesional_efector_servicio = null;
+            return;
+        }
+        $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($legacy);
+    }
+
     /**
      * @inheritdoc
      */
@@ -185,7 +210,7 @@ class Turno extends \yii\db\ActiveRecord
             [['id_persona', 'hora', 'fecha', 'id_efector', 'id_servicio_asignado'], 'required'],
             [['id_rrhh_servicio_asignado'], 'required', 'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH],
             [['id_servicio_asignado'], 'required', 'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS],
-            [['id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_rrhh_servicio_asignado', 'id_efector', 'programado'], 'integer'],
+            [['id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_rrhh_servicio_asignado', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
             // no deja crear un turno para la misma persona para el mismo recurso en el mismo dia
             [
                 ['fecha', 'id_persona', 'id_rrhh_servicio_asignado'], 'unique',
@@ -292,6 +317,11 @@ class Turno extends \yii\db\ActiveRecord
     public function getRrhhServicioAsignado()
     {
         return $this->hasOne(RrhhServicio::className(), ['id' => 'id_rrhh_servicio_asignado']);
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     public function getAgenda_rrhh()
@@ -447,9 +477,13 @@ class Turno extends \yii\db\ActiveRecord
     public static function cargarRrhhServicioAsignado($id_turnos, $id_servicio_asignado)
     {
         $id_rrhh_servicio_asignado = RrhhServicio::obtenerIdRrhhServicio(Yii::$app->user->getIdRecursoHumano(), $id_servicio_asignado);
+        $idPes = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $id_rrhh_servicio_asignado);
 
         Yii::$app->db->createCommand()
-            ->update('turnos', ['id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado], 'id_turnos = ' . $id_turnos)
+            ->update('turnos', [
+                'id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado,
+                'id_profesional_efector_servicio' => $idPes,
+            ], 'id_turnos = ' . $id_turnos)
             ->execute();
     }
 

@@ -3,8 +3,10 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\models\Persona;
+use common\components\Services\Persona\PersonaBusquedaAsistenteUiService;
 use common\components\Services\Persona\PersonaSignosVitalesService;
+use common\components\UiScreenService;
+use common\models\Persona;
 // Nota: la historia clínica agregada vive en PacientesController (persona en rol paciente).
 
 /**
@@ -20,6 +22,45 @@ class PersonaController extends BaseController
         $actions = parent::actions();
         unset($actions['index'], $actions['view'], $actions['create'], $actions['update'], $actions['delete']);
         return $actions;
+    }
+
+    /**
+     * UI JSON: buscar personas por nombre, apellido o documento. Sin `q` no se devuelven ítems.
+     *
+     * GET|POST /api/v1/persona/buscar-para-asistente
+     *
+     * @action_name Buscar persona (asistente)
+     * @entity Persona
+     * @tags views, ui, persona, asistente
+     */
+    public function actionBuscarParaAsistente(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'persona',
+            'buscar-para-asistente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $q = $req->get('q') ?: $req->post('q');
+            $items = PersonaBusquedaAsistenteUiService::buscar(is_string($q) ? $q : null);
+            $uiItems = [];
+            foreach ($items as $it) {
+                $uiItems[] = [
+                    'id' => (string) $it['id'],
+                    'name' => (string) $it['name'],
+                    'meta' => [],
+                ];
+            }
+            $ui = UiScreenService::withListBlockItems($ui, $uiItems);
+        }
+
+        return $ui;
     }
 
     /**

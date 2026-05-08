@@ -48,7 +48,7 @@ Regla actual: **toda acción debe incluir `client_open.kind`** para que el front
 ### Importante: “view” vs “dominio”
 
 - **View (en API)**: significa **descriptor de UI en JSON** (wizard/list/detail) y se obtiene por rutas dedicadas bajo **`/api/v1/<entidad>/<accion>`**.
-- **Dominio/datos (en API)**: endpoints como `/api/v1/turnos`, `/api/v1/agenda/*`, etc. **no son views**; son APIs de negocio consumidas por UIs nativas o por los descriptores.
+- **Dominio/datos (en API)**: endpoints como `/api/v1/turnos`, `/api/v1/profesional-agenda/*`, etc. **no son views**; son APIs de negocio consumidas por UIs nativas o por los descriptores.
 
 Regla de arquitectura: el backend no debe invocar controladores web (`frontend/controllers`) para construir UI. Las views JSON se sirven desde plantillas (`views/json/...`) vía los **controladores API por entidad** (ej. `TurnosController`) y `UiDefinitionTemplateManager`/`UiScreenService`.
 
@@ -128,12 +128,12 @@ El cliente debe renderizar `text` + botones desde `remediation`. Al elegir:
 
 ```json
 {
-  "action_id": "agenda.configurar-agenda",
+  "action_id": "profesional-agenda.configurar-agenda",
   "display_name": "Configurar agenda laboral",
-  "route": "/api/v1/agenda/configurar-agenda",
+  "route": "/api/v1/profesional-agenda/configurar-agenda",
   "client_open": {
     "kind": "ui_json",
-    "api": { "route": "/api/v1/agenda/configurar-agenda", "method": "GET|POST" }
+    "api": { "route": "/api/v1/profesional-agenda/configurar-agenda", "method": "GET|POST" }
   }
 }
 ```

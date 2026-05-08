@@ -123,6 +123,7 @@ final class UiSelectOptionSourceResolver
         self::$sources = [
             'efectores' => [self::class, 'resolveEfectores'],
             'servicios' => [self::class, 'resolveServicios'],
+            'recurso-humano' => [self::class, 'resolveRrhh'],
             'rrhh' => [self::class, 'resolveRrhh'],
         ];
     }

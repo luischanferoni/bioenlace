@@ -1,9 +1,7 @@
 <?php
 
-namespace common\components\Services\Rrhh;
+namespace common\components\Services\SesionOperativa;
 
-use Yii;
-use yii\base\Component;
 use common\models\Agenda_rrhh;
 use common\models\ConsultasConfiguracion;
 use common\models\Persona;
@@ -12,12 +10,13 @@ use common\models\RrhhLaboral;
 use common\models\RrhhServicio;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
+use Yii;
+use yii\base\Component;
 
 /**
- * Valida completitud RRHH por efector (alineado al alta en RrhhEfectorController) y arma
- * el árbol efectores → servicios elegibles para el wizard de sesión operativa.
+ * Valida completitud RRHH por efector y arma el árbol efectores → servicios para el wizard de sesión operativa.
  */
-class RrhhHabilitacionService extends Component
+class SesionOperativaProfesionalHabilitacionService extends Component
 {
     /** {@see Servicio::item_name} del servicio que otorga rol AdminEfector (excluido del listado clínico del wizard). */
     private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';
@@ -122,7 +121,6 @@ class RrhhHabilitacionService extends Component
 
                 if ($validServicios === []) {
                     if ($candidatosAdmin !== []) {
-                        // Mismo efector: rol clínico sin agenda válida pero también AdminEfector.
                         $validServicios = $candidatosAdmin;
                     } else {
                         $problemas[] = [
@@ -135,7 +133,6 @@ class RrhhHabilitacionService extends Component
                     }
                 }
             } elseif ($candidatosAdmin !== []) {
-                // Solo AdminEfector (o sin servicios clínicos elegibles): permitir fijar sesión sin agenda clínica.
                 $validServicios = $candidatosAdmin;
             } else {
                 $problemas[] = [
@@ -201,7 +198,6 @@ class RrhhHabilitacionService extends Component
 
         $sid = (int) $adminServicio->id_servicio;
 
-        // No usar findActive() aquí: añade `rrhh_efector.deleted_at`, incompatible con ->alias('re') en MySQL.
         return RrhhEfector::find()
             ->alias('re')
             ->andWhere(['re.deleted_at' => null])

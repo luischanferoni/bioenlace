@@ -22,7 +22,7 @@ Campos típicos:
 - `intent_id`
 - `action_name`: nombre humano sugerible
 - `description`: descripción para catálogo
-- `rbac_route`: ruta de permiso RBAC requerida para listar/ejecutar el flow (ej. `"/api/agenda/editar-agenda-flow"`).
+- `rbac_route`: ruta de permiso RBAC requerida para listar/ejecutar el flow (ej. `"/api/profesional-agenda/editar-agenda-flow"`).
 - `keywords`: lista de frases para matching
 - **`intent_semantics`** (opcional): semántica declarativa del intent para mejorar clasificación IA y explicación (`goal/how/preconditions/constraints/outcome/keyphrases`).
 - `subintents`: lista ordenada de pasos conversacionales

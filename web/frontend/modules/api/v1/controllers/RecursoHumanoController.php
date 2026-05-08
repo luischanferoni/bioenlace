@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Services\Rrhh\RrhhService;
-use common\components\Services\Rrhh\RrhhAgendaUiService;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\UiScreenService;
 use common\components\UiSelectOptionSourceResolver;
 use common\models\Persona;
@@ -14,11 +14,11 @@ use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 
 /**
- * API Rrhh: autocomplete de RRHH por efector/servicio; servicios asignados al RRHH del usuario en un efector.
+ * API recurso humano (profesional en efector): autocomplete por efector/servicio; servicios asignados al RRHH del usuario en un efector.
  * Autocomplete: migrado desde frontend\controllers\RrhhController::actionRrhhAutocomplete.
  * Servicios por RRHH: migrado desde frontend\controllers\RrhhEfectorController::actionServiciosPorRrhh.
  */
-class RrhhController extends BaseController
+class RecursoHumanoController extends BaseController
 {
     public static $authenticatorExcept = ['autocomplete'];
 
@@ -94,7 +94,7 @@ class RrhhController extends BaseController
     }
 
     /**
-     * GET/POST /api/v1/rrhh/autocomplete
+     * GET/POST /api/v1/recurso-humano/autocomplete
      * Parámetros: id_efector, id_servicio (requeridos); q, limit, sort_by, sort_order, efector_nombre, servicio_nombre (opcionales).
      */
     public function actionAutocomplete($q = null)
@@ -136,7 +136,7 @@ class RrhhController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/rrhh/listar-mis-servicios-en-efector
+     * GET|POST /api/v1/recurso-humano/listar-mis-servicios-en-efector
      *
      * Lista servicios asignados al RRHH de la persona autenticada, filtrados como en el flujo web
      * (servicio activo en el efector o servicio con item_name AdminEfector).
@@ -222,7 +222,7 @@ class RrhhController extends BaseController
     /**
      * Vista embebible: listar RRHH (profesionales) de un efector como `ui_json`.
      *
-     * GET|POST /api/v1/rrhh/listar-por-efector
+     * GET|POST /api/v1/recurso-humano/listar-por-efector
      *
      * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
      *
@@ -235,7 +235,7 @@ class RrhhController extends BaseController
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
-            'rrhh',
+            'recurso-humano',
             'listar-por-efector',
             $req->get(),
             $req->post(),
@@ -266,7 +266,7 @@ class RrhhController extends BaseController
             try {
                 $ui = UiScreenService::withListBlockItems(
                     $ui,
-                    RrhhService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit)
+                    ProfesionalEnEfectorListadoUiService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit)
                 );
             } catch (\InvalidArgumentException $e) {
                 throw new BadRequestHttpException($e->getMessage());
@@ -280,7 +280,7 @@ class RrhhController extends BaseController
      * Vista embebible: listar RRHH (profesionales) de un efector como `ui_json`,
      * filtrando a RRHH que tengan servicios con `servicios.acepta_turnos = SI`.
      *
-     * GET|POST /api/v1/rrhh/listar-por-efector-acepta-turnos
+     * GET|POST /api/v1/recurso-humano/listar-por-efector-acepta-turnos
      *
      * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
      *
@@ -293,7 +293,7 @@ class RrhhController extends BaseController
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
-            'rrhh',
+            'recurso-humano',
             'listar-por-efector-acepta-turnos',
             $req->get(),
             $req->post(),
@@ -324,7 +324,7 @@ class RrhhController extends BaseController
             try {
                 $ui = UiScreenService::withListBlockItems(
                     $ui,
-                    RrhhService::listarPorEfectorAceptaTurnos($idEfector, is_string($q) ? $q : null, $limit)
+                    ProfesionalEnEfectorListadoUiService::listarPorEfectorAceptaTurnos($idEfector, is_string($q) ? $q : null, $limit)
                 );
             } catch (\InvalidArgumentException $e) {
                 throw new BadRequestHttpException($e->getMessage());
@@ -337,7 +337,7 @@ class RrhhController extends BaseController
     /**
      * Vista embebible: listar servicios asignados a un RRHH como `ui_json`.
      *
-     * GET|POST /api/v1/rrhh/listar-servicios-en-efector
+     * GET|POST /api/v1/recurso-humano/listar-servicios-en-efector
      *
      * Parámetros: id_rr_hh (obligatorio).
      *
@@ -350,7 +350,7 @@ class RrhhController extends BaseController
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
-            'rrhh',
+            'recurso-humano',
             'listar-servicios-en-efector',
             $req->get(),
             $req->post(),
@@ -368,6 +368,54 @@ class RrhhController extends BaseController
             foreach ($items as $it) {
                 $uiItems[] = [
                     'id' => (string) (int) $it['id'],
+                    'name' => (string) $it['name'],
+                    'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
+                ];
+            }
+            $ui = UiScreenService::withListBlockItems($ui, $uiItems);
+        }
+
+        return $ui;
+    }
+
+    /**
+     * Vista embebible: servicios habilitados en el efector de sesión ({@see ServiciosEfector}), sin exigir RRHH previo.
+     * Sin `q` no se listan ítems (solo plantilla con buscador).
+     *
+     * GET|POST /api/v1/recurso-humano/listar-servicios-habilitados-efector
+     *
+     * @action_name Listar servicios habilitados en el efector
+     * @entity Rrhh
+     * @tags views, ui, rrhh, servicios, asistente
+     */
+    public function actionListarServiciosHabilitadosEfector(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'recurso-humano',
+            'listar-servicios-habilitados-efector',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+            if ($idEfector <= 0) {
+                throw new BadRequestHttpException('No hay efector en sesión.');
+            }
+            $q = $req->get('q') ?: $req->post('q');
+            try {
+                $raw = ProfesionalEnEfectorListadoUiService::listarServiciosHabilitadosPorEfector($idEfector, is_string($q) ? $q : null);
+            } catch (\InvalidArgumentException $e) {
+                throw new BadRequestHttpException($e->getMessage());
+            }
+            $uiItems = [];
+            foreach ($raw as $it) {
+                $uiItems[] = [
+                    'id' => (string) $it['id'],
                     'name' => (string) $it['name'],
                     'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
                 ];
@@ -440,7 +488,7 @@ class RrhhController extends BaseController
     }
 
     /**
-     * GET /api/v1/rrhh/condiciones-laborales-catalogo
+     * GET /api/v1/recurso-humano/condiciones-laborales-catalogo
      *
      * @return array{results: list<array{id: int, text: string}>}
      */
@@ -464,7 +512,7 @@ class RrhhController extends BaseController
     /**
      * UI JSON: crear/editar condición laboral (vigencia) de un RRHH.
      *
-     * GET|POST /api/v1/rrhh/editar-condicion-laboral
+     * GET|POST /api/v1/recurso-humano/editar-condicion-laboral
      *
      * @action_name Editar condición laboral (RRHH)
      * @entity Rrhh
@@ -477,16 +525,16 @@ class RrhhController extends BaseController
         $idEfector = (int) Yii::$app->user->getIdEfector();
 
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-        $defaults = RrhhAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
+        $defaults = ProfesionalEfectorServicioAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
         $paramsForRender = array_merge($defaults, $fromClient);
 
         return UiScreenService::handleScreen(
-            'rrhh',
+            'recurso-humano',
             'editar-condicion-laboral',
             $paramsForRender,
             $req->post(),
             static function (array $post) use ($idEfector): array {
-                return RrhhAgendaUiService::submitCondicionLaboral($idEfector, $post);
+                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post);
             }
         );
     }
@@ -495,7 +543,7 @@ class RrhhController extends BaseController
      * UI JSON: crear condición laboral (vigencia) de un RRHH.
      * Nota: el submit es un upsert; este endpoint existe por claridad de intención.
      *
-     * GET|POST /api/v1/rrhh/crear-condicion-laboral
+     * GET|POST /api/v1/recurso-humano/crear-condicion-laboral
      *
      * @action_name Crear condición laboral (RRHH)
      * @entity Rrhh
@@ -509,16 +557,16 @@ class RrhhController extends BaseController
 
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
         // Precarga si existe (upsert). Para "crear", esto también ayuda a no duplicar.
-        $defaults = RrhhAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
+        $defaults = ProfesionalEfectorServicioAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
         $paramsForRender = array_merge($defaults, $fromClient);
 
         return UiScreenService::handleScreen(
-            'rrhh',
+            'recurso-humano',
             'crear-condicion-laboral',
             $paramsForRender,
             $req->post(),
             static function (array $post) use ($idEfector): array {
-                return RrhhAgendaUiService::submitCondicionLaboral($idEfector, $post);
+                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post);
             }
         );
     }
@@ -527,7 +575,7 @@ class RrhhController extends BaseController
      * Vista embebible: listar profesionales (RRHH) por efector y servicio (obligatorios),
      * filtrando a servicios que aceptan turnos (`servicios.acepta_turnos = SI`).
      *
-     * GET|POST /api/v1/rrhh/listar-por-efector-servicio-acepta-turnos
+     * GET|POST /api/v1/recurso-humano/listar-por-efector-servicio-acepta-turnos
      *
      * @action_name Listar profesionales (acepta turnos) por efector y servicio
      * @entity Rrhh
@@ -544,7 +592,7 @@ class RrhhController extends BaseController
         }
 
         $ui = UiScreenService::handleScreen(
-            'rrhh',
+            'recurso-humano',
             'listar-por-efector-servicio-acepta-turnos',
             $req->get(),
             $req->post(),
@@ -565,7 +613,7 @@ class RrhhController extends BaseController
     /**
      * Vista embebible: elegir profesional (RRHH) para un efector/servicio.
      *
-     * GET|POST /api/v1/rrhh/elegir
+     * GET|POST /api/v1/recurso-humano/elegir
      *
      * @deprecated Preferir listar-por-efector-servicio-acepta-turnos en nuevos flujos.
      */
@@ -580,7 +628,7 @@ class RrhhController extends BaseController
         }
 
         return UiScreenService::handleScreen(
-            'rrhh',
+            'recurso-humano',
             'elegir',
             $req->get(),
             $req->post(),

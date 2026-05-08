@@ -25,8 +25,12 @@ class m260508_000004_consumidores_pes_lote2 extends Migration
         $this->ensureColumn('{{%dispensa_programa_diabetes}}', 'id_profesional_efector_servicio', 'dispensa_prog_diab');
         $this->ensureColumn('{{%sumar_autofacturacion}}', 'id_profesional_efector_servicio', 'sumar_autofact');
         $this->ensureColumn('{{%abreviaturas_rrhh}}', 'id_profesional_efector_servicio', 'abrev_rrhh');
-        $this->ensureColumn('{{%seg_nivel_internacion_practica}}', 'id_profesional_efector_servicio_solicita', 'snip_pes_sol');
-        $this->ensureColumn('{{%seg_nivel_internacion_practica}}', 'id_profesional_efector_servicio_realiza', 'snip_pes_rea');
+
+        $snip = $this->db->schema->getTableSchema('{{%seg_nivel_internacion_practica}}', true);
+        if ($snip !== null) {
+            $this->ensureColumn('{{%seg_nivel_internacion_practica}}', 'id_profesional_efector_servicio_solicita', 'snip_pes_sol');
+            $this->ensureColumn('{{%seg_nivel_internacion_practica}}', 'id_profesional_efector_servicio_realiza', 'snip_pes_rea');
+        }
 
         $pickSql = '(SELECT id_rr_hh, MIN(id) AS id_rs FROM {{%rrhh_servicio}} WHERE deleted_at IS NULL GROUP BY id_rr_hh) pick';
 
@@ -174,8 +178,9 @@ WHERE ab.id_rr_hh IS NOT NULL AND ab.id_rr_hh <> 0
   AND ab.id_profesional_efector_servicio IS NULL
 SQL);
 
-        // --- seg_nivel_internacion_practica (id_rrhh_* = id_rr_hh) ---
-        $this->execute(<<<SQL
+        // --- seg_nivel_internacion_practica (opcional: no existe en todos los entornos) ---
+        if ($snip !== null) {
+            $this->execute(<<<SQL
 UPDATE {{%seg_nivel_internacion_practica}} p
 INNER JOIN $pickSql ON pick.id_rr_hh = p.id_rrhh_solicita
 INNER JOIN {{%profesional_efector_servicio}} pes ON pes.legacy_rrhh_servicio_id = pick.id_rs AND pes.deleted_at IS NULL
@@ -183,7 +188,7 @@ SET p.id_profesional_efector_servicio_solicita = pes.id
 WHERE p.id_rrhh_solicita IS NOT NULL AND p.id_rrhh_solicita <> 0
   AND p.id_profesional_efector_servicio_solicita IS NULL
 SQL);
-        $this->execute(<<<SQL
+            $this->execute(<<<SQL
 UPDATE {{%seg_nivel_internacion_practica}} p
 INNER JOIN $pickSql ON pick.id_rr_hh = p.id_rrhh_realiza
 INNER JOIN {{%profesional_efector_servicio}} pes ON pes.legacy_rrhh_servicio_id = pick.id_rs AND pes.deleted_at IS NULL
@@ -191,6 +196,7 @@ SET p.id_profesional_efector_servicio_realiza = pes.id
 WHERE p.id_rrhh_realiza IS NOT NULL AND p.id_rrhh_realiza <> 0
   AND p.id_profesional_efector_servicio_realiza IS NULL
 SQL);
+        }
     }
 
     public function safeDown()

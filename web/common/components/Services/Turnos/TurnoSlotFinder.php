@@ -4,9 +4,9 @@ namespace common\components\Services\Turnos;
 
 use Yii;
 use common\models\Turno;
-use common\models\Agenda_rrhh;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\RrhhEfector;
 
 /**
  * Servicio de búsqueda de slots de turnos a partir de parámetros ya NORMALIZADOS.
@@ -119,47 +119,56 @@ class TurnoSlotFinder
         }
 
         $restricciones = $criteria['restricciones'] ?? [];
-        $soloRrhhServicio = isset($criteria['id_rrhh_servicio_asignado'])
+        $soloIdPes = null;
+        if (!empty($criteria['id_profesional_efector_servicio'])) {
+            $soloIdPes = (int) $criteria['id_profesional_efector_servicio'];
+        }
+        $soloRrsa = isset($criteria['id_rrhh_servicio_asignado'])
             ? (int) $criteria['id_rrhh_servicio_asignado']
             : null;
-        if ($soloRrhhServicio !== null && $soloRrhhServicio <= 0) {
-            $soloRrhhServicio = null;
+        if ($soloRrsa !== null && $soloRrsa <= 0) {
+            $soloRrsa = null;
         }
-
-        if (!empty($criteria['id_profesional_efector_servicio'])) {
-            $idPes = (int) $criteria['id_profesional_efector_servicio'];
-            $resolved = ProfesionalEfectorServicio::resolveRrhhServicioIdForSlotCriteria(
-                $idPes,
-                (int) $idServicio,
+        if ($soloIdPes === null && $soloRrsa !== null) {
+            $soloIdPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                $soloRrsa,
                 (int) $idEfector
             );
-            if ($resolved === null) {
+            if ($soloIdPes === null) {
                 return [];
             }
-            $soloRrhhServicio = $resolved;
         }
 
         $diasSemanaExcluidos = self::buildDiasSemanaExcluidos($restricciones);
         $franjasExcluidas = self::buildFranjasExcluidas($restricciones);
 
-        $rrhhServicios = RrhhServicio::findPorServicioEfector((int) $idServicio, (int) $idEfector);
-        if (empty($rrhhServicios)) {
+        $pesList = ProfesionalEfectorServicio::findAllActivosPorServicioEfector((int) $idServicio, (int) $idEfector);
+        if ($pesList === []) {
+            return [];
+        }
+        if ($soloIdPes !== null && $soloIdPes > 0) {
+            $pesList = array_values(array_filter(
+                $pesList,
+                static function (ProfesionalEfectorServicio $p) use ($soloIdPes): bool {
+                    return (int) $p->id === $soloIdPes;
+                }
+            ));
+        }
+        if ($pesList === []) {
             return [];
         }
 
-        $idsRrhhServicio = array_map(function (RrhhServicio $rs) {
-            return (int) $rs->id;
-        }, $rrhhServicios);
-        if ($soloRrhhServicio) {
-            if (!in_array($soloRrhhServicio, $idsRrhhServicio, true)) {
-                return [];
-            }
-            $idsRrhhServicio = [$soloRrhhServicio];
+        $idsPes = array_map(static function (ProfesionalEfectorServicio $p) {
+            return (int) $p->id;
+        }, $pesList);
+        $agendasPorPes = ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes);
+        if ($agendasPorPes === []) {
+            return [];
         }
 
-        $agendas = Agenda_rrhh::findPorIdsRrhhServicio($idsRrhhServicio);
-        if (empty($agendas)) {
-            return [];
+        $pesPorId = [];
+        foreach ($pesList as $p) {
+            $pesPorId[(int) $p->id] = $p;
         }
 
         $limit = max(1, (int) $limit);
@@ -173,12 +182,17 @@ class TurnoSlotFinder
                 continue;
             }
 
-            foreach ($agendas as $agenda) {
+            foreach ($agendasPorPes as $agenda) {
                 if (count($out) >= $limit) {
                     break 2;
                 }
+                $idPesAgenda = (int) $agenda->id_profesional_efector_servicio;
+                $pes = $pesPorId[$idPesAgenda] ?? null;
+                if ($pes === null) {
+                    continue;
+                }
                 $slots = $agenda->getSlotsParaDia($dia);
-                if (empty($slots)) {
+                if ($slots === []) {
                     continue;
                 }
 
@@ -192,28 +206,22 @@ class TurnoSlotFinder
                     if ($dia === date('Y-m-d') && $hora <= date('H:i')) {
                         continue;
                     }
-                    if (Turno::estaOcupadoSlot($agenda->id_rrhh_servicio_asignado, $dia, $hora)) {
+                    if (Turno::estaOcupadoSlotPorProfesionalEfectorServicio($idPesAgenda, $dia, $hora)) {
                         continue;
                     }
 
-                    $rrhhServ = null;
-                    foreach ($rrhhServicios as $rs) {
-                        if ((int) $rs->id === (int) $agenda->id_rrhh_servicio_asignado) {
-                            $rrhhServ = $rs;
-                            break;
-                        }
-                    }
-                    if (!$rrhhServ) {
-                        continue;
-                    }
+                    $re = RrhhEfector::find()
+                        ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
+                        ->one();
+                    $idRrhh = $re ? (int) $re->id_rr_hh : 0;
+                    $idRrsaOut = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat() ?? 0;
 
-                    $idRrsaAgenda = (int) $agenda->id_rrhh_servicio_asignado;
                     $out[] = [
                         'fecha' => $dia,
                         'hora' => $hora,
-                        'id_rr_hh' => (int) $rrhhServ->id_rr_hh,
-                        'id_rrhh_servicio_asignado' => $idRrsaAgenda,
-                        'id_profesional_efector_servicio' => ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrsaAgenda),
+                        'id_rr_hh' => $idRrhh,
+                        'id_rrhh_servicio_asignado' => $idRrsaOut,
+                        'id_profesional_efector_servicio' => $idPesAgenda,
                         'id_efector' => (int) $idEfector,
                         'id_servicio' => (int) $idServicio,
                     ];

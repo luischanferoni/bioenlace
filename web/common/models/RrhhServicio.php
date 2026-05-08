@@ -19,7 +19,8 @@ use Yii;
  *
  * @property RrhhEfector $rrhhEfector
  * @property Servicio $servicio
- * 
+ * @property ProfesionalEfectorServicioAgenda|null $agenda agenda operativa (PES), resuelta por efector del RRHH
+ *
  */
 class RrhhServicio extends \yii\db\ActiveRecord
 {
@@ -100,13 +101,20 @@ class RrhhServicio extends \yii\db\ActiveRecord
     }    
 
     /**
-     * Gets query for [[Agenda_rrhh]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Agenda operativa (`profesional_efector_servicio_agenda`) para esta asignación, según el efector del RRHH.
      */
-    public function getAgenda()
+    public function getAgenda(): ?ProfesionalEfectorServicioAgenda
     {
-        return $this->hasOne(Agenda_rrhh::className(), ['id_rrhh_servicio_asignado' => 'id']);
+        $re = $this->rrhhEfector;
+        if ($re === null) {
+            return null;
+        }
+        $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId((int) $this->id, (int) $re->id_efector);
+        if ($idPes === null) {
+            return null;
+        }
+
+        return ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes);
     }
 
     public static function rrhhPorEfectorConAgenda($id_efector)

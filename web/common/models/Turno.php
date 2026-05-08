@@ -198,7 +198,14 @@ class Turno extends \yii\db\ActiveRecord
             $this->id_profesional_efector_servicio = null;
             return;
         }
-        $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($legacy);
+        $idPes = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($legacy);
+        if ($idPes === null && (int) $this->id_efector > 0) {
+            $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                $legacy,
+                (int) $this->id_efector
+            );
+        }
+        $this->id_profesional_efector_servicio = $idPes;
     }
 
     /**
@@ -322,11 +329,6 @@ class Turno extends \yii\db\ActiveRecord
     public function getProfesionalEfectorServicio()
     {
         return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
-    }
-
-    public function getAgenda_rrhh()
-    {
-        return $this->hasMany(Agenda_rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     public function getUserAlta()
@@ -738,6 +740,31 @@ class Turno extends \yii\db\ActiveRecord
                 'hora' => $horaNormalizada,
             ])
             ->exists();
+    }
+
+    /**
+     * Ocupación de slot por asignación PES (y turnos viejos solo con id_rrhh_servicio_asignado equivalente).
+     */
+    public static function estaOcupadoSlotPorProfesionalEfectorServicio(int $idPes, string $fecha, string $hora): bool
+    {
+        if ($idPes <= 0) {
+            return false;
+        }
+        $horaNormalizada = (strlen($hora) === 5 && strpos($hora, ':') !== false) ? $hora . ':00' : $hora;
+        $q = static::findActive()->andWhere(['fecha' => $fecha, 'hora' => $horaNormalizada]);
+        if ((clone $q)->andWhere(['id_profesional_efector_servicio' => $idPes])->exists()) {
+            return true;
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null) {
+            return false;
+        }
+        $rrsa = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+        if ($rrsa !== null && $rrsa > 0) {
+            return (clone $q)->andWhere(['id_rrhh_servicio_asignado' => $rrsa])->exists();
+        }
+
+        return false;
     }
 
 

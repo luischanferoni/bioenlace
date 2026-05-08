@@ -97,36 +97,83 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Para búsqueda de slots sobre agenda legacy (`agenda_rrhh`): id de `rrhh_servicio` coherente con el PES.
+     * PES vigente para persona + efector + servicio.
      */
-    public static function resolveRrhhServicioIdForSlotCriteria(int $idPes, int $idServicio, int $idEfector): ?int
+    public static function findOneActivoPorPersonaEfectorServicio(int $idPersona, int $idEfector, int $idServicio): ?self
     {
-        if ($idPes <= 0 || $idServicio <= 0 || $idEfector <= 0) {
+        if ($idPersona <= 0 || $idEfector <= 0 || $idServicio <= 0) {
             return null;
         }
-        /** @var self|null $pes */
-        $pes = static::find()
+
+        /** @var self|null $r */
+        $r = static::find()
             ->where([
-                'id' => $idPes,
-                'id_servicio' => $idServicio,
+                'id_persona' => $idPersona,
                 'id_efector' => $idEfector,
+                'id_servicio' => $idServicio,
                 'deleted_at' => null,
             ])
             ->one();
-        if (!$pes) {
+
+        return $r;
+    }
+
+    /**
+     * @return self[]
+     */
+    public static function findAllActivosPorServicioEfector(int $idServicio, int $idEfector): array
+    {
+        if ($idServicio <= 0 || $idEfector <= 0) {
+            return [];
+        }
+
+        return static::find()
+            ->where(['id_servicio' => $idServicio, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->all();
+    }
+
+    /**
+     * Compat.: clientes que envían `id_rrhh_servicio_asignado` (`rrhh_servicio.id`) se mapean a PES en este efector.
+     */
+    public static function resolveProfesionalEfectorServicioIdFromRrhhServicioId(int $idRrhhServicio, int $idEfector): ?int
+    {
+        if ($idRrhhServicio <= 0 || $idEfector <= 0) {
             return null;
         }
-        if ($pes->legacy_rrhh_servicio_id) {
-            return (int) $pes->legacy_rrhh_servicio_id;
+        $fromLegacy = static::findIdByLegacyRrhhServicioId($idRrhhServicio);
+        if ($fromLegacy !== null) {
+            return $fromLegacy;
+        }
+        $rs = RrhhServicio::findOne(['id' => $idRrhhServicio, 'deleted_at' => null]);
+        if ($rs === null) {
+            return null;
         }
         $re = RrhhEfector::find()
-            ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
+            ->where(['id_rr_hh' => $rs->id_rr_hh, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->one();
-        if (!$re) {
+        if ($re === null) {
+            return null;
+        }
+
+        return static::findIdByPersonaEfectorServicio((int) $re->id_persona, $idEfector, (int) $rs->id_servicio);
+    }
+
+    /**
+     * `turnos.id_rrhh_servicio_asignado` mientras exista vínculo rrhh_servicio (compat. filas sin PES en turno).
+     */
+    public function resolveRrhhServicioAsignadoIdForTurnoCompat(): ?int
+    {
+        if ($this->legacy_rrhh_servicio_id) {
+            return (int) $this->legacy_rrhh_servicio_id;
+        }
+        $re = RrhhEfector::find()
+            ->where(['id_persona' => $this->id_persona, 'id_efector' => $this->id_efector, 'deleted_at' => null])
+            ->one();
+        if ($re === null) {
             return null;
         }
         $rs = RrhhServicio::find()
-            ->where(['id_rr_hh' => $re->id_rr_hh, 'id_servicio' => $pes->id_servicio, 'deleted_at' => null])
+            ->where(['id_rr_hh' => $re->id_rr_hh, 'id_servicio' => $this->id_servicio, 'deleted_at' => null])
             ->orderBy(['id' => SORT_ASC])
             ->one();
 

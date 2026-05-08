@@ -8,7 +8,6 @@ use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
 use common\models\Consulta;
 use common\models\Turno;
-use common\models\Agenda_rrhh;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
@@ -601,7 +600,12 @@ class TurnosController extends BaseController
                         continue;
                     }
                     $id = $idRrsaSlot . '|' . $fecha . '|' . $hora;
-                    $idPesSlot = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $idRrsaSlot);
+                    $idPesSlot = isset($slot['id_profesional_efector_servicio']) && $slot['id_profesional_efector_servicio'] !== null
+                        ? (int) $slot['id_profesional_efector_servicio']
+                        : ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                            (int) $idRrsaSlot,
+                            (int) $idEfector
+                        );
                     $meta = [
                         'fecha' => $fecha,
                         'hora' => $hora,

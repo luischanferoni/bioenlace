@@ -480,7 +480,11 @@ class RecursoHumanoController extends BaseController
                 'name' => $nombre,
                 'meta' => [
                     'id_rrhh_servicio' => (int) $rs->id,
-                    'id_profesional_efector_servicio' => ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $rs->id),
+                    'id_profesional_efector_servicio' => ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
+                        (int) $re->id_persona,
+                        $idEfector,
+                        (int) $rs->id_servicio
+                    ),
                     'acepta_turnos' => $acepta,
                 ],
             ];

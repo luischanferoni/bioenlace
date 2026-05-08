@@ -13,7 +13,6 @@ use wbraganca\dynamicform\DynamicFormWidget;
 use common\models\Efector;
 use common\models\Servicio;
 use common\models\Condiciones_laborales;
-use common\models\Agenda_rrhh;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\RrhhEfector */

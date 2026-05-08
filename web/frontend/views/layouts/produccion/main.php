@@ -113,7 +113,7 @@ if(Yii::$app->user->idEfector){
                 'items' => [
                     ['label' => 'Profesiones', 'url' => ['/profesiones']],
                     ['label' => 'Especialidades', 'url' => ['/especialidades']],
-                    ['label' => 'Agenda Laboral', 'url' => ['/agenda-rrhhs']],
+                    ['label' => 'Agenda Laboral', 'url' => ['/personas/indexpersonarrhh']],
                     ['label' => 'Listado de RRHH', 'url' => ['/personas/indexpersonarrhh']],
                   
                 ],

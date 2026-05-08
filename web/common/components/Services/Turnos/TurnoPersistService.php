@@ -5,7 +5,8 @@ namespace common\components\Services\Turnos;
 use Yii;
 use common\models\Turno;
 use common\models\Consulta;
-use common\models\Agenda_rrhh;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
@@ -77,9 +78,11 @@ class TurnoPersistService
             } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
                 $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
                 if ($model->id_rrhh_servicio_asignado) {
-                    $agenda = Agenda_rrhh::find()
-                        ->andWhere(['id_rrhh_servicio_asignado' => $model->id_rrhh_servicio_asignado])
-                        ->one();
+                    $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                        (int) $model->id_rrhh_servicio_asignado,
+                        (int) $model->id_efector
+                    );
+                    $agenda = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
                     if ($agenda) {
                         $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgados(
                             $model->id_rrhh_servicio_asignado,
@@ -136,7 +139,7 @@ class TurnoPersistService
         }
         $idRrhhServicio = $turno->id_rrhh_servicio_asignado;
         if ($idRrhhServicio) {
-            $this->assertAgendaAceptaTeleconsulta((int) $idRrhhServicio);
+            $this->assertAgendaAceptaTeleconsulta((int) $idRrhhServicio, (int) $turno->id_efector);
         }
     }
 
@@ -154,22 +157,21 @@ class TurnoPersistService
             $idRrhhServicio = $rs ? $rs->id : null;
         }
         if ($idRrhhServicio) {
-            $this->assertAgendaAceptaTeleconsulta((int) $idRrhhServicio);
+            $this->assertAgendaAceptaTeleconsulta((int) $idRrhhServicio, (int) $model->id_efector);
         } elseif ($model->id_rrhh_servicio_asignado || $model->id_rr_hh) {
             throw new \InvalidArgumentException('No se encontró la agenda del profesional para el servicio.');
         }
     }
 
-    private function assertAgendaAceptaTeleconsulta(int $idRrhhServicio): void
+    private function assertAgendaAceptaTeleconsulta(int $idRrhhServicio, int $idEfector): void
     {
-        $aceptaOnline = Agenda_rrhh::find()
-            ->andWhere(['id_rrhh_servicio_asignado' => $idRrhhServicio])
-            ->andWhere(['acepta_consultas_online' => true])
-            ->exists();
-        if (!$aceptaOnline) {
+        $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idRrhhServicio, $idEfector);
+        $agenda = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
+        if ($agenda === null || !$agenda->acepta_consultas_online) {
             throw new \InvalidArgumentException(
                 'El profesional no acepta teleconsulta para esta agenda.'
             );
         }
     }
 }
+

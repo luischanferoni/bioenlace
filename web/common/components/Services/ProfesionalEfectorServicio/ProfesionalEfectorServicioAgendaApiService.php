@@ -2,57 +2,59 @@
 
 namespace common\components\Services\ProfesionalEfectorServicio;
 
-use common\models\Agenda_rrhh;
-use common\models\busquedas\Agenda_rrhhBusqueda;
+use common\models\busquedas\ProfesionalEfectorServicioAgendaBusqueda;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 
 /**
- * Listado, búsqueda y serialización de agendas laborales (tabla `agenda_rrhh`) para la API REST.
- *
- * Complementa {@see ProfesionalEfectorServicioAgendaUiService} (wizard ui_json).
- * Una fila = agenda de un servicio (vía {@see Agenda_rrhh::id_rrhh_servicio_asignado}) para un RRHH en un efector.
+ * Listado, búsqueda y serialización de agendas laborales (`profesional_efector_servicio_agenda`) para la API REST.
  */
 class ProfesionalEfectorServicioAgendaApiService
 {
-    /**
-     * Agenda en el efector (cualquier RRHH). Uso: personal con permiso para-recurso (CRUD sobre terceros).
-     */
-    public static function findOwnedByEfector(int $idAgenda, int $idEfector): ?Agenda_rrhh
+    public static function findOwnedByEfector(int $idAgenda, int $idEfector): ?ProfesionalEfectorServicioAgenda
     {
-        /** @var Agenda_rrhh|null $model */
-        /** @var \yii\db\ActiveQuery $q */
-        $q = Agenda_rrhh::find();
-        $model = $q->where(['id_agenda_rrhh' => $idAgenda, 'id_efector' => $idEfector])->one();
+        /** @var ProfesionalEfectorServicioAgenda|null $model */
+        $model = ProfesionalEfectorServicioAgenda::find()->alias('a')
+            ->where(['a.id' => $idAgenda, 'a.id_efector' => $idEfector, 'a.deleted_at' => null])
+            ->one();
+
+        return $model;
+    }
+
+    public static function findOwnedByRecursoHumano(int $idAgenda, int $idEfector, int $idRrhh): ?ProfesionalEfectorServicioAgenda
+    {
+        $query = ProfesionalEfectorServicioAgenda::find()->alias('a');
+        $query->innerJoin(
+            ['pes' => ProfesionalEfectorServicio::tableName()],
+            'pes.id = a.id_profesional_efector_servicio AND pes.deleted_at IS NULL'
+        );
+        $query->innerJoin(
+            ['re' => 'rrhh_efector'],
+            're.id_persona = pes.id_persona AND re.id_efector = pes.id_efector AND re.deleted_at IS NULL'
+        );
+        $query->andWhere([
+            'a.id' => $idAgenda,
+            'a.id_efector' => $idEfector,
+            'a.deleted_at' => null,
+            're.id_rr_hh' => $idRrhh,
+        ]);
+
+        /** @var ProfesionalEfectorServicioAgenda|null $model */
+        $model = $query->one();
 
         return $model;
     }
 
     /**
-     * Agenda del profesional autenticado (mismo efector y mismo id_rr_hh).
-     */
-    public static function findOwnedByRecursoHumano(int $idAgenda, int $idEfector, int $idRrhh): ?Agenda_rrhh
-    {
-        /** @var Agenda_rrhh|null $model */
-        /** @var \yii\db\ActiveQuery $q */
-        $q = Agenda_rrhh::find();
-        $model = $q->where([
-            'id_agenda_rrhh' => $idAgenda,
-            'id_efector' => $idEfector,
-            'id_rr_hh' => $idRrhh,
-        ])->one();
-
-        return $model;
-    }
-
-    /**
-     * @param array $queryParams queryParams de Yii (incl. filtros de {@see Agenda_rrhhBusqueda}, page, per-page)
+     * @param array<string, mixed> $queryParams
      */
     public static function search(array $queryParams, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
     {
-        $search = new Agenda_rrhhBusqueda();
+        $search = new ProfesionalEfectorServicioAgendaBusqueda();
         $dp = $search->search($queryParams);
         $perPage = isset($queryParams['per-page']) ? (int) $queryParams['per-page'] : $defaultPerPage;
         $perPage = min($maxPerPage, max(1, $perPage));
@@ -64,9 +66,6 @@ class ProfesionalEfectorServicioAgendaApiService
         return $dp;
     }
 
-    /**
-     * Listado acotado al RRHH del profesional (ignora id_rr_hh en query si viniera malicioso).
-     */
     public static function searchForRecursoHumano(array $queryParams, int $idRrhh, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
     {
         $queryParams['id_rr_hh'] = $idRrhh;
@@ -74,9 +73,6 @@ class ProfesionalEfectorServicioAgendaApiService
         return self::search($queryParams, $defaultPerPage, $maxPerPage);
     }
 
-    /**
-     * Listado forzando efector y RRHH (staff). Los params no pueden cambiar el ámbito vía id_rr_hh/id_efector en query.
-     */
     public static function searchParaRecursoHumanoEnEfector(
         array $queryParams,
         int $idEfector,
@@ -98,15 +94,15 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($idRrhh <= 0 || $idEfector <= 0) {
             throw new BadRequestHttpException('id_efector e id_rr_hh deben ser válidos.');
         }
-        $re = RrhhEfector::findOne($idRrhh);
-        if ($re === null || (int) $re->id_efector !== $idEfector) {
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($re === null) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector indicado.');
         }
     }
 
     /**
-     * Valida que el servicio asignado pertenezca al RRHH y que el RRHH pertenezca al efector.
-     *
      * @throws BadRequestHttpException
      */
     public static function assertServicioAsignadoParaRecursoHumanoEnEfector(?int $idRrhhServicioAsignado, int $idRrhh, int $idEfector): void
@@ -121,26 +117,66 @@ class ProfesionalEfectorServicioAgendaApiService
         if ((int) $rs->id_rr_hh !== $idRrhh) {
             throw new BadRequestHttpException('El servicio asignado no corresponde a este recurso humano.');
         }
-        $re = RrhhEfector::findOne($idRrhh);
-        if ($re === null || (int) $re->id_efector !== $idEfector) {
+        self::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
+    }
+
+    /**
+     * Obtiene o crea la fila PES coherente con rrhh_servicio en el efector.
+     *
+     * @throws BadRequestHttpException
+     */
+    public static function obtenerOCrearPesParaRrhhServicioEnEfector(int $idRrhhServicio, int $idRrhh, int $idEfector): ProfesionalEfectorServicio
+    {
+        $rs = RrhhServicio::findOne(['id' => $idRrhhServicio, 'deleted_at' => null]);
+        if ($rs === null || (int) $rs->id_rr_hh !== $idRrhh) {
+            throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
+        }
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($re === null) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
         }
+        $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
+            (int) $re->id_persona,
+            $idEfector,
+            (int) $rs->id_servicio
+        );
+        if ($pes === null) {
+            $pes = new ProfesionalEfectorServicio();
+            $pes->id_persona = (int) $re->id_persona;
+            $pes->id_efector = $idEfector;
+            $pes->id_servicio = (int) $rs->id_servicio;
+            $pes->legacy_rrhh_servicio_id = (int) $rs->id;
+            if (!$pes->save()) {
+                throw new BadRequestHttpException('No se pudo crear la asignación profesional-efector-servicio.');
+            }
+        }
+
+        return $pes;
     }
 
     /**
      * @return array<string, mixed>
      */
-    public static function toApiArray(Agenda_rrhh $model): array
+    public static function toApiArray(ProfesionalEfectorServicioAgenda $model): array
     {
-        return $model->toArray(
-            [],
-            ['rrhh', 'rrhh.persona', 'tipo_dia', 'rrhhServicioAsignado']
-        );
+        $row = $model->toArray();
+        $pes = $model->asignacion;
+        if ($pes !== null) {
+            $row['id_profesional_efector_servicio'] = (int) $pes->id;
+            $re = RrhhEfector::find()
+                ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
+                ->one();
+            $row['id_rr_hh'] = $re !== null ? (int) $re->id_rr_hh : null;
+            $row['id_rrhh_servicio_asignado'] = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+            $row['id_agenda_rrhh'] = (int) $model->id;
+        }
+
+        return $row;
     }
 
     /**
-     * Normaliza días enviados como boolean/entero en JSON al enum SI/NO de la BD.
-     *
      * @param array<string, mixed> $data
      * @return array<string, mixed>
      */

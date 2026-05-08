@@ -20,7 +20,6 @@ use common\traits\ParameterQuestionsTrait;
  * @property integer $id_localidad
  * @property string $estado
  *
- * @property AgendaRrhh[] $agendaRrhhs
  * @property Localidades $idLocalidad
  * @property ServiciosEfector[] $serviciosEfectors
  * @property Servicios[] $idServicios
@@ -98,14 +97,6 @@ class Efector extends \yii\db\ActiveRecord
             'id_efector' => '¿En qué centro de salud?',
             'centro_salud' => '¿En qué centro de salud?',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getAgendaRrhhs()
-    {
-        return $this->hasMany(Agenda_Rrhh::className(), ['id_efector' => 'id_efector']);
     }
 
     /**

@@ -34,10 +34,15 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                  'attribute'=>'Agenda',
                  'format'=>'raw',
-                 'value' => function($data) {
-                    return  Html::a('<span class="glyphicon glyphicon-time" aria-hidden="true"></span>', ['agenda-rrhhs/create/', 'id' => $data['id_rr_hh']]);
-                                
-                            }
+                 'value' => static function ($data) {
+                     return Html::tag(
+                         'span',
+                         '<span class="glyphicon glyphicon-time text-muted" aria-hidden="true"></span>',
+                         [
+                             'title' => 'La agenda se configura desde el asistente o la API /api/v1/profesional-agenda.',
+                         ]
+                     );
+                 }
              ],
             [
                  'attribute'=>'Usuario',

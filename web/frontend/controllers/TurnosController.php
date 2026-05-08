@@ -13,8 +13,9 @@ use common\models\busquedas\TurnoLibreBusqueda;
 use common\models\busquedas\TurnoBusqueda;
 use common\models\Consulta;
 use common\models\Turno;
-use common\models\Agenda_rrhh;
 use common\models\AgendaFeriados;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
@@ -231,17 +232,13 @@ class TurnosController extends Controller
         $agregoSegundos = false;
 
         if ($id_servicio and $id_rrhh_servicio_asignado == 0) {
-            // eventos por servicio completo
-            // 1. Buscamos a todos los rrhh del efector con el servicio elegido por el usuario
-            $rrhhServicios = RrhhServicio::find()
-                ->leftJoin('rrhh_efector', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
-                ->andWhere(['rrhh_efector.id_efector' => $id_efector])
-                ->andWhere(['rrhh_servicio.id_servicio' => $id_servicio])
-                ->all();
-            // 2. Las agendas para todos los rrhh
-            $agendas = Agenda_rrhh::find()
-                ->andWhere(['in', 'id_rrhh_servicio_asignado', Yii\helpers\ArrayHelper::getColumn($rrhhServicios, 'id')])
-                ->all();
+            $pesRows = ProfesionalEfectorServicio::findAllActivosPorServicioEfector((int) $id_servicio, (int) $id_efector);
+            $idsPes = array_map(static function (ProfesionalEfectorServicio $p) {
+                return (int) $p->id;
+            }, $pesRows);
+            $agendas = $idsPes !== []
+                ? array_values(ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes))
+                : [];
 
             $agendaDiaSeleccionado = false;
             $horariosAgenda = [];
@@ -276,9 +273,19 @@ class TurnosController extends Controller
 
             $cupoPacientes = count($horariosAgenda) * 5;
         } else {
-            $agenda = Agenda_rrhh::find()
-                ->andWhere(['id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado])
-                ->one();
+            $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                (int) $id_rrhh_servicio_asignado,
+                (int) $id_efector
+            );
+            $agenda = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
+            if ($agenda === null) {
+                $mensajeSinTurnosDisponibles = '<p class="fst-italic ps-5">Sin turnos disponibles.</p>';
+                $ret = ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles]];
+                if ($formatoSlots) {
+                    $ret['results'] = [];
+                }
+                return $ret;
+            }
 
             $formasAtencion = $agenda->formas_atencion;
 

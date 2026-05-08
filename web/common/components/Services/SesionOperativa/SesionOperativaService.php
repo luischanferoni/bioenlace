@@ -5,10 +5,12 @@ namespace common\components\Services\SesionOperativa;
 use Yii;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
-use common\models\Agenda_rrhh;
 use common\models\ConsultasConfiguracion;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
+use common\models\Servicio;
 use common\models\User;
 use webvimark\modules\UserManagement\components\AuthHelper;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
@@ -166,9 +168,19 @@ class SesionOperativaService extends Component
         $nroDiaDeSemanaManiana = $nroDiaDeSemana === 6 ? 0 : $nroDiaDeSemana + 1;
         $columnasAgenda = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
 
-        $agendas = Agenda_rrhh::find()
-            ->andWhere(['in', 'id_rrhh_servicio_asignado', ArrayHelper::getColumn($serviciosDelRrhh, 'id')])
-            ->all();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idsPes = [];
+        if ($idEfector > 0) {
+            foreach ($serviciosDelRrhh as $row) {
+                $pid = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId((int) $row['id'], $idEfector);
+                if ($pid !== null) {
+                    $idsPes[] = $pid;
+                }
+            }
+        }
+        $agendas = $idsPes !== []
+            ? array_values(ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes))
+            : [];
 
         $servicios = [$nroDiaDeSemana => [], ($nroDiaDeSemana + 1) => []];
         foreach ($agendas as $agenda) {
@@ -179,10 +191,17 @@ class SesionOperativaService extends Component
                 continue;
             }
 
+            $pes = $agenda->asignacion;
+            if ($pes === null) {
+                continue;
+            }
+            $servicioModel = Servicio::findOne($pes->id_servicio);
+            $nombreServicio = $servicioModel !== null ? (string) $servicioModel->nombre : '';
+
             $horasDeAgendaHoy = explode(',', (string) $agenda->{$columnasAgenda[$nroDiaDeSemana]});
             $servicios[$nroDiaDeSemana] = [
-                $agenda->rrhhServicioAsignado->id_servicio => [
-                    'nombreServicio' => $agenda->rrhhServicioAsignado->servicio->nombre,
+                $pes->id_servicio => [
+                    'nombreServicio' => $nombreServicio,
                     'horaInicial' => $horasDeAgendaHoy[0] ?? null,
                     'horaFinal' => $horasDeAgendaHoy[count($horasDeAgendaHoy) - 1] ?? null,
                 ],
@@ -190,8 +209,8 @@ class SesionOperativaService extends Component
 
             $horasDeAgendaManiana = explode(',', (string) $agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]});
             $servicios[$nroDiaDeSemana + 1] = [
-                $agenda->rrhhServicioAsignado->id_servicio => [
-                    'nombreServicio' => $agenda->rrhhServicioAsignado->servicio->nombre,
+                $pes->id_servicio => [
+                    'nombreServicio' => $nombreServicio,
                     'horaInicial' => $horasDeAgendaManiana[0] ?? null,
                     'horaFinal' => $horasDeAgendaManiana[count($horasDeAgendaManiana) - 1] ?? null,
                 ],

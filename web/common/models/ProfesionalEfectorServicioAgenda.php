@@ -31,6 +31,7 @@ use yii\db\ActiveRecord;
 class ProfesionalEfectorServicioAgenda extends ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
+    use \common\traits\AgendaHorarioSlotsTrait;
 
     public static function tableName()
     {
@@ -62,12 +63,55 @@ class ProfesionalEfectorServicioAgenda extends ActiveRecord
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['formas_atencion'], 'string', 'max' => 32],
             [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'safe'],
+            [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'validarAlmenosUnDiaHorario', 'skipOnEmpty' => false],
         ];
+    }
+
+    public function validarAlmenosUnDiaHorario(): void
+    {
+        if (
+            (is_null($this->lunes_2) || $this->lunes_2 === '') &&
+            (is_null($this->martes_2) || $this->martes_2 === '') &&
+            (is_null($this->miercoles_2) || $this->miercoles_2 === '') &&
+            (is_null($this->jueves_2) || $this->jueves_2 === '') &&
+            (is_null($this->viernes_2) || $this->viernes_2 === '') &&
+            (is_null($this->sabado_2) || $this->sabado_2 === '') &&
+            (is_null($this->domingo_2) || $this->domingo_2 === '')
+        ) {
+            $this->addError('formas_atencion', 'La agenda para este servicio está vacía');
+        }
     }
 
     public function getAsignacion()
     {
         return $this->hasOne(ProfesionalEfectorServicio::class, ['id' => 'id_profesional_efector_servicio']);
+    }
+
+    /**
+     * @param int[] $idsProfesionalEfectorServicio
+     * @return array<int, self> indexado por id_profesional_efector_servicio
+     */
+    public static function findPorIdsProfesionalEfectorServicio(array $idsProfesionalEfectorServicio): array
+    {
+        if ($idsProfesionalEfectorServicio === []) {
+            return [];
+        }
+
+        return static::find()
+            ->andWhere(['in', 'id_profesional_efector_servicio', $idsProfesionalEfectorServicio])
+            ->andWhere(['deleted_at' => null])
+            ->indexBy('id_profesional_efector_servicio')
+            ->all();
+    }
+
+    public static function findActivaPorProfesionalEfectorServicio(int $idPes): ?self
+    {
+        /** @var self|null $row */
+        $row = static::find()
+            ->where(['id_profesional_efector_servicio' => $idPes, 'deleted_at' => null])
+            ->one();
+
+        return $row;
     }
 }
 

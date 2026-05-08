@@ -2,8 +2,9 @@
 
 namespace common\components\Services\SesionOperativa;
 
-use common\models\Agenda_rrhh;
 use common\models\ConsultasConfiguracion;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\Persona;
 use common\models\RrhhEfector;
 use common\models\RrhhLaboral;
@@ -96,9 +97,8 @@ class SesionOperativaProfesionalHabilitacionService extends Component
 
             if ($candidatosClinicos !== []) {
                 foreach ($candidatosClinicos as $rs) {
-                    $ag = Agenda_rrhh::findActive()
-                        ->andWhere(['id_rrhh_servicio_asignado' => $rs->id])
-                        ->one();
+                    $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId((int) $rs->id, $idEfector);
+                    $ag = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
                     if ($ag === null) {
                         continue;
                     }
@@ -109,7 +109,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                     $validServicios[] = $rs;
                 }
 
-                if ($agendasParaValidar !== [] && !Agenda_rrhh::validarGrupodeAgendas($agendasParaValidar)) {
+                if ($agendasParaValidar !== [] && !ProfesionalEfectorServicioAgenda::validarGrupoSinSolapamientoEntreAgendas($agendasParaValidar)) {
                     $problemas[] = [
                         'id_efector' => $idEfector,
                         'nombre' => $nombreEfector,
@@ -260,7 +260,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
         return ($servicioEfector !== null && $servicioEfector->deleted_at === null) || $esAdminEfector;
     }
 
-    private function agendaCompletaParaServicio(Servicio $servicio, Agenda_rrhh $ag): bool
+    private function agendaCompletaParaServicio(Servicio $servicio, ProfesionalEfectorServicioAgenda $ag): bool
     {
         if ($ag->formas_atencion === null || $ag->formas_atencion === '') {
             return false;
@@ -272,7 +272,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
         return $this->agendaTieneAlMenosUnDiaConHorario($ag);
     }
 
-    private function agendaTieneAlMenosUnDiaConHorario(Agenda_rrhh $ag): bool
+    private function agendaTieneAlMenosUnDiaConHorario(ProfesionalEfectorServicioAgenda $ag): bool
     {
         $cols = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
         foreach ($cols as $col) {

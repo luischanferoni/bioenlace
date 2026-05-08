@@ -13,7 +13,9 @@ use common\models\Efector;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\Persona;
-use common\models\Agenda_rrhh;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\Servicio;
 use Firebase\JWT\JWT;
 
 class SiteController extends Controller
@@ -410,34 +412,50 @@ class SiteController extends Controller
         $nroDiaDeSemana = date('N') - 1;
         $nroDiaDeSemanaManiana = $nroDiaDeSemana == 6 ? 0 : $nroDiaDeSemana + 1;
         $columnasAgenda = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
-        $agendas = Agenda_rrhh::find()
-            ->andWhere(['in', 'id_rrhh_servicio_asignado', ArrayHelper::getColumn($serviciosDelRrhh, 'id')])
-            ->all();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idsPes = [];
+        if ($idEfector > 0) {
+            foreach ($serviciosDelRrhh as $row) {
+                $pid = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId((int) $row['id'], $idEfector);
+                if ($pid !== null) {
+                    $idsPes[] = $pid;
+                }
+            }
+        }
+        $agendas = $idsPes !== []
+            ? array_values(ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes))
+            : [];
 
         $servicios = [$nroDiaDeSemana => [], ($nroDiaDeSemana + 1) => []];
         foreach ($agendas as $agenda) {
-            if (($agenda->{$columnasAgenda[$nroDiaDeSemana]} == null || $agenda->{$columnasAgenda[$nroDiaDeSemana]} == "")
-                && ($agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]} == null || $agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]} == "")
+            if (($agenda->{$columnasAgenda[$nroDiaDeSemana]} == null || $agenda->{$columnasAgenda[$nroDiaDeSemana]} == '')
+                && ($agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]} == null || $agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]} == '')
             ) {
                 continue;
             }
 
-            $horasDeAgendaHoy = explode(",", $agenda->{$columnasAgenda[$nroDiaDeSemana]});
+            $pes = $agenda->asignacion;
+            if ($pes === null) {
+                continue;
+            }
+            $servicioModel = Servicio::findOne($pes->id_servicio);
+            $nombreServicio = $servicioModel !== null ? (string) $servicioModel->nombre : '';
+
+            $horasDeAgendaHoy = explode(',', (string) $agenda->{$columnasAgenda[$nroDiaDeSemana]});
             $servicios[$nroDiaDeSemana] = [
-                $agenda->rrhhServicioAsignado->id_servicio => [
-                    'nombreServicio' => $agenda->rrhhServicioAsignado->servicio->nombre,
+                $pes->id_servicio => [
+                    'nombreServicio' => $nombreServicio,
                     'horaInicial' => $horasDeAgendaHoy[0],
                     'horaFinal' => $horasDeAgendaHoy[count($horasDeAgendaHoy) - 1],
-                ]
+                ],
             ];
-            // Sumo las de mañana por las dudas haya una agenda con horario corrido desde un dia al otro
-            $horasDeAgendaManiana = explode(",", $agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]});
+            $horasDeAgendaManiana = explode(',', (string) $agenda->{$columnasAgenda[$nroDiaDeSemanaManiana]});
             $servicios[$nroDiaDeSemana + 1] = [
-                $agenda->rrhhServicioAsignado->id_servicio => [
-                    'nombreServicio' => $agenda->rrhhServicioAsignado->servicio->nombre,
+                $pes->id_servicio => [
+                    'nombreServicio' => $nombreServicio,
                     'horaInicial' => $horasDeAgendaManiana[0],
                     'horaFinal' => $horasDeAgendaManiana[count($horasDeAgendaManiana) - 1],
-                ]
+                ],
             ];
         }
 

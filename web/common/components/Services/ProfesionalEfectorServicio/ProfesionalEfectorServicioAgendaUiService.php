@@ -2,7 +2,6 @@
 
 namespace common\components\Services\ProfesionalEfectorServicio;
 
-use common\models\Agenda_rrhh;
 use common\models\Condiciones_laborales;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
 use common\models\ProfesionalEfectorServicioAgenda;
@@ -51,7 +50,6 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('Este servicio no admite agenda de turnos; no corresponde abrir la configuración de agenda.');
         }
 
-        /** @var \yii\db\ActiveQuery $rrhhServicioQ */
         $rrhhServicioQ = RrhhServicio::find();
         $rrhhServicio = $rrhhServicioQ
             ->where(['id_rr_hh' => $idRrHh, 'id_servicio' => $idServicio])
@@ -64,26 +62,30 @@ final class ProfesionalEfectorServicioAgendaUiService
 
         $out['id_servicio'] = (string) $idServicio;
 
-        /** @var \yii\db\ActiveQuery $agendaQ */
-        $agenda = null;
-
-        /** @var ProfesionalEfectorServicioRecord|null $pes */
-        $pes = ProfesionalEfectorServicioRecord::findActive()
-            ->where(['legacy_rrhh_servicio_id' => (int) $rrhhServicio->id, 'deleted_at' => null])
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->one();
-        if ($pes !== null) {
-            /** @var ProfesionalEfectorServicioAgenda|null $agenda */
-            $agenda = ProfesionalEfectorServicioAgenda::findActive()
-                ->where(['id_profesional_efector_servicio' => (int) $pes->id, 'deleted_at' => null])
-                ->one();
+        if ($re === null) {
+            return $out;
         }
-        if ($agenda === null) {
-            $agendaQ = Agenda_rrhh::find();
-            $agenda = $agendaQ
-                ->where(['id_rrhh_servicio_asignado' => $rrhhServicio->id])
-                ->andWhere(['deleted_at' => null])
-                ->one();
+
+        $pes = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+            (int) $re->id_persona,
+            $idEfector,
+            $idServicio
+        );
+        if ($pes === null) {
+            $pes = new ProfesionalEfectorServicioRecord();
+            $pes->id_persona = (int) $re->id_persona;
+            $pes->id_efector = $idEfector;
+            $pes->id_servicio = $idServicio;
+            $pes->legacy_rrhh_servicio_id = (int) $rrhhServicio->id;
+            if (!$pes->save()) {
+                return $out;
+            }
         }
+
+        $agenda = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id);
 
         if ($agenda !== null) {
             $out['cupo_pacientes'] = (string) $agenda->cupo_pacientes;
@@ -94,7 +96,6 @@ final class ProfesionalEfectorServicioAgendaUiService
             }
         }
 
-        /** @var \yii\db\ActiveQuery $laboralQ */
         $laboralQ = RrhhLaboral::find();
         $laboral = $laboralQ
             ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
@@ -127,7 +128,6 @@ final class ProfesionalEfectorServicioAgendaUiService
         self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
         $out['id_rr_hh'] = (string) $idRrHh;
 
-        /** @var \yii\db\ActiveQuery $laboralQ */
         $laboralQ = RrhhLaboral::find();
         $laboral = $laboralQ
             ->where(['id_rr_hh' => $idRrHh, 'deleted_at' => null])
@@ -168,7 +168,6 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new NotFoundHttpException('Servicio inexistente.');
         }
 
-        /** @var \yii\db\ActiveQuery $rrhhServicioQ */
         $rrhhServicioQ = RrhhServicio::find();
         $rrhhServicio = $rrhhServicioQ
             ->where(['id_rr_hh' => $idRrHh, 'id_servicio' => $idServicio])
@@ -183,24 +182,18 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('Este servicio no admite agenda de turnos; no se puede guardar configuración de agenda.');
         }
 
-        /** @var \yii\db\ActiveQuery $agendaQ */
-        $agendaLegacy = null;
-        $agendaLegacyQ = Agenda_rrhh::find();
-        $agendaLegacy = $agendaLegacyQ
-            ->where(['id_rrhh_servicio_asignado' => $rrhhServicio->id])
-            ->andWhere(['deleted_at' => null])
-            ->one();
-
         $rrhhEfector = RrhhEfector::find()
             ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->one();
         if ($rrhhEfector === null) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
         }
-        /** @var ProfesionalEfectorServicioRecord|null $pes */
-        $pes = ProfesionalEfectorServicioRecord::find()
-            ->where(['legacy_rrhh_servicio_id' => (int) $rrhhServicio->id, 'deleted_at' => null])
-            ->one();
+
+        $pes = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+            (int) $rrhhEfector->id_persona,
+            $idEfector,
+            $idServicio
+        );
         if ($pes === null) {
             $pes = new ProfesionalEfectorServicioRecord();
             $pes->id_persona = (int) $rrhhEfector->id_persona;
@@ -212,22 +205,7 @@ final class ProfesionalEfectorServicioAgendaUiService
             }
         }
 
-        /** @var ProfesionalEfectorServicioAgenda|null $agendaNew */
-        $agendaNew = ProfesionalEfectorServicioAgenda::findActive()
-            ->where(['id_profesional_efector_servicio' => (int) $pes->id, 'deleted_at' => null])
-            ->one();
-
-        if ($agendaLegacy === null) {
-            $agendaLegacy = new Agenda_rrhh();
-            $agendaLegacy->id_rrhh_servicio_asignado = $rrhhServicio->id;
-            $agendaLegacy->id_efector = $idEfector;
-        }
-        $agendaLegacy->load($post, '');
-        $agendaLegacy->id_rrhh_servicio_asignado = $rrhhServicio->id;
-        if (empty($agendaLegacy->id_efector)) {
-            $agendaLegacy->id_efector = $idEfector;
-        }
-
+        $agendaNew = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id);
         if ($agendaNew === null) {
             $agendaNew = new ProfesionalEfectorServicioAgenda();
             $agendaNew->id_profesional_efector_servicio = (int) $pes->id;
@@ -239,26 +217,11 @@ final class ProfesionalEfectorServicioAgendaUiService
             $agendaNew->id_efector = (int) $idEfector;
         }
 
-        $tx = Yii::$app->db->beginTransaction();
-        try {
-            if (!$agendaLegacy->validate()) {
-                throw new BadRequestHttpException(implode(' ', $agendaLegacy->getFirstErrors()));
-            }
-            if (!$agendaNew->validate()) {
-                throw new BadRequestHttpException(implode(' ', $agendaNew->getFirstErrors()));
-            }
-
-            if (!$agendaLegacy->save(false)) {
-                throw new \RuntimeException('No se pudo guardar la agenda.');
-            }
-            if (!$agendaNew->save(false)) {
-                throw new \RuntimeException('No se pudo guardar la agenda (nuevo modelo).');
-            }
-
-            $tx->commit();
-        } catch (\Throwable $e) {
-            $tx->rollBack();
-            throw $e;
+        if (!$agendaNew->validate()) {
+            throw new BadRequestHttpException(implode(' ', $agendaNew->getFirstErrors()));
+        }
+        if (!$agendaNew->save(false)) {
+            throw new \RuntimeException('No se pudo guardar la agenda.');
         }
 
         return ['message' => 'Agenda guardada.'];
@@ -286,7 +249,6 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('Condición laboral inválida.');
         }
 
-        /** @var \yii\db\ActiveQuery $laboralQ */
         $laboralQ = RrhhLaboral::find();
         $laboral = $laboralQ
             ->where([
@@ -321,7 +283,6 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('No hay efector en sesión.');
         }
 
-        /** @var \yii\db\ActiveQuery $reQ */
         $reQ = RrhhEfector::find();
         $re = $reQ
             ->where([

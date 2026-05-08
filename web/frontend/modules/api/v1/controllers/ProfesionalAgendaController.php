@@ -10,12 +10,12 @@ use yii\web\NotFoundHttpException;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\UiScreenService;
-use common\models\Agenda_rrhh;
+use common\models\ProfesionalEfectorServicioAgenda;
 
 /**
- * Agenda profesional (día operativo) y CRUD de agendas laborales por servicio ({@see Agenda_rrhh}).
+ * Agenda profesional (día operativo) y CRUD de agendas laborales por servicio ({@see ProfesionalEfectorServicioAgenda}).
  *
- * **Modelo:** 1 efector → 1 RRHH → N servicios (`rrhh_servicio`) → **1 agenda por servicio** (`id_rrhh_servicio_asignado`).
+ * **Modelo:** 1 efector → PES (`profesional_efector_servicio`) → **1 agenda** por asignación.
  *
  * **Listado siempre:** el detalle por ítem viene en cada fila del listado; no hay acciones `ver-*`.
  *
@@ -146,7 +146,7 @@ class ProfesionalAgendaController extends BaseController
      * @action_name Actualizar mi agenda (servicio)
      * @entity Agendas
      * @tags agenda,profesional,actualizar,editar
-     * @param int $id id_agenda_rrhh
+     * @param int $id id `profesional_efector_servicio_agenda` (expuesto también como `id_agenda_rrhh` en JSON de respuesta)
      */
     public function actionActualizar($id)
     {
@@ -160,7 +160,7 @@ class ProfesionalAgendaController extends BaseController
      * @entity Agendas
      * @tags agenda,staff,actualizar,editar
      * @keywords actualizar agenda profesional, editar horarios por servicio
-     * @param int $id id_agenda_rrhh
+     * @param int $id id `profesional_efector_servicio_agenda`
      */
     public function actionActualizarParaRecurso($id)
     {
@@ -173,7 +173,7 @@ class ProfesionalAgendaController extends BaseController
      * @action_name Eliminar mi agenda (servicio)
      * @entity Agendas
      * @tags agenda,profesional,eliminar,baja
-     * @param int $id id_agenda_rrhh
+     * @param int $id id `profesional_efector_servicio_agenda`
      */
     public function actionEliminar($id)
     {
@@ -187,7 +187,7 @@ class ProfesionalAgendaController extends BaseController
      * @entity Agendas
      * @tags agenda,staff,eliminar,baja
      * @keywords eliminar agenda profesional, baja agenda por servicio
-     * @param int $id id_agenda_rrhh
+     * @param int $id id `profesional_efector_servicio_agenda`
      */
     public function actionEliminarParaRecurso($id)
     {
@@ -281,16 +281,25 @@ class ProfesionalAgendaController extends BaseController
 
         unset($body['id_agenda_rrhh']);
 
-        $model = new Agenda_rrhh();
-        $model->id_efector = $idEfector;
-        $model->id_rr_hh = $idRrhh;
-        $model->load($body, '');
-
+        $idRrsa = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
         ProfesionalEfectorServicioAgendaApiService::assertServicioAsignadoParaRecursoHumanoEnEfector(
-            self::nullablePositiveInt($model->id_rrhh_servicio_asignado),
+            $idRrsa,
             $idRrhh,
             $idEfector
         );
+        if ($idRrsa === null) {
+            return $this->error('id_rrhh_servicio_asignado es obligatorio.', ['id_rrhh_servicio_asignado' => ['Requerido']], 422);
+        }
+        $pes = ProfesionalEfectorServicioAgendaApiService::obtenerOCrearPesParaRrhhServicioEnEfector($idRrsa, $idRrhh, $idEfector);
+        if (ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id) !== null) {
+            return $this->error('Ya existe una agenda para este servicio.', [], 422);
+        }
+
+        $model = new ProfesionalEfectorServicioAgenda();
+        unset($body['id_rrhh_servicio_asignado']);
+        $model->load($body, '');
+        $model->id_profesional_efector_servicio = (int) $pes->id;
+        $model->id_efector = $idEfector;
 
         if (!$model->validate()) {
             return $this->error('Validación fallida.', $model->errors, 422);
@@ -324,19 +333,13 @@ class ProfesionalAgendaController extends BaseController
         }
 
         $body = $this->normalizeAgendaRequestBody();
-        unset($body['id_agenda_rrhh'], $body['id_efector'], $body['id_rr_hh']);
+        unset($body['id_agenda_rrhh'], $body['id_efector'], $body['id_rr_hh'], $body['id_rrhh_servicio_asignado']);
 
         $lockedEfector = (int) $model->id_efector;
-        $lockedRrhh = (int) $model->id_rr_hh;
+        $lockedPes = (int) $model->id_profesional_efector_servicio;
         $model->load($body, '');
         $model->id_efector = $lockedEfector;
-        $model->id_rr_hh = $lockedRrhh;
-
-        ProfesionalEfectorServicioAgendaApiService::assertServicioAsignadoParaRecursoHumanoEnEfector(
-            self::nullablePositiveInt($model->id_rrhh_servicio_asignado),
-            $lockedRrhh,
-            $idEfector
-        );
+        $model->id_profesional_efector_servicio = $lockedPes;
 
         if (!$model->validate()) {
             return $this->error('Validación fallida.', $model->errors, 422);

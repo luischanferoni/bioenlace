@@ -79,7 +79,6 @@ final class ProfesionalEfectorServicioAgendaUiService
             $pes->id_persona = (int) $re->id_persona;
             $pes->id_efector = $idEfector;
             $pes->id_servicio = $idServicio;
-            $pes->legacy_rrhh_servicio_id = (int) $rrhhServicio->id;
             if (!$pes->save()) {
                 return $out;
             }
@@ -199,7 +198,6 @@ final class ProfesionalEfectorServicioAgendaUiService
             $pes->id_persona = (int) $rrhhEfector->id_persona;
             $pes->id_efector = (int) $idEfector;
             $pes->id_servicio = (int) $idServicio;
-            $pes->legacy_rrhh_servicio_id = (int) $rrhhServicio->id;
             if (!$pes->save()) {
                 throw new \RuntimeException('No se pudo crear la asignación profesional-efector-servicio.');
             }

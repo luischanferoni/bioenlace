@@ -30,6 +30,8 @@ class TurnoPersistService
             $model->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
         }
 
+        $model->hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded();
+
         $this->assertTeleconsultaNuevoTurno($model);
 
         if (!$model->id_efector && $ctx->idEfectorSesion) {

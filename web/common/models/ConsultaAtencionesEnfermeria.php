@@ -60,7 +60,22 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
             }
         }
         if ((int) $this->id_rrhh_servicio > 0) {
-            $id = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $this->id_rrhh_servicio);
+            $idEfector = 0;
+            if ($this->id_consulta) {
+                $cEf = Consulta::findOne($this->id_consulta);
+                if ($cEf && (int) $cEf->id_efector > 0) {
+                    $idEfector = (int) $cEf->id_efector;
+                }
+            }
+            $id = $idEfector > 0
+                ? ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                    (int) $this->id_rrhh_servicio,
+                    $idEfector
+                )
+                : null;
+            if ($id === null) {
+                $id = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $this->id_rrhh_servicio);
+            }
             if ($id !== null) {
                 $this->id_profesional_efector_servicio = $id;
                 return;

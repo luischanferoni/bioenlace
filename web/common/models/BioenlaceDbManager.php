@@ -12,6 +12,43 @@ class BioenlaceDbManager extends DbManager
     public $efectorAssignmentTable;
 
     /**
+     * Cuando {@see $efectorAssignmentTable} es `profesional_efector_servicio`, los permisos/roles
+     * por servicio se resuelven igual que antes (join `servicios.item_name`) pero el vínculo persona–efector–servicio
+     * pasa por PES; el filtro `id_rr_hh` de sesión se aplica vía `rrhh_efector`.
+     */
+    protected function isProfesionalEfectorServicioAssignmentTable(): bool
+    {
+        $t = (string) $this->efectorAssignmentTable;
+        $t = str_replace(['{{%', '}}'], '', $t);
+
+        return strpos($t, 'profesional_efector_servicio') !== false;
+    }
+
+    /**
+     * @param Query $query consulta que ya incluye alias `a` = {@see $efectorAssignmentTable}
+     */
+    protected function joinRrhhEfectorForAssignmentQuery(Query $query): void
+    {
+        if (!$this->isProfesionalEfectorServicioAssignmentTable()) {
+            return;
+        }
+        $query->innerJoin(
+            ['re' => 'rrhh_efector'],
+            '{{re}}.[[id_persona]] = {{a}}.[[id_persona]]'
+            . ' AND {{re}}.[[id_efector]] = {{a}}.[[id_efector]]'
+            . ' AND {{re}}.[[deleted_at]] IS NULL'
+        );
+    }
+
+    /**
+     * @return int|string|null id_rr_hh en sesión
+     */
+    protected function sessionIdRrhh()
+    {
+        return Yii::$app->user->getIdRecursoHumano();
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function getPermissionsByUser($userId)
@@ -68,11 +105,16 @@ class BioenlaceDbManager extends DbManager
     protected function getDirectPermissionsByRrhh()
     {
         $query = (new Query())->select('b.*')
-            ->from(['a' => $this->efectorAssignmentTable, 'b' => $this->itemTable, 'c' => 'servicios'])
-            ->where('{{c}}.[[item_name]]={{b}}.[[name]]')
-            ->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]')
-            ->andWhere(['{{a}}.id_rr_hh' => Yii::$app->user->getIdRecursoHumano()])
-            ->andWhere(['{{b}}.type' => Item::TYPE_PERMISSION])
+            ->from(['a' => $this->efectorAssignmentTable, 'b' => $this->itemTable, 'c' => 'servicios']);
+        $this->joinRrhhEfectorForAssignmentQuery($query);
+        $query->where('{{c}}.[[item_name]]={{b}}.[[name]]')
+            ->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]');
+        if ($this->isProfesionalEfectorServicioAssignmentTable()) {
+            $query->andWhere(['re.id_rr_hh' => $this->sessionIdRrhh()]);
+        } else {
+            $query->andWhere(['{{a}}.id_rr_hh' => $this->sessionIdRrhh()]);
+        }
+        $query->andWhere(['{{b}}.type' => Item::TYPE_PERMISSION])
             ->andWhere('{{a}}.deleted_at IS NULL')
             ->groupBy(['{{c}}.[[item_name]]']);
        
@@ -166,10 +208,15 @@ class BioenlaceDbManager extends DbManager
     protected function getInheritedPermissionsByRrhh()
     {
         $query = (new Query())->select('c.item_name')
-            ->from(['a' => $this->efectorAssignmentTable, 'c' => 'servicios'])
-            ->where(['a.id_rr_hh' => Yii::$app->user->getIdRecursoHumano()])
-            ->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]') 
-            ->andWhere('{{a}}.deleted_at IS NULL')           
+            ->from(['a' => $this->efectorAssignmentTable, 'c' => 'servicios']);
+        $this->joinRrhhEfectorForAssignmentQuery($query);
+        if ($this->isProfesionalEfectorServicioAssignmentTable()) {
+            $query->where(['re.id_rr_hh' => $this->sessionIdRrhh()]);
+        } else {
+            $query->where(['a.id_rr_hh' => $this->sessionIdRrhh()]);
+        }
+        $query->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]')
+            ->andWhere('{{a}}.deleted_at IS NULL')
             ->groupBy(['{{c}}.[[item_name]]']);
         //echo $query->createCommand()->getRawSql();die;
         $childrenList = $this->getChildrenList();
@@ -310,12 +357,17 @@ class BioenlaceDbManager extends DbManager
     {
         $roles = [];
         $query = (new Query())->select('b.*')
-            ->from(['a' => $this->efectorAssignmentTable, 'b' => $this->itemTable, 'c' => 'servicios'])            
-            ->where('{{c}}.[[item_name]]={{b}}.[[name]]')
+            ->from(['a' => $this->efectorAssignmentTable, 'b' => $this->itemTable, 'c' => 'servicios']);
+        $this->joinRrhhEfectorForAssignmentQuery($query);
+        $query->where('{{c}}.[[item_name]]={{b}}.[[name]]')
             ->andWhere('{{a}}.id_servicio={{c}}.[[id_servicio]]')
-            ->andWhere('{{a}}.deleted_at IS NULL')
-            ->andWhere(['a.id_rr_hh' => Yii::$app->user->getIdRecursoHumano()])
-            ->andWhere(['b.type' => Item::TYPE_ROLE])
+            ->andWhere('{{a}}.deleted_at IS NULL');
+        if ($this->isProfesionalEfectorServicioAssignmentTable()) {
+            $query->andWhere(['re.id_rr_hh' => $this->sessionIdRrhh()]);
+        } else {
+            $query->andWhere(['a.id_rr_hh' => $this->sessionIdRrhh()]);
+        }
+        $query->andWhere(['b.type' => Item::TYPE_ROLE])
             ->groupBy(['{{c}}.[[item_name]]']);
 
         foreach ($query->all($this->db) as $row) {

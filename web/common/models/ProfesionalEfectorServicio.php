@@ -18,7 +18,7 @@ use common\models\ProfesionalEfectorServicioAgenda;
  * @property int|null $id_profesional_salud
  * @property int $id_efector
  * @property int $id_servicio
- * @property int|null $legacy_rrhh_servicio_id
+ * @property int|null $legacy_rrhh_servicio_id puente opcional en BD (backfill); el código no lo persiste ni lo exige para resolver PES
  * @property string $created_at
  * @property string $updated_at
  * @property string|null $deleted_at
@@ -133,51 +133,51 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Compat.: clientes que envían `id_rrhh_servicio_asignado` (`rrhh_servicio.id`) se mapean a PES en este efector.
+     * Compat.: `id_rrhh_servicio_asignado` (`rrhh_servicio.id`) → PES en este efector.
+     * Prioriza persona+efector+servicio; `legacy_rrhh_servicio_id` en fila PES solo como respaldo en BD.
      */
     public static function resolveProfesionalEfectorServicioIdFromRrhhServicioId(int $idRrhhServicio, int $idEfector): ?int
     {
         if ($idRrhhServicio <= 0 || $idEfector <= 0) {
             return null;
         }
-        $fromLegacy = static::findIdByLegacyRrhhServicioId($idRrhhServicio);
-        if ($fromLegacy !== null) {
-            return $fromLegacy;
-        }
         $rs = RrhhServicio::findOne(['id' => $idRrhhServicio, 'deleted_at' => null]);
-        if ($rs === null) {
-            return null;
-        }
-        $re = RrhhEfector::find()
-            ->where(['id_rr_hh' => $rs->id_rr_hh, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->one();
-        if ($re === null) {
-            return null;
+        if ($rs !== null) {
+            $re = RrhhEfector::find()
+                ->where(['id_rr_hh' => $rs->id_rr_hh, 'id_efector' => $idEfector, 'deleted_at' => null])
+                ->one();
+            if ($re !== null) {
+                $idPes = static::findIdByPersonaEfectorServicio((int) $re->id_persona, $idEfector, (int) $rs->id_servicio);
+                if ($idPes !== null) {
+                    return $idPes;
+                }
+            }
         }
 
-        return static::findIdByPersonaEfectorServicio((int) $re->id_persona, $idEfector, (int) $rs->id_servicio);
+        return static::findIdByLegacyRrhhServicioId($idRrhhServicio);
     }
 
     /**
-     * `turnos.id_rrhh_servicio_asignado` mientras exista vínculo rrhh_servicio (compat. filas sin PES en turno).
+     * `rrhh_servicio.id` para APIs que aún exponen `id_rrhh_servicio_asignado`.
+     * Resuelve por persona+efector+servicio; columna `legacy_rrhh_servicio_id` solo si falta vínculo.
      */
     public function resolveRrhhServicioAsignadoIdForTurnoCompat(): ?int
     {
-        if ($this->legacy_rrhh_servicio_id) {
-            return (int) $this->legacy_rrhh_servicio_id;
-        }
         $re = RrhhEfector::find()
             ->where(['id_persona' => $this->id_persona, 'id_efector' => $this->id_efector, 'deleted_at' => null])
             ->one();
         if ($re === null) {
-            return null;
+            return $this->legacy_rrhh_servicio_id ? (int) $this->legacy_rrhh_servicio_id : null;
         }
         $rs = RrhhServicio::find()
             ->where(['id_rr_hh' => $re->id_rr_hh, 'id_servicio' => $this->id_servicio, 'deleted_at' => null])
             ->orderBy(['id' => SORT_ASC])
             ->one();
+        if ($rs) {
+            return (int) $rs->id;
+        }
 
-        return $rs ? (int) $rs->id : null;
+        return $this->legacy_rrhh_servicio_id ? (int) $this->legacy_rrhh_servicio_id : null;
     }
 
     /**
@@ -212,7 +212,21 @@ class ProfesionalEfectorServicio extends ActiveRecord
             ->where(['id_rr_hh' => $idRrhh, 'deleted_at' => null])
             ->orderBy(['id' => SORT_ASC])
             ->one();
-        return $rs ? static::findIdByLegacyRrhhServicioId((int) $rs->id) : null;
+        if ($rs === null) {
+            return null;
+        }
+        $res = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrhh, 'deleted_at' => null])
+            ->orderBy(['id_efector' => SORT_ASC, 'id_persona' => SORT_ASC])
+            ->all();
+        foreach ($res as $re) {
+            $idPes = static::findIdByPersonaEfectorServicio((int) $re->id_persona, (int) $re->id_efector, (int) $rs->id_servicio);
+            if ($idPes !== null) {
+                return $idPes;
+            }
+        }
+
+        return static::findIdByLegacyRrhhServicioId((int) $rs->id);
     }
 
     /**
@@ -241,20 +255,9 @@ class ProfesionalEfectorServicio extends ActiveRecord
             return null;
         }
         if ($idEfector) {
-            $rs = RrhhServicio::find()
-                ->alias('rs')
-                ->innerJoin(
-                    '{{%rrhh_efector}} re',
-                    're.id_rr_hh = rs.id_rr_hh AND re.id_efector = :ef',
-                    [':ef' => $idEfector]
-                )
-                ->where(['rs.id' => $idAsignado, 'rs.deleted_at' => null, 're.deleted_at' => null])
-                ->one();
-            if ($rs) {
-                $id = static::findIdByLegacyRrhhServicioId((int) $rs->id);
-                if ($id !== null) {
-                    return $id;
-                }
+            $id = static::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idAsignado, $idEfector);
+            if ($id !== null) {
+                return $id;
             }
         }
         $fromLegacy = static::findIdByLegacyRrhhServicioId($idAsignado);
@@ -278,7 +281,9 @@ class ProfesionalEfectorServicio extends ActiveRecord
         if (!$rs) {
             return null;
         }
-        return static::findIdByLegacyRrhhServicioId((int) $rs->id);
+        $idPes = static::findIdByPersonaEfectorServicio((int) $re->id_persona, $idEfector, (int) $rs->id_servicio);
+
+        return $idPes ?? static::findIdByLegacyRrhhServicioId((int) $rs->id);
     }
 }
 

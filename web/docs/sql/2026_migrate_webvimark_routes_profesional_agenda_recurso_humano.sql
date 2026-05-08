@@ -1,8 +1,15 @@
 -- =============================================================================
--- Migración Webvimark (UserManagement / Yii2 RBAC): renombrar rutas API en auth_item
---   /api/agenda/*           -> /api/profesional-agenda/*
---   /api/rrhh/*             -> /api/recurso-humano/*
---   /api/agenda/*-agenda-flow (intents) -> /api/profesional-agenda/*-agenda-flow
+-- Migración Webvimark (UserManagement / Yii2 RBAC):
+--
+--   A) API — renombrar rutas en auth_item
+--      /api/agenda/*           -> /api/profesional-agenda/*
+--      /api/rrhh/*             -> /api/recurso-humano/*
+--      /api/agenda/*-agenda-flow (intents) -> /api/profesional-agenda/*-agenda-flow
+--
+--   B) Web frontend — tras eliminar el CRUD Yii `agenda-rrhhs` del repo, consolidar
+--      permisos RBAC que apunten a `/frontend/agenda-rrhhs/*` en la ruta ya usada
+--      por el menú “Agenda laboral”: `/frontend/personas/indexpersonarrhh`
+--      ({@see web/frontend/config/params.php} `path` + `action->uniqueId`).
 --
 -- Tablas típicas del módulo: auth_item, auth_item_child, auth_item_group, auth_rule
 -- (+ auth_assignment: asignación usuario ↔ rol/permiso; referencia auth_item.name).
@@ -77,6 +84,58 @@ UPDATE auth_item SET name = '/api/recurso-humano/options' WHERE name = '/api/rrh
 COMMIT;
 
 -- =============================================================================
+-- Web frontend: permisos legacy `agenda-rrhhs` -> listado RRHH
+--
+-- El CRUD de vistas `agenda-rrhhs` fue retirado del código; si en `auth_item` quedaron
+-- rutas `/frontend/agenda-rrhhs/...`, los usuarios/roles perderían acceso coherente
+-- hasta migrar referencias.
+--
+-- Convención en Bioenlace: type 3 = ruta (ver `limpieza_webvimark_rbac_mariadb.sql`).
+--
+-- PREVIEW (opcional):
+--   SELECT name, type FROM auth_item WHERE name LIKE '/frontend/agenda-rrhhs/%' ORDER BY name;
+--   SELECT * FROM auth_item_child WHERE child LIKE '/frontend/agenda-rrhhs/%';
+--   SELECT * FROM auth_assignment WHERE item_name LIKE '/frontend/agenda-rrhhs/%';
+--
+-- Si en tu base las rutas web **no** usan prefijo `/frontend`, no ejecutes este bloque
+-- tal cual: duplicá los pasos reemplazando
+--   `/frontend/agenda-rrhhs/%`  ->  `/agenda-rrhhs/%`
+--   `/frontend/personas/indexpersonarrhh`  ->  `/personas/indexpersonarrhh`
+-- =============================================================================
+
+START TRANSACTION;
+
+-- Destino: misma acción que el ítem de menú “Agenda laboral” / listado RRHH
+INSERT INTO `auth_item` (`name`, `type`, `description`, `created_at`, `updated_at`)
+SELECT
+  '/frontend/personas/indexpersonarrhh',
+  COALESCE((SELECT MIN(`type`) FROM `auth_item` WHERE `name` LIKE '/frontend/agenda-rrhhs/%'), 3),
+  'Listado RRHH / agenda laboral (sustituye permisos agenda-rrhhs)',
+  UNIX_TIMESTAMP(),
+  UNIX_TIMESTAMP()
+WHERE NOT EXISTS (SELECT 1 FROM `auth_item` WHERE `name` = '/frontend/personas/indexpersonarrhh');
+
+-- Padres que colgaban una ruta agenda-rrhhs pasan a colgar el listado RRHH (sin duplicar aristas)
+INSERT IGNORE INTO `auth_item_child` (`parent`, `child`)
+SELECT DISTINCT `c`.`parent`, '/frontend/personas/indexpersonarrhh'
+FROM `auth_item_child` `c`
+WHERE `c`.`child` LIKE '/frontend/agenda-rrhhs/%';
+
+DELETE FROM `auth_item_child` WHERE `child` LIKE '/frontend/agenda-rrhhs/%';
+
+-- Asignaciones directas usuario ↔ ruta (si existían)
+INSERT IGNORE INTO `auth_assignment` (`user_id`, `item_name`)
+SELECT DISTINCT `a`.`user_id`, '/frontend/personas/indexpersonarrhh'
+FROM `auth_assignment` `a`
+WHERE `a`.`item_name` LIKE '/frontend/agenda-rrhhs/%';
+
+DELETE FROM `auth_assignment` WHERE `item_name` LIKE '/frontend/agenda-rrhhs/%';
+
+DELETE FROM `auth_item` WHERE `name` LIKE '/frontend/agenda-rrhhs/%';
+
+COMMIT;
+
+-- =============================================================================
 -- Rutas sin barra inicial (si las registraron así en auth_item):
 -- UPDATE auth_item SET name = CONCAT('/', TRIM(LEADING '/' FROM name))
 --  WHERE name NOT LIKE '/%' AND (name LIKE 'api/agenda/%' OR name LIKE 'api/rrhh/%');
@@ -85,14 +144,24 @@ COMMIT;
 
 
 -- #############################################################################
--- OPCIONAL: eliminar esquema RRHH/agenda “clásico” (sin retrocompatibilidad)
+-- FUTURO / REFERENCIA: DROP del núcleo RRHH + agenda + puente PES (¡no ejecutar aún!)
 -- #############################################################################
 --
--- Pensado para entornos donde **no** necesitás mantener el código Yii actual ni datos
--- enlazados: borra tablas núcleo `rrhh_*` / `agenda_rrhh` y la columna puente en PES.
+-- **Estado del repo Bioenlace (operación normal):** el código **sigue usando** las tablas
+-- `rrhh_efector`, `rrhh_servicio`, `rrhh_laboral`, la tabla `agenda_rrhh` (migraciones /
+-- installs históricos), columnas `turnos.id_rr_hh`, `turnos.id_rrhh_servicio_asignado`, y el
+-- puente `profesional_efector_servicio.legacy_rrhh_servicio_id` (modelo AR, servicios de
+-- agenda/alta PES, resolución de slots, sesión operativa, etc.).
 --
--- Base de datos (hosting Bioenlace): `u257309594_bioenlace`
--- En local u otro entorno, reemplazá ese literal en las consultas 0–3 y en `USE` del DROP.
+-- Por tanto: **no ejecutes** el bloque `DROP TABLE` / `DROP COLUMN` de abajo en producción
+-- ni en local mientras este repositorio sea la fuente de verdad. Solo tendría sentido tras
+-- un proyecto explícito que (1) migre o elimine todo consumo de RRHH legacy en PHP,
+-- (2) reemplace o anule columnas que guardan IDs viejos, y (3) valide datos en staging.
+--
+-- Lo que sigue es **solo** diagnóstico documentado + SQL de corte final hipotético.
+--
+-- En todas las consultas, reemplazá `REEMPLAZA_TU_BASE` por el nombre real del schema
+-- (ej. hosting `u257309594_bioenlace` o tu base local).
 --
 -- Antes de ejecutar: descubrir dependencias en MySQL.
 --
@@ -101,7 +170,7 @@ COMMIT;
 --
 --   SELECT TABLE_SCHEMA, TABLE_NAME
 --     FROM information_schema.TABLES
---    WHERE TABLE_SCHEMA = 'u257309594_bioenlace'
+--    WHERE TABLE_SCHEMA = 'REEMPLAZA_TU_BASE'
 --      AND TABLE_NAME IN (
 --          'agenda_rrhh', 'rrhh_servicio', 'rrhh_efector', 'rrhh_laboral'
 --      )
@@ -118,7 +187,7 @@ COMMIT;
 --
 --   SELECT TABLE_NAME
 --     FROM information_schema.TABLES
---    WHERE TABLE_SCHEMA = 'u257309594_bioenlace'
+--    WHERE TABLE_SCHEMA = 'REEMPLAZA_TU_BASE'
 --      AND (
 --            TABLE_NAME LIKE '%rrhh%' OR TABLE_NAME LIKE '%agenda%'
 --          )
@@ -129,7 +198,7 @@ COMMIT;
 --
 --   SELECT kcu.TABLE_NAME, kcu.COLUMN_NAME, kcu.CONSTRAINT_NAME, kcu.REFERENCED_TABLE_NAME
 --     FROM information_schema.KEY_COLUMN_USAGE kcu
---    WHERE kcu.TABLE_SCHEMA = 'u257309594_bioenlace'
+--    WHERE kcu.TABLE_SCHEMA = 'REEMPLAZA_TU_BASE'
 --      AND kcu.REFERENCED_TABLE_NAME IN (
 --            'agenda_rrhh', 'rrhh_servicio', 'rrhh_efector', 'rrhh_laboral'
 --      );
@@ -138,7 +207,7 @@ COMMIT;
 --
 --   SELECT kcu.TABLE_NAME, kcu.COLUMN_NAME, kcu.CONSTRAINT_NAME, kcu.REFERENCED_TABLE_NAME
 --     FROM information_schema.KEY_COLUMN_USAGE kcu
---    WHERE kcu.TABLE_SCHEMA = 'u257309594_bioenlace'
+--    WHERE kcu.TABLE_SCHEMA = 'REEMPLAZA_TU_BASE'
 --      AND kcu.TABLE_NAME IN (
 --            'agenda_rrhh', 'rrhh_servicio', 'rrhh_efector', 'rrhh_laboral'
 --      )
@@ -158,7 +227,7 @@ COMMIT;
 --
 --   SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE
 --     FROM information_schema.COLUMNS
---    WHERE TABLE_SCHEMA = 'u257309594_bioenlace'
+--    WHERE TABLE_SCHEMA = 'REEMPLAZA_TU_BASE'
 --      AND (
 --            COLUMN_NAME IN (
 --              'id_rr_hh', 'id_rrhh_servicio_asignado', 'id_agenda_rrhh'
@@ -169,7 +238,7 @@ COMMIT;
 --          )
 --    ORDER BY TABLE_NAME, ORDINAL_POSITION;
 --
--- Inventario real devuelto por (3) en `u257309594_bioenlace` (referencia; re-ejecutar tras cambios):
+-- Inventario de ejemplo devuelto por (3) en una base de referencia (re-ejecutar en la tuya):
 --   abreviaturas_rrhh.id_rr_hh
 --   agenda_rrhh.id_agenda_rrhh, id_rr_hh, id_rrhh_servicio_asignado
 --   atenciones_enfermeria.id_rr_hh, id_rrhh_servicio
@@ -203,9 +272,9 @@ COMMIT;
 -- Orden DROP típico (hijos antes que padres lógicos):
 --   agenda_rrhh -> rrhh_laboral -> rrhh_servicio -> rrhh_efector
 --
--- Descomentá para aplicar:
+-- Descomentá **solo** cuando el código ya no dependa del legado (ver advertencia arriba):
 --
--- USE u257309594_bioenlace;
+-- USE `REEMPLAZA_TU_BASE`;
 -- SET FOREIGN_KEY_CHECKS = 0;
 --
 -- DROP TABLE IF EXISTS agenda_rrhh;
@@ -220,6 +289,6 @@ COMMIT;
 --
 -- SET FOREIGN_KEY_CHECKS = 1;
 --
--- Nota: el repo PHP actual **sí** referencia esas tablas y columnas; tras esto hay que
--- alinear modelos/servicios con solo `profesional_efector_servicio*` (o el esquema nuevo).
+-- Hoy este DROP + quitar `legacy_rrhh_servicio_id` **romperían** la app que acompaña a este
+-- repo; dejamos el SQL como checklist de cierre de un proyecto de migración futuro.
 -- #############################################################################

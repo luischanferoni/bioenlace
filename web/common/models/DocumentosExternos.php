@@ -81,9 +81,14 @@ class DocumentosExternos extends \yii\db\ActiveRecord
             return false;
         }
         if ($insert || $this->isAttributeChanged('id_rrhh_servicio', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId(
-                (int) $this->id_rrhh_servicio
-            );
+            $idServicio = (int) $this->id_rrhh_servicio;
+            $idEfector = (int) $this->id_efector;
+            $this->id_profesional_efector_servicio = $idEfector > 0
+                ? ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idServicio, $idEfector)
+                : null;
+            if ($this->id_profesional_efector_servicio === null) {
+                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idServicio);
+            }
         }
         return true;
     }

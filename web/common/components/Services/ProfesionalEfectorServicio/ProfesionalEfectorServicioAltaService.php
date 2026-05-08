@@ -89,7 +89,6 @@ final class ProfesionalEfectorServicioAltaService
                 $pes->id_efector = $idEfector;
                 $pes->id_servicio = $idServicio;
             }
-            $pes->legacy_rrhh_servicio_id = (int) $rs->id;
             if (!$pes->save()) {
                 throw new \RuntimeException('No se pudo registrar la asignación profesional–efector–servicio: ' . json_encode($pes->getErrors()));
             }

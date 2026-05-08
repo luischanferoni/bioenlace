@@ -147,7 +147,6 @@ class ProfesionalEfectorServicioAgendaApiService
             $pes->id_persona = (int) $re->id_persona;
             $pes->id_efector = $idEfector;
             $pes->id_servicio = (int) $rs->id_servicio;
-            $pes->legacy_rrhh_servicio_id = (int) $rs->id;
             if (!$pes->save()) {
                 throw new BadRequestHttpException('No se pudo crear la asignación profesional-efector-servicio.');
             }

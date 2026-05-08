@@ -40,7 +40,7 @@ return [
         ],
         'authManager' => [
             'class' => 'common\models\BioenlaceDbManager',
-            'efectorAssignmentTable' => 'rrhh_servicio',
+            'efectorAssignmentTable' => 'profesional_efector_servicio',
             'rolesEspeciales' => ['_x_efector_', '_sin_efector_'],
         ],        
         'user' => [

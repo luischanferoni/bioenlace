@@ -11,16 +11,16 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 use yii\web\Response;
 
-use common\models\busquedas\RrhhEfectorBusqueda;
+use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Persona;
 use common\models\Servicio;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 
 /**
- * RrhhEfectorController implements the CRUD actions for RrhhEfector model.
+ * Gestión backend de filas PES (`profesional_efector_servicio`): listados, admin efector, live search.
  */
-class RrhhEfectorController extends Controller
+class ProfesionalEfectorServicioController extends Controller
 {
     /**
      * {@inheritdoc}
@@ -41,15 +41,15 @@ class RrhhEfectorController extends Controller
     }
 
     /**
-     * Lists all RrhhEfector models.
+     * Listado PES.
      * @return mixed
      */
     public function actionIndex()
     {
-        $searchModel = new RrhhEfectorBusqueda();
+        $searchModel = new ProfesionalEfectorServicioBusqueda();
 
         if (!Yii::$app->user->getIdEfector()) {
-            $searchModel->scenario = RrhhEfectorBusqueda::EFECTOR_SEARCH;
+            $searchModel->scenario = ProfesionalEfectorServicioBusqueda::EFECTOR_SEARCH;
         } else {
             $searchModel->id_efector = (int) Yii::$app->user->getIdEfector();
         }
@@ -62,7 +62,6 @@ class RrhhEfectorController extends Controller
     }
 
     /**
-     * Displays a single RrhhEfector model.
      * @param integer $id_rr_hh
      * @param integer $id_efector
      * @return mixed
@@ -111,14 +110,13 @@ class RrhhEfectorController extends Controller
             $transaction = \Yii::$app->db->beginTransaction();
             try {
                 $post_efectores = Yii::$app->request->post('efectores') ? Yii::$app->request->post('efectores') : [];
-                // obtengo los nuevos que vengan
-                $rrhh_efectores_a_crear = array_diff($post_efectores, $persona_efectores);
+                $id_efectores_a_crear = array_diff($post_efectores, $persona_efectores);
 
-                foreach ($rrhh_efectores_a_crear as $rrhh_efector_a_crear) {
+                foreach ($id_efectores_a_crear as $id_efector_a_crear) {
                     try {
                         ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
                             (int) $persona->id_persona,
-                            (int) $rrhh_efector_a_crear,
+                            (int) $id_efector_a_crear,
                             $idServAdmin
                         );
                     } catch (\Throwable $e) {
@@ -126,13 +124,12 @@ class RrhhEfectorController extends Controller
                         throw new Exception($e->getMessage(), 0, $e);
                     }
                 }
-                // los que no vengan los elimino
-                $rrhh_efectores_a_eliminar = array_diff($persona_efectores, $post_efectores);
-                if (count($rrhh_efectores_a_eliminar) > 0) {
-                    foreach ($rrhh_efectores_a_eliminar as $rrhh_efector_a_eliminar) {
+                $id_efectores_a_eliminar = array_diff($persona_efectores, $post_efectores);
+                if (count($id_efectores_a_eliminar) > 0) {
+                    foreach ($id_efectores_a_eliminar as $id_efector_a_eliminar) {
                         $pesAdm = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
                             (int) $persona->id_persona,
-                            (int) $rrhh_efector_a_eliminar,
+                            (int) $id_efector_a_eliminar,
                             $idServAdmin
                         );
                         if ($pesAdm !== null) {
@@ -220,8 +217,6 @@ class RrhhEfectorController extends Controller
     }
 
     /**
-     * Updates an existing RrhhEfector model.
-     * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id_rr_hh
      * @param integer $id_efector
      * @return mixed
@@ -233,7 +228,7 @@ class RrhhEfectorController extends Controller
     }
 
     /**
-     * Funcion para crear el select dependiente de rrhh de un efector
+     * Autocomplete de personas con PES en el efector.
      */
     public function actionPersonasLiveSearch($q = null, $idEfector)
     {
@@ -249,10 +244,7 @@ class RrhhEfectorController extends Controller
     }
 
     /**
-     * Deletes an existing RrhhEfector model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param integer $id_rr_hh
-     * @param integer $id_efector
+     * @param mixed $id id PES (primera fila del grupo persona+efector a retirar en bloque)
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */

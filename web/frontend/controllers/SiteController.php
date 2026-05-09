@@ -287,10 +287,10 @@ class SiteController extends Controller
     private static function establecerSessionInicial()
     {
         // Confirmamos que el usuario no este asociado a un efector
-        $rrhh_efectores = ProfesionalEfectorServicio::getEfectoresParaSesion((int) Yii::$app->user->getIdPersona());
+        $efectoresParaSesion = ProfesionalEfectorServicio::getEfectoresParaSesion((int) Yii::$app->user->getIdPersona());
 
         // Si el usuario no esta en ningun efector se puede tratar de un usuario con permisos para todos los efectores o ninguno
-        if (count($rrhh_efectores) == 0) {
+        if (count($efectoresParaSesion) == 0) {
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
             \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
             $keys = Yii::$app->session->get(\webvimark\modules\UserManagement\components\AuthHelper::SESSION_PREFIX_ROLES);
@@ -314,23 +314,23 @@ class SiteController extends Controller
             }
         }
 
-        /*  if (count($rrhh_efectores) == 1) {
+        /*  if (count($efectoresParaSesion) == 1) {
             // Seteamos el efector con el que el usuario trabajará          
-            Yii::$app->user->setIdEfector($rrhh_efectores[0]['id_efector']);
-            Yii::$app->user->setNombreEfector($rrhh_efectores[0]['nombre']);
-            Yii::$app->user->setIdRecursoHumano($rrhh_efectores[0]['id_rr_hh']);
-            // Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector((int) Yii::$app->user->getIdPersona(), (int) $rrhh_efectores[0]['id_efector']));
+            Yii::$app->user->setIdEfector($efectoresParaSesion[0]['id_efector']);
+            Yii::$app->user->setNombreEfector($efectoresParaSesion[0]['nombre']);
+            Yii::$app->user->setIdRecursoHumano($efectoresParaSesion[0]['id_rr_hh']);
+            // Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector((int) Yii::$app->user->getIdPersona(), (int) $efectoresParaSesion[0]['id_efector']));
 
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
 
-            self::establecerAgendaDisponible($rrhh_efectores[0]['id_rr_hh']);
+            self::establecerAgendaDisponible($efectoresParaSesion[0]['id_rr_hh']);
 
             //   return ['consultas/tipoatencion'];
         }*/
 
         // En session todos los efectores en los que el usuario trabaja
         // para que luego pueda cambiar si necesita
-        Yii::$app->user->setEfectores(ArrayHelper::map($rrhh_efectores, 'id_efector', 'nombre'));
+        Yii::$app->user->setEfectores(ArrayHelper::map($efectoresParaSesion, 'id_efector', 'nombre'));
 
         // BioenlaceDbManager usa idRecursoHumano en sesión para armar permisos; tras elegir lista de efectores
         // aún puede faltar ese dato (varios efectores). Refrescar rutas con el contexto actual.

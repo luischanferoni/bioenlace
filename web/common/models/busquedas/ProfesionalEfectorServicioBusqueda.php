@@ -5,12 +5,13 @@ namespace common\models\busquedas;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
+use common\models\Efector;
 use common\models\ProfesionalEfectorServicio;
 
 /**
- * Búsqueda de asignaciones profesional–efector–servicio (PES), sustituto del listado legacy `rrhh_efector`.
+ * Búsqueda de filas `profesional_efector_servicio` (PES).
  */
-class RrhhEfectorBusqueda extends Model
+class ProfesionalEfectorServicioBusqueda extends Model
 {
     const EFECTOR_SEARCH = 'EFECTOR_SEARCH';
 
@@ -33,6 +34,18 @@ class RrhhEfectorBusqueda extends Model
     public function scenarios()
     {
         return Model::scenarios();
+    }
+
+    /**
+     * Efector del contexto de listado (p. ej. `actionRrhh` fija `id_efector`).
+     */
+    public function getEfector(): ?Efector
+    {
+        if ($this->id_efector === null || (int) $this->id_efector <= 0) {
+            return null;
+        }
+
+        return Efector::findOne((int) $this->id_efector);
     }
 
     /**

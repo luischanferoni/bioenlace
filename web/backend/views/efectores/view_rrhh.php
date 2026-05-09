@@ -14,12 +14,13 @@ use common\models\Servicio;
 use common\models\Persona;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\RrhhEfectorBusqueda */
+/* @var $searchModel common\models\busquedas\ProfesionalEfectorServicioBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = $searchModel->efector->nombre;
+$efCtx = $searchModel->efector;
+$this->title = $efCtx !== null ? $efCtx->nombre : ('Efector #' . (int) ($searchModel->id_efector ?? 0));
 
-$idEfector = $searchModel->efector->id_efector;
+$idEfector = (int) ($searchModel->id_efector ?? ($efCtx !== null ? $efCtx->id_efector : 0));
 $this->params['breadcrumbs'][] = $this->title;
 
 ?>
@@ -72,7 +73,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     'minimumInputLength' => 3,
                                     'allowClear' => true,
                                     'ajax' => [
-                                        'url' => Url::to(['rrhh-efector/personas-live-search', 'idEfector' => $idEfector]),
+                                        'url' => Url::to(['profesional-efector-servicio/personas-live-search', 'idEfector' => $idEfector]),
                                         'dataType' => 'json',
                                         'data' => new JsExpression('function(params) { return {q:params.term}; }')
                                     ],
@@ -107,7 +108,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
                                 $botonAdminEfector = '<li class="list-group-item">' . Html::a(
                                     'Establecer AdminEfector',
-                                    ['/rrhh-efector/create-admin-efector', 'id_rr_hh' => $data->id_rr_hh],
+                                    ['/profesional-efector-servicio/create-admin-efector', 'id_rr_hh' => $data->id_rr_hh],
                                     [
                                         'class' => 'btn btn-sm btn-warning ajax_adminefector', 
                                         'alert_title' => 'Confirme la asignacion de "'.
@@ -119,7 +120,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 if (in_array('ADMINISTRAR EFECTOR', $servicios)) {
                                     $botonAdminEfector = '<li class="list-group-item">' . Html::a(
                                         'Quitar AdminEfector',
-                                        ['/rrhh-efector/remove-admin-efector', 'id_rr_hh' => $data->id_rr_hh],
+                                        ['/profesional-efector-servicio/remove-admin-efector', 'id_rr_hh' => $data->id_rr_hh],
                                         ['class' => 'btn btn-sm btn-warning ajax_adminefector',
                                             'alert_title' => 'Seguro desea quitar a "'.
                                             $data->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N).

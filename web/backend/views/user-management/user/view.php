@@ -35,7 +35,7 @@ $this->params['breadcrumbs'][] = $this->title;
 				) ?>
 				<?= GhostHtml::a(
 					'Administracion de Efector',
-					['/rrhh-efector/create-admin-efector-con-rrhh', 'id' => $model->id],
+					['/profesional-efector-servicio/create-admin-efector-con-rrhh', 'id' => $model->id],
 					['class' => 'btn btn-sm btn-warning', 'data-pjax' => 0]
 				) ?>
 				<?= GhostHtml::a(

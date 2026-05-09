@@ -9,7 +9,7 @@ $this->title = '"'.$persona->apellido.' '.$persona->nombre.'" como Administrador
 $this->params['breadcrumbs'][] = ['label' => 'Rrhh -> Efectores', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="rrhh-efector-create">
+<div class="profesional-efector-servicio-create">
 
     <h3><?= Html::encode($this->title) ?></h3>
 

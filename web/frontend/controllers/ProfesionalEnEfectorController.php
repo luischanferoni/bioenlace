@@ -5,7 +5,7 @@ namespace frontend\controllers;
 use Yii;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
-use common\models\busquedas\RrhhEfectorBusqueda;
+use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -13,9 +13,9 @@ use yii\helpers\ArrayHelper;
 use yii\db\Query;
 
 /**
- * CRUD de PES por efector (URLs legacy id_rr_hh + id_efector).
+ * CRUD de PES identificado por `id_rr_hh` + `id_efector` (compatibilidad de URLs legacy).
  */
-class Rrhh_efectoresController extends Controller
+class ProfesionalEnEfectorController extends Controller
 {
     public function behaviors()
     {
@@ -34,7 +34,7 @@ class Rrhh_efectoresController extends Controller
      */
     public function actionIndex()
     {
-        $searchModel = new RrhhEfectorBusqueda();
+        $searchModel = new ProfesionalEfectorServicioBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [
@@ -145,6 +145,8 @@ class Rrhh_efectoresController extends Controller
     }
 
     /**
+     * DepDrop: profesionales con PES en el efector elegido.
+     *
      * @no_intent_catalog
      */
     public function actionProfesionalesPorEfector()

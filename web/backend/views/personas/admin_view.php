@@ -160,7 +160,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <?php
         echo SisseGhostHtml::a(
             'Administrar RRHH',
-            ['/rrhh-efector/create'],
+            ['/profesional-efector-servicio/create'],
             ['class' => 'ms-2', 'title' => 'Administrar persona como recurso humano']
         );
         ?>

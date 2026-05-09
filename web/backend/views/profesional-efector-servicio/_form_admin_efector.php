@@ -19,7 +19,7 @@ use common\models\Condiciones_laborales;
 /* @var $form yii\widgets\ActiveForm */
 ?>
 
-<div class="rrhh-efector-form">
+<div class="profesional-efector-servicio-form">
 
     <?php $form = ActiveForm::begin(); ?>
     <?php 

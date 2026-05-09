@@ -11,7 +11,7 @@ use yii\helpers\ArrayHelper;
 
 use common\models\ProfesionalEfectorServicio;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
-use common\models\busquedas\RrhhEfectorBusqueda;
+use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 use common\models\Persona;
 use common\models\Efector;
 use common\models\Servicio;
@@ -40,7 +40,7 @@ class RrhhController extends Controller
     */
     public function actionIndex()
     {
-        $searchModel = new RrhhEfectorBusqueda();
+        $searchModel = new ProfesionalEfectorServicioBusqueda();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('index', [

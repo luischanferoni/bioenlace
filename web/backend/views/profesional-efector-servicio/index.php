@@ -4,13 +4,13 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\RrhhEfectorBusqueda */
+/* @var $searchModel common\models\busquedas\ProfesionalEfectorServicioBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Recursos Humanos';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="rrhh-efector-index">
+<div class="profesional-efector-servicio-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

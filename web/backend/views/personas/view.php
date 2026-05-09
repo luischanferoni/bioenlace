@@ -297,7 +297,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         </g>
                     </svg>
                 </div>
-                <?php if (User::canRoute(['/rrhh-efector/create'])) { ?>
+                <?php if (User::canRoute(['/profesional-efector-servicio/create'])) { ?>
                     <div class="card-body">
                         <h4 class="mb-2">Administración</h4>
                         <div class="row">
@@ -313,7 +313,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             <?php
                             echo SisseGhostHtml::a(
                                 'Administrar RRHH',
-                                ['/rrhh-efector/create'],
+                                ['/profesional-efector-servicio/create'],
                                 ['class' => 'ms-2', 'title' => 'Administrar persona como recurso humano']
                             );
                             ?>

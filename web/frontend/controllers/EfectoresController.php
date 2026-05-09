@@ -12,7 +12,6 @@ use yii\helpers\Json;
 
 use common\models\Efector;
 use common\models\busquedas\EfectorBusqueda;
-use common\models\busquedas\RrhhEfectorBusqueda;
 
 //agregamos el modulo de la extension para el control de acceso
 use webvimark\modules\UserManagement\UserManagementModule;

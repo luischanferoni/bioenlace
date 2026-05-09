@@ -95,7 +95,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 
 Archivos con ocurrencias (revisar según prioridad clínica):
 
-`AutofacturacionController`, `ConsultaAtencionesEnfermeriaController`, `ConsultasController`, `EncuestaParchesMamariosController`, `GuardiaController`, `PacienteController`, `PersonaProgramaController`, `PersonasController`, `ReporteController`, `Rrhh_efectoresController`, `RrhhController`, `RrhhEfectoresController`, `ServiciosEfectoresController`, `SiteController`, `traits/ConsultaTrait`, `TurnosController`.
+`AutofacturacionController`, `ConsultaAtencionesEnfermeriaController`, `ConsultasController`, `EncuestaParchesMamariosController`, `GuardiaController`, `PacienteController`, `PersonaProgramaController`, `PersonasController`, `ReporteController`, `ProfesionalEnEfectorController`, `RrhhController`, `ServiciosEfectoresController`, `SiteController`, `traits/ConsultaTrait`, `TurnosController`.
 
 ---
 
@@ -106,11 +106,11 @@ Revisión con `rg "id_rr_hh|getIdRecursoHumano" web/frontend/controllers` (sin c
 | Controlador / módulo | Resultado |
 |----------------------|-----------|
 | **`ConsultasController`** | `actionListadoSumar` ya filtra turnos con EXISTS `rr_hh` **o** PES en turno. `actionIndex` → `ConsultaBusqueda::searchGral` (PES en “mis consultas”). Sin otras acciones con SQL solo-RRHH. |
-| **`AutofacturacionController`** | Si no hay `getIdRecursoHumano`, resuelve `id_rr_hh` desde PES en sesión + `RrhhEfector`. |
+| **`AutofacturacionController`** | Si no hay `getIdRecursoHumano`, resuelve `id_rr_hh` desde PES en sesión (`ProfesionalEfectorServicio`). |
 | **`ConsultaAtencionesEnfermeriaController`** | Alta: setea `id_profesional_efector_servicio` y completa `id_rr_hh` desde PES cuando hace falta. |
-| **`PersonaProgramaController`** | `resolveRrhhEfectorFromSessionOrPes()` para alta programa cuando no viene RRHH en request. |
+| **`PersonaProgramaController`** | `resolveProfesionalEfectorServicioParaAlta()` para alta programa cuando no viene RRHH en request. |
 | **`PacienteController`** | Sin SQL de agenda en acciones activas; timeline por API. |
-| **`Rrhh_efectoresController` / `RrhhEfectoresController`** | Rutas `id_rr_hh` son la **PK del vínculo** `RrhhEfector` (no un filtro de listado clínico); no requieren el mismo patrón OR-PES que consultas/turnos. Evolución de UI/selects: plan de PRs aparte. |
+| **`ProfesionalEnEfectorController`** | Rutas `id_rr_hh` + `id_efector` identifican la primera fila PES del par persona–efector (legacy); evolución de UI/selects: plan de PRs aparte. |
 | **`ConsultaBusqueda::searchConsultasPersona`** | Filtra por paciente (`id_persona`); no aplica filtro por profesional. |
 | **Flutter médico `ConfigService`** | Trazas de depuración con `dart:developer` (`developer.log`, nombre `ConfigService`); no se vuelcan valores de `Authorization` en log. |
 
@@ -137,7 +137,7 @@ rg "id_rr_hh|id_rrhh_asignado" web/common/models --glob "*Busqueda*"
 
 Separar en PRs pequeños para revisión:
 
-1. **RRHH ↔ efector (web)** — `Rrhh_efectoresController` / `RrhhEfectoresController`: alinear selects con `rrhh_servicio` / PES según columna persistida; pruebas manuales de alta/edición.
+1. **RRHH ↔ efector (web)** — `ProfesionalEnEfectorController`: alinear selects con PES según columna persistida; pruebas manuales de alta/edición.
 2. **PersonaPrograma / Autofacturacion** — un PR por módulo: revisar solo rutas que filtren agenda o profesional por `id_rr_hh`.
 3. **ConsultaAtencionesEnfermeria** — confirmar filtros de lista con OR PES si la consulta/enfermería guarda `id_profesional_efector_servicio`.
 

@@ -166,7 +166,7 @@ use kartik\depdrop\DepDrop;
                     'pluginOptions' => [
                         'depends' => ['personaprogramadiabetes-id_efector'],
                         'placeholder' => 'Seleccione un profesional',
-                        'url' => Url::to(['/rrhh_efectores/profesionales-por-efector'])
+                        'url' => Url::to(['/profesional-en-efector/profesionales-por-efector'])
                     ]
 
                 ])->label(false); ?>

@@ -11,7 +11,7 @@ $this->params['breadcrumbs'][] = ['label' => 'Rrhh Efectors', 'url' => ['index']
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
-<div class="rrhh-efector-view">
+<div class="profesional-efector-servicio-view">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

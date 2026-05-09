@@ -15,7 +15,7 @@ use common\models\ServiciosEfector;
 /**
  * API recurso humano (profesional en efector): autocomplete por efector/servicio; servicios asignados al RRHH del usuario en un efector.
  * Autocomplete: migrado desde frontend\controllers\RrhhController::actionRrhhAutocomplete.
- * Servicios por RRHH: migrado desde frontend\controllers\RrhhEfectorController::actionServiciosPorRrhh.
+ * Servicios por RRHH: ver Historial API / backend ProfesionalEfectorServicio (legacy web).
  */
 class RecursoHumanoController extends BaseController
 {

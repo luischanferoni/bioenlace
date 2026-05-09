@@ -13,7 +13,7 @@ use common\models\Efector;
 use common\models\EfectorTurnosConfig;
 use common\models\PersonaEfectorAutogestionLiberacion;
 use common\models\busquedas\EfectorBusqueda;
-use common\models\busquedas\RrhhEfectorBusqueda;
+use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 
 //agregamos el modulo de la extension para el control de acceso
 use webvimark\modules\UserManagement\UserManagementModule;
@@ -77,7 +77,7 @@ class EfectoresController extends Controller
      */
     public function actionRrhh($id)
     {
-        $searchModel = new RrhhEfectorBusqueda();
+        $searchModel = new ProfesionalEfectorServicioBusqueda();
         
         $searchModel->id_efector = $id;
         

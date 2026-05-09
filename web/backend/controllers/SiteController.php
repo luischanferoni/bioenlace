@@ -16,7 +16,6 @@ use common\models\LoginForm;
 use common\models\Efector;
 use common\models\ContactForm;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use common\models\Persona;
 
 class SiteController extends Controller

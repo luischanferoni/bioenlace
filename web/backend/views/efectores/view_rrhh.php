@@ -85,8 +85,10 @@ $this->params['breadcrumbs'][] = $this->title;
                         'label' => 'Servicio',
                         'value' => function ($data) {
                             $servicios = [];
-                            foreach ($data->rrhhServicio as $rrhhServicio) {
-                                $servicios[] = $rrhhServicio->servicio->nombre;
+                            foreach ($data->profesionalEfectorServicios as $pes) {
+                                if ($pes->servicio !== null) {
+                                    $servicios[] = $pes->servicio->nombre;
+                                }
                             }
 
                             return count($servicios) == 0 ? 'Sin servicios' : implode(" - ", $servicios);
@@ -97,8 +99,10 @@ $this->params['breadcrumbs'][] = $this->title;
                         'value' => function ($data) {
                             if (isset($data->persona->id_user) && $data->persona->id_user !== 0) {
                                 $servicios = [];
-                                foreach ($data->rrhhServicio as $rrhhServicio) {
-                                    $servicios[] = $rrhhServicio->servicio->nombre;
+                                foreach ($data->profesionalEfectorServicios as $pes) {
+                                    if ($pes->servicio !== null) {
+                                        $servicios[] = $pes->servicio->nombre;
+                                    }
                                 }
 
                                 $botonAdminEfector = '<li class="list-group-item">' . Html::a(

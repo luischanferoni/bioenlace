@@ -3,7 +3,6 @@
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use common\models\Telefono;
 use kartik\select2\Select2;
 use kartik\date\DatePicker;

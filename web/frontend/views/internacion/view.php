@@ -142,7 +142,16 @@ $this->registerJsFile(
                 <div class="card-body">
 
                     <div class="mt-2 mb-2 ms-2">
-                        <p class="d-inline text-dark" style="font-weight: bold;">Profesional a cargo: </p> <?= $model_rrhh->rrhhEfector->persona->apellido . " " . $model_rrhh->rrhhEfector->persona->otro_apellido . ', ' . $model_rrhh->rrhhEfector->persona->nombre . " " . $model_rrhh->rrhhEfector->persona->otro_nombre; ?>
+                        <p class="d-inline text-dark" style="font-weight: bold;">Profesional a cargo: </p>
+                        <?php
+                        $pCargo = ($model_rrhh !== null && $model_rrhh->persona) ? $model_rrhh->persona : null;
+                        echo $pCargo
+                            ? Html::encode(
+                                $pCargo->apellido . ' ' . $pCargo->otro_apellido . ', '
+                                . $pCargo->nombre . ' ' . $pCargo->otro_nombre
+                            )
+                            : '—';
+                        ?>
                     </div>
 
                     <div class="mb-2 ms-2">

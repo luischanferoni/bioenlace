@@ -5,12 +5,9 @@ namespace common\components\Services\ProfesionalEfectorServicio;
 use Yii;
 use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 
 /**
- * Resolver de contexto profesional (PES primary, RRHH compat).
- *
- * Pensado para centralizar bridges temporales durante migración.
+ * Resolver de contexto profesional (PES + vínculo RRHH–efector).
  * Sin dependencias HTTP.
  */
 final class ProfesionalContextResolver
@@ -66,8 +63,7 @@ final class ProfesionalContextResolver
     }
 
     /**
-     * Resuelve `rrhh_servicio.id` (agenda legacy) a partir de PES.
-     * Útil para compat en flujos que aún persisten `id_rrhh_servicio_asignado`.
+     * Valor histórico `legacy_rrhh_servicio_id` en la fila PES, si existe.
      */
     public static function resolveRrhhServicioIdFromPes(int $idPes): ?int
     {
@@ -79,23 +75,8 @@ final class ProfesionalContextResolver
             return null;
         }
         $legacySlot = (int) ($pes->legacy_rrhh_servicio_id ?? 0);
-        if ($legacySlot > 0) {
-            return $legacySlot;
-        }
-        $idRrhh = self::resolveRrhhIdFromPes($idPes);
-        if ($idRrhh <= 0) {
-            return null;
-        }
-        $rs = RrhhServicio::find()
-            ->where([
-                'id_rr_hh' => $idRrhh,
-                'id_servicio' => (int) $pes->id_servicio,
-                'deleted_at' => null,
-            ])
-            ->orderBy(['id' => SORT_ASC])
-            ->select(['id'])
-            ->scalar();
-        return $rs ? (int) $rs : null;
+
+        return $legacySlot > 0 ? $legacySlot : null;
     }
 }
 

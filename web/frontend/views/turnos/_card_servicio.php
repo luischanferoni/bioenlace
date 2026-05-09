@@ -43,10 +43,9 @@ use common\models\ServiciosEfector;
 
                 foreach ($servicioEfector->rrhhs as $rrhhEfectorServicio) {
                 
-                    // Hay recursos humanos con id_persona = 0
-                    if (!isset($rrhhEfectorServicio->rrhhEfector->persona)) { continue; }
+                    if (!isset($rrhhEfectorServicio->persona)) { continue; }
                     
-                    $datosParaLiveSearch .= $rrhhEfectorServicio->rrhhEfector->persona->apellido . ' ' . $rrhhEfectorServicio->rrhhEfector->persona->nombre . ' ';
+                    $datosParaLiveSearch .= $rrhhEfectorServicio->persona->apellido . ' ' . $rrhhEfectorServicio->persona->nombre . ' ';
                 
                     echo '<div class="border-bottom mb-3">'; ?>
                     
@@ -58,7 +57,7 @@ use common\models\ServiciosEfector;
                         >
                             <i class="bi bi-printer text-white"></i>
                     </a>
-                    <?php echo $rrhhEfectorServicio->rrhhEfector->persona->apellido . ', ' . $rrhhEfectorServicio->rrhhEfector->persona->nombre;
+                    <?php echo $rrhhEfectorServicio->persona->apellido . ', ' . $rrhhEfectorServicio->persona->nombre;
 
 
                     

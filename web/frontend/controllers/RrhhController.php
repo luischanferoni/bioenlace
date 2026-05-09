@@ -124,8 +124,7 @@ class RrhhController extends Controller
     }
 
     /**
-     * Select dependiente: opciones desde filas `rrhh_servicio` vinculadas al RRHH en el efector (mantenimiento legacy).
-     * Asignaciones solo en PES (`profesional_efector_servicio`) no se listan aquí; usar flujos de agenda/alta PES.
+     * Select dependiente: opciones desde PES (`profesional_efector_servicio`) del RRHH en el efector.
      * @no_intent_catalog
     */
     public function actionSubcatservicios()
@@ -136,7 +135,7 @@ class RrhhController extends Controller
             $items = RrhhEfector::find()
                 ->joinWith('rrhhServicio')
                 ->andWhere(['rrhh_efector.id_efector' => $cat_id])
-                ->andWhere('rrhh_servicio.deleted_at IS NULL')
+                ->andWhere('profesional_efector_servicio.deleted_at IS NULL')
                 ->all();
             foreach ($items as $item) {
                 foreach ($item->rrhhServicio as $rs) {

@@ -508,15 +508,19 @@ class TurnosController extends Controller
     */
     public function actionRrhh($id_servicio)
     {
-        $idEfector = Yii::$app->user->getIdEfector();
-        $sql = "SELECT rh.id_rr_hh, nombre, apellido FROM rrhh_efector "
-            . "INNER JOIN rrhh_servicio ON rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh "
-            . "INNER JOIN personas ON rrhh_efector.id_persona = personas.id_persona "
-            . "WHERE rrhh_servicio.id_servicio = $id_servicio AND rrhh_efector.id_efector = $idEfector";
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idServicio = (int) $id_servicio;
+        $sql = 'SELECT DISTINCT rh.id_rr_hh, personas.nombre, personas.apellido '
+            . 'FROM rrhh_efector rh '
+            . 'INNER JOIN profesional_efector_servicio pes ON pes.id_persona = rh.id_persona '
+            . 'AND pes.id_efector = rh.id_efector AND pes.deleted_at IS NULL '
+            . 'INNER JOIN personas ON rh.id_persona = personas.id_persona '
+            . 'WHERE pes.id_servicio = :sid AND rh.id_efector = :eid AND rh.deleted_at IS NULL '
+            . 'ORDER BY personas.apellido, personas.nombre';
 
-        $command = Yii::$app->db->createCommand($sql);
-
-        $result = $command->queryAll();
+        $result = $idServicio > 0 && $idEfector > 0
+            ? Yii::$app->db->createCommand($sql, [':sid' => $idServicio, ':eid' => $idEfector])->queryAll()
+            : [];
 
         $opciones = '<option>Seleccione...</option>';
 

@@ -117,51 +117,63 @@ class RrhhServicio extends \yii\db\ActiveRecord
         return ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes);
     }
 
+    /**
+     * @return ProfesionalEfectorServicio[]
+     */
     public static function rrhhPorEfectorConAgenda($id_efector)
     {
-        $query = RrhhServicio::find()
-            ->innerJoin('rrhh_efector', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
-            ->innerJoin('servicios', 'rrhh_servicio.id_servicio = servicios.id_servicio')
+        return ProfesionalEfectorServicio::find()
+            ->alias('pes')
+            ->innerJoin('servicios', 'servicios.id_servicio = pes.id_servicio')
             ->andWhere(['servicios.acepta_turnos' => 'SI'])
-            ->andWhere(['rrhh_efector.id_efector' => $id_efector])
-            ->orderBy('rrhh_servicio.id_servicio');
-
-        return $query->all();
-    }   
-    
-    
-    public static function obtenerIdRrhhServicio($id_rr_hh, $id_servicio)
-    {
-        $rrhhServicio = self::find()
-        ->where(['id_rr_hh'=>$id_rr_hh])
-        ->andWhere(['id_servicio'=>$id_servicio])
-        ->one();
-
-        if($rrhhServicio){
-
-        return $rrhhServicio->id;
-
-    }
-    
-    return false;
-
+            ->andWhere(['pes.id_efector' => (int) $id_efector])
+            ->andWhere(['pes.deleted_at' => null])
+            ->orderBy('pes.id_servicio')
+            ->all();
     }
 
     /**
-     * Query: RRHH que atienden un servicio en un efector (para búsqueda de slots).
-     * Flujo MVC: usado por Controller/Component que orquesta; las queries viven en el modelo.
+     * Id de fila PES para el vínculo RRHH (id_rr_hh) + servicio, o false.
+     *
+     * @param int $id_rr_hh
+     * @param int $id_servicio
+     * @return int|false
+     */
+    public static function obtenerIdRrhhServicio($id_rr_hh, $id_servicio)
+    {
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $id_rr_hh, 'deleted_at' => null])
+            ->one();
+        if ($re === null) {
+            return false;
+        }
+        $pes = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => (int) $re->id_persona,
+                'id_efector' => (int) $re->id_efector,
+                'id_servicio' => (int) $id_servicio,
+                'deleted_at' => null,
+            ])
+            ->one();
+
+        return $pes !== null ? (int) $pes->id : false;
+    }
+
+    /**
+     * PES que atienden un servicio en un efector (para búsqueda de slots).
      *
      * @param int $idServicio
      * @param int $idEfector
-     * @return RrhhServicio[]
+     * @return ProfesionalEfectorServicio[]
      */
     public static function findPorServicioEfector($idServicio, $idEfector)
     {
-        return static::find()
-            ->from(['rs' => static::tableName()])
-            ->leftJoin('rrhh_efector re', 're.id_rr_hh = rs.id_rr_hh')
-            ->andWhere(['re.id_efector' => (int) $idEfector])
-            ->andWhere(['rs.id_servicio' => (int) $idServicio])
+        return ProfesionalEfectorServicio::find()
+            ->where([
+                'id_efector' => (int) $idEfector,
+                'id_servicio' => (int) $idServicio,
+                'deleted_at' => null,
+            ])
             ->all();
     }
 

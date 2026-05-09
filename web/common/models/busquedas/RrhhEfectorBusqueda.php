@@ -7,6 +7,7 @@ use yii\base\Model;
 use yii\data\ActiveDataProvider;
 
 use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 
 /**
  * RrhhEfectorBusqueda represents the model behind the search form of `common\models\RrhhEfector`.
@@ -87,12 +88,19 @@ class RrhhEfectorBusqueda extends RrhhEfector
             }]);
         }
 
-        if ($this->idServicio != "") {
-            $query->joinWith(['rrhhServicio' => function ($q) {
-                $q->where('rrhh_servicio.id_servicio = ' . $this->idServicio)
-                  ->andWhere('rrhh_servicio.deleted_at is NULL');
-            }]);
+        if ($this->idServicio !== '' && $this->idServicio !== null) {
+            $reTable = RrhhEfector::tableName();
+            $pesTable = ProfesionalEfectorServicio::tableName();
+            $sub = (new \yii\db\Query())
+                ->from(['pes_f' => $pesTable])
+                ->where("pes_f.id_persona = [[{$reTable}]].[[id_persona]]")
+                ->andWhere("pes_f.id_efector = [[{$reTable}]].[[id_efector]]")
+                ->andWhere(['pes_f.id_servicio' => (int) $this->idServicio])
+                ->andWhere(['pes_f.deleted_at' => null]);
+            $query->andWhere(['exists', $sub]);
         }
+
+        $query->with(['profesionalEfectorServicios.servicio', 'persona']);
 
         return $dataProvider;
     }

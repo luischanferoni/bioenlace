@@ -115,15 +115,6 @@ class ServiciosEfectoresController extends Controller
     */
     public function actionDelete($id_servicio, $id_efector)
     {
-        // Servicio con profesionales asignados (legacy y/o PES): no borrar hasta limpiar asignaciones
-        $cantidadRrhhServicio = \common\models\RrhhServicio::findActive()
-            ->leftJoin('rrhh_efector', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
-            ->where([
-                'rrhh_efector.id_efector' => (int) $id_efector,
-                'rrhh_servicio.id_servicio' => (int) $id_servicio,
-            ])
-            ->andWhere(['rrhh_servicio.deleted_at' => null])
-            ->count();
         $cantidadPes = ProfesionalEfectorServicio::find()
             ->where([
                 'id_efector' => (int) $id_efector,
@@ -132,8 +123,8 @@ class ServiciosEfectoresController extends Controller
             ])
             ->count();
 
-        if ($cantidadRrhhServicio > 0 || $cantidadPes > 0) {
-            return $this->asJson(['error' => true, 'msg' => 'El servicio que desea borrar aún tiene profesionales asignados (agenda PES o vínculo RRHH legacy). Elimine esas asignaciones y vuelva a intentar.']);
+        if ($cantidadPes > 0) {
+            return $this->asJson(['error' => true, 'msg' => 'El servicio que desea borrar aún tiene profesionales asignados (PES). Elimine esas asignaciones y vuelva a intentar.']);
         }
 
         $this->findModel($id_servicio, $id_efector)->delete();

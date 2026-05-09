@@ -29,7 +29,7 @@ use frontend\components\CPacienteHistorial;
 use frontend\components\PacienteHistorial;
 use common\models\ConsultasConfiguracion;
 use common\models\Consulta;
-use common\models\RrhhServicio;
+use common\models\ProfesionalEfectorServicio;
 use webvimark\modules\UserManagement\models\User;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
@@ -207,9 +207,22 @@ class InternacionController extends Controller
 
         $paciente = $model->paciente;
 
-        $model_rrhh = new RrhhServicio();
-        $model_rrhh = $model_rrhh->findOne($model->id_rrhh);
-        $datosProfesional = $this->formatearDatosProfesional($model_rrhh);
+        $model_rrhh = null;
+        if ((int) ($model->id_profesional_efector_servicio ?? 0) > 0) {
+            $model_rrhh = ProfesionalEfectorServicio::findOne([
+                'id' => (int) $model->id_profesional_efector_servicio,
+                'deleted_at' => null,
+            ]);
+        }
+        if ($model_rrhh === null && (int) ($model->id_rrhh ?? 0) > 0) {
+            $idLeg = (int) $model->id_rrhh;
+            $model_rrhh = ProfesionalEfectorServicio::find()
+                ->where(['deleted_at' => null])
+                ->andWhere(['or', ['id' => $idLeg], ['legacy_rrhh_servicio_id' => $idLeg]])
+                ->orderBy(['id' => SORT_ASC])
+                ->one();
+        }
+        $datosProfesional = $model_rrhh !== null ? $this->formatearDatosProfesional($model_rrhh) : [];
 
         $puedeAtender = false;
         $servicioProfesionalSesion = Yii::$app->user->getServicioActual();

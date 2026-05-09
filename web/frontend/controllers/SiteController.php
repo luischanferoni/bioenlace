@@ -210,8 +210,7 @@ class SiteController extends Controller
         $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
         if ($pes !== null) {
             Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-            $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-            Yii::$app->user->setIdRrhhServicio($compat !== null ? (int) $compat : 0);
+            Yii::$app->user->setIdRrhhServicio(0);
         } else {
             try {
                 $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
@@ -219,13 +218,8 @@ class SiteController extends Controller
                     $idEfector,
                     $idServicio
                 );
-                $pesNuevo = ProfesionalEfectorServicio::findOne([
-                    'id' => $out['id_profesional_efector_servicio'],
-                    'deleted_at' => null,
-                ]);
                 Yii::$app->user->setIdProfesionalEfectorServicio((int) $out['id_profesional_efector_servicio']);
-                $compat = $pesNuevo !== null ? $pesNuevo->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
-                Yii::$app->user->setIdRrhhServicio($compat !== null ? (int) $compat : 0);
+                Yii::$app->user->setIdRrhhServicio(0);
             } catch (\Throwable $e) {
                 Yii::warning('actionCambiarServicio: no se pudo asegurar PES: ' . $e->getMessage(), __METHOD__);
                 Yii::$app->user->setIdProfesionalEfectorServicio(null);
@@ -268,11 +262,11 @@ class SiteController extends Controller
     }
 
     /**
-     * Servicios del contexto (id_servicio => nombre): PES persona+efector primero; si no hay filas, relación legacy `rrhhServicio`.
+     * Servicios del contexto (id_servicio => nombre) desde PES persona+efector.
      *
      * @return array<int, string>
      */
-    private static function serviciosNombrePorPersonaEfector(int $idPersona, int $idEfector, ?RrhhEfector $rrhhEfector = null): array
+    private static function serviciosNombrePorPersonaEfector(int $idPersona, int $idEfector): array
     {
         if ($idPersona <= 0 || $idEfector <= 0) {
             return [];
@@ -287,17 +281,8 @@ class SiteController extends Controller
                 $out[(int) $p->id_servicio] = (string) $p->servicio->nombre;
             }
         }
-        if ($out !== []) {
-            return $out;
-        }
-        if ($rrhhEfector !== null) {
-            $legacy = $rrhhEfector->getRrhhServicio()->all();
-            if ($legacy !== []) {
-                return ArrayHelper::map($legacy, 'id_servicio', 'servicio.nombre');
-            }
-        }
 
-        return [];
+        return $out;
     }
 
     /*
@@ -338,8 +323,7 @@ class SiteController extends Controller
             Yii::$app->user->setIdEfector($rrhh_efectores[0]['id_efector']);
             Yii::$app->user->setNombreEfector($rrhh_efectores[0]['nombre']);
             Yii::$app->user->setIdRecursoHumano($rrhh_efectores[0]['id_rr_hh']);
-            $rrhhServicio = RrhhServicio::findActive()->andWhere(['id_rr_hh' => $rrhh_efectores[0]['id_rr_hh']])->all();
-            Yii::$app->user->setServicios(ArrayHelper::map($rrhhServicio, 'id_servicio', 'servicio.nombre'));
+            // Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector((int) Yii::$app->user->getIdPersona(), (int) $rrhh_efectores[0]['id_efector']));
 
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
 
@@ -405,6 +389,23 @@ class SiteController extends Controller
         $idServicio = (int) $servicio;
 
         $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
+        if ($pes === null) {
+            try {
+                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
+                $pes = ProfesionalEfectorServicio::findOne([
+                    'id' => $out['id_profesional_efector_servicio'],
+                    'deleted_at' => null,
+                ]);
+            } catch (\Throwable $e) {
+                throw new BadRequestHttpException(
+                    'No hay asignación PES para este efector y servicio: ' . $e->getMessage()
+                );
+            }
+        }
+        if ($pes === null) {
+            throw new BadRequestHttpException('No hay asignación PES en el efector seleccionado para este usuario.');
+        }
+
         $rrhhEfector = RrhhEfector::find()
             ->where([
                 'id_efector' => $idEfector,
@@ -413,39 +414,13 @@ class SiteController extends Controller
             ])
             ->one();
 
-        if ($pes !== null) {
-            $efector = Efector::findOne($idEfector);
-            Yii::$app->user->setIdEfector($idEfector);
-            Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
-            Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-            $idRrhh = $rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0;
-            Yii::$app->user->setIdRecursoHumano($idRrhh);
-            $idRrhhServicio = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-            Yii::$app->user->setIdRrhhServicio($idRrhhServicio !== null ? (int) $idRrhhServicio : 0);
-
-            Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector, $rrhhEfector));
-        } elseif ($rrhhEfector !== null) {
-            Yii::$app->user->setIdEfector($rrhhEfector->id_efector);
-            Yii::$app->user->setNombreEfector($rrhhEfector->efector->nombre);
-            Yii::$app->user->setIdRecursoHumano($rrhhEfector->id_rr_hh);
-            Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector, $rrhhEfector));
-            try {
-                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
-                Yii::$app->user->setIdProfesionalEfectorServicio((int) $out['id_profesional_efector_servicio']);
-                $pesRow = ProfesionalEfectorServicio::findOne(['id' => $out['id_profesional_efector_servicio'], 'deleted_at' => null]);
-                $idRrhhServicio = $pesRow !== null ? $pesRow->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
-                Yii::$app->user->setIdRrhhServicio($idRrhhServicio !== null ? (int) $idRrhhServicio : 0);
-            } catch (\Throwable $e) {
-                Yii::warning(
-                    'establecerSessionFinal (rama rrhh_efector): no se pudo asegurar PES: ' . $e->getMessage(),
-                    __METHOD__
-                );
-                Yii::$app->user->setIdProfesionalEfectorServicio(null);
-                Yii::$app->user->setIdRrhhServicio(0);
-            }
-        } else {
-            throw new BadRequestHttpException('No hay asignación en el efector seleccionado para este usuario.');
-        }
+        $efector = Efector::findOne($idEfector);
+        Yii::$app->user->setIdEfector($idEfector);
+        Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
+        Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
+        Yii::$app->user->setIdRecursoHumano($rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0);
+        Yii::$app->user->setIdRrhhServicio(0);
+        Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector));
 
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);

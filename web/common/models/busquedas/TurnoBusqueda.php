@@ -146,7 +146,7 @@ class TurnoBusqueda extends Turno
             return $dataProvider;
         }
 
-        $idsServicios = array_values(array_filter(\Yii\helpers\ArrayHelper::getColumn($rrhh->rrhhServicio, 'id_servicio')));
+        $idsServicios = array_values(array_filter(\Yii\helpers\ArrayHelper::getColumn($rrhh->profesionalEfectorServicios, 'id_servicio')));
         if ($idsServicios === []) {
             $idsServicios = ProfesionalEfectorServicio::find()
                 ->select(['id_servicio'])

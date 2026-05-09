@@ -8,13 +8,8 @@ use yii\base\ActionFilter;
 use yii\web\ForbiddenHttpException;
 
 use common\models\Consulta;
-use common\models\Turno;
 use common\models\ConsultasConfiguracion;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
-use yii\helpers\ArrayHelper;
-
 /**
  * SisseActionFilter implements a layer of access to the controller actions.
  *
@@ -97,8 +92,11 @@ class SisseConsultaFilter extends ActionFilter
         if ($idConsulta !== '' && $idConsulta !== null) {
             $this->modelConsulta = Consulta::findOne($idConsulta);
             list($urlAnterior, $urlActual, $urlSiguiente) = ConsultasConfiguracion::getUrlPorIdConfiguracion($this->modelConsulta->id_configuracion, $this->modelConsulta->paso_completado + 1);
-            
-            return [$urlAnterior, $urlActual, $urlSiguiente];
+            $this->urlAnterior = $urlAnterior;
+            $this->urlActual = $urlActual;
+            $this->urlSiguiente = $urlSiguiente;
+
+            return true;
         }
 
         $this->modelConsulta = new Consulta();
@@ -119,21 +117,8 @@ class SisseConsultaFilter extends ActionFilter
                     }
                 }
             }
-            $rrhh = null;
-            if ($servicios === [] && $idEfector > 0 && $idPersona > 0) {
-                $rrhh = RrhhEfector::find()
-                    ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
-                    ->one();
-            }
-            if ($servicios === [] && $rrhh === null) {
-                $idRrhh = ProfesionalContextResolver::resolveRrhhIdFromSessionOrPes();
-                $rrhh = $idRrhh > 0 ? RrhhEfector::find()->where(['id_rr_hh' => $idRrhh, 'deleted_at' => null])->one() : null;
-            }
-            if ($servicios === [] && $rrhh !== null) {
-                $servicios = ArrayHelper::map($rrhh->rrhhServicio, 'id_servicio', 'servicio.item_name');
-            }
             if ($servicios === []) {
-                throw new ForbiddenHttpException('No se pudo determinar el recurso humano (RRHH/PES) para deducir el servicio.');
+                throw new ForbiddenHttpException('No se pudo deducir el servicio desde PES (persona y efector en sesión).');
             }
             $idServicioRrhh = array_keys($servicios)[0];
 
@@ -155,6 +140,8 @@ class SisseConsultaFilter extends ActionFilter
         $this->urlAnterior = $urlAnterior;
         $this->urlActual = $urlActual;
         $this->urlSiguiente = $urlSiguiente;
+
+        return true;
     }
 
 }

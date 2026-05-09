@@ -314,12 +314,33 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
     }
 
     /**
-     * Relación legacy: `id_rrhh` almacena `rrhh_servicio.id` (no confundir con `id_rr_hh` de recurso humano).
-     * Para contexto operativo PES preferir {@see getProfesionalEfectorServicio()}.
+     * Asignación PES del profesional a cargo: `id_profesional_efector_servicio`, o resolución desde `id_rrhh`
+     * (PK PES o `legacy_rrhh_servicio_id`) vía {@see afterFind()}.
+     *
+     * @return \yii\db\ActiveQuery
      */
     public function getRrhh()
     {
-        return $this->hasOne(RrhhServicio::className(), ['id' => 'id_rrhh']);
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio'])
+            ->andOnCondition(['profesional_efector_servicio.deleted_at' => null]);
+    }
+
+    public function afterFind()
+    {
+        parent::afterFind();
+        $idCol = (int) ($this->id_profesional_efector_servicio ?? 0);
+        $idLegacy = (int) ($this->id_rrhh ?? 0);
+        if ($idCol > 0 || $idLegacy <= 0 || $this->isRelationPopulated('rrhh')) {
+            return;
+        }
+        $pes = ProfesionalEfectorServicio::find()
+            ->where(['deleted_at' => null])
+            ->andWhere(['or', ['id' => $idLegacy], ['legacy_rrhh_servicio_id' => $idLegacy]])
+            ->orderBy(['id' => SORT_ASC])
+            ->one();
+        if ($pes !== null) {
+            $this->populateRelation('rrhh', $pes);
+        }
     }
 
     public function getProfesionalEfectorServicio()

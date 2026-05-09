@@ -104,30 +104,24 @@ class RrhhEfector extends \yii\db\ActiveRecord
     }
 
     /**
+     * Alias histórico: mismas filas que {@see getProfesionalEfectorServicios()} (PES).
+     *
      * @return \yii\db\ActiveQuery
      */
     public function getRrhhServicio()
     {
-        return $this->hasMany(RrhhServicio::className(), ['id_rr_hh' => 'id_rr_hh'])
-            ->onCondition('rrhh_servicio.deleted_at is NULL');
+        return $this->getProfesionalEfectorServicios();
     }
 
     /**
+     * Asignaciones operativas persona–efector–servicio (canónico).
+     *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrhhServiciosEliminados()
+    public function getProfesionalEfectorServicios()
     {
-        return $this->hasMany(RrhhServicio::className(), ['id_rr_hh' => 'id_rr_hh'])
-                    ->onCondition('rrhh_servicio.deleted_at is NOT NULL');
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRrhhServicioConAgenda()
-    {
-        return $this->hasMany(RrhhServicio::className(), ['id_rr_hh' => 'id_rr_hh'])
-            ->leftJoin('servicios', ['servicios.id_servicio' => 'rrhh_servicio.id_servicio', 'servicios.acepta_turnos' => 'SI']);
+        return $this->hasMany(ProfesionalEfectorServicio::className(), ['id_persona' => 'id_persona', 'id_efector' => 'id_efector'])
+            ->andOnCondition(['profesional_efector_servicio.deleted_at' => null]);
     }
 
     /**
@@ -151,8 +145,8 @@ class RrhhEfector extends \yii\db\ActiveRecord
             ->andWhere('rrhh_efector.deleted_at IS NULL')
             ->innerJoin('efectores', 'efectores.id_efector = rrhh_efector.id_efector')
             ->innerJoin(
-                'rrhh_servicio',
-                'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh AND rrhh_servicio.deleted_at IS NULL'
+                'profesional_efector_servicio pes',
+                'pes.id_persona = rrhh_efector.id_persona AND pes.id_efector = rrhh_efector.id_efector AND pes.deleted_at IS NULL'
             )
             ->asArray()
             ->all();
@@ -167,23 +161,23 @@ class RrhhEfector extends \yii\db\ActiveRecord
      */
     public function ordenadosPorTurno($id_efector, $id_persona)
     {
-        $and = '';
-        if ($id_persona) {
-            $and = 'AND rr_hh.id_persona = ' . $id_persona;
-        }
-
-        return RrhhServicio::find()
-            ->select(['rrhh_servicio.id', 'rrhh_efector.id_rr_hh', 'rrhh_servicio.id_servicio'])
-            ->leftJoin(
+        $q = ProfesionalEfectorServicio::find()
+            ->alias('pes')
+            ->select(['pes.id', 'rrhh_efector.id_rr_hh', 'pes.id_servicio'])
+            ->innerJoin(
                 'rrhh_efector',
-                'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh'
+                'rrhh_efector.id_persona = pes.id_persona AND rrhh_efector.id_efector = pes.id_efector AND rrhh_efector.deleted_at IS NULL'
             )
-            ->leftJoin('servicios', 'rrhh_servicio.id_servicio = servicios.id_servicio')
+            ->leftJoin('servicios', 'pes.id_servicio = servicios.id_servicio')
             ->where(['servicios.acepta_turnos' => 'SI'])
             ->andWhere(['rrhh_efector.id_efector' => Yii::$app->user->getIdEfector()])
-            ->andWhere(['rrhh_efector.deleted_at' => null])
-            ->orderBy('rrhh_servicio.id_servicio')
-            ->all();
+            ->andWhere(['pes.deleted_at' => null])
+            ->orderBy('pes.id_servicio');
+        if ($id_persona) {
+            $q->andWhere(['rrhh_efector.id_persona' => (int) $id_persona]);
+        }
+
+        return $q->all();
     }
     
     /**
@@ -268,12 +262,21 @@ class RrhhEfector extends \yii\db\ActiveRecord
     public static function obtenerMedicosPorEfector($id_efector){
 
        return RrhhEfector::find()
-        ->select(['rrhh_efector.id_rr_hh','rrhh_servicio.id', 'personas.id_persona', 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", servicios.nombre) AS datos'])
-        ->where(['rrhh_efector.id_efector' => $id_efector])
-        ->join('LEFT JOIN', 'rrhh_servicio', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
-        ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rrhh_servicio.id_servicio')
-        ->andWhere('servicios.nombre IN ("MED CLINICA", "ODONTOLOGIA","PEDIATRIA","GINECOLOGIA","OBSTETRICIA","MED FAMILIAR","MED GENERAL","NEUROLOGIA","CARDIOLOGIA","INMUNOLOGIA CLINICA Y ALERGOLOGIA","GASTROENTEROLOGIA","OFTALMOLOGIA","ENDOCRINOLOGIA","TRAUMATOLOGIA","NEUMUNOLOGIA","CIRUGIA GENERAL","DIABETES","GERIATRIA","TERAPIA INTENSIVA","PSIQUIATRÍA","NEFROLOGÍA","UROLOGÍA","HEMATOLOGÍA","OTORRINOLARINGOLOGÍA")')
-        ->join('LEFT JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
+        ->alias('re')
+        ->select(['re.id_rr_hh','pes.id', 'personas.id_persona', 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", servicios.nombre) AS datos'])
+        ->where(['re.id_efector' => $id_efector])
+        ->innerJoin(
+            'profesional_efector_servicio pes',
+            'pes.id_persona = re.id_persona AND pes.id_efector = re.id_efector AND pes.deleted_at IS NULL'
+        )
+        ->innerJoin('servicios', 'servicios.id_servicio = pes.id_servicio')
+        ->andWhere(['in', 'servicios.nombre', [
+            'MED CLINICA', 'ODONTOLOGIA', 'PEDIATRIA', 'GINECOLOGIA', 'OBSTETRICIA', 'MED FAMILIAR', 'MED GENERAL',
+            'NEUROLOGIA', 'CARDIOLOGIA', 'INMUNOLOGIA CLINICA Y ALERGOLOGIA', 'GASTROENTEROLOGIA', 'OFTALMOLOGIA',
+            'ENDOCRINOLOGIA', 'TRAUMATOLOGIA', 'NEUMUNOLOGIA', 'CIRUGIA GENERAL', 'DIABETES', 'GERIATRIA',
+            'TERAPIA INTENSIVA', 'PSIQUIATRÍA', 'NEFROLOGÍA', 'UROLOGÍA', 'HEMATOLOGÍA', 'OTORRINOLARINGOLOGÍA',
+        ]])
+        ->join('LEFT JOIN', 'personas', 're.id_persona = personas.id_persona')
         ->asArray()
         ->all();
 
@@ -284,12 +287,16 @@ class RrhhEfector extends \yii\db\ActiveRecord
         $out = ['id' => '', 'text' => ''];
 
         $data = RrhhEfector::find()
-         ->select(['rrhh_efector.id_rr_hh AS id', 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", efectores.nombre) AS text'])         
-         ->join('JOIN', 'efectores', 'rrhh_efector.id_efector = efectores.id_efector')
-         ->join('LEFT JOIN', 'rrhh_servicio', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
-         ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rrhh_servicio.id_servicio')
-         ->where('servicios.nombre IN ("MED CLINICA", "PEDIATRIA","GINECOLOGIA","OBSTETRICIA","MED FAMILIAR","MED GENERAL","ENDOCRINOLOGIA", "GERIATRIA","APS", "ENFERMERIA")')
-         ->join('LEFT JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')         
+         ->alias('re')
+         ->select(['re.id_rr_hh AS id', 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", efectores.nombre) AS text'])
+         ->join('JOIN', 'efectores', 're.id_efector = efectores.id_efector')
+         ->innerJoin(
+             'profesional_efector_servicio pes',
+             'pes.id_persona = re.id_persona AND pes.id_efector = re.id_efector AND pes.deleted_at IS NULL'
+         )
+         ->innerJoin('servicios', 'servicios.id_servicio = pes.id_servicio')
+         ->where(['in', 'servicios.nombre', ['MED CLINICA', 'PEDIATRIA', 'GINECOLOGIA', 'OBSTETRICIA', 'MED FAMILIAR', 'MED GENERAL', 'ENDOCRINOLOGIA', 'GERIATRIA', 'APS', 'ENFERMERIA']])
+         ->join('LEFT JOIN', 'personas', 're.id_persona = personas.id_persona')
          ->andWhere(['like', 'CONCAT(personas.apellido, " ", personas.nombre)', '%'.$q.'%', false])
          ->orWhere(['like', 'CONCAT(personas.nombre, " ", personas.apellido)', '%'.$q.'%', false])
          ->orWhere(['like', 'CONCAT(personas.nombre, " ", COALESCE(personas.otro_nombre,""))', '%'.$q.'%', false])
@@ -309,19 +316,23 @@ class RrhhEfector extends \yii\db\ActiveRecord
      public static function obtenerMedicosPorServicioEfector($id_efector, $id_servicio){
 
         return RrhhEfector::find()
-         ->select(['rrhh_efector.id_rr_hh','rrhh_servicio.id', 'personas.id_persona', 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", servicios.nombre) AS datos'])
-         ->where(['rrhh_efector.id_efector' => $id_efector])
-         ->join('LEFT JOIN', 'rrhh_servicio', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
-         ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rrhh_servicio.id_servicio')
+         ->alias('re')
+         ->select(['re.id_rr_hh','pes.id', 'personas.id_persona', 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " " ,COALESCE(personas.otro_nombre,""), " - ", servicios.nombre) AS datos'])
+         ->where(['re.id_efector' => $id_efector])
+         ->innerJoin(
+             'profesional_efector_servicio pes',
+             'pes.id_persona = re.id_persona AND pes.id_efector = re.id_efector AND pes.deleted_at IS NULL'
+         )
+         ->innerJoin('servicios', 'servicios.id_servicio = pes.id_servicio')
          ->andWhere(['servicios.id_servicio' => $id_servicio])
-         ->join('LEFT JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
+         ->join('LEFT JOIN', 'personas', 're.id_persona = personas.id_persona')
          ->asArray()
          ->all();
  
      }
 
     /**
-     * Autocomplete de RRHH usando tablas rrhh_efector y rrhh_servicio (schema actual).
+     * Autocomplete de RRHH vía `rrhh_efector` + PES (`profesional_efector_servicio`).
      * Devuelve lista de profesionales con id (id_rr_hh) y text (nombre + servicio).
      * @param string|null $q
      * @param array $filters id_efector, id_servicio, id_servicio_asignado, efector_nombre, servicio_nombre, limit, sort_by, sort_order
@@ -335,8 +346,12 @@ class RrhhEfector extends \yii\db\ActiveRecord
                 'rrhh_efector.id_rr_hh AS id'
             ])
             ->from('rrhh_efector')
-            ->join('LEFT JOIN', 'rrhh_servicio', 'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh AND rrhh_servicio.deleted_at IS NULL')
-            ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = rrhh_servicio.id_servicio')
+            ->join(
+                'LEFT JOIN',
+                'profesional_efector_servicio pes',
+                'pes.id_persona = rrhh_efector.id_persona AND pes.id_efector = rrhh_efector.id_efector AND pes.deleted_at IS NULL'
+            )
+            ->join('LEFT JOIN', 'servicios', 'servicios.id_servicio = pes.id_servicio')
             ->join('LEFT JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
             ->join('LEFT JOIN', 'efectores', 'rrhh_efector.id_efector = efectores.id_efector')
             ->where(['rrhh_efector.deleted_at' => null]);
@@ -360,7 +375,7 @@ class RrhhEfector extends \yii\db\ActiveRecord
         }
         $idServicio = $filters['id_servicio'] ?? $filters['id_servicio_asignado'] ?? null;
         if (!empty($idServicio)) {
-            $query->andWhere(['rrhh_servicio.id_servicio' => $idServicio]);
+            $query->andWhere(['pes.id_servicio' => $idServicio]);
         }
         if (!empty($filters['efector_nombre'])) {
             $query->andWhere(['like', 'efectores.nombre', '%' . $filters['efector_nombre'] . '%', false]);

@@ -17,11 +17,11 @@ use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use Firebase\JWT\JWT;
 
 /**
- * Orquesta el establecimiento del "contexto operativo" en sesión (efector, RRHH, servicio y encounter class),
- * alineado con el flujo histórico de la web.
+ * Orquesta el establecimiento del "contexto operativo" en sesi?n (efector, RRHH, servicio y encounter class),
+ * alineado con el flujo hist?rico de la web.
  *
- * La asignación operativa canónica es {@see ProfesionalEfectorServicio}; `id_rr_hh` / `id_rrhh_servicio` se
- * mantienen solo como compatibilidad cuando aún existen filas legacy.
+ * La asignaci?n operativa can?nica es {@see ProfesionalEfectorServicio}; `id_rr_hh` / `id_rrhh_servicio` se
+ * mantienen solo como compatibilidad cuando a?n existen filas legacy.
  */
 class SesionOperativaService extends Component
 {
@@ -44,7 +44,7 @@ class SesionOperativaService extends Component
         $encounterClass = $body['encounter_class'] ?? null;
 
         if (!$efectorId || !$servicioId || !$encounterClass) {
-            throw new \InvalidArgumentException('Todos los parámetros son requeridos: efector_id, servicio_id, encounter_class');
+            throw new \InvalidArgumentException('Todos los par?metros son requeridos: efector_id, servicio_id, encounter_class');
         }
 
         $efectorId = (int) $efectorId;
@@ -53,7 +53,7 @@ class SesionOperativaService extends Component
 
         $validEncounterClasses = array_keys(ConsultasConfiguracion::ENCOUNTER_CLASS);
         if (!in_array($encounterClass, $validEncounterClasses, true)) {
-            throw new \InvalidArgumentException('Encounter class inválido');
+            throw new \InvalidArgumentException('Encounter class inv?lido');
         }
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
@@ -71,7 +71,7 @@ class SesionOperativaService extends Component
             }
         }
         if ($pes === null) {
-            throw new \RuntimeException('No se encontró asignación profesional-efector-servicio para la persona autenticada');
+            throw new \RuntimeException('No se encontr? asignaci?n profesional-efector-servicio para la persona autenticada');
         }
 
         $rrhhEfector = RrhhEfector::find()
@@ -83,8 +83,6 @@ class SesionOperativaService extends Component
             ->one();
         $idRrhh = $rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0;
 
-        $idRrhhServicio = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-
         Yii::$app->user->setEncounterClass($encounterClass);
         Yii::$app->user->setServicioActual($servicioId);
 
@@ -93,7 +91,7 @@ class SesionOperativaService extends Component
         Yii::$app->user->setIdRecursoHumano($idRrhh);
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
 
-        Yii::$app->user->setIdRrhhServicio($idRrhhServicio !== null ? (int) $idRrhhServicio : 0);
+        Yii::$app->user->setIdRrhhServicio(0);
 
         $pesEnEfector = ProfesionalEfectorServicio::find()
             ->where([
@@ -117,7 +115,7 @@ class SesionOperativaService extends Component
 
         $redirectUrl = Yii::$app->urlManager->createUrl($this->getRedirectRouteForCurrentUser());
 
-        // Token stateless con contexto operativo: permite que clientes móviles operen sin cookie de sesión.
+        // Token stateless con contexto operativo: permite que clientes m?viles operen sin cookie de sesi?n.
         $identity = Yii::$app->user->identity;
         $payload = [
             'user_id' => (int) ($identity->id ?? 0),
@@ -127,7 +125,7 @@ class SesionOperativaService extends Component
             'id_rr_hh' => $idRrhh,
             'id_profesional_efector_servicio' => (int) $pes->id,
             'servicio_actual' => (int) $servicioId,
-            'id_rrhh_servicio' => (int) ($idRrhhServicio ?? 0),
+            'id_rrhh_servicio' => 0,
             'encounter_class' => (string) $encounterClass,
             'iat' => time(),
             'exp' => time() + (24 * 60 * 60),
@@ -142,7 +140,7 @@ class SesionOperativaService extends Component
             'servicio' => [
                 'id' => (int) $servicioId,
                 'nombre' => (string) ($pes->servicio->nombre ?? ''),
-                'id_rrhh_servicio' => (int) ($idRrhhServicio ?? 0),
+                'id_rrhh_servicio' => 0,
             ],
             'encounter_class' => [
                 'code' => (string) $encounterClass,
@@ -177,7 +175,7 @@ class SesionOperativaService extends Component
     }
 
     /**
-     * Hidratación de agenda disponible a partir de todas las PES de la persona en el efector de sesión.
+     * Hidrataci?n de agenda disponible a partir de todas las PES de la persona en el efector de sesi?n.
      */
     private function establecerAgendaDisponiblePorContextoSesion(): void
     {
@@ -192,15 +190,6 @@ class SesionOperativaService extends Component
             ->all();
 
         $servicioActual = Yii::$app->user->getServicioActual();
-        foreach ($pesRows as $pesRow) {
-            if ((int) $servicioActual === (int) $pesRow->id_servicio) {
-                $compatId = $pesRow->resolveRrhhServicioAsignadoIdForTurnoCompat();
-                if ($compatId !== null) {
-                    Yii::$app->user->setIdRrhhServicio((int) $compatId);
-                }
-            }
-        }
-
         $nroDiaDeSemana = (int) date('N') - 1;
         $nroDiaDeSemanaManiana = $nroDiaDeSemana === 6 ? 0 : $nroDiaDeSemana + 1;
         $columnasAgenda = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];

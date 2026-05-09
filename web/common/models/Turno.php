@@ -184,28 +184,25 @@ class Turno extends \yii\db\ActiveRecord
             return false;
         }
         $pesChanged = $insert || $this->isAttributeChanged('id_profesional_efector_servicio', false);
-        $rrsaChanged = $insert || $this->isAttributeChanged('id_rrhh_servicio_asignado', false);
 
         if ($pesChanged && (int) $this->id_profesional_efector_servicio > 0) {
             $this->syncLegacyIdsFromProfesionalEfectorServicio();
-        } elseif ($rrsaChanged) {
-            $this->syncProfesionalEfectorServicioFromLegacy();
         }
         return true;
     }
 
     /**
-     * Si el cliente envía solo PES, completa `id_rrhh_servicio_asignado` e `id_rr_hh` antes de validaciones que aún los usan.
+     * Si el cliente envía solo PES, completa `id_rr_hh` coherente con persona+efector del PES.
      */
     public function hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded(): void
     {
-        if ((int) $this->id_profesional_efector_servicio > 0 && (int) $this->id_rrhh_servicio_asignado <= 0) {
+        if ((int) $this->id_profesional_efector_servicio > 0) {
             $this->syncLegacyIdsFromProfesionalEfectorServicio();
         }
     }
 
     /**
-     * Rellena columnas legado a partir de la fila PES (auth y reportes históricos siguen viendo id_rr_hh / rrhh_servicio.id).
+     * Alinea `id_rr_hh` con el vínculo RRHH–efector del PES; no persiste `rrhh_servicio`.
      */
     public function syncLegacyIdsFromProfesionalEfectorServicio(): void
     {
@@ -220,10 +217,8 @@ class Turno extends \yii\db\ActiveRecord
         if ($pes === null) {
             return;
         }
-        $rsa = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-        if ($rsa) {
-            $this->id_rrhh_servicio_asignado = $rsa;
-        }
+        $leg = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+        $this->id_rrhh_servicio_asignado = $leg !== null ? (int) $leg : 0;
         $re = RrhhEfector::find()
             ->where([
                 'id_persona' => $pes->id_persona,
@@ -237,40 +232,17 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Mantiene `id_profesional_efector_servicio` alineado con `id_rrhh_servicio_asignado` cuando no vino PES en el payload.
-     */
-    public function syncProfesionalEfectorServicioFromLegacy(): void
-    {
-        $legacy = (int) $this->id_rrhh_servicio_asignado;
-        if ($legacy <= 0) {
-            $this->id_profesional_efector_servicio = null;
-            return;
-        }
-        $idPes = null;
-        if ((int) $this->id_efector > 0) {
-            $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                $legacy,
-                (int) $this->id_efector
-            );
-        }
-        if ($idPes === null) {
-            $idPes = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($legacy);
-        }
-        $this->id_profesional_efector_servicio = $idPes;
-    }
-
-    /**
-     * En escenario delegar: exige PES o, en su defecto, `id_rrhh_servicio_asignado` (se sincroniza el otro en beforeSave).
+     * En escenario delegar: exige PES.
      */
     public function validateDelegarRequiereProfesional(): void
     {
         if ($this->scenario !== ServiciosEfector::DELEGAR_A_CADA_RRHH) {
             return;
         }
-        if ((int) $this->id_profesional_efector_servicio <= 0 && (int) $this->id_rrhh_servicio_asignado <= 0) {
+        if ((int) $this->id_profesional_efector_servicio <= 0) {
             $this->addError(
                 'id_profesional_efector_servicio',
-                'Indique id_profesional_efector_servicio o id_rrhh_servicio_asignado.'
+                'Indique id_profesional_efector_servicio.'
             );
         }
     }
@@ -296,18 +268,6 @@ class Turno extends \yii\db\ActiveRecord
                 'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH,
                 'when' => function ($model) {
                     return (int) $model->id_profesional_efector_servicio > 0;
-                },
-            ],
-            [
-                ['fecha', 'id_persona', 'id_rrhh_servicio_asignado'], 'unique',
-                'targetAttribute' => ['fecha', 'id_persona', 'id_rrhh_servicio_asignado'],
-                'filter' => function ($query) {
-                    $query->andWhere(['estado' => 'PENDIENTE']);
-                },
-                'message' => 'Ya existe un turno para este paciente para este médico para la fecha indicada',
-                'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH,
-                'when' => function ($model) {
-                    return (int) $model->id_profesional_efector_servicio <= 0 && (int) $model->id_rrhh_servicio_asignado > 0;
                 },
             ],
             [
@@ -403,9 +363,14 @@ class Turno extends \yii\db\ActiveRecord
         return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
+    /**
+     * PES asociado cuando `id_rrhh_servicio_asignado` almacena la PK de `profesional_efector_servicio`
+     * (o coincide con un id resuelto en runtime vía {@see id_profesional_efector_servicio}).
+     */
     public function getRrhhServicioAsignado()
     {
-        return $this->hasOne(RrhhServicio::className(), ['id' => 'id_rrhh_servicio_asignado']);
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_rrhh_servicio_asignado'])
+            ->andOnCondition(['profesional_efector_servicio.deleted_at' => null]);
     }
 
     /**
@@ -420,10 +385,6 @@ class Turno extends \yii\db\ActiveRecord
         if ($pes !== null && $pes->servicio) {
             return (string) $pes->servicio->nombre;
         }
-        if ($this->rrhhServicioAsignado && $this->rrhhServicioAsignado->servicio) {
-            return (string) $this->rrhhServicioAsignado->servicio->nombre;
-        }
-
         return 'Sin servicio';
     }
 
@@ -450,19 +411,6 @@ class Turno extends \yii\db\ActiveRecord
 
             return $re && $re->persona ? $re->persona : null;
         }
-        if ((int) $this->id_rrhh_servicio_asignado > 0 && $this->rrhhServicioAsignado) {
-            $rs = $this->rrhhServicioAsignado;
-            $re = RrhhEfector::find()
-                ->where([
-                    'id_rr_hh' => (int) $rs->id_rr_hh,
-                    'id_efector' => (int) $this->id_efector,
-                    'deleted_at' => null,
-                ])
-                ->one();
-
-            return $re && $re->persona ? $re->persona : null;
-        }
-
         return null;
     }
 
@@ -482,17 +430,17 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Slots legacy, servicios y ids PES para filtrar turnos del profesional en un efector (PES + compat).
+     * Servicios e ids PES para filtrar turnos del profesional en un efector.
      *
-     * @return array{0: list<int>, 1: list<int>, 2: list<int>}
+     * @return array{0: list<int>, 1: list<int>, 2: list<int>} slot legacy vacío, servicioIds, pesIds
      */
     private static function contextoProfesionalTurnosDesdeRrhhEfector(?RrhhEfector $re): array
     {
         if ($re === null) {
             return [[], [], []];
         }
-        $slotIds = array_values(array_filter(ArrayHelper::getColumn($re->rrhhServicio, 'id')));
-        $servicioIds = array_values(array_filter(ArrayHelper::getColumn($re->rrhhServicio, 'id_servicio')));
+        $servicioIds = [];
+        $slotIds = [];
         $pesRows = ProfesionalEfectorServicio::find()
             ->where([
                 'id_persona' => $re->id_persona,
@@ -546,11 +494,12 @@ class Turno extends \yii\db\ActiveRecord
         // o al servicio en el cual el rrhh esta trabajando en este momento
         $query = Turno::findActive()->where(['id_efector' => Yii::$app->user->getIdEfector()]);
 
-        $or = [
-            ['in', 'id_rrhh_servicio_asignado', $idsRrhhServicios !== [] ? $idsRrhhServicios : [-1]],
-        ];
+        $or = [];
         if ($idsPes !== []) {
             $or[] = ['in', 'id_profesional_efector_servicio', $idsPes];
+        }
+        if ($idsRrhhServicios !== []) {
+            $or[] = ['in', 'id_rrhh_servicio_asignado', $idsRrhhServicios];
         }
         $or[] = [
             'and',
@@ -598,11 +547,12 @@ class Turno extends \yii\db\ActiveRecord
         // o al servicio en el cual el rrhh esta trabajando en este momento
         $query = Turno::findActive();
 
-        $or = [
-            ['in', 'id_rrhh_servicio_asignado', $idsRrhhServicios !== [] ? $idsRrhhServicios : [-1]],
-        ];
+        $or = [];
         if ($idsPes !== []) {
             $or[] = ['in', 'id_profesional_efector_servicio', $idsPes];
+        }
+        if ($idsRrhhServicios !== []) {
+            $or[] = ['in', 'id_rrhh_servicio_asignado', $idsRrhhServicios];
         }
         $or[] = [
             'and',
@@ -663,10 +613,9 @@ class Turno extends \yii\db\ActiveRecord
     public static function cargarRrhhServicioAsignado($id_turnos, $id_servicio_asignado)
     {
         $idEfector = (int) Yii::$app->user->getIdEfector();
-        $idRrhh = Yii::$app->user->getIdRecursoHumano();
         $pesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
         $idPes = null;
-        $id_rrhh_servicio_asignado = null;
+        $id_rrhh_servicio_asignado = 0;
 
         if ($pesSesionRaw !== null && $pesSesionRaw !== '' && (int) $pesSesionRaw > 0) {
             $pesS = ProfesionalEfectorServicio::findOne(['id' => (int) $pesSesionRaw, 'deleted_at' => null]);
@@ -676,28 +625,9 @@ class Turno extends \yii\db\ActiveRecord
                 && ($idEfector <= 0 || (int) $pesS->id_efector === $idEfector)
             ) {
                 $idPes = (int) $pesS->id;
-                $id_rrhh_servicio_asignado = $pesS->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                $leg = $pesS->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                $id_rrhh_servicio_asignado = $leg !== null ? (int) $leg : 0;
             }
-        }
-        if (($id_rrhh_servicio_asignado === null || (int) $id_rrhh_servicio_asignado <= 0)
-            && $idRrhh && $id_servicio_asignado && $idEfector > 0) {
-            $id_rrhh_servicio_asignado = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
-                (int) $idRrhh,
-                (int) $id_servicio_asignado,
-                $idEfector
-            );
-        }
-        if ($id_rrhh_servicio_asignado === null || (int) $id_rrhh_servicio_asignado <= 0) {
-            $id_rrhh_servicio_asignado = RrhhServicio::obtenerIdRrhhServicio($idRrhh, $id_servicio_asignado);
-        }
-        if ($idPes === null && $idEfector > 0 && $id_rrhh_servicio_asignado) {
-            $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                (int) $id_rrhh_servicio_asignado,
-                $idEfector
-            );
-        }
-        if ($idPes === null && $id_rrhh_servicio_asignado) {
-            $idPes = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $id_rrhh_servicio_asignado);
         }
 
         Yii::$app->db->createCommand()
@@ -756,22 +686,14 @@ class Turno extends \yii\db\ActiveRecord
 
         $turnosAtendidos = [];
         if ($rrhh_efector !== null) {
-            [$slotIds, , $pesIds] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh_efector);
-            $primerSlot = $slotIds[0] ?? 0;
+            [, , $pesIds] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh_efector);
 
             $turnosAtendidosQuery = self::find()
                 ->where([['fecha' => $fecha]])
                 ->andWhere(['id_efector' => $efector])
                 ->andWhere(['atendido' => 'SI']);
-            if ($primerSlot > 0 || $pesIds !== []) {
-                $orTa = [];
-                if ($primerSlot > 0) {
-                    $orTa[] = ['id_rrhh_servicio_asignado' => $primerSlot];
-                }
-                if ($pesIds !== []) {
-                    $orTa[] = ['in', 'id_profesional_efector_servicio', $pesIds];
-                }
-                $turnosAtendidosQuery->andWhere(array_merge(['or'], $orTa));
+            if ($pesIds !== []) {
+                $turnosAtendidosQuery->andWhere(['in', 'id_profesional_efector_servicio', $pesIds]);
                 $turnosAtendidos = $turnosAtendidosQuery->all();
             }
         }
@@ -960,20 +882,10 @@ class Turno extends \yii\db\ActiveRecord
         if ($idPes <= 0) {
             return 0;
         }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        $rrsa = $pes !== null ? $pes->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
         $q = self::find()
             ->andWhere(['fecha' => $fecha])
-            ->andWhere(['in', 'estado', self::ESTADOS_PARA_DESHABILITAR]);
-        if ($rrsa !== null && (int) $rrsa > 0) {
-            $q->andWhere([
-                'or',
-                ['id_profesional_efector_servicio' => $idPes],
-                ['id_rrhh_servicio_asignado' => (int) $rrsa],
-            ]);
-        } else {
-            $q->andWhere(['id_profesional_efector_servicio' => $idPes]);
-        }
+            ->andWhere(['in', 'estado', self::ESTADOS_PARA_DESHABILITAR])
+            ->andWhere(['id_profesional_efector_servicio' => $idPes]);
 
         return (int) $q->count();
     }
@@ -1009,19 +921,7 @@ class Turno extends \yii\db\ActiveRecord
         }
         $horaNormalizada = (strlen($hora) === 5 && strpos($hora, ':') !== false) ? $hora . ':00' : $hora;
         $q = static::findActive()->andWhere(['fecha' => $fecha, 'hora' => $horaNormalizada]);
-        if ((clone $q)->andWhere(['id_profesional_efector_servicio' => $idPes])->exists()) {
-            return true;
-        }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        if ($pes === null) {
-            return false;
-        }
-        $rrsa = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-        if ($rrsa !== null && $rrsa > 0) {
-            return (clone $q)->andWhere(['id_rrhh_servicio_asignado' => $rrsa])->exists();
-        }
-
-        return false;
+        return (clone $q)->andWhere(['id_profesional_efector_servicio' => $idPes])->exists();
     }
 
 

@@ -4,13 +4,12 @@ namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
 use Yii;
 
 /**
- * Alta idempotente: persona + efector + servicio → {@see RrhhEfector}, {@see ProfesionalEfectorServicioModel} (canónico) y {@see RrhhServicio} si falta fila legacy (compat turnos / admin).
+ * Alta idempotente: persona + efector + servicio → {@see RrhhEfector} y {@see ProfesionalEfectorServicioModel} (canónico).
  *
  * Sin HttpException: errores de negocio como \InvalidArgumentException.
  */
@@ -71,26 +70,6 @@ final class ProfesionalEfectorServicioAltaService
             }
             if (!$pes->save()) {
                 throw new \RuntimeException('No se pudo registrar la asignación profesional–efector–servicio: ' . json_encode($pes->getErrors()));
-            }
-
-            /** @var RrhhServicio|null $rs */
-            $rs = RrhhServicio::find()
-                ->where([
-                    'id_rr_hh' => (int) $re->id_rr_hh,
-                    'id_servicio' => $idServicio,
-                    'deleted_at' => null,
-                ])
-                ->one();
-            if ($rs === null) {
-                $rs = new RrhhServicio();
-                $rs->id_rr_hh = (int) $re->id_rr_hh;
-                $rs->id_servicio = $idServicio;
-                if ($rs->hasAttribute('horario') && ($rs->horario === null || $rs->horario === '')) {
-                    $rs->horario = '';
-                }
-                if (!$rs->save()) {
-                    throw new \RuntimeException('No se pudo asignar el servicio al RRHH: ' . json_encode($rs->getErrors()));
-                }
             }
 
             $transaction->commit();

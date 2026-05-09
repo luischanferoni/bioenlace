@@ -100,8 +100,7 @@ abstract class BaseUserConfig extends User
     }
 
     /**
-     * Compat. agenda/turnos legacy (`rrhh_servicio.id`). La fuente operativa es {@see setIdProfesionalEfectorServicio};
-     * este valor se deriva del PES cuando el token o el flujo no lo envían.
+     * Reservado; sin `rrhh_servicio` operativo — mantener 0. La fuente es {@see setIdProfesionalEfectorServicio}.
      */
     public function setIdRrhhServicio($idRrhhServicio)
     {

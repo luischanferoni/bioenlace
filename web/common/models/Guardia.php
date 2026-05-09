@@ -158,11 +158,6 @@ class Guardia extends \yii\db\ActiveRecord
         return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rrhh_asignado']);
     }
 
-    public function getRrhhServicio()
-    {
-        return $this->hasOne(RrhhServicio::className(), ['id' => 'id_rrhh_asignado']);
-    }
-
     public function getProfesionalEfectorServicio()
     {
         return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
@@ -202,21 +197,6 @@ class Guardia extends \yii\db\ActiveRecord
             $pes = $this->profesionalEfectorServicio;
             if ($pes !== null && $pes->persona) {
                 return $pes->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
-            }
-        }
-        if ($this->id_rrhh_asignado) {
-            $rs = $this->rrhhServicio;
-            if ($rs !== null && $this->id_efector) {
-                $re = RrhhEfector::find()
-                    ->where([
-                        'id_rr_hh' => $rs->id_rr_hh,
-                        'id_efector' => $this->id_efector,
-                        'deleted_at' => null,
-                    ])
-                    ->one();
-                if ($re !== null && $re->persona) {
-                    return $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
-                }
             }
         }
 

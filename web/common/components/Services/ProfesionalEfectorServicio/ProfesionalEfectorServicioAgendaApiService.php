@@ -6,7 +6,6 @@ use common\models\busquedas\ProfesionalEfectorServicioAgendaBusqueda;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 
@@ -120,10 +119,9 @@ class ProfesionalEfectorServicioAgendaApiService
     }
 
     /**
-     * Valida (y opcionalmente resuelve) `rrhh_servicio` respecto de una fila PES del mismo efector.
+     * Opcional: valida coherencia si el cliente aún envía `id_rrhh_servicio_asignado` (solo vs `legacy_rrhh_servicio_id` en PES).
      *
-     * @param int|null $idRrhhServicioAsignado si null o 0, intenta {@see ProfesionalEfectorServicio::resolveRrhhServicioAsignadoIdForTurnoCompat}
-     * @return int id_rrhh_servicio_asignado efectivo
+     * @return int valor histórico para serialización (puede ser 0)
      * @throws BadRequestHttpException
      */
     public static function assertRrhhServicioAsignadoAlineadoConPes(
@@ -134,25 +132,13 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($idEfector <= 0 || (int) $pes->id_efector !== $idEfector) {
             throw new BadRequestHttpException('La asignación profesional no pertenece al efector.');
         }
-        $idRrsa = $idRrhhServicioAsignado !== null && $idRrhhServicioAsignado > 0
-            ? (int) $idRrhhServicioAsignado
-            : (int) ($pes->resolveRrhhServicioAsignadoIdForTurnoCompat() ?: 0);
-        if ($idRrsa <= 0) {
-            throw new BadRequestHttpException('Indique id_rrhh_servicio_asignado o una PES con vínculo de servicio asignado.');
-        }
-        $re = RrhhEfector::find()
-            ->where(['id_persona' => $pes->id_persona, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->one();
-        $qRs = RrhhServicio::find()
-            ->where(['id' => $idRrsa, 'id_servicio' => $pes->id_servicio, 'deleted_at' => null]);
-        if ($re !== null) {
-            $qRs->andWhere(['id_rr_hh' => $re->id_rr_hh]);
-        }
-        if (!$qRs->exists()) {
-            throw new BadRequestHttpException('Servicio asignado no encontrado o no coincide con la asignación profesional.');
+        $leg = (int) ($pes->legacy_rrhh_servicio_id ?? 0);
+        $in = $idRrhhServicioAsignado !== null && $idRrhhServicioAsignado > 0 ? (int) $idRrhhServicioAsignado : 0;
+        if ($in > 0 && $leg > 0 && $in !== $leg) {
+            throw new BadRequestHttpException('id_rrhh_servicio_asignado no coincide con la asignación PES.');
         }
 
-        return $idRrsa;
+        return $leg > 0 ? $leg : $in;
     }
 
     /**
@@ -170,27 +156,26 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($re === null) {
             throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
         }
-        $porLegacyCol = ProfesionalEfectorServicio::find()
+        $ok = ProfesionalEfectorServicio::find()
+            ->alias('pes')
             ->where([
-                'id_persona' => $re->id_persona,
-                'id_efector' => $idEfector,
-                'legacy_rrhh_servicio_id' => $idRrhhServicioAsignado,
-                'deleted_at' => null,
+                'pes.id_persona' => $re->id_persona,
+                'pes.id_efector' => $idEfector,
+                'pes.deleted_at' => null,
+            ])
+            ->andWhere([
+                'or',
+                ['pes.id' => $idRrhhServicioAsignado],
+                ['pes.legacy_rrhh_servicio_id' => $idRrhhServicioAsignado],
             ])
             ->exists();
-        if (!$porLegacyCol && !RrhhServicio::find()
-            ->where([
-                'id' => $idRrhhServicioAsignado,
-                'id_rr_hh' => $idRrhh,
-                'deleted_at' => null,
-            ])
-            ->exists()) {
+        if (!$ok) {
             throw new BadRequestHttpException('Servicio asignado no encontrado o no corresponde a este recurso humano.');
         }
     }
 
     /**
-     * Obtiene o crea la fila PES coherente con rrhh_servicio en el efector.
+     * Resuelve PES existente por id PES, por `legacy_rrhh_servicio_id` o por coincidencia de PK en el efector/persona.
      *
      * @throws BadRequestHttpException
      */
@@ -202,9 +187,19 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($re === null) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
         }
+        $pesDirect = ProfesionalEfectorServicio::find()
+            ->where([
+                'id' => $idRrhhServicio,
+                'id_persona' => (int) $re->id_persona,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
+            ->one();
+        if ($pesDirect !== null) {
+            return $pesDirect;
+        }
         $idPesPorLegacy = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrhhServicio);
         if ($idPesPorLegacy !== null) {
-            /** @var ProfesionalEfectorServicio|null $pesLegacy */
             $pesLegacy = ProfesionalEfectorServicio::findOne(['id' => $idPesPorLegacy, 'deleted_at' => null]);
             if (
                 $pesLegacy !== null
@@ -225,26 +220,10 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($pesPorCol !== null) {
             return $pesPorCol;
         }
-        $rs = RrhhServicio::findOne(['id' => $idRrhhServicio, 'deleted_at' => null]);
-        if ($rs === null || (int) $rs->id_rr_hh !== $idRrhh) {
-            throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
-        }
-        $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
-            (int) $re->id_persona,
-            $idEfector,
-            (int) $rs->id_servicio
-        );
-        if ($pes === null) {
-            $pes = new ProfesionalEfectorServicio();
-            $pes->id_persona = (int) $re->id_persona;
-            $pes->id_efector = $idEfector;
-            $pes->id_servicio = (int) $rs->id_servicio;
-            if (!$pes->save()) {
-                throw new BadRequestHttpException('No se pudo crear la asignación profesional-efector-servicio.');
-            }
-        }
 
-        return $pes;
+        throw new BadRequestHttpException(
+            'No hay fila PES para ese identificador. Cree la asignación con el flujo de alta PES (id_profesional_efector_servicio).'
+        );
     }
 
     /**

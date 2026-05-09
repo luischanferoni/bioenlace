@@ -14,7 +14,6 @@ use common\models\CoberturaMedica;
 use common\models\Telefono;
 use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 
 /**
  * GuardiaController implements the CRUD actions for Guardia model.
@@ -207,7 +206,7 @@ class GuardiaController extends Controller
     }
 
     /**
-     * Valores del Select2 de profesional: {@see RrhhEfector::obtenerMedicosPorEfector} usa `rrhh_servicio.id` como `id`.
+     * Prellenado desde sesión operativa (PES canónico; `id_rrhh_asignado` solo si hay `legacy_rrhh_servicio_id`).
      */
     protected function prefillIdRrhhAsignadoDesdeSesion(Guardia $model): void
     {
@@ -216,59 +215,35 @@ class GuardiaController extends Controller
             return;
         }
 
-        $idRrhhServicio = Yii::$app->user->getIdRrhhServicio();
-        if ($idRrhhServicio !== null && $idRrhhServicio !== '') {
-            $model->id_rrhh_asignado = (int) $idRrhhServicio;
-
-            return;
-        }
-
-        $idRrhh = Yii::$app->user->getIdRecursoHumano();
-        if ($idRrhh !== null && $idRrhh !== '') {
-            $idServicioSesion = Yii::$app->user->getServicioActual();
-            if ($idServicioSesion !== null && $idServicioSesion !== '') {
-                $resolved = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
-                    (int) $idRrhh,
-                    (int) $idServicioSesion,
-                    $idEfector
-                );
-                if ($resolved !== null && $resolved > 0) {
-                    $model->id_rrhh_asignado = (int) $resolved;
-
-                    return;
+        $pesRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
+        if ($pesRaw !== null && $pesRaw !== '') {
+            $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
+            if ($pes !== null && (int) $pes->id_efector === $idEfector) {
+                $model->id_profesional_efector_servicio = (int) $pes->id;
+                $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                if ($compat !== null && $compat > 0) {
+                    $model->id_rrhh_asignado = (int) $compat;
                 }
-            }
-            $row = RrhhServicio::find()
-                ->alias('rs')
-                ->innerJoin(['re' => 'rrhh_efector'], 're.id_rr_hh = rs.id_rr_hh')
-                ->where([
-                    're.id_rr_hh' => (int) $idRrhh,
-                    're.id_efector' => $idEfector,
-                    'rs.deleted_at' => null,
-                ])
-                ->orderBy(['rs.id' => SORT_ASC])
-                ->select(['rs.id'])
-                ->asArray()
-                ->one();
-            if ($row !== null && isset($row['id'])) {
-                $model->id_rrhh_asignado = (int) $row['id'];
 
                 return;
             }
         }
 
-        $pesRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
-        if ($pesRaw === null || $pesRaw === '') {
-            return;
-        }
-        $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
-        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-            return;
-        }
-        $model->id_profesional_efector_servicio = (int) $pes->id;
-        $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-        if ($compat !== null && $compat > 0) {
-            $model->id_rrhh_asignado = (int) $compat;
+        $idServicioSesion = Yii::$app->user->getServicioActual();
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idServicioSesion !== null && $idServicioSesion !== '' && $idPersona > 0) {
+            $pes2 = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
+                $idPersona,
+                $idEfector,
+                (int) $idServicioSesion
+            );
+            if ($pes2 !== null) {
+                $model->id_profesional_efector_servicio = (int) $pes2->id;
+                $compat = $pes2->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                if ($compat !== null && $compat > 0) {
+                    $model->id_rrhh_asignado = (int) $compat;
+                }
+            }
         }
     }
 

@@ -37,7 +37,15 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 - `web/common/migrations/m260508_000003_consumidores_id_profesional_efector_servicio.php` — consumidores (incl. `guardia`, `consultas`, etc.; ver comentarios en migración).
 - `web/common/migrations/m260508_000004_consumidores_pes_lote2.php` — segundo lote.
 - `web/common/migrations/m260508_000006_turnos_index_profesional_efector_servicio.php` — índices turnos.
+- `web/common/migrations/m260509_000001_drop_rrhh_servicio_and_pes_legacy_bridge.php` — **retiro BD**: `DROP` de tabla `rrhh_servicio`, eliminación de `profesional_efector_servicio.legacy_rrhh_servicio_id` y normalización de `turnos.id_rrhh_servicio_asignado` donde hay PES (ver docblock de la migración; **requiere** diagnóstico previo y despliegue de código sin dependencia del AR `RrhhServicio`).
 - SQL rutas Webvimark / permisos (si aplica en el entorno): `web/docs/sql/2026_migrate_webvimark_routes_profesional_agenda_recurso_humano.sql`
+
+### Retiro de `rrhh_servicio` en base de datos
+
+1. Ejecutar `web/docs/sql/diagnostico_pes_antes_eliminar_legacy.sql` hasta cumplir criterios del final del script.
+2. Aplicar `yii migrate` incluyendo `m260509_000001_drop_rrhh_servicio_and_pes_legacy_bridge` (solo **mysql/mysqli**; otros drivers quedan omitidos con mensaje).
+3. **Código posterior obligatorio:** quitar o desactivar usos de `\common\models\RrhhServicio`, métodos que lean `legacy_rrhh_servicio_id`, y cualquier SQL explícito a `rrhh_servicio`. Buscar: `rg "rrhh_servicio|legacy_rrhh_servicio_id|RrhhServicio" web/common web/frontend web/backend`.
+4. **Fuera de esta migración:** columnas como `id_rrhh_servicio_asignado` (turnos), `id_rrhh_asignado` (guardia), `id_rrhh_servicio` en otros consumidores — siguen existiendo; un DDL futuro puede anularlas cuando el código deje de referenciarlas.
 
 ---
 

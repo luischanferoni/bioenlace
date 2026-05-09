@@ -16,6 +16,7 @@
 --   - Comparar turnos: PES vs legacy_rrhh_servicio_id del PES (inconsistencias).
 --
 -- NO ejecuta DROP. Revise los resultados hasta que el negocio apruebe el retiro.
+-- Migración Yii asociada (tras aprobar): web/common/migrations/m260509_000001_drop_rrhh_servicio_and_pes_legacy_bridge.php
 --
 -- Base de datos activa obligatoria (tablas sin prefijo `esquema.`). Primera fila: compruebe _bd_sesion.
 -- =============================================================================

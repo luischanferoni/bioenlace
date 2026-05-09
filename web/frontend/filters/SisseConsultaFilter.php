@@ -10,7 +10,10 @@ use yii\web\ForbiddenHttpException;
 use common\models\Consulta;
 use common\models\Turno;
 use common\models\ConsultasConfiguracion;
+use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
+use yii\helpers\ArrayHelper;
 
 /**
  * SisseActionFilter implements a layer of access to the controller actions.
@@ -102,16 +105,40 @@ class SisseConsultaFilter extends ActionFilter
 
         // Si no recibimos el servicio del rrhh, tenemos que deducirlo
         if ($idServicioRrhh == '' && $idServicioRrhh !== null) {
-            $idRrhh = ProfesionalContextResolver::resolveRrhhIdFromSessionOrPes();
-            $rrhh = $idRrhh > 0 ? \common\models\RrhhEfector::findOne($idRrhh) : null;
-            if ($rrhh === null) {
+            $idEfector = (int) (Yii::$app->user->getIdEfector() ?? 0);
+            $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
+            $servicios = [];
+            if ($idEfector > 0 && $idPersona > 0) {
+                $pesRows = ProfesionalEfectorServicio::find()
+                    ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                    ->with('servicio')
+                    ->all();
+                foreach ($pesRows as $p) {
+                    if ($p->servicio !== null && $p->servicio->item_name !== null && $p->servicio->item_name !== '') {
+                        $servicios[(int) $p->id_servicio] = (string) $p->servicio->item_name;
+                    }
+                }
+            }
+            $rrhh = null;
+            if ($servicios === [] && $idEfector > 0 && $idPersona > 0) {
+                $rrhh = RrhhEfector::find()
+                    ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                    ->one();
+            }
+            if ($servicios === [] && $rrhh === null) {
+                $idRrhh = ProfesionalContextResolver::resolveRrhhIdFromSessionOrPes();
+                $rrhh = $idRrhh > 0 ? RrhhEfector::find()->where(['id_rr_hh' => $idRrhh, 'deleted_at' => null])->one() : null;
+            }
+            if ($servicios === [] && $rrhh !== null) {
+                $servicios = ArrayHelper::map($rrhh->rrhhServicio, 'id_servicio', 'servicio.item_name');
+            }
+            if ($servicios === []) {
                 throw new ForbiddenHttpException('No se pudo determinar el recurso humano (RRHH/PES) para deducir el servicio.');
             }
-            $servicios = \Yii\helpers\ArrayHelper::map($rrhh->rrhhServicio, 'id_servicio', 'servicio.item_name');
             $idServicioRrhh = array_keys($servicios)[0];
 
-            foreach($servicios as $key => $servicio) {
-                if ($servicio == 'Medico') {
+            foreach ($servicios as $key => $servicio) {
+                if ($servicio === 'Medico') {
                     $idServicioRrhh = $key;
                     break;
                 }

@@ -14,8 +14,10 @@ use yii\web\Response;
 use common\models\busquedas\RrhhEfectorBusqueda;
 use common\models\RrhhEfector;
 use common\models\RrhhServicio;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Persona;
 use common\models\Servicio;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 
 /**
  * RrhhEfectorController implements the CRUD actions for RrhhEfector model.
@@ -92,15 +94,18 @@ class RrhhEfectorController extends Controller
         // Este es el servicio que le otorga el rol de AdminEfector
         // TODO: que el string AdminEfector venga de una constante
         $admin_efector_servicio = Servicio::find()->where(['item_name' => 'AdminEfector'])->one();
+        if ($admin_efector_servicio === null) {
+            throw new NotFoundHttpException('Servicio AdminEfector no configurado.');
+        }
+        $idServAdmin = (int) $admin_efector_servicio->id_servicio;
 
-        // Busco los efectores para los cuales la persona es AdminEfector
-        $query_rrhh_efector = RrhhEfector::find();
-        $rrhh_efectores = $query_rrhh_efector->andWhere(['id_persona' => $persona->id_persona])
-            ->innerJoin(
-                'rrhh_servicio',
-                'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh' .
-                    ' AND rrhh_servicio.id_servicio = ' . $admin_efector_servicio->id_servicio .
-                    ' AND rrhh_servicio.deleted_at IS NULL'
+        // Efectores donde la persona es AdminEfector: PES y/o fila legacy `rrhh_servicio`
+        $rrhh_efectores = RrhhEfector::find()->alias('re')
+            ->where(['re.id_persona' => $persona->id_persona, 're.deleted_at' => null])
+            ->andWhere(
+                'EXISTS (SELECT 1 FROM profesional_efector_servicio pes WHERE pes.id_persona = re.id_persona AND pes.id_efector = re.id_efector AND pes.id_servicio = :sidPes AND pes.deleted_at IS NULL)
+                OR EXISTS (SELECT 1 FROM rrhh_servicio rs WHERE rs.id_rr_hh = re.id_rr_hh AND rs.id_servicio = :sidRs AND rs.deleted_at IS NULL)',
+                [':sidPes' => $idServAdmin, ':sidRs' => $idServAdmin]
             )
             ->asArray()->all();
 
@@ -132,14 +137,16 @@ class RrhhEfectorController extends Controller
                         $rrhh_efector->save(false);
                     }
 
-                    $rrhh_servicio = new RrhhServicio();
-                    $rrhh_servicio->id_rr_hh = $rrhh_efector->id_rr_hh;
-                    $rrhh_servicio->id_servicio = $admin_efector_servicio->id_servicio;
-                    if (!$rrhh_servicio->validate()) {
-                        $error = $rrhh_servicio->getErrorSummary(true);
-                        throw new Exception;
+                    try {
+                        ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+                            (int) $persona->id_persona,
+                            (int) $rrhh_efector_a_crear,
+                            $idServAdmin
+                        );
+                    } catch (\Throwable $e) {
+                        $error = [$e->getMessage()];
+                        throw new Exception($e->getMessage(), 0, $e);
                     }
-                    $rrhh_servicio->save(false);
                 }
                 // los que no vengan los elimino
                 $rrhh_efectores_a_eliminar = array_diff($persona_efectores, $post_efectores);
@@ -156,15 +163,28 @@ class RrhhEfectorController extends Controller
                         $rr_hh->delete();
                         */
 
-                        $rr_hh_servicio = RrhhServicio::find()
-                            ->andWhere(
-                                [
-                                    'id_rr_hh' => $persona_rrhh_efectores[$rrhh_efector_a_eliminar],
-                                    'id_servicio' => $admin_efector_servicio->id_servicio
-                                ]
-                            )
-                            ->one()
-                            ->delete();
+                        $idRrhhRow = $persona_rrhh_efectores[$rrhh_efector_a_eliminar] ?? null;
+                        if ($idRrhhRow !== null) {
+                            $pesAdm = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
+                                (int) $persona->id_persona,
+                                (int) $rrhh_efector_a_eliminar,
+                                $idServAdmin
+                            );
+                            if ($pesAdm !== null) {
+                                $pesAdm->delete();
+                            }
+                            $rr_hh_servicio = RrhhServicio::find()
+                                ->andWhere(
+                                    [
+                                        'id_rr_hh' => $idRrhhRow,
+                                        'id_servicio' => $admin_efector_servicio->id_servicio,
+                                    ]
+                                )
+                                ->one();
+                            if ($rr_hh_servicio !== null) {
+                                $rr_hh_servicio->delete();
+                            }
+                        }
                     }
                 }
 
@@ -188,28 +208,31 @@ class RrhhEfectorController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $servicioAdminEfector = Servicio::find()->where(['item_name' => 'AdminEfector'])->one();
+        if ($servicioAdminEfector === null) {
+            return Json::encode(['error' => true, 'message' => 'Servicio AdminEfector no configurado.']);
+        }
+        $idServ = (int) $servicioAdminEfector->id_servicio;
 
-        $adminEfector = RrhhServicio::find()->where(['id_rr_hh' => $id_rr_hh])->andWhere(['id_servicio' => $servicioAdminEfector->id_servicio])->one();
+        $adminEfector = RrhhServicio::find()->where(['id_rr_hh' => $id_rr_hh])->andWhere(['id_servicio' => $idServ])->one();
 
         if (!$adminEfector) {
-
-            $rrhh_servicio = new RrhhServicio();
-            $rrhh_servicio->id_rr_hh = $id_rr_hh;
-            $rrhh_servicio->id_servicio = $servicioAdminEfector->id_servicio;
-            if (!$rrhh_servicio->validate()) {
-                $error = $rrhh_servicio->getErrorSummary(true);
-                //throw new Exception;
-                //$error = json_decode($e->getMessage());
-
-                return Json::encode(['error' => true, 'message' => $error]);
+            $vinculos = RrhhEfector::find()
+                ->where(['id_rr_hh' => $id_rr_hh, 'deleted_at' => null])
+                ->all();
+            foreach ($vinculos as $reRow) {
+                try {
+                    ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+                        (int) $reRow->id_persona,
+                        (int) $reRow->id_efector,
+                        $idServ
+                    );
+                } catch (\Throwable $e) {
+                    return Json::encode(['error' => true, 'message' => $e->getMessage()]);
+                }
             }
-            $rrhh_servicio->save(false);
-
-        }else{
-
-            $adminEfector->deleted_at = NULL;
+        } else {
+            $adminEfector->deleted_at = null;
             $adminEfector->save();
-            
         }
 
         return "ok";
@@ -221,8 +244,23 @@ class RrhhEfectorController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $servicioAdminEfector = Servicio::find()->where(['item_name' => 'AdminEfector'])->one();
+        if ($servicioAdminEfector === null) {
+            return "ok";
+        }
+        $idServ = (int) $servicioAdminEfector->id_servicio;
 
-        $rrhhServicio = RrhhServicio::find()->where(['id_rr_hh' => $id_rr_hh, 'id_servicio' => $servicioAdminEfector->id_servicio])->one();
+        foreach (RrhhEfector::find()->where(['id_rr_hh' => $id_rr_hh, 'deleted_at' => null])->all() as $reRow) {
+            $pesAdm = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
+                (int) $reRow->id_persona,
+                (int) $reRow->id_efector,
+                $idServ
+            );
+            if ($pesAdm !== null) {
+                $pesAdm->delete();
+            }
+        }
+
+        $rrhhServicio = RrhhServicio::find()->where(['id_rr_hh' => $id_rr_hh, 'id_servicio' => $idServ])->one();
 
         if ($rrhhServicio) {
             $rrhhServicio->delete();

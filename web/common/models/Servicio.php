@@ -70,8 +70,10 @@ class Servicio extends \yii\db\ActiveRecord
     
     public function getRrhhs()
     {
-        return $this->hasMany(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh'])
-                ->viaTable('rrhh_servicio', ['id_servicio' => 'id_servicio']);
+        return $this->hasMany(RrhhEfector::className(), ['id_persona' => 'id_persona', 'id_efector' => 'id_efector'])
+            ->viaTable(ProfesionalEfectorServicio::tableName(), ['id_servicio' => 'id_servicio'], function ($q) {
+                $q->andWhere([ProfesionalEfectorServicio::tableName() . '.deleted_at' => null]);
+            });
     }
 
     /**

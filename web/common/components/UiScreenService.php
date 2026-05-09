@@ -4,6 +4,7 @@ namespace common\components;
 
 use Yii;
 use yii\web\ServerErrorHttpException;
+use common\models\ProfesionalEfectorServicio;
 
 /**
  * Helper para endpoints de definiciones de vistas JSON (plantillas en `frontend/modules/api/v1/views/json/...`)
@@ -175,6 +176,16 @@ final class UiScreenService
             $idRrsa = $id0;
             if ($idRrsa !== '' && (!isset($params['id_rrhh_servicio_asignado']) || $params['id_rrhh_servicio_asignado'] === '' || $params['id_rrhh_servicio_asignado'] === null)) {
                 $params['id_rrhh_servicio_asignado'] = $idRrsa;
+            }
+            $idRrsaInt = (int) $idRrsa;
+            if (
+                $idRrsaInt > 0
+                && (!isset($params['id_profesional_efector_servicio']) || $params['id_profesional_efector_servicio'] === '' || $params['id_profesional_efector_servicio'] === null)
+            ) {
+                $idPesLeg = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrsaInt);
+                if ($idPesLeg !== null && $idPesLeg > 0) {
+                    $params['id_profesional_efector_servicio'] = $idPesLeg;
+                }
             }
         }
         if ($fecha !== '' && (!isset($params['fecha']) || $params['fecha'] === '' || $params['fecha'] === null)) {

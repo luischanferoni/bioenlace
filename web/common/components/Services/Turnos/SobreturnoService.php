@@ -4,6 +4,7 @@ namespace common\components\Services\Turnos;
 
 use Yii;
 use common\models\Turno;
+use common\models\ProfesionalEfectorServicio;
 use common\models\TurnoNotificacionProgramada;
 use common\models\EfectorTurnosConfig;
 use common\models\TurnoEventoAudit;
@@ -24,16 +25,29 @@ class SobreturnoService
         }
 
         $minutos = max(5, (int) $cfg->sobreturno_minutos_retraso_estimado);
-        $otros = Turno::findActive()
+        $otrosQuery = Turno::findActive()
             ->where([
                 'fecha' => $sobreturno->fecha,
-                'id_rrhh_servicio_asignado' => $sobreturno->id_rrhh_servicio_asignado,
                 'estado' => Turno::ESTADO_PENDIENTE,
             ])
             ->andWhere(['<>', 'id_turnos', $sobreturno->id_turnos])
-            ->andWhere(['>', 'hora', $sobreturno->hora])
-            ->orderBy(['hora' => SORT_ASC])
-            ->all();
+            ->andWhere(['>', 'hora', $sobreturno->hora]);
+        $idPesSo = (int) ($sobreturno->id_profesional_efector_servicio ?? 0);
+        if ($idPesSo > 0) {
+            $rrsaSo = ProfesionalEfectorServicio::findOne(['id' => $idPesSo, 'deleted_at' => null]);
+            $compatSo = $rrsaSo !== null ? $rrsaSo->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
+            $or = [
+                ['id_profesional_efector_servicio' => $idPesSo],
+                ['id_rrhh_servicio_asignado' => (int) $sobreturno->id_rrhh_servicio_asignado],
+            ];
+            if ($compatSo !== null && (int) $compatSo > 0) {
+                $or[] = ['id_rrhh_servicio_asignado' => (int) $compatSo];
+            }
+            $otrosQuery->andWhere(array_merge(['or'], $or));
+        } else {
+            $otrosQuery->andWhere(['id_rrhh_servicio_asignado' => $sobreturno->id_rrhh_servicio_asignado]);
+        }
+        $otros = $otrosQuery->orderBy(['hora' => SORT_ASC])->all();
 
         $push = new PushNotificationSender();
         foreach ($otros as $t) {

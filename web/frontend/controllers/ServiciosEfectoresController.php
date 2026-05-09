@@ -6,6 +6,7 @@ use Yii;
 use common\models\ServiciosEfector;
 use common\models\busquedas\ServiciosEfectorBusqueda;
 use common\models\Efector;
+use common\models\ProfesionalEfectorServicio;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -114,14 +115,25 @@ class ServiciosEfectoresController extends Controller
     */
     public function actionDelete($id_servicio, $id_efector)
     {
-        // si el servicio tiene rrhh asignado y activo, le pedimos que primero los elimine y lluego vuelva a eliminar el servicio
+        // Servicio con profesionales asignados (legacy y/o PES): no borrar hasta limpiar asignaciones
         $cantidadRrhhServicio = \common\models\RrhhServicio::findActive()
-        ->leftJoin('rrhh_efector', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
-        ->where("id_efector = $id_efector and id_servicio = $id_servicio and rrhh_servicio.deleted_at is null")
-        ->count();
+            ->leftJoin('rrhh_efector', 'rrhh_efector.id_rr_hh = rrhh_servicio.id_rr_hh')
+            ->where([
+                'rrhh_efector.id_efector' => (int) $id_efector,
+                'rrhh_servicio.id_servicio' => (int) $id_servicio,
+            ])
+            ->andWhere(['rrhh_servicio.deleted_at' => null])
+            ->count();
+        $cantidadPes = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_efector' => (int) $id_efector,
+                'id_servicio' => (int) $id_servicio,
+                'deleted_at' => null,
+            ])
+            ->count();
 
-        if(isset($cantidadRrhhServicio) && $cantidadRrhhServicio > 0){
-            return $this->asJson(['error' => true, 'msg' => 'El servicio que desea borrar aun tiene rrhh activos asignados, por favor primero elimine los rrhh y luego vuelva a intentar eliminar el servicio.']);
+        if ($cantidadRrhhServicio > 0 || $cantidadPes > 0) {
+            return $this->asJson(['error' => true, 'msg' => 'El servicio que desea borrar aún tiene profesionales asignados (agenda PES o vínculo RRHH legacy). Elimine esas asignaciones y vuelva a intentar.']);
         }
 
         $this->findModel($id_servicio, $id_efector)->delete();

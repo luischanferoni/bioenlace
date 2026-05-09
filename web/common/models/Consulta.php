@@ -583,14 +583,16 @@ class Consulta extends \yii\db\ActiveRecord
                 'motivo' => new \yii\db\Expression('NULLIF(TRIM(c.motivo_consulta), "")'),
             ])
             ->innerJoin('turnos t', 'c.id_turnos = t.id_turnos')
-            // Uniones para mantener el mismo universo que el armado previo del timeline.
-            ->innerJoin('rrhh_servicio rs', 'rs.id = t.id_rrhh_servicio_asignado')
-            ->innerJoin('rrhh_efector re', 're.id_rr_hh = rs.id_rr_hh')
+            ->leftJoin(
+                ['pes' => 'profesional_efector_servicio'],
+                'pes.id = t.id_profesional_efector_servicio AND pes.deleted_at IS NULL'
+            )
             ->innerJoin('servicios s', 's.id_servicio = t.id_servicio_asignado')
             ->innerJoin('efectores e', 'e.id_efector = t.id_efector')
             ->innerJoin('servicios_efector as se', 'se.id_servicio = t.id_servicio_asignado and se.id_efector = t.id_efector')
             ->leftJoin('servicios as pase_prev', 'pase_prev.id_servicio = se.pase_previo')
             ->where(['t.id_persona' => $personaId])
+            ->andWhere(['or', ['is not', 'pes.id', null], ['>', 't.id_rr_hh', 0]])
             ->andWhere('t.deleted_at IS NULL')
             ->andWhere('c.deleted_at IS NULL')
             ->andWhere(new \yii\db\Expression('NULLIF(TRIM(c.motivo_consulta), "") IS NOT NULL'))
@@ -624,13 +626,16 @@ class Consulta extends \yii\db\ActiveRecord
             ->alias('c')
             ->select(['c.id_consulta'])
             ->innerJoin('turnos t', 'c.id_turnos = t.id_turnos')
-            ->innerJoin('rrhh_servicio rs', 'rs.id = t.id_rrhh_servicio_asignado')
-            ->innerJoin('rrhh_efector re', 're.id_rr_hh = rs.id_rr_hh')
+            ->leftJoin(
+                ['pes' => 'profesional_efector_servicio'],
+                'pes.id = t.id_profesional_efector_servicio AND pes.deleted_at IS NULL'
+            )
             ->innerJoin('servicios s', 's.id_servicio = t.id_servicio_asignado')
             ->innerJoin('efectores e', 'e.id_efector = t.id_efector')
             ->innerJoin('servicios_efector as se', 'se.id_servicio = t.id_servicio_asignado and se.id_efector = t.id_efector')
             ->leftJoin('servicios as pase_prev', 'pase_prev.id_servicio = se.pase_previo')
             ->where(['t.id_persona' => $personaId])
+            ->andWhere(['or', ['is not', 'pes.id', null], ['>', 't.id_rr_hh', 0]])
             ->andWhere('t.deleted_at IS NULL')
             ->andWhere('c.deleted_at IS NULL')
             ->orderBy(['t.fecha' => SORT_DESC, 't.hora' => SORT_DESC, 'c.id_consulta' => SORT_DESC])

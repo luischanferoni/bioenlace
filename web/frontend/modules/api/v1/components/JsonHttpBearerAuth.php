@@ -149,11 +149,20 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             if (isset($decoded->servicio_actual)) {
                 Yii::$app->user->setServicioActual((int) $decoded->servicio_actual);
             }
-            if (isset($decoded->id_rrhh_servicio)) {
-                Yii::$app->user->setIdRrhhServicio((int) $decoded->id_rrhh_servicio);
-            }
             if (isset($decoded->id_profesional_efector_servicio)) {
                 Yii::$app->user->setIdProfesionalEfectorServicio((int) $decoded->id_profesional_efector_servicio);
+            }
+            if (isset($decoded->id_rrhh_servicio) && (int) $decoded->id_rrhh_servicio > 0) {
+                Yii::$app->user->setIdRrhhServicio((int) $decoded->id_rrhh_servicio);
+            } elseif (isset($decoded->id_profesional_efector_servicio) && (int) $decoded->id_profesional_efector_servicio > 0) {
+                $pesJwt = ProfesionalEfectorServicio::findOne([
+                    'id' => (int) $decoded->id_profesional_efector_servicio,
+                    'deleted_at' => null,
+                ]);
+                $compatJwt = $pesJwt !== null ? $pesJwt->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
+                if ($compatJwt !== null) {
+                    Yii::$app->user->setIdRrhhServicio((int) $compatJwt);
+                }
             }
             if (isset($decoded->encounter_class)) {
                 Yii::$app->user->setEncounterClass((string) $decoded->encounter_class);

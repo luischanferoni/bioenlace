@@ -214,23 +214,49 @@ class Referencia extends \yii\db\ActiveRecord
         }
         
         
-    public function getUsuarioPorIdEfectorIdServicio($idefector,$idservicio)
+    public function getUsuarioPorIdEfectorIdServicio($idefector, $idservicio)
     {
-        $usuarios = \common\models\RrhhEfector::find()->asArray()->select(
-                    ['id_servicio' => 'rrhh_servicio.id_servicio',
-                        'id_rr_hh' => 'rrhh_efector.id_rr_hh',
-                        'id_persona' => 'rrhh_efector.id_persona',
-                        'id_user' => 'personas.id_user',
-                        'username' => 'user.username'
-                    ])
-                    ->from('rrhh_efector')
-                    ->join('INNER JOIN', 'rrhh_servicio', 'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh AND rrhh_servicio.deleted_at IS NULL')
-                    ->join('INNER JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
-                    ->join('INNER JOIN', 'user', 'personas.id_user = user.id')
-                    ->where(['rrhh_efector.id_efector' => $idefector])
-                    ->andWhere(['rrhh_servicio.id_servicio' => $idservicio])
-                    ->orderBy('username')->all();
-        return $usuarios;
+        $idefector = (int) $idefector;
+        $idservicio = (int) $idservicio;
+
+        $qPes = (new \yii\db\Query())
+            ->select([
+                'id_servicio' => 'pes.id_servicio',
+                'id_rr_hh' => 're.id_rr_hh',
+                'id_persona' => 'pes.id_persona',
+                'id_user' => 'personas.id_user',
+                'username' => 'user.username',
+            ])
+            ->from(['pes' => 'profesional_efector_servicio'])
+            ->innerJoin(
+                ['re' => 'rrhh_efector'],
+                're.id_persona = pes.id_persona AND re.id_efector = pes.id_efector AND re.deleted_at IS NULL'
+            )
+            ->innerJoin('personas', 're.id_persona = personas.id_persona')
+            ->innerJoin('user', 'personas.id_user = user.id')
+            ->where([
+                'pes.id_efector' => $idefector,
+                'pes.id_servicio' => $idservicio,
+            ])
+            ->andWhere(['pes.deleted_at' => null]);
+
+        $qLegacy = (new \yii\db\Query())
+            ->select([
+                'id_servicio' => 'rrhh_servicio.id_servicio',
+                'id_rr_hh' => 'rrhh_efector.id_rr_hh',
+                'id_persona' => 'rrhh_efector.id_persona',
+                'id_user' => 'personas.id_user',
+                'username' => 'user.username',
+            ])
+            ->from('rrhh_efector')
+            ->join('INNER JOIN', 'rrhh_servicio', 'rrhh_servicio.id_rr_hh = rrhh_efector.id_rr_hh AND rrhh_servicio.deleted_at IS NULL')
+            ->join('INNER JOIN', 'personas', 'rrhh_efector.id_persona = personas.id_persona')
+            ->join('INNER JOIN', 'user', 'personas.id_user = user.id')
+            ->where(['rrhh_efector.id_efector' => $idefector])
+            ->andWhere(['rrhh_servicio.id_servicio' => $idservicio])
+            ->andWhere(['rrhh_efector.deleted_at' => null]);
+
+        return $qPes->union($qLegacy)->orderBy(['username' => SORT_ASC])->all();
     }
         
         

@@ -25,7 +25,8 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
    - `findIdByPersonaEfectorServicio`
    - `resolveProfesionalEfectorServicioIdFromRrhhServicioId` (según caso)
 5. **Consulta** ya sincroniza PES en `beforeSave` vía `syncProfesionalEfectorServicioFromContext()` cuando hay `id_rr_hh` + `id_efector` + `id_servicio` (o turno con PES).
-6. **Bridges temporales PES→RRHH**: centralizar la resolución en un único helper para no duplicar lógica en controladores:\n+   - `web/common/components/Services/ProfesionalEfectorServicio/ProfesionalContextResolver.php`
+6. **Bridges temporales PES→RRHH**: centralizar la resolución en un único helper para no duplicar lógica en controladores:
+   - `web/common/components/Services/ProfesionalEfectorServicio/ProfesionalContextResolver.php`
 
 ---
 
@@ -61,6 +62,18 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 | **`ConsultaBusqueda::searchGral`** | Filtro “mis consultas” (`personas.id_user`) extendido con **OR** `turnos.id_profesional_efector_servicio` ∈ PES de la persona en sesión (`condicionTurnoAsignadoProfesionalSesion`). |
 | **`ReferenciasBusquedas::search` (rol Médico)** | `LEFT JOIN` hacia `rr_hh`/`personas` y condición **OR** turno por `id_rr_hh` subquery **o** `id_profesional_efector_servicio` en PES del usuario. |
 | **Paciente timeline (web)** | `PacienteController::actionHistoria`: referencia en docblock a migración PES si se reactiva el UNION SQL comentado; timeline efectivo vía vista + API (listados ambulatorios PES en `PacientesController::turnosAmbulatorioMedico`). |
+
+### Cierre de fases (solo código, sin migraciones SQL)
+
+| Fase | Cambios principales |
+|------|---------------------|
+| **Turnos / slots** | API `TurnosController`: ocupación con `id_efector` antes del resolver; reprogramación legacy sincroniza `id_rr_hh` vía PES/`legacy_rrhh_servicio_id` antes de tocar `RrhhServicio`. Web `TurnosController::actionEventos`: resolver slot con `ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector`. `SobreturnoService`: turnos colindantes por PES u homólogos legacy. |
+| **Agenda PES** | `ProfesionalEfectorServicioAgendaUiService`: alta/carga sin exigir fila en `rrhh_servicio` (validación por PES persona+efector+servicio). `ProfesionalEfectorServicioAgendaApiService`: asserts con `exists` / PES+legacy; `obtenerOCrearPesParaRrhhServicioEnEfector` intenta PES por `legacy_rrhh_servicio_id` antes de leer legacy. `ProfesionalEfectorServicioAltaService`: persiste PES antes que `RrhhServicio` en la transacción. |
+| **Guardia** | `GuardiaController::prefillIdRrhhAsignadoDesdeSesion`: RRHH con servicio en sesión vía resolver PES-first; con PES en sesión asigna `id_profesional_efector_servicio` y compat opcional en `id_rrhh_asignado`. |
+| **Búsqueda turnos web** | `TurnoBusqueda`: atributo `profesional_clave` (`p<id>` PES o id legacy) con OR a `id_profesional_efector_servicio`; `searchAllTurnos` tolera RRHH sin filas `rrhh_servicio` (servicios desde PES). Vista `turnos/list.php`: Select2 mezcla opciones legacy + `ProfesionalEfectorServicio::opcionesProfesionalFiltroTurnosPorEfector`. |
+| **UI / JS** | `UiScreenService`: `slot_id` legacy rellena `id_profesional_efector_servicio` si hay `legacy_rrhh_servicio_id` en PES. `agenda-laboral.js`: etiqueta de servicio desde `servicio` embebido o `nombre_servicio` si no viene `rrhhServicioAsignado`. |
+| **Admin RRHH (backend)** | `RrhhEfectorController`: listado AdminEfector por EXISTS PES **o** `rrhh_servicio`; alta vía `ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector`; baja limpia PES + legacy. JSON create/remove alineados con PES. |
+| **Remanente solo código (cierre tanda)** | Sesión/SISSE (`SiteController`, `SisseConsultaFilter`) servicios PES-first con fallback legacy; `Turno` OR PES en listados y `cargarRrhhServicioAsignado` con PES en sesión; API `TurnosController` fallback `RrhhServicio::findOne` acotado; `Referencia::getUsuarioPorIdEfectorIdServicio` UNION PES; `ServiciosEfectoresController` y enfermería alineados; JS calendario/SPA con `id_profesional_efector_servicio`; libro de guardia vía `Guardia::getProfesionalAsignadoNombreCompleto()`; docblock `SegNivelInternacion::getRrhh()`; `RrhhController::actionSubcatservicios` aclarado como listado legacy. |
 
 ---
 

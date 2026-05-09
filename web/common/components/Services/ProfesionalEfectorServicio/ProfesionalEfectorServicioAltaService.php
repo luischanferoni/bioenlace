@@ -10,7 +10,7 @@ use common\models\ServiciosEfector;
 use Yii;
 
 /**
- * Alta idempotente: persona + efector + servicio → {@see RrhhEfector}, {@see RrhhServicio}, {@see ProfesionalEfectorServicioModel}.
+ * Alta idempotente: persona + efector + servicio → {@see RrhhEfector}, {@see ProfesionalEfectorServicioModel} (canónico) y {@see RrhhServicio} si falta fila legacy (compat turnos / admin).
  *
  * Sin HttpException: errores de negocio como \InvalidArgumentException.
  */
@@ -55,6 +55,24 @@ final class ProfesionalEfectorServicioAltaService
                 }
             }
 
+            /** @var ProfesionalEfectorServicioModel|null $pes */
+            $pes = ProfesionalEfectorServicioModel::findActive()
+                ->where([
+                    'id_persona' => $idPersona,
+                    'id_efector' => $idEfector,
+                    'id_servicio' => $idServicio,
+                ])
+                ->one();
+            if ($pes === null) {
+                $pes = new ProfesionalEfectorServicioModel();
+                $pes->id_persona = $idPersona;
+                $pes->id_efector = $idEfector;
+                $pes->id_servicio = $idServicio;
+            }
+            if (!$pes->save()) {
+                throw new \RuntimeException('No se pudo registrar la asignación profesional–efector–servicio: ' . json_encode($pes->getErrors()));
+            }
+
             /** @var RrhhServicio|null $rs */
             $rs = RrhhServicio::find()
                 ->where([
@@ -73,24 +91,6 @@ final class ProfesionalEfectorServicioAltaService
                 if (!$rs->save()) {
                     throw new \RuntimeException('No se pudo asignar el servicio al RRHH: ' . json_encode($rs->getErrors()));
                 }
-            }
-
-            /** @var ProfesionalEfectorServicioModel|null $pes */
-            $pes = ProfesionalEfectorServicioModel::findActive()
-                ->where([
-                    'id_persona' => $idPersona,
-                    'id_efector' => $idEfector,
-                    'id_servicio' => $idServicio,
-                ])
-                ->one();
-            if ($pes === null) {
-                $pes = new ProfesionalEfectorServicioModel();
-                $pes->id_persona = $idPersona;
-                $pes->id_efector = $idEfector;
-                $pes->id_servicio = $idServicio;
-            }
-            if (!$pes->save()) {
-                throw new \RuntimeException('No se pudo registrar la asignación profesional–efector–servicio: ' . json_encode($pes->getErrors()));
             }
 
             $transaction->commit();

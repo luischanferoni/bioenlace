@@ -140,18 +140,16 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($idRrsa <= 0) {
             throw new BadRequestHttpException('Indique id_rrhh_servicio_asignado o una PES con vínculo de servicio asignado.');
         }
-        $rs = RrhhServicio::findOne(['id' => $idRrsa, 'deleted_at' => null]);
-        if ($rs === null) {
-            throw new BadRequestHttpException('Servicio asignado no encontrado.');
-        }
-        if ((int) $rs->id_servicio !== (int) $pes->id_servicio) {
-            throw new BadRequestHttpException('El servicio asignado no coincide con la asignación profesional.');
-        }
         $re = RrhhEfector::find()
             ->where(['id_persona' => $pes->id_persona, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->one();
-        if ($re !== null && (int) $rs->id_rr_hh !== (int) $re->id_rr_hh) {
-            throw new BadRequestHttpException('El servicio asignado no corresponde al recurso humano de esta persona en el efector.');
+        $qRs = RrhhServicio::find()
+            ->where(['id' => $idRrsa, 'id_servicio' => $pes->id_servicio, 'deleted_at' => null]);
+        if ($re !== null) {
+            $qRs->andWhere(['id_rr_hh' => $re->id_rr_hh]);
+        }
+        if (!$qRs->exists()) {
+            throw new BadRequestHttpException('Servicio asignado no encontrado o no coincide con la asignación profesional.');
         }
 
         return $idRrsa;
@@ -165,14 +163,30 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($idRrhhServicioAsignado === null || $idRrhhServicioAsignado <= 0) {
             return;
         }
-        $rs = RrhhServicio::findOne($idRrhhServicioAsignado);
-        if ($rs === null) {
-            throw new BadRequestHttpException('Servicio asignado no encontrado.');
-        }
-        if ((int) $rs->id_rr_hh !== $idRrhh) {
-            throw new BadRequestHttpException('El servicio asignado no corresponde a este recurso humano.');
-        }
         self::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($re === null) {
+            throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
+        }
+        $porLegacyCol = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => $re->id_persona,
+                'id_efector' => $idEfector,
+                'legacy_rrhh_servicio_id' => $idRrhhServicioAsignado,
+                'deleted_at' => null,
+            ])
+            ->exists();
+        if (!$porLegacyCol && !RrhhServicio::find()
+            ->where([
+                'id' => $idRrhhServicioAsignado,
+                'id_rr_hh' => $idRrhh,
+                'deleted_at' => null,
+            ])
+            ->exists()) {
+            throw new BadRequestHttpException('Servicio asignado no encontrado o no corresponde a este recurso humano.');
+        }
     }
 
     /**
@@ -182,15 +196,38 @@ class ProfesionalEfectorServicioAgendaApiService
      */
     public static function obtenerOCrearPesParaRrhhServicioEnEfector(int $idRrhhServicio, int $idRrhh, int $idEfector): ProfesionalEfectorServicio
     {
-        $rs = RrhhServicio::findOne(['id' => $idRrhhServicio, 'deleted_at' => null]);
-        if ($rs === null || (int) $rs->id_rr_hh !== $idRrhh) {
-            throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
-        }
         $re = RrhhEfector::find()
             ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->one();
         if ($re === null) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
+        }
+        $idPesPorLegacy = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrhhServicio);
+        if ($idPesPorLegacy !== null) {
+            /** @var ProfesionalEfectorServicio|null $pesLegacy */
+            $pesLegacy = ProfesionalEfectorServicio::findOne(['id' => $idPesPorLegacy, 'deleted_at' => null]);
+            if (
+                $pesLegacy !== null
+                && (int) $pesLegacy->id_persona === (int) $re->id_persona
+                && (int) $pesLegacy->id_efector === (int) $idEfector
+            ) {
+                return $pesLegacy;
+            }
+        }
+        $pesPorCol = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => $re->id_persona,
+                'id_efector' => $idEfector,
+                'legacy_rrhh_servicio_id' => $idRrhhServicio,
+                'deleted_at' => null,
+            ])
+            ->one();
+        if ($pesPorCol !== null) {
+            return $pesPorCol;
+        }
+        $rs = RrhhServicio::findOne(['id' => $idRrhhServicio, 'deleted_at' => null]);
+        if ($rs === null || (int) $rs->id_rr_hh !== $idRrhh) {
+            throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
         }
         $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
             (int) $re->id_persona,

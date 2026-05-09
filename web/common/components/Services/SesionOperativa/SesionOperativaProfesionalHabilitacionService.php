@@ -8,7 +8,6 @@ use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\Persona;
 use common\models\RrhhEfector;
 use common\models\RrhhLaboral;
-use common\models\RrhhServicio;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
 use Yii;
@@ -78,35 +77,42 @@ class SesionOperativaProfesionalHabilitacionService extends Component
 
             $candidatosClinicos = [];
             $candidatosAdmin = [];
-            foreach ($re->getRrhhServicio()->with(['servicio'])->all() as $rs) {
-                if ($rs->servicio === null) {
+            $pesRows = ProfesionalEfectorServicio::find()
+                ->where([
+                    'id_persona' => (int) $re->id_persona,
+                    'id_efector' => $idEfector,
+                    'deleted_at' => null,
+                ])
+                ->with(['servicio'])
+                ->all();
+            foreach ($pesRows as $pes) {
+                if ($pes->servicio === null) {
                     continue;
                 }
-                if (!$this->pasaFiltroServicioEnEfector($rs, $idEfector)) {
+                if (!$this->pasaFiltroPesEnEfector($pes, $idEfector)) {
                     continue;
                 }
-                if ($this->isServicioAdministracionEfector($rs->servicio)) {
-                    $candidatosAdmin[] = $rs;
+                if ($this->isServicioAdministracionEfector($pes->servicio)) {
+                    $candidatosAdmin[] = $pes;
                     continue;
                 }
-                $candidatosClinicos[] = $rs;
+                $candidatosClinicos[] = $pes;
             }
 
-            $validServicios = [];
+            $validPes = [];
             $agendasParaValidar = [];
 
             if ($candidatosClinicos !== []) {
-                foreach ($candidatosClinicos as $rs) {
-                    $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId((int) $rs->id, $idEfector);
-                    $ag = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
+                foreach ($candidatosClinicos as $pes) {
+                    $ag = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id);
                     if ($ag === null) {
                         continue;
                     }
-                    if (!$this->agendaCompletaParaServicio($rs->servicio, $ag)) {
+                    if (!$this->agendaCompletaParaServicio($pes->servicio, $ag)) {
                         continue;
                     }
                     $agendasParaValidar[] = $ag;
-                    $validServicios[] = $rs;
+                    $validPes[] = $pes;
                 }
 
                 if ($agendasParaValidar !== [] && !ProfesionalEfectorServicioAgenda::validarGrupoSinSolapamientoEntreAgendas($agendasParaValidar)) {
@@ -119,9 +125,9 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                     continue;
                 }
 
-                if ($validServicios === []) {
+                if ($validPes === []) {
                     if ($candidatosAdmin !== []) {
-                        $validServicios = $candidatosAdmin;
+                        $validPes = $candidatosAdmin;
                     } else {
                         $problemas[] = [
                             'id_efector' => $idEfector,
@@ -133,7 +139,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                     }
                 }
             } elseif ($candidatosAdmin !== []) {
-                $validServicios = $candidatosAdmin;
+                $validPes = $candidatosAdmin;
             } else {
                 $problemas[] = [
                     'id_efector' => $idEfector,
@@ -145,11 +151,12 @@ class SesionOperativaProfesionalHabilitacionService extends Component
             }
 
             $serviciosPayload = [];
-            foreach ($validServicios as $rs) {
+            foreach ($validPes as $pes) {
+                $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
                 $serviciosPayload[] = [
-                    'id_servicio' => (int) $rs->id_servicio,
-                    'nombre' => (string) $rs->servicio->nombre,
-                    'id_rrhh_servicio' => (int) $rs->id,
+                    'id_servicio' => (int) $pes->id_servicio,
+                    'nombre' => (string) $pes->servicio->nombre,
+                    'id_rrhh_servicio' => $compat !== null ? (int) $compat : 0,
                 ];
             }
 
@@ -203,8 +210,8 @@ class SesionOperativaProfesionalHabilitacionService extends Component
             ->andWhere(['re.deleted_at' => null])
             ->select(['p.nombre', 'p.apellido'])
             ->innerJoin(
-                ['rs' => RrhhServicio::tableName()],
-                'rs.id_rr_hh = re.id_rr_hh AND rs.id_servicio = :sid AND rs.deleted_at IS NULL',
+                ['pes' => ProfesionalEfectorServicio::tableName()],
+                'pes.id_persona = re.id_persona AND pes.id_efector = re.id_efector AND pes.id_servicio = :sid AND pes.deleted_at IS NULL',
                 [':sid' => $sid]
             )
             ->innerJoin(['p' => Persona::tableName()], 'p.id_persona = re.id_persona')
@@ -245,17 +252,17 @@ class SesionOperativaProfesionalHabilitacionService extends Component
         return (string) $s->item_name === self::ITEM_NAME_SERVICIO_ADMIN_EFECTOR;
     }
 
-    private function pasaFiltroServicioEnEfector(RrhhServicio $rs, int $idEfector): bool
+    private function pasaFiltroPesEnEfector(ProfesionalEfectorServicio $pes, int $idEfector): bool
     {
         $servicioEfector = ServiciosEfector::findActive()
             ->andWhere([
                 'id_efector' => $idEfector,
-                'id_servicio' => $rs->id_servicio,
+                'id_servicio' => $pes->id_servicio,
             ])
             ->one();
 
-        $esAdminEfector = $rs->servicio !== null
-            && (string) $rs->servicio->item_name === self::ITEM_NAME_SERVICIO_ADMIN_EFECTOR;
+        $esAdminEfector = $pes->servicio !== null
+            && (string) $pes->servicio->item_name === self::ITEM_NAME_SERVICIO_ADMIN_EFECTOR;
 
         return ($servicioEfector !== null && $servicioEfector->deleted_at === null) || $esAdminEfector;
     }

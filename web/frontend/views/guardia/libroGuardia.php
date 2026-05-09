@@ -128,16 +128,7 @@ $acciones = array(
                                 'attribute' => 'id_rrhh_asignado',
                                 'label' => 'RRHH', 
                                 'value' => function ($data) {
-                                    //hago esta pregunta porque hasta ese id se estaban guardando id de rrhh de efector y no de servicio. fix hecho el 30/10/24
-                                    if($data->id <17002){
-
-                                    return $data->id_rrhh_asignado? $data->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'NO';
-
-                                } else{
-
-                                    return $data->id_rrhh_asignado? $data->rrhhServicio->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'NO';
-                                }
-
+                                    return $data->getProfesionalAsignadoNombreCompleto();
                                 }               
                                 
                             ],

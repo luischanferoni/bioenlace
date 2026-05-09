@@ -12,7 +12,6 @@ use webvimark\modules\UserManagement\models\User;
 
 use common\models\Efector;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\components\Services\SesionOperativa\SesionOperativaService;
@@ -214,13 +213,23 @@ class SiteController extends Controller
             $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
             Yii::$app->user->setIdRrhhServicio($compat !== null ? (int) $compat : 0);
         } else {
-            $servicioDelRrhh = RrhhServicio::find()
-                ->select(['id'])
-                ->andWhere(['id_servicio' => $id_servicio])
-                ->andWhere(['id_rr_hh' => Yii::$app->user->getIdRecursoHumano()])
-                ->one();
-            if ($servicioDelRrhh !== null) {
-                Yii::$app->user->setIdRrhhServicio((int) $servicioDelRrhh->id);
+            try {
+                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+                    $idPersona,
+                    $idEfector,
+                    $idServicio
+                );
+                $pesNuevo = ProfesionalEfectorServicio::findOne([
+                    'id' => $out['id_profesional_efector_servicio'],
+                    'deleted_at' => null,
+                ]);
+                Yii::$app->user->setIdProfesionalEfectorServicio((int) $out['id_profesional_efector_servicio']);
+                $compat = $pesNuevo !== null ? $pesNuevo->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
+                Yii::$app->user->setIdRrhhServicio($compat !== null ? (int) $compat : 0);
+            } catch (\Throwable $e) {
+                Yii::warning('actionCambiarServicio: no se pudo asegurar PES: ' . $e->getMessage(), __METHOD__);
+                Yii::$app->user->setIdProfesionalEfectorServicio(null);
+                Yii::$app->user->setIdRrhhServicio(0);
             }
         }
 
@@ -256,6 +265,39 @@ class SiteController extends Controller
         return $this->render('ver-centro-salud', [
             'model' => $efector,
         ]);
+    }
+
+    /**
+     * Servicios del contexto (id_servicio => nombre): PES persona+efector primero; si no hay filas, relación legacy `rrhhServicio`.
+     *
+     * @return array<int, string>
+     */
+    private static function serviciosNombrePorPersonaEfector(int $idPersona, int $idEfector, ?RrhhEfector $rrhhEfector = null): array
+    {
+        if ($idPersona <= 0 || $idEfector <= 0) {
+            return [];
+        }
+        $pesRows = ProfesionalEfectorServicio::find()
+            ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->with('servicio')
+            ->all();
+        $out = [];
+        foreach ($pesRows as $p) {
+            if ($p->servicio !== null) {
+                $out[(int) $p->id_servicio] = (string) $p->servicio->nombre;
+            }
+        }
+        if ($out !== []) {
+            return $out;
+        }
+        if ($rrhhEfector !== null) {
+            $legacy = $rrhhEfector->getRrhhServicio()->all();
+            if ($legacy !== []) {
+                return ArrayHelper::map($legacy, 'id_servicio', 'servicio.nombre');
+            }
+        }
+
+        return [];
     }
 
     /*
@@ -381,21 +423,12 @@ class SiteController extends Controller
             $idRrhhServicio = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
             Yii::$app->user->setIdRrhhServicio($idRrhhServicio !== null ? (int) $idRrhhServicio : 0);
 
-            $pesEnEfector = ProfesionalEfectorServicio::find()
-                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
-                ->all();
-            Yii::$app->user->setServicios(ArrayHelper::map(
-                $pesEnEfector,
-                'id_servicio',
-                static function ($p) {
-                    return $p->servicio !== null ? (string) $p->servicio->nombre : '';
-                }
-            ));
+            Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector, $rrhhEfector));
         } elseif ($rrhhEfector !== null) {
             Yii::$app->user->setIdEfector($rrhhEfector->id_efector);
             Yii::$app->user->setNombreEfector($rrhhEfector->efector->nombre);
             Yii::$app->user->setIdRecursoHumano($rrhhEfector->id_rr_hh);
-            Yii::$app->user->setServicios(ArrayHelper::map($rrhhEfector->rrhhServicio, 'id_servicio', 'servicio.nombre'));
+            Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector, $rrhhEfector));
             try {
                 $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
                 Yii::$app->user->setIdProfesionalEfectorServicio((int) $out['id_profesional_efector_servicio']);

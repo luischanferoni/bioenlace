@@ -293,8 +293,7 @@ class PacientesController extends BaseController
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
             $paciente = $turno->persona;
-            $servicio = $turno->servicio ? $turno->servicio->nombre :
-                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+            $servicio = $turno->getNombreServicioParaDisplay();
             $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,

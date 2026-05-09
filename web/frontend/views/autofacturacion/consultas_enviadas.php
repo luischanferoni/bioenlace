@@ -2,6 +2,7 @@
 
 use yii\grid\GridView;
 use common\models\Persona;
+use common\models\Turno;
 use kartik\daterange\DateRangePicker;
 use yii\bootstrap5\ActiveForm;
 
@@ -72,7 +73,14 @@ $form = ActiveForm::begin();
                         'label' => 'Profesional de Salud',
                         'contentOptions' => ['class' => 'text-wrap'],
                         'value' => function ($data) {
-                            return isset($data->parent->id_rrhh_servicio_asignado) ? $data->parent->rrhhServicioAsignado->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : '';
+                            $parent = $data->parent;
+                            if ($parent instanceof Turno) {
+                                $p = $parent->getProfesionalPersonaParaDisplay();
+
+                                return $p ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : '';
+                            }
+
+                            return '';
                         }
                     ],
                     [

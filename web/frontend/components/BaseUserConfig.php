@@ -99,6 +99,10 @@ abstract class BaseUserConfig extends User
         return Yii::$app->session->get('servicio_actual');
     }
 
+    /**
+     * Compat. agenda/turnos legacy (`rrhh_servicio.id`). La fuente operativa es {@see setIdProfesionalEfectorServicio};
+     * este valor se deriva del PES cuando el token o el flujo no lo envían.
+     */
     public function setIdRrhhServicio($idRrhhServicio)
     {
         Yii::$app->session->set('id_rrhh_servicio', $idRrhhServicio);

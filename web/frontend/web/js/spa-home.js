@@ -1675,10 +1675,14 @@
                                 function add(list, franjaLabel) {
                                     (list || []).forEach(s => {
                                         if (!s) return;
+                                        const idPes = s.id_profesional_efector_servicio;
                                         const idRrsa = s.id_rrhh_servicio_asignado;
                                         const hora = s.hora;
-                                        if (!idRrsa || !hora) return;
-                                        const value = '' + idRrsa + '|' + d.fecha + '|' + hora;
+                                        if (!hora) return;
+                                        if ((!idPes || idPes <= 0) && (!idRrsa || idRrsa <= 0)) return;
+                                        const value = (idPes && idPes > 0)
+                                            ? ('pes:' + idPes + '|' + d.fecha + '|' + hora)
+                                            : ('' + idRrsa + '|' + d.fecha + '|' + hora);
                                         items.push({ value: value, label: d.fecha + ' · ' + franjaLabel + ' · ' + hora });
                                     });
                                 }

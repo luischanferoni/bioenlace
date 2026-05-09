@@ -17,7 +17,6 @@ use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
@@ -189,8 +188,12 @@ class TurnosController extends Controller
 
         $id_efector = Yii::$app->user->getIdEfector();
 
-        if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio) {
-            $resolved = RrhhServicio::obtenerIdRrhhServicio($id_rr_hh, $id_servicio);
+        if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio && $id_efector) {
+            $resolved = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
+                (int) $id_rr_hh,
+                (int) $id_servicio,
+                (int) $id_efector
+            );
             if ($resolved) {
                 $id_rrhh_servicio_asignado = (int) $resolved;
             }

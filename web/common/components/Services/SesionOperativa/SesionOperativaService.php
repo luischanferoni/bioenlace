@@ -10,7 +10,6 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\models\RrhhEfector;
-use common\models\RrhhServicio;
 use common\models\Servicio;
 use common\models\User;
 use webvimark\modules\UserManagement\components\AuthHelper;

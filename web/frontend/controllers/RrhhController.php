@@ -124,7 +124,8 @@ class RrhhController extends Controller
     }
 
     /**
-     * Select dependiente: servicios por efector.
+     * Select dependiente: opciones desde filas `rrhh_servicio` vinculadas al RRHH en el efector (mantenimiento legacy).
+     * Asignaciones solo en PES (`profesional_efector_servicio`) no se listan aquí; usar flujos de agenda/alta PES.
      * @no_intent_catalog
     */
     public function actionSubcatservicios()

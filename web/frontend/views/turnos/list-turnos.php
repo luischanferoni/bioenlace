@@ -53,8 +53,9 @@ $estados = array(Turno::ESTADO_PENDIENTE => 'bg-soft-warning p-2 text-warning', 
             'format' => 'raw',
             //'filter'=>false,
             'value' => function ($data) {
-                return $data->id_rrhh_servicio_asignado ? $data->rrhhServicioAsignado->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) :
-                    'SIN ESPECIFICAR';
+                $p = $data->getProfesionalPersonaParaDisplay();
+
+                return $p ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'SIN ESPECIFICAR';
             }
         ],
         [

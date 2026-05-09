@@ -30,6 +30,11 @@ $this->registerJsVar("turnos_id_efector", $turnos_id_efector);
 $this->registerJsVar("turnos_id_persona", $turnos_id_persona);
 $this->registerJsVar("turnos_id_servicio", 0);
 $this->registerJsVar("turnos_id_rrhh_sa", 0);
+$idPesCal = Yii::$app->user->getIdProfesionalEfectorServicio();
+$this->registerJsVar(
+    'turnos_id_profesional_efector_servicio',
+    $idPesCal !== null && $idPesCal !== '' ? (int) $idPesCal : 0
+);
 $this->registerJsFile(
     "@web/js/turnos_calendario.js",
     ['depends' => [\yii\web\JqueryAsset::class]]

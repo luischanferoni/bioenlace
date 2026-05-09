@@ -7,6 +7,7 @@ use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Turno;
 use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 
 /**
@@ -17,6 +18,9 @@ class TurnoBusqueda extends Turno
     public $busqueda_libre = false;
     public $dni;
 
+    /** @var string|null Filtro profesional: id legacy `rrhh_servicio` o `p` + id PES (p. ej. p42). */
+    public $profesional_clave;
+
     /**
      * @inheritdoc
      */
@@ -24,7 +28,7 @@ class TurnoBusqueda extends Turno
     {
         return [
             [['id_turnos', 'id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_rrhh_servicio_asignado'], 'integer'],
-            [['fecha', 'hora', 'confirmado', 'referenciado', 'usuario_alta', 'fecha_alta', 'usuario_mod', 'fecha_mod', 'busqueda_libre', 'dni'], 'safe'],
+            [['fecha', 'hora', 'confirmado', 'referenciado', 'usuario_alta', 'fecha_alta', 'usuario_mod', 'fecha_mod', 'busqueda_libre', 'dni', 'profesional_clave'], 'safe'],
 
         ];
     }
@@ -67,12 +71,36 @@ class TurnoBusqueda extends Turno
             'id_persona' => $this->id_persona,
             'fecha' => $this->fecha,
             'hora' => $this->hora,
-            'id_rrhh_servicio_asignado' => $this->id_rrhh_servicio_asignado,
             'id_consulta_referencia' => $this->id_consulta_referencia,
             'id_servicio_asignado' => $this->id_servicio_asignado,
             'fecha_alta' => $this->fecha_alta,
             'fecha_mod' => $this->fecha_mod,
         ]);
+
+        $claveProf = $this->profesional_clave !== null && $this->profesional_clave !== ''
+            ? trim((string) $this->profesional_clave)
+            : '';
+        if ($claveProf === '' && $this->id_rrhh_servicio_asignado !== null && $this->id_rrhh_servicio_asignado !== '') {
+            $claveProf = (string) (int) $this->id_rrhh_servicio_asignado;
+        }
+        if ($claveProf !== '') {
+            if ($claveProf[0] === 'p' || $claveProf[0] === 'P') {
+                $idPesF = (int) substr($claveProf, 1);
+                if ($idPesF > 0) {
+                    $query->andWhere(['id_profesional_efector_servicio' => $idPesF]);
+                }
+            } else {
+                $idLeg = (int) $claveProf;
+                if ($idLeg > 0) {
+                    $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
+                    $or = [['id_rrhh_servicio_asignado' => $idLeg]];
+                    if ($idPesMap !== null && $idPesMap > 0) {
+                        $or[] = ['id_profesional_efector_servicio' => $idPesMap];
+                    }
+                    $query->andWhere(array_merge(['or'], $or));
+                }
+            }
+        }
 
         $query->andFilterWhere(['like', 'confirmado', $this->confirmado])
             ->andFilterWhere(['like', 'referenciado', $this->referenciado])
@@ -106,34 +134,44 @@ class TurnoBusqueda extends Turno
      */
     public function searchAllTurnos($tfecha, $idRrhh)
     {
-        $rrhh = RrhhEfector::findOne($idRrhh);
-        $idsRrhhServicios = \Yii\helpers\ArrayHelper::getColumn($rrhh->rrhhServicio, 'id');
-        $idsServicios = \Yii\helpers\ArrayHelper::getColumn($rrhh->rrhhServicio, 'id_servicio');
+        $query = Turno::find();
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+        ]);
 
-        $t = RrhhEfector::obtenerServicioActual();
+        $rrhh = RrhhEfector::findOne($idRrhh);
+        if ($rrhh === null) {
+            $query->where('0=1');
+
+            return $dataProvider;
+        }
+
+        $idsServicios = array_values(array_filter(\Yii\helpers\ArrayHelper::getColumn($rrhh->rrhhServicio, 'id_servicio')));
+        if ($idsServicios === []) {
+            $idsServicios = ProfesionalEfectorServicio::find()
+                ->select(['id_servicio'])
+                ->where([
+                    'id_persona' => $rrhh->id_persona,
+                    'id_efector' => $rrhh->id_efector,
+                    'deleted_at' => null,
+                ])
+                ->column();
+        }
 
         // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
-        $serviciosConPasePrevio = ServiciosEfector::find()
-            ->andWhere(['servicios_efector.id_efector' => Yii::$app->user->getIdEfector()])
-            ->andWhere(['in', 'servicios_efector.pase_previo', $idsServicios])
-            ->all();
+        $serviciosConPasePrevio = $idsServicios !== []
+            ? ServiciosEfector::find()
+                ->andWhere(['servicios_efector.id_efector' => Yii::$app->user->getIdEfector()])
+                ->andWhere(['in', 'servicios_efector.pase_previo', $idsServicios])
+                ->all()
+            : [];
         $idServiciosConPasePrevio = \Yii\helpers\ArrayHelper::getColumn($serviciosConPasePrevio, 'id_servicio');
 
         $totalIdsServicios = array_unique(array_merge($idsServicios, $idServiciosConPasePrevio));
 
-
-        $query = Turno::find();
-
-        // add conditions that should always apply here
-
-
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
-
-        //var_dump($this->id_rrhh_servicio_asignado);die;
 
         // grid filtering conditions
         $query->andFilterWhere([
@@ -141,12 +179,36 @@ class TurnoBusqueda extends Turno
             'id_persona' => $this->id_persona,
             'fecha' => $this->fecha,
             'hora' => $this->hora,
-            'id_rrhh_servicio_asignado' => $this->id_rrhh_servicio_asignado,
             'id_consulta_referencia' => $this->id_consulta_referencia,
             'id_servicio_asignado' => $this->id_servicio_asignado,
             'fecha_alta' => $this->fecha_alta,
             'fecha_mod' => $this->fecha_mod,
         ]);
+
+        $claveProf = $this->profesional_clave !== null && $this->profesional_clave !== ''
+            ? trim((string) $this->profesional_clave)
+            : '';
+        if ($claveProf === '' && $this->id_rrhh_servicio_asignado !== null && $this->id_rrhh_servicio_asignado !== '') {
+            $claveProf = (string) (int) $this->id_rrhh_servicio_asignado;
+        }
+        if ($claveProf !== '') {
+            if ($claveProf[0] === 'p' || $claveProf[0] === 'P') {
+                $idPesF = (int) substr($claveProf, 1);
+                if ($idPesF > 0) {
+                    $query->andWhere(['id_profesional_efector_servicio' => $idPesF]);
+                }
+            } else {
+                $idLeg = (int) $claveProf;
+                if ($idLeg > 0) {
+                    $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
+                    $or = [['id_rrhh_servicio_asignado' => $idLeg]];
+                    if ($idPesMap !== null && $idPesMap > 0) {
+                        $or[] = ['id_profesional_efector_servicio' => $idPesMap];
+                    }
+                    $query->andWhere(array_merge(['or'], $or));
+                }
+            }
+        }
 
 
         if (isset($tfecha) && $tfecha != "") {
@@ -173,10 +235,6 @@ class TurnoBusqueda extends Turno
         #->andWhere(['estado' => 'PENDIENTE'])
         $query->andFilterWhere(['id_efector' => Yii::$app->user->getIdEfector()])
             ->orderBy('fecha', 'hora');
-
-        $dataProvider = new ActiveDataProvider([
-            'query' => $query,
-        ]);
 
         return $dataProvider;
     }

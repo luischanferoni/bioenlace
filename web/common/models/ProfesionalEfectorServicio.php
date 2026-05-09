@@ -240,6 +240,31 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
+     * Resuelve `rrhh_servicio.id` (slot legacy) desde id_rr_hh + servicio + efector: PES primero, luego tabla legacy.
+     */
+    public static function resolverIdRrhhServicioDesdeRrhhServicioYEfector(int $idRrhh, int $idServicio, int $idEfector): ?int
+    {
+        if ($idRrhh <= 0 || $idServicio <= 0 || $idEfector <= 0) {
+            return null;
+        }
+        $re = RrhhEfector::find()
+            ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
+            ->one();
+        if ($re !== null) {
+            $pes = static::findOneActivoPorPersonaEfectorServicio((int) $re->id_persona, $idEfector, $idServicio);
+            if ($pes !== null) {
+                $c = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+                if ($c !== null) {
+                    return (int) $c;
+                }
+            }
+        }
+        $legacy = RrhhServicio::obtenerIdRrhhServicio($idRrhh, $idServicio);
+
+        return $legacy ? (int) $legacy : null;
+    }
+
+    /**
      * Primer `rrhh_servicio` del RRHH (orden por id); útil cuando el consumidor solo guarda `id_rr_hh`.
      */
     public static function findIdByRrhhEfectorMinLegacyServicio(?int $idRrhh): ?int
@@ -323,6 +348,38 @@ class ProfesionalEfectorServicio extends ActiveRecord
         $idPes = static::findIdByPersonaEfectorServicio((int) $re->id_persona, $idEfector, (int) $rs->id_servicio);
 
         return $idPes ?? static::findIdByLegacyRrhhServicioId((int) $rs->id);
+    }
+
+    /**
+     * Opciones de filtro «Profesional» en listados de turnos (web): mismos servicios que {@see RrhhEfector::obtenerMedicosPorEfector}.
+     *
+     * @return array<int, array{id:int, datos:string}>
+     */
+    public static function opcionesProfesionalFiltroTurnosPorEfector(int $idEfector): array
+    {
+        if ($idEfector <= 0) {
+            return [];
+        }
+        $nombres = [
+            'MED CLINICA', 'ODONTOLOGIA', 'PEDIATRIA', 'GINECOLOGIA', 'OBSTETRICIA', 'MED FAMILIAR', 'MED GENERAL',
+            'NEUROLOGIA', 'CARDIOLOGIA', 'INMUNOLOGIA CLINICA Y ALERGOLOGIA', 'GASTROENTEROLOGIA', 'OFTALMOLOGIA',
+            'ENDOCRINOLOGIA', 'TRAUMATOLOGIA', 'NEUMUNOLOGIA', 'CIRUGIA GENERAL', 'DIABETES', 'GERIATRIA',
+            'TERAPIA INTENSIVA', 'PSIQUIATRÍA', 'NEFROLOGÍA', 'UROLOGÍA', 'HEMATOLOGÍA', 'OTORRINOLARINGOLOGIA',
+        ];
+
+        return static::find()
+            ->alias('pes')
+            ->select([
+                'id' => 'pes.id',
+                'datos' => 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " ", COALESCE(personas.otro_nombre,""), " - ", servicios.nombre)',
+            ])
+            ->innerJoin('servicios', 'servicios.id_servicio = pes.id_servicio')
+            ->innerJoin('personas', 'personas.id_persona = pes.id_persona')
+            ->where(['pes.id_efector' => $idEfector, 'pes.deleted_at' => null])
+            ->andWhere(['in', 'servicios.nombre', $nombres])
+            ->orderBy(['personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC])
+            ->asArray()
+            ->all();
     }
 }
 

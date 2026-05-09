@@ -78,6 +78,10 @@ final class ProfesionalContextResolver
         if ($pes === null) {
             return null;
         }
+        $legacySlot = (int) ($pes->legacy_rrhh_servicio_id ?? 0);
+        if ($legacySlot > 0) {
+            return $legacySlot;
+        }
         $idRrhh = self::resolveRrhhIdFromPes($idPes);
         if ($idRrhh <= 0) {
             return null;

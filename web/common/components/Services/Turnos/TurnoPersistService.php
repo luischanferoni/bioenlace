@@ -7,7 +7,6 @@ use common\models\Turno;
 use common\models\Consulta;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\EfectorTurnosConfig;
@@ -79,16 +78,19 @@ class TurnoPersistService
                 $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
             } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
                 $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
-                if ($model->id_rrhh_servicio_asignado) {
-                    $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                $idPesCupo = (int) ($model->id_profesional_efector_servicio ?? 0);
+                if ($idPesCupo <= 0 && $model->id_rrhh_servicio_asignado) {
+                    $idPesCupo = (int) (ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
                         (int) $model->id_rrhh_servicio_asignado,
                         (int) $model->id_efector
-                    );
-                    $agenda = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
+                    ) ?: 0);
+                }
+                if ($idPesCupo > 0) {
+                    $agenda = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPesCupo);
                     if ($agenda) {
-                        $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgados(
-                            $model->id_rrhh_servicio_asignado,
-                            $model->fecha
+                        $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgadosPorProfesionalEfectorServicio(
+                            $idPesCupo,
+                            (string) $model->fecha
                         );
                         if ($agenda->cupo_pacientes != 0 && $agenda->cupo_pacientes <= $cantTurnosOtorgados) {
                             throw new \InvalidArgumentException(
@@ -151,12 +153,19 @@ class TurnoPersistService
             return;
         }
         $idRrhhServicio = $model->id_rrhh_servicio_asignado;
-        if (!$idRrhhServicio && $model->id_rr_hh && $model->id_servicio_asignado) {
-            $rs = RrhhServicio::find()
-                ->andWhere(['id_rr_hh' => $model->id_rr_hh, 'id_servicio' => $model->id_servicio_asignado])
-                ->select('id')
-                ->one();
-            $idRrhhServicio = $rs ? $rs->id : null;
+        if (!$idRrhhServicio && (int) ($model->id_profesional_efector_servicio ?? 0) > 0) {
+            $pesT = ProfesionalEfectorServicio::findOne([
+                'id' => (int) $model->id_profesional_efector_servicio,
+                'deleted_at' => null,
+            ]);
+            $idRrhhServicio = $pesT !== null ? $pesT->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
+        }
+        if (!$idRrhhServicio && $model->id_rr_hh && $model->id_servicio_asignado && $model->id_efector) {
+            $idRrhhServicio = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
+                (int) $model->id_rr_hh,
+                (int) $model->id_servicio_asignado,
+                (int) $model->id_efector
+            );
         }
         if ($idRrhhServicio) {
             $this->assertAgendaAceptaTeleconsulta((int) $idRrhhServicio, (int) $model->id_efector);

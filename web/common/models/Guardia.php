@@ -183,6 +183,46 @@ class Guardia extends \yii\db\ActiveRecord
         }
     }
 
+    /**
+     * Nombre del profesional asignado para listados (libro de guardia): PES cuando existe; legacy `rrhh_servicio` + efector.
+     */
+    public function getProfesionalAsignadoNombreCompleto(): string
+    {
+        if ($this->id < 17002) {
+            if (!$this->id_rrhh_asignado) {
+                return 'NO';
+            }
+            $re = $this->rrhhEfector;
+
+            return $re !== null && $re->persona
+                ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                : 'NO';
+        }
+        if ((int) $this->id_profesional_efector_servicio > 0) {
+            $pes = $this->profesionalEfectorServicio;
+            if ($pes !== null && $pes->persona) {
+                return $pes->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
+            }
+        }
+        if ($this->id_rrhh_asignado) {
+            $rs = $this->rrhhServicio;
+            if ($rs !== null && $this->id_efector) {
+                $re = RrhhEfector::find()
+                    ->where([
+                        'id_rr_hh' => $rs->id_rr_hh,
+                        'id_efector' => $this->id_efector,
+                        'deleted_at' => null,
+                    ])
+                    ->one();
+                if ($re !== null && $re->persona) {
+                    return $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
+                }
+            }
+        }
+
+        return 'NO';
+    }
+
     public static function pacienteIngresadoEnEfector($idPersona, $idEfector)
     {
         $guardia = self::find()

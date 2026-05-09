@@ -1,3 +1,14 @@
+function turnosPayloadExtra() {
+  var p = {};
+  if (
+    typeof turnos_id_profesional_efector_servicio !== "undefined" &&
+    turnos_id_profesional_efector_servicio
+  ) {
+    p.id_profesional_efector_servicio = turnos_id_profesional_efector_servicio;
+  }
+  return p;
+}
+
 function getEventos(dia) {
   $("#eventos_maniana").html(
     '<div class="iq-loader-box"><div class="iq-loader-8"></div></div>'
@@ -8,11 +19,14 @@ function getEventos(dia) {
 
   $.get(
     turnos_url_eventos,
-    {
-      dia: dia,
-      id_servicio: turnos_id_servicio,
-      id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
-    },
+    Object.assign(
+      {
+        dia: dia,
+        id_servicio: turnos_id_servicio,
+        id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
+      },
+      turnosPayloadExtra()
+    ),
     function (data) {
       $("#eventos_maniana").html(data.turnos.maniana);
       $("#eventos_tarde").html(data.turnos.tarde);
@@ -187,14 +201,17 @@ $(document).ready(function () {
       url: turnos_url_crear_sobreturno,
       type: "POST",
       headers: window.BioenlaceApiClient.mergeHeaders({}),
-      data: {
-        id_persona: turnos_id_persona,
-        fecha: $("#fecha_input").val(),
-        hora: $("#hora_input").val(),
-        id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
-        id_servicio_asignado: turnos_id_servicio,
-        id_efector: turnos_id_efector,
-      },
+      data: Object.assign(
+        {
+          id_persona: turnos_id_persona,
+          fecha: $("#fecha_input").val(),
+          hora: $("#hora_input").val(),
+          id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
+          id_servicio_asignado: turnos_id_servicio,
+          id_efector: turnos_id_efector,
+        },
+        turnosPayloadExtra()
+      ),
     })
       .done(function (data) {
         if (data.success == true) {
@@ -222,14 +239,17 @@ $(document).ready(function () {
       url: turnos_url_create,
       type: "POST",
       headers: window.BioenlaceApiClient.mergeHeaders({}),
-      data: {
-        id_persona: turnos_id_persona,
-        fecha: $("#fecha_input").val(),
-        hora: $("#hora_input").val(),
-        id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
-        id_servicio_asignado: turnos_id_servicio,
-        id_efector: turnos_id_efector,
-      },
+      data: Object.assign(
+        {
+          id_persona: turnos_id_persona,
+          fecha: $("#fecha_input").val(),
+          hora: $("#hora_input").val(),
+          id_rrhh_servicio_asignado: turnos_id_rrhh_sa,
+          id_servicio_asignado: turnos_id_servicio,
+          id_efector: turnos_id_efector,
+        },
+        turnosPayloadExtra()
+      ),
     })
       .done(function (data) {
         if (data.success == true || data.id) {

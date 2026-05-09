@@ -5,6 +5,7 @@ use yii\grid\GridView;
 use yii\widgets\Pjax;
 use common\models\Persona;
 use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Turno;
 use kartik\daterange\DateRangePicker;
 use kartik\select2\Select2;
@@ -75,32 +76,35 @@ $estados = array(Turno::ESTADO_PENDIENTE => 'bg-soft-warning p-2 text-warning', 
                                         ],
                                         [
                                             'label' => 'Profesional',
-                                            'attribute' => 'id_rrhh_servicio_asignado',
+                                            'attribute' => 'profesional_clave',
                                             'format' => 'raw',
                                             //'filter'=>false,
-                                            'value' => function ($data) {  
-                                                return $data->id_rrhh_servicio_asignado? $data->rrhhServicioAsignado->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON): 
-                                                        'SIN ESPECIFICAR';
+                                            'value' => function ($data) {
+                                                $p = $data->getProfesionalPersonaParaDisplay();
+
+                                                return $p ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'SIN ESPECIFICAR';
                                             },
                                             'filter' => Select2::widget([
-
                                                 'model' => $turnos,
-                                            
-                                                'attribute' => 'id_rrhh_servicio_asignado',
-                                            
-                                                'data' => ArrayHelper::map(RrhhEfector::obtenerMedicosPorEfector(Yii::$app->user->getIdEfector()), 'id', 'datos'),
-                                                
+                                                'attribute' => 'profesional_clave',
+                                                'data' => (static function () {
+                                                    $idEf = Yii::$app->user->getIdEfector();
+                                                    $opts = [];
+                                                    foreach (RrhhEfector::obtenerMedicosPorEfector($idEf) as $row) {
+                                                        $opts[(string) (int) $row['id']] = $row['datos'];
+                                                    }
+                                                    foreach (ProfesionalEfectorServicio::opcionesProfesionalFiltroTurnosPorEfector((int) $idEf) as $row) {
+                                                        $opts['p' . (int) $row['id']] = $row['datos'];
+                                                    }
+
+                                                    return $opts;
+                                                })(),
                                                 'theme' => 'default',
-                                            
                                                 'hideSearch' => false,
-                                            
                                                 'options' => [
-                                            
                                                     'placeholder' => 'Seleccione un profesional...',
-                                            
-                                                ]
-                                            
-                                            ])
+                                                ],
+                                            ]),
                                         ],
                                         [
                                             'label' => 'Estado',

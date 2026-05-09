@@ -225,6 +225,19 @@ class GuardiaController extends Controller
 
         $idRrhh = Yii::$app->user->getIdRecursoHumano();
         if ($idRrhh !== null && $idRrhh !== '') {
+            $idServicioSesion = Yii::$app->user->getServicioActual();
+            if ($idServicioSesion !== null && $idServicioSesion !== '') {
+                $resolved = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
+                    (int) $idRrhh,
+                    (int) $idServicioSesion,
+                    $idEfector
+                );
+                if ($resolved !== null && $resolved > 0) {
+                    $model->id_rrhh_asignado = (int) $resolved;
+
+                    return;
+                }
+            }
             $row = RrhhServicio::find()
                 ->alias('rs')
                 ->innerJoin(['re' => 'rrhh_efector'], 're.id_rr_hh = rs.id_rr_hh')
@@ -249,29 +262,13 @@ class GuardiaController extends Controller
             return;
         }
         $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
-        if ($pes === null) {
+        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
             return;
         }
-        $re = RrhhEfector::find()
-            ->where([
-                'id_persona' => $pes->id_persona,
-                'id_efector' => $pes->id_efector,
-                'deleted_at' => null,
-            ])
-            ->one();
-        if ($re === null) {
-            return;
-        }
-        $rs = RrhhServicio::find()
-            ->where([
-                'id_rr_hh' => $re->id_rr_hh,
-                'id_servicio' => $pes->id_servicio,
-                'deleted_at' => null,
-            ])
-            ->orderBy(['id' => SORT_ASC])
-            ->one();
-        if ($rs !== null) {
-            $model->id_rrhh_asignado = (int) $rs->id;
+        $model->id_profesional_efector_servicio = (int) $pes->id;
+        $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+        if ($compat !== null && $compat > 0) {
+            $model->id_rrhh_asignado = (int) $compat;
         }
     }
 

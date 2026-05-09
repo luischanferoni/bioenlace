@@ -7,7 +7,6 @@ use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\RrhhEfector;
 use common\models\RrhhLaboral;
-use common\models\RrhhServicio;
 use common\models\Servicio;
 use Yii;
 use yii\web\BadRequestHttpException;
@@ -72,12 +71,18 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         if ($idRrHh > 0) {
-            $rrhhServicio = RrhhServicio::find()
-                ->where(['id_rr_hh' => $idRrHh, 'id_servicio' => $idServicio])
-                ->andWhere(['deleted_at' => null])
+            $reServicio = RrhhEfector::find()
+                ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
                 ->one();
-
-            if ($rrhhServicio === null) {
+            if ($reServicio === null) {
+                return $out;
+            }
+            $pesServicio = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+                (int) $reServicio->id_persona,
+                $idEfector,
+                $idServicio
+            );
+            if ($pesServicio === null) {
                 return $out;
             }
         }
@@ -260,15 +265,6 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         if ($idRrHh > 0) {
-            $rrhhServicio = RrhhServicio::find()
-                ->where(['id_rr_hh' => $idRrHh, 'id_servicio' => $idServicio])
-                ->andWhere(['deleted_at' => null])
-                ->one();
-
-            if ($rrhhServicio === null) {
-                throw new BadRequestHttpException('El RRHH no tiene asignado ese servicio.');
-            }
-
             $rrhhEfector = RrhhEfector::find()
                 ->where(['id_rr_hh' => $idRrHh, 'id_efector' => $idEfector, 'deleted_at' => null])
                 ->one();

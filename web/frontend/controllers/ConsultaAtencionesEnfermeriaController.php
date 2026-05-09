@@ -130,21 +130,22 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
         
         $modelAtencionEnfermeria->fecha_creacion = date("d/m/Y");
         $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
-        if ($idRrhh <= 0) {
-            $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
-            if ($idPes > 0) {
-                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-                if ($pes !== null) {
-                    $re = RrhhEfector::find()
-                        ->where([
-                            'id_persona' => (int) $pes->id_persona,
-                            'id_efector' => (int) $pes->id_efector,
-                            'deleted_at' => null,
-                        ])
-                        ->one();
-                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
-                }
+        $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+        if ($idRrhh <= 0 && $idPesSesion > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
+            if ($pes !== null) {
+                $modelAtencionEnfermeria->id_profesional_efector_servicio = $idPesSesion;
+                $re = RrhhEfector::find()
+                    ->where([
+                        'id_persona' => (int) $pes->id_persona,
+                        'id_efector' => (int) $pes->id_efector,
+                        'deleted_at' => null,
+                    ])
+                    ->one();
+                $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
             }
+        } elseif ($idPesSesion > 0) {
+            $modelAtencionEnfermeria->id_profesional_efector_servicio = $idPesSesion;
         }
         $modelAtencionEnfermeria->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
 

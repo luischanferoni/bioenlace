@@ -313,6 +313,10 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         return $this->hasOne(SegNivelInternacionTipoIngreso::className(), ['id' => 'id_tipo_ingreso']);
     }
 
+    /**
+     * Relación legacy: `id_rrhh` almacena `rrhh_servicio.id` (no confundir con `id_rr_hh` de recurso humano).
+     * Para contexto operativo PES preferir {@see getProfesionalEfectorServicio()}.
+     */
     public function getRrhh()
     {
         return $this->hasOne(RrhhServicio::className(), ['id' => 'id_rrhh']);

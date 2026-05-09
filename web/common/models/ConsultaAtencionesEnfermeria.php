@@ -296,11 +296,36 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     */
     public static function porRecursohumano($id_rr_hh, $fecha_consulta)
     {
+        $q = ConsultaAtencionesEnfermeria::find()
+            ->where(['fecha_creacion' => $fecha_consulta . ' 00:00:00']);
+        $or = [['id_rr_hh' => $id_rr_hh]];
+        if (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+            $idEfector = (int) (Yii::$app->user->getIdEfector() ?? 0);
+            if ($idEfector > 0) {
+                $re = RrhhEfector::find()
+                    ->where([
+                        'id_rr_hh' => $id_rr_hh,
+                        'id_efector' => $idEfector,
+                        'deleted_at' => null,
+                    ])
+                    ->one();
+                if ($re !== null) {
+                    $pesIds = ProfesionalEfectorServicio::find()
+                        ->select(['id'])
+                        ->where([
+                            'id_persona' => $re->id_persona,
+                            'id_efector' => $re->id_efector,
+                            'deleted_at' => null,
+                        ])
+                        ->column();
+                    if ($pesIds !== []) {
+                        $or[] = ['in', 'id_profesional_efector_servicio', $pesIds];
+                    }
+                }
+            }
+        }
 
-        return ConsultaAtencionesEnfermeria::find()
-            ->where(['fecha_creacion' => $fecha_consulta . ' 00:00:00'])
-            ->where(['id_rr_hh' => $id_rr_hh])
-            ->one();
+        return $q->andWhere(array_merge(['or'], $or))->one();
     }
 
     /*

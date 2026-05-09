@@ -10,6 +10,7 @@ use common\models\Consulta;
 use common\models\Turno;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
 use common\models\RrhhServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
@@ -559,7 +560,11 @@ class TurnosController extends BaseController
             $idRrsa = (int) ($req->get('id_rrhh_servicio_asignado') ?: $req->post('id_rrhh_servicio_asignado') ?: 0);
             $idRrhh = $req->get('id_rr_hh') ?: $req->post('id_rr_hh');
             if ($idRrsa <= 0 && $idRrhh) {
-                $resolved = RrhhServicio::obtenerIdRrhhServicio((int) $idRrhh, (int) $idServicio);
+                $resolved = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
+                    (int) $idRrhh,
+                    (int) $idServicio,
+                    (int) $idEfector
+                );
                 if ($resolved) {
                     $idRrsa = (int) $resolved;
                 }
@@ -736,11 +741,11 @@ class TurnosController extends BaseController
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
-            $servicio = $turno->servicio ? $turno->servicio->nombre :
-                ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+            $servicio = $turno->getNombreServicioParaDisplay();
             $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
-            $profesional = $turno->rrhh && $turno->rrhh->persona
-                ? $turno->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+            $profPersona = $turno->getProfesionalPersonaParaDisplay();
+            $profesional = $profPersona
+                ? $profPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
                 : null;
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,
@@ -777,8 +782,7 @@ class TurnosController extends BaseController
             throw new NotFoundHttpException('Turno no encontrado');
         }
         $paciente = $turno->persona;
-        $servicio = $turno->servicio ? $turno->servicio->nombre :
-            ($turno->rrhhServicioAsignado ? $turno->rrhhServicioAsignado->servicio->nombre : 'Sin servicio');
+        $servicio = $turno->getNombreServicioParaDisplay();
         return [
             'id' => $turno->id_turnos,
             'id_persona' => $turno->id_persona,
@@ -897,29 +901,77 @@ class TurnosController extends BaseController
         }
         $fecha = $post['fecha'] ?? null;
         $hora = $post['hora'] ?? null;
+        $idPesPost = isset($post['id_profesional_efector_servicio']) ? (int) $post['id_profesional_efector_servicio'] : 0;
         $idRrsa = isset($post['id_rrhh_servicio_asignado']) && $post['id_rrhh_servicio_asignado'] !== ''
             ? (int) $post['id_rrhh_servicio_asignado'] : (int) $turno->id_rrhh_servicio_asignado;
         if (!$fecha || !$hora) {
             throw new BadRequestHttpException('fecha y hora requeridos');
         }
-        if (Turno::estaOcupadoSlot($idRrsa, $fecha, $hora)) {
-            throw new BadRequestHttpException('El horario ya no está disponible');
-        }
-        $turno->fecha = $fecha;
-        $turno->hora = $hora;
-        $turno->id_rrhh_servicio_asignado = $idRrsa;
-        $rr = RrhhServicio::findOne($idRrsa);
-        if ($rr) {
-            $turno->id_rr_hh = $rr->id_rr_hh;
-        }
         $idEfectorTurno = (int) $turno->id_efector;
         if ($idEfectorTurno <= 0) {
             $idEfectorTurno = (int) Yii::$app->user->getIdEfector();
         }
-        $idPesReprograma = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idRrsa, $idEfectorTurno);
-        if ($idPesReprograma !== null) {
-            $turno->id_profesional_efector_servicio = $idPesReprograma;
+        if ($idPesPost > 0) {
+            $pesPost = ProfesionalEfectorServicio::findOne(['id' => $idPesPost, 'deleted_at' => null]);
+            if (
+                $pesPost === null
+                || (int) $pesPost->id_efector !== $idEfectorTurno
+            ) {
+                throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este turno');
+            }
+            $c = $pesPost->resolveRrhhServicioAsignadoIdForTurnoCompat();
+            if ($c !== null) {
+                $idRrsa = (int) $c;
+            }
+            if (Turno::estaOcupadoSlotPorProfesionalEfectorServicio($idPesPost, (string) $fecha, (string) $hora)) {
+                throw new BadRequestHttpException('El horario ya no está disponible');
+            }
+            $turno->id_profesional_efector_servicio = $idPesPost;
+            $reSync = RrhhEfector::find()
+                ->where([
+                    'id_persona' => (int) $pesPost->id_persona,
+                    'id_efector' => (int) $pesPost->id_efector,
+                    'deleted_at' => null,
+                ])
+                ->one();
+            if ($reSync !== null) {
+                $turno->id_rr_hh = $reSync->id_rr_hh;
+            }
+        } else {
+            if (Turno::estaOcupadoSlot($idRrsa, $fecha, $hora)) {
+                throw new BadRequestHttpException('El horario ya no está disponible');
+            }
+            $idPesReprograma = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idRrsa, $idEfectorTurno);
+            if ($idPesReprograma === null) {
+                $idPesReprograma = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrsa);
+            }
+            if ($idPesReprograma !== null) {
+                $turno->id_profesional_efector_servicio = $idPesReprograma;
+                $pesR = ProfesionalEfectorServicio::findOne(['id' => $idPesReprograma, 'deleted_at' => null]);
+                if ($pesR !== null && (int) $pesR->id_efector === $idEfectorTurno) {
+                    $reSync = RrhhEfector::find()
+                        ->where([
+                            'id_persona' => (int) $pesR->id_persona,
+                            'id_efector' => (int) $pesR->id_efector,
+                            'deleted_at' => null,
+                        ])
+                        ->one();
+                    if ($reSync !== null) {
+                        $turno->id_rr_hh = $reSync->id_rr_hh;
+                    }
+                }
+            }
+            // Último recurso si aún no hay id_rr_hh: leer fila legacy por id de slot (transición).
+            if (!$turno->id_rr_hh && $idRrsa > 0) {
+                $rr = RrhhServicio::findOne($idRrsa);
+                if ($rr) {
+                    $turno->id_rr_hh = $rr->id_rr_hh;
+                }
+            }
         }
+        $turno->fecha = $fecha;
+        $turno->hora = $hora;
+        $turno->id_rrhh_servicio_asignado = $idRrsa;
         if (!$turno->save()) {
             throw new BadRequestHttpException('No se pudo guardar el turno.');
         }
@@ -1073,8 +1125,14 @@ class TurnosController extends BaseController
             $idPesParam = $sPes !== null && $sPes !== '' ? (int) $sPes : 0;
         }
 
-        if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio) {
-            $resolved = RrhhServicio::obtenerIdRrhhServicio($id_rr_hh, $id_servicio);
+        $id_efector = Yii::$app->user->getIdEfector();
+
+        if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio && $id_efector) {
+            $resolved = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
+                (int) $id_rr_hh,
+                (int) $id_servicio,
+                (int) $id_efector
+            );
             if ($resolved) {
                 $id_rrhh_servicio_asignado = (int) $resolved;
             }
@@ -1091,8 +1149,6 @@ class TurnosController extends BaseController
                 }
             }
         }
-
-        $id_efector = Yii::$app->user->getIdEfector();
 
         $formatoSlots = isset($params['formato']) && $params['formato'] === 'slots';
 

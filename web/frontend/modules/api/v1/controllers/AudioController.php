@@ -44,11 +44,13 @@ class AudioController extends BaseController
             // Si se solicita procesamiento inmediato, pasar por el pipeline de análisis
             if ($procesarInmediatamente) {
                 $userPerTabConfig = $request->post('userPerTabConfig', []);
+                $idPesCtx = $userPerTabConfig['idProfesionalEfectorServicio']
+                    ?? $userPerTabConfig['id_profesional_efector_servicio'] ?? null;
                 $idRrHhServicio = $userPerTabConfig['id_rrhh_servicio'] ?? null;
                 $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
                 $idConfiguracion = $request->post('id_configuracion');
 
-                if ($idRrHhServicio && $idServicio) {
+                if ($idServicio && ($idPesCtx || $idRrHhServicio)) {
                     $servicio = \common\models\Servicio::findOne($idServicio);
                     $tabId = $request->post('tab_id') ?? 'tab_' . uniqid() . '_' . time();
 

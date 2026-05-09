@@ -83,7 +83,7 @@ class _DynamicFormState extends State<DynamicForm> {
   }
 
   /// Normaliza depends_on del JSON: puede ser un string (un campo) o una lista (varios).
-  /// Expande `hora` (u otro campo) con valor compuesto `id_rrsa|fecha|hora` según `slot_selection` del JSON.
+  /// Expande `hora` (u otro campo) con valor compuesto `pes:<id>|fecha|hora` o legacy `id_rrsa|fecha|hora` según `slot_selection` del JSON.
   static void applySlotCompositeExpansion(
     List<dynamic> allFields,
     Map<String, dynamic> payload,

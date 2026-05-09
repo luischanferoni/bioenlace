@@ -26,16 +26,27 @@ List<Map<String, dynamic>> _flattenSlotsPacientePorDia(Map<String, dynamic> data
       for (final s in slots ?? []) {
         if (s is! Map) continue;
         final hora = s['hora']?.toString() ?? '';
-        final slotId = s['slot_id']?.toString() ?? '';
+        var slotId = s['slot_id']?.toString() ?? '';
         final idRrsa = s['id_rrhh_servicio_asignado']?.toString() ?? '';
+        final idPesRaw = s['id_profesional_efector_servicio'];
+        final idPes = idPesRaw is int
+            ? idPesRaw
+            : (idPesRaw is String ? int.tryParse(idPesRaw) : null) ?? 0;
         if (fecha.isEmpty || hora.isEmpty) continue;
-        // Nuevo contrato: `slot_id` viene listo para submit (prefiere PES). Compat: reconstruir legacy si falta.
+        if (slotId.isEmpty && idPes > 0) {
+          slotId = 'pes:$idPes|$fecha|$hora';
+        }
+        // `slot_id` PES-first desde API; compat legacy si falta.
         final id = slotId.isNotEmpty ? slotId : (idRrsa.isNotEmpty ? '$idRrsa|$fecha|$hora' : '');
         if (id.isEmpty) continue;
         final fechaTxt = _formatFechaCardSlots(fecha);
+        final svcNombre = (s['servicio'] is Map)
+            ? (s['servicio'] as Map)['nombre']?.toString() ?? ''
+            : '';
+        final textCore = '$fechaTxt · $franjaLabel · $hora';
         out.add({
           'id': id,
-          'text': '$fechaTxt · $franjaLabel · $hora',
+          'text': svcNombre.isNotEmpty ? '$textCore · $svcNombre' : textCore,
         });
       }
     }

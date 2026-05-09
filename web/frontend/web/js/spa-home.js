@@ -1683,7 +1683,9 @@
                                         const value = (idPes && idPes > 0)
                                             ? ('pes:' + idPes + '|' + d.fecha + '|' + hora)
                                             : ('' + idRrsa + '|' + d.fecha + '|' + hora);
-                                        items.push({ value: value, label: d.fecha + ' · ' + franjaLabel + ' · ' + hora });
+                                        const svcNombre = (s.servicio && s.servicio.nombre) ? String(s.servicio.nombre) : '';
+                                        const labelCore = d.fecha + ' · ' + franjaLabel + ' · ' + hora;
+                                        items.push({ value: value, label: svcNombre ? (labelCore + ' · ' + svcNombre) : labelCore });
                                     });
                                 }
                                 if (!selectedFranja) {

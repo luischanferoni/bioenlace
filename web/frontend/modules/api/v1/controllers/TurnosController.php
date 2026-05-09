@@ -28,7 +28,15 @@ use common\components\Services\Turnos\SobreturnoService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
+
 /**
+ * Turnos API v1.
+ *
+ * **Contrato de slot / asignación (PES-first):**
+ * - Identidad canónica del cupo profesional: `id_profesional_efector_servicio` (>0).
+ * - `id_rrhh_servicio_asignado` se mantiene solo por **compatibilidad** con clientes legacy; puede ser `0` en filas PES “puras”.
+ * - Donde aplique, se incluye `servicio` como objeto `{ id_servicio, nombre }` además del string `servicio` legible.
+ *
  * {@see ProfesionalAgendaController} — GET /api/v1/profesional-agenda/dia (permiso /api/profesional-agenda/dia).
  */
 class TurnosController extends BaseController
@@ -176,7 +184,7 @@ class TurnosController extends BaseController
     /**
      * Delega en {@see TurnoPersistService}; traduce excepciones de dominio a HTTP.
      *
-     * @return array{id: int, fecha: mixed, hora: mixed, id_consulta: int|null}
+     * @return array<string, mixed> ver {@see TurnoPersistService::crear}
      */
     protected function ejecutarCreacionTurno(Turno $model): array
     {
@@ -225,6 +233,9 @@ class TurnosController extends BaseController
                         'id' => $turno->id_turnos,
                         'estado' => $turno->estado,
                         'tipo_atencion' => $turno->tipo_atencion,
+                        'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
+                        'id_rrhh_servicio_asignado' => (int) ($turno->id_rrhh_servicio_asignado ?? 0),
+                        'servicio_detalle' => $turno->getServicioEmbebidoParaApi(),
                     ],
                 ];
             }
@@ -630,6 +641,9 @@ class TurnosController extends BaseController
                     if ($idPesSlot !== null) {
                         $meta['id_profesional_efector_servicio'] = $idPesSlot;
                     }
+                    if (!empty($slot['servicio']) && is_array($slot['servicio'])) {
+                        $meta['servicio'] = $slot['servicio'];
+                    }
                     $items[] = [
                         // `id` es el valor que el cliente manda como selección (se persiste en `slot_id`).
                         'id' => $slotId,
@@ -706,19 +720,24 @@ class TurnosController extends BaseController
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
-            $servicio = $turno->getNombreServicioParaDisplay();
+            $servicioNombre = $turno->getNombreServicioParaDisplay();
+            $servicioObj = $turno->getServicioEmbebidoParaApi();
             $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
             $profPersona = $turno->getProfesionalPersonaParaDisplay();
             $profesional = $profPersona
                 ? $profPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
                 : null;
+            $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,
                 'id_persona' => $turno->id_persona,
                 'fecha' => $turno->fecha,
                 'hora' => $turno->hora,
-                'servicio' => $servicio,
+                'servicio' => $servicioNombre,
+                'servicio_detalle' => $servicioObj,
                 'id_servicio_asignado' => $turno->id_servicio_asignado,
+                'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : null,
+                'id_rrhh_servicio_asignado' => (int) ($turno->id_rrhh_servicio_asignado ?? 0),
                 'estado' => $turno->estado,
                 'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
                 'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
@@ -747,7 +766,8 @@ class TurnosController extends BaseController
             throw new NotFoundHttpException('Turno no encontrado');
         }
         $paciente = $turno->persona;
-        $servicio = $turno->getNombreServicioParaDisplay();
+        $servicioNombre = $turno->getNombreServicioParaDisplay();
+        $servicioObj = $turno->getServicioEmbebidoParaApi();
         return [
             'id' => $turno->id_turnos,
             'id_persona' => $turno->id_persona,
@@ -760,10 +780,11 @@ class TurnosController extends BaseController
             ],
             'fecha' => $turno->fecha,
             'hora' => $turno->hora,
-            'servicio' => $servicio,
+            'servicio' => $servicioNombre,
+            'servicio_detalle' => $servicioObj,
             'id_servicio_asignado' => $turno->id_servicio_asignado,
             'id_rrhh_servicio_asignado' => $turno->id_rrhh_servicio_asignado,
-            'id_profesional_efector_servicio' => $turno->id_profesional_efector_servicio,
+            'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
             'estado' => $turno->estado,
             'estado_label' => $turno->estado ? (Turno::ESTADOS[$turno->estado] ?? 'Sin estado') : 'Sin estado',
             'estado_motivo' => $turno->estado_motivo,

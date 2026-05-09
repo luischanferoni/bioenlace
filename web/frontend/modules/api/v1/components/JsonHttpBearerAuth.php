@@ -139,6 +139,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
 
         // Contexto operativo stateless: si el token trae claims de sesión operativa, aplicarlos.
         // Estos claims SOLO deben ser emitidos por el backend (SesionOperativaService) tras validar coherencia.
+        // PES-first: `id_profesional_efector_servicio` es canónico; `id_rrhh_servicio` en JWT (si existiera) no se rehidrata.
         try {
             if (isset($decoded->id_efector)) {
                 Yii::$app->user->setIdEfector((int) $decoded->id_efector);

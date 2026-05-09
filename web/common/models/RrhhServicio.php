@@ -5,7 +5,10 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "rrhh_servicio".
+ * ActiveRecord de la tabla histórica `rrhh_servicio` (asignación RRHH–servicio legacy).
+ *
+ * El modelo operativo de agenda/asignación es {@see ProfesionalEfectorServicio}. Esta tabla puede seguir
+ * existiendo por datos históricos o integraciones; no usar para nuevas features sin migrar a PES.
  *
  * @property int $id_rr_hh
  * @property int $id_servicio

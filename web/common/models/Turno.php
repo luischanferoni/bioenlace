@@ -389,6 +389,36 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
+     * Fragmento JSON canónico para clientes (PES-first): evita depender solo de `id_rrhh_servicio_asignado`.
+     *
+     * @return array{id_servicio: int, nombre: string}|null
+     */
+    public function getServicioEmbebidoParaApi(): ?array
+    {
+        if ($this->servicio) {
+            return [
+                'id_servicio' => (int) $this->servicio->id_servicio,
+                'nombre' => (string) $this->servicio->nombre,
+            ];
+        }
+        $pes = $this->profesionalEfectorServicio;
+        if ($pes !== null && $pes->servicio) {
+            return [
+                'id_servicio' => (int) $pes->servicio->id_servicio,
+                'nombre' => (string) $pes->servicio->nombre,
+            ];
+        }
+        $idServ = (int) ($this->id_servicio_asignado ?? 0);
+        if ($idServ > 0) {
+            $nombre = $this->getNombreServicioParaDisplay();
+
+            return ['id_servicio' => $idServ, 'nombre' => $nombre !== 'Sin servicio' ? $nombre : ('Servicio #' . $idServ)];
+        }
+
+        return null;
+    }
+
+    /**
      * Persona del profesional del turno: PES primero; si no, vínculo por `id_rr_hh` + efector.
      */
     public function getProfesionalPersonaParaDisplay(): ?Persona

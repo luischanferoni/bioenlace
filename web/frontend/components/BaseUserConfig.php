@@ -145,18 +145,25 @@ abstract class BaseUserConfig extends User
 
     /**
      * Sesiones por-pestaña (snapshot inicial).
-     * @return array [clave => valor]
+     *
+     * `id_rrhh_servicio` se mantiene solo por compatibilidad con clientes antiguos; la asignación canónica es
+     * `idProfesionalEfectorServicio`.
+     *
+     * @return array<string, mixed>
      */
     public function getPerTabSessions()
     {
         $s = Yii::$app->session;
+        $idPes = $s->get('idProfesionalEfectorServicio');
+
         return [
             'idRecursoHumano' => $s->get('idRecursoHumano'),
             'idEfector' => $s->get('idEfector'),
             'nombreEfector' => $s->get('nombreEfector'),
             'servicio_actual' => $s->get('servicio_actual'),
             'id_rrhh_servicio' => $s->get('id_rrhh_servicio'),
-            'idProfesionalEfectorServicio' => $s->get('idProfesionalEfectorServicio'),
+            'idProfesionalEfectorServicio' => $idPes,
+            'id_profesional_efector_servicio' => $idPes,
             'encounterClass' => $s->get('encounterClass'),
         ];
     }

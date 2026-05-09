@@ -92,12 +92,17 @@ class TurnoBusqueda extends Turno
             } else {
                 $idLeg = (int) $claveProf;
                 if ($idLeg > 0) {
-                    $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
-                    $or = [['id_rrhh_servicio_asignado' => $idLeg]];
-                    if ($idPesMap !== null && $idPesMap > 0) {
-                        $or[] = ['id_profesional_efector_servicio' => $idPesMap];
+                    $pesByPk = ProfesionalEfectorServicio::findOne(['id' => $idLeg, 'deleted_at' => null]);
+                    if ($pesByPk !== null) {
+                        $query->andWhere(['id_profesional_efector_servicio' => $idLeg]);
+                    } else {
+                        $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
+                        $or = [['id_rrhh_servicio_asignado' => $idLeg]];
+                        if ($idPesMap !== null && $idPesMap > 0) {
+                            $or[] = ['id_profesional_efector_servicio' => $idPesMap];
+                        }
+                        $query->andWhere(array_merge(['or'], $or));
                     }
-                    $query->andWhere(array_merge(['or'], $or));
                 }
             }
         }
@@ -200,12 +205,17 @@ class TurnoBusqueda extends Turno
             } else {
                 $idLeg = (int) $claveProf;
                 if ($idLeg > 0) {
-                    $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
-                    $or = [['id_rrhh_servicio_asignado' => $idLeg]];
-                    if ($idPesMap !== null && $idPesMap > 0) {
-                        $or[] = ['id_profesional_efector_servicio' => $idPesMap];
+                    $pesByPk = ProfesionalEfectorServicio::findOne(['id' => $idLeg, 'deleted_at' => null]);
+                    if ($pesByPk !== null) {
+                        $query->andWhere(['id_profesional_efector_servicio' => $idLeg]);
+                    } else {
+                        $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
+                        $or = [['id_rrhh_servicio_asignado' => $idLeg]];
+                        if ($idPesMap !== null && $idPesMap > 0) {
+                            $or[] = ['id_profesional_efector_servicio' => $idPesMap];
+                        }
+                        $query->andWhere(array_merge(['or'], $or));
                     }
-                    $query->andWhere(array_merge(['or'], $or));
                 }
             }
         }

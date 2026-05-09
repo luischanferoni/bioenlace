@@ -222,11 +222,11 @@
 
   function getServiceLabel(item) {
     try {
-      var rs = item.rrhhServicioAsignado;
-      var svc = rs && rs.servicio ? rs.servicio : null;
-      if (svc && svc.nombre) return String(svc.nombre);
       if (item.servicio && item.servicio.nombre) return String(item.servicio.nombre);
       if (item.nombre_servicio) return String(item.nombre_servicio);
+      var rs = item.rrhhServicioAsignado;
+      var svcLegacy = rs && rs.servicio ? rs.servicio : null;
+      if (svcLegacy && svcLegacy.nombre) return String(svcLegacy.nombre);
     } catch (e) {}
     return 'Servicio';
   }

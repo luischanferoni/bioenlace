@@ -19,7 +19,15 @@ class TurnoPersistService
     /**
      * Alta: defaults, teleconsulta, derivaciones, escenario por ServiciosEfector, save, consulta collateral.
      *
-     * @return array{id: int, fecha: mixed, hora: mixed, id_consulta: int|null}
+     * @return array{
+     *   id: int,
+     *   fecha: mixed,
+     *   hora: mixed,
+     *   id_consulta: int|null,
+     *   id_profesional_efector_servicio: int|null,
+     *   id_rrhh_servicio_asignado: int,
+     *   servicio_detalle: array{id_servicio: int, nombre: string}|null
+     * }
      * @throws PolicyModeradaException reserva autogestion bloqueada
      * @throws \InvalidArgumentException validación de negocio o errores del AR
      */
@@ -122,6 +130,9 @@ class TurnoPersistService
             'fecha' => $model->fecha,
             'hora' => $model->hora,
             'id_consulta' => $idConsulta,
+            'id_profesional_efector_servicio' => (int) ($model->id_profesional_efector_servicio ?? 0) ?: null,
+            'id_rrhh_servicio_asignado' => (int) ($model->id_rrhh_servicio_asignado ?? 0),
+            'servicio_detalle' => $model->getServicioEmbebidoParaApi(),
         ];
     }
 
@@ -141,9 +152,14 @@ class TurnoPersistService
         if (!$cfg->permitir_cambio_modalidad) {
             throw new \InvalidArgumentException('Cambio de modalidad no permitido en este efector');
         }
-        $idRrhhServicio = $turno->id_rrhh_servicio_asignado;
-        if ($idRrhhServicio) {
-            $this->assertAgendaAceptaTeleconsulta((int) $idRrhhServicio, (int) $turno->id_efector);
+        $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
+        if ($idPes > 0) {
+            $this->assertAgendaAceptaTeleconsultaPorPes($idPes);
+        } else {
+            $idRrhhServicio = (int) ($turno->id_rrhh_servicio_asignado ?? 0);
+            if ($idRrhhServicio > 0) {
+                $this->assertAgendaAceptaTeleconsulta($idRrhhServicio, (int) $turno->id_efector);
+            }
         }
     }
 
@@ -152,23 +168,23 @@ class TurnoPersistService
         if ($model->tipo_atencion !== Turno::TIPO_ATENCION_TELECONSULTA) {
             return;
         }
-        $idRrhhServicio = $model->id_rrhh_servicio_asignado;
-        if (!$idRrhhServicio && (int) ($model->id_profesional_efector_servicio ?? 0) > 0) {
-            $pesT = ProfesionalEfectorServicio::findOne([
-                'id' => (int) $model->id_profesional_efector_servicio,
-                'deleted_at' => null,
-            ]);
-            $idRrhhServicio = $pesT !== null ? $pesT->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
+        $idPes = (int) ($model->id_profesional_efector_servicio ?? 0);
+        if ($idPes > 0) {
+            $this->assertAgendaAceptaTeleconsultaPorPes($idPes);
+
+            return;
         }
+        $idRrhhServicio = (int) ($model->id_rrhh_servicio_asignado ?? 0);
         if (!$idRrhhServicio && $model->id_rr_hh && $model->id_servicio_asignado && $model->id_efector) {
-            $idRrhhServicio = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
+            $resolved = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
                 (int) $model->id_rr_hh,
                 (int) $model->id_servicio_asignado,
                 (int) $model->id_efector
             );
+            $idRrhhServicio = (int) ($resolved ?? 0);
         }
-        if ($idRrhhServicio) {
-            $this->assertAgendaAceptaTeleconsulta((int) $idRrhhServicio, (int) $model->id_efector);
+        if ($idRrhhServicio > 0) {
+            $this->assertAgendaAceptaTeleconsulta($idRrhhServicio, (int) $model->id_efector);
         } elseif ($model->id_rrhh_servicio_asignado || $model->id_rr_hh) {
             throw new \InvalidArgumentException('No se encontró la agenda del profesional para el servicio.');
         }
@@ -177,7 +193,17 @@ class TurnoPersistService
     private function assertAgendaAceptaTeleconsulta(int $idRrhhServicio, int $idEfector): void
     {
         $idPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idRrhhServicio, $idEfector);
-        $agenda = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
+        if (!$idPes) {
+            throw new \InvalidArgumentException(
+                'El profesional no acepta teleconsulta para esta agenda.'
+            );
+        }
+        $this->assertAgendaAceptaTeleconsultaPorPes($idPes);
+    }
+
+    private function assertAgendaAceptaTeleconsultaPorPes(int $idPes): void
+    {
+        $agenda = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes);
         if ($agenda === null || !$agenda->acepta_consultas_online) {
             throw new \InvalidArgumentException(
                 'El profesional no acepta teleconsulta para esta agenda.'

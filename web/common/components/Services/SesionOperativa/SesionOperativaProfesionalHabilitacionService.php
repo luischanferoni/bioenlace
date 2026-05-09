@@ -22,9 +22,11 @@ class SesionOperativaProfesionalHabilitacionService extends Component
     private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';
 
     /**
+     * En cada ítem de `servicios`, `id_profesional_efector_servicio` es canónico; `id_rrhh_servicio` es solo compatibilidad legacy (puede ser 0).
+     *
      * @return array{
      *   encounter_classes: list<array{code:string,label:string}>,
-     *   efectores: list<array{id_efector:int,id:int,nombre:string,servicios:list<array{id_servicio:int,nombre:string,id_rrhh_servicio:int}>}>,
+     *   efectores: list<array{id_efector:int,id:int,nombre:string,servicios:list<array{id_servicio:int,nombre:string,id_profesional_efector_servicio:int,id_rrhh_servicio:int}>}>,
      *   efectores_con_problemas: list<array{id_efector:?int,nombre:?string,message:string,contact:mixed}>
      * }
      */
@@ -156,6 +158,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                 $serviciosPayload[] = [
                     'id_servicio' => (int) $pes->id_servicio,
                     'nombre' => (string) $pes->servicio->nombre,
+                    'id_profesional_efector_servicio' => (int) $pes->id,
                     'id_rrhh_servicio' => $compat !== null ? (int) $compat : 0,
                 ];
             }

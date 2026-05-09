@@ -80,6 +80,7 @@ class TurnoSlotFinder
      *   'id_profesional_efector_servicio' => int|null,
      *   'id_efector' => int,
      *   'id_servicio' => int,
+     *   'servicio' => array{id_servicio:int,nombre:string},
      * ]
      */
     public static function findFirstAvailable(array $criteria): ?array
@@ -215,6 +216,10 @@ class TurnoSlotFinder
                         ->one();
                     $idRrhh = $re ? (int) $re->id_rr_hh : 0;
                     $idRrsaOut = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat() ?? 0;
+                    $srv = $pes->servicio;
+                    $servicioEmb = $srv !== null
+                        ? ['id_servicio' => (int) $srv->id_servicio, 'nombre' => (string) $srv->nombre]
+                        : ['id_servicio' => (int) $idServicio, 'nombre' => ''];
 
                     $out[] = [
                         'fecha' => $dia,
@@ -224,6 +229,7 @@ class TurnoSlotFinder
                         'id_profesional_efector_servicio' => $idPesAgenda,
                         'id_efector' => (int) $idEfector,
                         'id_servicio' => (int) $idServicio,
+                        'servicio' => $servicioEmb,
                     ];
                 }
             }

@@ -1,7 +1,12 @@
 // lib/services/config_service.dart
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
+
+void _logConfig(String message, {Object? error, StackTrace? stackTrace}) {
+  developer.log(message, name: 'ConfigService', error: error, stackTrace: stackTrace);
+}
 
 /// Respuesta del modo «opciones» de POST /sesion-operativa/establecer (body vacío).
 class SessionWizardOptions {
@@ -97,8 +102,8 @@ class ConfigService {
     }
 
     final uri = Uri.parse('${AppConfig.apiUrl}/sesion-operativa/establecer');
-    print('Request URL: $uri (wizard options)');
-    print('Headers: $_headers');
+    _logConfig('Request URL: $uri (wizard options)');
+    _logConfig('Header keys: ${_headers.keys.join(", ")}');
 
     final response = await http.post(
       uri,
@@ -106,7 +111,7 @@ class ConfigService {
       body: json.encode(body),
     );
 
-    print('Response status: ${response.statusCode}');
+    _logConfig('Response status: ${response.statusCode}');
 
     final bodyTrimmed = response.body.trim();
     if (bodyTrimmed.startsWith('<!DOCTYPE') || bodyTrimmed.startsWith('<html')) {
@@ -189,9 +194,9 @@ class ConfigService {
         body['user_id'] = userId;
       }
 
-      print('Request URL: ${AppConfig.apiUrl}/sesion-operativa/establecer');
-      print('Request body: $body');
-      print('Headers: $_headers');
+      _logConfig('Request URL: ${AppConfig.apiUrl}/sesion-operativa/establecer');
+      _logConfig('Request body: $body');
+      _logConfig('Header keys: ${_headers.keys.join(", ")}');
 
       final response = await http.post(
         Uri.parse('${AppConfig.apiUrl}/sesion-operativa/establecer'),
@@ -199,19 +204,19 @@ class ConfigService {
         body: json.encode(body),
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      _logConfig('Response status: ${response.statusCode}');
+      _logConfig('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
-        print('Parsed data: $data');
+        _logConfig('Parsed data: $data');
 
         if (data['success'] == true && data['data'] != null) {
           try {
             return SessionConfig.fromJson(data['data'] as Map<String, dynamic>);
-          } catch (e) {
-            print('Error parsing SessionConfig: $e');
-            print('Data received: ${data['data']}');
+          } catch (e, st) {
+            _logConfig('Error parsing SessionConfig', error: e, stackTrace: st);
+            _logConfig('Data received: ${data['data']}');
             rethrow;
           }
         } else {
@@ -233,8 +238,8 @@ class ConfigService {
         }
         throw Exception(msg);
       }
-    } catch (e) {
-      print('Error setting session: $e');
+    } catch (e, st) {
+      _logConfig('Error setting session', error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -273,21 +278,30 @@ class Efector {
 class Servicio {
   final int id;
   final String nombre;
+  /// Asignación canónica (PES) para agenda y turnos.
+  final int idProfesionalEfectorServicio;
+  /// Solo compatibilidad con turnos legacy; suele ser 0.
   final int idRrhhServicio;
 
   Servicio({
     required this.id,
     required this.nombre,
-    required this.idRrhhServicio,
+    this.idProfesionalEfectorServicio = 0,
+    this.idRrhhServicio = 0,
   });
 
   factory Servicio.fromJson(Map<String, dynamic> json) {
+    final idPesRaw = json['id_profesional_efector_servicio'];
+    final idPes = idPesRaw is int
+        ? idPesRaw
+        : (idPesRaw is String ? int.tryParse(idPesRaw) : null) ?? 0;
     return Servicio(
       id: (json['id'] as int?) ??
           (json['id_servicio'] as int?) ??
           (json['id_servicio'] is String ? int.tryParse(json['id_servicio'] as String) : null) ??
           0,
       nombre: json['nombre'] as String? ?? 'Sin nombre',
+      idProfesionalEfectorServicio: idPes,
       idRrhhServicio: (json['id_rrhh_servicio'] as int?) ?? 0,
     );
   }

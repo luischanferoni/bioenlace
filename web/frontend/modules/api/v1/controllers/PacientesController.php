@@ -293,13 +293,15 @@ class PacientesController extends BaseController
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
             $paciente = $turno->persona;
-            $servicio = $turno->getNombreServicioParaDisplay();
+            $servicioNombre = $turno->getNombreServicioParaDisplay();
+            $servicioObj = $turno->getServicioEmbebidoParaApi();
             $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,
                 'id_persona' => $turno->id_persona,
                 // Contexto profesional (canónico vs legacy)
                 'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
+                'id_rrhh_servicio_asignado' => (int) ($turno->id_rrhh_servicio_asignado ?? 0),
                 'id_rr_hh' => (int) ($turno->id_rr_hh ?? 0) ?: null,
                 'paciente' => [
                     'id' => $paciente ? $paciente->id_persona : null,
@@ -308,7 +310,8 @@ class PacientesController extends BaseController
                 ],
                 'fecha' => $turno->fecha,
                 'hora' => $turno->hora,
-                'servicio' => $servicio,
+                'servicio' => $servicioNombre,
+                'servicio_detalle' => $servicioObj,
                 'id_servicio_asignado' => $turno->id_servicio_asignado,
                 'estado' => $turno->estado,
                 'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',

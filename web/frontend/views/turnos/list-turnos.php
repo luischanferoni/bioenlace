@@ -48,14 +48,20 @@ $estados = array(Turno::ESTADO_PENDIENTE => 'bg-soft-warning p-2 text-warning', 
             }
         ],
         [
-            'label' => 'Profesional',
-            'attribute' => 'id_rrhh_servicio_asignado',
+            'label' => 'Profesional (PES / asignación)',
+            'attribute' => 'id_profesional_efector_servicio',
             'format' => 'raw',
             //'filter'=>false,
             'value' => function ($data) {
                 $p = $data->getProfesionalPersonaParaDisplay();
+                $nombre = $p ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'SIN ESPECIFICAR';
+                $idPes = (int) ($data->id_profesional_efector_servicio ?? 0);
+                $idLeg = (int) ($data->id_rrhh_servicio_asignado ?? 0);
+                $meta = $idPes > 0
+                    ? (' <span class="text-muted small">PES #' . $idPes . '</span>')
+                    : ($idLeg > 0 ? (' <span class="text-muted small" title="compat legacy">asig. #' . $idLeg . '</span>') : '');
 
-                return $p ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'SIN ESPECIFICAR';
+                return $nombre . $meta;
             }
         ],
         [

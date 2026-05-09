@@ -34,8 +34,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="col-sm-4"><label>Efector:</label> <?= $model->efector ? $model->efector->nombre : '-' ?></div>
                 <div class="col-sm-4"><label>Servicios:</label> <?php
                     $servicios = [];
-                    foreach ($model->rrhhServicio as $rs) {
-                        if ($rs->servicio) $servicios[] = $rs->servicio->nombre;
+                    foreach ($model->rrhhServicio as $pes) {
+                        if ($pes->servicio) {
+                            $servicios[] = $pes->servicio->nombre;
+                        }
                     }
                     echo implode(', ', $servicios) ?: '-';
                 ?></div>

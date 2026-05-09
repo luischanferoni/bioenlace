@@ -35,7 +35,14 @@ class SesionOperativaService extends Component
 
     /**
      * @param array{efector_id:mixed, servicio_id:mixed, encounter_class:mixed} $body
-     * @return array{efector:array{id:int,nombre:string},servicio:array{id:int,nombre:string,id_rrhh_servicio:int},encounter_class:array{code:string,label:string},rrhh_id:int,redirect_url:string,context_token:string}
+     * @return array{
+     *   efector: array{id:int,nombre:string},
+     *   servicio: array{id:int,nombre:string,id_profesional_efector_servicio:int,id_rrhh_servicio:int},
+     *   encounter_class: array{code:string,label:string},
+     *   rrhh_id: int,
+     *   redirect_url: string,
+     *   context_token: string
+     * } `servicio.id_rrhh_servicio` queda en 0 y est? **deprecated** (compat); usar `id_profesional_efector_servicio`.
      */
     public function establecer(array $body): array
     {
@@ -140,6 +147,7 @@ class SesionOperativaService extends Component
             'servicio' => [
                 'id' => (int) $servicioId,
                 'nombre' => (string) ($pes->servicio->nombre ?? ''),
+                'id_profesional_efector_servicio' => (int) $pes->id,
                 'id_rrhh_servicio' => 0,
             ],
             'encounter_class' => [

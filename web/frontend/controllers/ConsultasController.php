@@ -30,6 +30,9 @@ use Exception;
 
 /**
  * ConsultasController implements the CRUD actions for Consulta model.
+ *
+ * **PES:** el único SQL propio de turnos por profesional es {@see actionListadoSumar} (OR `rr_hh` por persona **o** PES en turno).
+ * El listado general {@see actionIndex} delega en {@see ConsultaBusqueda::searchGral} (filtro “mis consultas” ya ampliable por PES).
  */
 class ConsultasController extends Controller
 {

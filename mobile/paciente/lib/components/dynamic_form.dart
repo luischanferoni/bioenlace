@@ -106,7 +106,7 @@ class _DynamicFormState extends State<DynamicForm> {
       for (var i = 0; i < parts.length; i++) {
         final k = parts[i];
         final v = chunks[i];
-        // Primer chunk `pes:<id>`: normalizar a id PES (parts legacy `id_rrhh_servicio_asignado` aún soportados).
+        // Compat: descriptors antiguos podían nombrar el primer chunk como id_rrhh_servicio_asignado.
         if (k == 'id_rrhh_servicio_asignado' && v.startsWith('pes:')) {
           final raw = v.substring(4).trim();
           final idPes = int.tryParse(raw);

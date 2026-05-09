@@ -143,7 +143,7 @@ class TurnosController extends Controller
     /**
      * Se lo llama desde el index
      *
-     * Recibe id_rrhh_servicio_asignado e id_servicio
+     * Recibe `id_profesional_efector_servicio` (PES) e `id_servicio`.
      * @no_intent_catalog
     */
     public function actionCalendario()
@@ -153,7 +153,7 @@ class TurnosController extends Controller
         $session = Yii::$app->getSession();
         $session_paciente = unserialize($session['persona']);
 
-        $id_rrhh_servicio_asignado = Yii::$app->request->get('id_rrhh_servicio_asignado');
+        $id_profesional_efector_servicio = Yii::$app->request->get('id_profesional_efector_servicio');
 
         $id_servicio = Yii::$app->request->get('id_servicio');
 
@@ -163,7 +163,7 @@ class TurnosController extends Controller
 
         return $this->renderAjax('turnos_rrhh', [
             'id_servicio' => $id_servicio,
-            'id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado,
+            'id_profesional_efector_servicio' => $id_profesional_efector_servicio,
             'persona' => $session_paciente,
         ]);
     }
@@ -172,7 +172,7 @@ class TurnosController extends Controller
      * Este metodo carga las horas disponibles por día
      * Se lo llama desde js despues de llamar a turnos/calendario
      *
-     * Recibe id_rrhh_servicio_asignado e id_servicio
+     * Recibe `id_profesional_efector_servicio` (PES), opcionalmente `id_rr_hh` + servicio, e `id_servicio`.
      * @no_intent_catalog
     */
     public function actionEventos()
@@ -186,14 +186,6 @@ class TurnosController extends Controller
         $id_efector = Yii::$app->user->getIdEfector();
 
         $idPesReq = (int) ($request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio') ?: 0);
-        $idRrsaAlias = (int) ($request->get('id_rrhh_servicio_asignado') ?: $request->post('id_rrhh_servicio_asignado') ?: 0);
-        if ($idPesReq <= 0 && $idRrsaAlias > 0) {
-            $mapped = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                $idRrsaAlias,
-                (int) $id_efector
-            );
-            $idPesReq = $mapped !== null ? $mapped : $idRrsaAlias;
-        }
         if ($idPesReq <= 0 && $id_rr_hh && $id_servicio && $id_efector) {
             $idPesReq = (int) (ProfesionalEfectorServicio::resolverIdPesDesdeRrhhServicioYEfector(
                 (int) $id_rr_hh,

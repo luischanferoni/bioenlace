@@ -21,7 +21,7 @@ use common\models\ProfesionalEfectorServicioAgenda;
  *
  * **RBAC (alineado a Turnos: ámbito propio vs operativo sobre tercero):**
  * - **`listar`, `crear`, `actualizar`, `eliminar`:** RRHH del usuario en sesión; efector desde sesión (no se aceptan `id_rr_hh` / `id_efector` en query para ampliar alcance).
- * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; listar exige **`id_efector`** y **`id_profesional_efector_servicio`** *o* **`id_rr_hh`**; alta para recurso: **`id_efector`** + **`id_profesional_efector_servicio`** (opcional `id_rrhh_servicio_asignado`) *o* **`id_rr_hh`** + **`id_rrhh_servicio_asignado`**.
+ * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; listar exige **`id_efector`** y **`id_profesional_efector_servicio`** *o* **`id_rr_hh`**; alta para recurso: **`id_efector`** + **`id_profesional_efector_servicio`**.
  *
  * Permisos `/api/profesional-agenda/...` (sin `v1` en webvimark):
  * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso
@@ -139,7 +139,7 @@ class ProfesionalAgendaController extends BaseController
     }
 
     /**
-     * Alta para otro profesional: `id_efector` + `id_profesional_efector_servicio` (y opcional `id_rrhh_servicio_asignado`) *o* `id_efector` + `id_rr_hh` + `id_rrhh_servicio_asignado` (body o query). RBAC: /api/profesional-agenda/crear-para-recurso
+     * Alta para otro profesional: `id_efector` + `id_profesional_efector_servicio` (body o query). RBAC: /api/profesional-agenda/crear-para-recurso
      *
      * @action_name Crear agenda para un profesional (staff)
      * @entity Agendas
@@ -156,7 +156,7 @@ class ProfesionalAgendaController extends BaseController
      * @action_name Actualizar mi agenda (servicio)
      * @entity Agendas
      * @tags agenda,profesional,actualizar,editar
-     * @param int $id id `profesional_efector_servicio_agenda` (expuesto también como `id_agenda_rrhh` en JSON de respuesta)
+     * @param int $id id `profesional_efector_servicio_agenda`
      */
     public function actionActualizar($id)
     {
@@ -278,16 +278,6 @@ class ProfesionalAgendaController extends BaseController
             }
             $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
             $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
-            $idRrsaOpt = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
-            try {
-                ProfesionalEfectorServicioAgendaApiService::assertOptionalPesAliasMatches(
-                    $idRrsaOpt,
-                    $pes,
-                    $idEfector
-                );
-            } catch (BadRequestHttpException $e) {
-                return $this->error($e->getMessage(), ['id_rrhh_servicio_asignado' => [$e->getMessage()]], 422);
-            }
         } else {
             $idEfector = $this->requireEfectorId();
             $idPes = (int) ($body['id_profesional_efector_servicio'] ?? Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
@@ -301,16 +291,6 @@ class ProfesionalAgendaController extends BaseController
                 );
             }
             $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
-            $idRrsaOpt = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
-            try {
-                ProfesionalEfectorServicioAgendaApiService::assertOptionalPesAliasMatches(
-                    $idRrsaOpt,
-                    $pes,
-                    $idEfector
-                );
-            } catch (BadRequestHttpException $e) {
-                return $this->error($e->getMessage(), ['id_rrhh_servicio_asignado' => [$e->getMessage()]], 422);
-            }
         }
 
         unset($body['id_agenda_rrhh']);
@@ -398,15 +378,5 @@ class ProfesionalAgendaController extends BaseController
             'success' => true,
             'message' => 'Agenda eliminada.',
         ];
-    }
-
-    private static function nullablePositiveInt($v): ?int
-    {
-        if ($v === null || $v === '') {
-            return null;
-        }
-        $i = (int) $v;
-
-        return $i > 0 ? $i : null;
     }
 }

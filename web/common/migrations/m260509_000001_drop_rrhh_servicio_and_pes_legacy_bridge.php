@@ -24,7 +24,7 @@ use yii\db\Migration;
  * ## No incluye (fases posteriores)
  *
  * - Eliminar columnas consumidoras legacy: {@see m260509_000002_drop_legacy_rrhh_servicio_id_columns}.
- * - Tabla `agenda_rrhh`: no se elimina aquí.
+ * - Tabla `agenda_rrhh`: {@see m260510_000001_drop_agenda_rrhh_table}.
  *
  * ## Rollback
  *

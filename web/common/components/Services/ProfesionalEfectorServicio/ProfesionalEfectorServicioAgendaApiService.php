@@ -119,38 +119,6 @@ class ProfesionalEfectorServicioAgendaApiService
     }
 
     /**
-     * Opcional: si el cliente envía el alias deprecado `id_rrhh_servicio_asignado`, debe ser el mismo entero que la PK PES.
-     *
-     * @throws BadRequestHttpException
-     */
-    public static function assertOptionalPesAliasMatches(
-        ?int $aliasIdRrsa,
-        ProfesionalEfectorServicio $pes,
-        int $idEfector
-    ): void {
-        if ($idEfector <= 0 || (int) $pes->id_efector !== $idEfector) {
-            throw new BadRequestHttpException('La asignación profesional no pertenece al efector.');
-        }
-        $in = $aliasIdRrsa !== null && $aliasIdRrsa > 0 ? (int) $aliasIdRrsa : 0;
-        if ($in > 0 && $in !== (int) $pes->id) {
-            throw new BadRequestHttpException(
-                'El alias id_rrhh_servicio_asignado no coincide con id_profesional_efector_servicio (mismo id PES esperado).'
-            );
-        }
-    }
-
-    /**
-     * @deprecated Use {@see assertOptionalPesAliasMatches}
-     */
-    public static function assertRrhhServicioAsignadoAlineadoConPes(
-        ?int $idRrhhServicioAsignado,
-        ProfesionalEfectorServicio $pes,
-        int $idEfector
-    ): void {
-        self::assertOptionalPesAliasMatches($idRrhhServicioAsignado, $pes, $idEfector);
-    }
-
-    /**
      * @throws BadRequestHttpException
      */
     public static function assertServicioAsignadoParaRecursoHumanoEnEfector(?int $idRrhhServicioAsignado, int $idRrhh, int $idEfector): void
@@ -222,8 +190,6 @@ class ProfesionalEfectorServicioAgendaApiService
                 ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
                 ->one();
             $row['id_rr_hh'] = $re !== null ? (int) $re->id_rr_hh : null;
-            $row['id_profesional_efector_servicio'] = (int) $pes->id;
-            $row['id_agenda_rrhh'] = (int) $model->id;
         }
 
         return $row;

@@ -34,7 +34,6 @@ use yii\web\ConflictHttpException;
  *
  * **Contrato de slot / asignación (PES-first):**
  * - Identidad canónica del cupo profesional: `id_profesional_efector_servicio` (>0).
- * - En query/body, `id_rrhh_servicio_asignado` se acepta solo como **alias** del id PES (misma semántica que la PK de `profesional_efector_servicio`).
  * - Donde aplique, se incluye `servicio` como objeto `{ id_servicio, nombre }` además del string `servicio` legible.
  *
  * {@see ProfesionalAgendaController} — GET /api/v1/profesional-agenda/dia (permiso /api/profesional-agenda/dia).
@@ -487,7 +486,7 @@ class TurnosController extends BaseController
 
     /**
      * Sobreturno urgente en gestión operativa (staff). POST /api/v1/turnos/crear-sobreturno.
-     * Body: id_persona, fecha, hora, id_profesional_efector_servicio (u opcional alias `id_rrhh_servicio_asignado` = id PES), id_servicio_asignado, (id_efector opcional).
+     * Body: id_persona, fecha, hora, id_profesional_efector_servicio, id_servicio_asignado, (id_efector opcional).
      * RBAC: /api/turnos/crear-sobreturno
      */
     public function actionCrearSobreturno()
@@ -514,7 +513,6 @@ class TurnosController extends BaseController
      * - id_efector (opcional; si falta, usa sesión)
      * - id_profesional_efector_servicio (opcional)
      * - id_rr_hh (opcional; con id_servicio resuelve PES en el efector)
-     * - id_rrhh_servicio_asignado (opcional; alias numérico de id PES)
      * - limite, franja_tarde_desde (opcionales; defaults `turnosPaciente`)
      * - restricciones (JSON array; mismo formato que {@see TurnoSlotFinder::findAvailableSlots})
      *
@@ -877,9 +875,6 @@ class TurnosController extends BaseController
         $fecha = $post['fecha'] ?? null;
         $hora = $post['hora'] ?? null;
         $idPesPost = isset($post['id_profesional_efector_servicio']) ? (int) $post['id_profesional_efector_servicio'] : 0;
-        if ($idPesPost <= 0 && isset($post['id_rrhh_servicio_asignado'])) {
-            $idPesPost = (int) $post['id_rrhh_servicio_asignado'];
-        }
         if (!$fecha || !$hora) {
             throw new BadRequestHttpException('fecha y hora requeridos');
         }
@@ -1053,14 +1048,6 @@ class TurnosController extends BaseController
         $id_efector = Yii::$app->user->getIdEfector();
 
         $idPesParam = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
-        $idRrsaAlias = isset($params['id_rrhh_servicio_asignado']) ? (int) $params['id_rrhh_servicio_asignado'] : 0;
-        if ($idPesParam <= 0 && $idRrsaAlias > 0) {
-            $mapped = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                $idRrsaAlias,
-                (int) $id_efector
-            );
-            $idPesParam = $mapped !== null ? $mapped : $idRrsaAlias;
-        }
         if ($idPesParam <= 0) {
             $sPes = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPesParam = $sPes !== null && $sPes !== '' ? (int) $sPes : 0;

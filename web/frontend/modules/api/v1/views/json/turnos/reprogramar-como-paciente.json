@@ -30,7 +30,7 @@
         },
         {
           "name": "id_profesional_efector_servicio",
-          "label": "Profesional (id PES; alias body id_rrhh_servicio_asignado)",
+          "label": "Profesional (id PES)",
           "type": "text",
           "required": true
         }

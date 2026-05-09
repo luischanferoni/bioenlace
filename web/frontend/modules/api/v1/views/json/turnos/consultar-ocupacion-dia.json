@@ -24,7 +24,7 @@
         },
         {
           "name": "id_profesional_efector_servicio",
-          "label": "Profesional / agenda (id PES; alias query id_rrhh_servicio_asignado)",
+          "label": "Profesional / agenda (id PES)",
           "type": "text",
           "required": false
         },

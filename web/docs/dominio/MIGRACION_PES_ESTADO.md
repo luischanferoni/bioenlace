@@ -16,7 +16,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 
 ## Principios prácticos
 
-1. **Sesión operativa** puede traer `idRecursoHumano`, `idProfesionalEfectorServicio` (canónico), `servicio_actual`, `idEfector`. En snapshot/JWT, `id_rrhh_servicio` **repite el id PES** como alias de payload; los clientes nuevos deben preferir `id_profesional_efector_servicio` / `idProfesionalEfectorServicio`.
+1. **Sesión operativa** puede traer `idRecursoHumano`, `idProfesionalEfectorServicio` (canónico), `servicio_actual`, `idEfector`. Los clientes deben usar **`id_profesional_efector_servicio`** en requests y lógica; campos snapshot heredados (`id_rrhh_servicio`, etc.) no sustituyen al contrato API endurecido.
 2. **Filtros y reportes** que antes hacían `consultas.id_rr_hh = :x` deben considerar también **`id_profesional_efector_servicio`** cuando la consulta quedó registrada solo con PES (o resolver PES desde persona + efector + servicio a partir del `id_rr_hh` del formulario).
 3. **Formularios web**: valores de agenda/profesional deben ser **PK PES**; no existe tabla `rrhh_servicio` tras `m260509_000001`.
 4. **Preferir helpers existentes** en `common/models/ProfesionalEfectorServicio.php`, por ejemplo:
@@ -38,6 +38,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 - `web/common/migrations/m260508_000004_consumidores_pes_lote2.php` — segundo lote.
 - `web/common/migrations/m260508_000006_turnos_index_profesional_efector_servicio.php` — índices turnos.
 - `web/common/migrations/m260509_000001_drop_rrhh_servicio_and_pes_legacy_bridge.php` — **retiro BD**: `DROP` de tabla `rrhh_servicio`, eliminación de `profesional_efector_servicio.legacy_rrhh_servicio_id` y normalización de `turnos.id_rrhh_servicio_asignado` donde hay PES (ver docblock de la migración; **requiere** diagnóstico previo y despliegue de código sin dependencia del AR `RrhhServicio`).
+- `web/common/migrations/m260510_000001_drop_agenda_rrhh_table.php` — **retiro BD**: `DROP TABLE agenda_rrhh` tras eliminar FKs entrantes (solo mysql/mysqli; ver docblock).
 - SQL rutas Webvimark / permisos (si aplica en el entorno): `web/docs/sql/2026_migrate_webvimark_routes_profesional_agenda_recurso_humano.sql`
 
 ### Retiro de `rrhh_servicio` en base de datos
@@ -45,7 +46,8 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 1. Ejecutar `web/docs/sql/diagnostico_pes_antes_eliminar_legacy.sql` hasta cumplir criterios del final del script.
 2. Aplicar `yii migrate` incluyendo `m260509_000001_drop_rrhh_servicio_and_pes_legacy_bridge` (solo **mysql/mysqli**; otros drivers quedan omitidos con mensaje).
 3. **Código posterior obligatorio:** quitar o desactivar usos de `\common\models\RrhhServicio`, métodos que lean `legacy_rrhh_servicio_id`, y cualquier SQL explícito a `rrhh_servicio`. Buscar: `rg "rrhh_servicio|legacy_rrhh_servicio_id|RrhhServicio" web/common web/frontend web/backend`.
-4. **`m260509_000002_drop_legacy_rrhh_servicio_id_columns`** elimina columnas consumidoras (`turnos.id_rrhh_servicio_asignado`, `guardia.id_rrhh_asignado`, etc.); el código debe usar solo PES y alias de **nombre** en API (`id_rrhh_servicio_asignado` = mismo entero que PES).
+4. **`m260509_000002_drop_legacy_rrhh_servicio_id_columns`** elimina columnas consumidoras (`turnos.id_rrhh_servicio_asignado`, `guardia.id_rrhh_asignado`, etc.); el código y la API usan **`id_profesional_efector_servicio`** sin alias de request `id_rrhh_servicio_asignado`.
+5. **`m260510_000001_drop_agenda_rrhh_table`** elimina la tabla legado `agenda_rrhh` cuando el modelo canónico de agenda es `profesional_efector_servicio_agenda`.
 
 ---
 
@@ -57,7 +59,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 |------|------------------------|
 | **Asistente / SubIntentEngine** | Intents YAML y flows pasan `id_profesional_efector_servicio` donde corresponde; hidratación de drafts (servicios alta PES, hydrators). |
 | **API turnos / agenda** | `TurnosController`, `ProfesionalAgendaController`, servicios `ProfesionalEfectorServicioAgenda*`: aceptar PES además de RRHH legacy; asserts de efector/PES. |
-| **Contrato slots (paciente/staff)** | `turnos/slots-disponibles-como-paciente`: `slot_id` PES-first (`pes:<id>|fecha|hora`) con compat legacy; modo `raw=1` devuelve `por_dia` + `available_filters` para widgets/autocomplete. |
+| **Contrato slots (paciente/staff)** | `turnos/slots-disponibles-como-paciente`: `slot_id` (`pes:<id>|fecha|hora`); modo `raw=1` devuelve `por_dia` + `available_filters` para widgets/autocomplete. |
 | **Sesión** | `SiteController` / `SesionOperativaService`: fijar PES cuando solo había RRHH; documentación de endpoint operativo. |
 | **Consulta (acceso y motivos)** | `ConsultaAccessService`; controladores API/web de motivos y chat; `Consulta::resolveIdRrhhParaMotivos()`; `ConsultaTrait::guardarConsulta` asigna PES desde sesión en altas. |
 | **Web turnos** | `TurnosController::actionEventos`: request con PES, ocupación, etc. |
@@ -75,13 +77,13 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 
 | Fase | Cambios principales |
 |------|---------------------|
-| **Turnos / slots** | API y web: filtros y persistencia por **PES**; alias de request `id_rrhh_servicio_asignado` = mismo id. Sin tabla/columnas `rrhh_servicio` tras migraciones 260509. |
+| **Turnos / slots** | API y web: filtros y persistencia solo por **`id_profesional_efector_servicio`**. Sin tabla/columnas `rrhh_servicio` tras migraciones 260509. |
 | **Agenda PES** | `ProfesionalEfectorServicioAgenda*`: validación por PES (persona+efector+servicio). `ProfesionalEfectorServicioAltaService` asegura filas PES. |
 | **Guardia** | Solo **`id_profesional_efector_servicio`** en modelo y flujos actuales. |
 | **Búsqueda turnos web** | `TurnoBusqueda` / vistas: opciones y filtros vía PES (`ProfesionalEfectorServicio::opcionesProfesionalFiltroTurnosPorEfector`, etc.). |
 | **UI / JS** | Slots y calendario: identidad `id_profesional_efector_servicio` / `pes:…`. |
 | **Admin RRHH (backend)** | Alta/baja alineadas con PES; sin dependencia de tabla `rrhh_servicio`. |
-| **Cierre contrato** | JWT y snapshot: `id_profesional_efector_servicio` canónico; `id_rrhh_servicio` en payload como alias numérico del PES. Flutter PES-first. |
+| **Cierre contrato** | API turnos/agenda: sin alias `id_rrhh_servicio_asignado` ni `id_agenda_rrhh` en JSON; JWT/snapshot pueden aún exponer campos legacy hasta un barrido dedicado. Flutter PES-first. |
 
 ---
 
@@ -144,12 +146,14 @@ Separar en PRs pequeños para revisión:
 - `id_profesional_efector_servicio` (number|null): identidad canónica del cupo profesional.
 - `servicio_detalle` (object|null): `{ "id_servicio", "nombre" }` para UI sin depender de tablas legacy.
 - `servicio` (string): nombre para display (se mantiene junto al objeto).
-- `id_rrhh_servicio_asignado` (number): **solo compatibilidad**; puede ser `0` en filas PES puras.
 
 **Slot ofrecido** (`TurnoSlotFinder` / UI lista)
 
 - `id_profesional_efector_servicio`, `slot_id` tipo `pes:<id>|<fecha>|<hora>`, y `servicio`: `{ id_servicio, nombre }`.
-- `id_rrhh_servicio_asignado`: compat; no usar como identidad principal.
+
+**Agenda laboral (API `profesional-agenda`)**
+
+- Ítem de listado/detalle: `id` = PK de `profesional_efector_servicio_agenda`; **`id_agenda_rrhh` no se expone**.
 
 **Sesión operativa** (`POST …/sesion-operativa/establecer`, wizard)
 

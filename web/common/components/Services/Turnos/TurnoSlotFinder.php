@@ -90,7 +90,6 @@ class TurnoSlotFinder
 
     /**
      * Lista hasta $limit slots libres (mismo criterio que findFirstAvailable).
-     * Criterio opcional: `id_rrhh_servicio_asignado` — nombre deprecado; mismo entero que id PES (`profesional_efector_servicio.id`).
      * Criterio opcional: id_profesional_efector_servicio — limita a esa agenda/profesional.
      *
      * @param array $criteria
@@ -122,21 +121,6 @@ class TurnoSlotFinder
         $soloIdPes = null;
         if (!empty($criteria['id_profesional_efector_servicio'])) {
             $soloIdPes = (int) $criteria['id_profesional_efector_servicio'];
-        }
-        $soloRrsa = isset($criteria['id_rrhh_servicio_asignado'])
-            ? (int) $criteria['id_rrhh_servicio_asignado']
-            : null;
-        if ($soloRrsa !== null && $soloRrsa <= 0) {
-            $soloRrsa = null;
-        }
-        if ($soloIdPes === null && $soloRrsa !== null) {
-            $soloIdPes = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                $soloRrsa,
-                (int) $idEfector
-            );
-            if ($soloIdPes === null) {
-                return [];
-            }
         }
 
         $diasSemanaExcluidos = self::buildDiasSemanaExcluidos($restricciones);

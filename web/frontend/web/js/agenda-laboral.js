@@ -267,7 +267,7 @@
   }
 
   function attachAutosave(cardEl, item) {
-    var id = item.id_agenda_rrhh || item.id || null;
+    var id = item.id || null;
     if (!id) return;
 
     var timers = new Map();

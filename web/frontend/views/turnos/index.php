@@ -43,8 +43,8 @@ $this->params['breadcrumbs'][] = $this->title;
     $ref_html = array();
     foreach ($referencias as $referencia) {
       $cant[$referencia->id_servicio] = isset($cant[$referencia->id_servicio]) ? $cant[$referencia->id_servicio] + 1 : 1;
-      $ref_html[$referencia->id_servicio][$referencia->id_referencia] = '<a href="#" class="link_referencia" id_referencia="' . $referencia->id_referencia . '" id_persona="' . $referencia->consulta->turno->persona->id_persona . '" 
-    id_servicio="' . $referencia->id_servicio . '" persona_hc="' . $referencia->consulta->turno->persona->obtenerNHistoriaClinica(Yii::$app->user->getIdEfector()) . '"><span class="label label-warning">' . $referencia->consulta->turno->persona->nombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) . '</span></a>';
+      $ref_html[$referencia->id_servicio][$referencia->id_referencia] = '<a href="#" class="link_referencia" id_referencia="' . $referencia->id_referencia . '" id_persona="' . $referencia->consulta->turno->paciente->id_persona . '" 
+    id_servicio="' . $referencia->id_servicio . '" persona_hc="' . $referencia->consulta->turno->paciente->obtenerNHistoriaClinica(Yii::$app->user->getIdEfector()) . '"><span class="label label-warning">' . $referencia->consulta->turno->paciente->nombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) . '</span></a>';
     }
 
     $s_ant = null;
@@ -87,11 +87,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <div class="list-group">
     <?php }
-      if (is_object($rr_hh->rrhhEfector->persona)) {
+      if (is_object($rr_hh->rrhh->persona)) {
     ?>
       <div class="list-group-item">
-        <a href="#" id="<?php echo $rr_hh->id_rr_hh ?>" class="mostrar-turnos btn text-white w-75 list-group-item" servicio="<?php echo $rr_hh->id_servicio; ?>" style="background-color: <?php echo $color; ?>"> <?php echo $rr_hh->rrhhEfector->persona->nombre ?> <?php echo $rr_hh->rrhhEfector->persona->apellido ?> </a>
-        <a class="btn btn-light list-group-item" style="background-color: <?php echo $color; ?>" href="<?= Url::to(['turnos/espera', 'id_user' => $rr_hh->rrhhEfector->persona->id_user]) ?>" target="_blank"><i class="bi bi-printer text-white"></i></a>
+        <a href="#" id="<?php echo $rr_hh->id_rr_hh ?>" class="mostrar-turnos btn text-white w-75 list-group-item" servicio="<?php echo $rr_hh->id_servicio; ?>" style="background-color: <?php echo $color; ?>"> <?php echo $rr_hh->rrhh->persona->nombre ?> <?php echo $rr_hh->rrhh->persona->apellido ?> </a>
+        <a class="btn btn-light list-group-item" style="background-color: <?php echo $color; ?>" href="<?= Url::to(['turnos/espera', 'id_user' => $rr_hh->rrhh->persona->id_user]) ?>" target="_blank"><i class="bi bi-printer text-white"></i></a>
 
       </div>
 

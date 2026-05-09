@@ -40,7 +40,7 @@ class TurnoNotificacionController extends Controller
                     $content = $builder->buildForTurno($turno);
                     $content['data']['type'] = $row->tipo === TurnoNotificacionProgramada::TIPO_TRANSPORT_HINT
                         ? 'TURNO_TRANSPORT_HINT' : 'TURNO_REMINDER';
-                    if ($turno->persona) {
+                    if ($turno->paciente) {
                         $push->sendToPersona((int) $turno->id_persona, $content['data'], $content['title'], $content['body']);
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST) {
@@ -58,7 +58,7 @@ class TurnoNotificacionController extends Controller
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RETRASO_SOBRETURNO) {
                     $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
                     $min = isset($meta['minutos_retraso_estimado']) ? (int) $meta['minutos_retraso_estimado'] : 30;
-                    if ($turno->persona) {
+                    if ($turno->paciente) {
                         $push->sendToPersona(
                             (int) $turno->id_persona,
                             ['type' => 'TURNO_RETRASO_SOBRETURNO', 'id_turno' => (string) $turno->id_turnos],

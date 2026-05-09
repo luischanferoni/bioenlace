@@ -98,7 +98,7 @@ $estados = array(Turno::ESTADO_PENDIENTE => 'bg-soft-warning p-2 text-warning', 
         <div class="card">
             <?php if (isset($dataProvider->getModels()[0])) { ?>
                 <div class="card-header bg-soft-info">
-                    <h5>Turnos de: <?= $dataProvider->getModels()[0]->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) ?></h5>
+                    <h5>Turnos de: <?= $dataProvider->getModels()[0]->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) ?></h5>
                 </div>
             <?php } ?>
             <div class="card-body">

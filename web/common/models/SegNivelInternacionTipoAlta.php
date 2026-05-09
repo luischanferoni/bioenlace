@@ -10,7 +10,7 @@ use Yii;
  * @property int $id
  * @property string $tipo_alta
  *
- * @property SegNivelInternacion[] $segNivelInternacions
+ * @property-read SegNivelInternacion[] $internaciones
  */
 class SegNivelInternacionTipoAlta extends \yii\db\ActiveRecord
 {
@@ -45,12 +45,18 @@ class SegNivelInternacionTipoAlta extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[SegNivelInternacions]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Internaciones con este tipo de alta.
+     */
+    public function getInternaciones()
+    {
+        return $this->hasMany(SegNivelInternacion::className(), ['id_tipo_alta' => 'id']);
+    }
+
+    /**
+     * Alias histórico (`segNivelInternacions`).
      */
     public function getSegNivelInternacions()
     {
-        return $this->hasMany(SegNivelInternacion::className(), ['id_tipo_alta' => 'id']);
+        return $this->getInternaciones();
     }
 }

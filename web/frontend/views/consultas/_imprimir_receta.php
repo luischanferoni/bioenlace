@@ -14,7 +14,7 @@ use yii\helpers\Html;
 	        </tr>
 		     <tr>
 		      <td >
-		      <?= '<p><b>'.$model->turno->persona->tipoDocumento->nombre.': </b>'.$model->turno->persona->documento .'</p>
+		      <?= '<p><b>'.$model->turno->paciente->tipoDocumento->nombre.': </b>'.$model->turno->paciente->documento .'</p>
 		           <p><b>Apellido y Nombre: </b>'.$model->getPaciente($model->id_turnos).'<p>'?>
 		       </td>
 		       
@@ -74,7 +74,7 @@ use yii\helpers\Html;
            <tbody >   
 
                 <?php
-                foreach ($model->diagnosticoConsultas as $row) {
+                foreach ($model->diagnosticos as $row) {
                     $diagnostico = common\models\Cie10::findOne(['codigo'=>$row['codigo']]);
                     if (is_object($diagnostico)) {
                         $diagnostico_mostrar = $diagnostico->diagnostico;

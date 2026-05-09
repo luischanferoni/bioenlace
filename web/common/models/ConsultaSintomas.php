@@ -14,7 +14,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $tipo_sintomas
  *
  * @property Cie10 $codigo0
- * @property Consultas $idConsulta
+ * @property-read Consulta|null $consulta
  */
 class ConsultaSintomas extends \yii\db\ActiveRecord
 {

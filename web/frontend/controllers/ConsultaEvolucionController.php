@@ -32,7 +32,7 @@ class ConsultaEvolucionController extends DefaultConsultaController
 
     public function createCore($modelConsulta)
     {
-        $modeloEvolucion = $modelConsulta->consultaEvolucion ? $modelConsulta->consultaEvolucion: new ConsultaEvolucion;
+        $modeloEvolucion = $modelConsulta->evolucion ? $modelConsulta->evolucion: new ConsultaEvolucion;
        
         if (Yii::$app->request->post()) {
             $transaction = \Yii::$app->db->beginTransaction();

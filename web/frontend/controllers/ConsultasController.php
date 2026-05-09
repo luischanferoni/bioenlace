@@ -305,7 +305,7 @@ class ConsultasController extends Controller
     {
         $idConsulta = $id_consulta;
         $consulta =  $this->findModel($idConsulta);
-        $modelosConsultaDiagnostico = $consulta->diagnosticoConsultas;
+        $modelosConsultaDiagnostico = $consulta->diagnosticos;
         $model_valoracion_nutricional = ValoracionNutricional::getValoracionPorConsulta($idConsulta);
         $model_tension_arterial = TensionArterial::getTensionPorConsulta($idConsulta);
 
@@ -316,15 +316,15 @@ class ConsultasController extends Controller
             $id_persona = $consulta->turno->id_persona;
         }
         $model_persona                          = Persona::findOne(['id_persona' => $id_persona]);
-        $model_embarazo                         = $consulta->consultaObstetricia; #  ConsultaObstetricia
-        $modelosConsultaMedicamentos            = $consulta->consultaMedicamentos;
-        $modelosConsultaPracticas               = $consulta->consultaPracticas;
-        $modelosConsultaEvaluaciones            = $consulta->consultaEvaluaciones;
-        $modelosConsultaAntecedentesPersonales  = $consulta->personasAntecedenteConsultas;
-        $modelosConsultaAntecedentesFamiliares  = $consulta->personasAntecedenteFamiliarConsultas;
+        $model_embarazo                         = $consulta->obstetricia; #  ConsultaObstetricia
+        $modelosConsultaMedicamentos            = $consulta->medicamentos;
+        $modelosConsultaPracticas               = $consulta->practicasPostDiagnostico;
+        $modelosConsultaEvaluaciones            = $consulta->practicasPreDiagnostico;
+        $modelosConsultaAntecedentesPersonales  = $consulta->antecedentesPersonales;
+        $modelosConsultaAntecedentesFamiliares  = $consulta->antecedentesFamiliares;
         $modelosConsultaAlergias                = $consulta->alergias;
         $modelosConsultaDerivaciones            = $consulta->derivacionesSolicitadas;
-        $modeloConsultaEvolucion                = $consulta->consultaEvolucion;
+        $modeloConsultaEvolucion                = $consulta->evolucion;
         $modelConsultaOftalmologia               = $consulta->getOftalmologiasDP();
         $modelConsultaOftalmologiaEstudios       = $consulta->getOftalmologiasEstudiosDP();
         $modelConsultaRecetaLente               = $consulta->recetasLentes;
@@ -465,7 +465,7 @@ class ConsultasController extends Controller
             $nuevaConsulta->updated_at = date('Y-m-d H:i:s');
 
             if ($nuevaConsulta->save()) {
-                //$relaciones = ['atencionEnfermeria', 'motivoConsulta', 'diagnosticoConsultas'];
+                //$relaciones = ['atencionEnfermeria', 'motivoConsulta', 'diagnosticos'];
                 $relaciones = ConsultasConfiguracion::getRelaciones($modelConsulta->id_configuracion);
 
                 foreach ($relaciones as $value) {
@@ -553,11 +553,13 @@ class ConsultasController extends Controller
             $relacion == "motivoConsulta"
             || $relacion == "consultaDerivaciones"
             || $relacion == "consultaPracticas"
+            || $relacion == "practicasPostDiagnostico"
         ) {
             $newChild->select2_codigo = ['term' => $newChild->codigo];
         }
 
-        if ($relacion == 'personasAntecedenteConsultas' || $relacion == 'personasAntecedenteFamiliarConsultas') {
+        if ($relacion == 'personasAntecedenteConsultas' || $relacion == 'personasAntecedenteFamiliarConsultas'
+            || $relacion == 'antecedentesPersonales' || $relacion == 'antecedentesFamiliares') {
             $child->delete();
         }
 

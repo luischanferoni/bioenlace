@@ -47,7 +47,7 @@ $cantidadTurnos = count($turnos);
                 if($cantidadTurnos > 0){
                     foreach ($turnos as $key => $turno) {                        
                         if ($i < $max) {
-                            // Timeline deshabilitado: $url = Url::toRoute('paciente/historia/'.$turno->persona->id_persona);
+                            // Timeline deshabilitado: $url = Url::toRoute('paciente/historia/'.$turno->paciente->id_persona);
                             $url = '#';
                     ?>
                     <div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded">
@@ -88,10 +88,10 @@ $cantidadTurnos = count($turnos);
                         <div class="ms-3" style="width: 100%;">                                
                             <div class="d-flex align-items-center justify-content-between">
                                 <h5 class="mb-0 d-flex align-items-center">
-                                    <?= $turno->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) ;?>
+                                    <?= $turno->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) ;?>
                                 </h5>                                    
                             </div>
-                            <p class="mb-1"><strong><?= $turno->persona->tipoDocumento->nombre ?>: </strong> <?= $turno->persona->documento ?></p>
+                            <p class="mb-1"><strong><?= $turno->paciente->tipoDocumento->nombre ?>: </strong> <?= $turno->paciente->documento ?></p>
                         </div>
                         <div class="ms-1" style="width: 13%;">
                             <?php /* Timeline deshabilitado: enlace a paciente/historia

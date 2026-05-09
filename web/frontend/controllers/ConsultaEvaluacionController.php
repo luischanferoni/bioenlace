@@ -20,7 +20,7 @@ class ConsultaEvaluacionController extends DefaultConsultaController
     {
         $idsBDPrevioPost = [];
 
-        $modelosConsultaEvaluaciones = $modelConsulta->consultaEvaluaciones; 
+        $modelosConsultaEvaluaciones = $modelConsulta->practicasPreDiagnostico; 
 
         if(!$modelosConsultaEvaluaciones){
             $modelosConsultaEvaluaciones = [new ConsultaPracticas()];

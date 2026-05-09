@@ -52,7 +52,7 @@ class SobreturnoService
             ], JSON_UNESCAPED_UNICODE);
             $n->save(false);
 
-            if ($t->persona) {
+            if ($t->paciente) {
                 $push->sendToPersona(
                     (int) $t->id_persona,
                     [

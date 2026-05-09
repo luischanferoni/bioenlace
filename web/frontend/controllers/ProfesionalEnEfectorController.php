@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use Yii;
+use common\models\PersonaProgramaDiabetes;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
@@ -145,7 +146,7 @@ class ProfesionalEnEfectorController extends Controller
     }
 
     /**
-     * DepDrop: profesionales con PES en el efector elegido.
+     * DepDrop: opciones PES (`profesional_efector_servicio.id`) por efector (lista médica habitual).
      *
      * @no_intent_catalog
      */
@@ -156,9 +157,34 @@ class ProfesionalEnEfectorController extends Controller
         if (isset($_POST['depdrop_parents']) && $_POST['depdrop_parents'] != null) {
             $id_efector = $_POST['depdrop_parents'][0];
             $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector($id_efector);
-            $arrayEfectores = ArrayHelper::map($profesionales, 'id_rr_hh', 'datos');
-            foreach ($arrayEfectores as $key => $value) {
-                $out[] = ['id' => $key, 'name' => $value];
+            foreach ($profesionales as $row) {
+                $out[] = ['id' => $row['id'], 'name' => $row['datos']];
+            }
+            return ['output' => $out, 'selected' => ''];
+        }
+        return ['output' => '', 'selected' => ''];
+    }
+
+    /**
+     * DepDrop: opciones PES según el efector de la ficha `persona_programa_diabetes` (p. ej. dispensa).
+     *
+     * @no_intent_catalog
+     */
+    public function actionProfesionalesPorPersonaProgramaDiabetes()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $out = [];
+        if (isset($_POST['depdrop_parents']) && $_POST['depdrop_parents'] != null) {
+            $idPpd = (int) ($_POST['depdrop_parents'][0] ?? 0);
+            if ($idPpd <= 0) {
+                return ['output' => '', 'selected' => ''];
+            }
+            $ppd = PersonaProgramaDiabetes::findOne($idPpd);
+            if ($ppd === null || !$ppd->id_efector) {
+                return ['output' => '', 'selected' => ''];
+            }
+            foreach (ProfesionalEfectorServicio::listarOpcionesPorEfector((int) $ppd->id_efector) as $row) {
+                $out[] = ['id' => $row['id'], 'name' => $row['datos']];
             }
             return ['output' => $out, 'selected' => ''];
         }

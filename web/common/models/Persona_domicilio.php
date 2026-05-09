@@ -13,7 +13,7 @@ use Yii;
  * @property string $usuario_alta
  * @property string $fecha_alta
  *
- * @property Personas $idPersona
+ * @property-read Persona|null $persona
  * @property Domicilios $idDomicilio
  */
 class Persona_domicilio extends \yii\db\ActiveRecord
@@ -57,7 +57,7 @@ class Persona_domicilio extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdPersona()
+    public function getPersona()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }

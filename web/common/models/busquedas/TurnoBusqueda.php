@@ -107,7 +107,7 @@ class TurnoBusqueda extends Turno
 
 
         if ($this->dni != '' && $this->busqueda_libre) {
-            $query->joinWith(['persona' => function ($q) {
+            $query->joinWith(['paciente' => function ($q) {
                 $q->where(['documento' => $this->dni]);
             }]);
 

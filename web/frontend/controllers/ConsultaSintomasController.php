@@ -29,7 +29,7 @@ class ConsultaSintomasController extends DefaultConsultaController
         $idsBDPrevioPost = [];        
         $mapCodigoId = [];
 
-        $modelosConsultaSintomas = $modelConsulta->consultaSintomas;
+        $modelosConsultaSintomas = $modelConsulta->sintomas;
         if (!$modelosConsultaSintomas) {
             $modelosConsultaSintomas = [new ConsultaSintomas()];            
         } else {

@@ -1,5 +1,6 @@
 <?php
 
+use common\models\Persona;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
@@ -44,7 +45,18 @@ $this->params['breadcrumbs'][] = $this->title;
             'tiras',
             'monitor',
             'lanceta',
-            'id_rrhh_efector',
+            'id_efector',
+            [
+                'attribute' => 'id_profesional_efector_servicio',
+                'label' => 'Profesional',
+                'value' => static function ($model) {
+                    $pes = $model->profesionalEfectorServicio;
+
+                    return $pes && $pes->persona
+                        ? $pes->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                        : ($model->id_profesional_efector_servicio !== null ? (string) $model->id_profesional_efector_servicio : '');
+                },
+            ],
             'hba1c',
             'glucemia',
         ],

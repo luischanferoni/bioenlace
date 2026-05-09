@@ -25,15 +25,17 @@ use common\models\DiagnosticoConsultaRepository as DCRepo;
  * @property string|null $updated_at 
  * @property int|null $update_user 
  *
- * @property InfraestructuraCama $cama
- * @property SegNivelInternacionTipoAlta $tipoAlta
- * @property Efectores $efectorOrigen
- * @property Efector $efectorDerivacion
- * @property SegNivelInternacionTipoIngreso $tipoIngreso
- * @property SegNivelInternacionAtencionesEnfermeria[] $segNivelInternacionAtencionesEnfermerias
- * @property SegNivelInternacionDiagnostico[] $segNivelInternacionDiagnosticos
- * @property SegNivelInternacionMedicamento[] $segNivelInternacionMedicamentos
- * @property SegNivelInternacionPractica[] $segNivelInternacionPracticas
+ * @property-read InfraestructuraCama|null $cama
+ * @property-read SegNivelInternacionTipoAlta|null $tipoAlta
+ * @property-read Efector|null $efectorOrigen
+ * @property-read Efector|null $efectorDerivacion
+ * @property-read SegNivelInternacionTipoIngreso|null $tipoIngreso
+ * @property-read Consulta[] $atenciones Consultas vinculadas como episodios hijos de esta internación
+ * @property-read SegNivelInternacionDiagnostico[] $diagnosticos
+ * @property-read SegNivelInternacionPractica[] $practicas
+ * @property-read SegNivelInternacionMedicamento[] $medicamentos
+ * @property-read SegNivelInternacionSuministroMedicamento[] $suministrosMedicamentos
+ * @property-read SegNivelInternacionAtencionesEnfermeria[] $atencionesEnfermeria
  */
 
 
@@ -224,53 +226,84 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
    
 
     /**
-     * Gets query for [[SegNivelInternacionDiagnosticos]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Diagnósticos de internación ({@see SegNivelInternacionDiagnostico}).
      */
-    public function getSegNivelInternacionDiagnosticos()
+    public function getDiagnosticos()
     {
         return $this->hasMany(SegNivelInternacionDiagnostico::className(), ['id_internacion' => 'id']);
     }
 
     /**
-     * Gets query for [[SegNivelInternacionPracticas]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Alias histórico (`segNivelInternacionDiagnosticos`).
      */
-    public function getSegNivelInternacionPracticas()
+    public function getSegNivelInternacionDiagnosticos()
+    {
+        return $this->getDiagnosticos();
+    }
+
+    /**
+     * Prácticas registradas en la internación.
+     */
+    public function getPracticas()
     {
         return $this->hasMany(SegNivelInternacionPractica::className(), ['id_internacion' => 'id']);
     }
 
     /**
-     * Gets query for [[SegNivelInternacionMedicamentos]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Alias histórico (`segNivelInternacionPracticas`).
      */
-    public function getSegNivelInternacionMedicamentos()
+    public function getSegNivelInternacionPracticas()
+    {
+        return $this->getPracticas();
+    }
+
+    /**
+     * Plan / ítems de medicación de internación ({@see SegNivelInternacionMedicamento}).
+     */
+    public function getMedicamentos()
     {
         return $this->hasMany(SegNivelInternacionMedicamento::className(), ['id_internacion' => 'id']);
     }
 
     /**
-     * Gets query for [[SegNivelInternacionSuministroMedicamentos]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Alias histórico (`segNivelInternacionMedicamentos`).
      */
-    public function getSegNivelInternacionSuministroMedicamentos()
+    public function getSegNivelInternacionMedicamentos()
     {
-        return $this->hasMany(SegNivelInternacionSuministroMedicamento::className(), ['id_internacion' => 'id'])->orderBy(['fecha' => 'SORT_ASC', 'hora' => 'SORT_ASC']);
+        return $this->getMedicamentos();
     }
 
     /**
-     * Gets query for [[SegNivelInternacionAtencionesEnfermeria]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Suministros de medicación administrados durante la internación.
+     */
+    public function getSuministrosMedicamentos()
+    {
+        return $this->hasMany(SegNivelInternacionSuministroMedicamento::className(), ['id_internacion' => 'id'])
+            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC]);
+    }
+
+    /**
+     * Alias histórico (`segNivelInternacionSuministroMedicamentos`).
+     */
+    public function getSegNivelInternacionSuministroMedicamentos()
+    {
+        return $this->getSuministrosMedicamentos();
+    }
+
+    /**
+     * Registros de enfermería asociados a la internación.
+     */
+    public function getAtencionesEnfermeria()
+    {
+        return $this->hasMany(SegNivelInternacionAtencionesEnfermeria::className(), ['id_internacion' => 'id']);
+    }
+
+    /**
+     * Alias histórico (`segNivelInternacionAtencionesEnfermeria`).
      */
     public function getSegNivelInternacionAtencionesEnfermeria()
     {
-        return $this->hasMany(SegNivelInternacionAtencionesEnfermeria::className(), ['id_internacion' => 'id']);
+        return $this->getAtencionesEnfermeria();
     }
 
     /**
@@ -314,18 +347,6 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
     }
 
     /**
-     * Asignación PES del profesional a cargo: `id_profesional_efector_servicio`, o resolución desde `id_rrhh`
-     * (PK PES o `id_rr_hh`) vía {@see afterFind()} y {@see ProfesionalEfectorServicio::resolvePesModelFromInternacionRrhhField()}.
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRrhh()
-    {
-        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio'])
-            ->andOnCondition(['profesional_efector_servicio.deleted_at' => null]);
-    }
-
-    /**
      * Efector para acotar resolución PES desde `id_rrhh` (cama → piso, o `id_efector_origen`).
      */
     public function resolveIdEfectorContextForPes(): ?int
@@ -354,7 +375,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         parent::afterFind();
         $idCol = (int) ($this->id_profesional_efector_servicio ?? 0);
         $idLegacy = (int) ($this->id_rrhh ?? 0);
-        if ($idCol > 0 || $idLegacy <= 0 || $this->isRelationPopulated('rrhh')) {
+        if ($idCol > 0 || $idLegacy <= 0 || $this->isRelationPopulated('profesionalEfectorServicio')) {
             return;
         }
         $pes = ProfesionalEfectorServicio::resolvePesModelFromInternacionRrhhField(
@@ -362,13 +383,17 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             $this->resolveIdEfectorContextForPes()
         );
         if ($pes !== null) {
-            $this->populateRelation('rrhh', $pes);
+            $this->populateRelation('profesionalEfectorServicio', $pes);
         }
     }
 
+    /**
+     * Asignación PES del profesional a cargo (excluye filas borradas lógicamente).
+     */
     public function getProfesionalEfectorServicio()
     {
-        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio'])
+            ->andOnCondition(['profesional_efector_servicio.deleted_at' => null]);
     }
 
     /**

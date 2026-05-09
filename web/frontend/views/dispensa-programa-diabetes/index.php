@@ -36,7 +36,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'tiras',
             //'monitor',
             //'lanceta',
-            //'id_rrhh_efector',
+            'id_profesional_efector_servicio',
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

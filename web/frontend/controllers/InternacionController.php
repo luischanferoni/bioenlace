@@ -162,28 +162,28 @@ class InternacionController extends Controller
         
         foreach ($atenciones as $key => $atencion) {
             # agrupar evoluciones
-            if ($atencion->consultaEvolucion) {
-                $evoluciones[] = $atencion->consultaEvolucion;
+            if ($atencion->evolucion) {
+                $evoluciones[] = $atencion->evolucion;
             }
 
             # agrupar SINTOMAS
-            if ($atencion->consultaSintomas) {
-                $sintomas[] = $atencion->consultaSintomas;
+            if ($atencion->sintomas) {
+                $sintomas[] = $atencion->sintomas;
             }
 
             # agrupar DIAGNOSTICOS
-            #if($atencion->diagnosticoConsultas){
-            #    $diagnosticos[] = $atencion->diagnosticoConsultas;
+            #if($atencion->diagnosticos){
+            #    $diagnosticos[] = $atencion->diagnosticos;
             #}
 
             # agrupar Medicamentos
-            if ($atencion->consultaMedicamentos) {
-                $medicamentos[] = $atencion->consultaMedicamentos;
+            if ($atencion->medicamentos) {
+                $medicamentos[] = $atencion->medicamentos;
             }
 
             # agrupar PRACTICAS REALIZADAS
-            if ($atencion->consultaPracticas) {
-                $practicas[] = $atencion->consultaPracticas;
+            if ($atencion->practicasPostDiagnostico) {
+                $practicas[] = $atencion->practicasPostDiagnostico;
             }
 
             # agrupar ATENCIONES ENFERMERIA

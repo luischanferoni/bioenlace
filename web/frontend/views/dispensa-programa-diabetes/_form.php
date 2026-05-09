@@ -1,7 +1,9 @@
 <?php
 
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\widgets\ActiveForm;
+use kartik\depdrop\DepDrop;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\DispensaProgramaDiabetes */
@@ -13,6 +15,16 @@ use yii\widgets\ActiveForm;
     <?php $form = ActiveForm::begin(); ?>
 
     <?= $form->field($model, 'id_persona_programa_diabetes')->textInput() ?>
+
+    <?= $form->field($model, 'id_profesional_efector_servicio')->widget(DepDrop::className(), [
+        'type' => DepDrop::TYPE_SELECT2,
+        'select2Options' => ['theme' => 'default'],
+        'pluginOptions' => [
+            'depends' => ['dispensaprogramadiabetes-id_persona_programa_diabetes'],
+            'placeholder' => 'Seleccione profesional que entrega',
+            'url' => Url::to(['/profesional-en-efector/profesionales-por-persona-programa-diabetes']),
+        ],
+    ]) ?>
 
     <?= $form->field($model, 'id_persona_retira')->textInput() ?>
 
@@ -30,13 +42,11 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'glibenclamida')->textInput() ?>
 
-    <?= $form->field($model, 'tiras')->dropDownList([ 50 => '50', 100 => '100', ], ['prompt' => '']) ?>
+    <?= $form->field($model, 'tiras')->dropDownList([50 => '50', 100 => '100'], ['prompt' => '']) ?>
 
     <?= $form->field($model, 'monitor')->textInput() ?>
 
     <?= $form->field($model, 'lanceta')->textInput() ?>
-
-    <?= $form->field($model, 'id_rrhh_efector')->textInput() ?>
 
     <div class="form-group">
         <?= Html::submitButton('Save', ['class' => 'btn btn-success']) ?>

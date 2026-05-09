@@ -10,7 +10,7 @@ use Yii;
  * @property string $id_tipo_consulta
  * @property string $nombre
  *
- * @property Consultas[] $consultas
+ * @property-read Consulta[] $consultas
  */
 class TipoConsulta extends \yii\db\ActiveRecord
 {
@@ -48,7 +48,7 @@ class TipoConsulta extends \yii\db\ActiveRecord
      */
     public function getConsultas()
     {
-        return $this->hasMany(Consultas::className(), ['id_tipo_consulta' => 'id_tipo_consulta']);
+        return $this->hasMany(Consulta::className(), ['id_tipo_consulta' => 'id_tipo_consulta']);
     }
     
     //Agregamos esta función para traer los nombres de los tipos de consultas

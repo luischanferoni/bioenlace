@@ -12,7 +12,7 @@ use Yii;
  * @property string $id_consulta
  * @property string $codigo
  * @property string $origen medico|paciente - quién cargó el motivo (médico en consulta o paciente vía app)
- * @property Consultas $idConsulta
+ * @property-read Consulta|null $consulta
  */
 class ConsultaMotivos extends \yii\db\ActiveRecord
 {
@@ -79,7 +79,7 @@ class ConsultaMotivos extends \yii\db\ActiveRecord
      */
     public function getConsulta()
     {
-        return $this->hasOne(Consultas::className(), ['id_consulta' => 'id_consulta']);
+        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
 

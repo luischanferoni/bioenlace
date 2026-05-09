@@ -32,7 +32,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'fecha_baja',
             //'motivo_baja',
             //'tipo_empadronamiento',
-            //'id_rrhh_efector',
+            'id_profesional_efector_servicio',
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

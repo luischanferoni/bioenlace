@@ -38,7 +38,8 @@ $this->params['breadcrumbs'][] = $this->title;
             //'tiras',
             //'monitor',
             //'lanceta',
-            //'id_rrhh_efector',
+            'id_efector',
+            'id_profesional_efector_servicio',
             //'hba1c',
             //'glucemia',
 

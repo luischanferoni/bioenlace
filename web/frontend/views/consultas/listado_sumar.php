@@ -68,7 +68,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'codigo',
                 'label' => 'Código',
                 'value' => function($data) {
-                    $codigo = $data->diagnosticoConsultas->codigo;
+                    $codigo = $data->diagnosticos->codigo;
                     return $codigo;
                 }
             ],

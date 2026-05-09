@@ -83,7 +83,7 @@ class InternacionDiagnosticoController extends Controller
         }
 
         //$modelInternacion= $this->findModelInternacion($id_internacion);
-        //$models = $modelInternacion->segNivelInternacionDiagnosticos;
+        //$models = $modelInternacion->diagnosticos;
         if (Yii::$app->request->post()) {
 
             $models = FormularioDinamico::createMultiple(SegNivelInternacionDiagnostico::classname());

@@ -15,6 +15,7 @@ use Yii;
  * @property string $fecha
  *
  * @property Personas $idPersona
+ * @property-read Rrhh|null $rrhh Profesional derivado (`id_rr_hh`)
  */
 class ConsultaDerivaciones extends \yii\db\ActiveRecord
 {
@@ -196,11 +197,11 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RrHh]].
+     * Fila `rr_hh` del profesional asignado a la derivación.
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrhhDerivado()
+    public function getRrhh()
     {
         return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }

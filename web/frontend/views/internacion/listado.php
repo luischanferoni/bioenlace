@@ -93,7 +93,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                                                             </td>
                                                                             <td class="sorting_1"> <?php echo $dato->internacionActual->paciente->attributes['documento']; ?> </td>
                                                                             <td class=""> <?php echo $dato->internacionActual->paciente->attributes['fecha_nacimiento']; ?> </td>
-                                                                            <td class=""> <?php echo $dato->internacionActual->rrhh->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON); ?> </td>
+                                                                            <td class=""> <?php echo $dato->internacionActual->profesionalEfectorServicio->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON); ?> </td>
                                                                             <td class=""> <?php echo $dato->attributes['nro_cama']; ?>
                                                                             </td>
                                                                             <td class=""> <?php echo $datoSala; ?> </td>

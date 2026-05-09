@@ -10,7 +10,7 @@ use Yii;
  * @property int $id
  * @property string $tipo_ingreso
  *
- * @property SegNivelInternacion[] $segNivelInternacions
+ * @property-read SegNivelInternacion[] $internaciones
  */
 class SegNivelInternacionTipoIngreso extends \yii\db\ActiveRecord
 {
@@ -48,12 +48,18 @@ class SegNivelInternacionTipoIngreso extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[SegNivelInternacions]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Internaciones con este tipo de ingreso.
+     */
+    public function getInternaciones()
+    {
+        return $this->hasMany(SegNivelInternacion::className(), ['id_tipo_ingreso' => 'id']);
+    }
+
+    /**
+     * Alias histórico (`segNivelInternacions`).
      */
     public function getSegNivelInternacions()
     {
-        return $this->hasMany(SegNivelInternacion::className(), ['id_tipo_ingreso' => 'id']);
+        return $this->getInternaciones();
     }
 }

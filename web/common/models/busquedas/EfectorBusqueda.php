@@ -82,7 +82,7 @@ class EfectorBusqueda extends Efector
         if (!$this->validate()) {
             //Descomentar esta linea si no quiere devolver ningún registro cuando falle la validación
             // $query->where('0=1');
-            $query->joinWith('idLocalidad'); //agrego esta línea para que me haga un join con la tabla localidades
+            $query->joinWith('localidad'); //agrego esta línea para que me haga un join con la tabla localidades
             return $dataProvider;
         }        
                    

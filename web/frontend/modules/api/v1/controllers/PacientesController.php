@@ -313,7 +313,7 @@ class PacientesController extends BaseController
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
-            $paciente = $turno->persona;
+            $paciente = $turno->paciente;
             $servicioNombre = $turno->getNombreServicioParaDisplay();
             $servicioObj = $turno->getServicioEmbebidoParaApi();
             $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);

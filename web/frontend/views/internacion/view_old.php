@@ -114,10 +114,10 @@ $url = Url::toRoute(
                     </div>
                     <div class="card-body">
                         <?php
-                        if (is_array($model->segNivelInternacionDiagnosticos)) { ?>
+                        if (is_array($model->diagnosticos)) { ?>
                             <table id="diagnosticos" class="table table-striped table-bordered detail-view">
                                 <tbody>
-                                    <?php foreach ($model->segNivelInternacionDiagnosticos as $key => $diagnostico) { ?>
+                                    <?php foreach ($model->diagnosticos as $key => $diagnostico) { ?>
                                         <tr>
                                             <td>
                                                 <?= $diagnostico->diagnosticoSnomed->term; ?>
@@ -194,10 +194,10 @@ $url = Url::toRoute(
                     </div>
                     <div class="card-body">
                         <?php
-                        if (is_array($model->segNivelInternacionPracticas)) { ?>
+                        if (is_array($model->practicas)) { ?>
                             <table id="diagnosticos" class="table table-striped table-bordered detail-view">
                                 <tbody>
-                                    <?php foreach ($model->segNivelInternacionPracticas as $key => $practica) { ?>
+                                    <?php foreach ($model->practicas as $key => $practica) { ?>
                                         <tr>
                                             <td>
                                                 <?= $practica->practicaSnomed->term; ?>
@@ -316,10 +316,10 @@ $url = Url::toRoute(
                     </div>
                     <div class="card-body">
                         <?php
-                        if (is_array($model->segNivelInternacionMedicamentos)) { ?>
+                        if (is_array($model->medicamentos)) { ?>
                             <table id="diagnosticos" class="table table-striped table-bordered detail-view">
                                 <tbody>
-                                    <?php foreach ($model->segNivelInternacionMedicamentos as $key => $medicamento) { ?>
+                                    <?php foreach ($model->medicamentos as $key => $medicamento) { ?>
                                         <tr>
                                             <td>
                                                 <?= $medicamento->medicamentoSnomed->term; ?>
@@ -370,10 +370,10 @@ $url = Url::toRoute(
                     </div>
                     <div class="card-body">
                     <?php
-                        if (is_array($model->segNivelInternacionSuministroMedicamentos)) { ?>
+                        if (is_array($model->suministrosMedicamentos)) { ?>
                             <table id="diagnosticos" class="table table-striped table-bordered detail-view">
                                 <tbody>
-                                    <?php foreach ($model->segNivelInternacionSuministroMedicamentos as $key => $suminstroMedicamento) { ?>
+                                    <?php foreach ($model->suministrosMedicamentos as $key => $suminstroMedicamento) { ?>
                                         <tr>
                                             
                                             <td>
@@ -420,7 +420,7 @@ $url = Url::toRoute(
                     <div class="card-body">
                         <table class="table table-bordered">
                             <?php
-                            if (is_array($model->segNivelInternacionAtencionesEnfermeria)) {
+                            if (is_array($model->atencionesEnfermeria)) {
                                 echo '<tr><th>Fecha control/atención</th>'
                                     . '<th>Control/Atención</th>';
                                 echo '<th>Observaciones</th>';
@@ -429,7 +429,7 @@ $url = Url::toRoute(
                                 echo '</tr>';
                             }
 
-                            foreach ($model->segNivelInternacionAtencionesEnfermeria as $key => $value) {
+                            foreach ($model->atencionesEnfermeria as $key => $value) {
                                 $datos = json_decode($value->datos, TRUE);
                                 $valores = mostrarDato($datos);
                                 $indice = 1;

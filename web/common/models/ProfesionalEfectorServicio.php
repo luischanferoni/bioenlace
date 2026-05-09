@@ -74,11 +74,11 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Fila `rr_hh` de la persona (mismo significado operativo que el antiguo vínculo por efector cuando hay un RRHH por persona).
+     * Fila `rr_hh` de la persona del profesional (canónico por persona).
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrhhEfector()
+    public function getRrhh()
     {
         return $this->hasOne(Rrhh::class, ['id_persona' => 'id_persona'])
             ->orderBy(['id_rr_hh' => SORT_ASC]);
@@ -434,6 +434,31 @@ class ProfesionalEfectorServicio extends ActiveRecord
         unset($r);
 
         return $rows;
+    }
+
+    /**
+     * Todas las asignaciones PES activas en el efector (etiqueta apellido/nombre + servicio).
+     *
+     * @return list<array{id:int, datos:string}>
+     */
+    public static function listarOpcionesPorEfector(int $id_efector): array
+    {
+        if ($id_efector <= 0) {
+            return [];
+        }
+
+        return static::find()
+            ->alias('pes')
+            ->select([
+                'id' => 'pes.id',
+                'datos' => 'CONCAT(COALESCE(personas.apellido,""), ", ", COALESCE(personas.nombre,""), " — ", servicios.nombre)',
+            ])
+            ->where(['pes.id_efector' => $id_efector, 'pes.deleted_at' => null])
+            ->innerJoin('servicios', 'servicios.id_servicio = pes.id_servicio')
+            ->join('LEFT JOIN', 'personas', 'pes.id_persona = personas.id_persona')
+            ->orderBy(['personas.apellido' => SORT_ASC, 'personas.nombre' => SORT_ASC])
+            ->asArray()
+            ->all();
     }
 
     /**

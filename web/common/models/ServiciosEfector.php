@@ -13,7 +13,8 @@ use Yii;
  */
 class ServiciosEfector extends \yii\db\ActiveRecord
 {
-    public $rrhhs;
+    /** @var ProfesionalEfectorServicio[]|array<int, ProfesionalEfectorServicio> profesionales con PES en el servicio (rellenado en listados de agenda). */
+    public $profesionalesPes;
     use \common\traits\SoftDeleteDateTimeTrait;
     
     const ORDEN_LLEGADA_PARA_TODOS = 'ORDEN_LLEGADA_PARA_TODOS';
@@ -203,9 +204,9 @@ class ServiciosEfector extends \yii\db\ActiveRecord
                 unset($arrayServiciosEfector['CON_DERIVACION'][$key]);
                 continue;
             }
-            $servicioEfector->rrhhs = [];
+            $servicioEfector->profesionalesPes = [];
             if ($servicioEfector->formas_atencion == self::DERIVACION_DELEGAR_A_CADA_RRHH) {
-                $servicioEfector->rrhhs = isset($arrayRrhhServicios[$servicioEfector->id_servicio])?$arrayRrhhServicios[$servicioEfector->id_servicio]:[];
+                $servicioEfector->profesionalesPes = isset($arrayRrhhServicios[$servicioEfector->id_servicio])?$arrayRrhhServicios[$servicioEfector->id_servicio]:[];
             }
         }
         
@@ -214,9 +215,9 @@ class ServiciosEfector extends \yii\db\ActiveRecord
                 unset($arrayServiciosEfector['SIN_DERIVACION'][$key]);
                 continue;
             }            
-            $servicioEfector->rrhhs = [];
+            $servicioEfector->profesionalesPes = [];
             if ($servicioEfector->formas_atencion == self::DELEGAR_A_CADA_RRHH) {
-                $servicioEfector->rrhhs = isset($arrayRrhhServicios[$servicioEfector->id_servicio])?$arrayRrhhServicios[$servicioEfector->id_servicio]:[];
+                $servicioEfector->profesionalesPes = isset($arrayRrhhServicios[$servicioEfector->id_servicio])?$arrayRrhhServicios[$servicioEfector->id_servicio]:[];
             }
         }
       

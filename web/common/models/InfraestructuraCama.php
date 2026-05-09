@@ -15,7 +15,7 @@ use Yii;
  * @property string|null $estado
  *
  * @property InfraestructuraSala $sala
- * @property SegNivelInternacion[] $segNivelInternacions
+ * @property-read SegNivelInternacion[] $internaciones
  */
 class InfraestructuraCama extends \yii\db\ActiveRecord
 {
@@ -69,7 +69,7 @@ class InfraestructuraCama extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[SegNivelInternacions]].
+     * Internaciones asociadas a esta cama.
      *
      * @return \yii\db\ActiveQuery
      */
@@ -79,7 +79,7 @@ class InfraestructuraCama extends \yii\db\ActiveRecord
     }
     
     /**
-     * Gets query for [[SegNivelInternacions]].
+     * Internación activa en esta cama (si existe).
      *
      * @return \yii\db\ActiveQuery
      */

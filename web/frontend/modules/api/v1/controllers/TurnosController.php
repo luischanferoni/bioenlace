@@ -756,7 +756,7 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $paciente = $turno->persona;
+        $paciente = $turno->paciente;
         $servicioNombre = $turno->getNombreServicioParaDisplay();
         $servicioObj = $turno->getServicioEmbebidoParaApi();
         return [

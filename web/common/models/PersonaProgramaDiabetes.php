@@ -22,13 +22,14 @@ use Yii;
  * @property string|null $tiras
  * @property string|null $monitor
  * @property int|null $lanceta
- * @property int|null $id_rrhh_efector medico que firma el formulario de empadronamiento.
+ * @property int|null $id_efector Efector del médico solicitante
+ * @property int|null $id_profesional_efector_servicio Médico que firma / solicita (PES)
  * @property int|null $hba1c
  * @property int|null $glucemia
  *
- * @property DispensaProgramaDiabetes[] $dispensaProgramaDiabetes
- * @property PersonaPrograma $personaPrograma
- * @property Personas $personaAutorizada
+ * @property-read DispensaProgramaDiabetes[] $dispensas
+ * @property-read PersonaPrograma|null $empadronamiento Alta en programa de salud que agrupa esta ficha diabetes
+ * @property-read Persona|null $personaAutorizada
  */
 class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
 {
@@ -75,23 +76,6 @@ class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
         ];
     }
 
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-        if ($insert
-            || $this->isAttributeChanged('id_rrhh_efector', false)
-            || $this->isAttributeChanged('id_efector', false)
-        ) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinPes(
-                $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null,
-                $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
-            );
-        }
-        return true;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -100,7 +84,7 @@ class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
         return [
             [['id_persona_programa', 'tipo_diabetes'], 'required'],
             [['id_persona_programa', 'id_persona_autorizada', 'ins_lenta_nph', 'ins_lenta_lantus', 'ins_rapida_novorapid', 'metformina_500', 'metformina_850',
-             'glibenclamida', 'lanceta', 'id_rrhh_efector', 'hba1c', 'glucemia', 'id_efector', 'id_profesional_efector_servicio', 'dni_persona_autorizada'], 'integer'],
+             'glibenclamida', 'lanceta', 'hba1c', 'glucemia', 'id_efector', 'id_profesional_efector_servicio', 'dni_persona_autorizada'], 'integer'],
             [['incluir_salud', 'tiras', 'monitor', 'nombre_persona_autorizada', 'apellido_persona_autorizada'], 'string'],
             [['fecha_laboratorio'], 'safe'],
             [['tipo_diabetes'], 'string', 'max' => 25],
@@ -131,30 +115,43 @@ class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
             'tiras' => 'Tiras',
             'monitor' => 'Monitor',
             'lanceta' => 'Lanceta',
-            'id_rrhh_efector' => 'Id Rrhh Efector',
+            'id_efector' => 'Efector',
+            'id_profesional_efector_servicio' => 'Profesional',
             'hba1c' => 'Hba1c',
             'glucemia' => 'Glucemia',
         ];
     }
 
     /**
-     * Gets query for [[DispensaProgramaDiabetes]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Historial de dispensas asociadas a esta ficha diabetes.
      */
-    public function getDispensaProgramaDiabetes()
+    public function getDispensas()
     {
         return $this->hasMany(DispensaProgramaDiabetes::className(), ['id_persona_programa_diabetes' => 'id']);
     }
 
     /**
-     * Gets query for [[PersonaPrograma]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Alias histórico (`dispensaProgramaDiabetes`).
+     */
+    public function getDispensaProgramaDiabetes()
+    {
+        return $this->getDispensas();
+    }
+
+    /**
+     * Empadronamiento en programa de salud ({@see PersonaPrograma}) del que depende esta ficha.
+     */
+    public function getEmpadronamiento()
+    {
+        return $this->hasOne(PersonaPrograma::className(), ['id' => 'id_persona_programa']);
+    }
+
+    /**
+     * Alias histórico (`personaPrograma`).
      */
     public function getPersonaPrograma()
     {
-        return $this->hasOne(PersonaPrograma::className(), ['id' => 'id_persona_programa']);
+        return $this->getEmpadronamiento();
     }
 
     /**

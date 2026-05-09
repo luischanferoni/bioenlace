@@ -24,12 +24,18 @@ use common\models\sumar\Autofacturacion;
  * @property string $observacion
  * @property string $control_embarazo
  *
- * @property TipoConsultas $idTipoConsulta
- * @property Turnos $idTurnos
- * @property DiagnosticoConsultas[] $diagnosticoConsultas
- * @property Cie10[] $codigos
- * @property MedicamentosConsultas[] $medicamentosConsultas
- * @property Medicamentos[] $idMedicamentos
+ * @property-read TipoConsulta|null $tipoConsulta
+ * @property-read Turno|null $turno
+ * @property-read DiagnosticoConsulta[] $diagnosticos
+ * @property-read Cie10[] $codigos
+ * @property-read ConsultaMedicamentos[] $medicamentos
+ * @property-read ConsultaPracticas[] $practicasPostDiagnostico
+ * @property-read ConsultaPracticas[] $practicasPreDiagnostico
+ * @property-read ConsultaSintomas[] $sintomas
+ * @property-read ConsultaObstetricia|null $obstetricia
+ * @property-read ConsultaEvolucion|null $evolucion
+ * @property-read PersonasAntecedente[] $antecedentesPersonales
+ * @property-read PersonasAntecedenteFamiliar[] $antecedentesFamiliares
  */
 
 class Consulta extends \yii\db\ActiveRecord
@@ -232,7 +238,7 @@ class Consulta extends \yii\db\ActiveRecord
             [['parent_class', 'parent_id', 'id_persona', 'id_efector'], 'required'],
            /* ['sistolica', 'required', 'when' => function ($model) {
                 $b = false;
-                foreach ($model->diagnosticoConsultas as $diagnosticoConsulta) {
+                foreach ($model->diagnosticos as $diagnosticoConsulta) {
                     if($diagnosticoConsulta->codigo == '38341003'){
                         $b = true;
                     }
@@ -293,7 +299,7 @@ class Consulta extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdTipoConsulta()
+    public function getTipoConsulta()
     {
         return $this->hasOne(TipoConsulta::className(), ['id_tipo_consulta' => 'id_tipo_consulta']);
     }
@@ -306,7 +312,10 @@ class Consulta extends \yii\db\ActiveRecord
         return $this->hasOne(Turno::className(), ['id_turnos' => 'id_turnos']);
     }
 
-    public function getRrhhEfector()
+    /**
+     * RRHH del profesional que atiende (vía PES), para cadena persona/profesión en UI.
+     */
+    public function getProfesionalRrhh()
     {
         return $this->hasOne(Rrhh::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
@@ -326,32 +335,51 @@ class Consulta extends \yii\db\ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Diagnósticos asociados a la consulta (tabla {@see DiagnosticoConsulta}).
      */
-    public function getDiagnosticoConsultas()
+    public function getDiagnosticos()
     {
         return $this->hasMany(DiagnosticoConsulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Alias por compatibilidad con pasos_json / clonación (`diagnosticoConsultas`).
      */
-    public function getConsultaPracticas()
+    public function getDiagnosticoConsultas()
+    {
+        return $this->getDiagnosticos();
+    }
+
+    /**
+     * Prácticas ambulatorias posteriores al diagnóstico (tipo POSTDIAGNOSTICO).
+     */
+    public function getPracticasPostDiagnostico()
     {
         return $this->hasMany(ConsultaPracticas::className(), ['id_consulta' => 'id_consulta'])->where(['tipo_practica'=>'POSTDIAGNOSTICO']);
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Alias por compatibilidad con pasos_json / clonación (`consultaPracticas`).
      */
-    public function getConsultaEvaluaciones()
+    public function getConsultaPracticas()
+    {
+        return $this->getPracticasPostDiagnostico();
+    }
+
+    /**
+     * Prácticas de evaluación previa (tipo PREDIAGNOSTICO).
+     */
+    public function getPracticasPreDiagnostico()
     {
         return $this->hasMany(ConsultaPracticas::className(), ['id_consulta' => 'id_consulta'])->where(['tipo_practica'=>'PREDIAGNOSTICO']);
     }
 
-    public function getConsultaSolicitudPracticas()
+    /**
+     * Alias por compatibilidad con pasos_json / clonación (`consultaEvaluaciones`).
+     */
+    public function getConsultaEvaluaciones()
     {
-        return $this->hasMany(ConsultaDerivaciones::className(), ['id_consulta_solicitante' => 'id_consulta']);
+        return $this->getPracticasPreDiagnostico();
     }
 
     public function getDerivacionesSolicitadas()
@@ -378,34 +406,66 @@ class Consulta extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getConsultaSintomas()
+    public function getSintomas()
     {
         return $this->hasMany(ConsultaSintomas::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Alias por compatibilidad con pasos_json / clonación (`consultaSintomas`).
      */
-    public function getConsultaMedicamentos()
+    public function getConsultaSintomas()
+    {
+        return $this->getSintomas();
+    }
+
+    /**
+     * Líneas de medicación activas ({@see ConsultaMedicamentos}) en la consulta.
+     */
+    public function getMedicamentos()
     {
         return $this->hasMany(ConsultaMedicamentos::className(), ['id_consulta' => 'id_consulta'])
                     ->onCondition(['estado' => 'ACTIVO']);
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Alias por compatibilidad con pasos_json / clonación (`consultaMedicamentos`).
      */
-    public function getConsultaObstetricia()
+    public function getConsultaMedicamentos()
     {
-        return $this->hasOne(ConsultaObstetricia::className(), ['id_consulta' => 'id_consulta']);
+        return $this->getMedicamentos();
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getConsultaEvolucion()
+    public function getObstetricia()
+    {
+        return $this->hasOne(ConsultaObstetricia::className(), ['id_consulta' => 'id_consulta']);
+    }
+
+    /**
+     * Alias por compatibilidad con pasos_json / clonación (`consultaObstetricia`).
+     */
+    public function getConsultaObstetricia()
+    {
+        return $this->getObstetricia();
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getEvolucion()
     {
         return $this->hasOne(ConsultaEvolucion::className(), ['id_consulta' => 'id_consulta']);
+    }
+
+    /**
+     * Alias por compatibilidad con pasos_json / clonación (`consultaEvolucion`).
+     */
+    public function getConsultaEvolucion()
+    {
+        return $this->getEvolucion();
     }
     
     /**
@@ -419,17 +479,33 @@ class Consulta extends \yii\db\ActiveRecord
      /**
      * @return \yii\db\ActiveQuery
      */
-    public function getPersonasAntecedenteConsultas()
+    public function getAntecedentesPersonales()
     {
         return $this->hasMany(PersonasAntecedente::className(), ['id_consulta' => 'id_consulta'])->where(['tipo_antecedente'=>'Personal']);
+    }
+
+    /**
+     * Alias por compatibilidad con pasos_json / clonación (`personasAntecedenteConsultas`).
+     */
+    public function getPersonasAntecedenteConsultas()
+    {
+        return $this->getAntecedentesPersonales();
     }
     
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getPersonasAntecedenteFamiliarConsultas()
+    public function getAntecedentesFamiliares()
     {
         return $this->hasMany(PersonasAntecedenteFamiliar::className(), ['id_consulta' => 'id_consulta'])->where(['tipo_antecedente'=>'Familiar']);
+    }
+
+    /**
+     * Alias por compatibilidad con pasos_json / clonación (`personasAntecedenteFamiliarConsultas`).
+     */
+    public function getPersonasAntecedenteFamiliarConsultas()
+    {
+        return $this->getAntecedentesFamiliares();
     }
 
     /**
@@ -774,7 +850,7 @@ class Consulta extends \yii\db\ActiveRecord
         }
 
         if ($this->id_turnos != null && $this->id_turnos != 0 && $this->id_turnos != "") {
-            return $this->turno->persona;
+            return $this->turno->paciente;
         }
 
         if ($this->parent_id != null && $this->parent_id != 0 && $this->parent_id != "") {
@@ -1267,7 +1343,7 @@ class Consulta extends \yii\db\ActiveRecord
     public function getCodEspecialidadSumar(){
 
         $id_servicio = $this->id_servicio;
-        $profesionales = $this->rrhhEfector->persona->profesionalSalud;
+        $profesionales = $this->profesionalRrhh->persona->profesionalSalud;
 
         foreach($profesionales as $profesional){
 

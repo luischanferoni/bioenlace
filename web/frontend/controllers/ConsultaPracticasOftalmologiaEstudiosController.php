@@ -252,7 +252,7 @@ class ConsultaPracticasOftalmologiaEstudiosController extends DefaultConsultaCon
             if($derivaciones) {
 
                 $consultaSolicitante = $derivaciones[0]->consulta;
-                $diagnosticos = $consultaSolicitante->diagnosticoConsultas;
+                $diagnosticos = $consultaSolicitante->diagnosticos;
 
                 // 5. Precargo el codigo de las practicas con las derivaciones
                 foreach ($derivaciones as $derivacion) {
@@ -274,7 +274,7 @@ class ConsultaPracticasOftalmologiaEstudiosController extends DefaultConsultaCon
         }
 
         if ($diagnosticos == null) {
-            $diagnosticos = $modelConsulta->diagnosticoConsultas;
+            $diagnosticos = $modelConsulta->diagnosticos;
         }
 
         return [$oftalmologias, $diagnosticos];

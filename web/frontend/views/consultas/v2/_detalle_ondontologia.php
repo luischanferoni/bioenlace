@@ -191,9 +191,9 @@ use common\models\ConsultaOdontologiaEstados;
 <?php 
 echo $this->render('_detalle_consulta_amb', [
     'model' => $modelConsulta,
-    'model_diagnosticos_consulta' => $modelConsulta->diagnosticoConsultas,
-    'model_medicamentos_consulta' => $modelConsulta->consultaMedicamentos,
-    'model_consulta_practicas' => $modelConsulta->consultaPracticas,
+    'model_diagnosticos_consulta' => $modelConsulta->diagnosticos,
+    'model_medicamentos_consulta' => $modelConsulta->medicamentos,
+    'model_consulta_practicas' => $modelConsulta->practicasPostDiagnostico,
     'model_consulta_derivaciones' => $modelConsulta->derivacionesSolicitadas,
 ]) ?>
 

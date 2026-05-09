@@ -14,8 +14,8 @@ use Yii;
  * @property integer $diastolica
  * @property string $id_consulta
  *
- * @property Consultas $idConsulta
- * @property Personas $idPersona
+ * @property-read Consulta|null $consulta
+ * @property-read Persona|null $persona
  */
 class TensionArterial extends \yii\db\ActiveRecord
 {
@@ -57,17 +57,17 @@ class TensionArterial extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdConsulta()
+    public function getConsulta()
     {
-        return $this->hasOne(Consultas::className(), ['id_consulta' => 'id_consulta']);
+        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdPersona()
+    public function getPersona()
     {
-        return $this->hasOne(Personas::className(), ['id_persona' => 'id_persona']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
     public static function getTensionPorConsulta($id_cons)

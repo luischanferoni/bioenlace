@@ -28,7 +28,8 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $fecha_alta
  * @property string $usuario_mod
  * @property string $fecha_mod
- * 
+ * @property-read Persona|null $paciente Paciente que toma el turno ({@see self::getPaciente()}).
+ *
  * @chatbot-category turnos
  * @chatbot-category-name "Gestión de Turnos"
  * @chatbot-category-description "Acciones concretas relacionadas con turnos médicos"
@@ -330,9 +331,20 @@ class Turno extends \yii\db\ActiveRecord
         ];
     }
 
-    public function getPersona()
+    /**
+     * Paciente asociado al turno (alineado con {@see Consulta::getPaciente()} / {@see Guardia::getPaciente()}).
+     */
+    public function getPaciente()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
+    }
+
+    /**
+     * Alias histórico (`persona`).
+     */
+    public function getPersona()
+    {
+        return $this->getPaciente();
     }
 
     public function getServicio()
@@ -348,11 +360,6 @@ class Turno extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Rrhh::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
-    }
-
-    public function getRrhhEfector()
-    {
-        return $this->getRrhh();
     }
 
     /**

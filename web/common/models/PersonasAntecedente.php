@@ -12,8 +12,8 @@ use Yii;
  * @property integer $id_snomed_situacion
  * @property string|null $deleted_at
  * @property string|null $deleted_by
- * @property Antecedentes $idAntecedente
- * @property Personas $idConsulta
+ * @property-read Antecedente|null $antecedente
+ * @property-read Persona|null $persona
  */
 class PersonasAntecedente extends \yii\db\ActiveRecord
 {
@@ -64,7 +64,7 @@ class PersonasAntecedente extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdAntecedente()
+    public function getAntecedente()
     {
         return $this->hasOne(Antecedente::className(), ['id_antecedente' => 'id_antecedente']);
     }
@@ -78,11 +78,13 @@ class PersonasAntecedente extends \yii\db\ActiveRecord
     }
 
     /**
+     * Paciente (`personas_antecedentes.id_persona`).
+     *
      * @return \yii\db\ActiveQuery
      */
-    public function getIdConsulta()
+    public function getPersona()
     {
-        return $this->hasOne(Persona::className(), ['id_persona' => 'id_consulta']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
     /**

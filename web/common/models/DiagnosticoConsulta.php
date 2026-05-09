@@ -15,7 +15,7 @@ use Yii;
  * @property string $tipo_diagnostico
  *
  * @property Cie10 $codigo0
- * @property Consultas $idConsulta
+ * @property-read Consulta|null $consulta
  */
 class DiagnosticoConsulta extends \yii\db\ActiveRecord
 {

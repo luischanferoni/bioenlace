@@ -40,7 +40,7 @@ use common\models\Persona;
                                             </td>
                                             
                                             <td>
-                                                <?= $evolucion->consulta->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) ?>
+                                                <?= $evolucion->consulta->profesionalRrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) ?>
                                             </td>  
 
                                             <td>

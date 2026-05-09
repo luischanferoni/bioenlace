@@ -1,5 +1,6 @@
 <?php
 
+use common\models\Persona;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
@@ -42,13 +43,17 @@ $this->params['breadcrumbs'][] = $this->title;
             [   //muestra el nombre del responsable seleccionado en el listado
                 'label'=> 'RRHH Solicita',
                 'attribute'=>'id_rrhh_solicita',
-                'value'=>$model->rrhhSolicita->rrhh->idPersona->nombreCompleto,
+                'value'=>$model->rrhhSolicita && $model->rrhhSolicita->persona
+                    ? $model->rrhhSolicita->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                    : '',
             ],
             //'id_rrhh_realiza',
             [   //muestra el nombre del responsable seleccionado en el listado
                 'label'=> 'RRHH Realiza',
                 'attribute'=>'id_rrhh_realiza',
-                'value'=>$model->rrhhRealiza->rrhh->idPersona->nombreCompleto,
+                'value'=>$model->rrhhRealiza && $model->rrhhRealiza->persona
+                    ? $model->rrhhRealiza->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                    : '',
             ],
             [
                'attribute'=>'imageFile',

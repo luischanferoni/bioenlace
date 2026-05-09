@@ -68,7 +68,7 @@ $this->title = 'Autofacturación';
                         'label' => 'Diagnósticos',
                         'value' => function($data) {
                             $diagnosticos = [];
-                            foreach($data->diagnosticoConsultas as $diagnostico) {
+                            foreach($data->diagnosticos as $diagnostico) {
                                 $diagnosticos[] = isset($diagnostico->codigoSnomed->term) ? $diagnostico->codigoSnomed->term:"";
                             }
                             return '<ul><li>'.implode("</li><li>", $diagnosticos).'</li></ul>';
@@ -80,7 +80,7 @@ $this->title = 'Autofacturación';
                         'label' => 'Prácticas',
                         'value' => function($data) {
                             $practicas = [];
-                            foreach($data->consultaPracticas as $practica) {
+                            foreach($data->practicasPostDiagnostico as $practica) {
                                 $practicas[] = $practica->codigoSnomed->term;
                             }
                             return '<ul><li>'.implode("</li><li>", $practicas).'</li></ul>';

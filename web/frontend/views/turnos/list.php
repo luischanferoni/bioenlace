@@ -61,7 +61,7 @@ $estados = array(Turno::ESTADO_PENDIENTE => 'bg-soft-warning p-2 text-warning', 
                                             'format' => 'raw',
                                             'filter'=>false,
                                             'value' => function ($data) {                   
-                                                return $data->id_persona? $data->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON): 'No definida';
+                                                return $data->id_persona? $data->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON): 'No definida';
                                             }
                                         ],
                                         [
@@ -70,7 +70,7 @@ $estados = array(Turno::ESTADO_PENDIENTE => 'bg-soft-warning p-2 text-warning', 
                                             'format' => 'raw',
                                             'filter'=>false,
                                             'value' => function ($data) {                   
-                                                return $data->id_persona? $data->persona->documento: 'No definida';
+                                                return $data->id_persona? $data->paciente->documento: 'No definida';
                                             }
                                         ],
                                         [

@@ -136,14 +136,14 @@ class AutofacturacionController extends Controller
                 break;
         }
         
-        $diagnosticos = $consulta->diagnosticoConsultas;
+        $diagnosticos = $consulta->diagnosticos;
         $codigosDiagnosticos = ArrayHelper::getColumn($diagnosticos, 'codigo');
 
         //$codigosDiagnosticos = '102506008';
        
 
        /* foreach ($codigosDiagnosticos as $diagnostico) {                    
-            $procedimientos = $consulta->consultaPracticas;
+            $procedimientos = $consulta->practicasPostDiagnostico;
             $codigosProcedimientos = ArrayHelper::getColumn($procedimientos, 'codigo');
             $diagnosticoProcedimientos[$diagnostico] = 
         }*/

@@ -55,7 +55,7 @@ class BulkCancelDayService
                     'fecha' => $fecha,
                 ]);
                 $push = new PushNotificationSender();
-                if ($turno->persona) {
+                if ($turno->paciente) {
                     $push->sendToPersona(
                         (int) $turno->id_persona,
                         ['type' => 'TURNO_CANCELADO_EFECTOR', 'id_turno' => (string) $turno->id_turnos],

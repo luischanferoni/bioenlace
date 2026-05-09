@@ -147,7 +147,7 @@ final class UiSelectOptionSourceResolver
 
         if ($filter === 'user_efectores' && $userId) {
             $q = \common\models\UserEfector::find()
-                ->joinWith('idEfector')
+                ->joinWith('efector')
                 ->where(['user_efector.id_user' => $userId])
                 ->andWhere('efectores.deleted_at IS NULL');
 
@@ -162,8 +162,8 @@ final class UiSelectOptionSourceResolver
             $options = [];
             foreach ($efectores as $efector) {
                 $options[] = [
-                    'id' => $efector->idEfector->id_efector,
-                    'name' => $efector->idEfector->nombre,
+                    'id' => $efector->efector->id_efector,
+                    'name' => $efector->efector->nombre,
                 ];
             }
 

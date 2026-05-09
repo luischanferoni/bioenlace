@@ -3,7 +3,19 @@
 namespace common\models\sumar;
 
 use Yii;
+use common\models\BeneficiarioSumar;
+use common\models\Consulta;
+use common\models\ProfesionalEfectorServicio;
+use common\models\Rrhh;
 
+/**
+ * Registro de envío / autofacturación SUMAR vinculado a una consulta.
+ *
+ * @property-read Consulta|null $consulta
+ * @property-read BeneficiarioSumar|null $beneficiario
+ * @property-read Rrhh|null $rrhh
+ * @property-read ProfesionalEfectorServicio|null $profesionalEfectorServicio
+ */
 class Autofacturacion extends \yii\db\ActiveRecord
 {
     /**
@@ -76,7 +88,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
             'id_sumar_autofacturacion' => 'ID',
             'id_consulta' => 'Consulta',
             'id_efector' => 'Efector',
-            'beneficiarios' => 'Baneficiario Sumar',
+            'beneficiarios' => 'Beneficiario Sumar',
             'codigos' => 'Codigos Mapeados',
             'codigo_enviado' => 'Codigo Enviado',
             'fecha_envio' => 'Fecha de Envío',
@@ -85,29 +97,29 @@ class Autofacturacion extends \yii\db\ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Consulta asociada (FK `id_consulta` en esta tabla).
      */
     public function getConsulta()
     {
-        return $this->hasMany(\common\models\Consulta::className(), ['id_consulta' => 'id_consulta']);
+        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**
-     * @return \yii\db\ActiveQuery
+     * Beneficiario SUMAR cuando aplica vínculo por `id_beneficiario`.
      */
     public function getBeneficiario()
     {
-        return $this->hasOne(\common\models\BeneficiarioSumar::className(), ['id_beneficiarios' => 'id_beneficiario']);
+        return $this->hasOne(BeneficiarioSumar::className(), ['id_beneficiarios' => 'id_beneficiario']);
     }
 
-    public function getRrhhEfector()
+    public function getRrhh()
     {
-        return $this->hasOne(\common\models\Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     public function getProfesionalEfectorServicio()
     {
-        return $this->hasOne(\common\models\ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     public static function getUltimaPorEfector()

@@ -16,8 +16,8 @@ use Yii;
  * @property integer $edad_hasta
  * @property string $activo
  *
- * @property PersonasAntecedentes[] $personasAntecedentes
- * @property Personas[] $idPersonas
+ * @property PersonasAntecedente[] $personasAntecedentes
+ * @property-read Persona[] $personas
  */
 class Antecedente extends \yii\db\ActiveRecord
 {
@@ -64,15 +64,15 @@ class Antecedente extends \yii\db\ActiveRecord
      */
     public function getPersonasAntecedentes()
     {
-        return $this->hasMany(PersonasAntecedentes::className(), ['id_antecedente' => 'id_antecedente']);
+        return $this->hasMany(PersonasAntecedente::className(), ['id_antecedente' => 'id_antecedente']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdPersonas()
+    public function getPersonas()
     {
-        return $this->hasMany(Personas::className(), ['id_persona' => 'id_persona'])->viaTable('personas_antecedentes', ['id_antecedente' => 'id_antecedente']);
+        return $this->hasMany(Persona::className(), ['id_persona' => 'id_persona'])->viaTable('personas_antecedentes', ['id_antecedente' => 'id_antecedente']);
     }
     
     public function getAntecedente_personal($edad,$sexo) {

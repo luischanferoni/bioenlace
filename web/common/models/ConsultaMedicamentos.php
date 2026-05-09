@@ -21,8 +21,8 @@ use Yii;
  * @property integer $cantidad
  * @property string $frecuencia
  * @property integer $id_snomed_medicamento
- * @property Consultas $idConsulta
- * @property Medicamentos $idMedicamento
+ * @property-read Consulta|null $consulta
+ * @property-read Medicamento|null $medicamento
  */
 class ConsultaMedicamentos extends \yii\db\ActiveRecord
 {
@@ -109,15 +109,6 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
 
     /**
      * @return \yii\db\ActiveQuery
-     * TODO: refactorizar codigo para poder borrar este metodo y dejar el de abajo (getConsulta)
-     */
-    public function getIdConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
      */
     public function getConsulta()
     {
@@ -127,7 +118,7 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdMedicamento()
+    public function getMedicamento()
     {
         return $this->hasOne(Medicamento::className(), ['id_medicamento' => 'id_medicamento']);
     }

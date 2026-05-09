@@ -776,12 +776,12 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
     private function obtenerRelacionConsulta($nombreModelo)
     {
         $mapa = [
-            'ConsultaMedicamentos' => 'consultaMedicamentos',
-            'ConsultaSintomas' => 'consultaSintomas',
+            'ConsultaMedicamentos' => 'medicamentos',
+            'ConsultaSintomas' => 'sintomas',
             'ConsultaMotivos' => 'motivoConsulta',
-            'ConsultaPracticas' => 'practicasPersonaConsultas',
+            'ConsultaPracticas' => 'practicasPostDiagnostico',
             'ConsultaPracticasOftalmologia' => 'oftalmologiasDP',
-            'ConsultaDiagnosticos' => 'diagnosticoConsultas',
+            'ConsultaDiagnosticos' => 'diagnosticos',
         ];
 
         return $mapa[$nombreModelo] ?? null;

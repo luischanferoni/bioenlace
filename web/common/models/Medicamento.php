@@ -19,8 +19,9 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $generico
  * @property string $presentacion
  *
- * @property MedicamentosConsultas[] $medicamentosConsultas
- * @property Consultas[] $idConsultas
+ * @property ConsultaMedicamentos[] $medicamentosConsultas
+ * @property-read ConsultaMedicamentos[] $consultaMedicamentos
+ * @property-read Consulta[] $consultas
  */
 class Medicamento extends \yii\db\ActiveRecord
 {
@@ -72,15 +73,24 @@ class Medicamento extends \yii\db\ActiveRecord
      */
     public function getMedicamentosConsultas()
     {
-        return $this->hasMany(MedicamentosConsultas::className(), ['id_medicamento' => 'id_medicamento']);
+        return $this->hasMany(ConsultaMedicamentos::className(), ['id_medicamento' => 'id_medicamento']);
+    }
+
+    /**
+     * Alias con nombre alineado al modelo {@see ConsultaMedicamentos}.
+     */
+    public function getConsultaMedicamentos()
+    {
+        return $this->getMedicamentosConsultas();
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdConsultas()
+    public function getConsultas()
     {
-        return $this->hasMany(Consultas::className(), ['id_consulta' => 'id_consulta'])->viaTable('medicamentos_consultas', ['id_medicamento' => 'id_medicamento']);
+        return $this->hasMany(Consulta::className(), ['id_consulta' => 'id_consulta'])
+            ->viaTable(ConsultaMedicamentos::tableName(), ['id_medicamento' => 'id_medicamento']);
     }
     
     public function getMedicamentoConcat() {

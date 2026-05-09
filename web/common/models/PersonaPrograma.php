@@ -16,11 +16,11 @@ use Yii;
  * @property string|null $fecha_baja
  * @property string|null $motivo_baja
  * @property string|null $tipo_empadronamiento
- * @property int|null $id_rrhh_efector Legacy (retirado por migración PES)
+ * @property int|null $id_profesional_efector_servicio
  *
- * @property Personas $persona
- * @property Programas $programa
- * @property PersonaProgramaDiabetes[] $personaProgramaDiabetes
+ * @property-read Persona|null $persona
+ * @property-read Programa|null $programa
+ * @property-read PersonaProgramaDiabetes[] $inscripcionesDiabetes Inscripciones/seguimiento diabetes vinculadas a este empadronamiento
  */
 class PersonaPrograma extends \yii\db\ActiveRecord
 {
@@ -73,20 +73,6 @@ class PersonaPrograma extends \yii\db\ActiveRecord
         ];
     }
 
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-        if ($this->hasAttribute('id_rrhh_efector') && ($insert || $this->isAttributeChanged('id_rrhh_efector', false))) {
-            $legacy = $this->id_rrhh_efector;
-            if ($legacy !== null && $legacy !== '') {
-                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhMinPes((int) $legacy);
-            }
-        }
-        return true;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -95,7 +81,6 @@ class PersonaPrograma extends \yii\db\ActiveRecord
         return [
             [['id_persona', 'id_programa', 'id_profesional_efector_servicio'], 'required'],
             [['id_persona', 'id_programa', 'id_profesional_efector_servicio'], 'integer'],
-            [['id_rrhh_efector'], 'integer', 'skipOnEmpty' => true],
             [['activo', 'tipo_empadronamiento'], 'string'],
             [['fecha', 'fecha_baja'], 'safe'],
             [['clave_beneficiario'], 'string', 'max' => 16],
@@ -120,7 +105,7 @@ class PersonaPrograma extends \yii\db\ActiveRecord
             'fecha_baja' => 'Fecha Baja',
             'motivo_baja' => 'Motivo Baja',
             'tipo_empadronamiento' => 'Tipo Empadronamiento',
-            'id_rrhh_efector' => 'Id Rrhh Efector',
+            'id_profesional_efector_servicio' => 'Profesional',
         ];
     }
 
@@ -145,13 +130,19 @@ class PersonaPrograma extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[PersonaProgramaDiabetes]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Inscripciones en el programa diabetes asociadas a este empadronamiento en programa de salud.
+     */
+    public function getInscripcionesDiabetes()
+    {
+        return $this->hasMany(PersonaProgramaDiabetes::className(), ['id_persona_programa' => 'id']);
+    }
+
+    /**
+     * Alias histórico (`personaProgramaDiabetes`).
      */
     public function getPersonaProgramaDiabetes()
     {
-        return $this->hasMany(PersonaProgramaDiabetes::className(), ['id_persona_programa' => 'id']);
+        return $this->getInscripcionesDiabetes();
     }
 
     public function getProfesionalEfectorServicio()

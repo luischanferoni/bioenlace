@@ -59,7 +59,7 @@ class TurnoLifecycleService
         TurnoEventoAudit::registrar($turno->id_turnos, $tipo, $idUser, ['canal' => $canal]);
 
         $push = new PushNotificationSender();
-        if ($turno->persona && $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_MEDICO) {
+        if ($turno->paciente && $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_MEDICO) {
             $push->sendToPersona(
                 (int) $turno->id_persona,
                 ['type' => 'TURNO_CANCELADO_EFECTOR', 'id_turno' => (string) $turno->id_turnos],

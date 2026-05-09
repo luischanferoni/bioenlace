@@ -41,7 +41,7 @@ class ConsultaObstetriciaController extends Controller
         
         $modelConsulta = Consulta::getModeloConsulta(Yii::$app->request->get('id_consulta'), $paciente, Yii::$app->request->get('parent'), Yii::$app->request->get('parent_id'));
         //var_dump($modelConsulta); die;
-        $modeloEmbarazo = isset($modelConsulta->consultaObstetricia)?$modelConsulta->consultaObstetricia: new ConsultaObstetricia;       
+        $modeloEmbarazo = isset($modelConsulta->obstetricia)?$modelConsulta->obstetricia: new ConsultaObstetricia;       
 
         if (Yii::$app->request->post()) {
             $modelConsulta = $this->guardarConsulta($arrayConfiguracion, $modelConsulta, $paciente);

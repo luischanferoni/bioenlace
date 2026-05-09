@@ -227,7 +227,7 @@ class TurnosController extends Controller
         $pacientesTurnosOcupados = [];
         foreach ($turnos as $turno) {
             $horasTurnosOcupados[$turno->id_turnos] = $turno->hora;
-            $pacientesTurnosOcupados[$turno->id_turnos] = $turno->persona->id_persona;
+            $pacientesTurnosOcupados[$turno->id_turnos] = $turno->paciente->id_persona;
         }
 
         $nroDiaDeSemana = date('N', strtotime($dia)) - 1;
@@ -485,11 +485,10 @@ class TurnosController extends Controller
         $idEfector = (int) Yii::$app->user->getIdEfector();
         $idServicio = (int) $id_servicio;
         $sql = 'SELECT DISTINCT rh.id_rr_hh, personas.nombre, personas.apellido '
-            . 'FROM rrhh_efector rh '
-            . 'INNER JOIN profesional_efector_servicio pes ON pes.id_persona = rh.id_persona '
-            . 'AND pes.id_efector = rh.id_efector AND pes.deleted_at IS NULL '
-            . 'INNER JOIN personas ON rh.id_persona = personas.id_persona '
-            . 'WHERE pes.id_servicio = :sid AND rh.id_efector = :eid AND rh.deleted_at IS NULL '
+            . 'FROM profesional_efector_servicio pes '
+            . 'INNER JOIN rr_hh rh ON rh.id_persona = pes.id_persona '
+            . 'INNER JOIN personas ON personas.id_persona = pes.id_persona '
+            . 'WHERE pes.id_servicio = :sid AND pes.id_efector = :eid AND pes.deleted_at IS NULL '
             . 'ORDER BY personas.apellido, personas.nombre';
 
         $result = $idServicio > 0 && $idEfector > 0

@@ -99,7 +99,7 @@ use frontend\controllers\MpiApiController;
                 $modelPersona = $persona::findOne($record['id_persona']);
                 $consulta = new Consulta();
                 $modelConsulta = $consulta::findOne($record['id_consulta']);                
-                $diagnosticosConsulta = $modelConsulta->odontologiaDiagnosticos; //$modelConsulta->diagnosticoConsultas;
+                $diagnosticosConsulta = $modelConsulta->odontologiaDiagnosticos; //$modelConsulta->diagnosticos;
                 $practicasOdontologicas = $modelConsulta->odontologiaPracticas;
                 $domicilio = ($modelPersona->getDomicilioActivo())? $modelPersona->getDomicilioActivo()->getDomicilioCompleto(): "No especificado.";
                 

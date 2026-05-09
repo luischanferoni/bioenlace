@@ -266,7 +266,10 @@ class Persona extends \yii\db\ActiveRecord
         return $this->hasMany(Guardia::className(), ['id_persona' => 'id_persona']);
     }
 
-    public function getRrhhEfector()
+    /**
+     * Primer recurso humano (`rr_hh`) asociado a la persona.
+     */
+    public function getRrhh()
     {
         return $this->hasOne(Rrhh::class, ['id_persona' => 'id_persona'])
             ->orderBy(['id_rr_hh' => SORT_ASC]);

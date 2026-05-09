@@ -22,7 +22,7 @@ class ConsultaAntecedentesPersonalesController extends DefaultConsultaController
         $idsBDPrevioPost = [];
         $mapCodigoId = [];
 
-        $modelosPersonasAntecedenteConsultas = $modelConsulta->personasAntecedenteConsultas;
+        $modelosPersonasAntecedenteConsultas = $modelConsulta->antecedentesPersonales;
         if (!$modelosPersonasAntecedenteConsultas) {
             $modelosPersonasAntecedenteConsultas = [new PersonasAntecedente()];
         } else {

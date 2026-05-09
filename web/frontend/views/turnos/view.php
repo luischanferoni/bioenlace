@@ -63,7 +63,7 @@ $this->params['breadcrumbs'][] = "Turnos Otorgados";
               if (isset($turno->userAlta)) {
                 echo $turno->userAlta->nombre . ' ' . $turno->userAlta->apellido;
               }else{
-                echo $turno->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N);
+                echo $turno->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N);
               }
               echo '</td>';
               /* echo '<td>';

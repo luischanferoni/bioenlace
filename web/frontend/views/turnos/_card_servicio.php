@@ -41,27 +41,27 @@ use common\models\ServiciosEfector;
                 )."</div>";
             } else {
 
-                foreach ($servicioEfector->rrhhs as $rrhhEfectorServicio) {
-                
-                    if (!isset($rrhhEfectorServicio->persona)) { continue; }
-                    
-                    $datosParaLiveSearch .= $rrhhEfectorServicio->persona->apellido . ' ' . $rrhhEfectorServicio->persona->nombre . ' ';
+                foreach ($servicioEfector->profesionalesPes as $pes) {
+
+                    if (!isset($pes->persona)) { continue; }
+
+                    $datosParaLiveSearch .= $pes->persona->apellido . ' ' . $pes->persona->nombre . ' ';
                 
                     echo '<div class="border-bottom mb-3">'; ?>
                     
                     <a class="btn btn-soft btn-sm rounded-pill me-3" 
                         style="background-color: <?php echo $color; ?>" 
-                        href="<?= Url::to(['turnos/espera', 'rrhh' => $rrhhEfectorServicio->id]) ?>" 
+                        href="<?= Url::to(['turnos/espera', 'rrhh' => $pes->id]) ?>" 
                         target="_blank"
                         data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Imprimir turnos"
                         >
                             <i class="bi bi-printer text-white"></i>
                     </a>
-                    <?php echo $rrhhEfectorServicio->persona->apellido . ', ' . $rrhhEfectorServicio->persona->nombre;
+                    <?php echo $pes->persona->apellido . ', ' . $pes->persona->nombre;
 
 
                     
-                    if (isset($rrhhEfectorServicio->agenda) && $servicioEfector->formas_atencion !== ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS): ?>
+                    if (isset($pes->agenda) && $servicioEfector->formas_atencion !== ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS): ?>
 
                         
                         
@@ -73,12 +73,12 @@ use common\models\ServiciosEfector;
                             "data-bs-toggle" => "modal",
                             "data-title" => sprintf("Turno para %s, %s", $persona->apellido, $persona->nombre),
                             "data-bioenlace-id_servicio" => $servicioEfector->id_servicio,
-                            "data-bioenlace-id_rrhh_sa" => $rrhhEfectorServicio->id,
+                            "data-bioenlace-id_rrhh_sa" => $pes->id,
                             ]
                         );?>
                     <?php endif ?>
 
-                    <?php if (!isset($rrhhEfectorServicio->agenda) && $servicioEfector->formas_atencion !== ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) { ?>
+                    <?php if (!isset($pes->agenda) && $servicioEfector->formas_atencion !== ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) { ?>
                         <span class="ms-3 mb-2 badge bg-soft-danger">SIN AGENDA</span>
                     <?php } ?>           
 

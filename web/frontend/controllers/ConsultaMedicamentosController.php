@@ -26,7 +26,7 @@ class ConsultaMedicamentosController extends DefaultConsultaController
     {
         $idGuardados = [];
 
-        $modelosConsultaMedicamentos = $modelConsulta->consultaMedicamentos;
+        $modelosConsultaMedicamentos = $modelConsulta->medicamentos;
         if (!$modelosConsultaMedicamentos) {
             $modelosConsultaMedicamentos = [new ConsultaMedicamentos()];
         } else {

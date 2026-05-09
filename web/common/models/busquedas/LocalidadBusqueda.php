@@ -79,7 +79,7 @@ class LocalidadBusqueda extends Localidad
             // uncomment the following line if you do not want to return any records when validation fails
             // $query->where('0=1');
             //esto se agrego
-            $query->joinWith('idDepartamento');//este join se puso dentro del if, antes estaba afuera
+            $query->joinWith('departamento');//este join se puso dentro del if, antes estaba afuera
             return $dataProvider;
         }
         
@@ -96,7 +96,7 @@ class LocalidadBusqueda extends Localidad
         
         
         //esto se agrego, para filtrar por departamento en el listado
-        $query->joinWith(['idDepartamento' => function($q) {
+        $query->joinWith(['departamento' => function($q) {
             $q->andFilterWhere(['like', 'departamentos.nombre', $this->departamentoName]);
         }]);
         
@@ -107,7 +107,7 @@ class LocalidadBusqueda extends Localidad
                 'provincias.id_provincia' => $this->provinciaId
             ]);
         }]);
-        /*$query->joinWith(['idDepartamento.provincia' => function($q) {
+        /*$query->joinWith(['departamento.provincia' => function($q) {
             $q->andFilterWhere(['like', 'provincias.nombre', $this->provinciaName]);
         }]);*/
         

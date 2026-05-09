@@ -17,7 +17,7 @@ use common\models\ConsultaMedicamentos;
     <div class="accordion accordion-flush" id="diagnosticos">
         <?php 
         $i = 0;
-        foreach ($modelConsulta->diagnosticoConsultas as $iDiagnostico => $diagnostico) : 
+        foreach ($modelConsulta->diagnosticos as $iDiagnostico => $diagnostico) : 
         ?>
             <div class="accordion-item">
                 <h2 class="accordion-header">

@@ -64,7 +64,7 @@ class BarriosBusqueda extends Barrios
             // uncomment the following line if you do not want to return any records when validation fails
             // $query->where('0=1');
             //esto se agrego
-            //$query->joinWith('idDepartamento');//este join se puso dentro del if, antes estaba afuera
+            // Si hace falta filtrar por localidad/departamento: joinWith('localidad') o cadena localidad.departamento (ver LocalidadBusqueda).
             return $dataProvider;
         }
         

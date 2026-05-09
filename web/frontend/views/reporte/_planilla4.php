@@ -92,8 +92,8 @@ use frontend\controllers\MpiApiController;
                 $consulta = new Consulta();
                 $modelConsulta = $consulta::findOne($record['id_consulta']);
                 $motivosConsulta = $modelConsulta->motivoConsulta;
-                $diagnosticosConsulta = $modelConsulta->diagnosticoConsultas;
-                $practicasConsulta = $modelConsulta->consultaPracticas;
+                $diagnosticosConsulta = $modelConsulta->diagnosticos;
+                $practicasConsulta = $modelConsulta->practicasPostDiagnostico;
                 $atencionesConsulta = $modelConsulta->atencionEnfermeria;
                 $domicilio = ($modelPersona->getDomicilioActivo())? $modelPersona->getDomicilioActivo()->getDomicilioCompleto(): "No especificado.";
 

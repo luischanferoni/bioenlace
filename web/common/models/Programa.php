@@ -10,6 +10,7 @@ use Yii;
  * @property integer $id_programa
  * @property string $nombre
  * @property string $referente
+ * @property-read PersonaPrograma[] $inscripciones Empadronamientos en este programa
  */
 class Programa extends \yii\db\ActiveRecord
 {
@@ -51,5 +52,21 @@ class Programa extends \yii\db\ActiveRecord
         ->one();
 
         return $programa->id_programa;
+    }
+
+    /**
+     * Personas empadronadas en este programa de salud.
+     */
+    public function getInscripciones()
+    {
+        return $this->hasMany(PersonaPrograma::className(), ['id_programa' => 'id_programa']);
+    }
+
+    /**
+     * Alias por convención Yii plural (`personaProgramas`).
+     */
+    public function getPersonaProgramas()
+    {
+        return $this->getInscripciones();
     }
 }

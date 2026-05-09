@@ -14,7 +14,7 @@ use common\models\DiagnosticoConsultaRepository as DiagnosticoRepo;
  * @property string $tipo_diagnostico
  *
  * @property Cie10 $codigo0
- * @property Consultas $idConsulta
+ * @property-read Consulta|null $consulta
  */
 class DiagnosticoPrevio extends DiagnosticoConsulta
 {

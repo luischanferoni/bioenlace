@@ -50,7 +50,7 @@ class EstadoCivil extends \yii\db\ActiveRecord
      */
     public function getPersonas()
     {
-        return $this->hasMany(Personas::className(), ['id_estado_civil' => 'id_estado_civil']);
+        return $this->hasMany(Persona::className(), ['id_estado_civil' => 'id_estado_civil']);
     }
     
     public static function getListaEstadosCiviles()

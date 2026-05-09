@@ -31,14 +31,14 @@ class ConsultaPracticasController extends DefaultConsultaController
     {
         $idsBDPrevioPost = [];
 
-        $modelosConsultaPracticas = $modelConsulta->consultaPracticas;
+        $modelosConsultaPracticas = $modelConsulta->practicasPostDiagnostico;
 
         $diagnosticos = [];
         if (!$modelosConsultaPracticas) {
             list($modelosConsultaPracticas, $diagnosticos) = $this->preCargarDerivaciones($modelConsulta);
         } else {
             $idsBDPrevioPost = ArrayHelper::getColumn($modelosConsultaPracticas, 'id');
-            $diagnosticos = $modelConsulta->diagnosticoConsultas;
+            $diagnosticos = $modelConsulta->diagnosticos;
         }
 
         if (Yii::$app->request->post()) {
@@ -158,7 +158,7 @@ class ConsultaPracticasController extends DefaultConsultaController
             // 4. Busco la consulta que solicito la/s derivaciones para obtener los diagnosticos originales
             if($derivaciones) {
                 $consultaSolicitante = $derivaciones[0]->consulta;
-                $diagnosticos = $consultaSolicitante->diagnosticoConsultas;
+                $diagnosticos = $consultaSolicitante->diagnosticos;
 
                 // 5. Precargo el codigo de las practicas con las derivaciones
                 foreach ($derivaciones as $derivacion) {
@@ -181,7 +181,7 @@ class ConsultaPracticasController extends DefaultConsultaController
         }
 
         if ($diagnosticos == null) {
-            $diagnosticos = $modelConsulta->diagnosticoConsultas;
+            $diagnosticos = $modelConsulta->diagnosticos;
         }
 
         return [$modelosConsultaPracticas, $diagnosticos];

@@ -198,8 +198,8 @@ $id_tipo_consulta = $model->id_tipo_consulta;
               <tr>
                 <th class="bg-soft-primary" style="width: 10%">Síntomas</th>
                 <td>
-                <?php if(!empty($model->consultaSintomas)): ?>
-                  <?php foreach ($model->consultaSintomas as $cs): 
+                <?php if(!empty($model->sintomas)): ?>
+                  <?php foreach ($model->sintomas as $cs): 
                     $sintoma = common\models\snomed\SnomedProblemas::findOne(['conceptId' => $cs['codigo']]);
                     $sintoma_term = '';
                     if($sintoma) {

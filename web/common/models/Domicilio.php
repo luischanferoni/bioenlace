@@ -112,9 +112,9 @@ class Domicilio extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdPersonas()
+    public function getPersonas()
     {
-        return $this->hasMany(Personas::className(), ['id_persona' => 'id_persona'])
+        return $this->hasMany(Persona::className(), ['id_persona' => 'id_persona'])
                 ->viaTable('personas_domicilios', ['id_domicilio' => 'id_domicilio']);
     }
     

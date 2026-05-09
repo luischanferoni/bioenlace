@@ -20,8 +20,8 @@ use Yii;
  * @property string $per_imc
  * @property string $id_consulta
  *
- * @property Consultas $idConsulta
- * @property Personas $idPersona
+ * @property-read Consulta|null $consulta
+ * @property-read Persona|null $persona
  */
 class ValoracionNutricional extends \yii\db\ActiveRecord
 {
@@ -71,17 +71,17 @@ class ValoracionNutricional extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdConsulta()
+    public function getConsulta()
     {
-        return $this->hasOne(Consultas::className(), ['id_consulta' => 'id_consulta']);
+        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdPersona()
+    public function getPersona()
     {
-        return $this->hasOne(Personas::className(), ['id_persona' => 'id_persona']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
     //Busca la valoración por consulta y persona

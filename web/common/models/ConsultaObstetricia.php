@@ -17,7 +17,7 @@ use Yii;
  * @property string $finalizado
  * @property string $id_consulta
  *
- * @property Consultas $idConsulta
+ * @property-read Consulta|null $consulta
  * @property Personas $idPersona
  */
 class ConsultaObstetricia extends \yii\db\ActiveRecord
@@ -76,7 +76,7 @@ class ConsultaObstetricia extends \yii\db\ActiveRecord
      */
     public function getConsulta()
     {
-        return $this->hasOne(Consultas::className(), ['id_consulta' => 'id_consulta']);
+        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**
@@ -84,7 +84,7 @@ class ConsultaObstetricia extends \yii\db\ActiveRecord
      */
     public function getPersona()
     {
-        return $this->hasOne(Personas::className(), ['id_persona' => 'id_persona']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
     public function pasarFechaFormatoISO($date)

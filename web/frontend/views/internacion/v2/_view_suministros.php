@@ -27,10 +27,10 @@ use yii\helpers\Html;
     </div>
     <div class="card-body">
         <?php
-        if (is_array($model->segNivelInternacionSuministroMedicamentos)) { ?>
+        if (is_array($model->suministrosMedicamentos)) { ?>
             <table id="diagnosticos" class="table table-striped table-bordered detail-view">
                 <tbody>
-                    <?php foreach ($model->segNivelInternacionSuministroMedicamentos as $key => $suminstroMedicamento) { ?>
+                    <?php foreach ($model->suministrosMedicamentos as $key => $suminstroMedicamento) { ?>
                         <tr>
 
                             <td>

@@ -2,8 +2,6 @@
 
 namespace common\models;
 
-use Yii;
-
 /**
  * This is the model class for table "dispensa_programa_diabetes".
  *
@@ -20,10 +18,10 @@ use Yii;
  * @property string|null $tiras
  * @property int|null $monitor
  * @property int|null $lanceta
- * @property int|null $id_rrhh_efector Persona que entrega los medicamentos
+ * @property int|null $id_profesional_efector_servicio Persona que entrega (PES)
  *
- * @property PersonaProgramaDiabetes $personaProgramaDiabetes
- * @property Personas $personaRetira
+ * @property-read PersonaProgramaDiabetes|null $fichaDiabetes
+ * @property-read Persona|null $personaRetira
  */
 class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
 {
@@ -35,29 +33,6 @@ class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
         return 'dispensa_programa_diabetes';
     }
 
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-        if ($insert
-            || $this->isAttributeChanged('id_rrhh_efector', false)
-            || $this->isAttributeChanged('id_persona_programa_diabetes', false)
-        ) {
-            if (!$this->id_persona_programa_diabetes) {
-                $this->id_profesional_efector_servicio = null;
-            } else {
-                $ppd = PersonaProgramaDiabetes::findOne($this->id_persona_programa_diabetes);
-                $idEf = $ppd && $ppd->id_efector ? (int) $ppd->id_efector : null;
-                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinPes(
-                    $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null,
-                    $idEf
-                );
-            }
-        }
-        return true;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -65,7 +40,7 @@ class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
     {
         return [
             [['id_persona_programa_diabetes', 'id_persona_retira'], 'required'],
-            [['id_persona_programa_diabetes', 'id_persona_retira', 'ins_lenta_nph', 'ins_lenta_lantus', 'ins_rapida_novorapid', 'metformina_500', 'metformina_850', 'glibenclamida', 'monitor', 'lanceta', 'id_rrhh_efector', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_persona_programa_diabetes', 'id_persona_retira', 'ins_lenta_nph', 'ins_lenta_lantus', 'ins_rapida_novorapid', 'metformina_500', 'metformina_850', 'glibenclamida', 'monitor', 'lanceta', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha_retiro'], 'safe'],
             [['tiras'], 'string'],
             [['id_persona_programa_diabetes'], 'exist', 'skipOnError' => true, 'targetClass' => PersonaProgramaDiabetes::className(), 'targetAttribute' => ['id_persona_programa_diabetes' => 'id']],
@@ -92,18 +67,24 @@ class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
             'tiras' => 'Tiras',
             'monitor' => 'Monitor',
             'lanceta' => 'Lanceta',
-            'id_rrhh_efector' => 'Id Rrhh Efector',
+            'id_profesional_efector_servicio' => 'Profesional que entrega',
         ];
     }
 
     /**
-     * Gets query for [[PersonaProgramaDiabetes]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Ficha diabetes ({@see PersonaProgramaDiabetes}) a la que pertenece esta dispensa.
+     */
+    public function getFichaDiabetes()
+    {
+        return $this->hasOne(PersonaProgramaDiabetes::className(), ['id' => 'id_persona_programa_diabetes']);
+    }
+
+    /**
+     * Alias histórico (`personaProgramaDiabetes`).
      */
     public function getPersonaProgramaDiabetes()
     {
-        return $this->hasOne(PersonaProgramaDiabetes::className(), ['id' => 'id_persona_programa_diabetes']);
+        return $this->getFichaDiabetes();
     }
 
     /**

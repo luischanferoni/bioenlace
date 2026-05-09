@@ -17,6 +17,7 @@ use Yii;
  *
  * @property SnomedHallazgos $codigoSnomed
  * @property Persona $persona
+ * @property-read Consulta|null $consulta
  */
 class Alergias extends \yii\db\ActiveRecord
 {
@@ -112,7 +113,7 @@ class Alergias extends \yii\db\ActiveRecord
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
 
-    public function getIdConsulta()
+    public function getConsulta()
     {
         return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }

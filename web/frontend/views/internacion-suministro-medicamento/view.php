@@ -1,5 +1,6 @@
 <?php
 
+use common\models\Persona;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
@@ -33,7 +34,9 @@ $this->params['breadcrumbs'][] = $this->title;
                     [   //muestra el nombre del responsable seleccionado en el listado
                         'label' => 'Quien Suministró',
                         'attribute' => 'id_rrhh',
-                        'value' => $model->rrhhSuministra->rrhh->idPersona->nombreCompleto,
+                        'value' => $model->rrhhSuministra && $model->rrhhSuministra->persona
+                            ? $model->rrhhSuministra->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                            : '',
                     ],
                     'observacion',
                 ],

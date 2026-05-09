@@ -10,7 +10,7 @@ use Yii;
  * @property string $id_condicion_laboral
  * @property string $nombre
  *
- * @property RrHhEfector[] $rrHhEfectors
+ * @property ProfesionalEfectorServicioCondicionLaboral[] $profesionalEfectorServicioCondicionesLaborales
  */
 class Condiciones_laborales extends \yii\db\ActiveRecord
 {
@@ -46,11 +46,13 @@ class Condiciones_laborales extends \yii\db\ActiveRecord
     }
 
     /**
+     * Filas puente PES–condición laboral para esta condición.
+     *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrHhEfectors()
+    public function getProfesionalEfectorServicioCondicionesLaborales()
     {
-        return $this->hasMany(RrHhEfector::className(), ['id_condicion_laboral' => 'id_condicion_laboral']);
+        return $this->hasMany(ProfesionalEfectorServicioCondicionLaboral::className(), ['id_condicion_laboral' => 'id_condicion_laboral']);
     }
 
 }

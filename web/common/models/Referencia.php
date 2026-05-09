@@ -21,11 +21,11 @@ use common\models\Consulta;
  * @property string $hora_turno
  * @property string $observacion
  *
- * @property Consultas $idConsulta
- * @property Efectores $idEfectorReferenciado
- * @property MotivosDerivacion $idMotivoDerivacion
- * @property Servicios $idServicio
- * @property EstadoSolicitud $idEstado
+ * @property-read Consulta|null $consulta
+ * @property-read Efector|null $efectorReferenciado
+ * @property-read MotivoDerivacion|null $motivoDerivacion
+ * @property-read Servicio|null $servicio
+ * @property-read Estado_solicitud|null $estadoSolicitud
  */
 class Referencia extends \yii\db\ActiveRecord
 {
@@ -72,49 +72,41 @@ class Referencia extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-//    public function getIdConsulta()
-//    {
-//        return $this->hasOne(Consultas::className(), ['id_consulta' => 'id_consulta']);
-//    }
-
     public function getConsulta()
     {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
-    }
-    
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getIdEfectorReferenciado()
-    {
-        return $this->hasOne(Efectores::className(), ['id_efector' => 'id_efector_referenciado']);
+        return $this->hasOne(Consulta::class, ['id_consulta' => 'id_consulta']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdMotivoDerivacion()
+    public function getEfectorReferenciado()
     {
-        return $this->hasOne(MotivosDerivacion::className(), ['id_motivo_derivacion' => 'id_motivo_derivacion']);
-    }
-    
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getIdServicio()
-    {
-        return $this->hasOne(Servicios::className(), ['id_servicio' => 'id_servicio']);
+        return $this->hasOne(Efector::class, ['id_efector' => 'id_efector_referenciado']);
     }
 
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdEstado()
+    public function getMotivoDerivacion()
     {
-        return $this->hasOne(EstadoSolicitud::className(), ['id_estado' => 'id_estado']);
+        return $this->hasOne(MotivoDerivacion::class, ['id_motivo_derivacion' => 'id_motivo_derivacion']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getServicio()
+    {
+        return $this->hasOne(Servicio::class, ['id_servicio' => 'id_servicio']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getEstadoSolicitud()
+    {
+        return $this->hasOne(Estado_solicitud::class, ['id_estado' => 'id_estado']);
     }
     
     public function getDatosPersona($idconsulta,$idreferencia)
@@ -261,7 +253,7 @@ class Referencia extends \yii\db\ActiveRecord
     
     public function cantidadPorEfector($id_efector)
     {
-        return (new yii\db\Query())
+        return (new \yii\db\Query())
             ->from('referencia')
             ->where('id_efector_referenciado = '.$id_efector)
             ->andWhere('id_estado = 1')

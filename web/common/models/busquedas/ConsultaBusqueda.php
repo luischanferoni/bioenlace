@@ -128,22 +128,14 @@ class ConsultaBusqueda extends Consulta
      */
     public function search($params)
     {
-        //variable con el usuario que inicio sesion
-        $id_user = Yii::$app->user->id;
         // TODO este parametro y el resto debería de setearse antes de la llamada a este metodo
         // deberia de venir en $params
-        
-        //$query = Consulta::find();
 
         // No quiero hacer un lazy loading y lanzar queries por cada reqistro en un loop
         // entonces prefiero traer todas las relaciones 1 a 1 de entrada
         $query = Consulta::find()
-                        ->select('consultas.*')                        
-                        //->leftJoin('rr_hh')
+                        ->select('consultas.*')
                         ->with('paciente')
-                        //->leftJoin('rr_hh_efector', '`rr_hh_efector`.`id_rr_hh` = `rr_hh`.`id_rr_hh`')
-                        //->where(['personas.id_user' => $id_user])
-                        //->andWhere(['=', '`turnos`.`fecha`', date('Y-m-d')])
                         ->andWhere('id_efector = :id_efector',[':id_efector' => $this->id_efector])
                         ->orderBy('created_at DESC');
 

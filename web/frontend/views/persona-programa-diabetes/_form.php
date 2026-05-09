@@ -160,14 +160,14 @@ use kartik\depdrop\DepDrop;
 
             <div class="col-md-5">
                 <?= '<label class="control-label">Profesional</label>' ?>
-                <?= $form->field($model, 'id_rrhh_efector')->widget(DepDrop::className(), [
+                <?= $form->field($model, 'id_profesional_efector_servicio')->widget(DepDrop::className(), [
                     'type' => DepDrop::TYPE_SELECT2,
                     'select2Options' => ['theme' => 'default'],
                     'pluginOptions' => [
                         'depends' => ['personaprogramadiabetes-id_efector'],
                         'placeholder' => 'Seleccione un profesional',
-                        'url' => Url::to(['/profesional-en-efector/profesionales-por-efector'])
-                    ]
+                        'url' => Url::to(['/profesional-en-efector/profesionales-por-efector']),
+                    ],
 
                 ])->label(false); ?>
             </div>

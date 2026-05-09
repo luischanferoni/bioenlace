@@ -11,7 +11,7 @@ use Yii;
  * @property integer $id_persona
  * @property string $mail
  *
- * @property Personas $idPersona
+ * @property-read Persona|null $persona
  */
 class Persona_mails extends \yii\db\ActiveRecord
 {
@@ -58,9 +58,9 @@ class Persona_mails extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdPersona()
+    public function getPersona()
     {
-        return $this->hasOne(Personas::className(), ['id_persona' => 'id_persona']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
     public function beforeSave($insert) {

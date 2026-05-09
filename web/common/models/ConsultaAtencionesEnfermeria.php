@@ -146,7 +146,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         return $this->hasOne(Efector::className(), ['id_efector' => 'id_efector']);
     }
 
-    public function getRrhhEfector()
+    public function getRrhh()
     {
         return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }

@@ -22,7 +22,8 @@ use common\traits\ParameterQuestionsTrait;
  *
  * @property Localidades $idLocalidad
  * @property ServiciosEfector[] $serviciosEfectors
- * @property Servicios[] $idServicios
+ * @property-read Servicio[] $servicios
+ * @property-read Rrhh[] $rrhhs
  * @property Turnos[] $turnos
  */
 class Efector extends \yii\db\ActiveRecord
@@ -108,11 +109,14 @@ class Efector extends \yii\db\ActiveRecord
     }
 
     /**
+     * Asignaciones PES activas en el efector (sustituye vínculo legacy suprimido).
+     *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrHhEfectors()
+    public function getProfesionalEfectorServicios()
     {
-        return $this->hasMany(RrHh_Efector::className(), ['id_efector' => 'id_efector']);
+        return $this->hasMany(ProfesionalEfectorServicio::className(), ['id_efector' => 'id_efector'])
+            ->andWhere(['profesional_efector_servicio.deleted_at' => null]);
     }
     /**
      * @return \yii\db\ActiveQuery
@@ -125,9 +129,10 @@ class Efector extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdServicios()
+    public function getServicios()
     {
-        return $this->hasMany(Servicio::className(), ['id_servicio' => 'id_servicio'])->viaTable('ServiciosEfector', ['id_efector' => 'id_efector']);
+        return $this->hasMany(Servicio::className(), ['id_servicio' => 'id_servicio'])
+            ->viaTable(ServiciosEfector::tableName(), ['id_efector' => 'id_efector']);
     }
 
     /**
@@ -145,11 +150,21 @@ class Efector extends \yii\db\ActiveRecord
     }
   
       /**
+     * RRHH (`rr_hh`) de personas con al menos una fila PES activa en este efector (sustituye `rr_hh_efector`).
+     *
      * @return \yii\db\ActiveQuery
      */
-    public function getIdRrHhs()
+    public function getRrhhs()
     {
-        return $this->hasMany(RrHh::className(), ['id_rr_hh' => 'id_rr_hh'])->viaTable('rr_hh_efector', ['id_efector' => 'id_efector']);
+        return $this->hasMany(Rrhh::className(), ['id_persona' => 'id_persona'])
+            ->viaTable(
+                ProfesionalEfectorServicio::tableName(),
+                ['id_efector' => 'id_efector'],
+                static function ($query) {
+                    /** @var \yii\db\Query $query */
+                    $query->andWhere(['profesional_efector_servicio.deleted_at' => null]);
+                }
+            );
     }
 
     /**

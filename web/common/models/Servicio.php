@@ -14,7 +14,7 @@ use common\traits\ParameterQuestionsTrait;
  *
  * @property Referencia[] $referencias
  * @property ServiciosEfector[] $serviciosEfectors
- * @property Efectores[] $idEfectors
+ * @property-read Efector[] $efectores
  * @property Turnos[] $turnos
  */
 class Servicio extends \yii\db\ActiveRecord
@@ -110,9 +110,10 @@ class Servicio extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdEfectors()
+    public function getEfectores()
     {
-        return $this->hasMany(Efectores::className(), ['id_efector' => 'id_efector'])->viaTable('ServiciosEfector', ['id_servicio' => 'id_servicio']);
+        return $this->hasMany(Efector::className(), ['id_efector' => 'id_efector'])
+            ->viaTable(ServiciosEfector::tableName(), ['id_servicio' => 'id_servicio']);
     }
 
     /**

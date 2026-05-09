@@ -11,8 +11,8 @@ use Yii;
  * @property integer $id_antecedente
  * @property integer $id_snomed_situacion
  * @property string|null $deleted_at
- * @property Antecedentes $idAntecedente
- * @property Personas $idConsulta
+ * @property-read Antecedente|null $antecedente
+ * @property-read Persona|null $persona
  */
 class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
 {
@@ -61,7 +61,7 @@ class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdAntecedente()
+    public function getAntecedente()
     {
         return $this->hasOne(Antecedente::className(), ['id_antecedente' => 'id_antecedente']);
     }
@@ -77,9 +77,12 @@ class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdConsulta()
+    /**
+     * Paciente (`personas_antecedentes.id_persona`).
+     */
+    public function getPersona()
     {
-        return $this->hasOne(Persona::className(), ['id_persona' => 'id_consulta']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
     
     //Busca los antecedentes familiares de una persona por consulta

@@ -16,7 +16,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $arancel
  *
  * @property DetallePracticas[] $detallePracticas
- * @property CategoriasPracticas $idCategoria
+ * @property-read CategoriasPractica|null $categoria
  */
 class Practica extends \yii\db\ActiveRecord
 {
@@ -83,9 +83,9 @@ class Practica extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getIdCategoria()
+    public function getCategoria()
     {
-        return $this->hasOne(CategoriasPracticas::className(), ['id_categoria' => 'id_categoria']);
+        return $this->hasOne(CategoriasPractica::className(), ['id_categoria' => 'id_categoria']);
     }
 
     /**

@@ -132,8 +132,8 @@ foreach ($turnos as $turno) { ?>
         </div>
 
         <div class="<?php echo ($profesional != '') ? 'col-4' : 'col-7' ?>">
-          <h4 class="mb-2"><?php echo $turno->persona->apellido . ', ' . $turno->persona->nombre; ?></h4>
-          <h4 class="mb-2">DNI: <?php echo $turno->persona->documento; ?></h4>
+          <h4 class="mb-2"><?php echo $turno->paciente->apellido . ', ' . $turno->paciente->nombre; ?></h4>
+          <h4 class="mb-2">DNI: <?php echo $turno->paciente->documento; ?></h4>
           <?php 
               if($turno->id_consulta_referencia != 0):
                 echo '<h4 class="mb-2"><span class="badge bg-info">Referencia</span></h4>';
@@ -147,7 +147,7 @@ foreach ($turnos as $turno) { ?>
         <div class="col-3">
         <?php if($profesional != ''){?>
           <div class="col-xs-4">
-            <h4>DNI: <?php echo $turno->persona->documento;?> - HC: <?php echo $turno->persona->obtenerNHistoriaClinica(Yii::$app->user->getIdEfector());?></h4>
+            <h4>DNI: <?php echo $turno->paciente->documento;?> - HC: <?php echo $turno->paciente->obtenerNHistoriaClinica(Yii::$app->user->getIdEfector());?></h4>
           </div>
         <?php } else { ?>
             <?php echo Html::a(

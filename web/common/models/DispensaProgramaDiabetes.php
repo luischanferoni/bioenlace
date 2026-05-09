@@ -49,7 +49,7 @@ class DispensaProgramaDiabetes extends \yii\db\ActiveRecord
             } else {
                 $ppd = PersonaProgramaDiabetes::findOne($this->id_persona_programa_diabetes);
                 $idEf = $ppd && $ppd->id_efector ? (int) $ppd->id_efector : null;
-                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
+                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinPes(
                     $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null,
                     $idEf
                 );

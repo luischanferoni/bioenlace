@@ -34,18 +34,7 @@ class SobreturnoService
             ->andWhere(['>', 'hora', $sobreturno->hora]);
         $idPesSo = (int) ($sobreturno->id_profesional_efector_servicio ?? 0);
         if ($idPesSo > 0) {
-            $rrsaSo = ProfesionalEfectorServicio::findOne(['id' => $idPesSo, 'deleted_at' => null]);
-            $compatSo = $rrsaSo !== null ? $rrsaSo->resolveRrhhServicioAsignadoIdForTurnoCompat() : null;
-            $or = [
-                ['id_profesional_efector_servicio' => $idPesSo],
-                ['id_rrhh_servicio_asignado' => (int) $sobreturno->id_rrhh_servicio_asignado],
-            ];
-            if ($compatSo !== null && (int) $compatSo > 0) {
-                $or[] = ['id_rrhh_servicio_asignado' => (int) $compatSo];
-            }
-            $otrosQuery->andWhere(array_merge(['or'], $or));
-        } else {
-            $otrosQuery->andWhere(['id_rrhh_servicio_asignado' => $sobreturno->id_rrhh_servicio_asignado]);
+            $otrosQuery->andWhere(['id_profesional_efector_servicio' => $idPesSo]);
         }
         $otros = $otrosQuery->orderBy(['hora' => SORT_ASC])->all();
 

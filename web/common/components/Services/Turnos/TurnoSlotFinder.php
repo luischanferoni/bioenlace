@@ -76,7 +76,6 @@ class TurnoSlotFinder
      *   'fecha' => 'YYYY-MM-DD',
      *   'hora' => 'HH:MM',
      *   'id_rr_hh' => int,
-     *   'id_rrhh_servicio_asignado' => int,
      *   'id_profesional_efector_servicio' => int|null,
      *   'id_efector' => int,
      *   'id_servicio' => int,
@@ -91,8 +90,8 @@ class TurnoSlotFinder
 
     /**
      * Lista hasta $limit slots libres (mismo criterio que findFirstAvailable).
-     * Criterio opcional: id_rrhh_servicio_asignado — limita a esa agenda/profesional.
-     * Criterio opcional: id_profesional_efector_servicio — mismo efecto (resuelve a rrhh_servicio legacy).
+     * Criterio opcional: `id_rrhh_servicio_asignado` — alias del id PES (misma PK).
+     * Criterio opcional: id_profesional_efector_servicio — limita a esa agenda/profesional.
      *
      * @param array $criteria
      * @param int $limit
@@ -215,7 +214,6 @@ class TurnoSlotFinder
                         ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
                         ->one();
                     $idRrhh = $re ? (int) $re->id_rr_hh : 0;
-                    $idRrsaOut = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat() ?? 0;
                     $srv = $pes->servicio;
                     $servicioEmb = $srv !== null
                         ? ['id_servicio' => (int) $srv->id_servicio, 'nombre' => (string) $srv->nombre]
@@ -225,7 +223,6 @@ class TurnoSlotFinder
                         'fecha' => $dia,
                         'hora' => $hora,
                         'id_rr_hh' => $idRrhh,
-                        'id_rrhh_servicio_asignado' => $idRrsaOut,
                         'id_profesional_efector_servicio' => $idPesAgenda,
                         'id_efector' => (int) $idEfector,
                         'id_servicio' => (int) $idServicio,

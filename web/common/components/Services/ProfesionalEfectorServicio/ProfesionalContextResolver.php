@@ -25,6 +25,7 @@ final class ProfesionalContextResolver
         if ($idPes <= 0) {
             return 0;
         }
+
         return self::resolveRrhhIdFromPes($idPes);
     }
 
@@ -47,6 +48,7 @@ final class ProfesionalContextResolver
                 'deleted_at' => null,
             ])
             ->one();
+
         return $re !== null ? (int) $re->id_rr_hh : 0;
     }
 
@@ -59,24 +61,7 @@ final class ProfesionalContextResolver
         if ($idRrhh <= 0) {
             return null;
         }
+
         return RrhhEfector::findOne($idRrhh);
     }
-
-    /**
-     * Valor histórico `legacy_rrhh_servicio_id` en la fila PES, si existe.
-     */
-    public static function resolveRrhhServicioIdFromPes(int $idPes): ?int
-    {
-        if ($idPes <= 0) {
-            return null;
-        }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        if ($pes === null) {
-            return null;
-        }
-        $legacySlot = (int) ($pes->legacy_rrhh_servicio_id ?? 0);
-
-        return $legacySlot > 0 ? $legacySlot : null;
-    }
 }
-

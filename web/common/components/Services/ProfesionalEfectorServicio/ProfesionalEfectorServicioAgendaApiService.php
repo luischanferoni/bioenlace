@@ -119,26 +119,22 @@ class ProfesionalEfectorServicioAgendaApiService
     }
 
     /**
-     * Opcional: valida coherencia si el cliente aún envía `id_rrhh_servicio_asignado` (solo vs `legacy_rrhh_servicio_id` en PES).
+     * Opcional: si el cliente envía `id_rrhh_servicio_asignado`, debe coincidir con la PK PES (compat de nombre).
      *
-     * @return int valor histórico para serialización (puede ser 0)
      * @throws BadRequestHttpException
      */
     public static function assertRrhhServicioAsignadoAlineadoConPes(
         ?int $idRrhhServicioAsignado,
         ProfesionalEfectorServicio $pes,
         int $idEfector
-    ): int {
+    ): void {
         if ($idEfector <= 0 || (int) $pes->id_efector !== $idEfector) {
             throw new BadRequestHttpException('La asignación profesional no pertenece al efector.');
         }
-        $leg = (int) ($pes->legacy_rrhh_servicio_id ?? 0);
         $in = $idRrhhServicioAsignado !== null && $idRrhhServicioAsignado > 0 ? (int) $idRrhhServicioAsignado : 0;
-        if ($in > 0 && $leg > 0 && $in !== $leg) {
-            throw new BadRequestHttpException('id_rrhh_servicio_asignado no coincide con la asignación PES.');
+        if ($in > 0 && $in !== (int) $pes->id) {
+            throw new BadRequestHttpException('id_rrhh_servicio_asignado no coincide con id_profesional_efector_servicio.');
         }
-
-        return $leg > 0 ? $leg : $in;
     }
 
     /**
@@ -162,11 +158,7 @@ class ProfesionalEfectorServicioAgendaApiService
                 'pes.id_persona' => $re->id_persona,
                 'pes.id_efector' => $idEfector,
                 'pes.deleted_at' => null,
-            ])
-            ->andWhere([
-                'or',
-                ['pes.id' => $idRrhhServicioAsignado],
-                ['pes.legacy_rrhh_servicio_id' => $idRrhhServicioAsignado],
+                'pes.id' => $idRrhhServicioAsignado,
             ])
             ->exists();
         if (!$ok) {
@@ -175,11 +167,11 @@ class ProfesionalEfectorServicioAgendaApiService
     }
 
     /**
-     * Resuelve PES existente por id PES, por `legacy_rrhh_servicio_id` o por coincidencia de PK en el efector/persona.
+     * Resuelve PES existente por PK en el efector y persona del RRHH.
      *
      * @throws BadRequestHttpException
      */
-    public static function obtenerOCrearPesParaRrhhServicioEnEfector(int $idRrhhServicio, int $idRrhh, int $idEfector): ProfesionalEfectorServicio
+    public static function obtenerPesPorIdEnEfectorParaRrhh(int $idPes, int $idRrhh, int $idEfector): ProfesionalEfectorServicio
     {
         $re = RrhhEfector::find()
             ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
@@ -189,7 +181,7 @@ class ProfesionalEfectorServicioAgendaApiService
         }
         $pesDirect = ProfesionalEfectorServicio::find()
             ->where([
-                'id' => $idRrhhServicio,
+                'id' => $idPes,
                 'id_persona' => (int) $re->id_persona,
                 'id_efector' => $idEfector,
                 'deleted_at' => null,
@@ -197,28 +189,6 @@ class ProfesionalEfectorServicioAgendaApiService
             ->one();
         if ($pesDirect !== null) {
             return $pesDirect;
-        }
-        $idPesPorLegacy = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrhhServicio);
-        if ($idPesPorLegacy !== null) {
-            $pesLegacy = ProfesionalEfectorServicio::findOne(['id' => $idPesPorLegacy, 'deleted_at' => null]);
-            if (
-                $pesLegacy !== null
-                && (int) $pesLegacy->id_persona === (int) $re->id_persona
-                && (int) $pesLegacy->id_efector === (int) $idEfector
-            ) {
-                return $pesLegacy;
-            }
-        }
-        $pesPorCol = ProfesionalEfectorServicio::find()
-            ->where([
-                'id_persona' => $re->id_persona,
-                'id_efector' => $idEfector,
-                'legacy_rrhh_servicio_id' => $idRrhhServicio,
-                'deleted_at' => null,
-            ])
-            ->one();
-        if ($pesPorCol !== null) {
-            return $pesPorCol;
         }
 
         throw new BadRequestHttpException(
@@ -239,7 +209,7 @@ class ProfesionalEfectorServicioAgendaApiService
                 ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
                 ->one();
             $row['id_rr_hh'] = $re !== null ? (int) $re->id_rr_hh : null;
-            $row['id_rrhh_servicio_asignado'] = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
+            $row['id_profesional_efector_servicio'] = (int) $pes->id;
             $row['id_agenda_rrhh'] = (int) $model->id;
         }
 

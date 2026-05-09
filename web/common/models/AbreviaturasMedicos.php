@@ -43,7 +43,7 @@ class AbreviaturasMedicos extends ActiveRecord
             return false;
         }
         if ($insert || $this->isAttributeChanged('id_rr_hh', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinPes(
                 $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null
             );
         }

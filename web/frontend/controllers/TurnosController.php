@@ -181,43 +181,31 @@ class TurnosController extends Controller
 
         $request = Yii::$app->request;
         $dia = $request->get('dia') ?: $request->post('dia') ?: date("Y-m-d");
-        $id_rrhh_servicio_asignado = (int) ($request->get('id_rrhh_servicio_asignado') ?: $request->post('id_rrhh_servicio_asignado') ?: 0);
         $id_servicio = $request->get('id_servicio') ?: $request->post('id_servicio');
         $id_rr_hh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
-        $idPesReq = (int) ($request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio') ?: 0);
-
         $id_efector = Yii::$app->user->getIdEfector();
 
-        if ($id_rrhh_servicio_asignado === 0 && $id_rr_hh && $id_servicio && $id_efector) {
-            $resolved = ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector(
+        $idPesReq = (int) ($request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio') ?: 0);
+        $idRrsaAlias = (int) ($request->get('id_rrhh_servicio_asignado') ?: $request->post('id_rrhh_servicio_asignado') ?: 0);
+        if ($idPesReq <= 0 && $idRrsaAlias > 0) {
+            $mapped = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                $idRrsaAlias,
+                (int) $id_efector
+            );
+            $idPesReq = $mapped !== null ? $mapped : $idRrsaAlias;
+        }
+        if ($idPesReq <= 0 && $id_rr_hh && $id_servicio && $id_efector) {
+            $idPesReq = (int) (ProfesionalEfectorServicio::resolverIdPesDesdeRrhhServicioYEfector(
                 (int) $id_rr_hh,
                 (int) $id_servicio,
                 (int) $id_efector
-            );
-            if ($resolved) {
-                $id_rrhh_servicio_asignado = (int) $resolved;
-            }
-        }
-        if ($id_rrhh_servicio_asignado === 0 && $idPesReq > 0 && $id_servicio && $id_efector) {
-            $pesSlot = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
-            if (
-                $pesSlot
-                && (int) $pesSlot->id_efector === (int) $id_efector
-                && (int) $pesSlot->id_servicio === (int) $id_servicio
-            ) {
-                $compat = $pesSlot->resolveRrhhServicioAsignadoIdForTurnoCompat();
-                if ($compat) {
-                    $id_rrhh_servicio_asignado = (int) $compat;
-                }
-            }
+            ) ?: 0);
         }
 
         $formatoSlots = ($request->get('formato') ?: $request->post('formato')) === 'slots';
 
         $turnosQuery = Turno::findActive();
-        if ($id_rrhh_servicio_asignado) {
-            $turnosQuery->andWhere(['id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado]);
-        } elseif ($idPesReq > 0) {
+        if ($idPesReq > 0) {
             $pesFiltro = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
             if ($pesFiltro && (int) $pesFiltro->id_efector === (int) $id_efector) {
                 $turnosQuery->andWhere(['id_profesional_efector_servicio' => $idPesReq]);
@@ -256,7 +244,7 @@ class TurnosController extends Controller
 
         $agregoSegundos = false;
 
-        if ($id_servicio and $id_rrhh_servicio_asignado == 0) {
+        if ($id_servicio && $idPesReq == 0) {
             $pesRows = ProfesionalEfectorServicio::findAllActivosPorServicioEfector((int) $id_servicio, (int) $id_efector);
             $idsPes = array_map(static function (ProfesionalEfectorServicio $p) {
                 return (int) $p->id;
@@ -298,13 +286,8 @@ class TurnosController extends Controller
 
             $cupoPacientes = count($horariosAgenda) * 5;
         } else {
-            $idPes = $id_rrhh_servicio_asignado > 0
-                ? ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                    (int) $id_rrhh_servicio_asignado,
-                    (int) $id_efector
-                )
-                : null;
-            if ($idPes === null && $idPesReq > 0 && $id_efector) {
+            $idPes = null;
+            if ($idPesReq > 0 && $id_efector) {
                 $pesAgenda = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
                 if (
                     $pesAgenda
@@ -597,11 +580,15 @@ class TurnosController extends Controller
             }
         }
         $servicioAsignado = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['id_servicio_asignado'] : NULL;
-        $rrhhServicioAsignado = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['id_rrhh_servicio_asignado'] : NULL;
+        $idPesFiltroList = Yii::$app->request->get('TurnoBusqueda')['id_profesional_efector_servicio'] ?? null;
 
         $searchModel = new TurnoBusqueda();
-        if ($servicioAsignado != null) $searchModel->id_servicio_asignado = $servicioAsignado;
-        if ($rrhhServicioAsignado != null) $searchModel->id_rrhh_servicio_asignado = $rrhhServicioAsignado;
+        if ($servicioAsignado != null) {
+            $searchModel->id_servicio_asignado = $servicioAsignado;
+        }
+        if ($idPesFiltroList != null) {
+            $searchModel->id_profesional_efector_servicio = $idPesFiltroList;
+        }
         $dataProvider = $searchModel->searchAllTurnos($tfecha, $idRrhh);
         return $this->render('list', [
             'turnos' => $searchModel,

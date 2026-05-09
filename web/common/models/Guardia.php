@@ -15,7 +15,6 @@ use yii\helpers\Console;
  * @property string|null $fecha_fin
  * @property string|null $hora_fin
  * @property string|null $estado
- * @property int|null $id_rrhh_asignado
  * @property int|null $id_profesional_efector_servicio
  * @property string|null $cobertura
  * @property string|null $situacion_al_ingresar
@@ -79,7 +78,7 @@ class Guardia extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_persona', 'id_rrhh_asignado', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
+            [['id_persona', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
             [['fecha', 'hora', 'fecha_fin', 'hora_fin', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['ingresa_con', 'ingresa_en', 'estado', 'situacion_al_ingresar', 'condiciones_derivacion', 'datos_contacto_tel'], 'string'],
             [['cobertura'], 'string', 'max' => 100],
@@ -117,7 +116,7 @@ class Guardia extends \yii\db\ActiveRecord
             'id_persona' => 'Paciente',
             'fecha' => 'Fecha Ingreso',
             'hora' => 'Hora Ingreso',
-            'id_rrhh_asignado' => 'Profesional',
+            'id_profesional_efector_servicio' => 'Profesional',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
             'deleted_at' => 'Deleted At',
@@ -148,16 +147,6 @@ class Guardia extends \yii\db\ActiveRecord
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
 
-    /**
-     * Gets query for [[RrhhAsignado]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRrhhEfector()
-    {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rrhh_asignado']);
-    }
-
     public function getProfesionalEfectorServicio()
     {
         return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
@@ -179,20 +168,10 @@ class Guardia extends \yii\db\ActiveRecord
     }
 
     /**
-     * Nombre del profesional asignado para listados (libro de guardia): PES cuando existe; legacy `rrhh_servicio` + efector.
+     * Nombre del profesional asignado para listados (libro de guardia) vía PES.
      */
     public function getProfesionalAsignadoNombreCompleto(): string
     {
-        if ($this->id < 17002) {
-            if (!$this->id_rrhh_asignado) {
-                return 'NO';
-            }
-            $re = $this->rrhhEfector;
-
-            return $re !== null && $re->persona
-                ? $re->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
-                : 'NO';
-        }
         if ((int) $this->id_profesional_efector_servicio > 0) {
             $pes = $this->profesionalEfectorServicio;
             if ($pes !== null && $pes->persona) {
@@ -301,21 +280,21 @@ class Guardia extends \yii\db\ActiveRecord
             $this->estado = 'finalizada';
         }
 
-        if ($insert
-            || $this->isAttributeChanged('id_rrhh_asignado', false)
+        if (
+            $insert
+            || $this->isAttributeChanged('id_profesional_efector_servicio', false)
             || $this->isAttributeChanged('id_efector', false)
         ) {
-            $idPes = ProfesionalEfectorServicio::resolvePesIdFromGuardiaAsignado(
-                $this->id_rrhh_asignado !== null && $this->id_rrhh_asignado !== '' ? (int) $this->id_rrhh_asignado : null,
-                $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
-            );
-            if (($idPes === null || $idPes <= 0) && Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+            if (
+                ((int) $this->id_profesional_efector_servicio === 0 || $this->id_profesional_efector_servicio === null)
+                && Yii::$app->has('user')
+                && !Yii::$app->user->isGuest
+            ) {
                 $raw = Yii::$app->user->getIdProfesionalEfectorServicio();
-                if ($raw !== null && $raw !== '') {
-                    $idPes = (int) $raw;
+                if ($raw !== null && $raw !== '' && (int) $raw > 0) {
+                    $this->id_profesional_efector_servicio = (int) $raw;
                 }
             }
-            $this->id_profesional_efector_servicio = ($idPes !== null && $idPes > 0) ? $idPes : null;
         }
 
         return true;

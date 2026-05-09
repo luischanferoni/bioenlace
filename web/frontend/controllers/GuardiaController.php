@@ -122,7 +122,7 @@ class GuardiaController extends Controller
         }
         
         $model->id_efector = Yii::$app->user->getIdEfector();
-        $this->prefillIdRrhhAsignadoDesdeSesion($model);
+        $this->prefillProfesionalEfectorServicioDesdeSesion($model);
         $model->fecha = date("d/m/Y");
         $telefono = new Telefono();
 
@@ -206,9 +206,9 @@ class GuardiaController extends Controller
     }
 
     /**
-     * Prellenado desde sesión operativa (PES canónico; `id_rrhh_asignado` solo si hay `legacy_rrhh_servicio_id`).
+     * Prellenado desde sesión operativa (PES canónico).
      */
-    protected function prefillIdRrhhAsignadoDesdeSesion(Guardia $model): void
+    protected function prefillProfesionalEfectorServicioDesdeSesion(Guardia $model): void
     {
         $idEfector = (int) $model->id_efector;
         if ($idEfector <= 0) {
@@ -220,10 +220,6 @@ class GuardiaController extends Controller
             $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
             if ($pes !== null && (int) $pes->id_efector === $idEfector) {
                 $model->id_profesional_efector_servicio = (int) $pes->id;
-                $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-                if ($compat !== null && $compat > 0) {
-                    $model->id_rrhh_asignado = (int) $compat;
-                }
 
                 return;
             }
@@ -239,10 +235,6 @@ class GuardiaController extends Controller
             );
             if ($pes2 !== null) {
                 $model->id_profesional_efector_servicio = (int) $pes2->id;
-                $compat = $pes2->resolveRrhhServicioAsignadoIdForTurnoCompat();
-                if ($compat !== null && $compat > 0) {
-                    $model->id_rrhh_asignado = (int) $compat;
-                }
             }
         }
     }

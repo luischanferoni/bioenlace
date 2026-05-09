@@ -43,12 +43,12 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
             return false;
         }
         if ($insert || $this->isAttributeChanged('id_rrhh_solicita', false)) {
-            $this->id_profesional_efector_servicio_solicita = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+            $this->id_profesional_efector_servicio_solicita = ProfesionalEfectorServicio::findIdByRrhhEfectorMinPes(
                 $this->id_rrhh_solicita !== null && $this->id_rrhh_solicita !== '' ? (int) $this->id_rrhh_solicita : null
             );
         }
         if ($insert || $this->isAttributeChanged('id_rrhh_realiza', false)) {
-            $this->id_profesional_efector_servicio_realiza = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+            $this->id_profesional_efector_servicio_realiza = ProfesionalEfectorServicio::findIdByRrhhEfectorMinPes(
                 $this->id_rrhh_realiza !== null && $this->id_rrhh_realiza !== '' ? (int) $this->id_rrhh_realiza : null
             );
         }

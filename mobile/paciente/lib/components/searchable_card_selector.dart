@@ -27,7 +27,6 @@ List<Map<String, dynamic>> _flattenSlotsPacientePorDia(Map<String, dynamic> data
         if (s is! Map) continue;
         final hora = s['hora']?.toString() ?? '';
         var slotId = s['slot_id']?.toString() ?? '';
-        final idRrsa = s['id_rrhh_servicio_asignado']?.toString() ?? '';
         final idPesRaw = s['id_profesional_efector_servicio'];
         final idPes = idPesRaw is int
             ? idPesRaw
@@ -36,8 +35,7 @@ List<Map<String, dynamic>> _flattenSlotsPacientePorDia(Map<String, dynamic> data
         if (slotId.isEmpty && idPes > 0) {
           slotId = 'pes:$idPes|$fecha|$hora';
         }
-        // `slot_id` PES-first desde API; compat legacy si falta.
-        final id = slotId.isNotEmpty ? slotId : (idRrsa.isNotEmpty ? '$idRrsa|$fecha|$hora' : '');
+        final id = slotId;
         if (id.isEmpty) continue;
         final fechaTxt = _formatFechaCardSlots(fecha);
         final svcNombre = (s['servicio'] is Map)
@@ -266,9 +264,12 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
         for (final s in slots ?? []) {
           if (s is! Map) continue;
           final hora = s['hora']?.toString() ?? '';
-          final idRrsa = s['id_rrhh_servicio_asignado']?.toString() ?? '';
-          if (fecha.isEmpty || hora.isEmpty || idRrsa.isEmpty) continue;
-          final id = '$idRrsa|$fecha|$hora';
+          final idPesRaw = s['id_profesional_efector_servicio'];
+          final idPes = idPesRaw is int
+              ? idPesRaw
+              : (idPesRaw is String ? int.tryParse(idPesRaw) : null) ?? 0;
+          if (fecha.isEmpty || hora.isEmpty || idPes <= 0) continue;
+          final id = 'pes:$idPes|$fecha|$hora';
           final fechaTxt = _formatFechaCardSlots(fecha);
           out.add({'id': id, 'text': '$fechaTxt · $franjaLabel · $hora'});
         }

@@ -45,8 +45,8 @@
           "required": false
         },
         {
-          "name": "id_rrhh_servicio_asignado",
-          "label": "Agenda (rrhh servicio)",
+          "name": "id_profesional_efector_servicio",
+          "label": "Agenda (id PES)",
           "type": "text",
           "required": false
         },

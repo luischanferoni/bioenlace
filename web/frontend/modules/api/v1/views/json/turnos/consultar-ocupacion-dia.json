@@ -17,12 +17,6 @@
           "required": false
         },
         {
-          "name": "id_rrhh_servicio_asignado",
-          "label": "ID agenda rrhh servicio",
-          "type": "text",
-          "required": false
-        },
-        {
           "name": "id_servicio",
           "label": "Servicio (si no hay agenda)",
           "type": "text",
@@ -30,7 +24,7 @@
         },
         {
           "name": "id_profesional_efector_servicio",
-          "label": "Profesional (PES; resolver agenda)",
+          "label": "Profesional / agenda (id PES; alias query id_rrhh_servicio_asignado)",
           "type": "text",
           "required": false
         },

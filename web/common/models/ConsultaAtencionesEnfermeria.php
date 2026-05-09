@@ -59,28 +59,6 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
                 return;
             }
         }
-        if ((int) $this->id_rrhh_servicio > 0) {
-            $idEfector = 0;
-            if ($this->id_consulta) {
-                $cEf = Consulta::findOne($this->id_consulta);
-                if ($cEf && (int) $cEf->id_efector > 0) {
-                    $idEfector = (int) $cEf->id_efector;
-                }
-            }
-            $id = $idEfector > 0
-                ? ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
-                    (int) $this->id_rrhh_servicio,
-                    $idEfector
-                )
-                : null;
-            if ($id === null) {
-                $id = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId((int) $this->id_rrhh_servicio);
-            }
-            if ($id !== null) {
-                $this->id_profesional_efector_servicio = $id;
-                return;
-            }
-        }
         if ($this->id_rr_hh && $this->id_consulta) {
             $c = Consulta::findOne($this->id_consulta);
             if ($c && $c->id_efector && $c->id_servicio) {
@@ -108,10 +86,9 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
         return [
             [['fecha_creacion', 'hora_creacion'], 'safe'],
-            [['id_consulta', 'id_persona', 'id_user', 'id_rr_hh', 'id_rrhh_servicio', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_consulta', 'id_persona', 'id_user', 'id_rr_hh', 'id_profesional_efector_servicio'], 'integer'],
             [['datos', 'id_consulta'], 'required'],
             [['datos'], 'validarDatos'],
-            [['id_rrhh_servicio'], 'default', 'value' => 0],
         ];
     }
 
@@ -795,7 +772,6 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         if ($insert
             || $this->isAttributeChanged('id_consulta', false)
             || $this->isAttributeChanged('id_rr_hh', false)
-            || $this->isAttributeChanged('id_rrhh_servicio', false)
         ) {
             $this->syncProfesionalEfectorServicioFromContext();
         }

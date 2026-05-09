@@ -479,7 +479,7 @@ HTML;
                     \common\models\Turno::cambiarCampoAtendido($modelConsulta->parent_id, \common\models\Turno::ATENDIDO_SI);
                     $turno = \common\models\Turno::findOne($modelConsulta->parent_id);
                     if ($turno) {
-                        \common\models\Turno::cargarRrhhServicioAsignado($modelConsulta->parent_id, $turno->id_servicio_asignado);
+                        \common\models\Turno::sincronizarProfesionalEfectorServicioDesdeSesion((int) $modelConsulta->parent_id, $turno->id_servicio_asignado);
                         $consultaPS = \common\models\ConsultaDerivaciones::getPracticaSolicitadasPorIdConsultaSolicitada($turno->id_consulta_referencia);
                         if ($consultaPS) {
                             $consultaPS->id_consulta_responde = $modelConsulta->id_consulta;

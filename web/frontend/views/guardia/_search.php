@@ -26,7 +26,7 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'hora') ?>
 
-    <?= $form->field($model, 'id_rrhh_asignado') ?>
+    <?= $form->field($model, 'id_profesional_efector_servicio') ?>
 
     <?php // echo $form->field($model, 'created_at') ?>
 

@@ -217,8 +217,6 @@ class Turno extends \yii\db\ActiveRecord
         if ($pes === null) {
             return;
         }
-        $leg = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-        $this->id_rrhh_servicio_asignado = $leg !== null ? (int) $leg : 0;
         $re = RrhhEfector::find()
             ->where([
                 'id_persona' => $pes->id_persona,
@@ -256,7 +254,7 @@ class Turno extends \yii\db\ActiveRecord
             [['id_persona', 'hora', 'fecha', 'id_efector', 'id_servicio_asignado'], 'required'],
             [['id_persona'], 'validateDelegarRequiereProfesional', 'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH],
             [['id_servicio_asignado'], 'required', 'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS],
-            [['id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_rrhh_servicio_asignado', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
+            [['id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
             // no deja crear un turno para la misma persona para el mismo recurso en el mismo dia
             [
                 ['fecha', 'id_persona', 'id_profesional_efector_servicio'], 'unique',
@@ -289,7 +287,6 @@ class Turno extends \yii\db\ActiveRecord
                     return false;
                 }
             }],
-            [['id_rrhh_servicio_asignado'], 'default', 'value' => 0],
             [['tipo_atencion'], 'string', 'max' => 20],
             [['tipo_atencion'], 'in', 'range' => [self::TIPO_ATENCION_PRESENCIAL, self::TIPO_ATENCION_TELECONSULTA]],
             [['tipo_atencion'], 'default', 'value' => self::TIPO_ATENCION_PRESENCIAL],
@@ -364,16 +361,6 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * PES asociado cuando `id_rrhh_servicio_asignado` almacena la PK de `profesional_efector_servicio`
-     * (o coincide con un id resuelto en runtime vía {@see id_profesional_efector_servicio}).
-     */
-    public function getRrhhServicioAsignado()
-    {
-        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_rrhh_servicio_asignado'])
-            ->andOnCondition(['profesional_efector_servicio.deleted_at' => null]);
-    }
-
-    /**
      * Texto de servicio para UI/API sin depender de `rrhh_servicio` cuando hay `servicio` o PES.
      */
     public function getNombreServicioParaDisplay(): string
@@ -389,7 +376,7 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Fragmento JSON canónico para clientes (PES-first): evita depender solo de `id_rrhh_servicio_asignado`.
+     * Fragmento JSON canónico para clientes (PES-first).
      *
      * @return array{id_servicio: int, nombre: string}|null
      */
@@ -462,7 +449,7 @@ class Turno extends \yii\db\ActiveRecord
     /**
      * Servicios e ids PES para filtrar turnos del profesional en un efector.
      *
-     * @return array{0: list<int>, 1: list<int>, 2: list<int>} slot legacy vacío, servicioIds, pesIds
+     * @return array{0: list<int>, 1: list<int>, 2: list<int>} reservado (vacío), servicioIds, pesIds
      */
     private static function contextoProfesionalTurnosDesdeRrhhEfector(?RrhhEfector $re): array
     {
@@ -470,7 +457,6 @@ class Turno extends \yii\db\ActiveRecord
             return [[], [], []];
         }
         $servicioIds = [];
-        $slotIds = [];
         $pesRows = ProfesionalEfectorServicio::find()
             ->where([
                 'id_persona' => $re->id_persona,
@@ -482,22 +468,15 @@ class Turno extends \yii\db\ActiveRecord
         foreach ($pesRows as $pes) {
             $pesIds[] = (int) $pes->id;
             $servicioIds[] = (int) $pes->id_servicio;
-            $c = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
-            if ($c !== null && (int) $c > 0) {
-                $slotIds[] = (int) $c;
-            }
         }
         $servicioIds = array_values(array_unique(array_filter($servicioIds, static function ($v) {
-            return $v !== null && $v !== '' && (int) $v > 0;
-        })));
-        $slotIds = array_values(array_unique(array_filter($slotIds, static function ($v) {
             return $v !== null && $v !== '' && (int) $v > 0;
         })));
         $pesIds = array_values(array_unique(array_filter($pesIds, static function ($v) {
             return (int) $v > 0;
         })));
 
-        return [$slotIds, $servicioIds, $pesIds];
+        return [[], $servicioIds, $pesIds];
     }
 
     public static function getTurnosPorRrhhPorFecha($fecha, $idRrhh)
@@ -506,7 +485,7 @@ class Turno extends \yii\db\ActiveRecord
         if ($rrhh === null) {
             return [];
         }
-        [$idsRrhhServicios, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh);
+        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh);
 
         // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
         $serviciosConPasePrevio = $idsServicios !== []
@@ -520,20 +499,19 @@ class Turno extends \yii\db\ActiveRecord
 
         $totalIdsServicios = array_unique(array_merge($idsServicios, $idServiciosConPasePrevio));
         //echo $serviciosConPasePrevio->createCommand()->getRawSql();die;
-        // En turnos se guarda id_rrhh_servicio_asignado o id_servicio, si se trata de un turno asignado al rrhh especifico
-        // o al servicio en el cual el rrhh esta trabajando en este momento
         $query = Turno::findActive()->where(['id_efector' => Yii::$app->user->getIdEfector()]);
 
         $or = [];
         if ($idsPes !== []) {
             $or[] = ['in', 'id_profesional_efector_servicio', $idsPes];
         }
-        if ($idsRrhhServicios !== []) {
-            $or[] = ['in', 'id_rrhh_servicio_asignado', $idsRrhhServicios];
-        }
         $or[] = [
             'and',
-            ['id_rrhh_servicio_asignado' => 0],
+            [
+                'or',
+                ['id_profesional_efector_servicio' => null],
+                ['id_profesional_efector_servicio' => 0],
+            ],
             ['in', 'id_servicio_asignado', $totalIdsServicios !== [] ? $totalIdsServicios : [-1]],
 
         ];
@@ -550,7 +528,7 @@ class Turno extends \yii\db\ActiveRecord
             ->orderBy('hora')
             //echo $query->createCommand()->getRawSql();die;
             ->all();
-        // SELECT * FROM `turnos` WHERE ((`id_rrhh_servicio_asignado`=1273) OR ((`id_servicio_asignado`=6) AND (`id_efector`='786'))) AND (`fecha`='2023-09-07') AND (turnos.atendido IS NULL) ORDER BY `hora`
+        // SELECT * FROM `turnos` WHERE ((`id_profesional_efector_servicio`=1273) OR ((`id_servicio_asignado`=6) AND (`id_efector`='786'))) AND (`fecha`='2023-09-07') AND (turnos.atendido IS NULL) ORDER BY `hora`
         return $turnos;
     }
 
@@ -560,7 +538,7 @@ class Turno extends \yii\db\ActiveRecord
         if ($rrhh === null) {
             return [];
         }
-        [$idsRrhhServicios, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh);
+        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh);
 
         // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
         $serviciosConPasePrevio = $idsServicios !== []
@@ -573,20 +551,19 @@ class Turno extends \yii\db\ActiveRecord
 
         $totalIdsServicios = array_unique(array_merge($idsServicios, $idServiciosConPasePrevio));
         //echo $serviciosConPasePrevio->createCommand()->getRawSql();die;
-        // En turnos se guarda id_rrhh_servicio_asignado o id_servicio, si se trata de un turno asignado al rrhh especifico
-        // o al servicio en el cual el rrhh esta trabajando en este momento
         $query = Turno::findActive();
 
         $or = [];
         if ($idsPes !== []) {
             $or[] = ['in', 'id_profesional_efector_servicio', $idsPes];
         }
-        if ($idsRrhhServicios !== []) {
-            $or[] = ['in', 'id_rrhh_servicio_asignado', $idsRrhhServicios];
-        }
         $or[] = [
             'and',
-            ['id_rrhh_servicio_asignado' => 0],
+            [
+                'or',
+                ['id_profesional_efector_servicio' => null],
+                ['id_profesional_efector_servicio' => 0],
+            ],
             ['id_servicio_asignado' => $totalIdsServicios !== [] ? $totalIdsServicios : [-1]],
             ['id_efector' => Yii::$app->user->getIdEfector()],
         ];
@@ -598,7 +575,7 @@ class Turno extends \yii\db\ActiveRecord
             ->orderBy('hora')
             //echo $query->createCommand()->getRawSql();die;
             ->all();
-        // SELECT * FROM `turnos` WHERE ((`id_rrhh_servicio_asignado`=1273) OR ((`id_servicio_asignado`=6) AND (`id_efector`='786'))) AND (`fecha`='2023-09-07') AND (turnos.atendido IS NULL) ORDER BY `hora`
+        // SELECT * FROM `turnos` WHERE ((`id_profesional_efector_servicio`=1273) OR ((`id_servicio_asignado`=6) AND (`id_efector`='786'))) AND (`fecha`='2023-09-07') AND (turnos.atendido IS NULL) ORDER BY `hora`
         return $turnos;
     }
 
@@ -640,12 +617,11 @@ class Turno extends \yii\db\ActiveRecord
             ->execute();
     }
 
-    public static function cargarRrhhServicioAsignado($id_turnos, $id_servicio_asignado)
+    public static function sincronizarProfesionalEfectorServicioDesdeSesion(int $id_turnos, $id_servicio_asignado): void
     {
         $idEfector = (int) Yii::$app->user->getIdEfector();
         $pesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
         $idPes = null;
-        $id_rrhh_servicio_asignado = 0;
 
         if ($pesSesionRaw !== null && $pesSesionRaw !== '' && (int) $pesSesionRaw > 0) {
             $pesS = ProfesionalEfectorServicio::findOne(['id' => (int) $pesSesionRaw, 'deleted_at' => null]);
@@ -655,14 +631,11 @@ class Turno extends \yii\db\ActiveRecord
                 && ($idEfector <= 0 || (int) $pesS->id_efector === $idEfector)
             ) {
                 $idPes = (int) $pesS->id;
-                $leg = $pesS->resolveRrhhServicioAsignadoIdForTurnoCompat();
-                $id_rrhh_servicio_asignado = $leg !== null ? (int) $leg : 0;
             }
         }
 
         Yii::$app->db->createCommand()
             ->update('turnos', [
-                'id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado,
                 'id_profesional_efector_servicio' => $idPes,
             ], 'id_turnos = ' . $id_turnos)
             ->execute();
@@ -892,20 +865,8 @@ class Turno extends \yii\db\ActiveRecord
     //Este metodo me devuelve la cantidad de turnos otorgados a un rrhh en una fecha particular, siempre y cuando tenga los estados
     //PENDIENTE, EN_ATENCION o ATENDIDO
 
-    public static function cantidadDeTurnosOtorgados($id_rrhh_servicio_asignado, $fecha){
-
-        $cant_turnos = self::find()
-        ->andWhere(['id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado])
-        ->andWhere(['fecha' => $fecha])
-        ->andWhere(['in','estado',Turno::ESTADOS_PARA_DESHABILITAR])
-        ->count();
-
-        return $cant_turnos;
-
-    }
-
     /**
-     * Cupo delegado: cuenta turnos del día para la misma asignación PES (y filas solo con slot legacy equivalente).
+     * Cupo delegado: cuenta turnos del día para la misma asignación PES.
      */
     public static function cantidadDeTurnosOtorgadosPorProfesionalEfectorServicio(int $idPes, string $fecha): int
     {
@@ -921,28 +882,7 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Query: indica si ya existe un turno activo en ese slot (para búsqueda de primer disponible).
-     * Flujo MVC: usado por Controller/Component; las queries viven en el modelo.
-     *
-     * @param int $idRrhhServicioAsignado
-     * @param string $fecha Y-m-d
-     * @param string $hora HH:MM (se normaliza a HH:MM:00 internamente si hace falta)
-     * @return bool
-     */
-    public static function estaOcupadoSlot($idRrhhServicioAsignado, $fecha, $hora)
-    {
-        $horaNormalizada = (strlen($hora) === 5 && strpos($hora, ':') !== false) ? $hora . ':00' : $hora;
-        return static::findActive()
-            ->andWhere([
-                'id_rrhh_servicio_asignado' => (int) $idRrhhServicioAsignado,
-                'fecha' => $fecha,
-                'hora' => $horaNormalizada,
-            ])
-            ->exists();
-    }
-
-    /**
-     * Ocupación de slot por asignación PES (y turnos viejos solo con id_rrhh_servicio_asignado equivalente).
+     * Ocupación de slot por asignación PES.
      */
     public static function estaOcupadoSlotPorProfesionalEfectorServicio(int $idPes, string $fecha, string $hora): bool
     {

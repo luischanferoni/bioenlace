@@ -12,7 +12,6 @@ use Yii;
  * @property string $tipo
  * @property integer $id_efector
  * @property integer $id_persona
- * @property integer $id_rrhh_servicio
  * @property int|null $id_profesional_efector_servicio
  * @property integer $fecha
  * 
@@ -80,16 +79,6 @@ class DocumentosExternos extends \yii\db\ActiveRecord
         if (!parent::beforeSave($insert)) {
             return false;
         }
-        if ($insert || $this->isAttributeChanged('id_rrhh_servicio', false)) {
-            $idServicio = (int) $this->id_rrhh_servicio;
-            $idEfector = (int) $this->id_efector;
-            $this->id_profesional_efector_servicio = $idEfector > 0
-                ? ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idServicio, $idEfector)
-                : null;
-            if ($this->id_profesional_efector_servicio === null) {
-                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idServicio);
-            }
-        }
         return true;
     }
 
@@ -99,8 +88,8 @@ class DocumentosExternos extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['titulo', 'tipo', 'id_efector', 'id_persona', 'id_rrhh_servicio', 'fecha', 'archivos_adjuntos'], 'required'],
-            [['id_efector', 'id_persona', 'id_rrhh_servicio', 'id_profesional_efector_servicio'], 'integer'],
+            [['titulo', 'tipo', 'id_efector', 'id_persona', 'id_profesional_efector_servicio', 'fecha', 'archivos_adjuntos'], 'required'],
+            [['id_efector', 'id_persona', 'id_profesional_efector_servicio'], 'integer'],
             [['titulo', 'tipo'], 'string'],
             [['fecha'], 'date', 'max' => time(), 'tooBig' => 'Fecha futura no esta permitida'],
             [['archivos_adjuntos'], 'file',
@@ -120,8 +109,7 @@ class DocumentosExternos extends \yii\db\ActiveRecord
             'tipo' => 'Tipo',
             'id_efector' => 'Efector',
             'id_persona' => 'Paciente',
-            'id_rrhh_servicio' => 'Profesional',
-            'id_profesional_efector_servicio' => 'Asignación PES',
+            'id_profesional_efector_servicio' => 'Profesional (PES)',
             'fecha' => 'Fecha',
         ];
     }

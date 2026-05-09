@@ -9,11 +9,11 @@ function turnosPayloadExtra() {
   return p;
 }
 
-/** Query/body turnos: PES primero; `id_rrhh_servicio_asignado` solo si no hay PES en sesión. */
+/** Query/body turnos: PES; `turnos_id_rrhh_sa` histórico se envía como id PES si no hay otro en sesión. */
 function turnosQueryConSlot(base) {
   var out = Object.assign({}, base || {}, turnosPayloadExtra());
   if (!out.id_profesional_efector_servicio && turnos_id_rrhh_sa) {
-    out.id_rrhh_servicio_asignado = turnos_id_rrhh_sa;
+    out.id_profesional_efector_servicio = turnos_id_rrhh_sa;
   }
   return out;
 }

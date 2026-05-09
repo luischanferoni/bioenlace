@@ -301,7 +301,7 @@ class PacientesController extends BaseController
                 'id_persona' => $turno->id_persona,
                 // Contexto profesional (canónico vs legacy)
                 'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
-                'id_rrhh_servicio_asignado' => (int) ($turno->id_rrhh_servicio_asignado ?? 0),
+                'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
                 'id_rr_hh' => (int) ($turno->id_rr_hh ?? 0) ?: null,
                 'paciente' => [
                     'id' => $paciente ? $paciente->id_persona : null,

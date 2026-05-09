@@ -11,8 +11,8 @@ use yii\db\Migration;
  *   - `sin_pes_pero_con_legacy` ≈ 0 en tablas críticas (o filas aceptadas como histórico).
  *   - Chequeos de PES huérfano en 0.
  *   - DDL sin FKs inesperadas hacia `rrhh_servicio` (o incluidas en el descubrimiento dinámico).
- * - **Código de aplicación:** tras aplicar esta migración, el AR {@see \common\models\RrhhServicio} y cualquier
- *   lectura de `rrhh_servicio` fallarán; debe existir un despliegue de código alineado (sin uso operativo de esa tabla).
+ * - **Código de aplicación:** tras aplicar esta migración, cualquier lectura de la tabla eliminada `rrhh_servicio`
+ *   fallará; debe existir un despliegue de código alineado (solo PES / sin AR `RrhhServicio`).
  *
  * ## Alcance
  *
@@ -23,7 +23,7 @@ use yii\db\Migration;
  *
  * ## No incluye (fases posteriores)
  *
- * - Eliminar columnas `id_rrhh_servicio_asignado`, `id_rrhh_asignado`, etc.: siguen en tablas por compat hasta nuevo cambio de código/DDL.
+ * - Eliminar columnas consumidoras legacy: {@see m260509_000002_drop_legacy_rrhh_servicio_id_columns}.
  * - Tabla `agenda_rrhh`: no se elimina aquí.
  *
  * ## Rollback

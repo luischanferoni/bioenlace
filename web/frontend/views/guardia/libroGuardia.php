@@ -125,12 +125,11 @@ $acciones = array(
                             
                             //'id_rrhh_asignado',
                             [
-                                'attribute' => 'id_rrhh_asignado',
-                                'label' => 'RRHH', 
+                                'attribute' => 'id_profesional_efector_servicio',
+                                'label' => 'Profesional',
                                 'value' => function ($data) {
                                     return $data->getProfesionalAsignadoNombreCompleto();
-                                }               
-                                
+                                },
                             ],
                             //'created_at',
                             //'updated_at',

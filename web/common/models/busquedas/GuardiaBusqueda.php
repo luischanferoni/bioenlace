@@ -18,7 +18,7 @@ class GuardiaBusqueda extends Guardia
     public function rules()
     {
         return [
-            [['id', 'id_persona', 'id_rrhh_asignado', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector'], 'integer'],
+            [['id', 'id_persona', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector'], 'integer'],
             [['fecha', 'hora', 'created_at', 'updated_at', 'deleted_at', 'cobertura', 'situacion_al_ingresar', 'condiciones_derivacion'], 'safe'],
         ];
     }
@@ -66,7 +66,7 @@ class GuardiaBusqueda extends Guardia
             'id_persona' => $this->id_persona,
             'fecha' => $this->fecha,
             'hora' => $this->hora,
-            'id_rrhh_asignado' => $this->id_rrhh_asignado,
+            'id_profesional_efector_servicio' => $this->id_profesional_efector_servicio,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
@@ -119,7 +119,7 @@ class GuardiaBusqueda extends Guardia
             'id_persona' => $this->id_persona,
             'fecha' => $this->fecha,
             'hora' => $this->hora,
-            'id_rrhh_asignado' => $this->id_rrhh_asignado,
+            'id_profesional_efector_servicio' => $this->id_profesional_efector_servicio,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,
@@ -171,7 +171,7 @@ class GuardiaBusqueda extends Guardia
             'id_persona' => $this->id_persona,
             //'fecha' => $this->fecha,
             'hora' => $this->hora,
-            'id_rrhh_asignado' => $this->id_rrhh_asignado,
+            'id_profesional_efector_servicio' => $this->id_profesional_efector_servicio,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'deleted_at' => $this->deleted_at,

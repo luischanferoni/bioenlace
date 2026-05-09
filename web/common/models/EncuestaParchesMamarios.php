@@ -461,7 +461,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             if ($idPesSesion > 0) {
                 $this->id_profesional_efector_servicio = $idPesSesion;
             } else {
-                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
+                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinPes(
                     $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null,
                     $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
                 );

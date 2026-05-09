@@ -138,7 +138,7 @@ final class UiScreenService
 
     /**
      * El flujo conversacional guarda el slot como `slot_id`:
-     * - legacy: "id_rrhh_servicio_asignado|fecha|hora"
+     * - numérico (compat): "<id_profesional_efector_servicio>|fecha|hora"
      * - canónico: "pes:<id_profesional_efector_servicio>|fecha|hora"
      *
      * Expande a campos que espera {@see Turno} y el POST del screen.
@@ -173,19 +173,12 @@ final class UiScreenService
                 $params['id_profesional_efector_servicio'] = $pesId;
             }
         } else {
-            $idRrsa = $id0;
-            if ($idRrsa !== '' && (!isset($params['id_rrhh_servicio_asignado']) || $params['id_rrhh_servicio_asignado'] === '' || $params['id_rrhh_servicio_asignado'] === null)) {
-                $params['id_rrhh_servicio_asignado'] = $idRrsa;
-            }
-            $idRrsaInt = (int) $idRrsa;
+            $idPesSlot = (int) $id0;
             if (
-                $idRrsaInt > 0
+                $idPesSlot > 0
                 && (!isset($params['id_profesional_efector_servicio']) || $params['id_profesional_efector_servicio'] === '' || $params['id_profesional_efector_servicio'] === null)
             ) {
-                $idPesLeg = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idRrsaInt);
-                if ($idPesLeg !== null && $idPesLeg > 0) {
-                    $params['id_profesional_efector_servicio'] = $idPesLeg;
-                }
+                $params['id_profesional_efector_servicio'] = $idPesSlot;
             }
         }
         if ($fecha !== '' && (!isset($params['fecha']) || $params['fecha'] === '' || $params['fecha'] === null)) {

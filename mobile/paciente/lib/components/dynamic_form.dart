@@ -83,7 +83,7 @@ class _DynamicFormState extends State<DynamicForm> {
   }
 
   /// Normaliza depends_on del JSON: puede ser un string (un campo) o una lista (varios).
-  /// Expande `hora` (u otro campo) con valor compuesto `pes:<id>|fecha|hora` o legacy `id_rrsa|fecha|hora` según `slot_selection` del JSON.
+  /// Expande `hora` (u otro campo) con valor compuesto `pes:<id>|fecha|hora` según `slot_selection` del JSON (parts canónicos: id_profesional_efector_servicio).
   static void applySlotCompositeExpansion(
     List<dynamic> allFields,
     Map<String, dynamic> payload,
@@ -113,8 +113,15 @@ class _DynamicFormState extends State<DynamicForm> {
           final idPes = int.tryParse(raw);
           if (idPes != null && idPes > 0) {
             payload['id_profesional_efector_servicio'] = idPes.toString();
-            // Dejar el campo legacy vacío para que el backend lo hidrate desde PES.
             payload[k] = '';
+            continue;
+          }
+        }
+        if (k == 'id_profesional_efector_servicio' && v.startsWith('pes:')) {
+          final raw = v.substring(4).trim();
+          final idPes = int.tryParse(raw);
+          if (idPes != null && idPes > 0) {
+            payload[k] = idPes.toString();
             continue;
           }
         }

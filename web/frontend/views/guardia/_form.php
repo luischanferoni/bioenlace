@@ -85,7 +85,7 @@ use common\models\Telefono;
                     $rrhh_Efector = new RrhhEfector();
                     $profesionales = $rrhh_Efector->obtenerMedicosPorEfector(yii::$app->user->getIdEfector());
 
-                    echo $form->field($model, 'id_rrhh_asignado')->widget(Select2::classname(), [
+                    echo $form->field($model, 'id_profesional_efector_servicio')->widget(Select2::classname(), [
                         'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
                         'theme' => Select2::THEME_DEFAULT,
                         'language' => 'en',

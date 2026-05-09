@@ -133,7 +133,7 @@ class DefaultConsultaController extends Controller
                         if ($modelConsulta->parent_class == '\common\models\Turno') {
                             Turno::cambiarCampoAtendido($modelConsulta->parent_id, Turno::ATENDIDO_SI);
                             $turno = Turno::findOne($modelConsulta->parent_id);
-                            Turno::cargarRrhhServicioAsignado($modelConsulta->parent_id, $turno->id_servicio_asignado);
+                            Turno::sincronizarProfesionalEfectorServicioDesdeSesion((int) $modelConsulta->parent_id, $turno->id_servicio_asignado);
                             $consultaPS = ConsultaDerivaciones::getPracticaSolicitadasPorIdConsultaSolicitada($turno->id_consulta_referencia);
                             if($consultaPS):
                                 $consultaPS->id_consulta_responde = $modelConsulta->id_consulta;
@@ -160,7 +160,7 @@ class DefaultConsultaController extends Controller
 
             Turno::cambiarCampoAtendido($modelConsulta->parent_id, Turno::ATENDIDO_SI);
             $turno = Turno::findOne($modelConsulta->parent_id);
-            Turno::cargarRrhhServicioAsignado($modelConsulta->parent_id, $turno->id_servicio_asignado);
+            Turno::sincronizarProfesionalEfectorServicioDesdeSesion((int) $modelConsulta->parent_id, $turno->id_servicio_asignado);
 
         }
 

@@ -34,7 +34,7 @@ use yii\web\ConflictHttpException;
  *
  * **Contrato de slot / asignación (PES-first):**
  * - Identidad canónica del cupo profesional: `id_profesional_efector_servicio` (>0).
- * - `id_rrhh_servicio_asignado` se mantiene solo por **compatibilidad** con clientes legacy; puede ser `0` en filas PES “puras”.
+ * - En query/body, `id_rrhh_servicio_asignado` se acepta solo como **alias** del id PES (misma semántica que la PK de `profesional_efector_servicio`).
  * - Donde aplique, se incluye `servicio` como objeto `{ id_servicio, nombre }` además del string `servicio` legible.
  *
  * {@see ProfesionalAgendaController} — GET /api/v1/profesional-agenda/dia (permiso /api/profesional-agenda/dia).
@@ -234,7 +234,6 @@ class TurnosController extends BaseController
                         'estado' => $turno->estado,
                         'tipo_atencion' => $turno->tipo_atencion,
                         'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
-                        'id_rrhh_servicio_asignado' => (int) ($turno->id_rrhh_servicio_asignado ?? 0),
                         'servicio_detalle' => $turno->getServicioEmbebidoParaApi(),
                     ],
                 ];
@@ -488,7 +487,7 @@ class TurnosController extends BaseController
 
     /**
      * Sobreturno urgente en gestión operativa (staff). POST /api/v1/turnos/crear-sobreturno.
-     * Body: id_persona, fecha, hora, id_rrhh_servicio_asignado, id_servicio_asignado, (id_efector opcional).
+     * Body: id_persona, fecha, hora, id_profesional_efector_servicio (u opcional alias `id_rrhh_servicio_asignado` = id PES), id_servicio_asignado, (id_efector opcional).
      * RBAC: /api/turnos/crear-sobreturno
      */
     public function actionCrearSobreturno()
@@ -513,9 +512,9 @@ class TurnosController extends BaseController
      * Parámetros (query/body):
      * - id_servicio (obligatorio)
      * - id_efector (opcional; si falta, usa sesión)
-     * - id_profesional_efector_servicio (opcional; se resuelve a id_rrhh_servicio_asignado)
-     * - id_rr_hh (opcional, legacy; se resuelve a id_rrhh_servicio_asignado)
-     * - id_rrhh_servicio_asignado (opcional; más preciso)
+     * - id_profesional_efector_servicio (opcional)
+     * - id_rr_hh (opcional; con id_servicio resuelve PES en el efector)
+     * - id_rrhh_servicio_asignado (opcional; alias numérico de id PES)
      * - limite, franja_tarde_desde (opcionales; defaults `turnosPaciente`)
      * - restricciones (JSON array; mismo formato que {@see TurnoSlotFinder::findAvailableSlots})
      *
@@ -631,16 +630,12 @@ class TurnosController extends BaseController
                         continue;
                     }
                     $slotId = 'pes:' . $idPesSlot . '|' . $fecha . '|' . $hora;
-                    $idRrsaSlot = isset($slot['id_rrhh_servicio_asignado']) ? (int) $slot['id_rrhh_servicio_asignado'] : 0;
                     $meta = [
                         'fecha' => $fecha,
                         'hora' => $hora,
-                        'id_rrhh_servicio_asignado' => $idRrsaSlot,
+                        'id_profesional_efector_servicio' => $idPesSlot,
                         'slot_id' => $slotId,
                     ];
-                    if ($idPesSlot !== null) {
-                        $meta['id_profesional_efector_servicio'] = $idPesSlot;
-                    }
                     if (!empty($slot['servicio']) && is_array($slot['servicio'])) {
                         $meta['servicio'] = $slot['servicio'];
                     }
@@ -737,7 +732,6 @@ class TurnosController extends BaseController
                 'servicio_detalle' => $servicioObj,
                 'id_servicio_asignado' => $turno->id_servicio_asignado,
                 'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : null,
-                'id_rrhh_servicio_asignado' => (int) ($turno->id_rrhh_servicio_asignado ?? 0),
                 'estado' => $turno->estado,
                 'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
                 'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
@@ -783,7 +777,6 @@ class TurnosController extends BaseController
             'servicio' => $servicioNombre,
             'servicio_detalle' => $servicioObj,
             'id_servicio_asignado' => $turno->id_servicio_asignado,
-            'id_rrhh_servicio_asignado' => $turno->id_rrhh_servicio_asignado,
             'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
             'estado' => $turno->estado,
             'estado_label' => $turno->estado ? (Turno::ESTADOS[$turno->estado] ?? 'Sin estado') : 'Sin estado',
@@ -820,12 +813,8 @@ class TurnosController extends BaseController
             'fecha_desde' => date('Y-m-d'),
             'max_dias' => isset($params['max_dias']) && $params['max_dias'] !== '' ? (int) $params['max_dias'] : 45,
         ];
-        if ($mismoProf) {
-            if ((int) $turno->id_profesional_efector_servicio > 0) {
-                $criteria['id_profesional_efector_servicio'] = (int) $turno->id_profesional_efector_servicio;
-            } elseif ((int) $turno->id_rrhh_servicio_asignado > 0) {
-                $criteria['id_rrhh_servicio_asignado'] = (int) $turno->id_rrhh_servicio_asignado;
-            }
+        if ($mismoProf && (int) $turno->id_profesional_efector_servicio > 0) {
+            $criteria['id_profesional_efector_servicio'] = (int) $turno->id_profesional_efector_servicio;
         }
         $slots = TurnoSlotFinder::findAvailableSlots($criteria, max(1, $limit));
         return ['success' => true, 'slots' => $slots];
@@ -919,8 +908,6 @@ class TurnosController extends BaseController
         if ($reSync !== null) {
             $turno->id_rr_hh = $reSync->id_rr_hh;
         }
-        $leg = $pesPost->resolveRrhhServicioAsignadoIdForTurnoCompat();
-        $turno->id_rrhh_servicio_asignado = $leg !== null ? (int) $leg : 0;
         $turno->fecha = $fecha;
         $turno->hora = $hora;
         if (!$turno->save()) {
@@ -956,7 +943,7 @@ class TurnosController extends BaseController
         }
 
         if (
-            (int) $turno->id_rrhh_servicio_asignado === 0
+            ((int) $turno->id_profesional_efector_servicio === 0 || $turno->id_profesional_efector_servicio === null)
             && $idServicio
             && (int) $turno->id_servicio_asignado === (int) $idServicio
         ) {
@@ -1058,24 +1045,36 @@ class TurnosController extends BaseController
     protected function buildConsultarOcupacionDiaPayload(array $params)
     {
         $dia = $params['dia'] ?? date('Y-m-d');
-        $id_rrhh_servicio_asignado = isset($params['id_rrhh_servicio_asignado']) ? (int) $params['id_rrhh_servicio_asignado'] : 0;
         $id_servicio = $params['id_servicio'] ?? null;
         $id_rr_hh = $params['id_rr_hh'] ?? null;
+        $id_efector = Yii::$app->user->getIdEfector();
+
         $idPesParam = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
+        $idRrsaAlias = isset($params['id_rrhh_servicio_asignado']) ? (int) $params['id_rrhh_servicio_asignado'] : 0;
+        if ($idPesParam <= 0 && $idRrsaAlias > 0) {
+            $mapped = ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
+                $idRrsaAlias,
+                (int) $id_efector
+            );
+            $idPesParam = $mapped !== null ? $mapped : $idRrsaAlias;
+        }
         if ($idPesParam <= 0) {
             $sPes = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPesParam = $sPes !== null && $sPes !== '' ? (int) $sPes : 0;
         }
-
-        $id_efector = Yii::$app->user->getIdEfector();
+        if ($idPesParam <= 0 && $id_rr_hh && $id_servicio && $id_efector) {
+            $idPesParam = (int) (ProfesionalEfectorServicio::resolverIdPesDesdeRrhhServicioYEfector(
+                (int) $id_rr_hh,
+                (int) $id_servicio,
+                (int) $id_efector
+            ) ?: 0);
+        }
 
         $formatoSlots = isset($params['formato']) && $params['formato'] === 'slots';
 
         $turnosQuery = Turno::findActive();
         if ($idPesParam > 0) {
             $turnosQuery->andWhere(['id_profesional_efector_servicio' => $idPesParam]);
-        } elseif ($id_rrhh_servicio_asignado) {
-            $turnosQuery->andWhere(['id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado]);
         } else {
             $turnosQuery->andWhere(['id_efector' => $id_efector])
                 ->andWhere(['id_servicio_asignado' => $id_servicio]);
@@ -1101,7 +1100,7 @@ class TurnosController extends BaseController
         if ($formatoSlots) {
             return [
                 'dia' => $dia,
-                'id_rrhh_servicio_asignado' => $id_rrhh_servicio_asignado,
+                'id_profesional_efector_servicio' => $idPesParam > 0 ? $idPesParam : null,
                 'id_servicio' => $id_servicio,
                 'horas_tomadas' => $horasTomadas,
                 'mensaje_feriado' => $mensajeFeriado,

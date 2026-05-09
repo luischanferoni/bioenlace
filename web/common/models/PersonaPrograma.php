@@ -79,7 +79,7 @@ class PersonaPrograma extends \yii\db\ActiveRecord
             return false;
         }
         if ($insert || $this->isAttributeChanged('id_rrhh_efector', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinLegacyServicio(
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinPes(
                 $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null
             );
         }

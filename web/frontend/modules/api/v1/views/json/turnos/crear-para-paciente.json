@@ -97,7 +97,7 @@
       ],
       "slot_selection": {
         "separator": "|",
-        "parts": ["id_rrhh_servicio_asignado", "fecha", "hora"]
+        "parts": ["id_profesional_efector_servicio", "fecha", "hora"]
       },
       "option_config": {
         "source": "slots_disponibles_paciente",

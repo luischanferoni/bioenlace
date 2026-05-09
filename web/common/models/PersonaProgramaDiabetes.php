@@ -84,7 +84,7 @@ class PersonaProgramaDiabetes extends \yii\db\ActiveRecord
             || $this->isAttributeChanged('id_rrhh_efector', false)
             || $this->isAttributeChanged('id_efector', false)
         ) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinLegacyServicio(
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinPes(
                 $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null,
                 $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
             );

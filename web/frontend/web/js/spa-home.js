@@ -1676,13 +1676,10 @@
                                     (list || []).forEach(s => {
                                         if (!s) return;
                                         const idPes = s.id_profesional_efector_servicio;
-                                        const idRrsa = s.id_rrhh_servicio_asignado;
                                         const hora = s.hora;
                                         if (!hora) return;
-                                        if ((!idPes || idPes <= 0) && (!idRrsa || idRrsa <= 0)) return;
-                                        const value = (idPes && idPes > 0)
-                                            ? ('pes:' + idPes + '|' + d.fecha + '|' + hora)
-                                            : ('' + idRrsa + '|' + d.fecha + '|' + hora);
+                                        if (!idPes || idPes <= 0) return;
+                                        const value = 'pes:' + idPes + '|' + d.fecha + '|' + hora;
                                         const svcNombre = (s.servicio && s.servicio.nombre) ? String(s.servicio.nombre) : '';
                                         const labelCore = d.fecha + ' · ' + franjaLabel + ' · ' + hora;
                                         items.push({ value: value, label: svcNombre ? (labelCore + ' · ' + svcNombre) : labelCore });

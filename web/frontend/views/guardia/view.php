@@ -39,7 +39,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     'estado',
                     'fecha',
                     'hora',
-                    'id_rrhh_asignado',
+                    'id_profesional_efector_servicio',
                     'created_at',
                     'updated_at',
                     'deleted_at',

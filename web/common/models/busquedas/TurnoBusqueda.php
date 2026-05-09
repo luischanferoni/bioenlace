@@ -18,7 +18,7 @@ class TurnoBusqueda extends Turno
     public $busqueda_libre = false;
     public $dni;
 
-    /** @var string|null Filtro profesional: id legacy `rrhh_servicio` o `p` + id PES (p. ej. p42). */
+    /** @var string|null Filtro profesional: id PES o `p` + id PES (p. ej. p42). */
     public $profesional_clave;
 
     /**
@@ -27,7 +27,7 @@ class TurnoBusqueda extends Turno
     public function rules()
     {
         return [
-            [['id_turnos', 'id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_rrhh_servicio_asignado'], 'integer'],
+            [['id_turnos', 'id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha', 'hora', 'confirmado', 'referenciado', 'usuario_alta', 'fecha_alta', 'usuario_mod', 'fecha_mod', 'busqueda_libre', 'dni', 'profesional_clave'], 'safe'],
 
         ];
@@ -73,6 +73,7 @@ class TurnoBusqueda extends Turno
             'hora' => $this->hora,
             'id_consulta_referencia' => $this->id_consulta_referencia,
             'id_servicio_asignado' => $this->id_servicio_asignado,
+            'id_profesional_efector_servicio' => $this->id_profesional_efector_servicio,
             'fecha_alta' => $this->fecha_alta,
             'fecha_mod' => $this->fecha_mod,
         ]);
@@ -80,8 +81,8 @@ class TurnoBusqueda extends Turno
         $claveProf = $this->profesional_clave !== null && $this->profesional_clave !== ''
             ? trim((string) $this->profesional_clave)
             : '';
-        if ($claveProf === '' && $this->id_rrhh_servicio_asignado !== null && $this->id_rrhh_servicio_asignado !== '') {
-            $claveProf = (string) (int) $this->id_rrhh_servicio_asignado;
+        if ($claveProf === '' && $this->id_profesional_efector_servicio !== null && $this->id_profesional_efector_servicio !== '') {
+            $claveProf = (string) (int) $this->id_profesional_efector_servicio;
         }
         if ($claveProf !== '') {
             if ($claveProf[0] === 'p' || $claveProf[0] === 'P') {
@@ -95,13 +96,6 @@ class TurnoBusqueda extends Turno
                     $pesByPk = ProfesionalEfectorServicio::findOne(['id' => $idLeg, 'deleted_at' => null]);
                     if ($pesByPk !== null) {
                         $query->andWhere(['id_profesional_efector_servicio' => $idLeg]);
-                    } else {
-                        $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
-                        $or = [['id_rrhh_servicio_asignado' => $idLeg]];
-                        if ($idPesMap !== null && $idPesMap > 0) {
-                            $or[] = ['id_profesional_efector_servicio' => $idPesMap];
-                        }
-                        $query->andWhere(array_merge(['or'], $or));
                     }
                 }
             }
@@ -111,7 +105,7 @@ class TurnoBusqueda extends Turno
             ->andFilterWhere(['like', 'referenciado', $this->referenciado])
             ->andFilterWhere(['like', 'usuario_alta', $this->usuario_alta])
             ->andFilterWhere(['like', 'usuario_mod', $this->usuario_mod]);
-            
+
 
         if ($this->dni != '' && $this->busqueda_libre) {
             $query->joinWith(['persona' => function ($q) {
@@ -121,7 +115,7 @@ class TurnoBusqueda extends Turno
             $query->andFilterWhere(['<>', 'estado', Turno::ESTADO_ATENDIDO])
                 ->orderBy('id_turnos DESC');
 
-        }elseif($this->dni == '' && $this->busqueda_libre){
+        } elseif ($this->dni == '' && $this->busqueda_libre) {
             $dataProvider = new ActiveDataProvider();
             $dataProvider->setTotalCount(-1);
             return $dataProvider;
@@ -186,6 +180,7 @@ class TurnoBusqueda extends Turno
             'hora' => $this->hora,
             'id_consulta_referencia' => $this->id_consulta_referencia,
             'id_servicio_asignado' => $this->id_servicio_asignado,
+            'id_profesional_efector_servicio' => $this->id_profesional_efector_servicio,
             'fecha_alta' => $this->fecha_alta,
             'fecha_mod' => $this->fecha_mod,
         ]);
@@ -193,8 +188,8 @@ class TurnoBusqueda extends Turno
         $claveProf = $this->profesional_clave !== null && $this->profesional_clave !== ''
             ? trim((string) $this->profesional_clave)
             : '';
-        if ($claveProf === '' && $this->id_rrhh_servicio_asignado !== null && $this->id_rrhh_servicio_asignado !== '') {
-            $claveProf = (string) (int) $this->id_rrhh_servicio_asignado;
+        if ($claveProf === '' && $this->id_profesional_efector_servicio !== null && $this->id_profesional_efector_servicio !== '') {
+            $claveProf = (string) (int) $this->id_profesional_efector_servicio;
         }
         if ($claveProf !== '') {
             if ($claveProf[0] === 'p' || $claveProf[0] === 'P') {
@@ -208,13 +203,6 @@ class TurnoBusqueda extends Turno
                     $pesByPk = ProfesionalEfectorServicio::findOne(['id' => $idLeg, 'deleted_at' => null]);
                     if ($pesByPk !== null) {
                         $query->andWhere(['id_profesional_efector_servicio' => $idLeg]);
-                    } else {
-                        $idPesMap = ProfesionalEfectorServicio::findIdByLegacyRrhhServicioId($idLeg);
-                        $or = [['id_rrhh_servicio_asignado' => $idLeg]];
-                        if ($idPesMap !== null && $idPesMap > 0) {
-                            $or[] = ['id_profesional_efector_servicio' => $idPesMap];
-                        }
-                        $query->andWhere(array_merge(['or'], $or));
                     }
                 }
             }
@@ -232,17 +220,6 @@ class TurnoBusqueda extends Turno
             $query->andFilterWhere(['between', 'fecha', $start, $end]);
         }
 
-        /* $query->andFilterWhere(
-            [
-                'or',
-                ['in', 'id_rrhh_servicio_asignado', $idsRrhhServicios],
-                [
-                    'and',
-                    ['id_servicio_asignado' => $totalIdsServicios],
-                    ['id_efector' => Yii::$app->user->getIdEfector()],
-                ],                          
-            ]) */
-        #->andWhere(['estado' => 'PENDIENTE'])
         $query->andFilterWhere(['id_efector' => Yii::$app->user->getIdEfector()])
             ->orderBy('fecha', 'hora');
 

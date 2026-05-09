@@ -154,12 +154,11 @@ class SesionOperativaProfesionalHabilitacionService extends Component
 
             $serviciosPayload = [];
             foreach ($validPes as $pes) {
-                $compat = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
                 $serviciosPayload[] = [
                     'id_servicio' => (int) $pes->id_servicio,
                     'nombre' => (string) $pes->servicio->nombre,
                     'id_profesional_efector_servicio' => (int) $pes->id,
-                    'id_rrhh_servicio' => $compat !== null ? (int) $compat : 0,
+                    'id_rrhh_servicio' => (int) $pes->id,
                 ];
             }
 

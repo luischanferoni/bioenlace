@@ -51,12 +51,21 @@ class DocumentosExternosController extends Controller
                 ];     
             }
 
-            // Obtener id_efector e id_rrhh_servicio obligatorios vía POST (si falta, UserRequest lanzará BadRequest)
+            // id_efector obligatorio vía POST; PES vía id_profesional_efector_servicio (alias POST id_rrhh_servicio = mismo id numérico).
             $modelDocumentoExterno->id_efector = UserRequest::requireUserParam('idEfector');
-            $modelDocumentoExterno->id_rrhh_servicio = UserRequest::requireUserParam('id_rrhh_servicio');
+            $post = Yii::$app->request->post();
+            $idPes = 0;
+            if (isset($post['id_profesional_efector_servicio']) && (int) $post['id_profesional_efector_servicio'] > 0) {
+                $idPes = (int) $post['id_profesional_efector_servicio'];
+            } elseif (isset($post['id_rrhh_servicio']) && (int) $post['id_rrhh_servicio'] > 0) {
+                $idPes = (int) $post['id_rrhh_servicio'];
+            }
+            if ($idPes <= 0) {
+                throw new \yii\web\BadRequestHttpException('Parámetro requerido: id_profesional_efector_servicio');
+            }
+            $modelDocumentoExterno->id_profesional_efector_servicio = $idPes;
 
             // Obtener id_persona desde el POST (puede venir en DocumentosExternos[id_persona] o en id_persona)
-            $post = Yii::$app->request->post();
             if (isset($post['DocumentosExternos']) && isset($post['DocumentosExternos']['id_persona'])) {
                 $modelDocumentoExterno->id_persona = $post['DocumentosExternos']['id_persona'];
             } elseif (isset($post['id_persona'])) {

@@ -186,6 +186,7 @@ class ServiciosEfector extends \yii\db\ActiveRecord
         }
 
         // Profesionales por servicio (PES en el efector)
+        $arrayRrhhServicios = [];
         $rrhhsServicio = ProfesionalEfectorServicio::find()
                 ->where(['id_efector' => $id_efector, 'deleted_at' => null])
                 ->with(['persona', 'agenda'])

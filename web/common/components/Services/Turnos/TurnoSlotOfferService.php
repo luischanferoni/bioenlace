@@ -39,11 +39,8 @@ class TurnoSlotOfferService
                 $idPes = isset($slot['id_profesional_efector_servicio']) && $slot['id_profesional_efector_servicio'] !== null
                     ? (int) $slot['id_profesional_efector_servicio']
                     : 0;
-                $idRrsa = isset($slot['id_rrhh_servicio_asignado']) ? (int) $slot['id_rrhh_servicio_asignado'] : 0;
                 if ($fechaSlot !== '' && $horaSlot !== '' && $idPes > 0) {
                     $slot['slot_id'] = 'pes:' . $idPes . '|' . $fechaSlot . '|' . $horaSlot;
-                } elseif ($fechaSlot !== '' && $horaSlot !== '' && $idRrsa > 0) {
-                    $slot['slot_id'] = $idRrsa . '|' . $fechaSlot . '|' . $horaSlot;
                 }
             }
             $fecha = $slot['fecha'];

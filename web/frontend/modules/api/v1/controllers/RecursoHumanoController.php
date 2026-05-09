@@ -491,7 +491,7 @@ class RecursoHumanoController extends BaseController
 
     /**
      * @return list<array{id:int,name:string,meta:array{id_rrhh_servicio:int, id_profesional_efector_servicio:int, acepta_turnos:string}>>
-     *         meta.id_rrhh_servicio: **deprecated** (compat turnos legacy); usar meta.id_profesional_efector_servicio.
+     *         meta.id_rrhh_servicio: **deprecated** (alias de la PK PES para clientes viejos); usar meta.id_profesional_efector_servicio.
      */
     private function serviciosAsignadosItemsForPersonaEfector(int $idPersona, int $idEfector): array
     {
@@ -512,12 +512,11 @@ class RecursoHumanoController extends BaseController
             }
             $nombre = $pes->servicio !== null ? (string) $pes->servicio->nombre : ('Servicio #' . $pes->id_servicio);
             $acepta = $pes->servicio !== null && strtoupper(trim((string) $pes->servicio->acepta_turnos)) === 'SI' ? 'SI' : 'NO';
-            $idRrsa = $pes->resolveRrhhServicioAsignadoIdForTurnoCompat();
             $items[] = [
                 'id' => (int) $pes->id_servicio,
                 'name' => $nombre,
                 'meta' => [
-                    'id_rrhh_servicio' => $idRrsa !== null ? (int) $idRrsa : 0,
+                    'id_rrhh_servicio' => (int) $pes->id,
                     'id_profesional_efector_servicio' => (int) $pes->id,
                     'acepta_turnos' => $acepta,
                 ],

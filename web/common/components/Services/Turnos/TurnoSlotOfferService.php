@@ -32,6 +32,20 @@ class TurnoSlotOfferService
 
         $porFecha = [];
         foreach ($plano as $slot) {
+            // Normalizar `slot_id` PES-first cuando sea posible.
+            if (!isset($slot['slot_id']) || !is_string($slot['slot_id']) || trim($slot['slot_id']) === '') {
+                $fechaSlot = (string) ($slot['fecha'] ?? '');
+                $horaSlot = (string) ($slot['hora'] ?? '');
+                $idPes = isset($slot['id_profesional_efector_servicio']) && $slot['id_profesional_efector_servicio'] !== null
+                    ? (int) $slot['id_profesional_efector_servicio']
+                    : 0;
+                $idRrsa = isset($slot['id_rrhh_servicio_asignado']) ? (int) $slot['id_rrhh_servicio_asignado'] : 0;
+                if ($fechaSlot !== '' && $horaSlot !== '' && $idPes > 0) {
+                    $slot['slot_id'] = 'pes:' . $idPes . '|' . $fechaSlot . '|' . $horaSlot;
+                } elseif ($fechaSlot !== '' && $horaSlot !== '' && $idRrsa > 0) {
+                    $slot['slot_id'] = $idRrsa . '|' . $fechaSlot . '|' . $horaSlot;
+                }
+            }
             $fecha = $slot['fecha'];
             if (!isset($porFecha[$fecha])) {
                 $porFecha[$fecha] = ['manana' => [], 'tarde' => []];
@@ -53,11 +67,25 @@ class TurnoSlotOfferService
             ];
         }
 
+        // Filtros simples para clientes que muestran chips (mobile/web).
+        $dias = [];
+        foreach (array_keys($porFecha) as $f) {
+            $dias[] = ['id' => (string) $f, 'label' => (string) $f];
+        }
+        $franjas = [
+            ['id' => 'manana', 'label' => 'Mañana'],
+            ['id' => 'tarde', 'label' => 'Tarde'],
+        ];
+
         return [
             'limite' => $limite,
             'max_dias_busqueda' => $maxDias,
             'franja_tarde_desde' => $franjaTardeDesde,
             'por_dia' => $porDia,
+            'available_filters' => [
+                'dias' => $dias,
+                'franjas' => $franjas,
+            ],
             'total' => count($plano),
         ];
     }

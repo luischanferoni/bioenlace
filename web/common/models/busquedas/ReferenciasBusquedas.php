@@ -6,6 +6,8 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Referencia;
+use common\models\Persona;
+use common\models\ProfesionalEfectorServicio;
 use webvimark\modules\UserManagement\models\User;
 
 /**
@@ -48,18 +50,30 @@ class ReferenciasBusquedas extends Referencia
 
         $id_user = Yii::$app->user->id;
         $id_efector = Yii::$app->user->idEfector;
-        $rr_hh = \common\models\Persona::find()->select(['rr_hh.id_rr_hh'])
+        $rr_hh = Persona::find()->select(['rr_hh.id_rr_hh'])
                 ->from('personas')
                 ->join('INNER JOIN','rr_hh','personas.id_persona=rr_hh.id_persona')
                 ->where(['personas.id_user' => $id_user]);
-        
+
+        $idPersonaSesion = (int) Yii::$app->user->getIdPersona();
+        if ($idPersonaSesion <= 0) {
+            $idPersonaSesion = (int) Persona::find()->select(['id_persona'])->where(['id_user' => $id_user])->scalar();
+        }
+        $pesIdsProfesional = [];
+        if ($idPersonaSesion > 0) {
+            $pesIdsProfesional = ProfesionalEfectorServicio::find()
+                ->select(['id'])
+                ->where(['id_persona' => $idPersonaSesion, 'deleted_at' => null])
+                ->column();
+        }
+
         $esAdministrativo = User::hasRole(['Administrativo'], $superAdminAllowed = true);
         $esMedico = User::hasRole(['Medico'], $superAdminAllowed = true);
-        if ($esMedico) {           
-            $query = referencia::find()
-                    -> select
-                    (['id_referencia' => 'referencia.id_referencia',
-                      'id_consulta' => 'consultas.id_consulta'  , 
+        if ($esMedico) {
+            $query = Referencia::find()
+                    ->select(
+                    ['id_referencia' => 'referencia.id_referencia',
+                      'id_consulta' => 'consultas.id_consulta'  ,
                       'id_efector_referenciado' => 'referencia.id_efector_referenciado',
                       'id_motivo_derivacion' => 'referencia.id_motivo_derivacion',
                       'id_servicio' => 'referencia.id_servicio',
@@ -70,13 +84,17 @@ class ReferenciasBusquedas extends Referencia
                     ->from('referencia')
                     ->join('INNER JOIN','consultas','referencia.id_consulta=consultas.id_consulta')
                     ->join('INNER JOIN','turnos','consultas.id_turnos=turnos.id_turnos')
-                    ->join('INNER JOIN','rr_hh','turnos.id_rr_hh=rr_hh.id_rr_hh')
-                    ->join('INNER JOIN','personas','rr_hh.id_persona=personas.id_persona')
+                    ->join('LEFT JOIN','rr_hh','turnos.id_rr_hh=rr_hh.id_rr_hh')
+                    ->join('LEFT JOIN','personas','rr_hh.id_persona=personas.id_persona')
                     ->join('INNER JOIN','efectores','turnos.id_efector=efectores.id_efector')
-                    ->where(['turnos.id_efector' => $id_efector])
-                    ->andWhere(['turnos.id_rr_hh' => $rr_hh ]);
+                    ->where(['turnos.id_efector' => $id_efector]);
+            $profOCond = ['or', ['turnos.id_rr_hh' => $rr_hh]];
+            if ($pesIdsProfesional !== []) {
+                $profOCond[] = ['turnos.id_profesional_efector_servicio' => $pesIdsProfesional];
+            }
+            $query->andWhere($profOCond);
         } else {
-           $query = referencia::find()
+           $query = Referencia::find()
                     -> select
                     (['id_referencia' => 'referencia.id_referencia',
                       'id_consulta' => 'consultas.id_consulta'  , 

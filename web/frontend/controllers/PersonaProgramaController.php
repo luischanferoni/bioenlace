@@ -11,12 +11,38 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 use frontend\filters\SisseActionFilter;
+use frontend\components\UserRequest;
+use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
 
 /**
  * PersonaProgramaController implements the CRUD actions for PersonaPrograma model.
  */
 class PersonaProgramaController extends Controller
 {
+    private function resolveRrhhEfectorFromSessionOrPes(): ?RrhhEfector
+    {
+        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        if ($idRrhh > 0) {
+            return RrhhEfector::findOne($idRrhh);
+        }
+        $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+        if ($idPes <= 0) {
+            return null;
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null) {
+            return null;
+        }
+        return RrhhEfector::find()
+            ->where([
+                'id_persona' => (int) $pes->id_persona,
+                'id_efector' => (int) $pes->id_efector,
+                'deleted_at' => null,
+            ])
+            ->one();
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -81,8 +107,19 @@ class PersonaProgramaController extends Controller
         $persona =  unserialize($persona);
 
         $programa = Yii::$app->getRequest()->getQueryParam('programa');
-
-        $rrhh = \common\models\RrhhEfector::findOne(UserRequest::requireUserParam('idRecursoHumano'));
+        $rrhh = null;
+        try {
+            $idRrhhParam = (int) UserRequest::requireUserParam('idRecursoHumano');
+            $rrhh = $idRrhhParam > 0 ? RrhhEfector::findOne($idRrhhParam) : null;
+        } catch (\Throwable $e) {
+            $rrhh = null;
+        }
+        if ($rrhh === null) {
+            $rrhh = $this->resolveRrhhEfectorFromSessionOrPes();
+        }
+        if ($rrhh === null) {
+            throw new NotFoundHttpException('No se pudo determinar el recurso humano (RRHH/PES) en sesión.');
+        }
 
         switch ($programa) {
             case 'diabetes':

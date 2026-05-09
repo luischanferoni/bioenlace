@@ -25,6 +25,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
    - `findIdByPersonaEfectorServicio`
    - `resolveProfesionalEfectorServicioIdFromRrhhServicioId` (según caso)
 5. **Consulta** ya sincroniza PES en `beforeSave` vía `syncProfesionalEfectorServicioFromContext()` cuando hay `id_rr_hh` + `id_efector` + `id_servicio` (o turno con PES).
+6. **Bridges temporales PES→RRHH**: centralizar la resolución en un único helper para no duplicar lógica en controladores:\n+   - `web/common/components/Services/ProfesionalEfectorServicio/ProfesionalContextResolver.php`
 
 ---
 
@@ -47,6 +48,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 |------|------------------------|
 | **Asistente / SubIntentEngine** | Intents YAML y flows pasan `id_profesional_efector_servicio` donde corresponde; hidratación de drafts (servicios alta PES, hydrators). |
 | **API turnos / agenda** | `TurnosController`, `ProfesionalAgendaController`, servicios `ProfesionalEfectorServicioAgenda*`: aceptar PES además de RRHH legacy; asserts de efector/PES. |
+| **Contrato slots (paciente/staff)** | `turnos/slots-disponibles-como-paciente`: `slot_id` PES-first (`pes:<id>|fecha|hora`) con compat legacy; modo `raw=1` devuelve `por_dia` + `available_filters` para widgets/autocomplete. |
 | **Sesión** | `SiteController` / `SesionOperativaService`: fijar PES cuando solo había RRHH; documentación de endpoint operativo. |
 | **Consulta (acceso y motivos)** | `ConsultaAccessService`; controladores API/web de motivos y chat; `Consulta::resolveIdRrhhParaMotivos()`; `ConsultaTrait::guardarConsulta` asigna PES desde sesión en altas. |
 | **Web turnos** | `TurnosController::actionEventos`: request con PES, ocupación, etc. |
@@ -54,6 +56,19 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 | **Reportes C4/C7** | `ConsultaBusqueda::searchParaReporteC4`: filtro por profesional ampliado (RRHH del form **o** PES alineado a persona/efector/servicio). Corrección en `searchReporteFarmacia` rama EMER (variable inexistente). Comentarios en `ReporteController`. |
 | **Encuesta parches** | `EncuestaParchesMamariosController`: resolver `id_rr_hh` desde PES si falta RRHH en sesión; `EncuestaParchesMamarios::beforeSave` prefiere PES de sesión para `id_profesional_efector_servicio`; `SisseActionFilter` acepta contexto con RRHH **o** PES. |
 | **Guardia** | `GuardiaController`: dejar de usar el atributo inexistente `id_rr_hh`; prellenar **`id_rrhh_asignado`** (`rrhh_servicio.id`) desde `id_rrhh_servicio` / RRHH / PES. `Guardia::beforeSave`: fallback PES desde sesión si el resolver por asignado no devuelve id. |
+| **PersonaPrograma** | `PersonaProgramaController`: no depender de `idRecursoHumano` como único input; resolver RRHH desde sesión o PES cuando no venga parámetro. |
+| **Web listado día / consultas del médico** | `ConsultasController::actionListadoSumar`: turnos del día filtrados por profesional vía **EXISTS rr_hh por persona** **o** fila PES (`profesional_efector_servicio`) alineada a persona + efector (sin cadena obligatoria `personas→rr_hh→turnos` únicamente). |
+| **`ConsultaBusqueda::searchGral`** | Filtro “mis consultas” (`personas.id_user`) extendido con **OR** `turnos.id_profesional_efector_servicio` ∈ PES de la persona en sesión (`condicionTurnoAsignadoProfesionalSesion`). |
+| **`ReferenciasBusquedas::search` (rol Médico)** | `LEFT JOIN` hacia `rr_hh`/`personas` y condición **OR** turno por `id_rr_hh` subquery **o** `id_profesional_efector_servicio` en PES del usuario. |
+| **Paciente timeline (web)** | `PacienteController::actionHistoria`: referencia en docblock a migración PES si se reactiva el UNION SQL comentado; timeline efectivo vía vista + API (listados ambulatorios PES en `PacientesController::turnosAmbulatorioMedico`). |
+
+---
+
+## Auditoría rápida de controladores web (`id_rr_hh` / `getIdRecursoHumano`)
+
+Archivos con ocurrencias (revisar según prioridad clínica):
+
+`AutofacturacionController`, `ConsultaAtencionesEnfermeriaController`, `ConsultasController`, `EncuestaParchesMamariosController`, `GuardiaController`, `PacienteController`, `PersonaProgramaController`, `PersonasController`, `ReporteController`, `Rrhh_efectoresController`, `RrhhController`, `RrhhEfectoresController`, `ServiciosEfectoresController`, `SiteController`, `traits/ConsultaTrait`, `TurnosController`.
 
 ---
 
@@ -61,9 +76,9 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 
 Priorizar por **uso clínico** y por **consultas SQL** que aún filtren solo por `id_rr_hh`:
 
-1. **`ConsultasController` (web)** — listados (`actionListadoSumar` y similares), uniones y filtros legacy.
-2. **`PacienteController` / timeline** — proyecciones y unions que expongan `id_rr_hh` sin considerar PES donde la fila ya migró.
-3. **CRUD RRHH web** (`Rrhh_efectoresController`, `RrhhEfectoresController`, …) — pantallas que aún modelan solo el esquema viejo.
+1. **`ConsultasController` (web)** — revisar **otras** acciones además de `actionListadoSumar` si aún acoplan solo RRHH.
+2. **`PacienteController` / timeline** — si se vuelve a habilitar el UNION SQL masivo, implementar **LEFT JOIN** + PES allí; hasta entonces el contrato es API/vista documentado en docblock.
+3. **CRUD RRHH web** (`Rrhh_efectoresController`, `RrhhEfectoresController`, …) — pantallas que aún modelan solo el esquema viejo (ver plan de PRs abajo).
 4. **Otros controladores** con pocas líneas pero acoplamiento: `PersonaProgramaController`, `AutofacturacionController`, `ConsultaAtencionesEnfermeriaController`, etc. (revisar con búsqueda).
 
 Comando útil para auditar en frontend:
@@ -77,6 +92,16 @@ Y en busquedas / modelos:
 ```bash
 rg "id_rr_hh|id_rrhh_asignado" web/common/models --glob "*Busqueda*"
 ```
+
+---
+
+## Plan sugerido de PRs (CRUD RRHH y satélites)
+
+Separar en PRs pequeños para revisión:
+
+1. **RRHH ↔ efector (web)** — `Rrhh_efectoresController` / `RrhhEfectoresController`: alinear selects con `rrhh_servicio` / PES según columna persistida; pruebas manuales de alta/edición.
+2. **PersonaPrograma / Autofacturacion** — un PR por módulo: revisar solo rutas que filtren agenda o profesional por `id_rr_hh`.
+3. **ConsultaAtencionesEnfermeria** — confirmar filtros de lista con OR PES si la consulta/enfermería guarda `id_profesional_efector_servicio`.
 
 ---
 

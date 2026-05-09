@@ -25,6 +25,7 @@ use common\components\Services\Turnos\TurnoConfirmationService;
 use common\components\Services\Turnos\PolicyModeradaException;
 use common\components\Services\Turnos\BulkCancelDayService;
 use common\components\Services\Turnos\SobreturnoService;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 /**
@@ -529,6 +530,10 @@ class TurnosController extends BaseController
             }
         );
 
+        // Para widgets/autocomplete: devolver payload plano (no ui_definition) cuando el cliente lo pide explícitamente.
+        $raw = $req->get('raw') ?: $req->post('raw');
+        $wantsRaw = $raw === '1' || $raw === 1 || $raw === true;
+
         // Inyectar listado de slots como `items` para UI JSON inline.
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
             $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
@@ -615,6 +620,10 @@ class TurnosController extends BaseController
                 throw new BadRequestHttpException($e->getMessage());
             }
 
+            if ($wantsRaw) {
+                return array_merge(['success' => true], $grouped);
+            }
+
             $items = [];
             $porDia = isset($grouped['por_dia']) && is_array($grouped['por_dia']) ? $grouped['por_dia'] : [];
             foreach ($porDia as $row) {
@@ -633,23 +642,27 @@ class TurnosController extends BaseController
                     if ($fecha === '' || $hora === '' || $idRrsaSlot === '') {
                         continue;
                     }
-                    $id = $idRrsaSlot . '|' . $fecha . '|' . $hora;
                     $idPesSlot = isset($slot['id_profesional_efector_servicio']) && $slot['id_profesional_efector_servicio'] !== null
                         ? (int) $slot['id_profesional_efector_servicio']
                         : ProfesionalEfectorServicio::resolveProfesionalEfectorServicioIdFromRrhhServicioId(
                             (int) $idRrsaSlot,
                             (int) $idEfector
                         );
+                    $slotId = $idPesSlot !== null && (int) $idPesSlot > 0
+                        ? ('pes:' . (int) $idPesSlot . '|' . $fecha . '|' . $hora)
+                        : ($idRrsaSlot . '|' . $fecha . '|' . $hora);
                     $meta = [
                         'fecha' => $fecha,
                         'hora' => $hora,
                         'id_rrhh_servicio_asignado' => (int) $idRrsaSlot,
+                        'slot_id' => $slotId,
                     ];
                     if ($idPesSlot !== null) {
                         $meta['id_profesional_efector_servicio'] = $idPesSlot;
                     }
                     $items[] = [
-                        'id' => $id,
+                        // `id` es el valor que el cliente manda como selección (se persiste en `slot_id`).
+                        'id' => $slotId,
                         'label' => $fecha . ' ' . $hora,
                         'meta' => $meta,
                     ];
@@ -973,7 +986,7 @@ class TurnosController extends BaseController
             $model->id_efector = Yii::$app->user->getIdEfector();
         }
         if (!$model->id_rr_hh) {
-            $model->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+            $model->id_rr_hh = ProfesionalContextResolver::resolveRrhhIdFromSessionOrPes() ?: null;
         }
         if (!$model->id_servicio) {
             $model->id_servicio = Yii::$app->user->getServicioActual();

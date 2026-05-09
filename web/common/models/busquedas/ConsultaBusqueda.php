@@ -8,12 +8,45 @@ use yii\data\ActiveDataProvider;
 use common\models\Consulta;
 use common\models\ProfesionalEfectorServicio;
 use common\models\RrhhEfector;
+use yii\db\Query;
 
 /**
  * ConsultaBusqueda represents the model behind the search form about `common\models\Consulta`.
  */
 class ConsultaBusqueda extends Consulta
 {
+    /**
+     * Consultas cuyo turno corresponde al profesional en sesión: match por usuario en rr_hh→personas (legacy)
+     * o por `turnos.id_profesional_efector_servicio` de la misma persona (PES).
+     *
+     * @return array<int|string, mixed>
+     */
+    private static function condicionTurnoAsignadoProfesionalSesion(): array
+    {
+        $id_user = Yii::$app->user->id;
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            $idPersona = (int) (new Query())
+                ->select(['id_persona'])
+                ->from('personas')
+                ->where(['id_user' => $id_user])
+                ->scalar();
+        }
+        $pesIds = [];
+        if ($idPersona > 0) {
+            $pesIds = ProfesionalEfectorServicio::find()
+                ->select(['id'])
+                ->where(['id_persona' => $idPersona, 'deleted_at' => null])
+                ->column();
+        }
+        $or = [['personas.id_user' => $id_user]];
+        if ($pesIds !== []) {
+            $or[] = ['turnos.id_profesional_efector_servicio' => $pesIds];
+        }
+
+        return array_merge(['or'], $or);
+    }
+
     public $conAutofacturacion = false;
     public $listadoConsultasEnviadas = false;
     public $fecha_desde = null;
@@ -197,8 +230,8 @@ class ConsultaBusqueda extends Consulta
                         ->leftJoin('turnos', '`turnos`.`id_turnos` = `consultas`.`parent_id` AND `consultas`.`parent_class` = '.Consulta::PARENT_TURNOS)
                         ->leftJoin('turnos', '`turnos`.`id_turnos` = `consultas`.`id_turnos` AND `consultas`.`id_turnos` != 0')
                         ->leftJoin('rr_hh', '`turnos`.`id_rr_hh` = `rr_hh`.`id_rr_hh`')
-                        ->leftJoin('personas', '`rr_hh`.`id_persona` = `personas`.`id_persona`')                        
-                        ->andWhere(['personas.id_user' => $id_user])
+                        ->leftJoin('personas', '`rr_hh`.`id_persona` = `personas`.`id_persona`')
+                        ->andWhere(static::condicionTurnoAsignadoProfesionalSesion())
                         ->andWhere('turnos.id_efector = :id_efector',[':id_efector' => $id_efector])
                         ->orderBy('turnos.fecha DESC,turnos.hora DESC');
         

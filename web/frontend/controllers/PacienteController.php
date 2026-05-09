@@ -55,6 +55,12 @@ class PacienteController extends Controller
 
     /**
      * Obtiene el historial de un paciente específico.
+     *
+     * La vista usa timeline por API (`views/paciente/timeline/timeline.php`). El bloque grande de UNION SQL
+     * legacy permanece comentado; si se reactivara, los JOIN solo por `consultas.id_rr_hh` deben ampliarse con
+     * `profesional_efector_servicio` para filas solo-PES (ver `web/docs/dominio/MIGRACION_PES_ESTADO.md`).
+     * Listados por profesional en ambulatorio ya consideran PES en {@see \frontend\modules\api\v1\controllers\PacientesController::turnosAmbulatorioMedico}.
+     *
      * @param integer $paciente_id
      * @return mixed
      * @no_intent_catalog

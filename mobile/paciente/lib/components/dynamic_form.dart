@@ -104,7 +104,21 @@ class _DynamicFormState extends State<DynamicForm> {
       final chunks = composite.split(sep);
       if (chunks.length != parts.length) continue;
       for (var i = 0; i < parts.length; i++) {
-        payload[parts[i]] = chunks[i];
+        final k = parts[i];
+        final v = chunks[i];
+        // Migración PES: el primer chunk puede venir como "pes:<id>" en lugar de id_rrhh_servicio_asignado.
+        // Si el JSON del wizard todavía declara parts legacy, traducimos a `id_profesional_efector_servicio`.
+        if (k == 'id_rrhh_servicio_asignado' && v.startsWith('pes:')) {
+          final raw = v.substring(4).trim();
+          final idPes = int.tryParse(raw);
+          if (idPes != null && idPes > 0) {
+            payload['id_profesional_efector_servicio'] = idPes.toString();
+            // Dejar el campo legacy vacío para que el backend lo hidrate desde PES.
+            payload[k] = '';
+            continue;
+          }
+        }
+        payload[k] = v;
       }
     }
   }

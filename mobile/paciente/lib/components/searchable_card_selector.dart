@@ -26,9 +26,12 @@ List<Map<String, dynamic>> _flattenSlotsPacientePorDia(Map<String, dynamic> data
       for (final s in slots ?? []) {
         if (s is! Map) continue;
         final hora = s['hora']?.toString() ?? '';
+        final slotId = s['slot_id']?.toString() ?? '';
         final idRrsa = s['id_rrhh_servicio_asignado']?.toString() ?? '';
-        if (fecha.isEmpty || hora.isEmpty || idRrsa.isEmpty) continue;
-        final id = '$idRrsa|$fecha|$hora';
+        if (fecha.isEmpty || hora.isEmpty) continue;
+        // Nuevo contrato: `slot_id` viene listo para submit (prefiere PES). Compat: reconstruir legacy si falta.
+        final id = slotId.isNotEmpty ? slotId : (idRrsa.isNotEmpty ? '$idRrsa|$fecha|$hora' : '');
+        if (id.isEmpty) continue;
         final fechaTxt = _formatFechaCardSlots(fecha);
         out.add({
           'id': id,
@@ -134,7 +137,6 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
   bool _isLoading = false;
   bool _isSearching = false;
   String? _selectedEfectorId;
-  String? _selectedEfectorName;
   /// Evita disparar búsqueda al servidor cuando el texto se actualiza por selección de un cuadro (tap).
   bool _isSelectingItem = false;
 
@@ -375,16 +377,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
             _filteredEfectores = itemsList;
             _isLoading = false;
             
-            // Si hay un valor inicial, encontrar el nombre
-            if (_selectedEfectorId != null) {
-              final item = _efectores.firstWhere(
-                (e) => e['id']?.toString() == _selectedEfectorId,
-                orElse: () => {},
-              );
-              if (item.isNotEmpty) {
-                _selectedEfectorName = item['text']?.toString();
-              }
-            }
+            // Si hay valor inicial, el campo se sincroniza por id; no guardamos nombre aparte.
           });
           widget.onOptionsLoaded?.call(itemsList);
         }
@@ -457,7 +450,6 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
     _isSelectingItem = true;
     setState(() {
       _selectedEfectorId = itemId;
-      _selectedEfectorName = itemName;
       _searchController.text = itemName ?? '';
       _searchFocusNode.unfocus();
     });
@@ -574,7 +566,6 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                         if (mounted) {
                           setState(() {
                             _selectedEfectorId = null;
-                            _selectedEfectorName = null;
                             _searchController.clear();
                           });
                         }

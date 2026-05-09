@@ -70,11 +70,28 @@ trait ConsultaTrait {
     {
         if ($modelConsulta->isNewRecord) {
 
-            $modelConsulta->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
             $pesSesion = Yii::$app->user->getIdProfesionalEfectorServicio();
             if ($pesSesion !== null && $pesSesion !== '') {
                 $modelConsulta->id_profesional_efector_servicio = (int) $pesSesion;
             }
+            $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+            if ($idRrhh <= 0 && $modelConsulta->id_profesional_efector_servicio) {
+                $pes = \common\models\ProfesionalEfectorServicio::findOne([
+                    'id' => (int) $modelConsulta->id_profesional_efector_servicio,
+                    'deleted_at' => null,
+                ]);
+                if ($pes !== null) {
+                    $re = \common\models\RrhhEfector::find()
+                        ->where([
+                            'id_persona' => (int) $pes->id_persona,
+                            'id_efector' => (int) $pes->id_efector,
+                            'deleted_at' => null,
+                        ])
+                        ->one();
+                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                }
+            }
+            $modelConsulta->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
             $modelConsulta->id_servicio = Yii::$app->user->getServicioActual();
             $modelConsulta->id_persona = $paciente->id_persona;
             $modelConsulta->id_efector = Yii::$app->user->getIdEfector();
@@ -84,7 +101,7 @@ trait ConsultaTrait {
         $modelConsulta->paso_completado = $arrayConfiguracion['paso'];
 
         if (!$modelConsulta->save()) {
-            throw new Exception();
+            throw new \Exception();
         }
 
         return $modelConsulta;

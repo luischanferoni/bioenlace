@@ -8,6 +8,7 @@ use yii\web\ForbiddenHttpException;
 use common\models\SolicitudRrhh;
 use common\models\SolicitudRrhhEvento;
 use common\models\EfectorTurnosConfig;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\RrhhEfector;
 
 /**
@@ -15,10 +16,25 @@ use common\models\RrhhEfector;
  */
 class SolicitudRrhhController extends BaseController
 {
+    private function requireRrhhIdFromSessionOrPes(int $idEfector): int
+    {
+        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        if ($idRrhh > 0) {
+            return $idRrhh;
+        }
+        $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+        if ($idPes <= 0) {
+            return 0;
+        }
+        // Compat: respetar efector del contexto actual.
+        $idRrhh = ProfesionalContextResolver::resolveRrhhIdFromPes($idPes);
+        return $idRrhh > 0 ? $idRrhh : 0;
+    }
+
     public function actionListar()
     {
         $idEfector = Yii::$app->user->getIdEfector();
-        $idRrhh = Yii::$app->user->getIdRecursoHumano();
+        $idRrhh = $this->requireRrhhIdFromSessionOrPes((int) $idEfector);
         if (!$idEfector || !$idRrhh) {
             throw new BadRequestHttpException('Efector o RRHH no determinado');
         }
@@ -54,7 +70,7 @@ class SolicitudRrhhController extends BaseController
     public function actionCrear()
     {
         $idEfector = Yii::$app->user->getIdEfector();
-        $idRrhh = Yii::$app->user->getIdRecursoHumano();
+        $idRrhh = $this->requireRrhhIdFromSessionOrPes((int) $idEfector);
         if (!$idEfector || !$idRrhh) {
             throw new BadRequestHttpException('Efector o RRHH no determinado');
         }

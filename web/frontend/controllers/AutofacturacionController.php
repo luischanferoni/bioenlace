@@ -18,6 +18,8 @@ use yii\httpclient\Client;
 use common\models\sumar\Autofacturacion;
 use common\models\Consulta;
 use common\models\busquedas\ConsultaBusqueda;
+use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
 
 class AutofacturacionController extends Controller
 {
@@ -182,6 +184,7 @@ class AutofacturacionController extends Controller
         // prueba para traer los datos extra de los codigos como si requiere DR o TRZ, el grupo etario o el sexo
         $codigos_finales = [];
         foreach ($codigos as $clave => $codigo) {
+            $arrayPrestaciones = null;
             $datos_respuesta = Yii::$app->autofacturacionSumar->consultaDatosCodigo($codigo);
             $array_respuestas = json_decode($datos_respuesta);            
             //var_dump($consulta->parent->fecha);die;
@@ -197,7 +200,7 @@ class AutofacturacionController extends Controller
                     }
                 }
             }
-            if($banderaPrestacion != false) {
+            if ($banderaPrestacion != false && is_array($arrayPrestaciones)) {
                 $codigos_finales[] = $arrayPrestaciones;
             }
             
@@ -217,9 +220,27 @@ class AutofacturacionController extends Controller
         
         $autofacturacion = new Autofacturacion();
         $autofacturacion->id_consulta = $id_consulta;
+        $arrayBeneficiarios = isset($arrayBeneficiarios) && is_array($arrayBeneficiarios) ? $arrayBeneficiarios : [];
         $autofacturacion->beneficiarios = json_encode($arrayBeneficiarios);
         $autofacturacion->codigos = json_encode($codigos_finales);
-        $autofacturacion->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        if ($idRrhh <= 0) {
+            $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+            if ($idPes > 0) {
+                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+                if ($pes !== null) {
+                    $re = RrhhEfector::find()
+                        ->where([
+                            'id_persona' => (int) $pes->id_persona,
+                            'id_efector' => (int) $pes->id_efector,
+                            'deleted_at' => null,
+                        ])
+                        ->one();
+                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                }
+            }
+        }
+        $autofacturacion->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
 
         if (!$autofacturacion->save()) {
             //return $autofacturacion->getErrors();

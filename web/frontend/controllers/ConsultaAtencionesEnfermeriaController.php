@@ -16,6 +16,7 @@ use yii\web\Response;
 use yii\helpers\ArrayHelper;
 
 use common\models\Consulta;
+use common\models\AtencionesEnfermeria;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\ConsultasConfiguracion;
 use common\models\Persona;
@@ -25,6 +26,10 @@ use common\models\ConsultaDerivaciones;
 use common\models\ConsultaBalanceHidrico;
 use common\models\ConsultaPracticasOftalmologia;
 use common\models\FormularioDinamico;
+use common\models\ProfesionalEfectorServicio;
+use common\models\RrhhEfector;
+
+use frontend\components\UserRequest;
 
 
 use frontend\filters\SisseActionFilter;
@@ -124,7 +129,24 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
         }
         
         $modelAtencionEnfermeria->fecha_creacion = date("d/m/Y");
-        $modelAtencionEnfermeria->id_rr_hh = Yii::$app->user->getIdRecursoHumano();        
+        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        if ($idRrhh <= 0) {
+            $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+            if ($idPes > 0) {
+                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+                if ($pes !== null) {
+                    $re = RrhhEfector::find()
+                        ->where([
+                            'id_persona' => (int) $pes->id_persona,
+                            'id_efector' => (int) $pes->id_efector,
+                            'deleted_at' => null,
+                        ])
+                        ->one();
+                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                }
+            }
+        }
+        $modelAtencionEnfermeria->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
 
         if (Yii::$app->request->isPost) {
             $post = Yii::$app->request->post();

@@ -84,6 +84,38 @@ class Consulta extends \yii\db\ActiveRecord
     public $diastolica;
 
     public $nombreservicio;
+
+    /**
+     * Compat legacy (web controllers): algunos flujos antiguos llaman `Consulta::calcularUrl*`.
+     * La fuente de verdad del ruteo es {@see ConsultasConfiguracion}.
+     *
+     * @return array{0:int,1:string|null,2:string|null,3:string|null,4:array}
+     */
+    public static function calcularUrl($paciente, $idServicioRrhh, $encounterClass): array
+    {
+        [$urlAnterior, $urlActual, $urlSiguiente, $idCfg] = ConsultasConfiguracion::getUrlPorServicioYEncounterClass(
+            (int) $idServicioRrhh,
+            (string) $encounterClass
+        );
+
+        return [
+            (int) ($idCfg ?? 0),
+            $urlAnterior,
+            $urlActual,
+            $urlSiguiente,
+            [],
+        ];
+    }
+
+    /**
+     * Compat legacy (side effects removidos): mantener firma sin romper callers.
+     */
+    public static function calcularUrlV2($idConsulta, $paciente, $servicioActual, $encounterClass): void
+    {
+        // Históricamente podía setear URLs/estado. Hoy los controladores calculan rutas con ConsultasConfiguracion
+        // y la UI moderna consume API. Dejamos stub para compat.
+        unset($idConsulta, $paciente, $servicioActual, $encounterClass);
+    }
     /**
      * @inheritdoc
      */

@@ -572,7 +572,23 @@ class TurnosController extends Controller
     public function actionList()
     {
         $tfecha = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['fecha'] : date("Y-m-d") . ' - ' . date("Y-m-d");
-        $idRrhh = Yii::$app->user->getIdRecursoHumano();
+        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        if ($idRrhh <= 0) {
+            $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+            if ($idPes > 0) {
+                $pes = \common\models\ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+                if ($pes !== null) {
+                    $re = \common\models\RrhhEfector::find()
+                        ->where([
+                            'id_persona' => (int) $pes->id_persona,
+                            'id_efector' => (int) $pes->id_efector,
+                            'deleted_at' => null,
+                        ])
+                        ->one();
+                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                }
+            }
+        }
         $servicioAsignado = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['id_servicio_asignado'] : NULL;
         $rrhhServicioAsignado = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['id_rrhh_servicio_asignado'] : NULL;
 

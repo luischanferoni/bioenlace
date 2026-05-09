@@ -74,7 +74,8 @@
       "params": {
         "id_servicio": "id_servicio_asignado",
         "id_efector": "id_efector",
-        "id_profesional_efector_servicio": "id_profesional_efector_servicio"
+        "id_profesional_efector_servicio": "id_profesional_efector_servicio",
+        "raw": "1"
       },
       "auto_load": true,
       "show_search": false,

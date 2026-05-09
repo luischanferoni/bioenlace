@@ -9,6 +9,8 @@ use yii\web\ForbiddenHttpException;
 
 use common\models\Consulta;
 use common\models\Turno;
+use common\models\ConsultasConfiguracion;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 
 /**
  * SisseActionFilter implements a layer of access to the controller actions.
@@ -41,7 +43,6 @@ use common\models\Turno;
 
 class SisseConsultaFilter extends ActionFilter
 {
-
     /**
      * @var callable a PHP callback that returns true or false.
      * The callback's signature should be:
@@ -101,7 +102,11 @@ class SisseConsultaFilter extends ActionFilter
 
         // Si no recibimos el servicio del rrhh, tenemos que deducirlo
         if ($idServicioRrhh == '' && $idServicioRrhh !== null) {
-            $rrhh = \common\models\RrhhEfector::findOne(Yii::$app->user->getIdRecursoHumano());
+            $idRrhh = ProfesionalContextResolver::resolveRrhhIdFromSessionOrPes();
+            $rrhh = $idRrhh > 0 ? \common\models\RrhhEfector::findOne($idRrhh) : null;
+            if ($rrhh === null) {
+                throw new ForbiddenHttpException('No se pudo determinar el recurso humano (RRHH/PES) para deducir el servicio.');
+            }
             $servicios = \Yii\helpers\ArrayHelper::map($rrhh->rrhhServicio, 'id_servicio', 'servicio.item_name');
             $idServicioRrhh = array_keys($servicios)[0];
 
@@ -113,15 +118,9 @@ class SisseConsultaFilter extends ActionFilter
             }
         }
 
-        // si no lo recibimos por parametro, tenemos que deducir el encounter class
-        // para eso usamos el parametro paciente.
-        // Revisar las constantes al comienzo de esta clase para conocer los encounterClass
-        if ($encounterClass == '' && $encounterClass !== null) {
-            if ($paciente->estadoPaciente['estado']  == Persona::ESTADO_INTERNADA) {
-                $encounterClass == self::ENCOUNTER_CLASS_IMP;
-            } else {
-                $encounterClass == self::ENCOUNTER_CLASS_AMB;
-            }
+        // Si no viene encounter_class, usar el de sesión (o fallback AMB).
+        if ($encounterClass === null || $encounterClass === '') {
+            $encounterClass = Yii::$app->user->getEncounterClass() ?: Consulta::ENCOUNTER_CLASS_AMB;
         }
 
         list($urlAnterior, $urlActual, $urlSiguiente) = ConsultasConfiguracion::getUrlPorServicioYEncounterClass($idServicioRrhh, $encounterClass);

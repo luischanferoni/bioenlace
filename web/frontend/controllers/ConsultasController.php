@@ -15,6 +15,7 @@ use yii\data\Pagination;
 
 use yii\web\NotFoundHttpException;
 use yii\base\UnknownPropertyException;
+use yii\db\Query;
 
 use common\models\Consulta;
 use common\models\ConsultasConfiguracion;
@@ -168,23 +169,41 @@ class ConsultasController extends Controller
         // if(!User::hasRole('MedicoAdmin')){$fecha = 'CURRENT_DATE()';}
         $idEfector = Yii::$app->user->getIdEfector();
 
+        $idPersonaMedico = (int) Yii::$app->user->getIdPersona();
+        if ($idPersonaMedico <= 0) {
+            $idPersonaMedico = (int) (new Query())
+                ->select(['id_persona'])
+                ->from('personas')
+                ->where(['id_user' => $id_user])
+                ->scalar();
+        }
+
+        // Turnos del día en el efector asignados al profesional logueado: por id_rr_hh (legacy) o por PES
+        // (evita depender solo del INNER JOIN personas→rr_hh→turnos cuando el vínculo es solo PES).
         $dataProvider = new SqlDataProvider([
             'key' => 'id_turnos',
             'sql' => 'SELECT turnos.atendido, turnos.hora, turnos.confirmado, '
-                . 'turnos.id_turnos as id_turnos, pac.apellido, pac.nombre, pac.documento, '
-                . 'turnos.hora, pac.id_persona, rr_hh.id_rr_hh, IF (phc.numero_hc IS NULL, "--", phc.numero_hc) AS numeroHC, '
-                . 'turnos.programado FROM `personas` '
-                . 'INNER JOIN rr_hh ON (personas.id_persona = rr_hh.id_persona) '
-                . 'INNER JOIN turnos ON (rr_hh.id_rr_hh = turnos.id_rr_hh) '
-                . ''
+                . 'turnos.id_turnos AS id_turnos, pac.apellido, pac.nombre, pac.documento, '
+                . 'turnos.hora, pac.id_persona, turnos.id_rr_hh, IF (phc.numero_hc IS NULL, "--", phc.numero_hc) AS numeroHC, '
+                . 'turnos.programado FROM turnos '
                 . 'INNER JOIN personas pac ON (turnos.id_persona = pac.id_persona) '
                 . 'LEFT JOIN personas_hc phc ON (phc.id_persona = turnos.id_persona) '
-                . 'WHERE personas.id_user = :id_user '
-                . 'AND turnos.fecha =' . $fecha . ' '
+                . 'LEFT JOIN profesional_efector_servicio pes ON pes.id = turnos.id_profesional_efector_servicio '
+                . 'AND pes.deleted_at IS NULL '
+                . 'WHERE turnos.fecha = ' . $fecha . ' '
                 . 'AND turnos.id_efector = :id_efector '
-                . 'AND turnos.atendido IS NULL GROUP BY turnos.id_turnos ORDER BY turnos.hora ASC ',
-            'params' => [':id_user' => $id_user, ':id_efector' => $idEfector]
-        ]); //AND rr_hh.id_especialidad = 1 
+                . 'AND turnos.atendido IS NULL '
+                . 'AND ( '
+                . 'EXISTS (SELECT 1 FROM rr_hh rh_med WHERE rh_med.id_persona = :id_persona_medico '
+                . 'AND rh_med.id_rr_hh = turnos.id_rr_hh) '
+                . 'OR (pes.id IS NOT NULL AND pes.id_persona = :id_persona_medico AND pes.id_efector = turnos.id_efector) '
+                . ') '
+                . 'GROUP BY turnos.id_turnos ORDER BY turnos.hora ASC ',
+            'params' => [
+                ':id_efector' => $idEfector,
+                ':id_persona_medico' => $idPersonaMedico,
+            ],
+        ]);
         if (Yii::$app->request->get('id_user')) {
             $this->layout = 'imprimir';
         }

@@ -216,11 +216,10 @@ class InternacionController extends Controller
         }
         if ($model_rrhh === null && (int) ($model->id_rrhh ?? 0) > 0) {
             $idLeg = (int) $model->id_rrhh;
-            $model_rrhh = ProfesionalEfectorServicio::find()
-                ->where(['deleted_at' => null])
-                ->andWhere(['or', ['id' => $idLeg], ['legacy_rrhh_servicio_id' => $idLeg]])
-                ->orderBy(['id' => SORT_ASC])
-                ->one();
+            $model_rrhh = ProfesionalEfectorServicio::resolvePesModelFromInternacionRrhhField(
+                $idLeg,
+                $model->resolveIdEfectorContextForPes()
+            );
         }
         $datosProfesional = $model_rrhh !== null ? $this->formatearDatosProfesional($model_rrhh) : [];
 

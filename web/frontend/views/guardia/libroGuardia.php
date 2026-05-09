@@ -123,7 +123,6 @@ $acciones = array(
                                 }
                             ],            
                             
-                            //'id_rrhh_asignado',
                             [
                                 'attribute' => 'id_profesional_efector_servicio',
                                 'label' => 'Profesional',

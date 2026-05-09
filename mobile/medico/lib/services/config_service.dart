@@ -280,7 +280,7 @@ class Servicio {
   final String nombre;
   /// Asignación canónica (PES) para agenda y turnos.
   final int idProfesionalEfectorServicio;
-  /// Solo compatibilidad con turnos legacy; suele ser 0.
+  /// Alias legacy del mismo id PES que envía la API en `id_rrhh_servicio` (o copia de `idProfesionalEfectorServicio` si viene 0).
   final int idRrhhServicio;
 
   Servicio({
@@ -302,7 +302,10 @@ class Servicio {
           0,
       nombre: json['nombre'] as String? ?? 'Sin nombre',
       idProfesionalEfectorServicio: idPes,
-      idRrhhServicio: (json['id_rrhh_servicio'] as int?) ?? 0,
+      idRrhhServicio: () {
+        final legacy = (json['id_rrhh_servicio'] as int?) ?? 0;
+        return legacy > 0 ? legacy : idPes;
+      }(),
     );
   }
 }

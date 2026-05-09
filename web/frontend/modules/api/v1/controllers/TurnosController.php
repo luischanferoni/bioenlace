@@ -877,6 +877,9 @@ class TurnosController extends BaseController
         $fecha = $post['fecha'] ?? null;
         $hora = $post['hora'] ?? null;
         $idPesPost = isset($post['id_profesional_efector_servicio']) ? (int) $post['id_profesional_efector_servicio'] : 0;
+        if ($idPesPost <= 0 && isset($post['id_rrhh_servicio_asignado'])) {
+            $idPesPost = (int) $post['id_rrhh_servicio_asignado'];
+        }
         if (!$fecha || !$hora) {
             throw new BadRequestHttpException('fecha y hora requeridos');
         }

@@ -50,7 +50,8 @@ class AudioController extends BaseController
                 $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
                 $idConfiguracion = $request->post('id_configuracion');
 
-                if ($idServicio && ($idPesCtx || $idRrHhServicio)) {
+                $idProfCtx = (int) ($idPesCtx ?? $idRrHhServicio ?? 0);
+                if ($idServicio && $idProfCtx > 0) {
                     $servicio = \common\models\Servicio::findOne($idServicio);
                     $tabId = $request->post('tab_id') ?? 'tab_' . uniqid() . '_' . time();
 

@@ -315,7 +315,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
 
     /**
      * Asignación PES del profesional a cargo: `id_profesional_efector_servicio`, o resolución desde `id_rrhh`
-     * (PK PES o `legacy_rrhh_servicio_id`) vía {@see afterFind()}.
+     * (PK PES o `id_rr_hh`) vía {@see afterFind()} y {@see ProfesionalEfectorServicio::resolvePesModelFromInternacionRrhhField()}.
      *
      * @return \yii\db\ActiveQuery
      */
@@ -323,6 +323,30 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
     {
         return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio'])
             ->andOnCondition(['profesional_efector_servicio.deleted_at' => null]);
+    }
+
+    /**
+     * Efector para acotar resolución PES desde `id_rrhh` (cama → piso, o `id_efector_origen`).
+     */
+    public function resolveIdEfectorContextForPes(): ?int
+    {
+        $idOrigen = (int) ($this->id_efector_origen ?? 0);
+        if ($idOrigen > 0) {
+            return $idOrigen;
+        }
+        $idCama = (int) ($this->id_cama ?? 0);
+        if ($idCama <= 0) {
+            return null;
+        }
+        $id = (new \yii\db\Query())
+            ->select(['p.id_efector'])
+            ->from(['c' => InfraestructuraCama::tableName()])
+            ->innerJoin(['s' => InfraestructuraSala::tableName()], 's.id = c.id_sala')
+            ->innerJoin(['p' => InfraestructuraPiso::tableName()], 'p.id = s.id_piso')
+            ->where(['c.id' => $idCama])
+            ->scalar();
+
+        return $id !== false && $id !== null ? (int) $id : null;
     }
 
     public function afterFind()
@@ -333,11 +357,10 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         if ($idCol > 0 || $idLegacy <= 0 || $this->isRelationPopulated('rrhh')) {
             return;
         }
-        $pes = ProfesionalEfectorServicio::find()
-            ->where(['deleted_at' => null])
-            ->andWhere(['or', ['id' => $idLegacy], ['legacy_rrhh_servicio_id' => $idLegacy]])
-            ->orderBy(['id' => SORT_ASC])
-            ->one();
+        $pes = ProfesionalEfectorServicio::resolvePesModelFromInternacionRrhhField(
+            $idLegacy,
+            $this->resolveIdEfectorContextForPes()
+        );
         if ($pes !== null) {
             $this->populateRelation('rrhh', $pes);
         }

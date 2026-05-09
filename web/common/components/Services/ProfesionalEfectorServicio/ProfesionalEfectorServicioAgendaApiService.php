@@ -119,22 +119,35 @@ class ProfesionalEfectorServicioAgendaApiService
     }
 
     /**
-     * Opcional: si el cliente envía `id_rrhh_servicio_asignado`, debe coincidir con la PK PES (compat de nombre).
+     * Opcional: si el cliente envía el alias deprecado `id_rrhh_servicio_asignado`, debe ser el mismo entero que la PK PES.
      *
      * @throws BadRequestHttpException
      */
-    public static function assertRrhhServicioAsignadoAlineadoConPes(
-        ?int $idRrhhServicioAsignado,
+    public static function assertOptionalPesAliasMatches(
+        ?int $aliasIdRrsa,
         ProfesionalEfectorServicio $pes,
         int $idEfector
     ): void {
         if ($idEfector <= 0 || (int) $pes->id_efector !== $idEfector) {
             throw new BadRequestHttpException('La asignación profesional no pertenece al efector.');
         }
-        $in = $idRrhhServicioAsignado !== null && $idRrhhServicioAsignado > 0 ? (int) $idRrhhServicioAsignado : 0;
+        $in = $aliasIdRrsa !== null && $aliasIdRrsa > 0 ? (int) $aliasIdRrsa : 0;
         if ($in > 0 && $in !== (int) $pes->id) {
-            throw new BadRequestHttpException('id_rrhh_servicio_asignado no coincide con id_profesional_efector_servicio.');
+            throw new BadRequestHttpException(
+                'El alias id_rrhh_servicio_asignado no coincide con id_profesional_efector_servicio (mismo id PES esperado).'
+            );
         }
+    }
+
+    /**
+     * @deprecated Use {@see assertOptionalPesAliasMatches}
+     */
+    public static function assertRrhhServicioAsignadoAlineadoConPes(
+        ?int $idRrhhServicioAsignado,
+        ProfesionalEfectorServicio $pes,
+        int $idEfector
+    ): void {
+        self::assertOptionalPesAliasMatches($idRrhhServicioAsignado, $pes, $idEfector);
     }
 
     /**

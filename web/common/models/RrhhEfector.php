@@ -104,7 +104,7 @@ class RrhhEfector extends \yii\db\ActiveRecord
     }
 
     /**
-     * Alias histórico: mismas filas que {@see getProfesionalEfectorServicios()} (PES).
+     * @deprecated Nombre histórico; mismas filas que {@see getProfesionalEfectorServicios()} (PES). Preferir `getProfesionalEfectorServicios()`.
      *
      * @return \yii\db\ActiveQuery
      */

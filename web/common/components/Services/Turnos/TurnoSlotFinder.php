@@ -90,7 +90,7 @@ class TurnoSlotFinder
 
     /**
      * Lista hasta $limit slots libres (mismo criterio que findFirstAvailable).
-     * Criterio opcional: `id_rrhh_servicio_asignado` — alias del id PES (misma PK).
+     * Criterio opcional: `id_rrhh_servicio_asignado` — nombre deprecado; mismo entero que id PES (`profesional_efector_servicio.id`).
      * Criterio opcional: id_profesional_efector_servicio — limita a esa agenda/profesional.
      *
      * @param array $criteria

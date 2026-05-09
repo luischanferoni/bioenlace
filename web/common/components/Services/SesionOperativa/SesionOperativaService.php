@@ -42,7 +42,7 @@ class SesionOperativaService extends Component
      *   rrhh_id: int,
      *   redirect_url: string,
      *   context_token: string
-     * } `servicio.id_rrhh_servicio` queda en 0 y est? **deprecated** (compat); usar `id_profesional_efector_servicio`.
+     * } `servicio.id_rrhh_servicio` repite el id PES (alias legacy en payload); can?nico: `id_profesional_efector_servicio`.
      */
     public function establecer(array $body): array
     {
@@ -98,8 +98,6 @@ class SesionOperativaService extends Component
         Yii::$app->user->setIdRecursoHumano($idRrhh);
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
 
-        Yii::$app->user->setIdRrhhServicio(0);
-
         $pesEnEfector = ProfesionalEfectorServicio::find()
             ->where([
                 'id_persona' => $idPersona,
@@ -132,7 +130,7 @@ class SesionOperativaService extends Component
             'id_rr_hh' => $idRrhh,
             'id_profesional_efector_servicio' => (int) $pes->id,
             'servicio_actual' => (int) $servicioId,
-            'id_rrhh_servicio' => 0,
+            'id_rrhh_servicio' => (int) $pes->id,
             'encounter_class' => (string) $encounterClass,
             'iat' => time(),
             'exp' => time() + (24 * 60 * 60),
@@ -148,7 +146,7 @@ class SesionOperativaService extends Component
                 'id' => (int) $servicioId,
                 'nombre' => (string) ($pes->servicio->nombre ?? ''),
                 'id_profesional_efector_servicio' => (int) $pes->id,
-                'id_rrhh_servicio' => 0,
+                'id_rrhh_servicio' => (int) $pes->id,
             ],
             'encounter_class' => [
                 'code' => (string) $encounterClass,

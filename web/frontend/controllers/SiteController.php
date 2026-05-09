@@ -210,7 +210,6 @@ class SiteController extends Controller
         $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
         if ($pes !== null) {
             Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-            Yii::$app->user->setIdRrhhServicio(0);
         } else {
             try {
                 $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
@@ -219,11 +218,9 @@ class SiteController extends Controller
                     $idServicio
                 );
                 Yii::$app->user->setIdProfesionalEfectorServicio((int) $out['id_profesional_efector_servicio']);
-                Yii::$app->user->setIdRrhhServicio(0);
             } catch (\Throwable $e) {
                 Yii::warning('actionCambiarServicio: no se pudo asegurar PES: ' . $e->getMessage(), __METHOD__);
                 Yii::$app->user->setIdProfesionalEfectorServicio(null);
-                Yii::$app->user->setIdRrhhServicio(0);
             }
         }
 
@@ -419,7 +416,6 @@ class SiteController extends Controller
         Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
         Yii::$app->user->setIdRecursoHumano($rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0);
-        Yii::$app->user->setIdRrhhServicio(0);
         Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector));
 
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);

@@ -22,7 +22,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
     private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';
 
     /**
-     * En cada ítem de `servicios`, `id_profesional_efector_servicio` es canónico; `id_rrhh_servicio` es solo compatibilidad legacy (puede ser 0).
+     * En cada ítem de `servicios`, `id_profesional_efector_servicio` es canónico; `id_rrhh_servicio` repite el mismo id (alias en payload).
      *
      * @return array{
      *   encounter_classes: list<array{code:string,label:string}>,

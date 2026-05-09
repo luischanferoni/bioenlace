@@ -103,7 +103,6 @@ $this->registerJsFile(
                                 }
                             ],            
                             
-                            //'id_rrhh_asignado',
                             //'created_at',
                             //'updated_at',
                             //'deleted_at',

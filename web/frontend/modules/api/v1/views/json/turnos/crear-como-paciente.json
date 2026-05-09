@@ -32,12 +32,6 @@
           "include_in_submit": true
         },
         {
-          "name": "id_rrhh_servicio_asignado",
-          "type": "hidden",
-          "required": false,
-          "include_in_submit": true
-        },
-        {
           "name": "fecha",
           "type": "hidden",
           "required": false,

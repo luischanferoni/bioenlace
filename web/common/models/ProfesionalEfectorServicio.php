@@ -287,6 +287,33 @@ class ProfesionalEfectorServicio extends ActiveRecord
      *
      * @return array<int, array{id:int, datos:string}>
      */
+    /**
+     * Resuelve PES desde el campo `id_rrhh` de internación u otros legados: puede ser PK PES o `id_rr_hh`.
+     * Sin columna `legacy_rrhh_servicio_id` ni tabla `rrhh_servicio`.
+     */
+    public static function resolvePesModelFromInternacionRrhhField(int $idLegacy, ?int $idEfectorContext): ?self
+    {
+        if ($idLegacy <= 0) {
+            return null;
+        }
+        if ($idEfectorContext !== null && $idEfectorContext > 0) {
+            $id = static::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idLegacy, $idEfectorContext);
+            if ($id !== null) {
+                return static::findOne(['id' => $id, 'deleted_at' => null]);
+            }
+            $id = static::findIdByRrhhAndEfectorMinPes($idLegacy, $idEfectorContext);
+            if ($id !== null) {
+                return static::findOne(['id' => $id, 'deleted_at' => null]);
+            }
+        }
+        $id = static::findIdByRrhhEfectorMinPes($idLegacy);
+        if ($id !== null) {
+            return static::findOne(['id' => $id, 'deleted_at' => null]);
+        }
+
+        return static::find()->where(['id' => $idLegacy, 'deleted_at' => null])->one();
+    }
+
     public static function opcionesProfesionalFiltroTurnosPorEfector(int $idEfector): array
     {
         if ($idEfector <= 0) {

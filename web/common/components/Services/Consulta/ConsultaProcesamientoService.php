@@ -19,16 +19,19 @@ class ConsultaProcesamientoService extends Component
     {
         try {
             $userPerTabConfig = $body['userPerTabConfig'] ?? [];
-            $idRrHhServicio = $userPerTabConfig['id_rrhh_servicio'] ?? null;
+            $idPesTab = $userPerTabConfig['id_profesional_efector_servicio']
+                ?? $userPerTabConfig['idProfesionalEfectorServicio'] ?? null;
+            $idRrHhServicioLegacy = $userPerTabConfig['id_rrhh_servicio'] ?? null;
+            $idRrHhServicio = (int) ($idPesTab ?: $idRrHhServicioLegacy ?: 0);
             $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
             $textoConsulta = $body['consulta'] ?? null;
             $idConfiguracion = $body['id_configuracion'] ?? null;
 
-            if (!$idRrHhServicio || !$textoConsulta) {
+            if ($idRrHhServicio <= 0 || !$textoConsulta) {
                 return [
                     '__statusCode' => 400,
                     'success' => false,
-                    'message' => 'Faltan datos obligatorios. Por favor, verifique que haya proporcionado el ID de recurso humano y el texto de la consulta.',
+                    'message' => 'Faltan datos obligatorios. Verifique id_profesional_efector_servicio (o id_rrhh_servicio espejo) y el texto de la consulta.',
                     'errors' => null,
                 ];
             }

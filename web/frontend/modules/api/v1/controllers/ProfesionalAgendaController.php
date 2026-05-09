@@ -280,7 +280,7 @@ class ProfesionalAgendaController extends BaseController
             $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
             $idRrsaOpt = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
             try {
-                ProfesionalEfectorServicioAgendaApiService::assertRrhhServicioAsignadoAlineadoConPes(
+                ProfesionalEfectorServicioAgendaApiService::assertOptionalPesAliasMatches(
                     $idRrsaOpt,
                     $pes,
                     $idEfector
@@ -303,7 +303,7 @@ class ProfesionalAgendaController extends BaseController
             $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
             $idRrsaOpt = self::nullablePositiveInt($body['id_rrhh_servicio_asignado'] ?? null);
             try {
-                ProfesionalEfectorServicioAgendaApiService::assertRrhhServicioAsignadoAlineadoConPes(
+                ProfesionalEfectorServicioAgendaApiService::assertOptionalPesAliasMatches(
                     $idRrsaOpt,
                     $pes,
                     $idEfector

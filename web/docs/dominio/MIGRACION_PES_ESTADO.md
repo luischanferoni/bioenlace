@@ -16,11 +16,11 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 
 ## Principios prácticos
 
-1. **Sesión operativa** puede traer `idRecursoHumano`, `idProfesionalEfectorServicio` (canónico), `servicio_actual`, `idEfector`. La clave `id_rrhh_servicio` en sesión/snapshot queda **reservada y en desuso** (típicamente `0`); los clientes nuevos deben usar `id_profesional_efector_servicio` / `idProfesionalEfectorServicio`.
+1. **Sesión operativa** puede traer `idRecursoHumano`, `idProfesionalEfectorServicio` (canónico), `servicio_actual`, `idEfector`. En snapshot/JWT, `id_rrhh_servicio` **repite el id PES** como alias de payload; los clientes nuevos deben preferir `id_profesional_efector_servicio` / `idProfesionalEfectorServicio`.
 2. **Filtros y reportes** que antes hacían `consultas.id_rr_hh = :x` deben considerar también **`id_profesional_efector_servicio`** cuando la consulta quedó registrada solo con PES (o resolver PES desde persona + efector + servicio a partir del `id_rr_hh` del formulario).
-3. **Formularios web** que mandan `id_rr_hh` pero el Select2 en realidad usa **`rrhh_servicio.id`** (como en guardia): el campo persistido suele ser `id_rrhh_asignado` u homólogo; conviene **no inventar** `id_rr_hh` en el modelo si la tabla no lo tiene.
+3. **Formularios web**: valores de agenda/profesional deben ser **PK PES**; no existe tabla `rrhh_servicio` tras `m260509_000001`.
 4. **Preferir helpers existentes** en `common/models/ProfesionalEfectorServicio.php`, por ejemplo:
-   - `findIdByRrhhAndEfectorMinLegacyServicio`
+   - `findIdByRrhhAndEfectorMinPes`
    - `resolvePesIdFromGuardiaAsignado`
    - `findIdByPersonaEfectorServicio`
    - `resolveProfesionalEfectorServicioIdFromRrhhServicioId` (según caso)
@@ -45,7 +45,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 1. Ejecutar `web/docs/sql/diagnostico_pes_antes_eliminar_legacy.sql` hasta cumplir criterios del final del script.
 2. Aplicar `yii migrate` incluyendo `m260509_000001_drop_rrhh_servicio_and_pes_legacy_bridge` (solo **mysql/mysqli**; otros drivers quedan omitidos con mensaje).
 3. **Código posterior obligatorio:** quitar o desactivar usos de `\common\models\RrhhServicio`, métodos que lean `legacy_rrhh_servicio_id`, y cualquier SQL explícito a `rrhh_servicio`. Buscar: `rg "rrhh_servicio|legacy_rrhh_servicio_id|RrhhServicio" web/common web/frontend web/backend`.
-4. **Fuera de esta migración:** columnas como `id_rrhh_servicio_asignado` (turnos), `id_rrhh_asignado` (guardia), `id_rrhh_servicio` en otros consumidores — siguen existiendo; un DDL futuro puede anularlas cuando el código deje de referenciarlas.
+4. **`m260509_000002_drop_legacy_rrhh_servicio_id_columns`** elimina columnas consumidoras (`turnos.id_rrhh_servicio_asignado`, `guardia.id_rrhh_asignado`, etc.); el código debe usar solo PES y alias de **nombre** en API (`id_rrhh_servicio_asignado` = mismo entero que PES).
 
 ---
 
@@ -61,10 +61,10 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 | **Sesión** | `SiteController` / `SesionOperativaService`: fijar PES cuando solo había RRHH; documentación de endpoint operativo. |
 | **Consulta (acceso y motivos)** | `ConsultaAccessService`; controladores API/web de motivos y chat; `Consulta::resolveIdRrhhParaMotivos()`; `ConsultaTrait::guardarConsulta` asigna PES desde sesión en altas. |
 | **Web turnos** | `TurnosController::actionEventos`: request con PES, ocupación, etc. |
-| **Paciente / turno hoy** | `Persona::turnoHoy`: además de servicio y `id_rrhh_servicio_asignado` vs RRHH en sesión, match por `id_profesional_efector_servicio` (sesión o parámetro). |
+| **Paciente / turno hoy** | `Persona::turnoHoy`: match por servicio, RRHH en sesión y/o **`id_profesional_efector_servicio`**. |
 | **Reportes C4/C7** | `ConsultaBusqueda::searchParaReporteC4`: filtro por profesional ampliado (RRHH del form **o** PES alineado a persona/efector/servicio). Corrección en `searchReporteFarmacia` rama EMER (variable inexistente). Comentarios en `ReporteController`. |
 | **Encuesta parches** | `EncuestaParchesMamariosController`: resolver `id_rr_hh` desde PES si falta RRHH en sesión; `EncuestaParchesMamarios::beforeSave` prefiere PES de sesión para `id_profesional_efector_servicio`; `SisseActionFilter` acepta contexto con RRHH **o** PES. |
-| **Guardia** | `GuardiaController`: dejar de usar el atributo inexistente `id_rr_hh`; prellenar **`id_rrhh_asignado`** (`rrhh_servicio.id`) desde `id_rrhh_servicio` / RRHH / PES. `Guardia::beforeSave`: fallback PES desde sesión si el resolver por asignado no devuelve id. |
+| **Guardia** | `Guardia` persiste **`id_profesional_efector_servicio`**; vistas y API alineados a PES (columnas `id_rrhh_asignado` retiradas por `m260509_000002`). |
 | **PersonaPrograma** | `PersonaProgramaController`: no depender de `idRecursoHumano` como único input; resolver RRHH desde sesión o PES cuando no venga parámetro. |
 | **Web listado día / consultas del médico** | `ConsultasController::actionListadoSumar`: turnos del día filtrados por profesional vía **EXISTS rr_hh por persona** **o** fila PES (`profesional_efector_servicio`) alineada a persona + efector (sin cadena obligatoria `personas→rr_hh→turnos` únicamente). Docblock de clase del controller referencia PES + `ConsultaBusqueda::searchGral`. |
 | **`ConsultaBusqueda::searchGral`** | Filtro “mis consultas” (`personas.id_user`) extendido con **OR** `turnos.id_profesional_efector_servicio` ∈ PES de la persona en sesión (`condicionTurnoAsignadoProfesionalSesion`). |
@@ -75,13 +75,13 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 
 | Fase | Cambios principales |
 |------|---------------------|
-| **Turnos / slots** | API `TurnosController`: ocupación con `id_efector` antes del resolver; reprogramación legacy sincroniza `id_rr_hh` vía PES/`legacy_rrhh_servicio_id` antes de tocar `RrhhServicio`. Web `TurnosController::actionEventos`: resolver slot con `ProfesionalEfectorServicio::resolverIdRrhhServicioDesdeRrhhServicioYEfector`. `SobreturnoService`: turnos colindantes por PES u homólogos legacy. |
-| **Agenda PES** | `ProfesionalEfectorServicioAgendaUiService`: alta/carga sin exigir fila en `rrhh_servicio` (validación por PES persona+efector+servicio). `ProfesionalEfectorServicioAgendaApiService`: asserts con `exists` / PES+legacy; `obtenerOCrearPesParaRrhhServicioEnEfector` intenta PES por `legacy_rrhh_servicio_id` antes de leer legacy. `ProfesionalEfectorServicioAltaService`: persiste PES antes que `RrhhServicio` en la transacción. |
-| **Guardia** | `GuardiaController::prefillIdRrhhAsignadoDesdeSesion`: RRHH con servicio en sesión vía resolver PES-first; con PES en sesión asigna `id_profesional_efector_servicio` y compat opcional en `id_rrhh_asignado`. |
-| **Búsqueda turnos web** | `TurnoBusqueda`: atributo `profesional_clave` (`p<id>` PES o id legacy) con OR a `id_profesional_efector_servicio`; `searchAllTurnos` tolera RRHH sin filas `rrhh_servicio` (servicios desde PES). Vista `turnos/list.php`: Select2 mezcla opciones legacy + `ProfesionalEfectorServicio::opcionesProfesionalFiltroTurnosPorEfector`. |
-| **UI / JS** | `UiScreenService`: `slot_id` PES-first. `agenda-laboral.js` / `spa-home.js` / `turnos_calendario.js`: identidad de slot y etiquetas desde `id_profesional_efector_servicio` y objeto `servicio` en slots; `id_rrhh_servicio_asignado` solo si no hay PES en sesión (calendario). |
-| **Admin RRHH (backend)** | `RrhhEfectorController`: listado AdminEfector por EXISTS PES **o** `rrhh_servicio`; alta vía `ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector`; baja limpia PES + legacy. JSON create/remove alineados con PES. |
-| **Remanente solo código (cierre tanda)** | Respuestas API turnos/listados con `id_profesional_efector_servicio`, `servicio_detalle` y `id_rrhh_servicio_asignado` (compat); `Turno::getServicioEmbebidoParaApi()`; wizard sesión y JWT con `id_profesional_efector_servicio` en nodo `servicio`; snapshot pestaña con `id_profesional_efector_servicio`; `TurnoBusqueda` numérico interpreta PK PES antes que legacy; `RrhhServicio` AR documentado como legacy; Flutter médico/paciente PES-first. |
+| **Turnos / slots** | API y web: filtros y persistencia por **PES**; alias de request `id_rrhh_servicio_asignado` = mismo id. Sin tabla/columnas `rrhh_servicio` tras migraciones 260509. |
+| **Agenda PES** | `ProfesionalEfectorServicioAgenda*`: validación por PES (persona+efector+servicio). `ProfesionalEfectorServicioAltaService` asegura filas PES. |
+| **Guardia** | Solo **`id_profesional_efector_servicio`** en modelo y flujos actuales. |
+| **Búsqueda turnos web** | `TurnoBusqueda` / vistas: opciones y filtros vía PES (`ProfesionalEfectorServicio::opcionesProfesionalFiltroTurnosPorEfector`, etc.). |
+| **UI / JS** | Slots y calendario: identidad `id_profesional_efector_servicio` / `pes:…`. |
+| **Admin RRHH (backend)** | Alta/baja alineadas con PES; sin dependencia de tabla `rrhh_servicio`. |
+| **Cierre contrato** | JWT y snapshot: `id_profesional_efector_servicio` canónico; `id_rrhh_servicio` en payload como alias numérico del PES. Flutter PES-first. |
 
 ---
 

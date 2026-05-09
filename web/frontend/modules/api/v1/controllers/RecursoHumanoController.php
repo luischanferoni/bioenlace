@@ -491,7 +491,7 @@ class RecursoHumanoController extends BaseController
 
     /**
      * @return list<array{id:int,name:string,meta:array{id_rrhh_servicio:int, id_profesional_efector_servicio:int, acepta_turnos:string}>>
-     *         meta.id_rrhh_servicio: **deprecated** (alias de la PK PES para clientes viejos); usar meta.id_profesional_efector_servicio.
+     *         meta.id_rrhh_servicio: mismo entero que meta.id_profesional_efector_servicio (alias de payload); preferir el nombre canónico.
      */
     private function serviciosAsignadosItemsForPersonaEfector(int $idPersona, int $idEfector): array
     {

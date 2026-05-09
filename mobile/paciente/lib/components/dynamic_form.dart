@@ -106,8 +106,7 @@ class _DynamicFormState extends State<DynamicForm> {
       for (var i = 0; i < parts.length; i++) {
         final k = parts[i];
         final v = chunks[i];
-        // Migración PES: el primer chunk puede venir como "pes:<id>" en lugar de id_rrhh_servicio_asignado.
-        // Si el JSON del wizard todavía declara parts legacy, traducimos a `id_profesional_efector_servicio`.
+        // Primer chunk `pes:<id>`: normalizar a id PES (parts legacy `id_rrhh_servicio_asignado` aún soportados).
         if (k == 'id_rrhh_servicio_asignado' && v.startsWith('pes:')) {
           final raw = v.substring(4).trim();
           final idPes = int.tryParse(raw);

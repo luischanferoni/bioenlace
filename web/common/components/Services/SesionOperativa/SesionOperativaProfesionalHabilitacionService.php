@@ -5,9 +5,9 @@ namespace common\components\Services\SesionOperativa;
 use common\models\ConsultasConfiguracion;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\ProfesionalEfectorServicioCondicionLaboral;
 use common\models\Persona;
-use common\models\RrhhEfector;
-use common\models\RrhhLaboral;
+use common\models\Efector;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
 use Yii;
@@ -40,19 +40,20 @@ class SesionOperativaProfesionalHabilitacionService extends Component
             ];
         }
 
-        $rrhhRows = RrhhEfector::findActive()
-            ->where(['id_persona' => $idPersona])
-            ->with(['efector'])
-            ->all();
+        $idEfectoresPes = ProfesionalEfectorServicio::find()
+            ->select(['id_efector'])
+            ->distinct()
+            ->where(['id_persona' => $idPersona, 'deleted_at' => null])
+            ->column();
 
-        if ($rrhhRows === []) {
+        if ($idEfectoresPes === []) {
             return [
                 'encounter_classes' => $encounterClasses,
                 'efectores' => [],
                 'efectores_con_problemas' => [[
                     'id_efector' => null,
                     'nombre' => null,
-                    'message' => 'No tiene vínculos de recurso humano con ningún efector. Solicite al administrador que lo asigne.',
+                    'message' => 'No tiene asignaciones profesionales (PES) en ningún efector. Solicite al administrador que lo asigne.',
                     'contact' => null,
                 ]],
             ];
@@ -61,13 +62,17 @@ class SesionOperativaProfesionalHabilitacionService extends Component
         $efectoresOk = [];
         $problemas = [];
 
-        foreach ($rrhhRows as $re) {
-            $idEfector = (int) $re->id_efector;
-            $nombreEfector = $re->efector !== null ? (string) $re->efector->nombre : '';
+        foreach ($idEfectoresPes as $idEfectorRaw) {
+            $idEfector = (int) $idEfectorRaw;
+            $efectorRow = Efector::findOne($idEfector);
+            $nombreEfector = $efectorRow !== null ? (string) $efectorRow->nombre : '';
             $contact = $this->formatContactList($this->getContactosAdministradorEfector($idEfector));
 
-            $nLab = (int) RrhhLaboral::findActive()->andWhere(['id_rr_hh' => $re->id_rr_hh])->count();
-            if ($nLab < 1) {
+            $tieneLaboralPes = ProfesionalEfectorServicioCondicionLaboral::existeAlgunaActivaParaPersonaEfector(
+                $idPersona,
+                $idEfector
+            );
+            if (!$tieneLaboralPes) {
                 $problemas[] = [
                     'id_efector' => $idEfector,
                     'nombre' => $nombreEfector,
@@ -81,7 +86,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
             $candidatosAdmin = [];
             $pesRows = ProfesionalEfectorServicio::find()
                 ->where([
-                    'id_persona' => (int) $re->id_persona,
+                    'id_persona' => $idPersona,
                     'id_efector' => $idEfector,
                     'deleted_at' => null,
                 ])
@@ -207,19 +212,29 @@ class SesionOperativaProfesionalHabilitacionService extends Component
 
         $sid = (int) $adminServicio->id_servicio;
 
-        return RrhhEfector::find()
-            ->alias('re')
-            ->andWhere(['re.deleted_at' => null])
-            ->select(['p.nombre', 'p.apellido'])
-            ->innerJoin(
-                ['pes' => ProfesionalEfectorServicio::tableName()],
-                'pes.id_persona = re.id_persona AND pes.id_efector = re.id_efector AND pes.id_servicio = :sid AND pes.deleted_at IS NULL',
-                [':sid' => $sid]
-            )
-            ->innerJoin(['p' => Persona::tableName()], 'p.id_persona = re.id_persona')
-            ->andWhere(['re.id_efector' => $idEfector])
+        $raw = ProfesionalEfectorServicio::find()
+            ->alias('pes')
+            ->select(['p.id_persona', 'p.nombre', 'p.apellido'])
+            ->innerJoin(['p' => Persona::tableName()], 'p.id_persona = pes.id_persona')
+            ->andWhere([
+                'pes.id_efector' => $idEfector,
+                'pes.id_servicio' => $sid,
+                'pes.deleted_at' => null,
+            ])
             ->asArray()
             ->all();
+        $seen = [];
+        $out = [];
+        foreach ($raw as $r) {
+            $pid = (int) ($r['id_persona'] ?? 0);
+            if ($pid <= 0 || isset($seen[$pid])) {
+                continue;
+            }
+            $seen[$pid] = true;
+            $out[] = ['nombre' => $r['nombre'] ?? '', 'apellido' => $r['apellido'] ?? ''];
+        }
+
+        return $out;
     }
 
     /**

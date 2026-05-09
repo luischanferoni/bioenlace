@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\RrhhEfector */
+/* @var $model common\models\ProfesionalEfectorServicio */
 /* @var $model_persona common\models\Persona|null */
 
 $this->title = 'Actualizar RRHH: ' . $model->id_rr_hh;

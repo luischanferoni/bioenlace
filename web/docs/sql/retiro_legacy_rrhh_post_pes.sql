@@ -104,6 +104,7 @@ ALTER TABLE `profesional_efector_servicio` DROP COLUMN `legacy_rrhh_servicio_id`
 -- DROP TABLE IF EXISTS `rrhh_efector`;
 -- DROP TABLE IF EXISTS `rrhh_laboral`;
 -- SET FOREIGN_KEY_CHECKS = 1;
+-- Equivalente Yii (mysql/mysqli): web/common/migrations/m260511_000001_drop_rrhh_efector_and_rrhh_laboral.php
 
 -- =============================================================================
 -- Post-check sugerido: volver a correr secciones 0–3 de diagnostico_pes (ajustando

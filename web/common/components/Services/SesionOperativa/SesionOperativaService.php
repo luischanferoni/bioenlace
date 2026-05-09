@@ -9,7 +9,6 @@ use common\models\ConsultasConfiguracion;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
-use common\models\RrhhEfector;
 use common\models\Servicio;
 use common\models\User;
 use webvimark\modules\UserManagement\components\AuthHelper;
@@ -81,14 +80,7 @@ class SesionOperativaService extends Component
             throw new \RuntimeException('No se encontr? asignaci?n profesional-efector-servicio para la persona autenticada');
         }
 
-        $rrhhEfector = RrhhEfector::find()
-            ->where([
-                'id_efector' => $efectorId,
-                'id_persona' => $idPersona,
-                'deleted_at' => null,
-            ])
-            ->one();
-        $idRrhh = $rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0;
+        $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona($idPersona);
 
         Yii::$app->user->setEncounterClass($encounterClass);
         Yii::$app->user->setServicioActual($servicioId);

@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 
 use kartik\select2\Select2;
 use kartik\date\DatePicker;
@@ -82,8 +82,7 @@ use common\models\Telefono;
             <div class="row">
                 <div class="col-md-6">
                     <?php
-                    $rrhh_Efector = new RrhhEfector();
-                    $profesionales = $rrhh_Efector->obtenerMedicosPorEfector(yii::$app->user->getIdEfector());
+                    $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
                     echo $form->field($model, 'id_profesional_efector_servicio')->widget(Select2::classname(), [
                         'data' => ArrayHelper::map($profesionales, 'id', 'datos'),

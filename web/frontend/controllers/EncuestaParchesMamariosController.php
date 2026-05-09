@@ -14,7 +14,6 @@ use common\models\AtencionesEnfermeria;
 use common\models\EncuestaParchesMamarios;
 use common\models\PersonasAntecedente;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 use common\models\busquedas\EncuestaParchesMamariosBusqueda;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\Consulta;
@@ -131,15 +130,9 @@ class EncuestaParchesMamariosController extends Controller
             if ($pesRaw !== null && $pesRaw !== '') {
                 $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
                 if ($pes !== null) {
-                    $re = RrhhEfector::find()
-                        ->where([
-                            'id_persona' => $pes->id_persona,
-                            'id_efector' => $pes->id_efector,
-                            'deleted_at' => null,
-                        ])
-                        ->one();
-                    if ($re !== null) {
-                        $model->id_rr_hh = (int) $re->id_rr_hh;
+                    $idRh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
+                    if ($idRh > 0) {
+                        $model->id_rr_hh = $idRh;
                     }
                 }
             }

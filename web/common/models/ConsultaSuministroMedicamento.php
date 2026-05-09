@@ -3,7 +3,6 @@
 namespace common\models;
 
 use Yii;
-use common\models\RrhhEfector;
 use common\models\snomed\SnomedMedicamentos;
 
 
@@ -51,13 +50,10 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
                 return;
             }
             if ($c && $this->id_rrhh && $c->id_efector && $c->id_servicio) {
-                $re = RrhhEfector::find()
-                    ->where(['id_rr_hh' => $this->id_rrhh, 'id_efector' => $c->id_efector])
-                    ->andWhere(['deleted_at' => null])
-                    ->one();
-                if ($re) {
+                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rrhh);
+                if ($idPersona !== null && $idPersona > 0) {
                     $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                        (int) $re->id_persona,
+                        $idPersona,
                         (int) $c->id_efector,
                         (int) $c->id_servicio
                     );
@@ -115,7 +111,7 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
      */
     public function getRrhhSuministra()
     {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rrhh']);
+        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rrhh']);
     }
 
         /**

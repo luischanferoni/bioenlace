@@ -5,7 +5,6 @@ namespace common\components\Services\Consulta;
 use common\models\Consulta;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 use Yii;
 
 /**
@@ -38,15 +37,9 @@ final class ConsultaAccessService
 
         if ($idPesSesion > 0) {
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
-            if ($pes !== null) {
-                $re = RrhhEfector::find()
-                    ->where([
-                        'id_persona' => $pes->id_persona,
-                        'id_efector' => $pes->id_efector,
-                        'deleted_at' => null,
-                    ])
-                    ->one();
-                if ($re !== null && $idRrhhConsulta > 0 && (int) $re->id_rr_hh === $idRrhhConsulta) {
+            if ($pes !== null && $idRrhhConsulta > 0) {
+                $idRrhhPersona = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
+                if ($idRrhhPersona > 0 && $idRrhhPersona === $idRrhhConsulta) {
                     return true;
                 }
             }
@@ -55,15 +48,8 @@ final class ConsultaAccessService
         if ($idRrhhSesion > 0 && $idPesConsulta > 0) {
             $pesC = ProfesionalEfectorServicio::findOne(['id' => $idPesConsulta, 'deleted_at' => null]);
             if ($pesC !== null) {
-                $re = RrhhEfector::find()
-                    ->where([
-                        'id_rr_hh' => $idRrhhSesion,
-                        'id_efector' => $pesC->id_efector,
-                        'id_persona' => $pesC->id_persona,
-                        'deleted_at' => null,
-                    ])
-                    ->one();
-                if ($re !== null) {
+                $idRrhhPersonaC = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pesC->id_persona);
+                if ($idRrhhPersonaC > 0 && $idRrhhPersonaC === $idRrhhSesion) {
                     return true;
                 }
             }
@@ -99,11 +85,9 @@ final class ConsultaAccessService
         if ($idRrhhC <= 0) {
             return false;
         }
-        $rrhhEfector = RrhhEfector::find()
-            ->where(['id_rr_hh' => $idRrhhC, 'deleted_at' => null])
-            ->one();
+        $idPersonaConsulta = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhhC);
 
-        return $rrhhEfector !== null && (int) $rrhhEfector->id_persona === (int) $persona->id_persona;
+        return $idPersonaConsulta !== null && (int) $idPersonaConsulta === (int) $persona->id_persona;
     }
 
     /**
@@ -134,10 +118,8 @@ final class ConsultaAccessService
         if ($idRrhhC <= 0) {
             return false;
         }
-        $rrhhEfector = RrhhEfector::find()
-            ->where(['id_rr_hh' => $idRrhhC, 'deleted_at' => null])
-            ->one();
+        $idPersonaConsulta = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhhC);
 
-        return $rrhhEfector !== null && (int) $rrhhEfector->id_persona === (int) $persona->id_persona;
+        return $idPersonaConsulta !== null && (int) $idPersonaConsulta === (int) $persona->id_persona;
     }
 }

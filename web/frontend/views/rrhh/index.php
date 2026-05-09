@@ -37,9 +37,16 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => 'efector.nombre',
             ],
             ['class' => 'yii\grid\ActionColumn', 'urlCreator' => function ($action, $model, $key, $index) {
-                if ($action === 'view') return ['view', 'id' => $model->id_rr_hh];
-                if ($action === 'update') return ['update', 'id' => $model->id_rr_hh];
-                if ($action === 'delete') return ['delete', 'id' => $model->id_rr_hh];
+                if ($action === 'view') {
+                    return ['view', 'id' => $model->id];
+                }
+                if ($action === 'update') {
+                    return ['update', 'id' => $model->id];
+                }
+                if ($action === 'delete') {
+                    return ['delete', 'id' => $model->id];
+                }
+
                 return '#';
             }],
         ],

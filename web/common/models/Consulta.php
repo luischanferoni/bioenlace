@@ -188,7 +188,7 @@ class Consulta extends \yii\db\ActiveRecord
         }
         if ($insert
             || $this->isAttributeChanged('id_turnos', false)
-            || $this->isAttributeChanged('id_rr_hh', false)
+            || ($this->hasAttribute('id_rr_hh') && $this->isAttributeChanged('id_rr_hh', false))
             || $this->isAttributeChanged('id_efector', false)
             || $this->isAttributeChanged('id_servicio', false)
         ) {
@@ -198,7 +198,7 @@ class Consulta extends \yii\db\ActiveRecord
     }
 
     /**
-     * Mantiene PES alineado con turno o con tupla id_rr_hh + id_efector + id_servicio.
+     * Mantiene PES alineado con turno o (legacy) tupla id_rr_hh + id_efector + id_servicio.
      */
     public function syncProfesionalEfectorServicioFromContext(): void
     {
@@ -209,14 +209,11 @@ class Consulta extends \yii\db\ActiveRecord
                 return;
             }
         }
-        if ($this->id_rr_hh && $this->id_efector && $this->id_servicio) {
-            $re = RrhhEfector::find()
-                ->where(['id_rr_hh' => $this->id_rr_hh, 'id_efector' => $this->id_efector])
-                ->andWhere(['deleted_at' => null])
-                ->one();
-            if ($re) {
+        if ($this->hasAttribute('id_rr_hh') && $this->getAttribute('id_rr_hh') && $this->id_efector && $this->id_servicio) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->getAttribute('id_rr_hh'));
+            if ($idPersona !== null && $idPersona > 0) {
                 $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                    (int) $re->id_persona,
+                    $idPersona,
                     (int) $this->id_efector,
                     (int) $this->id_servicio
                 );
@@ -311,7 +308,8 @@ class Consulta extends \yii\db\ActiveRecord
 
     public function getRrhhEfector()
     {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(Rrhh::className(), ['id_persona' => 'id_persona'])
+            ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     public function getProfesionalEfectorServicio()
@@ -592,7 +590,7 @@ class Consulta extends \yii\db\ActiveRecord
             ->innerJoin('servicios_efector as se', 'se.id_servicio = t.id_servicio_asignado and se.id_efector = t.id_efector')
             ->leftJoin('servicios as pase_prev', 'pase_prev.id_servicio = se.pase_previo')
             ->where(['t.id_persona' => $personaId])
-            ->andWhere(['or', ['is not', 'pes.id', null], ['>', 't.id_rr_hh', 0]])
+            ->andWhere(['or', ['is not', 'pes.id', null], ['>', 't.id_profesional_efector_servicio', 0]])
             ->andWhere('t.deleted_at IS NULL')
             ->andWhere('c.deleted_at IS NULL')
             ->andWhere(new \yii\db\Expression('NULLIF(TRIM(c.motivo_consulta), "") IS NOT NULL'))
@@ -635,7 +633,7 @@ class Consulta extends \yii\db\ActiveRecord
             ->innerJoin('servicios_efector as se', 'se.id_servicio = t.id_servicio_asignado and se.id_efector = t.id_efector')
             ->leftJoin('servicios as pase_prev', 'pase_prev.id_servicio = se.pase_previo')
             ->where(['t.id_persona' => $personaId])
-            ->andWhere(['or', ['is not', 'pes.id', null], ['>', 't.id_rr_hh', 0]])
+            ->andWhere(['or', ['is not', 'pes.id', null], ['>', 't.id_profesional_efector_servicio', 0]])
             ->andWhere('t.deleted_at IS NULL')
             ->andWhere('c.deleted_at IS NULL')
             ->orderBy(['t.fecha' => SORT_DESC, 't.hora' => SORT_DESC, 'c.id_consulta' => SORT_DESC])
@@ -655,7 +653,7 @@ class Consulta extends \yii\db\ActiveRecord
      */
     public function resolveIdRrhhParaMotivos(): int
     {
-        $id = (int) $this->id_rr_hh;
+        $id = $this->hasAttribute('id_rr_hh') ? (int) $this->id_rr_hh : 0;
         if ($id > 0) {
             return $id;
         }
@@ -667,15 +665,7 @@ class Consulta extends \yii\db\ActiveRecord
         if ($pes === null) {
             return 0;
         }
-        $re = RrhhEfector::find()
-            ->where([
-                'id_persona' => $pes->id_persona,
-                'id_efector' => $pes->id_efector,
-                'deleted_at' => null,
-            ])
-            ->one();
-
-        return $re !== null ? (int) $re->id_rr_hh : 0;
+        return ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
     }
 
     public function getMostUseRrhh($medico)
@@ -686,7 +676,9 @@ class Consulta extends \yii\db\ActiveRecord
                         left join consultas_motivos cm on (c.id_consulta = cm.id_consulta)
                         LEFT JOIN snomed_hallazgos sh on (cm.codigo = sh.conceptId)
                         LEFT join servicios s on (c.id_servicio=s.id_servicio)
-                        WHERE sh.conceptId is not null and c.id_rr_hh = :medico
+                        INNER JOIN profesional_efector_servicio pes ON pes.id = c.id_profesional_efector_servicio AND pes.deleted_at IS NULL
+                        INNER JOIN rr_hh rh ON rh.id_persona = pes.id_persona
+                        WHERE sh.conceptId is not null AND rh.id_rr_hh = :medico
                         GROUP by c.id_servicio, sh.conceptId, sh.term
                         ORDER by s.nombre asc, count(c.id_consulta) desc LIMIT 6",
                         [':medico' => $medico]);
@@ -1128,7 +1120,13 @@ class Consulta extends \yii\db\ActiveRecord
         $modelConsulta->parent_class = Consulta::PARENT_CLASSES[$parent];
         $modelConsulta->parent_id = $parentId;
 
-        $modelConsulta->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        if ($modelConsulta->hasAttribute('id_rr_hh')) {
+            $modelConsulta->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+        }
+        $idPesOp = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+        if ($idPesOp > 0) {
+            $modelConsulta->id_profesional_efector_servicio = $idPesOp;
+        }
         $modelConsulta->id_servicio = Yii::$app->user->getServicioActual();
         $modelConsulta->id_persona = $paciente->id_persona;
         $modelConsulta->id_efector = Yii::$app->user->getIdEfector();
@@ -1202,13 +1200,26 @@ class Consulta extends \yii\db\ActiveRecord
         $consulta->parent_class = self::PARENT_CLASSES[self::PARENT_TURNO];
         $consulta->parent_id = $turno->id_turnos;
         $consulta->id_persona = $turno->id_persona;
-        $consulta->id_rr_hh = $turno->id_rr_hh;
+        if ($consulta->hasAttribute('id_rr_hh')) {
+            $consulta->setAttribute('id_rr_hh', $turno->getAttribute('id_rr_hh'));
+        }
+        if ((int) $turno->id_profesional_efector_servicio > 0) {
+            $consulta->id_profesional_efector_servicio = (int) $turno->id_profesional_efector_servicio;
+        }
         $consulta->id_efector = $turno->getAttribute('id_efector') ?: null;
         $consulta->id_servicio = $turno->id_servicio_asignado ?: $turno->getAttribute('id_servicio');
-        if ($consulta->id_efector === null && $turno->id_rr_hh) {
-            $rrhh = \common\models\RrhhEfector::findOne($turno->id_rr_hh);
-            if ($rrhh) {
-                $consulta->id_efector = $rrhh->id_efector;
+        if ($consulta->id_efector === null) {
+            $idEfTurno = (int) ($turno->getAttribute('id_efector') ?: 0);
+            if ($idEfTurno > 0) {
+                $consulta->id_efector = $idEfTurno;
+            } elseif ((int) $turno->id_profesional_efector_servicio > 0) {
+                $pes = ProfesionalEfectorServicio::findOne([
+                    'id' => (int) $turno->id_profesional_efector_servicio,
+                    'deleted_at' => null,
+                ]);
+                if ($pes !== null) {
+                    $consulta->id_efector = (int) $pes->id_efector;
+                }
             }
         }
         if (!$consulta->id_efector || !$consulta->id_servicio) {

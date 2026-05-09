@@ -12,8 +12,6 @@ use common\models\Localidad;
 use common\models\Barrios;
 
 use common\models\LoginForm;
-use common\models\RrhhEfector;
-
 class LoginController extends BaseController
 {
 	public $enableCsrfValidation = false;

@@ -9,7 +9,7 @@ use common\models\SolicitudRrhh;
 use common\models\SolicitudRrhhEvento;
 use common\models\EfectorTurnosConfig;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
-use common\models\RrhhEfector;
+use yii\db\Query;
 
 /**
  * Solicitudes / pedidos entre profesionales (según modo_comunicacion_medicos del efector).
@@ -120,7 +120,18 @@ class SolicitudRrhhController extends BaseController
      */
     protected function pickAutoDestinatario($idEfector, $excludeRrhh)
     {
-        $r = RrhhEfector::find()->where(['id_efector' => $idEfector])->andWhere(['<>', 'id_rr_hh', $excludeRrhh])->one();
-        return $r ? (int) $r->id_rr_hh : null;
+        $id = (new Query())
+            ->select(['rh.id_rr_hh'])
+            ->from(['rh' => 'rr_hh'])
+            ->innerJoin(
+                ['pes' => \common\models\ProfesionalEfectorServicio::tableName()],
+                'pes.id_persona = rh.id_persona AND pes.id_efector = :ef AND pes.deleted_at IS NULL',
+                [':ef' => (int) $idEfector]
+            )
+            ->where(['<>', 'rh.id_rr_hh', (int) $excludeRrhh])
+            ->limit(1)
+            ->scalar();
+
+        return $id !== false && $id !== null ? (int) $id : null;
     }
 }

@@ -19,7 +19,6 @@ use common\models\sumar\Autofacturacion;
 use common\models\Consulta;
 use common\models\busquedas\ConsultaBusqueda;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 
 class AutofacturacionController extends Controller
 {
@@ -229,14 +228,7 @@ class AutofacturacionController extends Controller
             if ($idPes > 0) {
                 $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
                 if ($pes !== null) {
-                    $re = RrhhEfector::find()
-                        ->where([
-                            'id_persona' => (int) $pes->id_persona,
-                            'id_efector' => (int) $pes->id_efector,
-                            'deleted_at' => null,
-                        ])
-                        ->one();
-                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                    $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
                 }
             }
         }

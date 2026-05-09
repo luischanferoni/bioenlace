@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 use common\models\InfraestructuraPiso;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
@@ -43,8 +43,7 @@ use yii\helpers\ArrayHelper;
                     <?= $form->field($model, 'covid')->checkbox() ?>
 
                     <?php
-                    $rrhh_Efector = new RrhhEfector();
-                    $profesionales = $rrhh_Efector->obtenerMedicosPorEfector(yii::$app->user->getIdEfector());
+                    $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
                     echo $form->field($model, 'id_responsable')->widget(Select2::classname(), [
                         'data' => ArrayHelper::map($profesionales, 'id_rr_hh', 'datos'),

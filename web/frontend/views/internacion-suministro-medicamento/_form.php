@@ -3,7 +3,6 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use common\models\SegNivelInternacionMedicamento;
-use common\models\RrhhEfector;
 use kartik\select2\Select2;
 use kartik\time\TimePicker;
 use kartik\date\DatePicker;

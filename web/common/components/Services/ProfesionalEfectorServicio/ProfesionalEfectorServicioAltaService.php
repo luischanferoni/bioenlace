@@ -3,13 +3,12 @@
 namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
-use common\models\RrhhEfector;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
 use Yii;
 
 /**
- * Alta idempotente: persona + efector + servicio → {@see RrhhEfector} y {@see ProfesionalEfectorServicioModel} (canónico).
+ * Alta idempotente: persona + efector + servicio → {@see ProfesionalEfectorServicioModel} (canónico).
  *
  * Sin HttpException: errores de negocio como \InvalidArgumentException.
  */
@@ -41,19 +40,6 @@ final class ProfesionalEfectorServicioAltaService
         $db = Yii::$app->db;
         $transaction = $db->beginTransaction();
         try {
-            /** @var RrhhEfector|null $re */
-            $re = RrhhEfector::findActive()
-                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector])
-                ->one();
-            if ($re === null) {
-                $re = new RrhhEfector();
-                $re->id_persona = $idPersona;
-                $re->id_efector = $idEfector;
-                if (!$re->save()) {
-                    throw new \RuntimeException('No se pudo crear el vínculo RRHH–efector: ' . json_encode($re->getErrors()));
-                }
-            }
-
             /** @var ProfesionalEfectorServicioModel|null $pes */
             $pes = ProfesionalEfectorServicioModel::findActive()
                 ->where([
@@ -79,7 +65,7 @@ final class ProfesionalEfectorServicioAltaService
         }
 
         return [
-            'id_rr_hh' => (int) $re->id_rr_hh,
+            'id_rr_hh' => ProfesionalEfectorServicioModel::resolveIdRrhhForPersona($idPersona),
             'id_profesional_efector_servicio' => (int) $pes->id,
             'id_servicio' => $idServicio,
             'servicio_acepta_turnos' => $acepta,

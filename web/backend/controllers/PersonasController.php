@@ -42,7 +42,6 @@ use common\models\Provincia;
 use common\models\Departamento;
 use common\models\Persona_mails;
 use common\models\Persona_hc;
-use common\models\RrhhEfector;
 use common\models\Tipo_documento;
 use common\controllers\Model;
 use frontend\controllers\MpiApiController;

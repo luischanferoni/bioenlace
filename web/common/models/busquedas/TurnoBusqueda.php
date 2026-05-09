@@ -6,7 +6,6 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Turno;
-use common\models\RrhhEfector;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 
@@ -138,24 +137,22 @@ class TurnoBusqueda extends Turno
             'query' => $query,
         ]);
 
-        $rrhh = RrhhEfector::findOne($idRrhh);
-        if ($rrhh === null) {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrhh);
+        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
             $query->where('0=1');
 
             return $dataProvider;
         }
 
-        $idsServicios = array_values(array_filter(\Yii\helpers\ArrayHelper::getColumn($rrhh->profesionalEfectorServicios, 'id_servicio')));
-        if ($idsServicios === []) {
-            $idsServicios = ProfesionalEfectorServicio::find()
-                ->select(['id_servicio'])
-                ->where([
-                    'id_persona' => $rrhh->id_persona,
-                    'id_efector' => $rrhh->id_efector,
-                    'deleted_at' => null,
-                ])
-                ->column();
-        }
+        $idsServicios = ProfesionalEfectorServicio::find()
+            ->select(['id_servicio'])
+            ->where([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfectorSesion,
+                'deleted_at' => null,
+            ])
+            ->column();
 
         // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
         $serviciosConPasePrevio = $idsServicios !== []

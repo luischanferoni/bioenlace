@@ -2,7 +2,6 @@
 
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
-use common\models\RrhhEfector;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use kartik\date\DatePicker;

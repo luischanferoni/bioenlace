@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 use kartik\select2\Select2;
 use yii\web\JsExpression;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use yii\helpers\ArrayHelper;
 use wbraganca\dynamicform\DynamicFormWidget;
 use yii\helpers\Url;
@@ -50,8 +50,7 @@ use yii\helpers\Url;
 
                         <div class="col-md-9">
                             <?php
-                            $rrhh_Efector = new RrhhEfector();
-                            $profesionales = $rrhh_Efector->obtenerProfesionalesPorEfector(yii::$app->user->getIdEfector());
+                            $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
                             echo Select2::widget([
                                 'name' => "id_rrhh_solicita",

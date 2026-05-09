@@ -4,10 +4,9 @@ namespace common\components\Services\ProfesionalEfectorServicio;
 
 use Yii;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 
 /**
- * Resolver de contexto profesional (PES + vínculo RRHH–efector).
+ * Resolver de contexto profesional (PES + id_rr_hh vía persona).
  * Sin dependencias HTTP.
  */
 final class ProfesionalContextResolver
@@ -30,7 +29,7 @@ final class ProfesionalContextResolver
     }
 
     /**
-     * Resuelve id_rr_hh para un PES dado (mismo efector) si existe vínculo legacy.
+     * Resuelve id_rr_hh para un PES dado (misma persona que el PES).
      */
     public static function resolveRrhhIdFromPes(int $idPes): int
     {
@@ -41,27 +40,7 @@ final class ProfesionalContextResolver
         if ($pes === null) {
             return 0;
         }
-        $re = RrhhEfector::find()
-            ->where([
-                'id_persona' => (int) $pes->id_persona,
-                'id_efector' => (int) $pes->id_efector,
-                'deleted_at' => null,
-            ])
-            ->one();
 
-        return $re !== null ? (int) $re->id_rr_hh : 0;
-    }
-
-    /**
-     * Devuelve fila `rrhh_efector` del profesional activo (RRHH en sesión o derivado de PES).
-     */
-    public static function resolveRrhhEfectorFromSessionOrPes(): ?RrhhEfector
-    {
-        $idRrhh = self::resolveRrhhIdFromSessionOrPes();
-        if ($idRrhh <= 0) {
-            return null;
-        }
-
-        return RrhhEfector::findOne($idRrhh);
+        return ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
     }
 }

@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\RrhhEfector */
+/* @var $model common\models\ProfesionalEfectorServicio */
 
 $this->title = '"'.$persona->apellido.' '.$persona->nombre.'" como Administrador de Efector';
 $this->params['breadcrumbs'][] = ['label' => 'Rrhh -> Efectores', 'url' => ['index']];

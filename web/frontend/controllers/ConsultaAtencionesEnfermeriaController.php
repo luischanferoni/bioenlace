@@ -27,7 +27,6 @@ use common\models\ConsultaBalanceHidrico;
 use common\models\ConsultaPracticasOftalmologia;
 use common\models\FormularioDinamico;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 
 use frontend\components\UserRequest;
 
@@ -135,14 +134,7 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
             if ($pes !== null) {
                 $modelAtencionEnfermeria->id_profesional_efector_servicio = $idPesSesion;
-                $re = RrhhEfector::find()
-                    ->where([
-                        'id_persona' => (int) $pes->id_persona,
-                        'id_efector' => (int) $pes->id_efector,
-                        'deleted_at' => null,
-                    ])
-                    ->one();
-                $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
             }
         } elseif ($idPesSesion > 0) {
             $modelAtencionEnfermeria->id_profesional_efector_servicio = $idPesSesion;

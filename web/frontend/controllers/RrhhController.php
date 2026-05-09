@@ -5,20 +5,20 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\web\BadRequestHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
 
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\models\busquedas\RrhhEfectorBusqueda;
 use common\models\Persona;
 use common\models\Efector;
 use common\models\Servicio;
+use common\models\ServiciosEfector;
 
 /**
- * RrhhController implementa el CRUD para el modelo RrhhEfector (recursos humanos por efector).
+ * CRUD de asignaciones PES (`profesional_efector_servicio`).
  */
 class RrhhController extends Controller
 {
@@ -35,7 +35,7 @@ class RrhhController extends Controller
     }
 
     /**
-     * Lista todos los modelos RrhhEfector.
+     * Lista asignaciones profesional–efector–servicio.
      * @no_intent_catalog
     */
     public function actionIndex()
@@ -50,7 +50,6 @@ class RrhhController extends Controller
     }
 
     /**
-     * Muestra un modelo RrhhEfector.
      * @no_intent_catalog
     */
     public function actionView($id)
@@ -61,18 +60,28 @@ class RrhhController extends Controller
     }
 
     /**
-     * Crea un nuevo RrhhEfector.
      * @no_intent_catalog
     */
     public function actionCreate($idp = null)
     {
-        $model = new RrhhEfector();
+        $model = new ProfesionalEfectorServicio();
         if ($idp !== null) {
-            $model->id_persona = $idp;
+            $model->id_persona = (int) $idp;
         }
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id_rr_hh]);
+        if ($model->load(Yii::$app->request->post())) {
+            if ((int) $model->id_servicio <= 0 && (int) $model->id_efector > 0) {
+                $firstSe = ServiciosEfector::find()
+                    ->where(['id_efector' => (int) $model->id_efector])
+                    ->orderBy(['id_servicio' => SORT_ASC])
+                    ->one();
+                if ($firstSe !== null) {
+                    $model->id_servicio = (int) $firstSe->id_servicio;
+                }
+            }
+            if ($model->save()) {
+                return $this->redirect(['view', 'id' => $model->id]);
+            }
         }
 
         $model_persona = $idp ? Persona::findOne($idp) : null;
@@ -83,7 +92,6 @@ class RrhhController extends Controller
     }
 
     /**
-     * Actualiza un RrhhEfector existente.
      * @no_intent_catalog
     */
     public function actionUpdate($id)
@@ -91,7 +99,7 @@ class RrhhController extends Controller
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id_rr_hh]);
+            return $this->redirect(['view', 'id' => $model->id]);
         }
 
         return $this->render('update', [
@@ -101,7 +109,6 @@ class RrhhController extends Controller
     }
 
     /**
-     * Elimina un RrhhEfector.
      * @no_intent_catalog
     */
     public function actionDelete($id)
@@ -111,20 +118,19 @@ class RrhhController extends Controller
     }
 
     /**
-     * @param string $id id_rr_hh
-     * @return RrhhEfector
-     * @throws NotFoundHttpException
+     * @param string|int $id PK de `profesional_efector_servicio`
      */
-    protected function findModel($id)
+    protected function findModel($id): ProfesionalEfectorServicio
     {
-        if (($model = RrhhEfector::findOne($id)) !== null) {
+        $model = ProfesionalEfectorServicio::findOne(['id' => (int) $id, 'deleted_at' => null]);
+        if ($model !== null) {
             return $model;
         }
         throw new NotFoundHttpException('The requested page does not exist.');
     }
 
     /**
-     * Select dependiente: opciones desde PES (`profesional_efector_servicio`) del RRHH en el efector.
+     * Select dependiente: servicios / filas PES en el efector.
      * @no_intent_catalog
     */
     public function actionSubcatservicios()
@@ -132,25 +138,26 @@ class RrhhController extends Controller
         $out = [];
         if (isset($_POST['depdrop_parents']) && $_POST['depdrop_parents'] != null) {
             $cat_id = $_POST['depdrop_parents'][0];
-            $items = RrhhEfector::find()
-                ->joinWith('rrhhServicio')
-                ->andWhere(['rrhh_efector.id_efector' => $cat_id])
-                ->andWhere('profesional_efector_servicio.deleted_at IS NULL')
+            $items = ProfesionalEfectorServicio::find()
+                ->where(['id_efector' => $cat_id, 'deleted_at' => null])
+                ->with('servicio')
                 ->all();
             foreach ($items as $item) {
-                foreach ($item->rrhhServicio as $rs) {
-                    if ($rs->servicio) {
-                        $out[] = ['id' => $rs->id, 'name' => $rs->servicio->nombre];
-                    }
+                if ($item->servicio) {
+                    $out[] = ['id' => $item->id, 'name' => $item->servicio->nombre];
                 }
             }
             $seen = [];
             $out = array_values(array_filter($out, function ($x) use (&$seen) {
-                if (isset($seen[$x['id']])) return false;
+                if (isset($seen[$x['id']])) {
+                    return false;
+                }
                 $seen[$x['id']] = true;
+
                 return true;
             }));
             echo Json::encode(['output' => $out, 'selected' => '']);
+
             return;
         }
         if (isset($_POST['id_efector'])) {
@@ -161,6 +168,7 @@ class RrhhController extends Controller
             foreach ($servicios as $s) {
                 echo "<option value=\"{$s->id_servicio}\">{$s->nombre}</option>";
             }
+
             return;
         }
         echo Json::encode(['output' => '', 'selected' => '']);
@@ -181,7 +189,7 @@ class RrhhController extends Controller
                 $idEfector = $parents[0];
                 $idServicio = $parents[1];
 
-                $profesionales = RrhhEfector::obtenerMedicosPorServicioEfector($idEfector, $idServicio);
+                $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorServicioEfector($idEfector, $idServicio);
                 $arrayEfectores = ArrayHelper::map($profesionales, 'id_rr_hh', 'datos');
 
                 foreach ($arrayEfectores as $key => $value) {
@@ -191,6 +199,7 @@ class RrhhController extends Controller
                 return ['output' => $out, 'selected' => ''];
             }
         }
+
         return ['output' => '', 'selected' => ''];
     }
 

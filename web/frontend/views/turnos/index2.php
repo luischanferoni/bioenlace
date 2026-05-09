@@ -12,7 +12,6 @@ use yii\widgets\ActiveForm;
 use yii\bootstrap5\Dropdown;
 
 use common\models\Persona;
-use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
 
 

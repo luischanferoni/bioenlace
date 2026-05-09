@@ -4,7 +4,7 @@ use yii\helpers\ArrayHelper;
 use common\models\Persona;
 use common\models\Consulta;
 use frontend\controllers\MpiApiController;
-use common\models\RrhhEfector;
+use common\models\Rrhh;
 use common\models\Servicio;
 
 ?>
@@ -98,7 +98,8 @@ use common\models\Servicio;
         $diagnosticosConsulta = $modelConsulta->diagnosticoConsultas;
         $practicasConsulta = $modelConsulta->consultaPracticas;
         $domicilio = ($modelPersona->getDomicilioActivo()) ? $modelPersona->getDomicilioActivo()->getDomicilioCompleto() : "No especificado.";
-        $nombreMedico = RrhhEfector::findOne(['id_rr_hh' => $modelConsulta->id_rr_hh])->persona->getNombreCompleto('');
+        $rhMed = Rrhh::findOne((int) $modelConsulta->id_rr_hh);
+        $nombreMedico = $rhMed !== null && $rhMed->persona !== null ? $rhMed->persona->getNombreCompleto('') : '';
         $coberturas_api = [];
         $cobertura_medica_key = sprintf("cobertura_medica_%s", $persona->id_persona);
 

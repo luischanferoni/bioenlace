@@ -31,7 +31,6 @@ use common\models\Provincia;
 use common\models\Departamento;
 use common\models\Persona_mails;
 use common\models\Persona_hc;
-use common\models\RrhhEfector;
 use common\models\Tipo_documento;
 use common\models\ConsultasConfiguracion;
 use common\models\Consulta;
@@ -482,13 +481,17 @@ class PersonasController extends Controller
     */
     public function actionDeleterrhh()
     {
-        $id = Yii::$app->request->post('id');
-        $rrhh = RrhhEfector::find()
-            ->where(['id_rr_hh' => $id])
-            ->one();
-
-        if ($rrhh != null) {
-            $rrhh->delete();
+        $id = (int) Yii::$app->request->post('id');
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idPersona = \common\models\ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($id);
+        if ($idPersona !== null && $idPersona > 0 && $idEfector > 0) {
+            foreach (
+                \common\models\ProfesionalEfectorServicio::find()
+                    ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                    ->all() as $pes
+            ) {
+                $pes->delete();
+            }
         }
 
         return "ok";

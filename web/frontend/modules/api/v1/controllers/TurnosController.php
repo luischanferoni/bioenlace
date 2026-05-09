@@ -10,7 +10,6 @@ use common\models\Consulta;
 use common\models\Turno;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
@@ -896,15 +895,9 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException('El horario ya no está disponible');
         }
         $turno->id_profesional_efector_servicio = $idPesPost;
-        $reSync = RrhhEfector::find()
-            ->where([
-                'id_persona' => (int) $pesPost->id_persona,
-                'id_efector' => (int) $pesPost->id_efector,
-                'deleted_at' => null,
-            ])
-            ->one();
-        if ($reSync !== null) {
-            $turno->id_rr_hh = $reSync->id_rr_hh;
+        $idRrSync = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pesPost->id_persona);
+        if ($idRrSync > 0) {
+            $turno->id_rr_hh = $idRrSync;
         }
         $turno->fecha = $fecha;
         $turno->hora = $hora;

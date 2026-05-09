@@ -54,10 +54,12 @@ class ProfesionalEfectorServicioAgendaBusqueda extends Model
         }
 
         if ($this->id_rr_hh) {
-            $query->innerJoin(
-                ['re' => 'rrhh_efector'],
-                're.id_persona = pes.id_persona AND re.id_efector = pes.id_efector AND re.deleted_at IS NULL'
-            )->andWhere(['re.id_rr_hh' => $this->id_rr_hh]);
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rr_hh);
+            if ($idPersona !== null && $idPersona > 0) {
+                $query->andWhere(['pes.id_persona' => $idPersona]);
+            } else {
+                $query->andWhere('0=1');
+            }
         }
 
         $id_efector = $this->id_efector ? (int) $this->id_efector : (int) Yii::$app->user->getIdEfector();

@@ -5,102 +5,80 @@ namespace common\models\busquedas;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-
-use common\models\RrhhEfector;
 use common\models\ProfesionalEfectorServicio;
 
 /**
- * RrhhEfectorBusqueda represents the model behind the search form of `common\models\RrhhEfector`.
+ * Búsqueda de asignaciones profesional–efector–servicio (PES), sustituto del listado legacy `rrhh_efector`.
  */
-class RrhhEfectorBusqueda extends RrhhEfector
+class RrhhEfectorBusqueda extends Model
 {
     const EFECTOR_SEARCH = 'EFECTOR_SEARCH';
 
+    public $id_efector;
+    public $id_persona;
     public $nombrePersona;
     public $nombreEfector;
     public $idServicio;
     public $deleted_at;
 
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
-            [['id_persona', 'idServicio'], 'integer'],            
+            [['id_persona', 'idServicio', 'id_efector'], 'integer'],
             [['nombrePersona', 'deleted_at'], 'safe'],
-            [['nombreEfector'],'safe', 'on' => self::EFECTOR_SEARCH]
+            [['nombreEfector'], 'safe', 'on' => self::EFECTOR_SEARCH],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function scenarios()
     {
-        // bypass scenarios() implementation in the parent class
         return Model::scenarios();
     }
 
     /**
-     * Creates data provider instance with search query applied
-     *
-     * @param array $params
-     *
-     * @return ActiveDataProvider
+     * @param array<string, mixed> $params
      */
-    public function search($params)
+    public function search($params): ActiveDataProvider
     {
-        $query = RrhhEfector::find();        
-
-        // add conditions that should always apply here
+        $query = ProfesionalEfectorServicio::find()->alias('pes');
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
-        //var_dump($params);die;
+
         $this->load($params);
 
-        // grid filtering conditions
         $query->andFilterWhere([
-            'id_efector' => $this->id_efector,
-            'id_persona' => $this->id_persona,            
+            'pes.id_efector' => $this->id_efector,
+            'pes.id_persona' => $this->id_persona,
         ]);
-//var_dump($params);var_dump($this->deleted_at);die;
-        if ($this->deleted_at == "null" || is_null($this->deleted_at)) {
-            $query->andWhere('rrhh_efector.deleted_at IS NULL');
+
+        if ($this->deleted_at === 'null' || $this->deleted_at === null) {
+            $query->andWhere(['pes.deleted_at' => null]);
         } else {
-            $query->andWhere('rrhh_efector.deleted_at IS NOT NULL');
+            $query->andWhere(['not', ['pes.deleted_at' => null]]);
         }
-        
-        if ($this->nombrePersona != "") {
+
+        if ($this->nombrePersona !== null && $this->nombrePersona !== '') {
             $query->joinWith(['persona' => function ($q) {
-                $q->where(['like', 'CONCAT(personas.apellido," ",personas.nombre)', '%'.$this->nombrePersona.'%', false])
-                    ->orwhere(['like', 'personas.nombre', '%'.$this->nombrePersona.'%', false])
-                    ->orwhere(['like', 'personas.apellido', $this->nombrePersona.'%', false])
-                    ->orWhere(['like', 'personas.documento', $this->nombrePersona.'%', false]);
+                $q->where(['like', 'CONCAT(personas.apellido," ",personas.nombre)', '%' . $this->nombrePersona . '%', false])
+                    ->orWhere(['like', 'personas.nombre', '%' . $this->nombrePersona . '%', false])
+                    ->orWhere(['like', 'personas.apellido', $this->nombrePersona . '%', false])
+                    ->orWhere(['like', 'personas.documento', $this->nombrePersona . '%', false]);
             }]);
         }
 
-        if ($this->nombreEfector != "") {
+        if ($this->nombreEfector !== null && $this->nombreEfector !== '') {
             $query->joinWith(['efector' => function ($q) {
                 $q->where('efectores.nombre LIKE "%' . $this->nombreEfector . '%"');
             }]);
         }
 
         if ($this->idServicio !== '' && $this->idServicio !== null) {
-            $reTable = RrhhEfector::tableName();
-            $pesTable = ProfesionalEfectorServicio::tableName();
-            $sub = (new \yii\db\Query())
-                ->from(['pes_f' => $pesTable])
-                ->where("pes_f.id_persona = [[{$reTable}]].[[id_persona]]")
-                ->andWhere("pes_f.id_efector = [[{$reTable}]].[[id_efector]]")
-                ->andWhere(['pes_f.id_servicio' => (int) $this->idServicio])
-                ->andWhere(['pes_f.deleted_at' => null]);
-            $query->andWhere(['exists', $sub]);
+            $query->andWhere(['pes.id_servicio' => (int) $this->idServicio]);
         }
 
-        $query->with(['profesionalEfectorServicios.servicio', 'persona']);
+        $query->with(['persona', 'efector', 'servicio']);
 
         return $dataProvider;
     }

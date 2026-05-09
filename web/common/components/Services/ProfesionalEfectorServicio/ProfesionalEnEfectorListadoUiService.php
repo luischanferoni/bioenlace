@@ -4,7 +4,6 @@ namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
 use yii\db\Expression;
 use yii\db\Query;
@@ -64,16 +63,14 @@ final class ProfesionalEnEfectorListadoUiService
 
         $items = [];
         foreach ($byPersona as $pid => $pesRep) {
-            $re = RrhhEfector::find()
-                ->where(['id_persona' => $pid, 'id_efector' => $idEfector, 'deleted_at' => null])
-                ->one();
+            $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona($pid);
             $id = (string) (int) $pesRep->id;
             $name = $pesRep->persona !== null
                 ? $pesRep->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
                 : ('Profesional #' . $id);
             $meta = [
                 'id_profesional_efector_servicio' => (int) $pesRep->id,
-                'id_rr_hh' => $re !== null ? (int) $re->id_rr_hh : null,
+                'id_rr_hh' => $idRr > 0 ? $idRr : null,
             ];
             $items[] = ['id' => $id, 'name' => $name, 'meta' => $meta];
         }
@@ -136,16 +133,14 @@ final class ProfesionalEnEfectorListadoUiService
 
         $items = [];
         foreach ($byPersona as $pid => $pesRep) {
-            $re = RrhhEfector::find()
-                ->where(['id_persona' => $pid, 'id_efector' => $idEfector, 'deleted_at' => null])
-                ->one();
+            $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona($pid);
             $id = (string) (int) $pesRep->id;
             $name = $pesRep->persona !== null
                 ? $pesRep->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
                 : ('Profesional #' . $id);
             $meta = [
                 'id_profesional_efector_servicio' => (int) $pesRep->id,
-                'id_rr_hh' => $re !== null ? (int) $re->id_rr_hh : null,
+                'id_rr_hh' => $idRr > 0 ? $idRr : null,
             ];
             $items[] = ['id' => $id, 'name' => $name, 'meta' => $meta];
         }
@@ -158,7 +153,7 @@ final class ProfesionalEnEfectorListadoUiService
     }
 
     /**
-     * Autocomplete por efector + servicio (misma forma que {@see RrhhEfector::autocompleteRrhh}):
+     * Autocomplete por efector + servicio:
      * filas desde `profesional_efector_servicio`; `id` = id PES (string); `id_rr_hh` opcional si existe vínculo legacy.
      *
      * @param array<string, mixed> $filters id_efector, id_servicio|id_servicio_asignado, acepta_turnos?, efector_nombre?, servicio_nombre?, sort_by?, sort_order?, limit?
@@ -171,7 +166,7 @@ final class ProfesionalEnEfectorListadoUiService
         $query = (new Query())
             ->select([
                 'pes.id AS pes_id',
-                're.id_rr_hh AS id_rr_hh',
+                'pes.id_persona AS id_persona',
                 new Expression(
                     'CONCAT(COALESCE(p.apellido,""), ", ", COALESCE(p.nombre,""), " ", COALESCE(p.otro_nombre,""), " - ", COALESCE(s.nombre, "")) AS text'
                 ),
@@ -180,10 +175,6 @@ final class ProfesionalEnEfectorListadoUiService
             ->innerJoin(['p' => 'personas'], 'p.id_persona = pes.id_persona')
             ->innerJoin(['s' => 'servicios'], 's.id_servicio = pes.id_servicio')
             ->leftJoin(['e' => 'efectores'], 'e.id_efector = pes.id_efector')
-            ->leftJoin(
-                ['re' => 'rrhh_efector'],
-                're.id_persona = pes.id_persona AND re.id_efector = pes.id_efector AND re.deleted_at IS NULL'
-            )
             ->where(['pes.deleted_at' => null]);
 
         if (!empty($filters['id_efector'])) {
@@ -249,9 +240,9 @@ final class ProfesionalEnEfectorListadoUiService
             if ($pesId <= 0) {
                 continue;
             }
-            $idRrhh = isset($row['id_rr_hh']) && $row['id_rr_hh'] !== null && $row['id_rr_hh'] !== ''
-                ? (int) $row['id_rr_hh']
-                : null;
+            $idPersonaRow = isset($row['id_persona']) ? (int) $row['id_persona'] : 0;
+            $idRrhhResolved = $idPersonaRow > 0 ? ProfesionalEfectorServicio::resolveIdRrhhForPersona($idPersonaRow) : 0;
+            $idRrhh = $idRrhhResolved > 0 ? $idRrhhResolved : null;
             $item = [
                 'id' => (string) $pesId,
                 'text' => trim((string) ($row['text'] ?? '')) !== '' ? trim((string) $row['text']) : ('PES #' . $pesId),

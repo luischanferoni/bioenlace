@@ -469,7 +469,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         }
 
         if ($insert || $this->isAttributeChanged('id_rrhh', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinPes(
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhMinPes(
                 (int) $this->id_rrhh
             );
         }

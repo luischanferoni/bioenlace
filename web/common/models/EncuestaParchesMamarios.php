@@ -156,7 +156,8 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
                 'consume_alcohol', 'consume_tabaco', 'terapia_remplazo_hormonal', 'resultado', 'resultado_indicado', 'id_operador', 'prueba_adicional'
             ], 'required'],
             [['paso_menospausia'], 'safe'],
-            [['id_operador', 'id_rr_hh', 'id_persona', 'id_efector', 'id_profesional_efector_servicio', 'edad_primer_periodo', 'edad_primer_parto', 'edad_menospausia'], 'integer'],
+            [['id_operador', 'id_persona', 'id_efector', 'id_profesional_efector_servicio', 'edad_primer_periodo', 'edad_primer_parto', 'edad_menospausia'], 'integer'],
+            [['id_rr_hh'], 'integer', 'skipOnEmpty' => true],
             ['edad_primer_periodo', 'in', 'range' => range(7, 19)],
             ['edad_primer_parto', 'in', 'range' => range(9, 60)],
             ['edad_primer_parto', 'required', 'when' => function ($model) {
@@ -219,7 +220,6 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             [['a_diferencia', 'b_diferencia', 'c_diferencia'], 'in', 'range' => range(0, 17)],
             [['numero_serie'], 'string', 'max' => 15],
             [['id_persona'], 'exist', 'skipOnError' => true, 'targetClass' => Persona::className(), 'targetAttribute' => ['id_persona' => 'id_persona']],
-            [['id_rr_hh'], 'exist', 'skipOnError' => true, 'targetClass' => RrhhEfector::className(), 'targetAttribute' => ['id_rr_hh' => 'id_rr_hh']],
             [['id_efector'], 'exist', 'skipOnError' => true, 'targetClass' => Efector::className(), 'targetAttribute' => ['id_efector' => 'id_efector']],
         ];
     }
@@ -280,11 +280,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
      */
     public function getOperador()
     {
-        if ($this->id_rr_hh == NULL) {
-            return $this->hasOne(RrhhEfector::className(), ['id_rr_hh_viejo' => 'id_operador']);
-        } else {
-            return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_operador']);
-        }
+        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_operador']);
     }
 
     /**
@@ -304,7 +300,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
      */
     public function getRrHh()
     {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     /**
@@ -448,7 +444,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
         }
 
         if ($insert
-            || $this->isAttributeChanged('id_rr_hh', false)
+            || ($this->hasAttribute('id_rr_hh') && $this->isAttributeChanged('id_rr_hh', false))
             || $this->isAttributeChanged('id_efector', false)
         ) {
             $idPesSesion = null;
@@ -462,7 +458,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
                 $this->id_profesional_efector_servicio = $idPesSesion;
             } else {
                 $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinPes(
-                    $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null,
+                    $this->hasAttribute('id_rr_hh') && $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null,
                     $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
                 );
             }

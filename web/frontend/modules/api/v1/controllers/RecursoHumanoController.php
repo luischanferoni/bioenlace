@@ -10,7 +10,6 @@ use common\components\UiScreenService;
 use common\components\UiSelectOptionSourceResolver;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
 
 /**
@@ -147,7 +146,7 @@ class RecursoHumanoController extends BaseController
      *
      * Resolución del efector:
      * - Si viene `id_efector` o `idEfector`: se usa ese efector con la persona autenticada (asignaciones PES).
-     * - Si no: se intenta por `id_rr_hh` en sesión → `rrhh_efector`, o en último término `getIdEfector()` de sesión.
+     * - Si no: se intenta por `id_rr_hh` en sesión → PES de esa persona, o en último término `getIdEfector()` de sesión.
      *
      * @return array{servicios: list<array{id_servicio: int, nombre: string}>}
      */
@@ -167,14 +166,15 @@ class RecursoHumanoController extends BaseController
         } else {
             $idRrHhSesion = (int) Yii::$app->user->getIdRecursoHumano();
             if ($idRrHhSesion > 0) {
-                $rrhhEfector = RrhhEfector::findActive()
-                    ->where([
-                        'id_rr_hh' => $idRrHhSesion,
-                        'id_persona' => $idPersona,
-                    ])
-                    ->one();
-                if ($rrhhEfector !== null) {
-                    $idEfector = (int) $rrhhEfector->id_efector;
+                $idPersonaSesion = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrHhSesion);
+                if ($idPersonaSesion !== null && $idPersonaSesion === $idPersona) {
+                    $pesCtx = ProfesionalEfectorServicio::find()
+                        ->where(['id_persona' => $idPersona, 'deleted_at' => null])
+                        ->orderBy(['id_efector' => SORT_ASC, 'id' => SORT_ASC])
+                        ->one();
+                    if ($pesCtx !== null) {
+                        $idEfector = (int) $pesCtx->id_efector;
+                    }
                 }
             }
             if ($idEfector <= 0) {
@@ -465,18 +465,15 @@ class RecursoHumanoController extends BaseController
         if ($idRrHh === null || $idRrHh === '') {
             throw new BadRequestHttpException('Indique id_rr_hh o id_profesional_efector_servicio.');
         }
-        $re = RrhhEfector::findActive()
-            ->where([
-                'id_rr_hh' => (int) $idRrHh,
-                'id_efector' => $idEfectorSesion,
-                'deleted_at' => null,
-            ])
-            ->one();
-        if ($re === null) {
+        if (!ProfesionalEfectorServicio::rrhhTieneAsignacionPesEnEfector((int) $idRrHh, $idEfectorSesion)) {
+            throw new BadRequestHttpException('RRHH no válido para este efector.');
+        }
+        $idPersonaProf = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrHh);
+        if ($idPersonaProf === null || $idPersonaProf <= 0) {
             throw new BadRequestHttpException('RRHH no válido para este efector.');
         }
 
-        return [(int) $re->id_persona, (int) $re->id_efector];
+        return [(int) $idPersonaProf, (int) $idEfectorSesion];
     }
 
     private function requireIdEfectorFromSession(): int

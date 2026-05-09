@@ -15,7 +15,7 @@ use common\models\Servicio;
 use common\models\Condiciones_laborales;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\RrhhEfector */
+/* @var $model common\models\ProfesionalEfectorServicio */
 /* @var $form yii\widgets\ActiveForm */
 ?>
 

@@ -7,7 +7,6 @@ use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 
 use common\models\AtencionesEnfermeria;
-use common\models\RrhhEfector;
 use yii\web\JsExpression;
 
 /* @var $this yii\web\View */

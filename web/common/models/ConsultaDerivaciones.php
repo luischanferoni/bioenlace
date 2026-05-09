@@ -4,7 +4,6 @@ namespace common\models;
 use common\models\snomed\SnomedProcedimientos;
 use yii\data\ActiveDataProvider;
 use common\models\Consulta;
-use common\models\RrhhEfector;
 use Yii;
 
 /**
@@ -60,16 +59,13 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
             $this->id_profesional_efector_servicio = null;
             return;
         }
-        $re = RrhhEfector::find()
-            ->where(['id_rr_hh' => $this->id_rr_hh, 'id_efector' => $this->id_efector])
-            ->andWhere(['deleted_at' => null])
-            ->one();
-        if (!$re) {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rr_hh);
+        if ($idPersona === null || $idPersona <= 0) {
             $this->id_profesional_efector_servicio = null;
             return;
         }
         $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-            (int) $re->id_persona,
+            $idPersona,
             (int) $this->id_efector,
             (int) $this->id_servicio
         );
@@ -206,7 +202,7 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
      */
     public function getRrhhDerivado()
     {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     public function getProfesionalEfectorServicio()

@@ -39,6 +39,8 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 - `web/common/migrations/m260508_000006_turnos_index_profesional_efector_servicio.php` — índices turnos.
 - `web/common/migrations/m260509_000001_drop_rrhh_servicio_and_pes_legacy_bridge.php` — **retiro BD**: `DROP` de tabla `rrhh_servicio`, eliminación de `profesional_efector_servicio.legacy_rrhh_servicio_id` y normalización de `turnos.id_rrhh_servicio_asignado` donde hay PES (ver docblock de la migración; **requiere** diagnóstico previo y despliegue de código sin dependencia del AR `RrhhServicio`).
 - `web/common/migrations/m260510_000001_drop_agenda_rrhh_table.php` — **retiro BD**: `DROP TABLE agenda_rrhh` tras eliminar FKs entrantes (solo mysql/mysqli; ver docblock).
+- `web/common/migrations/m260512_000001_drop_rrhh_legacy_columns_post_pes.php` — **retiro BD de columnas legacy** en tablas consumidoras (`consultas.id_rr_hh`, `turnos.id_rr_hh`, `guardia.*`, etc.), alineado a `web/docs/sql/retiro_legacy_rrhh_post_pes.sql`. Ejecutar en el mismo despliegue que el código AR sin esos atributos.
+- `web/common/migrations/m260511_000001_drop_rrhh_efector_and_rrhh_laboral.php` — **retiro BD final (peligroso)**: `DROP TABLE rrhh_laboral` y `DROP TABLE rrhh_efector`. **Después** de `m260512_*` y sin modelos AR legacy (`RrhhEfector`/`RrhhLaboral` eliminados del código).
 - SQL rutas Webvimark / permisos (si aplica en el entorno): `web/docs/sql/2026_migrate_webvimark_routes_profesional_agenda_recurso_humano.sql`
 
 ### Retiro de `rrhh_servicio` en base de datos
@@ -48,6 +50,8 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 3. **Código posterior obligatorio:** quitar o desactivar usos de `\common\models\RrhhServicio`, métodos que lean `legacy_rrhh_servicio_id`, y cualquier SQL explícito a `rrhh_servicio`. Buscar: `rg "rrhh_servicio|legacy_rrhh_servicio_id|RrhhServicio" web/common web/frontend web/backend`.
 4. **`m260509_000002_drop_legacy_rrhh_servicio_id_columns`** elimina columnas consumidoras (`turnos.id_rrhh_servicio_asignado`, `guardia.id_rrhh_asignado`, etc.); el código y la API usan **`id_profesional_efector_servicio`** sin alias de request `id_rrhh_servicio_asignado`.
 5. **`m260510_000001_drop_agenda_rrhh_table`** elimina la tabla legado `agenda_rrhh` cuando el modelo canónico de agenda es `profesional_efector_servicio_agenda`.
+6. **`m260512_000001_drop_rrhh_legacy_columns_post_pes`** elimina columnas `id_rr_hh` / `id_rrhh_*` legacy en tablas satélite (ver SQL de referencia).
+7. **`m260511_000001_drop_rrhh_efector_and_rrhh_laboral`** cierra el esquema `rrhh_efector` / `rrhh_laboral` en BD. Referencia SQL comentada: `web/docs/sql/retiro_legacy_rrhh_post_pes.sql` (fase 3).
 
 ---
 

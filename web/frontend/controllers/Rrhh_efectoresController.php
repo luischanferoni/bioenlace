@@ -3,15 +3,17 @@
 namespace frontend\controllers;
 
 use Yii;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
+use common\models\ServiciosEfector;
 use common\models\busquedas\RrhhEfectorBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
+use yii\db\Query;
 
 /**
- * Rrhh_efectoresController implementa el CRUD para el modelo RrhhEfector.
+ * CRUD de PES por efector (URLs legacy id_rr_hh + id_efector).
  */
 class Rrhh_efectoresController extends Controller
 {
@@ -58,10 +60,26 @@ class Rrhh_efectoresController extends Controller
      */
     public function actionCreate()
     {
-        $model = new RrhhEfector();
+        $model = new ProfesionalEfectorServicio();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector]);
+        if ($model->load(Yii::$app->request->post())) {
+            if ((int) $model->id_servicio <= 0 && (int) $model->id_efector > 0) {
+                $firstSe = ServiciosEfector::find()
+                    ->where(['id_efector' => (int) $model->id_efector])
+                    ->orderBy(['id_servicio' => SORT_ASC])
+                    ->one();
+                if ($firstSe !== null) {
+                    $model->id_servicio = (int) $firstSe->id_servicio;
+                }
+            }
+            if ($model->save()) {
+                $idRh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $model->id_persona);
+                if ($idRh <= 0) {
+                    return $this->redirect(['rrhh/view', 'id' => $model->id]);
+                }
+
+                return $this->redirect(['view', 'id_rr_hh' => $idRh, 'id_efector' => $model->id_efector]);
+            }
         }
 
         return $this->render('create', [
@@ -79,7 +97,12 @@ class Rrhh_efectoresController extends Controller
         $model = $this->findModel($id_rr_hh, $id_efector);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector]);
+            $idRh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $model->id_persona);
+            if ($idRh <= 0) {
+                return $this->redirect(['rrhh/view', 'id' => $model->id]);
+            }
+
+            return $this->redirect(['view', 'id_rr_hh' => $idRh, 'id_efector' => $model->id_efector]);
         }
 
         return $this->render('update', [
@@ -99,14 +122,23 @@ class Rrhh_efectoresController extends Controller
     }
 
     /**
-     * @param integer $id_rr_hh
-     * @param integer $id_efector
-     * @return RrhhEfector
-     * @throws NotFoundHttpException
+     * @return ProfesionalEfectorServicio
      */
     protected function findModel($id_rr_hh, $id_efector)
     {
-        if (($model = RrhhEfector::findOne(['id_rr_hh' => $id_rr_hh, 'id_efector' => $id_efector])) !== null) {
+        $idPersona = (new Query())->from('rr_hh')->select('id_persona')->where(['id_rr_hh' => (int) $id_rr_hh])->scalar();
+        if ($idPersona === false || $idPersona === null) {
+            throw new NotFoundHttpException('The requested page does not exist.');
+        }
+        $model = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => (int) $idPersona,
+                'id_efector' => (int) $id_efector,
+                'deleted_at' => null,
+            ])
+            ->orderBy(['id' => SORT_ASC])
+            ->one();
+        if ($model !== null) {
             return $model;
         }
         throw new NotFoundHttpException('The requested page does not exist.');
@@ -121,7 +153,7 @@ class Rrhh_efectoresController extends Controller
         $out = [];
         if (isset($_POST['depdrop_parents']) && $_POST['depdrop_parents'] != null) {
             $id_efector = $_POST['depdrop_parents'][0];
-            $profesionales = RrhhEfector::obtenerMedicosPorEfector($id_efector);
+            $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector($id_efector);
             $arrayEfectores = ArrayHelper::map($profesionales, 'id_rr_hh', 'datos');
             foreach ($arrayEfectores as $key => $value) {
                 $out[] = ['id' => $key, 'name' => $value];

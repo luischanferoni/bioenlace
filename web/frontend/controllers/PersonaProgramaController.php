@@ -13,34 +13,59 @@ use yii\filters\VerbFilter;
 use frontend\filters\SisseActionFilter;
 use frontend\components\UserRequest;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 
 /**
  * PersonaProgramaController implements the CRUD actions for PersonaPrograma model.
  */
 class PersonaProgramaController extends Controller
 {
-    private function resolveRrhhEfectorFromSessionOrPes(): ?RrhhEfector
+    /**
+     * PES del profesional en contexto (sesión o parámetro id_rr_hh).
+     */
+    private function resolveProfesionalEfectorServicioParaAlta(?int $idRrhhParam): ?ProfesionalEfectorServicio
     {
-        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
-        if ($idRrhh > 0) {
-            return RrhhEfector::findOne($idRrhh);
+        if ($idRrhhParam !== null && $idRrhhParam > 0) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhhParam);
+            if ($idPersona !== null && $idPersona > 0) {
+                $idEfector = (int) Yii::$app->user->getIdEfector();
+                if ($idEfector > 0) {
+                    $pes = ProfesionalEfectorServicio::find()
+                        ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                        ->orderBy(['id' => SORT_ASC])
+                        ->one();
+                    if ($pes !== null) {
+                        return $pes;
+                    }
+                }
+
+                return ProfesionalEfectorServicio::find()
+                    ->where(['id_persona' => $idPersona, 'deleted_at' => null])
+                    ->orderBy(['id_efector' => SORT_ASC, 'id' => SORT_ASC])
+                    ->one();
+            }
         }
         $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
-        if ($idPes <= 0) {
-            return null;
+        if ($idPes > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if ($pes !== null) {
+                return $pes;
+            }
         }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        if ($pes === null) {
-            return null;
+        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        if ($idRrhh > 0) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+            if ($idPersona !== null && $idPersona > 0) {
+                $idEfector = (int) Yii::$app->user->getIdEfector();
+                if ($idEfector > 0) {
+                    return ProfesionalEfectorServicio::find()
+                        ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                        ->orderBy(['id' => SORT_ASC])
+                        ->one();
+                }
+            }
         }
-        return RrhhEfector::find()
-            ->where([
-                'id_persona' => (int) $pes->id_persona,
-                'id_efector' => (int) $pes->id_efector,
-                'deleted_at' => null,
-            ])
-            ->one();
+
+        return null;
     }
 
     /**
@@ -107,17 +132,17 @@ class PersonaProgramaController extends Controller
         $persona =  unserialize($persona);
 
         $programa = Yii::$app->getRequest()->getQueryParam('programa');
-        $rrhh = null;
+        $idRrhhParam = null;
         try {
             $idRrhhParam = (int) UserRequest::requireUserParam('idRecursoHumano');
-            $rrhh = $idRrhhParam > 0 ? RrhhEfector::findOne($idRrhhParam) : null;
+            if ($idRrhhParam <= 0) {
+                $idRrhhParam = null;
+            }
         } catch (\Throwable $e) {
-            $rrhh = null;
+            $idRrhhParam = null;
         }
-        if ($rrhh === null) {
-            $rrhh = $this->resolveRrhhEfectorFromSessionOrPes();
-        }
-        if ($rrhh === null) {
+        $pesCtx = $this->resolveProfesionalEfectorServicioParaAlta($idRrhhParam);
+        if ($pesCtx === null) {
             throw new NotFoundHttpException('No se pudo determinar el recurso humano (RRHH/PES) en sesión.');
         }
 
@@ -131,7 +156,7 @@ class PersonaProgramaController extends Controller
 
                     $model->id_persona = $persona->id_persona;
                     $model->id_programa = $id_programa;
-                    $model->id_rrhh_efector = $rrhh->id_rr_hh;
+                    $model->id_profesional_efector_servicio = (int) $pesCtx->id;
                     $model->activo = PersonaPrograma::ACTIVO_SI;
 
                     if (!$model->save()) {

@@ -62,13 +62,10 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         if ($this->id_rr_hh && $this->id_consulta) {
             $c = Consulta::findOne($this->id_consulta);
             if ($c && $c->id_efector && $c->id_servicio) {
-                $re = RrhhEfector::find()
-                    ->where(['id_rr_hh' => $this->id_rr_hh, 'id_efector' => $c->id_efector])
-                    ->andWhere(['deleted_at' => null])
-                    ->one();
-                if ($re) {
+                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rr_hh);
+                if ($idPersona !== null && $idPersona > 0) {
                     $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                        (int) $re->id_persona,
+                        $idPersona,
                         (int) $c->id_efector,
                         (int) $c->id_servicio
                     );
@@ -151,7 +148,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
 
     public function getRrhhEfector()
     {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     public function getProfesionalEfectorServicio()
@@ -279,19 +276,13 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         if (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
             $idEfector = (int) (Yii::$app->user->getIdEfector() ?? 0);
             if ($idEfector > 0) {
-                $re = RrhhEfector::find()
-                    ->where([
-                        'id_rr_hh' => $id_rr_hh,
-                        'id_efector' => $idEfector,
-                        'deleted_at' => null,
-                    ])
-                    ->one();
-                if ($re !== null) {
+                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $id_rr_hh);
+                if ($idPersona !== null && $idPersona > 0) {
                     $pesIds = ProfesionalEfectorServicio::find()
                         ->select(['id'])
                         ->where([
-                            'id_persona' => $re->id_persona,
-                            'id_efector' => $re->id_efector,
+                            'id_persona' => $idPersona,
+                            'id_efector' => $idEfector,
                             'deleted_at' => null,
                         ])
                         ->column();

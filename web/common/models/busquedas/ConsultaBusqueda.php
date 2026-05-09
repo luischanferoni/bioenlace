@@ -7,7 +7,6 @@ use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Consulta;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
 use yii\db\Query;
 
 /**
@@ -317,13 +316,13 @@ class ConsultaBusqueda extends Consulta
         $idEfector = (int) $id_efector;
         $idServ = (int) $idServicio;
         $idRrhh = (int) $idMedico;
+        $schema = Yii::$app->db->schema->getTableSchema('{{%consultas}}', true);
+        $hasLegacyRrhh = $schema !== null && isset($schema->columns['id_rr_hh']);
+
         if ($idRrhh <= 0) {
-            return ['consultas.id_rr_hh' => $idRrhh];
+            return $hasLegacyRrhh ? ['consultas.id_rr_hh' => $idRrhh] : ['consultas.id_profesional_efector_servicio' => null];
         }
-        $idPersona = (int) RrhhEfector::find()
-            ->select(['id_persona'])
-            ->where(['id_rr_hh' => $idRrhh])
-            ->scalar();
+        $idPersona = (int) (ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh) ?? 0);
         $pesIds = [];
         if ($idPersona > 0 && $idEfector > 0 && $idServ > 0) {
             $pesIds = ProfesionalEfectorServicio::find()
@@ -337,7 +336,10 @@ class ConsultaBusqueda extends Consulta
                 ->column();
         }
         if ($pesIds === []) {
-            return ['consultas.id_rr_hh' => $idRrhh];
+            return $hasLegacyRrhh ? ['consultas.id_rr_hh' => $idRrhh] : ['consultas.id_profesional_efector_servicio' => -1];
+        }
+        if (!$hasLegacyRrhh) {
+            return ['consultas.id_profesional_efector_servicio' => $pesIds];
         }
 
         return [

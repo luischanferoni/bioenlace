@@ -217,15 +217,9 @@ class Turno extends \yii\db\ActiveRecord
         if ($pes === null) {
             return;
         }
-        $re = RrhhEfector::find()
-            ->where([
-                'id_persona' => $pes->id_persona,
-                'id_efector' => $pes->id_efector,
-                'deleted_at' => null,
-            ])
-            ->one();
-        if ($re !== null) {
-            $this->id_rr_hh = $re->id_rr_hh;
+        $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
+        if ($idRr > 0 && $this->hasAttribute('id_rr_hh')) {
+            $this->setAttribute('id_rr_hh', $idRr);
         }
     }
 
@@ -254,7 +248,7 @@ class Turno extends \yii\db\ActiveRecord
             [['id_persona', 'hora', 'fecha', 'id_efector', 'id_servicio_asignado'], 'required'],
             [['id_persona'], 'validateDelegarRequiereProfesional', 'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH],
             [['id_servicio_asignado'], 'required', 'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS],
-            [['id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
+            [['id_persona', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
             // no deja crear un turno para la misma persona para el mismo recurso en el mismo dia
             [
                 ['fecha', 'id_persona', 'id_profesional_efector_servicio'], 'unique',
@@ -352,12 +346,13 @@ class Turno extends \yii\db\ActiveRecord
     }
     public function getRrhh()
     {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(Rrhh::className(), ['id_persona' => 'id_persona'])
+            ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     public function getRrhhEfector()
     {
-        return $this->hasOne(RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->getRrhh();
     }
 
     /**
@@ -417,17 +412,13 @@ class Turno extends \yii\db\ActiveRecord
         if ($this->rrhh && $this->rrhh->persona) {
             return $this->rrhh->persona;
         }
-        if ($this->id_rr_hh && $this->id_efector) {
-            $re = RrhhEfector::find()
-                ->where([
-                    'id_rr_hh' => (int) $this->id_rr_hh,
-                    'id_efector' => (int) $this->id_efector,
-                    'deleted_at' => null,
-                ])
-                ->one();
-
-            return $re && $re->persona ? $re->persona : null;
+        if ($this->hasAttribute('id_rr_hh') && (int) $this->getAttribute('id_rr_hh') > 0) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->getAttribute('id_rr_hh'));
+            if ($idPersona !== null && $idPersona > 0) {
+                return Persona::findOne($idPersona);
+            }
         }
+
         return null;
     }
 
@@ -451,16 +442,16 @@ class Turno extends \yii\db\ActiveRecord
      *
      * @return array{0: list<int>, 1: list<int>, 2: list<int>} reservado (vacío), servicioIds, pesIds
      */
-    private static function contextoProfesionalTurnosDesdeRrhhEfector(?RrhhEfector $re): array
+    private static function contextoProfesionalTurnosDesdePersonaEfector(?int $idPersona, ?int $idEfector): array
     {
-        if ($re === null) {
+        if ($idPersona === null || $idPersona <= 0 || $idEfector === null || $idEfector <= 0) {
             return [[], [], []];
         }
         $servicioIds = [];
         $pesRows = ProfesionalEfectorServicio::find()
             ->where([
-                'id_persona' => $re->id_persona,
-                'id_efector' => $re->id_efector,
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
                 'deleted_at' => null,
             ])
             ->all();
@@ -481,11 +472,12 @@ class Turno extends \yii\db\ActiveRecord
 
     public static function getTurnosPorRrhhPorFecha($fecha, $idRrhh)
     {
-        $rrhh = RrhhEfector::findOne($idRrhh);
-        if ($rrhh === null) {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrhh);
+        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
             return [];
         }
-        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh);
+        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, $idEfectorSesion);
 
         // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
         $serviciosConPasePrevio = $idsServicios !== []
@@ -534,11 +526,12 @@ class Turno extends \yii\db\ActiveRecord
 
     public static function getAllTurnosPorRrhhPorFecha($fecha, $idRrhh)
     {
-        $rrhh = RrhhEfector::findOne($idRrhh);
-        if ($rrhh === null) {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrhh);
+        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
             return [];
         }
-        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh);
+        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, $idEfectorSesion);
 
         // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
         $serviciosConPasePrevio = $idsServicios !== []
@@ -682,14 +675,10 @@ class Turno extends \yii\db\ActiveRecord
             }
         }
 
-        $rrhh_efector = RrhhEfector::find()
-            ->where(['id_rr_hh' => $rrhh])
-            ->andWhere(['id_efector' => $efector])
-            ->one();
-
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $rrhh);
         $turnosAtendidos = [];
-        if ($rrhh_efector !== null) {
-            [, , $pesIds] = self::contextoProfesionalTurnosDesdeRrhhEfector($rrhh_efector);
+        if ($idPersona !== null && $idPersona > 0 && $efector) {
+            [, , $pesIds] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, (int) $efector);
 
             $turnosAtendidosQuery = self::find()
                 ->where([['fecha' => $fecha]])

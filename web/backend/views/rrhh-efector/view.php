@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\RrhhEfector */
+/* @var $model common\models\ProfesionalEfectorServicio */
 
 $this->title = $model->id_rr_hh;
 $this->params['breadcrumbs'][] = ['label' => 'Rrhh Efectors', 'url' => ['index']];

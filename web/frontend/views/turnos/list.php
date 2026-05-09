@@ -4,7 +4,6 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\widgets\Pjax;
 use common\models\Persona;
-use common\models\RrhhEfector;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Turno;
 use kartik\daterange\DateRangePicker;
@@ -90,7 +89,7 @@ $estados = array(Turno::ESTADO_PENDIENTE => 'bg-soft-warning p-2 text-warning', 
                                                 'data' => (static function () {
                                                     $idEf = Yii::$app->user->getIdEfector();
                                                     $opts = [];
-                                                    foreach (RrhhEfector::obtenerMedicosPorEfector($idEf) as $row) {
+                                                    foreach (ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) $idEf) as $row) {
                                                         $opts[(string) (int) $row['id']] = $row['datos'];
                                                     }
                                                     foreach (ProfesionalEfectorServicio::opcionesProfesionalFiltroTurnosPorEfector((int) $idEf) as $row) {

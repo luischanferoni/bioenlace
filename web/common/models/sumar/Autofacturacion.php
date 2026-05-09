@@ -19,9 +19,10 @@ class Autofacturacion extends \yii\db\ActiveRecord
         if (!parent::beforeSave($insert)) {
             return false;
         }
+        $legacyRrhh = $this->hasAttribute('id_rr_hh');
         if ($insert
             || $this->isAttributeChanged('id_consulta', false)
-            || $this->isAttributeChanged('id_rr_hh', false)
+            || ($legacyRrhh && $this->isAttributeChanged('id_rr_hh', false))
         ) {
             $this->syncProfesionalEfectorServicioFromContext();
         }
@@ -39,14 +40,11 @@ class Autofacturacion extends \yii\db\ActiveRecord
             $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
             return;
         }
-        if ($this->id_rr_hh && $c && $c->id_efector && $c->id_servicio) {
-            $re = \common\models\RrhhEfector::find()
-                ->where(['id_rr_hh' => $this->id_rr_hh, 'id_efector' => $c->id_efector])
-                ->andWhere(['deleted_at' => null])
-                ->one();
-            if ($re) {
+        if ($this->hasAttribute('id_rr_hh') && $this->getAttribute('id_rr_hh') && $c && $c->id_efector && $c->id_servicio) {
+            $idPersona = \common\models\ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->getAttribute('id_rr_hh'));
+            if ($idPersona !== null && $idPersona > 0) {
                 $this->id_profesional_efector_servicio = \common\models\ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                    (int) $re->id_persona,
+                    $idPersona,
                     (int) $c->id_efector,
                     (int) $c->id_servicio
                 );
@@ -62,8 +60,9 @@ class Autofacturacion extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_consulta', 'beneficiarios', 'codigos', 'id_rr_hh'], 'required'],
-            [['id_consulta', 'id_rr_hh', 'beneficiario_enviado', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_consulta', 'beneficiarios', 'codigos'], 'required'],
+            [['id_consulta', 'beneficiario_enviado', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_rr_hh'], 'integer', 'skipOnEmpty' => true],
             [['codigos', 'codigo_enviado', 'beneficiarios'], 'string'],
         ];
     }
@@ -103,7 +102,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
 
     public function getRrhhEfector()
     {
-        return $this->hasOne(\common\models\RrhhEfector::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(\common\models\Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
     }
 
     public function getProfesionalEfectorServicio()

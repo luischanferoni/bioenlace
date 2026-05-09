@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\RrhhEfector */
+/* @var $model common\models\ProfesionalEfectorServicio */
 
 $this->title = 'Update Rrhh Efector: ' . $model->id_rr_hh;
 $this->params['breadcrumbs'][] = ['label' => 'Rrhh Efectors', 'url' => ['index']];

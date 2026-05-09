@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
-use common\models\RrhhEfector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Telefono;
 use kartik\select2\Select2;
 use kartik\date\DatePicker;
@@ -82,8 +82,7 @@ use common\models\SegNivelInternacion;
     <div class="card">
         <div class="card-body">
             <?php
-            $rrhh_efector = new RrhhEfector();
-            $profesionales = $rrhh_efector->obtenerMedicosPorEfector(yii::$app->user->getIdEfector());
+            $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
             //EL ID QUE SE GUARDA EN ID_RRHH ES EL ID DE RRHH SERVICIO.
             

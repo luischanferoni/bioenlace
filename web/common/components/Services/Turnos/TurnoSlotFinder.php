@@ -6,7 +6,6 @@ use Yii;
 use common\models\Turno;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\RrhhEfector;
 
 /**
  * Servicio de búsqueda de slots de turnos a partir de parámetros ya NORMALIZADOS.
@@ -194,10 +193,7 @@ class TurnoSlotFinder
                         continue;
                     }
 
-                    $re = RrhhEfector::find()
-                        ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
-                        ->one();
-                    $idRrhh = $re ? (int) $re->id_rr_hh : 0;
+                    $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
                     $srv = $pes->servicio;
                     $servicioEmb = $srv !== null
                         ? ['id_servicio' => (int) $srv->id_servicio, 'nombre' => (string) $srv->nombre]

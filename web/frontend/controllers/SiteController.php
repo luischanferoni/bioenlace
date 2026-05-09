@@ -11,7 +11,6 @@ use yii\helpers\ArrayHelper;
 use webvimark\modules\UserManagement\models\User;
 
 use common\models\Efector;
-use common\models\RrhhEfector;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\components\Services\SesionOperativa\SesionOperativaService;
@@ -341,34 +340,7 @@ class SiteController extends Controller
         return ['site/inicio'];
     }
 
-    /*private static function establecerSessionEfectores($id_efector)
-    {
-        $rrhh_efector = RrhhEfector::find()->where(['id_efector' => $id_efector, 'id_persona' => Yii::$app->user->getIdPersona()])->one();
-
-        // Si el usuario selecciona un efector y llega hasta aqui, pero no esta en RrhhEfector
-        // quiere decir que es un usuario que tiene permisos para ver cualquier efector sin ser un recurso humano
-        if (!$rrhh_efector) {
-
-            $efector = Efector::find()->where(['id_efector' => $id_efector])->one();
-        
-            Yii::$app->user->setIdEfector($efector->id_efector);
-            Yii::$app->user->setNombreEfector($efector->nombre);
-
-            return ['site/index'];
-        }
-
-        Yii::$app->user->setIdEfector($rrhh_efector->id_efector);
-        Yii::$app->user->setNombreEfector($rrhh_efector->efector->nombre);
-        Yii::$app->user->setIdRecursoHumano($rrhh_efector->id_rr_hh);
-        Yii::$app->user->setServicios(ArrayHelper::map($rrhh_efector->rrhhServicio, 'id_servicio', 'servicio.nombre'));
-        // AuthHelper::updatePermissions recibe como parametro id_user pero no lo utiliza
-        // debido al cambio en config/web.php 'components' => ['authManager'...
-        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
-
-        self::establecerAgendaDisponible($rrhh_efector->id_rr_hh);
-        
-        return ['consultas/tipoatencion'];
-    }*/
+    /* Código muerto (sesión operativa PES / wizard): reemplazado por flujos actuales. */
 
     /**
      * @no_intent_catalog
@@ -403,19 +375,11 @@ class SiteController extends Controller
             throw new BadRequestHttpException('No hay asignación PES en el efector seleccionado para este usuario.');
         }
 
-        $rrhhEfector = RrhhEfector::find()
-            ->where([
-                'id_efector' => $idEfector,
-                'id_persona' => $idPersona,
-                'deleted_at' => null,
-            ])
-            ->one();
-
         $efector = Efector::findOne($idEfector);
         Yii::$app->user->setIdEfector($idEfector);
         Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-        Yii::$app->user->setIdRecursoHumano($rrhhEfector !== null ? (int) $rrhhEfector->id_rr_hh : 0);
+        Yii::$app->user->setIdRecursoHumano(ProfesionalEfectorServicio::resolveIdRrhhForPersona($idPersona));
         Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector));
 
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);

@@ -7,7 +7,6 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Turno;
-use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
 
 /**

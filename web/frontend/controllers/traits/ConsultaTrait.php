@@ -81,17 +81,12 @@ trait ConsultaTrait {
                     'deleted_at' => null,
                 ]);
                 if ($pes !== null) {
-                    $re = \common\models\RrhhEfector::find()
-                        ->where([
-                            'id_persona' => (int) $pes->id_persona,
-                            'id_efector' => (int) $pes->id_efector,
-                            'deleted_at' => null,
-                        ])
-                        ->one();
-                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                    $idRrhh = \common\models\ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
                 }
             }
-            $modelConsulta->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
+            if ($modelConsulta->hasAttribute('id_rr_hh')) {
+                $modelConsulta->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
+            }
             $modelConsulta->id_servicio = Yii::$app->user->getServicioActual();
             $modelConsulta->id_persona = $paciente->id_persona;
             $modelConsulta->id_efector = Yii::$app->user->getIdEfector();

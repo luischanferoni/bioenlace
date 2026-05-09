@@ -268,7 +268,8 @@ class Persona extends \yii\db\ActiveRecord
 
     public function getRrhhEfector()
     {
-        return $this->hasMany(RrhhEfector::className(), ['id_persona' => 'id_persona']);
+        return $this->hasOne(Rrhh::class, ['id_persona' => 'id_persona'])
+            ->orderBy(['id_rr_hh' => SORT_ASC]);
     }
 
     public function getTurnos()

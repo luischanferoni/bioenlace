@@ -21,14 +21,20 @@ $this->params['breadcrumbs'][] = $this->title;
             ['class' => 'yii\grid\SerialColumn'],
             [
                 'attribute' => 'id_persona',
-                'value' => function($data) {
-                    return isset($data->persona) ? $data->persona->apellido.', '.$data->persona->nombre : '--';
-                }
+                'value' => function ($data) {
+                    return isset($data->persona) ? $data->persona->apellido . ', ' . $data->persona->nombre : '--';
+                },
+            ],
+            [
+                'label' => 'Servicio',
+                'value' => function ($data) {
+                    return $data->servicio !== null ? $data->servicio->nombre : '--';
+                },
             ],
 
             [
                 'attribute' => 'nombreEfector',
-                'value' => function($data) {
+                'value' => function ($data) {
                     return isset($data->efector) ? $data->efector->nombre : '--';
                 },
                 'visible' => Yii::$app->user->getIdEfector() ? false : true,
@@ -37,17 +43,17 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => '{delete}',
-                'buttons'=> [
-                    'view'  => function ($url, $model) {
-                        return Html::a('Eliminar', ['delete', 'id' => $model->id_rr_hh], [
+                'buttons' => [
+                    'delete' => function ($url, $model) {
+                        return Html::a('Eliminar', ['delete', 'id' => $model->id], [
                             'class' => 'btn btn-danger',
                             'data' => [
-                                'confirm' => 'Está seguro que desea eliminar este ítem?',
+                                'confirm' => 'Se eliminarán todas las asignaciones (PES) de esta persona en este efector. ¿Continuar?',
                                 'method' => 'post',
                             ],
                         ]);
-                    },                    
-                ]                
+                    },
+                ],
             ],
         ],
     ]); ?>

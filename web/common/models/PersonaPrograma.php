@@ -16,7 +16,7 @@ use Yii;
  * @property string|null $fecha_baja
  * @property string|null $motivo_baja
  * @property string|null $tipo_empadronamiento
- * @property int $id_rrhh_efector Es el recurso humano que cargo la ficha
+ * @property int|null $id_rrhh_efector Legacy (retirado por migración PES)
  *
  * @property Personas $persona
  * @property Programas $programa
@@ -78,10 +78,11 @@ class PersonaPrograma extends \yii\db\ActiveRecord
         if (!parent::beforeSave($insert)) {
             return false;
         }
-        if ($insert || $this->isAttributeChanged('id_rrhh_efector', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhEfectorMinPes(
-                $this->id_rrhh_efector !== null && $this->id_rrhh_efector !== '' ? (int) $this->id_rrhh_efector : null
-            );
+        if ($this->hasAttribute('id_rrhh_efector') && ($insert || $this->isAttributeChanged('id_rrhh_efector', false))) {
+            $legacy = $this->id_rrhh_efector;
+            if ($legacy !== null && $legacy !== '') {
+                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhMinPes((int) $legacy);
+            }
         }
         return true;
     }
@@ -92,8 +93,9 @@ class PersonaPrograma extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_persona', 'id_programa', 'id_rrhh_efector'], 'required'],
-            [['id_persona', 'id_programa', 'id_rrhh_efector', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_persona', 'id_programa', 'id_profesional_efector_servicio'], 'required'],
+            [['id_persona', 'id_programa', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_rrhh_efector'], 'integer', 'skipOnEmpty' => true],
             [['activo', 'tipo_empadronamiento'], 'string'],
             [['fecha', 'fecha_baja'], 'safe'],
             [['clave_beneficiario'], 'string', 'max' => 16],

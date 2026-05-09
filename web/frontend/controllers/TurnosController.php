@@ -16,7 +16,6 @@ use common\models\Turno;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\RrhhEfector;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
@@ -558,16 +557,9 @@ class TurnosController extends Controller
         if ($idRrhh <= 0) {
             $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
             if ($idPes > 0) {
-                $pes = \common\models\ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
                 if ($pes !== null) {
-                    $re = \common\models\RrhhEfector::find()
-                        ->where([
-                            'id_persona' => (int) $pes->id_persona,
-                            'id_efector' => (int) $pes->id_efector,
-                            'deleted_at' => null,
-                        ])
-                        ->one();
-                    $idRrhh = $re !== null ? (int) $re->id_rr_hh : 0;
+                    $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
                 }
             }
         }

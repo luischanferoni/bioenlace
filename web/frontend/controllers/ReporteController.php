@@ -15,7 +15,7 @@ use common\models\busquedas\ConsultaBusqueda;
 use kartik\mpdf\Pdf;
 use common\models\Servicio;
 use common\models\Efector;
-use common\models\RrhhEfector;
+use common\models\Rrhh;
 
 class ReporteController extends Controller
 {
@@ -59,7 +59,8 @@ class ReporteController extends Controller
                 $nombreDepartamento = $efector->localidad->departamento->nombre;
                 $servicio = Yii::$app->request->post('servicio');
                 $nombreServicio = Servicio::findOne(["id_servicio" => $servicio])->nombre;
-                $nombreMedico = RrhhEfector::findOne(['id_rr_hh' => $medico])->persona->getNombreCompleto('');
+                $rh = Rrhh::findOne((int) $medico);
+                $nombreMedico = $rh !== null && $rh->persona !== null ? $rh->persona->getNombreCompleto('') : '';
                 $desde = Yii::$app->request->post('desde');
                 $hasta = Yii::$app->request->post('hasta');
 
@@ -409,7 +410,8 @@ class ReporteController extends Controller
                 $servicio = Yii::$app->request->post('servicio');
                 $nombreServicio = Servicio::findOne(["id_servicio" => $servicio])->nombre;
                 
-                $nombreMedico = RrhhEfector::findOne(['id_rr_hh' => $medico])->persona->getNombreCompleto('');
+                $rh = Rrhh::findOne((int) $medico);
+                $nombreMedico = $rh !== null && $rh->persona !== null ? $rh->persona->getNombreCompleto('') : '';
                 $desde = Yii::$app->request->post('desde');
                 $hasta = Yii::$app->request->post('hasta');                
 

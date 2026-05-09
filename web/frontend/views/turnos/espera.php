@@ -18,7 +18,7 @@ header("Refresh: $sec");
 $rr_hh = '';
 
 if ($profesional != '') {    
-  $rr_hh = " para " . $profesional->rrhhEfector->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
+  $rr_hh = " para " . $profesional->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
 }
 // fin
 

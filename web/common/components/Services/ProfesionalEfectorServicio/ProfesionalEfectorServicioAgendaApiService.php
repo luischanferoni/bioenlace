@@ -5,7 +5,6 @@ namespace common\components\Services\ProfesionalEfectorServicio;
 use common\models\busquedas\ProfesionalEfectorServicioAgendaBusqueda;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\RrhhEfector;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 
@@ -26,20 +25,21 @@ class ProfesionalEfectorServicioAgendaApiService
 
     public static function findOwnedByRecursoHumano(int $idAgenda, int $idEfector, int $idRrhh): ?ProfesionalEfectorServicioAgenda
     {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+        if ($idPersona === null || $idPersona <= 0) {
+            return null;
+        }
+
         $query = ProfesionalEfectorServicioAgenda::find()->alias('a');
         $query->innerJoin(
             ['pes' => ProfesionalEfectorServicio::tableName()],
             'pes.id = a.id_profesional_efector_servicio AND pes.deleted_at IS NULL'
         );
-        $query->innerJoin(
-            ['re' => 'rrhh_efector'],
-            're.id_persona = pes.id_persona AND re.id_efector = pes.id_efector AND re.deleted_at IS NULL'
-        );
         $query->andWhere([
             'a.id' => $idAgenda,
             'a.id_efector' => $idEfector,
             'a.deleted_at' => null,
-            're.id_rr_hh' => $idRrhh,
+            'pes.id_persona' => $idPersona,
         ]);
 
         /** @var ProfesionalEfectorServicioAgenda|null $model */
@@ -93,10 +93,7 @@ class ProfesionalEfectorServicioAgendaApiService
         if ($idRrhh <= 0 || $idEfector <= 0) {
             throw new BadRequestHttpException('id_efector e id_rr_hh deben ser válidos.');
         }
-        $re = RrhhEfector::find()
-            ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->one();
-        if ($re === null) {
+        if (!ProfesionalEfectorServicio::rrhhTieneAsignacionPesEnEfector($idRrhh, $idEfector)) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector indicado.');
         }
     }
@@ -127,16 +124,14 @@ class ProfesionalEfectorServicioAgendaApiService
             return;
         }
         self::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
-        $re = RrhhEfector::find()
-            ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->one();
-        if ($re === null) {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+        if ($idPersona === null || $idPersona <= 0) {
             throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
         }
         $ok = ProfesionalEfectorServicio::find()
             ->alias('pes')
             ->where([
-                'pes.id_persona' => $re->id_persona,
+                'pes.id_persona' => $idPersona,
                 'pes.id_efector' => $idEfector,
                 'pes.deleted_at' => null,
                 'pes.id' => $idRrhhServicioAsignado,
@@ -154,16 +149,17 @@ class ProfesionalEfectorServicioAgendaApiService
      */
     public static function obtenerPesPorIdEnEfectorParaRrhh(int $idPes, int $idRrhh, int $idEfector): ProfesionalEfectorServicio
     {
-        $re = RrhhEfector::find()
-            ->where(['id_rr_hh' => $idRrhh, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->one();
-        if ($re === null) {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+        if ($idPersona === null || $idPersona <= 0) {
+            throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
+        }
+        if (!ProfesionalEfectorServicio::rrhhTieneAsignacionPesEnEfector($idRrhh, $idEfector)) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
         }
         $pesDirect = ProfesionalEfectorServicio::find()
             ->where([
                 'id' => $idPes,
-                'id_persona' => (int) $re->id_persona,
+                'id_persona' => $idPersona,
                 'id_efector' => $idEfector,
                 'deleted_at' => null,
             ])
@@ -186,10 +182,8 @@ class ProfesionalEfectorServicioAgendaApiService
         $pes = $model->asignacion;
         if ($pes !== null) {
             $row['id_profesional_efector_servicio'] = (int) $pes->id;
-            $re = RrhhEfector::find()
-                ->where(['id_persona' => $pes->id_persona, 'id_efector' => $pes->id_efector, 'deleted_at' => null])
-                ->one();
-            $row['id_rr_hh'] = $re !== null ? (int) $re->id_rr_hh : null;
+            $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
+            $row['id_rr_hh'] = $idRr > 0 ? $idRr : null;
         }
 
         return $row;

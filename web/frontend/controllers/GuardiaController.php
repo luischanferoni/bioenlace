@@ -13,8 +13,6 @@ use yii\helpers\ArrayHelper;
 use common\models\CoberturaMedica;
 use common\models\Telefono;
 use common\models\ProfesionalEfectorServicio;
-use common\models\RrhhEfector;
-
 /**
  * GuardiaController implements the CRUD actions for Guardia model.
  */

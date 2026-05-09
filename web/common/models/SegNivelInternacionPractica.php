@@ -118,26 +118,6 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
         return $this->hasOne(SnomedProcedimientos::className(), ['conceptId' => 'conceptId']);
     }
 
-    /**
-     * Gets query for [[RrhhSolicita]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRrhhSolicita()
-    {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rrhh_solicita']);
-    }
-
-    /**
-     * Gets query for [[RrhhRealiza]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRrhhRealiza()
-    {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rrhh_realiza']);
-    }
-
     public function getProfesionalEfectorServicioSolicita()
     {
         return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio_solicita']);

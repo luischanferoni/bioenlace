@@ -152,7 +152,9 @@ class EncuestaParchesMamariosController extends Controller
                     $nuevaConsulta->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_ENCUESTA_PARCHES];
                     $nuevaConsulta->parent_id = $model->id;
                     $nuevaConsulta->id_persona = $persona->id_persona;
-                    $nuevaConsulta->id_efector = $model->operador->id_efector;
+                    $nuevaConsulta->id_efector = $model->profesionalEfectorServicio
+                        ? (int) $model->profesionalEfectorServicio->id_efector
+                        : (int) $model->id_efector;
                     $nuevaConsulta->id_rr_hh = $model->id_operador;
                     $nuevaConsulta->id_servicio = 5;
                     $nuevaConsulta->id_configuracion = 0;

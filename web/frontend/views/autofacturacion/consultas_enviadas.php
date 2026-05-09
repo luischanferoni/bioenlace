@@ -87,7 +87,7 @@ $form = ActiveForm::begin();
                         'label' => 'Facturista',
                         'contentOptions' => ['class' => 'text-wrap'],
                         'value' => function ($data) {
-                            return $data->autofacturacion->rrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
+                            return $data->autofacturacion->rrhh->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
                         }
                     ],
                     [

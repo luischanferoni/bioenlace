@@ -484,9 +484,8 @@ class TurnosController extends Controller
     {
         $idEfector = (int) Yii::$app->user->getIdEfector();
         $idServicio = (int) $id_servicio;
-        $sql = 'SELECT DISTINCT rh.id_rr_hh, personas.nombre, personas.apellido '
+        $sql = 'SELECT DISTINCT pes.id, personas.nombre, personas.apellido '
             . 'FROM profesional_efector_servicio pes '
-            . 'INNER JOIN rr_hh rh ON rh.id_persona = pes.id_persona '
             . 'INNER JOIN personas ON personas.id_persona = pes.id_persona '
             . 'WHERE pes.id_servicio = :sid AND pes.id_efector = :eid AND pes.deleted_at IS NULL '
             . 'ORDER BY personas.apellido, personas.nombre';
@@ -498,7 +497,7 @@ class TurnosController extends Controller
         $opciones = '<option>Seleccione...</option>';
 
         foreach ($result as $row) {
-            $opciones .= '<option value="' . $row['id_rr_hh'] . '">' . $row['apellido'] . ', ' . $row['nombre'] . '</option>';
+            $opciones .= '<option value="' . (int) $row['id'] . '">' . $row['apellido'] . ', ' . $row['nombre'] . '</option>';
         }
         echo $opciones;
         Yii::$app->end();

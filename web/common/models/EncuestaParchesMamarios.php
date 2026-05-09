@@ -58,9 +58,10 @@ use DateTime;
  * @property int|null $updated_at
  * @property int|null $deleted_at
  *
- * @property Personas $persona
- * @property RrHh $rrHh
- * @property Efectores $efector
+ * @property Persona|null $persona
+ * @property Persona|null $operadorPersona Profesional vía PES o id_operador.
+ * @property Persona|null $rrHh Alias de {@see self::getOperadorPersona()}.
+ * @property Efector|null $efector
  */
 
 
@@ -274,17 +275,26 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RrHh]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Persona del operador (vía {@see getProfesionalEfectorServicio()} o columna `id_operador` sin tabla `rr_hh`).
      */
-    public function getOperador()
+    public function getOperadorPersona(): ?Persona
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_operador']);
+        $pes = $this->profesionalEfectorServicio;
+        if ($pes !== null && $pes->persona !== null) {
+            return $pes->persona;
+        }
+        if ($this->hasAttribute('id_operador') && $this->id_operador !== null && $this->id_operador !== '' && (int) $this->id_operador > 0) {
+            $idP = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_operador);
+            if ($idP !== null && $idP > 0) {
+                return Persona::findOne($idP);
+            }
+        }
+
+        return null;
     }
 
     /**
-     * Gets query for [[Persona]].
+     * Gets query for [[Persona]] (paciente / titular encuesta).
      *
      * @return \yii\db\ActiveQuery
      */
@@ -294,13 +304,11 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RrHh]].
-     *
-     * @return \yii\db\ActiveQuery
+     * Alias histórico (`rrHh`).
      */
-    public function getRrHh()
+    public function getRrHh(): ?Persona
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->getOperadorPersona();
     }
 
     /**

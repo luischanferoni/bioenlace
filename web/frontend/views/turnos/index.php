@@ -15,7 +15,6 @@ use kartik\select2\Select2;
 use yii\web\JsExpression;
 use yii\helpers\ArrayHelper;
 use common\models\Persona;
-use common\models\Rrhh;
 use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
@@ -87,11 +86,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <div class="list-group">
     <?php }
-      if (is_object($rr_hh->rrhh->persona)) {
+      if (is_object($rr_hh->persona)) {
     ?>
       <div class="list-group-item">
-        <a href="#" id="<?php echo $rr_hh->id_rr_hh ?>" class="mostrar-turnos btn text-white w-75 list-group-item" servicio="<?php echo $rr_hh->id_servicio; ?>" style="background-color: <?php echo $color; ?>"> <?php echo $rr_hh->rrhh->persona->nombre ?> <?php echo $rr_hh->rrhh->persona->apellido ?> </a>
-        <a class="btn btn-light list-group-item" style="background-color: <?php echo $color; ?>" href="<?= Url::to(['turnos/espera', 'id_user' => $rr_hh->rrhh->persona->id_user]) ?>" target="_blank"><i class="bi bi-printer text-white"></i></a>
+        <a href="#" id="<?php echo $rr_hh->id ?>" class="mostrar-turnos btn text-white w-75 list-group-item" servicio="<?php echo $rr_hh->id_servicio; ?>" style="background-color: <?php echo $color; ?>"> <?php echo $rr_hh->persona->nombre ?> <?php echo $rr_hh->persona->apellido ?> </a>
+        <a class="btn btn-light list-group-item" style="background-color: <?php echo $color; ?>" href="<?= Url::to(['turnos/espera', 'id_user' => $rr_hh->persona->id_user]) ?>" target="_blank"><i class="bi bi-printer text-white"></i></a>
 
       </div>
 

@@ -6,14 +6,13 @@ use Yii;
 use common\models\BeneficiarioSumar;
 use common\models\Consulta;
 use common\models\ProfesionalEfectorServicio;
-use common\models\Rrhh;
 
 /**
  * Registro de envío / autofacturación SUMAR vinculado a una consulta.
  *
  * @property-read Consulta|null $consulta
  * @property-read BeneficiarioSumar|null $beneficiario
- * @property-read Rrhh|null $rrhh
+ * @property-read \common\models\Persona|null $rrhh Persona del profesional vía PES.
  * @property-read ProfesionalEfectorServicio|null $profesionalEfectorServicio
  */
 class Autofacturacion extends \yii\db\ActiveRecord
@@ -114,7 +113,8 @@ class Autofacturacion extends \yii\db\ActiveRecord
 
     public function getRrhh()
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rr_hh']);
+        return $this->hasOne(\common\models\Persona::className(), ['id_persona' => 'id_persona'])
+            ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
     }
 
     public function getProfesionalEfectorServicio()

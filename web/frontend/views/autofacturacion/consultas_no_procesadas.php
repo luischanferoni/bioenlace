@@ -47,7 +47,7 @@ $form = ActiveForm::begin();
                         'label' => 'Profesional de Salud',
                         'contentOptions' => ['class' => 'text-wrap'],
                         'value' => function ($data) {                            
-                            return isset($data->profesionalRrhh) ? $data->profesionalRrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : '';
+                            return isset($data->profesionalRrhh) ? $data->profesionalRrhh->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : '';
                         }
                     ],
                 ]

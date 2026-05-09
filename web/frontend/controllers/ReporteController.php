@@ -15,7 +15,7 @@ use common\models\busquedas\ConsultaBusqueda;
 use kartik\mpdf\Pdf;
 use common\models\Servicio;
 use common\models\Efector;
-use common\models\Rrhh;
+use common\models\ProfesionalEfectorServicio;
 
 class ReporteController extends Controller
 {
@@ -59,8 +59,7 @@ class ReporteController extends Controller
                 $nombreDepartamento = $efector->localidad->departamento->nombre;
                 $servicio = Yii::$app->request->post('servicio');
                 $nombreServicio = Servicio::findOne(["id_servicio" => $servicio])->nombre;
-                $rh = Rrhh::findOne((int) $medico);
-                $nombreMedico = $rh !== null && $rh->persona !== null ? $rh->persona->getNombreCompleto('') : '';
+                $nombreMedico = $this->nombreProfesionalParaReporte((int) $medico);
                 $desde = Yii::$app->request->post('desde');
                 $hasta = Yii::$app->request->post('hasta');
 
@@ -410,8 +409,7 @@ class ReporteController extends Controller
                 $servicio = Yii::$app->request->post('servicio');
                 $nombreServicio = Servicio::findOne(["id_servicio" => $servicio])->nombre;
                 
-                $rh = Rrhh::findOne((int) $medico);
-                $nombreMedico = $rh !== null && $rh->persona !== null ? $rh->persona->getNombreCompleto('') : '';
+                $nombreMedico = $this->nombreProfesionalParaReporte((int) $medico);
                 $desde = Yii::$app->request->post('desde');
                 $hasta = Yii::$app->request->post('hasta');                
 
@@ -479,6 +477,29 @@ class ReporteController extends Controller
             'mensaje'=>$mensaje
         ]);
 
+    }
+
+    /**
+     * Nombre del profesional desde filtro de reporte (id PES, id_persona o id resuelto sin tabla `rr_hh`).
+     */
+    private function nombreProfesionalParaReporte(int $medicoId): string
+    {
+        if ($medicoId <= 0) {
+            return '';
+        }
+        $pes = ProfesionalEfectorServicio::findOne($medicoId);
+        if ($pes !== null && $pes->persona !== null) {
+            return $pes->persona->getNombreCompleto('');
+        }
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($medicoId);
+        if ($idPersona !== null && $idPersona > 0) {
+            $p = Persona::findOne($idPersona);
+
+            return $p !== null ? $p->getNombreCompleto('') : '';
+        }
+        $p = Persona::findOne($medicoId);
+
+        return $p !== null ? $p->getNombreCompleto('') : '';
     }
 
     public function obtenerMes($fecha){

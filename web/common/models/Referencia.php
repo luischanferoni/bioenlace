@@ -214,16 +214,12 @@ class Referencia extends \yii\db\ActiveRecord
         $qPes = (new \yii\db\Query())
             ->select([
                 'id_servicio' => 'pes.id_servicio',
-                'id_rr_hh' => 'rh.id_rr_hh',
+                'id_rr_hh' => 'pes.id',
                 'id_persona' => 'pes.id_persona',
                 'id_user' => 'personas.id_user',
                 'username' => 'user.username',
             ])
             ->from(['pes' => 'profesional_efector_servicio'])
-            ->innerJoin(
-                ['rh' => 'rr_hh'],
-                'rh.id_persona = pes.id_persona'
-            )
             ->innerJoin('personas', 'pes.id_persona = personas.id_persona')
             ->innerJoin('user', 'personas.id_user = user.id')
             ->where([

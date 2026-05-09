@@ -127,8 +127,12 @@ class ProfesionalEnEfectorController extends Controller
      */
     protected function findModel($id_rr_hh, $id_efector)
     {
-        $idPersona = (new Query())->from('rr_hh')->select('id_persona')->where(['id_rr_hh' => (int) $id_rr_hh])->scalar();
-        if ($idPersona === false || $idPersona === null) {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $id_rr_hh);
+        if ($idPersona === null || (int) $idPersona <= 0) {
+            $pesProbe = ProfesionalEfectorServicio::findOne(['id' => (int) $id_rr_hh, 'deleted_at' => null]);
+            $idPersona = $pesProbe !== null ? (int) $pesProbe->id_persona : null;
+        }
+        if ($idPersona === null || $idPersona <= 0) {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
         $model = ProfesionalEfectorServicio::find()

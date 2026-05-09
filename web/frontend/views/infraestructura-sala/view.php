@@ -48,7 +48,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     [   //muestra el nombre del responsable seleccionado en el listado
                         'label' => 'Responsable',
                         'attribute' => 'id_responsable',
-                        'value' => $model->responsable ? $model->responsable->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'No definido',
+                        'value' => $model->responsable ? $model->responsable->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'No definido',
                     ],
                     //'id_piso',
                     [   //muestra el nombre del piso seleccionado en el listado

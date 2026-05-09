@@ -21,7 +21,6 @@ use Yii;
  * @property string $per_imc
  * @property string $id_consulta
  *
- * @property Rrhh $id_user
  * @property Personas $id_persona
  */
 class AtencionesEnfermeria extends \yii\db\ActiveRecord

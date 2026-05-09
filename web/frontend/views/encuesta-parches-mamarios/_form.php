@@ -49,7 +49,8 @@ use yii\web\JsExpression;
                     <?php
                     $data = [];
                     if (!is_null($model->id_operador) && $model->id_operador != "") {
-                        $data = [$model->id_operador => $model->operador->persona->apellido . ', ' . $model->operador->persona->nombre];
+                        $op = $model->operadorPersona;
+                        $data = $op !== null ? [$model->id_operador => $op->apellido . ', ' . $op->nombre] : [];
                     }
 
                     echo $form->field($model, 'id_operador')->widget(Select2::classname(), [

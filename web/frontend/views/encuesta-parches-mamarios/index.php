@@ -62,7 +62,9 @@ $this->params['breadcrumbs'][] = $this->title;
                             if($data->created_at < '2024-03-28 00:00:00') {
                                 return $data->efector->nombre;
                             } else {
-                                return isset($data->operador) ? $data->operador->efector->nombre:$data->efector->nombre;
+                                return ($data->profesionalEfectorServicio && $data->profesionalEfectorServicio->efector)
+                                    ? $data->profesionalEfectorServicio->efector->nombre
+                                    : $data->efector->nombre;
                             }
                         }
                     ],
@@ -107,7 +109,9 @@ $this->params['breadcrumbs'][] = $this->title;
                             if($data->created_at < '2024-03-28 00:00:00') {
                                 return $data->efector->nombre;
                             } else {
-                                return isset($data->operador) ? $data->operador->efector->nombre:$data->efector->nombre;
+                                return ($data->profesionalEfectorServicio && $data->profesionalEfectorServicio->efector)
+                                    ? $data->profesionalEfectorServicio->efector->nombre
+                                    : $data->efector->nombre;
                             }
                             
                         }
@@ -117,7 +121,9 @@ $this->params['breadcrumbs'][] = $this->title;
                         'attribute' => 'id_operador',
                         'value' => function ($data) {
                            
-                                return isset($data->operador) ? $data->operador->persona->getNombreCompleto(common\models\Persona::FORMATO_NOMBRE_A_OA_N_ON): '';
+                                return $data->operadorPersona !== null
+                                    ? $data->operadorPersona->getNombreCompleto(common\models\Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                                    : '';
                             
                         }
                     ],

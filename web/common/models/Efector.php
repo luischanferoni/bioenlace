@@ -23,7 +23,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property Localidades $idLocalidad
  * @property ServiciosEfector[] $serviciosEfectors
  * @property-read Servicio[] $servicios
- * @property-read Rrhh[] $rrhhs
+ * @property-read Persona[] $rrhhs Personas con al menos una PES activa en el efector.
  * @property Turnos[] $turnos
  */
 class Efector extends \yii\db\ActiveRecord
@@ -150,13 +150,13 @@ class Efector extends \yii\db\ActiveRecord
     }
   
       /**
-     * RRHH (`rr_hh`) de personas con al menos una fila PES activa en este efector (sustituye `rr_hh_efector`).
+     * Personas con al menos una fila PES activa en este efector (sustituye `rr_hh_efector` / tabla `rr_hh`).
      *
      * @return \yii\db\ActiveQuery
      */
     public function getRrhhs()
     {
-        return $this->hasMany(Rrhh::className(), ['id_persona' => 'id_persona'])
+        return $this->hasMany(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(
                 ProfesionalEfectorServicio::tableName(),
                 ['id_efector' => 'id_efector'],

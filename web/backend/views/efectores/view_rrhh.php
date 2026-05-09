@@ -10,6 +10,7 @@ use webvimark\modules\UserManagement\models\User;
 use kartik\select2\Select2;
 
 use common\models\Efector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\models\Persona;
 
@@ -44,7 +45,12 @@ $this->params['breadcrumbs'][] = $this->title;
                 'dataProvider' => $dataProvider,
                 'filterModel' => $searchModel,
                 'columns' => [
-                    'id_rr_hh',
+                    [
+                        'label' => 'id_rr_hh',
+                        'value' => static function ($data) {
+                            return ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $data->id_persona);
+                        },
+                    ],
 
                     [
                         'attribute' => 'nombrePersona',
@@ -84,31 +90,20 @@ $this->params['breadcrumbs'][] = $this->title;
                     [
                         'attribute' => 'idServicio',
                         'label' => 'Servicio',
-                        'value' => function ($data) {
-                            $servicios = [];
-                            foreach ($data->profesionalEfectorServicios as $pes) {
-                                if ($pes->servicio !== null) {
-                                    $servicios[] = $pes->servicio->nombre;
-                                }
-                            }
-
-                            return count($servicios) == 0 ? 'Sin servicios' : implode(" - ", $servicios);
+                        'value' => static function ($data) {
+                            return $data->servicio !== null ? $data->servicio->nombre : 'Sin servicios';
                         },
                         'filter' => Html::activeDropDownList($searchModel, 'idServicio', $mapServicios, ['class' => 'form-control', 'prompt' => '- TODOS -'])
                     ],
                     [
                         'value' => function ($data) {
                             if (isset($data->persona->id_user) && $data->persona->id_user !== 0) {
-                                $servicios = [];
-                                foreach ($data->profesionalEfectorServicios as $pes) {
-                                    if ($pes->servicio !== null) {
-                                        $servicios[] = $pes->servicio->nombre;
-                                    }
-                                }
+                                $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $data->id_persona);
+                                $nombreServicio = $data->servicio !== null ? $data->servicio->nombre : '';
 
                                 $botonAdminEfector = '<li class="list-group-item">' . Html::a(
                                     'Establecer AdminEfector',
-                                    ['/profesional-efector-servicio/create-admin-efector', 'id_rr_hh' => $data->id_rr_hh],
+                                    ['/profesional-efector-servicio/create-admin-efector', 'id_rr_hh' => $idRrhh],
                                     [
                                         'class' => 'btn btn-sm btn-warning ajax_adminefector', 
                                         'alert_title' => 'Confirme la asignacion de "'.
@@ -117,10 +112,10 @@ $this->params['breadcrumbs'][] = $this->title;
                                     ]
                                 ) . '</li>';
 
-                                if (in_array('ADMINISTRAR EFECTOR', $servicios)) {
+                                if ($nombreServicio === 'ADMINISTRAR EFECTOR') {
                                     $botonAdminEfector = '<li class="list-group-item">' . Html::a(
                                         'Quitar AdminEfector',
-                                        ['/profesional-efector-servicio/remove-admin-efector', 'id_rr_hh' => $data->id_rr_hh],
+                                        ['/profesional-efector-servicio/remove-admin-efector', 'id_rr_hh' => $idRrhh],
                                         ['class' => 'btn btn-sm btn-warning ajax_adminefector',
                                             'alert_title' => 'Seguro desea quitar a "'.
                                             $data->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N).

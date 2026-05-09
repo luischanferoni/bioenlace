@@ -111,7 +111,8 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
      */
     public function getRrhhSuministra()
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rrhh']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
+            ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
     }
 
         /**

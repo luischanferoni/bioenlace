@@ -18,6 +18,7 @@ use Yii;
  *
  * @property InfraestructuraCama[] $infraestructuraCamas
  * @property InfraestructuraPiso $piso
+ * @property Persona|null $responsable Persona (`id_responsable` como id_persona).
  */
 class InfraestructuraSala extends \yii\db\ActiveRecord
 {
@@ -98,6 +99,6 @@ class InfraestructuraSala extends \yii\db\ActiveRecord
      */
     public function getResponsable()
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_responsable']);
-    }         
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_responsable']);
+    }
 }

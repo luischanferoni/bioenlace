@@ -37,7 +37,6 @@ use common\models\Turno;
  * @property EstadoCivil $idEstadoCivil
  * @property PersonasDomicilios[] $personasDomicilios
  * @property Domicilios[] $idDomicilios
- * @property RrHh[] $rrHhs
  * @property Usuarios[] $usuarios
  */
 class Persona extends \yii\db\ActiveRecord
@@ -264,15 +263,6 @@ class Persona extends \yii\db\ActiveRecord
     public function getEncuentrosGuardia()
     {
         return $this->hasMany(Guardia::className(), ['id_persona' => 'id_persona']);
-    }
-
-    /**
-     * Primer recurso humano (`rr_hh`) asociado a la persona.
-     */
-    public function getRrhh()
-    {
-        return $this->hasOne(Rrhh::class, ['id_persona' => 'id_persona'])
-            ->orderBy(['id_rr_hh' => SORT_ASC]);
     }
 
     public function getTurnos()

@@ -17,7 +17,7 @@ use Yii;
  *
  * @property SegNivelInternacion $internacion
  * @property SegNivelInternacionMedicamento $medicamento
- * @property Rrhh|null $rrhhSuministra recurso humano que suministra (`id_rrhh`)
+ * @property Persona|null $rrhhSuministra Persona que suministra (`id_rrhh` → id_persona si sin tabla `rr_hh`).
  */
 class SegNivelInternacionSuministroMedicamento extends \yii\db\ActiveRecord
 {
@@ -81,11 +81,11 @@ class SegNivelInternacionSuministroMedicamento extends \yii\db\ActiveRecord
     }
 
     /**
-     * Profesional que suministra (tabla `rr_hh`).
+     * Persona que suministra (FK `id_rrhh` como id_persona cuando no existe tabla `rr_hh`).
      */
     public function getRrhhSuministra()
     {
-        return $this->hasOne(Rrhh::className(), ['id_rr_hh' => 'id_rrhh']);
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_rrhh']);
     }
 }
 

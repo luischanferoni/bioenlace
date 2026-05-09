@@ -86,8 +86,11 @@ class ConsultaBusqueda extends Consulta
         $query = Consulta::find()
                         ->select('consultas.*')
                         ->leftJoin('turnos', '`turnos`.`id_turnos` = `consultas`.`id_turnos`')
-                        ->leftJoin('rr_hh', '`turnos`.`id_rr_hh` = `rr_hh`.`id_rr_hh`')
-                        ->leftJoin('personas', '`rr_hh`.`id_persona` = `personas`.`id_persona`')
+                        ->leftJoin(
+                            'profesional_efector_servicio pes_turno',
+                            '`pes_turno`.`id` = `turnos`.`id_profesional_efector_servicio` AND pes_turno.deleted_at IS NULL'
+                        )
+                        ->leftJoin('personas', '`pes_turno`.`id_persona` = `personas`.`id_persona`')
                         ->andWhere('turnos.fecha = :fecha_hoy',[':fecha_hoy' => $fecha_hoy])
                         ->andWhere('turnos.id_efector = :id_efector',[':id_efector' => $id_efector])
                         ->orderBy('turnos.fecha DESC,turnos.hora DESC');
@@ -220,8 +223,11 @@ class ConsultaBusqueda extends Consulta
                         ->select('consultas.*')
                         ->leftJoin('turnos', '`turnos`.`id_turnos` = `consultas`.`parent_id` AND `consultas`.`parent_class` = '.Consulta::PARENT_TURNOS)
                         ->leftJoin('turnos', '`turnos`.`id_turnos` = `consultas`.`id_turnos` AND `consultas`.`id_turnos` != 0')
-                        ->leftJoin('rr_hh', '`turnos`.`id_rr_hh` = `rr_hh`.`id_rr_hh`')
-                        ->leftJoin('personas', '`rr_hh`.`id_persona` = `personas`.`id_persona`')
+                        ->leftJoin(
+                            'profesional_efector_servicio pes_turno',
+                            '`pes_turno`.`id` = `turnos`.`id_profesional_efector_servicio` AND pes_turno.deleted_at IS NULL'
+                        )
+                        ->leftJoin('personas', '`pes_turno`.`id_persona` = `personas`.`id_persona`')
                         ->andWhere(static::condicionTurnoAsignadoProfesionalSesion())
                         ->andWhere('turnos.id_efector = :id_efector',[':id_efector' => $id_efector])
                         ->orderBy('turnos.fecha DESC,turnos.hora DESC');

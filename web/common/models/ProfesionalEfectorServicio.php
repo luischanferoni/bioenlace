@@ -73,17 +73,6 @@ class ProfesionalEfectorServicio extends ActiveRecord
         return $this->hasOne(Servicio::class, ['id_servicio' => 'id_servicio']);
     }
 
-    /**
-     * Fila `rr_hh` de la persona del profesional (canónico por persona).
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getRrhh()
-    {
-        return $this->hasOne(Rrhh::class, ['id_persona' => 'id_persona'])
-            ->orderBy(['id_rr_hh' => SORT_ASC]);
-    }
-
     public function getAgenda()
     {
         return $this->hasOne(ProfesionalEfectorServicioAgenda::class, ['id_profesional_efector_servicio' => 'id'])

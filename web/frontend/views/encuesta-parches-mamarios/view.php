@@ -22,14 +22,18 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'id_operador',
                 'label' => 'Operador',
-                'value' => $model->operador->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),    
+                'value' => $model->operadorPersona !== null ? $model->operadorPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : '',
             ],            
             'fecha_prueba',
             'numero_serie',
             [
                 'attribute' => 'id_efector',
                 'label' => 'Efector',
-                'value' =>   $model->created_at < '2024-03-28 00:00:00' ? $model->efector->nombre: $model->operador->efector->nombre 
+                'value' => $model->created_at < '2024-03-28 00:00:00'
+                    ? $model->efector->nombre
+                    : ($model->profesionalEfectorServicio && $model->profesionalEfectorServicio->efector
+                        ? $model->profesionalEfectorServicio->efector->nombre
+                        : $model->efector->nombre)
             ],
             'antecedente_cancer_mama',
             'antecedente_cirugia_mamaria',

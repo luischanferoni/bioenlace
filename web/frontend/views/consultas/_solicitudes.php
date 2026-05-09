@@ -125,7 +125,7 @@ use common\models\ConsultaPracticas;
                                 /*
                                     $data = [];
                                     if (!is_null($model_c_p_s->dirigido_a) && $model_c_p_s->dirigido_a != "") {
-                                        $data = [$model_c_p_s->dirigido_a => $model_c_p_s->rrhh->persona->apellido . ', ' . $model_c_p_s->rrhh->persona->nombre];
+                                        $data = [$model_c_p_s->dirigido_a => $model_c_p_s->rrhh->apellido . ', ' . $model_c_p_s->rrhh->nombre];
                                     }
 
                                     echo $form->field($model_c_p_s, 'dirigido_a')->widget(Select2::classname(), [

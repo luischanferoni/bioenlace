@@ -8,6 +8,7 @@ use yii\web\ForbiddenHttpException;
 use common\models\SolicitudRrhh;
 use common\models\SolicitudRrhhEvento;
 use common\models\EfectorTurnosConfig;
+use common\models\ProfesionalEfectorServicio;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use yii\db\Query;
 
@@ -120,17 +121,26 @@ class SolicitudRrhhController extends BaseController
      */
     protected function pickAutoDestinatario($idEfector, $excludeRrhh)
     {
-        $id = (new Query())
-            ->select(['rh.id_rr_hh'])
-            ->from(['rh' => 'rr_hh'])
-            ->innerJoin(
-                ['pes' => \common\models\ProfesionalEfectorServicio::tableName()],
-                'pes.id_persona = rh.id_persona AND pes.id_efector = :ef AND pes.deleted_at IS NULL',
-                [':ef' => (int) $idEfector]
-            )
-            ->where(['<>', 'rh.id_rr_hh', (int) $excludeRrhh])
-            ->limit(1)
-            ->scalar();
+        $excludeRrhh = (int) $excludeRrhh;
+        $excludePid = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($excludeRrhh);
+        if ($excludePid === null || $excludePid <= 0) {
+            $pesEx = ProfesionalEfectorServicio::findOne($excludeRrhh);
+            $excludePid = $pesEx !== null ? (int) $pesEx->id_persona : 0;
+        }
+        $q = (new Query())
+            ->select(['pes.id'])
+            ->from(['pes' => ProfesionalEfectorServicio::tableName()])
+            ->where([
+                'pes.id_efector' => (int) $idEfector,
+                'pes.deleted_at' => null,
+            ])
+            ->orderBy(['pes.id' => SORT_ASC])
+            ->limit(1);
+        if ($excludePid > 0) {
+            $q->andWhere(['<>', 'pes.id_persona', $excludePid]);
+        }
+
+        $id = $q->scalar();
 
         return $id !== false && $id !== null ? (int) $id : null;
     }

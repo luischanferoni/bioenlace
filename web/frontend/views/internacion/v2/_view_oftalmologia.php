@@ -45,7 +45,7 @@ if (is_array($oftalmologias)) { ?>
                                     </td>
 
                                     <td>
-                                        <?= $valueOftalmologia->consulta->profesionalRrhh->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)  ?>
+                                        <?= $valueOftalmologia->consulta->profesionalRrhh->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)  ?>
                                     </td>
 
                                 </tr>

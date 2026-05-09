@@ -358,7 +358,7 @@ class Turno extends \yii\db\ActiveRecord
     }
     public function getRrhh()
     {
-        return $this->hasOne(Rrhh::className(), ['id_persona' => 'id_persona'])
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
     }
 
@@ -416,8 +416,8 @@ class Turno extends \yii\db\ActiveRecord
         if ($pes !== null) {
             return $pes->persona;
         }
-        if ($this->rrhh && $this->rrhh->persona) {
-            return $this->rrhh->persona;
+        if ($this->rrhh) {
+            return $this->rrhh;
         }
         if ($this->hasAttribute('id_rr_hh') && (int) $this->getAttribute('id_rr_hh') > 0) {
             $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->getAttribute('id_rr_hh'));

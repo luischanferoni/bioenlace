@@ -50,10 +50,6 @@ class ReferenciasBusquedas extends Referencia
 
         $id_user = Yii::$app->user->id;
         $id_efector = Yii::$app->user->idEfector;
-        $rr_hh = Persona::find()->select(['rr_hh.id_rr_hh'])
-                ->from('personas')
-                ->join('INNER JOIN','rr_hh','personas.id_persona=rr_hh.id_persona')
-                ->where(['personas.id_user' => $id_user]);
 
         $idPersonaSesion = (int) Yii::$app->user->getIdPersona();
         if ($idPersonaSesion <= 0) {
@@ -84,15 +80,13 @@ class ReferenciasBusquedas extends Referencia
                     ->from('referencia')
                     ->join('INNER JOIN','consultas','referencia.id_consulta=consultas.id_consulta')
                     ->join('INNER JOIN','turnos','consultas.id_turnos=turnos.id_turnos')
-                    ->join('LEFT JOIN','rr_hh','turnos.id_rr_hh=rr_hh.id_rr_hh')
-                    ->join('LEFT JOIN','personas','rr_hh.id_persona=personas.id_persona')
                     ->join('INNER JOIN','efectores','turnos.id_efector=efectores.id_efector')
                     ->where(['turnos.id_efector' => $id_efector]);
-            $profOCond = ['or', ['turnos.id_rr_hh' => $rr_hh]];
             if ($pesIdsProfesional !== []) {
-                $profOCond[] = ['turnos.id_profesional_efector_servicio' => $pesIdsProfesional];
+                $query->andWhere(['turnos.id_profesional_efector_servicio' => $pesIdsProfesional]);
+            } else {
+                $query->andWhere('0=1');
             }
-            $query->andWhere($profOCond);
         } else {
            $query = Referencia::find()
                     -> select
@@ -108,8 +102,6 @@ class ReferenciasBusquedas extends Referencia
                     ->from('referencia')
                     ->join('INNER JOIN','consultas','referencia.id_consulta=consultas.id_consulta')
                     ->join('INNER JOIN','turnos','consultas.id_turnos=turnos.id_turnos')
-                    ->join('INNER JOIN','rr_hh','turnos.id_rr_hh=rr_hh.id_rr_hh')
-                    ->join('INNER JOIN','personas','rr_hh.id_persona=personas.id_persona')
                     ->join('INNER JOIN','efectores','turnos.id_efector=efectores.id_efector')
                     ->where(['turnos.id_efector' => $id_efector]);
         }

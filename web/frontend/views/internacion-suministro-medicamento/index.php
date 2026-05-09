@@ -45,8 +45,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label' => 'RRHH', 
                 'value' => function ($data) {
                    
-                    return $data->rrhhSuministra && $data->rrhhSuministra->persona
-                        ? $data->rrhhSuministra->persona->getNombreCompleto(\common\models\Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                    return $data->rrhhSuministra
+                        ? $data->rrhhSuministra->getNombreCompleto(\common\models\Persona::FORMATO_NOMBRE_A_OA_N_ON)
                         : 'NO';
                 }               
                 

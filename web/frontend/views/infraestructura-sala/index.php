@@ -55,7 +55,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
                            if (is_object($data->responsable)) 
                             { 
-                                return $data->responsable->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON); 
+                                return $data->responsable->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON); 
                             } else {
                                 return 'Sin Responsable';
                             }

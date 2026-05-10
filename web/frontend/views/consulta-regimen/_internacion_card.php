@@ -36,7 +36,7 @@ use common\models\Persona;
                 ?>
               </td>
               <td>
-                  <?= $regimen->consulta->profesionalRrhh->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)  ?>
+                  <?= $regimen->consulta->profesionalPes->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)  ?>
               </td>
             </tr>
           <?php endforeach; ?>

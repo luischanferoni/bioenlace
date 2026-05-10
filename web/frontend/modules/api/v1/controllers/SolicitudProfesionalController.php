@@ -5,14 +5,14 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
-use common\models\SolicitudRrhh;
-use common\models\SolicitudRrhhEvento;
+use common\models\SolicitudProfesionalEfector;
+use common\models\SolicitudProfesionalEfectorEvento;
 use common\models\EfectorTurnosConfig;
 use common\models\ProfesionalEfectorServicio;
 use yii\db\Query;
 
 /**
- * Solicitudes entre profesionales del efector (`solicitud_rrhh` en BD; ids columnas = PES).
+ * Solicitudes entre profesionales del efector (`solicitud_profesional_efector`; ids = PES).
  */
 class SolicitudProfesionalController extends BaseController
 {
@@ -33,12 +33,12 @@ class SolicitudProfesionalController extends BaseController
             return ['success' => true, 'solicitudes' => [], 'message' => 'Módulo deshabilitado'];
         }
 
-        $q = SolicitudRrhh::find()->where(['id_efector' => $idEfector]);
+        $q = SolicitudProfesionalEfector::find()->where(['id_efector' => $idEfector]);
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DIRECTO) {
             $q->andWhere([
                 'or',
-                ['id_solicitante_rr_hh' => $idPes],
-                ['id_destinatario_rr_hh' => $idPes],
+                ['id_solicitante_profesional_efector_servicio' => $idPes],
+                ['id_destinatario_profesional_efector_servicio' => $idPes],
             ]);
         }
         $list = $q->orderBy(['id' => SORT_DESC])->limit(100)->all();
@@ -49,8 +49,8 @@ class SolicitudProfesionalController extends BaseController
                 'estado' => $s->estado,
                 'tipo' => $s->tipo,
                 'mensaje' => $s->mensaje,
-                'id_solicitante_profesional_efector_servicio' => $s->id_solicitante_rr_hh,
-                'id_destinatario_profesional_efector_servicio' => $s->id_destinatario_rr_hh,
+                'id_solicitante_profesional_efector_servicio' => $s->id_solicitante_profesional_efector_servicio,
+                'id_destinatario_profesional_efector_servicio' => $s->id_destinatario_profesional_efector_servicio,
                 'created_at' => $s->created_at,
             ];
         }
@@ -76,9 +76,9 @@ class SolicitudProfesionalController extends BaseController
         }
         $dest = Yii::$app->request->post('id_destinatario_profesional_efector_servicio');
 
-        $s = new SolicitudRrhh();
+        $s = new SolicitudProfesionalEfector();
         $s->id_efector = $idEfector;
-        $s->id_solicitante_rr_hh = $idPes;
+        $s->id_solicitante_profesional_efector_servicio = $idPes;
         $s->mensaje = $mensaje;
         $s->tipo = Yii::$app->request->post('tipo', 'general');
 
@@ -88,18 +88,18 @@ class SolicitudProfesionalController extends BaseController
                     'id_destinatario_profesional_efector_servicio requerido en modo directo'
                 );
             }
-            $s->id_destinatario_rr_hh = (int) $dest;
+            $s->id_destinatario_profesional_efector_servicio = (int) $dest;
         } elseif ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_INTERMEDIARIO) {
             $s->id_intermediario_user = Yii::$app->user->id;
         } elseif ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_AUTO_ASIGNACION) {
             $candidato = $this->pickAutoDestinatario($idEfector, $idPes);
-            $s->id_destinatario_rr_hh = $candidato;
+            $s->id_destinatario_profesional_efector_servicio = $candidato;
         }
 
         if (!$s->save()) {
             throw new BadRequestHttpException(implode(', ', $s->getFirstErrors()));
         }
-        $ev = new SolicitudRrhhEvento();
+        $ev = new SolicitudProfesionalEfectorEvento();
         $ev->id_solicitud = $s->id;
         $ev->id_user = Yii::$app->user->id;
         $ev->tipo = 'creada';

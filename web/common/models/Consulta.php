@@ -304,7 +304,7 @@ class Consulta extends \yii\db\ActiveRecord
     /**
      * Persona del profesional que atiende (vía PES), para nombre y profesión en UI.
      */
-    public function getProfesionalRrhh()
+    public function getProfesionalPes()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
@@ -1325,7 +1325,7 @@ class Consulta extends \yii\db\ActiveRecord
     public function getCodEspecialidadSumar(){
 
         $id_servicio = $this->id_servicio;
-        $profesionales = $this->profesionalRrhh->profesionalSalud;
+        $profesionales = $this->profesionalPes->profesionalSalud;
 
         foreach($profesionales as $profesional){
 

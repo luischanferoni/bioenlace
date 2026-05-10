@@ -84,9 +84,7 @@ use common\models\SegNivelInternacion;
             <?php
             $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
-            //EL ID QUE SE GUARDA EN ID_RRHH ES EL ID DE RRHH SERVICIO.
-            
-            echo $form->field($model, 'id_rrhh')->widget(Select2::classname(), [
+            echo $form->field($model, 'id_profesional_efector_servicio')->widget(Select2::classname(), [
                 'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
                 'theme' => Select2::THEME_DEFAULT,
                 'language' => 'en',

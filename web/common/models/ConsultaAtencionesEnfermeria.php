@@ -22,7 +22,7 @@ use yii\validators\NumberValidator;
  * @property string $per_imc
  * @property string $id_consulta
  *
- * @property Persona|null $rrhh Profesional vía PES.
+ * @property Persona|null $profesionalPersona Profesional vía PES.
  * @property Personas $id_persona
  */
 class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
@@ -142,7 +142,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         return $this->hasOne(Efector::className(), ['id_efector' => 'id_efector']);
     }
 
-    public function getRrhh()
+    public function getProfesionalPersona()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);

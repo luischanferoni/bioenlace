@@ -54,7 +54,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
     <?php 
         $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
-        echo $form->field($model, 'id_rrhh_solicita')->widget(Select2::classname(), [
+        echo $form->field($model, 'id_profesional_efector_servicio_solicita')->widget(Select2::classname(), [
             'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
             'theme' => 'bootstrap',
             'language' => 'en',
@@ -74,7 +74,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
 <?php 
         $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
-        echo $form->field($model, 'id_rrhh_realiza')->widget(Select2::classname(), [
+        echo $form->field($model, 'id_profesional_efector_servicio_realiza')->widget(Select2::classname(), [
             'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
             'theme' => 'bootstrap',
             'language' => 'en',

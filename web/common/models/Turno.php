@@ -344,12 +344,6 @@ class Turno extends \yii\db\ActiveRecord
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
     }
 
-    /** @deprecated Use {@see getProfesionalPersona} */
-    public function getRrhh()
-    {
-        return $this->getProfesionalPersona();
-    }
-
     /**
      * Texto de servicio para UI/API sin depender de `rrhh_servicio` cuando hay `servicio` o PES.
      */

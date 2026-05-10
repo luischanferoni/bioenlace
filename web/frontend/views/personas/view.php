@@ -420,7 +420,7 @@ $this->registerJsFile(
                                 echo SisseGhostHtml::a(
                                     'Flujos staff (asistente)',
                                     ['/site/asistente'],
-                                    ['class' => 'ms-2', 'title' => 'Abrir el asistente (agenda RRHH, etc.)']
+                                    ['class' => 'ms-2', 'title' => 'Abrir el asistente (agenda laboral, etc.)']
                                 );
                             }
                             ?>

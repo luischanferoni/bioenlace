@@ -14,7 +14,6 @@ use common\models\snomed\SnomedMedicamentos;
  * @property string|null $id_internacion
  * @property string|null $fecha
  * @property string|null $hora
- * @property int|null $id_rrhh
  * @property string|null $observaciones
  */
 class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
@@ -34,7 +33,6 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
         }
         if ($insert
             || $this->isAttributeChanged('id_consulta', false)
-            || $this->isAttributeChanged('id_rrhh', false)
         ) {
             $this->syncProfesionalEfectorServicioFromContext();
         }
@@ -49,17 +47,6 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
                 $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
                 return;
             }
-            if ($c && $this->id_rrhh && $c->id_efector && $c->id_servicio) {
-                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $this->id_rrhh);
-                if ($idPersona !== null && $idPersona > 0) {
-                    $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                        $idPersona,
-                        (int) $c->id_efector,
-                        (int) $c->id_servicio
-                    );
-                    return;
-                }
-            }
         }
         $this->id_profesional_efector_servicio = null;
     }
@@ -71,7 +58,7 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
     {
         return [
             //[['id_internacion_medicamento'], 'required'],
-            [['id', 'id_internacion_medicamento', 'id_rrhh', 'id_consulta', 'id_profesional_efector_servicio'], 'integer'],
+            [['id', 'id_internacion_medicamento', 'id_consulta', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha', 'hora'], 'required'],
             [['observacion'], 'safe'],
             [['id'], 'unique'],
@@ -105,11 +92,11 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[RrhhSuministra]].
+     * Persona del profesional vía PES asignado al suministro.
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrhhSuministra()
+    public function getPersonaProfesional()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);

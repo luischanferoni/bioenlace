@@ -12,7 +12,7 @@ use common\models\ProfesionalEfectorServicio;
  *
  * @property-read Consulta|null $consulta
  * @property-read BeneficiarioSumar|null $beneficiario
- * @property-read \common\models\Persona|null $rrhh Persona del profesional vía PES.
+ * @property-read \common\models\Persona|null $profesionalPersona Persona del profesional vía PES.
  * @property-read ProfesionalEfectorServicio|null $profesionalEfectorServicio
  */
 class Autofacturacion extends \yii\db\ActiveRecord
@@ -94,7 +94,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
         return $this->hasOne(BeneficiarioSumar::className(), ['id_beneficiarios' => 'id_beneficiario']);
     }
 
-    public function getRrhh()
+    public function getProfesionalPersona()
     {
         return $this->hasOne(\common\models\Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);

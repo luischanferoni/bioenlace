@@ -16,15 +16,15 @@ use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use Firebase\JWT\JWT;
 
 /**
- * Orquesta el establecimiento del "contexto operativo" en sesi?n (efector, RRHH, servicio y encounter class),
- * alineado con el flujo hist?rico de la web.
+ * Orquesta el establecimiento del "contexto operativo" en sesión (efector, PES, servicio y encounter class),
+ * alineado con el flujo histórico de la web.
  *
  * La asignación operativa canónica es {@see ProfesionalEfectorServicio}; el JWT puede repetir el id PES en campos alias.
  */
 class SesionOperativaService extends Component
 {
     /**
-     * Hidrata `servicioYhorarioDeTurno` y `idRrhhServicio` (si aplica) desde PES + agendas en el efector actual.
+     * Hidrata `servicioYhorarioDeTurno` y datos de agenda desde PES + agendas en el efector actual.
      */
     public static function aplicarAgendaDisponibleDesdeContextoUsuario(): void
     {

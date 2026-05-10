@@ -214,13 +214,6 @@ class InternacionController extends Controller
                 'deleted_at' => null,
             ]);
         }
-        if ($model_profesional_pes === null && (int) ($model->id_rrhh ?? 0) > 0) {
-            $idLeg = (int) $model->id_rrhh;
-            $model_profesional_pes = ProfesionalEfectorServicio::resolvePesModelFromInternacionLegacyField(
-                $idLeg,
-                $model->resolveIdEfectorContextForPes()
-            );
-        }
         $datosProfesional = $model_profesional_pes !== null ? $this->formatearDatosProfesional($model_profesional_pes) : [];
 
         $puedeAtender = false;

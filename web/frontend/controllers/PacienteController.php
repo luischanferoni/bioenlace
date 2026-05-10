@@ -198,6 +198,7 @@ class PacienteController extends Controller
                         'servicio' => null,
                         'tipo' => null,
                         'parent_id' => $instancia['form']['nombre'],
+                        'nombre_profesional' => null,
                         'rr_hh' => null,
                         'efector' => null,
                         'tipo_historia' => 'Forms'

@@ -224,7 +224,7 @@
     try {
       if (item.servicio && item.servicio.nombre) return String(item.servicio.nombre);
       if (item.nombre_servicio) return String(item.nombre_servicio);
-      var rs = item.rrhhServicioAsignado;
+      var rs = item.profesionalEfectorServicio || item.rrhhServicioAsignado;
       var svcLegacy = rs && rs.servicio ? rs.servicio : null;
       if (svcLegacy && svcLegacy.nombre) return String(svcLegacy.nombre);
     } catch (e) {}

@@ -8,7 +8,7 @@ use yii\web\ForbiddenHttpException;
 use common\components\Services\Quirofano\UserEfectorAccess as QuirofanoUserEfectorAccess;
 
 /**
- * Exige id_efector en GET (o id_efector de sesión) y que el usuario tenga vínculo RRHH con ese efector.
+ * Exige id_efector en GET (o id_efector de sesión) y que el usuario tenga asignación profesional en ese efector.
  */
 class QuirofanoEfectorAccessFilter extends ActionFilter
 {

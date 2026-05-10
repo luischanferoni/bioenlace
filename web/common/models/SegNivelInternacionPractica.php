@@ -13,8 +13,6 @@ use common\models\snomed\SnomedProcedimientos;
  * @property string|null $resultado
  * @property string|null $informe
  * @property string|null $fileName
- * @property int|null $id_rrhh_solicita
- * @property int|null $id_rrhh_realiza
  * @property int|null $id_internacion
  * @property int|null $id_profesional_efector_servicio_solicita
  * @property int|null $id_profesional_efector_servicio_realiza
@@ -36,24 +34,6 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
         return 'seg_nivel_internacion_practica';
     }
 
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-        if ($insert || $this->isAttributeChanged('id_rrhh_solicita', false)) {
-            $this->id_profesional_efector_servicio_solicita = ProfesionalEfectorServicio::findFirstPesIdByStaffOrPersona(
-                $this->id_rrhh_solicita !== null && $this->id_rrhh_solicita !== '' ? (int) $this->id_rrhh_solicita : null
-            );
-        }
-        if ($insert || $this->isAttributeChanged('id_rrhh_realiza', false)) {
-            $this->id_profesional_efector_servicio_realiza = ProfesionalEfectorServicio::findFirstPesIdByStaffOrPersona(
-                $this->id_rrhh_realiza !== null && $this->id_rrhh_realiza !== '' ? (int) $this->id_rrhh_realiza : null
-            );
-        }
-        return true;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -61,19 +41,15 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
     {
         return [
             [['id_internacion','conceptId'], 'required'],
-            [['id', 'id_rrhh_solicita', 'id_rrhh_realiza', 'id_internacion', 'id_profesional_efector_servicio_solicita', 'id_profesional_efector_servicio_realiza'], 'integer'],
+            [['id', 'id_internacion', 'id_profesional_efector_servicio_solicita', 'id_profesional_efector_servicio_realiza'], 'integer'],
             [['informe', 'fileName'], 'string'],
             [['imageFile'], 'file',
               'skipOnEmpty' => true,
               'uploadRequired' => 'No has seleccionado ningún archivo', //Mensaje de error
-              //'maxSize' => 1024 * 1024 * 50, //Tamaño máximo del archivo ->1 MB 
-              //'tooBig' => 'El tamaño máximo permitido es 5MB', //Mensaje de error
-              //'minSize' => 1000, //Tamaño máximo del archivo ->10 Bytes
-              //'tooSmall' => 'El tamaño mínimo permitido son 1 MB', //Mensaje de error
-              'extensions' => 'pdf,png,jpg',  //Tipo de extensiones permitidas separadas por ,
-              'wrongExtension' => 'El archivo {file} no contiene una extensión permitida ({extensions})', //Mensaje de error
-              'maxFiles' => 1,   //N° de archivos permitidos para subir
-              'tooMany' => 'El máximo de archivos permitidos son {limit}', //Mensaje de error
+              'extensions' => 'pdf,png,jpg',
+              'wrongExtension' => 'El archivo {file} no contiene una extensión permitida ({extensions})',
+              'maxFiles' => 1,
+              'tooMany' => 'El máximo de archivos permitidos son {limit}',
             ],
             [['conceptId'], 'string', 'max' => 45],
             [['resultado'], 'string', 'max' => 255],
@@ -92,8 +68,8 @@ class SegNivelInternacionPractica extends \yii\db\ActiveRecord
             'conceptId' => 'Concepto',
             'resultado' => 'Resultado',
             'informe' => 'Informe',
-            'id_rrhh_solicita' => 'Solicitada por',
-            'id_rrhh_realiza' => 'Realiza por',
+            'id_profesional_efector_servicio_solicita' => 'Solicitada por',
+            'id_profesional_efector_servicio_realiza' => 'Realiza por',
             'id_internacion' => 'Internacion',
             'imageFile' => 'Adjuntar resultado',
         ];

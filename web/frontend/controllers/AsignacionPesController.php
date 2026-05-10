@@ -19,9 +19,15 @@ use common\models\ServiciosEfector;
 
 /**
  * CRUD de asignaciones PES (`profesional_efector_servicio`).
+ * Rutas web: `/asignacion-pes/*` (antes `rrhh`).
  */
-class RrhhController extends Controller
+class AsignacionPesController extends Controller
 {
+    public function getViewPath()
+    {
+        return Yii::getAlias('@frontend/views/rrhh');
+    }
+
     public function behaviors()
     {
         return [

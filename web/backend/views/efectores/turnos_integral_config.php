@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use common\models\EfectorTurnosConfig;
-use common\models\SolicitudRrhh;
+use common\models\SolicitudProfesionalEfector;
 
 $this->title = 'Turnos — ' . $efector->nombre;
 $this->params['breadcrumbs'][] = ['label' => 'Efectores', 'url' => ['indexuserefector']];
@@ -61,7 +61,7 @@ $this->params['breadcrumbs'][] = 'Config. turnos';
         <hr>
         <h5>Últimas solicitudes entre médicos</h5>
         <?php
-        $sols = SolicitudRrhh::find()->where(['id_efector' => $efector->id_efector])->orderBy(['id' => SORT_DESC])->limit(25)->all();
+        $sols = SolicitudProfesionalEfector::find()->where(['id_efector' => $efector->id_efector])->orderBy(['id' => SORT_DESC])->limit(25)->all();
         ?>
         <table class="table table-sm">
             <thead><tr><th>ID</th><th>Estado</th><th>Tipo</th><th>Mensaje</th><th>Fecha</th></tr></thead>

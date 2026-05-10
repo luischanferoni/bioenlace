@@ -13,7 +13,7 @@ use yii\bootstrap5\Modal;
 </div>
 <h6 class="mb-1"><?php echo $historia['efector'] ?></h6>
 <div class="d-inline-block w-100">
-  <?php echo $historia['rr_hh'] ?>
+  <?php echo htmlspecialchars((string) ($historia['nombre_profesional'] ?? $historia['rr_hh'] ?? '')) ?>
 </div>
 
 <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#sianlabModal<?php echo $historia['parent_id'] ?>">

@@ -8,7 +8,7 @@ use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 
 /**
- * Acceso a datos de quirófano acotado por efectores asignados al usuario (RRHH).
+ * Acceso a datos de quirófano acotado por efectores asignados al usuario.
  */
 final class UserEfectorAccess
 {

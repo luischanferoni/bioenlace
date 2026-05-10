@@ -105,7 +105,9 @@ class InternacionPracticaController extends Controller
                 $model->created_at = date('Y-m-d H:i:s');
                 $model->create_user = Yii::$app->user->id;
                 $model->id_internacion = $id_internacion;
-                $model->id_rrhh_solicita = Yii::$app->request->post("id_rrhh_solicita");                
+                $rawSol = Yii::$app->request->post('id_profesional_efector_servicio_solicita');
+                $model->id_profesional_efector_servicio_solicita = $rawSol !== null && $rawSol !== ''
+                    ? (int) $rawSol : null;
                 if (! ($flag = $model->save())) {
                     $transaction->rollBack();
                     break;

@@ -223,14 +223,14 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
         $textoProcesado = $texto;
         
         // Obtener todas las abreviaturas activas con información de médicos
-        // La tabla de relación se llama 'abreviaturas_rrhh', no 'abreviaturas_medicos'
+        // Tabla puente profesional–abreviatura
         $query = self::find()
             ->select([
                 'abreviaturas_medicas.*',
                 'GROUP_CONCAT(am.id_profesional_efector_servicio) as medicos_ids',
                 'MAX(am.frecuencia_uso) as max_frecuencia_medico'
             ])
-            ->leftJoin('abreviaturas_rrhh am', 'abreviaturas_medicas.id = am.abreviatura_id AND am.activo = 1')
+            ->leftJoin('abreviaturas_profesional_efector_servicio am', 'abreviaturas_medicas.id = am.abreviatura_id AND am.activo = 1')
             ->where(['abreviaturas_medicas.activo' => 1])
             ->groupBy('abreviaturas_medicas.id');
         

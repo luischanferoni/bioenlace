@@ -34,8 +34,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     [   //muestra el nombre del responsable seleccionado en el listado
                         'label' => 'Quien Suministró',
                         'attribute' => 'id_rrhh',
-                        'value' => $model->rrhhSuministra
-                            ? $model->rrhhSuministra->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                        'value' => $model->personaSuministra
+                            ? $model->personaSuministra->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
                             : '',
                     ],
                     'observacion',

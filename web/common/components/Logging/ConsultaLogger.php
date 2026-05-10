@@ -222,7 +222,9 @@ class ConsultaLogger
     private function escribirEncabezado($textoConsulta)
     {
         $timestamp = date('Y-m-d H:i:s');
-        $medicoId = $this->contexto['idRrHhServicio'] ?? 'N/A';
+        $medicoId = $this->contexto['id_profesional_efector_servicio']
+            ?? $this->contexto['idRrHhServicio']
+            ?? 'N/A';
         $servicio = $this->contexto['servicio'] ?? 'N/A';
 
         $encabezado = str_repeat('=', 80) . "\n";

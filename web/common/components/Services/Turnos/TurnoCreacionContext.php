@@ -16,22 +16,22 @@ final class TurnoCreacionContext
     /** @var int|null efector operativo en sesión (staff), opcional para paciente móvil */
     public $idEfectorSesion;
 
-    /** @var int|null RRHH en sesión */
-    public $idRrhhSesion;
+    /** @var int|null PES del profesional en sesión */
+    public $idProfesionalEfectorServicioSesion;
 
     /**
      * @param int|string|null $idPersonaAutenticada
      * @param int|string|null $idEfectorSesion
-     * @param int|string|null $idRrhhSesion
+     * @param int|string|null $idProfesionalEfectorServicioSesion
      */
-    public function __construct($idPersonaAutenticada, $idEfectorSesion, $idRrhhSesion)
+    public function __construct($idPersonaAutenticada, $idEfectorSesion, $idProfesionalEfectorServicioSesion)
     {
         $this->idPersonaAutenticada = $idPersonaAutenticada !== null && $idPersonaAutenticada !== ''
             ? (int) $idPersonaAutenticada : null;
         $this->idEfectorSesion = $idEfectorSesion !== null && $idEfectorSesion !== ''
             ? (int) $idEfectorSesion : null;
-        $this->idRrhhSesion = $idRrhhSesion !== null && $idRrhhSesion !== ''
-            ? (int) $idRrhhSesion : null;
+        $this->idProfesionalEfectorServicioSesion = $idProfesionalEfectorServicioSesion !== null && $idProfesionalEfectorServicioSesion !== ''
+            ? (int) $idProfesionalEfectorServicioSesion : null;
     }
 
     /**

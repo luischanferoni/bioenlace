@@ -23,9 +23,9 @@ use yii\widgets\ActiveForm;
 
     <?= $form->field($model, 'informe') ?>
 
-    <?= $form->field($model, 'id_rrhh_solicita') ?>
+    <?= $form->field($model, 'id_profesional_efector_servicio_solicita') ?>
 
-    <?php // echo $form->field($model, 'id_rrhh_realiza') ?>
+    <?php // echo $form->field($model, 'id_profesional_efector_servicio_realiza') ?>
 
     <?php // echo $form->field($model, 'id_internacion') ?>
 

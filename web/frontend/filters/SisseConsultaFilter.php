@@ -101,7 +101,7 @@ class SisseConsultaFilter extends ActionFilter
 
         $this->modelConsulta = new Consulta();
 
-        // Si no recibimos el servicio del rrhh, tenemos que deducirlo
+        // Si no recibimos el servicio del contexto profesional, hay que deducirlo
         if ($idServicioRrhh == '' && $idServicioRrhh !== null) {
             $idEfector = (int) (Yii::$app->user->getIdEfector() ?? 0);
             $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);

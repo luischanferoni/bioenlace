@@ -17,7 +17,7 @@ class SegNivelInternacionPracticaBusqueda extends SegNivelInternacionPractica
     public function rules()
     {
         return [
-            [['id', 'id_rrhh_solicita', 'id_rrhh_realiza', 'id_internacion'], 'integer'],
+            [['id', 'id_profesional_efector_servicio_solicita', 'id_profesional_efector_servicio_realiza', 'id_internacion'], 'integer'],
             [['conceptId', 'resultado', 'informe'], 'safe'],
         ];
     }
@@ -59,8 +59,8 @@ class SegNivelInternacionPracticaBusqueda extends SegNivelInternacionPractica
         // grid filtering conditions
         $query->andFilterWhere([
             'id' => $this->id,
-            'id_rrhh_solicita' => $this->id_rrhh_solicita,
-            'id_rrhh_realiza' => $this->id_rrhh_realiza,
+            'id_profesional_efector_servicio_solicita' => $this->id_profesional_efector_servicio_solicita,
+            'id_profesional_efector_servicio_realiza' => $this->id_profesional_efector_servicio_realiza,
             'id_internacion' => $this->id_internacion,
         ]);
 

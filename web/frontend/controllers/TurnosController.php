@@ -471,7 +471,7 @@ class TurnosController extends Controller
     /**
      * @no_intent_catalog
     */
-    public function actionRrhh($id_servicio)
+    public function actionOpcionesProfesionalesPorServicio($id_servicio)
     {
         $idEfector = (int) Yii::$app->user->getIdEfector();
         $idServicio = (int) $id_servicio;

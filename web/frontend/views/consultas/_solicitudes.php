@@ -125,7 +125,7 @@ use common\models\ConsultaPracticas;
                                 /*
                                     $data = [];
                                     if (!is_null($model_c_p_s->dirigido_a) && $model_c_p_s->dirigido_a != "") {
-                                        $data = [$model_c_p_s->dirigido_a => $model_c_p_s->rrhh->apellido . ', ' . $model_c_p_s->rrhh->nombre];
+                                        $data = [$model_c_p_s->dirigido_a => $model_c_p_s->profesionalPersona->apellido . ', ' . $model_c_p_s->profesionalPersona->nombre];
                                     }
 
                                     echo $form->field($model_c_p_s, 'dirigido_a')->widget(Select2::classname(), [
@@ -137,7 +137,7 @@ use common\models\ConsultaPracticas;
                                             'allowClear' => true,
                                             'minimumInputLength' => 3,
                                             'ajax' => [
-                                                'url' => Url::to(['rrhh/profesionales-autocomplete']),
+                                                'url' => Url::to(['asignacion-pes/profesionales-autocomplete']),
                                                 'dataType' => 'json',
                                                 'data' => new JsExpression('function(params) { return {q:params.term}; }'),
                                             ],

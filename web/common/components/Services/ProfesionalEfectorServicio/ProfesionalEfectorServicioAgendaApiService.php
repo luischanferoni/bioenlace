@@ -182,6 +182,11 @@ class ProfesionalEfectorServicioAgendaApiService
         $pes = $model->asignacion;
         if ($pes !== null) {
             $row['id_profesional_efector_servicio'] = (int) $pes->id;
+            $svc = $pes->servicio;
+            $row['profesionalEfectorServicio'] = [
+                'id' => (int) $pes->id,
+                'servicio' => $svc !== null ? ['nombre' => (string) $svc->nombre] : null,
+            ];
         }
 
         return $row;

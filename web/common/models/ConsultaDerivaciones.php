@@ -15,7 +15,7 @@ use Yii;
  * @property string $fecha
  *
  * @property Personas $idPersona
- * @property-read Persona|null $rrhh Profesional vía PES.
+ * @property-read Persona|null $profesionalPersona Profesional vía PES.
  */
 class ConsultaDerivaciones extends \yii\db\ActiveRecord
 {
@@ -193,7 +193,7 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrhh()
+    public function getProfesionalPersona()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);

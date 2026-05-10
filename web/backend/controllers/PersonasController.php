@@ -768,7 +768,7 @@ public function actionListaCandidatos(){
     }
 
     /**
-     * Listado de personas con asignación PES en el efector de sesión (vista `personas_rrhh`).
+     * Listado de personas con asignación PES en el efector de sesión (vista `personas_pes_efector`).
      */
     public function actionIndexPersonasPes()
     {

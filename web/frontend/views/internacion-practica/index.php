@@ -30,8 +30,8 @@ $this->params['breadcrumbs'][] = $this->title;
             'conceptId',
             'resultado',
             'informe:ntext',
-            'id_rrhh_solicita',
-            //'id_rrhh_realiza',
+            'id_profesional_efector_servicio_solicita',
+            //'id_profesional_efector_servicio_realiza',
             //'id_internacion',
 
             ['class' => 'yii\grid\ActionColumn'],

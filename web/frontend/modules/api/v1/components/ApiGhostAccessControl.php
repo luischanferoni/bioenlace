@@ -19,7 +19,7 @@ class ApiGhostAccessControl extends ActionFilter
      * Rutas necesarias para el bootstrap de sesión operativa.
      *
      * Estos endpoints deben ser accesibles para cualquier usuario AUTENTICADO, incluso antes de que exista
-     * contexto RRHH/efector en sesión (roles por efector). No se chequea RBAC aquí: solo autenticación.
+     * contexto operativo (efector/PES) en sesión (roles por efector). No se chequea RBAC aquí: solo autenticación.
      *
      * Importante: Mantener la lista chica y específica.
      *

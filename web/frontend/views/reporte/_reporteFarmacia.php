@@ -97,7 +97,7 @@ use common\models\Servicio;
         $diagnosticosConsulta = $modelConsulta->diagnosticos;
         $practicasConsulta = $modelConsulta->practicasPostDiagnostico;
         $domicilio = ($modelPersona->getDomicilioActivo()) ? $modelPersona->getDomicilioActivo()->getDomicilioCompleto() : "No especificado.";
-        $pProf = $modelConsulta->profesionalRrhh;
+        $pProf = $modelConsulta->profesionalPes;
         $nombreMedico = $pProf !== null ? $pProf->getNombreCompleto('') : '';
         $coberturas_api = [];
         $cobertura_medica_key = sprintf("cobertura_medica_%s", $persona->id_persona);

@@ -10,14 +10,14 @@ use Yii;
  * @property int $id
  * @property int $id_internacion
  * @property int $id_internacion_medicamento
- * @property int $id_rrhh
+ * @property int $id_rrhh Id persona legacy en suministro de internación (si persiste en BD).
  * @property string $fecha
  * @property string $hora
  * @property string|null $observacion
  *
  * @property SegNivelInternacion $internacion
  * @property SegNivelInternacionMedicamento $medicamento
- * @property Persona|null $rrhhSuministra Persona que suministra (`id_rrhh` → id_persona si sin tabla `rr_hh`).
+ * @property Persona|null $personaSuministra Persona que suministra (`id_rrhh` como id_persona legacy).
  */
 class SegNivelInternacionSuministroMedicamento extends \yii\db\ActiveRecord
 {
@@ -81,9 +81,9 @@ class SegNivelInternacionSuministroMedicamento extends \yii\db\ActiveRecord
     }
 
     /**
-     * Persona que suministra (FK `id_rrhh` como id_persona cuando no existe tabla `rr_hh`).
+     * Persona que suministra (`id_rrhh` almacena id_persona en esta tabla).
      */
-    public function getRrhhSuministra()
+    public function getPersonaSuministra()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_rrhh']);
     }

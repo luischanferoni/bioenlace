@@ -82,7 +82,7 @@ class PersonaBusqueda extends persona
     }
 
     /**
-     * Listado desde la vista `personas_rrhh` (personas con asignación PES en el efector de sesión).
+     * Listado desde la vista `personas_pes_efector` (personas con asignación PES en el efector de sesión).
      *
      * @param array $params
      *
@@ -90,8 +90,8 @@ class PersonaBusqueda extends persona
      */
     public function searchPersonasAsignacionPes($params) {
 
-        //consulta en la vista personas_rrhh
-        $query = Persona::findActive()->select('*')->from('personas_rrhh')
+        //consulta en la vista personas_pes_efector
+        $query = Persona::findActive()->select('*')->from('personas_pes_efector')
             ->where(['=','id_efector',Yii::$app->user->getIdEfector()])
             ->andWhere(['=','rrhh_eliminado', 0])
             ->asArray();

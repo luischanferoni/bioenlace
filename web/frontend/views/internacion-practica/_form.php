@@ -45,7 +45,7 @@ use yii\helpers\Url;
 
                     <div class="row " style="margin-bottom: 10px;">
                         <div class="col-md-3">
-                            <label for="id_rrhh_solicita">Profesional</label>
+                            <label for="id_profesional_efector_servicio_solicita">Profesional</label>
                         </div>
 
                         <div class="col-md-9">
@@ -53,7 +53,7 @@ use yii\helpers\Url;
                             $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
                             echo Select2::widget([
-                                'name' => "id_rrhh_solicita",
+                                'name' => "id_profesional_efector_servicio_solicita",
                                 'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
                                 'theme' => 'bootstrap',
                                 'language' => 'en',

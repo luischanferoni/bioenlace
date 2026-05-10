@@ -24,7 +24,7 @@ class AbreviaturasMedicos extends ActiveRecord
      */
     public static function tableName()
     {
-        return 'abreviaturas_rrhh';
+        return 'abreviaturas_profesional_efector_servicio';
     }
 
     /**

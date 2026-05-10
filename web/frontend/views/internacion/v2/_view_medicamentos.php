@@ -53,7 +53,7 @@ use common\models\Persona;
                                     </td>
 
                                     <td>
-                                        <?= $valueMedicamento->consulta->profesionalRrhh->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) ?>
+                                        <?= $valueMedicamento->consulta->profesionalPes->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) ?>
                                     </td>
             
                                 <?php 

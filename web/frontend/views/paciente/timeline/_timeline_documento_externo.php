@@ -19,7 +19,7 @@ use common\models\Consulta;
         <p class="pe-3">Título: <?=$historia['resumen']?></p>
     </div>
     <div class="d-flex align-items-center">
-        <p class="pe-3 border-end">Subido por: <?=$historia['rr_hh']?></p>
+        <p class="pe-3 border-end">Subido por: <?= htmlspecialchars((string) ($historia['nombre_profesional'] ?? $historia['rr_hh'] ?? '')) ?></p>
         <p class="ps-3 pe-3 border-end">Servicio: <?=$historia['servicio']?></p>
     </div>
 </div>

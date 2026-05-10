@@ -16,7 +16,7 @@ use common\models\SegNivelInternacion;
 <div class="d-inline-block w-100">
     <p><?= $historia['resumen'] ?></p>
     <div class="d-flex align-items-center">
-        <p class="pe-3 border-end">Profesional: <?= $historia['rr_hh'] ?></p>
+        <p class="pe-3 border-end">Profesional: <?= htmlspecialchars((string) ($historia['nombre_profesional'] ?? $historia['rr_hh'] ?? '')) ?></p>
         <p class="ps-3 pe-3">Efector Origen: <?= $historia['efector'] ?></p>
     </div>
 </div>

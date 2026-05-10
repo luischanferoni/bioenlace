@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'id_rrhh_solicita',
             [   //muestra el nombre del responsable seleccionado en el listado
                 'label'=> 'Profesional solicita',
-                'attribute'=>'id_rrhh_solicita',
+                'attribute'=>'id_profesional_efector_servicio_solicita',
                 'value'=>$model->profesionalEfectorServicioSolicita && $model->profesionalEfectorServicioSolicita->persona
                     ? $model->profesionalEfectorServicioSolicita->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
                     : '',
@@ -50,7 +50,7 @@ $this->params['breadcrumbs'][] = $this->title;
             //'id_rrhh_realiza',
             [   //muestra el nombre del responsable seleccionado en el listado
                 'label'=> 'Profesional realiza',
-                'attribute'=>'id_rrhh_realiza',
+                'attribute'=>'id_profesional_efector_servicio_realiza',
                 'value'=>$model->profesionalEfectorServicioRealiza && $model->profesionalEfectorServicioRealiza->persona
                     ? $model->profesionalEfectorServicioRealiza->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
                     : '',

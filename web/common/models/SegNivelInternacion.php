@@ -19,7 +19,7 @@ use common\models\DiagnosticoConsultaRepository as DCRepo;
  * @property int|null $id_tipo_alta 
  * @property int|null $id_cama
  * @property int|null $id_persona
- * @property int $id_rrhh 
+ * @property int|null $id_profesional_efector_servicio
  * @property string $created_at 
  * @property int $create_user 
  * @property string|null $updated_at 
@@ -91,14 +91,14 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             [
                 [['fecha_inicio','hora_inicio', 'fecha_fin', 'hora_fin'], 'safe'],
                 [['observaciones_alta', 'condiciones_derivacion', 'situacion_al_ingresar', 'ingresa_en', 'ingresa_con', 'datos_contacto_nombre', 'datos_contacto_tel'], 'string'],
-                [['id_tipo_alta', 'id_efector_derivacion', 'id_cama', 'id_persona', 'id_rrhh', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'obra_social'], 'integer'],
+                [['id_tipo_alta', 'id_efector_derivacion', 'id_cama', 'id_persona', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'obra_social'], 'integer'],
                 [['id_cama'], 'exist', 'skipOnError' => true, 'targetClass' => InfraestructuraCama::className(), 'targetAttribute' => ['id_cama' => 'id']],
                 [['id_tipo_alta'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacionTipoAlta::className(), 'targetAttribute' => ['id_tipo_alta' => 'id']],
                 [['id_efector_derivacion'], 'exist', 'skipOnError' => true, 'targetClass' => Efector::className(), 'targetAttribute' => ['id_efector_derivacion' => 'id_efector']],
                 [['id_tipo_ingreso'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacionTipoIngreso::className(), 'targetAttribute' => ['id_tipo_ingreso' => 'id']],
                 
                 ['fecha_inicio', 'date', 'max' => time(), 'tooBig' => 'Fecha futura no esta permitida', 'on' => self::INGRESO_PACIENTE],
-                [['fecha_inicio', 'hora_inicio', 'id_rrhh', 'id_tipo_ingreso'], 'required', 'on' => self::INGRESO_PACIENTE],
+                [['fecha_inicio', 'hora_inicio', 'id_profesional_efector_servicio', 'id_tipo_ingreso'], 'required', 'on' => self::INGRESO_PACIENTE],
                 [['fecha_fin', 'hora_fin', 'id_tipo_alta'], 'required', 'on' => self::EGRESO_PACIENTE],
                 [
                     ['id_efector_origen'],
@@ -174,7 +174,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             'fecha_fin' => 'Fecha Alta',
             'hora_fin' => 'Hora Alta',
             'id_cama' => 'Nro Cama',
-            'id_rrhh' => 'Profesional que solicita Internación',
+            'id_profesional_efector_servicio' => 'Profesional que solicita Internación',
             'id_persona' => 'Paciente',
             'observaciones_alta' => 'Observaciones',
             'condiciones_derivacion' => 'Condiciones de Derivación',
@@ -347,7 +347,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
     }
 
     /**
-     * Efector para acotar resolución PES desde `id_rrhh` (cama → piso, o `id_efector_origen`).
+     * Efector para acotar resolución PES (cama → piso, o `id_efector_origen`).
      */
     public function resolveIdEfectorContextForPes(): ?int
     {
@@ -368,23 +368,6 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             ->scalar();
 
         return $id !== false && $id !== null ? (int) $id : null;
-    }
-
-    public function afterFind()
-    {
-        parent::afterFind();
-        $idCol = (int) ($this->id_profesional_efector_servicio ?? 0);
-        $idLegacy = (int) ($this->id_rrhh ?? 0);
-        if ($idCol > 0 || $idLegacy <= 0 || $this->isRelationPopulated('profesionalEfectorServicio')) {
-            return;
-        }
-        $pes = ProfesionalEfectorServicio::resolvePesModelFromInternacionLegacyField(
-            $idLegacy,
-            $this->resolveIdEfectorContextForPes()
-        );
-        if ($pes !== null) {
-            $this->populateRelation('profesionalEfectorServicio', $pes);
-        }
     }
 
     /**
@@ -491,12 +474,6 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             $fechaFin = date_create_from_format('d/m/Y', $this->fecha_fin);
             $fechaFinFormateada = date_format($fechaFin, 'Y-m-d');
             $this->fecha_fin = $fechaFinFormateada;
-        }
-
-        if ($insert || $this->isAttributeChanged('id_rrhh', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findFirstPesIdByStaffOrPersona(
-                (int) $this->id_rrhh
-            );
         }
 
         return true;

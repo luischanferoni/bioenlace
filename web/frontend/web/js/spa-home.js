@@ -568,125 +568,13 @@
     }
 
     /**
-     * Manejar envío de consulta
+     * Procesar payload JSON del asistente (POST /api/v1/asistente/enviar).
+     * También usado al ejecutar una acción tipo intent desde una card.
      */
-    function handleSendQuery(contentOverride) {
-        const raw = (typeof contentOverride === 'string')
-            ? contentOverride
-            : (queryInput ? queryInput.value : '');
-        const query = String(raw || '').trim();
-        
-        // En flows, se permite avanzar con `content=''` (solo snapshot draft/intento).
-        if (!query && !currentIntentId) {
-            showError('Por favor, ingresa una consulta');
-            return;
-        }
-
-        // Deshabilitar botón y mostrar loading
-        setLoadingState(true);
-        if (chatEmptyHint) {
-            chatEmptyHint.classList.add('d-none');
-        }
-
-        // Limpiar el textarea inmediatamente (UX tipo chat) solo si el input existe
-        // y el envío vino del textarea (no por override programático).
-        if (typeof contentOverride !== 'string') {
-            try {
-                queryInput.value = '';
-                handleInput();
-            } catch (e) {
-                // ignore
-            }
-        }
-
-        // En modo chat, agregar burbuja de usuario antes de enviar (si hay texto).
-        if (chatMessagesDiv && query !== '' && typeof contentOverride !== 'string') {
-            appendChatBubble('user', '<div>' + escapeHtml(query) + '</div>');
-        }
-
-        // Usar endpoint de la API. Importante: en entornos donde el frontend vive bajo /api,
-        // window.spaConfig.baseUrl puede ser https://host/api y concatenar "/api/..." duplica.
-        const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
-        const body = {};
-
-        // Texto libre = nueva consulta al IntentEngine; se conserva el flow solo para “cerca…” (misma heurística que SubIntentEngine).
-        if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query)) {
-            currentIntentId = null;
-            currentSubintentId = null;
-            draft = {};
-            writeFlowState();
-        }
-
-        // Modo flow: si hay intent activo, enviar snapshot.
-        if (currentIntentId) {
-            body.intent_id = currentIntentId;
-            if (currentSubintentId) {
-                body.subintent_id = currentSubintentId;
-            }
-            body.draft = draft || {};
-            body.content = query;
-        } else {
-            body.content = query;
-        }
-
-        fetch(asistenteUrl, {
-            method: 'POST',
-            headers: window.BioenlaceApiClient.mergeHeaders({
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }),
-            credentials: 'same-origin', // Incluir cookies de sesión
-            body: JSON.stringify(body)
-        })
-        .then(response => {
-            // Si la respuesta no es exitosa, manejar el error
-            if (!response.ok) {
-                return response.text().then(text => {
-                    // Cuerpo JSON típico API: { "success": false, "message": "...", "errors": ... }
-                    let msgFromBody = '';
-                    if (text && String(text).trim() !== '') {
-                        try {
-                            const j = JSON.parse(text);
-                            if (j && typeof j === 'object') {
-                                if (j.message != null && String(j.message).trim() !== '') {
-                                    msgFromBody = String(j.message).trim();
-                                } else if (j.error != null && String(j.error).trim() !== '') {
-                                    msgFromBody = String(j.error).trim();
-                                }
-                            }
-                        } catch (parseErr) {
-                            // No era JSON; seguimos con mensajes por código HTTP.
-                        }
-                    }
-                    if (msgFromBody) {
-                        throw new Error(msgFromBody);
-                    }
-                    if (response.status === 400) {
-                        throw new Error('Error de validación. Por favor, verifica tu consulta e intenta nuevamente.');
-                    }
-                    if (response.status === 401) {
-                        throw new Error('Debes estar autenticado para usar esta funcionalidad.');
-                    }
-                    const st = response.statusText ? String(response.statusText).trim() : '';
-                    throw new Error(st ? ('Error ' + response.status + ': ' + st) : ('Error ' + response.status));
-                });
-            }
-            
-            // Verificar que la respuesta sea JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                return response.text().then(text => {
-                    console.warn('El servidor devolvió HTML en lugar de JSON:', text.substring(0, 200));
-                    throw new Error('Respuesta no válida del servidor');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
+    function handleAssistantResponse(data) {
             // Compat: antes venía { success, message, data }, ahora el endpoint devuelve el payload directo.
             let result = data;
-            if (data.data && typeof data.data === 'object' && (data.data.success !== undefined || data.data.explanation !== undefined || data.data.action !== undefined)) {
+            if (data && data.data && typeof data.data === 'object' && (data.data.success !== undefined || data.data.explanation !== undefined || data.data.action !== undefined)) {
                 result = data.data;
             }
 
@@ -772,6 +660,10 @@
                 const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
 
                 const flowSectionInner = appendAssistantFlowSection(primaryText || 'Ok.');
+                if (!flowSectionInner) {
+                    showError('No se pudo mostrar el paso del flujo en el chat.');
+                    return;
+                }
 
                 const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
@@ -1038,7 +930,125 @@
                 // Error sin explicación
                 showError(result.error || result.message || 'Error al procesar la consulta');
             }
+    }
+
+    /**
+     * Manejar envío de consulta
+     */
+    function handleSendQuery(contentOverride) {
+        const raw = (typeof contentOverride === 'string')
+            ? contentOverride
+            : (queryInput ? queryInput.value : '');
+        const query = String(raw || '').trim();
+        
+        // En flows, se permite avanzar con `content=''` (solo snapshot draft/intento).
+        if (!query && !currentIntentId) {
+            showError('Por favor, ingresa una consulta');
+            return;
+        }
+
+        // Deshabilitar botón y mostrar loading
+        setLoadingState(true);
+        if (chatEmptyHint) {
+            chatEmptyHint.classList.add('d-none');
+        }
+
+        // Limpiar el textarea inmediatamente (UX tipo chat) solo si el input existe
+        // y el envío vino del textarea (no por override programático).
+        if (typeof contentOverride !== 'string') {
+            try {
+                queryInput.value = '';
+                handleInput();
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        // En modo chat, agregar burbuja de usuario antes de enviar (si hay texto).
+        if (chatMessagesDiv && query !== '' && typeof contentOverride !== 'string') {
+            appendChatBubble('user', '<div>' + escapeHtml(query) + '</div>');
+        }
+
+        // Usar endpoint de la API. Importante: en entornos donde el frontend vive bajo /api,
+        // window.spaConfig.baseUrl puede ser https://host/api y concatenar "/api/..." duplica.
+        const asistenteUrl = window.location.origin + '/api/v1/asistente/enviar';
+        const body = {};
+
+        // Texto libre = nueva consulta al IntentEngine; se conserva el flow solo para “cerca…” (misma heurística que SubIntentEngine).
+        if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query)) {
+            currentIntentId = null;
+            currentSubintentId = null;
+            draft = {};
+            writeFlowState();
+        }
+
+        // Modo flow: si hay intent activo, enviar snapshot.
+        if (currentIntentId) {
+            body.intent_id = currentIntentId;
+            if (currentSubintentId) {
+                body.subintent_id = currentSubintentId;
+            }
+            body.draft = draft || {};
+            body.content = query;
+        } else {
+            body.content = query;
+        }
+
+        fetch(asistenteUrl, {
+            method: 'POST',
+            headers: window.BioenlaceApiClient.mergeHeaders({
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }),
+            credentials: 'same-origin', // Incluir cookies de sesión
+            body: JSON.stringify(body)
         })
+        .then(response => {
+            // Si la respuesta no es exitosa, manejar el error
+            if (!response.ok) {
+                return response.text().then(text => {
+                    // Cuerpo JSON típico API: { "success": false, "message": "...", "errors": ... }
+                    let msgFromBody = '';
+                    if (text && String(text).trim() !== '') {
+                        try {
+                            const j = JSON.parse(text);
+                            if (j && typeof j === 'object') {
+                                if (j.message != null && String(j.message).trim() !== '') {
+                                    msgFromBody = String(j.message).trim();
+                                } else if (j.error != null && String(j.error).trim() !== '') {
+                                    msgFromBody = String(j.error).trim();
+                                }
+                            }
+                        } catch (parseErr) {
+                            // No era JSON; seguimos con mensajes por código HTTP.
+                        }
+                    }
+                    if (msgFromBody) {
+                        throw new Error(msgFromBody);
+                    }
+                    if (response.status === 400) {
+                        throw new Error('Error de validación. Por favor, verifica tu consulta e intenta nuevamente.');
+                    }
+                    if (response.status === 401) {
+                        throw new Error('Debes estar autenticado para usar esta funcionalidad.');
+                    }
+                    const st = response.statusText ? String(response.statusText).trim() : '';
+                    throw new Error(st ? ('Error ' + response.status + ': ' + st) : ('Error ' + response.status));
+                });
+            }
+            
+            // Verificar que la respuesta sea JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                return response.text().then(text => {
+                    console.warn('El servidor devolvió HTML en lugar de JSON:', text.substring(0, 200));
+                    throw new Error('Respuesta no válida del servidor');
+                });
+            }
+            return response.json();
+        })
+        .then(handleAssistantResponse)
         .catch(error => {
             console.error('Error:', error);
             showError(error.message || 'Error de conexión. Por favor, intente nuevamente.');
@@ -2377,6 +2387,9 @@
         if (!card) return;
 
         const expandContent = card.querySelector('.spa-card-expand-content');
+        if (!expandContent) {
+            return;
+        }
         const isExpanded = expandedCards.has(cardId);
 
         if (isExpanded) {

@@ -72,6 +72,13 @@
         return tab && Array.isArray(tab.requires_client) && tab.requires_client.indexOf('geolocation') !== -1;
     }
 
+    /**
+     * Solo si la mini-UI respondió bien mostramos la tira de pasos (evita “siguientes pasos” tras HTTP≠200, JSON inválido o success:false).
+     */
+    function flowUiDefinitionReadyForProgress(json) {
+        return !!(json && json.kind === 'ui_definition' && json.success !== false);
+    }
+
     function fetchFlowUiDefinition(fullUrl, mountEl) {
         mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
         fetch(fullUrl, {
@@ -101,28 +108,27 @@
                 mountEl.innerHTML = '';
                 if (json && json.kind === 'ui_definition') {
                     renderDynamicUi(json, mountEl, { url: fullUrl });
+                    if (flowUiDefinitionReadyForProgress(json)) {
+                        try {
+                            if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                                attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                            }
+                        } catch (e) {
+                            // ignore
+                        }
+                    } else {
+                        removeFlowPlanStrip();
+                    }
                 } else {
                     mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
-                }
-                try {
-                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                    }
-                } catch (e) {
-                    // ignore
+                    removeFlowPlanStrip();
                 }
             })
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
                 const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
                 mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
-                try {
-                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                    }
-                } catch (e) {
-                    // ignore
-                }
+                removeFlowPlanStrip();
             })
             .finally(function () {
                 setTimeout(scrollChatToBottom, 10);
@@ -843,30 +849,28 @@
                     flowUiMount.innerHTML = '';
                     if (json && json.kind === 'ui_definition') {
                         renderDynamicUi(json, flowUiMount, { url: fullUrl });
+                        if (flowUiDefinitionReadyForProgress(json)) {
+                            try {
+                                const mountAfter = mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount;
+                                if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                                    attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                                }
+                            } catch (e) {
+                                // ignore
+                            }
+                        } else {
+                            removeFlowPlanStrip();
+                        }
                     } else {
                         flowUiMount.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
-                    }
-                    try {
-                        const mountAfter = mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount;
-                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                        }
-                    } catch (e) {
-                        // ignore
+                        removeFlowPlanStrip();
                     }
                 })
                 .catch(err => {
                     console.error('Error cargando UI JSON (flow):', err);
                     const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
                     flowUiMount.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
-                    try {
-                        const mountAfter = mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount;
-                        if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                            attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                        }
-                    } catch (e) {
-                        // ignore
-                    }
+                    removeFlowPlanStrip();
                 })
                 .finally(() => {
                     setLoadingState(false);

@@ -66,6 +66,8 @@ subintents:
     provides:
       - draft.id_persona
     next: select_servicio
+    # SPA (`spa-home.js`): si la URL de la mini-UI devuelve HTTP≠200, JSON sin `kind: ui_definition` o `success: false`,
+    # no se muestra la tira de pasos como si el flujo hubiera avanzado (no “saltamos” visualmente a los siguientes pasos).
     open_ui:
       action_id: persona.buscar-para-asistente
       pass_content_as_query: q
@@ -85,6 +87,7 @@ subintents:
           default: true
         next: asignacion_sin_agenda_listo
     open_ui:
+      # Misma regla SPA que en `select_persona`: error de carga de UI → no tira de plan / pasos siguientes.
       action_id: recurso-humano.listar-servicios-habilitados-efector
       pass_content_as_query: q
 
@@ -95,6 +98,7 @@ subintents:
       - draft.id_servicio
     next: ""
     open_ui:
+      # Misma regla SPA al abrir la configuración de agenda.
       action_id: profesional-agenda.configurar-agenda
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

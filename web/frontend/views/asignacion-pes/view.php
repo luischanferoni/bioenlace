@@ -10,7 +10,7 @@ $this->title = 'PES #' . $model->id . ': ' . ($persona ? $persona->apellido . ',
 $this->params['breadcrumbs'][] = ['label' => 'Asignaciones', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="rrhh-view">
+<div class="asignacion-pes-view">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

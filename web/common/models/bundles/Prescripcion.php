@@ -13,19 +13,4 @@ class Prescripcion extends \yii\db\ActiveRecord
     public $timestamp;
     public $entry = [];
 
-    /*
-    // Al reactivar rules(): alinear con PES — p. ej. [['id_profesional_efector_servicio'], 'integer'] y no exigir solo id histórico si el contrato del bundle opera por PES.
-    public function rules()
-    {
-        return [
-            [['id_rrhh_servicio_asignado'], 'required'],            
-            [['id_rrhh_servicio_asignado', 'id_tipo_dia', 'id_efector', 'cupo_pacientes'], 'integer'],
-            [['hora_inicio', 'hora_fin', 'fecha_inicio', 'fecha_fin'], 'safe'],
-            [['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo', 
-            'lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'string'],
-            [['fecha_inicio', 'fecha_fin'], 'date', 'format' => 'php:Y-m-d'],
-            [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'validarAlmenosUno', 'skipOnEmpty' => false],
-        ];
-    }
-    */
 }

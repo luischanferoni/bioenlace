@@ -270,7 +270,13 @@ class Persona extends \yii\db\ActiveRecord
         return $this->hasMany(Turno::className(), ['id_persona' => 'id_persona'])->orderBy(['fecha' => SORT_DESC]);;
     }
 
-    public function getTurnosActivos($idServicio, $idRrhh)
+    /**
+     * Turno pendiente del paciente para el servicio o el vínculo PES indicados.
+     *
+     * @param int|string|null $idServicio {@see Turno::$id_servicio_asignado}
+     * @param int|string|null $idProfesionalEfectorServicio {@see Turno::$id_profesional_efector_servicio}
+     */
+    public function getTurnosActivos($idServicio, $idProfesionalEfectorServicio)
     {
         $query = Turno::find();
         $turnos = $query->andWhere(['id_persona' => $this->id_persona])
@@ -278,7 +284,7 @@ class Persona extends \yii\db\ActiveRecord
             ->andWhere([
                 'or',
                 ['id_servicio_asignado' => $idServicio],
-                ['id_profesional_efector_servicio' => $idRrhh],
+                ['id_profesional_efector_servicio' => $idProfesionalEfectorServicio],
             ])
             ->one();
     }
@@ -869,19 +875,19 @@ class Persona extends \yii\db\ActiveRecord
     }
 
     /**
-     * Turno del día pendiente alineado con servicio en sesión, `id_rr_hh` del turno y/o PES.
+     * Turno del día pendiente alineado con servicio, efector y {@see Turno::$id_profesional_efector_servicio} (PES).
      *
      * @param int|string|null $idServicio
-     * @param int|string|null $idRrhh contexto staff / PK PES en sesión (comparación con `turnos.id_profesional_efector_servicio`)
+     * @param int|string|null $idProfesionalEfectorServicio PES a comparar con el turno (p. ej. el de la sesión).
      * @param int|string|null $idEfector
-     * @param int|string|null $idProfesionalEfectorServicio si null y hay `Yii::$app->user`, se usa `getIdProfesionalEfectorServicio()`
+     * @param int|string|null $idPesOverride si no es null/vacío, sustituye el PES de sesión para la rama `$matchPes`; si es null, se usa `getIdProfesionalEfectorServicio()` (contexto staff autenticado).
      */
-    public function turnoHoy($idServicio, $idRrhh, $idEfector, $idProfesionalEfectorServicio = null)
+    public function turnoHoy($idServicio, $idProfesionalEfectorServicio, $idEfector, $idPesOverride = null)
     {
         $idPes = 0;
-        if ($idProfesionalEfectorServicio !== null && $idProfesionalEfectorServicio !== '') {
-            $idPes = (int) $idProfesionalEfectorServicio;
-        } elseif (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+        if ($idPesOverride !== null && $idPesOverride !== '') {
+            $idPes = (int) $idPesOverride;
+        } else {
             $raw = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPes = $raw !== null && $raw !== '' ? (int) $raw : 0;
         }
@@ -894,11 +900,11 @@ class Persona extends \yii\db\ActiveRecord
                 $matchPes = $idPes > 0
                     && $turno->id_profesional_efector_servicio !== null
                     && (int) $turno->id_profesional_efector_servicio === $idPes;
-                $matchRrhh = $idRrhh !== null && $idRrhh !== ''
+                $matchPesExplicito = $idProfesionalEfectorServicio !== null && $idProfesionalEfectorServicio !== ''
                     && $turno->id_profesional_efector_servicio !== null
-                    && (int) $turno->id_profesional_efector_servicio === (int) $idRrhh;
+                    && (int) $turno->id_profesional_efector_servicio === (int) $idProfesionalEfectorServicio;
 
-                if (($turno->id_servicio_asignado == $idServicio || $matchRrhh || $matchPes)
+                if (($turno->id_servicio_asignado == $idServicio || $matchPesExplicito || $matchPes)
                     && $turno->id_efector == $idEfector
                 ) {
                     return $turno;

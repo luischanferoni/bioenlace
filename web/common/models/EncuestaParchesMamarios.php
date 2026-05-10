@@ -60,7 +60,6 @@ use DateTime;
  *
  * @property Persona|null $persona
  * @property Persona|null $operadorPersona Profesional vía PES o id_operador.
- * @property Persona|null $rrHh Alias de {@see self::getOperadorPersona()}.
  * @property Efector|null $efector
  */
 
@@ -273,7 +272,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
     }
 
     /**
-     * Persona del operador (vía {@see getProfesionalEfectorServicio()} o columna `id_operador` sin tabla `rr_hh`).
+     * Persona del operador (vía {@see getProfesionalEfectorServicio()} o columna `id_operador`).
      */
     public function getOperadorPersona(): ?Persona
     {
@@ -304,14 +303,6 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
     public function getPersona()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
-    }
-
-    /**
-     * Alias histórico (`rrHh`).
-     */
-    public function getRrHh(): ?Persona
-    {
-        return $this->getOperadorPersona();
     }
 
     /**

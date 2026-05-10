@@ -188,7 +188,7 @@ return [
                 'OPTIONS api/<version:\w+>/personas/<id:\d+>/historia-clinica' => '<version>/pacientes/historia-clinica',
 
                 // Config API
-                // (Se eliminan endpoints de listados en ConfigController; ver Efectores/Rrhh/Catálogos/SesiónOperativa)
+                // (Se eliminan endpoints de listados en ConfigController; ver Efectores/PES/Catálogos/SesiónOperativa)
                 
                 // Efectores API - Búsqueda
                 'GET api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',

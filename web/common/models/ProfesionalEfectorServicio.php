@@ -516,7 +516,7 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Autocomplete de personas con al menos una PES activa en el efector (sustituto de búsqueda vía `rrhh_efector`).
+     * Autocomplete de personas con al menos una PES activa en el efector.
      *
      * @return list<array{id:int|string, text:string}>
      */

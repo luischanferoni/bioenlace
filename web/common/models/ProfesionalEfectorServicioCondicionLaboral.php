@@ -89,7 +89,7 @@ class ProfesionalEfectorServicioCondicionLaboral extends ActiveRecord
     }
 
     /**
-     * Última fila activa por PES (mayor id), alineado al comportamiento previo con `rrhh_laboral`.
+     * Última fila activa por PES (mayor id).
      */
     public static function findUltimaActivaPorPes(int $idPes): ?self
     {

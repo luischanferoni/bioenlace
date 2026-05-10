@@ -773,7 +773,7 @@ public function actionListaCandidatos(){
     public function actionIndexPersonasPes()
     {
         $searchModel = new PersonaBusqueda();
-        $dataProvider = $searchModel->searchPersonasAsignacionPes(Yii::$app->request->queryParams);
+        $dataProvider = $searchModel->searchPersonasPorProfesionalEfectorServicioEnEfector(Yii::$app->request->queryParams);
 
         return $this->render('index_personas_pes', [
             'searchModel' => $searchModel,

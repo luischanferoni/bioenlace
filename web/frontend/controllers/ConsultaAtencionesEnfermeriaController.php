@@ -369,32 +369,4 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
         }
     }
 
-  /*  private function crearUrlParaAtencion($paciente)
-    {
-        $idconfiguracion = 0;
-        $paso = 0;               
-        
-        if (Yii::$app->request->get('id_consulta') != "" && Yii::$app->request->get('id_consulta') != null) {
-            $modelConsulta = Consulta::findOne($idConsulta);
-            $idconfiguracion = $modelConsulta->id_configuracion;
-            $paso = $modelConsulta->paso_completado + 1;
-            list($urlAnterior, $urlActual, $urlSiguiente) = ConsultasConfiguracion::getUrlPorIdConfiguracion($idconfiguracion, $paso);
-
-            return [$modelConsulta, $urlAnterior, $urlSiguiente];
-        }
-        
-        $idServicioRrhh = Yii::$app->request->get('id_servicio_rr_hh');
-        if ($idServicioRrhh == "" || $idServicioRrhh == null) {
-            $idServicioRrhh = 0;
-        }
-
-        $encounterClass = Yii::$app->request->get('encounter_class');
-        if ($encounterClass == "" || $encounterClass == null) {        
-            $encounterClass = '';
-        }
-
-        list($urlAnterior, $urlActual, $urlSiguiente, $parametrosExtra) = Consulta::calcularUrl($paciente, $idServicioRrhh, $encounterClass);
-        return [new Consulta(), null, $urlSiguiente];        
-    }*/
-
 }

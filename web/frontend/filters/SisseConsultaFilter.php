@@ -73,7 +73,7 @@ class SisseConsultaFilter extends ActionFilter
     {
         $request = Yii::$app->getRequest();
         $idConsulta = $request->get('id_consulta');
-        $idServicioRrhh = $request->get('id_servicio');
+        $idServicio = $request->get('id_servicio');
         $encounterClass = $request->get('encounter_class');
 
        /* $session = Yii::$app->getSession();
@@ -102,7 +102,7 @@ class SisseConsultaFilter extends ActionFilter
         $this->modelConsulta = new Consulta();
 
         // Si no recibimos el servicio del contexto profesional, hay que deducirlo
-        if ($idServicioRrhh == '' && $idServicioRrhh !== null) {
+        if ($idServicio == '' && $idServicio !== null) {
             $idEfector = (int) (Yii::$app->user->getIdEfector() ?? 0);
             $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
             $servicios = [];
@@ -120,11 +120,11 @@ class SisseConsultaFilter extends ActionFilter
             if ($servicios === []) {
                 throw new ForbiddenHttpException('No se pudo deducir el servicio desde PES (persona y efector en sesión).');
             }
-            $idServicioRrhh = array_keys($servicios)[0];
+            $idServicio = array_keys($servicios)[0];
 
             foreach ($servicios as $key => $servicio) {
                 if ($servicio === 'Medico') {
-                    $idServicioRrhh = $key;
+                    $idServicio = $key;
                     break;
                 }
             }
@@ -135,7 +135,7 @@ class SisseConsultaFilter extends ActionFilter
             $encounterClass = Yii::$app->user->getEncounterClass() ?: Consulta::ENCOUNTER_CLASS_AMB;
         }
 
-        list($urlAnterior, $urlActual, $urlSiguiente) = ConsultasConfiguracion::getUrlPorServicioYEncounterClass($idServicioRrhh, $encounterClass);
+        list($urlAnterior, $urlActual, $urlSiguiente) = ConsultasConfiguracion::getUrlPorServicioYEncounterClass($idServicio, $encounterClass);
 
         $this->urlAnterior = $urlAnterior;
         $this->urlActual = $urlActual;

@@ -24,7 +24,7 @@ if ($idEfectorForm > 0) {
     );
 }
 ?>
-<div class="rrhh-form">
+<div class="asignacion-pes-form">
 
     <?php $form = ActiveForm::begin(); ?>
 

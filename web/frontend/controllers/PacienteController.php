@@ -57,7 +57,7 @@ class PacienteController extends Controller
      * Obtiene el historial de un paciente específico.
      *
      * La vista usa timeline por API (`views/paciente/timeline/timeline.php`). Cualquier rearmado de SQL local
-     * debe filtrar también por {@see \common\models\ProfesionalEfectorServicio} además de `consultas.id_rr_hh`
+     * debe filtrar también por {@see \common\models\ProfesionalEfectorServicio} además de `consultas.id_profesional_efector_servicio`
      * (ver `web/docs/dominio/MIGRACION_PES_ESTADO.md`). Listados ambulatorios: {@see \frontend\modules\api\v1\controllers\PacientesController::turnosAmbulatorioMedico}.
      *
      * @param integer $paciente_id

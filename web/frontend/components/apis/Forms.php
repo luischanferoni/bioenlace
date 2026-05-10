@@ -533,12 +533,12 @@ class Forms extends Component
             }
 
             if ($adminEfector) {
-                $rrhh = Persona::findOne(['id_user' => $instancia["createdBy"]]);
+                $encuestadorPersona = Persona::findOne(['id_user' => $instancia['createdBy']]);
 
-                if ($rrhh) {
-                    $instanciasResult[$key]['encuestador'] = $rrhh->apellido . ', ' . $rrhh->nombre . ' ' . $rrhh->otro_nombre;
+                if ($encuestadorPersona !== null) {
+                    $instanciasResult[$key]['encuestador'] = $encuestadorPersona->apellido . ', ' . $encuestadorPersona->nombre . ' ' . $encuestadorPersona->otro_nombre;
                 } else {
-                    $instanciasResult[$key]['encuestador'] = "--";
+                    $instanciasResult[$key]['encuestador'] = '--';
                 }
             }
 

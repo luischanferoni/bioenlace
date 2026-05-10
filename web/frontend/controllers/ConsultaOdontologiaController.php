@@ -313,7 +313,7 @@ class ConsultaOdontologiaController extends DefaultConsultaController
         foreach ($estados as $estado) {
 
             // recibimos todos los estados del paciente en todas las consultas
-            // se pueden actualizar estados, pero no las realizadas por otros RRHH            
+            // se pueden actualizar estados, pero no las realizadas por otros PES            
             if (isset($estado->id_consulta) && $idConsulta != $estado->id_consulta) {continue;}
             
             // control para que no carguen practicas a denticion temporal para las cuales

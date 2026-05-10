@@ -43,10 +43,10 @@ trait ConsultaTrait {
             ];
         }
         
-        // no recibimos el id_consulta, a deducir de acuerdo al encounter y el servicio
-        $idServicioRrhh = UserRequest::requireUserParam('servicio_actual');
-        if ($idServicioRrhh == "" || $idServicioRrhh == null) {
-            $idServicioRrhh = 0;
+        // no recibimos el id_consulta, a deducir de acuerdo al encounter y el servicio (id_servicio de catálogo)
+        $idServicio = UserRequest::requireUserParam('servicio_actual');
+        if ($idServicio == "" || $idServicio == null) {
+            $idServicio = 0;
         }
 
         $encounterClass = UserRequest::requireUserParam('encounterClass');
@@ -54,7 +54,7 @@ trait ConsultaTrait {
             $encounterClass = '';
         }
 
-        list($idConfiguracion, $urlAnterior, $urlActual, $urlSiguiente, $parametrosExtra) = Consulta::calcularUrl($paciente, $idServicioRrhh, $encounterClass);
+        list($idConfiguracion, $urlAnterior, $urlActual, $urlSiguiente, $parametrosExtra) = Consulta::calcularUrl($paciente, $idServicio, $encounterClass);
         if ($urlSiguiente == null) {
             $urlSiguiente = 'fin';
         }

@@ -245,44 +245,6 @@ class InternacionController extends Controller
         ]);
     }
 
-
-
-    /*
-    private function crearUrlParaAtencion($paciente)
-    {
-        $idconfiguracion = 0;
-        $paso = 0;               
-        
-        if (Yii::$app->request->get('id_consulta') != "" && Yii::$app->request->get('id_consulta') != null) {
-            $modelConsulta = Consulta::findOne($idConsulta);
-            $idconfiguracion = $modelConsulta->id_configuracion;
-            $paso = $modelConsulta->paso_completado + 1;
-            list($urlAnterior, $urlActual, $urlSiguiente) = ConsultasConfiguracion::getUrlPorIdConfiguracion($idconfiguracion, $paso);
-
-            if ($urlActual == null) {
-                Yii::error('Configuracion de consulta no encontrada: id_configuracion('.$id_configuracion.'), id_consulta('.$id_consulta.')');
-                return 'error';
-            }
-            return $urlActual.'?id_consulta='.$modelConsulta->id_consulta;
-        }
-        
-        $idServicioRrhh = Yii::$app->request->get('id_servicio_rr_hh');
-        if ($idServicioRrhh == "" || $idServicioRrhh == null) {
-            $idServicioRrhh = 0;
-        }
-
-        $encounterClass = ConsultasConfiguracion::ENCOUNTER_CLASS_IMP;
-         
-
-        list($idConfiguracion, $urlAnterior, $urlActual, $urlSiguiente, $parametrosExtra) = Consulta::calcularUrl($paciente, $idServicioRrhh, $encounterClass);
-        if ($urlActual == null) {
-            Yii::error('Configuracion de consulta no encontrada: id_servicio('.$idServicioRrhh.'), encounter_class('.$encounterClass.')');
-            return 'error';
-        }
-        
-        return $urlActual == null ? null : $urlActual.$parametrosExtra;
-    }
-*/
     /**
      * Creates a new SegNivelInternacion model.
      * If creation is successful, the browser will be redirected to the 'view' page.

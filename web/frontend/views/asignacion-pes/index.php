@@ -10,7 +10,7 @@ use yii\grid\GridView;
 $this->title = 'Asignaciones profesional por efector y servicio';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="rrhh-index">
+<div class="asignacion-pes-index">
 
     <h1><?= Html::encode($this->title) ?></h1>
 

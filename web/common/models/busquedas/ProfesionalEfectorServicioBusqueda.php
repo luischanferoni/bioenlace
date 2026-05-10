@@ -16,7 +16,7 @@ class ProfesionalEfectorServicioBusqueda extends Model
     const EFECTOR_SEARCH = 'EFECTOR_SEARCH';
 
     public $id_efector;
-    /** @var int|null PK PES (filtro directo en listado RRHH/PES). */
+    /** @var int|null PK PES (filtro directo en listado PES). */
     public $id_profesional_efector_servicio;
     public $id_persona;
     public $nombrePersona;

@@ -8,9 +8,9 @@ use yii\data\ActiveDataProvider;
 use common\models\Persona;
 
 /**
- * PersonaBusqueda represents the model behind the search form about `common\models\persona`.
+ * PersonaBusqueda represents the model behind the search form about `common\models\Persona`.
  */
-class PersonaBusqueda extends persona
+class PersonaBusqueda extends Persona
 {
     /**
      * @inheritdoc
@@ -41,7 +41,7 @@ class PersonaBusqueda extends persona
      */
     public function search($params)
     {
-        $query = persona::findActive();
+        $query = Persona::findActive();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -82,18 +82,21 @@ class PersonaBusqueda extends persona
     }
 
     /**
-     * Listado desde la vista `personas_pes_efector` (personas con asignación PES en el efector de sesión).
+     * Listado desde la vista `personas_pes_efector`: personas con asignación vigente
+     * (`profesional_efector_servicio`) en el efector de sesión.
+     *
+     * La vista debe exponer `asignacion_operativa_eliminada` (0 = vigente, 1 = baja lógica de la fila
+     * de asignación) o equivalente derivado de `profesional_efector_servicio.deleted_at`.
      *
      * @param array $params
      *
      * @return ActiveDataProvider
      */
-    public function searchPersonasAsignacionPes($params) {
-
-        //consulta en la vista personas_pes_efector
+    public function searchPersonasPorProfesionalEfectorServicioEnEfector($params)
+    {
         $query = Persona::findActive()->select('*')->from('personas_pes_efector')
-            ->where(['=','id_efector',Yii::$app->user->getIdEfector()])
-            ->andWhere(['=','rrhh_eliminado', 0])
+            ->where(['id_efector' => Yii::$app->user->getIdEfector()])
+            ->andWhere(['asignacion_operativa_eliminada' => 0])
             ->asArray();
 
         $dataProvider = new ActiveDataProvider([
@@ -106,12 +109,11 @@ class PersonaBusqueda extends persona
             // uncomment the following line if you do not want to return any records when validation fails
             // $query->where('0=1');
             return $dataProvider;
-}
+        }
 
         $query->andFilterWhere(['like', 'id_persona', $this->id_persona])
-                ->andFilterWhere(['like', 'apellido', $this->apellido])
-                ->andFilterWhere(['like', 'nombre', $this->nombre]);
-        
+            ->andFilterWhere(['like', 'apellido', $this->apellido])
+            ->andFilterWhere(['like', 'nombre', $this->nombre]);
 
         return $dataProvider;
     }

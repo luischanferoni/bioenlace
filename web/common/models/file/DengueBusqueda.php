@@ -13,7 +13,6 @@ use common\models\file\DengueImport;
  */
 class DengueBusqueda extends DengueImport
 {
-     public $rrhh;
     /**
      * @inheritdoc
      */

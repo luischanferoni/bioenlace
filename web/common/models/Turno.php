@@ -180,26 +180,13 @@ class Turno extends \yii\db\ActiveRecord
 
     public function beforeSave($insert)
     {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-        $pesChanged = $insert || $this->isAttributeChanged('id_profesional_efector_servicio', false);
-
-        if ($pesChanged && (int) $this->id_profesional_efector_servicio > 0) {
-            $this->syncLegacyIdsFromProfesionalEfectorServicio();
-        }
-        return true;
+        return parent::beforeSave($insert);
     }
 
     /**
      * Reservado; las columnas antiguas en `turnos` fueron retiradas (solo PES).
      */
     public function hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded(): void
-    {
-    }
-
-    /** Columnas RRHH antiguas eliminadas del DDL; sin-op. */
-    public function syncLegacyIdsFromProfesionalEfectorServicio(): void
     {
     }
 
@@ -345,7 +332,7 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Texto de servicio para UI/API sin depender de `rrhh_servicio` cuando hay `servicio` o PES.
+     * Texto de servicio para UI/API sin depender de PES cuando hay `servicio` o PES.
      */
     public function getNombreServicioParaDisplay(): string
     {
@@ -834,7 +821,7 @@ class Turno extends \yii\db\ActiveRecord
     }
 
 
-    //Este metodo me devuelve la cantidad de turnos otorgados a un rrhh en una fecha particular, siempre y cuando tenga los estados
+    //Este metodo me devuelve la cantidad de turnos otorgados a un PES en una fecha particular, siempre y cuando tenga los estados
     //PENDIENTE, EN_ATENCION o ATENDIDO
 
     /**

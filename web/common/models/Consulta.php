@@ -95,12 +95,16 @@ class Consulta extends \yii\db\ActiveRecord
      * Compatibilidad con controladores web: algunos flujos aún llaman `Consulta::calcularUrl*`.
      * La fuente de verdad del ruteo es {@see ConsultasConfiguracion}.
      *
+     * @param Persona $paciente reservado para compatibilidad de firma (no usado en el cálculo).
+     * @param int $idServicio {@see Servicio::id_servicio} — coincide con {@see ConsultasConfiguracion::$id_servicio}.
+     * @param string $encounterClass código HL7 (p. ej. {@see self::ENCOUNTER_CLASS_AMB}).
+     *
      * @return array{0:int,1:string|null,2:string|null,3:string|null,4:array}
      */
-    public static function calcularUrl($paciente, $idServicioRrhh, $encounterClass): array
+    public static function calcularUrl($paciente, $idServicio, $encounterClass): array
     {
         [$urlAnterior, $urlActual, $urlSiguiente, $idCfg] = ConsultasConfiguracion::getUrlPorServicioYEncounterClass(
-            (int) $idServicioRrhh,
+            (int) $idServicio,
             (string) $encounterClass
         );
 
@@ -1201,10 +1205,8 @@ class Consulta extends \yii\db\ActiveRecord
         );
         Yii::error($log);*/
     
-        return ['success' => true, 'msg' => '', 'model' => $modelConsulta, 'modelEditando' => null];
-        
-        /*$parametrosExtra = '?id_servicio='.$idServicioRrhh.'&encounter_class='.$encounterClass;
-        return [$idConfiguracion, $urlAnterior, $urlActual, $urlSiguiente, $parametrosExtra];*/
+        return ['success' => true, 'msg' => '', 'model' => $modelConsulta, 'modelEditando' => null];        
+
     }
 
 

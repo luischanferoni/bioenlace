@@ -8,7 +8,7 @@ use yii\widgets\ActiveForm;
 /* @var $form yii\widgets\ActiveForm */
 ?>
 
-<div class="rrhh-search">
+<div class="asignacion-pes-search">
 
     <?php $form = ActiveForm::begin([
         'action' => ['index'],

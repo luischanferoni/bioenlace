@@ -128,7 +128,7 @@ class DefaultConsultaController extends Controller
                    
                     if ($modelConsulta->urlSiguiente === 'fin') {                        
                        
-                        //Si este paso es el ultimo, cambio en el turno el campo atendido a 'SI' y asigno el rrhh que lo atendio.
+                        //Si este paso es el ultimo, cambio en el turno el campo atendido a 'SI' y asigno el PES que lo atendio.
                         
                         if ($modelConsulta->parent_class == '\common\models\Turno') {
                             Turno::cambiarCampoAtendido($modelConsulta->parent_id, Turno::ATENDIDO_SI);

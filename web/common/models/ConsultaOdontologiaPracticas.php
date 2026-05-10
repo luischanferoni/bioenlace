@@ -149,15 +149,6 @@ class ConsultaOdontologiaPracticas extends \yii\db\ActiveRecord
                     'v.id_consultas_odontologia_practicas = dcm.id_consultas_odontologia_practicas');
 
         return $mq->asArray()->all();
-            /*self::find()
-            ->select('consultas.id_rr_hh, consultas_odontologia_practicas.*')
-            ->innerJoin('consultas_odontologia_practicas', 
-                'consultas_odontologia_practicas.id_consultas_odontologia_practicas = consultas_odontologia_practicas.root_id')
-            ->innerJoin('consultas', 
-                'consultas.id_consulta = consultas_odontologia_practicas.id_consulta AND id_persona = '.$idPersona)
-            //->where(['tiempo' => $tiempo])
-            ->asArray()
-            ->all();*/
     }
 
     /**

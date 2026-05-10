@@ -634,7 +634,7 @@
                     // Insertar el row como "mensaje" separado debajo de la burbuja.
                     if (chatMessagesDiv) {
                         const rowWrap = document.createElement('div');
-                        rowWrap.className = 'd-flex justify-content-start mb-3';
+                        rowWrap.className = 'd-flex justify-content-center w-100 mb-3';
                         rowWrap.appendChild(row);
                         chatMessagesDiv.appendChild(rowWrap);
                     }

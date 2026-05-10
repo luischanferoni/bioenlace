@@ -11,7 +11,7 @@ $urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'],
 ?>
 
 <style>
-/* Misma idea que #form-wizard1 en plantilla legacy: solo el primer paso hasta avanzar. */
+/* Misma idea que #form-wizard1 en plantilla anterior: solo el primer paso hasta avanzar. */
 .form-wizard#dynamic-form .formwizard_fieldset:not(:first-of-type) {
     display: none;
 }

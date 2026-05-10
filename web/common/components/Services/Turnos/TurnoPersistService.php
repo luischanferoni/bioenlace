@@ -53,10 +53,6 @@ class TurnoPersistService
             }
         }
 
-        if (!$model->id_rr_hh && $ctx->esReservaParaSiMismo($model) && $ctx->idRrhhSesion) {
-            $model->id_rr_hh = $ctx->idRrhhSesion;
-        }
-
         if ($model->id_servicio_asignado && $model->id_persona && $model->id_efector) {
             $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
                 $model->id_persona,
@@ -161,21 +157,7 @@ class TurnoPersistService
 
             return;
         }
-        if ($model->id_rr_hh && $model->id_servicio_asignado && $model->id_efector) {
-            $idPesRes = ProfesionalEfectorServicio::resolverIdPesDesdeRrhhServicioYEfector(
-                (int) $model->id_rr_hh,
-                (int) $model->id_servicio_asignado,
-                (int) $model->id_efector
-            );
-            if ($idPesRes !== null && $idPesRes > 0) {
-                $this->assertAgendaAceptaTeleconsultaPorPes($idPesRes);
-
-                return;
-            }
-        }
-        if ($model->id_rr_hh) {
-            throw new \InvalidArgumentException('No se encontró la agenda del profesional para el servicio.');
-        }
+        throw new \InvalidArgumentException('Indique id_profesional_efector_servicio para teleconsulta.');
     }
 
     private function assertAgendaAceptaTeleconsultaPorPes(int $idPes): void

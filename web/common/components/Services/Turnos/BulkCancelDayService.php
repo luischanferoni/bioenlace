@@ -13,16 +13,16 @@ use common\models\TurnoNotificacionProgramada;
 class BulkCancelDayService
 {
     /**
-     * Cancela todos los turnos PENDIENTE del día (opcionalmente filtrados por rrhh).
+     * Cancela todos los turnos PENDIENTE del día (opcionalmente filtrados por PES o por contexto de profesional).
      *
      * @param int $idEfector
      * @param string $fecha Y-m-d
-     * @param int|null $idRrhh filtro legacy (todo el profesional en el efector)
+     * @param int|null $staffContextId id PES o id de asignación usado para resolver persona (todas las PES de ese profesional en el efector)
      * @param int|null $idUser
-     * @param int|null $idPes filtro por fila PES (más acotado que idRrhh)
+     * @param int|null $idPes filtro por fila PES (más acotado que staffContextId)
      * @return int cantidad cancelados
      */
-    public function cancelarDia($idEfector, $fecha, $idRrhh = null, $idUser = null, $idPes = null)
+    public function cancelarDia($idEfector, $fecha, $staffContextId = null, $idUser = null, $idPes = null)
     {
         $cfg = EfectorTurnosConfig::getOrCreateForEfector((int) $idEfector);
         if (!$cfg->cancelacion_masiva) {
@@ -38,8 +38,24 @@ class BulkCancelDayService
                 throw new \InvalidArgumentException('id_profesional_efector_servicio inválido para este efector.');
             }
             $q->andWhere(['id_profesional_efector_servicio' => (int) $idPes]);
-        } elseif ($idRrhh) {
-            $q->andWhere(['id_rr_hh' => (int) $idRrhh]);
+        } elseif ($staffContextId) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $staffContextId);
+            if ($idPersona === null || $idPersona <= 0) {
+                throw new \InvalidArgumentException('Identificador de profesional inválido para cancelación masiva.');
+            }
+            $pesIds = ProfesionalEfectorServicio::find()
+                ->select(['id'])
+                ->where([
+                    'id_persona' => $idPersona,
+                    'id_efector' => (int) $idEfector,
+                    'deleted_at' => null,
+                ])
+                ->column();
+            if ($pesIds === []) {
+                $q->andWhere('0=1');
+            } else {
+                $q->andWhere(['id_profesional_efector_servicio' => $pesIds]);
+            }
         }
 
         $models = $q->all();

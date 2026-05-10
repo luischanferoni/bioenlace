@@ -8,13 +8,14 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 use yii\web\Controller;
+use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\db\Query;
 
 /**
- * CRUD de PES identificado por `id_rr_hh` + `id_efector` (compatibilidad de URLs legacy).
+ * CRUD de PES; query `id_profesional_efector_servicio` + `id_efector`.
  */
 class ProfesionalEnEfectorController extends Controller
 {
@@ -45,14 +46,20 @@ class ProfesionalEnEfectorController extends Controller
     }
 
     /**
-     * @param integer $id_rr_hh
-     * @param integer $id_efector
      * @no_intent_catalog
-    */
-    public function actionView($id_rr_hh, $id_efector)
+     */
+    public function actionView()
     {
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $idEfector = (int) ($params['id_efector'] ?? 0);
+        $idPes = ProfesionalEfectorServicio::staffContextIdFromRequestParams($params);
+        if ($idPes <= 0 || $idEfector <= 0) {
+            throw new BadRequestHttpException('Hacen falta id_efector e id_profesional_efector_servicio.');
+        }
+
         return $this->render('view', [
-            'model' => $this->findModel($id_rr_hh, $id_efector),
+            'model' => $this->findModel($idPes, $idEfector),
         ]);
     }
 
@@ -74,12 +81,7 @@ class ProfesionalEnEfectorController extends Controller
                 }
             }
             if ($model->save()) {
-                $idRh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $model->id_persona);
-                if ($idRh <= 0) {
-                    return $this->redirect(['rrhh/view', 'id' => $model->id]);
-                }
-
-                return $this->redirect(['view', 'id_rr_hh' => $idRh, 'id_efector' => $model->id_efector]);
+                return $this->redirect(['view', 'id_profesional_efector_servicio' => (int) $model->id, 'id_efector' => $model->id_efector]);
             }
         }
 
@@ -89,21 +91,21 @@ class ProfesionalEnEfectorController extends Controller
     }
 
     /**
-     * @param integer $id_rr_hh
-     * @param integer $id_efector
      * @no_intent_catalog
     */
-    public function actionUpdate($id_rr_hh, $id_efector)
+    public function actionUpdate()
     {
-        $model = $this->findModel($id_rr_hh, $id_efector);
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $idEfector = (int) ($params['id_efector'] ?? 0);
+        $idPes = ProfesionalEfectorServicio::staffContextIdFromRequestParams($params);
+        if ($idPes <= 0 || $idEfector <= 0) {
+            throw new BadRequestHttpException('Hacen falta id_efector e id_profesional_efector_servicio.');
+        }
+        $model = $this->findModel($idPes, $idEfector);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            $idRh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $model->id_persona);
-            if ($idRh <= 0) {
-                return $this->redirect(['rrhh/view', 'id' => $model->id]);
-            }
-
-            return $this->redirect(['view', 'id_rr_hh' => $idRh, 'id_efector' => $model->id_efector]);
+            return $this->redirect(['view', 'id_profesional_efector_servicio' => (int) $model->id, 'id_efector' => $model->id_efector]);
         }
 
         return $this->render('update', [
@@ -112,37 +114,31 @@ class ProfesionalEnEfectorController extends Controller
     }
 
     /**
-     * @param integer $id_rr_hh
-     * @param integer $id_efector
      * @no_intent_catalog
     */
-    public function actionDelete($id_rr_hh, $id_efector)
+    public function actionDelete()
     {
-        $this->findModel($id_rr_hh, $id_efector)->delete();
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $idEfector = (int) ($params['id_efector'] ?? 0);
+        $idPes = ProfesionalEfectorServicio::staffContextIdFromRequestParams($params);
+        if ($idPes <= 0 || $idEfector <= 0) {
+            throw new BadRequestHttpException('Hacen falta id_efector e id_profesional_efector_servicio.');
+        }
+        $this->findModel($idPes, $idEfector)->delete();
         return $this->redirect(['index']);
     }
 
     /**
      * @return ProfesionalEfectorServicio
      */
-    protected function findModel($id_rr_hh, $id_efector)
+    protected function findModel($id_profesional_efector_servicio, $id_efector)
     {
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $id_rr_hh);
-        if ($idPersona === null || (int) $idPersona <= 0) {
-            $pesProbe = ProfesionalEfectorServicio::findOne(['id' => (int) $id_rr_hh, 'deleted_at' => null]);
-            $idPersona = $pesProbe !== null ? (int) $pesProbe->id_persona : null;
-        }
-        if ($idPersona === null || $idPersona <= 0) {
-            throw new NotFoundHttpException('The requested page does not exist.');
-        }
-        $model = ProfesionalEfectorServicio::find()
-            ->where([
-                'id_persona' => (int) $idPersona,
-                'id_efector' => (int) $id_efector,
-                'deleted_at' => null,
-            ])
-            ->orderBy(['id' => SORT_ASC])
-            ->one();
+        $model = ProfesionalEfectorServicio::findOne([
+            'id' => (int) $id_profesional_efector_servicio,
+            'id_efector' => (int) $id_efector,
+            'deleted_at' => null,
+        ]);
         if ($model !== null) {
             return $model;
         }

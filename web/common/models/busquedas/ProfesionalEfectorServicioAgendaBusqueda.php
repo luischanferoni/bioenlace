@@ -16,14 +16,16 @@ class ProfesionalEfectorServicioAgendaBusqueda extends Model
     public $id;
     public $id_profesional_efector_servicio;
     public $id_efector;
-    public $id_rr_hh;
-    public $rrhh;
+    /** Filtro por persona del profesional: cualquier PES de ese profesional. */
+    public $id_profesional_contexto;
+    /** Filtro opcional por apellido (LIKE). */
+    public $apellido;
 
     public function rules(): array
     {
         return [
-            [['id', 'id_profesional_efector_servicio', 'id_efector', 'id_rr_hh'], 'integer'],
-            [['rrhh'], 'safe'],
+            [['id', 'id_profesional_efector_servicio', 'id_efector', 'id_profesional_contexto'], 'integer'],
+            [['apellido'], 'safe'],
         ];
     }
 
@@ -53,8 +55,8 @@ class ProfesionalEfectorServicioAgendaBusqueda extends Model
             return $dataProvider;
         }
 
-        if ($this->id_rr_hh) {
-            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rr_hh);
+        if ($this->id_profesional_contexto) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $this->id_profesional_contexto);
             if ($idPersona !== null && $idPersona > 0) {
                 $query->andWhere(['pes.id_persona' => $idPersona]);
             } else {
@@ -69,7 +71,7 @@ class ProfesionalEfectorServicioAgendaBusqueda extends Model
             ->andFilterWhere(['a.id_efector' => $id_efector])
             ->andWhere(['a.deleted_at' => null]);
 
-        $query->andFilterWhere(['like', 'per.apellido', $this->rrhh]);
+        $query->andFilterWhere(['like', 'per.apellido', $this->apellido]);
         $query->orderBy(['per.apellido' => SORT_ASC, 'a.id' => SORT_ASC]);
 
         return $dataProvider;

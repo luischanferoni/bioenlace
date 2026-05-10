@@ -185,12 +185,12 @@ $this->registerJs("
           $('.bi-caret-right-fill').remove();
           $(this).parent().append(\"<i class='bi bi-caret-right-fill'></i>\");
           $( this ).parent().addClass( 'bg-soft-danger' );
-          var rrhh = $(this).attr('id');
+          var idPes = $(this).attr('id');
           var id_servicio = $(this).attr('servicio');
           $('#id_servicio').val(id_servicio);
-          $('#id_rr_hh').val(rrhh);
+          $('#id_profesional_efector_servicio').val(idPes);
           
-          $.post('" . Url::to(['turnos/eventos']) . "', {id_rr_hh:rrhh},function(data){
+          $.post('" . Url::to(['turnos/eventos']) . "', {id_profesional_efector_servicio:idPes},function(data){
             //$('#cover-spin').show();
             calendar.removeAllEvents();
             calendar.addEventSource(data);
@@ -241,7 +241,7 @@ $this->registerJs("
           $('#modal').on('hidden.bs.modal', function () {
             $('#fechadesde').val('');
             $('#fechahasta').val('');
-            $('#id_rr_hh').val('');
+            $('#id_profesional_efector_servicio').val('');
             $('#fechadesde').val('');
             $('#id_referencia').val('');
             $('#nro_hc').val('');
@@ -301,7 +301,7 @@ $this->registerJs(
               headers: (typeof window.getBioenlaceApiClientHeaders === 'function') ? window.getBioenlaceApiClientHeaders() : {},
               data: { 
                 fecha:$('#fechadesde').val(),
-                id_rr_hh:$('#id_rr_hh').val(),
+                id_profesional_efector_servicio:$('#id_profesional_efector_servicio').val(),
                 id_servicio_asignado:$('#id_servicio').val(),
                 id_persona:$('#id_persona').val(),
                 referencia:$('#id_referencia').val(),
@@ -315,7 +315,7 @@ $this->registerJs(
                   }
                   $('#fechadesde').val('');
                   $('#fechahasta').val('');
-                  $('#id_rr_hh').val('');
+                  $('#id_profesional_efector_servicio').val('');
                   $('#fechadesde').val('');
                   $('#id_referencia').val('');
                   $('#nro_hc').val('');

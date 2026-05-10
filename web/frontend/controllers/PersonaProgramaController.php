@@ -20,12 +20,12 @@ use common\models\ProfesionalEfectorServicio;
 class PersonaProgramaController extends Controller
 {
     /**
-     * PES del profesional en contexto (sesión o parámetro id_rr_hh).
+     * PES del profesional en contexto (sesión o parámetro `id_profesional_efector_servicio`).
      */
-    private function resolveProfesionalEfectorServicioParaAlta(?int $idRrhhParam): ?ProfesionalEfectorServicio
+    private function resolveProfesionalEfectorServicioParaAlta(?int $idContextoPesParam): ?ProfesionalEfectorServicio
     {
-        if ($idRrhhParam !== null && $idRrhhParam > 0) {
-            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhhParam);
+        if ($idContextoPesParam !== null && $idContextoPesParam > 0) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idContextoPesParam);
             if ($idPersona !== null && $idPersona > 0) {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
@@ -51,9 +51,9 @@ class PersonaProgramaController extends Controller
                 return $pes;
             }
         }
-        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
-        if ($idRrhh > 0) {
-            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+        $idPesSesion = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        if ($idPesSesion > 0) {
+            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idPesSesion);
             if ($idPersona !== null && $idPersona > 0) {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
@@ -132,18 +132,18 @@ class PersonaProgramaController extends Controller
         $persona =  unserialize($persona);
 
         $programa = Yii::$app->getRequest()->getQueryParam('programa');
-        $idRrhhParam = null;
+        $idContextoPesParam = null;
         try {
-            $idRrhhParam = (int) UserRequest::requireUserParam('idRecursoHumano');
-            if ($idRrhhParam <= 0) {
-                $idRrhhParam = null;
+            $idContextoPesParam = (int) UserRequest::requireUserParam('idRecursoHumano');
+            if ($idContextoPesParam <= 0) {
+                $idContextoPesParam = null;
             }
         } catch (\Throwable $e) {
-            $idRrhhParam = null;
+            $idContextoPesParam = null;
         }
-        $pesCtx = $this->resolveProfesionalEfectorServicioParaAlta($idRrhhParam);
+        $pesCtx = $this->resolveProfesionalEfectorServicioParaAlta($idContextoPesParam);
         if ($pesCtx === null) {
-            throw new NotFoundHttpException('No se pudo determinar el recurso humano (RRHH/PES) en sesión.');
+            throw new NotFoundHttpException('No se pudo determinar el contexto profesional (PES) en sesión.');
         }
 
         switch ($programa) {

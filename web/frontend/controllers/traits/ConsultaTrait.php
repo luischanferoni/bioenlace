@@ -73,19 +73,11 @@ trait ConsultaTrait {
             $pesSesion = Yii::$app->user->getIdProfesionalEfectorServicio();
             if ($pesSesion !== null && $pesSesion !== '') {
                 $modelConsulta->id_profesional_efector_servicio = (int) $pesSesion;
-            }
-            $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
-            if ($idRrhh <= 0 && $modelConsulta->id_profesional_efector_servicio) {
-                $pes = \common\models\ProfesionalEfectorServicio::findOne([
-                    'id' => (int) $modelConsulta->id_profesional_efector_servicio,
-                    'deleted_at' => null,
-                ]);
-                if ($pes !== null) {
-                    $idRrhh = \common\models\ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
+            } else {
+                $rh = Yii::$app->user->getIdRecursoHumano();
+                if ($rh !== null && $rh !== '') {
+                    $modelConsulta->id_profesional_efector_servicio = (int) $rh;
                 }
-            }
-            if ($modelConsulta->hasAttribute('id_rr_hh')) {
-                $modelConsulta->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
             }
             $modelConsulta->id_servicio = Yii::$app->user->getServicioActual();
             $modelConsulta->id_persona = $paciente->id_persona;

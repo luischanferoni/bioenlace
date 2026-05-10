@@ -14,11 +14,11 @@ use DateTime;
  * This is the model class for table "encuesta_parches_mamarios".
  *
  * @property int $id
- * @property int|null $id_rr_hh
  * @property int|null $id_persona
  * @property string|null $fecha_prueba
  * @property string|null $numero_serie
  * @property int|null $id_efector
+ * @property int|null $id_profesional_efector_servicio
  * @property string|null $antecedente_cancer_mama
  * @property string|null $antecedente_cirugia_mamaria
  * @property string|null $actualmente_amamantando
@@ -158,7 +158,6 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             ], 'required'],
             [['paso_menospausia'], 'safe'],
             [['id_operador', 'id_persona', 'id_efector', 'id_profesional_efector_servicio', 'edad_primer_periodo', 'edad_primer_parto', 'edad_menospausia'], 'integer'],
-            [['id_rr_hh'], 'integer', 'skipOnEmpty' => true],
             ['edad_primer_periodo', 'in', 'range' => range(7, 19)],
             ['edad_primer_parto', 'in', 'range' => range(9, 60)],
             ['edad_primer_parto', 'required', 'when' => function ($model) {
@@ -270,7 +269,6 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             'observaciones' => 'Observaciones',
             'resultado' => 'Resultado',
             'resultado_indicado' => 'Resultado Indicado Manualmente',
-            'id_rr_hh' => 'Id Rr Hh',
         ];
     }
 
@@ -284,7 +282,12 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             return $pes->persona;
         }
         if ($this->hasAttribute('id_operador') && $this->id_operador !== null && $this->id_operador !== '' && (int) $this->id_operador > 0) {
-            $idP = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_operador);
+            $idOp = (int) $this->id_operador;
+            $directo = Persona::findOne($idOp);
+            if ($directo !== null) {
+                return $directo;
+            }
+            $idP = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idOp);
             if ($idP !== null && $idP > 0) {
                 return Persona::findOne($idP);
             }
@@ -451,10 +454,7 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             $this->resultado = self::RESULTADO_NO_SIGNIFICATIVA;
         }
 
-        if ($insert
-            || ($this->hasAttribute('id_rr_hh') && $this->isAttributeChanged('id_rr_hh', false))
-            || $this->isAttributeChanged('id_efector', false)
-        ) {
+        if ($insert || $this->isAttributeChanged('id_efector', false)) {
             $idPesSesion = null;
             if (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
                 $raw = Yii::$app->user->getIdProfesionalEfectorServicio();
@@ -464,11 +464,6 @@ class EncuestaParchesMamarios extends \yii\db\ActiveRecord
             }
             if ($idPesSesion > 0) {
                 $this->id_profesional_efector_servicio = $idPesSesion;
-            } else {
-                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhAndEfectorMinPes(
-                    $this->hasAttribute('id_rr_hh') && $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null,
-                    $this->id_efector !== null && $this->id_efector !== '' ? (int) $this->id_efector : null
-                );
             }
         }
 

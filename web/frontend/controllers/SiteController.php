@@ -318,12 +318,12 @@ class SiteController extends Controller
             // Seteamos el efector con el que el usuario trabajará          
             Yii::$app->user->setIdEfector($efectoresParaSesion[0]['id_efector']);
             Yii::$app->user->setNombreEfector($efectoresParaSesion[0]['nombre']);
-            Yii::$app->user->setIdRecursoHumano($efectoresParaSesion[0]['id_rr_hh']);
+            Yii::$app->user->setIdRecursoHumano($efectoresParaSesion[0]['id_profesional_efector_servicio']);
             // Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector((int) Yii::$app->user->getIdPersona(), (int) $efectoresParaSesion[0]['id_efector']));
 
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
 
-            self::establecerAgendaDisponible($efectoresParaSesion[0]['id_rr_hh']);
+            self::establecerAgendaDisponible($efectoresParaSesion[0]['id_profesional_efector_servicio']);
 
             //   return ['consultas/tipoatencion'];
         }*/
@@ -379,7 +379,7 @@ class SiteController extends Controller
         Yii::$app->user->setIdEfector($idEfector);
         Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-        Yii::$app->user->setIdRecursoHumano(ProfesionalEfectorServicio::resolveIdRrhhForPersona($idPersona));
+        Yii::$app->user->setIdRecursoHumano((int) $pes->id);
         Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector));
 
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
@@ -418,9 +418,9 @@ class SiteController extends Controller
      * Establece en session un array que nos va a pemitir saber la agenda del dia actual
      */
     /**
-     * @param mixed $id_rr_hh ignorado; la agenda se resuelve por PES en sesión (persona + efector).
+     * @param mixed $_unused ignorado; la agenda se resuelve por PES en sesión (persona + efector).
      */
-    public static function establecerAgendaDisponible($id_rr_hh)
+    public static function establecerAgendaDisponible($_unused = null)
     {
         SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
     }

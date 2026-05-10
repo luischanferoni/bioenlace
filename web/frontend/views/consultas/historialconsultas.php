@@ -57,9 +57,9 @@ $nombre_paciente = common\models\Consulta::getPersona(Yii::$app->getRequest()->g
                 'label'=> 'Profesional',
                 'value'=>function($data){
                     //TODO: Mejorar busqueda de profesion y especialidad, tal vez hay que ver en que agenda se le dio el turno para obtener mejor la especialidad
-                    $profesion = $data->turno->rrhh->profesionalSalud[0]->especialidad->profesion->nombre;
-                    $especialidad = $data->turno->rrhh->profesionalSalud[0]->especialidad->nombre;
-                return $data->turno->rrhh->nombre.' '.$data->turno->rrhh->apellido ." ($profesion - $especialidad)";
+                    $profesion = $data->turno->profesionalPersona->profesionalSalud[0]->especialidad->profesion->nombre;
+                    $especialidad = $data->turno->profesionalPersona->profesionalSalud[0]->especialidad->nombre;
+                return $data->turno->profesionalPersona->nombre.' '.$data->turno->profesionalPersona->apellido ." ($profesion - $especialidad)";
                 }
             ],
             [

@@ -222,17 +222,12 @@ class AutofacturacionController extends Controller
         $arrayBeneficiarios = isset($arrayBeneficiarios) && is_array($arrayBeneficiarios) ? $arrayBeneficiarios : [];
         $autofacturacion->beneficiarios = json_encode($arrayBeneficiarios);
         $autofacturacion->codigos = json_encode($codigos_finales);
-        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
-        if ($idRrhh <= 0) {
-            $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
-            if ($idPes > 0) {
-                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-                if ($pes !== null) {
-                    $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
-                }
-            }
+        $idPesCtx = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+        if ($idPesCtx <= 0) {
+            $rh = Yii::$app->user->getIdRecursoHumano();
+            $idPesCtx = $rh !== null && $rh !== '' ? (int) $rh : 0;
         }
-        $autofacturacion->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
+        $autofacturacion->id_profesional_efector_servicio = $idPesCtx > 0 ? $idPesCtx : null;
 
         if (!$autofacturacion->save()) {
             //return $autofacturacion->getErrors();

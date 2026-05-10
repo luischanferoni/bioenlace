@@ -8,7 +8,7 @@ use Yii;
 /**
  * Completa el draft del intent `agenda.crear-rrhh-flow` antes de {@see \common\components\Assistant\SubIntentEngine\SubIntentEngine::process}:
  * - `servicio_acepta_turnos` desde catálogo si hay `id_servicio`
- * - `id_profesional_efector_servicio` e `id_rr_hh` (y coherencia de `servicio_acepta_turnos`) vía {@see ProfesionalEfectorServicioAltaService} si falta alguno y hay persona+servicio+efector en sesión.
+ * - `id_profesional_efector_servicio` (y coherencia de `servicio_acepta_turnos`) vía {@see ProfesionalEfectorServicioAltaService} si falta y hay persona+servicio+efector en sesión.
  */
 final class ProfesionalEfectorServicioCrearFlowDraftHydrator
 {
@@ -29,17 +29,11 @@ final class ProfesionalEfectorServicioCrearFlowDraftHydrator
 
         $idPersona = isset($draft['id_persona']) ? (int) $draft['id_persona'] : 0;
         $idEfector = (int) Yii::$app->user->getIdEfector();
-        $idRrHh = isset($draft['id_rr_hh']) ? (int) $draft['id_rr_hh'] : 0;
         $idPes = isset($draft['id_profesional_efector_servicio']) ? (int) $draft['id_profesional_efector_servicio'] : 0;
 
-        if ($idPersona > 0 && $idServicio > 0 && $idEfector > 0 && ($idRrHh <= 0 || $idPes <= 0)) {
+        if ($idPersona > 0 && $idServicio > 0 && $idEfector > 0 && $idPes <= 0) {
             $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
-            if ($idRrHh <= 0) {
-                $draft['id_rr_hh'] = (string) $out['id_rr_hh'];
-            }
-            if ($idPes <= 0) {
-                $draft['id_profesional_efector_servicio'] = (string) $out['id_profesional_efector_servicio'];
-            }
+            $draft['id_profesional_efector_servicio'] = (string) $out['id_profesional_efector_servicio'];
             $draft['servicio_acepta_turnos'] = $out['servicio_acepta_turnos'];
         }
     }

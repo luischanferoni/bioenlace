@@ -28,7 +28,7 @@ class SolicitudRrhhController extends BaseController
             return 0;
         }
         // Compat: respetar efector del contexto actual.
-        $idRrhh = ProfesionalContextResolver::resolveRrhhIdFromPes($idPes);
+        $idRrhh = ProfesionalContextResolver::resolveProfesionalColumnIdFromPes($idPes);
         return $idRrhh > 0 ? $idRrhh : 0;
     }
 

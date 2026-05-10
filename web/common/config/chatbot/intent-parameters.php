@@ -17,7 +17,7 @@ return [
             'resolve_references' => true,
             'update_on_complete' => [
                 'type' => 'professional',
-                'fields' => ['id_rr_hh', 'id_efector', 'servicio']
+                'fields' => ['id_profesional_efector_servicio', 'id_efector', 'servicio']
             ],
             'cache_ttl' => 3600
         ]

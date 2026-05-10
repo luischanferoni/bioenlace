@@ -109,13 +109,12 @@ if(Yii::$app->user->idEfector){
             ],
             ['label' => 'Consultas', 'url' => ['/consultas']],
             [
-                'label' => 'RRHH',
+                'label' => 'Profesionales',
                 'items' => [
                     ['label' => 'Profesiones', 'url' => ['/profesiones']],
                     ['label' => 'Especialidades', 'url' => ['/especialidades']],
-                    ['label' => 'Agenda Laboral', 'url' => ['/personas/indexpersonarrhh']],
-                    ['label' => 'Listado de RRHH', 'url' => ['/personas/indexpersonarrhh']],
-                  
+                    ['label' => 'Agenda laboral', 'url' => ['/personas/index-personas-pes']],
+                    ['label' => 'Listado por efector (PES)', 'url' => ['/personas/index-personas-pes']],
                 ],
             ],
             [

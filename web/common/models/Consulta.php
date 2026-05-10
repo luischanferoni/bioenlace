@@ -92,7 +92,7 @@ class Consulta extends \yii\db\ActiveRecord
     public $nombreservicio;
 
     /**
-     * Compat legacy (web controllers): algunos flujos antiguos llaman `Consulta::calcularUrl*`.
+     * Compatibilidad con controladores web: algunos flujos aún llaman `Consulta::calcularUrl*`.
      * La fuente de verdad del ruteo es {@see ConsultasConfiguracion}.
      *
      * @return array{0:int,1:string|null,2:string|null,3:string|null,4:array}
@@ -114,7 +114,7 @@ class Consulta extends \yii\db\ActiveRecord
     }
 
     /**
-     * Compat legacy (side effects removidos): mantener firma sin romper callers.
+     * Compatibilidad (efectos secundarios removidos): mantener firma sin romper callers.
      */
     public static function calcularUrlV2($idConsulta, $paciente, $servicioActual, $encounterClass): void
     {
@@ -194,7 +194,6 @@ class Consulta extends \yii\db\ActiveRecord
         }
         if ($insert
             || $this->isAttributeChanged('id_turnos', false)
-            || ($this->hasAttribute('id_rr_hh') && $this->isAttributeChanged('id_rr_hh', false))
             || $this->isAttributeChanged('id_efector', false)
             || $this->isAttributeChanged('id_servicio', false)
         ) {
@@ -204,7 +203,7 @@ class Consulta extends \yii\db\ActiveRecord
     }
 
     /**
-     * Mantiene PES alineado con turno o (legacy) tupla id_rr_hh + id_efector + id_servicio.
+     * Mantiene PES alineado con turno vinculado.
      */
     public function syncProfesionalEfectorServicioFromContext(): void
     {
@@ -212,17 +211,7 @@ class Consulta extends \yii\db\ActiveRecord
             $t = Turno::findOne($this->id_turnos);
             if ($t && (int) $t->id_profesional_efector_servicio > 0) {
                 $this->id_profesional_efector_servicio = (int) $t->id_profesional_efector_servicio;
-                return;
-            }
-        }
-        if ($this->hasAttribute('id_rr_hh') && $this->getAttribute('id_rr_hh') && $this->id_efector && $this->id_servicio) {
-            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->getAttribute('id_rr_hh'));
-            if ($idPersona !== null && $idPersona > 0) {
-                $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                    $idPersona,
-                    (int) $this->id_efector,
-                    (int) $this->id_servicio
-                );
+
                 return;
             }
         }
@@ -725,23 +714,23 @@ class Consulta extends \yii\db\ActiveRecord
     }
 
     /**
-     * `id_rr_hh` para estadísticas de motivos; si la consulta solo tiene PES, resuelve RRHH en el mismo efector.
+     * Id PES para estadísticas de motivos (filtro por profesional).
      */
     public function resolveIdRrhhParaMotivos(): int
     {
-        $id = $this->hasAttribute('id_rr_hh') ? (int) $this->id_rr_hh : 0;
-        if ($id > 0) {
-            return $id;
-        }
         $idPes = (int) ($this->id_profesional_efector_servicio ?? 0);
-        if ($idPes <= 0) {
-            return 0;
+        if ($idPes > 0) {
+            return $idPes;
         }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        if ($pes === null) {
-            return 0;
+        $idTurnos = (int) ($this->id_turnos ?? 0);
+        if ($idTurnos > 0) {
+            $t = Turno::findOne($idTurnos);
+            if ($t !== null && (int) $t->id_profesional_efector_servicio > 0) {
+                return (int) $t->id_profesional_efector_servicio;
+            }
         }
-        return ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
+
+        return 0;
     }
 
     public function getMostUseRrhh($medico)
@@ -753,11 +742,10 @@ class Consulta extends \yii\db\ActiveRecord
                         LEFT JOIN snomed_hallazgos sh on (cm.codigo = sh.conceptId)
                         LEFT join servicios s on (c.id_servicio=s.id_servicio)
                         INNER JOIN profesional_efector_servicio pes ON pes.id = c.id_profesional_efector_servicio AND pes.deleted_at IS NULL
-                        INNER JOIN rr_hh rh ON rh.id_persona = pes.id_persona
-                        WHERE sh.conceptId is not null AND rh.id_rr_hh = :medico
+                        WHERE sh.conceptId is not null AND pes.id = :id_pes
                         GROUP by c.id_servicio, sh.conceptId, sh.term
                         ORDER by s.nombre asc, count(c.id_consulta) desc LIMIT 6",
-                        [':medico' => $medico]);
+                        [':id_pes' => $medico]);
 
         $result = $command->queryAll();
         $array = [];
@@ -1196,9 +1184,6 @@ class Consulta extends \yii\db\ActiveRecord
         $modelConsulta->parent_class = Consulta::PARENT_CLASSES[$parent];
         $modelConsulta->parent_id = $parentId;
 
-        if ($modelConsulta->hasAttribute('id_rr_hh')) {
-            $modelConsulta->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
-        }
         $idPesOp = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         if ($idPesOp > 0) {
             $modelConsulta->id_profesional_efector_servicio = $idPesOp;
@@ -1276,9 +1261,6 @@ class Consulta extends \yii\db\ActiveRecord
         $consulta->parent_class = self::PARENT_CLASSES[self::PARENT_TURNO];
         $consulta->parent_id = $turno->id_turnos;
         $consulta->id_persona = $turno->id_persona;
-        if ($consulta->hasAttribute('id_rr_hh')) {
-            $consulta->setAttribute('id_rr_hh', $turno->getAttribute('id_rr_hh'));
-        }
         if ((int) $turno->id_profesional_efector_servicio > 0) {
             $consulta->id_profesional_efector_servicio = (int) $turno->id_profesional_efector_servicio;
         }

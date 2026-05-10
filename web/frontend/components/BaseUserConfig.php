@@ -116,7 +116,6 @@ abstract class BaseUserConfig extends User
     {
         $id = (int) $id;
         Yii::$app->session->set('idProfesionalEfectorServicio', $id);
-        // Espejo numérico para clientes que aún leen `id_rrhh_servicio` en snapshot (mismo id PES).
         Yii::$app->session->set('id_rrhh_servicio', $id > 0 ? $id : 0);
     }
 
@@ -149,24 +148,18 @@ abstract class BaseUserConfig extends User
     /**
      * Sesiones por-pestaña (snapshot inicial).
      *
-     * `id_rrhh_servicio` en el snapshot repite el id PES cuando hay contexto operativo (alias legacy); canónico:
-     * `idProfesionalEfectorServicio` / `id_profesional_efector_servicio`.
-     *
      * @return array<string, mixed>
      */
     public function getPerTabSessions()
     {
         $s = Yii::$app->session;
         $idPes = (int) ($s->get('idProfesionalEfectorServicio') ?: 0);
-        $legacyTab = $s->get('id_rrhh_servicio');
-        $idRrhhMirror = $idPes > 0 ? $idPes : (int) ($legacyTab ?: 0);
 
         return [
             'idRecursoHumano' => $s->get('idRecursoHumano'),
             'idEfector' => $s->get('idEfector'),
             'nombreEfector' => $s->get('nombreEfector'),
             'servicio_actual' => $s->get('servicio_actual'),
-            'id_rrhh_servicio' => $idRrhhMirror,
             'idProfesionalEfectorServicio' => $idPes,
             'id_profesional_efector_servicio' => $idPes,
             'encounterClass' => $s->get('encounterClass'),

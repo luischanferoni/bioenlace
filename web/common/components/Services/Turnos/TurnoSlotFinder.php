@@ -74,7 +74,6 @@ class TurnoSlotFinder
      * @return array|null [
      *   'fecha' => 'YYYY-MM-DD',
      *   'hora' => 'HH:MM',
-     *   'id_rr_hh' => int,
      *   'id_profesional_efector_servicio' => int|null,
      *   'id_efector' => int,
      *   'id_servicio' => int,
@@ -193,7 +192,6 @@ class TurnoSlotFinder
                         continue;
                     }
 
-                    $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
                     $srv = $pes->servicio;
                     $servicioEmb = $srv !== null
                         ? ['id_servicio' => (int) $srv->id_servicio, 'nombre' => (string) $srv->nombre]
@@ -202,7 +200,6 @@ class TurnoSlotFinder
                     $out[] = [
                         'fecha' => $dia,
                         'hora' => $hora,
-                        'id_rr_hh' => $idRrhh,
                         'id_profesional_efector_servicio' => $idPesAgenda,
                         'id_efector' => (int) $idEfector,
                         'id_servicio' => (int) $idServicio,

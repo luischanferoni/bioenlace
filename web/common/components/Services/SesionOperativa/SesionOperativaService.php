@@ -19,8 +19,7 @@ use Firebase\JWT\JWT;
  * Orquesta el establecimiento del "contexto operativo" en sesi?n (efector, RRHH, servicio y encounter class),
  * alineado con el flujo hist?rico de la web.
  *
- * La asignaci?n operativa can?nica es {@see ProfesionalEfectorServicio}; `id_rr_hh` / `id_rrhh_servicio` se
- * mantienen solo como compatibilidad cuando a?n existen filas legacy.
+ * La asignación operativa canónica es {@see ProfesionalEfectorServicio}; el JWT puede repetir el id PES en campos alias.
  */
 class SesionOperativaService extends Component
 {
@@ -34,14 +33,17 @@ class SesionOperativaService extends Component
 
     /**
      * @param array{efector_id:mixed, servicio_id:mixed, encounter_class:mixed} $body
+     *
+     * Respuesta: `servicio` incluye `id_profesional_efector_servicio` (PK PES).
+     *
      * @return array{
      *   efector: array{id:int,nombre:string},
-     *   servicio: array{id:int,nombre:string,id_profesional_efector_servicio:int,id_rrhh_servicio:int},
+     *   servicio: array{id:int,nombre:string,id_profesional_efector_servicio:int},
      *   encounter_class: array{code:string,label:string},
-     *   rrhh_id: int,
+     *   id_contexto_profesional: int,
      *   redirect_url: string,
      *   context_token: string
-     * } `servicio.id_rrhh_servicio` repite el id PES (alias legacy en payload); can?nico: `id_profesional_efector_servicio`.
+     * }
      */
     public function establecer(array $body): array
     {
@@ -80,14 +82,14 @@ class SesionOperativaService extends Component
             throw new \RuntimeException('No se encontr? asignaci?n profesional-efector-servicio para la persona autenticada');
         }
 
-        $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona($idPersona);
+        $idContextoStaff = (int) $pes->id;
 
         Yii::$app->user->setEncounterClass($encounterClass);
         Yii::$app->user->setServicioActual($servicioId);
 
         Yii::$app->user->setIdEfector($pes->id_efector);
         Yii::$app->user->setNombreEfector($pes->efector !== null ? (string) $pes->efector->nombre : '');
-        Yii::$app->user->setIdRecursoHumano($idRrhh);
+        Yii::$app->user->setIdRecursoHumano($idContextoStaff);
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
 
         $pesEnEfector = ProfesionalEfectorServicio::find()
@@ -119,10 +121,8 @@ class SesionOperativaService extends Component
             'email' => (string) ($identity->email ?? ''),
             'id_persona' => $idPersona,
             'id_efector' => (int) $pes->id_efector,
-            'id_rr_hh' => $idRrhh,
             'id_profesional_efector_servicio' => (int) $pes->id,
             'servicio_actual' => (int) $servicioId,
-            'id_rrhh_servicio' => (int) $pes->id,
             'encounter_class' => (string) $encounterClass,
             'iat' => time(),
             'exp' => time() + (24 * 60 * 60),
@@ -138,13 +138,12 @@ class SesionOperativaService extends Component
                 'id' => (int) $servicioId,
                 'nombre' => (string) ($pes->servicio->nombre ?? ''),
                 'id_profesional_efector_servicio' => (int) $pes->id,
-                'id_rrhh_servicio' => (int) $pes->id,
             ],
             'encounter_class' => [
                 'code' => (string) $encounterClass,
                 'label' => (string) ConsultasConfiguracion::ENCOUNTER_CLASS[$encounterClass],
             ],
-            'rrhh_id' => $idRrhh,
+            'id_contexto_profesional' => $idContextoStaff,
             'redirect_url' => (string) $redirectUrl,
             'context_token' => (string) $contextToken,
         ];

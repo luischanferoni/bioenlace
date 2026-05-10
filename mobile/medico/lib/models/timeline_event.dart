@@ -9,7 +9,6 @@ class TimelineEvent {
   final String? parentClass;
   final int? parentId;
   final String? profesional;
-  final int? idRrHh;
   final int? idProfesionalEfectorServicio;
   final String? efector;
   final String? tipoDetalle;
@@ -24,7 +23,6 @@ class TimelineEvent {
     this.parentClass,
     this.parentId,
     this.profesional,
-    this.idRrHh,
     this.idProfesionalEfectorServicio,
     this.efector,
     this.tipoDetalle,
@@ -65,7 +63,6 @@ class TimelineEvent {
       parentClass: json['parent_class'] as String?,
       parentId: _parseInt(json['parent_id']),
       profesional: json['profesional'] as String?,
-      idRrHh: _parseInt(json['id_rr_hh']),
       idProfesionalEfectorServicio: _parseInt(json['id_profesional_efector_servicio']),
       efector: json['efector'] as String?,
       tipoDetalle: json['tipo_detalle'] as String?,
@@ -83,7 +80,6 @@ class TimelineEvent {
         'parent_class': parentClass,
         'parent_id': parentId,
         'profesional': profesional,
-        'id_rr_hh': idRrHh,
         'id_profesional_efector_servicio': idProfesionalEfectorServicio,
         'efector': efector,
         'tipo_detalle': tipoDetalle,

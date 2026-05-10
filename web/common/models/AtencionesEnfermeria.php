@@ -182,13 +182,13 @@ class AtencionesEnfermeria extends \yii\db\ActiveRecord
     * porRecursohumano busca un registro creado por un recurso humano
     * TODO: definir si usar el id de recurso humano o el id de usuario univoco para todo el sistema
     */
-    public static function porRecursohumano($id_rr_hh, $fecha_consulta) {
-  
-          return AtencionesEnfermeria::find()
-            ->where(['fecha_creacion' => $fecha_consulta. ' 00:00:00'])
-            ->where(['id_rr_hh' => $id_rr_hh])          
+    public static function porRecursohumano($id_profesional_efector_servicio, $fecha_consulta)
+    {
+        return AtencionesEnfermeria::find()
+            ->where(['fecha_creacion' => $fecha_consulta . ' 00:00:00'])
+            ->andWhere(['id_profesional_efector_servicio' => (int) $id_profesional_efector_servicio])
             ->one();
-      }    
+    }
 
     /*
     * formatearDatos usado en la vista

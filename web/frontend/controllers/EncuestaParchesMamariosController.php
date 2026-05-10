@@ -121,21 +121,13 @@ class EncuestaParchesMamariosController extends Controller
                 'modelAtencionEnfermeria' => isset($model_a_enf) ? $model_a_enf : NULL
             ]);
         }
-        // id_rr_hh en sesión o, en transición PES, derivado del profesional_efector_servicio activo
-        $idRrhhSesion = Yii::$app->user->getIdRecursoHumano();
-        if ($idRrhhSesion !== null && $idRrhhSesion !== '') {
-            $model->id_rr_hh = (int) $idRrhhSesion;
-        } else {
-            $pesRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
-            if ($pesRaw !== null && $pesRaw !== '') {
-                $pes = ProfesionalEfectorServicio::findOne((int) $pesRaw);
-                if ($pes !== null) {
-                    $idRh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
-                    if ($idRh > 0) {
-                        $model->id_rr_hh = $idRh;
-                    }
-                }
-            }
+        $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+        if ($idPesSesion <= 0) {
+            $rh = Yii::$app->user->getIdRecursoHumano();
+            $idPesSesion = $rh !== null && $rh !== '' ? (int) $rh : 0;
+        }
+        if ($idPesSesion > 0) {
+            $model->id_profesional_efector_servicio = $idPesSesion;
         }
 
         $transaction = \Yii::$app->db->beginTransaction();
@@ -155,7 +147,7 @@ class EncuestaParchesMamariosController extends Controller
                     $nuevaConsulta->id_efector = $model->profesionalEfectorServicio
                         ? (int) $model->profesionalEfectorServicio->id_efector
                         : (int) $model->id_efector;
-                    $nuevaConsulta->id_rr_hh = $model->id_operador;
+                    $nuevaConsulta->id_profesional_efector_servicio = (int) ($model->id_profesional_efector_servicio ?? 0) ?: null;
                     $nuevaConsulta->id_servicio = 5;
                     $nuevaConsulta->id_configuracion = 0;
                     $nuevaConsulta->paso_completado = 999;

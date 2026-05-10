@@ -17,7 +17,6 @@ use common\traits\ParameterQuestionsTrait;
  * @property integer $id_persona
  * @property string $fech
  * @property string $hora
- * @property string $id_rr_hh
  * @property int|null $id_profesional_efector_servicio
  * @property string $confirmado
  * @property string $referenciado
@@ -46,7 +45,7 @@ use common\traits\ParameterQuestionsTrait;
  * @chatbot-intent-patient-profile-can-use professional,efector,service
  * @chatbot-intent-patient-profile-resolve-references true
  * @chatbot-intent-patient-profile-update-on-complete-type professional
- * @chatbot-intent-patient-profile-update-on-complete-fields id_rr_hh,id_efector,servicio
+ * @chatbot-intent-patient-profile-update-on-complete-fields id_profesional_efector_servicio,id_efector,servicio
  * @chatbot-intent-patient-profile-cache-ttl 3600
  * 
  * @chatbot-intent modificar_turno
@@ -193,35 +192,15 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Si el cliente envía solo PES, completa `id_rr_hh` coherente con persona+efector del PES.
+     * Reservado; las columnas antiguas en `turnos` fueron retiradas (solo PES).
      */
     public function hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded(): void
     {
-        if ((int) $this->id_profesional_efector_servicio > 0) {
-            $this->syncLegacyIdsFromProfesionalEfectorServicio();
-        }
     }
 
-    /**
-     * Alinea `id_rr_hh` con el vínculo RRHH–efector del PES; no persiste `rrhh_servicio`.
-     */
+    /** Columnas RRHH antiguas eliminadas del DDL; sin-op. */
     public function syncLegacyIdsFromProfesionalEfectorServicio(): void
     {
-        $idPes = (int) $this->id_profesional_efector_servicio;
-        if ($idPes <= 0) {
-            return;
-        }
-        /** @var ProfesionalEfectorServicio|null $pes */
-        $pes = ProfesionalEfectorServicio::find()
-            ->where(['id' => $idPes, 'deleted_at' => null])
-            ->one();
-        if ($pes === null) {
-            return;
-        }
-        $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
-        if ($idRr > 0 && $this->hasAttribute('id_rr_hh')) {
-            $this->setAttribute('id_rr_hh', $idRr);
-        }
     }
 
     /**
@@ -303,7 +282,7 @@ class Turno extends \yii\db\ActiveRecord
             'id_persona' => 'Paciente',
             'fecha' => 'Fecha del Turno',
             'hora' => 'Hora del Turno',
-            'id_rr_hh' => 'Profesional',
+            'id_profesional_efector_servicio' => 'Profesional (PES)',
             'confirmado' => 'Confirmado',
             'referenciado' => 'Referenciado',
             'id_consulta_referencia' => 'Efector de Referencia',
@@ -356,10 +335,19 @@ class Turno extends \yii\db\ActiveRecord
     {
         return $this->hasOne(Efector::className(), ['id_efector' => 'id_efector']);
     }
-    public function getRrhh()
+    /**
+     * Persona del profesional vía fila PES del turno.
+     */
+    public function getProfesionalPersona()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
+    }
+
+    /** @deprecated Use {@see getProfesionalPersona} */
+    public function getRrhh()
+    {
+        return $this->getProfesionalPersona();
     }
 
     /**
@@ -408,7 +396,7 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Persona del profesional del turno: PES primero; si no, vínculo por `id_rr_hh` + efector.
+     * Persona del profesional del turno (PES obligatorio para vínculo consistente).
      */
     public function getProfesionalPersonaParaDisplay(): ?Persona
     {
@@ -416,14 +404,8 @@ class Turno extends \yii\db\ActiveRecord
         if ($pes !== null) {
             return $pes->persona;
         }
-        if ($this->rrhh) {
-            return $this->rrhh;
-        }
-        if ($this->hasAttribute('id_rr_hh') && (int) $this->getAttribute('id_rr_hh') > 0) {
-            $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->getAttribute('id_rr_hh'));
-            if ($idPersona !== null && $idPersona > 0) {
-                return Persona::findOne($idPersona);
-            }
+        if ($this->profesionalPersona) {
+            return $this->profesionalPersona;
         }
 
         return null;

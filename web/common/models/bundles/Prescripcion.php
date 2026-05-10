@@ -14,7 +14,7 @@ class Prescripcion extends \yii\db\ActiveRecord
     public $entry = [];
 
     /*
-    // Al reactivar rules(): alinear con PES — p. ej. [['id_profesional_efector_servicio'], 'integer'] y no exigir solo legacy si el contrato del bundle opera por PES.
+    // Al reactivar rules(): alinear con PES — p. ej. [['id_profesional_efector_servicio'], 'integer'] y no exigir solo id histórico si el contrato del bundle opera por PES.
     public function rules()
     {
         return [

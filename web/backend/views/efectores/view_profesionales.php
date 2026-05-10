@@ -9,7 +9,6 @@ use yii\web\JsExpression;
 use webvimark\modules\UserManagement\models\User;
 use kartik\select2\Select2;
 
-use common\models\Efector;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\models\Persona;
@@ -33,12 +32,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <div class="card-body">
 
-        <?= $this->render("_view_tabs", ['model' => $searchModel, 'tab' => 'rrhh']); ?>
+        <?= $this->render("_view_tabs", ['model' => $searchModel, 'tab' => 'profesionales']); ?>
 
         <div class="table-responsive">
-            <?php 
+            <?php
                 $mapServicios = ArrayHelper::map(Servicio::find()->orderBy('nombre')->all(), 'id_servicio', 'nombre');
-                //var_dump($searchModel->id_persona);die;
             ?>
 
             <?= GridView::widget([
@@ -46,10 +44,8 @@ $this->params['breadcrumbs'][] = $this->title;
                 'filterModel' => $searchModel,
                 'columns' => [
                     [
-                        'label' => 'id_rr_hh',
-                        'value' => static function ($data) {
-                            return ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $data->id_persona);
-                        },
+                        'attribute' => 'id',
+                        'label' => 'PES (id)',
                     ],
 
                     [
@@ -67,25 +63,6 @@ $this->params['breadcrumbs'][] = $this->title;
                             }
                         },
                         'format' => 'raw',
-                        /*'filter' => Select2::widget(
-                            [
-                                'model' => $searchModel,
-                                'attribute' => 'id_persona',
-                                'data' => isset($searchModel->persona)?[$searchModel->id_persona => $searchModel->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)]:[],
-                                'theme' => Select2::THEME_DEFAULT,
-                                'options' => ['placeholder' => '- TODAS -'],
-                                'pluginOptions' => [
-                                    'width' => '100%',
-                                    'minimumInputLength' => 3,
-                                    'allowClear' => true,
-                                    'ajax' => [
-                                        'url' => Url::to(['profesional-efector-servicio/personas-live-search', 'idEfector' => $idEfector]),
-                                        'dataType' => 'json',
-                                        'data' => new JsExpression('function(params) { return {q:params.term}; }')
-                                    ],
-                                ],
-                            ]
-                        ),*/
                     ],
                     [
                         'attribute' => 'idServicio',
@@ -98,28 +75,28 @@ $this->params['breadcrumbs'][] = $this->title;
                     [
                         'value' => function ($data) {
                             if (isset($data->persona->id_user) && $data->persona->id_user !== 0) {
-                                $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $data->id_persona);
+                                $idPes = (int) $data->id;
                                 $nombreServicio = $data->servicio !== null ? $data->servicio->nombre : '';
 
                                 $botonAdminEfector = '<li class="list-group-item">' . Html::a(
                                     'Establecer AdminEfector',
-                                    ['/profesional-efector-servicio/create-admin-efector', 'id_rr_hh' => $idRrhh],
+                                    ['/profesional-efector-servicio/create-admin-efector', 'id_pes' => $idPes],
                                     [
-                                        'class' => 'btn btn-sm btn-warning ajax_adminefector', 
+                                        'class' => 'btn btn-sm btn-warning ajax_adminefector',
                                         'alert_title' => 'Confirme la asignacion de "'.
                                             $data->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N).
-                                            '" como administrador de este efector', 
+                                            '" como administrador de este efector',
                                     ]
                                 ) . '</li>';
 
                                 if ($nombreServicio === 'ADMINISTRAR EFECTOR') {
                                     $botonAdminEfector = '<li class="list-group-item">' . Html::a(
                                         'Quitar AdminEfector',
-                                        ['/profesional-efector-servicio/remove-admin-efector', 'id_rr_hh' => $idRrhh],
+                                        ['/profesional-efector-servicio/remove-admin-efector', 'id_pes' => $idPes],
                                         ['class' => 'btn btn-sm btn-warning ajax_adminefector',
                                             'alert_title' => 'Seguro desea quitar a "'.
                                             $data->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N).
-                                            '" como administrador de este efector?',                                         
+                                            '" como administrador de este efector?',
                                         ]
                                     ) . '</li>';
                                 }
@@ -154,8 +131,7 @@ $this->params['breadcrumbs'][] = $this->title;
 </div>
 
 <?php
-//var_dump($withOffcanvas);die;
-$this->registerJs(    
+$this->registerJs(
     "
     $(document).ready(function() {
         $('.ajax_adminefector').click(function(e) {
@@ -168,8 +144,8 @@ $this->registerJs(
 
                         $.ajax({
                             url: url,
-                            type: 'POST',                            
-                            success: function (data) {                                
+                            type: 'POST',
+                            success: function (data) {
                                 alertaFlotante('Listo', 'success');
                                 parent.html(data);
                             },
@@ -179,7 +155,7 @@ $this->registerJs(
                         });
                     }
                 });
-        });        
+        });
     });
     "
 );

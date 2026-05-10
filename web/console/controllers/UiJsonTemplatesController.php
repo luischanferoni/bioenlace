@@ -70,7 +70,7 @@ class UiJsonTemplatesController extends Controller
                     continue;
                 }
                 if (isset($decoded['wizard_config']) || isset($decoded['steps'])) {
-                    $errors[] = "ui_json legacy (wizard_config/steps) no permitido: {$path}";
+                    $errors[] = "ui_json obsoleto (wizard_config/steps) no permitido: {$path}";
                 }
                 foreach ($decoded['blocks'] as $idx => $b) {
                     if (!is_array($b)) {

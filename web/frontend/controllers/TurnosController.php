@@ -98,8 +98,6 @@ class TurnosController extends Controller
 
         $idEfector = Yii::$app->user->getIdEfector();
 
-        $id_rr_hh = Yii::$app->request->get('id_rr_hh');
-
         $serviciosXEfector = ServiciosEfector::rrhhPorServiciosAgendaPorEfector($idEfector, $id_servicio_practica);
         $idsServiciosSinDerivacion = yii\helpers\ArrayHelper::getColumn($serviciosXEfector['SIN_DERIVACION'], 'id_servicio');
         $idsServiciosConDerivacion = yii\helpers\ArrayHelper::getColumn($serviciosXEfector['CON_DERIVACION'], 'id_servicio');
@@ -171,7 +169,7 @@ class TurnosController extends Controller
      * Este metodo carga las horas disponibles por día
      * Se lo llama desde js despues de llamar a turnos/calendario
      *
-     * Recibe `id_profesional_efector_servicio` (PES), opcionalmente `id_rr_hh` + servicio, e `id_servicio`.
+     * Recibe `id_profesional_efector_servicio` (PES), más `id_servicio` y día cuando corresponda.
      * @no_intent_catalog
     */
     public function actionEventos()
@@ -179,21 +177,14 @@ class TurnosController extends Controller
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         $request = Yii::$app->request;
-        $dia = $request->get('dia') ?: $request->post('dia') ?: date("Y-m-d");
-        $id_servicio = $request->get('id_servicio') ?: $request->post('id_servicio');
-        $id_rr_hh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
+        $params = array_merge($request->get(), $request->post());
+        $dia = $params['dia'] ?? date("Y-m-d");
+        $id_servicio = $params['id_servicio'] ?? null;
         $id_efector = Yii::$app->user->getIdEfector();
 
-        $idPesReq = (int) ($request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio') ?: 0);
-        if ($idPesReq <= 0 && $id_rr_hh && $id_servicio && $id_efector) {
-            $idPesReq = (int) (ProfesionalEfectorServicio::resolverIdPesDesdeRrhhServicioYEfector(
-                (int) $id_rr_hh,
-                (int) $id_servicio,
-                (int) $id_efector
-            ) ?: 0);
-        }
+        $idPesReq = (int) ($params['id_profesional_efector_servicio'] ?? 0);
 
-        $formatoSlots = ($request->get('formato') ?: $request->post('formato')) === 'slots';
+        $formatoSlots = (($params['formato'] ?? '') === 'slots');
 
         $turnosQuery = Turno::findActive();
         if ($idPesReq > 0) {
@@ -551,16 +542,7 @@ class TurnosController extends Controller
     public function actionList()
     {
         $tfecha = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['fecha'] : date("Y-m-d") . ' - ' . date("Y-m-d");
-        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
-        if ($idRrhh <= 0) {
-            $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
-            if ($idPes > 0) {
-                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-                if ($pes !== null) {
-                    $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
-                }
-            }
-        }
+        $idStaffContext = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?: Yii::$app->user->getIdRecursoHumano() ?: 0);
         $servicioAsignado = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['id_servicio_asignado'] : NULL;
         $idPesFiltroList = Yii::$app->request->get('TurnoBusqueda')['id_profesional_efector_servicio'] ?? null;
 
@@ -571,7 +553,7 @@ class TurnosController extends Controller
         if ($idPesFiltroList != null) {
             $searchModel->id_profesional_efector_servicio = $idPesFiltroList;
         }
-        $dataProvider = $searchModel->searchAllTurnos($tfecha, $idRrhh);
+        $dataProvider = $searchModel->searchAllTurnos($tfecha, $idStaffContext);
         return $this->render('list', [
             'turnos' => $searchModel,
             'dataProvider' => $dataProvider,

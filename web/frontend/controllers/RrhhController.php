@@ -190,7 +190,7 @@ class RrhhController extends Controller
                 $idServicio = $parents[1];
 
                 $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorServicioEfector($idEfector, $idServicio);
-                $arrayEfectores = ArrayHelper::map($profesionales, 'id_rr_hh', 'datos');
+                $arrayEfectores = ArrayHelper::map($profesionales, 'id', 'datos');
 
                 foreach ($arrayEfectores as $key => $value) {
                     $out[] = ['id' => $key, 'name' => $value];

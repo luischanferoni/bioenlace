@@ -130,7 +130,7 @@ return [
                 'POST api/<version:\w+>/motivos-consulta/subir' => '<version>/motivos-consulta/subir',
                 'OPTIONS api/<version:\w+>/motivos-consulta/subir' => '<version>/motivos-consulta/subir',
                 
-                // Turnos / agenda profesional API: día operativo; ABM profesional_efector_servicio_agenda = listar|crear|actualizar|eliminar (propio) vs *-para-recurso (staff, listar con id_efector+id_rr_hh)
+                // Turnos / agenda profesional API: día operativo; ABM profesional_efector_servicio_agenda = listar|crear|actualizar|eliminar (propio) vs *-para-recurso (staff; query id_efector + id_profesional_efector_servicio)
                 'GET api/<version:\w+>/profesional-agenda/dia' => '<version>/profesional-agenda/dia',
                 'OPTIONS api/<version:\w+>/profesional-agenda/dia' => '<version>/profesional-agenda/dia',
                 'GET api/<version:\w+>/profesional-agenda/listar-para-recurso' => '<version>/profesional-agenda/listar-para-recurso',

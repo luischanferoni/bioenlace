@@ -59,18 +59,14 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
                 return;
             }
         }
-        if ($this->id_rr_hh && $this->id_consulta) {
-            $c = Consulta::findOne($this->id_consulta);
-            if ($c && $c->id_efector && $c->id_servicio) {
-                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rr_hh);
-                if ($idPersona !== null && $idPersona > 0) {
-                    $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                        $idPersona,
-                        (int) $c->id_efector,
-                        (int) $c->id_servicio
-                    );
-                    return;
-                }
+        if ($this->id_profesional_efector_servicio !== null && $this->id_profesional_efector_servicio !== '' && (int) $this->id_profesional_efector_servicio > 0) {
+            return;
+        }
+        if (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
+            $idPes = Yii::$app->user->getIdProfesionalEfectorServicio();
+            if ($idPes !== null && $idPes !== '' && (int) $idPes > 0) {
+                $this->id_profesional_efector_servicio = (int) $idPes;
+                return;
             }
         }
         $this->id_profesional_efector_servicio = null;
@@ -83,7 +79,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
         return [
             [['fecha_creacion', 'hora_creacion'], 'safe'],
-            [['id_consulta', 'id_persona', 'id_user', 'id_rr_hh', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_consulta', 'id_persona', 'id_user', 'id_profesional_efector_servicio'], 'integer'],
             [['datos', 'id_consulta'], 'required'],
             [['datos'], 'validarDatos'],
         ];
@@ -269,32 +265,14 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     * porRecursohumano busca un registro creado por un recurso humano
     * TODO: definir si usar el id de recurso humano o el id de usuario univoco para todo el sistema
     */
-    public static function porRecursohumano($id_rr_hh, $fecha_consulta)
+    public static function porRecursohumano($id_profesional_efector_servicio, $fecha_consulta)
     {
-        $q = ConsultaAtencionesEnfermeria::find()
-            ->where(['fecha_creacion' => $fecha_consulta . ' 00:00:00']);
-        $or = [['id_rr_hh' => $id_rr_hh]];
-        if (Yii::$app->has('user') && !Yii::$app->user->isGuest) {
-            $idEfector = (int) (Yii::$app->user->getIdEfector() ?? 0);
-            if ($idEfector > 0) {
-                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $id_rr_hh);
-                if ($idPersona !== null && $idPersona > 0) {
-                    $pesIds = ProfesionalEfectorServicio::find()
-                        ->select(['id'])
-                        ->where([
-                            'id_persona' => $idPersona,
-                            'id_efector' => $idEfector,
-                            'deleted_at' => null,
-                        ])
-                        ->column();
-                    if ($pesIds !== []) {
-                        $or[] = ['in', 'id_profesional_efector_servicio', $pesIds];
-                    }
-                }
-            }
-        }
+        $idPes = (int) $id_profesional_efector_servicio;
 
-        return $q->andWhere(array_merge(['or'], $or))->one();
+        return ConsultaAtencionesEnfermeria::find()
+            ->where(['fecha_creacion' => $fecha_consulta . ' 00:00:00'])
+            ->andWhere(['id_profesional_efector_servicio' => $idPes])
+            ->one();
     }
 
     /*
@@ -763,7 +741,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
 
         if ($insert
             || $this->isAttributeChanged('id_consulta', false)
-            || $this->isAttributeChanged('id_rr_hh', false)
+            || $this->isAttributeChanged('id_profesional_efector_servicio', false)
         ) {
             $this->syncProfesionalEfectorServicioFromContext();
         }

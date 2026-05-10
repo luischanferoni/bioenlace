@@ -28,19 +28,17 @@ class BioenlaceDbManager extends DbManager
      */
     protected function applyEfectorAssignmentSessionFilter(Query $query): void
     {
-        if ($this->isProfesionalEfectorServicioAssignmentTable()) {
-            $idPersona = (int) Yii::$app->user->getIdPersona();
-            $idEfector = (int) Yii::$app->user->getIdEfector();
-            if ($idPersona > 0) {
-                $query->andWhere(['{{a}}.[[id_persona]]' => $idPersona]);
-            }
-            if ($idEfector > 0) {
-                $query->andWhere(['{{a}}.[[id_efector]]' => $idEfector]);
-            }
-
-            return;
+        if (!$this->isProfesionalEfectorServicioAssignmentTable()) {
+            throw new \RuntimeException('BioenlaceDbManager: configure authManager.efectorAssignmentTable como profesional_efector_servicio.');
         }
-        $query->andWhere(['{{a}}.[[id_rr_hh]]' => $this->sessionIdRrhh()]);
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona > 0) {
+            $query->andWhere(['{{a}}.[[id_persona]]' => $idPersona]);
+        }
+        if ($idEfector > 0) {
+            $query->andWhere(['{{a}}.[[id_efector]]' => $idEfector]);
+        }
     }
 
     /**
@@ -48,20 +46,9 @@ class BioenlaceDbManager extends DbManager
      */
     protected function shouldLoadEfectorPermissionsForCurrentUser(): bool
     {
-        if ($this->isProfesionalEfectorServicioAssignmentTable()) {
-            return (int) Yii::$app->user->getIdPersona() > 0 && (int) Yii::$app->user->getIdEfector() > 0;
-        }
-        $id = $this->sessionIdRrhh();
-
-        return $id !== null && $id !== '' && (int) $id > 0;
-    }
-
-    /**
-     * @return int|string|null id_rr_hh en sesión
-     */
-    protected function sessionIdRrhh()
-    {
-        return Yii::$app->user->getIdRecursoHumano();
+        return $this->isProfesionalEfectorServicioAssignmentTable()
+            && (int) Yii::$app->user->getIdPersona() > 0
+            && (int) Yii::$app->user->getIdEfector() > 0;
     }
 
     /**
@@ -92,7 +79,7 @@ class BioenlaceDbManager extends DbManager
 
         // Sumamos los roles permisos recurso humano / PES
         if ($this->shouldLoadEfectorPermissionsForCurrentUser()) {
-            $permissions = $this->getDirectPermissionsByRrhh();
+            $permissions = $this->getDirectPermissionsByEfectorAssignment();
         }
 
         // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getInheritedPermissionsByUser()
@@ -117,7 +104,7 @@ class BioenlaceDbManager extends DbManager
         return $permissions;
     }
 
-    protected function getDirectPermissionsByRrhh()
+    protected function getDirectPermissionsByEfectorAssignment()
     {
         $query = (new Query())->select('b.*')
             ->from(['a' => $this->efectorAssignmentTable, 'b' => $this->itemTable, 'c' => 'servicios']);
@@ -147,7 +134,7 @@ class BioenlaceDbManager extends DbManager
 
         // Sumamos los permisos por recurso humano / PES
         if ($this->shouldLoadEfectorPermissionsForCurrentUser()) {
-            $permissions = $this->getInheritedPermissionsByRrhh();
+            $permissions = $this->getInheritedPermissionsByEfectorAssignment();
         }
 
         // Obtener todos los roles del usuario (incluyendo "paciente" si se agregó dinámicamente)
@@ -214,7 +201,7 @@ class BioenlaceDbManager extends DbManager
         return $permissions;
     }
 
-    protected function getInheritedPermissionsByRrhh()
+    protected function getInheritedPermissionsByEfectorAssignment()
     {
         $query = (new Query())->select('c.item_name')
             ->from(['a' => $this->efectorAssignmentTable, 'c' => 'servicios']);
@@ -259,7 +246,7 @@ class BioenlaceDbManager extends DbManager
 
         // Sumamos los roles por recurso humano / PES
         if ($this->shouldLoadEfectorPermissionsForCurrentUser()) {
-            $roles = array_merge($roles, $this->getRolesByRrhh());
+            $roles = array_merge($roles, $this->getRolesByEfectorAssignment());
         }
 
         // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getRolesByUser()        
@@ -356,7 +343,7 @@ class BioenlaceDbManager extends DbManager
      * TODO: Eventualmente todos los usuarios estarían asignados a roles con prefijos (especiales),
      * el resto de roles son asignados a recursos humanos
      */    
-    public function getRolesByRrhh()
+    public function getRolesByEfectorAssignment()
     {
         $roles = [];
         $query = (new Query())->select('b.*')

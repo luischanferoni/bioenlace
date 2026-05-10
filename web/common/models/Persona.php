@@ -278,7 +278,7 @@ class Persona extends \yii\db\ActiveRecord
             ->andWhere([
                 'or',
                 ['id_servicio_asignado' => $idServicio],
-                ['id_rr_hh' => $idRrhh],
+                ['id_profesional_efector_servicio' => $idRrhh],
             ])
             ->one();
     }
@@ -872,7 +872,7 @@ class Persona extends \yii\db\ActiveRecord
      * Turno del día pendiente alineado con servicio en sesión, `id_rr_hh` del turno y/o PES.
      *
      * @param int|string|null $idServicio
-     * @param int|string|null $idRrhh id recurso humano en sesión (comparación con `turnos.id_rr_hh`)
+     * @param int|string|null $idRrhh contexto staff / PK PES en sesión (comparación con `turnos.id_profesional_efector_servicio`)
      * @param int|string|null $idEfector
      * @param int|string|null $idProfesionalEfectorServicio si null y hay `Yii::$app->user`, se usa `getIdProfesionalEfectorServicio()`
      */
@@ -895,7 +895,8 @@ class Persona extends \yii\db\ActiveRecord
                     && $turno->id_profesional_efector_servicio !== null
                     && (int) $turno->id_profesional_efector_servicio === $idPes;
                 $matchRrhh = $idRrhh !== null && $idRrhh !== ''
-                    && (int) $turno->id_rr_hh === (int) $idRrhh;
+                    && $turno->id_profesional_efector_servicio !== null
+                    && (int) $turno->id_profesional_efector_servicio === (int) $idRrhh;
 
                 if (($turno->id_servicio_asignado == $idServicio || $matchRrhh || $matchPes)
                     && $turno->id_efector == $idEfector

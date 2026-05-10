@@ -42,7 +42,7 @@ class ChatController extends BaseController
         $body = Yii::$app->request->getBodyParams();
         $intentId = isset($body['intent_id']) ? trim((string) $body['intent_id']) : '';
 
-        // Modo intent (SubIntentEngine): no hay retrocompatibilidad/legacy aquí.
+        // Modo intent (SubIntentEngine): solo rutas del motor de intents.
         if ($intentId !== '') {
             $userId = (int) Yii::$app->user->id;
             $body = is_array($body) ? $body : [];

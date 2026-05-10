@@ -10,6 +10,7 @@ use yii\web\NotFoundHttpException;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\UiScreenService;
+use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 
 /**
@@ -20,8 +21,8 @@ use common\models\ProfesionalEfectorServicioAgenda;
  * **Listado siempre:** el detalle por ítem viene en cada fila del listado; no hay acciones `ver-*`.
  *
  * **RBAC (alineado a Turnos: ámbito propio vs operativo sobre tercero):**
- * - **`listar`, `crear`, `actualizar`, `eliminar`:** RRHH del usuario en sesión; efector desde sesión (no se aceptan `id_rr_hh` / `id_efector` en query para ampliar alcance).
- * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; listar exige **`id_efector`** y **`id_profesional_efector_servicio`** *o* **`id_rr_hh`**; alta para recurso: **`id_efector`** + **`id_profesional_efector_servicio`**.
+ * - **`listar`, `crear`, `actualizar`, `eliminar`:** profesional en sesión (contexto PES); efector desde sesión (no se aceptan `id_efector` ni IDs de otro profesional en query para ampliar alcance).
+ * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; **`id_efector`** + **`id_profesional_efector_servicio`**.
  *
  * Permisos `/api/profesional-agenda/...` (sin `v1` en webvimark):
  * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso
@@ -35,7 +36,7 @@ class ProfesionalAgendaController extends BaseController
      *
      * @action_name Configurar agenda (horarios/cupo/modo) por servicio
      * @entity Agendas
-     * @tags agenda, rrhh, servicios, horarios, cupo, staff
+     * @tags agenda, profesional, servicios, horarios, cupo, staff
      * @keywords configurar agenda profesional, horarios por servicio, cupo pacientes, forma de atención
      * @spa_presentation fullscreen
      */
@@ -74,7 +75,7 @@ class ProfesionalAgendaController extends BaseController
     }
 
     /**
-     * Listado paginado del RRHH logueado en el efector de sesión. RBAC: /api/profesional-agenda/listar
+     * Listado paginado del profesional en sesión (contexto PES) en el efector actual. RBAC: /api/profesional-agenda/listar
      *
      * @action_name Listar mis agendas por servicio
      * @entity Agendas
@@ -85,7 +86,7 @@ class ProfesionalAgendaController extends BaseController
     {
         $idRrhh = $this->requireRecursoHumanoId();
         $params = Yii::$app->request->queryParams;
-        unset($params['id_rr_hh'], $params['id_efector']);
+        unset($params['id_profesional_contexto'], $params['id_efector']);
 
         $dp = ProfesionalEfectorServicioAgendaApiService::searchForRecursoHumano($params, $idRrhh);
 
@@ -93,41 +94,35 @@ class ProfesionalAgendaController extends BaseController
     }
 
     /**
-     * Listado de un médico concreto. Query obligatorio: `id_efector` y `id_profesional_efector_servicio` *o* `id_rr_hh`. RBAC: /api/profesional-agenda/listar-para-recurso
+     * Listado de un médico concreto. Query obligatorio: `id_efector` y `id_profesional_efector_servicio`. RBAC: /api/profesional-agenda/listar-para-recurso
      *
      * @action_name Listar agendas de un recurso en un efector
      * @entity Agendas
-     * @tags agenda,staff,listar,rrhh,efector
+     * @tags agenda, staff, listar, efector
      * @keywords agendas de un médico, listar horarios profesional
      */
     public function actionListarParaRecurso()
     {
         $params = Yii::$app->request->queryParams;
         $idEfector = (int) ($params['id_efector'] ?? 0);
-        $idPes = (int) ($params['id_profesional_efector_servicio'] ?? 0);
-        $idRrhh = (int) ($params['id_rr_hh'] ?? 0);
-        if ($idEfector <= 0 || ($idRrhh <= 0 && $idPes <= 0)) {
+        $idStaff = ProfesionalEfectorServicio::staffContextIdFromRequestParams($params);
+        if ($idEfector <= 0 || $idStaff <= 0) {
             throw new BadRequestHttpException(
-                'id_efector e id_profesional_efector_servicio, o id_efector e id_rr_hh, son obligatorios.'
+                'id_efector e id_profesional_efector_servicio son obligatorios.'
             );
         }
         $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
-        if ($idPes > 0) {
-            ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
-            unset($params['id_rr_hh']);
-            $params['id_profesional_efector_servicio'] = $idPes;
-            $params['id_efector'] = $idEfector;
-            $dp = ProfesionalEfectorServicioAgendaApiService::search($params);
-        } else {
-            ProfesionalEfectorServicioAgendaApiService::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
-            $dp = ProfesionalEfectorServicioAgendaApiService::searchParaRecursoHumanoEnEfector($params, $idEfector, $idRrhh);
-        }
+        ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idStaff, $idEfector);
+        unset($params['id_profesional_contexto']);
+        $params['id_profesional_efector_servicio'] = $idStaff;
+        $params['id_efector'] = $idEfector;
+        $dp = ProfesionalEfectorServicioAgendaApiService::search($params);
 
         return $this->paginatedListResponse($dp);
     }
 
     /**
-     * Alta para el propio RRHH. RBAC: /api/profesional-agenda/crear
+     * Alta para el profesional en contexto. RBAC: /api/profesional-agenda/crear
      *
      * @action_name Crear agenda para uno de mis servicios
      * @entity Agendas
@@ -229,7 +224,7 @@ class ProfesionalAgendaController extends BaseController
     {
         $id = (int) Yii::$app->user->getIdRecursoHumano();
         if ($id <= 0) {
-            throw new BadRequestHttpException('No se pudo determinar el recurso humano del usuario.');
+            throw new BadRequestHttpException('No se pudo determinar el contexto profesional en sesión.');
         }
 
         return $id;
@@ -269,9 +264,10 @@ class ProfesionalAgendaController extends BaseController
         $body = $this->normalizeAgendaRequestBody();
 
         if ($paraRecurso) {
-            $idEfector = (int) ($body['id_efector'] ?? Yii::$app->request->get('id_efector') ?? 0);
-            $idPes = (int) ($body['id_profesional_efector_servicio'] ?? Yii::$app->request->get('id_profesional_efector_servicio') ?? 0);
-            unset($body['id_efector'], $body['id_rr_hh'], $body['id_profesional_efector_servicio']);
+            $merged = array_merge(Yii::$app->request->get(), is_array($body) ? $body : []);
+            $idEfector = (int) ($merged['id_efector'] ?? 0);
+            $idPes = ProfesionalEfectorServicio::staffContextIdFromRequestParams($merged);
+            unset($body['id_efector'], $body['id_profesional_contexto'], $body['id_profesional_efector_servicio']);
 
             if ($idEfector <= 0 || $idPes <= 0) {
                 throw new BadRequestHttpException('id_efector e id_profesional_efector_servicio son requeridos para crear agenda para otro recurso.');
@@ -279,9 +275,13 @@ class ProfesionalAgendaController extends BaseController
             $this->assertEfectorParamMatchesSessionWhenPresent($idEfector);
             $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
         } else {
+            $merged = array_merge(Yii::$app->request->get(), is_array($body) ? $body : []);
             $idEfector = $this->requireEfectorId();
-            $idPes = (int) ($body['id_profesional_efector_servicio'] ?? Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
-            unset($body['id_efector'], $body['id_rr_hh'], $body['id_profesional_efector_servicio']);
+            $idPes = ProfesionalEfectorServicio::staffContextIdFromRequestParams($merged);
+            if ($idPes <= 0) {
+                $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+            }
+            unset($body['id_efector'], $body['id_profesional_contexto'], $body['id_profesional_efector_servicio']);
 
             if ($idPes <= 0) {
                 return $this->error(
@@ -336,7 +336,7 @@ class ProfesionalAgendaController extends BaseController
         }
 
         $body = $this->normalizeAgendaRequestBody();
-        unset($body['id_agenda_rrhh'], $body['id_efector'], $body['id_rr_hh'], $body['id_rrhh_servicio_asignado']);
+        unset($body['id_agenda_rrhh'], $body['id_efector'], $body['id_profesional_contexto'], $body['id_rrhh_servicio_asignado']);
 
         $lockedEfector = (int) $model->id_efector;
         $lockedPes = (int) $model->id_profesional_efector_servicio;

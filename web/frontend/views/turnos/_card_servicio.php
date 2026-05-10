@@ -36,7 +36,7 @@ use common\models\ServiciosEfector;
                     "data-bs-target" => "#modal-general",
                     "data-bs-toggle" => "modal",
                     "data-title" => sprintf("Turno para %s, %s", $persona->apellido, $persona->nombre),
-                    "data-bioenlace-id_servicio" => $servicioEfector->id_servicio
+                    "data-bioenlace-id_servicio" => $servicioEfector->id_servicio,
                     ]
                 )."</div>";
             } else {
@@ -51,7 +51,7 @@ use common\models\ServiciosEfector;
                     
                     <a class="btn btn-soft btn-sm rounded-pill me-3" 
                         style="background-color: <?php echo $color; ?>" 
-                        href="<?= Url::to(['turnos/espera', 'rrhh' => $pes->id]) ?>" 
+                        href="<?= Url::to(['turnos/espera', 'pes' => $pes->id]) ?>" 
                         target="_blank"
                         data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Imprimir turnos"
                         >
@@ -73,7 +73,7 @@ use common\models\ServiciosEfector;
                             "data-bs-toggle" => "modal",
                             "data-title" => sprintf("Turno para %s, %s", $persona->apellido, $persona->nombre),
                             "data-bioenlace-id_servicio" => $servicioEfector->id_servicio,
-                            "data-bioenlace-id_rrhh_sa" => $pes->id,
+                            "data-bioenlace-id_profesional_efector_servicio" => $pes->id,
                             ]
                         );?>
                     <?php endif ?>

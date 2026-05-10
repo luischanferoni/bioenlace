@@ -43,6 +43,7 @@ use common\models\Departamento;
 use common\models\Persona_mails;
 use common\models\Persona_hc;
 use common\models\Tipo_documento;
+use common\models\ProfesionalEfectorServicio;
 use common\controllers\Model;
 use frontend\controllers\MpiApiController;
 use frontend\filters\SisseActionFilter;
@@ -70,7 +71,7 @@ class PersonasController extends Controller {
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['post'],
-                    'deleterrhh' => ['post'],
+                    'eliminar-asignaciones-pes-en-efector' => ['post'],
                 ],
             ],
         ];
@@ -767,17 +768,58 @@ public function actionListaCandidatos(){
     }
 
     /**
-     * Action para mostrar el listado de personas con sus datos de rrhh
-     * 
+     * @deprecated Preferir {@see actionIndexPersonasPes}.
      */
-    public function actionIndexpersonarrhh() {
+    public function actionIndexpersonarrhh()
+    {
+        return $this->redirect(['index-personas-pes'], 301);
+    }
 
+    /**
+     * Listado de personas con asignación PES en el efector de sesión (vista `personas_rrhh`).
+     */
+    public function actionIndexPersonasPes()
+    {
         $searchModel = new PersonaBusqueda();
-        $dataProvider = $searchModel->searchpersonarrhh(Yii::$app->request->queryParams);
-        return $this->render('indexpersonarrhh', [
+        $dataProvider = $searchModel->searchPersonasAsignacionPes(Yii::$app->request->queryParams);
+
+        return $this->render('index_personas_pes', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);
+    }
+
+    /**
+     * Quita todas las filas PES de la persona en el efector de sesión (POST `id`: id PES o id de compatibilidad con tab antigua).
+     */
+    public function actionEliminarAsignacionesPesEnEfector()
+    {
+        Yii::$app->response->format = Response::FORMAT_RAW;
+        $id = (int) Yii::$app->request->post('id');
+        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+        if ($id <= 0 || $idEfectorSesion <= 0) {
+            return 'ok';
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $id, 'deleted_at' => null]);
+        $idPersona = null;
+        if ($pes !== null && (int) $pes->id_efector === $idEfectorSesion) {
+            $idPersona = (int) $pes->id_persona;
+        } else {
+            $resolved = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($id);
+            $idPersona = ($resolved !== null && (int) $resolved > 0) ? (int) $resolved : null;
+        }
+        if ($idPersona === null || $idPersona <= 0) {
+            return 'ok';
+        }
+        foreach (
+            ProfesionalEfectorServicio::find()
+                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfectorSesion, 'deleted_at' => null])
+                ->all() as $row
+        ) {
+            $row->delete();
+        }
+
+        return 'ok';
     }
 
     public function actionPersonasAutocomplete($q = null, $id = null) {

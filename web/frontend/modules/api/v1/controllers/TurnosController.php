@@ -109,11 +109,6 @@ class TurnosController extends BaseController
     {
         $request = Yii::$app->request;
         $fecha = $request->get('fecha', date('Y-m-d'));
-        $rrhhRaw = $request->get('rrhh_id');
-        $rrhhId = $rrhhRaw !== null && $rrhhRaw !== ''
-            ? (int) $rrhhRaw
-            : (int) (Yii::$app->user->getIdRecursoHumano() ?: 0);
-
         $pesOverride = $request->get('id_profesional_efector_servicio');
         $pesId = ($pesOverride !== null && $pesOverride !== '') ? (int) $pesOverride : null;
         if ($pesId !== null && $pesId <= 0) {
@@ -123,13 +118,18 @@ class TurnosController extends BaseController
         $pesSesion = Yii::$app->user->getIdProfesionalEfectorServicio();
         $pesEfectivo = $pesId ?? ($pesSesion !== null && $pesSesion !== '' ? (int) $pesSesion : 0);
 
-        if ($rrhhId <= 0 && $pesEfectivo <= 0) {
+        $idProfQuery = ($pesOverride !== null && $pesOverride !== '') ? (int) $pesOverride : 0;
+        $idContextoProfesional = $idProfQuery > 0
+            ? $idProfQuery
+            : (int) (Yii::$app->user->getIdRecursoHumano() ?: 0);
+
+        if ($idContextoProfesional <= 0 && $pesEfectivo <= 0) {
             throw new BadRequestHttpException(
-                'Indique contexto de agenda: rrhh_id y/o id_profesional_efector_servicio, o fije sesión operativa (recurso/PES).'
+                'Indique id_profesional_efector_servicio o fije sesión operativa con contexto profesional.'
             );
         }
         try {
-            return PacientesController::agendaAmbulatorioJson($fecha, $rrhhId, true, $pesId);
+            return PacientesController::agendaAmbulatorioJson($fecha, $idContextoProfesional, true, $pesId);
         } catch (\Throwable $e) {
             Yii::error('TurnosController::agendaDiaResponse: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
             throw new \yii\web\ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
@@ -467,13 +467,8 @@ class TurnosController extends BaseController
                 if ($idPes !== null && $idPes <= 0) {
                     $idPes = null;
                 }
-                $idRrhh = $post['id_rr_hh'] ?? null;
-                $idRrhh = $idRrhh !== null && $idRrhh !== '' ? (int) $idRrhh : null;
-                if ($idRrhh !== null && $idRrhh <= 0) {
-                    $idRrhh = null;
-                }
                 try {
-                    $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, $idRrhh, Yii::$app->user->id, $idPes);
+                    $n = (new BulkCancelDayService())->cancelarDia($idEfector, $fecha, null, Yii::$app->user->id, $idPes);
                 } catch (\InvalidArgumentException $e) {
                     throw new BadRequestHttpException($e->getMessage());
                 }
@@ -511,7 +506,6 @@ class TurnosController extends BaseController
      * - id_servicio (obligatorio)
      * - id_efector (opcional; si falta, usa sesión)
      * - id_profesional_efector_servicio (opcional)
-     * - id_rr_hh (opcional; con id_servicio resuelve PES en el efector)
      * - limite, franja_tarde_desde (opcionales; defaults `turnosPaciente`)
      * - restricciones (JSON array; mismo formato que {@see TurnoSlotFinder::findAvailableSlots})
      *
@@ -895,10 +889,6 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException('El horario ya no está disponible');
         }
         $turno->id_profesional_efector_servicio = $idPesPost;
-        $idRrSync = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pesPost->id_persona);
-        if ($idRrSync > 0) {
-            $turno->id_rr_hh = $idRrSync;
-        }
         $turno->fecha = $fecha;
         $turno->hora = $hora;
         if (!$turno->save()) {
@@ -956,9 +946,6 @@ class TurnosController extends BaseController
 
         if (!$model->id_efector) {
             $model->id_efector = Yii::$app->user->getIdEfector();
-        }
-        if (!$model->id_rr_hh) {
-            $model->id_rr_hh = ProfesionalContextResolver::resolveRrhhIdFromSessionOrPes() ?: null;
         }
         if (!$model->id_servicio) {
             $model->id_servicio = Yii::$app->user->getServicioActual();
@@ -1037,7 +1024,6 @@ class TurnosController extends BaseController
     {
         $dia = $params['dia'] ?? date('Y-m-d');
         $id_servicio = $params['id_servicio'] ?? null;
-        $id_rr_hh = $params['id_rr_hh'] ?? null;
         $id_efector = Yii::$app->user->getIdEfector();
 
         $idPesParam = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
@@ -1045,14 +1031,6 @@ class TurnosController extends BaseController
             $sPes = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPesParam = $sPes !== null && $sPes !== '' ? (int) $sPes : 0;
         }
-        if ($idPesParam <= 0 && $id_rr_hh && $id_servicio && $id_efector) {
-            $idPesParam = (int) (ProfesionalEfectorServicio::resolverIdPesDesdeRrhhServicioYEfector(
-                (int) $id_rr_hh,
-                (int) $id_servicio,
-                (int) $id_efector
-            ) ?: 0);
-        }
-
         $formatoSlots = isset($params['formato']) && $params['formato'] === 'slots';
 
         $turnosQuery = Turno::findActive();

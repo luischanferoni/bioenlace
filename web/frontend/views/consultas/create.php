@@ -68,10 +68,19 @@ if (Yii::$app->getRequest()->getQueryParam('tipo_cons')) {
     }
 }
 
+$pesAtencionUrl = 0;
+if (isset($id_profesional_efector_servicio)) {
+    $pesAtencionUrl = (int) $id_profesional_efector_servicio;
+}
+$urlAtencionEnfermeria = ['atenciones-enfermeria/create', 'id_persona' => $id_persona];
+if ($pesAtencionUrl > 0) {
+    $urlAtencionEnfermeria['id_profesional_efector_servicio'] = $pesAtencionUrl;
+}
+
 $array_opciones = [
     [
         'label' => 'Cargar datos',
-        'url' => ['atenciones-enfermeria/create', 'id_persona' => $id_persona, 'id_rr_hh' => $id_rr_hh],
+        'url' => $urlAtencionEnfermeria,
         'linkOptions' => [
             'class' => 'modalGeneral',
             'data-title' => 'Historial de Consultas',

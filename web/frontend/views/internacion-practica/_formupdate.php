@@ -55,7 +55,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
         $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
         echo $form->field($model, 'id_rrhh_solicita')->widget(Select2::classname(), [
-            'data' => ArrayHelper::map($profesionales, 'id_rr_hh', 'datos'),
+            'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
             'theme' => 'bootstrap',
             'language' => 'en',
             'readonly'=> true,
@@ -75,7 +75,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
         $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
         echo $form->field($model, 'id_rrhh_realiza')->widget(Select2::classname(), [
-            'data' => ArrayHelper::map($profesionales, 'id_rr_hh', 'datos'),
+            'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
             'theme' => 'bootstrap',
             'language' => 'en',
             'options' => ['placeholder' => 'Seleccione el Profesional que realiza la práctica'],

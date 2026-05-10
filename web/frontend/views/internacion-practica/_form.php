@@ -54,7 +54,7 @@ use yii\helpers\Url;
 
                             echo Select2::widget([
                                 'name' => "id_rrhh_solicita",
-                                'data' => ArrayHelper::map($profesionales, 'id_rr_hh', 'datos'),
+                                'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
                                 'theme' => 'bootstrap',
                                 'language' => 'en',
                                 'options' => ['placeholder' => 'Seleccione el Profesional que solicita'],

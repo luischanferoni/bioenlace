@@ -6,9 +6,9 @@ use yii\helpers\Html;
 /* @var $model common\models\ProfesionalEfectorServicio */
 /* @var $model_persona common\models\Persona|null */
 
-$this->title = 'Actualizar RRHH: ' . $model->id_rr_hh;
+$this->title = 'Actualizar asignación PES: ' . $model->id;
 $this->params['breadcrumbs'][] = ['label' => 'RRHH', 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => $model->id_rr_hh, 'url' => ['view', 'id' => $model->id_rr_hh]];
+$this->params['breadcrumbs'][] = ['label' => (string) $model->id, 'url' => ['view', 'id' => $model->id]];
 $this->params['breadcrumbs'][] = 'Actualizar';
 ?>
 <div class="rrhh-update">

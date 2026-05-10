@@ -22,36 +22,24 @@ final class ConsultaAccessService
             return true;
         }
 
-        $idRrhhConsulta = (int) $consulta->id_rr_hh;
-        $idRrhhSesion = (int) Yii::$app->user->getIdRecursoHumano();
-        if ($idRrhhConsulta > 0 && $idRrhhSesion > 0 && $idRrhhConsulta === $idRrhhSesion) {
-            return true;
-        }
-
-        $pesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
-        $idPesSesion = $pesSesionRaw !== null && $pesSesionRaw !== '' ? (int) $pesSesionRaw : 0;
         $idPesConsulta = (int) ($consulta->id_profesional_efector_servicio ?? 0);
-        if ($idPesSesion > 0 && $idPesConsulta > 0 && $idPesSesion === $idPesConsulta) {
+        $idPesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
+        $idPesSesion = $idPesSesionRaw !== null && $idPesSesionRaw !== '' ? (int) $idPesSesionRaw : 0;
+        if ($idPesSesion <= 0) {
+            $rh = Yii::$app->user->getIdRecursoHumano();
+            $idPesSesion = $rh !== null && $rh !== '' ? (int) $rh : 0;
+        }
+        if ($idPesConsulta > 0 && $idPesSesion > 0 && $idPesConsulta === $idPesSesion) {
             return true;
         }
-
-        if ($idPesSesion > 0) {
-            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
-            if ($pes !== null && $idRrhhConsulta > 0) {
-                $idRrhhPersona = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
-                if ($idRrhhPersona > 0 && $idRrhhPersona === $idRrhhConsulta) {
-                    return true;
-                }
-            }
-        }
-
-        if ($idRrhhSesion > 0 && $idPesConsulta > 0) {
+        if ($idPesSesion > 0 && $idPesConsulta > 0) {
+            $pesS = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
             $pesC = ProfesionalEfectorServicio::findOne(['id' => $idPesConsulta, 'deleted_at' => null]);
-            if ($pesC !== null) {
-                $idRrhhPersonaC = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pesC->id_persona);
-                if ($idRrhhPersonaC > 0 && $idRrhhPersonaC === $idRrhhSesion) {
-                    return true;
-                }
+            if (
+                $pesS !== null && $pesC !== null
+                && (int) $pesS->id_persona === (int) $pesC->id_persona
+            ) {
+                return true;
             }
         }
 
@@ -81,13 +69,8 @@ final class ConsultaAccessService
                 return true;
             }
         }
-        $idRrhhC = (int) $consulta->id_rr_hh;
-        if ($idRrhhC <= 0) {
-            return false;
-        }
-        $idPersonaConsulta = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhhC);
 
-        return $idPersonaConsulta !== null && (int) $idPersonaConsulta === (int) $persona->id_persona;
+        return false;
     }
 
     /**
@@ -108,18 +91,11 @@ final class ConsultaAccessService
             return false;
         }
         $idPesC = (int) ($consulta->id_profesional_efector_servicio ?? 0);
-        if ($idPesC > 0) {
-            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesC, 'deleted_at' => null]);
-            if ($pes !== null && (int) $pes->id_persona === (int) $persona->id_persona) {
-                return true;
-            }
-        }
-        $idRrhhC = (int) $consulta->id_rr_hh;
-        if ($idRrhhC <= 0) {
+        if ($idPesC <= 0) {
             return false;
         }
-        $idPersonaConsulta = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhhC);
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesC, 'deleted_at' => null]);
 
-        return $idPersonaConsulta !== null && (int) $idPersonaConsulta === (int) $persona->id_persona;
+        return $pes !== null && (int) $pes->id_persona === (int) $persona->id_persona;
     }
 }

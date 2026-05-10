@@ -214,7 +214,7 @@ class Referencia extends \yii\db\ActiveRecord
         $qPes = (new \yii\db\Query())
             ->select([
                 'id_servicio' => 'pes.id_servicio',
-                'id_rr_hh' => 'pes.id',
+                'id_profesional_efector_servicio' => 'pes.id',
                 'id_persona' => 'pes.id_persona',
                 'id_user' => 'personas.id_user',
                 'username' => 'user.username',

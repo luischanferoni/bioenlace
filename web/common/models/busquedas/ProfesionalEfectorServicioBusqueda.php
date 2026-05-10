@@ -16,6 +16,8 @@ class ProfesionalEfectorServicioBusqueda extends Model
     const EFECTOR_SEARCH = 'EFECTOR_SEARCH';
 
     public $id_efector;
+    /** @var int|null PK PES (filtro directo en listado RRHH/PES). */
+    public $id_profesional_efector_servicio;
     public $id_persona;
     public $nombrePersona;
     public $nombreEfector;
@@ -25,7 +27,7 @@ class ProfesionalEfectorServicioBusqueda extends Model
     public function rules(): array
     {
         return [
-            [['id_persona', 'idServicio', 'id_efector'], 'integer'],
+            [['id_persona', 'idServicio', 'id_efector', 'id_profesional_efector_servicio'], 'integer'],
             [['nombrePersona', 'deleted_at'], 'safe'],
             [['nombreEfector'], 'safe', 'on' => self::EFECTOR_SEARCH],
         ];
@@ -37,7 +39,7 @@ class ProfesionalEfectorServicioBusqueda extends Model
     }
 
     /**
-     * Efector del contexto de listado (p. ej. `actionRrhh` fija `id_efector`).
+     * Efector del contexto de listado (p. ej. `EfectoresController::actionProfesionales` fija `id_efector`).
      */
     public function getEfector(): ?Efector
     {
@@ -60,11 +62,13 @@ class ProfesionalEfectorServicioBusqueda extends Model
         ]);
 
         $this->load($params);
-
         $query->andFilterWhere([
             'pes.id_efector' => $this->id_efector,
             'pes.id_persona' => $this->id_persona,
         ]);
+        if ($this->id_profesional_efector_servicio !== null && $this->id_profesional_efector_servicio !== '') {
+            $query->andWhere(['pes.id' => (int) $this->id_profesional_efector_servicio]);
+        }
 
         if ($this->deleted_at === 'null' || $this->deleted_at === null) {
             $query->andWhere(['pes.deleted_at' => null]);

@@ -6,8 +6,8 @@ use yii\widgets\DetailView;
 /* @var $this yii\web\View */
 /* @var $model common\models\ProfesionalEfectorServicio */
 
-$this->title = $model->id_rr_hh;
-$this->params['breadcrumbs'][] = ['label' => 'Rrhh Efectors', 'url' => ['index']];
+$this->title = 'PES #' . (int) $model->id;
+$this->params['breadcrumbs'][] = ['label' => 'Profesional–efector–servicio', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
@@ -16,8 +16,8 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Update', ['update', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector], ['class' => 'btn btn-primary']) ?>
-        <?= Html::a('Delete', ['delete', 'id_rr_hh' => $model->id_rr_hh, 'id_efector' => $model->id_efector], [
+        <?= Html::a('Update', ['update', 'id' => $model->id, 'id_efector' => $model->id_efector], ['class' => 'btn btn-primary']) ?>
+        <?= Html::a('Delete', ['delete', 'id' => $model->id, 'id_efector' => $model->id_efector], [
             'class' => 'btn btn-danger',
             'data' => [
                 'confirm' => 'Are you sure you want to delete this item?',
@@ -29,7 +29,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= DetailView::widget([
         'model' => $model,
         'attributes' => [
-            'id_rr_hh',
+            'id',
             'id_persona',
             'id_efector',
             'created_at',

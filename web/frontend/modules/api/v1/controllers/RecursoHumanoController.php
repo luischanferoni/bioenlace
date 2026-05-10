@@ -13,9 +13,9 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 
 /**
- * API recurso humano (profesional en efector): autocomplete por efector/servicio; servicios asignados al RRHH del usuario en un efector.
- * Autocomplete: migrado desde frontend\controllers\RrhhController::actionRrhhAutocomplete.
- * Servicios por RRHH: ver Historial API / backend ProfesionalEfectorServicio (legacy web).
+ * API profesional en efector: autocomplete por efector/servicio; servicios asignados en sesión.
+ * Autocomplete: migrado desde listados web legacy.
+ * Servicios por PES: ver backend ProfesionalEfectorServicio.
  */
 class RecursoHumanoController extends BaseController
 {
@@ -39,7 +39,7 @@ class RecursoHumanoController extends BaseController
     /**
      * @return array<string, mixed>
      */
-    private function buildRrhhAutocompleteFilters(string $idEfector, string $idServicio): array
+    private function buildProfesionalAutocompleteFilters(string $idEfector, string $idServicio): array
     {
         $req = Yii::$app->request;
         $filters = [
@@ -63,7 +63,7 @@ class RecursoHumanoController extends BaseController
     /**
      * @return array<int, array{id: string, name: string}>
      */
-    private function rrhhItemsForUi(?string $q, array $filters): array
+    private function profesionalItemsForUi(?string $q, array $filters): array
     {
         $rows = ProfesionalEnEfectorListadoUiService::autocompletePorEfectorServicio($q ?? '', $filters);
         $out = [];
@@ -80,8 +80,9 @@ class RecursoHumanoController extends BaseController
                 'id' => $id,
                 'name' => $text !== '' ? $text : $id,
             ];
-            if (isset($r['id_rr_hh']) && (int) $r['id_rr_hh'] > 0) {
-                $item['meta'] = ['id_rr_hh' => (int) $r['id_rr_hh']];
+            $pesId = (int) ($r['id_profesional_efector_servicio'] ?? $r['id'] ?? 0);
+            if ($pesId > 0) {
+                $item['meta'] = ['id_profesional_efector_servicio' => $pesId];
             }
             $out[] = $item;
         }
@@ -141,12 +142,12 @@ class RecursoHumanoController extends BaseController
     /**
      * GET|POST /api/v1/recurso-humano/listar-mis-servicios-en-efector
      *
-     * Lista servicios asignados al RRHH de la persona autenticada, filtrados como en el flujo web
+     * Lista servicios asignados al profesional autenticado, filtrados como en el flujo web
      * (servicio activo en el efector o servicio con item_name AdminEfector).
      *
      * Resolución del efector:
      * - Si viene `id_efector` o `idEfector`: se usa ese efector con la persona autenticada (asignaciones PES).
-     * - Si no: se intenta por `id_rr_hh` en sesión → PES de esa persona, o en último término `getIdEfector()` de sesión.
+     * - Si no: se intenta por contexto profesional en sesión (PES) → efector de esa asignación, o `getIdEfector()` de sesión.
      *
      * @return array{servicios: list<array{id_servicio: int, nombre: string}>}
      */
@@ -164,9 +165,9 @@ class RecursoHumanoController extends BaseController
         if ($idEfectorPedido > 0) {
             $idEfector = $idEfectorPedido;
         } else {
-            $idRrHhSesion = (int) Yii::$app->user->getIdRecursoHumano();
-            if ($idRrHhSesion > 0) {
-                $idPersonaSesion = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrHhSesion);
+            $idPesSesion = (int) Yii::$app->user->getIdRecursoHumano();
+            if ($idPesSesion > 0) {
+                $idPersonaSesion = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idPesSesion);
                 if ($idPersonaSesion !== null && $idPersonaSesion === $idPersona) {
                     $pesCtx = ProfesionalEfectorServicio::find()
                         ->where(['id_persona' => $idPersona, 'deleted_at' => null])
@@ -184,7 +185,7 @@ class RecursoHumanoController extends BaseController
 
         if ($idEfector <= 0) {
             throw new BadRequestHttpException(
-                'Indique id_efector o fije contexto operativo en sesión (efector / recurso humano) para listar servicios.'
+                'Indique id_efector o fije contexto operativo en sesión (efector / profesional) para listar servicios.'
             );
         }
 
@@ -234,15 +235,15 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * Vista embebible: listar RRHH (profesionales) de un efector como `ui_json`.
+     * Vista embebible: listar profesionales de un efector como `ui_json`.
      *
      * GET|POST /api/v1/recurso-humano/listar-por-efector
      *
      * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
      *
      * @action_name Listar profesionales por efector
-     * @entity Rrhh
-     * @tags views, ui, rrhh, profesional
+     * @entity Profesional
+     * @tags views, ui, profesional
      * @keywords elegir profesional, listar médicos, listar especialistas, efector
      */
     public function actionListarPorEfector(): array
@@ -291,16 +292,16 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * Vista embebible: listar RRHH (profesionales) de un efector como `ui_json`,
-     * filtrando a RRHH que tengan servicios con `servicios.acepta_turnos = SI`.
+     * Vista embebible: listar profesionales de un efector como `ui_json`,
+     * filtrando a quienes tengan servicios con `servicios.acepta_turnos = SI`.
      *
      * GET|POST /api/v1/recurso-humano/listar-por-efector-acepta-turnos
      *
      * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
      *
      * @action_name Listar profesionales (acepta turnos) por efector
-     * @entity Rrhh
-     * @tags views, ui, rrhh, profesional
+     * @entity Profesional
+     * @tags views, ui, profesional
      * @keywords elegir profesional, listar médicos, listar especialistas, efector, acepta turnos
      */
     public function actionListarPorEfectorAceptaTurnos(): array
@@ -349,15 +350,15 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * Vista embebible: listar servicios asignados a un RRHH como `ui_json`.
+     * Vista embebible: listar servicios asignados al profesional como `ui_json`.
      *
      * GET|POST /api/v1/recurso-humano/listar-servicios-en-efector
      *
-     * Parámetros: id_rr_hh o id_profesional_efector_servicio (uno obligatorio) para anclar el profesional en el efector de sesión.
+     * Parámetros: `id_profesional_efector_servicio` (obligatorio) para anclar el profesional en el efector de sesión.
      *
      * @action_name Listar servicios de un profesional (en efector)
-     * @entity Rrhh
-     * @tags views, ui, rrhh, servicios
+     * @entity Profesional
+     * @tags views, ui, servicios
      * @keywords elegir servicio, servicios asignados, agenda por servicio, efector
      */
     public function actionListarServiciosEnEfector(): array
@@ -393,14 +394,14 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * Vista embebible: servicios habilitados en el efector de sesión ({@see ServiciosEfector}), sin exigir RRHH previo.
+     * Vista embebible: servicios habilitados en el efector de sesión ({@see ServiciosEfector}), sin exigir profesional previo.
      * Sin `q` no se listan ítems (solo plantilla con buscador).
      *
      * GET|POST /api/v1/recurso-humano/listar-servicios-habilitados-efector
      *
      * @action_name Listar servicios habilitados en el efector
-     * @entity Rrhh
-     * @tags views, ui, rrhh, servicios, asistente
+     * @entity Profesional
+     * @tags views, ui, servicios, asistente
      */
     public function actionListarServiciosHabilitadosEfector(): array
     {
@@ -441,7 +442,7 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * Ancla el profesional vía `id_profesional_efector_servicio` o `id_rr_hh` + efector de sesión.
+     * Ancla el profesional vía `id_profesional_efector_servicio` en el efector de sesión.
      *
      * @return array{0: int, 1: int} id_persona del profesional, id_efector
      */
@@ -449,31 +450,18 @@ class RecursoHumanoController extends BaseController
     {
         $request = Yii::$app->request;
         $idPesRaw = $request->get('id_profesional_efector_servicio') ?: $request->post('id_profesional_efector_servicio');
-        if ($idPesRaw !== null && $idPesRaw !== '') {
-            $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $idPesRaw, 'deleted_at' => null]);
-            if ($pes === null) {
-                throw new BadRequestHttpException('id_profesional_efector_servicio inválido.');
-            }
-            if ((int) $pes->id_efector !== (int) $idEfectorSesion) {
-                throw new BadRequestHttpException('La PES no corresponde al efector de sesión.');
-            }
-
-            return [(int) $pes->id_persona, (int) $pes->id_efector];
+        if ($idPesRaw === null || $idPesRaw === '') {
+            throw new BadRequestHttpException('Indique id_profesional_efector_servicio.');
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $idPesRaw, 'deleted_at' => null]);
+        if ($pes === null) {
+            throw new BadRequestHttpException('id_profesional_efector_servicio inválido.');
+        }
+        if ((int) $pes->id_efector !== (int) $idEfectorSesion) {
+            throw new BadRequestHttpException('La asignación no corresponde al efector de sesión.');
         }
 
-        $idRrHh = $request->get('id_rr_hh') ?: $request->post('id_rr_hh');
-        if ($idRrHh === null || $idRrHh === '') {
-            throw new BadRequestHttpException('Indique id_rr_hh o id_profesional_efector_servicio.');
-        }
-        if (!ProfesionalEfectorServicio::rrhhTieneAsignacionPesEnEfector((int) $idRrHh, $idEfectorSesion)) {
-            throw new BadRequestHttpException('RRHH no válido para este efector.');
-        }
-        $idPersonaProf = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrHh);
-        if ($idPersonaProf === null || $idPersonaProf <= 0) {
-            throw new BadRequestHttpException('RRHH no válido para este efector.');
-        }
-
-        return [(int) $idPersonaProf, (int) $idEfectorSesion];
+        return [(int) $pes->id_persona, (int) $pes->id_efector];
     }
 
     private function requireIdEfectorFromSession(): int
@@ -487,8 +475,7 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * @return list<array{id:int,name:string,meta:array{id_rrhh_servicio:int, id_profesional_efector_servicio:int, acepta_turnos:string}>>
-     *         meta.id_rrhh_servicio: mismo entero que meta.id_profesional_efector_servicio (alias de payload); preferir el nombre canónico.
+     * @return list<array{id:int,name:string,meta:array{id_profesional_efector_servicio:int, acepta_turnos:string}}>
      */
     private function serviciosAsignadosItemsForPersonaEfector(int $idPersona, int $idEfector): array
     {
@@ -513,7 +500,6 @@ class RecursoHumanoController extends BaseController
                 'id' => (int) $pes->id_servicio,
                 'name' => $nombre,
                 'meta' => [
-                    'id_rrhh_servicio' => (int) $pes->id,
                     'id_profesional_efector_servicio' => (int) $pes->id,
                     'acepta_turnos' => $acepta,
                 ],
@@ -546,14 +532,14 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * UI JSON: crear/editar condición laboral (vigencia) de un RRHH.
+     * UI JSON: crear/editar condición laboral (vigencia) de un profesional.
      *
      * GET|POST /api/v1/recurso-humano/editar-condicion-laboral
      *
-     * @action_name Editar condición laboral (RRHH)
-     * @entity Rrhh
-     * @tags rrhh, condicion-laboral, staff
-     * @keywords condición laboral, vigencia, rrhh
+     * @action_name Editar condición laboral (profesional)
+     * @entity Profesional
+     * @tags condicion-laboral, staff
+     * @keywords condición laboral, vigencia, profesional
      */
     public function actionEditarCondicionLaboral(): array
     {
@@ -576,15 +562,15 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * UI JSON: crear condición laboral (vigencia) de un RRHH.
+     * UI JSON: crear condición laboral (vigencia) de un profesional.
      * Nota: el submit es un upsert; este endpoint existe por claridad de intención.
      *
      * GET|POST /api/v1/recurso-humano/crear-condicion-laboral
      *
-     * @action_name Crear condición laboral (RRHH)
-     * @entity Rrhh
-     * @tags rrhh, condicion-laboral, staff
-     * @keywords crear condición laboral, alta condición laboral, vigencia rrhh
+     * @action_name Crear condición laboral (profesional)
+     * @entity Profesional
+     * @tags condicion-laboral, staff
+     * @keywords crear condición laboral, alta condición laboral, vigencia profesional
      */
     public function actionCrearCondicionLaboral(): array
     {
@@ -608,14 +594,14 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * Vista embebible: listar profesionales (RRHH) por efector y servicio (obligatorios),
+     * Vista embebible: listar profesionales por efector y servicio (obligatorios),
      * filtrando a servicios que aceptan turnos (`servicios.acepta_turnos = SI`).
      *
      * GET|POST /api/v1/recurso-humano/listar-por-efector-servicio-acepta-turnos
      *
      * @action_name Listar profesionales (acepta turnos) por efector y servicio
-     * @entity Rrhh
-     * @tags views, ui, rrhh, profesional
+     * @entity Profesional
+     * @tags views, ui, profesional
      * @keywords listar profesional, elegir médico, elegir especialista, efector, servicio, acepta turnos
      */
     public function actionListarPorEfectorServicioAceptaTurnos(): array
@@ -638,16 +624,16 @@ class RecursoHumanoController extends BaseController
         );
 
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
-            $filters = $this->buildRrhhAutocompleteFilters($idEfector, $idServicio);
+            $filters = $this->buildProfesionalAutocompleteFilters($idEfector, $idServicio);
             $q = $this->reqParamRaw('q');
-            $ui = UiScreenService::withListBlockItems($ui, $this->rrhhItemsForUi($q, $filters));
+            $ui = UiScreenService::withListBlockItems($ui, $this->profesionalItemsForUi($q, $filters));
         }
 
         return $ui;
     }
 
     /**
-     * Vista embebible: elegir profesional (RRHH) para un efector/servicio.
+     * Vista embebible: elegir profesional para un efector/servicio.
      *
      * GET|POST /api/v1/recurso-humano/elegir
      *

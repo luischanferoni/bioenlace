@@ -213,10 +213,10 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
      * Procesar texto expandiendo abreviaturas médicas con lógica de médico
      * @param string $texto
      * @param string $especialidad Opcional: filtrar por especialidad
-     * @param int $idRrHh Opcional: ID del médico para priorizar sus abreviaturas
+     * @param int|null $idProfesionalEfectorServicio Opcional: PES del médico para priorizar sus abreviaturas
      * @return array
      */
-    public static function expandirAbreviaturasConMedico($texto, $especialidad = null, $idRrHh = null)
+    public static function expandirAbreviaturasConMedico($texto, $especialidad = null, $idProfesionalEfectorServicio = null)
     {
         // Inicializar variables asegurando que sean arrays
         $abreviaturasEncontradas = [];
@@ -227,7 +227,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
         $query = self::find()
             ->select([
                 'abreviaturas_medicas.*',
-                'GROUP_CONCAT(am.id_rr_hh) as medicos_ids',
+                'GROUP_CONCAT(am.id_profesional_efector_servicio) as medicos_ids',
                 'MAX(am.frecuencia_uso) as max_frecuencia_medico'
             ])
             ->leftJoin('abreviaturas_rrhh am', 'abreviaturas_medicas.id = am.abreviatura_id AND am.activo = 1')
@@ -284,7 +284,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
                 [
                     'metodo' => 'AbreviaturasMedicas::expandirAbreviaturasConMedico',
                     'total_abreviaturas' => $totalAbreviaturas,
-                    'id_rr_hh' => $idRrHh,
+                    'id_profesional_efector_servicio' => $idProfesionalEfectorServicio,
                     'especialidad' => $especialidad,
                     'abreviaturas' => $listaAbreviaturas
                 ]
@@ -324,7 +324,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
                     $ocurrencias = is_countable($matches[0]) ? count($matches[0]) : 0;
                 }
                 
-                $expansionElegida = self::elegirExpansionPorMedico($abreviatura, $idRrHh);
+                $expansionElegida = self::elegirExpansionPorMedico($abreviatura, $idProfesionalEfectorServicio);
                 
                 if ($expansionElegida) {
                     // Reemplazar todas las ocurrencias encontradas
@@ -370,19 +370,19 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
     /**
      * Elegir expansión basada en el médico y frecuencia
      * @param AbreviaturasMedicas $abreviatura
-     * @param int $idRrHh
+     * @param int|null $idProfesionalEfectorServicio
      * @param string $contexto
      * @return string|null
      */
-    private static function elegirExpansionPorMedico($abreviatura, $idRrHh = null, $contexto = null)
+    private static function elegirExpansionPorMedico($abreviatura, $idProfesionalEfectorServicio = null, $contexto = null)
     {
-        if (!$idRrHh) {
+        if (!$idProfesionalEfectorServicio) {
             return $abreviatura->expansion_completa;
         }
         
         // Verificar si el médico tiene una preferencia específica
         $relacionMedico = \common\models\AbreviaturasMedicos::find()
-            ->where(['abreviatura_id' => $abreviatura->id, 'id_rr_hh' => $idRrHh, 'activo' => 1])
+            ->where(['abreviatura_id' => $abreviatura->id, 'id_profesional_efector_servicio' => $idProfesionalEfectorServicio, 'activo' => 1])
             ->one();
         
         if ($relacionMedico) {
@@ -403,7 +403,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
         
         if (is_countable($abreviaturasSimilares) && count($abreviaturasSimilares) > 0) {
             // Hay ambigüedad, usar LLM para desambiguar
-            return self::desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idRrHh);
+            return self::desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idProfesionalEfectorServicio);
         }
         
         // Si no hay preferencia del médico, usar la más frecuente
@@ -415,10 +415,10 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
      * @param AbreviaturasMedicas $abreviatura
      * @param array $abreviaturasSimilares
      * @param string $contexto
-     * @param int $idRrHh
+     * @param int|null $idProfesionalEfectorServicio
      * @return string
      */
-    private static function desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idRrHh)
+    private static function desambiguarConLLM($abreviatura, $abreviaturasSimilares, $contexto, $idProfesionalEfectorServicio)
     {
         // Asegurar que $abreviaturasSimilares sea un array
         if (!is_array($abreviaturasSimilares)) {
@@ -447,7 +447,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
                 $expansionElegida = $opciones[$respuesta - 1];
                 
                 // Guardar la elección del LLM para futuras referencias
-                self::guardarEleccionLLM($abreviatura->abreviatura, $expansionElegida, $contexto, $idRrHh);
+                self::guardarEleccionLLM($abreviatura->abreviatura, $expansionElegida, $contexto, $idProfesionalEfectorServicio);
                 
                 return $expansionElegida;
             }
@@ -465,9 +465,9 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
      * @param string $abreviatura
      * @param string $expansionElegida
      * @param string $contexto
-     * @param int $idRrHh
+     * @param int|null $idProfesionalEfectorServicio
      */
-    private static function guardarEleccionLLM($abreviatura, $expansionElegida, $contexto, $idRrHh)
+    private static function guardarEleccionLLM($abreviatura, $expansionElegida, $contexto, $idProfesionalEfectorServicio)
     {
         try {
             // Crear o actualizar registro en tabla principal con origen LLM

@@ -14,7 +14,7 @@
       "selection": { "mode": "single" },
       "chips": [],
       "draft_field": "id_profesional_efector_servicio",
-      "item": { "kind": "rrhh", "id_field": "id", "label_field": "name" },
+      "item": { "kind": "profesional", "id_field": "id", "label_field": "name" },
       "items": []
     }
   ]

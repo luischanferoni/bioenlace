@@ -15,7 +15,7 @@ use yii\widgets\ActiveForm;
         'method' => 'get',
     ]); ?>
 
-    <?= $form->field($model, 'id_rr_hh') ?>
+    <?= $form->field($model, 'id_profesional_efector_servicio')->label('ID PES') ?>
     <?= $form->field($model, 'id_persona') ?>
     <?= $form->field($model, 'nombrePersona') ?>
 

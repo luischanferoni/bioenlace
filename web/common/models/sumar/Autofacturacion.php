@@ -30,11 +30,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
         if (!parent::beforeSave($insert)) {
             return false;
         }
-        $legacyRrhh = $this->hasAttribute('id_rr_hh');
-        if ($insert
-            || $this->isAttributeChanged('id_consulta', false)
-            || ($legacyRrhh && $this->isAttributeChanged('id_rr_hh', false))
-        ) {
+        if ($insert || $this->isAttributeChanged('id_consulta', false)) {
             $this->syncProfesionalEfectorServicioFromContext();
         }
         return true;
@@ -51,17 +47,6 @@ class Autofacturacion extends \yii\db\ActiveRecord
             $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
             return;
         }
-        if ($this->hasAttribute('id_rr_hh') && $this->getAttribute('id_rr_hh') && $c && $c->id_efector && $c->id_servicio) {
-            $idPersona = \common\models\ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->getAttribute('id_rr_hh'));
-            if ($idPersona !== null && $idPersona > 0) {
-                $this->id_profesional_efector_servicio = \common\models\ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-                    $idPersona,
-                    (int) $c->id_efector,
-                    (int) $c->id_servicio
-                );
-                return;
-            }
-        }
         $this->id_profesional_efector_servicio = null;
     }
 
@@ -73,7 +58,6 @@ class Autofacturacion extends \yii\db\ActiveRecord
         return [
             [['id_consulta', 'beneficiarios', 'codigos'], 'required'],
             [['id_consulta', 'beneficiario_enviado', 'id_profesional_efector_servicio'], 'integer'],
-            [['id_rr_hh'], 'integer', 'skipOnEmpty' => true],
             [['codigos', 'codigo_enviado', 'beneficiarios'], 'string'],
         ];
     }
@@ -91,7 +75,6 @@ class Autofacturacion extends \yii\db\ActiveRecord
             'codigos' => 'Codigos Mapeados',
             'codigo_enviado' => 'Codigo Enviado',
             'fecha_envio' => 'Fecha de Envío',
-            'id_rr_hh' => 'RRHH',
         ];
     }
 

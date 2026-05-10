@@ -23,7 +23,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property Localidades $idLocalidad
  * @property ServiciosEfector[] $serviciosEfectors
  * @property-read Servicio[] $servicios
- * @property-read Persona[] $rrhhs Personas con al menos una PES activa en el efector.
+ * @property-read Persona[] $profesionales Personas con al menos una fila PES activa en el efector.
  * @property Turnos[] $turnos
  */
 class Efector extends \yii\db\ActiveRecord
@@ -109,7 +109,7 @@ class Efector extends \yii\db\ActiveRecord
     }
 
     /**
-     * Asignaciones PES activas en el efector (sustituye vínculo legacy suprimido).
+     * Asignaciones PES activas en el efector (sustituye el vínculo antiguo retirado).
      *
      * @return \yii\db\ActiveQuery
      */
@@ -148,13 +148,13 @@ class Efector extends \yii\db\ActiveRecord
     {
         return $this->idLocalidad ? $this->idLocalidad->nombre : '- no hay localidad -';
     }
-  
-      /**
-     * Personas con al menos una fila PES activa en este efector (sustituye `rr_hh_efector` / tabla `rr_hh`).
+
+    /**
+     * Personas (profesionales) con al menos una asignación activa en {@see ProfesionalEfectorServicio} para este efector.
      *
      * @return \yii\db\ActiveQuery
      */
-    public function getRrhhs()
+    public function getProfesionales()
     {
         return $this->hasMany(Persona::className(), ['id_persona' => 'id_persona'])
             ->viaTable(

@@ -4,6 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
 use common\models\InfraestructuraPiso;
+use common\models\Persona;
 use common\models\Servicio;
 
 /* @var $this yii\web\View */
@@ -35,11 +36,14 @@ $this->params['breadcrumbs'][] = $this->title;
             'covid',
             //'id_responsable',
             [
-                'attribute' => 'responsable.rrhh.idPersona.nombreCompleto',
-                'label' => 'Responsable',                
-                'filter' => Html::activeDropDownList($searchModel, 'id_responsable', 
-                            ArrayHelper::map(\common\models\ProfesionalEfectorServicio::obtenerMedicosPorEfector(yii::$app->user->getIdEfector()),'id_rr_hh', 'datos'), 
-                            ['class' => 'form-control', 
+                'label' => 'Responsable',
+                'value' => static function ($model) {
+                    $p = $model->responsable;
+                    return $p !== null ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : '';
+                },
+                'filter' => Html::activeDropDownList($searchModel, 'id_responsable',
+                            ArrayHelper::map(\common\models\ProfesionalEfectorServicio::obtenerMedicosPorEfector(yii::$app->user->getIdEfector()),'id', 'datos'),
+                            ['class' => 'form-control',
                             'prompt' => '- Seleccione -'])
             ],
             //'id_piso',

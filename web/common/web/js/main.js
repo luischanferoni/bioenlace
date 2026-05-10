@@ -162,12 +162,12 @@ $(function () {
     dateFormat: "Y-m-d",
     onChange: function(selectedDates, dateStr, instance) {      
       
-      rrhh = $('#cal-lista-espera').data('rrhh')
-      urlRrhh = ""
-      if(rrhh){
-        urlRrhh = "&rrhh="+rrhh
+      pes = $('#cal-lista-espera').data('pes')
+      urlPes = ""
+      if(pes){
+        urlPes = "&pes="+pes
       }
-      $(window).attr('location', baseUrl + "turnos/espera?fecha=" + dateStr + urlRrhh)
+      $(window).attr('location', baseUrl + "turnos/espera?fecha=" + dateStr + urlPes)
     }
 });
 

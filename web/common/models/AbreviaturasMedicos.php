@@ -11,7 +11,7 @@ use yii\behaviors\TimestampBehavior;
  *
  * @property int $id
  * @property int $abreviatura_id
- * @property int $id_rr_hh
+ * @property int $id_profesional_efector_servicio
  * @property int $frecuencia_uso
  * @property string $fecha_primer_uso
  * @property string $fecha_ultimo_uso
@@ -37,29 +37,13 @@ class AbreviaturasMedicos extends ActiveRecord
         ];
     }
 
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-        if ($insert || $this->isAttributeChanged('id_rr_hh', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhMinPes(
-                $this->id_rr_hh !== null && $this->id_rr_hh !== '' ? (int) $this->id_rr_hh : null
-            );
-        }
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
-            [['abreviatura_id', 'id_rr_hh'], 'required'],
-            [['abreviatura_id', 'id_rr_hh', 'frecuencia_uso', 'activo', 'id_profesional_efector_servicio'], 'integer'],
+            [['abreviatura_id', 'id_profesional_efector_servicio'], 'required'],
+            [['abreviatura_id', 'id_profesional_efector_servicio', 'frecuencia_uso', 'activo'], 'integer'],
             [['fecha_primer_uso', 'fecha_ultimo_uso'], 'safe'],
-            [['abreviatura_id', 'id_rr_hh'], 'unique', 'targetAttribute' => ['abreviatura_id', 'id_rr_hh']],
+            [['abreviatura_id', 'id_profesional_efector_servicio'], 'unique', 'targetAttribute' => ['abreviatura_id', 'id_profesional_efector_servicio']],
         ];
     }
 
@@ -71,7 +55,7 @@ class AbreviaturasMedicos extends ActiveRecord
         return [
             'id' => 'ID',
             'abreviatura_id' => 'Abreviatura ID',
-            'id_rr_hh' => 'ID RRHH',
+            'id_profesional_efector_servicio' => 'Asignación PES',
             'frecuencia_uso' => 'Frecuencia Uso',
             'fecha_primer_uso' => 'Fecha Primer Uso',
             'fecha_ultimo_uso' => 'Fecha Ultimo Uso',
@@ -95,13 +79,13 @@ class AbreviaturasMedicos extends ActiveRecord
     /**
      * Registrar uso de abreviatura por médico
      * @param int $abreviaturaId
-     * @param int $idRrHh
+     * @param int $idProfesionalEfectorServicio PK {@see ProfesionalEfectorServicio}
      * @return bool
      */
-    public static function registrarUso($abreviaturaId, $idRrHh)
+    public static function registrarUso($abreviaturaId, $idProfesionalEfectorServicio)
     {
         $relacion = self::find()
-            ->where(['abreviatura_id' => $abreviaturaId, 'id_rr_hh' => $idRrHh])
+            ->where(['abreviatura_id' => $abreviaturaId, 'id_profesional_efector_servicio' => $idProfesionalEfectorServicio])
             ->one();
 
         if ($relacion) {
@@ -113,7 +97,7 @@ class AbreviaturasMedicos extends ActiveRecord
             // Crear nueva relación
             $relacion = new self();
             $relacion->abreviatura_id = $abreviaturaId;
-            $relacion->id_rr_hh = $idRrHh;
+            $relacion->id_profesional_efector_servicio = $idProfesionalEfectorServicio;
             $relacion->frecuencia_uso = 1;
             $relacion->fecha_primer_uso = date('Y-m-d H:i:s');
             $relacion->fecha_ultimo_uso = date('Y-m-d H:i:s');
@@ -124,15 +108,15 @@ class AbreviaturasMedicos extends ActiveRecord
 
     /**
      * Obtener abreviaturas más usadas por un médico específico
-     * @param int $idRrHh
+     * @param int $idProfesionalEfectorServicio
      * @param int $limit
      * @return array
      */
-    public static function getAbreviaturasPorMedico($idRrHh, $limit = 10)
+    public static function getAbreviaturasPorMedico($idProfesionalEfectorServicio, $limit = 10)
     {
         return self::find()
             ->joinWith('abreviatura')
-            ->where(['id_rr_hh' => $idRrHh, 'activo' => 1])
+            ->where(['id_profesional_efector_servicio' => $idProfesionalEfectorServicio, 'activo' => 1])
             ->orderBy(['frecuencia_uso' => SORT_DESC])
             ->limit($limit)
             ->all();
@@ -153,17 +137,17 @@ class AbreviaturasMedicos extends ActiveRecord
 
     /**
      * Obtener estadísticas de uso por médico
-     * @param int $idRrHh
+     * @param int $idProfesionalEfectorServicio
      * @return array
      */
-    public static function getEstadisticasPorMedico($idRrHh)
+    public static function getEstadisticasPorMedico($idProfesionalEfectorServicio)
     {
         $total = self::find()
-            ->where(['id_rr_hh' => $idRrHh, 'activo' => 1])
+            ->where(['id_profesional_efector_servicio' => $idProfesionalEfectorServicio, 'activo' => 1])
             ->sum('frecuencia_uso');
 
         $abreviaturasUnicas = self::find()
-            ->where(['id_rr_hh' => $idRrHh, 'activo' => 1])
+            ->where(['id_profesional_efector_servicio' => $idProfesionalEfectorServicio, 'activo' => 1])
             ->count();
 
         return [

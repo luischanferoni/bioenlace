@@ -62,12 +62,11 @@ class ProfesionalEfectorServicioController extends Controller
     }
 
     /**
-     * @param integer $id_rr_hh
-     * @param integer $id_efector
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
+     * Descontinuado (listado PES vía índice).
+     *
+     * @throws NotFoundHttpException siempre
      */
-    public function actionView($id_rr_hh, $id_efector)
+    public function actionView($id, $id_efector)
     {
         throw new NotFoundHttpException('Vista descontinuada: use el listado PES (índice).');
     }
@@ -78,7 +77,7 @@ class ProfesionalEfectorServicioController extends Controller
      * @return mixed
      */
 
-    public function actionCreateAdminEfectorConRrhh($id)
+    public function actionCreateAdminEfectorDesdeUsuario($id)
     {
         $persona = Persona::find()->where(['id_user' => $id])->one();
 
@@ -153,7 +152,7 @@ class ProfesionalEfectorServicioController extends Controller
         ]);
     }
 
-    public function actionCreateAdminEfector($id_rr_hh)
+    public function actionCreateAdminEfector($id_pes)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -163,9 +162,13 @@ class ProfesionalEfectorServicioController extends Controller
         }
         $idServ = (int) $servicioAdminEfector->id_servicio;
 
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $id_rr_hh);
-        if ($idPersona === null || $idPersona <= 0) {
-            return Json::encode(['error' => true, 'message' => 'RRHH no encontrado.']);
+        $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $id_pes, 'deleted_at' => null]);
+        if ($pes === null) {
+            return Json::encode(['error' => true, 'message' => 'Asignación PES no encontrada.']);
+        }
+        $idPersona = (int) $pes->id_persona;
+        if ($idPersona <= 0) {
+            return Json::encode(['error' => true, 'message' => 'Persona no encontrada para esta asignación.']);
         }
         $idEfectores = ProfesionalEfectorServicio::find()
             ->select(['id_efector'])
@@ -188,7 +191,7 @@ class ProfesionalEfectorServicioController extends Controller
 
     }
 
-    public function actionRemoveAdminEfector($id_rr_hh)
+    public function actionRemoveAdminEfector($id_pes)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -198,8 +201,9 @@ class ProfesionalEfectorServicioController extends Controller
         }
         $idServ = (int) $servicioAdminEfector->id_servicio;
 
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $id_rr_hh);
-        if ($idPersona !== null && $idPersona > 0) {
+        $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $id_pes, 'deleted_at' => null]);
+        $idPersona = $pes !== null ? (int) $pes->id_persona : 0;
+        if ($idPersona > 0) {
             foreach (
                 ProfesionalEfectorServicio::find()
                     ->where([
@@ -217,12 +221,11 @@ class ProfesionalEfectorServicioController extends Controller
     }
 
     /**
-     * @param integer $id_rr_hh
-     * @param integer $id_efector
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
+     * Descontinuado (gestión vía PES en índice / API).
+     *
+     * @throws NotFoundHttpException siempre
      */
-    public function actionUpdate($id_rr_hh, $id_efector)
+    public function actionUpdate($id, $id_efector)
     {
         throw new NotFoundHttpException('Actualización descontinuada: gestione asignaciones vía PES.');
     }

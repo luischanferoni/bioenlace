@@ -9,6 +9,6 @@ use yii\helpers\Html;
     <?= Html::a('Detalles', ['/efectores/view', 'id' => $model->id_efector], ['class' => 'nav-link '.($tab == 'view' ? 'active' : '')]);?>
   </li>
   <li class="nav-item">
-    <?= Html::a('RRHH', ['/efectores/rrhh', 'id' => $model->id_efector], ['class' => 'nav-link '.($tab == 'rrhh' ? 'active' : '')]);?>
+    <?= Html::a('Profesionales (PES)', ['/efectores/profesionales', 'id' => $model->id_efector], ['class' => 'nav-link '.($tab == 'profesionales' ? 'active' : '')]);?>
   </li>
 </ul>

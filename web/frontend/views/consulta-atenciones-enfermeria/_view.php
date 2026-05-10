@@ -26,7 +26,7 @@ echo PanelWidget::widget([
     'model' => $model,
     
     // 'menu' => [
-    //         ['Cargar nuevos datos', ['atenciones-enfermeria/create', 'id_persona' => $id_persona, 'id_rr_hh' => $id_rr_hh]]
+    //         ['Cargar nuevos datos', ['atenciones-enfermeria/create', 'id_persona' => $id_persona, 'id_profesional_efector_servicio' => $id_profesional_efector_servicio]]
     // ],
     'attributes' => [
         /*[

@@ -25,7 +25,7 @@ class ProfesionalEfectorServicioAgendaApiService
 
     public static function findOwnedByRecursoHumano(int $idAgenda, int $idEfector, int $idRrhh): ?ProfesionalEfectorServicioAgenda
     {
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idRrhh);
         if ($idPersona === null || $idPersona <= 0) {
             return null;
         }
@@ -67,7 +67,7 @@ class ProfesionalEfectorServicioAgendaApiService
 
     public static function searchForRecursoHumano(array $queryParams, int $idRrhh, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
     {
-        $queryParams['id_rr_hh'] = $idRrhh;
+        $queryParams['id_profesional_contexto'] = $idRrhh;
 
         return self::search($queryParams, $defaultPerPage, $maxPerPage);
     }
@@ -80,7 +80,7 @@ class ProfesionalEfectorServicioAgendaApiService
         int $maxPerPage = 100
     ): ActiveDataProvider {
         $queryParams['id_efector'] = $idEfector;
-        $queryParams['id_rr_hh'] = $idRrhh;
+        $queryParams['id_profesional_contexto'] = $idRrhh;
 
         return self::search($queryParams, $defaultPerPage, $maxPerPage);
     }
@@ -91,9 +91,9 @@ class ProfesionalEfectorServicioAgendaApiService
     public static function assertRecursoHumanoPerteneceAEfector(int $idRrhh, int $idEfector): void
     {
         if ($idRrhh <= 0 || $idEfector <= 0) {
-            throw new BadRequestHttpException('id_efector e id_rr_hh deben ser válidos.');
+            throw new BadRequestHttpException('id_efector e id_profesional_efector_servicio deben ser válidos.');
         }
-        if (!ProfesionalEfectorServicio::rrhhTieneAsignacionPesEnEfector($idRrhh, $idEfector)) {
+        if (!ProfesionalEfectorServicio::staffContextTienePesEnEfector($idRrhh, $idEfector)) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector indicado.');
         }
     }
@@ -124,7 +124,7 @@ class ProfesionalEfectorServicioAgendaApiService
             return;
         }
         self::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idRrhh);
         if ($idPersona === null || $idPersona <= 0) {
             throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
         }
@@ -149,11 +149,11 @@ class ProfesionalEfectorServicioAgendaApiService
      */
     public static function obtenerPesPorIdEnEfectorParaRrhh(int $idPes, int $idRrhh, int $idEfector): ProfesionalEfectorServicio
     {
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idRrhh);
         if ($idPersona === null || $idPersona <= 0) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
         }
-        if (!ProfesionalEfectorServicio::rrhhTieneAsignacionPesEnEfector($idRrhh, $idEfector)) {
+        if (!ProfesionalEfectorServicio::staffContextTienePesEnEfector($idRrhh, $idEfector)) {
             throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
         }
         $pesDirect = ProfesionalEfectorServicio::find()
@@ -182,8 +182,6 @@ class ProfesionalEfectorServicioAgendaApiService
         $pes = $model->asignacion;
         if ($pes !== null) {
             $row['id_profesional_efector_servicio'] = (int) $pes->id;
-            $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
-            $row['id_rr_hh'] = $idRr > 0 ? $idRr : null;
         }
 
         return $row;

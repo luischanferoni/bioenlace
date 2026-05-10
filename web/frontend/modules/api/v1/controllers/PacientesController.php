@@ -225,16 +225,16 @@ class PacientesController extends BaseController
      *
      * @return array{turnos: array, fecha: string, total: int}
      */
-    public static function agendaAmbulatorioJson(string $fecha, int $rrhhId, bool $conTurnoPrueba, ?int $pesId = null): array
+    public static function agendaAmbulatorioJson(string $fecha, int $idContextoProfesional, bool $conTurnoPrueba, ?int $pesId = null): array
     {
         $c = new self('pacientes', Yii::$app->getModule('v1'));
-        return $c->turnosAmbulatorioMedico($fecha, $rrhhId, $conTurnoPrueba, $pesId);
+        return $c->turnosAmbulatorioMedico($fecha, $idContextoProfesional, $conTurnoPrueba, $pesId);
     }
 
     /**
      * @return array{turnos: array, fecha: string, total: int}
      */
-    private function turnosAmbulatorioMedico(string $fecha, ?int $rrhhId, bool $agregarTurnoPruebaSiHoy, ?int $pesIdParam = null): array
+    private function turnosAmbulatorioMedico(string $fecha, ?int $idContextoProfesional, bool $agregarTurnoPruebaSiHoy, ?int $pesIdParam = null): array
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();
 
@@ -253,25 +253,20 @@ class PacientesController extends BaseController
             }
         }
 
-        if ($rrhhId === null || (int) $rrhhId <= 0) {
+        if ($idContextoProfesional === null || (int) $idContextoProfesional <= 0) {
             $rh = Yii::$app->user->getIdRecursoHumano();
-            $rrhhId = $rh !== null && $rh !== '' ? (int) $rh : 0;
+            $idContextoProfesional = $rh !== null && $rh !== '' ? (int) $rh : 0;
         } else {
-            $rrhhId = (int) $rrhhId;
+            $idContextoProfesional = (int) $idContextoProfesional;
         }
 
-        $rrhhOk = false;
-        if ($rrhhId > 0) {
-            $resolved = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($rrhhId);
-            if ($resolved !== null && (int) $resolved === $idPersona) {
-                $rrhhOk = true;
-            } else {
-                $pesProbe = ProfesionalEfectorServicio::findOne(['id' => $rrhhId, 'deleted_at' => null]);
-                $rrhhOk = $pesProbe !== null && (int) $pesProbe->id_persona === $idPersona;
-            }
+        $contextoProfesionalOk = false;
+        if ($idContextoProfesional > 0) {
+            $resolved = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idContextoProfesional);
+            $contextoProfesionalOk = $resolved !== null && (int) $resolved === $idPersona;
         }
 
-        if ($pesId <= 0 && !$rrhhOk) {
+        if ($pesId <= 0 && !$contextoProfesionalOk) {
             return ['turnos' => [], 'fecha' => $fecha, 'total' => 0];
         }
 
@@ -281,43 +276,16 @@ class PacientesController extends BaseController
             ->andWhere(['is', 'atendido', null])
             ->orderBy('hora');
 
-        $turnosTbl = Turno::tableName();
-        $pesTbl = ProfesionalEfectorServicio::tableName();
-        $turnosSchema = Turno::getTableSchema();
-        $hasRrhhCol = $turnosSchema !== null && isset($turnosSchema->columns['id_rr_hh']);
-
-        if ($pesId > 0 && $rrhhId > 0) {
-            if ($hasRrhhCol) {
-                $turnosQuery->andWhere([
-                    'or',
-                    ['id_profesional_efector_servicio' => $pesId],
-                    ['id_rr_hh' => $rrhhId],
-                ]);
-            } else {
-                $pidProf = $this->idPersonaProfesionalDesdeIdentificador($rrhhId);
-                $turnosQuery->andWhere([
-                    'or',
-                    ['id_profesional_efector_servicio' => $pesId],
-                    $pidProf > 0 ? new \yii\db\Expression(
-                        'EXISTS (SELECT 1 FROM `' . $pesTbl . '` pex WHERE pex.id = `' . $turnosTbl . '`.`id_profesional_efector_servicio` AND pex.deleted_at IS NULL AND pex.id_persona = :pid)',
-                        [':pid' => $pidProf]
-                    ) : '0=1',
-                ]);
-            }
+        if ($pesId > 0 && $idContextoProfesional > 0) {
+            $turnosQuery->andWhere([
+                'or',
+                ['id_profesional_efector_servicio' => $pesId],
+                ['id_profesional_efector_servicio' => $idContextoProfesional],
+            ]);
         } elseif ($pesId > 0) {
             $turnosQuery->andWhere(['id_profesional_efector_servicio' => $pesId]);
-        } else {
-            if ($hasRrhhCol) {
-                $turnosQuery->andWhere(['id_rr_hh' => $rrhhId]);
-            } elseif ($rrhhId > 0) {
-                $pidProf = $this->idPersonaProfesionalDesdeIdentificador($rrhhId);
-                if ($pidProf > 0) {
-                    $turnosQuery->andWhere(new \yii\db\Expression(
-                        'EXISTS (SELECT 1 FROM `' . $pesTbl . '` pex WHERE pex.id = `' . $turnosTbl . '`.`id_profesional_efector_servicio` AND pex.deleted_at IS NULL AND pex.id_persona = :pid)',
-                        [':pid' => $pidProf]
-                    ));
-                }
-            }
+        } elseif ($idContextoProfesional > 0 && $contextoProfesionalOk) {
+            $turnosQuery->andWhere(['id_profesional_efector_servicio' => $idContextoProfesional]);
         }
 
         $turnos = $turnosQuery->all();
@@ -328,12 +296,11 @@ class PacientesController extends BaseController
             $servicioNombre = $turno->getNombreServicioParaDisplay();
             $servicioObj = $turno->getServicioEmbebidoParaApi();
             $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+            $pesTurno = (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null;
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,
                 'id_persona' => $turno->id_persona,
-                // Contexto profesional (canónico vs legacy)
-                'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
-                'id_rr_hh' => (int) ($turno->id_rr_hh ?? 0) ?: null,
+                'id_profesional_efector_servicio' => $pesTurno,
                 'paciente' => [
                     'id' => $paciente ? $paciente->id_persona : null,
                     'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
@@ -362,8 +329,8 @@ class PacientesController extends BaseController
                 $idEfectorPrueba = null;
                 if ($pes !== null) {
                     $idEfectorPrueba = (int) $pes->id_efector;
-                } elseif ($rrhhId > 0) {
-                    if (ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($rrhhId) === $idPersona) {
+                } elseif ($idContextoProfesional > 0) {
+                    if (ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idContextoProfesional) === $idPersona) {
                         $pesPrueba = ProfesionalEfectorServicio::find()
                             ->where(['id_persona' => $idPersona, 'deleted_at' => null])
                             ->orderBy(['id_efector' => SORT_ASC, 'id' => SORT_ASC])
@@ -493,22 +460,5 @@ class PacientesController extends BaseController
             ];
         }
         return $out;
-    }
-
-    /**
-     * id_persona del profesional desde id legacy o id PES (`profesional_efector_servicio.id`).
-     */
-    private function idPersonaProfesionalDesdeIdentificador(int $rrhhId): int
-    {
-        if ($rrhhId <= 0) {
-            return 0;
-        }
-        $pid = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($rrhhId);
-        if ($pid !== null && $pid > 0) {
-            return $pid;
-        }
-        $pesProbe = ProfesionalEfectorServicio::findOne(['id' => $rrhhId, 'deleted_at' => null]);
-
-        return $pesProbe !== null ? (int) $pesProbe->id_persona : 0;
     }
 }

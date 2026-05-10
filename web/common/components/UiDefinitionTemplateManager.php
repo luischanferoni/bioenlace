@@ -270,10 +270,8 @@ class UiDefinitionTemplateManager
             'id_servicio' => 'id_servicio_asignado',
             'servicio_actual' => 'id_servicio_asignado',
             'servicio' => 'id_servicio_asignado',
-            'id_rr_hh' => 'id_rr_hh',
-            'id_rrhh' => 'id_rr_hh',
-            'rrhh' => 'id_rr_hh',
-            'profesional' => 'id_rr_hh',
+            'pes' => 'id_profesional_efector_servicio',
+            'profesional' => 'id_profesional_efector_servicio',
         ];
 
         foreach ($paramAliases as $alias => $realName) {

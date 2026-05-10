@@ -45,9 +45,9 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
             return false;
         }
         if ($insert
-            || $this->isAttributeChanged('id_rr_hh', false)
             || $this->isAttributeChanged('id_efector', false)
             || $this->isAttributeChanged('id_servicio', false)
+            || $this->isAttributeChanged('id_profesional_efector_servicio', false)
         ) {
             $this->syncProfesionalEfectorServicioFromContext();
         }
@@ -56,20 +56,12 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
 
     public function syncProfesionalEfectorServicioFromContext(): void
     {
-        if (!$this->id_rr_hh || !$this->id_efector || !$this->id_servicio) {
-            $this->id_profesional_efector_servicio = null;
+        if ((int) ($this->id_profesional_efector_servicio ?? 0) > 0) {
             return;
         }
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rr_hh);
-        if ($idPersona === null || $idPersona <= 0) {
-            $this->id_profesional_efector_servicio = null;
+        if (!$this->id_efector || !$this->id_servicio) {
             return;
         }
-        $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
-            $idPersona,
-            (int) $this->id_efector,
-            (int) $this->id_servicio
-        );
     }
 
     /**
@@ -80,7 +72,7 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
         return [
             [['id_servicio', 'id_consulta_solicitante', 'id_efector'], 'required'],
             ['select2_codigo', 'each', 'rule' => ['string']],
-            [['id_rr_hh', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_profesional_efector_servicio'], 'integer'],
             [['tipo', 'indicaciones', 'codigo', 'tipo_solicitud'], 'string'],
         ];
     }

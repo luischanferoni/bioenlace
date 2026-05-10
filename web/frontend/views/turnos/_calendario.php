@@ -29,7 +29,7 @@ $this->registerJsVar("turnos_url_cancelar_operativo_base", $turnos_url_cancelar_
 $this->registerJsVar("turnos_id_efector", $turnos_id_efector);
 $this->registerJsVar("turnos_id_persona", $turnos_id_persona);
 $this->registerJsVar("turnos_id_servicio", 0);
-$this->registerJsVar("turnos_id_rrhh_sa", 0);
+$this->registerJsVar("turnos_pes_slot_id", 0);
 $idPesCal = Yii::$app->user->getIdProfesionalEfectorServicio();
 $this->registerJsVar(
     'turnos_id_profesional_efector_servicio',

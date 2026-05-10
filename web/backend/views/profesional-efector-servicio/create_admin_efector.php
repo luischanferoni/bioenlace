@@ -6,7 +6,7 @@ use yii\helpers\Html;
 /* @var $model common\models\ProfesionalEfectorServicio */
 
 $this->title = '"'.$persona->apellido.' '.$persona->nombre.'" como Administrador de Efector';
-$this->params['breadcrumbs'][] = ['label' => 'Rrhh -> Efectores', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Profesional–efector–servicio', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="profesional-efector-servicio-create">

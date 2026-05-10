@@ -83,7 +83,11 @@ class UserConfig extends BaseUserConfig
         $row = $efectores[0];
         Yii::$app->user->setIdEfector($row['id_efector']);
         Yii::$app->user->setNombreEfector($row['nombre']);
-        Yii::$app->user->setIdRecursoHumano($row['id_rr_hh']);
+        $idPesRow = (int) ($row['id_profesional_efector_servicio'] ?? 0);
+        if ($idPesRow > 0) {
+            Yii::$app->user->setIdProfesionalEfectorServicio($idPesRow);
+            Yii::$app->user->setIdRecursoHumano($idPesRow);
+        }
 
         $pesEnEfector = ProfesionalEfectorServicio::find()
             ->where([

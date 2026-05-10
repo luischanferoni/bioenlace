@@ -9,7 +9,7 @@ use yii\db\Expression;
 use yii\db\Query;
 
 /**
- * Listado/búsqueda de profesionales (RRHH) en un efector para mini-UIs (ui_json).
+ * Listado/búsqueda de profesionales en un efector para mini-UIs (ui_json).
  *
  * Sin HttpException: validaciones por \InvalidArgumentException.
  */
@@ -63,14 +63,12 @@ final class ProfesionalEnEfectorListadoUiService
 
         $items = [];
         foreach ($byPersona as $pid => $pesRep) {
-            $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona($pid);
             $id = (string) (int) $pesRep->id;
             $name = $pesRep->persona !== null
                 ? $pesRep->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
                 : ('Profesional #' . $id);
             $meta = [
                 'id_profesional_efector_servicio' => (int) $pesRep->id,
-                'id_rr_hh' => $idRr > 0 ? $idRr : null,
             ];
             $items[] = ['id' => $id, 'name' => $name, 'meta' => $meta];
         }
@@ -83,7 +81,7 @@ final class ProfesionalEnEfectorListadoUiService
     }
 
     /**
-     * Lista RRHH de un efector que tengan al menos un servicio con `servicios.acepta_turnos = SI`.
+     * Lista profesionales de un efector que tengan al menos un servicio con `servicios.acepta_turnos = SI`.
      *
      * @return list<array{id: string, name: string}>
      */
@@ -133,14 +131,12 @@ final class ProfesionalEnEfectorListadoUiService
 
         $items = [];
         foreach ($byPersona as $pid => $pesRep) {
-            $idRr = ProfesionalEfectorServicio::resolveIdRrhhForPersona($pid);
             $id = (string) (int) $pesRep->id;
             $name = $pesRep->persona !== null
                 ? $pesRep->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
                 : ('Profesional #' . $id);
             $meta = [
                 'id_profesional_efector_servicio' => (int) $pesRep->id,
-                'id_rr_hh' => $idRr > 0 ? $idRr : null,
             ];
             $items[] = ['id' => $id, 'name' => $name, 'meta' => $meta];
         }
@@ -154,10 +150,10 @@ final class ProfesionalEnEfectorListadoUiService
 
     /**
      * Autocomplete por efector + servicio:
-     * filas desde `profesional_efector_servicio`; `id` = id PES (string); `id_rr_hh` opcional si existe vínculo legacy.
+     * Filas desde `profesional_efector_servicio`; `id` = id PES (string).
      *
      * @param array<string, mixed> $filters id_efector, id_servicio|id_servicio_asignado, acepta_turnos?, efector_nombre?, servicio_nombre?, sort_by?, sort_order?, limit?
-     * @return list<array{id: string, text: string, id_rr_hh?: int|null}>
+     * @return list<array{id: string, text: string, id_profesional_efector_servicio: int}>
      */
     public static function autocompletePorEfectorServicio(string $q, array $filters): array
     {
@@ -240,16 +236,11 @@ final class ProfesionalEnEfectorListadoUiService
             if ($pesId <= 0) {
                 continue;
             }
-            $idPersonaRow = isset($row['id_persona']) ? (int) $row['id_persona'] : 0;
-            $idRrhhResolved = $idPersonaRow > 0 ? ProfesionalEfectorServicio::resolveIdRrhhForPersona($idPersonaRow) : 0;
-            $idRrhh = $idRrhhResolved > 0 ? $idRrhhResolved : null;
             $item = [
                 'id' => (string) $pesId,
                 'text' => trim((string) ($row['text'] ?? '')) !== '' ? trim((string) $row['text']) : ('PES #' . $pesId),
+                'id_profesional_efector_servicio' => $pesId,
             ];
-            if ($idRrhh !== null && $idRrhh > 0) {
-                $item['id_rr_hh'] = $idRrhh;
-            }
 
             $out[] = $item;
         }
@@ -258,7 +249,7 @@ final class ProfesionalEnEfectorListadoUiService
     }
 
     /**
-     * Servicios habilitados en el efector (tabla {@see ServiciosEfector}), para elegir asignación sin RRHH previo.
+     * Servicios habilitados en el efector (tabla {@see ServiciosEfector}), para elegir asignación sin profesional previo.
      * Sin query no devuelve ítems (el cliente muestra solo el buscador).
      *
      * @return list<array{id: string, name: string, meta: array{acepta_turnos: string}}>

@@ -9,11 +9,11 @@ function turnosPayloadExtra() {
   return p;
 }
 
-/** Query/body turnos: PES; `turnos_id_rrhh_sa` histórico se envía como id PES si no hay otro en sesión. */
+/** Query/body turnos: PES; `turnos_pes_slot_id` es el id elegido en la tarjeta (PK PES). */
 function turnosQueryConSlot(base) {
   var out = Object.assign({}, base || {}, turnosPayloadExtra());
-  if (!out.id_profesional_efector_servicio && turnos_id_rrhh_sa) {
-    out.id_profesional_efector_servicio = turnos_id_rrhh_sa;
+  if (!out.id_profesional_efector_servicio && turnos_pes_slot_id) {
+    out.id_profesional_efector_servicio = turnos_pes_slot_id;
   }
   return out;
 }
@@ -274,8 +274,13 @@ $(document).ready(function () {
       // Extract info from data-bs-* attributes
       const recipient = button.getAttribute("data-title");
 
-      turnos_id_rrhh_sa = button.getAttribute("data-sisse-id_rrhh_sa") ?? 0;
-      turnos_id_servicio = button.getAttribute("data-sisse-id_servicio");
+      turnos_pes_slot_id =
+        button.getAttribute("data-bioenlace-id_profesional_efector_servicio") ||
+        button.getAttribute("data-sisse-id_profesional_efector_servicio") ||
+        0;
+      turnos_id_servicio =
+        button.getAttribute("data-bioenlace-id_servicio") ||
+        button.getAttribute("data-sisse-id_servicio");
 
       // Update the modal's content.
       const modalTitle = turno_modal.querySelector(".modal-title");

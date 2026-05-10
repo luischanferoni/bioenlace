@@ -104,7 +104,7 @@ class ProfesionalEfectorServicio extends ActiveRecord
     /**
      * Efectores donde la persona tiene al menos una PES activa.
      *
-     * @return array<int, array{id_rr_hh:int, id_efector:int, nombre:string, id_localidad:int}>
+     * @return array<int, array{id_profesional_efector_servicio:int, id_efector:int, nombre:string, id_localidad:int}>
      */
     public static function getEfectoresParaSesion(int $idPersona): array
     {
@@ -121,13 +121,17 @@ class ProfesionalEfectorServicio extends ActiveRecord
             return [];
         }
 
-        $idRrhh = static::resolveIdRrhhForPersona($idPersona);
         $out = [];
         foreach ($idEfectores as $idEfector) {
             $idEfector = (int) $idEfector;
             $ef = Efector::findOne($idEfector);
+            $firstPesId = static::find()
+                ->select(['id'])
+                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
+                ->orderBy(['id' => SORT_ASC])
+                ->scalar();
             $out[] = [
-                'id_rr_hh' => $idRrhh,
+                'id_profesional_efector_servicio' => $firstPesId !== false && $firstPesId !== null ? (int) $firstPesId : 0,
                 'id_efector' => $idEfector,
                 'nombre' => $ef !== null ? (string) $ef->nombre : '',
                 'id_localidad' => $ef !== null ? (int) $ef->id_localidad : 0,
@@ -167,7 +171,73 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * PES para contexto profesional (id_rr_hh) + efector + servicio.
+     * Primer id PES de la persona (cualquier efector), para bootstrap de sesión/JWT legado numérico.
+     */
+    public static function firstPesIdForPersona(int $idPersona): int
+    {
+        if ($idPersona <= 0) {
+            return 0;
+        }
+        $id = static::find()
+            ->select(['id'])
+            ->where(['id_persona' => $idPersona, 'deleted_at' => null])
+            ->orderBy(['id_efector' => SORT_ASC, 'id' => SORT_ASC])
+            ->scalar();
+
+        return $id !== false && $id !== null ? (int) $id : 0;
+    }
+
+    /**
+     * Identificador de asignación profesional (PK PES) desde query/body.
+     *
+     * @param array<string, mixed> $params query/body mezclados
+     */
+    public static function staffContextIdFromRequestParams(array $params): int
+    {
+        $pes = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
+
+        return $pes > 0 ? $pes : 0;
+    }
+
+    /**
+     * @see staffContextIdFromRequestParams
+     */
+    public static function staffContextIdFromRequest(\yii\web\Request $request): int
+    {
+        return static::staffContextIdFromRequestParams(array_merge($request->get(), $request->post()));
+    }
+
+    /**
+     * id_persona desde un id de contexto staff: PK de {@see self} (PES).
+     */
+    public static function resolveIdPersonaFromStaffContextId(int $id): ?int
+    {
+        if ($id <= 0) {
+            return null;
+        }
+        $pes = static::findOne(['id' => $id, 'deleted_at' => null]);
+
+        return $pes !== null ? (int) $pes->id_persona : null;
+    }
+
+    /**
+     * @deprecated Use {@see resolveIdPersonaFromStaffContextId}; el id era PK PES o tabla `rr_hh` (retirada).
+     */
+    public static function resolveIdPersonaFromIdRrhh(int $idRrhh): ?int
+    {
+        return static::resolveIdPersonaFromStaffContextId($idRrhh);
+    }
+
+    /**
+     * @deprecated Use {@see firstPesIdForPersona}; antes reflejaba tabla `rr_hh` (retirada).
+     */
+    public static function resolveIdRrhhForPersona(int $idPersona): int
+    {
+        return static::firstPesIdForPersona($idPersona);
+    }
+
+    /**
+     * PES para persona + efector + servicio.
      */
     public static function findIdByPersonaEfectorServicio(int $idPersona, int $idEfector, int $idServicio): ?int
     {
@@ -188,72 +258,45 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * PES a partir de vínculo RRHH + servicio en un efector (sin tabla `rrhh_servicio`).
+     * PES para persona + servicio en efector; `idCandidato` es PK PES o id_persona (se intenta PES primero).
      */
-    public static function resolverIdPesDesdeRrhhServicioYEfector(int $idRrhh, int $idServicio, int $idEfector): ?int
+    public static function resolverIdPesDesdePersonaServicioYEfector(int $idCandidato, int $idServicio, int $idEfector): ?int
     {
-        if ($idRrhh <= 0 || $idServicio <= 0 || $idEfector <= 0) {
+        if ($idCandidato <= 0 || $idServicio <= 0 || $idEfector <= 0) {
             return null;
         }
-        $idPersona = static::resolveIdPersonaFromIdRrhh($idRrhh);
+        $pesDirecto = static::findOne([
+            'id' => $idCandidato,
+            'id_efector' => $idEfector,
+            'id_servicio' => $idServicio,
+            'deleted_at' => null,
+        ]);
+        if ($pesDirecto !== null) {
+            return (int) $pesDirecto->id;
+        }
+        $idPersona = static::resolveIdPersonaFromStaffContextId($idCandidato);
         if ($idPersona === null || $idPersona <= 0) {
-            return null;
+            $idPersona = Persona::find()->where(['id_persona' => $idCandidato])->exists() ? $idCandidato : null;
         }
-        if (!static::rrhhTieneAsignacionPesEnEfector($idRrhh, $idEfector)) {
+        if ($idPersona === null || $idPersona <= 0) {
             return null;
         }
 
         return static::findIdByPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
     }
 
-    /**
-     * id_persona para un `id_rr_hh` vía tabla `rr_hh`.
-     */
-    public static function resolveIdPersonaFromIdRrhh(int $idRrhh): ?int
+    /** @deprecated Use {@see resolverIdPesDesdePersonaServicioYEfector} */
+    public static function resolverIdPesDesdeRrhhServicioYEfector(int $idRrhh, int $idServicio, int $idEfector): ?int
     {
-        if ($idRrhh <= 0) {
-            return null;
-        }
-        $schema = Yii::$app->db->schema->getTableSchema('rr_hh', true);
-        if ($schema !== null && isset($schema->columns['id_persona'])) {
-            $p = (new Query())->from('rr_hh')->select(['id_persona'])->where(['id_rr_hh' => $idRrhh])->limit(1)->scalar();
-            if ($p !== false && $p !== null) {
-                return (int) $p;
-            }
-        }
-
-        return null;
+        return static::resolverIdPesDesdePersonaServicioYEfector($idRrhh, $idServicio, $idEfector);
     }
 
     /**
-     * id_rr_hh canónico para la persona (tabla `rr_hh`).
+     * La persona tiene al menos una fila PES activa en el efector.
      */
-    public static function resolveIdRrhhForPersona(int $idPersona): int
+    public static function personaTienePesEnEfector(int $idPersona, int $idEfector): bool
     {
-        if ($idPersona <= 0) {
-            return 0;
-        }
-        $schema = Yii::$app->db->schema->getTableSchema('rr_hh', true);
-        if ($schema !== null && isset($schema->columns['id_rr_hh'])) {
-            $id = (new Query())->from('rr_hh')->select(['id_rr_hh'])->where(['id_persona' => $idPersona])->limit(1)->scalar();
-            if ($id !== false && $id !== null) {
-                return (int) $id;
-            }
-        }
-
-        return 0;
-    }
-
-    /**
-     * El RRHH tiene al menos una asignación PES activa en el efector (sustituye comprobación vía `rrhh_efector`).
-     */
-    public static function rrhhTieneAsignacionPesEnEfector(int $idRrhh, int $idEfector): bool
-    {
-        if ($idRrhh <= 0 || $idEfector <= 0) {
-            return false;
-        }
-        $idPersona = static::resolveIdPersonaFromIdRrhh($idRrhh);
-        if ($idPersona === null || $idPersona <= 0) {
+        if ($idPersona <= 0 || $idEfector <= 0) {
             return false;
         }
 
@@ -263,15 +306,38 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Primer PES asociado al `id_rr_hh` dado (misma persona en cualquier efector con PES).
+     * Contexto staff numérico (habitualmente PK PES en sesión): ¿hay PES en el efector?
      */
-    public static function findIdByRrhhMinPes(?int $idRrhh): ?int
+    public static function staffContextTienePesEnEfector(int $staffContextId, int $idEfector): bool
     {
-        if (!$idRrhh || $idRrhh <= 0) {
+        $idPersona = static::resolveIdPersonaFromStaffContextId($staffContextId);
+        if ($idPersona === null || $idPersona <= 0) {
+            return false;
+        }
+
+        return static::personaTienePesEnEfector($idPersona, $idEfector);
+    }
+
+    /** @deprecated Use {@see staffContextTienePesEnEfector} */
+    public static function rrhhTieneAsignacionPesEnEfector(int $idRrhh, int $idEfector): bool
+    {
+        return static::staffContextTienePesEnEfector($idRrhh, $idEfector);
+    }
+
+    /**
+     * Primer PES por id PK o, si no existe fila, por id_persona con cualquier PES.
+     */
+    public static function findFirstPesIdByStaffOrPersona(?int $idCandidato): ?int
+    {
+        if (!$idCandidato || $idCandidato <= 0) {
             return null;
         }
-        $idPersona = static::resolveIdPersonaFromIdRrhh((int) $idRrhh);
-        if ($idPersona === null || $idPersona <= 0) {
+        $pes = static::findOne(['id' => $idCandidato, 'deleted_at' => null]);
+        if ($pes !== null) {
+            return (int) $pes->id;
+        }
+        $idPersona = $idCandidato;
+        if (!Persona::find()->where(['id_persona' => $idPersona])->exists()) {
             return null;
         }
         $pes = static::find()
@@ -282,35 +348,56 @@ class ProfesionalEfectorServicio extends ActiveRecord
         return $pes !== null ? (int) $pes->id : null;
     }
 
+    /** @deprecated Use {@see findFirstPesIdByStaffOrPersona} */
+    public static function findIdByRrhhMinPes(?int $idRrhh): ?int
+    {
+        return static::findFirstPesIdByStaffOrPersona($idRrhh);
+    }
+
     /**
-     * Como {@see findIdByRrhhMinPes} pero exige PES en el efector indicado.
+     * PES en efector: por PK PES en ese efector o por persona + efector (primer id).
      */
+    public static function findFirstPesIdInEfector(?int $idCandidato, ?int $idEfector): ?int
+    {
+        if (!$idCandidato || $idCandidato <= 0) {
+            return null;
+        }
+        if ($idEfector !== null && (int) $idEfector > 0) {
+            $pes = static::findOne([
+                'id' => $idCandidato,
+                'id_efector' => (int) $idEfector,
+                'deleted_at' => null,
+            ]);
+            if ($pes !== null) {
+                return (int) $pes->id;
+            }
+            $idPersona = static::resolveIdPersonaFromStaffContextId((int) $idCandidato);
+            if ($idPersona === null || $idPersona <= 0) {
+                $idPersona = Persona::find()->where(['id_persona' => $idCandidato])->exists() ? (int) $idCandidato : null;
+            }
+            if ($idPersona !== null && $idPersona > 0 && static::personaTienePesEnEfector($idPersona, (int) $idEfector)) {
+                $pes = static::find()
+                    ->where([
+                        'id_persona' => $idPersona,
+                        'id_efector' => (int) $idEfector,
+                        'deleted_at' => null,
+                    ])
+                    ->orderBy(['id' => SORT_ASC])
+                    ->one();
+
+                return $pes !== null ? (int) $pes->id : null;
+            }
+
+            return null;
+        }
+
+        return static::findFirstPesIdByStaffOrPersona($idCandidato);
+    }
+
+    /** @deprecated Use {@see findFirstPesIdInEfector} */
     public static function findIdByRrhhAndEfectorMinPes(?int $idRrhh, ?int $idEfector): ?int
     {
-        if (!$idRrhh || $idRrhh <= 0) {
-            return null;
-        }
-        $idPersona = static::resolveIdPersonaFromIdRrhh((int) $idRrhh);
-        if ($idPersona === null || $idPersona <= 0) {
-            return null;
-        }
-        if ($idEfector) {
-            if (!static::rrhhTieneAsignacionPesEnEfector((int) $idRrhh, (int) $idEfector)) {
-                return null;
-            }
-            $pes = static::find()
-                ->where([
-                    'id_persona' => $idPersona,
-                    'id_efector' => (int) $idEfector,
-                    'deleted_at' => null,
-                ])
-                ->orderBy(['id' => SORT_ASC])
-                ->one();
-
-            return $pes !== null ? (int) $pes->id : null;
-        }
-
-        return static::findIdByRrhhMinPes($idRrhh);
+        return static::findFirstPesIdInEfector($idRrhh, $idEfector);
     }
 
     public static function resolvePesIdFromGuardiaAsignado(?int $idAsignado, ?int $idEfector): ?int
@@ -325,12 +412,11 @@ class ProfesionalEfectorServicio extends ActiveRecord
             }
         }
 
-        return static::findIdByRrhhAndEfectorMinPes($idAsignado, $idEfector);
+        return static::findFirstPesIdInEfector($idAsignado, $idEfector);
     }
 
     /**
-     * Resuelve PES desde el campo `id_rrhh` de internación u otros legados: puede ser PK PES o `id_rr_hh`.
-     * Sin columna `legacy_rrhh_servicio_id` ni tabla `rrhh_servicio`.
+     * Campo legado numérico: PK PES o persona con PES en el efector de contexto.
      */
     public static function resolvePesModelFromInternacionRrhhField(int $idLegacy, ?int $idEfectorContext): ?self
     {
@@ -342,12 +428,12 @@ class ProfesionalEfectorServicio extends ActiveRecord
             if ($id !== null) {
                 return static::findOne(['id' => $id, 'deleted_at' => null]);
             }
-            $id = static::findIdByRrhhAndEfectorMinPes($idLegacy, $idEfectorContext);
+            $id = static::findFirstPesIdInEfector($idLegacy, $idEfectorContext);
             if ($id !== null) {
                 return static::findOne(['id' => $id, 'deleted_at' => null]);
             }
         }
-        $id = static::findIdByRrhhMinPes($idLegacy);
+        $id = static::findFirstPesIdByStaffOrPersona($idLegacy);
         if ($id !== null) {
             return static::findOne(['id' => $id, 'deleted_at' => null]);
         }
@@ -388,9 +474,9 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Filas con `id_rr_hh`, `id` (PES), `id_persona`, `datos` para listados de médicos por efector.
+     * Filas PES (`id`), `id_persona`, `datos` para listados de médicos por efector.
      *
-     * @return list<array{id_rr_hh:int, id:int, id_persona:int, datos:string}>
+     * @return list<array{id:int, id_persona:int, datos:string}>
      */
     public static function obtenerMedicosPorEfector(int $id_efector): array
     {
@@ -416,11 +502,6 @@ class ProfesionalEfectorServicio extends ActiveRecord
             ->join('LEFT JOIN', 'personas', 'pes.id_persona = personas.id_persona')
             ->asArray()
             ->all();
-        foreach ($rows as &$r) {
-            $pid = (int) ($r['id_persona'] ?? 0);
-            $r['id_rr_hh'] = $pid > 0 ? static::resolveIdRrhhForPersona($pid) : 0;
-        }
-        unset($r);
 
         return $rows;
     }
@@ -451,7 +532,7 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * @return list<array{id_rr_hh:int, id:int, id_persona:int, datos:string}>
+     * @return list<array{id:int, id_persona:int, datos:string}>
      */
     public static function obtenerMedicosPorServicioEfector(int $id_efector, int $id_servicio): array
     {
@@ -470,11 +551,6 @@ class ProfesionalEfectorServicio extends ActiveRecord
             ->join('LEFT JOIN', 'personas', 'pes.id_persona = personas.id_persona')
             ->asArray()
             ->all();
-        foreach ($rows as &$r) {
-            $pid = (int) ($r['id_persona'] ?? 0);
-            $r['id_rr_hh'] = $pid > 0 ? static::resolveIdRrhhForPersona($pid) : 0;
-        }
-        unset($r);
 
         return $rows;
     }

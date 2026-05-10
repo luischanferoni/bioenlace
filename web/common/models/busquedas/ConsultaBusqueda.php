@@ -15,8 +15,8 @@ use yii\db\Query;
 class ConsultaBusqueda extends Consulta
 {
     /**
-     * Consultas cuyo turno corresponde al profesional en sesión: match por usuario en rr_hh→personas (legacy)
-     * o por `turnos.id_profesional_efector_servicio` de la misma persona (PES).
+     * Consultas cuyo turno corresponde al profesional en sesión: match por `turnos.id_profesional_efector_servicio`
+     * de la misma persona (PES).
      *
      * @return array<int|string, mixed>
      */
@@ -301,26 +301,23 @@ class ConsultaBusqueda extends Consulta
     }
 
     /**
-     * Filtro por profesional en reportes C4/C7: el formulario envía `id_rr_hh`; las consultas pueden
-     * tener solo `id_profesional_efector_servicio` alineado a la misma persona en efector + servicio.
+     * Filtro por profesional en reportes C4/C7 (id de contexto staff = PK PES o compatible).
      *
      * @param int|string $id_efector
      * @param int|string $idServicio
-     * @param int|string $idMedico id_rr_hh (DepDrop reportes)
+     * @param int|string $idMedico id PES / staff (DepDrop reportes)
      * @return array condición para {@see \yii\db\Query::andWhere}
      */
     private static function reporteProfesionalFilterParaConsulta($id_efector, $idServicio, $idMedico): array
     {
         $idEfector = (int) $id_efector;
         $idServ = (int) $idServicio;
-        $idRrhh = (int) $idMedico;
-        $schema = Yii::$app->db->schema->getTableSchema('{{%consultas}}', true);
-        $hasLegacyRrhh = $schema !== null && isset($schema->columns['id_rr_hh']);
+        $idStaff = (int) $idMedico;
 
-        if ($idRrhh <= 0) {
-            return $hasLegacyRrhh ? ['consultas.id_rr_hh' => $idRrhh] : ['consultas.id_profesional_efector_servicio' => null];
+        if ($idStaff <= 0) {
+            return ['consultas.id_profesional_efector_servicio' => null];
         }
-        $idPersona = (int) (ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($idRrhh) ?? 0);
+        $idPersona = (int) (ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idStaff) ?? 0);
         $pesIds = [];
         if ($idPersona > 0 && $idEfector > 0 && $idServ > 0) {
             $pesIds = ProfesionalEfectorServicio::find()
@@ -334,17 +331,10 @@ class ConsultaBusqueda extends Consulta
                 ->column();
         }
         if ($pesIds === []) {
-            return $hasLegacyRrhh ? ['consultas.id_rr_hh' => $idRrhh] : ['consultas.id_profesional_efector_servicio' => -1];
-        }
-        if (!$hasLegacyRrhh) {
-            return ['consultas.id_profesional_efector_servicio' => $pesIds];
+            return ['consultas.id_profesional_efector_servicio' => -1];
         }
 
-        return [
-            'or',
-            ['consultas.id_rr_hh' => $idRrhh],
-            ['consultas.id_profesional_efector_servicio' => $pesIds],
-        ];
+        return ['consultas.id_profesional_efector_servicio' => $pesIds];
     }
 
     /**

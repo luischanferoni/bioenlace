@@ -48,7 +48,7 @@ class DiditClient extends Component
             $status = $data['status'] ?? 'unknown';
             $normalizedStatus = $this->normalizeStatus($status);
 
-            // Soporta Session API (id_verifications) y formato legacy (person + document)
+            // Soporta Session API (id_verifications) y formato alternativo (person + document)
             $idVerifications = $data['id_verifications'] ?? [];
             $firstIdVerification = is_array($idVerifications) && isset($idVerifications[0]) ? $idVerifications[0] : [];
             $documentTypeString = null;

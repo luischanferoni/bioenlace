@@ -10,7 +10,7 @@ use yii\db\ActiveRecord;
  *
  * - **`source: catalog`** + **`catalog: "<clave>"`**: catálogo genérico declarado en
  *   {@see UiCatalogOptionDefinitions} (lista blanca: clase AR + atributos).
- * - **`efectores` / `servicios` / `rrhh`**: fuentes con filtros/joins propios (no reducibles a un find() simple).
+ * - **`efectores` / `servicios` / `profesionales` / `recurso-humano`**: fuentes con filtros/joins propios (no reducibles a un find() simple).
  *
  * Extensión: {@see register()} o `Yii::$app->params['uiCatalogOptionDefinitions']`.
  */
@@ -123,8 +123,8 @@ final class UiSelectOptionSourceResolver
         self::$sources = [
             'efectores' => [self::class, 'resolveEfectores'],
             'servicios' => [self::class, 'resolveServicios'],
-            'recurso-humano' => [self::class, 'resolveRrhh'],
-            'rrhh' => [self::class, 'resolveRrhh'],
+            'recurso-humano' => [self::class, 'resolveProfesionalesOptions'],
+            'profesionales' => [self::class, 'resolveProfesionalesOptions'],
         ];
     }
 
@@ -244,7 +244,7 @@ final class UiSelectOptionSourceResolver
      *
      * @return array<int, array<string, mixed>>
      */
-    private static function resolveRrhh($filter, array $params, array $optionConfig): array
+    private static function resolveProfesionalesOptions($filter, array $params, array $optionConfig): array
     {
         return [];
     }

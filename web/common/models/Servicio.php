@@ -67,7 +67,10 @@ class Servicio extends \yii\db\ActiveRecord
         ];
     }
     
-    public function getRrhhs()
+    /**
+     * Filas {@see ProfesionalEfectorServicio} activas para este servicio.
+     */
+    public function getProfesionalEfectorServicios()
     {
         return $this->hasMany(ProfesionalEfectorServicio::className(), ['id_servicio' => 'id_servicio'])
             ->andWhere([ProfesionalEfectorServicio::tableName() . '.deleted_at' => null]);

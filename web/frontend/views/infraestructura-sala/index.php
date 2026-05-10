@@ -64,7 +64,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'filter' => Html::activeDropDownList(
                             $searchModel,
                             'id_responsable',
-                            ArrayHelper::map(ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector()), 'id_rr_hh', 'datos'),
+                            ArrayHelper::map(ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector()), 'id', 'datos'),
                             [
                                 'class' => 'form-control',
                                 'prompt' => '- Seleccione -'

@@ -187,37 +187,36 @@ class ServiciosEfector extends \yii\db\ActiveRecord
         }
 
         // Profesionales por servicio (PES en el efector)
-        $arrayRrhhServicios = [];
-        $rrhhsServicio = ProfesionalEfectorServicio::find()
+        $pesPorServicio = [];
+        $filasPes = ProfesionalEfectorServicio::find()
                 ->where(['id_efector' => $id_efector, 'deleted_at' => null])
                 ->with(['persona', 'agenda'])
                 ->orderBy('id_servicio')
                 ->all();
 
-        foreach ($rrhhsServicio as $rrhhServicio) {
-            $arrayRrhhServicios[$rrhhServicio->id_servicio][] = $rrhhServicio;
+        foreach ($filasPes as $pes) {
+            $pesPorServicio[$pes->id_servicio][] = $pes;
         }
-  //      var_dump($arrayRrhhServicios[4]);die;
 
         foreach ($arrayServiciosEfector['CON_DERIVACION'] as $key => $servicioEfector) {
-            if (!isset($arrayRrhhServicios[$servicioEfector->id_servicio])) {
+            if (!isset($pesPorServicio[$servicioEfector->id_servicio])) {
                 unset($arrayServiciosEfector['CON_DERIVACION'][$key]);
                 continue;
             }
             $servicioEfector->profesionalesPes = [];
             if ($servicioEfector->formas_atencion == self::DERIVACION_DELEGAR_A_CADA_RRHH) {
-                $servicioEfector->profesionalesPes = isset($arrayRrhhServicios[$servicioEfector->id_servicio])?$arrayRrhhServicios[$servicioEfector->id_servicio]:[];
+                $servicioEfector->profesionalesPes = isset($pesPorServicio[$servicioEfector->id_servicio])?$pesPorServicio[$servicioEfector->id_servicio]:[];
             }
         }
         
         foreach ($arrayServiciosEfector['SIN_DERIVACION'] as $key => $servicioEfector) {
-            if (!isset($arrayRrhhServicios[$servicioEfector->id_servicio])) {
+            if (!isset($pesPorServicio[$servicioEfector->id_servicio])) {
                 unset($arrayServiciosEfector['SIN_DERIVACION'][$key]);
                 continue;
             }            
             $servicioEfector->profesionalesPes = [];
             if ($servicioEfector->formas_atencion == self::DELEGAR_A_CADA_RRHH) {
-                $servicioEfector->profesionalesPes = isset($arrayRrhhServicios[$servicioEfector->id_servicio])?$arrayRrhhServicios[$servicioEfector->id_servicio]:[];
+                $servicioEfector->profesionalesPes = isset($pesPorServicio[$servicioEfector->id_servicio])?$pesPorServicio[$servicioEfector->id_servicio]:[];
             }
         }
       

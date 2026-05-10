@@ -139,21 +139,19 @@ class JsonHttpBearerAuth extends HttpBearerAuth
 
         // Contexto operativo stateless: si el token trae claims de sesión operativa, aplicarlos.
         // Estos claims SOLO deben ser emitidos por el backend (SesionOperativaService) tras validar coherencia.
-        // PES-first: `id_profesional_efector_servicio` es canónico; `id_rrhh_servicio` en JWT es alias numérico (mismo PES).
         try {
             if (isset($decoded->id_efector)) {
                 Yii::$app->user->setIdEfector((int) $decoded->id_efector);
-            }
-            if (isset($decoded->id_rr_hh)) {
-                Yii::$app->user->setIdRecursoHumano((int) $decoded->id_rr_hh);
             }
             if (isset($decoded->servicio_actual)) {
                 Yii::$app->user->setServicioActual((int) $decoded->servicio_actual);
             }
             if (isset($decoded->id_profesional_efector_servicio)) {
-                Yii::$app->user->setIdProfesionalEfectorServicio((int) $decoded->id_profesional_efector_servicio);
-            } elseif (isset($decoded->id_rrhh_servicio) && (int) $decoded->id_rrhh_servicio > 0) {
-                Yii::$app->user->setIdProfesionalEfectorServicio((int) $decoded->id_rrhh_servicio);
+                $idPes = (int) $decoded->id_profesional_efector_servicio;
+                Yii::$app->user->setIdProfesionalEfectorServicio($idPes);
+                if ($idPes > 0) {
+                    Yii::$app->user->setIdRecursoHumano($idPes);
+                }
             }
             if (isset($decoded->encounter_class)) {
                 Yii::$app->user->setEncounterClass((string) $decoded->encounter_class);

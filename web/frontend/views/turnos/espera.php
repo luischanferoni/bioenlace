@@ -61,7 +61,7 @@ if($profesional != ''){ ?>
             $linkFecha1 = 'turnos/espera?fecha='.$fecha1;
 
             if($profesional != ''){
-              $linkFecha1 .= '&rrhh='.$profesional->id;
+              $linkFecha1 .= '&pes='.$profesional->id;
             }
 
             $linkFecha1 = Url::toRoute($linkFecha1);
@@ -76,7 +76,7 @@ if($profesional != ''){ ?>
 
         <div class="col-4 justify-content-center d-flex text-center align-items-center">
           <button id="cal-lista-espera" class="btn btn-sm bg-soft-primary w-25 float-start rounded" 
-            <?php if($profesional != '') { echo "data-rrhh='$profesional->id'";  } ?> 
+            <?php if($profesional != '') { echo "data-pes='$profesional->id'";  } ?>
             data-bs-toggle="tooltip" data-bs-placement="bottom" data-bs-original-title="Buscar por fecha">
             <i class="bi bi-calendar-date" style="font-size: 25px;"></i>
           </button>
@@ -88,7 +88,7 @@ if($profesional != ''){ ?>
             $linkFecha2 = '/turnos/espera?fecha='.$fecha2;
 
             if($profesional != ''){
-              $linkFecha2 .= '&rrhh='.$profesional->id;
+              $linkFecha2 .= '&pes='.$profesional->id;
             }
 
             $linkFecha2 = Url::toRoute($linkFecha2);

@@ -31,7 +31,7 @@ use Exception;
 /**
  * ConsultasController implements the CRUD actions for Consulta model.
  *
- * **PES:** el único SQL propio de turnos por profesional es {@see actionListadoSumar} (OR `rr_hh` por persona **o** PES en turno).
+ * **PES:** turnos por profesional en {@see actionListadoSumar} vía `profesional_efector_servicio`.
  * El listado general {@see actionIndex} delega en {@see ConsultaBusqueda::searchGral} (filtro “mis consultas” ya ampliable por PES).
  */
 class ConsultasController extends Controller
@@ -181,26 +181,22 @@ class ConsultasController extends Controller
                 ->scalar();
         }
 
-        // Turnos del día en el efector asignados al profesional logueado: por id_rr_hh (legacy) o por PES
-        // (evita depender solo del INNER JOIN personas→rr_hh→turnos cuando el vínculo es solo PES).
+        // Turnos del día en el efector asignados al profesional logueado vía PES.
         $dataProvider = new SqlDataProvider([
             'key' => 'id_turnos',
             'sql' => 'SELECT turnos.atendido, turnos.hora, turnos.confirmado, '
                 . 'turnos.id_turnos AS id_turnos, pac.apellido, pac.nombre, pac.documento, '
-                . 'turnos.hora, pac.id_persona, turnos.id_rr_hh, IF (phc.numero_hc IS NULL, "--", phc.numero_hc) AS numeroHC, '
+                . 'turnos.hora, pac.id_persona, turnos.id_profesional_efector_servicio, IF (phc.numero_hc IS NULL, "--", phc.numero_hc) AS numeroHC, '
                 . 'turnos.programado FROM turnos '
                 . 'INNER JOIN personas pac ON (turnos.id_persona = pac.id_persona) '
                 . 'LEFT JOIN personas_hc phc ON (phc.id_persona = turnos.id_persona) '
-                . 'LEFT JOIN profesional_efector_servicio pes ON pes.id = turnos.id_profesional_efector_servicio '
+                . 'INNER JOIN profesional_efector_servicio pes ON pes.id = turnos.id_profesional_efector_servicio '
                 . 'AND pes.deleted_at IS NULL '
                 . 'WHERE turnos.fecha = ' . $fecha . ' '
                 . 'AND turnos.id_efector = :id_efector '
                 . 'AND turnos.atendido IS NULL '
-                . 'AND ( '
-                . 'EXISTS (SELECT 1 FROM rr_hh rh_med WHERE rh_med.id_persona = :id_persona_medico '
-                . 'AND rh_med.id_rr_hh = turnos.id_rr_hh) '
-                . 'OR (pes.id IS NOT NULL AND pes.id_persona = :id_persona_medico AND pes.id_efector = turnos.id_efector) '
-                . ') '
+                . 'AND pes.id_persona = :id_persona_medico '
+                . 'AND pes.id_efector = turnos.id_efector '
                 . 'GROUP BY turnos.id_turnos ORDER BY turnos.hora ASC ',
             'params' => [
                 ':id_efector' => $idEfector,

@@ -39,6 +39,7 @@ use common\models\PersonaRepository;
 use common\components\Services\Persona\PersonaSignosVitalesService;
 use common\models\Percentilos;
 use common\models\ServiciosEfector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\DiagnosticoConsulta;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
@@ -73,7 +74,7 @@ class PersonasController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['post'],
-                    'deleterrhh' => ['post'],
+                    'eliminar-asignaciones-pes-en-efector' => ['post'],
                 ],
             ],
         ];
@@ -477,24 +478,39 @@ class PersonasController extends Controller
     }
 
     /**
+     * Quita todas las filas PES de la persona en el efector de sesión.
+     * POST `id`: id PES (`profesional_efector_servicio.id`) preferido; compatibilidad: id de pestaña antigua → persona.
+     *
      * @no_intent_catalog
-    */
-    public function actionDeleterrhh()
+     */
+    public function actionEliminarAsignacionesPesEnEfector()
     {
+        Yii::$app->response->format = Response::FORMAT_RAW;
         $id = (int) Yii::$app->request->post('id');
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        $idPersona = \common\models\ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($id);
-        if ($idPersona !== null && $idPersona > 0 && $idEfector > 0) {
-            foreach (
-                \common\models\ProfesionalEfectorServicio::find()
-                    ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
-                    ->all() as $pes
-            ) {
-                $pes->delete();
-            }
+        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+        if ($id <= 0 || $idEfectorSesion <= 0) {
+            return 'ok';
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $id, 'deleted_at' => null]);
+        $idPersona = null;
+        if ($pes !== null && (int) $pes->id_efector === $idEfectorSesion) {
+            $idPersona = (int) $pes->id_persona;
+        } else {
+            $resolved = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($id);
+            $idPersona = ($resolved !== null && (int) $resolved > 0) ? (int) $resolved : null;
+        }
+        if ($idPersona === null || $idPersona <= 0) {
+            return 'ok';
+        }
+        foreach (
+            ProfesionalEfectorServicio::find()
+                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfectorSesion, 'deleted_at' => null])
+                ->all() as $row
+        ) {
+            $row->delete();
         }
 
-        return "ok";
+        return 'ok';
     }
 
     /**
@@ -514,15 +530,26 @@ class PersonasController extends Controller
     }
 
     /**
-     * Action para mostrar el listado de personas con sus datos de rrhh
-     * 
+     * @deprecated Use {@see actionIndexPersonasPes}. Redirección por compatibilidad de marcadores.
+     *
      * @no_intent_catalog
-    */
+     */
     public function actionIndexpersonarrhh()
     {
+        return $this->redirect(['index-personas-pes'], 301);
+    }
+
+    /**
+     * Listado de personas con asignación PES en el efector de sesión (vista `personas_rrhh`).
+     *
+     * @no_intent_catalog
+     */
+    public function actionIndexPersonasPes()
+    {
         $searchModel = new PersonaBusqueda();
-        $dataProvider = $searchModel->searchpersonarrhh(Yii::$app->request->queryParams);
-        return $this->render('indexpersonarrhh', [
+        $dataProvider = $searchModel->searchPersonasAsignacionPes(Yii::$app->request->queryParams);
+
+        return $this->render('index_personas_pes', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);

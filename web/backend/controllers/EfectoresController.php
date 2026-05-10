@@ -71,19 +71,20 @@ class EfectoresController extends Controller
     }
 
     /**
-     * Muestra los recursos humanos para un Efector.
-     * @param integer $id
+     * Asignaciones profesional–efector–servicio (PES) para un efector.
+     *
+     * @param integer $id id_efector
      * @return mixed
      */
-    public function actionRrhh($id)
+    public function actionProfesionales($id)
     {
         $searchModel = new ProfesionalEfectorServicioBusqueda();
-        
+
         $searchModel->id_efector = $id;
-        
+
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
-        return $this->render('view_rrhh', [
+        return $this->render('view_profesionales', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
         ]);

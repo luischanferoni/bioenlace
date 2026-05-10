@@ -46,7 +46,7 @@ use yii\helpers\ArrayHelper;
                     $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector((int) yii::$app->user->getIdEfector());
 
                     echo $form->field($model, 'id_responsable')->widget(Select2::classname(), [
-                        'data' => ArrayHelper::map($profesionales, 'id_rr_hh', 'datos'),
+                        'data' => ArrayHelper::map($profesionales, 'id', 'datos'),
                         'theme' => 'default',
                         'language' => 'en',
                         'options' => ['placeholder' => 'Seleccione el Profesional...'],

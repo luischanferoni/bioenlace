@@ -128,18 +128,14 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
         }
         
         $modelAtencionEnfermeria->fecha_creacion = date("d/m/Y");
-        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
         $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
-        if ($idRrhh <= 0 && $idPesSesion > 0) {
-            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
-            if ($pes !== null) {
-                $modelAtencionEnfermeria->id_profesional_efector_servicio = $idPesSesion;
-                $idRrhh = ProfesionalEfectorServicio::resolveIdRrhhForPersona((int) $pes->id_persona);
-            }
-        } elseif ($idPesSesion > 0) {
+        if ($idPesSesion <= 0) {
+            $rh = Yii::$app->user->getIdRecursoHumano();
+            $idPesSesion = $rh !== null && $rh !== '' ? (int) $rh : 0;
+        }
+        if ($idPesSesion > 0) {
             $modelAtencionEnfermeria->id_profesional_efector_servicio = $idPesSesion;
         }
-        $modelAtencionEnfermeria->id_rr_hh = $idRrhh > 0 ? $idRrhh : null;
 
         if (Yii::$app->request->isPost) {
             $post = Yii::$app->request->post();

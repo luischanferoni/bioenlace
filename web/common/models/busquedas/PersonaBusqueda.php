@@ -82,13 +82,13 @@ class PersonaBusqueda extends persona
     }
 
     /**
-     * Data Provider para el listado PERSONAS-RRHH
+     * Listado desde la vista `personas_rrhh` (personas con asignación PES en el efector de sesión).
      *
      * @param array $params
      *
      * @return ActiveDataProvider
      */
-    public function searchpersonarrhh($params) {
+    public function searchPersonasAsignacionPes($params) {
 
         //consulta en la vista personas_rrhh
         $query = Persona::findActive()->select('*')->from('personas_rrhh')

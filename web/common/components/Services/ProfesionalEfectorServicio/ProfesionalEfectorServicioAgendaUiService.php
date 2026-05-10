@@ -24,9 +24,12 @@ final class ProfesionalEfectorServicioAgendaUiService
      */
     public static function buildFieldValuesForGet(int $idEfector, array $query): array
     {
-        $idRrHh = isset($query['id_rr_hh']) ? (int) $query['id_rr_hh'] : 0;
         $idServicio = isset($query['id_servicio']) ? (int) $query['id_servicio'] : 0;
         $idPesIn = isset($query['id_profesional_efector_servicio']) ? (int) $query['id_profesional_efector_servicio'] : 0;
+        $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($query);
+        if ($idPesIn > 0) {
+            $idStaff = $idPesIn;
+        }
 
         $out = [
             'id_efector' => (string) $idEfector,
@@ -39,10 +42,6 @@ final class ProfesionalEfectorServicioAgendaUiService
                 throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
             }
             $out['id_profesional_efector_servicio'] = (string) $idPesIn;
-            $idRrHhFromPersona = ProfesionalEfectorServicioRecord::resolveIdRrhhForPersona((int) $pesAnchor->id_persona);
-            if ($idRrHhFromPersona > 0) {
-                $idRrHh = $idRrHhFromPersona;
-            }
             if ($idServicio <= 0) {
                 $idServicio = (int) $pesAnchor->id_servicio;
             }
@@ -51,8 +50,8 @@ final class ProfesionalEfectorServicioAgendaUiService
             }
         }
 
-        if ($idRrHh > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
+        if ($idStaff > 0) {
+            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
         } elseif ($idPesIn <= 0) {
             return $out;
         }
@@ -66,8 +65,8 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('Este servicio no admite agenda de turnos; no corresponde abrir la configuración de agenda.');
         }
 
-        if ($idRrHh > 0) {
-            $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromIdRrhh($idRrHh);
+        if ($idStaff > 0) {
+            $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
             if ($idPersona === null || $idPersona <= 0) {
                 return $out;
             }
@@ -85,8 +84,8 @@ final class ProfesionalEfectorServicioAgendaUiService
 
         if ($pesAnchor !== null) {
             $pes = $pesAnchor;
-        } elseif ($idRrHh > 0) {
-            $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromIdRrhh($idRrHh);
+        } elseif ($idStaff > 0) {
+            $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
             if ($idPersona === null || $idPersona <= 0) {
                 return $out;
             }
@@ -140,8 +139,11 @@ final class ProfesionalEfectorServicioAgendaUiService
      */
     public static function buildCondicionLaboralValuesForGet(int $idEfector, array $query): array
     {
-        $idRrHh = isset($query['id_rr_hh']) ? (int) $query['id_rr_hh'] : 0;
         $idPesIn = isset($query['id_profesional_efector_servicio']) ? (int) $query['id_profesional_efector_servicio'] : 0;
+        $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($query);
+        if ($idPesIn > 0) {
+            $idStaff = $idPesIn;
+        }
         $out = [
             'id_efector' => (string) $idEfector,
         ];
@@ -149,20 +151,16 @@ final class ProfesionalEfectorServicioAgendaUiService
             $pes = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesIn, 'deleted_at' => null]);
             if ($pes !== null && (int) $pes->id_efector === $idEfector) {
                 $out['id_profesional_efector_servicio'] = (string) $idPesIn;
-                $idRrFromP = ProfesionalEfectorServicioRecord::resolveIdRrhhForPersona((int) $pes->id_persona);
-                if ($idRrFromP > 0) {
-                    $idRrHh = $idRrFromP;
-                }
             }
         }
-        if ($idRrHh <= 0 && !isset($out['id_profesional_efector_servicio'])) {
+        if ($idStaff <= 0 && !isset($out['id_profesional_efector_servicio'])) {
             return $out;
         }
-        if ($idRrHh > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
+        if ($idStaff > 0) {
+            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
         }
-        if (!isset($out['id_profesional_efector_servicio']) && $idRrHh > 0) {
-            $idPersonaLegacy = ProfesionalEfectorServicioRecord::resolveIdPersonaFromIdRrhh($idRrHh);
+        if (!isset($out['id_profesional_efector_servicio']) && $idStaff > 0) {
+            $idPersonaLegacy = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
             if ($idPersonaLegacy !== null && $idPersonaLegacy > 0) {
                 $pesAny = ProfesionalEfectorServicioRecord::find()
                     ->where([
@@ -199,18 +197,18 @@ final class ProfesionalEfectorServicioAgendaUiService
      */
     public static function submitAgendaConfig(int $idEfector, array $post): array
     {
-        $idRrHh = (int) ($post['id_rr_hh'] ?? 0);
+        $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);
         $idServicio = (int) ($post['id_servicio'] ?? 0);
         $idPesPost = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+        if ($idPesPost > 0) {
+            $idStaff = $idPesPost;
+        }
 
         $pesFromPost = null;
         if ($idPesPost > 0) {
             $pesFromPost = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesPost, 'deleted_at' => null]);
             if ($pesFromPost === null || (int) $pesFromPost->id_efector !== $idEfector) {
                 throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
-            }
-            if ($idRrHh <= 0) {
-                $idRrHh = ProfesionalEfectorServicioRecord::resolveIdRrhhForPersona((int) $pesFromPost->id_persona);
             }
             if ($idServicio <= 0) {
                 $idServicio = (int) $pesFromPost->id_servicio;
@@ -220,12 +218,12 @@ final class ProfesionalEfectorServicioAgendaUiService
             }
         }
 
-        if ($idServicio <= 0 || ($idRrHh <= 0 && $idPesPost <= 0)) {
+        if ($idServicio <= 0 || ($idStaff <= 0 && $idPesPost <= 0)) {
             throw new BadRequestHttpException('Indique id_servicio e id_profesional_efector_servicio.');
         }
 
-        if ($idRrHh > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
+        if ($idStaff > 0) {
+            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
         }
 
         if ($idServicio === 62) {
@@ -241,12 +239,12 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('Este servicio no admite agenda de turnos; no se puede guardar configuración de agenda.');
         }
 
-        if ($idRrHh > 0) {
-            $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromIdRrhh($idRrHh);
+        if ($idStaff > 0 && $idPesPost <= 0) {
+            $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
             if ($idPersona === null || $idPersona <= 0) {
                 throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
             }
-            if (!ProfesionalEfectorServicioRecord::rrhhTieneAsignacionPesEnEfector($idRrHh, $idEfector)) {
+            if (!ProfesionalEfectorServicioRecord::staffContextTienePesEnEfector($idStaff, $idEfector)) {
                 throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
             }
 
@@ -301,17 +299,20 @@ final class ProfesionalEfectorServicioAgendaUiService
      */
     public static function submitCondicionLaboral(int $idEfector, array $post): array
     {
-        $idRrHh = (int) ($post['id_rr_hh'] ?? 0);
+        $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+        if ($idPes > 0) {
+            $idStaff = $idPes;
+        }
 
         if ($idPes > 0) {
             $pesOk = ProfesionalEfectorServicioRecord::findOne(['id' => $idPes, 'deleted_at' => null]);
             if ($pesOk === null || (int) $pesOk->id_efector !== $idEfector) {
                 throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
             }
-        } elseif ($idRrHh > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idRrHh, $idEfector);
-            $idPersonaLegacy = ProfesionalEfectorServicioRecord::resolveIdPersonaFromIdRrhh($idRrHh);
+        } elseif ($idStaff > 0) {
+            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
+            $idPersonaLegacy = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
             if ($idPersonaLegacy !== null && $idPersonaLegacy > 0) {
                 $pesAny = ProfesionalEfectorServicioRecord::find()
                     ->where([
@@ -328,7 +329,7 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         if ($idPes <= 0) {
-            throw new BadRequestHttpException('Indique id_profesional_efector_servicio o id_rr_hh con PES en este efector.');
+            throw new BadRequestHttpException('Indique id_profesional_efector_servicio con PES en este efector.');
         }
 
         $idCondicion = isset($post['id_condicion_laboral']) ? (int) $post['id_condicion_laboral'] : 0;
@@ -368,13 +369,13 @@ final class ProfesionalEfectorServicioAgendaUiService
         return ['message' => 'Condición laboral guardada.'];
     }
 
-    private static function assertRecursoHumanoPerteneceAEfector(int $idRrHh, int $idEfector): void
+    private static function assertRecursoHumanoPerteneceAEfector(int $idStaffContext, int $idEfector): void
     {
         if ($idEfector <= 0) {
             throw new BadRequestHttpException('No hay efector en sesión.');
         }
 
-        if (!ProfesionalEfectorServicioRecord::rrhhTieneAsignacionPesEnEfector($idRrHh, $idEfector)) {
+        if (!ProfesionalEfectorServicioRecord::staffContextTienePesEnEfector($idStaffContext, $idEfector)) {
             throw new ForbiddenHttpException('RRHH no pertenece al efector actual.');
         }
     }

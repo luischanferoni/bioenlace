@@ -26,7 +26,7 @@ class TurnoBusqueda extends Turno
     public function rules()
     {
         return [
-            [['id_turnos', 'id_persona', 'id_rr_hh', 'id_consulta_referencia', 'id_servicio_asignado', 'id_profesional_efector_servicio'], 'integer'],
+            [['id_turnos', 'id_persona', 'id_consulta_referencia', 'id_servicio_asignado', 'id_profesional_efector_servicio'], 'integer'],
             [['fecha', 'hora', 'confirmado', 'referenciado', 'usuario_alta', 'fecha_alta', 'usuario_mod', 'fecha_mod', 'busqueda_libre', 'dni', 'profesional_clave'], 'safe'],
 
         ];
@@ -130,14 +130,14 @@ class TurnoBusqueda extends Turno
      *
      * @return ActiveDataProvider
      */
-    public function searchAllTurnos($tfecha, $idRrhh)
+    public function searchAllTurnos($tfecha, $idStaffContext)
     {
         $query = Turno::find();
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
 
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $idStaffContext);
         $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
         if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
             $query->where('0=1');

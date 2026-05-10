@@ -21,17 +21,16 @@ class ConsultaProcesamientoService extends Component
             $userPerTabConfig = $body['userPerTabConfig'] ?? [];
             $idPesTab = $userPerTabConfig['id_profesional_efector_servicio']
                 ?? $userPerTabConfig['idProfesionalEfectorServicio'] ?? null;
-            $idRrHhServicioLegacy = $userPerTabConfig['id_rrhh_servicio'] ?? null;
-            $idRrHhServicio = (int) ($idPesTab ?: $idRrHhServicioLegacy ?: 0);
+            $idProfesionalEfectorServicio = (int) ($idPesTab ?: 0);
             $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
             $textoConsulta = $body['consulta'] ?? null;
             $idConfiguracion = $body['id_configuracion'] ?? null;
 
-            if ($idRrHhServicio <= 0 || !$textoConsulta) {
+            if ($idProfesionalEfectorServicio <= 0 || !$textoConsulta) {
                 return [
                     '__statusCode' => 400,
                     'success' => false,
-                    'message' => 'Faltan datos obligatorios. Verifique id_profesional_efector_servicio (o id_rrhh_servicio espejo) y el texto de la consulta.',
+                    'message' => 'Faltan datos obligatorios. Verifique id_profesional_efector_servicio y el texto de la consulta.',
                     'errors' => null,
                 ];
             }
@@ -52,7 +51,7 @@ class ConsultaProcesamientoService extends Component
             }
 
             $contextoLogger = [
-                'idRrHhServicio' => $idRrHhServicio,
+                'id_profesional_efector_servicio' => $idProfesionalEfectorServicio,
                 'servicio' => $servicio->nombre,
                 'tabId' => $tabId,
             ];
@@ -69,7 +68,7 @@ class ConsultaProcesamientoService extends Component
                 $textoConsulta,
                 $servicio->nombre,
                 $tabId,
-                $idRrHhServicio
+                $idProfesionalEfectorServicio
             );
             $textoProcesado = $resultadoFormato['texto_procesado'];
             $textoFormateado = $resultadoFormato['texto_formateado'];
@@ -366,7 +365,15 @@ HTML;
                     $modelConsulta = new Consulta();
                     $modelConsulta->id_configuracion = $idConfiguracion;
                     $modelConsulta->id_persona = $idPersona;
-                    $modelConsulta->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+                    $idPesSes = Yii::$app->user->getIdProfesionalEfectorServicio();
+                    if ($idPesSes !== null && $idPesSes !== '') {
+                        $modelConsulta->id_profesional_efector_servicio = (int) $idPesSes;
+                    } else {
+                        $rh = Yii::$app->user->getIdRecursoHumano();
+                        if ($rh !== null && $rh !== '') {
+                            $modelConsulta->id_profesional_efector_servicio = (int) $rh;
+                        }
+                    }
                     $modelConsulta->id_servicio = Yii::$app->user->getServicioActual();
                     $modelConsulta->id_efector = Yii::$app->user->getIdEfector();
                     $modelConsulta->estado = Consulta::ESTADO_EN_PROGRESO;

@@ -49,7 +49,6 @@ $this->params['breadcrumbs'][] = $this->title;
                     'covid',
                     //'id_responsable',
                     [
-                        //'attribute' => 'responsable.rrhh.idPersona.nombreCompleto',
                         'label' => 'Responsable',
                         'value' =>  function($data) {
 

@@ -39,7 +39,6 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             'resultado',
             'informe:ntext',
-            //'id_rrhh_solicita',
             [   //muestra el nombre del responsable seleccionado en el listado
                 'label'=> 'Profesional solicita',
                 'attribute'=>'id_profesional_efector_servicio_solicita',
@@ -47,7 +46,6 @@ $this->params['breadcrumbs'][] = $this->title;
                     ? $model->profesionalEfectorServicioSolicita->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
                     : '',
             ],
-            //'id_rrhh_realiza',
             [   //muestra el nombre del responsable seleccionado en el listado
                 'label'=> 'Profesional realiza',
                 'attribute'=>'id_profesional_efector_servicio_realiza',

@@ -14,20 +14,19 @@ header("Refresh: $sec");
 
 
 
-// es para la vista desde otros perfiles que no son el profesional
-$rr_hh = '';
+// Sufijo del título cuando la lista se filtra por un profesional (vista desde otros perfiles).
+$sufijoTituloProfesional = '';
 
-if ($profesional != '') {    
-  $rr_hh = " para " . $profesional->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
+if ($profesional != '') {
+    $sufijoTituloProfesional = ' para ' . $profesional->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
 }
-// fin
 
 $fecha_espera = isset($_GET['fecha']) ? ' del ' . date('d-m-Y', strtotime($_GET['fecha'])) : ' del ' . date('d-m-Y');
 ?>
 
-<?php 
-// es para la vista desde otros perfiles que no son el profesional
-if($profesional != ''){ ?>
+<?php
+// Cabecera institucional solo cuando hay profesional en contexto (otros perfiles).
+if ($profesional != '') { ?>
 <div class="row">
   <div class="col-4 text-center">
     <img src="<?= Yii::getAlias('@web') ?>/images/logo_ministerio_salud.png" style="height: 55px;"/>
@@ -50,7 +49,7 @@ if($profesional != ''){ ?>
     <div class="card-body">
        <div class="row">
           <div class="col-12">
-              <h3 class="float-center mt-2 mb-2"><?= Html::encode($this->title) . $rr_hh . $fecha_espera ?></h3>
+              <h3 class="float-center mt-2 mb-2"><?= Html::encode($this->title) . $sufijoTituloProfesional . $fecha_espera ?></h3>
             </div>
        </div>
 

@@ -190,19 +190,27 @@ class PacienteController extends Controller
             } else {
                 //var_dump($response->data);
                 foreach ($response->data as $instancia) {
+                    $profesionalNombre = null;
+                    if (!empty($instancia['createdBy'])) {
+                        $creador = Persona::findOne(['id_user' => (int) $instancia['createdBy']]);
+                        if ($creador !== null) {
+                            $profesionalNombre = $creador->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
+                        }
+                    }
 
-                    $respuesta[] = array(
+                    $respuesta[] = [
                         'fecha' => $instancia['createdAt'],
                         'resumen' => 'form/verinstancia/' . $instancia['id'],
                         'parent_class' => 'Forms',
                         'servicio' => null,
-                        'tipo' => null,
-                        'parent_id' => $instancia['form']['nombre'],
-                        'nombre_profesional' => null,
-                        'rr_hh' => null,
+                        'tipo' => 'Forms',
+                        'parent_id' => $instancia['form']['nombre'] ?? null,
+                        'profesional' => $profesionalNombre,
+                        'nombre_profesional' => $profesionalNombre,
+                        'id_profesional_efector_servicio' => null,
                         'efector' => null,
-                        'tipo_historia' => 'Forms'
-                    );
+                        'tipo_historia' => 'Forms',
+                    ];
                 }
             }
         } catch (\Exception $e) {

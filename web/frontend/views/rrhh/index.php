@@ -7,7 +7,7 @@ use yii\grid\GridView;
 /* @var $searchModel common\models\busquedas\ProfesionalEfectorServicioBusqueda */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = 'Recursos humanos por efector';
+$this->title = 'Asignaciones profesional por efector y servicio';
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="rrhh-index">
@@ -15,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Nuevo RRHH', ['create'], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('Nueva asignación', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
 
     <?= GridView::widget([

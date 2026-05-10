@@ -530,16 +530,6 @@ class PersonasController extends Controller
     }
 
     /**
-     * @deprecated Use {@see actionIndexPersonasPes}. Redirección por compatibilidad de marcadores.
-     *
-     * @no_intent_catalog
-     */
-    public function actionIndexpersonarrhh()
-    {
-        return $this->redirect(['index-personas-pes'], 301);
-    }
-
-    /**
      * Listado de personas con asignación PES en el efector de sesión (vista `personas_rrhh`).
      *
      * @no_intent_catalog

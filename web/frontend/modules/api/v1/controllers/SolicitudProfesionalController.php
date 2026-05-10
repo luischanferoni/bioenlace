@@ -12,9 +12,9 @@ use common\models\ProfesionalEfectorServicio;
 use yii\db\Query;
 
 /**
- * Solicitudes / pedidos entre profesionales (según modo_comunicacion_medicos del efector).
+ * Solicitudes entre profesionales del efector (`solicitud_rrhh` en BD; ids columnas = PES).
  */
-class SolicitudRrhhController extends BaseController
+class SolicitudProfesionalController extends BaseController
 {
     private function requireStaffContextIdFromSession(): int
     {
@@ -49,11 +49,12 @@ class SolicitudRrhhController extends BaseController
                 'estado' => $s->estado,
                 'tipo' => $s->tipo,
                 'mensaje' => $s->mensaje,
-                'id_solicitante_rr_hh' => $s->id_solicitante_rr_hh,
-                'id_destinatario_rr_hh' => $s->id_destinatario_rr_hh,
+                'id_solicitante_profesional_efector_servicio' => $s->id_solicitante_rr_hh,
+                'id_destinatario_profesional_efector_servicio' => $s->id_destinatario_rr_hh,
                 'created_at' => $s->created_at,
             ];
         }
+
         return ['success' => true, 'solicitudes' => $out];
     }
 
@@ -73,7 +74,7 @@ class SolicitudRrhhController extends BaseController
         if ($mensaje === null || $mensaje === '') {
             throw new BadRequestHttpException('mensaje requerido');
         }
-        $dest = Yii::$app->request->post('id_destinatario_rr_hh');
+        $dest = Yii::$app->request->post('id_destinatario_profesional_efector_servicio');
 
         $s = new SolicitudRrhh();
         $s->id_efector = $idEfector;
@@ -83,7 +84,9 @@ class SolicitudRrhhController extends BaseController
 
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DIRECTO) {
             if (!$dest) {
-                throw new BadRequestHttpException('id_destinatario_rr_hh requerido en modo directo');
+                throw new BadRequestHttpException(
+                    'id_destinatario_profesional_efector_servicio requerido en modo directo'
+                );
             }
             $s->id_destinatario_rr_hh = (int) $dest;
         } elseif ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_INTERMEDIARIO) {

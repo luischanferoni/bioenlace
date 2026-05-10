@@ -29,9 +29,9 @@ class ConsultaMotivosConsultaController extends DefaultConsultaController
         $idsBDPrevioPost = [];
         $mapCodigoId = [];
         $motivos = [];
-        $idRrhhMotivos = $modelConsulta->resolveIdRrhhParaMotivos();
-        if ($idRrhhMotivos > 0 && count($modelConsulta->getMostUseRrhh($idRrhhMotivos)) > 3) {
-            $motivos = $modelConsulta->getMostUseRrhh($idRrhhMotivos);
+        $idPesMotivos = $modelConsulta->resolveIdPesParaMotivos();
+        if ($idPesMotivos > 0 && count($modelConsulta->getMotivosFrecuentesPorProfesionalPes($idPesMotivos)) > 3) {
+            $motivos = $modelConsulta->getMotivosFrecuentesPorProfesionalPes($idPesMotivos);
         } else {
             $motivos = $modelConsulta->getMostUseServicio($modelConsulta->id_servicio);
         }

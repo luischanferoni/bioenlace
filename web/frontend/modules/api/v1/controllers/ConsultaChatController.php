@@ -233,7 +233,7 @@ class ConsultaChatController extends BaseController
 
     /**
      * Paciente: `consulta.id_persona` === sesión `idPersona` ({@see JsonHttpBearerAuth}).
-     * Médico: mismo RRHH y/o misma PES que en sesión operativa ({@see ConsultaAccessService::userCanAccessConsultaApi}).
+     * Médico: mismo contexto PES que en sesión operativa ({@see ConsultaAccessService::userCanAccessConsultaApi}).
      */
     protected function canAccessConsulta(Consulta $consulta): bool
     {

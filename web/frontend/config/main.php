@@ -177,9 +177,9 @@ return [
                 'OPTIONS api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'POST api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
                 'OPTIONS api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
-                'GET api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/listar',
-                'OPTIONS api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/listar',
-                'POST api/<version:\w+>/solicitud-rrhh' => '<version>/solicitud-rrhh/crear',
+                'GET api/<version:\w+>/solicitud-profesional' => '<version>/solicitud-profesional/listar',
+                'OPTIONS api/<version:\w+>/solicitud-profesional' => '<version>/solicitud-profesional/listar',
+                'POST api/<version:\w+>/solicitud-profesional' => '<version>/solicitud-profesional/crear',
                 
                 // Personas Timeline API (historia clínica)
                 'GET api/<version:\w+>/personas/<id:\d+>/signos-vitales' => '<version>/persona/signos-vitales',

@@ -7,7 +7,7 @@ use yii\helpers\Html;
 
 $persona = $model->persona;
 $this->title = 'PES #' . $model->id . ': ' . ($persona ? $persona->apellido . ', ' . $persona->nombre : '');
-$this->params['breadcrumbs'][] = ['label' => 'RRHH', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Asignaciones', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="rrhh-view">

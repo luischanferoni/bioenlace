@@ -716,7 +716,7 @@ class Consulta extends \yii\db\ActiveRecord
     /**
      * Id PES para estadísticas de motivos (filtro por profesional).
      */
-    public function resolveIdRrhhParaMotivos(): int
+    public function resolveIdPesParaMotivos(): int
     {
         $idPes = (int) ($this->id_profesional_efector_servicio ?? 0);
         if ($idPes > 0) {
@@ -733,7 +733,7 @@ class Consulta extends \yii\db\ActiveRecord
         return 0;
     }
 
-    public function getMostUseRrhh($medico)
+    public function getMotivosFrecuentesPorProfesionalPes($idPes)
     {
         $connection = Yii::$app->getDb();
         $command = $connection->createCommand("
@@ -745,7 +745,7 @@ class Consulta extends \yii\db\ActiveRecord
                         WHERE sh.conceptId is not null AND pes.id = :id_pes
                         GROUP by c.id_servicio, sh.conceptId, sh.term
                         ORDER by s.nombre asc, count(c.id_consulta) desc LIMIT 6",
-                        [':id_pes' => $medico]);
+                        [':id_pes' => $idPes]);
 
         $result = $command->queryAll();
         $array = [];

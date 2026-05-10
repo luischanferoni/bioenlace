@@ -40,7 +40,7 @@ use frontend\controllers\MpiApiController;
 <div class="row">
     <div class="col-12">
         <p style="padding-top: 13pt;padding-left: 38pt;text-indent: 363pt;line-height: 200%;text-align: left;">
-            <b>Apellidos y Nombre del Médico (RRHH)</b><span class="s1">:<?= $nombreMedico?> </span>
+            <b>Apellidos y Nombre del Médico</b><span class="s1">:<?= $nombreMedico?> </span>
         </p>
         <p style="padding-top: 13pt;line-height: 200%;text-align: center;">
             <b>Establecimiento (Efector):</b><span class="s1"><?= $nombreEfector ?></span> 

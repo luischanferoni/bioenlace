@@ -207,7 +207,7 @@ class RrhhController extends Controller
      * Autocomplete Select2 (misma forma que API /api/v1/recurso-humano/autocomplete).
      * @no_intent_catalog
      */
-    public function actionRrhhAutocomplete($q = null)
+    public function actionProfesionalesAutocomplete($q = null)
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $request = Yii::$app->request;

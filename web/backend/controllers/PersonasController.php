@@ -768,14 +768,6 @@ public function actionListaCandidatos(){
     }
 
     /**
-     * @deprecated Preferir {@see actionIndexPersonasPes}.
-     */
-    public function actionIndexpersonarrhh()
-    {
-        return $this->redirect(['index-personas-pes'], 301);
-    }
-
-    /**
      * Listado de personas con asignación PES en el efector de sesión (vista `personas_rrhh`).
      */
     public function actionIndexPersonasPes()

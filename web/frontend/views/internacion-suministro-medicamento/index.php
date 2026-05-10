@@ -42,7 +42,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'hora',            
             [
                 'attribute' => 'id_rrhh',
-                'label' => 'RRHH', 
+                'label' => 'Profesional',
                 'value' => function ($data) {
                    
                     return $data->rrhhSuministra

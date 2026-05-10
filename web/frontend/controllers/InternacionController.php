@@ -125,11 +125,11 @@ class InternacionController extends Controller
         ]);
     }
 
-    public function formatearDatosProfesional($modeloRrhh)
+    public function formatearDatosProfesional($modeloPes)
     {
         $array_profesiones = [];
-        if (isset($modeloRrhh->persona->profesionalSalud)) {
-            foreach ($modeloRrhh->persona->profesionalSalud as $profesional) {
+        if (isset($modeloPes->persona->profesionalSalud)) {
+            foreach ($modeloPes->persona->profesionalSalud as $profesional) {
                 if (isset($profesional->especialidad)) {
                     $array_profesiones[$profesional->profesion->nombre][] = $profesional->especialidad->nombre;
                 } else {
@@ -207,21 +207,21 @@ class InternacionController extends Controller
 
         $paciente = $model->paciente;
 
-        $model_rrhh = null;
+        $model_profesional_pes = null;
         if ((int) ($model->id_profesional_efector_servicio ?? 0) > 0) {
-            $model_rrhh = ProfesionalEfectorServicio::findOne([
+            $model_profesional_pes = ProfesionalEfectorServicio::findOne([
                 'id' => (int) $model->id_profesional_efector_servicio,
                 'deleted_at' => null,
             ]);
         }
-        if ($model_rrhh === null && (int) ($model->id_rrhh ?? 0) > 0) {
+        if ($model_profesional_pes === null && (int) ($model->id_rrhh ?? 0) > 0) {
             $idLeg = (int) $model->id_rrhh;
-            $model_rrhh = ProfesionalEfectorServicio::resolvePesModelFromInternacionLegacyField(
+            $model_profesional_pes = ProfesionalEfectorServicio::resolvePesModelFromInternacionLegacyField(
                 $idLeg,
                 $model->resolveIdEfectorContextForPes()
             );
         }
-        $datosProfesional = $model_rrhh !== null ? $this->formatearDatosProfesional($model_rrhh) : [];
+        $datosProfesional = $model_profesional_pes !== null ? $this->formatearDatosProfesional($model_profesional_pes) : [];
 
         $puedeAtender = false;
         $servicioProfesionalSesion = Yii::$app->user->getServicioActual();
@@ -235,7 +235,7 @@ class InternacionController extends Controller
 
         return $this->render('view', [
             'model' => $model,
-            'model_rrhh' => $model_rrhh,
+            'model_profesional_pes' => $model_profesional_pes,
             'datosProfesional' => $datosProfesional,
             'evoluciones' => empty($evoluciones) ? [] : $evoluciones,
             'sintomas' => empty($sintomas) ? [] : $sintomas,

@@ -137,7 +137,7 @@ use common\models\ConsultaPracticas;
                                             'allowClear' => true,
                                             'minimumInputLength' => 3,
                                             'ajax' => [
-                                                'url' => Url::to(['rrhh/rrhh-autocomplete']),
+                                                'url' => Url::to(['rrhh/profesionales-autocomplete']),
                                                 'dataType' => 'json',
                                                 'data' => new JsExpression('function(params) { return {q:params.term}; }'),
                                             ],

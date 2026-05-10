@@ -144,7 +144,7 @@ $this->registerJsFile(
                     <div class="mt-2 mb-2 ms-2">
                         <p class="d-inline text-dark" style="font-weight: bold;">Profesional a cargo: </p>
                         <?php
-                        $pCargo = ($model_rrhh !== null && $model_rrhh->persona) ? $model_rrhh->persona : null;
+                        $pCargo = ($model_profesional_pes !== null && $model_profesional_pes->persona) ? $model_profesional_pes->persona : null;
                         echo $pCargo
                             ? Html::encode(
                                 $pCargo->apellido . ' ' . $pCargo->otro_apellido . ', '

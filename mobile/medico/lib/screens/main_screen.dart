@@ -10,14 +10,14 @@ class MainScreen extends StatefulWidget {
   final String userId;
   final String userName;
   final String? authToken;
-  final String? rrhhId;
+  final String? idProfesionalEfectorServicio;
 
   const MainScreen({
     Key? key,
     required this.userId,
     required this.userName,
     this.authToken,
-    this.rrhhId,
+    this.idProfesionalEfectorServicio,
   }) : super(key: key);
 
   @override
@@ -41,7 +41,7 @@ class _MainScreenState extends State<MainScreen> {
         userId: widget.userId,
         userName: widget.userName,
         authToken: widget.authToken,
-        rrhhId: widget.rrhhId,
+        idProfesionalEfectorServicio: widget.idProfesionalEfectorServicio,
       ),
       AccionesScreen(
         userId: widget.userId,

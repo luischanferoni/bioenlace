@@ -208,7 +208,7 @@ class Turno extends \yii\db\ActiveRecord
      */
     public function validateDelegarRequiereProfesional(): void
     {
-        if ($this->scenario !== ServiciosEfector::DELEGAR_A_CADA_RRHH) {
+        if ($this->scenario !== ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL) {
             return;
         }
         if ((int) $this->id_profesional_efector_servicio <= 0) {
@@ -226,7 +226,7 @@ class Turno extends \yii\db\ActiveRecord
     {
         return [
             [['id_persona', 'hora', 'fecha', 'id_efector', 'id_servicio_asignado'], 'required'],
-            [['id_persona'], 'validateDelegarRequiereProfesional', 'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH],
+            [['id_persona'], 'validateDelegarRequiereProfesional', 'on' => ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL],
             [['id_servicio_asignado'], 'required', 'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS],
             [['id_persona', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
             // no deja crear un turno para la misma persona para el mismo recurso en el mismo dia
@@ -237,7 +237,7 @@ class Turno extends \yii\db\ActiveRecord
                     $query->andWhere(['estado' => 'PENDIENTE']);
                 },
                 'message' => 'Ya existe un turno para este paciente para este médico para la fecha indicada',
-                'on' => ServiciosEfector::DELEGAR_A_CADA_RRHH,
+                'on' => ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL,
                 'when' => function ($model) {
                     return (int) $model->id_profesional_efector_servicio > 0;
                 },
@@ -459,16 +459,16 @@ class Turno extends \yii\db\ActiveRecord
         return [[], $servicioIds, $pesIds];
     }
 
-    public static function getTurnosPorRrhhPorFecha($fecha, $idRrhh)
+    public static function getTurnosPorContextoProfesionalPorFecha($fecha, $staffContextId)
     {
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $staffContextId);
         $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
         if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
             return [];
         }
         [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, $idEfectorSesion);
 
-        // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
+        // Servicios que pueden exigir pase previo por el servicio actual del profesional
         $serviciosConPasePrevio = $idsServicios !== []
             ? ServiciosEfector::find()
                 ->andWhere(['servicios_efector.id_efector' => Yii::$app->user->getIdEfector()])
@@ -513,16 +513,16 @@ class Turno extends \yii\db\ActiveRecord
         return $turnos;
     }
 
-    public static function getAllTurnosPorRrhhPorFecha($fecha, $idRrhh)
+    public static function getAllTurnosPorContextoProfesionalPorFecha($fecha, $staffContextId)
     {
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $staffContextId);
         $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
         if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
             return [];
         }
         [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, $idEfectorSesion);
 
-        // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
+        // Servicios que pueden exigir pase previo por el servicio actual del profesional
         $serviciosConPasePrevio = $idsServicios !== []
             ? ServiciosEfector::find()
                 ->andWhere(['servicios_efector.id_efector' => Yii::$app->user->getIdEfector()])
@@ -634,11 +634,11 @@ class Turno extends \yii\db\ActiveRecord
         return count($cantTurnos);
     }
 
-    public static function estadisticasDiariasPorRrhh()
+    public static function estadisticasDiariasPorContextoProfesional()
     {
 
         $fecha = date("Y-m-d");
-        $rrhh = Yii::$app->user->getIdRecursoHumano();
+        $idPesSesion = Yii::$app->user->getIdProfesionalEfectorServicio();
         $efector = Yii::$app->user->getIdEfector();
         $servicio = Yii::$app->user->getServicioActual();
         $cantAtendidos = 0;
@@ -664,7 +664,7 @@ class Turno extends \yii\db\ActiveRecord
             }
         }
 
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $rrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $idPesSesion);
         $turnosAtendidos = [];
         if ($idPersona !== null && $idPersona > 0 && $efector) {
             [, , $pesIds] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, (int) $efector);

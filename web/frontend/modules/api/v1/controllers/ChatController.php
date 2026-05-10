@@ -46,7 +46,7 @@ class ChatController extends BaseController
         if ($intentId !== '') {
             $userId = (int) Yii::$app->user->id;
             $body = is_array($body) ? $body : [];
-            if ($intentId === 'agenda.crear-rrhh-flow') {
+            if ($intentId === 'agenda.crear-profesional-flow') {
                 try {
                     ProfesionalEfectorServicioCrearFlowDraftHydrator::hydrate($body);
                 } catch (\InvalidArgumentException $e) {

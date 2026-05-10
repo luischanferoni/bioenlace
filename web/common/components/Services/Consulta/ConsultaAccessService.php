@@ -26,7 +26,7 @@ final class ConsultaAccessService
         $idPesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
         $idPesSesion = $idPesSesionRaw !== null && $idPesSesionRaw !== '' ? (int) $idPesSesionRaw : 0;
         if ($idPesSesion <= 0) {
-            $rh = Yii::$app->user->getIdRecursoHumano();
+            $rh = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPesSesion = $rh !== null && $rh !== '' ? (int) $rh : 0;
         }
         if ($idPesConsulta > 0 && $idPesSesion > 0 && $idPesConsulta === $idPesSesion) {

@@ -254,7 +254,7 @@ class PacientesController extends BaseController
         }
 
         if ($idContextoProfesional === null || (int) $idContextoProfesional <= 0) {
-            $rh = Yii::$app->user->getIdRecursoHumano();
+            $rh = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idContextoProfesional = $rh !== null && $rh !== '' ? (int) $rh : 0;
         } else {
             $idContextoProfesional = (int) $idContextoProfesional;

@@ -9,7 +9,6 @@ use common\models\SolicitudRrhh;
 use common\models\SolicitudRrhhEvento;
 use common\models\EfectorTurnosConfig;
 use common\models\ProfesionalEfectorServicio;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use yii\db\Query;
 
 /**
@@ -17,27 +16,17 @@ use yii\db\Query;
  */
 class SolicitudRrhhController extends BaseController
 {
-    private function requireRrhhIdFromSessionOrPes(int $idEfector): int
+    private function requireStaffContextIdFromSession(): int
     {
-        $idRrhh = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
-        if ($idRrhh > 0) {
-            return $idRrhh;
-        }
-        $idPes = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
-        if ($idPes <= 0) {
-            return 0;
-        }
-        // Compat: respetar efector del contexto actual.
-        $idRrhh = ProfesionalContextResolver::resolveProfesionalColumnIdFromPes($idPes);
-        return $idRrhh > 0 ? $idRrhh : 0;
+        return (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
     }
 
     public function actionListar()
     {
         $idEfector = Yii::$app->user->getIdEfector();
-        $idRrhh = $this->requireRrhhIdFromSessionOrPes((int) $idEfector);
-        if (!$idEfector || !$idRrhh) {
-            throw new BadRequestHttpException('Efector o RRHH no determinado');
+        $idPes = $this->requireStaffContextIdFromSession();
+        if (!$idEfector || !$idPes) {
+            throw new BadRequestHttpException('Efector o contexto profesional no determinado');
         }
         $cfg = EfectorTurnosConfig::getOrCreateForEfector($idEfector);
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DESHABILITADO) {
@@ -48,8 +37,8 @@ class SolicitudRrhhController extends BaseController
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DIRECTO) {
             $q->andWhere([
                 'or',
-                ['id_solicitante_rr_hh' => $idRrhh],
-                ['id_destinatario_rr_hh' => $idRrhh],
+                ['id_solicitante_rr_hh' => $idPes],
+                ['id_destinatario_rr_hh' => $idPes],
             ]);
         }
         $list = $q->orderBy(['id' => SORT_DESC])->limit(100)->all();
@@ -71,9 +60,9 @@ class SolicitudRrhhController extends BaseController
     public function actionCrear()
     {
         $idEfector = Yii::$app->user->getIdEfector();
-        $idRrhh = $this->requireRrhhIdFromSessionOrPes((int) $idEfector);
-        if (!$idEfector || !$idRrhh) {
-            throw new BadRequestHttpException('Efector o RRHH no determinado');
+        $idPes = $this->requireStaffContextIdFromSession();
+        if (!$idEfector || !$idPes) {
+            throw new BadRequestHttpException('Efector o contexto profesional no determinado');
         }
         $cfg = EfectorTurnosConfig::getOrCreateForEfector($idEfector);
         if ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_DESHABILITADO) {
@@ -88,7 +77,7 @@ class SolicitudRrhhController extends BaseController
 
         $s = new SolicitudRrhh();
         $s->id_efector = $idEfector;
-        $s->id_solicitante_rr_hh = $idRrhh;
+        $s->id_solicitante_rr_hh = $idPes;
         $s->mensaje = $mensaje;
         $s->tipo = Yii::$app->request->post('tipo', 'general');
 
@@ -100,7 +89,7 @@ class SolicitudRrhhController extends BaseController
         } elseif ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_INTERMEDIARIO) {
             $s->id_intermediario_user = Yii::$app->user->id;
         } elseif ($cfg->modo_comunicacion_medicos === EfectorTurnosConfig::MODO_MEDICOS_AUTO_ASIGNACION) {
-            $candidato = $this->pickAutoDestinatario($idEfector, $idRrhh);
+            $candidato = $this->pickAutoDestinatario($idEfector, $idPes);
             $s->id_destinatario_rr_hh = $candidato;
         }
 
@@ -117,14 +106,14 @@ class SolicitudRrhhController extends BaseController
     }
 
     /**
-     * Heurística simple: primer otro RRHH del mismo efector.
+     * Heurística simple: primer otro profesional (PES) del mismo efector.
      */
-    protected function pickAutoDestinatario($idEfector, $excludeRrhh)
+    protected function pickAutoDestinatario($idEfector, $excludeStaffContextId)
     {
-        $excludeRrhh = (int) $excludeRrhh;
-        $excludePid = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($excludeRrhh);
+        $excludeStaffContextId = (int) $excludeStaffContextId;
+        $excludePid = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($excludeStaffContextId);
         if ($excludePid === null || $excludePid <= 0) {
-            $pesEx = ProfesionalEfectorServicio::findOne($excludeRrhh);
+            $pesEx = ProfesionalEfectorServicio::findOne($excludeStaffContextId);
             $excludePid = $pesEx !== null ? (int) $pesEx->id_persona : 0;
         }
         $q = (new Query())

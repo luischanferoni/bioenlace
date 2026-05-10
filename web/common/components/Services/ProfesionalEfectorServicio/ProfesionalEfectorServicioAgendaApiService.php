@@ -23,9 +23,9 @@ class ProfesionalEfectorServicioAgendaApiService
         return $model;
     }
 
-    public static function findOwnedByRecursoHumano(int $idAgenda, int $idEfector, int $idRrhh): ?ProfesionalEfectorServicioAgenda
+    public static function findOwnedByStaffContext(int $idAgenda, int $idEfector, int $staffContextId): ?ProfesionalEfectorServicioAgenda
     {
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($staffContextId);
         if ($idPersona === null || $idPersona <= 0) {
             return null;
         }
@@ -65,22 +65,22 @@ class ProfesionalEfectorServicioAgendaApiService
         return $dp;
     }
 
-    public static function searchForRecursoHumano(array $queryParams, int $idRrhh, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
+    public static function searchForStaffContext(array $queryParams, int $staffContextId, int $defaultPerPage = 20, int $maxPerPage = 100): ActiveDataProvider
     {
-        $queryParams['id_profesional_contexto'] = $idRrhh;
+        $queryParams['id_profesional_contexto'] = $staffContextId;
 
         return self::search($queryParams, $defaultPerPage, $maxPerPage);
     }
 
-    public static function searchParaRecursoHumanoEnEfector(
+    public static function searchForStaffContextEnEfector(
         array $queryParams,
         int $idEfector,
-        int $idRrhh,
+        int $staffContextId,
         int $defaultPerPage = 20,
         int $maxPerPage = 100
     ): ActiveDataProvider {
         $queryParams['id_efector'] = $idEfector;
-        $queryParams['id_profesional_contexto'] = $idRrhh;
+        $queryParams['id_profesional_contexto'] = $staffContextId;
 
         return self::search($queryParams, $defaultPerPage, $maxPerPage);
     }
@@ -88,13 +88,13 @@ class ProfesionalEfectorServicioAgendaApiService
     /**
      * @throws BadRequestHttpException
      */
-    public static function assertRecursoHumanoPerteneceAEfector(int $idRrhh, int $idEfector): void
+    public static function assertStaffContextEnEfector(int $staffContextId, int $idEfector): void
     {
-        if ($idRrhh <= 0 || $idEfector <= 0) {
+        if ($staffContextId <= 0 || $idEfector <= 0) {
             throw new BadRequestHttpException('id_efector e id_profesional_efector_servicio deben ser válidos.');
         }
-        if (!ProfesionalEfectorServicio::staffContextTienePesEnEfector($idRrhh, $idEfector)) {
-            throw new BadRequestHttpException('El recurso humano no pertenece al efector indicado.');
+        if (!ProfesionalEfectorServicio::staffContextTienePesEnEfector($staffContextId, $idEfector)) {
+            throw new BadRequestHttpException('El profesional no pertenece al efector indicado.');
         }
     }
 
@@ -118,15 +118,15 @@ class ProfesionalEfectorServicioAgendaApiService
     /**
      * @throws BadRequestHttpException
      */
-    public static function assertServicioAsignadoParaRecursoHumanoEnEfector(?int $idRrhhServicioAsignado, int $idRrhh, int $idEfector): void
+    public static function assertServicioAsignadoParaStaffContextEnEfector(?int $idPesAsignado, int $staffContextId, int $idEfector): void
     {
-        if ($idRrhhServicioAsignado === null || $idRrhhServicioAsignado <= 0) {
+        if ($idPesAsignado === null || $idPesAsignado <= 0) {
             return;
         }
-        self::assertRecursoHumanoPerteneceAEfector($idRrhh, $idEfector);
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idRrhh);
+        self::assertStaffContextEnEfector($staffContextId, $idEfector);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($staffContextId);
         if ($idPersona === null || $idPersona <= 0) {
-            throw new BadRequestHttpException('Servicio asignado no válido para este recurso humano.');
+            throw new BadRequestHttpException('Servicio asignado no válido para este profesional.');
         }
         $ok = ProfesionalEfectorServicio::find()
             ->alias('pes')
@@ -134,27 +134,27 @@ class ProfesionalEfectorServicioAgendaApiService
                 'pes.id_persona' => $idPersona,
                 'pes.id_efector' => $idEfector,
                 'pes.deleted_at' => null,
-                'pes.id' => $idRrhhServicioAsignado,
+                'pes.id' => $idPesAsignado,
             ])
             ->exists();
         if (!$ok) {
-            throw new BadRequestHttpException('Servicio asignado no encontrado o no corresponde a este recurso humano.');
+            throw new BadRequestHttpException('Servicio asignado no encontrado o no corresponde a este profesional.');
         }
     }
 
     /**
-     * Resuelve PES existente por PK en el efector y persona del RRHH.
+     * Resuelve PES existente por PK en el efector y persona del contexto profesional.
      *
      * @throws BadRequestHttpException
      */
-    public static function obtenerPesPorIdEnEfectorParaRrhh(int $idPes, int $idRrhh, int $idEfector): ProfesionalEfectorServicio
+    public static function obtenerPesPorIdEnEfectorParaStaffContext(int $idPes, int $staffContextId, int $idEfector): ProfesionalEfectorServicio
     {
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idRrhh);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($staffContextId);
         if ($idPersona === null || $idPersona <= 0) {
-            throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
+            throw new BadRequestHttpException('El profesional no pertenece al efector en sesión.');
         }
-        if (!ProfesionalEfectorServicio::staffContextTienePesEnEfector($idRrhh, $idEfector)) {
-            throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
+        if (!ProfesionalEfectorServicio::staffContextTienePesEnEfector($staffContextId, $idEfector)) {
+            throw new BadRequestHttpException('El profesional no pertenece al efector en sesión.');
         }
         $pesDirect = ProfesionalEfectorServicio::find()
             ->where([

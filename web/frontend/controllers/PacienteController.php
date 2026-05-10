@@ -42,7 +42,7 @@ class PacienteController extends Controller
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['historia', 'formulario-consulta', 'test'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_RECURSO_HUMANO],
+                'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),
@@ -104,7 +104,7 @@ class PacienteController extends Controller
                     // turnoHoy también coincide por id_profesional_efector_servicio en sesión (PES)
                     $turnoSesion = $paciente->turnoHoy(
                         Yii::$app->user->getServicioActual(),
-                        Yii::$app->user->getIdRecursoHumano(),
+                        Yii::$app->user->getIdProfesionalEfectorServicio(),
                         Yii::$app->user->getIdEfector()
                     );
                     if ($turnoSesion) {

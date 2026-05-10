@@ -467,7 +467,7 @@ class ConsultasConfiguracion extends \yii\db\ActiveRecord
             $encounterClass = Yii::$app->user->getEncounterClass();
             if ($encounterClass == self::ENCOUNTER_CLASS_AMB) {
 
-                $turno = $paciente->turnoHoy($idServicio, Yii::$app->user->getIdRecursoHumano(), Yii::$app->user->getIdEfector());
+                $turno = $paciente->turnoHoy($idServicio, Yii::$app->user->getIdProfesionalEfectorServicio(), Yii::$app->user->getIdEfector());
                 
                 //Preguntar si el servicio del turno tiene pase previo de enfermeria
                 if ($turno) {
@@ -525,7 +525,7 @@ class ConsultasConfiguracion extends \yii\db\ActiveRecord
 
                             // No se permite atender sin derivacion
                             if (
-                                $servicio->formas_atencion == ServiciosEfector::DERIVACION_DELEGAR_A_CADA_RRHH
+                                $servicio->formas_atencion == ServiciosEfector::DERIVACION_DELEGAR_A_CADA_PROFESIONAL
                                 || $servicio->formas_atencion == ServiciosEfector::DERIVACION_ORDEN_LLEGADA_PARA_TODOS
                             ) {
                                 $mensajeError = 'Este servicio solo acepta consultas con derivación previa';

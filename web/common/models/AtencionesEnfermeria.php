@@ -327,7 +327,7 @@ class AtencionesEnfermeria extends \yii\db\ActiveRecord
                 $this->fecha_creacion = date("Y-m-d");
             }
             $this->id_user = Yii::$app->user->id;            
-            //$this->id_rr_hh = Yii::$app->user->getIdRecursoHumano();
+            //$this->id_rr_hh = Yii::$app->user->getIdProfesionalEfectorServicio();
             $this->id_efector = Yii::$app->user->getIdEfector();
         }
 

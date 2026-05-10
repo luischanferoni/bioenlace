@@ -1,14 +1,12 @@
-intent_id: agenda.crear-rrhh-flow
+intent_id: agenda.crear-profesional-flow
 version: 1
 
-action_name: "Crear recurso humano"
+action_name: "Alta profesional en efector y agenda"
 rbac_route: "/api/profesional-agenda/crear-agenda-flow"
 keywords:
   - agenda
   - cargar agenda
   - cargar la agenda
-  - crear recurso humano
-  - agregar recurso humano
   - agregar profesional
   - agenda médico
   - agenda medico
@@ -21,7 +19,7 @@ intent_semantics:
     y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
   how: >-
     Buscar persona en el padrón, elegir un servicio habilitado para el efector en sesión;
-    el sistema persiste la asignación profesional–efector–servicio (PES) y vínculos legacy si aplican; solo si acepta_turnos es SI se continúa a la UI de agenda.
+    el sistema persiste la asignación profesional–efector–servicio (PES); solo si acepta_turnos es SI se continúa a la UI de agenda.
   preconditions:
     - Efector operativo en sesión.
     - Permisos para dar de alta asignaciones en el efector.
@@ -48,14 +46,14 @@ business_rules:
       - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario)"
       - "m[eé]dico|profesional|doctor"
     forbid_any:
-      - "crear|agregar|nuevo|alta|asociar|recurso humano|rrhh"
+      - "crear|agregar|nuevo|alta|asociar|recurso humano"
     user_message: >-
       Parece que querés trabajar con agenda u horarios de un profesional.
       ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?
     remediation:
       - id: flujo_completo
         label: "Flujo completo (profesional / servicio / agenda si aplica)"
-        intent_id: agenda.crear-rrhh-flow
+        intent_id: agenda.crear-profesional-flow
         reset_flow: true
       - id: solo_agenda
         label: "Solo horarios (ya tiene servicio que acepta turnos)"

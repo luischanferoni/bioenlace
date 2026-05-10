@@ -76,7 +76,7 @@ class UserConfig extends User
 		return @Yii::$app->user->identity->username;
 	}
 
-	public function getIdRecursoHumano()
+	public function getIdProfesionalEfectorServicio()
 	{
 		return null;
 	}

@@ -378,7 +378,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         if ($idCol > 0 || $idLegacy <= 0 || $this->isRelationPopulated('profesionalEfectorServicio')) {
             return;
         }
-        $pes = ProfesionalEfectorServicio::resolvePesModelFromInternacionRrhhField(
+        $pes = ProfesionalEfectorServicio::resolvePesModelFromInternacionLegacyField(
             $idLegacy,
             $this->resolveIdEfectorContextForPes()
         );
@@ -494,7 +494,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         }
 
         if ($insert || $this->isAttributeChanged('id_rrhh', false)) {
-            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByRrhhMinPes(
+            $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findFirstPesIdByStaffOrPersona(
                 (int) $this->id_rrhh
             );
         }

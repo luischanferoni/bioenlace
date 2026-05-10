@@ -318,7 +318,7 @@ class SiteController extends Controller
             // Seteamos el efector con el que el usuario trabajará          
             Yii::$app->user->setIdEfector($efectoresParaSesion[0]['id_efector']);
             Yii::$app->user->setNombreEfector($efectoresParaSesion[0]['nombre']);
-            Yii::$app->user->setIdRecursoHumano($efectoresParaSesion[0]['id_profesional_efector_servicio']);
+            Yii::$app->user->setIdProfesionalEfectorServicio($efectoresParaSesion[0]['id_profesional_efector_servicio']);
             // Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector((int) Yii::$app->user->getIdPersona(), (int) $efectoresParaSesion[0]['id_efector']));
 
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
@@ -332,7 +332,7 @@ class SiteController extends Controller
         // para que luego pueda cambiar si necesita
         Yii::$app->user->setEfectores(ArrayHelper::map($efectoresParaSesion, 'id_efector', 'nombre'));
 
-        // BioenlaceDbManager usa idRecursoHumano en sesión para armar permisos; tras elegir lista de efectores
+        // BioenlaceDbManager usa contexto PES en sesión para armar permisos; tras elegir lista de efectores
         // aún puede faltar ese dato (varios efectores). Refrescar rutas con el contexto actual.
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
@@ -379,7 +379,6 @@ class SiteController extends Controller
         Yii::$app->user->setIdEfector($idEfector);
         Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-        Yii::$app->user->setIdRecursoHumano((int) $pes->id);
         Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector));
 
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);

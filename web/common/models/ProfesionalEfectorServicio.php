@@ -156,9 +156,9 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * Resuelve id PES cuando el cliente envía la PK de `profesional_efector_servicio` válida en ese efector.
+     * Resuelve id PES cuando el valor es la PK de `profesional_efector_servicio` en ese efector.
      */
-    public static function resolveProfesionalEfectorServicioIdFromRrhhServicioId(int $idCandidate, int $idEfector): ?int
+    public static function resolvePesIdFromPkEnEfector(int $idCandidate, int $idEfector): ?int
     {
         if ($idCandidate <= 0 || $idEfector <= 0) {
             return null;
@@ -221,22 +221,6 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
-     * @deprecated Use {@see resolveIdPersonaFromStaffContextId}; el id era PK PES o tabla `rr_hh` (retirada).
-     */
-    public static function resolveIdPersonaFromIdRrhh(int $idRrhh): ?int
-    {
-        return static::resolveIdPersonaFromStaffContextId($idRrhh);
-    }
-
-    /**
-     * @deprecated Use {@see firstPesIdForPersona}; antes reflejaba tabla `rr_hh` (retirada).
-     */
-    public static function resolveIdRrhhForPersona(int $idPersona): int
-    {
-        return static::firstPesIdForPersona($idPersona);
-    }
-
-    /**
      * PES para persona + efector + servicio.
      */
     public static function findIdByPersonaEfectorServicio(int $idPersona, int $idEfector, int $idServicio): ?int
@@ -285,12 +269,6 @@ class ProfesionalEfectorServicio extends ActiveRecord
         return static::findIdByPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
     }
 
-    /** @deprecated Use {@see resolverIdPesDesdePersonaServicioYEfector} */
-    public static function resolverIdPesDesdeRrhhServicioYEfector(int $idRrhh, int $idServicio, int $idEfector): ?int
-    {
-        return static::resolverIdPesDesdePersonaServicioYEfector($idRrhh, $idServicio, $idEfector);
-    }
-
     /**
      * La persona tiene al menos una fila PES activa en el efector.
      */
@@ -318,12 +296,6 @@ class ProfesionalEfectorServicio extends ActiveRecord
         return static::personaTienePesEnEfector($idPersona, $idEfector);
     }
 
-    /** @deprecated Use {@see staffContextTienePesEnEfector} */
-    public static function rrhhTieneAsignacionPesEnEfector(int $idRrhh, int $idEfector): bool
-    {
-        return static::staffContextTienePesEnEfector($idRrhh, $idEfector);
-    }
-
     /**
      * Primer PES por id PK o, si no existe fila, por id_persona con cualquier PES.
      */
@@ -346,12 +318,6 @@ class ProfesionalEfectorServicio extends ActiveRecord
             ->one();
 
         return $pes !== null ? (int) $pes->id : null;
-    }
-
-    /** @deprecated Use {@see findFirstPesIdByStaffOrPersona} */
-    public static function findIdByRrhhMinPes(?int $idRrhh): ?int
-    {
-        return static::findFirstPesIdByStaffOrPersona($idRrhh);
     }
 
     /**
@@ -394,19 +360,13 @@ class ProfesionalEfectorServicio extends ActiveRecord
         return static::findFirstPesIdByStaffOrPersona($idCandidato);
     }
 
-    /** @deprecated Use {@see findFirstPesIdInEfector} */
-    public static function findIdByRrhhAndEfectorMinPes(?int $idRrhh, ?int $idEfector): ?int
-    {
-        return static::findFirstPesIdInEfector($idRrhh, $idEfector);
-    }
-
     public static function resolvePesIdFromGuardiaAsignado(?int $idAsignado, ?int $idEfector): ?int
     {
         if (!$idAsignado || $idAsignado <= 0) {
             return null;
         }
         if ($idEfector) {
-            $id = static::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idAsignado, $idEfector);
+            $id = static::resolvePesIdFromPkEnEfector($idAsignado, $idEfector);
             if ($id !== null) {
                 return $id;
             }
@@ -418,13 +378,13 @@ class ProfesionalEfectorServicio extends ActiveRecord
     /**
      * Campo legado numérico: PK PES o persona con PES en el efector de contexto.
      */
-    public static function resolvePesModelFromInternacionRrhhField(int $idLegacy, ?int $idEfectorContext): ?self
+    public static function resolvePesModelFromInternacionLegacyField(int $idLegacy, ?int $idEfectorContext): ?self
     {
         if ($idLegacy <= 0) {
             return null;
         }
         if ($idEfectorContext !== null && $idEfectorContext > 0) {
-            $id = static::resolveProfesionalEfectorServicioIdFromRrhhServicioId($idLegacy, $idEfectorContext);
+            $id = static::resolvePesIdFromPkEnEfector($idLegacy, $idEfectorContext);
             if ($id !== null) {
                 return static::findOne(['id' => $id, 'deleted_at' => null]);
             }

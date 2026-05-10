@@ -89,10 +89,10 @@ final class CommonActionsService
     {
         return [
             [
-                'id' => 'rrhh_agenda',
-                'titulo' => 'Recursos Humanos, Agenda y Condición laboral',
+                'id' => 'profesional_agenda',
+                'titulo' => 'Profesional, agenda y condición laboral',
                 'models' => [
-                    'agenda.crear-agenda-flow',
+                    'agenda.crear-profesional-flow',
                     'agenda.editar-agenda-flow',
                 ],
             ],

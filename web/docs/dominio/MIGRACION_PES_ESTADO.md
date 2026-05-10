@@ -17,13 +17,13 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 ## Principios prácticos
 
 1. **Sesión operativa** puede traer `idRecursoHumano`, `idProfesionalEfectorServicio` (canónico), `servicio_actual`, `idEfector`. Los clientes deben usar **`id_profesional_efector_servicio`** en requests y lógica; campos snapshot heredados (`id_rrhh_servicio`, etc.) no sustituyen al contrato API endurecido.
-2. **Filtros y reportes** sobre consultas usan **`id_profesional_efector_servicio`** (columnas `consultas.id_rr_hh` retiradas por migración `m260512_*`). Los formularios deben enviar PK PES como **`id_profesional_efector_servicio`** (en algunos endpoints también se acepta **`id_rr_hh`** con el mismo valor).
+2. **Filtros y reportes** sobre consultas usan **`id_profesional_efector_servicio`** (columnas `consultas.id_rr_hh` retiradas por migración `m260512_*`). Los formularios deben enviar PK PES como **`id_profesional_efector_servicio`**.
 3. **Formularios web**: valores de agenda/profesional deben ser **PK PES**; no existe tabla `rrhh_servicio` tras `m260509_000001`.
 4. **Preferir helpers existentes** en `common/models/ProfesionalEfectorServicio.php`, por ejemplo:
-   - `findIdByRrhhAndEfectorMinPes`
+   - `findFirstPesIdInEfector`
    - `resolvePesIdFromGuardiaAsignado`
    - `findIdByPersonaEfectorServicio`
-   - `resolveProfesionalEfectorServicioIdFromRrhhServicioId` (según caso)
+   - `resolvePesIdFromPkEnEfector` (cuando el valor ya es PK PES en el efector)
 5. **Consulta** sincroniza PES en `beforeSave` vía `syncProfesionalEfectorServicioFromContext()` cuando hay contexto efector/servicio y/o turno con PES (sin atributo `id_rr_hh` en AR).
 6. **Bridges temporales PES→RRHH**: centralizar la resolución en un único helper para no duplicar lógica en controladores:
    - `web/common/components/Services/ProfesionalEfectorServicio/ProfesionalContextResolver.php`

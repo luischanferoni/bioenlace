@@ -42,7 +42,8 @@ class SisseActionFilter extends ActionFilter
      * constantes que indican que variables de session requiere el action tener
      */
     const FILTRO_PACIENTE = 'FILTRO_PACIENTE';
-    const FILTRO_RECURSO_HUMANO = 'FILTRO_RECURSO_HUMANO';
+    /** Requiere id PES / contexto profesional en sesión (sesión operativa). */
+    const FILTRO_CONTEXTO_PROFESIONAL = 'FILTRO_CONTEXTO_PROFESIONAL';
     const FILTRO_CONSULTA = 'FILTRO_CONSULTA';
 
     /**
@@ -83,14 +84,15 @@ class SisseActionFilter extends ActionFilter
             }
         }
 
-        if (in_array(self::FILTRO_RECURSO_HUMANO, $this->filtrosExtra)) {
-            $idRrhh = Yii::$app->user->getIdRecursoHumano();
+        if (in_array(self::FILTRO_CONTEXTO_PROFESIONAL, $this->filtrosExtra)) {
+            $idPesSesion = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPes = Yii::$app->user->getIdProfesionalEfectorServicio();
-            $tieneContextoProfesional = ($idRrhh !== null && $idRrhh !== '')
+            $tieneContextoProfesional = ($idPesSesion !== null && $idPesSesion !== '')
                 || ($idPes !== null && $idPes !== '');
             if (!$tieneContextoProfesional) {
                 throw new ForbiddenHttpException(
-                    "Ocurrió un error con el recurso humano asociado con su usuario. Su usuario debe estar asignado a un efector como recurso humano");
+                    'Falta contexto profesional en sesión. Debe tener asignación en un efector (PES) o fijar sesión operativa.'
+                );
             }
         }
 

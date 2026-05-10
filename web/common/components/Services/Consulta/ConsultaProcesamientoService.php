@@ -369,7 +369,7 @@ HTML;
                     if ($idPesSes !== null && $idPesSes !== '') {
                         $modelConsulta->id_profesional_efector_servicio = (int) $idPesSes;
                     } else {
-                        $rh = Yii::$app->user->getIdRecursoHumano();
+                        $rh = Yii::$app->user->getIdProfesionalEfectorServicio();
                         if ($rh !== null && $rh !== '') {
                             $modelConsulta->id_profesional_efector_servicio = (int) $rh;
                         }

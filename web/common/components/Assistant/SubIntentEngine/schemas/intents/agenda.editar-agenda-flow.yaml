@@ -39,7 +39,7 @@ business_rules:
       - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario)"
       - "m[eé]dico|profesional|doctor"
     forbid_any:
-      - "crear|agregar|nuevo|alta|asociar|recurso humano|rrhh"
+      - "crear|agregar|nuevo|alta|asociar|recurso humano"
     user_message: >-
       Parece que querés trabajar con agenda u horarios de un profesional.
       ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?
@@ -50,11 +50,11 @@ business_rules:
         reset_flow: true
       - id: flujo_completo
         label: "Flujo completo (profesional / servicio / agenda si aplica)"
-        intent_id: agenda.crear-rrhh-flow
+        intent_id: agenda.crear-profesional-flow
         reset_flow: true
 
 subintents:
-  - id: select_rrhh
+  - id: select_profesional
     assistant_text: "Profesional"
     provides:
       - draft.id_profesional_efector_servicio

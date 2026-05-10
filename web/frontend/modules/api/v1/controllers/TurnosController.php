@@ -121,7 +121,7 @@ class TurnosController extends BaseController
         $idProfQuery = ($pesOverride !== null && $pesOverride !== '') ? (int) $pesOverride : 0;
         $idContextoProfesional = $idProfQuery > 0
             ? $idProfQuery
-            : (int) (Yii::$app->user->getIdRecursoHumano() ?: 0);
+            : (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?: 0);
 
         if ($idContextoProfesional <= 0 && $pesEfectivo <= 0) {
             throw new BadRequestHttpException(
@@ -998,8 +998,8 @@ class TurnosController extends BaseController
         if ($servicioEfector) {
             if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
                 $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
-            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
-                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
+            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL) {
+                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL;
             }
         }
 

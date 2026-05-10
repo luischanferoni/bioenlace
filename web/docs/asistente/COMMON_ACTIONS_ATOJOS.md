@@ -27,8 +27,8 @@ Este endpoint alimenta el panel “Atajos” de los clientes (web SPA y Flutter)
   ],
   "categories": [
     {
-      "id": "rrhh_agenda",
-      "titulo": "Recursos Humanos, Agenda y Condición laboral",
+      "id": "profesional_agenda",
+      "titulo": "Profesional, agenda y condición laboral",
       "actions": [ /* mismas actions, agrupadas */ ]
     }
   ]

@@ -51,7 +51,7 @@ class PersonaProgramaController extends Controller
                 return $pes;
             }
         }
-        $idPesSesion = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         if ($idPesSesion > 0) {
             $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idPesSesion);
             if ($idPersona !== null && $idPersona > 0) {
@@ -134,7 +134,7 @@ class PersonaProgramaController extends Controller
         $programa = Yii::$app->getRequest()->getQueryParam('programa');
         $idContextoPesParam = null;
         try {
-            $idContextoPesParam = (int) UserRequest::requireUserParam('idRecursoHumano');
+            $idContextoPesParam = (int) UserRequest::requireUserParam('id_profesional_efector_servicio');
             if ($idContextoPesParam <= 0) {
                 $idContextoPesParam = null;
             }

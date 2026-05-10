@@ -491,7 +491,7 @@ class ReporteController extends Controller
         if ($pes !== null && $pes->persona !== null) {
             return $pes->persona->getNombreCompleto('');
         }
-        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($medicoId);
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($medicoId);
         if ($idPersona !== null && $idPersona > 0) {
             $p = Persona::findOne($idPersona);
 

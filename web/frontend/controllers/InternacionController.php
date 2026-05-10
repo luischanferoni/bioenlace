@@ -216,7 +216,7 @@ class InternacionController extends Controller
         }
         if ($model_rrhh === null && (int) ($model->id_rrhh ?? 0) > 0) {
             $idLeg = (int) $model->id_rrhh;
-            $model_rrhh = ProfesionalEfectorServicio::resolvePesModelFromInternacionRrhhField(
+            $model_rrhh = ProfesionalEfectorServicio::resolvePesModelFromInternacionLegacyField(
                 $idLeg,
                 $model->resolveIdEfectorContextForPes()
             );

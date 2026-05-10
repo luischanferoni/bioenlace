@@ -224,7 +224,7 @@ class AutofacturacionController extends Controller
         $autofacturacion->codigos = json_encode($codigos_finales);
         $idPesCtx = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         if ($idPesCtx <= 0) {
-            $rh = Yii::$app->user->getIdRecursoHumano();
+            $rh = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPesCtx = $rh !== null && $rh !== '' ? (int) $rh : 0;
         }
         $autofacturacion->id_profesional_efector_servicio = $idPesCtx > 0 ? $idPesCtx : null;

@@ -40,7 +40,7 @@ class UserConfig extends BaseUserConfig
                 $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
                 $session->set('apiJwtToken', $token);
 
-                // BioenlaceDbManager arma permisos con getIdRecursoHumano(); sin esto, __userRoutes queda vacío
+                // BioenlaceDbManager arma permisos con contexto PES en sesión; sin esto, __userRoutes queda vacío
                 // hasta elegir efector (impersonate nunca pasa por ese POST).
                 $this->tryBootstrapSingleEfectorSession($persona);
             } else {
@@ -65,12 +65,12 @@ class UserConfig extends BaseUserConfig
     }
 
     /**
-     * Si la persona tiene un único vínculo RRHH+efector, fijar sesión como en SiteController (flujo comentado).
+     * Si la persona tiene un único vínculo PES+efector, fijar sesión como en SiteController (flujo comentado).
      * Así Route::getUserRoutes / __userRoutes reflejan permisos al primer request (login e impersonate).
      */
     private function tryBootstrapSingleEfectorSession(Persona $persona): void
     {
-        $idRh = Yii::$app->user->getIdRecursoHumano();
+        $idRh = Yii::$app->user->getIdProfesionalEfectorServicio();
         if ($idRh !== null && $idRh !== '' && (int) $idRh > 0) {
             return;
         }
@@ -86,7 +86,6 @@ class UserConfig extends BaseUserConfig
         $idPesRow = (int) ($row['id_profesional_efector_servicio'] ?? 0);
         if ($idPesRow > 0) {
             Yii::$app->user->setIdProfesionalEfectorServicio($idPesRow);
-            Yii::$app->user->setIdRecursoHumano($idPesRow);
         }
 
         $pesEnEfector = ProfesionalEfectorServicio::find()

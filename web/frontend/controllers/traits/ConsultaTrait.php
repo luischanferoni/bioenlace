@@ -74,7 +74,7 @@ trait ConsultaTrait {
             if ($pesSesion !== null && $pesSesion !== '') {
                 $modelConsulta->id_profesional_efector_servicio = (int) $pesSesion;
             } else {
-                $rh = Yii::$app->user->getIdRecursoHumano();
+                $rh = Yii::$app->user->getIdProfesionalEfectorServicio();
                 if ($rh !== null && $rh !== '') {
                     $modelConsulta->id_profesional_efector_servicio = (int) $rh;
                 }

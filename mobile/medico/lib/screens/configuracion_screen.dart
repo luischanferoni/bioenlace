@@ -340,7 +340,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                                   userId: userId,
                                   userName: userName,
                                   authToken: p.getString('auth_token'),
-                                  rrhhId: p.getString('rrhh_id'),
+                                  idProfesionalEfectorServicio:
+                                      p.getInt('id_profesional_efector_servicio')?.toString(),
                                 ),
                               ),
                             );

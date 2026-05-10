@@ -165,7 +165,7 @@ class RecursoHumanoController extends BaseController
         if ($idEfectorPedido > 0) {
             $idEfector = $idEfectorPedido;
         } else {
-            $idPesSesion = (int) Yii::$app->user->getIdRecursoHumano();
+            $idPesSesion = (int) Yii::$app->user->getIdProfesionalEfectorServicio();
             if ($idPesSesion > 0) {
                 $idPersonaSesion = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($idPesSesion);
                 if ($idPersonaSesion !== null && $idPersonaSesion === $idPersona) {

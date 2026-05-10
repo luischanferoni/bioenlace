@@ -106,16 +106,6 @@ class _DynamicFormState extends State<DynamicForm> {
       for (var i = 0; i < parts.length; i++) {
         final k = parts[i];
         final v = chunks[i];
-        // Compat: descriptors antiguos podían nombrar el primer chunk como id_rrhh_servicio_asignado.
-        if (k == 'id_rrhh_servicio_asignado' && v.startsWith('pes:')) {
-          final raw = v.substring(4).trim();
-          final idPes = int.tryParse(raw);
-          if (idPes != null && idPes > 0) {
-            payload['id_profesional_efector_servicio'] = idPes.toString();
-            payload[k] = '';
-            continue;
-          }
-        }
         if (k == 'id_profesional_efector_servicio' && v.startsWith('pes:')) {
           final raw = v.substring(4).trim();
           final idPes = int.tryParse(raw);

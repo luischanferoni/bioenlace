@@ -15,7 +15,7 @@ final class ProfesionalContextResolver
      */
     public static function resolveProfesionalColumnIdFromSessionOrPes(): int
     {
-        $id = (int) (Yii::$app->user->getIdRecursoHumano() ?? 0);
+        $id = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         if ($id > 0) {
             return $id;
         }

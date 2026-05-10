@@ -29,16 +29,6 @@ abstract class BaseUserConfig extends User
         return $session->get('idPersona');
     }
 
-    public function setIdRecursoHumano($idRecursoHumano)
-    {
-        Yii::$app->session->set('idRecursoHumano', $idRecursoHumano);
-    }
-
-    public function getIdRecursoHumano()
-    {
-        return Yii::$app->session->get('idRecursoHumano');
-    }
-
     public function setIdEfector($idEfector)
     {
         Yii::$app->session->set('idEfector', $idEfector);
@@ -99,24 +89,10 @@ abstract class BaseUserConfig extends User
         return Yii::$app->session->get('servicio_actual');
     }
 
-    /**
-     * Reservado; sin `rrhh_servicio` operativo — mantener 0. La fuente es {@see setIdProfesionalEfectorServicio}.
-     */
-    public function setIdRrhhServicio($idRrhhServicio)
-    {
-        Yii::$app->session->set('id_rrhh_servicio', $idRrhhServicio);
-    }
-
-    public function getIdRrhhServicio()
-    {
-        return Yii::$app->session->get('id_rrhh_servicio');
-    }
-
     public function setIdProfesionalEfectorServicio($id)
     {
         $id = (int) $id;
         Yii::$app->session->set('idProfesionalEfectorServicio', $id);
-        Yii::$app->session->set('id_rrhh_servicio', $id > 0 ? $id : 0);
     }
 
     public function getIdProfesionalEfectorServicio()
@@ -156,7 +132,6 @@ abstract class BaseUserConfig extends User
         $idPes = (int) ($s->get('idProfesionalEfectorServicio') ?: 0);
 
         return [
-            'idRecursoHumano' => $s->get('idRecursoHumano'),
             'idEfector' => $s->get('idEfector'),
             'nombreEfector' => $s->get('nombreEfector'),
             'servicio_actual' => $s->get('servicio_actual'),

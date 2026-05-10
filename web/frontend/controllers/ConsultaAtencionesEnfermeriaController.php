@@ -53,7 +53,7 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['index', 'espera'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE, SisseActionFilter::FILTRO_RECURSO_HUMANO],
+                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE, SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
           /* 'consulta-access' => [
                 'class' => SisseConsultaFilter::className(),
@@ -130,7 +130,7 @@ class ConsultaAtencionesEnfermeriaController extends DefaultConsultaController
         $modelAtencionEnfermeria->fecha_creacion = date("d/m/Y");
         $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         if ($idPesSesion <= 0) {
-            $rh = Yii::$app->user->getIdRecursoHumano();
+            $rh = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPesSesion = $rh !== null && $rh !== '' ? (int) $rh : 0;
         }
         if ($idPesSesion > 0) {

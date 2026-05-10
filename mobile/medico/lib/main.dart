@@ -22,31 +22,22 @@ Future<Map<String, dynamic>> _getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     final authToken = prefs.getString('auth_token');
     
-    // Manejar rrhh_id que puede estar guardado como int o String
-    String rrhhId = '7830';
-    if (prefs.containsKey('rrhh_id')) {
-      // Intentar leer como int primero (como se guarda en config_wizard_screen)
-      final rrhhIdInt = prefs.getInt('rrhh_id');
-      if (rrhhIdInt != null) {
-        rrhhId = rrhhIdInt.toString();
-      } else {
-        // Si no es int, intentar leer como String
-        final rrhhIdStr = prefs.getString('rrhh_id');
-        if (rrhhIdStr != null) {
-          rrhhId = rrhhIdStr;
-        }
-      }
+    // Contexto PES (profesional_efector_servicio) persistido tras el wizard.
+    String idProfesionalEfectorServicio = '7830';
+    final pesInt = prefs.getInt('id_profesional_efector_servicio');
+    if (pesInt != null) {
+      idProfesionalEfectorServicio = pesInt.toString();
     }
     
     final configCompleted = prefs.getBool('config_completed') ?? false;
     
     print('[DEBUG] _getUserData() - authToken: ${authToken != null ? "${authToken.substring(0, authToken.length > 20 ? 20 : authToken.length)}..." : "null"}');
-    print('[DEBUG] _getUserData() - rrhhId: $rrhhId');
+    print('[DEBUG] _getUserData() - idProfesionalEfectorServicio: $idProfesionalEfectorServicio');
     print('[DEBUG] _getUserData() - configCompleted: $configCompleted');
     
     return {
       'authToken': authToken,
-      'rrhhId': rrhhId,
+      'idProfesionalEfectorServicio': idProfesionalEfectorServicio,
       'configCompleted': configCompleted,
     };
   } catch (e) {
@@ -54,7 +45,7 @@ Future<Map<String, dynamic>> _getUserData() async {
     // Si hay error, retornar valores por defecto
     return {
       'authToken': null,
-      'rrhhId': '7830',
+      'idProfesionalEfectorServicio': '7830',
       'configCompleted': false,
     };
   }
@@ -168,7 +159,8 @@ class MyApp extends StatelessWidget {
                   userId: userId,
                   userName: userName,
                   authToken: authToken,
-                  rrhhId: data['rrhhId'] as String? ?? '7830',
+                  idProfesionalEfectorServicio:
+                      data['idProfesionalEfectorServicio'] as String? ?? '7830',
                 );
               },
             )
@@ -243,7 +235,7 @@ class MyApp extends StatelessWidget {
                           persona['documento'].toString(),
                         );
                       }
-                      // Forzar wizard con el nuevo usuario (evita rrhh/efector de otra sesión).
+                      // Forzar wizard con el nuevo usuario (evita PES/efector de otra sesión).
                       await prefs.setBool('config_completed', false);
 
                       if (!loginContext.mounted) return;

@@ -14,7 +14,7 @@ use Yii;
 use yii\base\Component;
 
 /**
- * Valida completitud RRHH por efector y arma el árbol efectores → servicios para el wizard de sesión operativa.
+ * Valida completitud del profesional por efector y arma el árbol efectores → servicios para el wizard de sesión operativa.
  */
 class SesionOperativaProfesionalHabilitacionService extends Component
 {
@@ -22,11 +22,11 @@ class SesionOperativaProfesionalHabilitacionService extends Component
     private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';
 
     /**
-     * En cada ítem de `servicios`, `id_profesional_efector_servicio` es canónico; `id_rrhh_servicio` repite el mismo id (alias en payload).
+     * En cada ítem de `servicios`, `id_profesional_efector_servicio` identifica la fila PES.
      *
      * @return array{
      *   encounter_classes: list<array{code:string,label:string}>,
-     *   efectores: list<array{id_efector:int,id:int,nombre:string,servicios:list<array{id_servicio:int,nombre:string,id_profesional_efector_servicio:int,id_rrhh_servicio:int}>}>,
+     *   efectores: list<array{id_efector:int,id:int,nombre:string,servicios:list<array{id_servicio:int,nombre:string,id_profesional_efector_servicio:int}>}>,
      *   efectores_con_problemas: list<array{id_efector:?int,nombre:?string,message:string,contact:mixed}>
      * }
      */
@@ -76,7 +76,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                 $problemas[] = [
                     'id_efector' => $idEfector,
                     'nombre' => $nombreEfector,
-                    'message' => 'Falta registrar al menos una condición laboral vigente para este efector. El administrador debe completar el alta de RRHH.',
+                    'message' => 'Falta registrar al menos una condición laboral vigente para este efector. El administrador debe completar el alta del profesional.',
                     'contact' => $contact,
                 ];
                 continue;
@@ -139,7 +139,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                         $problemas[] = [
                             'id_efector' => $idEfector,
                             'nombre' => $nombreEfector,
-                            'message' => 'Falta configuración de agenda o cupos para los servicios asignados (mismos requisitos que el alta de RRHH).',
+                            'message' => 'Falta configuración de agenda o cupos para los servicios asignados (mismos requisitos que el alta del profesional).',
                             'contact' => $contact,
                         ];
                         continue;
@@ -163,7 +163,6 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                     'id_servicio' => (int) $pes->id_servicio,
                     'nombre' => (string) $pes->servicio->nombre,
                     'id_profesional_efector_servicio' => (int) $pes->id,
-                    'id_rrhh_servicio' => (int) $pes->id,
                 ];
             }
 

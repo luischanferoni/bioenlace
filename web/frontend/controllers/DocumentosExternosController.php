@@ -51,14 +51,12 @@ class DocumentosExternosController extends Controller
                 ];     
             }
 
-            // id_efector obligatorio vía POST; PES vía id_profesional_efector_servicio (alias POST id_rrhh_servicio = mismo id numérico).
+            // id_efector obligatorio vía POST; PES vía id_profesional_efector_servicio.
             $modelDocumentoExterno->id_efector = UserRequest::requireUserParam('idEfector');
             $post = Yii::$app->request->post();
             $idPes = 0;
             if (isset($post['id_profesional_efector_servicio']) && (int) $post['id_profesional_efector_servicio'] > 0) {
                 $idPes = (int) $post['id_profesional_efector_servicio'];
-            } elseif (isset($post['id_rrhh_servicio']) && (int) $post['id_rrhh_servicio'] > 0) {
-                $idPes = (int) $post['id_rrhh_servicio'];
             }
             if ($idPes <= 0) {
                 throw new \yii\web\BadRequestHttpException('Parámetro requerido: id_profesional_efector_servicio');

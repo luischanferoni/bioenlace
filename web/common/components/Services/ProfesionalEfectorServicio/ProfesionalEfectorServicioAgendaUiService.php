@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
 
 /**
  * Pre-carga y persistencia de agenda / condición laboral para UI JSON
- * ({@see \frontend\modules\api\v1\controllers\ProfesionalAgendaController::actionConfigurarAgenda}, recurso humano).
+ * ({@see \frontend\modules\api\v1\controllers\ProfesionalAgendaController::actionConfigurarAgenda}).
  */
 final class ProfesionalEfectorServicioAgendaUiService
 {
@@ -51,7 +51,7 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         if ($idStaff > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
+            self::assertStaffContextPerteneceAEfector($idStaff, $idEfector);
         } elseif ($idPesIn <= 0) {
             return $out;
         }
@@ -157,7 +157,7 @@ final class ProfesionalEfectorServicioAgendaUiService
             return $out;
         }
         if ($idStaff > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
+            self::assertStaffContextPerteneceAEfector($idStaff, $idEfector);
         }
         if (!isset($out['id_profesional_efector_servicio']) && $idStaff > 0) {
             $idPersonaLegacy = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
@@ -223,7 +223,7 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         if ($idStaff > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
+            self::assertStaffContextPerteneceAEfector($idStaff, $idEfector);
         }
 
         if ($idServicio === 62) {
@@ -311,7 +311,7 @@ final class ProfesionalEfectorServicioAgendaUiService
                 throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
             }
         } elseif ($idStaff > 0) {
-            self::assertRecursoHumanoPerteneceAEfector($idStaff, $idEfector);
+            self::assertStaffContextPerteneceAEfector($idStaff, $idEfector);
             $idPersonaLegacy = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
             if ($idPersonaLegacy !== null && $idPersonaLegacy > 0) {
                 $pesAny = ProfesionalEfectorServicioRecord::find()
@@ -369,14 +369,14 @@ final class ProfesionalEfectorServicioAgendaUiService
         return ['message' => 'Condición laboral guardada.'];
     }
 
-    private static function assertRecursoHumanoPerteneceAEfector(int $idStaffContext, int $idEfector): void
+    private static function assertStaffContextPerteneceAEfector(int $idStaffContext, int $idEfector): void
     {
         if ($idEfector <= 0) {
             throw new BadRequestHttpException('No hay efector en sesión.');
         }
 
         if (!ProfesionalEfectorServicioRecord::staffContextTienePesEnEfector($idStaffContext, $idEfector)) {
-            throw new ForbiddenHttpException('RRHH no pertenece al efector actual.');
+            throw new ForbiddenHttpException('El profesional no pertenece al efector actual.');
         }
     }
 }

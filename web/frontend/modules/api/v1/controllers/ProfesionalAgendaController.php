@@ -84,11 +84,11 @@ class ProfesionalAgendaController extends BaseController
      */
     public function actionListar()
     {
-        $idRrhh = $this->requireRecursoHumanoId();
+        $staffContextId = $this->requireStaffContextId();
         $params = Yii::$app->request->queryParams;
         unset($params['id_profesional_contexto'], $params['id_efector']);
 
-        $dp = ProfesionalEfectorServicioAgendaApiService::searchForRecursoHumano($params, $idRrhh);
+        $dp = ProfesionalEfectorServicioAgendaApiService::searchForStaffContext($params, $staffContextId);
 
         return $this->paginatedListResponse($dp);
     }
@@ -220,9 +220,9 @@ class ProfesionalAgendaController extends BaseController
         return $id;
     }
 
-    private function requireRecursoHumanoId(): int
+    private function requireStaffContextId(): int
     {
-        $id = (int) Yii::$app->user->getIdRecursoHumano();
+        $id = (int) Yii::$app->user->getIdProfesionalEfectorServicio();
         if ($id <= 0) {
             throw new BadRequestHttpException('No se pudo determinar el contexto profesional en sesión.');
         }
@@ -293,13 +293,11 @@ class ProfesionalAgendaController extends BaseController
             $pes = ProfesionalEfectorServicioAgendaApiService::assertProfesionalEfectorServicioEnEfector($idPes, $idEfector);
         }
 
-        unset($body['id_agenda_rrhh']);
         if (ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id) !== null) {
             return $this->error('Ya existe una agenda para este servicio.', [], 422);
         }
 
         $model = new ProfesionalEfectorServicioAgenda();
-        unset($body['id_rrhh_servicio_asignado']);
         $model->load($body, '');
         $model->id_profesional_efector_servicio = (int) $pes->id;
         $model->id_efector = $idEfector;
@@ -329,14 +327,14 @@ class ProfesionalAgendaController extends BaseController
         if ($paraRecurso) {
             $model = ProfesionalEfectorServicioAgendaApiService::findOwnedByEfector($idAgenda, $idEfector);
         } else {
-            $model = ProfesionalEfectorServicioAgendaApiService::findOwnedByRecursoHumano($idAgenda, $idEfector, $this->requireRecursoHumanoId());
+            $model = ProfesionalEfectorServicioAgendaApiService::findOwnedByStaffContext($idAgenda, $idEfector, $this->requireStaffContextId());
         }
         if ($model === null) {
             throw new NotFoundHttpException('Agenda no encontrada.');
         }
 
         $body = $this->normalizeAgendaRequestBody();
-        unset($body['id_agenda_rrhh'], $body['id_efector'], $body['id_profesional_contexto'], $body['id_rrhh_servicio_asignado']);
+        unset($body['id_efector'], $body['id_profesional_contexto'], $body['id_profesional_efector_servicio']);
 
         $lockedEfector = (int) $model->id_efector;
         $lockedPes = (int) $model->id_profesional_efector_servicio;
@@ -367,7 +365,7 @@ class ProfesionalAgendaController extends BaseController
         if ($paraRecurso) {
             $model = ProfesionalEfectorServicioAgendaApiService::findOwnedByEfector($idAgenda, $idEfector);
         } else {
-            $model = ProfesionalEfectorServicioAgendaApiService::findOwnedByRecursoHumano($idAgenda, $idEfector, $this->requireRecursoHumanoId());
+            $model = ProfesionalEfectorServicioAgendaApiService::findOwnedByStaffContext($idAgenda, $idEfector, $this->requireStaffContextId());
         }
         if ($model === null) {
             throw new NotFoundHttpException('Agenda no encontrada.');

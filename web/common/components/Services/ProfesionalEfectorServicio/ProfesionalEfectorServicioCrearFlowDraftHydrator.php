@@ -6,7 +6,7 @@ use common\models\Servicio;
 use Yii;
 
 /**
- * Completa el draft del intent `agenda.crear-rrhh-flow` antes de {@see \common\components\Assistant\SubIntentEngine\SubIntentEngine::process}:
+ * Completa el draft del intent `agenda.crear-profesional-flow` antes de {@see \common\components\Assistant\SubIntentEngine\SubIntentEngine::process}:
  * - `servicio_acepta_turnos` desde catálogo si hay `id_servicio`
  * - `id_profesional_efector_servicio` (y coherencia de `servicio_acepta_turnos`) vía {@see ProfesionalEfectorServicioAltaService} si falta y hay persona+servicio+efector en sesión.
  */

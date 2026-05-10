@@ -192,7 +192,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setString('servicio_nombre', sessionConfig.servicio.nombre);
       await prefs.setString('encounter_class', sessionConfig.encounterClass.code);
       await prefs.setString('encounter_class_label', sessionConfig.encounterClass.label);
-      await prefs.setInt('rrhh_id', sessionConfig.rrhhId);
+      await prefs.setInt('id_profesional_efector_servicio', sessionConfig.idProfesionalEfectorServicio);
       await prefs.setBool('config_completed', true);
       // Usar el token con contexto operativo para el resto de llamadas (stateless; no depende de cookies).
       if (sessionConfig.contextToken != null && sessionConfig.contextToken!.isNotEmpty) {
@@ -207,7 +207,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
               userId: widget.userId,
               userName: widget.userName,
               authToken: widget.authToken,
-              rrhhId: sessionConfig.rrhhId.toString(),
+              idProfesionalEfectorServicio: sessionConfig.idProfesionalEfectorServicio.toString(),
             ),
           ),
         );

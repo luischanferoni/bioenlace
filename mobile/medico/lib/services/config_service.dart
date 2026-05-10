@@ -280,14 +280,11 @@ class Servicio {
   final String nombre;
   /// Asignación canónica (PES) para agenda y turnos.
   final int idProfesionalEfectorServicio;
-  /// Alias legacy del mismo id PES que envía la API en `id_rrhh_servicio` (o copia de `idProfesionalEfectorServicio` si viene 0).
-  final int idRrhhServicio;
 
   Servicio({
     required this.id,
     required this.nombre,
     this.idProfesionalEfectorServicio = 0,
-    this.idRrhhServicio = 0,
   });
 
   factory Servicio.fromJson(Map<String, dynamic> json) {
@@ -302,10 +299,6 @@ class Servicio {
           0,
       nombre: json['nombre'] as String? ?? 'Sin nombre',
       idProfesionalEfectorServicio: idPes,
-      idRrhhServicio: () {
-        final legacy = (json['id_rrhh_servicio'] as int?) ?? 0;
-        return legacy > 0 ? legacy : idPes;
-      }(),
     );
   }
 }
@@ -331,23 +324,29 @@ class SessionConfig {
   final Efector efector;
   final Servicio servicio;
   final EncounterClass encounterClass;
-  final int rrhhId;
+  /// Identificador PES del contexto operativo (equivale a `servicio.id_profesional_efector_servicio` cuando aplica).
+  final int idProfesionalEfectorServicio;
   final String? contextToken;
 
   SessionConfig({
     required this.efector,
     required this.servicio,
     required this.encounterClass,
-    required this.rrhhId,
+    required this.idProfesionalEfectorServicio,
     this.contextToken,
   });
 
   factory SessionConfig.fromJson(Map<String, dynamic> json) {
+    final servicioMap = json['servicio'] as Map<String, dynamic>?;
+    final idFromServicio =
+        servicioMap != null ? (servicioMap['id_profesional_efector_servicio'] as int?) ?? 0 : 0;
+    final idCtx = (json['id_contexto_profesional'] as int?) ?? idFromServicio;
+
     return SessionConfig(
       efector: Efector.fromJson(json['efector'] as Map<String, dynamic>),
       servicio: Servicio.fromJson(json['servicio'] as Map<String, dynamic>),
       encounterClass: EncounterClass.fromJson(json['encounter_class'] as Map<String, dynamic>),
-      rrhhId: (json['rrhh_id'] as int?) ?? 0,
+      idProfesionalEfectorServicio: idCtx,
       contextToken: json['context_token'] as String?,
     );
   }

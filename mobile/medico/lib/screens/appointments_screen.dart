@@ -10,13 +10,13 @@ import 'chat_consulta_screen.dart';
 
 class AppointmentsScreen extends StatefulWidget {
   final String? authToken;
-  final String? rrhhId;
+  final String? idProfesionalEfectorServicio;
   final String? userId;
 
   const AppointmentsScreen({
     Key? key,
     this.authToken,
-    this.rrhhId,
+    this.idProfesionalEfectorServicio,
     this.userId,
   }) : super(key: key);
 
@@ -50,7 +50,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
       final turnos = await _turnosService.getTurnosPorFecha(
         fechaStr,
-        rrhhId: widget.rrhhId,
+        idProfesionalEfectorServicio: widget.idProfesionalEfectorServicio,
       );
       setState(() {
         _turnos = turnos;

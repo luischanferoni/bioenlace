@@ -98,7 +98,7 @@ class TurnosController extends Controller
 
         $idEfector = Yii::$app->user->getIdEfector();
 
-        $serviciosXEfector = ServiciosEfector::rrhhPorServiciosAgendaPorEfector($idEfector, $id_servicio_practica);
+        $serviciosXEfector = ServiciosEfector::profesionalPorServiciosAgendaPorEfector($idEfector, $id_servicio_practica);
         $idsServiciosSinDerivacion = yii\helpers\ArrayHelper::getColumn($serviciosXEfector['SIN_DERIVACION'], 'id_servicio');
         $idsServiciosConDerivacion = yii\helpers\ArrayHelper::getColumn($serviciosXEfector['CON_DERIVACION'], 'id_servicio');
         $idsServicios = array_merge($idsServiciosSinDerivacion, $idsServiciosConDerivacion);
@@ -158,7 +158,7 @@ class TurnosController extends Controller
             throw new BadRequestHttpException('Parametros servicio faltante');
         }
 
-        return $this->renderAjax('turnos_rrhh', [
+        return $this->renderAjax('turnos_calendario_profesional', [
             'id_servicio' => $id_servicio,
             'id_profesional_efector_servicio' => $id_profesional_efector_servicio,
             'persona' => $session_paciente,
@@ -542,7 +542,7 @@ class TurnosController extends Controller
     public function actionList()
     {
         $tfecha = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['fecha'] : date("Y-m-d") . ' - ' . date("Y-m-d");
-        $idStaffContext = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?: Yii::$app->user->getIdRecursoHumano() ?: 0);
+        $idStaffContext = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?: 0);
         $servicioAsignado = Yii::$app->request->get('TurnoBusqueda') ? Yii::$app->request->get('TurnoBusqueda')['id_servicio_asignado'] : NULL;
         $idPesFiltroList = Yii::$app->request->get('TurnoBusqueda')['id_profesional_efector_servicio'] ?? null;
 

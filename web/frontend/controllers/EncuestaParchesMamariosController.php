@@ -33,7 +33,7 @@ class EncuestaParchesMamariosController extends Controller
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['create'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE, SisseActionFilter::FILTRO_RECURSO_HUMANO],
+                'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE, SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
                 'allowed' => function () {
                     $persona = Yii::$app->session['persona'];
                     $persona =  unserialize($persona);
@@ -123,7 +123,7 @@ class EncuestaParchesMamariosController extends Controller
         }
         $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         if ($idPesSesion <= 0) {
-            $rh = Yii::$app->user->getIdRecursoHumano();
+            $rh = Yii::$app->user->getIdProfesionalEfectorServicio();
             $idPesSesion = $rh !== null && $rh !== '' ? (int) $rh : 0;
         }
         if ($idPesSesion > 0) {

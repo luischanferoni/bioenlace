@@ -149,9 +149,6 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             if (isset($decoded->id_profesional_efector_servicio)) {
                 $idPes = (int) $decoded->id_profesional_efector_servicio;
                 Yii::$app->user->setIdProfesionalEfectorServicio($idPes);
-                if ($idPes > 0) {
-                    Yii::$app->user->setIdRecursoHumano($idPes);
-                }
             }
             if (isset($decoded->encounter_class)) {
                 Yii::$app->user->setEncounterClass((string) $decoded->encounter_class);

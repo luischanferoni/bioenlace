@@ -154,7 +154,7 @@ class TurnoBusqueda extends Turno
             ])
             ->column();
 
-        // Traigo los servicios que podrian requerir pasar por el servicio actual del rrhh
+        // Traigo los servicios que podrían requerir pasar por el servicio actual del profesional en contexto
         $serviciosConPasePrevio = $idsServicios !== []
             ? ServiciosEfector::find()
                 ->andWhere(['servicios_efector.id_efector' => Yii::$app->user->getIdEfector()])

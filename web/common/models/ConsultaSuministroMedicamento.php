@@ -50,7 +50,7 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
                 return;
             }
             if ($c && $this->id_rrhh && $c->id_efector && $c->id_servicio) {
-                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh((int) $this->id_rrhh);
+                $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $this->id_rrhh);
                 if ($idPersona !== null && $idPersona > 0) {
                     $this->id_profesional_efector_servicio = ProfesionalEfectorServicio::findIdByPersonaEfectorServicio(
                         $idPersona,

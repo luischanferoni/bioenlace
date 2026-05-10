@@ -18,16 +18,16 @@ class ServiciosEfector extends \yii\db\ActiveRecord
     use \common\traits\SoftDeleteDateTimeTrait;
     
     const ORDEN_LLEGADA_PARA_TODOS = 'ORDEN_LLEGADA_PARA_TODOS';
-    const DELEGAR_A_CADA_RRHH = 'DELEGAR_A_CADA_RRHH';
-    const DERIVACION_DELEGAR_A_CADA_RRHH = 'DERIVACION_DELEGAR_A_CADA_RRHH';
+    const DELEGAR_A_CADA_PROFESIONAL = 'DELEGAR_A_CADA_PROFESIONAL';
+    const DERIVACION_DELEGAR_A_CADA_PROFESIONAL = 'DERIVACION_DELEGAR_A_CADA_PROFESIONAL';
     const DERIVACION_ORDEN_LLEGADA_PARA_TODOS = 'DERIVACION_ORDEN_LLEGADA_PARA_TODOS';
 
     const FORMAS_ATENCION = [
-            self::DELEGAR_A_CADA_RRHH => 'El paciente puede elegir el médico', 
+            self::DELEGAR_A_CADA_PROFESIONAL => 'El paciente puede elegir el médico',
             self::ORDEN_LLEGADA_PARA_TODOS => 'Se atiende a todos por orden de llegada',
-            self::DERIVACION_DELEGAR_A_CADA_RRHH => 'Solo con DERIVACIÓN, puede elegir el médico', 
+            self::DERIVACION_DELEGAR_A_CADA_PROFESIONAL => 'Solo con DERIVACIÓN, puede elegir el médico',
             self::DERIVACION_ORDEN_LLEGADA_PARA_TODOS => 'Solo con DERIVACIÓN, por orden de llegada'
-        ];    
+        ];
 
 
     /**
@@ -146,9 +146,9 @@ class ServiciosEfector extends \yii\db\ActiveRecord
 
 
     /**
-     * Busca todos los servicios del efector, que atiendan al publico servicioAceptaAgenda en true
+     * Busca todos los servicios del efector que atiendan al público (`servicioAceptaAgenda`) y arma grupos con profesionales PES.
      */
-    public static function rrhhPorServiciosAgendaPorEfector($id_efector, $id_servicio_practica = null)
+    public static function profesionalPorServiciosAgendaPorEfector($id_efector, $id_servicio_practica = null)
     {
         $query = self::findActive()
                     ->andWhere(['servicios_efector.id_efector' => $id_efector])
@@ -168,13 +168,13 @@ class ServiciosEfector extends \yii\db\ActiveRecord
         foreach ($serviciosEfector as $servicioEfector) {
             $idsServicios[] = $servicioEfector->id_servicio;
             switch ($servicioEfector->formas_atencion) {
-                case self::DELEGAR_A_CADA_RRHH:
+                case self::DELEGAR_A_CADA_PROFESIONAL:
                     $arrayServiciosEfector['SIN_DERIVACION'][] = $servicioEfector;                    
                     break;
                 case self::ORDEN_LLEGADA_PARA_TODOS:
                     $arrayServiciosEfector['SIN_DERIVACION'][] = $servicioEfector;                    
                     break;
-                case self::DERIVACION_DELEGAR_A_CADA_RRHH:                    
+                case self::DERIVACION_DELEGAR_A_CADA_PROFESIONAL:                    
                     $arrayServiciosEfector['CON_DERIVACION'][] = $servicioEfector;
                     break;
                 case self::DERIVACION_ORDEN_LLEGADA_PARA_TODOS:
@@ -204,7 +204,7 @@ class ServiciosEfector extends \yii\db\ActiveRecord
                 continue;
             }
             $servicioEfector->profesionalesPes = [];
-            if ($servicioEfector->formas_atencion == self::DERIVACION_DELEGAR_A_CADA_RRHH) {
+            if ($servicioEfector->formas_atencion == self::DERIVACION_DELEGAR_A_CADA_PROFESIONAL) {
                 $servicioEfector->profesionalesPes = isset($pesPorServicio[$servicioEfector->id_servicio])?$pesPorServicio[$servicioEfector->id_servicio]:[];
             }
         }
@@ -215,7 +215,7 @@ class ServiciosEfector extends \yii\db\ActiveRecord
                 continue;
             }            
             $servicioEfector->profesionalesPes = [];
-            if ($servicioEfector->formas_atencion == self::DELEGAR_A_CADA_RRHH) {
+            if ($servicioEfector->formas_atencion == self::DELEGAR_A_CADA_PROFESIONAL) {
                 $servicioEfector->profesionalesPes = isset($pesPorServicio[$servicioEfector->id_servicio])?$pesPorServicio[$servicioEfector->id_servicio]:[];
             }
         }

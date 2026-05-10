@@ -24,13 +24,14 @@ class TurnosService {
   }
 
   // Obtener turnos por fecha
-  Future<List<Turno>> getTurnosPorFecha(String fecha, {String? rrhhId}) async {
+  Future<List<Turno>> getTurnosPorFecha(String fecha,
+      {String? idProfesionalEfectorServicio}) async {
     try {
       final queryParams = <String, String>{
         'fecha': fecha,
       };
-      if (rrhhId != null) {
-        queryParams['rrhh_id'] = rrhhId;
+      if (idProfesionalEfectorServicio != null) {
+        queryParams['id_profesional_efector_servicio'] = idProfesionalEfectorServicio;
       }
       
       // Para desarrollo/simulación: incluir user_id como parámetro si no hay token válido

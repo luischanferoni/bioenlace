@@ -17,14 +17,14 @@ class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
   final String? authToken;
-  final String? rrhhId;
+  final String? idProfesionalEfectorServicio;
 
   const HomeScreen({
     Key? key,
     required this.userId,
     required this.userName,
     this.authToken,
-    this.rrhhId,
+    this.idProfesionalEfectorServicio,
   }) : super(key: key);
 
   @override

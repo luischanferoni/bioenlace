@@ -50,7 +50,7 @@ final class TurnoCreacionContext
 
         $idP = $u->getIdPersona();
         $idE = $u->getIdEfector();
-        $idR = $u->getIdRecursoHumano();
+        $idR = $u->getIdProfesionalEfectorServicio();
 
         return new self(
             $idP ?: null,

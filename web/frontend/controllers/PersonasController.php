@@ -68,7 +68,7 @@ class PersonasController extends Controller
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['historia', 'view', 'crear-numero-historia-clinica'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_RECURSO_HUMANO],
+                'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),
@@ -496,7 +496,7 @@ class PersonasController extends Controller
         if ($pes !== null && (int) $pes->id_efector === $idEfectorSesion) {
             $idPersona = (int) $pes->id_persona;
         } else {
-            $resolved = ProfesionalEfectorServicio::resolveIdPersonaFromIdRrhh($id);
+            $resolved = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($id);
             $idPersona = ($resolved !== null && (int) $resolved > 0) ? (int) $resolved : null;
         }
         if ($idPersona === null || $idPersona <= 0) {

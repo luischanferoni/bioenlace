@@ -79,8 +79,8 @@ class TurnoPersistService
         if ($servicioEfector) {
             if ($servicioEfector->formas_atencion == ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS) {
                 $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
-            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_RRHH) {
-                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_RRHH;
+            } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL) {
+                $model->scenario = ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL;
                 $idPesCupo = (int) ($model->id_profesional_efector_servicio ?? 0);
                 if ($idPesCupo > 0) {
                     $agenda = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPesCupo);

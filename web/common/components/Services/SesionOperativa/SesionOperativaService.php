@@ -89,7 +89,6 @@ class SesionOperativaService extends Component
 
         Yii::$app->user->setIdEfector($pes->id_efector);
         Yii::$app->user->setNombreEfector($pes->efector !== null ? (string) $pes->efector->nombre : '');
-        Yii::$app->user->setIdRecursoHumano($idContextoStaff);
         Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
 
         $pesEnEfector = ProfesionalEfectorServicio::find()

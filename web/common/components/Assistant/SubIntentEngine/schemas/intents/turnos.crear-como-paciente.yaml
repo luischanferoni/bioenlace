@@ -47,7 +47,7 @@ subintents:
       - draft.id_servicio_asignado
     provides:
       - draft.id_efector
-    next: select_rrhh
+    next: select_profesional
     chooser:
       when_user_says_nearby:
         open_ui:
@@ -60,7 +60,7 @@ subintents:
           params:
             id_servicio: "draft.id_servicio_asignado"
 
-  - id: select_rrhh
+  - id: select_profesional
     assistant_text: "Profesional"
     requires:
       - draft.id_efector

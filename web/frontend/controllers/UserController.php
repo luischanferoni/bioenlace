@@ -26,7 +26,7 @@ class UserController extends \webvimark\modules\UserManagement\controllers\UserC
                 'only' => ['crear'],
                 'filtrosExtra' => [
                     SisseActionFilter::FILTRO_PACIENTE, 
-                    SisseActionFilter::FILTRO_RECURSO_HUMANO
+                    SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL
                 ],
             ],            
         ];

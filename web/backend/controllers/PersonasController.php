@@ -65,7 +65,7 @@ class PersonasController extends Controller {
             'access' => [
                 'class' => SisseActionFilter::className(),
                 'only' => ['view', 'crear-numero-historia-clinica'],
-                'filtrosExtra' => [SisseActionFilter::FILTRO_RECURSO_HUMANO],
+                'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),

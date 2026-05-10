@@ -10,8 +10,8 @@ class UserRequest
      * Devuelve el valor del parámetro enviado por POST (clave $postKey).
      * Si la petición es POST y falta el parámetro lanza BadRequestHttpException.
      * En peticiones no-POST devuelve el valor desde Yii::$app->user mediante el getter correspondiente.
-     * @param string $key clave simbólica: idEfector, servicio_actual, encounterClass, idRecursoHumano,
-     *        id_profesional_efector_servicio, id_rrhh_servicio (alias snapshot = PES), nombreEfector
+     * @param string $key clave simbólica: idEfector, servicio_actual, encounterClass,
+     *        id_profesional_efector_servicio, nombreEfector
      * @param string|null $postKey clave concreta en POST si difiere de la key
      * @return mixed
      * @throws BadRequestHttpException
@@ -35,12 +35,8 @@ class UserRequest
                 return Yii::$app->user->getServicioActual();
             case 'encounterClass':
                 return Yii::$app->user->getEncounterClass();
-            case 'idRecursoHumano':
-                return Yii::$app->user->getIdRecursoHumano();
             case 'id_profesional_efector_servicio':
                 return Yii::$app->user->getIdProfesionalEfectorServicio();
-            case 'id_rrhh_servicio':
-                return Yii::$app->user->getIdRrhhServicio();
             case 'nombreEfector':
                 return Yii::$app->user->getNombreEfector();
             default:

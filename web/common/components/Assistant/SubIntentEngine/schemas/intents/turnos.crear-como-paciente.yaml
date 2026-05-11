@@ -69,7 +69,7 @@ subintents:
       - draft.id_profesional_efector_servicio
     next: select_slot
     open_ui:
-      action_id: recurso-humano.listar-por-efector-servicio-acepta-turnos
+      action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
       params:
         id_efector: "draft.id_efector"
         id_servicio: "draft.id_servicio_asignado"

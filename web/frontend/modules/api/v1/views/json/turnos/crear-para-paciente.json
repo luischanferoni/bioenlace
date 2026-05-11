@@ -46,7 +46,7 @@
       "label": "Profesional",
       "type": "autocomplete",
       "required": true,
-      "endpoint": "/recurso-humano/autocomplete",
+      "endpoint": "/profesional-efector-servicio/autocomplete",
       "depends_on": ["id_efector", "id_servicio_asignado"],
       "params": {
         "id_servicio": "id_servicio_asignado",
@@ -54,7 +54,7 @@
       },
       "auto_load": true,
       "option_config": {
-        "source": "recurso-humano",
+        "source": "profesional-efector-servicio",
         "filter": "efector_rrhh"
       }
     },

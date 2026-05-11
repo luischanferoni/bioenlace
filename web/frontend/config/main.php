@@ -154,12 +154,12 @@ return [
                 'GET api/<version:\w+>/profesional-agenda/configurar-agenda' => '<version>/profesional-agenda/configurar-agenda',
                 'POST api/<version:\w+>/profesional-agenda/configurar-agenda' => '<version>/profesional-agenda/configurar-agenda',
                 'OPTIONS api/<version:\w+>/profesional-agenda/configurar-agenda' => '<version>/profesional-agenda/configurar-agenda',
-                'GET api/<version:\w+>/recurso-humano/editar-condicion-laboral' => '<version>/recurso-humano/editar-condicion-laboral',
-                'POST api/<version:\w+>/recurso-humano/editar-condicion-laboral' => '<version>/recurso-humano/editar-condicion-laboral',
-                'OPTIONS api/<version:\w+>/recurso-humano/editar-condicion-laboral' => '<version>/recurso-humano/editar-condicion-laboral',
-                'GET api/<version:\w+>/recurso-humano/crear-condicion-laboral' => '<version>/recurso-humano/crear-condicion-laboral',
-                'POST api/<version:\w+>/recurso-humano/crear-condicion-laboral' => '<version>/recurso-humano/crear-condicion-laboral',
-                'OPTIONS api/<version:\w+>/recurso-humano/crear-condicion-laboral' => '<version>/recurso-humano/crear-condicion-laboral',
+                'GET api/<version:\w+>/profesional-efector-servicio/editar-condicion-laboral' => '<version>/profesional-efector-servicio/editar-condicion-laboral',
+                'POST api/<version:\w+>/profesional-efector-servicio/editar-condicion-laboral' => '<version>/profesional-efector-servicio/editar-condicion-laboral',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/editar-condicion-laboral' => '<version>/profesional-efector-servicio/editar-condicion-laboral',
+                'GET api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
+                'POST api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
                 
                 // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
                 // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.
@@ -194,19 +194,22 @@ return [
                 'GET api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
                 'POST api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
                 'OPTIONS api/<version:\w+>/efectores/buscar' => '<version>/efectores/buscar',
-                
-                // Recurso humano API - Búsqueda / listados UI
-                'GET api/<version:\w+>/recurso-humano/autocomplete' => '<version>/recurso-humano/autocomplete',
-                'POST api/<version:\w+>/recurso-humano/autocomplete' => '<version>/recurso-humano/autocomplete',
-                'OPTIONS api/<version:\w+>/recurso-humano/autocomplete' => '<version>/recurso-humano/autocomplete',
-                'GET api/<version:\w+>/recurso-humano/listar-mis-servicios-en-efector' => '<version>/recurso-humano/listar-mis-servicios-en-efector',
-                'POST api/<version:\w+>/recurso-humano/listar-mis-servicios-en-efector' => '<version>/recurso-humano/listar-mis-servicios-en-efector',
-                'OPTIONS api/<version:\w+>/recurso-humano/listar-mis-servicios-en-efector' => '<version>/recurso-humano/listar-mis-servicios-en-efector',
-                'GET api/<version:\w+>/recurso-humano/listar-por-efector' => '<version>/recurso-humano/listar-por-efector',
-                'POST api/<version:\w+>/recurso-humano/listar-por-efector' => '<version>/recurso-humano/listar-por-efector',
-                'OPTIONS api/<version:\w+>/recurso-humano/listar-por-efector' => '<version>/recurso-humano/listar-por-efector',
-                'GET api/<version:\w+>/recurso-humano/condiciones-laborales-catalogo' => '<version>/recurso-humano/condiciones-laborales-catalogo',
-                'OPTIONS api/<version:\w+>/recurso-humano/condiciones-laborales-catalogo' => '<version>/recurso-humano/condiciones-laborales-catalogo',
+                'GET api/<version:\w+>/efectores/listar-servicios-habilitados' => '<version>/efectores/listar-servicios-habilitados',
+                'POST api/<version:\w+>/efectores/listar-servicios-habilitados' => '<version>/efectores/listar-servicios-habilitados',
+                'OPTIONS api/<version:\w+>/efectores/listar-servicios-habilitados' => '<version>/efectores/listar-servicios-habilitados',
+
+                // Profesional efector servicio (PES) API - Búsqueda / listados UI
+                'GET api/<version:\w+>/profesional-efector-servicio/autocomplete' => '<version>/profesional-efector-servicio/autocomplete',
+                'POST api/<version:\w+>/profesional-efector-servicio/autocomplete' => '<version>/profesional-efector-servicio/autocomplete',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/autocomplete' => '<version>/profesional-efector-servicio/autocomplete',
+                'GET api/<version:\w+>/profesional-efector-servicio/listar-mis-servicios-en-efector' => '<version>/profesional-efector-servicio/listar-mis-servicios-en-efector',
+                'POST api/<version:\w+>/profesional-efector-servicio/listar-mis-servicios-en-efector' => '<version>/profesional-efector-servicio/listar-mis-servicios-en-efector',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/listar-mis-servicios-en-efector' => '<version>/profesional-efector-servicio/listar-mis-servicios-en-efector',
+                'GET api/<version:\w+>/profesional-efector-servicio/listar-por-efector' => '<version>/profesional-efector-servicio/listar-por-efector',
+                'POST api/<version:\w+>/profesional-efector-servicio/listar-por-efector' => '<version>/profesional-efector-servicio/listar-por-efector',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/listar-por-efector' => '<version>/profesional-efector-servicio/listar-por-efector',
+                'GET api/<version:\w+>/profesional-efector-servicio/condiciones-laborales-catalogo' => '<version>/profesional-efector-servicio/condiciones-laborales-catalogo',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/condiciones-laborales-catalogo' => '<version>/profesional-efector-servicio/condiciones-laborales-catalogo',
 
                 // Catálogos API
                 'GET api/<version:\w+>/catalogos/encounter-classes' => '<version>/catalogos/encounter-classes',

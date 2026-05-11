@@ -210,7 +210,7 @@ class AsignacionPesController extends Controller
     }
 
     /**
-     * Autocomplete Select2 (misma forma que API /api/v1/recurso-humano/autocomplete).
+     * Autocomplete Select2 (misma forma que API /api/v1/profesional-efector-servicio/autocomplete).
      * @no_intent_catalog
      */
     public function actionProfesionalesAutocomplete($q = null)

@@ -17,7 +17,7 @@ use common\models\ServiciosEfector;
  * Autocomplete: migrado desde listados web legacy.
  * Servicios por PES: ver backend ProfesionalEfectorServicio.
  */
-class RecursoHumanoController extends BaseController
+class ProfesionalEfectorServicioController extends BaseController
 {
     public static $authenticatorExcept = ['autocomplete'];
 
@@ -98,7 +98,7 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * GET/POST /api/v1/recurso-humano/autocomplete
+     * GET/POST /api/v1/profesional-efector-servicio/autocomplete
      * Parámetros: id_efector, id_servicio (requeridos); q, limit, sort_by, sort_order, efector_nombre, servicio_nombre (opcionales).
      */
     public function actionAutocomplete($q = null)
@@ -140,7 +140,7 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/recurso-humano/listar-mis-servicios-en-efector
+     * GET|POST /api/v1/profesional-efector-servicio/listar-mis-servicios-en-efector
      *
      * Lista servicios asignados al profesional autenticado, filtrados como en el flujo web
      * (servicio activo en el efector o servicio con item_name AdminEfector).
@@ -237,7 +237,7 @@ class RecursoHumanoController extends BaseController
     /**
      * Vista embebible: listar profesionales de un efector como `ui_json`.
      *
-     * GET|POST /api/v1/recurso-humano/listar-por-efector
+     * GET|POST /api/v1/profesional-efector-servicio/listar-por-efector
      *
      * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
      *
@@ -250,7 +250,7 @@ class RecursoHumanoController extends BaseController
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
-            'recurso-humano',
+            'profesional-efector-servicio',
             'listar-por-efector',
             $req->get(),
             $req->post(),
@@ -295,7 +295,7 @@ class RecursoHumanoController extends BaseController
      * Vista embebible: listar profesionales de un efector como `ui_json`,
      * filtrando a quienes tengan servicios con `servicios.acepta_turnos = SI`.
      *
-     * GET|POST /api/v1/recurso-humano/listar-por-efector-acepta-turnos
+     * GET|POST /api/v1/profesional-efector-servicio/listar-por-efector-acepta-turnos
      *
      * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
      *
@@ -308,7 +308,7 @@ class RecursoHumanoController extends BaseController
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
-            'recurso-humano',
+            'profesional-efector-servicio',
             'listar-por-efector-acepta-turnos',
             $req->get(),
             $req->post(),
@@ -352,7 +352,7 @@ class RecursoHumanoController extends BaseController
     /**
      * Vista embebible: listar servicios asignados al profesional como `ui_json`.
      *
-     * GET|POST /api/v1/recurso-humano/listar-servicios-en-efector
+     * GET|POST /api/v1/profesional-efector-servicio/listar-servicios-en-efector
      *
      * Parámetros: `id_profesional_efector_servicio` (obligatorio) para anclar el profesional en el efector de sesión.
      *
@@ -365,7 +365,7 @@ class RecursoHumanoController extends BaseController
     {
         $req = Yii::$app->request;
         $ui = UiScreenService::handleScreen(
-            'recurso-humano',
+            'profesional-efector-servicio',
             'listar-servicios-en-efector',
             $req->get(),
             $req->post(),
@@ -383,54 +383,6 @@ class RecursoHumanoController extends BaseController
             foreach ($items as $it) {
                 $uiItems[] = [
                     'id' => (string) (int) $it['id'],
-                    'name' => (string) $it['name'],
-                    'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
-                ];
-            }
-            $ui = UiScreenService::withListBlockItems($ui, $uiItems);
-        }
-
-        return $ui;
-    }
-
-    /**
-     * Vista embebible: servicios habilitados en el efector de sesión ({@see ServiciosEfector}), sin exigir profesional previo.
-     * Sin `q` no se listan ítems (solo plantilla con buscador).
-     *
-     * GET|POST /api/v1/recurso-humano/listar-servicios-habilitados-efector
-     *
-     * @action_name Listar servicios habilitados en el efector
-     * @entity Profesional
-     * @tags views, ui, servicios, asistente
-     */
-    public function actionListarServiciosHabilitadosEfector(): array
-    {
-        $req = Yii::$app->request;
-        $ui = UiScreenService::handleScreen(
-            'recurso-humano',
-            'listar-servicios-habilitados-efector',
-            $req->get(),
-            $req->post(),
-            static function (array $post): array {
-                return ['data' => ['ok' => true]];
-            }
-        );
-
-        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
-            $idEfector = (int) Yii::$app->user->getIdEfector();
-            if ($idEfector <= 0) {
-                throw new BadRequestHttpException('No hay efector en sesión.');
-            }
-            $q = $req->get('q') ?: $req->post('q');
-            try {
-                $raw = ProfesionalEnEfectorListadoUiService::listarServiciosHabilitadosPorEfector($idEfector, is_string($q) ? $q : null);
-            } catch (\InvalidArgumentException $e) {
-                throw new BadRequestHttpException($e->getMessage());
-            }
-            $uiItems = [];
-            foreach ($raw as $it) {
-                $uiItems[] = [
-                    'id' => (string) $it['id'],
                     'name' => (string) $it['name'],
                     'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
                 ];
@@ -510,7 +462,7 @@ class RecursoHumanoController extends BaseController
     }
 
     /**
-     * GET /api/v1/recurso-humano/condiciones-laborales-catalogo
+     * GET /api/v1/profesional-efector-servicio/condiciones-laborales-catalogo
      *
      * @return array{results: list<array{id: int, text: string}>}
      */
@@ -534,7 +486,7 @@ class RecursoHumanoController extends BaseController
     /**
      * UI JSON: crear/editar condición laboral (vigencia) de un profesional.
      *
-     * GET|POST /api/v1/recurso-humano/editar-condicion-laboral
+     * GET|POST /api/v1/profesional-efector-servicio/editar-condicion-laboral
      *
      * @action_name Editar condición laboral (profesional)
      * @entity Profesional
@@ -551,7 +503,7 @@ class RecursoHumanoController extends BaseController
         $paramsForRender = array_merge($defaults, $fromClient);
 
         return UiScreenService::handleScreen(
-            'recurso-humano',
+            'profesional-efector-servicio',
             'editar-condicion-laboral',
             $paramsForRender,
             $req->post(),
@@ -565,7 +517,7 @@ class RecursoHumanoController extends BaseController
      * UI JSON: crear condición laboral (vigencia) de un profesional.
      * Nota: el submit es un upsert; este endpoint existe por claridad de intención.
      *
-     * GET|POST /api/v1/recurso-humano/crear-condicion-laboral
+     * GET|POST /api/v1/profesional-efector-servicio/crear-condicion-laboral
      *
      * @action_name Crear condición laboral (profesional)
      * @entity Profesional
@@ -583,7 +535,7 @@ class RecursoHumanoController extends BaseController
         $paramsForRender = array_merge($defaults, $fromClient);
 
         return UiScreenService::handleScreen(
-            'recurso-humano',
+            'profesional-efector-servicio',
             'crear-condicion-laboral',
             $paramsForRender,
             $req->post(),
@@ -597,7 +549,7 @@ class RecursoHumanoController extends BaseController
      * Vista embebible: listar profesionales por efector y servicio (obligatorios),
      * filtrando a servicios que aceptan turnos (`servicios.acepta_turnos = SI`).
      *
-     * GET|POST /api/v1/recurso-humano/listar-por-efector-servicio-acepta-turnos
+     * GET|POST /api/v1/profesional-efector-servicio/listar-por-efector-servicio-acepta-turnos
      *
      * @action_name Listar profesionales (acepta turnos) por efector y servicio
      * @entity Profesional
@@ -614,7 +566,7 @@ class RecursoHumanoController extends BaseController
         }
 
         $ui = UiScreenService::handleScreen(
-            'recurso-humano',
+            'profesional-efector-servicio',
             'listar-por-efector-servicio-acepta-turnos',
             $req->get(),
             $req->post(),
@@ -635,7 +587,7 @@ class RecursoHumanoController extends BaseController
     /**
      * Vista embebible: elegir profesional para un efector/servicio.
      *
-     * GET|POST /api/v1/recurso-humano/elegir
+     * GET|POST /api/v1/profesional-efector-servicio/elegir
      *
      * @deprecated Preferir listar-por-efector-servicio-acepta-turnos en nuevos flujos.
      */
@@ -650,7 +602,7 @@ class RecursoHumanoController extends BaseController
         }
 
         return UiScreenService::handleScreen(
-            'recurso-humano',
+            'profesional-efector-servicio',
             'elegir',
             $req->get(),
             $req->post(),

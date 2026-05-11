@@ -18,13 +18,13 @@ intent_semantics:
     Dar de alta la asignación de una persona a un servicio del efector (persona + efector + servicio)
     y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
   how: >-
-    Buscar persona en el padrón, elegir un servicio habilitado para el efector en sesión;
+    Buscar persona en el padrón, elegir un servicio que ofrece el establecimiento (efector en sesión);
     el sistema persiste la asignación profesional–efector–servicio (PES); solo si acepta_turnos es SI se continúa a la UI de agenda.
   preconditions:
     - Efector operativo en sesión.
     - Permisos para dar de alta asignaciones en el efector.
   constraints:
-    - Sin texto de búsqueda no se listan personas ni servicios (solo cuadro de filtro).
+    - La búsqueda de persona en padrón usa texto; el listado de servicios del efector se carga completo (filtro opcional por nombre vía `q` en la API).
     - Agenda solo si servicios.acepta_turnos = SI.
   outcome:
     - Asignación persona–efector–servicio persistida.
@@ -74,8 +74,7 @@ subintents:
 
   - id: select_servicio
     assistant_text: "Servicio"
-    requires:
-      - draft.id_persona
+    # La mini-UI solo usa efector en sesión; `id_persona` sigue viniendo del paso anterior por orden del flujo.
     provides:
       - draft.id_servicio
     next_routing:
@@ -88,8 +87,8 @@ subintents:
         next: asignacion_sin_agenda_listo
     open_ui:
       # Misma regla SPA que en `select_persona`: error de carga de UI → no tira de plan / pasos siguientes.
-      action_id: recurso-humano.listar-servicios-habilitados-efector
-      pass_content_as_query: q
+      # Catálogo del establecimiento (`ServiciosEfector`), no RRHH. `q` opcional en la API para filtrar por nombre.
+      action_id: efectores.listar-servicios-habilitados
 
   - id: configurar_agenda
     assistant_text: "Agenda"

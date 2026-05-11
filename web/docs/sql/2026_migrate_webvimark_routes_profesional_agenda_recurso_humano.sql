@@ -3,7 +3,7 @@
 --
 --   A) API — renombrar rutas en auth_item
 --      /api/agenda/*           -> /api/profesional-agenda/*
---      /api/rrhh/*             -> /api/recurso-humano/*
+--      /api/rrhh/*             -> /api/profesional-efector-servicio/*
 --      /api/agenda/*-agenda-flow (intents) -> /api/profesional-agenda/*-agenda-flow
 --
 --   B) Web frontend — tras eliminar el CRUD Yii `agenda-rrhhs` del repo, consolidar
@@ -64,22 +64,38 @@ UPDATE auth_item SET name = '/api/profesional-agenda/*'     WHERE name = '/api/a
 UPDATE auth_item SET name = '/api/profesional-agenda/options' WHERE name = '/api/agenda/options';
 
 -- ---------------------------------------------------------------------------
--- Recurso humano (antes /api/rrhh/)
+-- Profesional efector servicio / PES (antes /api/rrhh/; prefijo intermedio /api/recurso-humano/ obsoleto)
 -- ---------------------------------------------------------------------------
-UPDATE auth_item SET name = '/api/recurso-humano/autocomplete'                           WHERE name = '/api/rrhh/autocomplete';
-UPDATE auth_item SET name = '/api/recurso-humano/listar-mis-servicios-en-efector'       WHERE name = '/api/rrhh/listar-mis-servicios-en-efector';
-UPDATE auth_item SET name = '/api/recurso-humano/listar-por-efector'                     WHERE name = '/api/rrhh/listar-por-efector';
-UPDATE auth_item SET name = '/api/recurso-humano/listar-por-efector-acepta-turnos'     WHERE name = '/api/rrhh/listar-por-efector-acepta-turnos';
-UPDATE auth_item SET name = '/api/recurso-humano/listar-servicios-en-efector'            WHERE name = '/api/rrhh/listar-servicios-en-efector';
-UPDATE auth_item SET name = '/api/recurso-humano/listar-servicios-habilitados-efector' WHERE name = '/api/rrhh/listar-servicios-habilitados-efector';
-UPDATE auth_item SET name = '/api/recurso-humano/condiciones-laborales-catalogo'        WHERE name = '/api/rrhh/condiciones-laborales-catalogo';
-UPDATE auth_item SET name = '/api/recurso-humano/editar-condicion-laboral'             WHERE name = '/api/rrhh/editar-condicion-laboral';
-UPDATE auth_item SET name = '/api/recurso-humano/crear-condicion-laboral'              WHERE name = '/api/rrhh/crear-condicion-laboral';
-UPDATE auth_item SET name = '/api/recurso-humano/listar-por-efector-servicio-acepta-turnos' WHERE name = '/api/rrhh/listar-por-efector-servicio-acepta-turnos';
-UPDATE auth_item SET name = '/api/recurso-humano/elegir'                               WHERE name = '/api/rrhh/elegir';
+-- Bases que ya están en el prefijo intermedio /api/recurso-humano/
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/autocomplete'                           WHERE name = '/api/recurso-humano/autocomplete';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-mis-servicios-en-efector'       WHERE name = '/api/recurso-humano/listar-mis-servicios-en-efector';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-por-efector'                    WHERE name = '/api/recurso-humano/listar-por-efector';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-por-efector-acepta-turnos'      WHERE name = '/api/recurso-humano/listar-por-efector-acepta-turnos';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-servicios-en-efector'           WHERE name = '/api/recurso-humano/listar-servicios-en-efector';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/condiciones-laborales-catalogo'        WHERE name = '/api/recurso-humano/condiciones-laborales-catalogo';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/editar-condicion-laboral'              WHERE name = '/api/recurso-humano/editar-condicion-laboral';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/crear-condicion-laboral'               WHERE name = '/api/recurso-humano/crear-condicion-laboral';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-por-efector-servicio-acepta-turnos' WHERE name = '/api/recurso-humano/listar-por-efector-servicio-acepta-turnos';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/elegir'                                 WHERE name = '/api/recurso-humano/elegir';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/*'                                      WHERE name = '/api/recurso-humano/*';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/options'                                 WHERE name = '/api/recurso-humano/options';
 
-UPDATE auth_item SET name = '/api/recurso-humano/*'       WHERE name = '/api/rrhh/*';
-UPDATE auth_item SET name = '/api/recurso-humano/options' WHERE name = '/api/rrhh/options';
+-- Bases aún más viejas (rrhh)
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/autocomplete'                           WHERE name = '/api/rrhh/autocomplete';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-mis-servicios-en-efector'       WHERE name = '/api/rrhh/listar-mis-servicios-en-efector';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-por-efector'                    WHERE name = '/api/rrhh/listar-por-efector';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-por-efector-acepta-turnos'      WHERE name = '/api/rrhh/listar-por-efector-acepta-turnos';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-servicios-en-efector'           WHERE name = '/api/rrhh/listar-servicios-en-efector';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/condiciones-laborales-catalogo'        WHERE name = '/api/rrhh/condiciones-laborales-catalogo';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/editar-condicion-laboral'              WHERE name = '/api/rrhh/editar-condicion-laboral';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/crear-condicion-laboral'               WHERE name = '/api/rrhh/crear-condicion-laboral';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/listar-por-efector-servicio-acepta-turnos' WHERE name = '/api/rrhh/listar-por-efector-servicio-acepta-turnos';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/elegir'                                 WHERE name = '/api/rrhh/elegir';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/*'                                      WHERE name = '/api/rrhh/*';
+UPDATE auth_item SET name = '/api/profesional-efector-servicio/options'                                 WHERE name = '/api/rrhh/options';
+
+-- Fallback: si quedó algo con el prefijo intermedio, normalizarlo igual.
+UPDATE auth_item SET name = REPLACE(name, '/api/recurso-humano/', '/api/profesional-efector-servicio/') WHERE name LIKE '/api/recurso-humano/%';
 
 COMMIT;
 

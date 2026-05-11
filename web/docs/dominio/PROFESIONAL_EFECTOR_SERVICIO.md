@@ -93,7 +93,7 @@ DELIMITER ;
 
 Mientras haya consumidores de `agenda_rrhh`/`rrhh_servicio`, se puede mantener una etapa de transición donde el submit escribe en ambos modelos y se migra consumo por etapas.
 
-- **RBAC (webvimark) tras renombrar rutas API** a `/api/profesional-agenda/*` y `/api/recurso-humano/*`: script en `web/docs/sql/2026_migrate_webvimark_routes_profesional_agenda_recurso_humano.sql` (actualiza `auth_item.name`; `auth_item_child` / `auth_assignment` suelen seguir vía `ON UPDATE CASCADE`; `auth_item_group` y `auth_rule` no son paths HTTP). Al final del mismo archivo hay un bloque **opcional comentado** para `DROP` de `agenda_rrhh` / `rrhh_*` y quitar `legacy_rrhh_servicio_id` cuando no se quiera retrocompatibilidad con el esquema viejo.
+- **RBAC (webvimark) tras renombrar rutas API** a `/api/profesional-agenda/*` y `/api/profesional-efector-servicio/*`: script en `web/docs/sql/2026_migrate_webvimark_routes_profesional_agenda_recurso_humano.sql` (actualiza `auth_item.name`; `auth_item_child` / `auth_assignment` suelen seguir vía `ON UPDATE CASCADE`; `auth_item_group` y `auth_rule` no son paths HTTP). Al final del mismo archivo hay un bloque **opcional comentado** para `DROP` de `agenda_rrhh` / `rrhh_*` y quitar `legacy_rrhh_servicio_id` cuando no se quiera retrocompatibilidad con el esquema viejo.
 
 ### Fase consumidores (datos)
 

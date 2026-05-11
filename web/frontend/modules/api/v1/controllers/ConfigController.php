@@ -14,7 +14,7 @@ namespace frontend\modules\api\v1\controllers;
  *
  * **Opciones del wizard (sin fijar):** mismo `POST` con cuerpo incompleto → {@see \frontend\modules\api\v1\controllers\SesionOperativaController::actionEstablecer}.
  *
- * **Catálogos / listados:** `CatalogosController`, `RecursoHumanoController`, etc.
+ * **Catálogos / listados:** `CatalogosController`, `ProfesionalEfectorServicioController`, etc.
  */
 class ConfigController extends BaseController
 {

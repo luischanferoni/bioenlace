@@ -250,7 +250,7 @@ final class ProfesionalEnEfectorListadoUiService
 
     /**
      * Servicios habilitados en el efector (tabla {@see ServiciosEfector}), para elegir asignación sin profesional previo.
-     * Sin query no devuelve ítems (el cliente muestra solo el buscador).
+     * Sin `q` devuelve todos los habilitados (hasta `$limit`), ordenados por nombre. Con `q` filtra por nombre.
      *
      * @return list<array{id: string, name: string, meta: array{acepta_turnos: string}}>
      */
@@ -267,19 +267,18 @@ final class ProfesionalEnEfectorListadoUiService
         }
 
         $q = $q !== null ? trim((string) $q) : '';
-        if ($q === '') {
-            return [];
-        }
-
-        $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
 
         /** @var \yii\db\ActiveQuery $query */
         $query = ServiciosEfector::findActive()->alias('se');
         $query->innerJoin(['s' => 'servicios'], 's.id_servicio = se.id_servicio')
             ->where(['se.id_efector' => $idEfector])
-            ->andWhere(['like', 's.nombre', $term, false])
             ->orderBy(['s.nombre' => SORT_ASC])
             ->limit($limit);
+
+        if ($q !== '') {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $q) . '%';
+            $query->andWhere(['like', 's.nombre', $term, false]);
+        }
 
         $rows = $query->all();
         $items = [];
@@ -299,5 +298,25 @@ final class ProfesionalEnEfectorListadoUiService
         }
 
         return $items;
+    }
+
+    /**
+     * Ítems normalizados para `UiScreenService::withListBlockItems` (servicios del efector en {@see ServiciosEfector}).
+     *
+     * @return list<array{id: string, name: string, meta: array<string, mixed>}>
+     */
+    public static function uiJsonItemsServiciosHabilitadosEfector(int $idEfector, ?string $q = null): array
+    {
+        $raw = self::listarServiciosHabilitadosPorEfector($idEfector, $q);
+        $uiItems = [];
+        foreach ($raw as $it) {
+            $uiItems[] = [
+                'id' => (string) $it['id'],
+                'name' => (string) $it['name'],
+                'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
+            ];
+        }
+
+        return $uiItems;
     }
 }

@@ -60,7 +60,7 @@ subintents:
       - draft.id_profesional_efector_servicio
     next: select_servicio
     open_ui:
-      action_id: recurso-humano.listar-por-efector-acepta-turnos
+      action_id: profesional-efector-servicio.listar-por-efector-acepta-turnos
 
   - id: select_servicio
     assistant_text: "Servicio"
@@ -81,7 +81,7 @@ subintents:
           default: true
         next: condicion_laboral
     open_ui:
-      action_id: recurso-humano.listar-servicios-en-efector
+      action_id: profesional-efector-servicio.listar-servicios-en-efector
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
@@ -103,6 +103,6 @@ subintents:
       - draft.id_profesional_efector_servicio
     next: ""
     open_ui:
-      action_id: recurso-humano.editar-condicion-laboral
+      action_id: profesional-efector-servicio.editar-condicion-laboral
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

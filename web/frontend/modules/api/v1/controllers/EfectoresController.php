@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\components\Services\Efectores\EfectoresListadosService;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\UiScreenService;
 use yii\web\BadRequestHttpException;
 
@@ -235,6 +236,59 @@ class EfectoresController extends BaseController
             $filters = $this->buildEfectoresSearchFilters(true);
             $q = $this->reqParamRaw('q');
             $ui = UiScreenService::withListBlockItems($ui, $this->efectoresItemsForUi($q, $filters));
+        }
+
+        return $ui;
+    }
+
+    /**
+     * Vista embebible: servicios habilitados que ofrece el efector en sesión ({@see ServiciosEfector}).
+     *
+     * - Por defecto usa `id_efector` de sesión.
+     * - Opcional: `id_efector` en query/body debe coincidir con el de sesión (evita fuga entre establecimientos).
+     *
+     * GET|POST /api/v1/efectores/listar-servicios-habilitados
+     *
+     * @action_name Listar servicios habilitados del efector
+     * @entity Efectores
+     * @tags views, ui, servicios, efector, asistente
+     */
+    public function actionListarServiciosHabilitados(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'efectores',
+            'listar-servicios-habilitados',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+            if ($idEfectorSesion <= 0) {
+                throw new BadRequestHttpException('No hay efector en sesión.');
+            }
+            $idEfectorParam = $req->get('id_efector');
+            if ($idEfectorParam === null || $idEfectorParam === '') {
+                $idEfectorParam = $req->post('id_efector');
+            }
+            if ($idEfectorParam !== null && $idEfectorParam !== '' && (int) $idEfectorParam !== $idEfectorSesion) {
+                throw new BadRequestHttpException('id_efector no coincide con el efector en sesión.');
+            }
+
+            $q = $req->get('q') ?: $req->post('q');
+            try {
+                $uiItems = ProfesionalEnEfectorListadoUiService::uiJsonItemsServiciosHabilitadosEfector(
+                    $idEfectorSesion,
+                    is_string($q) ? $q : null
+                );
+            } catch (\InvalidArgumentException $e) {
+                throw new BadRequestHttpException($e->getMessage());
+            }
+            $ui = UiScreenService::withListBlockItems($ui, $uiItems);
         }
 
         return $ui;

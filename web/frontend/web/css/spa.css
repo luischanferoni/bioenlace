@@ -211,8 +211,8 @@
 :root {
     /* Separación del sticky “Atajos” respecto al borde superior del viewport (ajustar al gusto). */
     --spa-chat-toolbar-sticky-top: 6.75rem;
-    /* Distancia viewport-bottom → borde superior del composer; spa-home.js la recalcula (desktop y móvil con bottom: 88px). */
-    --spa-flow-plan-sticky-bottom: 7.5rem;
+    /* Distancia sticky al borde inferior del viewport (más bajo = más pegado al textarea); fijo 99px + JS refuerza igual. */
+    --spa-flow-plan-sticky-bottom: 99px;
 }
 
 .spa-asistente-root {
@@ -328,7 +328,15 @@
     box-sizing: border-box;
 }
 
-/* Plan de pasos (flow_manifest.steps): una sola tira, centrada, debajo de la mini-UI del paso activo */
+/* Plan de pasos (flow_manifest.steps): tira al 50% del ancho, centrada */
+.spa-flow-plan-wrap {
+    width: 50%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
 .spa-flow-plan-wrap .spa-flow-plan {
     padding-left: 0;
 }
@@ -342,7 +350,7 @@
     position: sticky;
     bottom: var(--spa-flow-plan-sticky-bottom);
     z-index: 1019;
-    align-self: stretch;
+    align-self: center;
     margin-top: 0;
     padding-bottom: 0.35rem;
     background: var(--bs-body-bg, #fff);

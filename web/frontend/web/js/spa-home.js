@@ -169,13 +169,8 @@
     let flowPlanStickyListenersBound = false;
 
     function updateFlowPlanStickyBottomVar() {
-        if (!chatComposer) return;
         try {
-            const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-            const r = chatComposer.getBoundingClientRect();
-            // Distancia viewport-bottom → borde superior del composer (incl. bottom: 88px en móvil).
-            const px = Math.max(0, Math.ceil(vh - r.top));
-            document.documentElement.style.setProperty('--spa-flow-plan-sticky-bottom', px + 'px');
+            document.documentElement.style.setProperty('--spa-flow-plan-sticky-bottom', '99px');
         } catch (e) { /* ignore */ }
     }
 
@@ -516,7 +511,7 @@
         }
 
         const wrap = document.createElement('div');
-        wrap.className = 'spa-flow-plan-wrap text-center w-100 mt-3 pt-2 border-top border-light-subtle';
+        wrap.className = 'spa-flow-plan-wrap text-center mt-3 pt-2 border-top border-light-subtle';
         const label = document.createElement('div');
         label.className = 'text-muted small mb-1';
         const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';

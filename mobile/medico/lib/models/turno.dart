@@ -32,24 +32,34 @@ class Turno {
     this.tipoAtencion,
   });
 
+  static int _asInt(Object? v) {
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v) ?? 0;
+    return int.tryParse('$v') ?? 0;
+  }
+
   // Crear desde JSON de la API
   factory Turno.fromJson(Map<String, dynamic> json) {
+    final idVal = json['id'] ?? json['id_turnos'];
     return Turno(
-      id: json['id'] as int,
-      idPersona: json['id_persona'] as int,
+      id: _asInt(idVal),
+      idPersona: _asInt(json['id_persona']),
       paciente: json['paciente'] != null
           ? Paciente.fromJson(json['paciente'] as Map<String, dynamic>)
           : null,
       fecha: json['fecha'] as String,
       hora: json['hora'] as String,
       servicio: json['servicio'] as String?,
-      idServicioAsignado: json['id_servicio_asignado'] as int?,
+      idServicioAsignado: json['id_servicio_asignado'] != null
+          ? _asInt(json['id_servicio_asignado'])
+          : null,
       estado: json['estado'] as String? ?? 'PENDIENTE',
       estadoLabel: json['estado_label'] as String? ?? 'Pendiente',
       observaciones: json['observaciones'] as String?,
       atendido: json['atendido'] as String?,
       createdAt: json['created_at'] as String?,
-      idConsulta: json['id_consulta'] as int?,
+      idConsulta:
+          json['id_consulta'] != null ? _asInt(json['id_consulta']) : null,
       tipoAtencion: json['tipo_atencion'] as String?,
     );
   }

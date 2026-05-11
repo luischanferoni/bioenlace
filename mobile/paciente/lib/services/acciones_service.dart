@@ -68,16 +68,11 @@ class AsistenteService {
 
       // Mismo endpoint que usa site/acciones.php en la web y la app del médico
       final uri = Uri.parse('${AppConfig.apiUrl}/asistente/enviar');
-      
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
 
-      // Agregar token de autenticación si existe
-      if (authToken != null) {
-        headers['Authorization'] = 'Bearer $authToken';
-      }
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'paciente-flutter',
+      );
 
       final body = <String, dynamic>{};
 
@@ -204,14 +199,10 @@ class AsistenteService {
       // Debug: imprimir URI completa (solo en desarrollo)
       print('GET execute-action URI: $uri');
       
-      final headers = {
-        'Accept': 'application/json',
-      };
-
-      // Agregar token de autenticación si existe
-      if (authToken != null) {
-        headers['Authorization'] = 'Bearer $authToken';
-      }
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'paciente-flutter',
+      )..remove('Content-Type');
 
       final response = await http.get(
         uri,
@@ -262,15 +253,10 @@ class AsistenteService {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/crud/ejecutar-accion');
       
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-
-      // Agregar token de autenticación si existe
-      if (authToken != null) {
-        headers['Authorization'] = 'Bearer $authToken';
-      }
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'paciente-flutter',
+      );
 
       final response = await http.post(
         uri,
@@ -317,12 +303,10 @@ class AsistenteService {
   Future<List<Map<String, dynamic>>> getCommonActions() async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/acciones/comunes');
-      final headers = <String, String>{
-        'Accept': 'application/json',
-      };
-      if (authToken != null) {
-        headers['Authorization'] = 'Bearer $authToken';
-      }
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'paciente-flutter',
+      )..remove('Content-Type');
 
       final response = await http
           .get(uri, headers: headers)
@@ -364,13 +348,10 @@ class AsistenteService {
   Future<Map<String, dynamic>> enviarInteraction(Map<String, dynamic> interaction) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/asistente/enviar');
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-      if (authToken != null) {
-        headers['Authorization'] = 'Bearer $authToken';
-      }
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'paciente-flutter',
+      );
       final body = <String, dynamic>{
         'intent_id': currentIntentId,
         'subintent_id': currentSubintentId,

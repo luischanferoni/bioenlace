@@ -21,35 +21,38 @@ class TurnosService {
     String? fechaHasta,
   }) async {
     try {
-      var uri = Uri.parse('${AppConfig.apiUrl}/turnos/listar-como-paciente');
-      if (fechaDesde != null || fechaHasta != null) {
-        uri = uri.replace(queryParameters: {
-          if (fechaDesde != null) 'fecha_desde': fechaDesde,
-          if (fechaHasta != null) 'fecha_hasta': fechaHasta,
-        });
-      }
+      final uri = Uri.parse('${AppConfig.apiUrl}/turnos/listar-como-paciente');
 
       final token = await _getEffectiveToken();
-      final headers = {
-        'Accept': 'application/json',
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: token,
+        appClient: 'paciente-flutter',
+      );
+
+      final body = <String, dynamic>{
+        if (fechaDesde != null) 'fecha_desde': fechaDesde,
+        if (fechaHasta != null) 'fecha_hasta': fechaHasta,
       };
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
-      }
 
-      final response = await http.get(
-        uri,
-        headers: headers,
-      ).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      final response = await http
+          .post(
+            uri,
+            headers: headers,
+            body: json.encode(body),
+          )
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-      final data = json.decode(response.body);
+      final data = json.decode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode == 200 && data['success'] == true) {
+        final block = data['data'];
+        final turnos = block is Map<String, dynamic> ? block['turnos'] : null;
+        final total = block is Map<String, dynamic> ? block['total'] : null;
         return {
           'success': true,
-          'data': data['data'],
-          'turnos': data['data']?['turnos'] ?? [],
-          'total': data['data']?['total'] ?? 0,
+          'data': block,
+          'turnos': turnos is List<dynamic> ? turnos : [],
+          'total': total is int ? total : int.tryParse('$total') ?? 0,
         };
       }
       final message = response.statusCode == 401

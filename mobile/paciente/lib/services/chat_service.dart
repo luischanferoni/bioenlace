@@ -17,14 +17,15 @@ class ChatService {
     this.authToken,
   });
 
-  Map<String, String> _jsonHeaders() {
-    final h = <String, String>{
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    if (authToken != null && authToken!.isNotEmpty) {
-      h['Authorization'] = 'Bearer $authToken';
-    }
+  Map<String, String> _jsonHeaders() =>
+      AppConfig.jsonHeaders(bearerToken: authToken, appClient: 'paciente-flutter');
+
+  Map<String, String> _getHeaders() {
+    final h = AppConfig.jsonHeaders(
+      bearerToken: authToken,
+      appClient: 'paciente-flutter',
+    );
+    h.remove('Content-Type');
     return h;
   }
 
@@ -32,7 +33,7 @@ class ChatService {
     try {
       final response = await http.get(
         Uri.parse('${AppConfig.apiUrl}/asistente/estado'),
-        headers: _jsonHeaders(),
+        headers: _getHeaders(),
       );
 
       if (response.statusCode == 200) {

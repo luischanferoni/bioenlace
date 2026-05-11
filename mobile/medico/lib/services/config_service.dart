@@ -60,17 +60,8 @@ class ConfigService {
 
   ConfigService({this.authToken});
 
-  Map<String, String> get _headers {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Client': 'mobile',
-    };
-    if (authToken != null && authToken!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $authToken';
-    }
-    return headers;
-  }
+  Map<String, String> get _headers =>
+      AppConfig.jsonHeaders(bearerToken: authToken, appClient: 'medico-flutter');
 
   /// Catálogo público de encounter classes (pantallas que no pasan por el wizard).
   Future<List<EncounterClass>> getEncounterClasses() async {

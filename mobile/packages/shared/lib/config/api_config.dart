@@ -8,6 +8,30 @@ class AppConfig {
     'API_URL',
     defaultValue: 'https://app.bioenlace.io/api/v1',
   );
+
+  /// Versión de app para compatibilidad de descriptores UI (`X-App-Version`), alineado con la web.
+  static const String appVersion = String.fromEnvironment(
+    'APP_VERSION',
+    defaultValue: '1.0.0',
+  );
+
+  /// Cabeceras JSON estándar BioEnlace API v1 (CORS + compatibilidad `ui_meta.clients`).
+  static Map<String, String> jsonHeaders({
+    String? bearerToken,
+    String appClient = 'flutter',
+  }) {
+    final h = <String, String>{
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-Client': 'mobile',
+      'X-App-Client': appClient,
+      'X-App-Version': appVersion,
+    };
+    if (bearerToken != null && bearerToken.isNotEmpty) {
+      h['Authorization'] = 'Bearer $bearerToken';
+    }
+    return h;
+  }
   
   // Timeout para las peticiones HTTP (en segundos) — 3 minutos para evitar fallos por demora de la API
   static const int httpTimeoutSeconds = 180;

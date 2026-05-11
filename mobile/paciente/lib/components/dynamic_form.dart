@@ -555,14 +555,10 @@ class _DynamicFormState extends State<DynamicForm> {
       final uri = Uri.parse('${AppConfig.apiUrl}$endpoint');
       final uriWithParams = uri.replace(queryParameters: params.map((k, v) => MapEntry(k, v.toString())));
       
-      final headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
-      
-      if (widget.authToken != null) {
-        headers['Authorization'] = 'Bearer ${widget.authToken}';
-      }
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: widget.authToken,
+        appClient: 'paciente-flutter',
+      )..remove('Content-Type');
 
       final response = await http.get(
         uriWithParams,

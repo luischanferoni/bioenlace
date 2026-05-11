@@ -145,7 +145,7 @@ class AuthController extends BaseController
     /**
      * Login biométrico usando Didit (selfie + liveness + face match).
      *
-     * Ruta: POST /api/v1/auth/biometric-login
+     * Ruta: POST /api/v1/auth/login-biometrico
      *
      * Payload esperado:
      * {

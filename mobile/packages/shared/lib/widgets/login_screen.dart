@@ -175,11 +175,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ? 'android'
               : (Platform.isIOS ? 'ios' : 'otro');
 
-          final uri = Uri.parse('${AppConfig.apiUrl}/auth/biometric-login');
+          final uri = Uri.parse('${AppConfig.apiUrl}/auth/login-biometrico');
           final response = await http
               .post(
                 uri,
-                headers: {'Content-Type': 'application/json'},
+                headers: AppConfig.jsonHeaders(appClient: 'bioenlace-flutter'),
                 body: jsonEncode({
                   'biometric_verification_id': session.sessionId,
                   'device_id': deviceId,

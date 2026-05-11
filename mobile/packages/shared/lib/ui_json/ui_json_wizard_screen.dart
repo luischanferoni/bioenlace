@@ -221,18 +221,12 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
   }
 
   Map<String, String> _headers({bool json = false}) {
-    final h = <String, String>{
-      'Accept': 'application/json',
-      'X-App-Client': widget.appClient,
-      'X-App-Version': '1.0.0',
-      'X-Client': 'mobile',
-    };
-    if (json) {
-      h['Content-Type'] = 'application/json';
-    }
-    final t = widget.authToken;
-    if (t != null && t.isNotEmpty) {
-      h['Authorization'] = 'Bearer $t';
+    final h = AppConfig.jsonHeaders(
+      bearerToken: widget.authToken,
+      appClient: widget.appClient,
+    );
+    if (!json) {
+      h.remove('Content-Type');
     }
     return h;
   }

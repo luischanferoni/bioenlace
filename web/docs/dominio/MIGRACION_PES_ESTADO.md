@@ -41,7 +41,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 - `web/common/migrations/m260510_000001_drop_agenda_rrhh_table.php` — **retiro BD**: `DROP TABLE agenda_rrhh` tras eliminar FKs entrantes (solo mysql/mysqli; ver docblock).
 - `web/common/migrations/m260512_000001_drop_rrhh_legacy_columns_post_pes.php` — **retiro BD de columnas legacy** en tablas consumidoras (`consultas.id_rr_hh`, `turnos.id_rr_hh`, `guardia.*`, etc.), alineado a `web/docs/sql/retiro_legacy_rrhh_post_pes.sql`. Ejecutar en el mismo despliegue que el código AR sin esos atributos.
 - `web/common/migrations/m260511_000001_drop_rrhh_efector_and_rrhh_laboral.php` — **retiro BD final (peligroso)**: `DROP TABLE rrhh_laboral` y `DROP TABLE rrhh_efector`. **Después** de `m260512_*` y sin modelos AR legacy (`RrhhEfector`/`RrhhLaboral` eliminados del código).
-- SQL rutas Webvimark / permisos (si aplica en el entorno): `web/docs/sql/2026_migrate_webvimark_routes_profesional_agenda_recurso_humano.sql`
+- SQL rutas Webvimark / permisos API + web (si aplica en el entorno): `web/docs/sql/2026_rbac_reconcile_u257309594_webvimark.sql`
 
 ### Retiro de `rrhh_servicio` en base de datos
 

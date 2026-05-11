@@ -1266,30 +1266,93 @@
         });
     }
 
+    function listBlockItemsFromUiDefinition(json, blockId) {
+        try {
+            const blocks = json && Array.isArray(json.blocks) ? json.blocks : [];
+            let b = null;
+            if (blockId) {
+                const sid = String(blockId);
+                for (let i = 0; i < blocks.length; i++) {
+                    if (blocks[i] && String(blocks[i].id || '') === sid) {
+                        b = blocks[i];
+                        break;
+                    }
+                }
+            }
+            if (!b) {
+                for (let j = 0; j < blocks.length; j++) {
+                    if (blocks[j] && String(blocks[j].kind || '') === 'list') {
+                        b = blocks[j];
+                        break;
+                    }
+                }
+            }
+            return b && Array.isArray(b.items) ? b.items : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function setUrlQueryParam(href, key, value) {
+        try {
+            const u = new URL(href, window.location.origin);
+            if (value === '' || value === null || value === undefined) {
+                u.searchParams.delete(key);
+            } else {
+                u.searchParams.set(key, String(value));
+            }
+            return u.toString();
+        } catch (e) {
+            return href;
+        }
+    }
+
     function renderUiJsonListBlock(block, container, options = {}) {
         const title = block.title ? String(block.title) : '';
         const items = Array.isArray(block.items) ? block.items : [];
         const draftField = block.draft_field ? String(block.draft_field) : '';
         const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
         const requiresConfirmation = selection.requires_confirmation === true;
+        const emptyMsg = block.empty_message ? String(block.empty_message) : '';
+        const itemKind = block.item && block.item.kind ? String(block.item.kind) : '';
+        const blockId = block.id != null ? String(block.id) : '';
+        const baseListUrl = options.url ? String(options.url) : '';
 
         let locked = false;
         let selectedId = '';
+
+        function buildPickButtonsHtml(listItems) {
+            let h = '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap">';
+            (Array.isArray(listItems) ? listItems : []).forEach((it) => {
+                const id = it && it.id !== undefined ? String(it.id) : '';
+                const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
+                if (!id) return;
+                h += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
+                h += '<span class="bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
+                h += escapeHtml(name);
+                h += '</button>';
+            });
+            h += '</div>';
+            return h;
+        }
+
+        const showPersonaSearch = itemKind === 'persona' && baseListUrl !== '';
 
         let html = '<div class="bio-ui-json-list">';
         if (title) {
             html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
         }
-        html += '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap">';
-        items.forEach((it) => {
-            const id = it && it.id !== undefined ? String(it.id) : '';
-            const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
-            if (!id) return;
-            html += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
-            html += '<span class="bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
-            html += escapeHtml(name);
-            html += '</button>';
-        });
+        if (showPersonaSearch) {
+            html += '<div class="mb-2">';
+            html += '<label class="form-label small text-muted mb-1">Buscar persona</label>';
+            html += '<input type="search" class="form-control form-control-sm" autocomplete="off" placeholder="Nombre, apellido o documento…" data-bio-list-persona-q="1" />';
+            html += '</div>';
+        }
+        if (items.length === 0 && emptyMsg) {
+            html += '<div class="small text-muted mb-2" data-bio-list-empty-hint="1">' + escapeHtml(emptyMsg) + '</div>';
+        }
+        html += '<div class="bio-ui-json-list-items" data-bio-list-items="1">';
+        html += buildPickButtonsHtml(items);
         html += '</div>';
         if (requiresConfirmation) {
             html += '<div class="d-flex justify-content-end pt-2">';
@@ -1299,12 +1362,18 @@
         html += '</div>';
         container.innerHTML = html;
 
-        const pickButtons = Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
+        const itemsMount = container.querySelector('[data-bio-list-items="1"]');
+        const emptyHintEl = container.querySelector('[data-bio-list-empty-hint="1"]');
         const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
+        const searchInput = container.querySelector('input[data-bio-list-persona-q="1"]');
+
+        function allPickButtons() {
+            return Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
+        }
 
         function setSelected(btn, id) {
             selectedId = id || '';
-            pickButtons.forEach(b => {
+            allPickButtons().forEach(b => {
                 b.classList.remove('border', 'border-3');
                 const ck = b.querySelector('.bio-ui-pick-check');
                 if (ck) ck.classList.add('d-none');
@@ -1323,7 +1392,7 @@
             if (!selectedId) return;
             locked = true;
             try {
-                pickButtons.forEach(b => { b.disabled = true; b.classList.add('disabled'); });
+                allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
             try { draft = Object.assign({}, draft || {}, { [draftField]: selectedId }); } catch (e) { /* ignore */ }
@@ -1334,19 +1403,27 @@
         }
 
         let singleAutoTimer = null;
-        pickButtons.forEach(btn => {
-            btn.addEventListener('click', function () {
-                if (singleAutoTimer) {
-                    clearTimeout(singleAutoTimer);
-                    singleAutoTimer = null;
-                }
-                if (locked) return;
-                const id = this.getAttribute('data-embed-id') || '';
-                if (!id) return;
-                setSelected(this, id);
-                if (!requiresConfirmation) confirmSelection();
-            });
-        });
+        if (container.__bioenlaceListPickHandler) {
+            try {
+                container.removeEventListener('click', container.__bioenlaceListPickHandler);
+            } catch (e) { /* ignore */ }
+            container.__bioenlaceListPickHandler = null;
+        }
+        function onListPickClick(ev) {
+            const btn = ev.target && ev.target.closest ? ev.target.closest('button[data-embed-pick="1"]') : null;
+            if (!btn || !container.contains(btn)) return;
+            if (singleAutoTimer) {
+                clearTimeout(singleAutoTimer);
+                singleAutoTimer = null;
+            }
+            if (locked) return;
+            const id = btn.getAttribute('data-embed-id') || '';
+            if (!id) return;
+            setSelected(btn, id);
+            if (!requiresConfirmation) confirmSelection();
+        }
+        container.__bioenlaceListPickHandler = onListPickClick;
+        container.addEventListener('click', onListPickClick);
         if (confirmBtn) {
             confirmBtn.addEventListener('click', function () {
                 if (locked) return;
@@ -1354,11 +1431,62 @@
             });
         }
 
+        let searchDebounce = null;
+        if (showPersonaSearch && searchInput && itemsMount) {
+            searchInput.addEventListener('input', function () {
+                if (locked) return;
+                const q = String(searchInput.value || '').trim();
+                if (searchDebounce) clearTimeout(searchDebounce);
+                searchDebounce = setTimeout(function () {
+                    searchDebounce = null;
+                    if (locked) return;
+                    if (q.length < 1) {
+                        itemsMount.innerHTML = buildPickButtonsHtml([]);
+                        if (emptyHintEl && emptyMsg) emptyHintEl.classList.remove('d-none');
+                        return;
+                    }
+                    const url = setUrlQueryParam(baseListUrl, 'q', q);
+                    itemsMount.innerHTML = '<div class="d-flex align-items-center gap-2 py-2 text-muted small"><div class="spinner-border spinner-border-sm"></div> Buscando…</div>';
+                    if (emptyHintEl) emptyHintEl.classList.add('d-none');
+                    fetch(url, {
+                        method: 'GET',
+                        headers: window.BioenlaceApiClient.mergeHeaders({
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        })
+                    })
+                        .then(function (r) {
+                            if (!r.ok) throw new Error('HTTP ' + r.status);
+                            return r.json();
+                        })
+                        .then(function (json) {
+                            if (locked) return;
+                            const nextItems = listBlockItemsFromUiDefinition(json, blockId);
+                            itemsMount.innerHTML = buildPickButtonsHtml(nextItems);
+                            if (emptyHintEl) {
+                                if (nextItems.length < 1 && emptyMsg) {
+                                    emptyHintEl.textContent = emptyMsg;
+                                    emptyHintEl.classList.remove('d-none');
+                                } else {
+                                    emptyHintEl.classList.add('d-none');
+                                }
+                            }
+                        })
+                        .catch(function () {
+                            if (locked) return;
+                            itemsMount.innerHTML = '<div class="alert alert-warning mb-0 py-2 small">No se pudo buscar. Intentá de nuevo.</div>';
+                            if (emptyHintEl && emptyMsg) emptyHintEl.classList.remove('d-none');
+                        });
+                }, 320);
+            });
+        }
+
+        const pickButtons = allPickButtons();
         if (pickButtons.length === 1 && !requiresConfirmation && draftField) {
             singleAutoTimer = setTimeout(function () {
                 singleAutoTimer = null;
                 if (locked) return;
-                const only = pickButtons[0];
+                const only = allPickButtons()[0];
                 if (!only || only.disabled) return;
                 only.click();
             }, SPA_LIST_SINGLE_AUTO_INTRO_MS);

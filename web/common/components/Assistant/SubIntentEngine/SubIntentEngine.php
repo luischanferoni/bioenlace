@@ -143,21 +143,8 @@ final class SubIntentEngine
         // Submit final (negocio) si existe.
         if (isset($current['submit']['action_id'])) {
             $submitActionId = trim((string) $current['submit']['action_id']);
-            $submitBlock = isset($current['submit']) && is_array($current['submit']) ? $current['submit'] : [];
-            $nextEmpty = trim((string) ($current['next'] ?? '')) === '';
-            $resumeKeys = isset($submitBlock['resume_after_draft_keys']) && is_array($submitBlock['resume_after_draft_keys'])
-                ? $submitBlock['resume_after_draft_keys']
-                : [];
-            if ($submitActionId !== '' && $resumeKeys !== [] && $nextEmpty && self::draftHasAllKeys($draft, $resumeKeys)) {
-                return self::withFlowManifest([
-                    'success' => true,
-                    'text' => 'Listo.',
-                    'intent_id' => $intentId,
-                    'subintent_id' => $currentId,
-                    'draft_delta' => (object) [],
-                ], $intentId, $currentId);
-            }
             if ($submitActionId !== '') {
+                $submitBlock = isset($current['submit']) && is_array($current['submit']) ? $current['submit'] : [];
                 $openSubmit = self::resolveClientOpen($submitActionId, $userId);
                 $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $submitBlock);
 
@@ -371,25 +358,6 @@ final class SubIntentEngine
         $open['client_open'] = $co;
 
         return $open;
-    }
-
-    /**
-     * @param array<string, mixed> $draft
-     * @param list<mixed> $keys nombres de campo en draft (sin prefijo `draft.`)
-     */
-    private static function draftHasAllKeys(array $draft, array $keys): bool
-    {
-        foreach ($keys as $raw) {
-            $field = trim((string) $raw);
-            if ($field === '') {
-                continue;
-            }
-            if (!isset($draft[$field]) || $draft[$field] === null || trim((string) $draft[$field]) === '') {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**

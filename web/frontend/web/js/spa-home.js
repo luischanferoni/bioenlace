@@ -682,7 +682,6 @@
                 const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
-                const nextId = activeStep && activeStep.next != null ? String(activeStep.next) : '';
 
                 let flowActionTitle = '';
                 if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
@@ -694,36 +693,19 @@
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
-                // Detectar fin real del flow:
-                // - El último step puede tener `next=""` pero igual requiere abrir una UI (tabs/open_ui).
-                // - Consideramos "terminado" cuando `next=""` y NO hay UI a abrir, típicamente con texto "Listo.".
+                // `open_ui` en esta respuesta: lo que el servidor pide montar ahora. El manifiesto describe el paso
+                // (puede incluir tabs del paso anterior); no implica que siempre haya que abrir URL en este turno.
                 const hasOpenUi = !!(openUi && openUi.action_id);
                 const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
-                const hasTabs = tabs.length >= 1;
-                const isTerminalStep = nextId === '';
-                const isDoneText = typeof primaryText === 'string' && /^listo\.?$/i.test(primaryText.trim());
+                const serverAskedForUi = hasOpenUi || !!okUiJson;
 
-                // Regla prioritaria: si el bot dice "Listo." y no hay `open_ui` explícito, NO abrir UI por tabs.
-                // (El manifest puede seguir apuntando al último step, pero el flujo ya cerró.)
-                if (isDoneText && !hasOpenUi && !okUiJson) {
-                    currentIntentId = null;
-                    currentSubintentId = null;
-                    draft = {};
-                    writeFlowState();
-                    removeFlowPlanStrip();
-                    bioFlowPlanPendingContext = null;
-                    setTimeout(scrollChatToBottom, 20);
-                    return;
-                }
-
-                // En flows, la fuente de verdad para abrir la UI es `flow_manifest.active_step.ui.tabs[*].route`.
-                // `open_ui.client_open` puede venir null (p. ej. por permisos/catálogo), pero igual podemos intentar
-                // abrir vía route y dejar que el server autorice (403) si corresponde.
+                // Resolver URL: primero descriptor ui_json del payload; si no, tabs del manifiesto solo como
+                // respaldo cuando igual hay `action_id` (p. ej. `client_open` null por permisos/catálogo).
                 let fullUrl = '';
                 if (okUiJson) {
                     const route = String(co.api.route || '');
                     fullUrl = mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api);
-                } else if (tabs.length >= 1) {
+                } else if (hasOpenUi && tabs.length >= 1) {
                     let defIdx = 0;
                     for (let ti = 0; ti < tabs.length; ti++) {
                         if (defaultTabId !== '' && String(tabs[ti].id) === defaultTabId) {
@@ -735,6 +717,17 @@
                 }
 
                 if (!fullUrl) {
+                    // Sin nada que montar: el flujo puede haber terminado sin `open_ui` (no es anómalo).
+                    if (!serverAskedForUi) {
+                        currentIntentId = null;
+                        currentSubintentId = null;
+                        draft = {};
+                        writeFlowState();
+                        removeFlowPlanStrip();
+                        bioFlowPlanPendingContext = null;
+                        setTimeout(scrollChatToBottom, 20);
+                        return;
+                    }
                     removeFlowPlanStrip();
                     bioFlowPlanPendingContext = null;
                     const errHtml = openUi && openUi.action_id

@@ -6,7 +6,6 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\components\UiScreenService;
 use common\components\UiSelectOptionSourceResolver;
 use common\models\Persona;
@@ -542,45 +541,6 @@ class ProfesionalEfectorServicioController extends BaseController
             $req->post(),
             static function (array $post) use ($idEfector): array {
                 return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post);
-            }
-        );
-    }
-
-    /**
-     * UI JSON: confirmar alta de asignación persona–servicio en el efector en sesión (servicio sin agenda de turnos).
-     *
-     * GET|POST /api/v1/profesional-efector-servicio/confirmar-asignacion-sin-agenda
-     *
-     * @action_name Confirmar asignación sin agenda
-     * @entity Profesional
-     * @tags asistente, staff, pes, alta
-     */
-    public function actionConfirmarAsignacionSinAgenda(): array
-    {
-        $req = Yii::$app->request;
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
-        }
-
-        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-
-        return UiScreenService::handleScreen(
-            'profesional-efector-servicio',
-            'confirmar-asignacion-sin-agenda',
-            $fromClient,
-            $req->post(),
-            static function (array $post) use ($idEfector): array {
-                $idPersona = (int) ($post['id_persona'] ?? 0);
-                $idServicio = (int) ($post['id_servicio'] ?? 0);
-                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
-
-                return [
-                    'data' => [
-                        'id_profesional_efector_servicio' => (string) $out['id_profesional_efector_servicio'],
-                        'servicio_acepta_turnos' => $out['servicio_acepta_turnos'],
-                    ],
-                ];
             }
         );
     }

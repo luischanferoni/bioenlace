@@ -211,7 +211,7 @@
 :root {
     /* Separación del sticky “Atajos” respecto al borde superior del viewport (ajustar al gusto). */
     --spa-chat-toolbar-sticky-top: 6.75rem;
-    /* Altura del bloque fijo del composer + margen; la ajusta spa-home.js al medir #spa-chat-composer. */
+    /* Distancia viewport-bottom → borde superior del composer; spa-home.js la recalcula (desktop y móvil con bottom: 88px). */
     --spa-flow-plan-sticky-bottom: 7.5rem;
 }
 
@@ -263,6 +263,11 @@
     .spa-chat-composer {
         bottom: 88px;
         z-index: 150;
+    }
+
+    /* Por debajo del composer (150) si hay solapamiento de 1px al pegar el plan arriba del input. */
+    .spa-flow-plan-wrap.spa-flow-plan-wrap--sticky-enabled {
+        z-index: 149;
     }
 }
 
@@ -332,14 +337,17 @@
     font-weight: 500;
 }
 
-/* Sticky solo en chat asistente: encima del textarea, acotado al bloque `.spa-chat-flow-row`. */
+/* Sticky: pegado al borde superior del composer (misma capa visual, justo encima del input fijo). */
 .spa-flow-plan-wrap.spa-flow-plan-wrap--sticky-enabled {
     position: sticky;
     bottom: var(--spa-flow-plan-sticky-bottom);
-    z-index: 1018;
+    z-index: 1019;
     align-self: stretch;
+    margin-top: 0;
+    padding-bottom: 0.35rem;
     background: var(--bs-body-bg, #fff);
-    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.08));
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
     transition: visibility 0.15s ease, opacity 0.15s ease;
 }
 

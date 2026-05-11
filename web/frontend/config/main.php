@@ -160,6 +160,9 @@ return [
                 'GET api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
                 'POST api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
                 'OPTIONS api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
+                'GET api/<version:\w+>/profesional-efector-servicio/confirmar-asignacion-sin-agenda' => '<version>/profesional-efector-servicio/confirmar-asignacion-sin-agenda',
+                'POST api/<version:\w+>/profesional-efector-servicio/confirmar-asignacion-sin-agenda' => '<version>/profesional-efector-servicio/confirmar-asignacion-sin-agenda',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/confirmar-asignacion-sin-agenda' => '<version>/profesional-efector-servicio/confirmar-asignacion-sin-agenda',
                 
                 // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
                 // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.

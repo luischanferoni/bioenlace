@@ -89,6 +89,7 @@ final class SubIntentEngine
 
         // Si el subintent provee algo y ya está en draft, avanzar al siguiente.
         $next = self::resolveNextSubintentId($current, $draft);
+
         if ($next !== '') {
             $nextSub = self::findSubintent($subintents, $next);
             if (is_array($nextSub)) {
@@ -109,12 +110,15 @@ final class SubIntentEngine
                 $submitNext = isset($nextSub['submit']['action_id']) ? trim((string) $nextSub['submit']['action_id']) : '';
                 if ($missingNext === [] && $submitNext !== '') {
                     $nextIdStr = (string) ($nextSub['id'] ?? '');
+                    $openSubmit = self::resolveClientOpen($submitNext, $userId);
+                    $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $nextSub['submit'] ?? null);
+
                     return self::withFlowManifest([
                         'success' => true,
                         'text' => self::assistantTextForPrompt($nextSub, 'Confirmemos y enviemos.'),
                         'intent_id' => $intentId,
                         'subintent_id' => $nextIdStr,
-                        'open_ui' => self::resolveClientOpen($submitNext, $userId),
+                        'open_ui' => $openSubmit,
                         'draft_delta' => (object) [],
                     ], $intentId, $nextIdStr);
                 }
@@ -139,13 +143,30 @@ final class SubIntentEngine
         // Submit final (negocio) si existe.
         if (isset($current['submit']['action_id'])) {
             $submitActionId = trim((string) $current['submit']['action_id']);
+            $submitBlock = isset($current['submit']) && is_array($current['submit']) ? $current['submit'] : [];
+            $nextEmpty = trim((string) ($current['next'] ?? '')) === '';
+            $resumeKeys = isset($submitBlock['resume_after_draft_keys']) && is_array($submitBlock['resume_after_draft_keys'])
+                ? $submitBlock['resume_after_draft_keys']
+                : [];
+            if ($submitActionId !== '' && $resumeKeys !== [] && $nextEmpty && self::draftHasAllKeys($draft, $resumeKeys)) {
+                return self::withFlowManifest([
+                    'success' => true,
+                    'text' => 'Listo.',
+                    'intent_id' => $intentId,
+                    'subintent_id' => $currentId,
+                    'draft_delta' => (object) [],
+                ], $intentId, $currentId);
+            }
             if ($submitActionId !== '') {
+                $openSubmit = self::resolveClientOpen($submitActionId, $userId);
+                $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $submitBlock);
+
                 return self::withFlowManifest([
                     'success' => true,
                     'text' => 'Confirmemos y enviemos.',
                     'intent_id' => $intentId,
                     'subintent_id' => $currentId,
-                    'open_ui' => self::resolveClientOpen($submitActionId, $userId),
+                    'open_ui' => $openSubmit,
                     'draft_delta' => (object) [],
                 ], $intentId, $currentId);
             }
@@ -303,6 +324,72 @@ final class SubIntentEngine
         }
 
         return trim((string) $v) !== '';
+    }
+
+    /**
+     * Añade query params al `client_open.api` desde `submit.params` del YAML (valores `draft.*`).
+     *
+     * @param array<string, mixed> $open
+     * @param array<string, mixed> $draft
+     * @param array<string, mixed>|null $submitBlock
+     * @return array<string, mixed>
+     */
+    private static function applyDraftParamsMapToOpenUi(array $open, array $draft, ?array $submitBlock): array
+    {
+        $paramsMap = is_array($submitBlock) && isset($submitBlock['params']) && is_array($submitBlock['params'])
+            ? $submitBlock['params']
+            : null;
+        if ($paramsMap === null || $paramsMap === [] || !isset($open['client_open']) || !is_array($open['client_open'])) {
+            return $open;
+        }
+        $co = $open['client_open'];
+        if (!isset($co['api']) || !is_array($co['api'])) {
+            return $open;
+        }
+        $api = $co['api'];
+        $query = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
+        foreach ($paramsMap as $k => $v) {
+            $key = is_string($k) ? trim($k) : '';
+            if ($key === '') {
+                continue;
+            }
+            $vv = is_string($v) ? trim($v) : '';
+            if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $field = substr($vv, 6);
+            if ($field === '') {
+                continue;
+            }
+            if (!isset($draft[$field]) || $draft[$field] === null || trim((string) $draft[$field]) === '') {
+                continue;
+            }
+            $query[$key] = (string) $draft[$field];
+        }
+        $api['query'] = $query;
+        $co['api'] = $api;
+        $open['client_open'] = $co;
+
+        return $open;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @param list<mixed> $keys nombres de campo en draft (sin prefijo `draft.`)
+     */
+    private static function draftHasAllKeys(array $draft, array $keys): bool
+    {
+        foreach ($keys as $raw) {
+            $field = trim((string) $raw);
+            if ($field === '') {
+                continue;
+            }
+            if (!isset($draft[$field]) || $draft[$field] === null || trim((string) $draft[$field]) === '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -18,8 +18,8 @@ intent_semantics:
     Dar de alta la asignación de una persona a un servicio del efector (persona + efector + servicio)
     y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
   how: >-
-    Buscar persona en el padrón, elegir un servicio que ofrece el establecimiento (efector en sesión);
-    el sistema persiste la asignación profesional–efector–servicio (PES); solo si acepta_turnos es SI se continúa a la UI de agenda.
+    Buscar persona en el padrón, elegir un servicio del establecimiento (efector en sesión).
+    Si el servicio acepta turnos, se guarda en el sistema el vínculo persona–efector–servicio y se abre la configuración de agenda; si no acepta turnos, el usuario confirma y al guardar se persiste ese mismo vínculo.
   preconditions:
     - Efector operativo en sesión.
     - Permisos para dar de alta asignaciones en el efector.
@@ -84,11 +84,25 @@ subintents:
         next: configurar_agenda
       - when:
           default: true
-        next: asignacion_sin_agenda_listo
+        next: confirmar_asignacion
     open_ui:
       # Misma regla SPA que en `select_persona`: error de carga de UI → no tira de plan / pasos siguientes.
       # Catálogo del establecimiento (`ServiciosEfector`), no RRHH. `q` opcional en la API para filtrar por nombre.
       action_id: efectores.listar-servicios-habilitados
+
+  - id: confirmar_asignacion
+    assistant_text: "Confirmación"
+    requires:
+      - draft.id_persona
+      - draft.id_servicio
+    next: ""
+    submit:
+      action_id: profesional-efector-servicio.confirmar-asignacion-sin-agenda
+      params:
+        id_persona: "draft.id_persona"
+        id_servicio: "draft.id_servicio"
+      resume_after_draft_keys:
+        - id_profesional_efector_servicio
 
   - id: configurar_agenda
     assistant_text: "Agenda"
@@ -102,9 +116,3 @@ subintents:
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
-
-  - id: asignacion_sin_agenda_listo
-    assistant_text: "Listo. La persona quedó asignada al servicio; este servicio no usa agenda de turnos."
-    requires:
-      - draft.id_profesional_efector_servicio
-    next: ""

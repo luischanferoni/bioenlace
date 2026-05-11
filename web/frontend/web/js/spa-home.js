@@ -171,8 +171,11 @@
     function updateFlowPlanStickyBottomVar() {
         if (!chatComposer) return;
         try {
-            const h = Math.ceil(chatComposer.getBoundingClientRect().height);
-            document.documentElement.style.setProperty('--spa-flow-plan-sticky-bottom', (h + 12) + 'px');
+            const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+            const r = chatComposer.getBoundingClientRect();
+            // Distancia viewport-bottom → borde superior del composer (incl. bottom: 88px en móvil).
+            const px = Math.max(0, Math.ceil(vh - r.top));
+            document.documentElement.style.setProperty('--spa-flow-plan-sticky-bottom', px + 'px');
         } catch (e) { /* ignore */ }
     }
 
@@ -233,12 +236,17 @@
             strip.classList.remove('spa-flow-plan-wrap--hidden-above');
         }
 
-        let composerH = 120;
-        try {
-            composerH = chatComposer ? Math.ceil(chatComposer.getBoundingClientRect().height) : 120;
-        } catch (e) { /* ignore */ }
         const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-        const lineY = Math.max(0, vh - composerH - 8);
+        let lineY = 0;
+        try {
+            if (chatComposer) {
+                lineY = Math.max(0, Math.floor(chatComposer.getBoundingClientRect().top) - 1);
+            } else {
+                lineY = Math.max(0, vh - 120);
+            }
+        } catch (e) {
+            lineY = Math.max(0, vh - 120);
+        }
         let ratio = (lineY - fr.top) / Math.max(1, fr.height);
         if (ratio < 0) ratio = 0;
         if (ratio > 1) ratio = 1;
@@ -1571,6 +1579,12 @@
                             container.querySelectorAll('input, select, textarea, button').forEach(function (el) { el.disabled = true; });
                         } catch (e) { /* ignore */ }
                         markInlineButtonConfirmed(submitBtn);
+                        if (json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
+                            try {
+                                draft = Object.assign({}, draft || {}, json.data);
+                                writeFlowState();
+                            } catch (e) { /* ignore */ }
+                        }
                         if (currentIntentId) {
                             setTimeout(() => { try { handleSendQuery(''); } catch (e) { /* ignore */ } }, 50);
                         }

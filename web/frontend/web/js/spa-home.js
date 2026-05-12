@@ -1148,7 +1148,14 @@
      * UI JSON (blocks): permite lista(s) + campos + custom_widgets en orden.
      */
     function renderUiJsonBlocks(json, container, options = {}) {
-        const blocks = Array.isArray(json.blocks) ? json.blocks : [];
+        let blocks = Array.isArray(json.blocks) ? json.blocks : [];
+        if (blocks.length > 0 && blocks.every(function (b) {
+            return b && typeof b === 'object' && b.display_order != null;
+        })) {
+            blocks = blocks.slice().sort(function (a, b) {
+                return (Number(a.display_order) || 0) - (Number(b.display_order) || 0);
+            });
+        }
         if (blocks.length < 1) {
             container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON sin blocks.</div>';
             return;

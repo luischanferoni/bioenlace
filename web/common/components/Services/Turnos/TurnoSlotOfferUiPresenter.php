@@ -41,6 +41,7 @@ final class TurnoSlotOfferUiPresenter
         });
 
         $blocks = [];
+        $displayOrder = 0;
         foreach ($porDia as $row) {
             if (!is_array($row)) {
                 continue;
@@ -55,11 +56,11 @@ final class TurnoSlotOfferUiPresenter
 
             $bMan = self::itemsForFranja($fecha, 'manana', $manana, $idServicioCriterio);
             if ($bMan !== []) {
-                $blocks[] = self::baseListBlock($fecha . '-manana', $dayHead . ' · por la mañana', $bMan);
+                $blocks[] = self::baseListBlock($displayOrder++, $fecha . '-manana', $dayHead . ' · por la mañana', $bMan);
             }
             $bTar = self::itemsForFranja($fecha, 'tarde', $tarde, $idServicioCriterio);
             if ($bTar !== []) {
-                $blocks[] = self::baseListBlock($fecha . '-tarde', $dayHead . ' · por la tarde', $bTar);
+                $blocks[] = self::baseListBlock($displayOrder++, $fecha . '-tarde', $dayHead . ' · por la tarde', $bTar);
             }
         }
 
@@ -171,11 +172,15 @@ final class TurnoSlotOfferUiPresenter
      * @param list<array<string, mixed>> $items
      * @return array<string, mixed>
      */
-    private static function baseListBlock(string $idSuffix, string $title, array $items): array
+    /**
+     * @param int $displayOrder orden global de la pantalla (mañana antes que tarde el mismo día; días en orden cronológico)
+     */
+    private static function baseListBlock(int $displayOrder, string $idSuffix, string $title, array $items): array
     {
         return [
             'kind' => 'list',
             'id' => 'slots-' . $idSuffix,
+            'display_order' => $displayOrder,
             'title' => $title,
             'selection' => ['mode' => 'single'],
             'draft_field' => 'slot_id',

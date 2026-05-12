@@ -276,6 +276,24 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
 
   List<dynamic> get _blocks => _root != null && _root!['blocks'] is List ? (_root!['blocks'] as List) : const [];
 
+  /// Si el backend envía `display_order` en **todos** los bloques, ordena por él (p. ej. mañana antes que tarde).
+  List<dynamic> _blocksOrderedForRender(List<dynamic> raw) {
+    if (raw.isEmpty) return raw;
+    if (!raw.every((b) {
+      if (b is! Map) return false;
+      return (b)['display_order'] != null;
+    })) {
+      return raw;
+    }
+    int orderKey(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+    final out = List<dynamic>.from(raw);
+    out.sort((a, b) => orderKey((a as Map)['display_order']).compareTo(orderKey((b as Map)['display_order'])));
+    return out;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -885,7 +903,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
 
     final screenTitle = widget.title ?? _root?['action_id']?.toString() ?? 'UI';
-    final blocks = _blocks;
+    final blocks = _blocksOrderedForRender(_blocks);
     final theme = Theme.of(context);
 
     Widget renderListBlock(Map<String, dynamic> b) {

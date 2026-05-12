@@ -403,11 +403,14 @@
         row.className = 'd-flex mb-2 ' + (role === 'user' ? 'justify-content-end' : 'justify-content-start');
 
         const bubble = document.createElement('div');
-        const base = 'p-2 rounded-3';
+        const base = 'spa-chat-bubble p-2 rounded-3';
+        const roleMod = role === 'user'
+            ? ' spa-chat-bubble--user'
+            : (role === 'system' ? ' spa-chat-bubble--system' : ' spa-chat-bubble--assistant');
         const theme = role === 'user'
             ? ' bg-primary text-white'
             : (role === 'system' ? ' bg-light text-muted border' : ' bg-white border');
-        bubble.className = base + theme;
+        bubble.className = base + roleMod + theme;
         bubble.style.maxWidth = '95%';
         bubble.innerHTML = html;
 
@@ -473,7 +476,7 @@
         } else if (variant === 'danger') {
             explanationEl.innerHTML = '<div class="alert alert-danger mb-0">' + explanationHtml + '</div>';
         } else {
-            explanationEl.innerHTML = '<p class="mb-0">' + explanationHtml + '</p>';
+            explanationEl.innerHTML = '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + explanationHtml + '</div>';
         }
 
         const actionsEl = document.createElement('div');
@@ -605,7 +608,7 @@
                 } catch (e) { /* ignore */ }
 
                 // Remediation es conversacional, pero no es "flow": usar burbuja para el texto (no bloque ancho).
-                const wrap = appendChatBubble('bot', '<p class="mb-0" style="font-size:1.2rem">' + escapeHtml(remText) + '</p>');
+                const wrap = appendChatBubble('bot', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + escapeHtml(remText) + '</div>');
                 if (wrap && Array.isArray(result.remediation) && result.remediation.length > 0) {
                     const row = document.createElement('div');
                     row.className = 'd-flex flex-wrap justify-content-center gap-2 mt-2 spa-intent-remediation';
@@ -966,7 +969,7 @@
 
         // En modo chat, agregar burbuja de usuario antes de enviar (si hay texto).
         if (chatMessagesDiv && query !== '' && typeof contentOverride !== 'string') {
-            appendChatBubble('user', '<div>' + escapeHtml(query) + '</div>');
+            appendChatBubble('user', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--user">' + escapeHtml(query) + '</div>');
         }
 
         // Usar endpoint de la API. Importante: en entornos donde el frontend vive bajo /api,

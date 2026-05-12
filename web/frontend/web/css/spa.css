@@ -210,7 +210,7 @@
 /* Asistente: sin card; mensajes con el fondo del layout; toolbar sticky; composer fijo abajo. */
 :root {
     /* Separación del sticky “Atajos” respecto al borde superior del viewport (ajustar al gusto). */
-    --spa-chat-toolbar-sticky-top: 6.75rem;
+    --spa-chat-toolbar-sticky-top: 4.75rem;
     /* Distancia sticky al borde inferior del viewport (más bajo = más pegado al textarea); fijo 99px + JS refuerza igual. */
     --spa-flow-plan-sticky-bottom: 99px;
 }
@@ -308,6 +308,16 @@
 
 .spa-chat-send-btn .spa-spinner {
     line-height: 0;
+}
+
+/*
+ * Burbuja: Bootstrap aporta forma/color (.p-2, .rounded-3, .bg-primary, …).
+ * Hooks en el contenedor: .spa-chat-bubble--user | .spa-chat-bubble--assistant | .spa-chat-bubble--system
+ * Hooks en el texto:       .spa-chat-bubble-text--user | .spa-chat-bubble-text--assistant
+ */
+.spa-chat-bubble-text {
+    font-size: 1.1rem;
+    line-height: 1.45;
 }
 
 /* Bloque `intent_flow` a ancho completo (título h4 + mini-UI; no burbuja angosta) */

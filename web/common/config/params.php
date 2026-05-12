@@ -18,9 +18,9 @@ return [
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */
     'turnosPaciente' => [
         /** Máximo de slots devueltos en una respuesta agrupada */
-        'slots_oferta_max' => 20,
+        'slots_oferta_max' => 400,
         /** Días hacia adelante que puede explorar TurnoSlotFinder */
-        'slots_busqueda_max_dias' => 45,
+        'slots_busqueda_max_dias' => 10,
         /** Hora límite inclusive: &lt; este HH:MM → franja `manana`, ≥ → `tarde` */
         'franja_tarde_desde' => '13:00',
         /** Tope duro si el cliente envía `limite` (anti-abuso) */

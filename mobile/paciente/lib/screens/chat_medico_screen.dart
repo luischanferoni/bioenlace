@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared/shared.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+
 import '../services/consulta_chat_service.dart';
+import '../theme/paciente_theme_extensions.dart';
 
 /// Chat con el médico: mensajes de texto, imagen, audio y video.
 class ChatMedicoScreen extends StatefulWidget {
@@ -88,8 +89,12 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       _scrollToBottom();
     } else {
       if (mounted) {
+        final cs = context.pacienteColors;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message']?.toString() ?? 'Error'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(result['message']?.toString() ?? 'Error'),
+            backgroundColor: cs.error,
+          ),
         );
       }
     }
@@ -133,8 +138,12 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       _scrollToBottom();
     } else {
       if (mounted) {
+        final cs = context.pacienteColors;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message']?.toString() ?? 'Error'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(result['message']?.toString() ?? 'Error'),
+            backgroundColor: cs.error,
+          ),
         );
       }
     }
@@ -142,10 +151,13 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.titulo, style: AppTheme.h2Style.copyWith(color: Colors.white)),
-        backgroundColor: Theme.of(context).primaryColor,
+        title: Text(widget.titulo),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         elevation: 0,
       ),
       body: Column(
@@ -176,6 +188,12 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
                           final isMe = m['user_role'] == 'paciente' || m['user_id'].toString() == widget.userId;
                           final type = m['message_type'] as String? ?? 'texto';
                           final content = m['content']?.toString() ?? '';
+                          final bubbleCs = Theme.of(context).colorScheme;
+                          final primaryFg = bubbleCs.onPrimary;
+                          final primaryFgMuted = primaryFg.withValues(alpha: 0.72);
+                          final otherBg = bubbleCs.surfaceContainerHighest;
+                          final otherFg = bubbleCs.onSurface;
+                          final otherFgMuted = bubbleCs.onSurfaceVariant;
 
                           return Align(
                             alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -184,7 +202,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
                               padding: const EdgeInsets.all(12),
                               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
                               decoration: BoxDecoration(
-                                color: isMe ? Theme.of(context).primaryColor : Colors.grey[200],
+                                color: isMe ? bubbleCs.primary : otherBg,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Column(
@@ -193,38 +211,70 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
                                   if (type == 'texto')
                                     Text(
                                       content,
-                                      style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontSize: 14),
+                                      style: tt.bodyMedium?.copyWith(
+                                        color: isMe ? primaryFg : otherFg,
+                                      ),
                                     )
                                   else if (type == 'imagen' && content.isNotEmpty)
                                     InkWell(
-                                      onTap: () {
-                                        // Opcional: abrir imagen a pantalla completa o en navegador
-                                      },
-                                      child: Image.network(content, fit: BoxFit.cover, loadingBuilder: (_, child, progress) =>
-                                          progress == null ? child : const SizedBox(height: 80, width: 80, child: Center(child: CircularProgressIndicator()))),
+                                      onTap: () {},
+                                      child: Image.network(
+                                        content,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (_, child, progress) => progress == null
+                                            ? child
+                                            : SizedBox(
+                                                height: 80,
+                                                width: 80,
+                                                child: Center(
+                                                  child: CircularProgressIndicator(color: bubbleCs.primary),
+                                                ),
+                                              ),
+                                      ),
                                     )
                                   else if (type == 'audio')
                                     Row(
                                       children: [
-                                        Icon(isMe ? Icons.mic : Icons.audiotrack, color: isMe ? Colors.white70 : Colors.grey[700]),
+                                        Icon(
+                                          isMe ? Icons.mic : Icons.audiotrack,
+                                          color: isMe ? primaryFgMuted : otherFgMuted,
+                                        ),
                                         const SizedBox(width: 8),
-                                        Text('Audio', style: TextStyle(color: isMe ? Colors.white70 : Colors.grey[700], fontSize: 12)),
+                                        Text(
+                                          'Audio',
+                                          style: tt.labelSmall?.copyWith(
+                                            color: isMe ? primaryFgMuted : otherFgMuted,
+                                          ),
+                                        ),
                                       ],
                                     )
                                   else if (type == 'video')
                                     Row(
                                       children: [
-                                        Icon(Icons.videocam, color: isMe ? Colors.white70 : Colors.grey[700]),
+                                        Icon(Icons.videocam, color: isMe ? primaryFgMuted : otherFgMuted),
                                         const SizedBox(width: 8),
-                                        Text('Video', style: TextStyle(color: isMe ? Colors.white70 : Colors.grey[700], fontSize: 12)),
+                                        Text(
+                                          'Video',
+                                          style: tt.labelSmall?.copyWith(
+                                            color: isMe ? primaryFgMuted : otherFgMuted,
+                                          ),
+                                        ),
                                       ],
                                     )
                                   else
-                                    Text(content, style: TextStyle(color: isMe ? Colors.white70 : Colors.grey[700], fontSize: 12)),
+                                    Text(
+                                      content,
+                                      style: tt.labelSmall?.copyWith(
+                                        color: isMe ? primaryFgMuted : otherFgMuted,
+                                      ),
+                                    ),
                                   const SizedBox(height: 4),
                                   Text(
                                     m['created_at']?.toString().substring(0, 16) ?? '',
-                                    style: TextStyle(color: isMe ? Colors.white70 : Colors.grey[600], fontSize: 10),
+                                    style: tt.labelSmall?.copyWith(
+                                      color: isMe ? primaryFgMuted : otherFgMuted,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -264,7 +314,9 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: _sending ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.send),
+                    icon: _sending
+                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.send),
                     onPressed: _sending ? null : _sendText,
                   ),
                 ],

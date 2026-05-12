@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../services/chat_service.dart';
 import 'home_screen.dart';
-import 'mis_turnos_screen.dart';
 import 'chat_screen.dart';
 import 'configuracion_screen.dart';
 
-/// Pantalla principal del paciente con bottom nav: Inicio, Mis turnos, Chat, Configuración.
+/// Pantalla principal del paciente con bottom nav: Inicio, Asistente, Configuración.
 class MainScreen extends StatefulWidget {
   final ChatService chatService;
   final String? authToken;
@@ -34,17 +33,10 @@ class _MainScreenState extends State<MainScreen> {
             userId: widget.chatService.currentUserId,
             userName: widget.chatService.currentUserName,
             authToken: widget.authToken,
-            onIrAChat: () => setState(() => _selectedIndex = 2),
-            onIrAMisTurnos: () => setState(() => _selectedIndex = 1),
-          ),
-          MisTurnosScreen(
-            authToken: widget.authToken,
-            userId: widget.chatService.currentUserId,
-            userName: widget.chatService.currentUserName,
+            onIrAChat: () => setState(() => _selectedIndex = 1),
           ),
           ChatScreen(
             chatService: widget.chatService,
-            onIrAMisTurnos: () => setState(() => _selectedIndex = 1),
           ),
           ConfiguracionScreen(
             userId: widget.chatService.currentUserId,
@@ -63,12 +55,8 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Inicio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today),
-            label: 'Mis turnos',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),
-            label: 'Chat',
+            label: 'Asistente',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

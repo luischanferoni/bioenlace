@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared/shared.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+
 import '../services/motivos_consulta_service.dart';
+import '../theme/paciente_theme_extensions.dart';
 
 /// Chat para cargar motivos de consulta: texto, fotos y audio.
 /// El médico verá luego un resumen estructurado (proceso aparte en backend).
@@ -97,10 +98,11 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       _scrollToBottom();
     } else {
       if (mounted) {
+        final cs = context.pacienteColors;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message']?.toString() ?? 'Error'),
-            backgroundColor: Colors.red,
+            backgroundColor: cs.error,
           ),
         );
       }
@@ -145,10 +147,11 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       _scrollToBottom();
     } else {
       if (mounted) {
+        final cs = context.pacienteColors;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message']?.toString() ?? 'Error'),
-            backgroundColor: Colors.red,
+            backgroundColor: cs.error,
           ),
         );
       }
@@ -157,10 +160,14 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
+    final onBubbleSecondary = cs.onPrimary.withValues(alpha: 0.72);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.titulo, style: AppTheme.h2Style.copyWith(color: Colors.white)),
-        backgroundColor: Theme.of(context).primaryColor,
+        title: Text(widget.titulo),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         elevation: 0,
       ),
       body: Column(
@@ -193,19 +200,19 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withOpacity(0.08),
+                                  color: cs.primary.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                  border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
                                 ),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.info_outline, color: AppTheme.primaryColor, size: 22),
+                                    Icon(Icons.info_outline, color: cs.primary, size: 22),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
                                         _welcomeMessage,
-                                        style: AppTheme.subTitleStyle.copyWith(fontSize: 13),
+                                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                                       ),
                                     ),
                                   ],
@@ -224,7 +231,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                               padding: const EdgeInsets.all(12),
                               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).primaryColor,
+                                color: cs.primary,
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: Column(
@@ -233,7 +240,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                                   if (type == 'texto')
                                     Text(
                                       content,
-                                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                                      style: tt.bodyMedium?.copyWith(color: cs.onPrimary),
                                     )
                                   else if (type == 'imagen' && content.isNotEmpty)
                                     ClipRRect(
@@ -244,28 +251,40 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                                         width: 200,
                                         loadingBuilder: (_, child, progress) => progress == null
                                             ? child
-                                            : const SizedBox(
+                                            : SizedBox(
                                                 height: 80,
                                                 width: 80,
-                                                child: Center(child: CircularProgressIndicator(color: Colors.white70)),
+                                                child: Center(
+                                                  child: CircularProgressIndicator(color: onBubbleSecondary),
+                                                ),
                                               ),
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.white70, size: 48),
+                                        errorBuilder: (_, __, ___) =>
+                                            Icon(Icons.broken_image, color: onBubbleSecondary, size: 48),
                                       ),
                                     )
                                   else if (type == 'audio')
-                                    const Row(
+                                    Row(
                                       children: [
-                                        Icon(Icons.mic, color: Colors.white70),
-                                        SizedBox(width: 8),
-                                        Text('Audio', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                        Icon(Icons.mic, color: onBubbleSecondary),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Audio',
+                                          style: tt.labelSmall?.copyWith(color: onBubbleSecondary),
+                                        ),
                                       ],
                                     )
                                   else
-                                    Text(content, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                    Text(
+                                      content,
+                                      style: tt.labelSmall?.copyWith(color: onBubbleSecondary),
+                                    ),
                                   const SizedBox(height: 4),
                                   Text(
                                     _formatCreatedAt(m['created_at']),
-                                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                                    style: tt.labelSmall?.copyWith(
+                                      color: onBubbleSecondary,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ],
                               ),

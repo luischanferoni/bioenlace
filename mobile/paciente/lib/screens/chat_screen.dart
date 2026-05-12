@@ -7,18 +7,15 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../components/dynamic_form.dart';
-import 'mis_turnos_screen.dart';
+import '../theme/paciente_theme_extensions.dart';
 import 'chat_motivos_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
-  /// Si se provee, el botón "Mis turnos" del AppBar cambia a la pestaña Mis turnos (ej. en MainScreen).
-  final VoidCallback? onIrAMisTurnos;
 
   const ChatScreen({
     Key? key,
     required this.chatService,
-    this.onIrAMisTurnos,
   }) : super(key: key);
 
   @override
@@ -26,9 +23,6 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  static const String _welcomeMessage =
-      '¡Hola! Soy tu asistente de BioEnlace. ¿En qué puedo ayudarte?';
-
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late AsistenteService _asistenteService;
@@ -37,6 +31,10 @@ class _ChatScreenState extends State<ChatScreen> {
   Map<String, dynamic> _draft = {};
   String? _intentId;
   String? _subintentId;
+
+  /// Atajos para panel inicial (GET acciones/comunes); mismo origen que el bottom sheet Atajos.
+  List<AtajoCategoria>? _welcomeAtajos;
+  bool _composerHasText = false;
 
   /// `turnos.crear-como-paciente` → `/api/v1/turnos/crear-como-paciente` (fallback si `client_open` viene null).
   String? _apiRouteFromActionId(String actionId) {
@@ -66,13 +64,7 @@ class _ChatScreenState extends State<ChatScreen> {
   /// Cierra el flujo del asistente sin persistir; vuelve al mensaje inicial (sin llamar a la API).
   void _resetAssistantToWelcome() {
     setState(() {
-      _chatHistory = [
-        {
-          'type': 'bot',
-          'content': _welcomeMessage,
-          'timestamp': DateTime.now(),
-        }
-      ];
+      _chatHistory = [];
       _draft = {};
       _intentId = null;
       _subintentId = null;
@@ -84,18 +76,23 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
   }
 
+  bool get _showWelcomeShortcutGrid =>
+      !_composerHasText &&
+      _chatHistory.isEmpty &&
+      _welcomeAtajos != null &&
+      _welcomeAtajos!.isNotEmpty;
+
+  void _onComposerTextChanged() {
+    final next = _messageController.text.trim().isNotEmpty;
+    if (next == _composerHasText) return;
+    setState(() => _composerHasText = next);
+  }
+
   @override
   void initState() {
     super.initState();
+    _messageController.addListener(_onComposerTextChanged);
     _initializeService();
-    // Inicializar con mensaje de bienvenida
-    _chatHistory = [
-      {
-        'type': 'bot',
-        'content': _welcomeMessage,
-        'timestamp': DateTime.now(),
-      }
-    ];
   }
 
   Future<void> _initializeService() async {
@@ -108,6 +105,13 @@ class _ChatScreenState extends State<ChatScreen> {
       userId: widget.chatService.currentUserId,
       authToken: authToken,
     );
+    try {
+      final atajos = await _asistenteService.cargarAtajos();
+      if (!mounted) return;
+      setState(() => _welcomeAtajos = atajos);
+    } catch (_) {
+      if (mounted) setState(() => _welcomeAtajos = []);
+    }
   }
 
   void _scrollToBottom() {
@@ -431,6 +435,221 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       _scrollToBottom();
     }
+  }
+
+  /// Inicia un flow por `intent_id` como la SPA (Atajos → `startFlowFromShortcut`).
+  Future<void> _startFlowFromShortcut(String intentId, String displayTitle) async {
+    final label = displayTitle.trim();
+    if (label.isNotEmpty) {
+      _messageController.text = label;
+    }
+    await _onRemediationChoice({
+      'intent_id': intentId,
+      'reset_flow': true,
+    });
+  }
+
+  Future<void> _showAtajosSheet() async {
+    final future = _asistenteService.cargarAtajos();
+    if (!mounted) return;
+    final screenH = MediaQuery.of(context).size.height;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return FutureBuilder<List<AtajoCategoria>>(
+          future: future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return SizedBox(
+                height: screenH * 0.35,
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            }
+            final cats = snapshot.data ?? [];
+            if (cats.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'No hay atajos disponibles.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      child: const Text('Cerrar'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            final maxH = screenH * 0.65;
+            return SizedBox(
+              height: maxH,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                    child: Text(
+                      'Atajos',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        for (final cat in cats) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                            child: Text(
+                              cat.titulo,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                            ),
+                          ),
+                          ...cat.items.map(
+                            (item) => ListTile(
+                              title: Text(item.title),
+                              subtitle: item.description.isNotEmpty
+                                  ? Text(
+                                      item.description,
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    )
+                                  : null,
+                              onTap: () {
+                                Navigator.pop(sheetContext);
+                                _startFlowFromShortcut(item.intentId, item.title);
+                              },
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Panel central con mismos atajos que el ícono «Atajos»; se oculta al escribir o al tener mensajes en el chat.
+  Widget _buildWelcomeShortcutsPanel() {
+    final cats = _welcomeAtajos;
+    if (cats == null || cats.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: FractionallySizedBox(
+          widthFactor: 0.8,
+          child: Material(
+            color: cs.surface,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Podés elegir un atajo o escribir tu consulta abajo.',
+                  textAlign: TextAlign.start,
+                  style: tt.titleLarge?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                ...cats.map(
+                  (cat) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cat.titulo,
+                          style: tt.titleMedium?.copyWith(
+                            decoration: TextDecoration.underline,
+                            color: cs.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          alignment: WrapAlignment.start,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: cat.items
+                              .map(
+                                (item) => ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 280),
+                                  child: Card(
+                                    elevation: 0,
+                                    color: cs.surfaceContainerHighest,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: BorderSide(color: cs.outlineVariant),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      onTap: _isSending
+                                          ? null
+                                          : () => _startFlowFromShortcut(item.intentId, item.title),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              item.title,
+                                              style: tt.titleSmall?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: cs.primary,
+                                              ),
+                                            ),
+                                            if (item.description.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                item.description,
+                                                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _sendMessage() async {
@@ -919,10 +1138,11 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showErrorSnackbar(String message) {
+    final cs = context.pacienteColors;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor: cs.error,
         duration: const Duration(seconds: 3),
       )
     );
@@ -930,39 +1150,26 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'BioEnlace',
-          style: AppTheme.h2Style.copyWith(color: Colors.white),
-        ),
-        backgroundColor: Theme.of(context).primaryColor,
+        title: const Text('BioEnlace'),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_today, color: Colors.white),
-            tooltip: 'Mis turnos',
-            onPressed: () {
-              if (widget.onIrAMisTurnos != null) {
-                widget.onIrAMisTurnos!();
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MisTurnosScreen(
-                      authToken: _asistenteService.authToken,
-                      userId: widget.chatService.currentUserId,
-                      userName: widget.chatService.currentUserName,
-                    ),
-                  ),
-                );
-              }
-            },
+            icon: const Icon(Icons.bookmarks_outlined),
+            tooltip: 'Atajos',
+            onPressed: _isSending ? null : _showAtajosSheet,
           ),
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (_showWelcomeShortcutGrid) _buildWelcomeShortcutsPanel(),
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -999,12 +1206,12 @@ class _ChatScreenState extends State<ChatScreen> {
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
                             color: isUser
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey[200],
+                                ? cs.primary
+                                : cs.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(16.0),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: cs.shadow.withValues(alpha: 0.12),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),
@@ -1019,14 +1226,14 @@ class _ChatScreenState extends State<ChatScreen> {
                                     Icon(
                                       Icons.smart_toy,
                                       size: 16,
-                                      color: Theme.of(context).primaryColor,
+                                      color: cs.primary,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       'BioEnlace',
-                                      style: AppTheme.h6Style.copyWith(
+                                      style: tt.labelLarge?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).primaryColor,
+                                        color: cs.primary,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -1036,17 +1243,18 @@ class _ChatScreenState extends State<ChatScreen> {
                               if (content.isNotEmpty)
                                 Text(
                                   content,
-                                  style: AppTheme.subTitleStyle.copyWith(
-                                    color: isUser ? Colors.white : Colors.black87,
-                                    fontSize: 14,
+                                  style: tt.bodyMedium?.copyWith(
+                                    color: isUser ? cs.onPrimary : cs.onSurface,
                                   ),
                                 ),
                               const SizedBox(height: 4),
                               Text(
                                 '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
-                                style: TextStyle(
+                                style: tt.labelSmall?.copyWith(
                                   fontSize: 10,
-                                  color: isUser ? Colors.white70 : Colors.grey[600],
+                                  color: isUser
+                                      ? cs.onPrimary.withValues(alpha: 0.72)
+                                      : cs.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -1065,16 +1273,17 @@ class _ChatScreenState extends State<ChatScreen> {
                             return ActionChip(
                               label: Text(
                                 action['display_name'] ?? action['title'] ?? action['label'] ?? 'Acción',
-                                style: TextStyle(fontSize: 12),
+                                style: tt.labelLarge?.copyWith(fontSize: 12),
                               ),
                               avatar: Icon(
                                 Icons.touch_app,
                                 size: 16,
                               ),
                               onPressed: () => _executeAction(action, messageIndex: index),
-                              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                              labelStyle: TextStyle(
-                                color: Theme.of(context).primaryColor,
+                              backgroundColor: cs.primary.withValues(alpha: 0.1),
+                              labelStyle: tt.labelLarge?.copyWith(
+                                fontSize: 12,
+                                color: cs.primary,
                               ),
                             );
                           }).toList(),
@@ -1101,15 +1310,16 @@ class _ChatScreenState extends State<ChatScreen> {
                             return ActionChip(
                               label: Text(
                                 label,
-                                style: const TextStyle(fontSize: 12),
+                                style: tt.labelLarge?.copyWith(fontSize: 12),
                               ),
                               avatar: const Icon(Icons.alt_route, size: 16),
                               onPressed: _isSending
                                   ? null
                                   : () => _onRemediationChoice(opt),
-                              backgroundColor: AppTheme.primaryColor.withOpacity(0.12),
-                              labelStyle: TextStyle(
-                                color: Theme.of(context).primaryColor,
+                              backgroundColor: cs.primary.withValues(alpha: 0.12),
+                              labelStyle: tt.labelLarge?.copyWith(
+                                fontSize: 12,
+                                color: cs.primary,
                               ),
                             );
                           }).toList(),
@@ -1138,7 +1348,10 @@ class _ChatScreenState extends State<ChatScreen> {
                                 final sel = message['flow_selected_tab_id']?.toString() ?? def;
                                 final selected = id.isNotEmpty && sel == id;
                                 return ChoiceChip(
-                                  label: Text(label, style: const TextStyle(fontSize: 12)),
+                                  label: Text(
+                                    label,
+                                    style: tt.labelLarge?.copyWith(fontSize: 12),
+                                  ),
                                   selected: selected,
                                   onSelected: (_) => _onFlowManifestTabSelected(index, tm),
                                 );
@@ -1387,7 +1600,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                   child: Material(
-                                    color: Colors.blue[50],
+                                    color: cs.primary.withValues(alpha: 0.06),
                                     borderRadius: BorderRadius.circular(12),
                                     child: InkWell(
                                       onTap: () {
@@ -1416,7 +1629,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                            color: cs.primary.withValues(alpha: 0.3),
                                           ),
                                         ),
                                         child: Row(
@@ -1424,22 +1637,22 @@ class _ChatScreenState extends State<ChatScreen> {
                                             Icon(
                                               Icons.input,
                                               size: 20,
-                                              color: Theme.of(context).primaryColor,
+                                              color: cs.primary,
                                             ),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Text(
                                                 actionName ?? 'Completa la información',
-                                                style: TextStyle(
+                                                style: tt.titleSmall?.copyWith(
                                                   fontWeight: FontWeight.bold,
-                                                  color: Theme.of(context).primaryColor,
+                                                  color: cs.primary,
                                                 ),
                                               ),
                                             ),
                                             Icon(
                                               Icons.arrow_forward_ios,
                                               size: 14,
-                                              color: Theme.of(context).primaryColor,
+                                              color: cs.primary,
                                             ),
                                           ],
                                         ),
@@ -1463,7 +1676,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                                   child: Material(
-                                    color: Colors.blue[50],
+                                    color: cs.primary.withValues(alpha: 0.06),
                                     borderRadius: BorderRadius.circular(12),
                                     child: InkWell(
                                       onTap: () {
@@ -1490,7 +1703,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: Theme.of(context).primaryColor.withOpacity(0.3),
+                                            color: cs.primary.withValues(alpha: 0.3),
                                           ),
                                         ),
                                         child: Row(
@@ -1498,22 +1711,22 @@ class _ChatScreenState extends State<ChatScreen> {
                                             Icon(
                                               Icons.input,
                                               size: 20,
-                                              color: Theme.of(context).primaryColor,
+                                              color: cs.primary,
                                             ),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Text(
                                                 'Completa la información',
-                                                style: TextStyle(
+                                                style: tt.titleSmall?.copyWith(
                                                   fontWeight: FontWeight.bold,
-                                                  color: Theme.of(context).primaryColor,
+                                                  color: cs.primary,
                                                 ),
                                               ),
                                             ),
                                             Icon(
                                               Icons.arrow_forward_ios,
                                               size: 14,
-                                              color: Theme.of(context).primaryColor,
+                                              color: cs.primary,
                                             ),
                                           ],
                                         ),
@@ -1542,18 +1755,15 @@ class _ChatScreenState extends State<ChatScreen> {
                           icon: Icon(
                             Icons.lightbulb_outline,
                             size: 16,
-                            color: Theme.of(context).primaryColor,
+                            color: cs.primary,
                           ),
                           label: Text(
                             suggestedQuery,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Theme.of(context).primaryColor,
-                            ),
+                            style: tt.bodyMedium?.copyWith(color: cs.primary),
                           ),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
-                              color: Theme.of(context).primaryColor.withOpacity(0.5),
+                              color: cs.primary.withValues(alpha: 0.5),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
@@ -1573,7 +1783,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           return Padding(
                             padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0),
                             child: ActionChip(
-                              avatar: Icon(Icons.edit_note, size: 18, color: Theme.of(context).primaryColor),
+                              avatar: Icon(Icons.edit_note, size: 18, color: cs.primary),
                               label: const Text('Cargar motivos de la consulta'),
                               onPressed: () {
                                 Navigator.push(
@@ -1589,8 +1799,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                   ),
                                 );
                               },
-                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-                              labelStyle: TextStyle(color: Theme.of(context).primaryColor, fontSize: 13),
+                              backgroundColor: cs.primary.withValues(alpha: 0.1),
+                              labelStyle: tt.labelLarge?.copyWith(color: cs.primary, fontSize: 13),
                             ),
                           );
                         },
@@ -1607,7 +1817,7 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Theme.of(context).scaffoldBackgroundColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: cs.shadow.withValues(alpha: 0.12),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -1620,23 +1830,23 @@ class _ChatScreenState extends State<ChatScreen> {
                     controller: _messageController,
                     decoration: InputDecoration(
                       hintText: 'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"',
-                      hintStyle: AppTheme.subTitleStyle,
+                      hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide(
-                          color: Theme.of(context).primaryColor.withOpacity(0.3),
+                          color: cs.primary.withValues(alpha: 0.3),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide(
-                          color: Theme.of(context).primaryColor.withOpacity(0.3),
+                          color: cs.primary.withValues(alpha: 0.3),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                         borderSide: BorderSide(
-                          color: Theme.of(context).primaryColor,
+                          color: cs.primary,
                           width: 2,
                         ),
                       ),
@@ -1649,7 +1859,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               padding: const EdgeInsets.all(12.0),
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Theme.of(context).primaryColor,
+                                color: cs.primary,
                               ),
                             )
                           : null,
@@ -1661,11 +1871,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
+                    color: cs.primary,
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white),
+                    icon: Icon(Icons.send, color: cs.onPrimary),
                     onPressed: _isSending ? null : _sendMessage,
                   ),
                 ),
@@ -1679,6 +1889,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _messageController.removeListener(_onComposerTextChanged);
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();

@@ -3,7 +3,7 @@ import 'package:camera/camera.dart';
 import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
-import '../theme/theme.dart';
+import '../theme/paciente_theme_extensions.dart';
 
 class CameraOverlay extends StatefulWidget {
   final bool isSelfie;
@@ -96,7 +96,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Primero valida la posición presionando el botón de enfoque'),
-          backgroundColor: AppTheme.warningColor,
+          backgroundColor: context.pacienteSemantic.warning,
         ),
       );
       return;
@@ -106,7 +106,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_validationMessage),
-          backgroundColor: AppTheme.warningColor,
+          backgroundColor: context.pacienteSemantic.warning,
         ),
       );
       return;
@@ -125,7 +125,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al capturar la imagen'),
-          backgroundColor: AppTheme.dangerColor,
+          backgroundColor: context.pacienteColors.error,
         ),
       );
     } finally {
@@ -260,7 +260,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: AppTheme.primaryColor),
+              CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
               SizedBox(height: 16),
               Text(
                 'Inicializando cámara...',
@@ -308,7 +308,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
   Widget _buildOverlay() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
+        color: Colors.black.withValues(alpha: 0.3),
       ),
       child: Stack(
         children: [
@@ -321,7 +321,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
                   : MediaQuery.of(context).size.width * 0.5,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: AppTheme.primaryColor,
+                  color: Theme.of(context).colorScheme.primary,
                   width: 3,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -371,8 +371,8 @@ class _CameraOverlayState extends State<CameraOverlay> {
           height: 20,
           decoration: BoxDecoration(
             border: Border(
-              top: BorderSide(color: AppTheme.primaryColor, width: 4),
-              left: BorderSide(color: AppTheme.primaryColor, width: 4),
+              top: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
+              left: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
             ),
           ),
         ),
@@ -386,8 +386,8 @@ class _CameraOverlayState extends State<CameraOverlay> {
           height: 20,
           decoration: BoxDecoration(
             border: Border(
-              top: BorderSide(color: AppTheme.primaryColor, width: 4),
-              right: BorderSide(color: AppTheme.primaryColor, width: 4),
+              top: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
+              right: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
             ),
           ),
         ),
@@ -401,8 +401,8 @@ class _CameraOverlayState extends State<CameraOverlay> {
           height: 20,
           decoration: BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: AppTheme.primaryColor, width: 4),
-              left: BorderSide(color: AppTheme.primaryColor, width: 4),
+              bottom: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
+              left: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
             ),
           ),
         ),
@@ -416,8 +416,8 @@ class _CameraOverlayState extends State<CameraOverlay> {
           height: 20,
           decoration: BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: AppTheme.primaryColor, width: 4),
-              right: BorderSide(color: AppTheme.primaryColor, width: 4),
+              bottom: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
+              right: BorderSide(color: Theme.of(context).colorScheme.primary, width: 4),
             ),
           ),
         ),
@@ -436,7 +436,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
             shape: BoxShape.rectangle,
             borderRadius: BorderRadius.circular(70),
             border: Border.all(
-              color: AppTheme.primaryColor.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
               width: 2,
             ),
           ),
@@ -454,7 +454,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
                 shape: BoxShape.circle,
               ),
             ),
@@ -462,7 +462,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
                 shape: BoxShape.circle,
               ),
             ),
@@ -481,7 +481,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
         right: 10,
         child: Container(
           height: 1,
-          color: AppTheme.primaryColor.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
         ),
       ),
       Positioned(
@@ -490,7 +490,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
         right: 10,
         child: Container(
           height: 1,
-          color: AppTheme.primaryColor.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
         ),
       ),
       // Líneas de guía vertical
@@ -500,7 +500,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
         bottom: 10,
         child: Container(
           width: 1,
-          color: AppTheme.primaryColor.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
         ),
       ),
       Positioned(
@@ -509,7 +509,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
         bottom: 10,
         child: Container(
           width: 1,
-          color: AppTheme.primaryColor.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
         ),
       ),
     ];
@@ -519,14 +519,14 @@ class _CameraOverlayState extends State<CameraOverlay> {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.black.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Icon(
             widget.isSelfie ? Icons.face : Icons.credit_card,
-            color: AppTheme.primaryColor,
+            color: Theme.of(context).colorScheme.primary,
             size: 32,
           ),
           SizedBox(height: 8),
@@ -562,8 +562,8 @@ class _CameraOverlayState extends State<CameraOverlay> {
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _isValidPosition 
-            ? AppTheme.successColor.withOpacity(0.9)
-            : AppTheme.warningColor.withOpacity(0.9),
+            ? context.pacienteSemantic.success.withValues(alpha: 0.9)
+            : context.pacienteSemantic.warning.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -599,7 +599,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
           child: Container(
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -616,7 +616,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
           child: Container(
             padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -635,8 +635,8 @@ class _CameraOverlayState extends State<CameraOverlay> {
             height: 70,
             decoration: BoxDecoration(
               color: _isCapturing 
-                  ? Colors.grey 
-                  : (_isValidPosition ? AppTheme.successColor : AppTheme.primaryColor),
+                  ? Theme.of(context).colorScheme.outline 
+                  : (_isValidPosition ? context.pacienteSemantic.success : Theme.of(context).colorScheme.primary),
               shape: BoxShape.circle,
             ),
             child: _isCapturing

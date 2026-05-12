@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
+import '../theme/paciente_theme_extensions.dart';
 import 'main_screen.dart';
 import 'signup_screen.dart';
 
@@ -22,18 +23,19 @@ class ConfiguracionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Configuración'),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
       ),
       body: Container(
-        color: AppTheme.backgroundColor,
+        color: cs.surface,
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            // Información del usuario
             Card(
               elevation: 0,
               child: Padding(
@@ -43,19 +45,19 @@ class ConfiguracionScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Tu cuenta',
-                      style: AppTheme.h4Style.copyWith(
+                      style: tt.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Icon(Icons.person, color: AppTheme.primaryColor),
+                        Icon(Icons.person, color: cs.primary),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Usuario: $userName',
-                            style: AppTheme.h5Style,
+                            style: tt.titleSmall,
                           ),
                         ),
                       ],
@@ -63,11 +65,11 @@ class ConfiguracionScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.badge, color: AppTheme.primaryColor),
+                        Icon(Icons.badge, color: cs.primary),
                         const SizedBox(width: 8),
                         Text(
                           'ID: $userId',
-                          style: AppTheme.subTitleStyle,
+                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -76,15 +78,17 @@ class ConfiguracionScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Opciones
             Card(
               elevation: 0,
               child: Column(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.notifications_outlined, color: AppTheme.primaryColor),
-                    title: Text('Notificaciones', style: AppTheme.h5Style),
-                    subtitle: Text('Recordatorios de turnos', style: AppTheme.subTitleStyle),
+                    leading: Icon(Icons.notifications_outlined, color: cs.primary),
+                    title: Text('Notificaciones', style: tt.titleSmall),
+                    subtitle: Text(
+                      'Recordatorios de turnos',
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
                     trailing: Switch(
                       value: true,
                       onChanged: (value) {
@@ -96,9 +100,12 @@ class ConfiguracionScreen extends StatelessWidget {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: Icon(Icons.language, color: AppTheme.primaryColor),
-                    title: Text('Idioma', style: AppTheme.h5Style),
-                    subtitle: Text('Español', style: AppTheme.subTitleStyle),
+                    leading: Icon(Icons.language, color: cs.primary),
+                    title: Text('Idioma', style: tt.titleSmall),
+                    subtitle: Text(
+                      'Español',
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -108,9 +115,12 @@ class ConfiguracionScreen extends StatelessWidget {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: Icon(Icons.dark_mode_outlined, color: AppTheme.primaryColor),
-                    title: Text('Tema', style: AppTheme.h5Style),
-                    subtitle: Text('Claro', style: AppTheme.subTitleStyle),
+                    leading: Icon(Icons.dark_mode_outlined, color: cs.primary),
+                    title: Text('Tema', style: tt.titleSmall),
+                    subtitle: Text(
+                      'Claro',
+                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                    ),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -122,15 +132,14 @@ class ConfiguracionScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Cerrar sesión
             Card(
               elevation: 0,
               child: ListTile(
-                leading: Icon(Icons.logout, color: AppTheme.dangerColor),
+                leading: Icon(Icons.logout, color: cs.error),
                 title: Text(
                   'Cerrar sesión',
-                  style: AppTheme.h5Style.copyWith(
-                    color: AppTheme.dangerColor,
+                  style: tt.titleSmall?.copyWith(
+                    color: cs.error,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -144,6 +153,7 @@ class ConfiguracionScreen extends StatelessWidget {
   }
 
   Future<void> _confirmarCerrarSesion(BuildContext context) async {
+    final cs = context.pacienteColors;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -156,7 +166,7 @@ class ConfiguracionScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.dangerColor),
+            style: TextButton.styleFrom(foregroundColor: cs.error),
             child: const Text('Cerrar sesión'),
           ),
         ],

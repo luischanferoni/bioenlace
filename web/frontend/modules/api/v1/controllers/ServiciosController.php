@@ -42,7 +42,6 @@ class ServiciosController extends BaseController
         );
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $rows = Servicio::find()
-                ->where(['deleted_at' => null])
                 ->orderBy(['nombre' => SORT_ASC])
                 ->all();
             $items = [];

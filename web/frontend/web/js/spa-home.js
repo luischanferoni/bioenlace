@@ -144,6 +144,7 @@
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
     const chatMessagesDiv = document.getElementById('spa-chat-messages');
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
+    const welcomeActionsEl = document.getElementById('spa-chat-welcome-actions');
 
     // Estado de cards expandidos
     const expandedCards = new Map();
@@ -336,8 +337,8 @@
             // ignore
         }
 
-        // Cargar atajos (flows) al inicio solo si existe el panel
-        if (shortcutsContent) {
+        // Cargar atajos (menú Atajos + panel inicial del chat vacío)
+        if (shortcutsContent || welcomeActionsEl) {
             loadCommonActions();
         }
 
@@ -2183,6 +2184,26 @@
         // Auto-resize textarea
         queryInput.style.height = 'auto';
         queryInput.style.height = queryInput.scrollHeight + 'px';
+        toggleWelcomeActionsForComposer();
+    }
+
+    /**
+     * Oculta los chips de acciones del estado inicial mientras el usuario escribe (siguen en menú Atajos).
+     */
+    function toggleWelcomeActionsForComposer() {
+        if (!welcomeActionsEl || !chatEmptyHint) {
+            return;
+        }
+        if (chatEmptyHint.classList.contains('d-none')) {
+            return;
+        }
+        const raw = queryInput ? String(queryInput.value || '') : '';
+        const hasText = raw.trim().length > 0;
+        if (hasText) {
+            welcomeActionsEl.classList.add('d-none');
+        } else {
+            welcomeActionsEl.classList.remove('d-none');
+        }
     }
 
     /**
@@ -3020,14 +3041,119 @@
         });
     }
 
+    function shortcutMetaFromAction(a) {
+        if (!a || typeof a !== 'object') {
+            return null;
+        }
+        const name = (a.name || a.display_name) ? String(a.name || a.display_name) : (a.action_id ? String(a.action_id) : '');
+        const desc = a.description ? String(a.description) : '';
+        const co = a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
+        const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a.action_id ? String(a.action_id) : '');
+        if (!iid) {
+            return null;
+        }
+        return { name: name, desc: desc, iid: iid };
+    }
+
+    function welcomeShortcutButtonHtml(meta) {
+        return '<button type="button" class="btn btn-outline-secondary btn-sm spa-chat-welcome-action-btn text-start" data-shortcut-intent-id="' + escapeHtml(meta.iid) + '" data-shortcut-name="' + escapeHtml(meta.name) + '">' +
+            '<span class="spa-chat-welcome-action-title fw-semibold d-block">' + escapeHtml(meta.name) + '</span>' +
+            (meta.desc ? '<span class="spa-chat-welcome-action-desc text-muted small d-block">' + escapeHtml(meta.desc) + '</span>' : '') +
+            '</button>';
+    }
+
+    function renderWelcomeShortcutsEmpty(msg) {
+        if (!welcomeActionsEl) {
+            return;
+        }
+        const t = (msg && String(msg).trim() !== '') ? String(msg).trim() : '';
+        welcomeActionsEl.innerHTML = t !== ''
+            ? '<div class="text-muted small">' + escapeHtml(t) + '</div>'
+            : '<div class="text-muted small">No hay atajos disponibles.</div>';
+    }
+
+    function renderWelcomeShortcutsCategories(categories) {
+        if (!welcomeActionsEl) {
+            return;
+        }
+        const cats = Array.isArray(categories) ? categories : [];
+        if (cats.length < 1) {
+            renderWelcomeShortcutsEmpty();
+            return;
+        }
+        let html = '<div class="spa-chat-welcome-categories d-flex flex-column gap-3">';
+        cats.forEach(function (c) {
+            const title = c && c.titulo ? String(c.titulo) : 'Atajos';
+            const actions = c && Array.isArray(c.actions) ? c.actions : [];
+            if (!actions.length) {
+                return;
+            }
+            html += '<section class="spa-chat-welcome-category">';
+            html += '<h3 class="h6 text-secondary text-decoration-underline mb-2">' + escapeHtml(title) + '</h3>';
+            html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-center">';
+            actions.forEach(function (a) {
+                const m = shortcutMetaFromAction(a);
+                if (!m) {
+                    return;
+                }
+                html += welcomeShortcutButtonHtml(m);
+            });
+            html += '</div></section>';
+        });
+        html += '</div>';
+        welcomeActionsEl.innerHTML = html;
+        attachWelcomeShortcutListeners();
+        toggleWelcomeActionsForComposer();
+    }
+
+    function renderWelcomeShortcutsFlat(actions) {
+        if (!welcomeActionsEl) {
+            return;
+        }
+        const items = Array.isArray(actions) ? actions : [];
+        if (items.length < 1) {
+            renderWelcomeShortcutsEmpty();
+            return;
+        }
+        let html = '<div class="spa-chat-welcome-category">';
+        html += '<h3 class="h6 text-secondary text-decoration-underline mb-2">Atajos</h3>';
+        html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-center">';
+        items.forEach(function (a) {
+            const m = shortcutMetaFromAction(a);
+            if (!m) {
+                return;
+            }
+            html += welcomeShortcutButtonHtml(m);
+        });
+        html += '</div></div>';
+        welcomeActionsEl.innerHTML = html;
+        attachWelcomeShortcutListeners();
+        toggleWelcomeActionsForComposer();
+    }
+
+    function attachWelcomeShortcutListeners() {
+        if (!welcomeActionsEl) {
+            return;
+        }
+        try {
+            Array.from(welcomeActionsEl.querySelectorAll('button[data-shortcut-intent-id]')).forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const iid = this.getAttribute('data-shortcut-intent-id') || '';
+                    const name = this.getAttribute('data-shortcut-name') || '';
+                    startFlowFromShortcut(iid, name);
+                });
+            });
+        } catch (e) { /* ignore */ }
+    }
+
     /**
-     * Cargar acciones comunes
+     * Cargar acciones comunes (menú Atajos + panel inicial del chat)
      */
     function loadCommonActions() {
-        if (!shortcutsContent) {
-            return; // No hay panel de atajos
+        if (!shortcutsContent && !welcomeActionsEl) {
+            return;
         }
-        
+
         // API: ver nota de duplicación /api arriba.
         const url = window.location.origin + '/api/v1/acciones/comunes';
         fetch(url, {
@@ -3052,18 +3178,22 @@
         .then(data => {
             if (data && data.success && Array.isArray(data.categories)) {
                 renderShortcutsCategories(data.categories);
+                renderWelcomeShortcutsCategories(data.categories);
                 return;
             }
             if (data && data.success && Array.isArray(data.actions)) {
                 // Fallback compat: si el backend solo devuelve actions planas.
                 renderShortcutsFlat(data.actions);
+                renderWelcomeShortcutsFlat(data.actions);
                 return;
             }
             renderShortcutsEmpty();
+            renderWelcomeShortcutsEmpty();
         })
         .catch(error => {
             console.warn('No se pudieron cargar las acciones comunes:', error);
             renderShortcutsEmpty('No se pudieron cargar los atajos.');
+            renderWelcomeShortcutsEmpty('No se pudieron cargar los atajos.');
         });
     }
 

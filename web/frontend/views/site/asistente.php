@@ -37,10 +37,13 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 </div>
 
                 <div id="spa-chat-messages" class="spa-chat-messages flex-grow-1 px-0">
-                    <!-- Estado inicial -->
-                    <div class="d-flex justify-content-center" id="spa-chat-empty-hint">
-                        <div class="text-muted small text-center">
-                            Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”.
+                    <!-- Estado inicial: intro + atajos (misma API que el menú Atajos); se ocultan al escribir o al primer envío -->
+                    <div class="d-flex justify-content-center w-100" id="spa-chat-empty-hint">
+                        <div class="spa-chat-empty-hint-inner text-center px-3 py-3 w-100" style="max-width: 40rem;">
+                            <p class="text-muted small spa-chat-empty-intro mb-3">
+                                Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”.
+                            </p>
+                            <div id="spa-chat-welcome-actions" class="spa-chat-welcome-actions" aria-label="Acciones sugeridas"></div>
                         </div>
                     </div>
                 </div>

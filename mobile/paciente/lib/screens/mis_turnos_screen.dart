@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared/shared.dart';
+
 import '../services/turnos_service.dart';
+import '../theme/paciente_theme_extensions.dart';
 import 'chat_medico_screen.dart';
 import 'chat_motivos_screen.dart';
 
@@ -49,10 +50,13 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mis turnos', style: AppTheme.h2Style.copyWith(color: Colors.white)),
-        backgroundColor: Theme.of(context).primaryColor,
+        title: const Text('Mis turnos'),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         elevation: 0,
       ),
       body: _loading
@@ -78,7 +82,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                   ? Center(
                       child: Text(
                         'No tenés turnos pendientes.',
-                        style: AppTheme.subTitleStyle,
+                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                       ),
                     )
                   : RefreshIndicator(
@@ -104,15 +108,24 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                                 children: [
                                   Text(
                                     '${t['fecha']} · ${t['hora']}',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                                   ),
-                                  if (t['servicio'] != null) Text(t['servicio'].toString(), style: AppTheme.subTitleStyle),
-                                  if (t['profesional'] != null) Text('Con: ${t['profesional']}', style: AppTheme.subTitleStyle),
+                                  if (t['servicio'] != null)
+                                    Text(
+                                      t['servicio'].toString(),
+                                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                                    ),
+                                  if (t['profesional'] != null)
+                                    Text(
+                                      'Con: ${t['profesional']}',
+                                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                                    ),
                                   Text(
                                     tipoAtencion == 'teleconsulta' ? 'Consulta por chat' : 'Presencial',
-                                    style: TextStyle(
-                                      color: tipoAtencion == 'teleconsulta' ? AppTheme.primaryColor : Colors.grey[600],
-                                      fontSize: 12,
+                                    style: tt.labelSmall?.copyWith(
+                                      color: tipoAtencion == 'teleconsulta'
+                                          ? cs.primary
+                                          : cs.onSurfaceVariant,
                                     ),
                                   ),
                                   const SizedBox(height: 10),

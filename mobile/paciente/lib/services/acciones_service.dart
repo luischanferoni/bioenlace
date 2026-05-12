@@ -19,6 +19,50 @@ bool asistenteUserSaysNearbyForEfectorChooser(String content) {
   return re.hasMatch(s);
 }
 
+/// Ítem de atajo (misma resolución de `intent_id` que `spa-home.js` / dropdown Atajos web).
+class AtajoItem {
+  final String intentId;
+  final String title;
+  final String description;
+
+  AtajoItem({
+    required this.intentId,
+    required this.title,
+    this.description = '',
+  });
+}
+
+/// Categoría de atajos (`titulo` + acciones) como devuelve [CommonActionsService] en `categories`.
+class AtajoCategoria {
+  final String titulo;
+  final List<AtajoItem> items;
+
+  AtajoCategoria({required this.titulo, required this.items});
+}
+
+String? _intentIdFromCommonActionMap(Map<String, dynamic> a) {
+  final co = a['client_open'];
+  if (co is Map) {
+    final m = Map<String, dynamic>.from(co);
+    if ('${m['kind']}' == 'intent' && m['intent_id'] != null) {
+      final s = '${m['intent_id']}'.trim();
+      if (s.isNotEmpty) return s;
+    }
+  }
+  final aid = a['action_id'];
+  if (aid != null) {
+    final s = '$aid'.trim();
+    if (s.isNotEmpty) return s;
+  }
+  return null;
+}
+
+String _actionDisplayName(Map<String, dynamic> a) {
+  final n = a['name'] ?? a['display_name'];
+  if (n != null && '$n'.trim().isNotEmpty) return '$n'.trim();
+  return _intentIdFromCommonActionMap(a) ?? '';
+}
+
 /// Servicio para procesar consultas en lenguaje natural y obtener acciones
 /// 
 /// Este servicio se conecta al mismo endpoint que usa:
@@ -339,6 +383,74 @@ class AsistenteService {
         });
       }
       return out;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// GET /api/v1/acciones/comunes — categorías de atajos como la SPA (`loadCommonActions` / dropdown Atajos).
+  Future<List<AtajoCategoria>> cargarAtajos() async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}/acciones/comunes');
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'paciente-flutter',
+      )..remove('Content-Type');
+
+      final response = await http
+          .get(uri, headers: headers)
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+
+      final responseData = json.decode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 200 || responseData['success'] != true) {
+        return [];
+      }
+
+      final catsRaw = responseData['categories'];
+      if (catsRaw is List && catsRaw.isNotEmpty) {
+        final out = <AtajoCategoria>[];
+        for (final c in catsRaw) {
+          if (c is! Map) continue;
+          final cm = Map<String, dynamic>.from(c);
+          final titulo = cm['titulo']?.toString() ?? 'Atajos';
+          final actions = cm['actions'];
+          final items = <AtajoItem>[];
+          if (actions is List) {
+            for (final a in actions) {
+              if (a is! Map) continue;
+              final am = Map<String, dynamic>.from(a);
+              final iid = _intentIdFromCommonActionMap(am);
+              if (iid == null || iid.isEmpty) continue;
+              items.add(AtajoItem(
+                intentId: iid,
+                title: _actionDisplayName(am),
+                description: am['description']?.toString() ?? '',
+              ));
+            }
+          }
+          if (items.isNotEmpty) {
+            out.add(AtajoCategoria(titulo: titulo, items: items));
+          }
+        }
+        if (out.isNotEmpty) return out;
+      }
+
+      final raw = responseData['actions'];
+      if (raw is! List) return [];
+      final flat = <AtajoItem>[];
+      for (final a in raw) {
+        if (a is! Map) continue;
+        final am = Map<String, dynamic>.from(a);
+        final iid = _intentIdFromCommonActionMap(am);
+        if (iid == null || iid.isEmpty) continue;
+        flat.add(AtajoItem(
+          intentId: iid,
+          title: _actionDisplayName(am),
+          description: am['description']?.toString() ?? '',
+        ));
+      }
+      if (flat.isEmpty) return [];
+      return [AtajoCategoria(titulo: 'Atajos', items: flat)];
     } catch (e) {
       return [];
     }

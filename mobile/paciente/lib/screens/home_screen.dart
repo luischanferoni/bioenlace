@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared/shared.dart';
 
 import '../services/turnos_service.dart';
+import '../theme/paciente_theme_extensions.dart';
 import 'chat_motivos_screen.dart';
+import 'mis_turnos_screen.dart';
 
 /// Pantalla de inicio del paciente: saludo, próximo turno y acciones rápidas.
 class HomeScreen extends StatefulWidget {
@@ -10,7 +11,6 @@ class HomeScreen extends StatefulWidget {
   final String userName;
   final String? authToken;
   final VoidCallback onIrAChat;
-  final VoidCallback onIrAMisTurnos;
 
   const HomeScreen({
     Key? key,
@@ -18,7 +18,6 @@ class HomeScreen extends StatefulWidget {
     required this.userName,
     this.authToken,
     required this.onIrAChat,
-    required this.onIrAMisTurnos,
   }) : super(key: key);
 
   @override
@@ -78,12 +77,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     final proximo = _getProximoTurno();
     final idConsulta = proximo != null ? proximo['id_consulta'] : null;
     final puedeCargarMotivos = idConsulta != null;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: cs.surface,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadTurnos,
@@ -111,26 +112,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Text(
                           '${_saludo()}, ${widget.userName.split(',').first.trim()}',
-                          style: AppTheme.h2Style.copyWith(
-                            color: AppTheme.dark,
-                            fontSize: 22,
+                          style: tt.headlineSmall?.copyWith(
+                            color: cs.onSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           '¿En qué podemos ayudarte?',
-                          style: AppTheme.subTitleStyle.copyWith(fontSize: 15),
+                          style: tt.bodyLarge?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 24),
                         if (proximo != null) ...[
-                          _buildCardProximoTurno(proximo, puedeCargarMotivos),
+                          _buildCardProximoTurno(context, proximo, puedeCargarMotivos),
                           const SizedBox(height: 24),
                         ] else
-                          _buildCardSinTurnos(),
+                          _buildCardSinTurnos(context),
                         const SizedBox(height: 16),
-                        _buildSeccionAcciones(puedeCargarMotivos, idConsulta),
-                        const SizedBox(height: 24),
-                        _buildCardHablarConBioEnlace(),
+                        _buildSeccionAcciones(context, puedeCargarMotivos, idConsulta),
                       ],
                     ),
         ),
@@ -138,11 +138,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCardProximoTurno(Map<String, dynamic> t, bool puedeCargarMotivos) {
+  Widget _buildCardProximoTurno(
+    BuildContext context,
+    Map<String, dynamic> t,
+    bool puedeCargarMotivos,
+  ) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     final idConsulta = t['id_consulta'];
     return Card(
       elevation: 0,
-      color: AppTheme.primaryColor.withOpacity(0.1),
+      color: cs.primary.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -151,12 +157,12 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Row(
               children: [
-                Icon(Icons.calendar_today, color: AppTheme.primaryColor, size: 24),
+                Icon(Icons.calendar_today, color: cs.primary, size: 24),
                 const SizedBox(width: 10),
                 Text(
                   'Tu próximo turno',
-                  style: AppTheme.h5Style.copyWith(
-                    color: AppTheme.primaryColor,
+                  style: tt.titleSmall?.copyWith(
+                    color: cs.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -165,12 +171,18 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             Text(
               '${t['fecha']} · ${t['hora']}',
-              style: AppTheme.h4Style,
+              style: tt.titleMedium,
             ),
             if (t['servicio'] != null)
-              Text(t['servicio'].toString(), style: AppTheme.subTitleStyle),
+              Text(
+                t['servicio'].toString(),
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
             if (t['profesional'] != null)
-              Text('Con: ${t['profesional']}', style: AppTheme.subTitleStyle),
+              Text(
+                'Con: ${t['profesional']}',
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
             if (puedeCargarMotivos) ...[
               const SizedBox(height: 12),
               OutlinedButton.icon(
@@ -191,8 +203,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
-                  side: BorderSide(color: AppTheme.primaryColor),
+                  foregroundColor: cs.primary,
+                  side: BorderSide(color: cs.primary),
                 ),
               ),
             ],
@@ -202,21 +214,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCardSinTurnos() {
+  Widget _buildCardSinTurnos(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     return Card(
       elevation: 0,
-      color: Colors.grey.shade100,
+      color: cs.surfaceContainerHighest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: const Padding(
-        padding: EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.event_available, color: Colors.grey),
-            SizedBox(width: 12),
+            Icon(Icons.event_available, color: cs.onSurfaceVariant),
+            const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'No tenés turnos pendientes. Podés pedir uno desde el chat.',
-                style: TextStyle(color: Colors.black54, fontSize: 14),
+                style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
             ),
           ],
@@ -225,14 +239,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSeccionAcciones(bool puedeCargarMotivos, dynamic idConsulta) {
+  Widget _buildSeccionAcciones(
+    BuildContext context,
+    bool puedeCargarMotivos,
+    dynamic idConsulta,
+  ) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Acciones rápidas',
-          style: AppTheme.h5Style.copyWith(
-            color: AppTheme.primaryColor,
+          style: tt.titleSmall?.copyWith(
+            color: cs.primary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -242,17 +262,31 @@ class _HomeScreenState extends State<HomeScreen> {
           runSpacing: 10,
           children: [
             _buildActionChip(
+              context,
               icon: Icons.add_circle_outline,
               label: 'Pedir turno',
               onTap: widget.onIrAChat,
             ),
             _buildActionChip(
+              context,
               icon: Icons.calendar_today,
               label: 'Ver mis turnos',
-              onTap: widget.onIrAMisTurnos,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MisTurnosScreen(
+                      authToken: widget.authToken,
+                      userId: widget.userId,
+                      userName: widget.userName,
+                    ),
+                  ),
+                );
+              },
             ),
             if (puedeCargarMotivos && idConsulta != null)
               _buildActionChip(
+                context,
                 icon: Icons.edit_note,
                 label: 'Cargar motivos',
                 onTap: () {
@@ -276,13 +310,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActionChip({
+  Widget _buildActionChip(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
     return Material(
-      color: AppTheme.primaryColor.withOpacity(0.08),
+      color: cs.primary.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,
@@ -292,52 +329,15 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 20, color: AppTheme.primaryColor),
+              Icon(icon, size: 20, color: cs.primary),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.w500)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardHablarConBioEnlace() {
-    return Material(
-      color: AppTheme.primaryColor.withOpacity(0.12),
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: widget.onIrAChat,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
-                child: Icon(Icons.chat_bubble_outline, color: AppTheme.primaryColor, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hablar con BioEnlace',
-                      style: AppTheme.h5Style.copyWith(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Pedí turnos, consultá tus citas o hacé preguntas.',
-                      style: AppTheme.subTitleStyle.copyWith(fontSize: 13),
-                    ),
-                  ],
+              Text(
+                label,
+                style: tt.labelLarge?.copyWith(
+                  color: cs.primary,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.primaryColor),
             ],
           ),
         ),

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart'; // Usar LoginScreen del paquete compartido
 
 import 'services/chat_service.dart';
+import 'theme/paciente_theme_extensions.dart';
 import 'screens/main_screen.dart';
 import 'screens/signup_screen.dart';
 
@@ -46,7 +47,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'BioEnlace Paciente',
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.lightTheme.copyWith(
+        extensions: const <ThemeExtension<dynamic>>[
+          PacienteSemanticColors.light,
+        ],
+      ),
       home: isLoggedIn
           ? MainScreen(chatService: chatService!, authToken: authToken)
           : LoginScreen(
@@ -127,7 +132,7 @@ class MyApp extends StatelessWidget {
                       ScaffoldMessenger.of(loginContext).showSnackBar(
                         SnackBar(
                           content: Text('Sesión iniciada como ${persona['apellido']}, ${persona['nombre']}'),
-                          backgroundColor: AppTheme.successColor,
+                          backgroundColor: loginContext.pacienteSemantic.success,
                           duration: Duration(seconds: 2),
                         ),
                       );
@@ -147,7 +152,7 @@ class MyApp extends StatelessWidget {
                       ScaffoldMessenger.of(loginContext).showSnackBar(
                         SnackBar(
                           content: Text('No se pudo obtener token. Usando modo visitante.'),
-                          backgroundColor: AppTheme.warningColor,
+                          backgroundColor: loginContext.pacienteSemantic.warning,
                           duration: Duration(seconds: 3),
                         ),
                       );
@@ -173,7 +178,7 @@ class MyApp extends StatelessWidget {
                     ScaffoldMessenger.of(loginContext).showSnackBar(
                       SnackBar(
                         content: Text('Error al conectar con el servidor. Usando modo visitante.'),
-                        backgroundColor: AppTheme.warningColor,
+                        backgroundColor: loginContext.pacienteSemantic.warning,
                         duration: Duration(seconds: 3),
                       ),
                     );
@@ -201,7 +206,7 @@ class MyApp extends StatelessWidget {
                   ScaffoldMessenger.of(loginContext).showSnackBar(
                     SnackBar(
                       content: Text('Error: ${e.toString()}. Usando modo visitante.'),
-                      backgroundColor: AppTheme.warningColor,
+                      backgroundColor: loginContext.pacienteSemantic.warning,
                       duration: Duration(seconds: 3),
                     ),
                   );

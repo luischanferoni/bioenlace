@@ -1,7 +1,7 @@
 // Archivo: lib/styles/button_styles.dart
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../theme/theme.dart';
+
+import '../theme/paciente_theme_extensions.dart';
 
 enum ButtonType {
   primary,
@@ -21,7 +21,6 @@ enum ButtonVariant {
 }
 
 class ButtonStyles {
-  // Método principal para obtener estilos de botón
   static ButtonStyle getStyle(
     BuildContext context, {
     required ButtonType type,
@@ -38,20 +37,17 @@ class ButtonStyles {
     }
   }
 
-  // Estilos filled (rellenos)
   static ButtonStyle _getFilledStyle(BuildContext context, ButtonType type, bool hasIcon) {
-    final colors = _getColors(type);
+    final colors = _getColors(context, type);
+    final tt = context.pacienteTextTheme;
     return ElevatedButton.styleFrom(
       foregroundColor: colors['text'],
       backgroundColor: colors['background'],
       padding: EdgeInsets.symmetric(
-        horizontal: hasIcon ? 16 : 20, 
+        horizontal: hasIcon ? 16 : 20,
         vertical: 12,
       ),
-      textStyle: GoogleFonts.openSans(
-        fontSize: 16, 
-        fontWeight: FontWeight.w600,
-      ),
+      textStyle: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
       ),
@@ -59,22 +55,19 @@ class ButtonStyles {
     );
   }
 
-  // Estilos outline (solo borde)
   static ButtonStyle _getOutlineStyle(BuildContext context, ButtonType type, bool hasIcon) {
-    final colors = _getColors(type);
+    final colors = _getColors(context, type);
+    final tt = context.pacienteTextTheme;
     return OutlinedButton.styleFrom(
       foregroundColor: colors['background'],
       backgroundColor: Colors.transparent,
       padding: EdgeInsets.symmetric(
-        horizontal: hasIcon ? 16 : 20, 
+        horizontal: hasIcon ? 16 : 20,
         vertical: 12,
       ),
-      textStyle: GoogleFonts.openSans(
-        fontSize: 16, 
-        fontWeight: FontWeight.w600,
-      ),
+      textStyle: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600),
       side: BorderSide(
-        color: colors['background']!, 
+        color: colors['background']!,
         width: 1.5,
       ),
       shape: RoundedRectangleBorder(
@@ -84,20 +77,17 @@ class ButtonStyles {
     );
   }
 
-  // Estilos soft (fondo suave)
   static ButtonStyle _getSoftStyle(BuildContext context, ButtonType type, bool hasIcon) {
-    final colors = _getColors(type);
+    final colors = _getColors(context, type);
+    final tt = context.pacienteTextTheme;
     return ElevatedButton.styleFrom(
       foregroundColor: colors['background'],
       backgroundColor: colors['softBackground'],
       padding: EdgeInsets.symmetric(
-        horizontal: hasIcon ? 16 : 20, 
+        horizontal: hasIcon ? 16 : 20,
         vertical: 12,
       ),
-      textStyle: GoogleFonts.openSans(
-        fontSize: 16, 
-        fontWeight: FontWeight.w600,
-      ),
+      textStyle: tt.labelLarge?.copyWith(fontWeight: FontWeight.w600),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
       ),
@@ -105,61 +95,61 @@ class ButtonStyles {
     );
   }
 
-  // Obtener colores según el tipo de botón
-  static Map<String, Color> _getColors(ButtonType type) {
+  static Map<String, Color> _getColors(BuildContext context, ButtonType type) {
+    final cs = context.pacienteColors;
+    final sem = context.pacienteSemantic;
     switch (type) {
       case ButtonType.primary:
         return {
-          'background': AppTheme.primaryColor,
-          'text': Colors.white,
-          'softBackground': AppTheme.primaryColor.withOpacity(0.2),
+          'background': cs.primary,
+          'text': cs.onPrimary,
+          'softBackground': cs.primary.withValues(alpha: 0.2),
         };
       case ButtonType.secondary:
         return {
-          'background': AppTheme.secondaryColor,
-          'text': Colors.white,
-          'softBackground': AppTheme.secondaryColor.withOpacity(0.1),
+          'background': cs.secondary,
+          'text': cs.onSecondary,
+          'softBackground': cs.secondary.withValues(alpha: 0.1),
         };
       case ButtonType.success:
         return {
-          'background': AppTheme.successColor,
-          'text': Colors.white,
-          'softBackground': AppTheme.successColor.withOpacity(0.1),
+          'background': sem.success,
+          'text': cs.onPrimary,
+          'softBackground': sem.success.withValues(alpha: 0.1),
         };
       case ButtonType.danger:
         return {
-          'background': AppTheme.dangerColor,
-          'text': Colors.white,
-          'softBackground': AppTheme.dangerColor.withOpacity(0.1),
+          'background': cs.error,
+          'text': cs.onError,
+          'softBackground': cs.error.withValues(alpha: 0.1),
         };
       case ButtonType.warning:
         return {
-          'background': AppTheme.warningColor,
-          'text': Colors.black87,
-          'softBackground': AppTheme.warningColor.withOpacity(0.1),
+          'background': sem.warning,
+          'text': cs.onSurface,
+          'softBackground': sem.warning.withValues(alpha: 0.1),
         };
       case ButtonType.info:
         return {
-          'background': AppTheme.infoColor,
-          'text': Colors.white,
-          'softBackground': AppTheme.infoColor.withOpacity(0.1),
+          'background': cs.secondary,
+          'text': cs.onSecondary,
+          'softBackground': cs.secondary.withValues(alpha: 0.1),
         };
       case ButtonType.light:
         return {
-          'background': AppTheme.light,
-          'text': Colors.black87,
-          'softBackground': AppTheme.light.withOpacity(0.3),
+          'background': cs.surfaceContainerHighest,
+          'text': cs.onSurface,
+          'softBackground': cs.surfaceContainerHighest.withValues(alpha: 0.3),
         };
       case ButtonType.dark:
         return {
-          'background': AppTheme.dark,
-          'text': Colors.white,
-          'softBackground': AppTheme.dark.withOpacity(0.1),
+          'background': cs.onSurface,
+          'text': cs.surface,
+          'softBackground': cs.onSurface.withValues(alpha: 0.1),
         };
     }
   }
 
-  // Métodos de conveniencia para cada tipo (mantener compatibilidad)
   static ButtonStyle primary(BuildContext context, {ButtonVariant variant = ButtonVariant.filled, bool hasIcon = false}) {
     return getStyle(context, type: ButtonType.primary, variant: variant, hasIcon: hasIcon);
   }
@@ -192,7 +182,6 @@ class ButtonStyles {
     return getStyle(context, type: ButtonType.dark, variant: variant, hasIcon: hasIcon);
   }
 
-  // Métodos específicos para outline
   static ButtonStyle primaryOutline(BuildContext context, {bool hasIcon = false}) {
     return getStyle(context, type: ButtonType.primary, variant: ButtonVariant.outline, hasIcon: hasIcon);
   }
@@ -217,7 +206,6 @@ class ButtonStyles {
     return getStyle(context, type: ButtonType.info, variant: ButtonVariant.outline, hasIcon: hasIcon);
   }
 
-  // Métodos específicos para soft
   static ButtonStyle primarySoft(BuildContext context, {bool hasIcon = false}) {
     return getStyle(context, type: ButtonType.primary, variant: ButtonVariant.soft, hasIcon: hasIcon);
   }
@@ -242,33 +230,28 @@ class ButtonStyles {
     return getStyle(context, type: ButtonType.info, variant: ButtonVariant.soft, hasIcon: hasIcon);
   }
 
-  // Botones de tamaño específico
   static ButtonStyle small(BuildContext context, {ButtonType type = ButtonType.primary, ButtonVariant variant = ButtonVariant.filled, bool hasIcon = false}) {
     final baseStyle = getStyle(context, type: type, variant: variant, hasIcon: hasIcon);
+    final tt = context.pacienteTextTheme;
     return baseStyle.copyWith(
-      padding: MaterialStateProperty.all(EdgeInsets.symmetric(
-        horizontal: hasIcon ? 8 : 12, 
+      padding: WidgetStateProperty.all(EdgeInsets.symmetric(
+        horizontal: hasIcon ? 8 : 12,
         vertical: 6,
       )),
-      textStyle: MaterialStateProperty.all(GoogleFonts.openSans(
-        fontSize: 14, 
-        fontWeight: FontWeight.w500,
-      )),
+      textStyle: WidgetStateProperty.all(tt.labelMedium?.copyWith(fontWeight: FontWeight.w500)),
     );
   }
 
   static ButtonStyle large(BuildContext context, {ButtonType type = ButtonType.primary, ButtonVariant variant = ButtonVariant.filled, bool hasIcon = false}) {
     final baseStyle = getStyle(context, type: type, variant: variant, hasIcon: hasIcon);
+    final tt = context.pacienteTextTheme;
     return baseStyle.copyWith(
-      padding: MaterialStateProperty.all(EdgeInsets.symmetric(
-        horizontal: hasIcon ? 24 : 30, 
+      padding: WidgetStateProperty.all(EdgeInsets.symmetric(
+        horizontal: hasIcon ? 24 : 30,
         vertical: 16,
       )),
-      textStyle: MaterialStateProperty.all(GoogleFonts.openSans(
-        fontSize: 18, 
-        fontWeight: FontWeight.w600,
-      )),
-      elevation: MaterialStateProperty.all(3),
+      textStyle: WidgetStateProperty.all(tt.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+      elevation: WidgetStateProperty.all(3),
     );
   }
 }

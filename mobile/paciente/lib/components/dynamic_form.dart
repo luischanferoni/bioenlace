@@ -149,7 +149,9 @@ class _DynamicFormState extends State<DynamicForm> {
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Text(
           message ?? 'Primero debe completar: ${missingDeps.join(", ")}',
-          style: TextStyle(color: Colors.orange[700], fontSize: 12),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
         ),
       );
     }
@@ -188,7 +190,7 @@ class _DynamicFormState extends State<DynamicForm> {
           labelText: label + (required ? ' *' : ''),
           hintText: description,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -214,7 +216,7 @@ class _DynamicFormState extends State<DynamicForm> {
           labelText: label + (required ? ' *' : ''),
           hintText: description,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -243,17 +245,18 @@ class _DynamicFormState extends State<DynamicForm> {
             builder: (context, child) {
               // Tema claro completo para todo el calendario (días, mes, año, cabecera)
               // así todos los textos son oscuros sobre fondo claro.
+              final cs = Theme.of(context).colorScheme;
               final lightScheme = ColorScheme.light(
-                surface: Colors.white,
-                onSurface: Colors.black87,
-                primary: Theme.of(context).colorScheme.primary,
-                onPrimary: Colors.white,
+                surface: cs.surface,
+                onSurface: cs.onSurface,
+                primary: cs.primary,
+                onPrimary: cs.onPrimary,
               );
               return Theme(
-                data: ThemeData.light().copyWith(
+                data: Theme.of(context).copyWith(
                   colorScheme: lightScheme,
-                  dialogBackgroundColor: Colors.white,
-                  textTheme: ThemeData.light().textTheme.apply(bodyColor: Colors.black87, displayColor: Colors.black87),
+                  dialogTheme: DialogThemeData(backgroundColor: cs.surface),
+                  textTheme: Theme.of(context).textTheme,
                 ),
                 child: child!,
               );
@@ -271,7 +274,7 @@ class _DynamicFormState extends State<DynamicForm> {
             labelText: label + (required ? ' *' : ''),
             hintText: description ?? 'Seleccionar fecha',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -279,7 +282,7 @@ class _DynamicFormState extends State<DynamicForm> {
           ),
           child: Text(
             _controllers[fieldName]?.text ?? '',
-            style: TextStyle(fontSize: 16),
+            style: Theme.of(context).textTheme.bodyLarge,
           ),
         ),
       ),
@@ -296,7 +299,9 @@ class _DynamicFormState extends State<DynamicForm> {
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Text(
           'Este campo requiere opciones que se cargarán dinámicamente. Por favor, use autocomplete en su lugar.',
-          style: TextStyle(color: Colors.orange[700], fontSize: 12),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
         ),
       );
     }
@@ -308,7 +313,7 @@ class _DynamicFormState extends State<DynamicForm> {
           labelText: label + (required ? ' *' : ''),
           hintText: description,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -525,7 +530,7 @@ class _DynamicFormState extends State<DynamicForm> {
               labelText: label + (required ? ' *' : ''),
               hintText: description ?? 'Escribe al menos 3 caracteres para buscar...',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -716,8 +721,8 @@ class _DynamicFormState extends State<DynamicForm> {
                     margin: EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
                       color: index <= _currentStep
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey[300],
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),

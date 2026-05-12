@@ -208,7 +208,7 @@ final class UiSelectOptionSourceResolver
             $servicios = \common\models\Servicio::find()
                 ->innerJoin('servicios_efector se', 'se.id_servicio = servicios.id_servicio')
                 ->where(['se.id_efector' => $params['id_efector']])
-                ->andWhere('servicios.deleted_at IS NULL')
+                ->andWhere('se.deleted_at IS NULL')
                 ->orderBy('servicios.nombre')
                 ->all();
 

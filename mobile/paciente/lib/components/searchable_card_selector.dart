@@ -485,7 +485,9 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                 _isSearching
                     ? (widget.noResultsMessage ?? 'No se encontraron resultados')
                     : (widget.emptyMessage ?? 'No hay opciones disponibles'),
-                style: TextStyle(color: Colors.grey[600]),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ),
           )
@@ -546,7 +548,9 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
         if (widget.description != null && widget.description!.isNotEmpty) ...[
           Text(
             widget.description!,
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 8),
         ],
@@ -558,7 +562,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
             decoration: InputDecoration(
               hintText: widget.searchHint ?? widget.description ?? 'Buscar...',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surface,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -636,7 +640,9 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       state.errorText!,
-                      style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                     ),
                   ),
               ],
@@ -660,7 +666,7 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
         ),
         const SizedBox(height: 6),
@@ -698,14 +704,14 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
     return Card(
       elevation: 0,
       color: isSelected 
-          ? Theme.of(context).primaryColor.withOpacity(0.1)
-          : Colors.white,
+          ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+          : Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isSelected 
-              ? Theme.of(context).primaryColor
-              : Colors.grey[300]!,
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.outlineVariant,
           width: isSelected ? 2 : 1,
         ),
       ),
@@ -720,13 +726,13 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
               if (isSelected)
                 Icon(
                   Icons.check_circle,
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 24,
                 )
               else
                 Icon(
                   defaultIcon,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   size: 24,
                 ),
               const SizedBox(height: 8),
@@ -735,12 +741,11 @@ class _SearchableCardSelectorState extends State<SearchableCardSelector> {
                 textAlign: TextAlign.center,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   color: isSelected 
-                      ? Theme.of(context).primaryColor
-                      : Colors.black87,
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],

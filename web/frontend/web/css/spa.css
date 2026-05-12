@@ -245,6 +245,22 @@
     border-radius: 999px;
 }
 
+/* Estado inicial del chat: mismos atajos que el menú; chips alineados al centro, ancho según contenido */
+.spa-chat-empty-hint-inner {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.spa-chat-welcome-category-chips {
+    align-items: flex-start;
+}
+
+.spa-chat-welcome-action-btn {
+    width: auto;
+    max-width: min(100%, 22rem);
+    flex: 0 1 auto;
+}
+
 .spa-chat-messages {
     overflow: visible;
     min-height: 0;

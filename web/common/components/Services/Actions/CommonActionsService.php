@@ -83,6 +83,8 @@ final class CommonActionsService
     /**
      * Definición manual de categorías de atajos (flows).
      *
+     * Solo se muestran los `intent_id` listados aquí aunque existan en el catálogo YAML y pasen RBAC.
+     *
      * @return list<array{id: string, titulo: string, models: list<string>}>
      */
     private static function flowCategoriesDefinition(): array
@@ -101,6 +103,8 @@ final class CommonActionsService
                 'titulo' => 'Turnos',
                 'models' => [
                     'turnos.crear-como-paciente',
+                    'turnos.cancelar-como-paciente-flow',
+                    'turnos.modificar-como-paciente-flow',
                 ],
             ],
         ];

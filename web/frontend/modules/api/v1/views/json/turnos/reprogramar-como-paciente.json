@@ -1,5 +1,6 @@
 {
   "ui_type": "ui_json",
+  "title": "Confirmar nuevo horario",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
@@ -12,27 +13,33 @@
       "fields": [
         {
           "name": "id",
-          "label": "ID turno",
-          "type": "text",
-          "required": true
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "slot_id",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
         },
         {
           "name": "fecha",
           "label": "Nueva fecha",
           "type": "date",
-          "required": true
+          "required": false
         },
         {
           "name": "hora",
           "label": "Nueva hora",
           "type": "text",
-          "required": true
+          "required": false
         },
         {
           "name": "id_profesional_efector_servicio",
           "label": "Profesional (id PES)",
           "type": "text",
-          "required": true
+          "required": false
         }
       ]
     }

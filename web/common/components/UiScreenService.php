@@ -63,7 +63,7 @@ final class UiScreenService
 
         if ($req->isPost) {
             try {
-                $postParams = self::expandSlotIdForTurnosCrearComoPaciente($entity, $action, $postParams);
+                $postParams = self::expandTurnosSlotIdParams($entity, $action, $postParams);
                 $submitResult = $submit($postParams);
                 return [
                     'success' => true,
@@ -101,7 +101,7 @@ final class UiScreenService
         if ($values !== null) {
             $params = array_merge($params, $values);
         }
-        $params = self::expandSlotIdForTurnosCrearComoPaciente($entity, $action, $params);
+        $params = self::expandTurnosSlotIdParams($entity, $action, $params);
 
         $config = UiDefinitionTemplateManager::render($entity, $action, $params);
         if (!is_array($config) || $config === []) {
@@ -141,14 +141,18 @@ final class UiScreenService
      * - numérico (compat): "<id_profesional_efector_servicio>|fecha|hora"
      * - canónico: "pes:<id_profesional_efector_servicio>|fecha|hora"
      *
-     * Expande a campos que espera {@see Turno} y el POST del screen.
+     * Expande `slot_id` a `fecha`, `hora`, `id_profesional_efector_servicio` en creación y reprogramación paciente.
      *
      * @param array<string, mixed> $params
      * @return array<string, mixed>
      */
-    private static function expandSlotIdForTurnosCrearComoPaciente(string $entity, string $action, array $params): array
+    private static function expandTurnosSlotIdParams(string $entity, string $action, array $params): array
     {
-        if (strtolower($entity) !== 'turnos' || $action !== 'crear-como-paciente') {
+        if (strtolower($entity) !== 'turnos') {
+            return $params;
+        }
+        $actions = ['crear-como-paciente', 'reprogramar-como-paciente'];
+        if (!in_array($action, $actions, true)) {
             return $params;
         }
         $slotId = $params['slot_id'] ?? null;

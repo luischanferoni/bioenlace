@@ -33,7 +33,6 @@ class _MainScreenState extends State<MainScreen> {
             userId: widget.chatService.currentUserId,
             userName: widget.chatService.currentUserName,
             authToken: widget.authToken,
-            onIrAChat: () => setState(() => _selectedIndex = 1),
           ),
           ChatScreen(
             chatService: widget.chatService,

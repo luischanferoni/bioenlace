@@ -1,0 +1,53 @@
+intent_id: turnos.modificar-como-paciente-flow
+version: 1
+
+action_name: "Cambiar horario de turno"
+description: "Autogestión: elegís un turno pendiente, un nuevo horario libre y confirmás la reprogramación."
+rbac_route: "/api/turnos/reprogramar-como-paciente"
+keywords:
+  - modificar turno
+  - cambiar turno
+  - reprogramar turno
+  - mover cita
+  - otro horario
+
+intent_semantics:
+  goal: >-
+    Reprogramar un turno propio a otra fecha/hora (y profesional PES) disponible.
+  how: >-
+    Lista de turnos pendientes → oferta de slots alternativos para ese turno → confirmación POST reprogramar.
+  preconditions:
+    - Política del efector permite reprogramación por app cuando aplica.
+  outcome:
+    - Turno actualizado a la nueva fecha/hora.
+
+subintents:
+  - id: select_turno
+    assistant_text: "Turno a modificar"
+    provides:
+      - draft.id
+    next: select_slot
+    open_ui:
+      action_id: turnos.elegir-pendiente-como-paciente
+
+  - id: select_slot
+    assistant_text: "Nuevo horario"
+    requires:
+      - draft.id
+    provides:
+      - draft.slot_id
+    next: confirm_reprogramar
+    open_ui:
+      action_id: turnos.slots-reprogramar-como-paciente
+      params:
+        id: "draft.id"
+
+  - id: confirm_reprogramar
+    assistant_text: "Confirmación"
+    requires:
+      - draft.id
+      - draft.slot_id
+    submit:
+      action_id: turnos.reprogramar-como-paciente
+      params:
+        id: "draft.id"

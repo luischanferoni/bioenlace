@@ -1,0 +1,21 @@
+{
+  "ui_type": "ui_json",
+  "title": "Elegir nuevo horario",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "default",
+      "selection": { "mode": "single" },
+      "draft_field": "slot_id",
+      "empty_message": "No hay horarios alternativos disponibles para reprogramar en este momento.",
+      "item": { "kind": "slot", "id_field": "id", "label_field": "label" },
+      "items": []
+    }
+  ]
+}

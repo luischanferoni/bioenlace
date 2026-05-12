@@ -3,21 +3,18 @@ import 'package:flutter/material.dart';
 import '../services/turnos_service.dart';
 import '../theme/paciente_theme_extensions.dart';
 import 'chat_motivos_screen.dart';
-import 'mis_turnos_screen.dart';
 
-/// Pantalla de inicio del paciente: saludo, próximo turno y acciones rápidas.
+/// Pantalla de inicio del paciente: saludo y próximo turno.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
   final String? authToken;
-  final VoidCallback onIrAChat;
 
   const HomeScreen({
     Key? key,
     required this.userId,
     required this.userName,
     this.authToken,
-    required this.onIrAChat,
   }) : super(key: key);
 
   @override
@@ -193,8 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 24),
                         ] else
                           _buildCardSinTurnos(context),
-                        const SizedBox(height: 16),
-                        _buildSeccionAcciones(context, puedeCargarMotivos, idConsulta),
                       ],
                     ),
         ),
@@ -303,109 +298,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSeccionAcciones(
-    BuildContext context,
-    bool puedeCargarMotivos,
-    dynamic idConsulta,
-  ) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Acciones rápidas',
-          style: tt.titleSmall?.copyWith(
-            color: cs.primary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _buildActionChip(
-              context,
-              icon: Icons.add_circle_outline,
-              label: 'Pedir turno',
-              onTap: widget.onIrAChat,
-            ),
-            _buildActionChip(
-              context,
-              icon: Icons.calendar_today,
-              label: 'Ver mis turnos',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MisTurnosScreen(
-                      authToken: widget.authToken,
-                      userId: widget.userId,
-                      userName: widget.userName,
-                    ),
-                  ),
-                );
-              },
-            ),
-            if (puedeCargarMotivos && idConsulta != null)
-              _buildActionChip(
-                context,
-                icon: Icons.edit_note,
-                label: 'Cargar motivos',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatMotivosScreen(
-                        consultaId: idConsulta as int,
-                        authToken: widget.authToken,
-                        userId: widget.userId,
-                        userName: widget.userName,
-                        titulo: 'Motivos de la consulta',
-                      ),
-                    ),
-                  );
-                },
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionChip(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
-    return Material(
-      color: cs.primary.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 20, color: cs.primary),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: tt.labelLarge?.copyWith(
-                  color: cs.primary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

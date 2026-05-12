@@ -30,8 +30,29 @@ class TurnoSlotOfferService
 
         $plano = TurnoSlotFinder::findAvailableSlots($criteria, $limite);
 
+        return self::buildOfferFromPlano($plano, $franjaTardeDesde, $limite, $maxDias);
+    }
+
+    /**
+     * Agrupa una lista plana de slots (mismo shape que {@see TurnoSlotFinder::findAvailableSlots}) por día y franja.
+     * Útil cuando los slots ya vienen de otra fuente (p. ej. reprogramación).
+     *
+     * @param list<array<string, mixed>> $plano
+     * @return array{
+     *   limite: int,
+     *   max_dias_busqueda: int,
+     *   franja_tarde_desde: string,
+     *   por_dia: list<array{fecha: string, manana: list<array<string, mixed>>, tarde: list<array<string, mixed>>}>,
+     *   total: int
+     * }
+     */
+    public static function buildOfferFromPlano(array $plano, string $franjaTardeDesde, int $limiteReported, int $maxDiasReported): array
+    {
         $porFecha = [];
         foreach ($plano as $slot) {
+            if (!is_array($slot)) {
+                continue;
+            }
             // Normalizar `slot_id` PES-first cuando sea posible.
             if (!isset($slot['slot_id']) || !is_string($slot['slot_id']) || trim($slot['slot_id']) === '') {
                 $fechaSlot = (string) ($slot['fecha'] ?? '');
@@ -43,11 +64,14 @@ class TurnoSlotOfferService
                     $slot['slot_id'] = 'pes:' . $idPes . '|' . $fechaSlot . '|' . $horaSlot;
                 }
             }
-            $fecha = $slot['fecha'];
+            $fecha = isset($slot['fecha']) ? (string) $slot['fecha'] : '';
+            if ($fecha === '') {
+                continue;
+            }
             if (!isset($porFecha[$fecha])) {
                 $porFecha[$fecha] = ['manana' => [], 'tarde' => []];
             }
-            $hora = $slot['hora'];
+            $hora = isset($slot['hora']) ? (string) $slot['hora'] : '';
             if (self::esManana($hora, $franjaTardeDesde)) {
                 $porFecha[$fecha]['manana'][] = $slot;
             } else {
@@ -64,7 +88,6 @@ class TurnoSlotOfferService
             ];
         }
 
-        // Filtros simples para clientes que muestran chips (mobile/web).
         $dias = [];
         foreach (array_keys($porFecha) as $f) {
             $dias[] = [
@@ -78,8 +101,8 @@ class TurnoSlotOfferService
         ];
 
         return [
-            'limite' => $limite,
-            'max_dias_busqueda' => $maxDias,
+            'limite' => max(1, $limiteReported),
+            'max_dias_busqueda' => max(1, $maxDiasReported),
             'franja_tarde_desde' => $franjaTardeDesde,
             'por_dia' => $porDia,
             'available_filters' => [

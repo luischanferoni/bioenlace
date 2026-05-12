@@ -16,4 +16,6 @@ La conversación se guía por:
 - `globals/` — ejemplos / contratos reutilizables para un futuro loader (p. ej. `location_acquisition.yaml`).
 - `intents/` — manifiestos por intent_id:
   - `turnos.crear-como-paciente.yaml`
+  - `turnos.cancelar-como-paciente-flow.yaml`
+  - `turnos.modificar-como-paciente-flow.yaml`
   - (otros intents conversacionales según el catálogo de acciones UI disponibles)

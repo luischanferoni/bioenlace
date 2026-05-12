@@ -1,0 +1,39 @@
+intent_id: turnos.cancelar-como-paciente-flow
+version: 1
+
+action_name: "Cancelar turno"
+description: "Autogestión: elegís un turno pendiente y confirmás la cancelación."
+rbac_route: "/api/turnos/cancelar-como-paciente"
+keywords:
+  - cancelar turno
+  - anular turno
+  - dar de baja turno
+  - no puedo ir al turno
+
+intent_semantics:
+  goal: >-
+    Cancelar un turno propio que siga pendiente.
+  how: >-
+    Se lista turnos pendientes, elegís uno y confirmás en la pantalla de cancelación.
+  preconditions:
+    - Turno en estado pendiente y perteneciente al paciente autenticado.
+  outcome:
+    - Turno cancelado con motivo de paciente (salvo que elijas otro motivo permitido en la UI).
+
+subintents:
+  - id: select_turno
+    assistant_text: "Turno a cancelar"
+    provides:
+      - draft.id
+    next: confirm_cancel
+    open_ui:
+      action_id: turnos.elegir-pendiente-como-paciente
+
+  - id: confirm_cancel
+    assistant_text: "Confirmación"
+    requires:
+      - draft.id
+    submit:
+      action_id: turnos.cancelar-como-paciente
+      params:
+        id: "draft.id"

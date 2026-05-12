@@ -1,5 +1,6 @@
 {
   "ui_type": "ui_json",
+  "title": "Cancelar turno",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
@@ -12,9 +13,9 @@
       "fields": [
         {
           "name": "id",
-          "label": "ID turno",
-          "type": "text",
-          "required": true
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
         },
         {
           "name": "estado_motivo",
@@ -29,10 +30,10 @@
         },
         {
           "name": "canal",
-          "label": "Canal",
-          "type": "text",
+          "type": "hidden",
           "required": false,
-          "default": "app"
+          "default": "app",
+          "include_in_submit": true
         }
       ]
     }

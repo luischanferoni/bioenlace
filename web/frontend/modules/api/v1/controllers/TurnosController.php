@@ -102,6 +102,124 @@ class TurnosController extends BaseController
     }
 
     /**
+     * Lista embebible (`ui_json`) de turnos pendientes del paciente para elegir uno (cancelar / reprogramar).
+     *
+     * GET|POST /api/v1/turnos/elegir-pendiente-como-paciente
+     * Parámetros opcionales: fecha_desde, fecha_hasta (mismo criterio que {@see self::listarComoPacienteData}).
+     *
+     * @action_name Elegir turno pendiente (paciente)
+     * @entity Turnos
+     * @tags views, ui, turnos, paciente, autogestión
+     * @keywords elegir mi turno, cancelar turno, cambiar turno, reprogramar
+     */
+    public function actionElegirPendienteComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'elegir-pendiente-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
+            $params = array_merge($req->get(), $req->post());
+            $data = $this->listarComoPacienteData($params);
+            $items = [];
+            foreach ($data['turnos'] as $t) {
+                if (!is_array($t)) {
+                    continue;
+                }
+                $id = isset($t['id']) ? (int) $t['id'] : 0;
+                if ($id <= 0) {
+                    continue;
+                }
+                $fecha = isset($t['fecha']) ? (string) $t['fecha'] : '';
+                $hora = isset($t['hora']) ? (string) $t['hora'] : '';
+                $svc = isset($t['servicio']) ? (string) $t['servicio'] : '';
+                $prof = isset($t['profesional']) ? (string) $t['profesional'] : '';
+                $parts = array_filter([$fecha !== '' && $hora !== '' ? "$fecha $hora" : '', $svc, $prof]);
+                $label = implode(' · ', $parts);
+                if ($label === '') {
+                    $label = 'Turno #' . $id;
+                }
+                $items[] = [
+                    'id' => (string) $id,
+                    'name' => $label,
+                ];
+            }
+            $out = UiScreenService::withListBlockItems($out, $items);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Horarios alternativos para reprogramar, presentados como bloques `list` (misma UX que slots-disponibles).
+     *
+     * GET|POST /api/v1/turnos/slots-reprogramar-como-paciente
+     * Obligatorio: id (id_turnos del turno a mover). Opcionales: limit, max_dias, mismo_profesional, franja_tarde_desde.
+     *
+     * @action_name Elegir nuevo horario (reprogramar paciente)
+     * @entity Turnos
+     * @tags views, ui, turnos, paciente, reprogramar
+     * @keywords cambiar horario turno, mover cita, reprogramar turno
+     */
+    public function actionSlotsReprogramarComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'slots-reprogramar-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        $raw = $req->get('raw') ?: $req->post('raw');
+        $wantsRaw = $raw === '1' || $raw === 1 || $raw === true;
+
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
+            $params = array_merge($req->get(), $req->post());
+            $tid = $this->resolveTurnoId(null, $params, $req);
+            if (!$tid) {
+                throw new BadRequestHttpException('id del turno requerido');
+            }
+            $payload = $this->buildSlotsAlternativosPayload($tid, $params);
+            if ($wantsRaw) {
+                return array_merge(['success' => true], $payload);
+            }
+            $turno = Turno::findOne($tid);
+            $idServicio = $turno ? (int) ($turno->id_servicio_asignado ?? 0) : 0;
+            $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+            $p = Yii::$app->params['turnosPaciente'] ?? [];
+            $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
+            $limiteRaw = $req->get('limite') ?: $req->post('limite');
+            $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
+            $limite = max(1, min($maxCliente, $limite));
+            $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
+            $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
+            if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
+                $franja = $defaults['franja_tarde_desde'];
+            }
+            $plano = isset($payload['slots']) && is_array($payload['slots']) ? $payload['slots'] : [];
+            $grouped = TurnoSlotOfferService::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
+            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio);
+            if ($blocks !== []) {
+                $out['blocks'] = $blocks;
+            } else {
+                $out = UiScreenService::withListBlockItems($out, []);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Respuesta JSON agenda del día (profesional). Usado por {@see ProfesionalAgendaController::actionDia}.
      *
      * @return array<string, mixed>

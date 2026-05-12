@@ -1,0 +1,22 @@
+{
+  "ui_type": "ui_json",
+  "title": "Elegir servicio",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "default",
+      "selection": { "mode": "single" },
+      "chips": [],
+      "draft_field": "id_servicio_asignado",
+      "empty_message": "No hay servicios que acepten turnos por autogestión en este momento. Consultá con tu centro de salud o administración.",
+      "item": { "kind": "servicio", "id_field": "id", "label_field": "name" },
+      "items": []
+    }
+  ]
+}

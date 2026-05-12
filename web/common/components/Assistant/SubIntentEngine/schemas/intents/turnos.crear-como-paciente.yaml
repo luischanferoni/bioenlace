@@ -39,7 +39,7 @@ subintents:
       - draft.id_servicio_asignado
     next: select_efector
     open_ui:
-      action_id: servicios.elegir
+      action_id: servicios.elegir-acepta-turnos
 
   - id: select_efector
     assistant_text: "Centro de salud"

@@ -56,5 +56,45 @@ class ServiciosController extends BaseController
 
         return $ui;
     }
+
+    /**
+     * View embebible: elegir servicio (solo catálogo con {@see Servicio::acepta_turnos} = SI).
+     *
+     * GET|POST /api/v1/servicios/elegir-acepta-turnos
+     *
+     * @action_name Elegir servicio para turnos
+     * @entity Servicios
+     * @tags views, ui, servicio, turnos
+     * @keywords elegir servicio turnos, reservar turno, servicio acepta agenda
+     */
+    public function actionElegirAceptaTurnos(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'servicios',
+            'elegir-acepta-turnos',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $rows = Servicio::find()
+                ->where(['acepta_turnos' => 'SI'])
+                ->orderBy(['nombre' => SORT_ASC])
+                ->all();
+            $items = [];
+            foreach ($rows as $s) {
+                $items[] = [
+                    'id' => (string) (int) $s->id_servicio,
+                    'name' => (string) $s->nombre,
+                ];
+            }
+            $ui = UiScreenService::withListBlockItems($ui, $items);
+        }
+
+        return $ui;
+    }
 }
 

@@ -37,29 +37,25 @@ trait AgendaHorarioSlotsTrait
         if ($duracion > 0) {
             $minutosXPaciente = $duracion;
             $agregoSegundos = false;
-            if (!is_null($this->cupo_pacientes) && (int) $this->cupo_pacientes > 0) {
-                $cupoPacientes = (int) $this->cupo_pacientes;
-            } else {
-                $cupoPacientes = static::estimateSlotCapacityFromHorarios($horariosAgenda, $duracion);
-            }
         } elseif (is_null($this->cupo_pacientes) || $this->cupo_pacientes == 0) {
             $minutosXPaciente = 15;
             $agregoSegundos = false;
-            $cupoPacientes = count($horariosAgenda) * 5;
         } else {
             $minutosXPaciente = 60 * count($horariosAgenda) / $this->cupo_pacientes;
             $agregoSegundos = ($minutosXPaciente - (int) $minutosXPaciente) >= 0.5;
-            $cupoPacientes = $this->cupo_pacientes;
         }
 
-        return static::crearSlotsDesdeHorarios($horariosAgenda, $cupoPacientes, $minutosXPaciente, $agregoSegundos);
+        return static::crearSlotsDesdeHorarios($horariosAgenda, $minutosXPaciente, $agregoSegundos);
     }
 
     /**
+     * Genera la grilla HH:MM de cada intervalo contiguo de horas en agenda (hasta fin del último bloque + 60 min).
+     * No limita por cupo de pacientes de la agenda: ese dato es de negocio; truncar la grilla ocultaba franjas (p. ej. tarde).
+     *
      * @param int[] $horariosAgenda
      * @return string[]
      */
-    public static function crearSlotsDesdeHorarios(array $horariosAgenda, $cupoPacientes, $minutosXPaciente, $agregoSegundos)
+    public static function crearSlotsDesdeHorarios(array $horariosAgenda, $minutosXPaciente, $agregoSegundos)
     {
         $intervalos = [];
         $intervaloActual = [];
@@ -80,19 +76,21 @@ trait AgendaHorarioSlotsTrait
         }
         $slots = [];
         $minutosXPaciente = (int) $minutosXPaciente;
+        $safetyMaxPorIntervalo = 10000;
         foreach ($intervalos as $horarios) {
             $inicio = new \DateTime(sprintf('%02d:00', $horarios[0]));
             $ultHora = new \DateTime(sprintf('%02d:00', $horarios[count($horarios) - 1]));
             $fin = clone $ultHora;
             $fin->modify('+60 minutes');
-            while ($inicio < $fin && $cupoPacientes > 0) {
+            $iter = 0;
+            while ($inicio < $fin && $iter < $safetyMaxPorIntervalo) {
+                $iter++;
                 $slots[] = $inicio->format('H:i');
                 if ($agregoSegundos) {
                     $inicio->modify("+{$minutosXPaciente} minutes 30 seconds");
                 } else {
                     $inicio->modify("+{$minutosXPaciente} minutes");
                 }
-                $cupoPacientes--;
             }
         }
 

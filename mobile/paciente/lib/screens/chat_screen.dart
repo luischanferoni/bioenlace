@@ -1060,7 +1060,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _executeActionWithParams(String actionId, Map<String, dynamic> params) async {
     // Legacy: antes se posteaba a /crud/ejecutar-accion. Ese endpoint ya no existe.
-    // La ejecución/submit ahora ocurre dentro de la pantalla UI JSON (UiJsonWizardScreen).
+    // La ejecución/submit ahora ocurre dentro del cliente UI JSON (UiJsonScreen).
     _showErrorSnackbar('Submit legacy no soportado. Abrí la pantalla desde client_open.');
   }
 
@@ -1181,91 +1181,130 @@ class _ChatScreenState extends State<ChatScreen> {
                 final content = message['content'] as String;
                 final actions = message['actions'] as List<Map<String, dynamic>>?;
                 final suggestedQuery = message['suggested_query'] as String?;
-                final timestamp = message['timestamp'] as DateTime;
                 final inlineUi = message['inline_ui'];
-                // final needsUserInput = message['needs_user_input'] as bool? ?? false;
-                // final actionAnalysisRaw = message['action_analysis'];
-                // final actionAnalysis = (actionAnalysisRaw is Map)
-                //     ? Map<String, dynamic>.from(actionAnalysisRaw)
-                //     : null;
+                final hasEmbeddedUi = !isUser && inlineUi is Map;
 
                 // Verificar si hay form_config para ocultar el mensaje de chat
                 final hasFormConfig = message['form_config'] != null;
-                
+                final hasActionsRow =
+                    !isUser && actions != null && actions.isNotEmpty;
+                final hasRemediationRow = !isUser &&
+                    message['remediation'] is List &&
+                    (message['remediation'] as List).isNotEmpty;
+                /// Separación antes de tabs/UI inline: el antiguo SizedBox(12) era el hueco fijo
+                /// que no se podía quitar con padding del texto ni de los chips.
+                final inlineUiLeadGapHeight = (!hasFormConfig &&
+                        !isUser &&
+                        inlineUi is Map &&
+                        hasEmbeddedUi &&
+                        content.isNotEmpty &&
+                        !hasActionsRow &&
+                        !hasRemediationRow)
+                    ? 4.0
+                    : 12.0;
+
                 return Column(
                   children: [
                     // Mensaje (solo mostrar si no hay form_config)
-                    if (!hasFormConfig)
-                      Align(
-                        alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                            vertical: 4.0,
-                            horizontal: 16.0,
-                          ),
-                          padding: const EdgeInsets.all(16.0),
-                          decoration: BoxDecoration(
-                            color: isUser
-                                ? cs.primary
-                                : cs.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(16.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: cs.shadow.withValues(alpha: 0.12),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (!isUser)
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.smart_toy,
-                                      size: 16,
-                                      color: cs.primary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'BioEnlace',
-                                      style: tt.labelLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: cs.primary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
+                    if (!hasFormConfig) ...[
+                      if (isUser)
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 4.0,
+                              horizontal: 16.0,
+                            ),
+                            padding: const EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: cs.primary,
+                              borderRadius: BorderRadius.circular(16.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: cs.shadow.withValues(alpha: 0.12),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
-                              if (!isUser) const SizedBox(height: 4),
-                              if (content.isNotEmpty)
-                                Text(
-                                  content,
-                                  style: tt.bodyMedium?.copyWith(
-                                    color: isUser ? cs.onPrimary : cs.onSurface,
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (content.isNotEmpty)
+                                  Text(
+                                    content,
+                                    style: tt.titleMedium?.copyWith(
+                                      color: cs.onPrimary,
+                                    ),
                                   ),
-                                ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')}',
-                                style: tt.labelSmall?.copyWith(
-                                  fontSize: 10,
-                                  color: isUser
-                                      ? cs.onPrimary.withValues(alpha: 0.72)
-                                      : cs.onSurfaceVariant,
-                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else if (hasEmbeddedUi)
+                        if (content.isNotEmpty)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 16.0,
+                                right: 16.0,
+                                top: 0,
+                                bottom: 0,
                               ),
-                            ],
+                              child: Text(
+                                content,
+                                style: tt.titleMedium?.copyWith(color: cs.onSurface),
+                              ),
+                            ),
+                          )
+                      else
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.fromLTRB(
+                              16.0,
+                              4.0,
+                              0,
+                              0.0,
+                            ),
+                            padding: const EdgeInsets.all(16.0),
+                            decoration: BoxDecoration(
+                              color: cs.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(16.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: cs.shadow.withValues(alpha: 0.12),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (content.isNotEmpty)
+                                  Text(
+                                    content,
+                                    style: tt.titleMedium?.copyWith(
+                                      color: cs.onSurface,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                    ],
                     // Acciones si existen
                     if (!isUser && actions != null && actions.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              padding: const EdgeInsets.only(
+                                left: 16.0,
+                                right: 16.0,
+                                top: 0,
+                                bottom: 0,
+                              ),
                         child: Wrap(
                           spacing: 8,
                           runSpacing: 8,
@@ -1328,10 +1367,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                     // Inline UI JSON embebida en chat
                     if (!isUser && inlineUi is Map) ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: inlineUiLeadGapHeight),
                       if (message['flow_tabs'] is List && (message['flow_tabs'] as List).length >= 2) ...[
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 0, bottom: 0),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Wrap(
@@ -1362,9 +1401,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         const SizedBox(height: 8),
                       ],
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 0.0, bottom: 10),
                         child: Align(
-                          alignment: Alignment.centerLeft,
+                          alignment: Alignment.topLeft,
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
                               maxWidth: MediaQuery.of(context).size.width - 32,
@@ -1372,8 +1411,8 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: AnimatedSize(
                               duration: const Duration(milliseconds: 180),
                               curve: Curves.easeOut,
-                              alignment: Alignment.topLeft,
-                              child: UiJsonWizardScreen(
+                              alignment: Alignment.center,
+                              child: UiJsonScreen(
                               key: ValueKey(
                                 '${inlineUi['api_absolute_url']?.toString() ?? ''}|${inlineUi['route']?.toString() ?? ''}',
                               ),
@@ -1746,7 +1785,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (!isUser && suggestedQuery != null && suggestedQuery.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.only(
+                          left: 16.0,
+                          right: 16.0,
+                          top: 0,
+                          bottom: 0,
+                        ),
                         child: OutlinedButton.icon(
                           onPressed: () {
                             _messageController.text = suggestedQuery;
@@ -1781,7 +1825,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           final idConsultaInt = idConsulta is int ? idConsulta : (idConsulta is num ? idConsulta.toInt() : null);
                           if (idConsultaInt == null) return const SizedBox.shrink();
                           return Padding(
-                            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0),
+                            padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 0.0),
                             child: ActionChip(
                               avatar: Icon(Icons.edit_note, size: 18, color: cs.primary),
                               label: const Text('Cargar motivos de la consulta'),

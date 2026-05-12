@@ -184,7 +184,7 @@ class _AccionesScreenState extends State<AccionesScreen> {
                                         final api = co['api'];
                                         final route = api is Map ? api['route']?.toString() : null;
                                         if (route != null && route.isNotEmpty) {
-                                          final w = UiJsonWizardScreen(
+                                          final w = UiJsonScreen(
                                             apiAbsoluteUrl: resolveApiAbsoluteUrl(route),
                                             authToken: widget.authToken,
                                             appClient: 'bioenlace-medico',

@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
@@ -26,6 +28,75 @@ String _humanizeExceptionMessage(Object e) {
   // Dart suele formatear Exception como "Exception: <msg>" (o a veces "Exception. <msg>").
   s = s.replaceFirst(RegExp(r'^Exception\s*[:.]\s*', caseSensitive: false), '');
   return s.trim();
+}
+
+/// Web/desktop: arrastre con ratón y rueda/trackpad en listas horizontales anidadas (p. ej. chat).
+class _UiJsonWebScrollBehavior extends MaterialScrollBehavior {
+  const _UiJsonWebScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.stylus,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.unknown,
+      };
+}
+
+/// Scroll horizontal con [ScrollController] propio + rueda (dx o Shift+dy), para Flutter web.
+class _HorizontalScrollInteraction extends StatefulWidget {
+  const _HorizontalScrollInteraction({
+    required this.height,
+    required this.builder,
+  });
+
+  final double height;
+  final Widget Function(BuildContext context, ScrollController controller) builder;
+
+  @override
+  State<_HorizontalScrollInteraction> createState() => _HorizontalScrollInteractionState();
+}
+
+class _HorizontalScrollInteractionState extends State<_HorizontalScrollInteraction> {
+  late final ScrollController _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onPointerSignal(PointerSignalEvent event) {
+    if (event is! PointerScrollEvent) return;
+    if (!_controller.hasClients) return;
+    final maxExtent = _controller.position.maxScrollExtent;
+    final shift = HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftLeft) ||
+        HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.shiftRight);
+    double delta = 0;
+    if (event.scrollDelta.dx != 0) {
+      delta = -event.scrollDelta.dx;
+    } else if (shift && event.scrollDelta.dy != 0) {
+      delta = -event.scrollDelta.dy;
+    }
+    if (delta == 0) return;
+    final next = (_controller.offset + delta).clamp(0.0, maxExtent);
+    _controller.jumpTo(next.toDouble());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScrollConfiguration(
+      behavior: const _UiJsonWebScrollBehavior(),
+      child: Listener(
+        onPointerSignal: _onPointerSignal,
+        child: SizedBox(
+          height: widget.height,
+          child: widget.builder(context, _controller),
+        ),
+      ),
+    );
+  }
 }
 
 /// Resuelve ruta devuelta por el backend (`/api/v1/...`) contra [AppConfig.apiUrl].
@@ -143,11 +214,11 @@ List<List<Map<String, dynamic>>> _splitFieldsIntoBootstrapRows(
   return rows;
 }
 
-/// Wizard mínimo para respuestas `kind: ui_definition` (GET descriptor + POST submit).
+/// Cliente UI JSON para respuestas `kind: ui_definition` (GET descriptor + POST submit).
 ///
 /// Los `custom_widget` se resuelven **solo en el cliente** según `widget_id` (p. ej. `weekly_scheduler`).
 /// No se descargan implementaciones desde la web.
-class UiJsonWizardScreen extends StatefulWidget {
+class UiJsonScreen extends StatefulWidget {
   final String apiAbsoluteUrl;
   final String? authToken;
 
@@ -169,7 +240,7 @@ class UiJsonWizardScreen extends StatefulWidget {
   /// Embebido: cancelar sin POST. Solo tiene efecto en bloques **`fields`** (no en listas horizontales).
   final VoidCallback? onCancel;
 
-  const UiJsonWizardScreen({
+  const UiJsonScreen({
     Key? key,
     required this.apiAbsoluteUrl,
     this.authToken,
@@ -182,10 +253,10 @@ class UiJsonWizardScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<UiJsonWizardScreen> createState() => _UiJsonWizardScreenState();
+  State<UiJsonScreen> createState() => _UiJsonScreenState();
 }
 
-class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
+class _UiJsonScreenState extends State<UiJsonScreen> {
   bool _loading = true;
   String? _error;
   Map<String, dynamic>? _root;
@@ -598,11 +669,14 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
                 return ValueListenableBuilder<String>(
                   valueListenable: n,
                   builder: (_, id, __) {
-                    return SizedBox(
+                    return _HorizontalScrollInteraction(
                       height: 96,
-                      child: ListView.separated(
+                      builder: (_, scrollController) => ListView.separated(
+                        controller: scrollController,
                         key: PageStorageKey<String>('ui_json.autocomplete:$cacheKey'),
                         scrollDirection: Axis.horizontal,
+                        primary: false,
+                        physics: const BouncingScrollPhysics(),
                         itemCount: show.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 10),
                         itemBuilder: (_, idx) {
@@ -801,7 +875,12 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
     if (_root == null || _root!['ui_type']?.toString() != 'ui_json') {
       return wrap(
         title: widget.title ?? 'UI',
-        body: const Center(child: Text('UI inválida')),
+        body: widget.embedded
+            ? const Padding(
+                padding: EdgeInsets.all(12),
+                child: Text('UI inválida'),
+              )
+            : const Center(child: Text('UI inválida')),
       );
     }
 
@@ -847,10 +926,13 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
             Text(title, style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
           ],
-          SizedBox(
+          _HorizontalScrollInteraction(
             height: listRowHeight,
-            child: ListView.builder(
+            builder: (ctx, scrollController) => ListView.builder(
+              controller: scrollController,
               scrollDirection: Axis.horizontal,
+              primary: false,
+              physics: const BouncingScrollPhysics(),
               padding: EdgeInsets.zero,
               itemCount: items.length,
               itemBuilder: (context, idx) {
@@ -1040,23 +1122,33 @@ class _UiJsonWizardScreenState extends State<UiJsonWizardScreen> {
       );
     }
 
+    const blocksPadding = EdgeInsets.fromLTRB(12, 10, 12, 0);
+    final blocksColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final bRaw in blocks) ...[
+          if (bRaw is Map) ...[
+            if (bRaw['kind']?.toString() == 'list') renderListBlock(Map<String, dynamic>.from(bRaw)),
+            if (bRaw['kind']?.toString() == 'fields') renderFieldsBlock(Map<String, dynamic>.from(bRaw)),
+            const SizedBox(height: 16),
+          ],
+        ],
+      ],
+    );
+
     final body = _loading
         ? (widget.embedded ? embeddedLoading() : const Center(child: CircularProgressIndicator()))
-        : SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final bRaw in blocks) ...[
-                  if (bRaw is Map) ...[
-                    if (bRaw['kind']?.toString() == 'list') renderListBlock(Map<String, dynamic>.from(bRaw)),
-                    if (bRaw['kind']?.toString() == 'fields') renderFieldsBlock(Map<String, dynamic>.from(bRaw)),
-                    const SizedBox(height: 16),
-                  ],
-                ],
-              ],
-            ),
-          );
+        : widget.embedded
+            // Chat embebido: alto = contenido (sin hueco inferior); el scroll lo hace el ListView padre.
+            ? Padding(
+                padding: blocksPadding,
+                child: blocksColumn,
+              )
+            : SingleChildScrollView(
+                padding: blocksPadding,
+                child: blocksColumn,
+              );
 
     return wrap(title: screenTitle, body: body);
   }

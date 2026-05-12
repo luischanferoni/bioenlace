@@ -30,7 +30,7 @@ Documento de referencia para convenciones de nombres, URLs públicas y permisos 
 - **URL:** `GET|POST /api/v1/turnos/slots-disponibles-como-paciente`
 - **Permiso webvimark:** `/api/turnos/slots-disponibles-como-paciente` (registrar y asignar al rol paciente u otros que correspondan).
 - **Límites por defecto:** clave `turnosPaciente` en `common/config/params.php` (`slots_oferta_max`, `slots_busqueda_max_dias`, `franja_tarde_desde`, `slots_oferta_max_cliente`).
-- **UI JSON:** el servidor puede devolver **varios bloques** `kind: list` (uno por día y franja mañana/tarde). Cada bloque tiene `title` (ej. `Hoy · Mañana`, `jueves 15/05 · Tarde`) e `items` con `id` = token `pes:…`, `label` = hora (`HH:MM`) y `meta` compacta (`fecha`, `hora`, `id_profesional_efector_servicio`, `franja`; `servicio` solo si difiere del `id_servicio` pedido). La plantilla base está en `slots-disponibles-como-paciente.json` (sin `chips`; el listado se arma en runtime).
+- **UI JSON:** el servidor puede devolver **varios bloques** `kind: list` (uno por día y franja). Cada bloque tiene `title` (ej. `Hoy · por la mañana`, `jueves 15/05 · por la tarde`) e `items` con `id` = token `pes:…`, `label` = hora (`HH:MM`) y `meta` compacta (`fecha`, `hora`, `id_profesional_efector_servicio`, `franja`; `servicio` solo si difiere del `id_servicio` pedido). La plantilla base está en `slots-disponibles-como-paciente.json` (sin `chips`; el listado se arma en runtime).
 
 ## Migración de permisos
 

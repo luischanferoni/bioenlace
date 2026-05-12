@@ -55,11 +55,11 @@ final class TurnoSlotOfferUiPresenter
 
             $bMan = self::itemsForFranja($fecha, 'manana', $manana, $idServicioCriterio);
             if ($bMan !== []) {
-                $blocks[] = self::baseListBlock($fecha . '-manana', $dayHead . ' · Mañana', $bMan);
+                $blocks[] = self::baseListBlock($fecha . '-manana', $dayHead . ' · por la mañana', $bMan);
             }
             $bTar = self::itemsForFranja($fecha, 'tarde', $tarde, $idServicioCriterio);
             if ($bTar !== []) {
-                $blocks[] = self::baseListBlock($fecha . '-tarde', $dayHead . ' · Tarde', $bTar);
+                $blocks[] = self::baseListBlock($fecha . '-tarde', $dayHead . ' · por la tarde', $bTar);
             }
         }
 

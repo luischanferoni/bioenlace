@@ -1809,7 +1809,7 @@
                                 + '</div></div>');
                         }
                         if (wantsFranja) {
-                            const franjas = [{ v: 'manana', l: 'Mañana' }, { v: 'tarde', l: 'Tarde' }];
+                            const franjas = [{ v: 'manana', l: 'Por la mañana' }, { v: 'tarde', l: 'Por la tarde' }];
                             chipsHtml.push('<div class="mb-2"><div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">'
                                 + franjas.map(fr => '<button type="button" class="btn btn-sm ' + (fr.v === selectedFranja ? 'btn-primary' : 'btn-outline-primary') + '" data-ac-chip-franja="' + id + '" data-value="' + fr.v + '">' + fr.l + '</button>').join('')
                                 + '</div></div>');
@@ -1834,12 +1834,12 @@
                                     });
                                 }
                                 if (!selectedFranja) {
-                                    add(d.manana, 'Mañana');
-                                    add(d.tarde, 'Tarde');
+                                    add(d.manana, 'Por la mañana');
+                                    add(d.tarde, 'Por la tarde');
                                 } else if (selectedFranja === 'manana') {
-                                    add(d.manana, 'Mañana');
+                                    add(d.manana, 'Por la mañana');
                                 } else {
-                                    add(d.tarde, 'Tarde');
+                                    add(d.tarde, 'Por la tarde');
                                 }
                             });
                             renderItems();

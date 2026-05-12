@@ -24,7 +24,7 @@ return [
         /** Hora límite inclusive: &lt; este HH:MM → franja `manana`, ≥ → `tarde` */
         'franja_tarde_desde' => '13:00',
         /** Tope duro si el cliente envía `limite` (anti-abuso) */
-        'slots_oferta_max_cliente' => 60,
+        'slots_oferta_max_cliente' => 400,
     ],
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en /api/v1/pacientes.

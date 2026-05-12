@@ -73,8 +73,8 @@ class TurnoSlotOfferService
             ];
         }
         $franjas = [
-            ['id' => 'manana', 'label' => 'Mañana'],
-            ['id' => 'tarde', 'label' => 'Tarde'],
+            ['id' => 'manana', 'label' => 'Por la mañana'],
+            ['id' => 'tarde', 'label' => 'Por la tarde'],
         ];
 
         return [

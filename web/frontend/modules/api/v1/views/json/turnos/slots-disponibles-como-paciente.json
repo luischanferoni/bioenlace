@@ -12,11 +12,6 @@
       "kind": "list",
       "id": "default",
       "selection": { "mode": "single" },
-      "chips": [
-        { "id": "next_available", "label": "Próximo disponible" },
-        { "id": "morning", "label": "Mañana" },
-        { "id": "afternoon", "label": "Tarde" }
-      ],
       "draft_field": "slot_id",
       "item": { "kind": "slot", "id_field": "id", "label_field": "label" },
       "items": []

@@ -75,6 +75,70 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Buenas noches';
   }
 
+  /// Quita el documento al final (`"Apellido, Nombre - 12345678"` → `"Apellido, Nombre"`).
+  String _profesionalSinDni(String? raw) {
+    if (raw == null || raw.isEmpty) return '';
+    final s = raw.trim();
+    const sep = ' - ';
+    final i = s.lastIndexOf(sep);
+    if (i <= 0) return s;
+    final tail = s.substring(i + sep.length).trim();
+    if (RegExp(r'^[0-9.\-\s]+$').hasMatch(tail)) {
+      return s.substring(0, i).trim();
+    }
+    return s;
+  }
+
+  static const _weekdaysEs = [
+    'domingo',
+    'lunes',
+    'martes',
+    'miércoles',
+    'jueves',
+    'viernes',
+    'sábado',
+  ];
+
+  /// Fecha relativa / día en español (misma idea que slots en API).
+  String _fechaAmigable(String? fechaYmd) {
+    if (fechaYmd == null || fechaYmd.isEmpty) return '';
+    final parts = fechaYmd.split('-');
+    if (parts.length != 3) return fechaYmd;
+    final y = int.tryParse(parts[0]);
+    final mo = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || mo == null || d == null) return fechaYmd;
+    final slot = DateTime(y, mo, d);
+    final today = DateTime.now();
+    final t0 = DateTime(today.year, today.month, today.day);
+    final s0 = DateTime(slot.year, slot.month, slot.day);
+    final diffDays = s0.difference(t0).inDays;
+    if (diffDays == 0) return 'Hoy';
+    if (diffDays == 1) return 'Mañana';
+    if (diffDays == 2) return 'Pasado mañana';
+    final name = _weekdaysEs[slot.weekday % 7];
+    return '$name ${d.toString().padLeft(2, '0')}/${mo.toString().padLeft(2, '0')}';
+  }
+
+  /// Hora `HH:mm` sin segundos (p. ej. `08:30:00` → `08:30`).
+  String _horaSinSegundos(String? hora) {
+    if (hora == null || hora.trim().isEmpty) return '';
+    final t = hora.trim();
+    final idx = t.indexOf(':');
+    if (idx < 0) return t;
+    final hStr = t.substring(0, idx);
+    final rest = t.substring(idx + 1);
+    final idx2 = rest.indexOf(':');
+    final minStr = idx2 >= 0 ? rest.substring(0, idx2) : rest;
+    final h = int.tryParse(hStr);
+    final m = int.tryParse(minStr);
+    if (h != null && m != null) {
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+    }
+    if (t.length >= 5) return t.substring(0, 5);
+    return t;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = context.pacienteColors;
@@ -170,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              '${t['fecha']} · ${t['hora']}',
+              '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
               style: tt.titleMedium,
             ),
             if (t['servicio'] != null)
@@ -180,7 +244,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             if (t['profesional'] != null)
               Text(
-                'Con: ${t['profesional']}',
+                'Con: ${_profesionalSinDni(t['profesional']?.toString())}',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             if (puedeCargarMotivos) ...[
@@ -197,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         authToken: widget.authToken,
                         userId: widget.userId,
                         userName: widget.userName,
-                        titulo: 'Motivos · ${t['fecha']} ${t['hora']}',
+                        titulo: 'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
                       ),
                     ),
                   );

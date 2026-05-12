@@ -63,7 +63,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 |------|------------------------|
 | **Asistente / SubIntentEngine** | Intents YAML y flows pasan `id_profesional_efector_servicio` donde corresponde; hidratación de drafts (servicios alta PES, hydrators). |
 | **API turnos / agenda** | `TurnosController` / `ProfesionalAgendaController`: **`id_profesional_efector_servicio`**; **`id_rr_hh`** como sinónimo en query/body donde aplique; `slots-disponibles-como-paciente` y ocupación del día resuelven PES desde `id_rr_hh` si hace falta; cancelación masiva del día acepta PES explícito o identificación vía `id_rr_hh`. |
-| **Contrato slots (paciente/staff)** | `turnos/slots-disponibles-como-paciente`: `slot_id` (`pes:<id>|fecha|hora`); modo `raw=1` devuelve `por_dia` + `available_filters` para widgets/autocomplete. |
+| **Contrato slots (paciente/staff)** | `turnos/slots-disponibles-como-paciente`: `slot_id` (`pes:<id>|fecha|hora`); respuesta `ui_json` con **varios bloques `list`** (uno por día+franja mañana/tarde), `title` amigable y `label` de ítem = hora; `meta` sin repetir `slot_id`; modo `raw=1` devuelve `por_dia` + `available_filters` (labels de día ya amigables). |
 | **Sesión** | `SiteController` / `SesionOperativaService`: fijar PES cuando solo había RRHH; documentación de endpoint operativo. |
 | **Consulta (acceso y motivos)** | `ConsultaAccessService`; controladores API/web de motivos y chat; `Consulta::resolveIdRrhhParaMotivos()`; `ConsultaTrait::guardarConsulta` asigna PES desde sesión en altas. |
 | **Web turnos** | `TurnosController::actionEventos`: prioridad `id_profesional_efector_servicio`; si falta, `id_rr_hh` + servicio resuelven PES (`resolverIdPesDesdePersonaServicioYEfector`). |

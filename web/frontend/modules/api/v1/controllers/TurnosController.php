@@ -17,6 +17,7 @@ use common\components\UiDefinitionTemplateManager;
 use common\components\UiScreenService;
 use common\components\Services\Turnos\TurnoSlotFinder;
 use common\components\Services\Turnos\TurnoSlotOfferService;
+use common\components\Services\Turnos\TurnoSlotOfferUiPresenter;
 use common\components\Services\Turnos\TurnoPersistService;
 use common\components\Services\Turnos\TurnoCreacionContext;
 use common\components\Services\Turnos\TurnoLifecycleService;
@@ -535,7 +536,7 @@ class TurnosController extends BaseController
         $raw = $req->get('raw') ?: $req->post('raw');
         $wantsRaw = $raw === '1' || $raw === 1 || $raw === true;
 
-        // Inyectar listado de slots como `items` para UI JSON inline.
+        // UI JSON inline: varios bloques `list` (día + franja), ver {@see TurnoSlotOfferUiPresenter}.
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
             $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
             if (!$idServicio) {
@@ -600,46 +601,12 @@ class TurnosController extends BaseController
                 return array_merge(['success' => true], $grouped);
             }
 
-            $items = [];
-            $porDia = isset($grouped['por_dia']) && is_array($grouped['por_dia']) ? $grouped['por_dia'] : [];
-            foreach ($porDia as $row) {
-                if (!is_array($row)) {
-                    continue;
-                }
-                $fecha = isset($row['fecha']) ? (string) $row['fecha'] : '';
-                $manana = isset($row['manana']) && is_array($row['manana']) ? $row['manana'] : [];
-                $tarde = isset($row['tarde']) && is_array($row['tarde']) ? $row['tarde'] : [];
-                foreach (array_merge($manana, $tarde) as $slot) {
-                    if (!is_array($slot)) {
-                        continue;
-                    }
-                    $hora = isset($slot['hora']) ? (string) $slot['hora'] : '';
-                    $idPesSlot = isset($slot['id_profesional_efector_servicio']) && $slot['id_profesional_efector_servicio'] !== null
-                        ? (int) $slot['id_profesional_efector_servicio']
-                        : 0;
-                    if ($fecha === '' || $hora === '' || $idPesSlot <= 0) {
-                        continue;
-                    }
-                    $slotId = 'pes:' . $idPesSlot . '|' . $fecha . '|' . $hora;
-                    $meta = [
-                        'fecha' => $fecha,
-                        'hora' => $hora,
-                        'id_profesional_efector_servicio' => $idPesSlot,
-                        'slot_id' => $slotId,
-                    ];
-                    if (!empty($slot['servicio']) && is_array($slot['servicio'])) {
-                        $meta['servicio'] = $slot['servicio'];
-                    }
-                    $items[] = [
-                        // `id` es el valor que el cliente manda como selección (se persiste en `slot_id`).
-                        'id' => $slotId,
-                        'label' => $fecha . ' ' . $hora,
-                        'meta' => $meta,
-                    ];
-                }
+            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, (int) $idServicio);
+            if ($blocks !== []) {
+                $out['blocks'] = $blocks;
+            } else {
+                $out = UiScreenService::withListBlockItems($out, []);
             }
-
-            $out = UiScreenService::withListBlockItems($out, $items);
         }
 
         return $out;

@@ -12,7 +12,6 @@
       "kind": "list",
       "id": "default",
       "selection": { "mode": "single" },
-      "chips": [{ "id": "nearby", "label": "Cerca" }],
       "draft_field": "id_efector",
       "item": { "kind": "efector", "id_field": "id", "label_field": "name" },
       "items": []

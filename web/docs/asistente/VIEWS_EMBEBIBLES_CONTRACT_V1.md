@@ -9,8 +9,7 @@ Este documento define el contrato para **views JSON embebibles** que se renderiz
 
 Una view embebible es un descriptor JSON servido bajo `/api/v1/<entidad>/<accion>` que:
 
-- puede mostrar **chips/filtros** opcionales
-- puede mostrar un **listado** de ítems seleccionables (cards/chips)
+- puede mostrar un **listado** de ítems seleccionables (cards/botones)
 - exige **confirmación obligatoria** antes de aplicar cambios al `draft`
 - al confirmar, produce un `draft_delta` (parcial) que el cliente aplica localmente y reenvía en el snapshot siguiente
 
@@ -82,7 +81,6 @@ Cuando una view embebible es un listado, debe exponer en su descriptor `ui_meta.
   "ui_meta": {
     "list": {
       "selection": { "mode": "single", "requires_confirmation": true },
-      "chips": [{ "id": "nearby", "label": "Cerca" }],
       "draft_field": "id_efector",
       "item": { "kind": "efector", "id_field": "id", "label_field": "nombre" }
     }
@@ -90,3 +88,4 @@ Cuando una view embebible es un listado, debe exponer en su descriptor `ui_meta.
 }
 ```
 
+(Filtros tipo “chips” en el bloque `list` del descriptor ya no forman parte del contrato: los clientes actuales no los consumen; la segmentación va en el servidor, p. ej. varios bloques `list` con `title`.)

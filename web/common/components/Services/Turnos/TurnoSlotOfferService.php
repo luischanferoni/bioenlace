@@ -67,7 +67,10 @@ class TurnoSlotOfferService
         // Filtros simples para clientes que muestran chips (mobile/web).
         $dias = [];
         foreach (array_keys($porFecha) as $f) {
-            $dias[] = ['id' => (string) $f, 'label' => (string) $f];
+            $dias[] = [
+                'id' => (string) $f,
+                'label' => TurnoSlotOfferUiPresenter::friendlyDayHeading((string) $f),
+            ];
         }
         $franjas = [
             ['id' => 'manana', 'label' => 'Mañana'],

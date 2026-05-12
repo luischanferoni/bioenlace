@@ -47,8 +47,8 @@ Propiedades soportadas:
 - **`selection`** (object):
   - `mode`: hoy se soporta `"single"`.
   - `requires_confirmation`: si `true`, muestra botón “Confirmar”; si `false`, confirma al tocar un item.
-- **`chips`** (opcional): metadata para filtros/tabs; el flujo conversacional suele aportar los tabs en `flow_manifest`.
-- **`item`** (opcional): metadata del tipo de item (p. ej. `"efector"`, `"rrhh"`). Es informativo para el cliente.
+- **`title`** (opcional): encabezado de sección (p. ej. agrupación por día/franja).
+- **`item`** (opcional): metadata del tipo de item (p. ej. `"efector"`, `"slot"`). Es informativo para el cliente.
 - **`items`** (array, obligatorio): items a renderizar (inyectados por controller/servicio).
 
 Shape mínimo de item:
@@ -72,7 +72,7 @@ Tipos comunes:
 
 #### Layout en grid (Bootstrap-like), opcional por campo
 
-- **`layout`** (objeto, opcional): rejilla de **12 columnas**, mismo contrato en **web** (`spa-home.js`) y **Flutter** (`UiJsonWizardScreen`).
+- **`layout`** (objeto, opcional): rejilla de **12 columnas**, mismo contrato en **web** (`spa-home.js`) y **Flutter** (`UiJsonScreen`).
   - `col` (número 1–12): fracción del ancho en una fila.
   - `breakpoint` (opcional): `sm` \| `md` \| `lg` \| `xl` \| `xxl` (por defecto `md`). Por debajo del ancho mínimo de ese breakpoint, el campo ocupa ancho completo (equivalente a apilar).
 

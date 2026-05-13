@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -257,6 +260,35 @@ class _ChatScreenState extends State<ChatScreen> {
     if (openUi is Map) {
       final co = openUi['client_open'];
       final actionId = openUi['action_id']?.toString();
+      final fsrRaw = data['flow_submit_request'];
+      if (actionId != null &&
+          actionId.isNotEmpty &&
+          co == null &&
+          fsrRaw is Map &&
+          (fsrRaw['route']?.toString().trim().isNotEmpty ?? false)) {
+        final fsrBody = fsrRaw['body'] is Map
+            ? Map<String, dynamic>.from(fsrRaw['body'] as Map)
+            : <String, dynamic>{};
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': explanation,
+            'actions': null,
+            if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+            'flow_submit_request': <String, dynamic>{
+              'route': fsrRaw['route']!.toString().trim(),
+              'method': (fsrRaw['method']?.toString().trim().isNotEmpty ?? false)
+                  ? fsrRaw['method'].toString()
+                  : 'POST',
+              'body': fsrBody,
+            },
+            'timestamp': DateTime.now(),
+          });
+        });
+        _scrollToBottom();
+        return true;
+      }
       if (co is Map && actionId != null && actionId.isNotEmpty) {
         final kindCo = co['kind']?.toString();
         final api = co['api'];
@@ -1137,6 +1169,87 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  String _messageFromHttpResponse(http.Response res) {
+    try {
+      final decoded = json.decode(utf8.decode(res.bodyBytes));
+      if (decoded is Map && decoded['message'] != null) {
+        final m = decoded['message'].toString().trim();
+        if (m.isNotEmpty) return m;
+      }
+    } catch (_) {
+      // ignore
+    }
+    return 'HTTP ${res.statusCode}';
+  }
+
+  Future<void> _postFlowSubmitFromMessage(int index) async {
+    if (index < 0 || index >= _chatHistory.length) return;
+    final msg = _chatHistory[index];
+    final fsr = msg['flow_submit_request'];
+    if (fsr is! Map) return;
+    final route = fsr['route']?.toString().trim() ?? '';
+    if (route.isEmpty) return;
+    setState(() => msg['_flow_submit_busy'] = true);
+    try {
+      final uri = Uri.parse(resolveApiAbsoluteUrl(route));
+      final bodyMap = fsr['body'] is Map
+          ? Map<String, dynamic>.from(fsr['body'] as Map)
+          : <String, dynamic>{};
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: _asistenteService.authToken,
+        appClient: 'bioenlace-paciente',
+      );
+      final res = await http
+          .post(uri, headers: headers, body: json.encode(bodyMap))
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      if (!mounted) return;
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        _showErrorSnackbar(_messageFromHttpResponse(res));
+        return;
+      }
+      final decoded = json.decode(utf8.decode(res.bodyBytes));
+      if (decoded is! Map) {
+        _showErrorSnackbar('Respuesta inválida');
+        return;
+      }
+      final m = Map<String, dynamic>.from(decoded);
+      if (m['kind'] == 'ui_submit_result' && m['success'] != false) {
+        final data = m['data'];
+        var extra = '';
+        if (data is Map) {
+          final s = data['mensaje']?.toString() ?? data['message']?.toString() ?? '';
+          if (s.trim().isNotEmpty) extra = '\n\n${s.trim()}';
+        }
+        setState(() {
+          msg.remove('flow_submit_request');
+          final prev = msg['content']?.toString() ?? '';
+          msg['content'] = ('$prev${extra.isEmpty ? '\n\nListo.' : extra}').trim();
+          _intentId = null;
+          _subintentId = null;
+          _draft = {};
+          _asistenteService.currentIntentId = null;
+          _asistenteService.currentSubintentId = null;
+          _asistenteService.draft = {};
+        });
+        _scrollToBottom();
+        return;
+      }
+      if (m['kind'] == 'ui_definition' && m['errors'] is Map) {
+        final err = m['errors'] as Map;
+        final first = err.values.isNotEmpty ? err.values.first.toString() : 'No se pudo validar.';
+        _showErrorSnackbar(first);
+        return;
+      }
+      _showErrorSnackbar(m['message']?.toString() ?? 'Error al confirmar');
+    } catch (e) {
+      if (mounted) _showErrorSnackbar(e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => msg['_flow_submit_busy'] = false);
+      }
+    }
+  }
+
   void _showErrorSnackbar(String message) {
     final cs = context.pacienteColors;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1365,6 +1478,30 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ],
+                    if (!isUser && message['flow_submit_request'] is Map) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ElevatedButton.icon(
+                            onPressed: (message['_flow_submit_busy'] == true || _isSending)
+                                ? null
+                                : () => _postFlowSubmitFromMessage(index),
+                            icon: message['_flow_submit_busy'] == true
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: cs.onPrimary,
+                                    ),
+                                  )
+                                : const Icon(Icons.check_circle_outline),
+                            label: const Text('Confirmar y enviar'),
+                          ),
+                        ),
+                      ),
+                    ],
                     // Inline UI JSON embebida en chat
                     if (!isUser && inlineUi is Map) ...[
                       SizedBox(height: inlineUiLeadGapHeight),
@@ -1476,12 +1613,26 @@ class _ChatScreenState extends State<ChatScreen> {
 
                                     final t = data['text']?.toString();
                                     final msgText = (t != null && t.trim().isNotEmpty) ? t.trim() : 'Ok.';
+                                    final fsrRaw = data['flow_submit_request'];
+                                    final Map<String, dynamic>? fsrPayload =
+                                        (fsrRaw is Map && (fsrRaw['route']?.toString().trim().isNotEmpty ?? false))
+                                            ? <String, dynamic>{
+                                                'route': fsrRaw['route']!.toString().trim(),
+                                                'method': (fsrRaw['method']?.toString().trim().isNotEmpty ?? false)
+                                                    ? fsrRaw['method'].toString()
+                                                    : 'POST',
+                                                'body': fsrRaw['body'] is Map
+                                                    ? Map<String, dynamic>.from(fsrRaw['body'] as Map)
+                                                    : <String, dynamic>{},
+                                              }
+                                            : null;
                                     setState(() {
                                       _chatHistory.add({
                                         'type': 'bot',
                                         'content': msgText,
                                         'actions': null,
                                         if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+                                        if (fsrPayload != null) 'flow_submit_request': fsrPayload,
                                         'timestamp': DateTime.now(),
                                       });
                                     });
@@ -1501,7 +1652,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                             'client_open': Map<String, dynamic>.from(co),
                                             'parameters': {'provided': _draft},
                                           };
-                                        } else {
+                                        } else if (fsrPayload == null) {
                                           // Fallback flow: usar route del active_step/tab default.
                                           final fm = data['flow_manifest'];
                                           String? route;
@@ -1587,12 +1738,26 @@ class _ChatScreenState extends State<ChatScreen> {
                                     final explanation = (text != null && text.trim().isNotEmpty)
                                         ? text.trim()
                                         : 'Listo.';
+                                    final fsrRaw = data['flow_submit_request'];
+                                    final Map<String, dynamic>? fsrPayload =
+                                        (fsrRaw is Map && (fsrRaw['route']?.toString().trim().isNotEmpty ?? false))
+                                            ? <String, dynamic>{
+                                                'route': fsrRaw['route']!.toString().trim(),
+                                                'method': (fsrRaw['method']?.toString().trim().isNotEmpty ?? false)
+                                                    ? fsrRaw['method'].toString()
+                                                    : 'POST',
+                                                'body': fsrRaw['body'] is Map
+                                                    ? Map<String, dynamic>.from(fsrRaw['body'] as Map)
+                                                    : <String, dynamic>{},
+                                              }
+                                            : null;
                                     setState(() {
                                       _chatHistory.add({
                                         'type': 'bot',
                                         'content': explanation,
                                         'actions': null,
                                         if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+                                        if (fsrPayload != null) 'flow_submit_request': fsrPayload,
                                         'timestamp': DateTime.now(),
                                       });
                                     });

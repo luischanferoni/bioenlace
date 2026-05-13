@@ -79,9 +79,90 @@
         return !!(json && json.kind === 'ui_definition' && json.success !== false);
     }
 
-    function fetchFlowUiDefinition(fullUrl, mountEl) {
+    /**
+     * POST de cierre declarativo (`flow_submit`) sin GET de descriptor: botón en el último paso embebido.
+     * @param {HTMLElement} hostEl contenedor (p. ej. la mini-UI del paso o el bloque del flow)
+     * @param {{ route: string, body?: object }} fsr `flow_submit_request` del payload
+     * @param {function(): void} onFlowCleared tras éxito (limpiar intent/draft en el chat)
+     */
+    function appendFlowInlineSubmit(hostEl, fsr, onFlowCleared) {
+        if (!hostEl || !fsr || !fsr.route) {
+            return;
+        }
+        var wrap = document.createElement('div');
+        wrap.className = 'mt-3 pt-2 border-top spa-flow-submit-inline';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Confirmar y enviar';
+        var errBox = document.createElement('div');
+        errBox.className = 'small text-danger mt-2 d-none';
+        wrap.appendChild(btn);
+        wrap.appendChild(errBox);
+        hostEl.appendChild(wrap);
+
+        btn.addEventListener('click', function () {
+            errBox.classList.add('d-none');
+            errBox.textContent = '';
+            btn.disabled = true;
+            var postUrl = resolveSpaFetchUrl(String(fsr.route));
+            var bodyObj = (fsr.body && typeof fsr.body === 'object') ? fsr.body : {};
+            fetch(postUrl, {
+                method: 'POST',
+                headers: window.BioenlaceApiClient.mergeHeaders({
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }),
+                credentials: 'same-origin',
+                body: JSON.stringify(bodyObj)
+            })
+                .then(function (r) {
+                    return r.text().then(function (t) {
+                        var j = null;
+                        try {
+                            j = t ? JSON.parse(t) : null;
+                        } catch (e) {
+                            j = null;
+                        }
+                        if (!r.ok) {
+                            var msg = 'HTTP ' + r.status;
+                            if (j && typeof j.message === 'string' && j.message.trim() !== '') {
+                                msg = j.message.trim();
+                            }
+                            throw new Error(msg);
+                        }
+                        return j;
+                    });
+                })
+                .then(function (json) {
+                    if (json && json.kind === 'ui_submit_result' && json.success !== false) {
+                        if (typeof onFlowCleared === 'function') {
+                            onFlowCleared();
+                        }
+                        wrap.innerHTML = '<div class="alert alert-success mb-0 py-2">Listo.</div>';
+                        setTimeout(scrollChatToBottom, 20);
+                        return;
+                    }
+                    if (json && json.kind === 'ui_definition' && json.errors) {
+                        var ek = Object.keys(json.errors);
+                        var first = ek.length ? String(json.errors[ek[0]]) : 'No se pudo validar.';
+                        throw new Error(first);
+                    }
+                    throw new Error((json && json.message) ? String(json.message) : 'Respuesta inesperada');
+                })
+                .catch(function (err) {
+                    console.error('flow_submit_request POST:', err);
+                    errBox.textContent = (err && err.message) ? String(err.message) : 'Error al enviar';
+                    errBox.classList.remove('d-none');
+                    btn.disabled = false;
+                });
+        });
+    }
+
+    function fetchFlowUiDefinition(fullUrl, mountEl, flowSubmitRequestOpt) {
         mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
-        fetch(fullUrl, {
+        return fetch(fullUrl, {
             method: 'GET',
             headers: window.BioenlaceApiClient.mergeHeaders({
                 'X-Requested-With': 'XMLHttpRequest',
@@ -118,6 +199,17 @@
                         }
                     } else {
                         removeFlowPlanStrip();
+                    }
+                    if (flowSubmitRequestOpt && flowSubmitRequestOpt.route && flowSubmitRequestOpt.body &&
+                        typeof flowSubmitRequestOpt.body === 'object') {
+                        appendFlowInlineSubmit(mountEl, flowSubmitRequestOpt, function () {
+                            currentIntentId = null;
+                            currentSubintentId = null;
+                            draft = {};
+                            writeFlowState();
+                            removeFlowPlanStrip();
+                            bioFlowPlanPendingContext = null;
+                        });
                     }
                 } else {
                     mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
@@ -692,19 +784,41 @@
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
+                const fsr = result && result.flow_submit_request && typeof result.flow_submit_request === 'object'
+                    ? result.flow_submit_request
+                    : null;
+
                 // `open_ui` en esta respuesta: lo que el servidor pide montar ahora. El manifiesto describe el paso
                 // (puede incluir tabs del paso anterior); no implica que siempre haya que abrir URL en este turno.
                 const hasOpenUi = !!(openUi && openUi.action_id);
                 const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
                 const serverAskedForUi = hasOpenUi || !!okUiJson;
 
-                // Resolver URL: primero descriptor ui_json del payload; si no, tabs del manifiesto solo como
-                // respaldo cuando igual hay `action_id` (p. ej. `client_open` null por permisos/catálogo).
+                function flowSubmitClearState() {
+                    currentIntentId = null;
+                    currentSubintentId = null;
+                    draft = {};
+                    writeFlowState();
+                    removeFlowPlanStrip();
+                    bioFlowPlanPendingContext = null;
+                }
+
+                // Resolver URL: primero `client_open` ui_json del payload; si hay `flow_submit_request`, seguir
+                // montando la mini-UI del paso activo (tabs) y el POST de cierre va aparte (botón).
                 let fullUrl = '';
                 if (okUiJson) {
                     const route = String(co.api.route || '');
                     fullUrl = mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api);
-                } else if (hasOpenUi && tabs.length >= 1) {
+                } else if (fsr && fsr.route && tabs.length >= 1) {
+                    let defIdx = 0;
+                    for (let ti = 0; ti < tabs.length; ti++) {
+                        if (defaultTabId !== '' && String(tabs[ti].id) === defaultTabId) {
+                            defIdx = ti;
+                            break;
+                        }
+                    }
+                    fullUrl = buildUrlForFlowTab(tabs[defIdx]);
+                } else if (tabs.length >= 1 && !(hasOpenUi && !okUiJson)) {
                     let defIdx = 0;
                     for (let ti = 0; ti < tabs.length; ti++) {
                         if (defaultTabId !== '' && String(tabs[ti].id) === defaultTabId) {
@@ -724,6 +838,14 @@
                         writeFlowState();
                         removeFlowPlanStrip();
                         bioFlowPlanPendingContext = null;
+                        setTimeout(scrollChatToBottom, 20);
+                        return;
+                    }
+                    if (fsr && fsr.route && fsr.body && typeof fsr.body === 'object') {
+                        removeFlowPlanStrip();
+                        bioFlowPlanPendingContext = null;
+                        appendFlowInlineSubmit(flowSectionInner, fsr, flowSubmitClearState);
+                        setLoadingState(false);
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }
@@ -777,7 +899,7 @@
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
                                 u.searchParams.set('longitud', String(pos.coords.longitude));
-                                fetchFlowUiDefinition(u.toString(), mountEl);
+                                fetchFlowUiDefinition(u.toString(), mountEl, fsr);
                             }, function () {
                                 mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
                             });
@@ -789,7 +911,7 @@
                             mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
                             return;
                         }
-                        fetchFlowUiDefinition(url, mountEl);
+                        fetchFlowUiDefinition(url, mountEl, fsr);
                     }
 
                     tabs.forEach(function (tab, idx) {
@@ -817,65 +939,8 @@
                 flowUiMount = document.createElement('div');
                 flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
                 flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
-                const loading = document.createElement('div');
-                loading.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted mt-2';
-                loading.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
-                flowUiMount.appendChild(loading);
                 mountHost.appendChild(flowUiMount);
-                fetch(fullUrl, {
-                    method: 'GET',
-                    headers: window.BioenlaceApiClient.mergeHeaders({
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    })
-                })
-                .then(r => {
-                    if (!r.ok) {
-                        return r.text().then(function (t) {
-                            try {
-                                const j = JSON.parse(t);
-                                if (j && typeof j.message === 'string' && j.message.trim() !== '') {
-                                    throw new Error(j.message.trim());
-                                }
-                            } catch (e) {
-                                // ignore
-                            }
-                            throw new Error('HTTP ' + r.status);
-                        });
-                    }
-                    return r.json();
-                })
-                .then(json => {
-                    flowUiMount.innerHTML = '';
-                    if (json && json.kind === 'ui_definition') {
-                        renderDynamicUi(json, flowUiMount, { url: fullUrl });
-                        if (flowUiDefinitionReadyForProgress(json)) {
-                            try {
-                                const mountAfter = mountHost.querySelector('[data-spa-flow-ui-mount]') || flowUiMount;
-                                if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                                    attachFlowPlanBelowMount(mountAfter, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                                }
-                            } catch (e) {
-                                // ignore
-                            }
-                        } else {
-                            removeFlowPlanStrip();
-                        }
-                    } else {
-                        flowUiMount.innerHTML = '<div class="alert alert-warning mb-0 mt-2">La respuesta no es una definición de UI válida.</div>';
-                        removeFlowPlanStrip();
-                    }
-                })
-                .catch(err => {
-                    console.error('Error cargando UI JSON (flow):', err);
-                    const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
-                    flowUiMount.innerHTML = '<div class="alert alert-danger mb-0 mt-2">' + escapeHtml(msg) + '</div>';
-                    removeFlowPlanStrip();
-                })
-                .finally(() => {
-                    setLoadingState(false);
-                    setTimeout(scrollChatToBottom, 20);
-                });
+                fetchFlowUiDefinition(fullUrl, flowUiMount, fsr);
                 return;
             }
 

@@ -301,14 +301,90 @@ final class SubIntentEngine
         $openSubmit = self::resolveClientOpen($submitActionId, $userId);
         $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $flowSubmitBlock);
 
-        return self::withFlowManifest([
+        $payload = [
             'success' => true,
             'text' => 'Confirmemos y enviemos.',
             'intent_id' => $intentId,
             'subintent_id' => $subintentId,
             'open_ui' => $openSubmit,
             'draft_delta' => (object) [],
-        ], $intentId, $subintentId);
+        ];
+        $inlineSubmit = self::buildFlowSubmitRequestDescriptor($submitActionId, $draft, $flowSubmitBlock);
+        if ($inlineSubmit !== null) {
+            $payload['flow_submit_request'] = $inlineSubmit;
+        }
+
+        return self::withFlowManifest($payload, $intentId, $subintentId);
+    }
+
+    /**
+     * POST listo para clientes que no abren GET de descriptor (`client_open` null): mismo mapeo `params` que `flow_submit` en YAML.
+     *
+     * @param array<string, mixed> $flowSubmitBlock
+     * @return array{method: string, route: string, body: array<string, string>}|null
+     */
+    private static function buildFlowSubmitRequestDescriptor(string $submitActionId, array $draft, array $flowSubmitBlock): ?array
+    {
+        $route = self::apiRouteForActionId($submitActionId);
+        if ($route === '') {
+            return null;
+        }
+        $body = self::buildSubmitBodyFromParamsMap($draft, $flowSubmitBlock);
+        if ($body === []) {
+            return null;
+        }
+
+        return [
+            'method' => 'POST',
+            'route' => $route,
+            'body' => $body,
+        ];
+    }
+
+    private static function apiRouteForActionId(string $actionId): string
+    {
+        $actionId = trim($actionId);
+        if (preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) !== 1) {
+            return '';
+        }
+
+        return '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @param array<string, mixed>|null $submitBlock
+     * @return array<string, string>
+     */
+    private static function buildSubmitBodyFromParamsMap(array $draft, ?array $submitBlock): array
+    {
+        $paramsMap = is_array($submitBlock) && isset($submitBlock['params']) && is_array($submitBlock['params'])
+            ? $submitBlock['params']
+            : null;
+        if ($paramsMap === null || $paramsMap === []) {
+            return [];
+        }
+        $out = [];
+        foreach ($paramsMap as $k => $v) {
+            $key = is_string($k) ? trim($k) : '';
+            if ($key === '') {
+                continue;
+            }
+            $vv = is_string($v) ? trim($v) : '';
+            if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $field = substr($vv, 6);
+            if ($field === '') {
+                continue;
+            }
+            if (!isset($draft[$field]) || $draft[$field] === null || trim((string) $draft[$field]) === '') {
+                continue;
+            }
+            $out[$key] = (string) $draft[$field];
+        }
+
+        return $out;
     }
 
     /**

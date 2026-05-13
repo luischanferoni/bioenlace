@@ -15,7 +15,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `subintents` | **Obligatorio**: lista ordenada de pasos. |
-| `flow_submit` | **Opcional.** Cierre del flujo: cuando el motor determina paso terminal (sin siguiente `open_ui` pendiente, `next` vacío o rama vacía) y el draft cumple `requires`/`provides`, emite `open_ui` con el `client_open` de esta acción (GET descriptor + POST mutación), igual que antes el `submit` por subintent. **No** declarar cierre por subintent: usar solo `flow_submit` en la raíz. |
+| `flow_submit` | **Opcional.** Cierre del flujo: cuando el motor determina paso terminal (sin siguiente `open_ui` pendiente, `next` vacío o rama vacía) y el draft cumple `requires`/`provides`, emite `open_ui` con el `client_open` de esta acción (GET descriptor + POST mutación), igual que antes el `submit` por subintent. **No** declarar cierre por subintent: usar solo `flow_submit` en la raíz. Además, si el mapeo `params` produce al menos un valor, el motor incluye **`flow_submit_request`** (`method`, `route` `/api/v1/...`, `body` clave→valor desde el draft) para que los clientes muestren un **botón de confirmación** en el último paso sin depender de abrir otra pantalla cuando `client_open` sea `null`. |
 
 ## Nodo `subintents[]` — claves soportadas
 
@@ -51,10 +51,20 @@ flow_submit:
     id: "draft.id"
 ```
 
+### Payload JSON: `flow_submit_request` (respuesta del motor)
+
+Cuando el cierre del flujo emite `flow_submit`, el motor puede adjuntar (además de `open_ui`):
+
+| Clave | Uso |
+|--------|-----|
+| `method` | Hoy siempre `POST`. |
+| `route` | Ruta API canónica `/api/v1/<entidad>/<accion>` derivada de `action_id`. |
+| `body` | Objeto string→string: cada clave del `params` del YAML cuyo valor es `draft.<campo>` y el draft tiene valor. Es el cuerpo del POST de cierre (`UiScreenService` / `kind: ui_submit_result`). |
+
 **Cuándo usar `flow_submit`:**
 
 1. **Paso dedicado** sin listado previo: el último dato ya está en `draft` y solo falta abrir la pantalla de cierre (ej. cancelar turno con `id`).
-2. **Tras un picker + `next: ""`**: mientras falten `requires` / `provides`, el motor abre `open_ui` del paso; cuando el draft está completo y no hay siguiente paso, emite el `client_open` del `flow_submit` (ej. slot elegido → `turnos.crear-como-paciente`).
+2. **Tras un picker + `next: ""`**: mientras falten `requires` / `provides`, el motor abre `open_ui` del paso; cuando el draft está completo y no hay siguiente paso, emite el `client_open` del `flow_submit` (ej. slot elegido → `turnos.crear-como-paciente`). Si no hay descriptor en catálogo/RBAC, **`flow_submit_request`** permite al cliente POSTear el cierre **en línea** (p. ej. botón bajo la misma mini-UI de slots) sin forzar un segundo `open_ui` fallido.
 3. **Rama sin `open_ui` siguiente**: si `next` apunta a un subintent “vacío” (sin UI, `next` vacío) y el draft ya cumple, el motor puede emitir `flow_submit` desde ese id de paso.
 
 **Cuándo no hace falta `flow_submit`:**

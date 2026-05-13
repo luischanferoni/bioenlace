@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../services/turnos_service.dart';
 import '../theme/paciente_theme_extensions.dart';
-import 'chat_motivos_screen.dart';
 
-/// Pantalla de inicio del paciente: saludo, próximo turno y listados paginados (próximos / anteriores).
+/// Próximo turno pendiente respecto al calendario local (solo fecha, sin hora).
+enum _ProximidadPendiente { hoy, manana, masAdelante }
+
+/// Pantalla de inicio del paciente: saludo y listados (próximos / anteriores) por pestañas.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -37,6 +39,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingMasPasados = false;
   String? _error;
 
+  /// 0 = próximos turnos, 1 = historial.
+  int _tabTurnos = 0;
+
   @override
   void initState() {
     super.initState();
@@ -56,7 +61,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!_scrollController.hasClients) return;
     final pos = _scrollController.position;
     if (pos.maxScrollExtent - pos.pixels < 400) {
-      _cargarMasPasados();
+      if (_tabTurnos == 0) {
+        _cargarMasPendientes();
+      } else {
+        _cargarMasPasados();
+      }
     }
   }
 
@@ -149,8 +158,63 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Map<String, dynamic>? get _proximoTurno =>
-      _pendientes.isNotEmpty ? _pendientes.first : null;
+  DateTime? _fechaTurnoSoloDia(Map<String, dynamic> t) {
+    final raw = t['fecha']?.toString();
+    if (raw == null || raw.isEmpty) return null;
+    final parts = raw.split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]);
+    final mo = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || mo == null || d == null) return null;
+    return DateTime(y, mo, d);
+  }
+
+  _ProximidadPendiente _proximidadPendiente(Map<String, dynamic> t) {
+    final slot = _fechaTurnoSoloDia(t);
+    if (slot == null) return _ProximidadPendiente.masAdelante;
+    final today = DateTime.now();
+    final t0 = DateTime(today.year, today.month, today.day);
+    final s0 = DateTime(slot.year, slot.month, slot.day);
+    final diffDays = s0.difference(t0).inDays;
+    if (diffDays == 0) return _ProximidadPendiente.hoy;
+    if (diffDays == 1) return _ProximidadPendiente.manana;
+    return _ProximidadPendiente.masAdelante;
+  }
+
+  ({Color bg, Color? border}) _coloresTarjetaProximo(
+    BuildContext context,
+    _ProximidadPendiente p,
+  ) {
+    final cs = context.pacienteColors;
+    final sem = context.pacienteSemantic;
+    switch (p) {
+      case _ProximidadPendiente.hoy:
+        return (
+          bg: Color.alphaBlend(
+            cs.error.withValues(alpha: 0.12),
+            cs.surfaceContainerHighest,
+          ),
+          border: cs.error.withValues(alpha: 0.45),
+        );
+      case _ProximidadPendiente.manana:
+        return (
+          bg: Color.alphaBlend(
+            cs.tertiary.withValues(alpha: 0.14),
+            cs.surfaceContainerHighest,
+          ),
+          border: cs.tertiary.withValues(alpha: 0.4),
+        );
+      case _ProximidadPendiente.masAdelante:
+        return (
+          bg: Color.alphaBlend(
+            sem.success.withValues(alpha: 0.10),
+            cs.surfaceContainerHighest,
+          ),
+          border: sem.success.withValues(alpha: 0.35),
+        );
+    }
+  }
 
   String _saludo() {
     final hour = DateTime.now().hour;
@@ -220,13 +284,44 @@ class _HomeScreenState extends State<HomeScreen> {
     return t;
   }
 
+  Widget _leyendaProximidad(BuildContext context) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
+    final sem = context.pacienteSemantic;
+    Widget dot(Color c) => Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: c,
+            shape: BoxShape.circle,
+          ),
+        );
+    Widget item(Color c, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            dot(c),
+            const SizedBox(width: 6),
+            Text(label, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
+          ],
+        );
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 6,
+        children: [
+          item(cs.error, 'Hoy'),
+          item(cs.tertiary, 'Mañana'),
+          item(sem.success, 'Más adelante'),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = context.pacienteColors;
     final tt = context.pacienteTextTheme;
-    final proximo = _proximoTurno;
-    final idConsulta = proximo != null ? proximo['id_consulta'] : null;
-    final puedeCargarMotivos = idConsulta != null;
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -262,13 +357,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: cs.onSurface,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '¿En qué podemos ayudarte?',
-                          style: tt.bodyLarge?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
                         const SizedBox(height: 24),
                         if (_error != null && (_pendientes.isNotEmpty || _pasados.isNotEmpty))
                           Padding(
@@ -278,67 +366,96 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: tt.bodySmall?.copyWith(color: cs.error),
                             ),
                           ),
-                        if (proximo != null) ...[
-                          _buildCardProximoTurno(context, proximo, puedeCargarMotivos),
-                          const SizedBox(height: 24),
-                        ] else if (_pendientes.isEmpty)
+                        if (_pendientes.isEmpty) ...[
                           _buildCardSinTurnos(context),
-                        Text(
-                          'Próximos turnos',
-                          style: tt.titleSmall?.copyWith(
-                            color: cs.onSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (_pendientes.isEmpty && proximo == null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Text(
-                              'No tenés turnos próximos.',
-                              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                          const SizedBox(height: 20),
+                        ],
+                        SegmentedButton<int>(
+                          segments: const [
+                            ButtonSegment<int>(
+                              value: 0,
+                              label: Text('Próximos'),
+                              icon: Icon(Icons.event_outlined, size: 18),
                             ),
-                          ),
-                        ..._pendientes.map((t) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _buildTurnoCompacto(context, t, futuro: true),
-                            )),
-                        if (_loadingMasPendientes)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
-                          ),
-                        if (_hayMasPendientes && !_loadingMasPendientes)
-                          TextButton(
-                            onPressed: _cargarMasPendientes,
-                            child: const Text('Cargar más'),
-                          ),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Turnos anteriores',
-                          style: tt.titleSmall?.copyWith(
-                            color: cs.onSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (_pasados.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Text(
-                              'No hay turnos anteriores en tu historial.',
-                              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                            ButtonSegment<int>(
+                              value: 1,
+                              label: Text('Anteriores'),
+                              icon: Icon(Icons.history, size: 18),
                             ),
-                          ),
-                        ..._pasados.map((t) => Padding(
+                          ],
+                          selected: {_tabTurnos},
+                          onSelectionChanged: (Set<int> next) {
+                            setState(() {
+                              _tabTurnos = next.first;
+                              if (_scrollController.hasClients) {
+                                _scrollController.jumpTo(0);
+                              }
+                            });
+                          },
+                          showSelectedIcon: false,
+                        ),
+                        if (_tabTurnos == 0) ...[
+                          _leyendaProximidad(context),
+                          const SizedBox(height: 8),
+                          ..._pendientes.map((t) {
+                            final prox = _proximidadPendiente(t);
+                            return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
-                              child: _buildTurnoCompacto(context, t, futuro: false),
-                            )),
-                        if (_loadingMasPasados)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
-                          ),
+                              child: _buildTurnoCompacto(
+                                context,
+                                t,
+                                futuro: true,
+                                proximidad: prox,
+                              ),
+                            );
+                          }),
+                          if (_loadingMasPendientes)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                            ),
+                          if (_hayMasPendientes && !_loadingMasPendientes)
+                            TextButton(
+                              onPressed: _cargarMasPendientes,
+                              child: const Text('Cargar más'),
+                            ),
+                        ] else ...[
+                          const SizedBox(height: 12),
+                          if (_pasados.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'No hay turnos anteriores en tu historial.',
+                                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                              ),
+                            ),
+                          ..._pasados.map((t) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _buildTurnoCompacto(context, t, futuro: false),
+                              )),
+                          if (_loadingMasPasados)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                            ),
+                          if (_hayMasPasados && !_loadingMasPasados)
+                            TextButton(
+                              onPressed: _cargarMasPasados,
+                              child: const Text('Cargar más'),
+                            ),
+                        ],
                         const SizedBox(height: 24),
                       ],
                     ),
@@ -351,14 +468,31 @@ class _HomeScreenState extends State<HomeScreen> {
     BuildContext context,
     Map<String, dynamic> t, {
     required bool futuro,
+    _ProximidadPendiente? proximidad,
   }) {
     final cs = context.pacienteColors;
     final tt = context.pacienteTextTheme;
     final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
+
+    Color bg;
+    Color? borderColor;
+    if (futuro && proximidad != null) {
+      final pair = _coloresTarjetaProximo(context, proximidad);
+      bg = pair.bg;
+      borderColor = pair.border;
+    } else {
+      bg = futuro ? cs.surfaceContainerHighest : cs.surfaceContainerHigh;
+    }
+
     return Card(
       elevation: 0,
-      color: futuro ? cs.surfaceContainerHighest : cs.surfaceContainerHigh,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      color: bg,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: borderColor != null
+            ? BorderSide(color: borderColor, width: 1.2)
+            : BorderSide.none,
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Column(
@@ -383,82 +517,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 estado,
                 style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardProximoTurno(
-    BuildContext context,
-    Map<String, dynamic> t,
-    bool puedeCargarMotivos,
-  ) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
-    final idConsulta = t['id_consulta'];
-    return Card(
-      elevation: 0,
-      color: cs.primary.withValues(alpha: 0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.calendar_today, color: cs.primary, size: 24),
-                const SizedBox(width: 10),
-                Text(
-                  'Tu próximo turno',
-                  style: tt.titleSmall?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
-              style: tt.titleMedium,
-            ),
-            if (t['servicio'] != null)
-              Text(
-                t['servicio'].toString(),
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            if (t['profesional'] != null)
-              Text(
-                'Con: ${_profesionalSinDni(t['profesional']?.toString())}',
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            if (puedeCargarMotivos) ...[
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.edit_note, size: 18),
-                label: const Text('Cargar motivos de la consulta'),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatMotivosScreen(
-                        consultaId: idConsulta as int,
-                        authToken: widget.authToken,
-                        userId: widget.userId,
-                        userName: widget.userName,
-                        titulo: 'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
-                      ),
-                    ),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: cs.primary,
-                  side: BorderSide(color: cs.primary),
-                ),
-              ),
-            ],
           ],
         ),
       ),

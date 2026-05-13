@@ -67,7 +67,7 @@ flow_submit:
 
 - Flujos `turnos.*` usan **`flow_submit`** hacia acciones API ya existentes (`crear-como-paciente`, `cancelar-como-paciente`, `reprogramar-como-paciente`).
 - `agenda.crear-profesional-flow` usa **`flow_submit`** hacia `profesional-agenda.crear-agenda-flow` tras configurar agenda (con `provides` que marca fin de la pantalla de configuración) o al terminar la rama sin turnos.
-- `agenda.editar-agenda-flow` puede declarar solo `rbac_route` hacia `editar-agenda-flow` sin `flow_submit` si el cierre es la propia pantalla de condición laboral.
+- `agenda.editar-agenda-flow` usa **`flow_submit`** hacia `profesional-agenda.editar-agenda-flow` (tras `configurar_agenda` con `provides` `agenda_ui_completed`, o al terminar la selección de servicio si no hay agenda de turnos).
 
 ## Referencia de código
 

@@ -9,20 +9,20 @@ keywords:
   - editar agenda
   - modificar agenda
   - horarios
-  - condición laboral
 
 intent_semantics:
   goal: >-
     Cargar o ajustar horarios de agenda de un profesional ya existente en el contexto de un servicio que habilite turnos.
   how: >-
-    Selecciona profesional y servicio; si el servicio habilita turnos abre la configuración de agenda, si no guía a completar condiciones/asociación.
+    Seleccioná profesional y servicio; si el servicio habilita turnos abrís la configuración de agenda y guardás;
+    si no admite agenda de turnos, el flujo cierra con confirmación. El cierre declarativo usa la misma ruta RBAC del intent.
   preconditions:
     - El profesional ya existe y es seleccionable.
     - Existe un servicio seleccionable en el efector.
   constraints:
-    - Para configurar agenda, el servicio asociado debe habilitar turnos; si no, el flujo debe encaminar a resolver esa condición.
+    - Para configurar agenda, el servicio asociado debe habilitar turnos.
   outcome:
-    - Horarios/agenda actualizados para el profesional cuando aplica.
+    - Horarios/agenda actualizados cuando el servicio admite turnos; acuse de cierre del flujo en todos los casos.
   keyphrases:
     - editar horarios existentes
     - ajustar disponibilidad en agenda
@@ -30,6 +30,7 @@ intent_semantics:
 
 draft_keys_extra:
   - servicio_acepta_turnos
+  - agenda_ui_completed
 
 business_rules:
   - id: agenda_alta_vs_solo_horarios
@@ -76,10 +77,10 @@ subintents:
       - when:
           draft_equals:
             servicio_acepta_turnos: "NO"
-        next: condicion_laboral
+        next: ""
       - when:
           default: true
-        next: condicion_laboral
+        next: ""
     open_ui:
       action_id: profesional-efector-servicio.listar-servicios-en-efector
       params:
@@ -87,22 +88,20 @@ subintents:
 
   - id: configurar_agenda
     assistant_text: "Agenda"
+    provides:
+      - draft.agenda_ui_completed
     requires:
       - draft.id_profesional_efector_servicio
       - draft.id_servicio
-    next: condicion_laboral
+    next: ""
     open_ui:
       action_id: profesional-agenda.configurar-agenda
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
 
-  - id: condicion_laboral
-    assistant_text: "Condición laboral"
-    requires:
-      - draft.id_profesional_efector_servicio
-    next: ""
-    open_ui:
-      action_id: profesional-efector-servicio.editar-condicion-laboral
-      params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+flow_submit:
+  action_id: profesional-agenda.editar-agenda-flow
+  params:
+    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+    id_servicio: "draft.id_servicio"

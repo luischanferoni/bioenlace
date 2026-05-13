@@ -9,10 +9,16 @@
     {
       "kind": "fields",
       "id": "default",
-      "title": "Acuse",
+      "title": "Confirmar cierre del flujo",
       "fields": [
         {
           "name": "id_profesional_efector_servicio",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_servicio",
           "type": "hidden",
           "required": false,
           "include_in_submit": true

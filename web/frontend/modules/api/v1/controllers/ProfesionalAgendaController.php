@@ -67,11 +67,11 @@ class ProfesionalAgendaController extends BaseController
     }
 
     /**
-     * Pantalla/RBAC de cierre asociada al flujo «editar agenda» (sin mutación extra obligatoria).
+     * Cierre declarativo del flujo asistente «editar agenda» (descriptor + POST de acuse).
      *
      * GET|POST /api/v1/profesional-agenda/editar-agenda-flow
      *
-     * @action_name Flujo editar agenda (asistente, RBAC)
+     * @action_name Cerrar flujo editar agenda (asistente)
      * @entity Agendas
      * @tags agenda, asistente, flow
      */
@@ -90,11 +90,16 @@ class ProfesionalAgendaController extends BaseController
             $req->post(),
             static function (array $post) use ($idEfector): array {
                 $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
-                if ($idPes > 0) {
-                    $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-                    if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-                        throw new ForbiddenHttpException('Asignación inválida para este efector.');
-                    }
+                $idServicio = (int) ($post['id_servicio'] ?? 0);
+                if ($idPes <= 0 || $idServicio <= 0) {
+                    throw new BadRequestHttpException('Indique id_profesional_efector_servicio e id_servicio.');
+                }
+                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+                if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+                    throw new ForbiddenHttpException('Asignación inválida para este efector.');
+                }
+                if ((int) $pes->id_servicio !== $idServicio) {
+                    throw new BadRequestHttpException('id_servicio no coincide con la asignación profesional.');
                 }
 
                 return ['data' => ['success' => true, 'message' => 'Flujo de edición de agenda cerrado.']];

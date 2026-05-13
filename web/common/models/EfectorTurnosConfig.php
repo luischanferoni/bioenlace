@@ -20,6 +20,8 @@ use yii\db\ActiveRecord;
  * @property string $modo_comunicacion_medicos
  * @property bool $sobreturno_notificar_retraso
  * @property int $sobreturno_minutos_retraso_estimado
+ * @property int|null $autogestion_min_horas_antes_cancelar
+ * @property int|null $autogestion_min_horas_antes_reprogramar
  * @property bool $cancelacion_masiva
  * @property string $created_at
  * @property string $updated_at
@@ -42,6 +44,8 @@ class EfectorTurnosConfig extends ActiveRecord
             [['id_efector'], 'required'],
             [['id_efector', 'cancel_suave_umbral', 'cancel_moderada_umbral', 'cancel_ventana_dias',
                 'autogestion_liberacion_vigencia_dias', 'sobreturno_minutos_retraso_estimado'], 'integer'],
+            [['autogestion_min_horas_antes_cancelar', 'autogestion_min_horas_antes_reprogramar'], 'integer', 'min' => 0, 'skipOnEmpty' => true],
+            [['autogestion_min_horas_antes_cancelar', 'autogestion_min_horas_antes_reprogramar'], 'default', 'value' => null],
             [['confirmacion_requerida', 'permitir_cambio_modalidad', 'recordatorios_habilitados',
                 'sobreturno_notificar_retraso', 'cancelacion_masiva'], 'boolean'],
             [['modo_comunicacion_medicos'], 'string', 'max' => 32],
@@ -68,6 +72,8 @@ class EfectorTurnosConfig extends ActiveRecord
             'modo_comunicacion_medicos' => 'Comunicación entre médicos',
             'sobreturno_notificar_retraso' => 'Notificar retraso por sobreturno',
             'sobreturno_minutos_retraso_estimado' => 'Minutos retraso estimado (sobreturno)',
+            'autogestion_min_horas_antes_cancelar' => 'Horas mínimas antes para cancelar por app (vacío=default sistema; 0=sin límite)',
+            'autogestion_min_horas_antes_reprogramar' => 'Horas mínimas antes para reprogramar por app (vacío=default; 0=sin límite)',
             'cancelacion_masiva' => 'Permitir cancelación masiva por día',
         ];
     }

@@ -4,7 +4,7 @@ import '../services/turnos_service.dart';
 import '../theme/paciente_theme_extensions.dart';
 import 'chat_motivos_screen.dart';
 
-/// Pantalla de inicio del paciente: saludo y próximo turno.
+/// Pantalla de inicio del paciente: saludo, próximo turno y listados paginados (próximos / anteriores).
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -22,48 +22,135 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const int _pageLimit = 12;
+
   late TurnosService _turnosService;
-  List<dynamic> _turnos = [];
-  bool _loading = true;
+  final ScrollController _scrollController = ScrollController();
+
+  final List<Map<String, dynamic>> _pendientes = [];
+  final List<Map<String, dynamic>> _pasados = [];
+
+  int _totalPendientes = 0;
+  int _totalPasados = 0;
+  bool _loadingInicial = true;
+  bool _loadingMasPendientes = false;
+  bool _loadingMasPasados = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
     _turnosService = TurnosService(authToken: widget.authToken);
-    _loadTurnos();
+    _scrollController.addListener(_onScroll);
+    _cargarInicial();
   }
 
-  Future<void> _loadTurnos() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    final result = await _turnosService.getMisTurnos();
-    setState(() {
-      _loading = false;
-      _turnos = result['turnos'] ?? [];
-      if (result['success'] != true) _error = result['message'] as String?;
-    });
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  /// Primer turno futuro (fecha/hora >= ahora) o el primero de la lista.
-  Map<String, dynamic>? _getProximoTurno() {
-    if (_turnos.isEmpty) return null;
-    final now = DateTime.now();
-    for (final t in _turnos) {
-      final map = t as Map<String, dynamic>;
-      final fecha = map['fecha']?.toString();
-      final hora = map['hora']?.toString();
-      if (fecha != null && hora != null) {
-        try {
-          final dt = DateTime.parse('$fecha $hora');
-          if (dt.isAfter(now) || dt.isAtSameMomentAs(now)) return map;
-        } catch (_) {}
-      }
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final pos = _scrollController.position;
+    if (pos.maxScrollExtent - pos.pixels < 400) {
+      _cargarMasPasados();
     }
-    return _turnos.isNotEmpty ? _turnos.first as Map<String, dynamic> : null;
   }
+
+  bool get _hayMasPendientes => _pendientes.length < _totalPendientes;
+  bool get _hayMasPasados => _pasados.length < _totalPasados;
+
+  Future<void> _cargarInicial() async {
+    setState(() {
+      _loadingInicial = true;
+      _error = null;
+      _pendientes.clear();
+      _pasados.clear();
+    });
+    final r1 = await _turnosService.getMisTurnos(
+      alcance: 'pendientes',
+      limit: _pageLimit,
+      offset: 0,
+    );
+    final r2 = await _turnosService.getMisTurnos(
+      alcance: 'pasados',
+      limit: _pageLimit,
+      offset: 0,
+    );
+    if (!mounted) return;
+    if (r1['success'] != true && r2['success'] != true) {
+      setState(() {
+        _loadingInicial = false;
+        _error = (r1['message'] ?? r2['message']) as String? ?? 'Error al cargar turnos';
+      });
+      return;
+    }
+    setState(() {
+      _loadingInicial = false;
+      if (r1['success'] == true) {
+        _pendientes.clear();
+        _pendientes.addAll(_asMapList(r1['turnos']));
+        _totalPendientes = r1['total'] as int? ?? _pendientes.length;
+      }
+      if (r2['success'] == true) {
+        _pasados.clear();
+        _pasados.addAll(_asMapList(r2['turnos']));
+        _totalPasados = r2['total'] as int? ?? _pasados.length;
+      }
+      if (r1['success'] != true) {
+        _error = r1['message'] as String?;
+      } else if (r2['success'] != true) {
+        _error = r2['message'] as String?;
+      }
+    });
+  }
+
+  List<Map<String, dynamic>> _asMapList(dynamic raw) {
+    if (raw is! List) return [];
+    return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> _cargarMasPendientes() async {
+    if (_loadingMasPendientes || !_hayMasPendientes) return;
+    setState(() => _loadingMasPendientes = true);
+    final r = await _turnosService.getMisTurnos(
+      alcance: 'pendientes',
+      limit: _pageLimit,
+      offset: _pendientes.length,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingMasPendientes = false;
+      if (r['success'] == true) {
+        _pendientes.addAll(_asMapList(r['turnos']));
+        _totalPendientes = r['total'] as int? ?? _pendientes.length;
+      }
+    });
+  }
+
+  Future<void> _cargarMasPasados() async {
+    if (_loadingMasPasados || !_hayMasPasados) return;
+    setState(() => _loadingMasPasados = true);
+    final r = await _turnosService.getMisTurnos(
+      alcance: 'pasados',
+      limit: _pageLimit,
+      offset: _pasados.length,
+    );
+    if (!mounted) return;
+    setState(() {
+      _loadingMasPasados = false;
+      if (r['success'] == true) {
+        _pasados.addAll(_asMapList(r['turnos']));
+        _totalPasados = r['total'] as int? ?? _pasados.length;
+      }
+    });
+  }
+
+  Map<String, dynamic>? get _proximoTurno =>
+      _pendientes.isNotEmpty ? _pendientes.first : null;
 
   String _saludo() {
     final hour = DateTime.now().hour;
@@ -72,7 +159,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Buenas noches';
   }
 
-  /// Quita el documento al final (`"Apellido, Nombre - 12345678"` → `"Apellido, Nombre"`).
   String _profesionalSinDni(String? raw) {
     if (raw == null || raw.isEmpty) return '';
     final s = raw.trim();
@@ -96,7 +182,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'sábado',
   ];
 
-  /// Fecha relativa / día en español (misma idea que slots en API).
   String _fechaAmigable(String? fechaYmd) {
     if (fechaYmd == null || fechaYmd.isEmpty) return '';
     final parts = fechaYmd.split('-');
@@ -117,7 +202,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$name ${d.toString().padLeft(2, '0')}/${mo.toString().padLeft(2, '0')}';
   }
 
-  /// Hora `HH:mm` sin segundos (p. ej. `08:30:00` → `08:30`).
   String _horaSinSegundos(String? hora) {
     if (hora == null || hora.trim().isEmpty) return '';
     final t = hora.trim();
@@ -140,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final cs = context.pacienteColors;
     final tt = context.pacienteTextTheme;
-    final proximo = _getProximoTurno();
+    final proximo = _proximoTurno;
     final idConsulta = proximo != null ? proximo['id_consulta'] : null;
     final puedeCargarMotivos = idConsulta != null;
 
@@ -148,10 +232,10 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: cs.surface,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _loadTurnos,
-          child: _loading
+          onRefresh: _cargarInicial,
+          child: _loadingInicial
               ? const Center(child: CircularProgressIndicator())
-              : _error != null
+              : _error != null && _pendientes.isEmpty && _pasados.isEmpty
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(24.0),
@@ -161,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(_error!, textAlign: TextAlign.center),
                             const SizedBox(height: 16),
                             ElevatedButton(
-                              onPressed: _loadTurnos,
+                              onPressed: _cargarInicial,
                               child: const Text('Reintentar'),
                             ),
                           ],
@@ -169,6 +253,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     )
                   : ListView(
+                      controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                       children: [
                         Text(
@@ -185,13 +270,120 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
+                        if (_error != null && (_pendientes.isNotEmpty || _pasados.isNotEmpty))
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(
+                              _error!,
+                              style: tt.bodySmall?.copyWith(color: cs.error),
+                            ),
+                          ),
                         if (proximo != null) ...[
                           _buildCardProximoTurno(context, proximo, puedeCargarMotivos),
                           const SizedBox(height: 24),
-                        ] else
+                        ] else if (_pendientes.isEmpty)
                           _buildCardSinTurnos(context),
+                        Text(
+                          'Próximos turnos',
+                          style: tt.titleSmall?.copyWith(
+                            color: cs.onSurface,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (_pendientes.isEmpty && proximo == null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'No tenés turnos próximos.',
+                              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                            ),
+                          ),
+                        ..._pendientes.map((t) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _buildTurnoCompacto(context, t, futuro: true),
+                            )),
+                        if (_loadingMasPendientes)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+                          ),
+                        if (_hayMasPendientes && !_loadingMasPendientes)
+                          TextButton(
+                            onPressed: _cargarMasPendientes,
+                            child: const Text('Cargar más'),
+                          ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Turnos anteriores',
+                          style: tt.titleSmall?.copyWith(
+                            color: cs.onSurface,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (_pasados.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'No hay turnos anteriores en tu historial.',
+                              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                            ),
+                          ),
+                        ..._pasados.map((t) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _buildTurnoCompacto(context, t, futuro: false),
+                            )),
+                        if (_loadingMasPasados)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+                          ),
+                        const SizedBox(height: 24),
                       ],
                     ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTurnoCompacto(
+    BuildContext context,
+    Map<String, dynamic> t, {
+    required bool futuro,
+  }) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
+    final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
+    return Card(
+      elevation: 0,
+      color: futuro ? cs.surfaceContainerHighest : cs.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
+              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            if (t['servicio'] != null)
+              Text(
+                t['servicio'].toString(),
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            if (t['profesional'] != null)
+              Text(
+                'Con: ${_profesionalSinDni(t['profesional']?.toString())}',
+                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+            if (!futuro && estado.isNotEmpty)
+              Text(
+                estado,
+                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+          ],
         ),
       ),
     );
@@ -297,5 +489,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 }

@@ -41,6 +41,7 @@ class TurnoLifecycleService
                     'Autogestión restringida: acercate al efector o llamá por teléfono para cancelar o reprogramar.'
                 );
             }
+            (new \common\components\Services\Turnos\TurnoAutogestionAnticipacionService())->assertPuedeCancelarPorApp($turno);
         }
 
         $turno->estado = Turno::ESTADO_CANCELADO;

@@ -16,9 +16,14 @@ class TurnosService {
     return prefs.getString('auth_token');
   }
 
+  /// [alcance]: `pendientes` (inicio ≥ ahora, activos) o `pasados` (inicio &lt; ahora, historial).
+  /// Sin [alcance]: comportamiento API legacy (rango de fechas).
   Future<Map<String, dynamic>> getMisTurnos({
     String? fechaDesde,
     String? fechaHasta,
+    String? alcance,
+    int? limit,
+    int? offset,
   }) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/turnos/listar-como-paciente');
@@ -32,6 +37,9 @@ class TurnosService {
       final body = <String, dynamic>{
         if (fechaDesde != null) 'fecha_desde': fechaDesde,
         if (fechaHasta != null) 'fecha_hasta': fechaHasta,
+        if (alcance != null) 'alcance': alcance,
+        if (limit != null) 'limit': limit,
+        if (offset != null) 'offset': offset,
       };
 
       final response = await http
@@ -47,12 +55,13 @@ class TurnosService {
       if (response.statusCode == 200 && data['success'] == true) {
         final block = data['data'];
         final turnos = block is Map<String, dynamic> ? block['turnos'] : null;
-        final total = block is Map<String, dynamic> ? block['total'] : null;
+        final totalRaw = block is Map<String, dynamic> ? block['total'] : null;
+        final total = totalRaw is int ? totalRaw : int.tryParse('$totalRaw') ?? 0;
         return {
           'success': true,
           'data': block,
           'turnos': turnos is List<dynamic> ? turnos : [],
-          'total': total is int ? total : int.tryParse('$total') ?? 0,
+          'total': total,
         };
       }
       final message = response.statusCode == 401

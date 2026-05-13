@@ -16,6 +16,14 @@ return [
         'httpEndpoint' => null,
     ],
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */
+    /**
+     * Defaults de {@see \common\models\EfectorTurnosConfig} cuando el campo en BD es NULL.
+     * 0 = sin restricción por anticipación para esa operación.
+     */
+    'efectorTurnosConfigDefaults' => [
+        'autogestion_min_horas_antes_cancelar' => 2,
+        'autogestion_min_horas_antes_reprogramar' => 2,
+    ],
     'turnosPaciente' => [
         /** Máximo de slots devueltos en una respuesta agrupada */
         'slots_oferta_max' => 400,

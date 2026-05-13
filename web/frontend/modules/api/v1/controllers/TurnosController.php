@@ -23,11 +23,15 @@ use common\components\Services\Turnos\TurnoCreacionContext;
 use common\components\Services\Turnos\TurnoLifecycleService;
 use common\components\Services\Turnos\TurnoConfirmationService;
 use common\components\Services\Turnos\PolicyModeradaException;
+use common\components\Services\Turnos\AutogestionAnticipacionException;
+use common\components\Services\Turnos\TurnoAutogestionAnticipacionService;
+use common\components\Services\Turnos\TurnoCancellationPolicyService;
 use common\components\Services\Turnos\BulkCancelDayService;
 use common\components\Services\Turnos\SobreturnoService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
+use yii\db\Expression;
 
 /**
  * Turnos API v1.
@@ -77,7 +81,11 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Turnos donde el usuario es paciente. GET /api/v1/turnos/listar-como-paciente (fecha_desde, fecha_hasta opcionales).
+     * Turnos donde el usuario es paciente. GET|POST /api/v1/turnos/listar-como-paciente.
+     *
+     * Sin `alcance`: compatibilidad (pendientes por rango de fecha, como antes) con `fecha_desde` / `fecha_hasta`.
+     * Con `alcance=pendientes`: solo activos, estado PENDIENTE, inicio &gt;= ahora; opcional `limit` (def. 20, máx. 100), `offset`.
+     * Con `alcance=pasados`: historial con inicio &lt; ahora (cualquier estado); misma paginación.
      *
      * @action_name Mis turnos y citas (paciente)
      * @entity Turnos
@@ -126,6 +134,13 @@ class TurnosController extends BaseController
         );
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
             $params = array_merge($req->get(), $req->post());
+            $params['alcance'] = 'pendientes';
+            if (!isset($params['limit']) || $params['limit'] === '') {
+                $params['limit'] = 200;
+            }
+            if (!isset($params['offset']) || $params['offset'] === '') {
+                $params['offset'] = 0;
+            }
             $data = $this->listarComoPacienteData($params);
             $items = [];
             foreach ($data['turnos'] as $t) {
@@ -770,19 +785,88 @@ class TurnosController extends BaseController
 
     /**
      * @param array<string, mixed> $params query o post mezclados
-     * @return array{turnos: array<int, array<string, mixed>>, total: int}
+     * @return array<string, mixed>
      */
     protected function listarComoPacienteData(array $params): array
     {
-        $idPersona = Yii::$app->user->getIdPersona();
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $alcance = isset($params['alcance']) ? (string) $params['alcance'] : '';
+
+        if ($alcance === 'pendientes' || $alcance === 'pasados') {
+            $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : 20;
+            $limit = max(1, min(100, $limit));
+            $offset = isset($params['offset']) && $params['offset'] !== '' ? (int) $params['offset'] : 0;
+            $offset = max(0, $offset);
+
+            if ($alcance === 'pendientes') {
+                $turnosQ = Turno::findActive()->alias('t')
+                    ->where(['t.id_persona' => $idPersona])
+                    ->andWhere(['t.estado' => Turno::ESTADO_PENDIENTE])
+                    ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), new Expression('NOW()')]);
+
+                if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
+                    $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);
+                } else {
+                    $turnosQ->andWhere(['<=', 't.fecha', date('Y-m-d', strtotime('+3 months'))]);
+                }
+                $turnosQ->orderBy(['t.fecha' => SORT_ASC, 't.hora' => SORT_ASC]);
+            } else {
+                $turnosQ = Turno::find()->alias('t')
+                    ->where(['t.id_persona' => $idPersona])
+                    ->andWhere(['<', new Expression('TIMESTAMP(t.fecha, t.hora)'), new Expression('NOW()')]);
+
+                if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
+                    $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);
+                }
+                if (isset($params['fecha_desde']) && $params['fecha_desde'] !== '') {
+                    $turnosQ->andWhere(['>=', 't.fecha', $params['fecha_desde']]);
+                }
+                $turnosQ->orderBy(['t.fecha' => SORT_DESC, 't.hora' => SORT_DESC]);
+            }
+
+            $total = (int) (clone $turnosQ)->count('*');
+            $turnos = $turnosQ->limit($limit)->offset($offset)->all();
+
+            $policySvc = new TurnoCancellationPolicyService();
+            $anticipSvc = new TurnoAutogestionAnticipacionService();
+            $policyOkPorEfector = [];
+
+            $formattedTurnos = [];
+            foreach ($turnos as $turno) {
+                $row = $this->formatTurnoPacienteListadoRow($turno);
+                if ($alcance === 'pendientes' && $turno->estado === Turno::ESTADO_PENDIENTE) {
+                    $idEf = (int) ($turno->id_efector ?? 0);
+                    if (!array_key_exists($idEf, $policyOkPorEfector)) {
+                        $policyOkPorEfector[$idEf] = $idEf <= 0 || !$policySvc->autogestionBloqueada($idPersona, $idEf);
+                    }
+                    $hC = $anticipSvc->minHorasAntesCancelarParaEfector($idEf);
+                    $hR = $anticipSvc->minHorasAntesReprogramarParaEfector($idEf);
+                    $row['puede_cancelar_autogestion_app'] = $policyOkPorEfector[$idEf]
+                        && $anticipSvc->ahoraEsAntesDeLimite($turno, $hC);
+                    $row['puede_reprogramar_autogestion_app'] = $policyOkPorEfector[$idEf]
+                        && $anticipSvc->ahoraEsAntesDeLimite($turno, $hR);
+                } else {
+                    $row['puede_cancelar_autogestion_app'] = false;
+                    $row['puede_reprogramar_autogestion_app'] = false;
+                }
+                $formattedTurnos[] = $row;
+            }
+
+            return [
+                'turnos' => $formattedTurnos,
+                'total' => $total,
+                'alcance' => $alcance,
+                'limit' => $limit,
+                'offset' => $offset,
+            ];
+        }
+
         $fechaDesde = isset($params['fecha_desde']) && $params['fecha_desde'] !== ''
             ? $params['fecha_desde'] : date('Y-m-d');
         $fechaHasta = isset($params['fecha_hasta']) && $params['fecha_hasta'] !== ''
             ? $params['fecha_hasta'] : date('Y-m-d', strtotime('+3 months'));
 
-        /** @var \yii\db\ActiveQuery $turnosQ */
-        $turnosQ = Turno::find();
-        $turnosQ->where(['id_persona' => $idPersona])
+        $turnosQ = Turno::findActive()->where(['id_persona' => $idPersona])
             ->andWhere(['>=', 'fecha', $fechaDesde])
             ->andWhere(['<=', 'fecha', $fechaHasta])
             ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
@@ -791,35 +875,46 @@ class TurnosController extends BaseController
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
-            $servicioNombre = $turno->getNombreServicioParaDisplay();
-            $servicioObj = $turno->getServicioEmbebidoParaApi();
-            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
-            $profPersona = $turno->getProfesionalPersonaParaDisplay();
-            $profesional = $profPersona
-                ? $profPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
-                : null;
-            $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
-            $formattedTurnos[] = [
-                'id' => $turno->id_turnos,
-                'id_persona' => $turno->id_persona,
-                'fecha' => $turno->fecha,
-                'hora' => $turno->hora,
-                'servicio' => $servicioNombre,
-                'servicio_detalle' => $servicioObj,
-                'id_servicio_asignado' => $turno->id_servicio_asignado,
-                'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : null,
-                'estado' => $turno->estado,
-                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
-                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
-                'id_consulta' => $consulta ? $consulta->id_consulta : null,
-                'profesional' => $profesional,
-                'created_at' => $turno->created_at,
-            ];
+            $formattedTurnos[] = $this->formatTurnoPacienteListadoRow($turno);
         }
 
         return [
             'turnos' => $formattedTurnos,
             'total' => count($formattedTurnos),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function formatTurnoPacienteListadoRow(Turno $turno): array
+    {
+        $servicioNombre = $turno->getNombreServicioParaDisplay();
+        $servicioObj = $turno->getServicioEmbebidoParaApi();
+        $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+        $profPersona = $turno->getProfesionalPersonaParaDisplay();
+        $profesional = $profPersona
+            ? $profPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+            : null;
+        $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
+        $idEf = $turno->id_efector !== null && (int) $turno->id_efector > 0 ? (int) $turno->id_efector : null;
+
+        return [
+            'id' => $turno->id_turnos,
+            'id_persona' => $turno->id_persona,
+            'fecha' => $turno->fecha,
+            'hora' => $turno->hora,
+            'servicio' => $servicioNombre,
+            'servicio_detalle' => $servicioObj,
+            'id_servicio_asignado' => $turno->id_servicio_asignado,
+            'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : null,
+            'id_efector' => $idEf,
+            'estado' => $turno->estado,
+            'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+            'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+            'id_consulta' => $consulta ? $consulta->id_consulta : null,
+            'profesional' => $profesional,
+            'created_at' => $turno->created_at,
         ];
     }
 
@@ -880,6 +975,11 @@ class TurnosController extends BaseController
         if ((int) $turno->id_persona !== (int) $idPersona) {
             throw new ForbiddenHttpException('No autorizado');
         }
+        try {
+            (new TurnoAutogestionAnticipacionService())->assertPuedeReprogramarPorApp($turno);
+        } catch (AutogestionAnticipacionException $e) {
+            throw new ConflictHttpException($e->getMessage());
+        }
         $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : 15;
         $mismoRaw = $params['mismo_profesional'] ?? '1';
         $mismoProf = $mismoRaw === '1' || $mismoRaw === 1 || $mismoRaw === true;
@@ -920,6 +1020,8 @@ class TurnosController extends BaseController
             $life->cancelar($turno, $motivo, $canal, Yii::$app->user->id ?? null);
         } catch (PolicyModeradaException $e) {
             throw $e;
+        } catch (AutogestionAnticipacionException $e) {
+            throw new ConflictHttpException($e->getMessage());
         }
         return ['success' => true, 'message' => 'Turno cancelado'];
     }
@@ -948,6 +1050,19 @@ class TurnosController extends BaseController
                 'success' => false,
                 'code' => 'REPROGRAM_POLICY_MODERADA',
                 'message' => 'Reprogramación por app no disponible: acercate al efector o llamá.',
+            ];
+        }
+        try {
+            (new TurnoAutogestionAnticipacionService())->assertPuedeReprogramarPorApp($turno);
+        } catch (AutogestionAnticipacionException $e) {
+            if ($forUiSubmit) {
+                throw new ConflictHttpException($e->getMessage());
+            }
+            Yii::$app->response->statusCode = 409;
+            return [
+                'success' => false,
+                'code' => 'REPROGRAM_ANTICIPACION',
+                'message' => $e->getMessage(),
             ];
         }
         $fecha = $post['fecha'] ?? null;

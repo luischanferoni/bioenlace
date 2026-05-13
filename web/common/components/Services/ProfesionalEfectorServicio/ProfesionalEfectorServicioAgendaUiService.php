@@ -193,7 +193,7 @@ final class ProfesionalEfectorServicioAgendaUiService
      * Persistencia: agenda del servicio seleccionado (sin condición laboral).
      *
      * @param array<string, mixed> $post
-     * @return array{message: string}
+     * @return array{message: string, agenda_ui_completed: string}
      */
     public static function submitAgendaConfig(int $idEfector, array $post): array
     {
@@ -288,7 +288,7 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new \RuntimeException('No se pudo guardar la agenda.');
         }
 
-        return ['message' => 'Agenda guardada.'];
+        return ['message' => 'Agenda guardada.', 'agenda_ui_completed' => '1'];
     }
 
     /**

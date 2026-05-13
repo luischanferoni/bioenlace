@@ -13,7 +13,8 @@ use Yii;
 /**
  * SubIntentEngine: motor conversacional dentro de un intent_id (stateless).
  *
- * Consume YAML bajo `common/components/SubIntentEngine/schemas/`.
+ * Consume YAML bajo `common/components/Assistant/SubIntentEngine/schemas/`.
+ * Contrato de intents (`flow_submit`, subintents): `schemas/SUBINTENT_CONTRACT.md`.
  *
  * Nota: este motor NO implementa IA aquí; expone `prompt_context` para que el caller
  * (cuando integre LLM) sepa qué adjuntar al prompt.
@@ -89,6 +90,7 @@ final class SubIntentEngine
 
         // Si el subintent provee algo y ya está en draft, avanzar al siguiente.
         $next = self::resolveNextSubintentId($current, $draft);
+        $flowSubmitBlock = isset($intent['flow_submit']) && is_array($intent['flow_submit']) ? $intent['flow_submit'] : null;
 
         if ($next !== '') {
             $nextSub = self::findSubintent($subintents, $next);
@@ -105,58 +107,29 @@ final class SubIntentEngine
                         $content
                     );
                 }
-                // Siguiente paso sin mini-UI pero con submit (ej. confirm): cargar submit como ese paso, sin duplicar lógica en clientes.
+                // Siguiente paso sin open_ui: cierre de rama (p. ej. sin agenda) o paso vacío → flow_submit o Listo.
                 $missingNext = self::missingDraftFields($nextSub, $draft);
-                $submitNext = isset($nextSub['submit']['action_id']) ? trim((string) $nextSub['submit']['action_id']) : '';
-                if ($missingNext === [] && $submitNext !== '') {
+                $nextNext = isset($nextSub['next']) ? trim((string) $nextSub['next']) : '';
+                $hasOpenAction = is_array($open) && !empty($open['action_id']);
+                if ($missingNext === [] && !$hasOpenAction && $nextNext === '') {
                     $nextIdStr = (string) ($nextSub['id'] ?? '');
-                    $openSubmit = self::resolveClientOpen($submitNext, $userId);
-                    $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $nextSub['submit'] ?? null);
+                    if ($flowSubmitBlock !== null && self::flowSubmitHasActionId($flowSubmitBlock)) {
+                        return self::emitFlowSubmitPayload($intentId, $nextIdStr, $draft, $userId, $flowSubmitBlock);
+                    }
 
                     return self::withFlowManifest([
                         'success' => true,
-                        'text' => self::assistantTextForPrompt($nextSub, 'Confirmemos y enviemos.'),
+                        'text' => self::assistantTextForPrompt($nextSub, 'Listo.'),
                         'intent_id' => $intentId,
                         'subintent_id' => $nextIdStr,
-                        'open_ui' => $openSubmit,
                         'draft_delta' => (object) [],
                     ], $intentId, $nextIdStr);
-                }
-                // Paso siguiente sin mini-UI ni submit (p. ej. cierre tras rama sin agenda).
-                if ($missingNext === [] && $submitNext === '') {
-                    $hasOpenAction = is_array($open) && !empty($open['action_id']);
-                    $nextNext = isset($nextSub['next']) ? trim((string) $nextSub['next']) : '';
-                    if (!$hasOpenAction && $nextNext === '') {
-                        $nextIdStr = (string) ($nextSub['id'] ?? '');
-                        return self::withFlowManifest([
-                            'success' => true,
-                            'text' => self::assistantTextForPrompt($nextSub, 'Listo.'),
-                            'intent_id' => $intentId,
-                            'subintent_id' => $nextIdStr,
-                            'draft_delta' => (object) [],
-                        ], $intentId, $nextIdStr);
-                    }
                 }
             }
         }
 
-        // Submit final (negocio) si existe.
-        if (isset($current['submit']['action_id'])) {
-            $submitActionId = trim((string) $current['submit']['action_id']);
-            if ($submitActionId !== '') {
-                $submitBlock = isset($current['submit']) && is_array($current['submit']) ? $current['submit'] : [];
-                $openSubmit = self::resolveClientOpen($submitActionId, $userId);
-                $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $submitBlock);
-
-                return self::withFlowManifest([
-                    'success' => true,
-                    'text' => 'Confirmemos y enviemos.',
-                    'intent_id' => $intentId,
-                    'subintent_id' => $currentId,
-                    'open_ui' => $openSubmit,
-                    'draft_delta' => (object) [],
-                ], $intentId, $currentId);
-            }
+        if ($flowSubmitBlock !== null && self::flowSubmitHasActionId($flowSubmitBlock)) {
+            return self::emitFlowSubmitPayload($intentId, $currentId, $draft, $userId, $flowSubmitBlock);
         }
 
         return self::withFlowManifest([
@@ -313,8 +286,33 @@ final class SubIntentEngine
         return trim((string) $v) !== '';
     }
 
+    private static function flowSubmitHasActionId(array $flowSubmitBlock): bool
+    {
+        return trim((string) ($flowSubmitBlock['action_id'] ?? '')) !== '';
+    }
+
     /**
-     * Añade query params al `client_open.api` desde `submit.params` del YAML (valores `draft.*`).
+     * @param array<string, mixed> $flowSubmitBlock
+     * @return array<string, mixed>
+     */
+    private static function emitFlowSubmitPayload(string $intentId, string $subintentId, array $draft, int $userId, array $flowSubmitBlock): array
+    {
+        $submitActionId = trim((string) $flowSubmitBlock['action_id']);
+        $openSubmit = self::resolveClientOpen($submitActionId, $userId);
+        $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $flowSubmitBlock);
+
+        return self::withFlowManifest([
+            'success' => true,
+            'text' => 'Confirmemos y enviemos.',
+            'intent_id' => $intentId,
+            'subintent_id' => $subintentId,
+            'open_ui' => $openSubmit,
+            'draft_delta' => (object) [],
+        ], $intentId, $subintentId);
+    }
+
+    /**
+     * Añade query params al `client_open.api` desde `params` de `flow_submit` o `submit` en YAML (valores `draft.*`).
      *
      * @param array<string, mixed> $open
      * @param array<string, mixed> $draft

@@ -5,11 +5,14 @@ Esta carpeta contiene la **fuente de verdad conversacional** del asistente **den
 - YAML **por intent_id** (ej. `turnos.crear-como-paciente`)
 - Opcionalmente referencias documentales a piezas compartidas (p. ej. `uses_global` apuntando a un id definido en `globals/`); la **fusión por imports no está implementada** en el motor.
 
+**Contrato de claves por paso (`subintents`) y raíz (`flow_submit`):** [`SUBINTENT_CONTRACT.md`](SUBINTENT_CONTRACT.md) — incluye `open_ui`, `chooser`, `next_routing` y **`flow_submit`** a nivel intent (cierre GET+POST vía `action_id` del catálogo). No añadir propiedades nuevas en YAML sin actualizar ese contrato y `SubIntentEngine.php`.
+
 Regla: el YAML no debe contener vocabulario clínico hardcodeado (ej. “oftalmólogo”) como reglas de keywords.  
 La conversación se guía por:
 
-- `requires/provides` (dependencias del draft)
-- `views` embebibles (acciones UI por `action_id`, ej. `efectores.elegir`)
+- `requires` / `provides` (dependencias del draft)
+- `open_ui` / `chooser` (mini-UIs por `action_id`)
+- `flow_submit` en la raíz del YAML (cierre del flujo; ver contrato)
 
 ### Estructura
 

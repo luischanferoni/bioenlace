@@ -1,0 +1,23 @@
+{
+  "ui_type": "ui_json",
+  "title": "Editar agenda (asistente)",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "default",
+      "title": "Acuse",
+      "fields": [
+        {
+          "name": "id_profesional_efector_servicio",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        }
+      ]
+    }
+  ]
+}

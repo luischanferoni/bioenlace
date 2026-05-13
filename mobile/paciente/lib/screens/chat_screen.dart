@@ -51,7 +51,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return '/api/v1/$ent/$act';
   }
 
-  /// Solo el paso final de confirmación de turno (formulario POST), no listados previos.
+  /// Pantalla final de alta de turno (descriptor + POST), no listados previos.
   bool _inlineUiIsConfirmacionTurno(Object? inline) {
     if (inline is! Map) {
       return false;
@@ -868,7 +868,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// Query de UI JSON: el servidor a veces no envía `parameters.provided`; el draft local trae id_*,
-  /// `slot_id` (composite del paso horario) y `tipo_atencion` para la pantalla de confirmación.
+  /// `slot_id` (composite del paso horario) y `tipo_atencion` para la pantalla de alta.
   Map<String, dynamic> _mergeDraftIdsWithProvided(Object? providedRaw) {
     final out = <String, dynamic>{};
     for (final e in _draft.entries) {

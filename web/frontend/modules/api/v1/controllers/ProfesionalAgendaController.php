@@ -25,10 +25,83 @@ use common\models\ProfesionalEfectorServicioAgenda;
  * - **`listar-para-recurso`, `crear-para-recurso`, `actualizar-para-recurso`, `eliminar-para-recurso`:** staff; **`id_efector`** + **`id_profesional_efector_servicio`**.
  *
  * Permisos `/api/profesional-agenda/...` (sin `v1` en webvimark):
- * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso
+ * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso,
+ * crear-agenda-flow, editar-agenda-flow
  */
 class ProfesionalAgendaController extends BaseController
 {
+    /**
+     * Cierre declarativo del flujo asistente «alta profesional y agenda» (descriptor + POST de acuse).
+     *
+     * GET|POST /api/v1/profesional-agenda/crear-agenda-flow
+     *
+     * @action_name Cerrar flujo alta profesional/agenda (asistente)
+     * @entity Agendas
+     * @tags agenda, asistente, flow
+     */
+    public function actionCrearAgendaFlow(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        return UiScreenService::handleScreen(
+            'profesional-agenda',
+            'crear-agenda-flow',
+            array_merge($req->get(), $req->isPost ? $req->post() : []),
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+                if ($idPes > 0) {
+                    $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+                    if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+                        throw new ForbiddenHttpException('Asignación inválida para este efector.');
+                    }
+                }
+
+                return ['data' => ['success' => true, 'message' => 'Flujo de alta completado.']];
+            }
+        );
+    }
+
+    /**
+     * Pantalla/RBAC de cierre asociada al flujo «editar agenda» (sin mutación extra obligatoria).
+     *
+     * GET|POST /api/v1/profesional-agenda/editar-agenda-flow
+     *
+     * @action_name Flujo editar agenda (asistente, RBAC)
+     * @entity Agendas
+     * @tags agenda, asistente, flow
+     */
+    public function actionEditarAgendaFlow(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        return UiScreenService::handleScreen(
+            'profesional-agenda',
+            'editar-agenda-flow',
+            array_merge($req->get(), $req->isPost ? $req->post() : []),
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+                if ($idPes > 0) {
+                    $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+                    if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+                        throw new ForbiddenHttpException('Asignación inválida para este efector.');
+                    }
+                }
+
+                return ['data' => ['success' => true, 'message' => 'Flujo de edición de agenda cerrado.']];
+            }
+        );
+    }
+
     /**
      * UI JSON: configurar agenda semanal por servicio (cupo, forma de atención y horarios).
      *

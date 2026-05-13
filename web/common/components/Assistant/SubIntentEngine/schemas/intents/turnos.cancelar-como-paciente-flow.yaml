@@ -14,7 +14,7 @@ intent_semantics:
   goal: >-
     Cancelar un turno propio que siga pendiente.
   how: >-
-    Se lista turnos pendientes, elegís uno y confirmás en la pantalla de cancelación.
+    Se lista turnos pendientes, elegís uno y confirmás en la pantalla de cancelación (cierre del flujo).
   preconditions:
     - Turno en estado pendiente y perteneciente al paciente autenticado.
   outcome:
@@ -25,15 +25,11 @@ subintents:
     assistant_text: "Turno a cancelar"
     provides:
       - draft.id
-    next: confirm_cancel
+    next: ""
     open_ui:
       action_id: turnos.elegir-pendiente-como-paciente
 
-  - id: confirm_cancel
-    assistant_text: "Confirmación"
-    requires:
-      - draft.id
-    submit:
-      action_id: turnos.cancelar-como-paciente
-      params:
-        id: "draft.id"
+flow_submit:
+  action_id: turnos.cancelar-como-paciente
+  params:
+    id: "draft.id"

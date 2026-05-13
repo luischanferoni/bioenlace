@@ -19,7 +19,7 @@ intent_semantics:
     y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
   how: >-
     Buscar persona en el padrón, elegir un servicio del establecimiento (efector en sesión).
-    Al completar ese paso se persiste el vínculo persona–efector–servicio; si el servicio acepta turnos sigue la pantalla de configuración de agenda (donde se guardan horarios/cupo), si no, el flujo termina ahí.
+    Al completar ese paso se persiste el vínculo persona–efector–servicio; si el servicio acepta turnos sigue la pantalla de configuración de agenda (donde se guardan horarios/cupo) y luego el cierre declarativo del flujo (`flow_submit`), si no, el cierre ocurre al terminar la selección de servicio.
   preconditions:
     - Efector operativo en sesión.
     - Permisos para dar de alta asignaciones en el efector.
@@ -37,6 +37,7 @@ intent_semantics:
 draft_keys_extra:
   - servicio_acepta_turnos
   - id_persona
+  - agenda_ui_completed
 
 business_rules:
   - id: agenda_alta_vs_solo_horarios
@@ -92,6 +93,8 @@ subintents:
 
   - id: configurar_agenda
     assistant_text: "Agenda"
+    provides:
+      - draft.agenda_ui_completed
     requires:
       - draft.id_profesional_efector_servicio
       - draft.id_servicio
@@ -102,3 +105,10 @@ subintents:
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
+
+flow_submit:
+  action_id: profesional-agenda.crear-agenda-flow
+  params:
+    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+    id_servicio: "draft.id_servicio"
+    id_persona: "draft.id_persona"

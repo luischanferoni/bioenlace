@@ -15,7 +15,7 @@ intent_semantics:
   goal: >-
     Reprogramar un turno propio a otra fecha/hora (y profesional PES) disponible.
   how: >-
-    Lista de turnos pendientes → oferta de slots alternativos para ese turno → confirmación POST reprogramar.
+    Lista de turnos pendientes → oferta de slots alternativos para ese turno → confirmación en pantalla de reprogramación (cierre del flujo).
   preconditions:
     - Política del efector permite reprogramación por app cuando aplica.
   outcome:
@@ -36,18 +36,14 @@ subintents:
       - draft.id
     provides:
       - draft.slot_id
-    next: confirm_reprogramar
+    next: ""
     open_ui:
       action_id: turnos.slots-reprogramar-como-paciente
       params:
         id: "draft.id"
 
-  - id: confirm_reprogramar
-    assistant_text: "Confirmación"
-    requires:
-      - draft.id
-      - draft.slot_id
-    submit:
-      action_id: turnos.reprogramar-como-paciente
-      params:
-        id: "draft.id"
+flow_submit:
+  action_id: turnos.reprogramar-como-paciente
+  params:
+    id: "draft.id"
+    slot_id: "draft.slot_id"

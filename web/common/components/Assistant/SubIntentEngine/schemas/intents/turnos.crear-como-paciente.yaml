@@ -15,7 +15,7 @@ intent_semantics:
   goal: >-
     Reservar un turno de atención seleccionando servicio, centro de salud, profesional y un horario disponible.
   how: >-
-    El flujo guía la selección de servicio → centro de salud (lista o cercano) → profesional → horario, y finaliza con confirmación/creación.
+    El flujo guía la selección de servicio → centro de salud (lista o cercano) → profesional → horario; al tener slot, se abre la pantalla de creación del turno (`flow_submit` del intent).
   preconditions:
     - El usuario puede autogestionar turnos.
     - Existe disponibilidad (slots) para el servicio/centro/profesional elegidos.
@@ -80,7 +80,7 @@ subintents:
       - draft.id_profesional_efector_servicio
     provides:
       - draft.slot_id
-    next: confirm
+    next: ""
     open_ui:
       action_id: turnos.slots-disponibles-como-paciente
       params:
@@ -88,9 +88,9 @@ subintents:
         id_efector: "draft.id_efector"
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
-  - id: confirm
-    assistant_text: "Confirmación"
-    requires:
-      - draft.slot_id
-    submit:
-      action_id: turnos.crear-como-paciente
+flow_submit:
+  action_id: turnos.crear-como-paciente
+  params:
+    slot_id: "draft.slot_id"
+    id_servicio_asignado: "draft.id_servicio_asignado"
+    id_efector: "draft.id_efector"

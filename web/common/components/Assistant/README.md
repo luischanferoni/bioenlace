@@ -12,7 +12,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 
 ## Fuentes de verdad
 
-- **Conversación por intent**: `SubIntentEngine/schemas/intents/*.yaml`
+- **Conversación por intent**: `SubIntentEngine/schemas/intents/*.yaml` — contrato de pasos (`open_ui`, `flow_submit`, etc.): `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`
 - **Piezas reutilizables**: `SubIntentEngine/schemas/globals/*.yaml`
 - **Mini-UIs** (`ui_json` / wizard): `frontend/modules/api/v1/views/json/<entidad>/<accion>.json`
 

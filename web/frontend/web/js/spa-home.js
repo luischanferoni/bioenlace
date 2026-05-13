@@ -140,7 +140,11 @@
                         if (typeof onFlowCleared === 'function') {
                             onFlowCleared();
                         }
-                        wrap.innerHTML = '<div class="alert alert-success mb-0 py-2">Listo.</div>';
+                        var d = json.data && typeof json.data === 'object' ? json.data : null;
+                        var okText = (d && typeof d.mensaje === 'string' && d.mensaje.trim() !== '')
+                            ? d.mensaje.trim()
+                            : 'Listo.';
+                        wrap.innerHTML = '<div class="alert alert-success mb-0 py-2">' + escapeHtml(okText) + '</div>';
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }

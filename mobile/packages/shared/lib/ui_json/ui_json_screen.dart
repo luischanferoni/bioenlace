@@ -830,6 +830,18 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           _loading = false;
           _formSubmitted = true;
         });
+        final dataRaw = m['data'];
+        if (dataRaw is Map) {
+          final msgOk = dataRaw['mensaje']?.toString().trim() ?? '';
+          if (msgOk.isNotEmpty && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(msgOk),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
         final cb = widget.onSubmitSuccess;
         if (cb != null) {
           final data = m['data'];

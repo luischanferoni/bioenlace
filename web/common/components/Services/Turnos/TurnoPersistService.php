@@ -23,9 +23,9 @@ class TurnoPersistService
      *   id: int,
      *   fecha: mixed,
      *   hora: mixed,
-     *   id_consulta: int|null,
      *   id_profesional_efector_servicio: int|null,
-     *   servicio_detalle: array{id_servicio: int, nombre: string}|null
+     *   servicio_detalle: array{id_servicio: int, nombre: string}|null,
+     *   mensaje: string
      * }
      * @throws PolicyModeradaException reserva autogestion bloqueada
      * @throws \InvalidArgumentException validación de negocio o errores del AR
@@ -103,24 +103,37 @@ class TurnoPersistService
             throw new \InvalidArgumentException(implode(', ', $model->getErrorSummary(true)));
         }
 
-        $idConsulta = null;
-        $consulta = Consulta::createFromTurno($model);
-        if ($consulta) {
-            $idConsulta = (int) $consulta->id_consulta;
-        }
+        Consulta::createFromTurno($model);
         try {
             (new TurnoLifecycleService())->afterTurnoCreado($model);
         } catch (\Throwable $e) {
             Yii::warning('afterTurnoCreado: ' . $e->getMessage(), 'api-turnos');
         }
 
+        $servicioNombre = trim((string) $model->getNombreServicioParaDisplay());
+        $fechaStr = (string) ($model->fecha ?? '');
+        $horaStr = (string) ($model->hora ?? '');
+        try {
+            if ($fechaStr !== '') {
+                $fechaStr = (new \DateTimeImmutable($fechaStr))->format('d/m/Y');
+            }
+        } catch (\Throwable $e) {
+            // dejar fecha en formato ISO si no parsea
+        }
+        if ($horaStr !== '' && strlen($horaStr) > 5) {
+            $horaStr = substr($horaStr, 0, 5);
+        }
+        $mensaje = $servicioNombre !== ''
+            ? sprintf('Reservamos tu turno de %s el %s a las %s.', $servicioNombre, $fechaStr, $horaStr)
+            : sprintf('Reservamos tu turno el %s a las %s.', $fechaStr, $horaStr);
+
         return [
             'id' => $model->id_turnos,
             'fecha' => $model->fecha,
             'hora' => $model->hora,
-            'id_consulta' => $idConsulta,
             'id_profesional_efector_servicio' => (int) ($model->id_profesional_efector_servicio ?? 0) ?: null,
             'servicio_detalle' => $model->getServicioEmbebidoParaApi(),
+            'mensaje' => $mensaje,
         ];
     }
 

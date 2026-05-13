@@ -1215,15 +1215,27 @@ class _ChatScreenState extends State<ChatScreen> {
       final m = Map<String, dynamic>.from(decoded);
       if (m['kind'] == 'ui_submit_result' && m['success'] != false) {
         final data = m['data'];
-        var extra = '';
+        var successText = 'Listo.';
         if (data is Map) {
           final s = data['mensaje']?.toString() ?? data['message']?.toString() ?? '';
-          if (s.trim().isNotEmpty) extra = '\n\n${s.trim()}';
+          if (s.trim().isNotEmpty) {
+            successText = s.trim();
+          }
+        }
+        if (mounted) {
+          final csSnack = context.pacienteColors;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(successText),
+              backgroundColor: csSnack.primary,
+              duration: const Duration(seconds: 4),
+            ),
+          );
         }
         setState(() {
           msg.remove('flow_submit_request');
           final prev = msg['content']?.toString() ?? '';
-          msg['content'] = ('$prev${extra.isEmpty ? '\n\nListo.' : extra}').trim();
+          msg['content'] = ('$prev\n\n$successText').trim();
           _intentId = null;
           _subintentId = null;
           _draft = {};

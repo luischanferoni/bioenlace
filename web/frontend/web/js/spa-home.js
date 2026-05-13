@@ -1533,15 +1533,18 @@
         if (grid) {
             html += '</div>';
         }
-        html += '<div class="d-flex justify-content-end pt-2">';
-        html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
-        html += '</div>';
+        const hideSubmit = block.hide_submit === true || block.hide_submit === 1 || block.hide_submit === '1';
+        if (!hideSubmit) {
+            html += '<div class="d-flex justify-content-end pt-2">';
+            html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
+            html += '</div>';
+        }
         html += '</form></div>';
         container.innerHTML = html;
 
         const form = container.querySelector('form[data-ui-json-form="1"]');
-        const submitBtn = container.querySelector('button[data-ui-json-submit="1"]');
-        if (!form || !submitBtn || !submitUrl) return;
+        const submitBtn = hideSubmit ? null : container.querySelector('button[data-ui-json-submit="1"]');
+        if (!form || (!hideSubmit && (!submitBtn || !submitUrl))) return;
 
         initCustomWidgetsInContainer(container, fields);
         attachAutocompleteHandlers(container);
@@ -1685,12 +1688,15 @@
 
         const outerClass = fieldBootstrapColClass(field, useGrid);
         let html = '<div class="' + outerClass + '">';
-        html += '<label class="form-label">' + escapeHtml(field.label || '');
-        if (field.required) {
-            html += ' <span class="text-danger">*</span>';
+        const lblRaw = field.label != null ? String(field.label).trim() : '';
+        if (lblRaw !== '' || field.required) {
+            html += '<label class="form-label">' + escapeHtml(lblRaw);
+            if (field.required) {
+                html += ' <span class="text-danger">*</span>';
+            }
+            html += '</label>';
         }
-        html += '</label>';
-        
+
         switch (field.type) {
             case 'autocomplete':
                 html += renderAutocompleteField(field);
@@ -1993,7 +1999,12 @@
      * Renderizar campo textarea
      */
     function renderTextareaField(field) {
-        let html = '<textarea class="form-control" name="' + escapeHtml(field.name) + '" rows="3"' + (field.required ? ' required' : '') + '>' + (field.value || '') + '</textarea>';
+        const ro = field.readonly === true || field.readonly === 1 || field.readonly === '1' || field.readonly === 'true';
+        const rows = field.rows != null && String(field.rows).trim() !== '' ? Math.max(2, parseInt(String(field.rows), 10) || 4) : 4;
+        let html = '<textarea class="form-control" name="' + escapeHtml(field.name) + '" rows="' + rows + '"'
+            + (field.required ? ' required' : '')
+            + (ro ? ' readonly' : '')
+            + '>' + (field.value || '') + '</textarea>';
         return html;
     }
 

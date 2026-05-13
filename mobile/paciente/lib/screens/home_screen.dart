@@ -37,6 +37,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _loadingInicial = true;
   bool _loadingMasPendientes = false;
   bool _loadingMasPasados = false;
+  /// Recarga del listado al cambiar de pestaña (vuelve a pedir al backend).
+  bool _refrescandoTabActivo = false;
   String? _error;
 
   /// 0 = próximos turnos, 1 = historial.
@@ -72,9 +74,40 @@ class _HomeScreenState extends State<HomeScreen> {
   bool get _hayMasPendientes => _pendientes.length < _totalPendientes;
   bool get _hayMasPasados => _pasados.length < _totalPasados;
 
+  /// Primera carga: solo próximos (la pestaña Anteriores pide datos al entrar).
   Future<void> _cargarInicial() async {
     setState(() {
       _loadingInicial = true;
+      _error = null;
+      _pendientes.clear();
+      _pasados.clear();
+      _totalPasados = 0;
+    });
+    final r1 = await _turnosService.getMisTurnos(
+      alcance: 'pendientes',
+      limit: _pageLimit,
+      offset: 0,
+    );
+    if (!mounted) return;
+    if (r1['success'] != true) {
+      setState(() {
+        _loadingInicial = false;
+        _error = r1['message'] as String? ?? 'Error al cargar turnos';
+      });
+      return;
+    }
+    setState(() {
+      _loadingInicial = false;
+      _pendientes
+        ..clear()
+        ..addAll(_filtrarProximosLocales(_asMapList(r1['turnos'])));
+      _totalPendientes = r1['total'] as int? ?? _pendientes.length;
+    });
+  }
+
+  /// Pull-to-refresh: actualiza próximos e historial.
+  Future<void> _refrescoPullCompleto() async {
+    setState(() {
       _error = null;
       _pendientes.clear();
       _pasados.clear();
@@ -92,21 +125,21 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     if (r1['success'] != true && r2['success'] != true) {
       setState(() {
-        _loadingInicial = false;
         _error = (r1['message'] ?? r2['message']) as String? ?? 'Error al cargar turnos';
       });
       return;
     }
     setState(() {
-      _loadingInicial = false;
       if (r1['success'] == true) {
-        _pendientes.clear();
-        _pendientes.addAll(_asMapList(r1['turnos']));
+        _pendientes
+          ..clear()
+          ..addAll(_filtrarProximosLocales(_asMapList(r1['turnos'])));
         _totalPendientes = r1['total'] as int? ?? _pendientes.length;
       }
       if (r2['success'] == true) {
-        _pasados.clear();
-        _pasados.addAll(_asMapList(r2['turnos']));
+        _pasados
+          ..clear()
+          ..addAll(_filtrarPasadosLocales(_asMapList(r2['turnos'])));
         _totalPasados = r2['total'] as int? ?? _pasados.length;
       }
       if (r1['success'] != true) {
@@ -134,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _loadingMasPendientes = false;
       if (r['success'] == true) {
-        _pendientes.addAll(_asMapList(r['turnos']));
+        _pendientes.addAll(_filtrarProximosLocales(_asMapList(r['turnos'])));
         _totalPendientes = r['total'] as int? ?? _pendientes.length;
       }
     });
@@ -152,10 +185,127 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _loadingMasPasados = false;
       if (r['success'] == true) {
-        _pasados.addAll(_asMapList(r['turnos']));
+        _pasados.addAll(_filtrarPasadosLocales(_asMapList(r['turnos'])));
         _totalPasados = r['total'] as int? ?? _pasados.length;
       }
     });
+  }
+
+  /// Inicio combinado fecha+hora en horario local del dispositivo (alinea criterio con lo que ve el usuario).
+  DateTime? _inicioTurnoLocal(Map<String, dynamic> t) {
+    final fechaRaw = t['fecha'];
+    String fechaStr;
+    if (fechaRaw is String) {
+      fechaStr = fechaRaw.trim().split('T').first;
+    } else if (fechaRaw is DateTime) {
+      fechaStr =
+          '${fechaRaw.year.toString().padLeft(4, '0')}-${fechaRaw.month.toString().padLeft(2, '0')}-${fechaRaw.day.toString().padLeft(2, '0')}';
+    } else {
+      return null;
+    }
+    if (fechaStr.length < 10) return null;
+
+    final horaRaw = t['hora'];
+    String horaNorm;
+    if (horaRaw is String && horaRaw.trim().isNotEmpty) {
+      horaNorm = horaRaw.trim();
+    } else {
+      horaNorm = '00:00:00';
+    }
+    if (horaNorm.length == 5 && horaNorm.contains(':')) {
+      horaNorm = '$horaNorm:00';
+    }
+    try {
+      return DateTime.parse('${fechaStr}T$horaNorm');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _inicioEsEstrictamentePasadoLocal(Map<String, dynamic> t) {
+    final d = _inicioTurnoLocal(t);
+    if (d == null) return false;
+    return d.isBefore(DateTime.now());
+  }
+
+  bool _inicioEsProximoOLocal(Map<String, dynamic> t) {
+    final d = _inicioTurnoLocal(t);
+    if (d == null) return true;
+    return !d.isBefore(DateTime.now());
+  }
+
+  List<Map<String, dynamic>> _filtrarPasadosLocales(List<Map<String, dynamic>> raw) {
+    return raw.where(_inicioEsEstrictamentePasadoLocal).toList();
+  }
+
+  List<Map<String, dynamic>> _filtrarProximosLocales(List<Map<String, dynamic>> raw) {
+    return raw.where(_inicioEsProximoOLocal).toList();
+  }
+
+  Future<void> _recargarPendientesDesdeCero() async {
+    setState(() {
+      _pendientes.clear();
+      _totalPendientes = 0;
+    });
+    final r = await _turnosService.getMisTurnos(
+      alcance: 'pendientes',
+      limit: _pageLimit,
+      offset: 0,
+    );
+    if (!mounted) return;
+    if (r['success'] == true) {
+      setState(() {
+        _pendientes
+          ..clear()
+          ..addAll(_filtrarProximosLocales(_asMapList(r['turnos'])));
+        _totalPendientes = r['total'] as int? ?? _pendientes.length;
+        _error = null;
+      });
+    } else {
+      setState(() => _error = r['message'] as String?);
+    }
+  }
+
+  Future<void> _recargarPasadosDesdeCero() async {
+    setState(() {
+      _pasados.clear();
+      _totalPasados = 0;
+    });
+    final r = await _turnosService.getMisTurnos(
+      alcance: 'pasados',
+      limit: _pageLimit,
+      offset: 0,
+    );
+    if (!mounted) return;
+    if (r['success'] == true) {
+      setState(() {
+        _pasados
+          ..clear()
+          ..addAll(_filtrarPasadosLocales(_asMapList(r['turnos'])));
+        _totalPasados = r['total'] as int? ?? _pasados.length;
+        _error = null;
+      });
+    } else {
+      setState(() => _error = r['message'] as String?);
+    }
+  }
+
+  Future<void> _alCambiarTab(int nuevoTab) async {
+    if (nuevoTab == _tabTurnos) return;
+    setState(() {
+      _tabTurnos = nuevoTab;
+      _refrescandoTabActivo = true;
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+    });
+    if (nuevoTab == 0) {
+      await _recargarPendientesDesdeCero();
+    } else {
+      await _recargarPasadosDesdeCero();
+    }
+    if (!mounted) return;
+    setState(() => _refrescandoTabActivo = false);
   }
 
   DateTime? _fechaTurnoSoloDia(Map<String, dynamic> t) {
@@ -327,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: cs.surface,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _cargarInicial,
+          onRefresh: _refrescoPullCompleto,
           child: _loadingInicial
               ? const Center(child: CircularProgressIndicator())
               : _error != null && _pendientes.isEmpty && _pasados.isEmpty
@@ -370,6 +520,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           _buildCardSinTurnos(context),
                           const SizedBox(height: 20),
                         ],
+                        if (_refrescandoTabActivo)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: LinearProgressIndicator(minHeight: 3),
+                          ),
                         SegmentedButton<int>(
                           segments: const [
                             ButtonSegment<int>(
@@ -385,18 +540,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                           selected: {_tabTurnos},
                           onSelectionChanged: (Set<int> next) {
-                            setState(() {
-                              _tabTurnos = next.first;
-                              if (_scrollController.hasClients) {
-                                _scrollController.jumpTo(0);
-                              }
-                            });
+                            final n = next.first;
+                            _alCambiarTab(n);
                           },
                           showSelectedIcon: false,
                         ),
                         if (_tabTurnos == 0) ...[
                           _leyendaProximidad(context),
                           const SizedBox(height: 8),
+                          if (_refrescandoTabActivo && _pendientes.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
                           ..._pendientes.map((t) {
                             final prox = _proximidadPendiente(t);
                             return Padding(
@@ -427,7 +583,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                         ] else ...[
                           const SizedBox(height: 12),
-                          if (_pasados.isEmpty)
+                          if (_refrescandoTabActivo && _pasados.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          if (!_refrescandoTabActivo && _pasados.isEmpty)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Text(

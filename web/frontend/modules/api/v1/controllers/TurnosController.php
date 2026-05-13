@@ -734,11 +734,35 @@ class TurnosController extends BaseController
                 return array_merge(['success' => true], $grouped);
             }
 
+            $anticipSvc = new TurnoAutogestionAnticipacionService();
+            $leyenda = $anticipSvc->textoLeyendaPoliticaAutogestionApp((int) $idEfector);
+            $legendBlock = [
+                'kind' => 'fields',
+                'id' => 'politica_autogestion',
+                'display_order' => -1,
+                'title' => 'Política de cancelación y reprogramación',
+                'hide_submit' => true,
+                'fields' => [
+                    [
+                        'name' => '_leyenda_politica_autogestion',
+                        'type' => 'textarea',
+                        'label' => '',
+                        'rows' => 6,
+                        'required' => false,
+                        'readonly' => true,
+                        'value' => $leyenda,
+                        'include_in_submit' => false,
+                    ],
+                ],
+            ];
+
             $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, (int) $idServicio);
             if ($blocks !== []) {
-                $out['blocks'] = $blocks;
+                $out['blocks'] = array_merge([$legendBlock], $blocks);
             } else {
                 $out = UiScreenService::withListBlockItems($out, []);
+                $baseBlocks = isset($out['blocks']) && is_array($out['blocks']) ? $out['blocks'] : [];
+                $out['blocks'] = array_merge([$legendBlock], $baseBlocks);
             }
         }
 

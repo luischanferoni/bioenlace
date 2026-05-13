@@ -131,4 +131,30 @@ class TurnoAutogestionAnticipacionService
 
         return max(0, (int) ($defaults[$key] ?? 0));
     }
+
+    /**
+     * Texto informativo para UI de reserva (horarios) según anticipación mínima del efector.
+     */
+    public function textoLeyendaPoliticaAutogestionApp(int $idEfector): string
+    {
+        $hC = $this->minHorasAntesCancelarParaEfector($idEfector);
+        $hR = $this->minHorasAntesReprogramarParaEfector($idEfector);
+
+        $lineas = [
+            'Estas reglas aplican al inicio del turno que elijas:',
+        ];
+        if ($hC <= 0) {
+            $lineas[] = '• Cancelar por app: sin mínimo de horas de anticipación.';
+        } else {
+            $lineas[] = '• Cancelar por app: al menos ' . $hC . ' hora' . ($hC === 1 ? '' : 's') . ' antes del horario reservado.';
+        }
+        if ($hR <= 0) {
+            $lineas[] = '• Cambiar el horario (reprogramar) por app: sin mínimo de horas de anticipación.';
+        } else {
+            $lineas[] = '• Cambiar el horario (reprogramar) por app: al menos ' . $hR . ' hora' . ($hR === 1 ? '' : 's') . ' antes del horario reservado.';
+        }
+        $lineas[] = 'Pasado ese plazo o en situaciones especiales, contactá al consultorio.';
+
+        return implode("\n", $lineas);
+    }
 }

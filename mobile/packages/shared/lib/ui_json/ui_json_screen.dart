@@ -650,6 +650,34 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           trailing: const Icon(Icons.calendar_today),
           onTap: () => _pickDate(field),
         );
+      case 'textarea':
+        final readonly = field['readonly'] == true;
+        final rowsRaw = field['rows'];
+        final lines = rowsRaw is int ? rowsRaw : int.tryParse('$rowsRaw') ?? 4;
+        final clamped = lines.clamp(2, 14).toInt();
+        final initialVal = field['value']?.toString() ?? _accum[name] ?? '';
+        if (initialVal.isNotEmpty) {
+          _accum.putIfAbsent(name, () => initialVal);
+        }
+        return TextFormField(
+          initialValue: initialVal,
+          maxLines: readonly ? clamped : 4,
+          minLines: readonly ? clamped : null,
+          readOnly: readonly,
+          enableSuggestions: !readonly,
+          decoration: InputDecoration(
+            labelText: label.isNotEmpty ? (required ? '$label *' : label) : null,
+            border: const OutlineInputBorder(),
+            alignLabelWithHint: true,
+            filled: readonly,
+          ),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          onChanged: readonly
+              ? null
+              : (v) => setState(() {
+                    _accum[name] = v;
+                  }),
+        );
       case 'autocomplete':
         final n = _notifierFor(name);
         if (!_depsOk(field)) {
@@ -1122,20 +1150,21 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               },
             ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              if (widget.embedded && widget.onCancel != null)
-                TextButton(
-                  onPressed: (_loading || _formSubmitted) ? null : widget.onCancel,
-                  child: const Text('Cancelar'),
+          if (b['hide_submit'] != true && b['hide_submit'] != 1 && b['hide_submit'] != '1')
+            Row(
+              children: [
+                if (widget.embedded && widget.onCancel != null)
+                  TextButton(
+                    onPressed: (_loading || _formSubmitted) ? null : widget.onCancel,
+                    child: const Text('Cancelar'),
+                  ),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: (_loading || _formSubmitted) ? null : _submit,
+                  child: Text(_formSubmitted ? 'Confirmado' : 'Confirmar'),
                 ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: (_loading || _formSubmitted) ? null : _submit,
-                child: Text(_formSubmitted ? 'Confirmado' : 'Confirmar'),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       );
     }

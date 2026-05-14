@@ -26,6 +26,7 @@ use common\components\Services\Turnos\PolicyModeradaException;
 use common\components\Services\Turnos\AutogestionAnticipacionException;
 use common\components\Services\Turnos\TurnoAutogestionAnticipacionService;
 use common\components\Services\Turnos\TurnoCancellationPolicyService;
+use common\components\Services\Turnos\TurnoCancelacionRazones;
 use common\components\Services\Turnos\BulkCancelDayService;
 use common\components\Services\Turnos\SobreturnoService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
@@ -155,7 +156,17 @@ class TurnosController extends BaseController
                 $hora = isset($t['hora']) ? (string) $t['hora'] : '';
                 $svc = isset($t['servicio']) ? (string) $t['servicio'] : '';
                 $prof = isset($t['profesional']) ? (string) $t['profesional'] : '';
-                $parts = array_filter([$fecha !== '' && $hora !== '' ? "$fecha $hora" : '', $svc, $prof]);
+                $fechaAmigable = $fecha !== '' ? TurnoSlotOfferUiPresenter::friendlyDayHeading($fecha) : '';
+                $horaCorta = $this->formatHoraTurnoPacienteCorta($hora);
+                $cuando = '';
+                if ($fechaAmigable !== '' && $horaCorta !== '') {
+                    $cuando = $fechaAmigable . ' · ' . $horaCorta;
+                } elseif ($fechaAmigable !== '') {
+                    $cuando = $fechaAmigable;
+                } elseif ($horaCorta !== '') {
+                    $cuando = $horaCorta;
+                }
+                $parts = array_filter([$cuando, $svc, $prof]);
                 $label = implode(' · ', $parts);
                 if ($label === '') {
                     $label = 'Turno #' . $id;
@@ -404,13 +415,21 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Cancelar turno propio (autogestión). POST …/turnos/{id}/cancelar. Body: estado_motivo, canal.
+     * Cancelar turno propio (autogestión). GET descriptor UI; POST body: id, razon_cancelacion, canal (opcional).
+     * El turno queda con estado_motivo CANCELADO_X_PACIENTE; la razón elegida va en auditoría (`meta_json`).
      * RBAC: /api/turnos/cancelar-como-paciente
      */
     public function actionCancelarComoPaciente($id = null)
     {
         $req = Yii::$app->request;
-        return UiScreenService::handleScreen(
+        if (!$req->isPost) {
+            $params = array_merge($req->get(), $req->post());
+            $def = UiScreenService::renderUiDefinition('turnos', 'cancelar-como-paciente', $params, null);
+
+            return TurnoCancelacionRazones::aplicarOpcionesRazonEnDefinicionUiJson($def);
+        }
+
+        $out = UiScreenService::handleScreen(
             'turnos',
             'cancelar-como-paciente',
             $req->get(),
@@ -424,6 +443,11 @@ class TurnosController extends BaseController
                 return ['data' => $this->cancelarComoPacienteCore($tid, $post)];
             }
         );
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['success'] ?? true) === false) {
+            return TurnoCancelacionRazones::aplicarOpcionesRazonEnDefinicionUiJson($out);
+        }
+
+        return $out;
     }
 
     /**
@@ -461,7 +485,8 @@ class TurnosController extends BaseController
                     $turno,
                     (string) $motivo,
                     (string) $canal,
-                    Yii::$app->user->id ?? null
+                    Yii::$app->user->id ?? null,
+                    []
                 );
 
                 return ['data' => ['success' => true, 'message' => 'Turno cancelado']];
@@ -909,6 +934,25 @@ class TurnosController extends BaseController
     }
 
     /**
+     * Hora legible en listados paciente (HH:mm, sin segundos).
+     */
+    protected function formatHoraTurnoPacienteCorta(?string $hora): string
+    {
+        if ($hora === null || trim($hora) === '') {
+            return '';
+        }
+        $t = trim($hora);
+        if (preg_match('/^(\d{1,2}):(\d{2})/', $t, $m) === 1) {
+            return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
+        }
+        if (strlen($t) >= 5) {
+            return substr($t, 0, 5);
+        }
+
+        return $t;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     protected function formatTurnoPacienteListadoRow(Turno $turno): array
@@ -1034,14 +1078,26 @@ class TurnosController extends BaseController
         if ((int) $turno->id_persona !== (int) $idPersona) {
             throw new ForbiddenHttpException('No autorizado');
         }
-        $motivo = $post['estado_motivo'] ?? Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE;
-        $canal = $post['canal'] ?? 'app';
-        if (!in_array($motivo, [Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE, Turno::ESTADO_MOTIVO_CANCELADO_MEDICO], true)) {
-            $motivo = Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE;
+        $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
+        if ($razon === '' && (($post['estado_motivo'] ?? '') === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE)) {
+            $razon = TurnoCancelacionRazones::COD_PAC_OTRO;
         }
+        if ($razon === '' || !TurnoCancelacionRazones::esCodigoPacienteAppValido($razon)) {
+            throw new BadRequestHttpException('Indicá un motivo de cancelación válido (razon_cancelacion).');
+        }
+        $canal = $post['canal'] ?? 'app';
         $life = new TurnoLifecycleService();
         try {
-            $life->cancelar($turno, $motivo, $canal, Yii::$app->user->id ?? null);
+            $life->cancelar(
+                $turno,
+                Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE,
+                $canal,
+                Yii::$app->user->id ?? null,
+                [
+                    'razon_cancelacion' => $razon,
+                    'razon_cancelacion_label' => TurnoCancelacionRazones::etiquetaPacienteApp($razon),
+                ]
+            );
         } catch (PolicyModeradaException $e) {
             throw $e;
         } catch (AutogestionAnticipacionException $e) {

@@ -18,15 +18,11 @@
           "include_in_submit": true
         },
         {
-          "name": "estado_motivo",
-          "label": "Motivo",
+          "name": "razon_cancelacion",
+          "label": "Motivo de la cancelación",
           "type": "select",
-          "required": false,
-          "default": "CANCELADO_X_PACIENTE",
-          "options": [
-            { "value": "CANCELADO_X_PACIENTE", "label": "Cancelado por paciente" },
-            { "value": "CANCELADO_X_MEDICO", "label": "Cancelado por médico" }
-          ]
+          "required": true,
+          "options": []
         },
         {
           "name": "canal",

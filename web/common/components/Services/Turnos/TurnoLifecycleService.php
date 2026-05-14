@@ -27,8 +27,9 @@ class TurnoLifecycleService
 
     /**
      * @param string $canal app|admin|telefono
+     * @param array<string, mixed> $metaAudit opcional; se fusiona en {@see TurnoEventoAudit::registrar()} (p. ej. razon_cancelacion).
      */
-    public function cancelar(Turno $turno, $estadoMotivo, $canal = 'app', $idUser = null)
+    public function cancelar(Turno $turno, $estadoMotivo, $canal = 'app', $idUser = null, array $metaAudit = [])
     {
         if ($turno->estado !== Turno::ESTADO_PENDIENTE) {
             throw new \InvalidArgumentException('Solo se pueden cancelar turnos pendientes');
@@ -55,9 +56,10 @@ class TurnoLifecycleService
         TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
 
         $tipo = $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE
-            ? TurnoEventoAudit::TIPO_CANCEL_PAT
+            ? TurnoEventoAudit::TIPO_CANCEL_PAC
             : TurnoEventoAudit::TIPO_CANCEL_MED;
-        TurnoEventoAudit::registrar($turno->id_turnos, $tipo, $idUser, ['canal' => $canal]);
+        $meta = array_merge($metaAudit, ['canal' => $canal]);
+        TurnoEventoAudit::registrar($turno->id_turnos, $tipo, $idUser, $meta);
 
         $push = new PushNotificationSender();
         if ($turno->paciente && $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_MEDICO) {

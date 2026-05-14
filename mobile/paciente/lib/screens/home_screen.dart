@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/turnos_service.dart';
 import '../theme/paciente_theme_extensions.dart';
+import 'chat_motivos_screen.dart';
 
 /// Próximo turno pendiente respecto al calendario local (solo fecha, sin hora).
 enum _ProximidadPendiente { hoy, manana, masAdelante }
@@ -416,6 +417,15 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$name ${d.toString().padLeft(2, '0')}/${mo.toString().padLeft(2, '0')}';
   }
 
+  /// `id_consulta` en el listado de turnos (si existe, el paciente puede cargar motivos).
+  int? _idConsultaDesdeTurno(Map<String, dynamic> t) {
+    final raw = t['id_consulta'];
+    if (raw == null) return null;
+    if (raw is int) return raw > 0 ? raw : null;
+    final n = int.tryParse(raw.toString());
+    return n != null && n > 0 ? n : null;
+  }
+
   String _horaSinSegundos(String? hora) {
     if (hora == null || hora.trim().isEmpty) return '';
     final t = hora.trim();
@@ -634,6 +644,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final cs = context.pacienteColors;
     final tt = context.pacienteTextTheme;
     final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
+    final idConsulta = futuro ? _idConsultaDesdeTurno(t) : null;
 
     Color bg;
     Color? borderColor;
@@ -673,6 +684,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Con: ${_profesionalSinDni(t['profesional']?.toString())}',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
+            if (idConsulta != null) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.edit_note, size: 18),
+                  label: const Text('Cargar motivos de consulta'),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatMotivosScreen(
+                          consultaId: idConsulta,
+                          authToken: widget.authToken,
+                          userId: widget.userId,
+                          userName: widget.userName,
+                          titulo:
+                              'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
+                        ),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: cs.primary,
+                    side: BorderSide(color: cs.primary),
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            ],
             if (!futuro && estado.isNotEmpty)
               Text(
                 estado,

@@ -575,12 +575,33 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
             subtitle: const Text('Sin opciones disponibles'),
           );
         }
+        final dropdownKey = ValueKey<String>('ui_json.select.$name.${items.length}.${effective ?? ""}');
         return DropdownButtonFormField<String>(
-          decoration: InputDecoration(labelText: required ? '$label *' : label),
+          key: dropdownKey,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: required ? '$label *' : label,
+            border: const OutlineInputBorder(),
+          ),
           // ignore: deprecated_member_use
           value: effective,
-          hint: const Text('Seleccione...'),
+          hint: const Text('Seleccioná una opción'),
           items: items,
+          selectedItemBuilder: (context) {
+            return items
+                .map(
+                  (item) => Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: DefaultTextStyle.merge(
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      child: item.child,
+                    ),
+                  ),
+                )
+                .toList();
+          },
           iconEnabledColor: Theme.of(context).colorScheme.primary,
           dropdownColor: Theme.of(context).colorScheme.surface,
           onChanged: (v) => setState(() {
@@ -1018,6 +1039,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                           if (requiresConfirmation) {
                             setState(() => _listEmbedSelectedId = id);
                           } else {
+                            setState(() => _listEmbedSelectedId = id);
                             // Un solo ítem: dar tiempo a percibir la UI antes de avanzar el flow.
                             if (items.length == 1) {
                               await Future<void>.delayed(const Duration(milliseconds: 480));
@@ -1027,7 +1049,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                             if (mounted) {
                               setState(() {
                                 _listEmbedLocked = true;
-                                _listEmbedSelectedId = null;
                               });
                             }
                           }
@@ -1076,7 +1097,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                           if (mounted) {
                             setState(() {
                               _listEmbedLocked = true;
-                              _listEmbedSelectedId = null;
                             });
                           }
                         },

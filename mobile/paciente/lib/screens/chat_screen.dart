@@ -1490,31 +1490,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ],
-                    if (!isUser && message['flow_submit_request'] is Map) ...[
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: ElevatedButton.icon(
-                            onPressed: (message['_flow_submit_busy'] == true || _isSending)
-                                ? null
-                                : () => _postFlowSubmitFromMessage(index),
-                            icon: message['_flow_submit_busy'] == true
-                                ? SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: cs.onPrimary,
-                                    ),
-                                  )
-                                : const Icon(Icons.check_circle_outline),
-                            label: const Text('Confirmar y enviar'),
-                          ),
-                        ),
-                      ),
-                    ],
-                    // Inline UI JSON embebida en chat
+                    // Inline UI JSON embebida en chat (antes del "Confirmar y enviar" del flow)
                     if (!isUser && inlineUi is Map) ...[
                       SizedBox(height: inlineUiLeadGapHeight),
                       if (message['flow_tabs'] is List && (message['flow_tabs'] as List).length >= 2) ...[
@@ -1794,6 +1770,30 @@ class _ChatScreenState extends State<ChatScreen> {
                               },
                             ),
                             ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (!isUser && message['flow_submit_request'] is Map) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: ElevatedButton.icon(
+                            onPressed: (message['_flow_submit_busy'] == true || _isSending)
+                                ? null
+                                : () => _postFlowSubmitFromMessage(index),
+                            icon: message['_flow_submit_busy'] == true
+                                ? SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: cs.onPrimary,
+                                    ),
+                                  )
+                                : const Icon(Icons.check_circle_outline),
+                            label: const Text('Confirmar y enviar'),
                           ),
                         ),
                       ),

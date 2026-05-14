@@ -1,0 +1,37 @@
+{
+  "ui_type": "ui_json",
+  "title": "Motivo de la cancelación",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "default",
+      "title": "Motivo de la cancelación",
+      "fields": [
+        {
+          "name": "id",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "razon_cancelacion",
+          "label": "Motivo de la cancelación",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "canal",
+          "type": "hidden",
+          "required": false,
+          "default": "app",
+          "include_in_submit": true
+        }
+      ]
+    }
+  ]
+}

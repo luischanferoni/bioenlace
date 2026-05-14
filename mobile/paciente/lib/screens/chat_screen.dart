@@ -1699,7 +1699,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                   }
                                 }
                               },
-                              onSubmitSuccess: (_) async {
+                              onSubmitSuccess: (data) async {
+                                final rc = data['razon_cancelacion']?.toString().trim();
+                                if (rc != null && rc.isNotEmpty) {
+                                  setState(() {
+                                    _draft['razon_cancelacion'] = rc;
+                                  });
+                                }
                                 // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
                                 _asistenteService.draft = Map<String, dynamic>.from(_draft);
                                 final res = await _asistenteService.procesarInteraccion('');

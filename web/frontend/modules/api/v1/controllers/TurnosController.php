@@ -32,6 +32,7 @@ use common\components\Services\Turnos\SobreturnoService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
+use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
 
 /**
@@ -180,6 +181,60 @@ class TurnosController extends BaseController
         }
 
         return $out;
+    }
+
+    /**
+     * Mini-UI (`ui_json`): elegir motivo de cancelación (paciente). No persiste el turno; solo valida y cierra el paso del flujo.
+     *
+     * GET|POST /api/v1/turnos/elegir-motivo-cancelacion-como-paciente
+     * Query/body: `id` (id_turnos). POST además `razon_cancelacion` (código PAC_*).
+     *
+     * @action_name Motivo de cancelación (paciente)
+     * @entity Turnos
+     * @tags views, ui, turnos, paciente, autogestión
+     */
+    public function actionElegirMotivoCancelacionComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            $params = array_merge($req->get(), $req->post());
+            $def = UiScreenService::renderUiDefinition('turnos', 'elegir-motivo-cancelacion-como-paciente', $params, null);
+
+            return TurnoCancelacionRazones::aplicarOpcionesRazonEnDefinicionUiJson($def);
+        }
+
+        return UiScreenService::handleScreen(
+            'turnos',
+            'elegir-motivo-cancelacion-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($req): array {
+                $tid = $this->resolveTurnoId(null, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+                $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+                if (!$turno) {
+                    throw new NotFoundHttpException('Turno no encontrado');
+                }
+                $idPersona = Yii::$app->user->getIdPersona();
+                if ((int) $turno->id_persona !== (int) $idPersona) {
+                    throw new ForbiddenHttpException('No autorizado');
+                }
+                $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
+                if ($razon === '' || !TurnoCancelacionRazones::esCodigoPacienteAppValido($razon)) {
+                    throw new BadRequestHttpException('Indicá un motivo de cancelación válido (razon_cancelacion).');
+                }
+
+                return [
+                    'data' => [
+                        'ok' => true,
+                        'mensaje' => 'Motivo registrado. Podés confirmar la cancelación.',
+                        'razon_cancelacion' => $razon,
+                    ],
+                ];
+            }
+        );
     }
 
     /**
@@ -415,18 +470,16 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Cancelar turno propio (autogestión). GET descriptor UI; POST body: id, razon_cancelacion, canal (opcional).
-     * El turno queda con estado_motivo CANCELADO_X_PACIENTE; la razón elegida va en auditoría (`meta_json`).
+     * Cancelar turno propio (autogestión). Solo POST: body `id`, `razon_cancelacion`, `canal` (opcional).
+     * El motivo se elige en {@see self::actionElegirMotivoCancelacionComoPaciente()} dentro del flujo del asistente.
+     * El turno queda con estado_motivo CANCELADO_X_PACIENTE; la razón va en auditoría (`meta_json`).
      * RBAC: /api/turnos/cancelar-como-paciente
      */
     public function actionCancelarComoPaciente($id = null)
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
-            $params = array_merge($req->get(), $req->post());
-            $def = UiScreenService::renderUiDefinition('turnos', 'cancelar-como-paciente', $params, null);
-
-            return TurnoCancelacionRazones::aplicarOpcionesRazonEnDefinicionUiJson($def);
+            throw new MethodNotAllowedHttpException(['POST'], 'La cancelación se confirma por POST con id y razon_cancelacion.');
         }
 
         $out = UiScreenService::handleScreen(

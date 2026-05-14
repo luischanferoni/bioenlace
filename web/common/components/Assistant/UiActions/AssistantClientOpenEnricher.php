@@ -24,6 +24,12 @@ final class AssistantClientOpenEnricher
             return $action;
         }
 
+        // Mutación solo por POST (p. ej. cierre `flow_submit`): puede existir plantilla para errores de submit,
+        // pero el asistente no debe abrir GET de descriptor en el paso final.
+        if (self::isAssistantPostOnlyMutationRoute($route)) {
+            return $action;
+        }
+
         // UI JSON (descriptores): si la ruta apunta a un template existente bajo `views/json/{entidad}/{accion}.json`,
         // el cliente debe abrirla como pantalla dinámica (`ui_json`).
         //
@@ -44,5 +50,19 @@ final class AssistantClientOpenEnricher
         }
 
         return $action;
+    }
+
+    private static function isAssistantPostOnlyMutationRoute(string $route): bool
+    {
+        $route = trim($route);
+        if ($route === '') {
+            return false;
+        }
+        $path = parse_url($route, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            $path = $route;
+        }
+
+        return $path === '/api/v1/turnos/cancelar-como-paciente';
     }
 }

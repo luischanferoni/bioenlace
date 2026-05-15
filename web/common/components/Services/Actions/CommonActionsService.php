@@ -2,9 +2,8 @@
 
 namespace common\components\Services\Actions;
 
- use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
- use common\components\Assistant\Catalog\IntentCatalogService;
-use common\components\Assistant\UiActions\ActionMappingService;
+use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Assistant\Catalog\IntentCatalogService;
 
 /**
  * Atajos de inicio: subconjunto ordenado de acciones.
@@ -29,9 +28,8 @@ final class CommonActionsService
         }
 
         $available = IntentCatalogService::getAvailableUiForUser($userId, true);
-        $flowsAllowed = self::filterFlowsByRbac($available, $userId);
         $byId = [];
-        foreach ($flowsAllowed as $f) {
+        foreach ($available as $f) {
             $aid = isset($f['action_id']) ? (string) $f['action_id'] : '';
             if ($aid === '') {
                 continue;
@@ -108,34 +106,6 @@ final class CommonActionsService
                 ],
             ],
         ];
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $flows
-     * @return array<int, array<string, mixed>>
-     */
-    private static function filterFlowsByRbac(array $flows, int $userId): array
-    {
-        $out = [];
-        foreach ($flows as $flow) {
-            if (!is_array($flow)) {
-                continue;
-            }
-            $aid = isset($flow['action_id']) ? trim((string) $flow['action_id']) : '';
-            if ($aid === '') {
-                continue;
-            }
-            $rbacRoute = isset($flow['rbac_route']) ? trim((string) $flow['rbac_route']) : '';
-            if ($rbacRoute === '') {
-                // Si falta rbac_route, negar por seguridad (evita exponer flows sin control).
-                continue;
-            }
-            if (!ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute)) {
-                continue;
-            }
-            $out[] = $flow;
-        }
-        return $out;
     }
 
     /**

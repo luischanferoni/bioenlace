@@ -26,9 +26,10 @@ final class IntentCatalogService
      */
     public static function getAvailableUiForUser(int $userId, bool $useCache = true): array
     {
-        // Nuevo: el asistente sugiere intents conversacionales desde YAML (fuente de verdad).
-        // No depende de enumerar templates JSON en views/json.
-        return YamlIntentCatalogService::discoverAll($useCache);
+        // Intents YAML filtrados por `rbac_route` (permiso webvimark alineado al manifiesto).
+        $all = YamlIntentCatalogService::discoverAll($useCache);
+
+        return YamlIntentCatalogService::filterByRbac($all, $userId);
     }
 }
 

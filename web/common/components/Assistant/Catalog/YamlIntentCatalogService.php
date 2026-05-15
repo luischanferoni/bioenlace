@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\Catalog;
 
+use common\components\Assistant\UiActions\ActionMappingService;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -179,6 +180,36 @@ final class YamlIntentCatalogService
             // Guardar por firma actual y también el último “base” para warm hits.
             $cache->set($cacheKey, $out, 300);
             $cache->set($cacheKeyBase, $out, 60);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Intents YAML visibles para un usuario según `rbac_route` del manifiesto (misma regla que atajos / CommonActionsService).
+     *
+     * @param array<int, array<string, mixed>> $items salida de {@see discoverAll}
+     * @return array<int, array<string, mixed>>
+     */
+    public static function filterByRbac(array $items, int $userId): array
+    {
+        $out = [];
+        foreach ($items as $flow) {
+            if (!is_array($flow)) {
+                continue;
+            }
+            $aid = isset($flow['action_id']) ? trim((string) $flow['action_id']) : '';
+            if ($aid === '') {
+                continue;
+            }
+            $rbacRoute = isset($flow['rbac_route']) ? trim((string) $flow['rbac_route']) : '';
+            if ($rbacRoute === '') {
+                continue;
+            }
+            if (!ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute)) {
+                continue;
+            }
+            $out[] = $flow;
         }
 
         return $out;

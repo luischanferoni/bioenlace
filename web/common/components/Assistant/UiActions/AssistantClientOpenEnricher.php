@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\UiActions;
 
+use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\UiDefinitionTemplateManager;
 
 /**
@@ -17,10 +18,22 @@ final class AssistantClientOpenEnricher
     public static function enrich(array $action): array
     {
         $route = (string) ($action['route'] ?? '');
+        $actionId = trim((string) ($action['action_id'] ?? ''));
 
         // Si la acción ya trae client_open.kind (ej. nativas descubiertas por catálogo), respetarlo,
         // pero asegurarnos de que la estructura mínima exista.
         if (isset($action['client_open']) && is_array($action['client_open'])) {
+            return $action;
+        }
+
+        // Flujos conversacionales (YAML en SubIntentEngine): el cliente arranca con POST action_id al asistente.
+        if ($actionId !== '' && YamlIntentCatalogService::intentExists($actionId)) {
+            $action['client_open'] = [
+                'kind' => 'intent',
+                'intent_id' => $actionId,
+            ];
+            $action['client_interaction'] = 'intent_flow';
+
             return $action;
         }
 

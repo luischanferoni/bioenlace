@@ -1265,6 +1265,66 @@ class _ChatScreenState extends State<ChatScreen> {
     final mobile = co['mobile'];
     final web = co['web'];
 
+    // Intent conversacional (YAML): POST /asistente/enviar con action_id → intent_flow.
+    if (kind == 'intent') {
+      final intentId = co['intent_id']?.toString() ?? action['action_id']?.toString() ?? '';
+      if (intentId.isEmpty) {
+        _showErrorSnackbar('Intent sin intent_id.');
+        return true;
+      }
+      setState(() {
+        _isSending = true;
+        _beginNewFlowActivation();
+        _intentId = intentId;
+        _subintentId = null;
+        _draft = {};
+        _asistenteService.currentIntentId = intentId;
+        _asistenteService.currentSubintentId = null;
+        _asistenteService.draft = {};
+      });
+      _scrollToBottom();
+      try {
+        final result = await _asistenteService.procesarInteraccion('', actionId: intentId);
+        if (!mounted) return true;
+        if (result['success'] != true) {
+          setState(() {
+            _isSending = false;
+            _chatHistory.add({
+              'type': 'bot',
+              'content': result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
+              'timestamp': DateTime.now(),
+            });
+          });
+          _scrollToBottom();
+          return true;
+        }
+        final raw = result['data'];
+        if (raw is! Map) {
+          setState(() => _isSending = false);
+          return true;
+        }
+        final data = Map<String, dynamic>.from(raw);
+        final consumed = await _consumeAsistenteSuccessData(data);
+        if (!consumed) {
+          _appendGenericAsistenteBotMessage(data);
+          _maybeAutoExecuteSingleAction(data);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isSending = false;
+            _chatHistory.add({
+              'type': 'bot',
+              'content': e.toString(),
+              'timestamp': DateTime.now(),
+            });
+          });
+        }
+      }
+      _scrollToBottom();
+      return true;
+    }
+
     // UI JSON (descriptor + submit): abrir con el motor UI JSON compartido.
     if (kind == 'ui_json') {
       final api = co['api'];

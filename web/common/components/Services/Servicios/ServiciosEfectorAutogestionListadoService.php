@@ -16,7 +16,8 @@ final class ServiciosEfectorAutogestionListadoService
      */
     public static function uiJsonItemsServiciosDistintosAceptaTurnos(): array
     {
-        $rows = ServiciosEfector::findActive()
+        // `servicios_efector` no tiene soft-delete en BD (sin `deleted_at`); no usar findActive().
+        $rows = ServiciosEfector::find()
             ->alias('se')
             ->innerJoin(['s' => 'servicios'], 's.id_servicio = se.id_servicio')
             ->andWhere(['s.acepta_turnos' => 'SI'])

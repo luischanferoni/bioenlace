@@ -767,10 +767,12 @@ class TurnosController extends BaseController
                 throw new BadRequestHttpException('No se pudo determinar id_efector');
             }
 
+            $defaultsSlots = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
             $criteria = [
                 'id_servicio' => (int) $idServicio,
                 'id_efector' => (int) $idEfector,
                 'fecha_desde' => date('Y-m-d'),
+                'min_minutos_desde_ahora' => $defaultsSlots['min_minutos_desde_ahora'],
             ];
 
             $idPesReq = (int) ($req->get('id_profesional_efector_servicio') ?: $req->post('id_profesional_efector_servicio') ?: 0);
@@ -1107,14 +1109,18 @@ class TurnosController extends BaseController
         } catch (AutogestionAnticipacionException $e) {
             throw new ConflictHttpException($e->getMessage());
         }
-        $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : 15;
+        $defaultsSlots = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : $defaultsSlots['limite'];
         $mismoRaw = $params['mismo_profesional'] ?? '1';
         $mismoProf = $mismoRaw === '1' || $mismoRaw === 1 || $mismoRaw === true;
         $criteria = [
             'id_servicio' => (int) $turno->id_servicio_asignado,
             'id_efector' => (int) $turno->id_efector,
             'fecha_desde' => date('Y-m-d'),
-            'max_dias' => isset($params['max_dias']) && $params['max_dias'] !== '' ? (int) $params['max_dias'] : 45,
+            'max_dias' => isset($params['max_dias']) && $params['max_dias'] !== ''
+                ? (int) $params['max_dias']
+                : $defaultsSlots['max_dias'],
+            'min_minutos_desde_ahora' => $defaultsSlots['min_minutos_desde_ahora'],
         ];
         if ($mismoProf && (int) $turno->id_profesional_efector_servicio > 0) {
             $criteria['id_profesional_efector_servicio'] = (int) $turno->id_profesional_efector_servicio;

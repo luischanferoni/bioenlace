@@ -33,6 +33,8 @@ return [
         'franja_tarde_desde' => '13:00',
         /** Tope duro si el cliente envía `limite` (anti-abuso) */
         'slots_oferta_max_cliente' => 400,
+        /** Oferta de slots de hoy: solo desde ahora + N minutos (autogestión / reprogramar). */
+        'slots_min_minutos_desde_ahora' => 15,
     ],
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en /api/v1/pacientes.

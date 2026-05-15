@@ -121,7 +121,7 @@ class TurnoSlotOfferService
     /**
      * Defaults para autogestión paciente desde Yii params `turnosPaciente`.
      *
-     * @return array{limite: int, max_dias: int, franja_tarde_desde: string}
+     * @return array{limite: int, max_dias: int, franja_tarde_desde: string, min_minutos_desde_ahora: int}
      */
     public static function leerDefaultsTurnosPaciente(): array
     {
@@ -131,6 +131,7 @@ class TurnoSlotOfferService
             'limite' => max(1, (int) ($p['slots_oferta_max'] ?? 20)),
             'max_dias' => max(1, (int) ($p['slots_busqueda_max_dias'] ?? 45)),
             'franja_tarde_desde' => (string) ($p['franja_tarde_desde'] ?? '13:00'),
+            'min_minutos_desde_ahora' => max(0, (int) ($p['slots_min_minutos_desde_ahora'] ?? 15)),
         ];
     }
 }

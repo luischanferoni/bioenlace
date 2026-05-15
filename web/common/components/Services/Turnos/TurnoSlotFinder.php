@@ -154,10 +154,15 @@ class TurnoSlotFinder
         }
 
         $limit = max(1, (int) $limit);
+        $minMinutosDesdeAhora = self::resolveMinMinutosDesdeAhora($criteria);
+        $hoyYmd = self::hoyEnZonaApp();
         $out = [];
 
         for ($offset = 0; $offset < $maxDias && count($out) < $limit; $offset++) {
             $dia = date('Y-m-d', strtotime($fechaDesde . " +{$offset} days"));
+            if ($dia < $hoyYmd) {
+                continue;
+            }
             $nroDiaSemana = (int) date('N', strtotime($dia));
 
             if (in_array($nroDiaSemana, $diasSemanaExcluidos, true)) {
@@ -185,7 +190,7 @@ class TurnoSlotFinder
                     if (self::isHoraExcluida($hora, $franjasExcluidas)) {
                         continue;
                     }
-                    if ($dia === date('Y-m-d') && $hora <= date('H:i')) {
+                    if (self::slotAntesDelMinimoPermitido($dia, $hora, $minMinutosDesdeAhora)) {
                         continue;
                     }
                     if (Turno::estaOcupadoSlotPorProfesionalEfectorServicio($idPesAgenda, $dia, $hora)) {
@@ -286,6 +291,64 @@ class TurnoSlotFinder
         }
 
         return false;
+    }
+
+    /**
+     * Minutos mínimos desde “ahora” para ofrecer un slot del día actual (params `turnosPaciente` o criteria).
+     *
+     * @param array<string, mixed> $criteria
+     */
+    private static function resolveMinMinutosDesdeAhora(array $criteria): int
+    {
+        if (array_key_exists('min_minutos_desde_ahora', $criteria)) {
+            return max(0, (int) $criteria['min_minutos_desde_ahora']);
+        }
+        $p = Yii::$app->params['turnosPaciente'] ?? [];
+
+        return max(0, (int) ($p['slots_min_minutos_desde_ahora'] ?? 15));
+    }
+
+    private static function hoyEnZonaApp(): string
+    {
+        return (new \DateTimeImmutable('now', self::appTimeZone()))->format('Y-m-d');
+    }
+
+    private static function appTimeZone(): \DateTimeZone
+    {
+        $z = Yii::$app->timeZone ?? 'UTC';
+        try {
+            return new \DateTimeZone((string) $z);
+        } catch (\Exception $e) {
+            return new \DateTimeZone('UTC');
+        }
+    }
+
+    /**
+     * true si el slot cae antes del umbral (pasado o demasiado cercano a la hora actual).
+     */
+    private static function slotAntesDelMinimoPermitido(string $dia, string $hora, int $minMinutos): bool
+    {
+        $horaNorm = substr(trim($hora), 0, 5);
+        if (!preg_match('/^\d{2}:\d{2}$/', $horaNorm)) {
+            return true;
+        }
+        $tz = self::appTimeZone();
+        $slot = \DateTimeImmutable::createFromFormat('!Y-m-d H:i', $dia . ' ' . $horaNorm, $tz);
+        if ($slot === false) {
+            return true;
+        }
+        $ahora = new \DateTimeImmutable('now', $tz);
+        if ($minMinutos <= 0) {
+            if ($dia !== $ahora->format('Y-m-d')) {
+                return false;
+            }
+
+            return $slot <= $ahora;
+        }
+
+        $minimo = $ahora->modify('+' . $minMinutos . ' minutes');
+
+        return $slot < $minimo;
     }
 }
 

@@ -354,6 +354,72 @@
     box-sizing: border-box;
 }
 
+/* Encabezado del flujo: `action_name` pequeño + línea a ancho completo */
+.spa-flow-chat-header {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 0.25rem 0;
+}
+
+.spa-flow-chat-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    margin: 0 0 0.35rem 0;
+    padding: 0;
+    border: none;
+    color: var(--bs-primary, #0d6efd);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.spa-flow-chat-rule {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: 0;
+    margin: 0 0 0.5rem 0;
+    border: none;
+    border-bottom: 2px solid var(--bs-primary, #0d6efd);
+    box-sizing: border-box;
+}
+
+/* Flow completado: resumen único en lugar de mini-UIs */
+.spa-chat-flow-row--completed {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Flow descartado o paso anterior: no interactivo */
+.spa-chat-flow-row--superseded {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.spa-chat-flow-row--superseded input,
+.spa-chat-flow-row--superseded select,
+.spa-chat-flow-row--superseded textarea,
+.spa-chat-flow-row--superseded button {
+    pointer-events: none;
+}
+
+/* Texto del paso bajo el encabezado del flujo: izquierda, sin línea inferior */
+.spa-flow-step-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+    margin: 0 0 0.75rem 0;
+    padding: 0;
+    border: none;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 /* Plan de pasos (flow_manifest.steps): tira al 50% del ancho, centrada */
 .spa-flow-plan-wrap {
     width: 50%;

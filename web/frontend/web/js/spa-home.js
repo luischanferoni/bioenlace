@@ -79,6 +79,283 @@
         return !!(json && json.kind === 'ui_definition' && json.success !== false);
     }
 
+    /** Deshabilita inputs/botones de un bloque de flow ya descartado o de un paso anterior. */
+    function disableFlowRowInteractions(row) {
+        if (!row) {
+            return;
+        }
+        row.classList.add('spa-chat-flow-row--superseded');
+        row.setAttribute('data-flow-superseded', '1');
+        try {
+            row.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+                el.disabled = true;
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    function beginNewFlowActivation() {
+        bioFlowActivationSeq += 1;
+    }
+
+    function supersedeAllFlowRows() {
+        if (!chatMessagesDiv) {
+            return;
+        }
+        chatMessagesDiv.querySelectorAll('.spa-chat-flow-row').forEach(disableFlowRowInteractions);
+    }
+
+    function supersedeDiscardedFlowRows(activeIntentId) {
+        if (!chatMessagesDiv || !activeIntentId) {
+            return;
+        }
+        const activeId = String(activeIntentId).trim();
+        chatMessagesDiv.querySelectorAll('.spa-chat-flow-row').forEach(function (row) {
+            const rowIntent = row.getAttribute('data-flow-intent-id') || '';
+            if (rowIntent && rowIntent !== activeId) {
+                disableFlowRowInteractions(row);
+            }
+        });
+    }
+
+    /** Mismo flow: deja habilitado solo el último bloque `.spa-chat-flow-row` de ese intent. */
+    function supersedeOlderStepsOfActiveFlow(activeIntentId) {
+        if (!chatMessagesDiv || !activeIntentId) {
+            return;
+        }
+        const activeId = String(activeIntentId).trim();
+        const rows = Array.from(chatMessagesDiv.querySelectorAll('.spa-chat-flow-row[data-flow-intent-id="' + activeId + '"]'));
+        for (let i = 0; i < rows.length - 1; i++) {
+            disableFlowRowInteractions(rows[i]);
+        }
+    }
+
+    function humanizeFlowResultFieldKey(key) {
+        const k = String(key || '');
+        if (k === 'id') {
+            return 'Nº';
+        }
+        if (k === 'fecha') {
+            return 'Fecha';
+        }
+        if (k === 'hora') {
+            return 'Hora';
+        }
+        return k.replace(/_/g, ' ');
+    }
+
+    const TURNO_CANCELACION_PACIENTE_LABELS = {
+        PAC_ENFERMEDAD: 'Enfermedad o síntomas: no puedo asistir',
+        PAC_OTRO_COMPROMISO: 'Otro compromiso u obligación',
+        PAC_YA_MEJORE: 'Ya mejoré / ya no necesito esta consulta',
+        PAC_RESERVA_ERRONEA: 'Reservé el turno por error',
+        PAC_OTRO_TURNO_EN_OTRO_LUGAR: 'Conseguí otro turno (misma u otra institución)',
+        PAC_TRANSPORTE: 'Dificultades de transporte o distancia',
+        PAC_LABORAL_ACADEMICO: 'Motivos laborales o de estudio',
+        PAC_OTRO: 'Otro motivo'
+    };
+
+    function etiquetaRazonCancelacionPaciente(code) {
+        const c = String(code || '').trim();
+        return TURNO_CANCELACION_PACIENTE_LABELS[c] || c;
+    }
+
+    function friendlyDateEs(fechaYmd) {
+        const raw = String(fechaYmd || '').trim();
+        if (raw.length < 10) return raw;
+        const parts = raw.substring(0, 10).split('-');
+        if (parts.length !== 3) return raw;
+        const y = parseInt(parts[0], 10);
+        const mo = parseInt(parts[1], 10) - 1;
+        const d = parseInt(parts[2], 10);
+        const slot = new Date(y, mo, d);
+        if (isNaN(slot.getTime())) return raw;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        slot.setHours(0, 0, 0, 0);
+        const diff = Math.round((slot.getTime() - today.getTime()) / 86400000);
+        if (diff === 0) return 'Hoy';
+        if (diff === 1) return 'Mañana';
+        if (diff === 2) return 'Pasado mañana';
+        const weekdays = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+        return weekdays[slot.getDay()] + ' ' + slot.getDate() + '/' + (slot.getMonth() + 1);
+    }
+
+    function formatHoraCorta(hora) {
+        const h = String(hora || '').trim();
+        if (!h) return '';
+        return h.length > 5 ? h.substring(0, 5) : h;
+    }
+
+    function formatCuandoDesdeFechaHora(fecha, hora) {
+        const f = String(fecha || '').trim();
+        const h = formatHoraCorta(hora);
+        if (!f && !h) return '';
+        if (!f) return h;
+        const dia = friendlyDateEs(f);
+        return h ? (dia + ' · ' + h) : dia;
+    }
+
+    function applyFlowPickToSnapshot(snap, draftField, item) {
+        if (!snap || !item || typeof item !== 'object') return;
+        const label = String(item.name || item.label || item.id || '').trim();
+        const field = String(draftField || '');
+        if (field === 'id') {
+            snap.turno = { id: item.id != null ? String(item.id) : '' };
+            if (label) snap.turno.label = label;
+        } else if (field === 'slot_id') {
+            const meta = item.meta && typeof item.meta === 'object' ? item.meta : {};
+            const fecha = meta.fecha != null ? String(meta.fecha) : '';
+            const hora = meta.hora != null ? String(meta.hora) : '';
+            const cuando = formatCuandoDesdeFechaHora(fecha, hora);
+            snap.slot = { id: item.id != null ? String(item.id) : '' };
+            if (label) snap.slot.label = label;
+            if (fecha) snap.slot.fecha = fecha;
+            if (hora) snap.slot.hora = hora;
+            if (cuando) snap.slot.cuando = cuando;
+            if (meta.servicio) snap.slot.servicio = meta.servicio;
+        } else if (field === 'razon_cancelacion') {
+            const code = String(item.code || item.value || item.id || '').trim();
+            const motivoLabel = String(item.label || item.name || '').trim()
+                || (code ? etiquetaRazonCancelacionPaciente(code) : '');
+            snap.motivo = {};
+            if (code) snap.motivo.code = code;
+            if (motivoLabel) snap.motivo.label = motivoLabel;
+        } else if (field === 'id_servicio_asignado') {
+            snap.servicio = { id: item.id != null ? String(item.id) : '' };
+            if (label) snap.servicio.label = label;
+        } else if (field === 'id_efector') {
+            snap.efector = { id: item.id != null ? String(item.id) : '' };
+            if (label) snap.efector.label = label;
+        } else if (field === 'id_profesional_efector_servicio') {
+            snap.profesional = { id: item.id != null ? String(item.id) : '' };
+            if (label) snap.profesional.label = label;
+        } else if (label) {
+            snap[field] = { id: item.id != null ? String(item.id) : '', label: label };
+        }
+    }
+
+    function nuevoHorarioLinea(snap, data) {
+        const d = data && typeof data === 'object' ? data : {};
+        const s = snap && typeof snap === 'object' ? snap : {};
+        const slot = s.slot;
+        if (slot && typeof slot === 'object') {
+            const cuando = slot.cuando != null ? String(slot.cuando).trim() : '';
+            if (cuando) return cuando;
+            const lbl = slot.label != null ? String(slot.label).trim() : '';
+            if (lbl) return lbl;
+            const built = formatCuandoDesdeFechaHora(slot.fecha, slot.hora);
+            if (built) return built;
+        }
+        return formatCuandoDesdeFechaHora(d.fecha, d.hora);
+    }
+
+    function formatFlowSubmitSummaryLines(data, intentId, flowSnapshotOpt) {
+        const d = data && typeof data === 'object' ? data : {};
+        const snap = flowSnapshotOpt && typeof flowSnapshotOpt === 'object' ? flowSnapshotOpt : {};
+        const iid = String(intentId || '').trim();
+
+        if (iid === 'turnos.cancelar-como-paciente-flow') {
+            const lines = ['Cancelamos tu turno.'];
+            if (snap.turno && snap.turno.label) lines.push(String(snap.turno.label).trim());
+            var motivoLbl = (snap.motivo && snap.motivo.label) ? String(snap.motivo.label).trim() : '';
+            if (!motivoLbl) {
+                const code = d.razon_cancelacion != null ? String(d.razon_cancelacion).trim() : '';
+                motivoLbl = (d.razon_cancelacion_label != null && String(d.razon_cancelacion_label).trim() !== '')
+                    ? String(d.razon_cancelacion_label).trim()
+                    : (code ? etiquetaRazonCancelacionPaciente(code) : '');
+            }
+            if (motivoLbl) lines.push('Motivo: ' + motivoLbl);
+            return lines;
+        }
+        if (iid === 'turnos.modificar-como-paciente-flow') {
+            const lines = ['Reprogramamos tu turno.'];
+            if (snap.turno && snap.turno.label) lines.push('Turno anterior: ' + String(snap.turno.label).trim());
+            const nuevo = nuevoHorarioLinea(snap, d);
+            if (nuevo) lines.push('Nuevo horario: ' + nuevo);
+            return lines;
+        }
+        if (iid === 'turnos.crear-como-paciente') {
+            const msg = (d.mensaje != null && String(d.mensaje).trim() !== '')
+                ? String(d.mensaje).trim()
+                : ((d.message != null && String(d.message).trim() !== '') ? String(d.message).trim() : '');
+            if (msg) return [msg];
+            var svc = (snap.servicio && snap.servicio.label) ? String(snap.servicio.label).trim() : '';
+            if (!svc && d.servicio_detalle && typeof d.servicio_detalle === 'object') {
+                const sd = d.servicio_detalle;
+                svc = (sd.nombre != null && String(sd.nombre).trim() !== '')
+                    ? String(sd.nombre).trim()
+                    : ((sd.descripcion != null && String(sd.descripcion).trim() !== '') ? String(sd.descripcion).trim() : '');
+            }
+            const cuando = nuevoHorarioLinea(snap, d);
+            if (svc && cuando) return ['Reservamos tu turno de ' + svc + ' (' + cuando + ').'];
+            if (cuando) return ['Reservamos tu turno (' + cuando + ').'];
+        }
+
+        const lines = [];
+        const primary = (d.mensaje != null && String(d.mensaje).trim() !== '')
+            ? String(d.mensaje).trim()
+            : ((d.message != null && String(d.message).trim() !== '') ? String(d.message).trim() : '');
+        if (primary) lines.push(primary);
+        if (d.razon_cancelacion_label != null && String(d.razon_cancelacion_label).trim() !== '') {
+            lines.push('Motivo: ' + String(d.razon_cancelacion_label).trim());
+        }
+        const cuando = formatCuandoDesdeFechaHora(d.fecha, d.hora);
+        if (cuando) lines.push('Fecha: ' + cuando);
+        return lines.length ? lines : ['Listo.'];
+    }
+
+    function buildFlowChatHeaderHtml(actionTitle) {
+        const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
+        if (titleStr === '') {
+            return '';
+        }
+        return '<div class="spa-flow-chat-header">'
+            + '<h3 class="spa-flow-chat-title">' + escapeHtml(titleStr) + '</h3>'
+            + '<div class="spa-flow-chat-rule" aria-hidden="true"></div>'
+            + '</div>';
+    }
+
+    function buildFlowSubmitSummaryHtml(data, intentId, flowSnapshotOpt) {
+        const lines = formatFlowSubmitSummaryLines(data, intentId, flowSnapshotOpt);
+        const body = lines.length
+            ? lines.map(function (ln) { return escapeHtml(ln); }).join('<br>')
+            : escapeHtml('Listo.');
+        return '<div class="spa-flow-completed-summary"><div class="alert alert-success mb-0 py-2">' + body + '</div></div>';
+    }
+
+    /** Tras submit exitoso: reemplaza todos los bloques del flow por un resumen con los datos. */
+    function collapseCompletedFlowActivation(activationSeq, data, actionTitle, intentIdOpt, flowSnapshotOpt) {
+        if (!chatMessagesDiv || activationSeq == null || String(activationSeq) === '') {
+            return;
+        }
+        const seq = String(activationSeq);
+        const rows = Array.from(chatMessagesDiv.querySelectorAll('.spa-chat-flow-row[data-flow-activation-seq="' + seq + '"]'));
+        if (!rows.length) {
+            return;
+        }
+        removeFlowPlanStrip();
+        const summaryHtml = buildFlowSubmitSummaryHtml(data, intentIdOpt, flowSnapshotOpt);
+        const first = rows[0];
+        first.classList.remove('spa-chat-flow-row--superseded');
+        first.removeAttribute('data-flow-superseded');
+        first.classList.add('spa-chat-flow-row--completed');
+        const inner = first.querySelector('.spa-chat-flow-turn');
+        if (inner) {
+            var headerHtml = '';
+            var existingHeader = inner.querySelector('.spa-flow-chat-header');
+            if (existingHeader) {
+                headerHtml = existingHeader.outerHTML;
+            } else {
+                headerHtml = buildFlowChatHeaderHtml(actionTitle);
+            }
+            inner.innerHTML = headerHtml + summaryHtml;
+        }
+        for (let i = 1; i < rows.length; i++) {
+            rows[i].remove();
+        }
+        setTimeout(scrollChatToBottom, 20);
+    }
+
     /**
      * POST de cierre declarativo (`flow_submit`) sin GET de descriptor: botón en el último paso embebido.
      * @param {HTMLElement} hostEl contenedor (p. ej. la mini-UI del paso o el bloque del flow)
@@ -137,15 +414,22 @@
                 })
                 .then(function (json) {
                     if (json && json.kind === 'ui_submit_result' && json.success !== false) {
+                        var row = hostEl.closest ? hostEl.closest('.spa-chat-flow-row') : null;
+                        var seq = row ? row.getAttribute('data-flow-activation-seq') : String(bioFlowActivationSeq);
+                        var title = '';
+                        try {
+                            var tEl = row && row.querySelector('.spa-flow-chat-title');
+                            if (tEl) {
+                                title = String(tEl.textContent || '').trim();
+                            }
+                        } catch (eTitle) { /* ignore */ }
+                        var d = json.data && typeof json.data === 'object' ? json.data : null;
+                        var snapForSummary = Object.assign({}, flowSnapshot || {});
+                        var intentForSummary = currentIntentId ? String(currentIntentId) : '';
+                        collapseCompletedFlowActivation(seq, d, title, intentForSummary, snapForSummary);
                         if (typeof onFlowCleared === 'function') {
                             onFlowCleared();
                         }
-                        var d = json.data && typeof json.data === 'object' ? json.data : null;
-                        var okText = (d && typeof d.mensaje === 'string' && d.mensaje.trim() !== '')
-                            ? d.mensaje.trim()
-                            : 'Listo.';
-                        wrap.innerHTML = '<div class="alert alert-success mb-0 py-2">' + escapeHtml(okText) + '</div>';
-                        setTimeout(scrollChatToBottom, 20);
                         return;
                     }
                     if (json && json.kind === 'ui_definition' && json.errors) {
@@ -164,7 +448,53 @@
         });
     }
 
-    function fetchFlowUiDefinition(fullUrl, mountEl, flowSubmitRequestOpt) {
+    function mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance) {
+        mountEl.innerHTML = '';
+        if (json && json.kind === 'ui_definition') {
+            renderDynamicUi(json, mountEl, {
+                url: fullUrl,
+                enableFlowChainAutoAdvance: enableFlowChainAutoAdvance === true
+            });
+            if (flowUiDefinitionReadyForProgress(json)) {
+                try {
+                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
+                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            } else {
+                removeFlowPlanStrip();
+            }
+            if (flowSubmitRequestOpt && flowSubmitRequestOpt.route && flowSubmitRequestOpt.body &&
+                typeof flowSubmitRequestOpt.body === 'object') {
+                appendFlowInlineSubmit(mountEl, flowSubmitRequestOpt, function () {
+                    clearFlowState();
+                    removeFlowPlanStrip();
+                    bioFlowPlanPendingContext = null;
+                });
+            }
+        } else {
+            mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+            removeFlowPlanStrip();
+        }
+    }
+
+    function fetchFlowUiDefinition(fullUrl, mountEl, flowSubmitRequestOpt, fetchOpts) {
+        fetchOpts = fetchOpts && typeof fetchOpts === 'object' ? fetchOpts : {};
+        const enableFlowChainAutoAdvance = fetchOpts.enableFlowChainAutoAdvance === true;
+        const flowRow = mountEl.closest ? mountEl.closest('.spa-chat-flow-row') : null;
+        if (flowRow && flowRow.__bioFlowUiCache && flowRow.__bioFlowUiCache[fullUrl]) {
+            mountFlowUiDefinition(
+                flowRow.__bioFlowUiCache[fullUrl],
+                mountEl,
+                fullUrl,
+                flowSubmitRequestOpt,
+                false
+            );
+            setTimeout(scrollChatToBottom, 10);
+            return Promise.resolve();
+        }
         mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
         return fetch(fullUrl, {
             method: 'GET',
@@ -190,35 +520,13 @@
                 return r.json();
             })
             .then(function (json) {
-                mountEl.innerHTML = '';
-                if (json && json.kind === 'ui_definition') {
-                    renderDynamicUi(json, mountEl, { url: fullUrl });
-                    if (flowUiDefinitionReadyForProgress(json)) {
-                        try {
-                            if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                                attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                            }
-                        } catch (e) {
-                            // ignore
-                        }
-                    } else {
-                        removeFlowPlanStrip();
+                if (flowRow && json && json.kind === 'ui_definition') {
+                    if (!flowRow.__bioFlowUiCache) {
+                        flowRow.__bioFlowUiCache = {};
                     }
-                    if (flowSubmitRequestOpt && flowSubmitRequestOpt.route && flowSubmitRequestOpt.body &&
-                        typeof flowSubmitRequestOpt.body === 'object') {
-                        appendFlowInlineSubmit(mountEl, flowSubmitRequestOpt, function () {
-                            currentIntentId = null;
-                            currentSubintentId = null;
-                            draft = {};
-                            writeFlowState();
-                            removeFlowPlanStrip();
-                            bioFlowPlanPendingContext = null;
-                        });
-                    }
-                } else {
-                    mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
-                    removeFlowPlanStrip();
+                    flowRow.__bioFlowUiCache[fullUrl] = json;
                 }
+                mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance);
             })
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
@@ -230,6 +538,7 @@
                 setTimeout(scrollChatToBottom, 10);
             });
     }
+
 
     // Referencias a elementos DOM
     const chatRoot = document.getElementById('spa-chat-root');
@@ -249,6 +558,30 @@
     let currentIntentId = null;
     let currentSubintentId = null;
     let draft = {};
+    let flowSnapshot = {};
+
+    function applyDraftDelta(delta) {
+        if (!delta || typeof delta !== 'object') return;
+        const next = Object.assign({}, draft || {});
+        const snap = Object.assign({}, flowSnapshot || {});
+        Object.keys(delta).forEach(function (k) {
+            if (k.indexOf('_flow_item_') === 0) {
+                applyFlowPickToSnapshot(snap, k.substring('_flow_item_'.length), delta[k]);
+            } else if (k !== 'flow_snapshot') {
+                next[k] = delta[k];
+            }
+        });
+        draft = next;
+        flowSnapshot = snap;
+    }
+
+    function clearFlowState() {
+        currentIntentId = null;
+        currentSubintentId = null;
+        draft = {};
+        flowSnapshot = {};
+        writeFlowState();
+    }
 
     /**
      * Alineado con SubIntentEngine::userWantsNearby (PHP): mantener el flow al pedir efectores cercanos.
@@ -262,6 +595,8 @@
     let bioFlowPlanStripEl = null;
     /** Contexto del último paso `intent_flow` para pintar la tira tras cargar la UI (`flow_manifest` + título). */
     let bioFlowPlanPendingContext = null;
+    /** Una activación = un inicio de flow (atajo, cambio de intent o vuelta tras otro flow). */
+    let bioFlowActivationSeq = 0;
     let flowPlanStickySyncRaf = null;
     let flowPlanStickyListenersBound = false;
 
@@ -463,9 +798,12 @@
         } catch (e) { /* ignore */ }
 
         // Reset estado anterior y disparar flow por snapshot.
+        supersedeAllFlowRows();
+        beginNewFlowActivation();
         currentIntentId = iid;
         currentSubintentId = null;
         draft = {};
+        flowSnapshot = {};
         writeFlowState();
 
         // Enviar snapshot sin texto (override string para no agregar burbuja de usuario).
@@ -521,22 +859,72 @@
      * Bloque a ancho completo del panel de chat para respuestas `intent_flow`: encabezado + zona para mini-UI.
      * No usa burbuja angosta; el JSON embebido se monta debajo del título (mismo patrón en todo el asistente SPA).
      *
-     * @param {string} titleText - Texto principal del paso (p. ej. `text` / `explanation` del payload).
+     * @param {string} stepText - Texto del paso (p. ej. `text` del motor).
+     * @param {string} [flowTitle] - `flow_manifest.action_name` del YAML (título del flujo, centrado).
      * @returns {HTMLDivElement|null} Contenedor interno: aquí se añaden pestañas, `[data-spa-flow-ui-mount]`, etc.
      */
-    function appendAssistantFlowSection(titleText) {
+    function shouldShowFlowChatHeader(fm) {
+        if (!fm || typeof fm !== 'object') {
+            return false;
+        }
+        const intentId = fm.intent_id != null ? String(fm.intent_id).trim() : '';
+        if (intentId === '') {
+            return !!(fm.action_name != null && String(fm.action_name).trim() !== '');
+        }
+        if (!chatMessagesDiv) {
+            return true;
+        }
+        const seq = String(bioFlowActivationSeq);
+        const rows = chatMessagesDiv.querySelectorAll('.spa-chat-flow-row');
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (row.getAttribute('data-flow-intent-id') === intentId
+                && row.getAttribute('data-flow-activation-seq') === seq
+                && row.querySelector('.spa-flow-chat-header')) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function appendAssistantFlowSection(stepText, flowTitle, flowIntentId) {
         if (!chatMessagesDiv) {
             return null;
         }
         const row = document.createElement('div');
         row.className = 'w-100 mb-3 spa-chat-flow-row';
+        if (flowIntentId != null && String(flowIntentId).trim() !== '') {
+            row.setAttribute('data-flow-intent-id', String(flowIntentId).trim());
+        }
+        row.setAttribute('data-flow-activation-seq', String(bioFlowActivationSeq));
         const inner = document.createElement('div');
         inner.className = 'spa-chat-flow-turn w-100';
-        const h = document.createElement('h4');
-        h.className = 'spa-assistant-step-title';
-        const t = String(titleText || '').trim();
-        h.textContent = t !== '' ? t : 'Ok.';
-        inner.appendChild(h);
+        const flowTitleStr = typeof flowTitle === 'string' ? flowTitle.trim() : '';
+        const stepStr = String(stepText || '').trim();
+        if (flowTitleStr !== '') {
+            const header = document.createElement('div');
+            header.className = 'spa-flow-chat-header';
+            const hFlow = document.createElement('h3');
+            hFlow.className = 'spa-flow-chat-title';
+            hFlow.textContent = flowTitleStr;
+            header.appendChild(hFlow);
+            const rule = document.createElement('div');
+            rule.className = 'spa-flow-chat-rule';
+            rule.setAttribute('aria-hidden', 'true');
+            header.appendChild(rule);
+            inner.appendChild(header);
+        }
+        if (stepStr !== '') {
+            const h = document.createElement('h4');
+            h.className = 'spa-flow-step-text';
+            h.textContent = stepStr;
+            inner.appendChild(h);
+        } else if (flowTitleStr === '') {
+            const h = document.createElement('h4');
+            h.className = 'spa-assistant-step-title';
+            h.textContent = 'Ok.';
+            inner.appendChild(h);
+        }
         row.appendChild(inner);
         chatMessagesDiv.appendChild(row);
         setTimeout(scrollChatToBottom, 10);
@@ -681,6 +1069,8 @@
      * También usado al ejecutar una acción tipo intent desde una card.
      */
     function handleAssistantResponse(data) {
+            const intentIdBeforeResponse = currentIntentId ? String(currentIntentId) : '';
+
             // Compat: antes venía { success, message, data }, ahora el endpoint devuelve el payload directo.
             let result = data;
             if (data && data.data && typeof data.data === 'object' && (data.data.success !== undefined || data.data.explanation !== undefined || data.data.action !== undefined)) {
@@ -695,6 +1085,7 @@
 
             if (kind === 'intent_remediation') {
                 setLoadingState(false);
+                supersedeAllFlowRows();
                 let remText = primaryText || 'Elegí una opción';
                 try {
                     const ai = result && result.match && result.match.ai && typeof result.match.ai === 'object' ? result.match.ai : null;
@@ -726,9 +1117,12 @@
                             });
                             b.classList.remove('btn-outline-secondary');
                             b.classList.add('btn-secondary');
+                            supersedeAllFlowRows();
+                            beginNewFlowActivation();
                             currentIntentId = String(ch.intent_id);
                             currentSubintentId = null;
                             draft = {};
+                            flowSnapshot = {};
                             writeFlowState();
                             handleSendQuery('');
                         });
@@ -748,7 +1142,12 @@
 
             // Si trae intent_id/subintent_id, sincronizar estado conversacional.
             if (result && result.intent_id) {
-                currentIntentId = String(result.intent_id);
+                const newIntentId = String(result.intent_id);
+                if (intentIdBeforeResponse && intentIdBeforeResponse !== newIntentId) {
+                    supersedeDiscardedFlowRows(newIntentId);
+                    beginNewFlowActivation();
+                }
+                currentIntentId = newIntentId;
                 writeFlowState();
             }
             if (result && result.subintent_id) {
@@ -757,7 +1156,7 @@
             }
             if (result && result.draft_delta && typeof result.draft_delta === 'object') {
                 try {
-                    draft = Object.assign({}, draft || {}, result.draft_delta || {});
+                    applyDraftDelta(result.draft_delta || {});
                     writeFlowState();
                 } catch (e) {
                     // ignore
@@ -768,7 +1167,23 @@
             if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
                 const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
 
-                const flowSectionInner = appendAssistantFlowSection(primaryText || 'Ok.');
+                let flowActionTitle = '';
+                if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
+                    flowActionTitle = String(fm.action_name).trim();
+                }
+                bioFlowPlanPendingContext = fm ? { fm: fm, actionTitle: flowActionTitle } : null;
+
+                const flowIntentId = fm && fm.intent_id != null ? String(fm.intent_id).trim()
+                    : (result.intent_id ? String(result.intent_id).trim() : '');
+                if (flowIntentId) {
+                    supersedeOlderStepsOfActiveFlow(flowIntentId);
+                }
+                const flowHeaderTitle = shouldShowFlowChatHeader(fm) ? flowActionTitle : '';
+                const flowSectionInner = appendAssistantFlowSection(
+                    primaryText || 'Ok.',
+                    flowHeaderTitle,
+                    flowIntentId
+                );
                 if (!flowSectionInner) {
                     showError('No se pudo mostrar el paso del flujo en el chat.');
                     return;
@@ -777,12 +1192,6 @@
                 const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
-
-                let flowActionTitle = '';
-                if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
-                    flowActionTitle = String(fm.action_name).trim();
-                }
-                bioFlowPlanPendingContext = fm ? { fm: fm, actionTitle: flowActionTitle } : null;
 
                 const uiMeta = activeStep && activeStep.ui && typeof activeStep.ui === 'object' ? activeStep.ui : null;
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
@@ -799,10 +1208,7 @@
                 const serverAskedForUi = hasOpenUi || !!okUiJson;
 
                 function flowSubmitClearState() {
-                    currentIntentId = null;
-                    currentSubintentId = null;
-                    draft = {};
-                    writeFlowState();
+                    clearFlowState();
                     removeFlowPlanStrip();
                     bioFlowPlanPendingContext = null;
                 }
@@ -839,6 +1245,7 @@
                         currentIntentId = null;
                         currentSubintentId = null;
                         draft = {};
+                        flowSnapshot = {};
                         writeFlowState();
                         removeFlowPlanStrip();
                         bioFlowPlanPendingContext = null;
@@ -903,7 +1310,7 @@
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
                                 u.searchParams.set('longitud', String(pos.coords.longitude));
-                                fetchFlowUiDefinition(u.toString(), mountEl, fsr);
+                                fetchFlowUiDefinition(u.toString(), mountEl, fsr, { enableFlowChainAutoAdvance: true });
                             }, function () {
                                 mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
                             });
@@ -915,7 +1322,7 @@
                             mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
                             return;
                         }
-                        fetchFlowUiDefinition(url, mountEl, fsr);
+                        fetchFlowUiDefinition(url, mountEl, fsr, { enableFlowChainAutoAdvance: true });
                     }
 
                     tabs.forEach(function (tab, idx) {
@@ -944,7 +1351,7 @@
                 flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
                 flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
                 mountHost.appendChild(flowUiMount);
-                fetchFlowUiDefinition(fullUrl, flowUiMount, fsr);
+                fetchFlowUiDefinition(fullUrl, flowUiMount, fsr, { enableFlowChainAutoAdvance: true });
                 return;
             }
 
@@ -1049,9 +1456,11 @@
 
         // Texto libre = nueva consulta al IntentEngine; se conserva el flow solo para “cerca…” (misma heurística que SubIntentEngine).
         if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query)) {
+            supersedeAllFlowRows();
             currentIntentId = null;
             currentSubintentId = null;
             draft = {};
+            flowSnapshot = {};
             writeFlowState();
         }
 
@@ -1396,6 +1805,17 @@
 
         let locked = false;
         let selectedId = '';
+        let itemsById = {};
+
+        function rebuildItemsById(listItems) {
+            itemsById = {};
+            (Array.isArray(listItems) ? listItems : []).forEach(function (it) {
+                if (it && it.id !== undefined) {
+                    itemsById[String(it.id)] = it;
+                }
+            });
+        }
+        rebuildItemsById(items);
 
         function buildPickButtonsHtml(listItems) {
             let h = '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap">';
@@ -1471,7 +1891,16 @@
                 allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
-            try { draft = Object.assign({}, draft || {}, { [draftField]: selectedId }); } catch (e) { /* ignore */ }
+            try {
+                const delta = {};
+                delta[draftField] = selectedId;
+                const item = itemsById[selectedId];
+                if (item) {
+                    delta['_flow_item_' + draftField] = item;
+                }
+                applyDraftDelta(delta);
+                writeFlowState();
+            } catch (e) { /* ignore */ }
             setTimeout(function () {
                 if (queryInput) queryInput.value = '';
                 handleSendQuery('');
@@ -1538,6 +1967,7 @@
                         .then(function (json) {
                             if (locked) return;
                             const nextItems = listBlockItemsFromUiDefinition(json, blockId);
+                            rebuildItemsById(nextItems);
                             itemsMount.innerHTML = buildPickButtonsHtml(nextItems);
                             if (emptyHintEl) {
                                 if (nextItems.length < 1 && emptyMsg) {
@@ -1558,7 +1988,7 @@
         }
 
         const pickButtons = allPickButtons();
-        if (pickButtons.length === 1 && !requiresConfirmation && draftField) {
+        if (options.enableFlowChainAutoAdvance === true && pickButtons.length === 1 && !requiresConfirmation && draftField) {
             singleAutoTimer = setTimeout(function () {
                 singleAutoTimer = null;
                 if (locked) return;
@@ -1652,7 +2082,25 @@
                         markInlineButtonConfirmed(submitBtn);
                         if (json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
                             try {
-                                draft = Object.assign({}, draft || {}, json.data);
+                                const delta = Object.assign({}, json.data);
+                                try {
+                                    const rc = delta.razon_cancelacion;
+                                    if (rc != null && String(rc).trim() !== '') {
+                                        const sel = form.querySelector('[name="razon_cancelacion"]');
+                                        let lbl = '';
+                                        if (sel && sel.selectedOptions && sel.selectedOptions[0]) {
+                                            lbl = String(sel.selectedOptions[0].textContent || '').trim();
+                                        }
+                                        if (!lbl) {
+                                            lbl = etiquetaRazonCancelacionPaciente(rc);
+                                        }
+                                        delta['_flow_item_razon_cancelacion'] = {
+                                            code: String(rc),
+                                            label: lbl
+                                        };
+                                    }
+                                } catch (eRc) { /* ignore */ }
+                                applyDraftDelta(delta);
                                 writeFlowState();
                             } catch (e) { /* ignore */ }
                         }

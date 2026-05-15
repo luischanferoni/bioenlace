@@ -240,6 +240,15 @@ class UiJsonScreen extends StatefulWidget {
   /// Embebido: cancelar sin POST. Solo tiene efecto en bloques **`fields`** (no en listas horizontales).
   final VoidCallback? onCancel;
 
+  /// Definición ya obtenida (p. ej. cacheada en el mensaje del chat): no repetir GET al hacer scroll.
+  final Map<String, dynamic>? initialDefinition;
+
+  /// Persistir la definición en el host tras el primer GET exitoso.
+  final void Function(Map<String, dynamic> definition)? onDefinitionLoaded;
+
+  /// Solo en encadenamiento de flow: lista de 1 ítem → auto-elegir y avanzar (primera carga del paso).
+  final bool enableFlowChainAutoAdvance;
+
   const UiJsonScreen({
     Key? key,
     required this.apiAbsoluteUrl,
@@ -250,6 +259,9 @@ class UiJsonScreen extends StatefulWidget {
     this.onDraftDelta,
     this.onSubmitSuccess,
     this.onCancel,
+    this.initialDefinition,
+    this.onDefinitionLoaded,
+    this.enableFlowChainAutoAdvance = false,
   }) : super(key: key);
 
   @override
@@ -265,6 +277,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   /// Cuando se confirma/aplica un ítem, bloquear nuevas selecciones en este embed.
   bool _listEmbedLocked = false;
   bool _formSubmitted = false;
+  bool _flowChainAutoScheduled = false;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
@@ -297,7 +310,21 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    final cached = widget.initialDefinition;
+    if (cached != null && cached['kind']?.toString() == 'ui_definition') {
+      _hydrateFromDefinition(Map<String, dynamic>.from(cached), fromNetwork: false);
+    } else {
+      _load();
+    }
+  }
+
+  @override
+  void didUpdateWidget(UiJsonScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.apiAbsoluteUrl != widget.apiAbsoluteUrl) {
+      _flowChainAutoScheduled = false;
+      _load();
+    }
   }
 
   @override
@@ -341,20 +368,72 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       if (m['kind'] != 'ui_definition') {
         throw Exception('No es ui_definition');
       }
-      _seedAccum(m);
-      setState(() {
-        _root = m;
-        _listEmbedSelectedId = null;
-        _listEmbedLocked = false;
-        _formSubmitted = false;
-        _loading = false;
-      });
+      _hydrateFromDefinition(m, fromNetwork: true);
     } catch (e) {
       setState(() {
         _error = _humanizeExceptionMessage(e);
         _loading = false;
       });
     }
+  }
+
+  void _hydrateFromDefinition(Map<String, dynamic> m, {required bool fromNetwork}) {
+    _seedAccum(m);
+    setState(() {
+      _root = m;
+      if (fromNetwork) {
+        _listEmbedSelectedId = null;
+        _listEmbedLocked = false;
+        _formSubmitted = false;
+      }
+      _loading = false;
+      _error = null;
+    });
+    if (fromNetwork) {
+      widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
+      _scheduleFlowChainSingleListPick();
+    }
+  }
+
+  /// Encadenamiento de flow: un solo ítem en lista → elegir y avanzar (solo tras GET inicial del paso).
+  void _scheduleFlowChainSingleListPick() {
+    if (_flowChainAutoScheduled ||
+        !widget.enableFlowChainAutoAdvance ||
+        !widget.embedded ||
+        widget.onDraftDelta == null ||
+        _listEmbedLocked) {
+      return;
+    }
+    _flowChainAutoScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _listEmbedLocked || _root == null) return;
+      for (final bRaw in _blocksOrderedForRender(_blocks)) {
+        if (bRaw is! Map) continue;
+        final b = Map<String, dynamic>.from(bRaw);
+        if (b['kind']?.toString() != 'list') continue;
+        final itemsRaw = b['items'];
+        final items = itemsRaw is List ? itemsRaw : const [];
+        if (items.length != 1) continue;
+        final selection =
+            b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
+        if (selection['requires_confirmation'] == true) continue;
+        final draftField = b['draft_field']?.toString() ?? '';
+        if (draftField.isEmpty) continue;
+        final it = items.first;
+        if (it is! Map) continue;
+        final m = Map<String, dynamic>.from(it);
+        final id = m['id']?.toString() ?? '';
+        if (id.isEmpty) continue;
+        setState(() => _listEmbedSelectedId = id);
+        await Future<void>.delayed(const Duration(milliseconds: 480));
+        if (!mounted || _listEmbedLocked) return;
+        await _applyListEmbedDraft(draftField, id, item: m);
+        if (mounted) {
+          setState(() => _listEmbedLocked = true);
+        }
+        return;
+      }
+    });
   }
 
   void _seedAccum(Map<String, dynamic> def) {
@@ -905,10 +984,18 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
   }
 
-  Future<void> _applyListEmbedDraft(String draftField, String id) async {
+  Future<void> _applyListEmbedDraft(
+    String draftField,
+    String id, {
+    Map<String, dynamic>? item,
+  }) async {
     final cb = widget.onDraftDelta;
     if (cb != null) {
-      await cb({draftField: id});
+      final delta = <String, dynamic>{draftField: id};
+      if (item != null && item.isNotEmpty) {
+        delta['_flow_item_$draftField'] = item;
+      }
+      await cb(delta);
     }
   }
 
@@ -1045,7 +1132,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                               await Future<void>.delayed(const Duration(milliseconds: 480));
                               if (!mounted || _listEmbedLocked) return;
                             }
-                            await _applyListEmbedDraft(draftField, id);
+                            await _applyListEmbedDraft(draftField, id, item: m);
                             if (mounted) {
                               setState(() {
                                 _listEmbedLocked = true;
@@ -1093,7 +1180,14 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                       ? null
                       : () async {
                           final id = _listEmbedSelectedId!;
-                          await _applyListEmbedDraft(draftField, id);
+                          Map<String, dynamic>? picked;
+                          for (final it in items) {
+                            if (it is Map && it['id']?.toString() == id) {
+                              picked = Map<String, dynamic>.from(it);
+                              break;
+                            }
+                          }
+                          await _applyListEmbedDraft(draftField, id, item: picked);
                           if (mounted) {
                             setState(() {
                               _listEmbedLocked = true;

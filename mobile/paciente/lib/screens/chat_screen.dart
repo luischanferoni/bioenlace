@@ -32,8 +32,12 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Map<String, dynamic>> _chatHistory = [];
   bool _isSending = false;
   Map<String, dynamic> _draft = {};
+  Map<String, dynamic> _flowSnapshot = {};
   String? _intentId;
   String? _subintentId;
+
+  /// Incrementa al iniciar cada activación de un flow (reinicio tras otro flow o atajo con reset).
+  int _flowActivationSeq = 0;
 
   /// Atajos para panel inicial (GET acciones/comunes); mismo origen que el bottom sheet Atajos.
   List<AtajoCategoria>? _welcomeAtajos;
@@ -64,16 +68,282 @@ class _ChatScreenState extends State<ChatScreen> {
     return route.contains('crear-como-paciente') || abs.contains('crear-como-paciente');
   }
 
+  /// Título del flujo (`action_name` en el YAML del subintent).
+  String? _flowActionTitleFromMessage(Map<String, dynamic> message) {
+    final fm = message['flow_manifest'];
+    if (fm is! Map) {
+      return null;
+    }
+    final name = fm['action_name']?.toString().trim();
+    if (name == null || name.isEmpty) {
+      return null;
+    }
+    return name;
+  }
+
+  bool _messageHasFlowInteractiveUi(Map<String, dynamic> message) {
+    return message['inline_ui'] is Map || message['flow_submit_request'] is Map;
+  }
+
+  String? _flowIntentIdFromMessage(Map<String, dynamic> message) {
+    final fm = message['flow_manifest'];
+    if (fm is Map) {
+      final id = fm['intent_id']?.toString().trim();
+      if (id != null && id.isNotEmpty) {
+        return id;
+      }
+    }
+    return null;
+  }
+
+  /// Flow distinto al activo: marcar UIs interactivas anteriores como descartadas.
+  void _supersedeDiscardedFlowUIs(String activeIntentId) {
+    for (final m in _chatHistory) {
+      if (m['type'] != 'bot' || !_messageHasFlowInteractiveUi(m)) {
+        continue;
+      }
+      final id = _flowIntentIdFromMessage(m);
+      if (id != null && id != activeIntentId) {
+        m['flow_superseded'] = true;
+      }
+    }
+  }
+
+  void _supersedeAllFlowInteractiveMessages() {
+    for (final m in _chatHistory) {
+      if (m['type'] == 'bot' && _messageHasFlowInteractiveUi(m)) {
+        m['flow_superseded'] = true;
+      }
+    }
+  }
+
+  /// Mismo flow: solo el último paso con mini-UI / submit permanece habilitado.
+  void _supersedeOlderStepsOfActiveFlow(String activeIntentId) {
+    int? lastIdx;
+    for (var i = _chatHistory.length - 1; i >= 0; i--) {
+      final m = _chatHistory[i];
+      if (m['type'] != 'bot' || !_messageHasFlowInteractiveUi(m)) {
+        continue;
+      }
+      if (_flowIntentIdFromMessage(m) == activeIntentId) {
+        lastIdx = i;
+        break;
+      }
+    }
+    if (lastIdx == null) {
+      return;
+    }
+    for (var i = 0; i < _chatHistory.length; i++) {
+      if (i == lastIdx) {
+        continue;
+      }
+      final m = _chatHistory[i];
+      if (m['type'] != 'bot' || !_messageHasFlowInteractiveUi(m)) {
+        continue;
+      }
+      if (_flowIntentIdFromMessage(m) == activeIntentId) {
+        m['flow_superseded'] = true;
+      }
+    }
+  }
+
+  void _beginNewFlowActivation() {
+    _flowActivationSeq++;
+  }
+
+  void _stampFlowActivationOnMessage(Map<String, dynamic> message) {
+    if (message['flow_manifest'] is Map ||
+        _messageHasFlowInteractiveUi(message)) {
+      message['flow_activation_seq'] = _flowActivationSeq;
+    }
+  }
+
+  void _stampLastBotMessageFlowActivation() {
+    if (_chatHistory.isEmpty) {
+      return;
+    }
+    final m = _chatHistory.last;
+    if (m['type'] == 'bot') {
+      _stampFlowActivationOnMessage(m);
+    }
+  }
+
+  void _applyFlowSupersession({String? previousIntentId, String? activeIntentId}) {
+    if (activeIntentId == null || activeIntentId.isEmpty) {
+      return;
+    }
+    if (previousIntentId != null &&
+        previousIntentId.isNotEmpty &&
+        previousIntentId != activeIntentId) {
+      _supersedeDiscardedFlowUIs(activeIntentId);
+      _beginNewFlowActivation();
+    }
+    _supersedeOlderStepsOfActiveFlow(activeIntentId);
+  }
+
+  void _applyDraftDelta(Map<String, dynamic> delta) {
+    if (delta.isEmpty) return;
+    final merged = applyDraftDelta(
+      draft: _draft,
+      flowSnapshot: _flowSnapshot,
+      delta: delta,
+    );
+    _draft = merged.draft;
+    _flowSnapshot = merged.flowSnapshot;
+  }
+
+  void _clearFlowState() {
+    _draft = {};
+    _flowSnapshot = {};
+    _intentId = null;
+    _subintentId = null;
+    _asistenteService.currentIntentId = null;
+    _asistenteService.currentSubintentId = null;
+    _asistenteService.draft = {};
+  }
+
+  /// Texto legible a partir de `ui_submit_result.data` + contexto del flow.
+  String _formatFlowSubmitSummary(
+    Map<String, dynamic>? data, {
+    String? intentId,
+    Map<String, dynamic>? flowSnapshot,
+  }) {
+    return formatFlowSubmitSummary(
+      intentId: intentId ?? _intentId,
+      submitData: data,
+      flowSnapshot: flowSnapshot ?? _flowSnapshot,
+    );
+  }
+
+  /// Tras submit exitoso: quita mini-UIs del flow y deja un único mensaje con el resultado.
+  void _collapseCompletedFlowActivation({
+    required int activationSeq,
+    Map<String, dynamic>? submitData,
+    String? flowActionTitle,
+    String? intentId,
+    Map<String, dynamic>? flowSnapshot,
+  }) {
+    final indices = <int>[];
+    for (var i = 0; i < _chatHistory.length; i++) {
+      final m = _chatHistory[i];
+      if (m['type'] == 'bot' && m['flow_activation_seq'] == activationSeq) {
+        indices.add(i);
+      }
+    }
+    if (indices.isEmpty) {
+      return;
+    }
+
+    final summary = _formatFlowSubmitSummary(
+      submitData,
+      intentId: intentId,
+      flowSnapshot: flowSnapshot,
+    );
+    final firstIdx = indices.first;
+
+    for (var i = indices.length - 1; i >= 0; i--) {
+      _chatHistory.removeAt(indices[i]);
+    }
+
+    _chatHistory.insert(firstIdx, {
+      'type': 'bot',
+      'content': summary,
+      'flow_completed_summary': true,
+      if (flowActionTitle != null && flowActionTitle.isNotEmpty)
+        'flow_manifest': {'action_name': flowActionTitle},
+      'timestamp': DateTime.now(),
+    });
+  }
+
+  /// Título del flow: una vez por activación (misma `flow_activation_seq`), no en cada paso.
+  bool _shouldShowFlowChatHeader(int messageIndex, Map<String, dynamic> message) {
+    final fm = message['flow_manifest'];
+    if (fm is! Map) {
+      return false;
+    }
+    final intentId = fm['intent_id']?.toString().trim() ?? '';
+    final actionName = fm['action_name']?.toString().trim() ?? '';
+    final seq = message['flow_activation_seq'];
+
+    for (var i = messageIndex - 1; i >= 0; i--) {
+      final prev = _chatHistory[i];
+      if (prev['type'] != 'bot') {
+        continue;
+      }
+      final pfm = prev['flow_manifest'];
+      if (pfm is! Map) {
+        continue;
+      }
+      if (prev['flow_activation_seq'] != seq) {
+        continue;
+      }
+      if (intentId.isNotEmpty) {
+        if ((pfm['intent_id']?.toString().trim() ?? '') == intentId) {
+          return false;
+        }
+        continue;
+      }
+      if (actionName.isNotEmpty &&
+          (pfm['action_name']?.toString().trim() ?? '') == actionName) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Encabezado del flujo: `action_name` pequeño centrado + línea a ancho completo.
+  Widget _buildFlowChatHeader(BuildContext context, {required String title}) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: tt.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: cs.primary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Divider(
+            color: cs.primary.withValues(alpha: 0.85),
+            thickness: 2,
+            height: 2,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Texto del paso (`assistant_text` / `content`), alineado a la izquierda sin línea inferior.
+  Widget _buildFlowStepTitle(BuildContext context, String stepText) {
+    final cs = context.pacienteColors;
+    final tt = context.pacienteTextTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          stepText,
+          textAlign: TextAlign.left,
+          style: tt.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: cs.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Cierra el flujo del asistente sin persistir; vuelve al mensaje inicial (sin llamar a la API).
   void _resetAssistantToWelcome() {
     setState(() {
       _chatHistory = [];
-      _draft = {};
-      _intentId = null;
-      _subintentId = null;
-      _asistenteService.currentIntentId = null;
-      _asistenteService.currentSubintentId = null;
-      _asistenteService.draft = {};
+      _clearFlowState();
       _isSending = false;
     });
     _scrollToBottom();
@@ -214,12 +484,8 @@ class _ChatScreenState extends State<ChatScreen> {
       }
       setState(() {
         _isSending = false;
-        _intentId = null;
-        _subintentId = null;
-        _draft = {};
-        _asistenteService.currentIntentId = null;
-        _asistenteService.currentSubintentId = null;
-        _asistenteService.draft = {};
+        _supersedeAllFlowInteractiveMessages();
+        _clearFlowState();
         final rem = data['remediation'];
         List<Map<String, dynamic>>? remList;
         if (rem is List) {
@@ -239,6 +505,7 @@ class _ChatScreenState extends State<ChatScreen> {
       return true;
     }
 
+    final previousIntentId = _intentId;
     final iid = data['intent_id']?.toString();
     final sid = data['subintent_id']?.toString();
     if (iid != null && iid.isNotEmpty) {
@@ -252,8 +519,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     final dd = data['draft_delta'];
     if (dd is Map && dd.isNotEmpty) {
-      _draft = {..._draft, ...Map<String, dynamic>.from(dd)};
-      _asistenteService.draft = _draft;
+      _applyDraftDelta(Map<String, dynamic>.from(dd));
+      _asistenteService.draft = Map<String, dynamic>.from(_draft);
     }
 
     final openUi = data['open_ui'];
@@ -285,6 +552,11 @@ class _ChatScreenState extends State<ChatScreen> {
             },
             'timestamp': DateTime.now(),
           });
+          _stampLastBotMessageFlowActivation();
+          _applyFlowSupersession(
+            previousIntentId: previousIntentId,
+            activeIntentId: _intentId,
+          );
         });
         _scrollToBottom();
         return true;
@@ -324,6 +596,11 @@ class _ChatScreenState extends State<ChatScreen> {
             if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
             'timestamp': DateTime.now(),
           });
+          _stampLastBotMessageFlowActivation();
+          _applyFlowSupersession(
+            previousIntentId: previousIntentId,
+            activeIntentId: _intentId,
+          );
         });
         _scrollToBottom();
         await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
@@ -373,6 +650,11 @@ class _ChatScreenState extends State<ChatScreen> {
               if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
               'timestamp': DateTime.now(),
             });
+            _stampLastBotMessageFlowActivation();
+            _applyFlowSupersession(
+              previousIntentId: previousIntentId,
+              activeIntentId: _intentId,
+            );
           });
           _scrollToBottom();
           await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
@@ -403,6 +685,11 @@ class _ChatScreenState extends State<ChatScreen> {
           if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
           'timestamp': DateTime.now(),
         });
+        _stampLastBotMessageFlowActivation();
+        _applyFlowSupersession(
+          previousIntentId: previousIntentId,
+          activeIntentId: _intentId,
+        );
       });
       _scrollToBottom();
       return true;
@@ -415,15 +702,22 @@ class _ChatScreenState extends State<ChatScreen> {
     final intentId = opt['intent_id']?.toString() ?? '';
     if (intentId.isEmpty) return;
     final resetFlow = opt['reset_flow'] == true;
-    setState(() => _isSending = true);
-    _scrollToBottom();
-    try {
+    final prevIntent = _intentId;
+    setState(() {
+      _isSending = true;
+      if (resetFlow || (prevIntent != null && prevIntent != intentId)) {
+        _beginNewFlowActivation();
+      }
       if (resetFlow) {
+        _supersedeAllFlowInteractiveMessages();
         _subintentId = null;
         _draft = {};
         _asistenteService.currentSubintentId = null;
         _asistenteService.draft = {};
       }
+    });
+    _scrollToBottom();
+    try {
       _intentId = intentId;
       _asistenteService.currentIntentId = intentId;
 
@@ -706,12 +1000,7 @@ class _ChatScreenState extends State<ChatScreen> {
       // Sin esto, cualquier mensaje seguía yendo a SubIntentEngine con el mismo intent y volvía a abrir
       // el selector de efector (faltan draft.*). El texto libre debe re-enrutar al IntentEngine raíz.
       if (!asistenteUserSaysNearbyForEfectorChooser(text)) {
-        _intentId = null;
-        _subintentId = null;
-        _draft = {};
-        _asistenteService.currentIntentId = null;
-        _asistenteService.currentSubintentId = null;
-        _asistenteService.draft = {};
+        _clearFlowState();
       }
 
       // Procesar interacción del usuario con el servicio de acciones
@@ -1018,6 +1307,7 @@ class _ChatScreenState extends State<ChatScreen> {
           if ((m['content']?.toString() ?? '').trim().isEmpty) {
             m['content'] = title;
           }
+          _stampFlowActivationOnMessage(m);
         } else {
           _chatHistory.add({
             'type': 'bot',
@@ -1030,7 +1320,9 @@ class _ChatScreenState extends State<ChatScreen> {
             },
             'timestamp': DateTime.now(),
           });
+          _stampLastBotMessageFlowActivation();
         }
+        _applyFlowSupersession(activeIntentId: _intentId);
       });
       _scrollToBottom();
       return true;
@@ -1232,16 +1524,22 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           );
         }
+        final activationSeq = msg['flow_activation_seq'] is int
+            ? msg['flow_activation_seq'] as int
+            : _flowActivationSeq;
+        final flowTitle = _flowActionTitleFromMessage(msg);
+        final resultData = data is Map ? Map<String, dynamic>.from(data) : null;
+        final intentForSummary = _intentId;
+        final snapForSummary = Map<String, dynamic>.from(_flowSnapshot);
         setState(() {
-          msg.remove('flow_submit_request');
-          final prev = msg['content']?.toString() ?? '';
-          msg['content'] = ('$prev\n\n$successText').trim();
-          _intentId = null;
-          _subintentId = null;
-          _draft = {};
-          _asistenteService.currentIntentId = null;
-          _asistenteService.currentSubintentId = null;
-          _asistenteService.draft = {};
+          _collapseCompletedFlowActivation(
+            activationSeq: activationSeq,
+            submitData: resultData,
+            flowActionTitle: flowTitle,
+            intentId: intentForSummary,
+            flowSnapshot: snapForSummary,
+          );
+          _clearFlowState();
         });
         _scrollToBottom();
         return;
@@ -1303,11 +1601,21 @@ class _ChatScreenState extends State<ChatScreen> {
               itemBuilder: (context, index) {
                 final message = _chatHistory[index];
                 final isUser = message['type'] == 'user';
+                final isFlowCompletedSummary =
+                    !isUser && message['flow_completed_summary'] == true;
                 final content = message['content'] as String;
                 final actions = message['actions'] as List<Map<String, dynamic>>?;
                 final suggestedQuery = message['suggested_query'] as String?;
                 final inlineUi = message['inline_ui'];
                 final hasEmbeddedUi = !isUser && inlineUi is Map;
+                final flowActionTitle = !isUser ? _flowActionTitleFromMessage(message) : null;
+                final hasFlowSubmit = !isUser && message['flow_submit_request'] is Map;
+                final hasFlowContext =
+                    flowActionTitle != null && (hasEmbeddedUi || hasFlowSubmit);
+                final showFlowHeader = hasFlowContext &&
+                    _shouldShowFlowChatHeader(index, message);
+                final showFlowStepText = hasFlowContext && content.isNotEmpty;
+                final flowUiDisabled = message['flow_superseded'] == true;
 
                 // Verificar si hay form_config para ocultar el mensaje de chat
                 final hasFormConfig = message['form_config'] != null;
@@ -1316,20 +1624,52 @@ class _ChatScreenState extends State<ChatScreen> {
                 final hasRemediationRow = !isUser &&
                     message['remediation'] is List &&
                     (message['remediation'] as List).isNotEmpty;
-                /// Separación antes de tabs/UI inline: el antiguo SizedBox(12) era el hueco fijo
-                /// que no se podía quitar con padding del texto ni de los chips.
-                final inlineUiLeadGapHeight = (!hasFormConfig &&
-                        !isUser &&
-                        inlineUi is Map &&
-                        hasEmbeddedUi &&
-                        content.isNotEmpty &&
-                        !hasActionsRow &&
-                        !hasRemediationRow)
-                    ? 4.0
-                    : 12.0;
+                /// Separación antes de tabs/UI inline.
+                double inlineUiLeadGapHeight = 12.0;
+                if (!hasFormConfig && !isUser && inlineUi is Map && hasEmbeddedUi) {
+                  if (hasFlowContext) {
+                    // Con encabezado de flujo el texto del paso ya aporta margen; evitar 12px extra.
+                    inlineUiLeadGapHeight = showFlowStepText ? 2.0 : 4.0;
+                  } else if (content.isNotEmpty && !hasActionsRow && !hasRemediationRow) {
+                    inlineUiLeadGapHeight = 4.0;
+                  }
+                }
+
+                if (isFlowCompletedSummary) {
+                  final summaryTitle = _flowActionTitleFromMessage(message);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (summaryTitle != null && summaryTitle.isNotEmpty)
+                        _buildFlowChatHeader(context, title: summaryTitle),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cs.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: cs.primary.withValues(alpha: 0.35)),
+                          ),
+                          child: Text(
+                            content,
+                            style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
 
                 return Column(
                   children: [
+                    if (!hasFormConfig && hasFlowContext) ...[
+                      if (showFlowHeader)
+                        _buildFlowChatHeader(context, title: flowActionTitle),
+                      if (showFlowStepText)
+                        _buildFlowStepTitle(context, content),
+                    ],
                     // Mensaje (solo mostrar si no hay form_config)
                     if (!hasFormConfig) ...[
                       if (isUser)
@@ -1367,7 +1707,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         )
                       else if (hasEmbeddedUi)
-                        if (content.isNotEmpty)
+                        if (!hasFlowContext && content.isNotEmpty)
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Padding(
@@ -1383,7 +1723,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                             ),
                           )
-                      else
+                      else if (!hasFlowContext)
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Container(
@@ -1517,7 +1857,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                     style: tt.labelLarge?.copyWith(fontSize: 12),
                                   ),
                                   selected: selected,
-                                  onSelected: (_) => _onFlowManifestTabSelected(index, tm),
+                                  onSelected: flowUiDisabled
+                                      ? null
+                                      : (_) => _onFlowManifestTabSelected(index, tm),
                                 );
                               }).toList(),
                             ),
@@ -1537,10 +1879,24 @@ class _ChatScreenState extends State<ChatScreen> {
                               duration: const Duration(milliseconds: 180),
                               curve: Curves.easeOut,
                               alignment: Alignment.center,
-                              child: UiJsonScreen(
-                              key: ValueKey(
-                                '${inlineUi['api_absolute_url']?.toString() ?? ''}|${inlineUi['route']?.toString() ?? ''}',
-                              ),
+                              child: AbsorbPointer(
+                                absorbing: flowUiDisabled,
+                                child: Opacity(
+                                  opacity: flowUiDisabled ? 0.55 : 1,
+                                  child: _KeepAliveChatChild(
+                                keepAlive: hasEmbeddedUi,
+                                child: UiJsonScreen(
+                              key: ObjectKey('inline-ui-$index'),
+                              initialDefinition: inlineUi['ui_definition'] is Map
+                                  ? Map<String, dynamic>.from(inlineUi['ui_definition'] as Map)
+                                  : null,
+                              onDefinitionLoaded: flowUiDisabled
+                                  ? null
+                                  : (def) {
+                                      inlineUi['ui_definition'] = def;
+                                    },
+                              enableFlowChainAutoAdvance: !flowUiDisabled &&
+                                  inlineUi['ui_definition'] == null,
                               apiAbsoluteUrl: (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty
                                   ? inlineUi['api_absolute_url']!.toString()
                                   : applyProvidedParamsToRoute(
@@ -1551,9 +1907,11 @@ class _ChatScreenState extends State<ChatScreen> {
                               appClient: 'bioenlace-paciente',
                               title: inlineUi['title']?.toString(),
                               embedded: true,
-                              onCancel: _inlineUiIsConfirmacionTurno(inlineUi) ? _resetAssistantToWelcome : null,
-                              onDraftDelta: (dd) async {
-                                _draft = {..._draft, ...dd};
+                              onCancel: flowUiDisabled
+                                  ? null
+                                  : (_inlineUiIsConfirmacionTurno(inlineUi) ? _resetAssistantToWelcome : null),
+                              onDraftDelta: flowUiDisabled ? null : (dd) async {
+                                _applyDraftDelta(Map<String, dynamic>.from(dd));
                                 // El descriptor GET puede llevar filtros en query (`id_servicio`, …) vía `provided`;
                                 // si el draft local no tiene aún `id_servicio_asignado`, lo tomamos de la URL resuelta
                                 // para que SubIntentEngine no vuelva a abrir la misma UI por draft incompleto.
@@ -1595,8 +1953,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                     }
                                     final dd2 = data['draft_delta'];
                                     if (dd2 is Map && dd2.isNotEmpty) {
-                                      _draft = {..._draft, ...Map<String, dynamic>.from(dd2)};
-                                      _asistenteService.draft = _draft;
+                                      _applyDraftDelta(Map<String, dynamic>.from(dd2));
+                                      _asistenteService.draft = Map<String, dynamic>.from(_draft);
                                     }
 
                                     final t = data['text']?.toString();
@@ -1623,6 +1981,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                         if (fsrPayload != null) 'flow_submit_request': fsrPayload,
                                         'timestamp': DateTime.now(),
                                       });
+                                      _stampLastBotMessageFlowActivation();
+                                      _applyFlowSupersession(activeIntentId: _intentId);
                                     });
                                     _scrollToBottom();
 
@@ -1699,11 +2059,17 @@ class _ChatScreenState extends State<ChatScreen> {
                                   }
                                 }
                               },
-                              onSubmitSuccess: (data) async {
+                              onSubmitSuccess: flowUiDisabled ? null : (data) async {
                                 final rc = data['razon_cancelacion']?.toString().trim();
                                 if (rc != null && rc.isNotEmpty) {
                                   setState(() {
-                                    _draft['razon_cancelacion'] = rc;
+                                    _applyDraftDelta({
+                                      'razon_cancelacion': rc,
+                                      '_flow_item_razon_cancelacion': {
+                                        'code': rc,
+                                        'label': etiquetaRazonCancelacionPaciente(rc),
+                                      },
+                                    });
                                   });
                                 }
                                 // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
@@ -1725,7 +2091,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                     }
                                     final dd = data['draft_delta'];
                                     if (dd is Map && dd.isNotEmpty) {
-                                      _draft = {..._draft, ...Map<String, dynamic>.from(dd)};
+                                      _applyDraftDelta(Map<String, dynamic>.from(dd));
                                       _asistenteService.draft = Map<String, dynamic>.from(_draft);
                                     }
                                     final text = data['text']?.toString();
@@ -1754,6 +2120,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                         if (fsrPayload != null) 'flow_submit_request': fsrPayload,
                                         'timestamp': DateTime.now(),
                                       });
+                                      _stampLastBotMessageFlowActivation();
+                                      _applyFlowSupersession(activeIntentId: _intentId);
                                     });
                                     _scrollToBottom();
                                     // Si hay UI siguiente, abrirla.
@@ -1775,6 +2143,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 }
                               },
                             ),
+                          ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -1786,7 +2157,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: ElevatedButton.icon(
-                            onPressed: (message['_flow_submit_busy'] == true || _isSending)
+                            onPressed: (flowUiDisabled ||
+                                    message['_flow_submit_busy'] == true ||
+                                    _isSending)
                                 ? null
                                 : () => _postFlowSubmitFromMessage(index),
                             icon: message['_flow_submit_busy'] == true
@@ -2120,5 +2493,31 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+}
+
+/// Evita que el scroll del chat desmonte mini-UIs y vuelva a pedir el descriptor GET.
+class _KeepAliveChatChild extends StatefulWidget {
+  final Widget child;
+  final bool keepAlive;
+
+  const _KeepAliveChatChild({
+    required this.child,
+    this.keepAlive = true,
+  });
+
+  @override
+  State<_KeepAliveChatChild> createState() => _KeepAliveChatChildState();
+}
+
+class _KeepAliveChatChildState extends State<_KeepAliveChatChild>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => widget.keepAlive;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

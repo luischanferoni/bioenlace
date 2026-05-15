@@ -908,11 +908,13 @@ class TurnosController extends BaseController
             $offset = isset($params['offset']) && $params['offset'] !== '' ? (int) $params['offset'] : 0;
             $offset = max(0, $offset);
 
+            $ahoraLocal = $this->ahoraLocalParaComparacionTurno();
+
             if ($alcance === 'pendientes') {
                 $turnosQ = Turno::findActive()->alias('t')
                     ->where(['t.id_persona' => $idPersona])
                     ->andWhere(['t.estado' => Turno::ESTADO_PENDIENTE])
-                    ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), new Expression('NOW()')]);
+                    ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal]);
 
                 if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
                     $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);
@@ -923,7 +925,7 @@ class TurnosController extends BaseController
             } else {
                 $turnosQ = Turno::find()->alias('t')
                     ->where(['t.id_persona' => $idPersona])
-                    ->andWhere(['<', new Expression('TIMESTAMP(t.fecha, t.hora)'), new Expression('NOW()')]);
+                    ->andWhere(['<', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal]);
 
                 if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
                     $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);
@@ -992,6 +994,21 @@ class TurnosController extends BaseController
             'turnos' => $formattedTurnos,
             'total' => count($formattedTurnos),
         ];
+    }
+
+    /**
+     * Instante actual en {@see Yii::$app->timeZone} para comparar con TIMESTAMP(fecha, hora).
+     * `fecha`/`hora` del turno son hora local del producto; MySQL NOW() suele estar en UTC y desplaza el filtro.
+     */
+    protected function ahoraLocalParaComparacionTurno(): string
+    {
+        try {
+            $tz = new \DateTimeZone(Yii::$app->timeZone);
+        } catch (\Exception $e) {
+            $tz = new \DateTimeZone('UTC');
+        }
+
+        return (new \DateTimeImmutable('now', $tz))->format('Y-m-d H:i:s');
     }
 
     /**

@@ -63,6 +63,12 @@ final class AssistantClientOpenEnricher
             $path = $route;
         }
 
-        return $path === '/api/v1/turnos/cancelar-como-paciente';
+        return in_array($path, self::POST_ONLY_MUTATION_ROUTES, true);
     }
+
+    /** Rutas con plantilla JSON para errores de submit, pero sin GET en el cierre del asistente (`flow_submit`). */
+    private const POST_ONLY_MUTATION_ROUTES = [
+        '/api/v1/turnos/cancelar-como-paciente',
+        '/api/v1/turnos/reprogramar-como-paciente',
+    ];
 }

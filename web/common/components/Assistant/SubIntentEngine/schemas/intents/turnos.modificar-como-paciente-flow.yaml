@@ -15,7 +15,7 @@ intent_semantics:
   goal: >-
     Reprogramar un turno propio a otra fecha/hora (y profesional PES) disponible.
   how: >-
-    Lista de turnos pendientes → oferta de slots alternativos para ese turno → confirmación en pantalla de reprogramación (cierre del flujo).
+    Lista de turnos pendientes → elección del nuevo horario (slots) → confirmación final (POST reprogramar, sin descriptor GET en ese paso).
   preconditions:
     - Política del efector permite reprogramación por app cuando aplica.
   outcome:

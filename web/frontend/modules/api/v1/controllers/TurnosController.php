@@ -608,11 +608,17 @@ class TurnosController extends BaseController
     }
 
     /**
-     * Reprogramar turno propio. POST …/turnos/{id}/reprogramar. RBAC: /api/turnos/reprogramar-como-paciente
+     * Reprogramar turno propio. Solo POST: body `id`, `slot_id` (o `fecha`/`hora`/`id_profesional_efector_servicio`).
+     * El nuevo horario se elige en {@see self::actionSlotsReprogramarComoPaciente()} dentro del flujo del asistente.
+     * RBAC: /api/turnos/reprogramar-como-paciente
      */
     public function actionReprogramarComoPaciente($id = null)
     {
         $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'La reprogramación se confirma por POST con id y slot_id (o fecha, hora e id_profesional_efector_servicio).');
+        }
+
         return UiScreenService::handleScreen(
             'turnos',
             'reprogramar-como-paciente',

@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\components\UiScreenService;
+use common\components\Services\Servicios\ServiciosEfectorAutogestionListadoService;
 use common\models\Servicio;
 
 /**
@@ -58,7 +59,8 @@ class ServiciosController extends BaseController
     }
 
     /**
-     * View embebible: elegir servicio (solo catálogo con {@see Servicio::acepta_turnos} = SI).
+     * View embebible: elegir servicio para turnos.
+     * Origen: {@see ServiciosEfector} (activos) + join {@see Servicio} con `acepta_turnos` = SI, distinct por `id_servicio`.
      *
      * GET|POST /api/v1/servicios/elegir-acepta-turnos
      *
@@ -80,17 +82,7 @@ class ServiciosController extends BaseController
             }
         );
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
-            $rows = Servicio::find()
-                ->where(['acepta_turnos' => 'SI'])
-                ->orderBy(['nombre' => SORT_ASC])
-                ->all();
-            $items = [];
-            foreach ($rows as $s) {
-                $items[] = [
-                    'id' => (string) (int) $s->id_servicio,
-                    'name' => (string) $s->nombre,
-                ];
-            }
+            $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos();
             $ui = UiScreenService::withListBlockItems($ui, $items);
         }
 

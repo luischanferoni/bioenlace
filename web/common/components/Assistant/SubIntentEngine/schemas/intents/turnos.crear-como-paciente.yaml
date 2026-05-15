@@ -39,6 +39,7 @@ subintents:
       - draft.id_servicio_asignado
     next: select_efector
     open_ui:
+      # Lista vía GET /api/v1/servicios/elegir-acepta-turnos: servicios_efector + servicios.acepta_turnos=SI (distinct id_servicio).
       action_id: servicios.elegir-acepta-turnos
 
   - id: select_efector

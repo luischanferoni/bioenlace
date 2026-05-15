@@ -13,7 +13,7 @@
       "id": "default",
       "selection": { "mode": "single" },
       "draft_field": "id_servicio_asignado",
-      "empty_message": "No hay servicios que acepten turnos por autogestión en este momento. Consultá con tu centro de salud o administración.",
+      "empty_message": "No hay servicios con turnos habilitados en ningún centro de salud en este momento. Consultá con tu centro de salud o administración.",
       "item": { "kind": "servicio", "id_field": "id", "label_field": "name" },
       "items": []
     }

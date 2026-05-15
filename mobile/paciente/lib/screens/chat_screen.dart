@@ -523,16 +523,15 @@ class _ChatScreenState extends State<ChatScreen> {
       _asistenteService.draft = Map<String, dynamic>.from(_draft);
     }
 
+    final fsrRaw = data['flow_submit_request'];
+    final hasFlowSubmitRequest = fsrRaw is Map &&
+        (fsrRaw['route']?.toString().trim().isNotEmpty ?? false);
+
     final openUi = data['open_ui'];
-    if (openUi is Map) {
-      final co = openUi['client_open'];
-      final actionId = openUi['action_id']?.toString();
-      final fsrRaw = data['flow_submit_request'];
-      if (actionId != null &&
-          actionId.isNotEmpty &&
-          co == null &&
-          fsrRaw is Map &&
-          (fsrRaw['route']?.toString().trim().isNotEmpty ?? false)) {
+    if (openUi is Map || hasFlowSubmitRequest) {
+      final co = openUi is Map ? openUi['client_open'] : null;
+      final actionId = openUi is Map ? openUi['action_id']?.toString() : null;
+      if (hasFlowSubmitRequest) {
         final fsrBody = fsrRaw['body'] is Map
             ? Map<String, dynamic>.from(fsrRaw['body'] as Map)
             : <String, dynamic>{};
@@ -1270,6 +1269,13 @@ class _ChatScreenState extends State<ChatScreen> {
       final intentId = co['intent_id']?.toString() ?? action['action_id']?.toString() ?? '';
       if (intentId.isEmpty) {
         _showErrorSnackbar('Intent sin intent_id.');
+        return true;
+      }
+      // Ya estamos en este flow (p. ej. cierre `flow_submit` mal etiquetado): no reiniciar draft.
+      if (_intentId != null &&
+          _intentId!.isNotEmpty &&
+          intentId == _intentId &&
+          _draft.isNotEmpty) {
         return true;
       }
       setState(() {
@@ -2046,9 +2052,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                     });
                                     _scrollToBottom();
 
-                                    // Si el paso siguiente trae open_ui, abrirla inline.
+                                    // Si el paso siguiente trae open_ui (sin cierre POST en línea), abrirla inline.
                                     final openUi = data['open_ui'];
-                                    if (openUi is Map) {
+                                    if (openUi is Map && fsrPayload == null) {
                                       final actionId = openUi['action_id']?.toString();
                                       final co = openUi['client_open'];
                                       if (actionId != null && actionId.isNotEmpty) {
@@ -2060,7 +2066,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                             'client_open': Map<String, dynamic>.from(co),
                                             'parameters': {'provided': _draft},
                                           };
-                                        } else if (fsrPayload == null) {
+                                        } else {
                                           // Fallback flow: usar route del active_step/tab default.
                                           final fm = data['flow_manifest'];
                                           String? route;
@@ -2184,9 +2190,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                       _applyFlowSupersession(activeIntentId: _intentId);
                                     });
                                     _scrollToBottom();
-                                    // Si hay UI siguiente, abrirla.
+                                    // Si hay UI siguiente (sin cierre POST en línea), abrirla.
                                     final openUi = data['open_ui'];
-                                    if (openUi is Map) {
+                                    if (openUi is Map && fsrPayload == null) {
                                       final actionId = openUi['action_id']?.toString();
                                       final co = openUi['client_open'];
                                       if (actionId != null && actionId.isNotEmpty && co is Map) {

@@ -312,6 +312,9 @@ final class SubIntentEngine
         $inlineSubmit = self::buildFlowSubmitRequestDescriptor($submitActionId, $draft, $flowSubmitBlock);
         if ($inlineSubmit !== null) {
             $payload['flow_submit_request'] = $inlineSubmit;
+            // Cierre en línea (botón POST): no reabrir el mismo intent ni otra mini-UI por `client_open`.
+            $openSubmit['client_open'] = null;
+            $payload['open_ui'] = $openSubmit;
         }
 
         return self::withFlowManifest($payload, $intentId, $subintentId);

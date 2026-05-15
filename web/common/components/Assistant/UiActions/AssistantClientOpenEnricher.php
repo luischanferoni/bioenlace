@@ -37,9 +37,8 @@ final class AssistantClientOpenEnricher
             return $action;
         }
 
-        // Mutación solo por POST (p. ej. cierre `flow_submit`): puede existir plantilla para errores de submit,
-        // pero el asistente no debe abrir GET de descriptor en el paso final.
-        if (self::isAssistantPostOnlyMutationRoute($route)) {
+        // Cierre `flow_submit`: POST sin GET de descriptor (puede existir JSON legacy para errores, no se abre en el asistente).
+        if ($route !== '' && self::isPostOnlyFlowClosureRoute($route)) {
             return $action;
         }
 
@@ -65,7 +64,10 @@ final class AssistantClientOpenEnricher
         return $action;
     }
 
-    private static function isAssistantPostOnlyMutationRoute(string $route): bool
+    /**
+     * Rutas de cierre declarativo de flujos (`flow_submit` / `rbac_route` del YAML): solo POST, sin UI en GET.
+     */
+    public static function isPostOnlyFlowClosureRoute(string $route): bool
     {
         $route = trim($route);
         if ($route === '') {
@@ -76,12 +78,16 @@ final class AssistantClientOpenEnricher
             $path = $route;
         }
 
-        return in_array($path, self::POST_ONLY_MUTATION_ROUTES, true);
+        return in_array($path, self::POST_ONLY_FLOW_CLOSURE_ROUTES, true);
     }
 
-    /** Rutas con plantilla JSON para errores de submit, pero sin GET en el cierre del asistente (`flow_submit`). */
-    private const POST_ONLY_MUTATION_ROUTES = [
+    /**
+     * Alineado a `rbac_route` / `flow_submit.action_id` en intents YAML (sin segmento `v1` en permiso webvimark).
+     */
+    private const POST_ONLY_FLOW_CLOSURE_ROUTES = [
         '/api/v1/turnos/cancelar-como-paciente',
         '/api/v1/turnos/reprogramar-como-paciente',
+        '/api/v1/profesional-agenda/crear-agenda-flow',
+        '/api/v1/profesional-agenda/editar-agenda-flow',
     ];
 }

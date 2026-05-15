@@ -6,6 +6,7 @@ use Yii;
 use yii\data\ActiveDataProvider;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
+use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
@@ -31,9 +32,10 @@ use common\models\ProfesionalEfectorServicioAgenda;
 class ProfesionalAgendaController extends BaseController
 {
     /**
-     * Cierre declarativo del flujo asistente «alta profesional y agenda» (descriptor + POST de acuse).
+     * Cierre declarativo del flujo asistente «alta profesional y agenda» (solo POST; sin descriptor UI).
+     * Permiso RBAC: `/api/profesional-agenda/crear-agenda-flow` (alineado al YAML `agenda.crear-profesional-flow`).
      *
-     * GET|POST /api/v1/profesional-agenda/crear-agenda-flow
+     * POST /api/v1/profesional-agenda/crear-agenda-flow
      *
      * @action_name Cerrar flujo alta profesional/agenda (asistente)
      * @entity Agendas
@@ -42,34 +44,40 @@ class ProfesionalAgendaController extends BaseController
     public function actionCrearAgendaFlow(): array
     {
         $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
+        }
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
             throw new BadRequestHttpException('Se requiere efector en sesión.');
         }
 
-        return UiScreenService::handleScreen(
-            'profesional-agenda',
-            'crear-agenda-flow',
-            array_merge($req->get(), $req->isPost ? $req->post() : []),
-            $req->post(),
-            static function (array $post) use ($idEfector): array {
-                $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
-                if ($idPes > 0) {
-                    $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-                    if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-                        throw new ForbiddenHttpException('Asignación inválida para este efector.');
-                    }
-                }
-
-                return ['data' => ['success' => true, 'message' => 'Flujo de alta completado.']];
+        $post = $req->post();
+        $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+        if ($idPes > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+                throw new ForbiddenHttpException('Asignación inválida para este efector.');
             }
-        );
+        }
+
+        return [
+            'success' => true,
+            'kind' => 'ui_submit_result',
+            'action_id' => 'profesional-agenda.crear-agenda-flow',
+            'data' => [
+                'success' => true,
+                'message' => 'Flujo de alta completado.',
+            ],
+            'errors' => null,
+        ];
     }
 
     /**
-     * Cierre declarativo del flujo asistente «editar agenda» (descriptor + POST de acuse).
+     * Cierre declarativo del flujo asistente «editar agenda» (solo POST; sin descriptor UI).
+     * Permiso RBAC: `/api/profesional-agenda/editar-agenda-flow` (alineado al YAML `agenda.editar-agenda-flow`).
      *
-     * GET|POST /api/v1/profesional-agenda/editar-agenda-flow
+     * POST /api/v1/profesional-agenda/editar-agenda-flow
      *
      * @action_name Cerrar flujo editar agenda (asistente)
      * @entity Agendas
@@ -78,33 +86,38 @@ class ProfesionalAgendaController extends BaseController
     public function actionEditarAgendaFlow(): array
     {
         $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
+        }
         $idEfector = (int) Yii::$app->user->getIdEfector();
         if ($idEfector <= 0) {
             throw new BadRequestHttpException('Se requiere efector en sesión.');
         }
 
-        return UiScreenService::handleScreen(
-            'profesional-agenda',
-            'editar-agenda-flow',
-            array_merge($req->get(), $req->isPost ? $req->post() : []),
-            $req->post(),
-            static function (array $post) use ($idEfector): array {
-                $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
-                $idServicio = (int) ($post['id_servicio'] ?? 0);
-                if ($idPes <= 0 || $idServicio <= 0) {
-                    throw new BadRequestHttpException('Indique id_profesional_efector_servicio e id_servicio.');
-                }
-                $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-                if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-                    throw new ForbiddenHttpException('Asignación inválida para este efector.');
-                }
-                if ((int) $pes->id_servicio !== $idServicio) {
-                    throw new BadRequestHttpException('id_servicio no coincide con la asignación profesional.');
-                }
+        $post = $req->post();
+        $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+        $idServicio = (int) ($post['id_servicio'] ?? 0);
+        if ($idPes <= 0 || $idServicio <= 0) {
+            throw new BadRequestHttpException('Indique id_profesional_efector_servicio e id_servicio.');
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+            throw new ForbiddenHttpException('Asignación inválida para este efector.');
+        }
+        if ((int) $pes->id_servicio !== $idServicio) {
+            throw new BadRequestHttpException('id_servicio no coincide con la asignación profesional.');
+        }
 
-                return ['data' => ['success' => true, 'message' => 'Flujo de edición de agenda cerrado.']];
-            }
-        );
+        return [
+            'success' => true,
+            'kind' => 'ui_submit_result',
+            'action_id' => 'profesional-agenda.editar-agenda-flow',
+            'data' => [
+                'success' => true,
+                'message' => 'Flujo de edición de agenda cerrado.',
+            ],
+            'errors' => null,
+        ];
     }
 
     /**

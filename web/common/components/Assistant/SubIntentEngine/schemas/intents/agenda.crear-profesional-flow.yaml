@@ -106,6 +106,7 @@ subintents:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
 
+# Cierre POST-only (sin GET UI); rbac_route = permiso /api/profesional-agenda/crear-agenda-flow
 flow_submit:
   action_id: profesional-agenda.crear-agenda-flow
   params:

@@ -709,7 +709,8 @@ final class SubIntentEngine
             if (preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
                 $route = '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
             }
-            if ($route && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
+            if ($route && !AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute($route)
+                && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
                 $map = AllowedRoutesResolver::getTargetRoutesMapForUserId($userId, true);
                 if (AllowedRoutesResolver::routeAllowedByMap($route, $map)) {
                     $action = [

@@ -59,7 +59,9 @@ Cuando el cierre del flujo emite `flow_submit`, el motor puede adjuntar (además
 |--------|-----|
 | `method` | Hoy siempre `POST`. |
 | `route` | Ruta API canónica `/api/v1/<entidad>/<accion>` derivada de `action_id`. |
-| `body` | Objeto string→string: cada clave del `params` del YAML cuyo valor es `draft.<campo>` y el draft tiene valor. Es el cuerpo del POST de cierre (`UiScreenService` / `kind: ui_submit_result`). |
+| `body` | Objeto string→string: cada clave del `params` del YAML cuyo valor es `draft.<campo>` y el draft tiene valor. Es el cuerpo del POST de cierre (`kind: ui_submit_result`). |
+
+**Cierres POST-only (sin UI en GET):** algunos `flow_submit.action_id` apuntan a endpoints que **solo aceptan POST** y devuelven `ui_submit_result` (acuse), sin descriptor `ui_definition`. El `rbac_route` del YAML debe coincidir con el permiso webvimark (sin `v1`), p. ej. `rbac_route: "/api/profesional-agenda/crear-agenda-flow"` → API `POST /api/v1/profesional-agenda/crear-agenda-flow`. El motor emite `open_ui.client_open: null` y **`flow_submit_request`** para el botón de confirmación; no abrir GET. Ver `AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute`.
 
 **Cuándo usar `flow_submit`:**
 

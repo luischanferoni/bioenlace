@@ -5,7 +5,9 @@ namespace common\components\Services\Turnos;
 use Yii;
 use common\models\Turno;
 use common\models\ProfesionalEfectorServicio;
+use common\components\Services\ProfesionalEfectorServicio\AgendaSlotEngine;
 use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\ProfesionalEfectorServicioAgendaVersion;
 
 /**
  * Servicio de búsqueda de slots de turnos a partir de parámetros ya NORMALIZADOS.
@@ -178,7 +180,12 @@ class TurnoSlotFinder
                 if ($pes === null) {
                     continue;
                 }
-                $slots = $agenda->getSlotsParaDia($dia);
+                $version = ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha($idPesAgenda, $dia);
+                $agendaLike = $version ?? $agenda;
+                $intervalo = $version !== null
+                    ? $version->getIntervaloMinutosEfectivo()
+                    : $agenda->resolveIntervaloMinutosParaSlots();
+                $slots = AgendaSlotEngine::slotsParaDia($agendaLike, $dia, $intervalo);
                 if ($slots === []) {
                     continue;
                 }

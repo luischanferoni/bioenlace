@@ -16,6 +16,7 @@ use yii\db\ActiveRecord;
  * @property string $formas_atencion
  * @property int|null $cupo_pacientes
  * @property int|null $duracion_slot_minutos
+ * @property int|null $intervalo_minutos
  * @property bool $acepta_consultas_online
  * @property string|null $lunes_2
  * @property string|null $martes_2
@@ -58,13 +59,24 @@ class ProfesionalEfectorServicioAgenda extends ActiveRecord
     {
         return [
             [['id_profesional_efector_servicio', 'id_efector', 'formas_atencion'], 'required'],
-            [['id_profesional_efector_servicio', 'id_efector', 'cupo_pacientes', 'duracion_slot_minutos'], 'integer'],
+            [['id_profesional_efector_servicio', 'id_efector', 'cupo_pacientes', 'duracion_slot_minutos', 'intervalo_minutos'], 'integer'],
+            ['intervalo_minutos', 'validateIntervaloMinutos'],
             [['acepta_consultas_online'], 'boolean'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['formas_atencion'], 'string', 'max' => 32],
             [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'safe'],
             [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'validarAlmenosUnDiaHorario', 'skipOnEmpty' => false],
         ];
+    }
+
+    public function validateIntervaloMinutos(): void
+    {
+        if ($this->intervalo_minutos === null || $this->intervalo_minutos === '') {
+            return;
+        }
+        if (!\common\components\Services\ProfesionalEfectorServicio\AgendaIntervaloMinutos::isAllowed((int) $this->intervalo_minutos)) {
+            $this->addError('intervalo_minutos', 'Intervalo no permitido. Use 15, 20, 30, 45 o 60 minutos.');
+        }
     }
 
     public function validarAlmenosUnDiaHorario(): void

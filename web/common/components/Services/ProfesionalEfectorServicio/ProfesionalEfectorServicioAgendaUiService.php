@@ -3,6 +3,7 @@
 namespace common\components\Services\ProfesionalEfectorServicio;
 
 use common\models\Condiciones_laborales;
+use common\components\Services\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioCondicionLaboral;
@@ -113,7 +114,7 @@ final class ProfesionalEfectorServicioAgendaUiService
 
         if ($agenda !== null) {
             $out['cupo_pacientes'] = (string) $agenda->cupo_pacientes;
-            $out['duracion_slot_minutos'] = $agenda->duracion_slot_minutos !== null ? (string) $agenda->duracion_slot_minutos : '';
+            $out['intervalo_minutos'] = (string) ($agenda->intervalo_minutos ?? AgendaIntervaloMinutos::DEFAULT);
             $out['formas_atencion'] = (string) $agenda->formas_atencion;
             foreach (['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'] as $col) {
                 $out[$col] = (string) ($agenda->$col ?? '');
@@ -129,7 +130,22 @@ final class ProfesionalEfectorServicioAgendaUiService
             }
         }
 
+        $out['vigente_desde'] = date('Y-m-d', strtotime('+1 day'));
+
         return $out;
+    }
+
+    /**
+     * Preview de impacto al cambiar intervalo / horarios (sin persistir).
+     *
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    public static function previewAgendaConfig(int $idEfector, array $post): array
+    {
+        $idPes = self::resolvePesIdForAgendaSubmit($idEfector, $post);
+
+        return ProfesionalEfectorServicioAgendaVersionService::previewImpacto($idPes, $idEfector, $post);
     }
 
     /**
@@ -197,33 +213,13 @@ final class ProfesionalEfectorServicioAgendaUiService
      */
     public static function submitAgendaConfig(int $idEfector, array $post): array
     {
-        $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);
         $idServicio = (int) ($post['id_servicio'] ?? 0);
         $idPesPost = (int) ($post['id_profesional_efector_servicio'] ?? 0);
         if ($idPesPost > 0) {
-            $idStaff = $idPesPost;
-        }
-
-        $pesFromPost = null;
-        if ($idPesPost > 0) {
             $pesFromPost = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesPost, 'deleted_at' => null]);
-            if ($pesFromPost === null || (int) $pesFromPost->id_efector !== $idEfector) {
-                throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
-            }
-            if ($idServicio <= 0) {
+            if ($pesFromPost !== null && $idServicio <= 0) {
                 $idServicio = (int) $pesFromPost->id_servicio;
             }
-            if ((int) $pesFromPost->id_servicio !== $idServicio) {
-                throw new BadRequestHttpException('id_servicio no coincide con la asignación profesional.');
-            }
-        }
-
-        if ($idServicio <= 0 || ($idStaff <= 0 && $idPesPost <= 0)) {
-            throw new BadRequestHttpException('Indique id_servicio e id_profesional_efector_servicio.');
-        }
-
-        if ($idStaff > 0) {
-            self::assertStaffContextPerteneceAEfector($idStaff, $idEfector);
         }
 
         if ($idServicio === 62) {
@@ -239,56 +235,52 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('Este servicio no admite agenda de turnos; no se puede guardar configuración de agenda.');
         }
 
-        if ($idStaff > 0 && $idPesPost <= 0) {
-            $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
-            if ($idPersona === null || $idPersona <= 0) {
-                throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
-            }
-            if (!ProfesionalEfectorServicioRecord::staffContextTienePesEnEfector($idStaff, $idEfector)) {
-                throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
-            }
+        $idPes = self::resolvePesIdForAgendaSubmit($idEfector, $post);
 
-            $pes = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
-                $idPersona,
-                $idEfector,
-                $idServicio
-            );
-            if ($pes === null) {
-                $pes = new ProfesionalEfectorServicioRecord();
-                $pes->id_persona = $idPersona;
-                $pes->id_efector = (int) $idEfector;
-                $pes->id_servicio = (int) $idServicio;
-                if (!$pes->save()) {
-                    throw new \RuntimeException('No se pudo crear la asignación profesional-efector-servicio.');
-                }
-            }
-        } else {
-            $pes = $pesFromPost;
-            if ($pes === null) {
-                throw new BadRequestHttpException('No se pudo resolver la asignación profesional.');
-            }
+        return ProfesionalEfectorServicioAgendaVersionService::publicarVersion($idPes, $idEfector, $post);
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     */
+    private static function resolvePesIdForAgendaSubmit(int $idEfector, array $post): int
+    {
+        $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);
+        $idServicio = (int) ($post['id_servicio'] ?? 0);
+        $idPesPost = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+        if ($idPesPost > 0) {
+            $idStaff = $idPesPost;
         }
 
-        $agendaNew = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id);
-        if ($agendaNew === null) {
-            $agendaNew = new ProfesionalEfectorServicioAgenda();
-            $agendaNew->id_profesional_efector_servicio = (int) $pes->id;
-            $agendaNew->id_efector = (int) $idEfector;
-        }
-        $agendaNew->load($post, '');
-        $agendaNew->id_profesional_efector_servicio = (int) $pes->id;
-        if (empty($agendaNew->id_efector)) {
-            $agendaNew->id_efector = (int) $idEfector;
+        if ($idPesPost > 0) {
+            $pesFromPost = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesPost, 'deleted_at' => null]);
+            if ($pesFromPost === null || (int) $pesFromPost->id_efector !== $idEfector) {
+                throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
+            }
+
+            return (int) $pesFromPost->id;
         }
 
-        if (!$agendaNew->validate()) {
-            throw new BadRequestHttpException(implode(' ', $agendaNew->getFirstErrors()));
-        }
-        if (!$agendaNew->save(false)) {
-            throw new \RuntimeException('No se pudo guardar la agenda.');
+        if ($idServicio <= 0 || $idStaff <= 0) {
+            throw new BadRequestHttpException('Indique id_servicio e id_profesional_efector_servicio.');
         }
 
-        return ['message' => 'Agenda guardada.', 'agenda_ui_completed' => '1'];
+        self::assertStaffContextPerteneceAEfector($idStaff, $idEfector);
+        $idPersona = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
+        if ($idPersona === null || $idPersona <= 0) {
+            throw new BadRequestHttpException('El recurso humano no pertenece al efector en sesión.');
+        }
+
+        $pes = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+            $idPersona,
+            $idEfector,
+            $idServicio
+        );
+        if ($pes === null) {
+            throw new BadRequestHttpException('No se pudo resolver la asignación profesional.');
+        }
+
+        return (int) $pes->id;
     }
 
     /**

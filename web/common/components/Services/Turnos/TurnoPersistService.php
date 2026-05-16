@@ -38,6 +38,12 @@ class TurnoPersistService
 
         $model->hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded();
 
+        try {
+            TurnoReservaSlotService::aplicarCamposReserva($model);
+        } catch (\InvalidArgumentException $e) {
+            throw $e;
+        }
+
         $this->assertTeleconsultaNuevoTurno($model);
 
         if (!$model->id_efector && $ctx->idEfectorSesion) {

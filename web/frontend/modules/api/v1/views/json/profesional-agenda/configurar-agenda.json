@@ -34,8 +34,29 @@
           "include_in_submit": true
         },
         {
+          "name": "vigente_desde",
+          "label": "Vigente desde",
+          "type": "date",
+          "required": true,
+          "layout": { "col": 4, "breakpoint": "md" }
+        },
+        {
+          "name": "intervalo_minutos",
+          "label": "Minutos por turno",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "15", "label": "15 minutos" },
+            { "value": "20", "label": "20 minutos" },
+            { "value": "30", "label": "30 minutos" },
+            { "value": "45", "label": "45 minutos" },
+            { "value": "60", "label": "60 minutos" }
+          ],
+          "layout": { "col": 4, "breakpoint": "md" }
+        },
+        {
           "name": "cupo_pacientes",
-          "label": "Cupo de pacientes",
+          "label": "Cupo de pacientes (límite diario)",
           "type": "select",
           "required": false,
           "options": [
@@ -47,14 +68,7 @@
             { "value": "25", "label": "25" },
             { "value": "30", "label": "30" }
           ],
-          "layout": { "col": 3, "breakpoint": "md" }
-        },
-        {
-          "name": "duracion_slot_minutos",
-          "label": "Minutos por turno (opcional)",
-          "type": "number",
-          "required": false,
-          "layout": { "col": 3, "breakpoint": "md" }
+          "layout": { "col": 4, "breakpoint": "md" }
         },
         {
           "name": "formas_atencion",
@@ -67,6 +81,28 @@
             { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
           ],
           "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "confirmar_cambios",
+          "label": "Confirmo el cambio tras revisar el impacto en turnos futuros",
+          "type": "select",
+          "required": false,
+          "options": [
+            { "value": "0", "label": "No" },
+            { "value": "1", "label": "Sí, guardar" }
+          ],
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "agenda_impact_preview",
+          "label": "Impacto en turnos futuros",
+          "type": "custom_widget",
+          "widget_id": "agenda_config_preview",
+          "required": false,
+          "assets": {
+            "js": ["/js/widgets/ui-widget-agenda-config-preview.js"]
+          },
+          "layout": { "col": 12, "breakpoint": "md" }
         },
         {
           "name": "weekly_scheduler_widget",
@@ -92,4 +128,3 @@
     }
   ]
 }
-

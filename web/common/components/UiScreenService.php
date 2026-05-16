@@ -159,37 +159,27 @@ final class UiScreenService
         if (!is_string($slotId) || trim($slotId) === '') {
             return $params;
         }
-        $parts = explode('|', $slotId);
-        if (count($parts) !== 3) {
+        $parsed = \common\components\Services\Turnos\TurnoReservaSlotService::parseSlotId($slotId);
+        if ($parsed === null) {
             return $params;
         }
-        $id0 = trim($parts[0]);
-        $fecha = trim($parts[1]);
-        $hora = trim($parts[2]);
-
-        // Preferir PES si viene en slot_id.
-        if (stripos($id0, 'pes:') === 0) {
-            $pesId = (int) trim(substr($id0, 4));
-            if (
-                $pesId > 0
-                && (!isset($params['id_profesional_efector_servicio']) || $params['id_profesional_efector_servicio'] === '' || $params['id_profesional_efector_servicio'] === null)
-            ) {
-                $params['id_profesional_efector_servicio'] = $pesId;
-            }
-        } else {
-            $idPesSlot = (int) $id0;
-            if (
-                $idPesSlot > 0
-                && (!isset($params['id_profesional_efector_servicio']) || $params['id_profesional_efector_servicio'] === '' || $params['id_profesional_efector_servicio'] === null)
-            ) {
-                $params['id_profesional_efector_servicio'] = $idPesSlot;
-            }
+        $pesId = (int) $parsed['id_profesional_efector_servicio'];
+        if (
+            $pesId > 0
+            && (!isset($params['id_profesional_efector_servicio']) || $params['id_profesional_efector_servicio'] === '' || $params['id_profesional_efector_servicio'] === null)
+        ) {
+            $params['id_profesional_efector_servicio'] = $pesId;
         }
+        $fecha = (string) $parsed['fecha'];
+        $hora = (string) $parsed['hora'];
         if ($fecha !== '' && (!isset($params['fecha']) || $params['fecha'] === '' || $params['fecha'] === null)) {
             $params['fecha'] = $fecha;
         }
         if ($hora !== '' && (!isset($params['hora']) || $params['hora'] === '' || $params['hora'] === null)) {
             $params['hora'] = $hora;
+        }
+        if (!isset($params['intervalo_minutos_reserva']) || $params['intervalo_minutos_reserva'] === '' || $params['intervalo_minutos_reserva'] === null) {
+            $params['intervalo_minutos_reserva'] = (int) $parsed['intervalo_minutos'];
         }
 
         return $params;

@@ -61,7 +61,13 @@ class TurnoSlotOfferService
                     ? (int) $slot['id_profesional_efector_servicio']
                     : 0;
                 if ($fechaSlot !== '' && $horaSlot !== '' && $idPes > 0) {
-                    $slot['slot_id'] = 'pes:' . $idPes . '|' . $fechaSlot . '|' . $horaSlot;
+                    $intervalo = 15;
+                    $ver = \common\models\ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha($idPes, $fechaSlot);
+                    if ($ver !== null) {
+                        $intervalo = $ver->getIntervaloMinutosEfectivo();
+                    }
+                    $slot['slot_id'] = 'pes:' . $idPes . '|' . $fechaSlot . '|' . $horaSlot . '|' . $intervalo;
+                    $slot['intervalo_minutos'] = $intervalo;
                 }
             }
             $fecha = isset($slot['fecha']) ? (string) $slot['fecha'] : '';

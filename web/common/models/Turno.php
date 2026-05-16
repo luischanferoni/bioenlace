@@ -848,9 +848,8 @@ class Turno extends \yii\db\ActiveRecord
         if ($idPes <= 0) {
             return false;
         }
-        $horaNormalizada = (strlen($hora) === 5 && strpos($hora, ':') !== false) ? $hora . ':00' : $hora;
-        $q = static::findActive()->andWhere(['fecha' => $fecha, 'hora' => $horaNormalizada]);
-        return (clone $q)->andWhere(['id_profesional_efector_servicio' => $idPes])->exists();
+
+        return !\common\components\Services\Turnos\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
     }
 
 

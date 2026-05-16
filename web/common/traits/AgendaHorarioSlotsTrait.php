@@ -2,6 +2,9 @@
 
 namespace common\traits;
 
+use common\components\Services\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
+use common\components\Services\ProfesionalEfectorServicio\AgendaSlotEngine;
+
 /**
  * Cálculo de slots HH:MM y validación de solapamiento entre agendas (columnas *_2).
  * Compartido por {@see \common\models\ProfesionalEfectorServicioAgenda} (tabla canónica; `agenda_rrhh` retirada vía {@see m260510_000001_drop_agenda_rrhh_table}).
@@ -19,33 +22,20 @@ trait AgendaHorarioSlotsTrait
      */
     public function getSlotsParaDia($dia): array
     {
-        $columnas = static::agendaHorarioColumnasSemana();
-        $nroDiaSemana = (int) date('N', strtotime($dia));
-        $colAgenda = $columnas[$nroDiaSemana - 1] ?? null;
-        if (!$colAgenda) {
-            return [];
-        }
-        $colValue = $this->{$colAgenda};
-        if (!$colValue) {
-            return [];
-        }
-        $horariosAgenda = array_map('intval', explode(',', $colValue));
-        if (empty($horariosAgenda)) {
-            return [];
+        return AgendaSlotEngine::slotsParaDia($this, (string) $dia, $this->resolveIntervaloMinutosParaSlots());
+    }
+
+    public function resolveIntervaloMinutosParaSlots(): int
+    {
+        if (isset($this->intervalo_minutos) && (int) $this->intervalo_minutos > 0) {
+            return AgendaIntervaloMinutos::normalize((int) $this->intervalo_minutos);
         }
         $duracion = isset($this->duracion_slot_minutos) ? (int) $this->duracion_slot_minutos : 0;
-        if ($duracion > 0) {
-            $minutosXPaciente = $duracion;
-            $agregoSegundos = false;
-        } elseif (is_null($this->cupo_pacientes) || $this->cupo_pacientes == 0) {
-            $minutosXPaciente = 15;
-            $agregoSegundos = false;
-        } else {
-            $minutosXPaciente = 60 * count($horariosAgenda) / $this->cupo_pacientes;
-            $agregoSegundos = ($minutosXPaciente - (int) $minutosXPaciente) >= 0.5;
+        if (AgendaIntervaloMinutos::isAllowed($duracion)) {
+            return $duracion;
         }
 
-        return static::crearSlotsDesdeHorarios($horariosAgenda, $minutosXPaciente, $agregoSegundos);
+        return AgendaIntervaloMinutos::DEFAULT;
     }
 
     /**

@@ -137,6 +137,14 @@ class ProfesionalAgendaController extends BaseController
         $idEfector = (int) Yii::$app->user->getIdEfector();
 
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        if ($req->isPost && ($fromClient['preview'] ?? '') === '1') {
+            return [
+                'success' => true,
+                'kind' => 'agenda_config_preview',
+                'data' => ProfesionalEfectorServicioAgendaUiService::previewAgendaConfig($idEfector, $fromClient),
+            ];
+        }
+
         $defaults = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $fromClient);
         $paramsForRender = array_merge($defaults, $fromClient);
 
@@ -149,6 +157,27 @@ class ProfesionalAgendaController extends BaseController
                 return ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $post);
             }
         );
+    }
+
+    /**
+     * POST /api/v1/profesional-agenda/preview-configurar-agenda
+     *
+     * Simula el impacto de un cambio de intervalo/horarios sin persistir.
+     */
+    public function actionPreviewConfigurarAgenda(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST.');
+        }
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $post = array_merge($req->get(), $req->post());
+
+        return [
+            'success' => true,
+            'kind' => 'agenda_config_preview',
+            'data' => ProfesionalEfectorServicioAgendaUiService::previewAgendaConfig($idEfector, $post),
+        ];
     }
 
     /**

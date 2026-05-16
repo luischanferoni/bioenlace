@@ -29,7 +29,10 @@ use common\components\Services\Turnos\TurnoCancellationPolicyService;
 use common\components\Services\Turnos\TurnoCancelacionRazones;
 use common\components\Services\Turnos\BulkCancelDayService;
 use common\components\Services\Turnos\SobreturnoService;
+use common\components\Services\Turnos\TurnoReservaSlotService;
+use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
+use common\models\TurnoAgendaConflicto;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\MethodNotAllowedHttpException;
@@ -612,6 +615,39 @@ class TurnosController extends BaseController
      * El nuevo horario se elige en {@see self::actionSlotsReprogramarComoPaciente()} dentro del flujo del asistente.
      * RBAC: /api/turnos/reprogramar-como-paciente
      */
+    /**
+     * Resuelve conflicto de agenda (cambio de intervalo del profesional).
+     * POST /api/v1/turnos/resolver-conflicto-agenda-como-paciente
+     * Body: id (id_turnos), eleccion: antes|despues|cancelar
+     *
+     * RBAC: /api/turnos/resolver-conflicto-agenda-como-paciente
+     */
+    public function actionResolverConflictoAgendaComoPaciente($id = null): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST con id y eleccion (antes|despues|cancelar).');
+        }
+        $post = array_merge($req->get(), $req->post());
+        $tid = $this->resolveTurnoId($id, $post, $req);
+        if (!$tid) {
+            throw new BadRequestHttpException('id del turno requerido');
+        }
+        $eleccion = trim((string) ($post['eleccion'] ?? ''));
+        if ($eleccion === '') {
+            throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
+        }
+
+        return [
+            'success' => true,
+            'data' => ProfesionalEfectorServicioAgendaVersionService::resolverConflictoPaciente(
+                (int) $tid,
+                (int) Yii::$app->user->getIdPersona(),
+                $eleccion
+            ),
+        ];
+    }
+
     public function actionReprogramarComoPaciente($id = null)
     {
         $req = Yii::$app->request;
@@ -1045,6 +1081,8 @@ class TurnosController extends BaseController
         $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
         $idEf = $turno->id_efector !== null && (int) $turno->id_efector > 0 ? (int) $turno->id_efector : null;
 
+        $conflicto = TurnoAgendaConflicto::findPendientePorTurno((int) $turno->id_turnos);
+
         return [
             'id' => $turno->id_turnos,
             'id_persona' => $turno->id_persona,
@@ -1061,6 +1099,8 @@ class TurnosController extends BaseController
             'id_consulta' => $consulta ? $consulta->id_consulta : null,
             'profesional' => $profesional,
             'created_at' => $turno->created_at,
+            'agenda_conflicto_pendiente' => $conflicto !== null,
+            'agenda_conflicto' => $conflicto !== null ? $conflicto->toPacienteApiArray() : null,
         ];
     }
 
@@ -1247,12 +1287,14 @@ class TurnosController extends BaseController
         ) {
             throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este turno');
         }
-        if (Turno::estaOcupadoSlotPorProfesionalEfectorServicio($idPesPost, (string) $fecha, (string) $hora)) {
-            throw new BadRequestHttpException('El horario ya no está disponible');
-        }
         $turno->id_profesional_efector_servicio = $idPesPost;
         $turno->fecha = $fecha;
         $turno->hora = $hora;
+        try {
+            TurnoReservaSlotService::aplicarCamposReserva($turno, (int) $turno->id_turnos);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
         if (!$turno->save()) {
             throw new BadRequestHttpException('No se pudo guardar el turno.');
         }

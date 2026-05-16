@@ -741,7 +741,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'No tenés turnos pendientes. Podés pedir uno desde el chat.',
+                'No tienes turnos pendientes. Puedes pedir uno desde el chat.',
                 style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
             ),

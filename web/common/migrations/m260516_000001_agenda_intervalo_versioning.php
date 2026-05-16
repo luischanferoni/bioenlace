@@ -132,9 +132,9 @@ class m260516_000001_agenda_intervalo_versioning extends Migration
     /**
      * Crea o completa turno_agenda_conflicto (reintento tras fallo parcial de FK).
      *
-     * @param array<string, mixed>|null $tableOptions
+     * @param string|null $tableOptions opciones DDL de createTable (ENGINE, CHARSET, …)
      */
-    private function ensureTurnoAgendaConflictoTable(?array $tableOptions, ?TableSchema $turnos): void
+    private function ensureTurnoAgendaConflictoTable(?string $tableOptions, ?TableSchema $turnos): void
     {
         $this->refreshTableSchema('{{%turnos}}');
         $turnos = $this->db->schema->getTableSchema('{{%turnos}}', true);

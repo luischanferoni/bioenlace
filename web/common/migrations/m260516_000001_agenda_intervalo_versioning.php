@@ -1,6 +1,8 @@
 <?php
 
 use yii\db\Migration;
+use yii\db\ColumnSchema;
+use yii\db\TableSchema;
 
 /**
  * Agenda por versiones: intervalo fijo (15/20/30/45/60), vigente_desde y conflictos de turnos.
@@ -89,50 +91,18 @@ class m260516_000001_agenda_intervalo_versioning extends Migration
             }
         }
 
-        if ($this->db->schema->getTableSchema('{{%turno_agenda_conflicto}}', true) === null) {
-            $this->createTable('{{%turno_agenda_conflicto}}', [
-                'id' => $this->primaryKey(),
-                'id_turno' => $this->integer()->notNull(),
-                'id_agenda_version' => $this->integer()->notNull(),
-                'estado' => $this->string(24)->notNull()->defaultValue('pendiente'),
-                'opcion_hora_antes' => $this->time()->null(),
-                'opcion_hora_despues' => $this->time()->null(),
-                'hora_elegida' => $this->time()->null(),
-                'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
-                'updated_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
-            ], $tableOptions);
-
-            $this->createIndex('ux_turno_agenda_conflicto_turno_version', '{{%turno_agenda_conflicto}}', ['id_turno', 'id_agenda_version'], true);
-            $this->createIndex('ix_turno_agenda_conflicto_estado', '{{%turno_agenda_conflicto}}', ['estado']);
-
-            $this->addForeignKey(
-                'fk_turno_agenda_conflicto_turno',
-                '{{%turno_agenda_conflicto}}',
-                'id_turno',
-                '{{%turnos}}',
-                'id_turnos',
-                'CASCADE',
-                'RESTRICT'
-            );
-            $this->addForeignKey(
-                'fk_turno_agenda_conflicto_version',
-                '{{%turno_agenda_conflicto}}',
-                'id_agenda_version',
-                '{{%profesional_efector_servicio_agenda_version}}',
-                'id',
-                'RESTRICT',
-                'RESTRICT'
-            );
-        }
+        $this->ensureTurnoAgendaConflictoTable($tableOptions, $turnos);
 
         $this->backfillAgendaVersions();
     }
 
     public function safeDown()
     {
-        $this->dropForeignKey('fk_turno_agenda_conflicto_version', '{{%turno_agenda_conflicto}}');
-        $this->dropForeignKey('fk_turno_agenda_conflicto_turno', '{{%turno_agenda_conflicto}}');
-        $this->dropTable('{{%turno_agenda_conflicto}}');
+        if ($this->db->schema->getTableSchema('{{%turno_agenda_conflicto}}', true) !== null) {
+            $this->dropForeignKeyIfExists('fk_turno_agenda_conflicto_version', '{{%turno_agenda_conflicto}}');
+            $this->dropForeignKeyIfExists('fk_turno_agenda_conflicto_turno', '{{%turno_agenda_conflicto}}');
+            $this->dropTable('{{%turno_agenda_conflicto}}');
+        }
 
         $turnos = $this->db->schema->getTableSchema('{{%turnos}}', true);
         if ($turnos !== null) {
@@ -152,9 +122,204 @@ class m260516_000001_agenda_intervalo_versioning extends Migration
             $this->dropColumn('{{%profesional_efector_servicio_agenda}}', 'intervalo_minutos');
         }
 
-        $this->dropForeignKey('fk_pes_agenda_version_efector', '{{%profesional_efector_servicio_agenda_version}}');
-        $this->dropForeignKey('fk_pes_agenda_version_pes', '{{%profesional_efector_servicio_agenda_version}}');
-        $this->dropTable('{{%profesional_efector_servicio_agenda_version}}');
+        if ($this->db->schema->getTableSchema('{{%profesional_efector_servicio_agenda_version}}', true) !== null) {
+            $this->dropForeignKeyIfExists('fk_pes_agenda_version_efector', '{{%profesional_efector_servicio_agenda_version}}');
+            $this->dropForeignKeyIfExists('fk_pes_agenda_version_pes', '{{%profesional_efector_servicio_agenda_version}}');
+            $this->dropTable('{{%profesional_efector_servicio_agenda_version}}');
+        }
+    }
+
+    /**
+     * Crea o completa turno_agenda_conflicto (reintento tras fallo parcial de FK).
+     *
+     * @param array<string, mixed>|null $tableOptions
+     */
+    private function ensureTurnoAgendaConflictoTable(?array $tableOptions, ?TableSchema $turnos): void
+    {
+        $this->refreshTableSchema('{{%turnos}}');
+        $turnos = $this->db->schema->getTableSchema('{{%turnos}}', true);
+
+        $idTurnoCol = $this->columnDefMatchingTurnosPk($turnos);
+
+        $conflicto = $this->db->schema->getTableSchema('{{%turno_agenda_conflicto}}', true);
+        if ($conflicto === null) {
+            $this->createTable('{{%turno_agenda_conflicto}}', [
+                'id' => $this->primaryKey(),
+                'id_turno' => $idTurnoCol,
+                'id_agenda_version' => $this->integer()->notNull(),
+                'estado' => $this->string(24)->notNull()->defaultValue('pendiente'),
+                'opcion_hora_antes' => $this->time()->null(),
+                'opcion_hora_despues' => $this->time()->null(),
+                'hora_elegida' => $this->time()->null(),
+                'created_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
+                'updated_at' => $this->timestamp()->notNull()->defaultExpression('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'),
+            ], $tableOptions);
+        } else {
+            $this->alignColumnToTurnosPk('{{%turno_agenda_conflicto}}', 'id_turno', $turnos);
+        }
+
+        $this->refreshTableSchema('{{%turno_agenda_conflicto}}');
+
+        if (!$this->indexExists('{{%turno_agenda_conflicto}}', 'ux_turno_agenda_conflicto_turno_version')) {
+            $this->createIndex(
+                'ux_turno_agenda_conflicto_turno_version',
+                '{{%turno_agenda_conflicto}}',
+                ['id_turno', 'id_agenda_version'],
+                true
+            );
+        }
+        if (!$this->indexExists('{{%turno_agenda_conflicto}}', 'ix_turno_agenda_conflicto_estado')) {
+            $this->createIndex('ix_turno_agenda_conflicto_estado', '{{%turno_agenda_conflicto}}', ['estado']);
+        }
+
+        $this->ensureTableInnoDb('{{%turnos}}');
+
+        if ($turnos !== null && isset($turnos->columns['id_turnos'])) {
+            $this->addForeignKeyIfMissing(
+                'fk_turno_agenda_conflicto_turno',
+                '{{%turno_agenda_conflicto}}',
+                'id_turno',
+                '{{%turnos}}',
+                'id_turnos',
+                'CASCADE',
+                'RESTRICT'
+            );
+        }
+
+        $this->addForeignKeyIfMissing(
+            'fk_turno_agenda_conflicto_version',
+            '{{%turno_agenda_conflicto}}',
+            'id_agenda_version',
+            '{{%profesional_efector_servicio_agenda_version}}',
+            'id',
+            'RESTRICT',
+            'RESTRICT'
+        );
+    }
+
+    /**
+     * FK a turnos.id_turnos: mismo tipo (signed/unsigned, int/bigint) que la PK legacy.
+     */
+    private function columnDefMatchingTurnosPk(?TableSchema $turnos)
+    {
+        if ($turnos === null || !isset($turnos->columns['id_turnos'])) {
+            return $this->integer()->notNull();
+        }
+
+        return $this->columnDefFromSchemaColumn($turnos->columns['id_turnos'])->notNull();
+    }
+
+    /**
+     * @return \yii\db\ColumnSchemaBuilder
+     */
+    private function columnDefFromSchemaColumn(ColumnSchema $col)
+    {
+        switch ($col->type) {
+            case 'bigint':
+                $def = $this->bigInteger();
+                break;
+            case 'smallint':
+                $def = $this->smallInteger();
+                break;
+            default:
+                $def = $this->integer();
+        }
+        if ($col->unsigned) {
+            $def->unsigned();
+        }
+
+        return $def;
+    }
+
+    private function alignColumnToTurnosPk(string $table, string $column, ?TableSchema $turnos): void
+    {
+        if ($turnos === null || !isset($turnos->columns['id_turnos'])) {
+            return;
+        }
+        $conflicto = $this->db->schema->getTableSchema($table, true);
+        if ($conflicto === null || !isset($conflicto->columns[$column])) {
+            return;
+        }
+        $current = $conflicto->columns[$column];
+        $target = $turnos->columns['id_turnos'];
+        if ($current->type === $target->type && (bool) $current->unsigned === (bool) $target->unsigned) {
+            return;
+        }
+        $this->alterColumn($table, $column, $this->columnDefFromSchemaColumn($target)->notNull());
+        $this->refreshTableSchema($table);
+    }
+
+    private function ensureTableInnoDb(string $table): void
+    {
+        if ($this->db->driverName !== 'mysql') {
+            return;
+        }
+        $raw = $this->db->schema->getRawTableName($table);
+        $engine = $this->db->createCommand(
+            'SELECT ENGINE FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :t',
+            [':t' => $raw]
+        )->queryScalar();
+        if ($engine !== false && strtoupper((string) $engine) !== 'INNODB') {
+            $this->execute('ALTER TABLE ' . $this->db->quoteTableName($table) . ' ENGINE=InnoDB');
+            $this->refreshTableSchema($table);
+        }
+    }
+
+    private function addForeignKeyIfMissing(
+        string $name,
+        string $table,
+        string $columns,
+        string $refTable,
+        string $refColumns,
+        ?string $delete = null,
+        ?string $update = null
+    ): void {
+        if ($this->foreignKeyExists($table, $name)) {
+            return;
+        }
+        $this->addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete, $update);
+    }
+
+    private function foreignKeyExists(string $table, string $name): bool
+    {
+        $raw = $this->db->schema->getRawTableName($table);
+        $cnt = (int) $this->db->createCommand(
+            'SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+             WHERE CONSTRAINT_SCHEMA = DATABASE()
+               AND TABLE_NAME = :t
+               AND CONSTRAINT_NAME = :n
+               AND CONSTRAINT_TYPE = :type',
+            [':t' => $raw, ':n' => $name, ':type' => 'FOREIGN KEY']
+        )->queryScalar();
+
+        return $cnt > 0;
+    }
+
+    private function indexExists(string $table, string $name): bool
+    {
+        $raw = $this->db->schema->getRawTableName($table);
+        $cnt = (int) $this->db->createCommand(
+            'SELECT COUNT(*) FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = :t
+               AND INDEX_NAME = :n',
+            [':t' => $raw, ':n' => $name]
+        )->queryScalar();
+
+        return $cnt > 0;
+    }
+
+    private function dropForeignKeyIfExists(string $name, string $table): void
+    {
+        if ($this->foreignKeyExists($table, $name)) {
+            $this->dropForeignKey($name, $table);
+        }
+    }
+
+    private function refreshTableSchema(string $table): void
+    {
+        $this->db->schema->refreshTableSchema($table);
     }
 
     private function backfillAgendaVersions(): void

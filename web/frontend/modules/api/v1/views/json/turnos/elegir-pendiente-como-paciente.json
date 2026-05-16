@@ -13,7 +13,7 @@
       "id": "default",
       "selection": { "mode": "single" },
       "draft_field": "id",
-      "empty_message": "No tenés turnos pendientes en el rango de fechas elegido.",
+      "empty_message": "No tienes turnos pendientes en este momento.",
       "item": { "kind": "turno", "id_field": "id", "label_field": "name" },
       "items": []
     }

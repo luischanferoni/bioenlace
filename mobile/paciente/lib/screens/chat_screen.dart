@@ -215,14 +215,17 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// Tras submit exitoso: quita mini-UIs del flow y deja un único mensaje con el resultado.
-  void _collapseCompletedFlowActivation({
+  static const Duration _flowCollapseFadeOut = Duration(milliseconds: 620);
+  static const Duration _flowSummaryFadeIn = Duration(milliseconds: 520);
+
+  /// Tras submit exitoso: anima salida de mini-UIs y deja un único mensaje con el resultado.
+  Future<void> _collapseCompletedFlowActivation({
     required int activationSeq,
     Map<String, dynamic>? submitData,
     String? flowActionTitle,
     String? intentId,
     Map<String, dynamic>? flowSnapshot,
-  }) {
+  }) async {
     final indices = <int>[];
     for (var i = 0; i < _chatHistory.length; i++) {
       final m = _chatHistory[i];
@@ -231,6 +234,17 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     }
     if (indices.isEmpty) {
+      return;
+    }
+
+    for (final i in indices) {
+      _chatHistory[i]['flow_collapsing'] = true;
+    }
+    if (mounted) {
+      setState(() {});
+    }
+    await Future<void>.delayed(_flowCollapseFadeOut);
+    if (!mounted) {
       return;
     }
 
@@ -253,6 +267,29 @@ class _ChatScreenState extends State<ChatScreen> {
         'flow_manifest': {'action_name': flowActionTitle},
       'timestamp': DateTime.now(),
     });
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Widget _wrapFlowInteractiveCollapse({
+    required bool collapsing,
+    required Widget child,
+  }) {
+    return AnimatedOpacity(
+      opacity: collapsing ? 0.0 : 1.0,
+      duration: _flowCollapseFadeOut,
+      curve: Curves.easeInOut,
+      child: AnimatedSlide(
+        offset: collapsing ? const Offset(0, -0.06) : Offset.zero,
+        duration: _flowCollapseFadeOut,
+        curve: Curves.easeInOut,
+        child: IgnorePointer(
+          ignoring: collapsing,
+          child: child,
+        ),
+      ),
+    );
   }
 
   /// Título del flow: una vez por activación (misma `flow_activation_seq`), no en cada paso.
@@ -320,9 +357,16 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   /// Texto del paso (`assistant_text` / `content`), alineado a la izquierda sin línea inferior.
-  Widget _buildFlowStepTitle(BuildContext context, String stepText) {
+  Widget _buildFlowStepTitle(
+    BuildContext context,
+    String stepText, {
+    bool muted = false,
+  }) {
     final cs = context.pacienteColors;
     final tt = context.pacienteTextTheme;
+    final stepColor = muted
+        ? cs.onSurfaceVariant.withValues(alpha: 0.72)
+        : cs.onSurface;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
       child: Align(
@@ -332,7 +376,7 @@ class _ChatScreenState extends State<ChatScreen> {
           textAlign: TextAlign.left,
           style: tt.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: cs.onSurface,
+            color: stepColor,
           ),
         ),
       ),
@@ -764,10 +808,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// Inicia un flow por `intent_id` como la SPA (Atajos → `startFlowFromShortcut`).
   Future<void> _startFlowFromShortcut(String intentId, String displayTitle) async {
-    final label = displayTitle.trim();
-    if (label.isNotEmpty) {
-      _messageController.text = label;
-    }
     await _onRemediationChoice({
       'intent_id': intentId,
       'reset_flow': true,
@@ -1597,14 +1637,15 @@ class _ChatScreenState extends State<ChatScreen> {
         final resultData = data is Map ? Map<String, dynamic>.from(data) : null;
         final intentForSummary = _intentId;
         final snapForSummary = Map<String, dynamic>.from(_flowSnapshot);
+        await _collapseCompletedFlowActivation(
+          activationSeq: activationSeq,
+          submitData: resultData,
+          flowActionTitle: flowTitle,
+          intentId: intentForSummary,
+          flowSnapshot: snapForSummary,
+        );
+        if (!mounted) return;
         setState(() {
-          _collapseCompletedFlowActivation(
-            activationSeq: activationSeq,
-            submitData: resultData,
-            flowActionTitle: flowTitle,
-            intentId: intentForSummary,
-            flowSnapshot: snapForSummary,
-          );
           _clearFlowState();
         });
         _scrollToBottom();
@@ -1682,6 +1723,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     _shouldShowFlowChatHeader(index, message);
                 final showFlowStepText = hasFlowContext && content.isNotEmpty;
                 final flowUiDisabled = message['flow_superseded'] == true;
+                final flowCollapsing = message['flow_collapsing'] == true;
 
                 // Verificar si hay form_config para ocultar el mensaje de chat
                 final hasFormConfig = message['form_config'] != null;
@@ -1703,28 +1745,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 if (isFlowCompletedSummary) {
                   final summaryTitle = _flowActionTitleFromMessage(message);
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (summaryTitle != null && summaryTitle.isNotEmpty)
-                        _buildFlowChatHeader(context, title: summaryTitle),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: cs.primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: cs.primary.withValues(alpha: 0.35)),
-                          ),
-                          child: Text(
-                            content,
-                            style: tt.bodyMedium?.copyWith(color: cs.onSurface),
-                          ),
-                        ),
-                      ),
-                    ],
+                  return _AnimatedFlowCompletedSummary(
+                    fadeInDuration: _flowSummaryFadeIn,
+                    title: summaryTitle,
+                    content: content,
+                    headerBuilder: summaryTitle != null && summaryTitle.isNotEmpty
+                        ? (ctx) => _buildFlowChatHeader(ctx, title: summaryTitle)
+                        : null,
+                    surfaceColor: cs.primary.withValues(alpha: 0.08),
+                    borderColor: cs.primary.withValues(alpha: 0.35),
+                    textStyle: tt.bodyMedium?.copyWith(color: cs.onSurface),
                   );
                 }
 
@@ -1734,7 +1764,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (showFlowHeader)
                         _buildFlowChatHeader(context, title: flowActionTitle),
                       if (showFlowStepText)
-                        _buildFlowStepTitle(context, content),
+                        _buildFlowStepTitle(
+                          context,
+                          content,
+                          muted: flowUiDisabled,
+                        ),
                     ],
                     // Mensaje (solo mostrar si no hay form_config)
                     if (!hasFormConfig) ...[
@@ -1897,7 +1931,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ],
                     // Inline UI JSON embebida en chat (antes del "Confirmar y enviar" del flow)
-                    if (!isUser && inlineUi is Map) ...[
+                    if (!isUser && inlineUi is Map)
+                      _wrapFlowInteractiveCollapse(
+                        collapsing: flowCollapsing,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                       SizedBox(height: inlineUiLeadGapHeight),
                       if (message['flow_tabs'] is List && (message['flow_tabs'] as List).length >= 2) ...[
                         Padding(
@@ -2216,14 +2255,19 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                       ),
-                    ],
-                    if (!isUser && message['flow_submit_request'] is Map) ...[
-                      Padding(
+                          ],
+                        ),
+                      ),
+                    if (!isUser && message['flow_submit_request'] is Map)
+                      _wrapFlowInteractiveCollapse(
+                        collapsing: flowCollapsing,
+                        child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                         child: Align(
                           alignment: Alignment.centerLeft,
                           child: ElevatedButton.icon(
                             onPressed: (flowUiDisabled ||
+                                    flowCollapsing ||
                                     message['_flow_submit_busy'] == true ||
                                     _isSending)
                                 ? null
@@ -2242,7 +2286,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                       ),
-                    ],
+                      ),
                     // Formulario dinámico si hay form_config (viene de getActionFormConfig)
                     if (!isUser) ...[
                       Builder(
@@ -2559,6 +2603,82 @@ class _ChatScreenState extends State<ChatScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+}
+
+/// Resumen final del flow con entrada suave tras el colapso de las mini-UIs.
+class _AnimatedFlowCompletedSummary extends StatefulWidget {
+  final Duration fadeInDuration;
+  final String? title;
+  final String content;
+  final Widget Function(BuildContext context)? headerBuilder;
+  final Color surfaceColor;
+  final Color borderColor;
+  final TextStyle? textStyle;
+
+  const _AnimatedFlowCompletedSummary({
+    required this.fadeInDuration,
+    required this.content,
+    required this.surfaceColor,
+    required this.borderColor,
+    this.title,
+    this.headerBuilder,
+    this.textStyle,
+  });
+
+  @override
+  State<_AnimatedFlowCompletedSummary> createState() =>
+      _AnimatedFlowCompletedSummaryState();
+}
+
+class _AnimatedFlowCompletedSummaryState
+    extends State<_AnimatedFlowCompletedSummary> {
+  double _opacity = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() => _opacity = 1);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: _opacity,
+      duration: widget.fadeInDuration,
+      curve: Curves.easeOut,
+      child: AnimatedSlide(
+        offset: _opacity < 1 ? const Offset(0, 0.08) : Offset.zero,
+        duration: widget.fadeInDuration,
+        curve: Curves.easeOut,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.headerBuilder != null) widget.headerBuilder!(context),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: widget.surfaceColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: widget.borderColor),
+                ),
+                child: Text(
+                  widget.content,
+                  style: widget.textStyle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

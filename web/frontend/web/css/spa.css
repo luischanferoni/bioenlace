@@ -393,10 +393,58 @@
     pointer-events: auto;
 }
 
-/* Flow descartado o paso anterior: no interactivo */
-.spa-chat-flow-row--superseded {
-    opacity: 0.55;
+/* Salida animada de mini-UIs / botón de confirmación antes del resumen */
+.spa-chat-flow-row--collapsing .spa-chat-flow-turn > :not(.spa-flow-chat-header) {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+    overflow: hidden;
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
     pointer-events: none;
+    transition:
+        opacity 0.62s ease-in-out,
+        transform 0.62s ease-in-out,
+        max-height 0.62s ease-in-out,
+        margin 0.62s ease-in-out,
+        padding 0.62s ease-in-out;
+}
+
+.spa-chat-flow-row--collapsing .spa-flow-plan-wrap,
+.spa-chat-flow-row--collapsing .spa-chat-flow-ui,
+.spa-chat-flow-row--collapsing .spa-flow-submit-inline,
+.spa-chat-flow-row--collapsing .spa-flow-step-text,
+.spa-chat-flow-row--collapsing .bio-ui-json-list,
+.spa-chat-flow-row--collapsing .bio-ui-json-fields {
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.62s ease-in-out, transform 0.62s ease-in-out;
+}
+
+/* Entrada del mensaje de éxito */
+.spa-flow-completed-summary {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.52s ease-out, transform 0.52s ease-out;
+}
+
+.spa-flow-completed-summary--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Flow descartado o paso anterior: no interactivo (mini-UIs atenuadas, no el título del paso) */
+.spa-chat-flow-row--superseded {
+    pointer-events: none;
+}
+
+.spa-chat-flow-row--superseded .spa-chat-flow-ui,
+.spa-chat-flow-row--superseded .spa-flow-submit-inline,
+.spa-chat-flow-row--superseded .spa-flow-plan-wrap,
+.spa-chat-flow-row--superseded .bio-ui-json-list,
+.spa-chat-flow-row--superseded .bio-ui-json-fields {
+    opacity: 0.55;
 }
 
 .spa-chat-flow-row--superseded input,
@@ -404,6 +452,13 @@
 .spa-chat-flow-row--superseded textarea,
 .spa-chat-flow-row--superseded button {
     pointer-events: none;
+}
+
+/* `assistant_text` de pasos cancelados / de otro flow */
+.spa-chat-flow-row--superseded .spa-flow-step-text,
+.spa-chat-flow-row--superseded .spa-assistant-step-title {
+    color: var(--bs-secondary-color, #6c757d);
+    opacity: 0.85;
 }
 
 /* Texto del paso bajo el encabezado del flujo: izquierda, sin línea inferior */
@@ -418,6 +473,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
+    color: inherit;
 }
 
 /* Plan de pasos (flow_manifest.steps): tira al 50% del ancho, centrada */

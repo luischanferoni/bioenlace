@@ -323,7 +323,10 @@
         return '<div class="spa-flow-completed-summary"><div class="alert alert-success mb-0 py-2">' + body + '</div></div>';
     }
 
-    /** Tras submit exitoso: reemplaza todos los bloques del flow por un resumen con los datos. */
+    const FLOW_COLLAPSE_FADE_MS = 620;
+    const FLOW_SUMMARY_ENTER_MS = 520;
+
+    /** Tras submit exitoso: anima salida de mini-UIs y reemplaza por un resumen con los datos. */
     function collapseCompletedFlowActivation(activationSeq, data, actionTitle, intentIdOpt, flowSnapshotOpt) {
         if (!chatMessagesDiv || activationSeq == null || String(activationSeq) === '') {
             return;
@@ -334,26 +337,45 @@
             return;
         }
         removeFlowPlanStrip();
-        const summaryHtml = buildFlowSubmitSummaryHtml(data, intentIdOpt, flowSnapshotOpt);
-        const first = rows[0];
-        first.classList.remove('spa-chat-flow-row--superseded');
-        first.removeAttribute('data-flow-superseded');
-        first.classList.add('spa-chat-flow-row--completed');
-        const inner = first.querySelector('.spa-chat-flow-turn');
-        if (inner) {
-            var headerHtml = '';
-            var existingHeader = inner.querySelector('.spa-flow-chat-header');
-            if (existingHeader) {
-                headerHtml = existingHeader.outerHTML;
-            } else {
-                headerHtml = buildFlowChatHeaderHtml(actionTitle);
+        rows.forEach(function (row) {
+            row.classList.add('spa-chat-flow-row--collapsing');
+        });
+        setTimeout(function () {
+            if (!chatMessagesDiv) {
+                return;
             }
-            inner.innerHTML = headerHtml + summaryHtml;
-        }
-        for (let i = 1; i < rows.length; i++) {
-            rows[i].remove();
-        }
-        setTimeout(scrollChatToBottom, 20);
+            const summaryHtml = buildFlowSubmitSummaryHtml(data, intentIdOpt, flowSnapshotOpt);
+            const first = rows[0];
+            if (!first || !first.isConnected) {
+                return;
+            }
+            first.classList.remove('spa-chat-flow-row--superseded', 'spa-chat-flow-row--collapsing');
+            first.removeAttribute('data-flow-superseded');
+            first.classList.add('spa-chat-flow-row--completed');
+            const inner = first.querySelector('.spa-chat-flow-turn');
+            if (inner) {
+                var headerHtml = '';
+                var existingHeader = inner.querySelector('.spa-flow-chat-header');
+                if (existingHeader) {
+                    headerHtml = existingHeader.outerHTML;
+                } else {
+                    headerHtml = buildFlowChatHeaderHtml(actionTitle);
+                }
+                inner.innerHTML = headerHtml + summaryHtml;
+                var summaryEl = inner.querySelector('.spa-flow-completed-summary');
+                if (summaryEl) {
+                    requestAnimationFrame(function () {
+                        summaryEl.classList.add('spa-flow-completed-summary--visible');
+                    });
+                }
+            }
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i] && rows[i].parentNode) {
+                    rows[i].remove();
+                }
+            }
+            setTimeout(scrollChatToBottom, FLOW_SUMMARY_ENTER_MS);
+        }, FLOW_COLLAPSE_FADE_MS);
     }
 
     /**
@@ -789,15 +811,8 @@
     function startFlowFromShortcut(intentId, displayName) {
         const iid = String(intentId || '').trim();
         if (!iid) return;
-        try {
-            // UX: dejar visible lo que se ejecutó (pero ejecutar en forma determinista, sin depender del clasificador).
-            if (queryInput) {
-                queryInput.value = String(displayName || iid);
-                handleInput();
-            }
-        } catch (e) { /* ignore */ }
 
-        // Reset estado anterior y disparar flow por snapshot.
+        // Reset estado anterior y disparar flow por snapshot (sin escribir en el composer).
         supersedeAllFlowRows();
         beginNewFlowActivation();
         currentIntentId = iid;

@@ -31,6 +31,24 @@ Documento de referencia para convenciones de nombres, URLs públicas y permisos 
 - **Permiso webvimark:** `/api/turnos/slots-disponibles-como-paciente` (registrar y asignar al rol paciente u otros que correspondan).
 - **Límites por defecto:** clave `turnosPaciente` en `common/config/params.php` (`slots_oferta_max`, `slots_busqueda_max_dias`, `franja_tarde_desde`, `slots_oferta_max_cliente`).
 - **UI JSON:** el servidor puede devolver **varios bloques** `kind: list` (uno por día y franja). Cada bloque tiene `title` (ej. `Hoy · por la mañana`, `jueves 15/05 · por la tarde`) e `items` con `id` = token `pes:…`, `label` = hora (`HH:MM`) y `meta` compacta (`fecha`, `hora`, `id_profesional_efector_servicio`, `franja`; `servicio` solo si difiere del `id_servicio` pedido). La plantilla base está en `slots-disponibles-como-paciente.json` (sin `chips`; el listado se arma en runtime).
+- **`slot_id` canónico (4 partes):** `pes:{id_profesional_efector_servicio}|{fecha}|{hora}|{intervalo_minutos}` — ver [agenda-intervalo-y-reservas.md](./agenda-intervalo-y-reservas.md). Compat: 3 partes (intervalo desde versión vigente).
+
+## Configurar agenda (staff / asistente)
+
+| URL | Permiso `/api/...` |
+|-----|-------------------|
+| `GET\|POST …/profesional-agenda/configurar-agenda` | `profesional-agenda/configurar-agenda` |
+| `POST …/profesional-agenda/preview-configurar-agenda` | `profesional-agenda/preview-configurar-agenda` |
+
+Publicación de versión con `vigente_desde`, `intervalo_minutos` (15/20/30/45/60) y `confirmar_cambios=1` si el preview indica impacto.
+
+## Conflictos de agenda (paciente)
+
+| URL | Permiso |
+|-----|---------|
+| `POST …/turnos/resolver-conflicto-agenda-como-paciente` | `turnos/resolver-conflicto-agenda-como-paciente` |
+
+Body: `id` (turno), `eleccion` = `antes` \| `despues` \| `cancelar`. Listados paciente exponen `agenda_conflicto_pendiente` y `agenda_conflicto`.
 
 ## Migración de permisos
 
@@ -39,4 +57,5 @@ Al renombrar acciones, los permisos **cambian de string**. Hay que registrar las
 ## Documentación relacionada
 
 - `web/docs/Turnos/README.md` — índice del dominio turnos.
+- `web/docs/Turnos/agenda-intervalo-y-reservas.md` — versiones, intervalo, solapamiento, conflictos.
 - `web/docs/Turnos/politica-cancelacion-autogestion.md`, `cancelacion-masiva.md`, `reprogramacion-ui.md`, etc. — flujos puntuales.

@@ -14,13 +14,15 @@ Esta carpeta describe flujos de negocio del **sistema de turnos** (agenda, estad
 | [Cancelación masiva](cancelacion-masiva.md) | Por día, AdminEfector. |
 | [Solicitudes entre médicos](solicitudes-medicos.md) | Módulo `solicitud_rrhh` y modos. |
 | [Reprogramación UI](reprogramacion-ui.md) | Pantalla `turnos/reprogramar` y API. |
+| [Agenda versionada e intervalo](agenda-intervalo-y-reservas.md) | Grilla 15–60 min, versiones `vigente_desde`, `slot_id`, solapamiento, conflictos y preview. |
 
 ## Referencias técnicas en el código
 
 - Modelo: `common\models\Turno` — constantes `ESTADO_CANCELADO`, `ESTADO_MOTIVO_CANCELADO_PACIENTE`, `ESTADO_MOTIVO_CANCELADO_MEDICO`.
 - Cancelación HTTP (frontend): `frontend\controllers\TurnosController::actionDelete`.
 - UI calendario: `frontend\views\turnos\_calendario.php`, `frontend\web\js\turnos_calendario.js`.
-- Búsqueda de slots: `common\components\Services\Turnos\TurnoSlotFinder`.
+- Búsqueda de slots: `common\components\Services\Turnos\TurnoSlotFinder` (versión de agenda por fecha).
+- Agenda versionada / intervalo: `ProfesionalEfectorServicioAgendaVersionService`, `AgendaSlotEngine`, `TurnoSlotOccupancyService`, `TurnoReservaSlotService` — ver [agenda-intervalo-y-reservas.md](./agenda-intervalo-y-reservas.md).
 - API v1 turnos: `frontend\modules\api\v1\controllers\TurnosController` — convención y RBAC: **[API-nomenclatura-y-RBAC.md](./API-nomenclatura-y-RBAC.md)** (tabla canónica en el docblock del controlador).
 - Servicios: `common\components\Services\Turnos\*`, cron `php yii turno-notificacion/run`.
 - Config por efector (backend): `backend\controllers\EfectoresController::actionTurnosIntegralConfig`.

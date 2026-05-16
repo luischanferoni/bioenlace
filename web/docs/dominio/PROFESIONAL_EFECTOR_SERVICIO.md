@@ -23,13 +23,25 @@ Unique recomendado (soft delete): `(id_persona, id_efector, id_servicio, deleted
 
 ### `profesional_efector_servicio_agenda`
 
-Agenda por asignación.
+Agenda por asignación (**espejo** de la versión vigente; lecturas rápidas y validaciones).
 
 - `id_profesional_efector_servicio` (**obligatorio**).
 - `id_efector` (**obligatorio**, redundante pero útil para consultas/validación).
-- Campos espejo de agenda (`formas_atencion`, `cupo_pacientes`, días `*_2`, etc.).
+- Campos espejo de agenda (`formas_atencion`, `cupo_pacientes`, `intervalo_minutos`, días `*_2`, etc.).
+- `duracion_slot_minutos` queda obsoleto para grilla nueva; usar `intervalo_minutos` (15/20/30/45/60).
 
 Unique recomendado (soft delete): `(id_profesional_efector_servicio, deleted_at)`.
+
+### `profesional_efector_servicio_agenda_version`
+
+Historial de cambios con vigencia.
+
+- `vigente_desde` (date): desde cuándo rige esta configuración.
+- `intervalo_minutos`: única palanca de granularidad de turnos.
+- Mismos campos de horarios que la agenda espejo.
+- Unique: `(id_profesional_efector_servicio, vigente_desde)`.
+
+Alta vía API `configurar-agenda` / `preview-configurar-agenda` (`ProfesionalEfectorServicioAgendaVersionService`). Detalle: `web/docs/Turnos/agenda-intervalo-y-reservas.md`.
 
 ### `profesional_efector_servicio_condicion_laboral`
 

@@ -1,0 +1,29 @@
+{
+  "ui_type": "ui_json",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "default",
+      "title": "Resolver conflicto de agenda",
+      "fields": [
+        {
+          "name": "id",
+          "label": "",
+          "type": "hidden",
+          "required": true
+        },
+        {
+          "name": "eleccion",
+          "label": "Nueva opción para el paciente",
+          "type": "select",
+          "required": true,
+          "options": []
+        }
+      ]
+    }
+  ]
+}

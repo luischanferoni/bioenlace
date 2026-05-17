@@ -10,6 +10,8 @@ use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
+use common\components\Services\Turnos\TurnoAgendaConflictoElecciones;
+use common\components\Services\Turnos\TurnoAgendaConflictoService;
 use common\components\UiScreenService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
@@ -496,5 +498,166 @@ class ProfesionalAgendaController extends BaseController
             'success' => true,
             'message' => 'Agenda eliminada.',
         ];
+    }
+
+    /**
+     * Lista embebible: turnos con conflicto de agenda pendiente en el efector (staff).
+     *
+     * GET|POST /api/v1/profesional-agenda/elegir-conflicto-agenda
+     *
+     * @action_name Elegir conflicto de agenda (staff)
+     * @entity Agendas
+     * @tags agenda, staff, turnos, conflicto
+     */
+    public function actionElegirConflictoAgenda(): array
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'profesional-agenda',
+            'elegir-conflicto-agenda',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+            if ($idEfector <= 0) {
+                throw new BadRequestHttpException('Se requiere efector en sesión.');
+            }
+            $params = array_merge($req->get(), $req->post());
+            $idPes = isset($params['id_profesional_efector_servicio']) && $params['id_profesional_efector_servicio'] !== ''
+                ? (int) $params['id_profesional_efector_servicio']
+                : null;
+            $rows = TurnoAgendaConflictoService::listarConflictosPendientesStaff($idEfector, $idPes);
+            $items = [];
+            foreach ($rows as $row) {
+                $items[] = TurnoAgendaConflictoService::toListPickerItem($row);
+            }
+            $out = UiScreenService::withListBlockItems($out, $items);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Mini-UI: elegir resolución de conflicto en nombre del paciente (staff). No persiste.
+     *
+     * GET|POST /api/v1/profesional-agenda/elegir-resolucion-conflicto-agenda-para-paciente
+     *
+     * @action_name Resolución conflicto agenda (staff)
+     * @entity Agendas
+     * @tags agenda, staff, turnos, conflicto
+     */
+    public function actionElegirResolucionConflictoAgendaParaPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $tid = isset($params['id']) && $params['id'] !== '' ? (int) $params['id'] : 0;
+        if (!$req->isPost) {
+            if ($tid <= 0) {
+                throw new BadRequestHttpException('id del turno requerido');
+            }
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+            if ($idEfector <= 0) {
+                throw new BadRequestHttpException('Se requiere efector en sesión.');
+            }
+            $conf = TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno($tid, null, $idEfector);
+            $def = UiScreenService::renderUiDefinition(
+                'profesional-agenda',
+                'elegir-resolucion-conflicto-agenda-para-paciente',
+                $params,
+                null
+            );
+
+            return TurnoAgendaConflictoElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $conf);
+        }
+
+        return UiScreenService::handleScreen(
+            'profesional-agenda',
+            'elegir-resolucion-conflicto-agenda-para-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($req): array {
+                $tid = (int) ($post['id'] ?? $req->get('id') ?? 0);
+                if ($tid <= 0) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+                $eleccion = trim((string) ($post['eleccion'] ?? ''));
+                if ($eleccion === '' || !TurnoAgendaConflictoElecciones::esEleccionValida($eleccion)) {
+                    throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
+                }
+                $idEfector = (int) Yii::$app->user->getIdEfector();
+                if ($idEfector <= 0) {
+                    throw new BadRequestHttpException('Se requiere efector en sesión.');
+                }
+                TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno($tid, null, $idEfector);
+
+                return ['data' => ['ok' => true, 'id' => $tid, 'eleccion' => strtolower($eleccion)]];
+            }
+        );
+    }
+
+    /**
+     * Resuelve conflicto de agenda en nombre del paciente (staff).
+     *
+     * POST /api/v1/profesional-agenda/resolver-conflicto-agenda-para-paciente
+     * Body: id, eleccion (antes|despues|cancelar)
+     *
+     * @action_name Resolver conflicto agenda para paciente (staff)
+     * @entity Agendas
+     * @tags agenda, staff, turnos, conflicto
+     */
+    public function actionResolverConflictoAgendaParaPaciente(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST con id y eleccion (antes|despues|cancelar).');
+        }
+        $post = array_merge($req->get(), $req->post());
+        $tid = (int) ($post['id'] ?? 0);
+        if ($tid <= 0) {
+            throw new BadRequestHttpException('id del turno requerido');
+        }
+        $eleccion = trim((string) ($post['eleccion'] ?? ''));
+        if ($eleccion === '') {
+            throw new BadRequestHttpException('eleccion requerida.');
+        }
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        return [
+            'success' => true,
+            'data' => TurnoAgendaConflictoService::resolverConflictoStaff($tid, $idEfector, $eleccion),
+        ];
+    }
+
+    /**
+     * Pantalla asistente: consultar agenda del día (misma data que {@see TurnosController::agendaDiaResponse()}).
+     *
+     * GET|POST /api/v1/profesional-agenda/ver-agenda-dia
+     *
+     * @action_name Ver agenda del día (operativo)
+     * @entity Agendas
+     * @tags agenda, staff, dia, turnos
+     */
+    public function actionVerAgendaDia(): array
+    {
+        $req = Yii::$app->request;
+
+        return UiScreenService::handleScreen(
+            'profesional-agenda',
+            'ver-agenda-dia',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($req): array {
+                $params = array_merge($req->get(), $post);
+
+                return ['data' => TurnosController::buildAgendaDiaPayload($params)];
+            }
+        );
     }
 }

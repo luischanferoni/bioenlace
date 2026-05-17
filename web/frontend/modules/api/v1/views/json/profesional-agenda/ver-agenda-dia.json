@@ -1,0 +1,28 @@
+{
+  "ui_type": "ui_json",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "default",
+      "title": "Agenda del día",
+      "fields": [
+        {
+          "name": "fecha",
+          "label": "Fecha",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "Profesional (id PES, opcional)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

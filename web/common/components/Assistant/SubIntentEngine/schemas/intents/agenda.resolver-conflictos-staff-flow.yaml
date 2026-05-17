@@ -1,0 +1,48 @@
+intent_id: agenda.resolver-conflictos-staff-flow
+version: 1
+
+action_name: "Resolver conflictos de agenda (staff)"
+description: "Gestión: elegir turnos con conflicto tras cambio de agenda y resolver en nombre del paciente (sin app móvil)."
+rbac_route: "/api/profesional-agenda/resolver-conflicto-agenda-para-paciente"
+keywords:
+  - conflictos agenda
+  - resolver conflicto paciente
+  - turnos desalineados
+  - cambio horario profesional
+
+intent_semantics:
+  goal: >-
+    Cerrar conflictos de agenda pendientes de pacientes del efector (reprogramar o cancelar).
+  how: >-
+    Lista de conflictos en el efector → elección antes/despues/cancelar → POST staff.
+  preconditions:
+    - Efector en sesión operativa.
+  outcome:
+    - Conflicto resuelto; turno actualizado o cancelado.
+
+subintents:
+  - id: select_turno
+    assistant_text: "Turno con conflicto"
+    provides:
+      - draft.id
+    next: select_eleccion
+    open_ui:
+      action_id: profesional-agenda.elegir-conflicto-agenda
+
+  - id: select_eleccion
+    assistant_text: "Resolución"
+    requires:
+      - draft.id
+    provides:
+      - draft.eleccion
+    next: ""
+    open_ui:
+      action_id: profesional-agenda.elegir-resolucion-conflicto-agenda-para-paciente
+      params:
+        id: "draft.id"
+
+flow_submit:
+  action_id: profesional-agenda.resolver-conflicto-agenda-para-paciente
+  params:
+    id: "draft.id"
+    eleccion: "draft.eleccion"

@@ -1,0 +1,29 @@
+{
+  "ui_type": "ui_json",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "default",
+      "title": "Tu turno cambió de horario",
+      "fields": [
+        {
+          "name": "id",
+          "label": "",
+          "type": "hidden",
+          "required": true
+        },
+        {
+          "name": "eleccion",
+          "label": "¿Qué preferís hacer?",
+          "type": "select",
+          "required": true,
+          "options": []
+        }
+      ]
+    }
+  ]
+}

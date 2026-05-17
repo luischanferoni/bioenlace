@@ -1,0 +1,42 @@
+intent_id: turnos.crear-sobreturno-flow
+version: 1
+
+action_name: "Crear sobreturno"
+description: "Staff: alta de sobreturno urgente para un paciente."
+rbac_route: "/api/turnos/crear-sobreturno"
+keywords:
+  - sobreturno
+  - turno urgente
+  - encaje urgente
+
+intent_semantics:
+  goal: >-
+    Crear un sobreturno en gestión operativa.
+  how: >-
+    Pantalla crear-sobreturno con paciente, fecha, hora y servicio.
+  outcome:
+    - Sobreturno registrado.
+
+subintents:
+  - id: crear
+    assistant_text: "Sobreturno"
+    provides:
+      - draft.id_persona
+      - draft.fecha
+      - draft.hora
+      - draft.id_servicio_asignado
+      - draft.id_efector
+      - draft.id_profesional_efector_servicio
+    next: ""
+    open_ui:
+      action_id: turnos.crear-sobreturno
+
+flow_submit:
+  action_id: turnos.crear-sobreturno
+  params:
+    id_persona: "draft.id_persona"
+    fecha: "draft.fecha"
+    hora: "draft.hora"
+    id_servicio_asignado: "draft.id_servicio_asignado"
+    id_efector: "draft.id_efector"
+    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

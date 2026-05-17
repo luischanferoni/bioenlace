@@ -1,0 +1,33 @@
+intent_id: turnos.consultar-politica-autogestion-flow
+version: 1
+
+action_name: "Consultar política de autogestión"
+description: "Consulta si podés cancelar o reprogramar turnos por app en el centro de salud indicado."
+rbac_route: "/api/turnos/politica-como-paciente"
+keywords:
+  - política turnos
+  - puedo cancelar por app
+  - autogestión turnos
+  - reglas cancelación paciente
+
+intent_semantics:
+  goal: >-
+    Conocer la política de autogestión (cancelar/reprogramar) del efector para el paciente autenticado.
+  how: >-
+    Pantalla con id_efector (si no hay sesión operativa) y consulta GET/POST politica-como-paciente.
+  outcome:
+    - Respuesta con umbrales y si la autogestión está habilitada o bloqueada.
+
+subintents:
+  - id: consultar
+    assistant_text: "Centro de salud"
+    provides:
+      - draft.id_efector
+    next: ""
+    open_ui:
+      action_id: turnos.politica-como-paciente
+
+flow_submit:
+  action_id: turnos.politica-como-paciente
+  params:
+    id_efector: "draft.id_efector"

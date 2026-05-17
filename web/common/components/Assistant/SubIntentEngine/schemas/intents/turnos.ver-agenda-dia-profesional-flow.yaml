@@ -1,0 +1,35 @@
+intent_id: turnos.ver-agenda-dia-profesional-flow
+version: 1
+
+action_name: "Ver agenda del día"
+description: "Profesional o staff: citas del día en el contexto operativo (misma data que agenda/dia)."
+rbac_route: "/api/profesional-agenda/ver-agenda-dia"
+keywords:
+  - agenda del día
+  - mis citas hoy
+  - turnos de hoy
+  - pacientes hoy
+
+intent_semantics:
+  goal: >-
+    Ver la agenda ambulatoria del día para el profesional en sesión o un PES indicado.
+  how: >-
+    Pantalla ver-agenda-dia con fecha (y opcional id PES) → respuesta JSON de citas.
+  outcome:
+    - Listado de turnos/citas del día.
+
+subintents:
+  - id: ver
+    assistant_text: "Fecha"
+    provides:
+      - draft.fecha
+      - draft.id_profesional_efector_servicio
+    next: ""
+    open_ui:
+      action_id: profesional-agenda.ver-agenda-dia
+
+flow_submit:
+  action_id: profesional-agenda.ver-agenda-dia
+  params:
+    fecha: "draft.fecha"
+    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

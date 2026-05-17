@@ -132,6 +132,20 @@ Permiso: `/api/turnos/resolver-conflicto-agenda-como-paciente`.
 
 - `agenda_conflicto_pendiente`: bool
 - `agenda_conflicto`: `{ id, id_turno, opcion_antes, opcion_despues }` si aplica
+- Filtro `solo_agenda_conflicto=1` con `alcance=pendientes` (solo turnos con conflicto abierto)
+- En `elegir-pendiente-como-paciente`, ítems con conflicto muestran prefijo `⚠` en el label
+
+**Asistente (paciente):** intent `turnos.conflicto-agenda-flow` → `elegir-conflicto-agenda-como-paciente` → `elegir-resolucion-conflicto-agenda-como-paciente` → POST resolver.
+
+### Staff
+
+| Método | Ruta |
+|--------|------|
+| GET\|POST | `/api/v1/profesional-agenda/elegir-conflicto-agenda` |
+| GET\|POST | `/api/v1/profesional-agenda/elegir-resolucion-conflicto-agenda-para-paciente` |
+| POST | `/api/v1/profesional-agenda/resolver-conflicto-agenda-para-paciente` |
+
+Intent: `agenda.resolver-conflictos-staff-flow`. Servicio: `TurnoAgendaConflictoService`.
 
 ## Código de referencia
 
@@ -152,6 +166,7 @@ Permiso: `/api/turnos/resolver-conflicto-agenda-como-paciente`.
 
 ## Documentación relacionada
 
+- [Intents turnos/agenda](./intents-turnos.md)
 - [API nomenclatura y RBAC](./API-nomenclatura-y-RBAC.md)
 - [Dominio PES y agenda](../dominio/PROFESIONAL_EFECTOR_SERVICIO.md)
 - [Reprogramación](./reprogramacion-ui.md)

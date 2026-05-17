@@ -31,6 +31,8 @@ use common\components\Services\Turnos\BulkCancelDayService;
 use common\components\Services\Turnos\SobreturnoService;
 use common\components\Services\Turnos\TurnoReservaSlotService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
+use common\components\Services\Turnos\TurnoAgendaConflictoService;
+use common\components\Services\Turnos\TurnoAgendaConflictoElecciones;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\TurnoAgendaConflicto;
 use yii\web\ForbiddenHttpException;
@@ -175,6 +177,9 @@ class TurnosController extends BaseController
                 if ($label === '') {
                     $label = 'Turno #' . $id;
                 }
+                if (!empty($t['agenda_conflicto_pendiente'])) {
+                    $label = '⚠ ' . $label;
+                }
                 $items[] = [
                     'id' => (string) $id,
                     'name' => $label,
@@ -184,6 +189,97 @@ class TurnosController extends BaseController
         }
 
         return $out;
+    }
+
+    /**
+     * Lista embebible: turnos del paciente con conflicto de agenda pendiente.
+     *
+     * GET|POST /api/v1/turnos/elegir-conflicto-agenda-como-paciente
+     *
+     * @action_name Elegir turno con conflicto de agenda (paciente)
+     * @entity Turnos
+     * @tags views, ui, turnos, paciente, autogestión, agenda
+     */
+    public function actionElegirConflictoAgendaComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'elegir-conflicto-agenda-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
+            $idPersona = (int) Yii::$app->user->getIdPersona();
+            $rows = TurnoAgendaConflictoService::listarPendientesParaPaciente($idPersona, true);
+            $items = [];
+            foreach ($rows as $row) {
+                $items[] = TurnoAgendaConflictoService::toListPickerItem($row);
+            }
+            $out = UiScreenService::withListBlockItems($out, $items);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Mini-UI: elegir resolución de conflicto (antes / después / cancelar). No persiste; el POST final es {@see self::actionResolverConflictoAgendaComoPaciente()}.
+     *
+     * GET|POST /api/v1/turnos/elegir-resolucion-conflicto-agenda-como-paciente
+     * Query/body: `id` (id_turnos). POST además `eleccion`.
+     *
+     * @action_name Resolución conflicto agenda (paciente)
+     * @entity Turnos
+     * @tags views, ui, turnos, paciente, agenda
+     */
+    public function actionElegirResolucionConflictoAgendaComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $tid = $this->resolveTurnoId(null, $params, $req);
+        if (!$req->isPost) {
+            if (!$tid) {
+                throw new BadRequestHttpException('id del turno requerido');
+            }
+            $conf = TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno(
+                (int) $tid,
+                (int) Yii::$app->user->getIdPersona()
+            );
+            $def = UiScreenService::renderUiDefinition(
+                'turnos',
+                'elegir-resolucion-conflicto-agenda-como-paciente',
+                $params,
+                null
+            );
+
+            return TurnoAgendaConflictoElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $conf);
+        }
+
+        return UiScreenService::handleScreen(
+            'turnos',
+            'elegir-resolucion-conflicto-agenda-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($req): array {
+                $tid = $this->resolveTurnoId(null, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+                $eleccion = trim((string) ($post['eleccion'] ?? ''));
+                if ($eleccion === '' || !TurnoAgendaConflictoElecciones::esEleccionValida($eleccion)) {
+                    throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
+                }
+                TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno(
+                    (int) $tid,
+                    (int) Yii::$app->user->getIdPersona()
+                );
+
+                return ['data' => ['ok' => true, 'id' => (int) $tid, 'eleccion' => strtolower($eleccion)]];
+            }
+        );
     }
 
     /**
@@ -311,8 +407,21 @@ class TurnosController extends BaseController
     public static function agendaDiaResponse(): array
     {
         $request = Yii::$app->request;
-        $fecha = $request->get('fecha', date('Y-m-d'));
-        $pesOverride = $request->get('id_profesional_efector_servicio');
+        $params = array_merge($request->get(), $request->post());
+
+        return self::buildAgendaDiaPayload($params);
+    }
+
+    /**
+     * @param array<string, mixed> $params fecha, id_profesional_efector_servicio (opc.)
+     * @return array<string, mixed>
+     */
+    public static function buildAgendaDiaPayload(array $params): array
+    {
+        $fecha = isset($params['fecha']) && $params['fecha'] !== ''
+            ? (string) $params['fecha']
+            : date('Y-m-d');
+        $pesOverride = $params['id_profesional_efector_servicio'] ?? null;
         $pesId = ($pesOverride !== null && $pesOverride !== '') ? (int) $pesOverride : null;
         if ($pesId !== null && $pesId <= 0) {
             $pesId = null;
@@ -334,8 +443,8 @@ class TurnosController extends BaseController
         try {
             return PacientesController::agendaAmbulatorioJson($fecha, $idContextoProfesional, true, $pesId);
         } catch (\Throwable $e) {
-            Yii::error('TurnosController::agendaDiaResponse: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
-            throw new \yii\web\ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
+            Yii::error('TurnosController::buildAgendaDiaPayload: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), 'api-turnos');
+            throw new ServerErrorHttpException('Error al obtener turnos: ' . $e->getMessage(), 0, $e);
         }
     }
 
@@ -916,6 +1025,27 @@ class TurnosController extends BaseController
      * @param array<string, mixed> $post
      * @return int|null
      */
+    /**
+     * @param mixed $value
+     */
+    protected function isTruthyQueryParam($value): bool
+    {
+        if ($value === true || $value === 1) {
+            return true;
+        }
+        if (!is_string($value)) {
+            return false;
+        }
+        $v = strtolower(trim($value));
+
+        return in_array($v, ['1', 'true', 'yes', 'si', 'sí'], true);
+    }
+
+    /**
+     * @param int|string|null $routeId id desde regla REST
+     * @param array<string, mixed> $post
+     * @return int|null
+     */
     protected function resolveTurnoId($routeId, array $post, $req = null)
     {
         if ($routeId !== null && $routeId !== '') {
@@ -951,6 +1081,14 @@ class TurnosController extends BaseController
                     ->where(['t.id_persona' => $idPersona])
                     ->andWhere(['t.estado' => Turno::ESTADO_PENDIENTE])
                     ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal]);
+
+                if ($this->isTruthyQueryParam($params['solo_agenda_conflicto'] ?? null)) {
+                    $turnosQ->innerJoin(
+                        ['c' => TurnoAgendaConflicto::tableName()],
+                        'c.id_turno = t.id_turnos AND c.estado = :estadoConf',
+                        [':estadoConf' => TurnoAgendaConflicto::ESTADO_PENDIENTE]
+                    );
+                }
 
                 if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
                     $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);

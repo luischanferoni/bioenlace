@@ -1,0 +1,46 @@
+intent_id: turnos.confirmar-asistencia-flow
+version: 1
+
+action_name: "Confirmar asistencia al turno"
+description: "Autogestión: elegís un turno pendiente y confirmás que asistirás."
+rbac_route: "/api/turnos/confirmar-asistencia-como-paciente"
+keywords:
+  - confirmar turno
+  - confirmar asistencia
+  - voy a ir
+  - asistiré al turno
+
+intent_semantics:
+  goal: >-
+    Confirmar asistencia a un turno propio pendiente.
+  how: >-
+    Lista de turnos pendientes → pantalla de confirmación → POST confirmar-asistencia.
+  outcome:
+    - Turno marcado con asistencia confirmada.
+
+subintents:
+  - id: select_turno
+    assistant_text: "Turno a confirmar"
+    provides:
+      - draft.id
+    next: confirmar
+    open_ui:
+      action_id: turnos.elegir-pendiente-como-paciente
+
+  - id: confirmar
+    assistant_text: "Confirmación"
+    requires:
+      - draft.id
+    provides:
+      - draft.token
+    next: ""
+    open_ui:
+      action_id: turnos.confirmar-asistencia-como-paciente
+      params:
+        id: "draft.id"
+
+flow_submit:
+  action_id: turnos.confirmar-asistencia-como-paciente
+  params:
+    id: "draft.id"
+    token: "draft.token"

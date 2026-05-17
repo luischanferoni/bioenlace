@@ -46,13 +46,29 @@ Publicación de versión con `vigente_desde`, `intervalo_minutos` (15/20/30/45/6
 
 | URL | Permiso |
 |-----|---------|
+| `GET\|POST …/turnos/elegir-conflicto-agenda-como-paciente` | `turnos/elegir-conflicto-agenda-como-paciente` |
+| `GET\|POST …/turnos/elegir-resolucion-conflicto-agenda-como-paciente` | `turnos/elegir-resolucion-conflicto-agenda-como-paciente` |
 | `POST …/turnos/resolver-conflicto-agenda-como-paciente` | `turnos/resolver-conflicto-agenda-como-paciente` |
 
-Body: `id` (turno), `eleccion` = `antes` \| `despues` \| `cancelar`. Listados paciente exponen `agenda_conflicto_pendiente` y `agenda_conflicto`.
+Body resolución: `id` (turno), `eleccion` = `antes` \| `despues` \| `cancelar`. Listados paciente exponen `agenda_conflicto_pendiente` y `agenda_conflicto`. Filtro opcional `solo_agenda_conflicto=1` en listados con `alcance=pendientes`. Intent: `turnos.conflicto-agenda-flow` — ver [intents-turnos.md](./intents-turnos.md).
+
+## Conflictos de agenda (staff)
+
+| URL | Permiso |
+|-----|---------|
+| `GET\|POST …/profesional-agenda/elegir-conflicto-agenda` | `profesional-agenda/elegir-conflicto-agenda` |
+| `GET\|POST …/profesional-agenda/elegir-resolucion-conflicto-agenda-para-paciente` | `profesional-agenda/elegir-resolucion-conflicto-agenda-para-paciente` |
+| `POST …/profesional-agenda/resolver-conflicto-agenda-para-paciente` | `profesional-agenda/resolver-conflicto-agenda-para-paciente` |
+
+Requiere efector en sesión. Intent: `agenda.resolver-conflictos-staff-flow`.
 
 ## Migración de permisos
 
 Al renombrar acciones, los permisos **cambian de string**. Hay que registrar las rutas nuevas en webvimark y reasignar roles; mantener temporalmente rutas viejas solo si hace falta convivencia en despliegue.
+
+## Intents asistente (turnos / agenda)
+
+Matriz completa intent ↔ API: [intents-turnos.md](./intents-turnos.md).
 
 ## Documentación relacionada
 

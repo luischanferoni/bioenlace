@@ -15,6 +15,7 @@ Esta carpeta describe flujos de negocio del **sistema de turnos** (agenda, estad
 | [Solicitudes entre médicos](solicitudes-medicos.md) | Módulo `solicitud_rrhh` y modos. |
 | [Reprogramación UI](reprogramacion-ui.md) | Pantalla `turnos/reprogramar` y API. |
 | [Agenda versionada e intervalo](agenda-intervalo-y-reservas.md) | Grilla 15–60 min, versiones `vigente_desde`, `slot_id`, solapamiento, conflictos y preview. |
+| [Intents asistente (turnos/agenda)](intents-turnos.md) | Matriz intent ↔ API, flujos paciente y staff. |
 
 ## Referencias técnicas en el código
 

@@ -1,0 +1,49 @@
+intent_id: turnos.conflicto-agenda-flow
+version: 1
+
+action_name: "Resolver cambio de horario por agenda"
+description: "Autogestión: elegís un turno afectado por un cambio de agenda del profesional y confirmás la nueva opción (antes, después o cancelar)."
+rbac_route: "/api/turnos/resolver-conflicto-agenda-como-paciente"
+keywords:
+  - conflicto agenda
+  - cambio de horario
+  - turno desalineado
+  - reprogramar por agenda
+  - horario anterior siguiente
+
+intent_semantics:
+  goal: >-
+    Resolver un turno propio marcado con conflicto tras un cambio de intervalo u horarios del profesional.
+  how: >-
+    Lista de turnos con conflicto pendiente → elección antes/despues/cancelar → POST de resolución.
+  preconditions:
+    - Turno pendiente con fila en turno_agenda_conflicto (estado pendiente).
+  outcome:
+    - Turno reprogramado a vecino en grilla o cancelado; conflicto cerrado.
+
+subintents:
+  - id: select_turno
+    assistant_text: "Turno afectado"
+    provides:
+      - draft.id
+    next: select_eleccion
+    open_ui:
+      action_id: turnos.elegir-conflicto-agenda-como-paciente
+
+  - id: select_eleccion
+    assistant_text: "Nueva opción"
+    requires:
+      - draft.id
+    provides:
+      - draft.eleccion
+    next: ""
+    open_ui:
+      action_id: turnos.elegir-resolucion-conflicto-agenda-como-paciente
+      params:
+        id: "draft.id"
+
+flow_submit:
+  action_id: turnos.resolver-conflicto-agenda-como-paciente
+  params:
+    id: "draft.id"
+    eleccion: "draft.eleccion"

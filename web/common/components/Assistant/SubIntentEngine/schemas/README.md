@@ -21,4 +21,8 @@ La conversación se guía por:
   - `turnos.crear-como-paciente.yaml`
   - `turnos.cancelar-como-paciente-flow.yaml`
   - `turnos.modificar-como-paciente-flow.yaml`
-  - (otros intents conversacionales según el catálogo de acciones UI disponibles)
+  - `turnos.conflicto-agenda-flow.yaml`, `turnos.confirmar-asistencia-flow.yaml`, `turnos.consultar-politica-autogestion-flow.yaml`
+  - `turnos.crear-para-paciente-flow.yaml`, `turnos.cancelar-para-paciente-flow.yaml`, `turnos.no-se-presento-flow.yaml`, `turnos.crear-sobreturno-flow.yaml`
+  - `turnos.consultar-ocupacion-dia-flow.yaml`, `turnos.ver-agenda-dia-profesional-flow.yaml`
+  - `agenda.crear-profesional-flow.yaml`, `agenda.editar-agenda-flow.yaml`, `agenda.resolver-conflictos-staff-flow.yaml`
+  - Matriz intent ↔ API: `web/docs/Turnos/intents-turnos.md`

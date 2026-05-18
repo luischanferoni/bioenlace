@@ -30,6 +30,6 @@ Esta carpeta describe flujos de negocio del **sistema de turnos** (agenda, estad
 
 ## Implementación actual
 
-- Ciclo de vida: `TurnoLifecycleService`, notificaciones en `turno_notificacion_programada`, push vía `PushNotificationSender` (log + `turnosPush.httpEndpoint` opcional).
+- Ciclo de vida: `TurnoLifecycleService`, notificaciones en `turno_notificacion_programada`, push vía `Services\Push\PushNotificationSender` (`fcmPush` en params).
 - Política autogestión: `TurnoCancellationPolicyService` + tabla `persona_efector_autogestion_liberacion`.
 - Pendiente de producto: oferta automática de huecos a derivaciones `EN_ESPERA` (no implementado en esta entrega).

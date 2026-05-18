@@ -108,6 +108,21 @@ final class TurnoCancelacionRazones
         return $out;
     }
 
+    /**
+     * Mapa value => label para dropdowns Yii (calendario staff).
+     *
+     * @return array<string, string>
+     */
+    public static function medicoAppOpcionesDropdown(): array
+    {
+        $out = [];
+        foreach (self::medicoAppOpcionesSelect() as $opt) {
+            $out[$opt['value']] = $opt['label'];
+        }
+
+        return $out;
+    }
+
     public static function esCodigoPacienteAppValido(string $code): bool
     {
         return $code !== '' && in_array($code, self::CODIGOS_PACIENTE_APP, true);

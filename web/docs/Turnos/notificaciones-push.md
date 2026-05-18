@@ -19,7 +19,13 @@
 
 ## Push
 
-`PushNotificationSender` registra en categoría `turnos-push`. Si `params['turnosPush']['httpEndpoint']` está definido, reenvía JSON al proxy configurado.
+Los turnos usan el servicio genérico `common\components\Services\Push\PushNotificationSender` (log `fcm-push`). Tipos en payload: `PushNotificationTypes::*` (p. ej. `TURNO_REMINDER`, `TURNO_REQUIERE_REUBICACION`).
+
+Config en `params-local.php` → **`fcmPush`** (proyecto Firebase, independiente de `google_cloud_*`):
+
+- `credentialsPath` + `projectId`: FCM HTTP v1.
+- `fcmServerKey`: API legacy opcional.
+- `httpEndpoint`: proxy opcional.
 
 ## Dispositivos
 

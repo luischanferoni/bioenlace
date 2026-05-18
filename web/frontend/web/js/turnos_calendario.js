@@ -180,7 +180,7 @@ $(document).ready(function () {
         type: "POST",
         headers: window.BioenlaceApiClient.mergeHeaders({}),
         data: {
-          estado_motivo: motivo_cancelacion,
+          razon_cancelacion: motivo_cancelacion,
           canal: "web",
         },
       })

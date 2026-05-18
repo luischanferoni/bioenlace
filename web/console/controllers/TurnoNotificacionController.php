@@ -6,7 +6,8 @@ use Yii;
 use yii\console\Controller;
 use common\models\TurnoNotificacionProgramada;
 use common\models\Turno;
-use common\components\Services\Turnos\PushNotificationSender;
+use common\components\Services\Push\PushNotificationSender;
+use common\components\Services\Push\FcmPushConfig;
 use common\components\Services\Turnos\TurnoReminderContentBuilder;
 
 /**
@@ -77,7 +78,7 @@ class TurnoNotificacionController extends Controller
                     $row->estado = TurnoNotificacionProgramada::ESTADO_FALLIDA;
                 }
                 $row->save(false);
-                Yii::error('TurnoNotificacion: ' . $e->getMessage(), 'turnos-push');
+                Yii::error('TurnoNotificacion: ' . $e->getMessage(), FcmPushConfig::LOG_CATEGORY);
             }
         }
         $this->stdout("Procesadas: $n\n");

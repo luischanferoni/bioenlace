@@ -9,23 +9,28 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
+import '../utils/turno_resolucion_utils.dart';
 import '../components/dynamic_form.dart';
 import '../theme/paciente_theme_extensions.dart';
 import 'chat_motivos_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
+  final PendingTurnoResolver? pendingResolver;
+  final VoidCallback? onPendingResolverHandled;
 
   const ChatScreen({
     Key? key,
     required this.chatService,
+    this.pendingResolver,
+    this.onPendingResolverHandled,
   }) : super(key: key);
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  ChatScreenState createState() => ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late AsistenteService _asistenteService;
@@ -412,6 +417,19 @@ class _ChatScreenState extends State<ChatScreen> {
     _initializeService();
   }
 
+  @override
+  void didUpdateWidget(ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pendingResolver != null &&
+        widget.pendingResolver != oldWidget.pendingResolver) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.pendingResolver != null) {
+          _runPendingResolver(widget.pendingResolver!);
+        }
+      });
+    }
+  }
+
   Future<void> _initializeService() async {
     // Cargar token desde SharedPreferences
     final prefs = await SharedPreferences.getInstance();
@@ -428,6 +446,55 @@ class _ChatScreenState extends State<ChatScreen> {
       setState(() => _welcomeAtajos = atajos);
     } catch (_) {
       if (mounted) setState(() => _welcomeAtajos = []);
+    }
+    if (widget.pendingResolver != null && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.pendingResolver != null) {
+          _runPendingResolver(widget.pendingResolver!);
+        }
+      });
+    }
+  }
+
+  /// Desde Inicio (Resolver) o push: inicia el flow y salta la elección del turno.
+  Future<void> _runPendingResolver(PendingTurnoResolver pending) async {
+    widget.onPendingResolverHandled?.call();
+    final turno = pending.turno;
+    final intentId = TurnoResolucionUtils.intentResolver(turno);
+    final id = turno['id']?.toString() ?? '';
+    if (id.isEmpty) {
+      return;
+    }
+
+    await _onRemediationChoice({
+      'intent_id': intentId,
+      'reset_flow': true,
+    });
+    if (!mounted) {
+      return;
+    }
+
+    final label = TurnoResolucionUtils.etiquetaLista(turno);
+    _applyDraftDelta({
+      'id': id,
+      '_flow_item_id': {'id': id, 'name': label},
+    });
+    _asistenteService.draft = Map<String, dynamic>.from(_draft);
+
+    final res = await _asistenteService.procesarInteraccion('');
+    if (!mounted) {
+      return;
+    }
+    if (res['success'] == true && res['data'] is Map) {
+      final consumed = await _consumeAsistenteSuccessData(
+        Map<String, dynamic>.from(res['data'] as Map),
+      );
+      if (!consumed) {
+        _appendGenericAsistenteBotMessage(
+          Map<String, dynamic>.from(res['data'] as Map),
+        );
+      }
+      _scrollToBottom();
     }
   }
 

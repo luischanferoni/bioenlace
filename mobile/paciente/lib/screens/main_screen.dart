@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../services/chat_service.dart';
+import '../services/notificaciones_service.dart';
+import '../services/push_notification_service.dart';
+import '../utils/turno_resolucion_utils.dart';
+import 'alertas_screen.dart';
 import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'configuracion_screen.dart';
@@ -22,6 +26,64 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  PendingTurnoResolver? _pendingResolver;
+  int _alertasNoLeidas = 0;
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _initPush();
+    _refreshAlertasCount();
+  }
+
+  Future<void> _initPush() async {
+    await PushNotificationService.instance.init(
+      onOpen: (data) {
+        final stub = PushNotificationService.turnoStubDesdePush(data);
+        if (stub != null) {
+          _abrirResolverTurno(stub);
+        } else {
+          _openAlertas();
+        }
+      },
+    );
+    await PushNotificationService.instance.registerTokenIfLoggedIn();
+  }
+
+  Future<void> _refreshAlertasCount() async {
+    final svc = NotificacionesService(authToken: widget.authToken);
+    final r = await svc.listar(soloNoLeidas: true, limit: 1);
+    if (!mounted) return;
+    if (r['success'] == true) {
+      setState(() => _alertasNoLeidas = r['no_leidas'] as int? ?? 0);
+    }
+  }
+
+  void _abrirResolverTurno(Map<String, dynamic> turno) {
+    setState(() {
+      _selectedIndex = 1;
+      _pendingResolver = PendingTurnoResolver(turno);
+    });
+  }
+
+  void _onPendingResolverHandled() {
+    setState(() => _pendingResolver = null);
+    _refreshAlertasCount();
+    _homeKey.currentState?.refrescarProximos();
+  }
+
+  void _openAlertas() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AlertasScreen(
+          authToken: widget.authToken,
+          onAbrirResolver: _abrirResolverTurno,
+        ),
+      ),
+    ).then((_) => _refreshAlertasCount());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,23 +92,36 @@ class _MainScreenState extends State<MainScreen> {
         index: _selectedIndex,
         children: [
           HomeScreen(
+            key: _homeKey,
             userId: widget.chatService.currentUserId,
             userName: widget.chatService.currentUserName,
             authToken: widget.authToken,
+            alertasNoLeidas: _alertasNoLeidas,
+            onOpenAlertas: _openAlertas,
+            onResolverTurno: _abrirResolverTurno,
           ),
           ChatScreen(
             chatService: widget.chatService,
+            pendingResolver: _pendingResolver,
+            onPendingResolverHandled: _onPendingResolverHandled,
           ),
           ConfiguracionScreen(
             userId: widget.chatService.currentUserId,
             userName: widget.chatService.currentUserName,
             authToken: widget.authToken,
+            onOpenAlertas: _openAlertas,
+            alertasNoLeidas: _alertasNoLeidas,
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        onTap: (index) {
+          setState(() => _selectedIndex = index);
+          if (index == 0) {
+            _refreshAlertasCount();
+          }
+        },
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(

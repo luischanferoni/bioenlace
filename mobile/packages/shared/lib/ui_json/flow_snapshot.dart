@@ -96,6 +96,12 @@ void applyFlowPickToSnapshot(
         if (motivoLabel.isNotEmpty) 'label': motivoLabel,
       };
       break;
+    case 'eleccion':
+      snap['eleccion'] = {
+        'value': (item['value'] ?? item['id'])?.toString(),
+        if (label.isNotEmpty) 'label': label,
+      };
+      break;
     case 'id_servicio_asignado':
       snap['servicio'] = {
         'id': item['id']?.toString(),
@@ -163,6 +169,10 @@ String formatFlowSubmitSummary({
       return _summaryCancelar(snap, data);
     case 'turnos.modificar-como-paciente-flow':
       return _summaryModificar(snap, data);
+    case 'turnos.conflicto-agenda-flow':
+      return _summaryConflictoAgenda(snap, data);
+    case 'turnos.reubicar-como-paciente-flow':
+      return _summaryReubicar(snap, data);
     case 'turnos.crear-como-paciente':
       return _summaryCrear(snap, data);
     default:
@@ -191,6 +201,70 @@ String _summaryCancelar(Map<String, dynamic> snap, Map<String, dynamic> data) {
   }
   if (motivoLbl.isNotEmpty) {
     lines.add('Motivo: $motivoLbl');
+  }
+  return lines.join('\n');
+}
+
+String _summaryConflictoAgenda(Map<String, dynamic> snap, Map<String, dynamic> data) {
+  final lines = <String>['Actualizamos tu turno según el cambio de agenda.'];
+  final turno = snap['turno'];
+  if (turno is Map) {
+    final lbl = turno['label']?.toString().trim();
+    if (lbl != null && lbl.isNotEmpty) {
+      lines.add(lbl);
+    }
+  }
+  final eleccion = snap['eleccion'];
+  if (eleccion is Map) {
+    final el = eleccion['label']?.toString().trim();
+    if (el != null && el.isNotEmpty) {
+      lines.add('Opción: $el');
+    }
+  }
+  final nuevo = _nuevoHorarioLinea(snap, data);
+  if (nuevo.isNotEmpty) {
+    lines.add('Nuevo horario: $nuevo');
+  }
+  final msg = data['message']?.toString().trim() ?? '';
+  if (msg.isNotEmpty && lines.length == 1) {
+    lines.add(msg);
+  }
+  return lines.join('\n');
+}
+
+String _summaryReubicar(Map<String, dynamic> snap, Map<String, dynamic> data) {
+  final lines = <String>['Reubicamos tu turno.'];
+  final turno = snap['turno'];
+  if (turno is Map) {
+    final lbl = turno['label']?.toString().trim();
+    if (lbl != null && lbl.isNotEmpty) {
+      lines.add('Turno anterior: $lbl');
+    }
+  }
+  final svc = snap['servicio'];
+  if (svc is Map) {
+    final s = svc['label']?.toString().trim();
+    if (s != null && s.isNotEmpty) {
+      lines.add('Servicio: $s');
+    }
+  }
+  final ef = snap['efector'];
+  if (ef is Map) {
+    final e = ef['label']?.toString().trim();
+    if (e != null && e.isNotEmpty) {
+      lines.add('Centro: $e');
+    }
+  }
+  final prof = snap['profesional'];
+  if (prof is Map) {
+    final p = prof['label']?.toString().trim();
+    if (p != null && p.isNotEmpty) {
+      lines.add('Profesional: $p');
+    }
+  }
+  final nuevo = _nuevoHorarioLinea(snap, data);
+  if (nuevo.isNotEmpty) {
+    lines.add('Nuevo horario: $nuevo');
   }
   return lines.join('\n');
 }

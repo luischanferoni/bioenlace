@@ -527,3 +527,53 @@
 }
 
 /* UI JSON list (embebible): estilos por Bootstrap (sin clases custom de selección) */
+
+.spa-alertas-toggle-btn .spa-alertas-badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.35rem;
+    font-size: 0.65rem;
+    min-width: 1.1rem;
+}
+
+.spa-alertas-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.spa-alertas-panel.spa-alertas-panel--open {
+    pointer-events: auto;
+    visibility: visible;
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.spa-alertas-panel-inner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: min(22rem, 100vw);
+    height: 100%;
+    background: var(--bs-body-bg, #fff);
+    display: flex;
+    flex-direction: column;
+}
+
+.spa-alertas-panel-body {
+    flex: 1 1 auto;
+    max-height: calc(100vh - 3rem);
+}
+
+.bioenlace-alerta-item--nueva {
+    background: rgba(var(--bs-primary-rgb, 13, 110, 253), 0.06);
+    cursor: pointer;
+}
+
+.bioenlace-alerta-item:hover {
+    background: var(--bs-tertiary-bg, #f8f9fa);
+}

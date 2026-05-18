@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/turnos_service.dart';
 import '../theme/paciente_theme_extensions.dart';
+import '../utils/turno_resolucion_utils.dart';
 import 'chat_motivos_screen.dart';
 
 /// Próximo turno pendiente respecto al calendario local (solo fecha, sin hora).
@@ -12,25 +13,32 @@ class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
   final String? authToken;
+  final void Function(Map<String, dynamic> turno)? onResolverTurno;
+  final VoidCallback? onOpenAlertas;
+  final int alertasNoLeidas;
 
   const HomeScreen({
     Key? key,
     required this.userId,
     required this.userName,
     this.authToken,
+    this.onResolverTurno,
+    this.onOpenAlertas,
+    this.alertasNoLeidas = 0,
   }) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   static const int _pageLimit = 12;
 
   late TurnosService _turnosService;
   final ScrollController _scrollController = ScrollController();
 
   final List<Map<String, dynamic>> _pendientes = [];
+  final List<Map<String, dynamic>> _enResolucion = [];
   final List<Map<String, dynamic>> _pasados = [];
 
   int _totalPendientes = 0;
@@ -75,7 +83,47 @@ class _HomeScreenState extends State<HomeScreen> {
   bool get _hayMasPendientes => _pendientes.length < _totalPendientes;
   bool get _hayMasPasados => _pasados.length < _totalPasados;
 
+  /// Próximos unificados: primero EN_RESOLUCION, luego PENDIENTE por fecha/hora.
+  List<Map<String, dynamic>> get _proximosVisibles {
+    final all = <Map<String, dynamic>>[..._enResolucion, ..._pendientes];
+    all.sort((a, b) {
+      final ar = TurnoResolucionUtils.esEnResolucion(a);
+      final br = TurnoResolucionUtils.esEnResolucion(b);
+      if (ar != br) {
+        return ar ? -1 : 1;
+      }
+      final da = _inicioTurnoLocal(a);
+      final db = _inicioTurnoLocal(b);
+      if (da == null && db == null) return 0;
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return da.compareTo(db);
+    });
+    return all;
+  }
+
+  Future<void> _cargarEnResolucion() async {
+    final r = await _turnosService.getMisTurnos(
+      alcance: 'en_resolucion',
+      limit: 50,
+      offset: 0,
+    );
+    if (!mounted) return;
+    if (r['success'] == true) {
+      setState(() {
+        _enResolucion
+          ..clear()
+          ..addAll(_filtrarProximosLocales(_asMapList(r['turnos'])));
+      });
+    }
+  }
+
   /// Primera carga: solo próximos (la pestaña Anteriores pide datos al entrar).
+  /// Recarga próximos (incluye EN_RESOLUCION) tras resolver un turno en el asistente.
+  Future<void> refrescarProximos() async {
+    await _cargarInicial();
+  }
+
   Future<void> _cargarInicial() async {
     setState(() {
       _loadingInicial = true;
@@ -89,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
       limit: _pageLimit,
       offset: 0,
     );
+    await _cargarEnResolucion();
     if (!mounted) return;
     if (r1['success'] != true) {
       setState(() {
@@ -111,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _error = null;
       _pendientes.clear();
+      _enResolucion.clear();
       _pasados.clear();
     });
     final r1 = await _turnosService.getMisTurnos(
@@ -118,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
       limit: _pageLimit,
       offset: 0,
     );
+    await _cargarEnResolucion();
     final r2 = await _turnosService.getMisTurnos(
       alcance: 'pasados',
       limit: _pageLimit,
@@ -246,6 +297,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _recargarPendientesDesdeCero() async {
     setState(() {
       _pendientes.clear();
+      _enResolucion.clear();
       _totalPendientes = 0;
     });
     final r = await _turnosService.getMisTurnos(
@@ -253,6 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
       limit: _pageLimit,
       offset: 0,
     );
+    await _cargarEnResolucion();
     if (!mounted) return;
     if (r['success'] == true) {
       setState(() {
@@ -473,8 +526,20 @@ class _HomeScreenState extends State<HomeScreen> {
           item(cs.error, 'Hoy'),
           item(cs.tertiary, 'Mañana'),
           item(sem.success, 'Más adelante'),
+          item(cs.secondary, 'Requiere acción'),
         ],
       ),
+    );
+  }
+
+  ({Color bg, Color? border}) _coloresTarjetaEnResolucion(BuildContext context) {
+    final cs = context.pacienteColors;
+    return (
+      bg: Color.alphaBlend(
+        cs.secondary.withValues(alpha: 0.22),
+        cs.surfaceContainerHighest,
+      ),
+      border: cs.secondary.withValues(alpha: 0.65),
     );
   }
 
@@ -511,14 +576,36 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                       children: [
-                        Text(
-                          '${_saludo()}, ${widget.userName.split(',').first.trim()}',
-                          style: tt.headlineSmall?.copyWith(
-                            color: cs.onSurface,
-                          ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${_saludo()}, ${widget.userName.split(',').first.trim()}',
+                                style: tt.headlineSmall?.copyWith(
+                                  color: cs.onSurface,
+                                ),
+                              ),
+                            ),
+                            if (widget.onOpenAlertas != null)
+                              IconButton(
+                                tooltip: 'Alertas',
+                                onPressed: widget.onOpenAlertas,
+                                icon: Badge(
+                                  isLabelVisible: widget.alertasNoLeidas > 0,
+                                  label: Text(
+                                    widget.alertasNoLeidas > 99
+                                        ? '99+'
+                                        : '${widget.alertasNoLeidas}',
+                                  ),
+                                  child: const Icon(Icons.notifications_outlined),
+                                ),
+                              ),
+                          ],
                         ),
                         const SizedBox(height: 24),
-                        if (_error != null && (_pendientes.isNotEmpty || _pasados.isNotEmpty))
+                        if (_error != null &&
+                            (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty))
                           Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Text(
@@ -526,7 +613,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: tt.bodySmall?.copyWith(color: cs.error),
                             ),
                           ),
-                        if (_pendientes.isEmpty) ...[
+                        if (_proximosVisibles.isEmpty) ...[
                           _buildCardSinTurnos(context),
                           const SizedBox(height: 20),
                         ],
@@ -558,13 +645,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (_tabTurnos == 0) ...[
                           _leyendaProximidad(context),
                           const SizedBox(height: 8),
-                          if (_refrescandoTabActivo && _pendientes.isEmpty)
+                          if (_refrescandoTabActivo && _proximosVisibles.isEmpty)
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 24),
                               child: Center(child: CircularProgressIndicator()),
                             ),
-                          ..._pendientes.map((t) {
-                            final prox = _proximidadPendiente(t);
+                          ..._proximosVisibles.map((t) {
+                            final enRes = TurnoResolucionUtils.esEnResolucion(t);
+                            final prox = enRes ? null : _proximidadPendiente(t);
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: _buildTurnoCompacto(
@@ -572,6 +660,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 t,
                                 futuro: true,
                                 proximidad: prox,
+                                enResolucion: enRes,
                               ),
                             );
                           }),
@@ -640,6 +729,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Map<String, dynamic> t, {
     required bool futuro,
     _ProximidadPendiente? proximidad,
+    bool enResolucion = false,
   }) {
     final cs = context.pacienteColors;
     final tt = context.pacienteTextTheme;
@@ -648,7 +738,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Color bg;
     Color? borderColor;
-    if (futuro && proximidad != null) {
+    if (enResolucion) {
+      final pair = _coloresTarjetaEnResolucion(context);
+      bg = pair.bg;
+      borderColor = pair.border;
+    } else if (futuro && proximidad != null) {
       final pair = _coloresTarjetaProximo(context, proximidad);
       bg = pair.bg;
       borderColor = pair.border;
@@ -684,7 +778,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 'Con: ${_profesionalSinDni(t['profesional']?.toString())}',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
-            if (idConsulta != null) ...[
+            if (enResolucion && widget.onResolverTurno != null) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.build_circle_outlined, size: 18),
+                  label: const Text('Resolver'),
+                  onPressed: () => widget.onResolverTurno!(t),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: cs.secondary,
+                    foregroundColor: cs.onSecondary,
+                    visualDensity: VisualDensity.compact,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
+            ],
+            if (!enResolucion && idConsulta != null) ...[
               const SizedBox(height: 10),
               Align(
                 alignment: Alignment.centerLeft,

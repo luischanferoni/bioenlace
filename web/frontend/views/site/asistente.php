@@ -7,6 +7,7 @@ use frontend\assets\BioenlaceApiClientAsset;
 $this->title = 'Asistente';
 $this->registerJsFile('@web/js/spa-navigation.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAsset::class, \yii\web\JqueryAsset::class]]);
+$this->registerJsFile('@web/js/bioenlace-alertas.js', ['depends' => [BioenlaceApiClientAsset::class]]);
 $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 
@@ -14,9 +15,18 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
     <div class="row g-0">
         <div class="col-12">
             <div id="spa-chat-root" class="spa-chat-root d-flex flex-column">
-                <div id="spa-chat-toolbar" class="spa-chat-toolbar w-100">
+                <div id="spa-chat-toolbar" class="spa-chat-toolbar w-100 d-flex flex-wrap align-items-center justify-content-end gap-2">
+                    <button
+                        type="button"
+                        id="spa-alertas-toggle-btn"
+                        class="btn btn-outline-secondary btn-sm position-relative spa-alertas-toggle-btn"
+                        aria-label="Alertas"
+                        title="Alertas"
+                    >
+                        Alertas
+                    </button>
                     <!-- Botón y .dropdown-menu como hermanos directos (Bootstrap y bootstrap-custom.js esperan nextElementSibling). -->
-                    <div class="dropdown position-static w-100 d-flex flex-column align-items-end">
+                    <div class="dropdown position-static flex-grow-1 d-flex flex-column align-items-end">
                         <button
                             type="button"
                             id="spa-shortcuts-toggle-btn"
@@ -67,6 +77,22 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                 <div class="text-muted small mt-2 mb-0 ms-3">Enter para enviar, Shift+Enter para salto de línea.</div>
             </div>
         </div>
+    </div>
+</div>
+
+<div
+    id="spa-alertas-panel"
+    class="spa-alertas-panel"
+    aria-hidden="true"
+    role="dialog"
+    aria-label="Alertas"
+>
+    <div class="spa-alertas-panel-inner shadow">
+        <div class="spa-alertas-panel-header d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+            <span class="fw-semibold">Alertas</span>
+            <button type="button" id="spa-alertas-close-btn" class="btn btn-sm btn-link">Cerrar</button>
+        </div>
+        <div class="spa-alertas-panel-body overflow-auto"></div>
     </div>
 </div>
 

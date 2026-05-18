@@ -11,8 +11,17 @@ return [
     'SISA_APP_ID'=> '6df3d2f1',
     'SISA_APP_KEY'=>'e6d747f81e4ef3112750cc477f35fd29',
     'hf_activar_correccion' => true,
-    /** Push turnos: si se define httpEndpoint, TurnoNotificacionController reenvía el payload (proxy). */
-    'turnosPush' => [
+    /**
+     * Push FCM de la plataforma (turnos, alertas, mensajes, etc.).
+     * Proyecto Firebase separado de google_cloud_* (Vertex / voz).
+     * - credentialsPath + projectId: FCM HTTP v1.
+     * - fcmServerKey: alternativa legacy.
+     * - httpEndpoint: proxy opcional.
+     */
+    'fcmPush' => [
+        'projectId' => null,
+        'credentialsPath' => null,
+        'fcmServerKey' => null,
         'httpEndpoint' => null,
     ],
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */

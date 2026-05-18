@@ -120,7 +120,7 @@ Modal::begin([
                     echo html::dropDownList(
                         'motivos_cancelacion',
                         [],
-                        Turno::getMotivosCancelacion(),
+                        \common\components\Services\Turnos\TurnoCancelacionRazones::medicoAppOpcionesDropdown(),
                         [
                             'prompt' => 'Motivo de Cancelación',
                             'class' => 'form-control',

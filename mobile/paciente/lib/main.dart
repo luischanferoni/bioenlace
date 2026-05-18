@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart'; // Usar LoginScreen del paquete compartido
 
+import 'firebase/firebase_bootstrap.dart';
 import 'services/chat_service.dart';
 import 'theme/paciente_theme_extensions.dart';
 import 'screens/main_screen.dart';
@@ -12,6 +13,7 @@ import 'screens/signup_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseBootstrap.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('is_logged_in') ?? false;

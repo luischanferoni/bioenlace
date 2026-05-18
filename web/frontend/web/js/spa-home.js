@@ -220,6 +220,11 @@
             snap.motivo = {};
             if (code) snap.motivo.code = code;
             if (motivoLabel) snap.motivo.label = motivoLabel;
+        } else if (field === 'eleccion') {
+            snap.eleccion = {
+                value: item.value != null ? String(item.value) : (item.id != null ? String(item.id) : ''),
+            };
+            if (label) snap.eleccion.label = label;
         } else if (field === 'id_servicio_asignado') {
             snap.servicio = { id: item.id != null ? String(item.id) : '' };
             if (label) snap.servicio.label = label;
@@ -270,6 +275,26 @@
         if (iid === 'turnos.modificar-como-paciente-flow') {
             const lines = ['Reprogramamos tu turno.'];
             if (snap.turno && snap.turno.label) lines.push('Turno anterior: ' + String(snap.turno.label).trim());
+            const nuevo = nuevoHorarioLinea(snap, d);
+            if (nuevo) lines.push('Nuevo horario: ' + nuevo);
+            return lines;
+        }
+        if (iid === 'turnos.conflicto-agenda-flow') {
+            const lines = ['Actualizamos tu turno por el cambio de agenda.'];
+            if (snap.turno && snap.turno.label) lines.push(String(snap.turno.label).trim());
+            if (snap.eleccion && snap.eleccion.label) lines.push('Opción: ' + String(snap.eleccion.label).trim());
+            const nuevo = nuevoHorarioLinea(snap, d);
+            if (nuevo) lines.push('Nuevo horario: ' + nuevo);
+            const msg = d.message != null ? String(d.message).trim() : '';
+            if (msg && lines.length === 1) lines.push(msg);
+            return lines;
+        }
+        if (iid === 'turnos.reubicar-como-paciente-flow') {
+            const lines = ['Reubicamos tu turno.'];
+            if (snap.turno && snap.turno.label) lines.push('Turno anterior: ' + String(snap.turno.label).trim());
+            if (snap.servicio && snap.servicio.label) lines.push('Servicio: ' + String(snap.servicio.label).trim());
+            if (snap.efector && snap.efector.label) lines.push('Centro: ' + String(snap.efector.label).trim());
+            if (snap.profesional && snap.profesional.label) lines.push('Profesional: ' + String(snap.profesional.label).trim());
             const nuevo = nuevoHorarioLinea(snap, d);
             if (nuevo) lines.push('Nuevo horario: ' + nuevo);
             return lines;
@@ -3907,6 +3932,10 @@
             handleInput();
         }
         handleSendQuery();
+    };
+
+    window.spaStartFlowFromShortcut = function (intentId, displayName) {
+        startFlowFromShortcut(intentId, displayName);
     };
 
     // Inicializar cuando el DOM esté listo

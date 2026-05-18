@@ -13,12 +13,16 @@ class ConfiguracionScreen extends StatelessWidget {
   final String userId;
   final String userName;
   final String? authToken;
+  final VoidCallback? onOpenAlertas;
+  final int alertasNoLeidas;
 
   const ConfiguracionScreen({
     Key? key,
     required this.userId,
     required this.userName,
     this.authToken,
+    this.onOpenAlertas,
+    this.alertasNoLeidas = 0,
   }) : super(key: key);
 
   @override
@@ -84,19 +88,38 @@ class ConfiguracionScreen extends StatelessWidget {
                 children: [
                   ListTile(
                     leading: Icon(Icons.notifications_outlined, color: cs.primary),
-                    title: Text('Notificaciones', style: tt.titleSmall),
+                    title: Text('Alertas', style: tt.titleSmall),
                     subtitle: Text(
-                      'Recordatorios de turnos',
+                      alertasNoLeidas > 0
+                          ? '$alertasNoLeidas sin leer'
+                          : 'Avisos del consultorio y turnos',
                       style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     ),
-                    trailing: Switch(
-                      value: true,
-                      onChanged: (value) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Próximamente')),
-                        );
-                      },
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (alertasNoLeidas > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: cs.error,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              alertasNoLeidas > 99 ? '99+' : '$alertasNoLeidas',
+                              style: tt.labelSmall?.copyWith(color: cs.onError),
+                            ),
+                          ),
+                        const Icon(Icons.chevron_right),
+                      ],
                     ),
+                    onTap: onOpenAlertas != null
+                        ? onOpenAlertas
+                        : () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Iniciá sesión para ver alertas')),
+                            );
+                          },
                   ),
                   const Divider(height: 1),
                   ListTile(

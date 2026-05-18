@@ -16,10 +16,17 @@ class MotivosConsultaService {
     this.userName,
   });
 
-  Map<String, String> get _headers => {
-        'Accept': 'application/json',
-        if (authToken != null && authToken!.isNotEmpty) 'Authorization': 'Bearer $authToken',
-      };
+  Map<String, String> get _headers => AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'paciente-flutter',
+      );
+
+  /// Multipart: sin Content-Type (lo fija el boundary).
+  Map<String, String> get _multipartHeaders {
+    final h = Map<String, String>.from(_headers);
+    h.remove('Content-Type');
+    return h;
+  }
 
   Future<Map<String, dynamic>> getMessages(int consultaId) async {
     try {
@@ -79,7 +86,7 @@ class MotivosConsultaService {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/subir');
       final request = http.MultipartRequest('POST', uri);
-      request.headers.addAll(_headers);
+      request.headers.addAll(_multipartHeaders);
       request.fields['consulta_id'] = consultaId.toString();
       request.fields['message_type'] = messageType;
       request.files.add(await http.MultipartFile.fromPath(

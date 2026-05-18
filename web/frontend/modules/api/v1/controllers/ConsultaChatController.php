@@ -18,8 +18,12 @@ class ConsultaChatController extends BaseController
 {
     public $enableCsrfValidation = false;
 
-    public function actionListarMensajes($consulta_id)
+    /**
+     * GET /api/v1/consulta-chat/mensajes/{id} — {id} = id_consulta.
+     */
+    public function actionListarMensajes($id)
     {
+        $consulta_id = (int) $id;
         [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
         if ($err !== null) {
             return $err;

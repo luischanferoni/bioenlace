@@ -19,10 +19,11 @@ class MotivosConsultaController extends BaseController
     public $enableCsrfValidation = false;
 
     /**
-     * GET mensajes de motivos de una consulta.
+     * GET /api/v1/motivos-consulta/mensajes/{id} — {id} = id_consulta.
      */
-    public function actionListarMensajes($consulta_id)
+    public function actionListarMensajes($id)
     {
+        $consulta_id = (int) $id;
         [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
         if ($err !== null) {
             return $err;

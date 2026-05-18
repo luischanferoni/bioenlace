@@ -5,40 +5,56 @@ namespace common\models;
 use yii\db\ActiveRecord;
 
 /**
- * Turno existente desalineado tras un cambio de agenda; el paciente debe elegir horario vecino.
+ * Turno que requiere reubicación o cancelación explícita (cambio de agenda, gestión staff, etc.).
  *
  * @property int $id
  * @property int $id_turno
- * @property int $id_agenda_version
- * @property string $estado pendiente|resuelto_reprogramado|resuelto_cancelado
+ * @property string $origen cambio_agenda|gestion_staff|licencia
+ * @property int|null $id_agenda_version
+ * @property string $estado pendiente|reubicado|cancelado
+ * @property string|null $razon_codigo
  * @property string|null $opcion_hora_antes
  * @property string|null $opcion_hora_despues
  * @property string|null $hora_elegida
+ * @property bool $permitir_otro_efector
+ * @property bool $permitir_otro_pes
+ * @property string|null $meta_json
  * @property string $created_at
  * @property string $updated_at
  */
-class TurnoAgendaConflicto extends ActiveRecord
+class TurnoResolucion extends ActiveRecord
 {
+    public const ORIGEN_CAMBIO_AGENDA = 'cambio_agenda';
+    public const ORIGEN_GESTION_STAFF = 'gestion_staff';
+    public const ORIGEN_LICENCIA = 'licencia';
+
     public const ESTADO_PENDIENTE = 'pendiente';
-    public const ESTADO_REPROGRAMADO = 'resuelto_reprogramado';
-    public const ESTADO_CANCELADO = 'resuelto_cancelado';
+    public const ESTADO_REUBICADO = 'reubicado';
+    public const ESTADO_CANCELADO = 'cancelado';
 
     public static function tableName()
     {
-        return 'turno_agenda_conflicto';
+        return 'turno_resolucion';
     }
 
     public function rules()
     {
         return [
-            [['id_turno', 'id_agenda_version', 'estado'], 'required'],
+            [['id_turno', 'origen', 'estado'], 'required'],
             [['id_turno', 'id_agenda_version'], 'integer'],
-            [['opcion_hora_antes', 'opcion_hora_despues', 'hora_elegida'], 'safe'],
+            [['permitir_otro_efector', 'permitir_otro_pes'], 'boolean'],
+            [['opcion_hora_antes', 'opcion_hora_despues', 'hora_elegida', 'meta_json'], 'safe'],
+            [['origen'], 'in', 'range' => [
+                self::ORIGEN_CAMBIO_AGENDA,
+                self::ORIGEN_GESTION_STAFF,
+                self::ORIGEN_LICENCIA,
+            ]],
             [['estado'], 'in', 'range' => [
                 self::ESTADO_PENDIENTE,
-                self::ESTADO_REPROGRAMADO,
+                self::ESTADO_REUBICADO,
                 self::ESTADO_CANCELADO,
             ]],
+            [['razon_codigo'], 'string', 'max' => 64],
         ];
     }
 
@@ -80,8 +96,12 @@ class TurnoAgendaConflicto extends ActiveRecord
         return [
             'id' => (int) $this->id,
             'id_turno' => (int) $this->id_turno,
+            'origen' => (string) $this->origen,
             'opcion_antes' => $antes,
             'opcion_despues' => $despues,
+            'permitir_otro_efector' => (bool) $this->permitir_otro_efector,
+            'permitir_otro_pes' => (bool) $this->permitir_otro_pes,
+            'tiene_opciones_vecinas' => ($antes !== null && $antes !== '') || ($despues !== null && $despues !== ''),
         ];
     }
 
@@ -94,17 +114,18 @@ class TurnoAgendaConflicto extends ActiveRecord
         }
 
         $pendientes = static::find()
-            ->alias('c')
-            ->innerJoin(['t' => Turno::tableName()], 't.id_turnos = c.id_turno')
+            ->alias('r')
+            ->innerJoin(['t' => Turno::tableName()], 't.id_turnos = r.id_turno')
             ->where([
-                'c.estado' => self::ESTADO_PENDIENTE,
+                'r.estado' => self::ESTADO_PENDIENTE,
+                't.estado' => Turno::ESTADO_EN_RESOLUCION,
                 't.id_profesional_efector_servicio' => $idPes,
                 't.fecha' => $fecha,
             ])
             ->all();
 
-        foreach ($pendientes as $c) {
-            foreach (self::franjasBloqueadasDeConflicto($c) as $franja) {
+        foreach ($pendientes as $r) {
+            foreach (self::franjasBloqueadasDeResolucion($r) as $franja) {
                 if (self::rangosSeSolapan($horaInicio, $horaFin, $franja['inicio'], $franja['fin'])) {
                     return true;
                 }
@@ -117,21 +138,21 @@ class TurnoAgendaConflicto extends ActiveRecord
     /**
      * @return list<array{inicio: string, fin: string}>
      */
-    public static function franjasBloqueadasDeConflicto(self $c): array
+    public static function franjasBloqueadasDeResolucion(self $r): array
     {
-        $turno = $c->turno;
+        $turno = $r->turno;
         if ($turno === null) {
             return [];
         }
-        $version = $c->agendaVersion;
+        $version = $r->agendaVersion;
         $intervalo = $version !== null ? $version->getIntervaloMinutosEfectivo() : 15;
         $out = [];
-        if ($c->opcion_hora_antes !== null && trim((string) $c->opcion_hora_antes) !== '') {
-            $h = self::normalizarHora((string) $c->opcion_hora_antes);
+        if ($r->opcion_hora_antes !== null && trim((string) $r->opcion_hora_antes) !== '') {
+            $h = self::normalizarHora((string) $r->opcion_hora_antes);
             $out[] = ['inicio' => $h, 'fin' => self::sumarMinutos($h, $intervalo)];
         }
-        if ($c->opcion_hora_despues !== null && trim((string) $c->opcion_hora_despues) !== '') {
-            $h = self::normalizarHora((string) $c->opcion_hora_despues);
+        if ($r->opcion_hora_despues !== null && trim((string) $r->opcion_hora_despues) !== '') {
+            $h = self::normalizarHora((string) $r->opcion_hora_despues);
             $out[] = ['inicio' => $h, 'fin' => self::sumarMinutos($h, $intervalo)];
         }
         $horaTurno = self::normalizarHora((string) $turno->hora);

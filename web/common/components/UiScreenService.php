@@ -151,7 +151,7 @@ final class UiScreenService
         if (strtolower($entity) !== 'turnos') {
             return $params;
         }
-        $actions = ['crear-como-paciente', 'reprogramar-como-paciente'];
+        $actions = ['crear-como-paciente', 'reprogramar-como-paciente', 'reubicar-como-paciente'];
         if (!in_array($action, $actions, true)) {
             return $params;
         }

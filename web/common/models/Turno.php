@@ -105,6 +105,7 @@ class Turno extends \yii\db\ActiveRecord
     public $cant_turnos;
 
     const ESTADO_PENDIENTE = 'PENDIENTE';
+    const ESTADO_EN_RESOLUCION = 'EN_RESOLUCION';
     const ESTADO_CANCELADO = 'CANCELADO';
     const ESTADO_EN_ATENCION = 'EN_ATENCION';
     const ESTADO_ATENDIDO = 'ATENDIDO';
@@ -122,6 +123,7 @@ class Turno extends \yii\db\ActiveRecord
     //Esta constante considera los estados de los turnos que me deshabilitan slots en el calendario.
     const ESTADOS_PARA_DESHABILITAR = [
         self::ESTADO_PENDIENTE,
+        self::ESTADO_EN_RESOLUCION,
         self::ESTADO_ATENDIDO,
         self::ESTADO_EN_ATENCION,
 
@@ -129,6 +131,7 @@ class Turno extends \yii\db\ActiveRecord
 
     const ESTADOS = [
         self::ESTADO_PENDIENTE => 'Pendiente',
+        self::ESTADO_EN_RESOLUCION => 'En resolución',
         self::ESTADO_CANCELADO => 'Cancelado',
         self::ESTADO_EN_ATENCION => 'En Atencion',
         self::ESTADO_ATENDIDO => 'Atendido',

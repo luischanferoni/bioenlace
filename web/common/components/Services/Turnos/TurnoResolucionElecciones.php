@@ -2,22 +2,23 @@
 
 namespace common\components\Services\Turnos;
 
-use common\models\TurnoAgendaConflicto;
+use common\models\Turno;
+use common\models\TurnoResolucion;
 use yii\web\BadRequestHttpException;
 
 /**
- * Opciones de resolución cuando un cambio de agenda desalineó un turno pendiente.
+ * Opciones de resolución rápida (antes / después / cancelar) tras cambio de agenda.
  */
-final class TurnoAgendaConflictoElecciones
+final class TurnoResolucionElecciones
 {
-  /**
-   * @return list<array{value: string, label: string}>
-   */
-    public static function opcionesSelectParaConflicto(TurnoAgendaConflicto $conf): array
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    public static function opcionesSelectParaResolucion(TurnoResolucion $res): array
     {
         $out = [];
-        $antes = $conf->opcion_hora_antes !== null ? substr((string) $conf->opcion_hora_antes, 0, 5) : null;
-        $despues = $conf->opcion_hora_despues !== null ? substr((string) $conf->opcion_hora_despues, 0, 5) : null;
+        $antes = $res->opcion_hora_antes !== null ? substr((string) $res->opcion_hora_antes, 0, 5) : null;
+        $despues = $res->opcion_hora_despues !== null ? substr((string) $res->opcion_hora_despues, 0, 5) : null;
         if ($antes !== null && $antes !== '') {
             $out[] = ['value' => 'antes', 'label' => 'Mover al horario anterior (' . $antes . ')'];
         }
@@ -38,12 +39,12 @@ final class TurnoAgendaConflictoElecciones
      * @param array<string, mixed> $def
      * @return array<string, mixed>
      */
-    public static function aplicarOpcionesEleccionEnDefinicionUiJson(array $def, TurnoAgendaConflicto $conf): array
+    public static function aplicarOpcionesEleccionEnDefinicionUiJson(array $def, TurnoResolucion $res): array
     {
         if (($def['kind'] ?? '') !== 'ui_definition' || ($def['ui_type'] ?? '') !== 'ui_json') {
             return $def;
         }
-        $opciones = self::opcionesSelectParaConflicto($conf);
+        $opciones = self::opcionesSelectParaResolucion($res);
         $blocks = isset($def['blocks']) && is_array($def['blocks']) ? $def['blocks'] : [];
         foreach ($blocks as $i => $b) {
             if (!is_array($b) || ($b['kind'] ?? '') !== 'fields') {
@@ -67,20 +68,21 @@ final class TurnoAgendaConflictoElecciones
         return $def;
     }
 
-    public static function requireConflictoPendienteParaTurno(
+    public static function requireResolucionPendienteParaTurno(
         int $idTurno,
         ?int $idPersona = null,
         ?int $idEfector = null
-    ): TurnoAgendaConflicto {
+    ): TurnoResolucion {
         if ($idTurno <= 0) {
             throw new BadRequestHttpException('id del turno requerido');
         }
-        $query = TurnoAgendaConflicto::find()
-            ->alias('c')
-            ->innerJoin(['t' => \common\models\Turno::tableName()], 't.id_turnos = c.id_turno')
+        $query = TurnoResolucion::find()
+            ->alias('r')
+            ->innerJoin(['t' => Turno::tableName()], 't.id_turnos = r.id_turno')
             ->where([
-                'c.id_turno' => $idTurno,
-                'c.estado' => TurnoAgendaConflicto::ESTADO_PENDIENTE,
+                'r.id_turno' => $idTurno,
+                'r.estado' => TurnoResolucion::ESTADO_PENDIENTE,
+                't.estado' => Turno::ESTADO_EN_RESOLUCION,
             ]);
         if ($idPersona !== null && $idPersona > 0) {
             $query->andWhere(['t.id_persona' => $idPersona]);
@@ -88,12 +90,12 @@ final class TurnoAgendaConflictoElecciones
         if ($idEfector !== null && $idEfector > 0) {
             $query->andWhere(['t.id_efector' => $idEfector]);
         }
-        /** @var TurnoAgendaConflicto|null $conf */
-        $conf = $query->one();
-        if ($conf === null) {
-            throw new BadRequestHttpException('No hay conflicto de agenda pendiente para este turno.');
+        /** @var TurnoResolucion|null $res */
+        $res = $query->one();
+        if ($res === null) {
+            throw new BadRequestHttpException('No hay resolución pendiente para este turno.');
         }
 
-        return $conf;
+        return $res;
     }
 }

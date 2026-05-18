@@ -31,10 +31,10 @@ use common\components\Services\Turnos\BulkCancelDayService;
 use common\components\Services\Turnos\SobreturnoService;
 use common\components\Services\Turnos\TurnoReservaSlotService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
-use common\components\Services\Turnos\TurnoAgendaConflictoService;
-use common\components\Services\Turnos\TurnoAgendaConflictoElecciones;
+use common\components\Services\Turnos\TurnoResolucionService;
+use common\components\Services\Turnos\TurnoResolucionElecciones;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
-use common\models\TurnoAgendaConflicto;
+use common\models\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\MethodNotAllowedHttpException;
@@ -177,7 +177,7 @@ class TurnosController extends BaseController
                 if ($label === '') {
                     $label = 'Turno #' . $id;
                 }
-                if (!empty($t['agenda_conflicto_pendiente'])) {
+                if (!empty($t['en_resolucion'])) {
                     $label = '⚠ ' . $label;
                 }
                 $items[] = [
@@ -214,10 +214,13 @@ class TurnosController extends BaseController
         );
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
             $idPersona = (int) Yii::$app->user->getIdPersona();
-            $rows = TurnoAgendaConflictoService::listarPendientesParaPaciente($idPersona, true);
+            $rows = TurnoResolucionService::listarEnResolucionParaPaciente(
+                $idPersona,
+                TurnoResolucion::ORIGEN_CAMBIO_AGENDA
+            );
             $items = [];
             foreach ($rows as $row) {
-                $items[] = TurnoAgendaConflictoService::toListPickerItem($row);
+                $items[] = TurnoResolucionService::toListPickerItem($row);
             }
             $out = UiScreenService::withListBlockItems($out, $items);
         }
@@ -244,7 +247,7 @@ class TurnosController extends BaseController
             if (!$tid) {
                 throw new BadRequestHttpException('id del turno requerido');
             }
-            $conf = TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno(
+            $res = TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
                 (int) $tid,
                 (int) Yii::$app->user->getIdPersona()
             );
@@ -255,7 +258,7 @@ class TurnosController extends BaseController
                 null
             );
 
-            return TurnoAgendaConflictoElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $conf);
+            return TurnoResolucionElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $res);
         }
 
         return UiScreenService::handleScreen(
@@ -269,10 +272,10 @@ class TurnosController extends BaseController
                     throw new BadRequestHttpException('id del turno requerido');
                 }
                 $eleccion = trim((string) ($post['eleccion'] ?? ''));
-                if ($eleccion === '' || !TurnoAgendaConflictoElecciones::esEleccionValida($eleccion)) {
+                if ($eleccion === '' || !TurnoResolucionElecciones::esEleccionValida($eleccion)) {
                     throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
                 }
-                TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno(
+                TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
                     (int) $tid,
                     (int) Yii::$app->user->getIdPersona()
                 );
@@ -280,6 +283,36 @@ class TurnosController extends BaseController
                 return ['data' => ['ok' => true, 'id' => (int) $tid, 'eleccion' => strtolower($eleccion)]];
             }
         );
+    }
+
+    /**
+     * Lista embebible: turnos del paciente en EN_RESOLUCION.
+     *
+     * GET|POST /api/v1/turnos/elegir-en-resolucion-como-paciente
+     */
+    public function actionElegirEnResolucionComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'elegir-en-resolucion-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
+            $idPersona = (int) Yii::$app->user->getIdPersona();
+            $rows = TurnoResolucionService::listarEnResolucionParaPaciente($idPersona);
+            $items = [];
+            foreach ($rows as $row) {
+                $items[] = TurnoResolucionService::toListPickerItem($row);
+            }
+            $out = UiScreenService::withListBlockItems($out, $items);
+        }
+
+        return $out;
     }
 
     /**
@@ -623,6 +656,17 @@ class TurnosController extends BaseController
     public function actionCancelarOperativo($id = null)
     {
         $req = Yii::$app->request;
+        if (!$req->isPost) {
+            $def = UiScreenService::renderUiDefinition(
+                'turnos',
+                'cancelar-operativo',
+                array_merge($req->get(), $req->post()),
+                null
+            );
+
+            return TurnoCancelacionRazones::aplicarOpcionesRazonMedicoEnDefinicionUiJson($def);
+        }
+
         return UiScreenService::handleScreen(
             'turnos',
             'cancelar-operativo',
@@ -641,20 +685,19 @@ class TurnosController extends BaseController
                 if ($idEfector && (int) $turno->id_efector !== (int) $idEfector) {
                     throw new ForbiddenHttpException('No autorizado');
                 }
-                $motivo = $post['estado_motivo'] ?? Turno::ESTADO_MOTIVO_CANCELADO_MEDICO;
-                if (!$motivo) {
-                    $motivo = Turno::ESTADO_MOTIVO_CANCELADO_MEDICO;
+                $razon = trim((string) ($post['razon_cancelacion'] ?? ''));
+                if ($razon === '') {
+                    throw new BadRequestHttpException('razon_cancelacion requerida.');
                 }
                 $canal = $post['canal'] ?? 'web';
-                (new TurnoLifecycleService())->cancelar(
+                $result = TurnoResolucionService::gestionarCancelacionStaff(
                     $turno,
-                    (string) $motivo,
+                    $razon,
                     (string) $canal,
-                    Yii::$app->user->id ?? null,
-                    []
+                    Yii::$app->user->id ?? null
                 );
 
-                return ['data' => ['success' => true, 'message' => 'Turno cancelado']];
+                return ['data' => array_merge(['success' => true], $result)];
             }
         );
     }
@@ -749,7 +792,7 @@ class TurnosController extends BaseController
 
         return [
             'success' => true,
-            'data' => ProfesionalEfectorServicioAgendaVersionService::resolverConflictoPaciente(
+            'data' => TurnoResolucionService::resolverEleccionVecina(
                 (int) $tid,
                 (int) Yii::$app->user->getIdPersona(),
                 $eleccion
@@ -776,6 +819,99 @@ class TurnosController extends BaseController
                 }
 
                 return ['data' => $this->reprogramarComoPacienteCore($tid, $post, true)];
+            }
+        );
+    }
+
+    /**
+     * Horarios para reubicar un turno EN_RESOLUCION (puede cambiar PES/efector vía query).
+     *
+     * GET|POST /api/v1/turnos/slots-reubicar-como-paciente
+     */
+    public function actionSlotsReubicarComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'slots-reubicar-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        $raw = $req->get('raw') ?: $req->post('raw');
+        $wantsRaw = $raw === '1' || $raw === 1 || $raw === true;
+
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
+            $params = array_merge($req->get(), $req->post());
+            $tid = $this->resolveTurnoId(null, $params, $req);
+            if (!$tid) {
+                throw new BadRequestHttpException('id del turno requerido');
+            }
+            $payload = $this->buildSlotsAlternativosPayload($tid, $params);
+            if ($wantsRaw) {
+                return array_merge(['success' => true], $payload);
+            }
+            $turno = Turno::findOne($tid);
+            $idServicio = isset($params['id_servicio_asignado']) && (int) $params['id_servicio_asignado'] > 0
+                ? (int) $params['id_servicio_asignado']
+                : ($turno ? (int) ($turno->id_servicio_asignado ?? 0) : 0);
+            $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+            $p = Yii::$app->params['turnosPaciente'] ?? [];
+            $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
+            $limiteRaw = $req->get('limite') ?: $req->post('limite');
+            $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
+            $limite = max(1, min($maxCliente, $limite));
+            $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
+            $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
+            if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
+                $franja = $defaults['franja_tarde_desde'];
+            }
+            $plano = isset($payload['slots']) && is_array($payload['slots']) ? $payload['slots'] : [];
+            $grouped = TurnoSlotOfferService::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
+            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio);
+            if ($blocks !== []) {
+                $out['blocks'] = $blocks;
+            } else {
+                $out = UiScreenService::withListBlockItems($out, []);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Reubicar turno EN_RESOLUCION (otro horario y opcionalmente otro profesional/efector). Solo POST.
+     *
+     * POST /api/v1/turnos/reubicar-como-paciente
+     */
+    public function actionReubicarComoPaciente($id = null)
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'La reubicación se confirma por POST con id y slot_id.');
+        }
+
+        return UiScreenService::handleScreen(
+            'turnos',
+            'reubicar-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($id, $req): array {
+                $tid = $this->resolveTurnoId($id, $post, $req);
+                if (!$tid) {
+                    throw new BadRequestHttpException('id del turno requerido');
+                }
+
+                return [
+                    'data' => TurnoResolucionService::reubicarComoPaciente(
+                        (int) $tid,
+                        (int) Yii::$app->user->getIdPersona(),
+                        $post
+                    ),
+                ];
             }
         );
     }
@@ -1068,7 +1204,7 @@ class TurnosController extends BaseController
         $idPersona = (int) Yii::$app->user->getIdPersona();
         $alcance = isset($params['alcance']) ? (string) $params['alcance'] : '';
 
-        if ($alcance === 'pendientes' || $alcance === 'pasados') {
+        if ($alcance === 'pendientes' || $alcance === 'pasados' || $alcance === 'en_resolucion') {
             $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : 20;
             $limit = max(1, min(100, $limit));
             $offset = isset($params['offset']) && $params['offset'] !== '' ? (int) $params['offset'] : 0;
@@ -1076,19 +1212,17 @@ class TurnosController extends BaseController
 
             $ahoraLocal = $this->ahoraLocalParaComparacionTurno();
 
-            if ($alcance === 'pendientes') {
+            if ($alcance === 'en_resolucion') {
+                $turnosQ = Turno::findActive()->alias('t')
+                    ->where(['t.id_persona' => $idPersona])
+                    ->andWhere(['t.estado' => Turno::ESTADO_EN_RESOLUCION])
+                    ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal])
+                    ->orderBy(['t.fecha' => SORT_ASC, 't.hora' => SORT_ASC]);
+            } elseif ($alcance === 'pendientes') {
                 $turnosQ = Turno::findActive()->alias('t')
                     ->where(['t.id_persona' => $idPersona])
                     ->andWhere(['t.estado' => Turno::ESTADO_PENDIENTE])
                     ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal]);
-
-                if ($this->isTruthyQueryParam($params['solo_agenda_conflicto'] ?? null)) {
-                    $turnosQ->innerJoin(
-                        ['c' => TurnoAgendaConflicto::tableName()],
-                        'c.id_turno = t.id_turnos AND c.estado = :estadoConf',
-                        [':estadoConf' => TurnoAgendaConflicto::ESTADO_PENDIENTE]
-                    );
-                }
 
                 if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
                     $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);
@@ -1120,7 +1254,16 @@ class TurnosController extends BaseController
             $formattedTurnos = [];
             foreach ($turnos as $turno) {
                 $row = $this->formatTurnoPacienteListadoRow($turno);
-                if ($alcance === 'pendientes' && $turno->estado === Turno::ESTADO_PENDIENTE) {
+                if (
+                    ($alcance === 'pendientes' && $turno->estado === Turno::ESTADO_PENDIENTE)
+                    || ($alcance === 'en_resolucion' && $turno->estado === Turno::ESTADO_EN_RESOLUCION)
+                ) {
+                    if ($alcance === 'en_resolucion') {
+                        $row['puede_cancelar_autogestion_app'] = true;
+                        $row['puede_reprogramar_autogestion_app'] = true;
+                        $formattedTurnos[] = $row;
+                        continue;
+                    }
                     $idEf = (int) ($turno->id_efector ?? 0);
                     if (!array_key_exists($idEf, $policyOkPorEfector)) {
                         $policyOkPorEfector[$idEf] = $idEf <= 0 || !$policySvc->autogestionBloqueada($idPersona, $idEf);
@@ -1219,7 +1362,7 @@ class TurnosController extends BaseController
         $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
         $idEf = $turno->id_efector !== null && (int) $turno->id_efector > 0 ? (int) $turno->id_efector : null;
 
-        $conflicto = TurnoAgendaConflicto::findPendientePorTurno((int) $turno->id_turnos);
+        $resolucion = TurnoResolucion::findPendientePorTurno((int) $turno->id_turnos);
 
         return [
             'id' => $turno->id_turnos,
@@ -1237,8 +1380,8 @@ class TurnosController extends BaseController
             'id_consulta' => $consulta ? $consulta->id_consulta : null,
             'profesional' => $profesional,
             'created_at' => $turno->created_at,
-            'agenda_conflicto_pendiente' => $conflicto !== null,
-            'agenda_conflicto' => $conflicto !== null ? $conflicto->toPacienteApiArray() : null,
+            'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION,
+            'turno_resolucion' => $resolucion !== null ? $resolucion->toPacienteApiArray() : null,
         ];
     }
 
@@ -1299,25 +1442,44 @@ class TurnosController extends BaseController
         if ((int) $turno->id_persona !== (int) $idPersona) {
             throw new ForbiddenHttpException('No autorizado');
         }
-        try {
-            (new TurnoAutogestionAnticipacionService())->assertPuedeReprogramarPorApp($turno);
-        } catch (AutogestionAnticipacionException $e) {
-            throw new ConflictHttpException($e->getMessage());
+        if (
+            $turno->estado !== Turno::ESTADO_PENDIENTE
+            && $turno->estado !== Turno::ESTADO_EN_RESOLUCION
+        ) {
+            throw new BadRequestHttpException('El turno no admite cambio de horario.');
+        }
+        $enResolucion = $turno->estado === Turno::ESTADO_EN_RESOLUCION;
+        if (!$enResolucion) {
+            try {
+                (new TurnoAutogestionAnticipacionService())->assertPuedeReprogramarPorApp($turno);
+            } catch (AutogestionAnticipacionException $e) {
+                throw new ConflictHttpException($e->getMessage());
+            }
         }
         $defaultsSlots = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
         $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : $defaultsSlots['limite'];
-        $mismoRaw = $params['mismo_profesional'] ?? '1';
+        $mismoDefault = $enResolucion ? '0' : '1';
+        $mismoRaw = $params['mismo_profesional'] ?? $mismoDefault;
         $mismoProf = $mismoRaw === '1' || $mismoRaw === 1 || $mismoRaw === true;
+        $idEfector = isset($params['id_efector']) && (int) $params['id_efector'] > 0
+            ? (int) $params['id_efector']
+            : (int) $turno->id_efector;
+        $idServicio = isset($params['id_servicio_asignado']) && (int) $params['id_servicio_asignado'] > 0
+            ? (int) $params['id_servicio_asignado']
+            : (int) $turno->id_servicio_asignado;
         $criteria = [
-            'id_servicio' => (int) $turno->id_servicio_asignado,
-            'id_efector' => (int) $turno->id_efector,
+            'id_servicio' => $idServicio,
+            'id_efector' => $idEfector,
             'fecha_desde' => date('Y-m-d'),
             'max_dias' => isset($params['max_dias']) && $params['max_dias'] !== ''
                 ? (int) $params['max_dias']
                 : $defaultsSlots['max_dias'],
             'min_minutos_desde_ahora' => $defaultsSlots['min_minutos_desde_ahora'],
         ];
-        if ($mismoProf && (int) $turno->id_profesional_efector_servicio > 0) {
+        $idPesParam = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
+        if ($idPesParam > 0) {
+            $criteria['id_profesional_efector_servicio'] = $idPesParam;
+        } elseif ($mismoProf && (int) $turno->id_profesional_efector_servicio > 0) {
             $criteria['id_profesional_efector_servicio'] = (int) $turno->id_profesional_efector_servicio;
         }
         $slots = TurnoSlotFinder::findAvailableSlots($criteria, max(1, $limit));
@@ -1348,6 +1510,9 @@ class TurnosController extends BaseController
         $canal = $post['canal'] ?? 'app';
         $life = new TurnoLifecycleService();
         try {
+            if ($turno->estado !== Turno::ESTADO_EN_RESOLUCION) {
+                (new TurnoAutogestionAnticipacionService())->assertPuedeCancelarPorApp($turno);
+            }
             $life->cancelar(
                 $turno,
                 Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE,
@@ -1356,7 +1521,8 @@ class TurnosController extends BaseController
                 [
                     'razon_cancelacion' => $razon,
                     'razon_cancelacion_label' => TurnoCancelacionRazones::etiquetaPacienteApp($razon),
-                ]
+                ],
+                false
             );
         } catch (PolicyModeradaException $e) {
             throw $e;
@@ -1379,6 +1545,9 @@ class TurnosController extends BaseController
         $idPersona = Yii::$app->user->getIdPersona();
         if ((int) $turno->id_persona !== (int) $idPersona) {
             throw new ForbiddenHttpException('No autorizado');
+        }
+        if ($turno->estado === Turno::ESTADO_EN_RESOLUCION) {
+            throw new BadRequestHttpException('Este turno está en resolución: usá el flujo de reubicación.');
         }
         $policy = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
         if ($policy->autogestionBloqueada($idPersona, (int) $turno->id_efector)) {

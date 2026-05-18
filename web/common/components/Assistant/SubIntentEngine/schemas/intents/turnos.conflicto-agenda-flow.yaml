@@ -17,9 +17,9 @@ intent_semantics:
   how: >-
     Lista de turnos con conflicto pendiente → elección antes/despues/cancelar → POST de resolución.
   preconditions:
-    - Turno pendiente con fila en turno_agenda_conflicto (estado pendiente).
+    - Turno EN_RESOLUCION por cambio de agenda con opciones vecinas (antes/después).
   outcome:
-    - Turno reprogramado a vecino en grilla o cancelado; conflicto cerrado.
+    - Turno vuelve a PENDIENTE en horario vecino o CANCELADO; resolución cerrada.
 
 subintents:
   - id: select_turno

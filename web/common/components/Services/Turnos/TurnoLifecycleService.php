@@ -7,6 +7,7 @@ use yii\db\Expression;
 use common\models\Turno;
 use common\models\TurnoNotificacionProgramada;
 use common\models\TurnoEventoAudit;
+use common\models\TurnoResolucion;
 
 class TurnoLifecycleService
 {
@@ -29,13 +30,26 @@ class TurnoLifecycleService
      * @param string $canal app|admin|telefono
      * @param array<string, mixed> $metaAudit opcional; se fusiona en {@see TurnoEventoAudit::registrar()} (p. ej. razon_cancelacion).
      */
-    public function cancelar(Turno $turno, $estadoMotivo, $canal = 'app', $idUser = null, array $metaAudit = [])
-    {
-        if ($turno->estado !== Turno::ESTADO_PENDIENTE) {
-            throw new \InvalidArgumentException('Solo se pueden cancelar turnos pendientes');
+    public function cancelar(
+        Turno $turno,
+        $estadoMotivo,
+        $canal = 'app',
+        $idUser = null,
+        array $metaAudit = [],
+        bool $notificarPacientePush = true
+    ) {
+        if (
+            $turno->estado !== Turno::ESTADO_PENDIENTE
+            && $turno->estado !== Turno::ESTADO_EN_RESOLUCION
+        ) {
+            throw new \InvalidArgumentException('Solo se pueden cancelar turnos pendientes o en resolución');
         }
 
-        if ($canal === 'app' && $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE) {
+        if (
+            $canal === 'app'
+            && $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE
+            && $turno->estado !== Turno::ESTADO_EN_RESOLUCION
+        ) {
             $policy = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
             if ($policy->autogestionBloqueada((int) $turno->id_persona, (int) $turno->id_efector)) {
                 throw new PolicyModeradaException(
@@ -55,19 +69,25 @@ class TurnoLifecycleService
 
         TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
 
+        $resPend = TurnoResolucion::findPendientePorTurno((int) $turno->id_turnos);
+        if ($resPend !== null) {
+            $resPend->estado = TurnoResolucion::ESTADO_CANCELADO;
+            $resPend->save(false);
+        }
+
         $tipo = $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE
             ? TurnoEventoAudit::TIPO_CANCEL_PAC
             : TurnoEventoAudit::TIPO_CANCEL_MED;
         $meta = array_merge($metaAudit, ['canal' => $canal]);
         TurnoEventoAudit::registrar($turno->id_turnos, $tipo, $idUser, $meta);
 
-        $push = new PushNotificationSender();
-        if ($turno->paciente && $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_MEDICO) {
+        if ($notificarPacientePush && $turno->paciente && $estadoMotivo === Turno::ESTADO_MOTIVO_CANCELADO_MEDICO) {
+            $push = new PushNotificationSender();
             $push->sendToPersona(
                 (int) $turno->id_persona,
                 ['type' => 'TURNO_CANCELADO_EFECTOR', 'id_turno' => (string) $turno->id_turnos],
                 'Turno cancelado por el consultorio',
-                'Tu turno del ' . $turno->fecha . ' fue cancelado. Podés reprogramar desde la app.'
+                'Tu turno del ' . $turno->fecha . ' fue cancelado.'
             );
         }
 

@@ -10,8 +10,8 @@ use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
-use common\components\Services\Turnos\TurnoAgendaConflictoElecciones;
-use common\components\Services\Turnos\TurnoAgendaConflictoService;
+use common\components\Services\Turnos\TurnoResolucionElecciones;
+use common\components\Services\Turnos\TurnoResolucionService;
 use common\components\UiScreenService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
@@ -530,10 +530,10 @@ class ProfesionalAgendaController extends BaseController
             $idPes = isset($params['id_profesional_efector_servicio']) && $params['id_profesional_efector_servicio'] !== ''
                 ? (int) $params['id_profesional_efector_servicio']
                 : null;
-            $rows = TurnoAgendaConflictoService::listarConflictosPendientesStaff($idEfector, $idPes);
+            $rows = TurnoResolucionService::listarEnResolucionStaff($idEfector, $idPes);
             $items = [];
             foreach ($rows as $row) {
-                $items[] = TurnoAgendaConflictoService::toListPickerItem($row);
+                $items[] = TurnoResolucionService::toListPickerItem($row);
             }
             $out = UiScreenService::withListBlockItems($out, $items);
         }
@@ -563,7 +563,7 @@ class ProfesionalAgendaController extends BaseController
             if ($idEfector <= 0) {
                 throw new BadRequestHttpException('Se requiere efector en sesión.');
             }
-            $conf = TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno($tid, null, $idEfector);
+            $res = TurnoResolucionElecciones::requireResolucionPendienteParaTurno($tid, null, $idEfector);
             $def = UiScreenService::renderUiDefinition(
                 'profesional-agenda',
                 'elegir-resolucion-conflicto-agenda-para-paciente',
@@ -571,7 +571,7 @@ class ProfesionalAgendaController extends BaseController
                 null
             );
 
-            return TurnoAgendaConflictoElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $conf);
+            return TurnoResolucionElecciones::aplicarOpcionesEleccionEnDefinicionUiJson($def, $res);
         }
 
         return UiScreenService::handleScreen(
@@ -585,14 +585,14 @@ class ProfesionalAgendaController extends BaseController
                     throw new BadRequestHttpException('id del turno requerido');
                 }
                 $eleccion = trim((string) ($post['eleccion'] ?? ''));
-                if ($eleccion === '' || !TurnoAgendaConflictoElecciones::esEleccionValida($eleccion)) {
+                if ($eleccion === '' || !TurnoResolucionElecciones::esEleccionValida($eleccion)) {
                     throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
                 }
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector <= 0) {
                     throw new BadRequestHttpException('Se requiere efector en sesión.');
                 }
-                TurnoAgendaConflictoElecciones::requireConflictoPendienteParaTurno($tid, null, $idEfector);
+                TurnoResolucionElecciones::requireResolucionPendienteParaTurno($tid, null, $idEfector);
 
                 return ['data' => ['ok' => true, 'id' => $tid, 'eleccion' => strtolower($eleccion)]];
             }
@@ -631,7 +631,7 @@ class ProfesionalAgendaController extends BaseController
 
         return [
             'success' => true,
-            'data' => TurnoAgendaConflictoService::resolverConflictoStaff($tid, $idEfector, $eleccion),
+            'data' => TurnoResolucionService::resolverConflictoStaff($tid, $idEfector, $eleccion),
         ];
     }
 

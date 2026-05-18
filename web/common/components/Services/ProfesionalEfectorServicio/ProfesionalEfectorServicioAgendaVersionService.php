@@ -5,7 +5,7 @@ namespace common\components\Services\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Turno;
-use common\models\TurnoAgendaConflicto;
+use common\components\Services\Turnos\TurnoResolucionService;
 use Yii;
 use yii\web\BadRequestHttpException;
 
@@ -117,7 +117,7 @@ final class ProfesionalEfectorServicioAgendaVersionService
         }
 
         self::sincronizarAgendaEspejo($idPes, $idEfector, $version);
-        self::crearConflictosDesdePreview((int) $version->id, $preview['conflictos'] ?? []);
+        TurnoResolucionService::crearDesdeCambioAgenda((int) $version->id, $preview['conflictos'] ?? []);
 
         return [
             'message' => 'Agenda guardada. Vigente desde ' . $vigenteDesde . '.',
@@ -125,36 +125,6 @@ final class ProfesionalEfectorServicioAgendaVersionService
             'id_agenda_version' => (int) $version->id,
             'preview' => $preview,
         ];
-    }
-
-    /**
-     * @param list<array<string, mixed>> $conflictos
-     */
-    private static function crearConflictosDesdePreview(int $idVersion, array $conflictos): void
-    {
-        foreach ($conflictos as $c) {
-            $idTurno = (int) ($c['id_turno'] ?? 0);
-            if ($idTurno <= 0) {
-                continue;
-            }
-            $existente = TurnoAgendaConflicto::find()
-                ->where([
-                    'id_turno' => $idTurno,
-                    'id_agenda_version' => $idVersion,
-                    'estado' => TurnoAgendaConflicto::ESTADO_PENDIENTE,
-                ])
-                ->exists();
-            if ($existente) {
-                continue;
-            }
-            $row = new TurnoAgendaConflicto();
-            $row->id_turno = $idTurno;
-            $row->id_agenda_version = $idVersion;
-            $row->estado = TurnoAgendaConflicto::ESTADO_PENDIENTE;
-            $row->opcion_hora_antes = self::horaParaDb($c['opcion_antes'] ?? null);
-            $row->opcion_hora_despues = self::horaParaDb($c['opcion_despues'] ?? null);
-            $row->save(false);
-        }
     }
 
     private static function sincronizarAgendaEspejo(int $idPes, int $idEfector, ProfesionalEfectorServicioAgendaVersion $version): void
@@ -230,7 +200,7 @@ final class ProfesionalEfectorServicioAgendaVersionService
         return Turno::find()
             ->where([
                 'id_profesional_efector_servicio' => $idPes,
-                'estado' => 'PENDIENTE',
+                'estado' => [Turno::ESTADO_PENDIENTE, Turno::ESTADO_EN_RESOLUCION],
             ])
             ->andWhere(['>=', 'fecha', $desdeYmd])
             ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
@@ -300,93 +270,4 @@ final class ProfesionalEfectorServicioAgendaVersionService
         return $msg;
     }
 
-  /**
-   * @param mixed $hora
-   */
-    private static function horaParaDb($hora): ?string
-    {
-        if ($hora === null || trim((string) $hora) === '') {
-            return null;
-        }
-
-        return TurnoAgendaConflicto::normalizarHora((string) $hora);
-    }
-
-    /**
-     * Resuelve conflicto del paciente: elige hora antes o después.
-     */
-    public static function resolverConflictoPaciente(int $idTurno, int $idPersona, string $eleccion): array
-    {
-        $eleccion = strtolower(trim($eleccion));
-        if (!in_array($eleccion, ['antes', 'despues', 'cancelar'], true)) {
-            throw new BadRequestHttpException('eleccion debe ser antes, despues o cancelar.');
-        }
-
-        /** @var TurnoAgendaConflicto|null $conf */
-        $conf = TurnoAgendaConflicto::find()
-            ->alias('c')
-            ->innerJoin(['t' => Turno::tableName()], 't.id_turnos = c.id_turno')
-            ->where([
-                'c.id_turno' => $idTurno,
-                'c.estado' => TurnoAgendaConflicto::ESTADO_PENDIENTE,
-                't.id_persona' => $idPersona,
-            ])
-            ->one();
-        if ($conf === null) {
-            throw new BadRequestHttpException('No hay conflicto pendiente para este turno.');
-        }
-
-        $turno = $conf->turno;
-        if ($turno === null) {
-            throw new BadRequestHttpException('Turno no encontrado.');
-        }
-
-        if ($eleccion === 'cancelar') {
-            $turno->estado = 'CANCELADO';
-            $turno->save(false);
-            $conf->estado = TurnoAgendaConflicto::ESTADO_CANCELADO;
-            $conf->save(false);
-
-            return ['message' => 'Turno cancelado.', 'estado' => 'cancelado'];
-        }
-
-        $hora = $eleccion === 'antes' ? $conf->opcion_hora_antes : $conf->opcion_hora_despues;
-        if ($hora === null || trim((string) $hora) === '') {
-            throw new BadRequestHttpException('La opción elegida no está disponible.');
-        }
-
-        $version = $conf->agendaVersion;
-        $intervalo = $version !== null ? $version->getIntervaloMinutosEfectivo() : AgendaIntervaloMinutos::DEFAULT;
-        $horaNorm = substr(TurnoAgendaConflicto::normalizarHora((string) $hora), 0, 5);
-        $fin = TurnoAgendaConflicto::sumarMinutos($horaNorm . ':00', $intervalo);
-
-        if (\common\components\Services\Turnos\TurnoSlotOccupancyService::haySolapamiento(
-            (int) $turno->id_profesional_efector_servicio,
-            (string) $turno->fecha,
-            $horaNorm . ':00',
-            $fin,
-            (int) $turno->id_turnos
-        )) {
-            throw new BadRequestHttpException('El horario elegido ya no está disponible.');
-        }
-
-        $turno->hora = $horaNorm . ':00';
-        $turno->hora_fin = $fin;
-        $turno->intervalo_minutos_reserva = $intervalo;
-        if ($version !== null) {
-            $turno->id_agenda_version = (int) $version->id;
-        }
-        $turno->save(false);
-
-        $conf->estado = TurnoAgendaConflicto::ESTADO_REPROGRAMADO;
-        $conf->hora_elegida = $hora;
-        $conf->save(false);
-
-        return [
-            'message' => 'Turno reprogramado a las ' . $horaNorm . '.',
-            'estado' => 'reprogramado',
-            'fecha' => $turno->fecha,
-            'hora' => $horaNorm,
-        ];
-    }
 }

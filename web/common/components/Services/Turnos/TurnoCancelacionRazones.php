@@ -29,13 +29,17 @@ final class TurnoCancelacionRazones
 
     /** @var list<string> */
     public const CODIGOS_MEDICO_APP = [
+        self::COD_MED_PACIENTE_SOLICITA_CANCELACION,
+        self::COD_MED_PACIENTE_AVISA_NO_ASISTE,
         self::COD_MED_AGENDA_EFECTOR,
         self::COD_MED_EMERGENCIA,
-        self::COD_MED_PACIENTE_AVISA_NO_ASISTE,
         self::COD_MED_RESUELTO_TELEMED,
         self::COD_MED_REASIGNACION,
         self::COD_MED_OTRO,
     ];
+
+    /** Cancelación cerrada sin ofrecer reubicación (pedido explícito del paciente sin app). */
+    public const COD_MED_PACIENTE_SOLICITA_CANCELACION = 'MED_PACIENTE_SOLICITA_CANCELACION';
 
     public const COD_PAC_ENFERMEDAD = 'PAC_ENFERMEDAD';
     public const COD_PAC_OTRO_COMPROMISO = 'PAC_OTRO_COMPROMISO';
@@ -67,6 +71,7 @@ final class TurnoCancelacionRazones
 
     /** @var array<string, string> */
     private const ETIQUETAS_MEDICO = [
+        self::COD_MED_PACIENTE_SOLICITA_CANCELACION => 'Cancelación solicitada por el paciente (sin app)',
         self::COD_MED_AGENDA_EFECTOR => 'Ajuste de agenda del consultorio',
         self::COD_MED_EMERGENCIA => 'Emergencia o fuerza mayor',
         self::COD_MED_PACIENTE_AVISA_NO_ASISTE => 'Paciente avisó que no asistirá',
@@ -123,8 +128,17 @@ final class TurnoCancelacionRazones
         return self::ETIQUETAS_MEDICO[$code] ?? $code;
     }
 
+    /** Cancelación inmediata (CANCELADO); no pasa por EN_RESOLUCION. */
+    public static function staffCancelacionDirecta(string $code): bool
+    {
+        return in_array($code, [
+            self::COD_MED_PACIENTE_SOLICITA_CANCELACION,
+            self::COD_MED_PACIENTE_AVISA_NO_ASISTE,
+        ], true);
+    }
+
     /**
-     * Completa `options` del campo `razon_cancelacion` en el descriptor ui_json (GET).
+     * Completa `options` del campo `razon_cancelacion` (paciente) en ui_json GET.
      *
      * @param array<string, mixed> $def
      * @return array<string, mixed>
@@ -145,6 +159,41 @@ final class TurnoCancelacionRazones
                     continue;
                 }
                 $f['options'] = self::pacienteAppOpcionesSelect();
+                $fields[$j] = $f;
+                $b['fields'] = $fields;
+                $blocks[$i] = $b;
+                $def['blocks'] = $blocks;
+
+                return $def;
+            }
+        }
+
+        return $def;
+    }
+
+    /**
+     * Completa `options` del campo `razon_cancelacion` (staff / MED_*) en ui_json GET.
+     *
+     * @param array<string, mixed> $def
+     * @return array<string, mixed>
+     */
+    public static function aplicarOpcionesRazonMedicoEnDefinicionUiJson(array $def): array
+    {
+        if (($def['kind'] ?? '') !== 'ui_definition' || ($def['ui_type'] ?? '') !== 'ui_json') {
+            return $def;
+        }
+        $blocks = isset($def['blocks']) && is_array($def['blocks']) ? $def['blocks'] : [];
+        foreach ($blocks as $i => $b) {
+            if (!is_array($b) || ($b['kind'] ?? '') !== 'fields') {
+                continue;
+            }
+            $fields = isset($b['fields']) && is_array($b['fields']) ? $b['fields'] : [];
+            foreach ($fields as $j => $f) {
+                if (!is_array($f) || ($f['name'] ?? '') !== 'razon_cancelacion') {
+                    continue;
+                }
+                $f['options'] = self::medicoAppOpcionesSelect();
+                $f['required'] = true;
                 $fields[$j] = $f;
                 $b['fields'] = $fields;
                 $blocks[$i] = $b;

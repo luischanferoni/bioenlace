@@ -6,7 +6,7 @@ use common\components\Services\ProfesionalEfectorServicio\AgendaIntervaloMinutos
 use common\components\Services\ProfesionalEfectorServicio\AgendaSlotEngine;
 use common\models\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Turno;
-use common\models\TurnoAgendaConflicto;
+use common\models\TurnoResolucion;
 
 /**
  * Normaliza fecha/hora PES desde slot_id y persiste intervalo, hora_fin e id_agenda_version.
@@ -73,7 +73,7 @@ final class TurnoReservaSlotService
             return;
         }
 
-        $horaNorm = substr(TurnoAgendaConflicto::normalizarHora($hora), 0, 5);
+        $horaNorm = substr(TurnoResolucion::normalizarHora($hora), 0, 5);
         $version = ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha($idPes, $fecha);
         $intervalo = $version !== null
             ? $version->getIntervaloMinutosEfectivo()
@@ -91,7 +91,7 @@ final class TurnoReservaSlotService
         }
 
         $horaDb = $horaNorm . ':00';
-        $fin = TurnoAgendaConflicto::sumarMinutos($horaDb, $intervalo);
+        $fin = TurnoResolucion::sumarMinutos($horaDb, $intervalo);
 
         if (!TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $horaNorm, $excluirIdTurno)) {
             throw new \InvalidArgumentException('El horario ya no está disponible.');

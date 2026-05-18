@@ -8,7 +8,7 @@
     {
       "kind": "fields",
       "id": "default",
-      "title": "Cancelar turno (gestión)",
+      "title": "Confirmar reubicación",
       "fields": [
         {
           "name": "id",
@@ -17,17 +17,22 @@
           "required": true
         },
         {
-          "name": "razon_cancelacion",
-          "label": "Motivo",
-          "type": "select",
+          "name": "slot_id",
+          "label": "Horario",
+          "type": "text",
           "required": true
         },
         {
-          "name": "canal",
-          "label": "Canal",
+          "name": "id_efector",
+          "label": "Centro",
           "type": "text",
-          "required": false,
-          "default": "web"
+          "required": false
+        },
+        {
+          "name": "id_servicio_asignado",
+          "label": "Servicio",
+          "type": "text",
+          "required": false
         }
       ]
     }

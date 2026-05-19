@@ -19,7 +19,26 @@ class BioCard extends StatelessWidget {
     this.shadow,
     this.onTap,
     this.color,
-  });
+  })  : _ribbonColor = null,
+        _ribbonWidth = 0;
+
+  // Constructor privado: borde uniforme + cinta lateral dibujada con un
+  // overlay para respetar `borderRadius` sin violar la regla de Flutter
+  // "A borderRadius can only be given on borders with uniform colors".
+  const BioCard._ribbon({
+    super.key,
+    required this.child,
+    this.padding = BioSpacing.card,
+    this.margin = EdgeInsets.zero,
+    this.onTap,
+    required Color ribbonColor,
+    double ribbonWidth = 4,
+  })  : border = null,
+        borderRadius = null,
+        shadow = null,
+        color = null,
+        _ribbonColor = ribbonColor,
+        _ribbonWidth = ribbonWidth;
 
   factory BioCard.emphasis({
     Key? key,
@@ -46,26 +65,12 @@ class BioCard extends StatelessWidget {
     VoidCallback? onTap,
   }) {
     final palette = IntentPalette.of(intent);
-    return BioCard(
+    return BioCard._ribbon(
       key: key,
       padding: padding,
       margin: margin,
       onTap: onTap,
-      border: Border(
-        top: const BorderSide(
-          color: PaperPalette.paper300,
-          width: BorderWidth.thin,
-        ),
-        right: const BorderSide(
-          color: PaperPalette.paper300,
-          width: BorderWidth.thin,
-        ),
-        bottom: const BorderSide(
-          color: PaperPalette.paper300,
-          width: BorderWidth.thin,
-        ),
-        left: BorderSide(color: palette.base, width: BorderWidth.thick),
-      ),
+      ribbonColor: palette.base,
       child: child,
     );
   }
@@ -78,12 +83,33 @@ class BioCard extends StatelessWidget {
   final List<BoxShadow>? shadow;
   final VoidCallback? onTap;
   final Color? color;
+  final Color? _ribbonColor;
+  final double _ribbonWidth;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
     final radius = borderRadius ?? BorderRadius.circular(BioRadius.sm);
     final effectiveBorder = border ?? BioBorder.paperDefault;
+
+    Widget body = Padding(padding: padding, child: child);
+
+    // Cinta lateral del intent dibujada como banda posicionada, dentro del
+    // ClipRRect (queda recortada por las esquinas redondeadas).
+    if (_ribbonColor != null) {
+      body = Stack(
+        children: [
+          body,
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: _ribbonWidth,
+            child: ColoredBox(color: _ribbonColor),
+          ),
+        ],
+      );
+    }
 
     final inner = Container(
       margin: margin,
@@ -95,7 +121,7 @@ class BioCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: radius,
-        child: Padding(padding: padding, child: child),
+        child: body,
       ),
     );
 

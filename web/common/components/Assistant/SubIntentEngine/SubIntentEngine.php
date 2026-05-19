@@ -64,91 +64,79 @@ final class SubIntentEngine
 
         $flowSubmitBlock = isset($intent['flow_submit']) && is_array($intent['flow_submit']) ? $intent['flow_submit'] : null;
 
-        // Determinar qué falta según requires.
-        $missing = self::missingDraftFields($current, $draft);
-        if ($missing !== []) {
-            // Abrir mini-UI del subintent actual (si está declarada).
-            $open = self::resolveOpenUiForSubintent($current, $content, $draft);
-            if ($open && !empty($open['action_id'])) {
-                return self::buildOpenUiResponse(
-                    $intentId,
-                    $currentId,
-                    $current,
-                    self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
-                    $userId,
-                    $open,
-                    $content,
-                    $flowSubmitBlock
-                );
+        // Avanzar mientras el paso actual esté completo. Detenerse en el primer paso pendiente
+        // (`missing != []`) o cuando se llegue al cierre del flow.
+        //
+        // Esto cubre dos escenarios: (1) recorrido lineal normal, donde cada paso tiene draft
+        // vacío al llegar (el loop se detiene en la primera iteración con `missing`); y (2)
+        // rebobinado del cliente (Cambio 1: cambiar la elección de un list anterior), donde el
+        // cliente reenvía el draft sin `subintent_id` y el motor debe saltar los pasos cuya
+        // selección ya esté presente hasta llegar al primer paso pendiente.
+        //
+        // Guard contra YAMLs mal formados (loop en `next_routing`).
+        $visited = [];
+        $maxHops = max(8, count($subintents) + 2);
+        $hops = 0;
+        while ($hops++ < $maxHops) {
+            if (isset($visited[$currentId])) {
+                // Loop en el YAML: corta y trata como cierre.
+                break;
             }
-            return self::withFlowManifest([
-                'success' => true,
-                'text' => 'Necesito más información para continuar.',
-                'intent_id' => $intentId,
-                'subintent_id' => $currentId,
-                'required_draft_fields' => $missing,
-                'draft_delta' => (object) [],
-            ], $intentId, $currentId);
-        }
+            $visited[$currentId] = true;
 
-        // Si el subintent provee algo y ya está en draft, avanzar al siguiente.
-        $next = self::resolveNextSubintentId($current, $draft);
-
-        if ($next !== '') {
-            $nextSub = self::findSubintent($subintents, $next);
-            if (is_array($nextSub)) {
-                $open = self::resolveOpenUiForSubintent($nextSub, $content, $draft);
+            $missing = self::missingDraftFields($current, $draft);
+            if ($missing !== []) {
+                $open = self::resolveOpenUiForSubintent($current, $content, $draft);
                 if ($open && !empty($open['action_id'])) {
                     return self::buildOpenUiResponse(
                         $intentId,
-                        (string) $nextSub['id'],
-                        $nextSub,
-                        self::assistantTextForPrompt($nextSub, 'Perfecto, sigamos con el siguiente paso.'),
+                        $currentId,
+                        $current,
+                        self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
                         $userId,
                         $open,
                         $content,
                         $flowSubmitBlock
                     );
                 }
-                // Siguiente paso sin open_ui: cierre de rama → mensaje de submit (botón sin UI previa).
-                $missingNext = self::missingDraftFields($nextSub, $draft);
-                $nextNext = isset($nextSub['next']) ? trim((string) $nextSub['next']) : '';
-                $hasOpenAction = is_array($open) && !empty($open['action_id']);
-                if ($missingNext === [] && !$hasOpenAction && $nextNext === '') {
-                    $nextIdStr = (string) ($nextSub['id'] ?? '');
-                    if ($flowSubmitBlock !== null && self::flowSubmitHasActionId($flowSubmitBlock)) {
-                        return self::buildTerminalSubmitOnlyResponse(
-                            $intentId,
-                            $nextIdStr,
-                            self::assistantTextForPrompt($nextSub, 'Confirmemos y enviemos.'),
-                            $flowSubmitBlock
-                        );
-                    }
-
-                    return self::withFlowManifest([
-                        'success' => true,
-                        'text' => self::assistantTextForPrompt($nextSub, 'Listo.'),
-                        'intent_id' => $intentId,
-                        'subintent_id' => $nextIdStr,
-                        'draft_delta' => (object) [],
-                    ], $intentId, $nextIdStr);
-                }
+                // Paso pendiente sin `open_ui` resoluble: pedir más info y cortar.
+                return self::withFlowManifest([
+                    'success' => true,
+                    'text' => 'Necesito más información para continuar.',
+                    'intent_id' => $intentId,
+                    'subintent_id' => $currentId,
+                    'required_draft_fields' => $missing,
+                    'draft_delta' => (object) [],
+                ], $intentId, $currentId);
             }
+
+            // Paso completo: intentar avanzar al siguiente.
+            $nextId = self::resolveNextSubintentId($current, $draft);
+            if ($nextId === '') {
+                break;
+            }
+            $nextSub = self::findSubintent($subintents, $nextId);
+            if (!is_array($nextSub)) {
+                break;
+            }
+            $current = $nextSub;
+            $currentId = (string) $current['id'];
         }
 
-        // No quedan pasos por delante: cierre por flow_submit (sin UI previa).
+        // Salida del loop: el flow no tiene más pasos por delante (o el "siguiente" es un stub
+        // sin `open_ui` ni `next`). Cierre por `flow_submit` si está declarado.
         if ($flowSubmitBlock !== null && self::flowSubmitHasActionId($flowSubmitBlock)) {
             return self::buildTerminalSubmitOnlyResponse(
                 $intentId,
                 $currentId,
-                'Confirmemos y enviemos.',
+                self::assistantTextForPrompt($current, 'Confirmemos y enviemos.'),
                 $flowSubmitBlock
             );
         }
 
         return self::withFlowManifest([
             'success' => true,
-            'text' => 'Listo.',
+            'text' => self::assistantTextForPrompt($current, 'Listo.'),
             'intent_id' => $intentId,
             'subintent_id' => $currentId,
             'draft_delta' => (object) [],

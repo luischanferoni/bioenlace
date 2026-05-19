@@ -16,7 +16,7 @@ class BioTokens extends ThemeExtension<BioTokens> {
     this.paperSurface = PaperPalette.paper50,
     this.paperSurfaceSunken = PaperPalette.paper100,
     this.paperBorderDefault = PaperPalette.paper300,
-    this.paperBorderEmphasis = PaperPalette.paper400,
+    this.paperBorderEmphasis = PaperPalette.paper700,
     this.paperDividerSubtle = PaperPalette.paper150,
     this.paperDividerDefault = PaperPalette.paper200,
     this.textTitle = PaperPalette.paper700,

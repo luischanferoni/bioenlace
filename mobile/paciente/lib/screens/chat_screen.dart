@@ -211,6 +211,11 @@ class ChatScreenState extends State<ChatScreen> {
   /// Cambio 1: al tocar un list de un paso anterior, se eliminan los mensajes
   /// posteriores del mismo flow y se limpian las keys del draft que esos pasos
   /// proveyeron (`flow_provides`). Luego el motor recalcula desde el paso editado.
+  ///
+  /// Importante: resetea también `_subintentId` (y el del service). Si no, el
+  /// próximo `procesarInteraccion('')` mandaría el `subintent_id` del último paso
+  /// que el cliente vió (p. ej. `elegir-slot`) y el motor intentaría retomar desde
+  /// ahí con un draft incompleto, en vez de recalcular desde el primer paso.
   void _truncateFlowAfter(int messageIndex) {
     if (messageIndex < 0 || messageIndex >= _chatHistory.length - 1) return;
     final activeIntent = _intentId;
@@ -243,6 +248,10 @@ class ChatScreenState extends State<ChatScreen> {
       _flowSnapshot.remove(k);
     }
     _asistenteService.draft = Map<String, dynamic>.from(_draft);
+    // Reset del subintent activo: el motor empezará desde subintents[0] y avanzará
+    // según el draft (que ahora refleja sólo lo que el usuario ya eligió).
+    _subintentId = null;
+    _asistenteService.currentSubintentId = null;
   }
 
   void _beginNewFlowActivation() {

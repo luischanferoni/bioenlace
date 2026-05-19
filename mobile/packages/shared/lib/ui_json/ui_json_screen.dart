@@ -274,7 +274,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   Map<String, dynamic>? _root;
   /// Selección pendiente en listados `ui_json` embebidos (antes de Confirmar).
   String? _listEmbedSelectedId;
-  /// Cuando se confirma/aplica un ítem, bloquear nuevas selecciones en este embed.
+  /// Bloqueo transitorio mientras se está aplicando el delta al padre. Se libera tras el
+  /// await para permitir cambiar la elección (Cambio 1: re-tap del list).
   bool _listEmbedLocked = false;
   bool _formSubmitted = false;
   bool _flowChainAutoScheduled = false;
@@ -424,12 +425,19 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         final m = Map<String, dynamic>.from(it);
         final id = m['id']?.toString() ?? '';
         if (id.isEmpty) continue;
-        setState(() => _listEmbedSelectedId = id);
-        await Future<void>.delayed(const Duration(milliseconds: 480));
-        if (!mounted || _listEmbedLocked) return;
-        await _applyListEmbedDraft(draftField, id, item: m);
-        if (mounted) {
-          setState(() => _listEmbedLocked = true);
+        // Re-entrada controlada por `_flowChainAutoScheduled`; el lock sólo durante el await.
+        setState(() {
+          _listEmbedSelectedId = id;
+          _listEmbedLocked = true;
+        });
+        try {
+          await Future<void>.delayed(const Duration(milliseconds: 480));
+          if (!mounted) return;
+          await _applyListEmbedDraft(draftField, id, item: m);
+        } finally {
+          if (mounted) {
+            setState(() => _listEmbedLocked = false);
+          }
         }
         return;
       }
@@ -1125,18 +1133,24 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                           if (_listEmbedLocked) return;
                           if (requiresConfirmation) {
                             setState(() => _listEmbedSelectedId = id);
-                          } else {
-                            setState(() => _listEmbedSelectedId = id);
-                            // Un solo ítem: dar tiempo a percibir la UI antes de avanzar el flow.
+                            return;
+                          }
+                          // Cambio 1: el lock es **transitorio**, sólo para evitar dobles
+                          // taps mientras se aplica el delta. Se libera al final del await
+                          // para permitir cambiar la elección (re-tap del mismo o de otro item).
+                          setState(() {
+                            _listEmbedSelectedId = id;
+                            _listEmbedLocked = true;
+                          });
+                          try {
                             if (items.length == 1) {
                               await Future<void>.delayed(const Duration(milliseconds: 480));
-                              if (!mounted || _listEmbedLocked) return;
+                              if (!mounted) return;
                             }
                             await _applyListEmbedDraft(draftField, id, item: m);
+                          } finally {
                             if (mounted) {
-                              setState(() {
-                                _listEmbedLocked = true;
-                              });
+                              setState(() => _listEmbedLocked = false);
                             }
                           }
                         },
@@ -1187,14 +1201,16 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                               break;
                             }
                           }
-                          await _applyListEmbedDraft(draftField, id, item: picked);
-                          if (mounted) {
-                            setState(() {
-                              _listEmbedLocked = true;
-                            });
+                          setState(() => _listEmbedLocked = true);
+                          try {
+                            await _applyListEmbedDraft(draftField, id, item: picked);
+                          } finally {
+                            if (mounted) {
+                              setState(() => _listEmbedLocked = false);
+                            }
                           }
                         },
-                  child: Text(_listEmbedLocked ? 'Confirmado' : 'Confirmar'),
+                  child: const Text('Confirmar'),
                 ),
               ],
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
 import '../services/notificaciones_service.dart';
@@ -114,7 +115,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: BioBottomNav(
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() => _selectedIndex = index);
@@ -122,20 +123,10 @@ class _MainScreenState extends State<MainScreen> {
             _refreshAlertasCount();
           }
         },
-        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            label: 'Asistente',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configuración',
-          ),
+          BioBottomNavItem(icon: Icons.home_outlined, label: 'Inicio'),
+          BioBottomNavItem(icon: Icons.chat_bubble_outline, label: 'Asistente'),
+          BioBottomNavItem(icon: Icons.settings_outlined, label: 'Configuración'),
         ],
       ),
     );

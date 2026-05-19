@@ -1,10 +1,8 @@
-// lib/screens/configuracion_screen.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
-import '../theme/paciente_theme_extensions.dart';
 import 'main_screen.dart';
 import 'signup_screen.dart';
 
@@ -27,170 +25,165 @@ class ConfiguracionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configuración'),
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
+      backgroundColor: tokens.paperBackground,
+      appBar: const BioAppBar(title: 'Configuración'),
+      body: ListView(
+        padding: BioSpacing.pageAll,
+        children: [
+          _buildCuentaCard(context),
+          BioSpacing.gapH(BioSpacing.lg),
+          _buildPreferenciasCard(context),
+          BioSpacing.gapH(BioSpacing.lg),
+          _buildCerrarSesionCard(context),
+        ],
       ),
-      body: Container(
-        color: cs.surface,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            Card(
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tu cuenta',
-                      style: tt.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Icon(Icons.person, color: cs.primary),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Usuario: $userName',
-                            style: tt.titleSmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.badge, color: cs.primary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'ID: $userId',
-                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+    );
+  }
+
+  Widget _buildCuentaCard(BuildContext context) {
+    final tokens = context.bio;
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    return BioCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tu cuenta',
+            style: BioTypography.title.copyWith(fontWeight: FontWeight.w700),
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          Row(
+            children: [
+              Icon(Icons.person_outline, color: primary, size: 20),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: Text('Usuario: $userName', style: BioTypography.body),
               ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              elevation: 0,
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.notifications_outlined, color: cs.primary),
-                    title: Text('Alertas', style: tt.titleSmall),
-                    subtitle: Text(
-                      alertasNoLeidas > 0
-                          ? '$alertasNoLeidas sin leer'
-                          : 'Avisos del consultorio y turnos',
-                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (alertasNoLeidas > 0)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: cs.error,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              alertasNoLeidas > 99 ? '99+' : '$alertasNoLeidas',
-                              style: tt.labelSmall?.copyWith(color: cs.onError),
-                            ),
-                          ),
-                        const Icon(Icons.chevron_right),
-                      ],
-                    ),
-                    onTap: onOpenAlertas != null
-                        ? onOpenAlertas
-                        : () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Iniciá sesión para ver alertas')),
-                            );
-                          },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.language, color: cs.primary),
-                    title: Text('Idioma', style: tt.titleSmall),
-                    subtitle: Text(
-                      'Español',
-                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Próximamente')),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.dark_mode_outlined, color: cs.primary),
-                    title: Text('Tema', style: tt.titleSmall),
-                    subtitle: Text(
-                      'Claro',
-                      style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Próximamente')),
-                      );
-                    },
-                  ),
-                ],
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          Row(
+            children: [
+              Icon(Icons.badge_outlined, color: primary, size: 20),
+              BioSpacing.gapW(BioSpacing.sm),
+              Text(
+                'ID: $userId',
+                style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
               ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              elevation: 0,
-              child: ListTile(
-                leading: Icon(Icons.logout, color: cs.error),
-                title: Text(
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreferenciasCard(BuildContext context) {
+    return BioCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          _ConfigTile(
+            icon: Icons.notifications_outlined,
+            title: 'Alertas',
+            subtitle: alertasNoLeidas > 0
+                ? '$alertasNoLeidas sin leer'
+                : 'Avisos del consultorio y turnos',
+            trailing: alertasNoLeidas > 0
+                ? BioBadge.danger(
+                    alertasNoLeidas > 99 ? '99+' : '$alertasNoLeidas',
+                  )
+                : null,
+            onTap: onOpenAlertas ??
+                () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Iniciá sesión para ver alertas'),
+                    ),
+                  );
+                },
+          ),
+          BioDivider.subtle(),
+          _ConfigTile(
+            icon: Icons.language_outlined,
+            title: 'Idioma',
+            subtitle: 'Español',
+            onTap: () => _proximamente(context),
+          ),
+          BioDivider.subtle(),
+          _ConfigTile(
+            icon: Icons.dark_mode_outlined,
+            title: 'Tema',
+            subtitle: 'Claro',
+            onTap: () => _proximamente(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCerrarSesionCard(BuildContext context) {
+    final danger = IntentPalette.of(UiIntent.danger).base;
+    return BioCard(
+      padding: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(BioRadius.sm),
+        onTap: () => _confirmarCerrarSesion(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BioSpacing.md,
+            vertical: BioSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.logout, color: danger, size: 22),
+              BioSpacing.gapW(BioSpacing.md),
+              Expanded(
+                child: Text(
                   'Cerrar sesión',
-                  style: tt.titleSmall?.copyWith(
-                    color: cs.error,
+                  style: BioTypography.title.copyWith(
+                    color: danger,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                onTap: () => _confirmarCerrarSesion(context),
               ),
-            ),
-          ],
+              Icon(Icons.chevron_right, color: context.bio.textMuted),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  void _proximamente(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Próximamente')),
+    );
+  }
+
   Future<void> _confirmarCerrarSesion(BuildContext context) async {
-    final cs = context.pacienteColors;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Cerrar sesión'),
         content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+        actionsPadding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.md,
+          vertical: BioSpacing.sm,
+        ),
         actions: [
-          TextButton(
+          BioButton(
+            label: 'Cancelar',
+            intent: UiIntent.neutral,
+            variant: BioButtonVariant.soft,
+            size: BioButtonSize.sm,
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
           ),
-          TextButton(
+          BioButton.danger(
+            label: 'Cerrar sesión',
+            size: BioButtonSize.sm,
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: cs.error),
-            child: const Text('Cerrar sesión'),
           ),
         ],
       ),
@@ -214,7 +207,6 @@ class ConfiguracionScreen extends StatelessWidget {
     );
   }
 
-  /// Construye la pantalla de login con la misma configuración que en main.dart
   Widget _buildLoginScreen(BuildContext context) {
     return LoginScreen(
       appTitle: 'Bienvenido a BioEnlace',
@@ -256,6 +248,63 @@ class ConfiguracionScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Fila de configuración con ícono, título, subtítulo y acción.
+class _ConfigTile extends StatelessWidget {
+  const _ConfigTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.bio;
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.md,
+          vertical: BioSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: primary, size: 22),
+            BioSpacing.gapW(BioSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: BioTypography.title),
+                  BioSpacing.gapH(2),
+                  Text(
+                    subtitle,
+                    style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            if (trailing != null) ...[
+              BioSpacing.gapW(BioSpacing.sm),
+              trailing!,
+            ],
+            BioSpacing.gapW(BioSpacing.xs),
+            Icon(Icons.chevron_right, color: tokens.textMuted),
+          ],
+        ),
+      ),
     );
   }
 }

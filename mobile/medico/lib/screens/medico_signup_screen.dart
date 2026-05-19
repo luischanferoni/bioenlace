@@ -83,8 +83,8 @@ class _MedicoSignupScreenState extends State<MedicoSignupScreen> {
       appBar: AppBar(
         backgroundColor: AppTheme.backgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.dark),
-        title: const Text(
+        iconTheme: IconThemeData(color: AppTheme.dark),
+        title: Text(
           'Registro de Médico',
           style: TextStyle(color: AppTheme.dark),
         ),
@@ -190,7 +190,7 @@ class _MedicoSignupScreenState extends State<MedicoSignupScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('• ',
+          Text('• ',
               style: TextStyle(color: AppTheme.dark, fontSize: 14)),
           Expanded(
             child: Text(

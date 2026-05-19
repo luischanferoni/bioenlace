@@ -45,7 +45,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
       _isLoading = true;
       _errorMessage = '';
     });
-
     try {
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
       final turnos = await _turnosService.getTurnosPorFecha(
@@ -80,17 +79,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   String _formatearFechaAmigable(DateTime fecha) {
     final hoy = DateTime.now();
-    final diferencia = fecha.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
-
-    if (diferencia == 0) {
-      return 'Hoy';
-    } else if (diferencia == 1) {
-      return 'Mañana';
-    } else if (diferencia == -1) {
-      return 'Ayer';
-    } else {
-      return DateFormat('EEEE, d \'de\' MMMM', 'es').format(fecha);
-    }
+    final diferencia =
+        fecha.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+    if (diferencia == 0) return 'Hoy';
+    if (diferencia == 1) return 'Mañana';
+    if (diferencia == -1) return 'Ayer';
+    return DateFormat('EEEE, d \'de\' MMMM', 'es').format(fecha);
   }
 
   Turno? _obtenerSiguienteTurno() {
@@ -105,129 +99,53 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
+  UiIntent _intentEstado(String estado) {
+    switch (estado) {
+      case 'PENDIENTE':
+        return UiIntent.warning;
+      case 'ATENDIDO':
+        return UiIntent.success;
+      case 'CANCELADO':
+        return UiIntent.danger;
+      case 'EN_ATENCION':
+        return UiIntent.info;
+      default:
+        return UiIntent.neutral;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
     final esHoy = _fechaSeleccionada.year == DateTime.now().year &&
         _fechaSeleccionada.month == DateTime.now().month &&
         _fechaSeleccionada.day == DateTime.now().day;
     final siguienteTurno = esHoy ? _obtenerSiguienteTurno() : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Turnos')),
+      appBar: const BioAppBar(title: 'Turnos'),
       body: Container(
-        color: AppTheme.backgroundColor,
+        color: tokens.paperBackground,
         child: Column(
           children: [
-            // Header con fecha y navegación
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              color: Colors.white,
-              child: Column(
-                children: [
-                  Text(
-                    _formatearFechaAmigable(_fechaSeleccionada),
-                    style: AppTheme.h2Style.copyWith(
-                      color: AppTheme.dark,
-                      fontSize: 20,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => _cambiarFecha(-1),
-                        icon: const Icon(Icons.chevron_left),
-                        label: const Text('Anterior'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.secondaryColor,
-                          side: const BorderSide(color: AppTheme.secondaryColor),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: _irAHoy,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.secondaryColor,
-                          side: const BorderSide(color: AppTheme.secondaryColor),
-                        ),
-                        child: const Text('Hoy'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => _cambiarFecha(1),
-                        icon: const Icon(Icons.chevron_right),
-                        label: const Text('Siguiente'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.secondaryColor,
-                          side: const BorderSide(color: AppTheme.secondaryColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            // Contenido
+            _buildHeader(),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _errorMessage.isNotEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                size: 48,
-                                color: AppTheme.dangerColor,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _errorMessage,
-                                style: AppTheme.subTitleStyle,
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: _cargarTurnos,
-                                child: const Text('Reintentar'),
-                              ),
-                            ],
-                          ),
-                        )
+                      ? _buildError()
                       : _turnos.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    size: 48,
-                                    color: AppTheme.infoColor,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No hay turnos programados para esta fecha.',
-                                    style: AppTheme.subTitleStyle,
-                                  ),
-                                ],
-                              ),
-                            )
+                          ? _buildEmpty()
                           : ListView(
-                              padding: const EdgeInsets.all(16.0),
+                              padding: const EdgeInsets.all(BioSpacing.lg),
                               children: [
-                                // Card de siguiente turno (solo si es hoy)
-                                if (siguienteTurno != null)
+                                if (siguienteTurno != null) ...[
                                   _buildSiguienteTurnoCard(siguienteTurno),
-                                if (siguienteTurno != null)
-                                  const SizedBox(height: 16),
-                                // Lista de turnos
+                                  BioSpacing.gapH(BioSpacing.lg),
+                                ],
                                 ..._turnos.map((turno) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 12.0),
+                                      padding: const EdgeInsets.only(
+                                          bottom: BioSpacing.md),
                                       child: _buildTurnoCard(turno),
                                     )),
                               ],
@@ -239,185 +157,219 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
-  Widget _buildSiguienteTurnoCard(Turno turno) {
-    return Card(
-      elevation: 0,
-      color: AppTheme.primaryColor.withOpacity(0.1),
-      child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildHeader() {
+    final tokens = context.bio;
+    return Container(
+      padding: const EdgeInsets.all(BioSpacing.lg),
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        border: BioBorder.bottom(BorderWidth.medium, tokens.paperBorderEmphasis),
+      ),
+      child: Column(
+        children: [
+          Text(
+            _formatearFechaAmigable(_fechaSeleccionada),
+            style: BioTypography.h3,
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    color: AppTheme.primaryColor,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Siguiente Turno',
-                    style: AppTheme.h3Style.copyWith(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+              BioButton(
+                label: 'Anterior',
+                icon: Icons.chevron_left,
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.outline,
+                size: BioButtonSize.sm,
+                onPressed: () => _cambiarFecha(-1),
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Paciente: ${turno.paciente?.nombreCompleto ?? "Sin paciente"}',
-                style: AppTheme.h5Style,
+              BioSpacing.gapW(BioSpacing.sm),
+              BioButton(
+                label: 'Hoy',
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.outline,
+                size: BioButtonSize.sm,
+                onPressed: _irAHoy,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Fecha: ${turno.fecha}',
-                style: AppTheme.subTitleStyle,
+              BioSpacing.gapW(BioSpacing.sm),
+              BioButton(
+                label: 'Siguiente',
+                iconRight: Icons.chevron_right,
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.outline,
+                size: BioButtonSize.sm,
+                onPressed: () => _cambiarFecha(1),
               ),
-              const SizedBox(height: 4),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: BioSpacing.pageAll,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BioAlert.danger(message: _errorMessage),
+            BioSpacing.gapH(BioSpacing.lg),
+            BioButton.primary(
+              label: 'Reintentar',
+              icon: Icons.refresh,
+              onPressed: _cargarTurnos,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    final tokens = context.bio;
+    return Center(
+      child: Padding(
+        padding: BioSpacing.pageAll,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.event_busy_outlined, size: 48, color: tokens.textMuted),
+            BioSpacing.gapH(BioSpacing.md),
+            Text(
+              'No hay turnos programados para esta fecha.',
+              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSiguienteTurnoCard(Turno turno) {
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    return BioCard.intent(
+      intent: UiIntent.primary,
+      onTap: () => _verHistoriaClinica(turno.idPersona,
+          parent: 'TURNO', parentId: turno.id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.calendar_today_outlined, color: primary, size: 22),
+              BioSpacing.gapW(BioSpacing.sm),
               Text(
-                'Hora: ${turno.hora}',
-                style: AppTheme.subTitleStyle,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Haz clic para ver la historia clínica',
-                style: AppTheme.subTitleStyle.copyWith(
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
+                'Siguiente turno',
+                style: BioTypography.h3.copyWith(
+                  color: primary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-        ),
+          BioSpacing.gapH(BioSpacing.md),
+          Text(
+            'Paciente: ${turno.paciente?.nombreCompleto ?? "Sin paciente"}',
+            style: BioTypography.title,
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text('Fecha: ${turno.fecha}', style: BioTypography.bodySm),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text('Hora: ${turno.hora}', style: BioTypography.bodySm),
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            'Tocá para ver la historia clínica',
+            style: BioTypography.caption.copyWith(
+              color: context.bio.textMuted,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildTurnoCard(Turno turno) {
-    return Card(
-      elevation: 0,
-      child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    final estadoIntent = _intentEstado(turno.estado);
+    return BioCard(
+      onTap: () => _verHistoriaClinica(turno.idPersona,
+          parent: 'TURNO', parentId: turno.id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.person,
-                    color: AppTheme.primaryColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      turno.paciente?.nombreCompleto ?? 'Sin paciente',
-                      style: AppTheme.h3Style,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: AppTheme.subTitleTextColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Hora: ${turno.hora}',
-                    style: AppTheme.subTitleStyle,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.local_hospital, size: 16, color: AppTheme.subTitleTextColor),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Servicio: ${turno.servicio ?? "Sin servicio"}',
-                      style: AppTheme.subTitleStyle,
-                    ),
-                  ),
-                ],
-              ),
-              if (turno.observaciones != null && turno.observaciones!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.note, size: 16, color: AppTheme.subTitleTextColor),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'Observaciones: ${turno.observaciones}',
-                        style: AppTheme.subTitleStyle.copyWith(fontSize: 11),
-                      ),
-                    ),
-                  ],
+              Icon(Icons.person_outline, color: primary, size: 22),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: Text(
+                  turno.paciente?.nombreCompleto ?? 'Sin paciente',
+                  style: BioTypography.h3,
                 ),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Chip(
-                    label: Text(
-                      turno.estadoLabel,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    backgroundColor: _getEstadoColor(turno.estado).withOpacity(0.2),
-                    labelStyle: TextStyle(color: _getEstadoColor(turno.estado)),
-                  ),
-                  if (turno.idConsulta != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.chat, size: 18),
-                        onPressed: () => _abrirChat(turno.idConsulta!, turno.paciente?.nombreCompleto ?? 'Paciente'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.secondaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        ),
-                        label: const Text('Chat'),
-                      ),
-                    ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.medical_services, size: 18),
-                    label: const Text('Historia clínica'),
-                    onPressed: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
+              ),
+              BioBadge(label: turno.estadoLabel, intent: estadoIntent),
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          _filaInfo(Icons.access_time, 'Hora: ${turno.hora}'),
+          BioSpacing.gapH(BioSpacing.xs),
+          _filaInfo(Icons.local_hospital_outlined,
+              'Servicio: ${turno.servicio ?? "Sin servicio"}'),
+          if (turno.observaciones != null && turno.observaciones!.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            _filaInfo(Icons.note_outlined,
+                'Observaciones: ${turno.observaciones}',
+                small: true),
+          ],
+          BioSpacing.gapH(BioSpacing.md),
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: BioSpacing.sm,
+            runSpacing: BioSpacing.xs,
+            children: [
+              if (turno.idConsulta != null)
+                BioButton(
+                  label: 'Chat',
+                  icon: Icons.chat_bubble_outline,
+                  intent: UiIntent.secondary,
+                  variant: BioButtonVariant.soft,
+                  size: BioButtonSize.sm,
+                  onPressed: () => _abrirChat(turno.idConsulta!,
+                      turno.paciente?.nombreCompleto ?? 'Paciente'),
+                ),
+              BioButton.outlinePrimary(
+                label: 'Historia clínica',
+                icon: Icons.medical_services_outlined,
+                size: BioButtonSize.sm,
+                onPressed: () => _verHistoriaClinica(turno.idPersona,
+                    parent: 'TURNO', parentId: turno.id),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Color _getEstadoColor(String estado) {
-    switch (estado) {
-      case 'PENDIENTE':
-        return AppTheme.warningColor;
-      case 'ATENDIDO':
-        return AppTheme.successColor;
-      case 'CANCELADO':
-        return AppTheme.dangerColor;
-      case 'EN_ATENCION':
-        return AppTheme.infoColor;
-      default:
-        return AppTheme.secondaryColor;
-    }
+  Widget _filaInfo(IconData icon, String text, {bool small = false}) {
+    final tokens = context.bio;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: tokens.textMuted),
+        BioSpacing.gapW(BioSpacing.xs),
+        Expanded(
+          child: Text(
+            text,
+            style: small ? BioTypography.caption : BioTypography.bodySm,
+          ),
+        ),
+      ],
+    );
   }
 
   void _verHistoriaClinica(int personaId, {String? parent, int? parentId}) {
@@ -450,4 +402,3 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 }
-

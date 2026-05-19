@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
 
 import '../services/notificaciones_service.dart';
 import '../services/push_notification_service.dart';
-import '../theme/paciente_theme_extensions.dart';
 
 /// Bandeja de alertas in-app del paciente.
 class AlertasScreen extends StatefulWidget {
@@ -78,62 +78,120 @@ class _AlertasScreenState extends State<AlertasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Alertas${_noLeidas > 0 ? ' ($_noLeidas)' : ''}'),
+      backgroundColor: tokens.paperBackground,
+      appBar: BioAppBar(
+        title: 'Alertas${_noLeidas > 0 ? ' ($_noLeidas)' : ''}',
         actions: [
           if (_noLeidas > 0)
-            TextButton(
-              onPressed: () async {
-                await _svc.marcarLeida();
-                await _cargar();
-              },
-              child: const Text('Marcar todas leídas'),
+            Padding(
+              padding: const EdgeInsets.only(right: BioSpacing.sm),
+              child: BioButton(
+                label: 'Marcar todas leídas',
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.soft,
+                size: BioButtonSize.sm,
+                onPressed: () async {
+                  await _svc.marcarLeida();
+                  await _cargar();
+                },
+              ),
             ),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
+              ? Padding(
+                  padding: BioSpacing.pageAll,
+                  child: BioAlert.danger(message: _error!),
+                )
               : RefreshIndicator(
                   onRefresh: _cargar,
                   child: _items.isEmpty
-                      ? ListView(
-                          children: [
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.3,
-                            ),
-                            Center(
-                              child: Text(
-                                'No tenés alertas.',
-                                style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                              ),
-                            ),
-                          ],
-                        )
-                      : ListView.builder(
+                      ? _buildEmpty(context)
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: BioSpacing.lg,
+                            vertical: BioSpacing.md,
+                          ),
                           itemCount: _items.length,
-                          itemBuilder: (context, i) {
-                            final item = _items[i];
-                            final leida = item['leida'] == true;
-                            return ListTile(
-                              tileColor: leida ? null : cs.secondaryContainer.withValues(alpha: 0.35),
-                              title: Text(
-                                item['titulo']?.toString() ?? '',
-                                style: TextStyle(
-                                  fontWeight: leida ? FontWeight.normal : FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(item['cuerpo']?.toString() ?? ''),
-                              onTap: () => _onTapItem(item),
-                            );
-                          },
+                          separatorBuilder: (_, __) =>
+                              BioSpacing.gapH(BioSpacing.sm),
+                          itemBuilder: (context, i) =>
+                              _buildItem(context, _items[i]),
                         ),
                 ),
+    );
+  }
+
+  Widget _buildEmpty(BuildContext context) {
+    final tokens = context.bio;
+    return ListView(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.18),
+        Padding(
+          padding: BioSpacing.pageAll,
+          child: BioCard(
+            color: tokens.paperSurfaceSunken,
+            child: Row(
+              children: [
+                Icon(Icons.notifications_none_outlined, color: tokens.textMuted),
+                BioSpacing.gapW(BioSpacing.md),
+                Expanded(
+                  child: Text(
+                    'No tenés alertas.',
+                    style: BioTypography.body,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildItem(BuildContext context, Map<String, dynamic> item) {
+    final leida = item['leida'] == true;
+    final titulo = item['titulo']?.toString() ?? '';
+    final cuerpo = item['cuerpo']?.toString() ?? '';
+
+    final contenido = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                titulo,
+                style: BioTypography.title.copyWith(
+                  fontWeight: leida ? FontWeight.w500 : FontWeight.w700,
+                ),
+              ),
+            ),
+            if (!leida) ...[
+              BioSpacing.gapW(BioSpacing.sm),
+              BioBadge(label: 'Nueva', intent: UiIntent.primary),
+            ],
+          ],
+        ),
+        if (cuerpo.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(cuerpo, style: BioTypography.bodySm),
+        ],
+      ],
+    );
+
+    if (leida) {
+      return BioCard(onTap: () => _onTapItem(item), child: contenido);
+    }
+    return BioCard.intent(
+      intent: UiIntent.primary,
+      onTap: () => _onTapItem(item),
+      child: contenido,
     );
   }
 }

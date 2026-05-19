@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
 
 import '../services/turnos_service.dart';
-import '../theme/paciente_theme_extensions.dart';
 import 'chat_medico_screen.dart';
 import 'chat_motivos_screen.dart';
 
@@ -71,7 +71,8 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     if (r1['success'] != true && r2['success'] != true) {
       setState(() {
         _loading = false;
-        _error = (r1['message'] ?? r2['message']) as String? ?? 'Error al cargar turnos';
+        _error = (r1['message'] ?? r2['message']) as String? ??
+            'Error al cargar turnos';
       });
       return;
     }
@@ -133,29 +134,25 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mis turnos'),
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
-        elevation: 0,
-      ),
+      backgroundColor: tokens.paperBackground,
+      appBar: const BioAppBar(title: 'Mis turnos'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null && _pendientes.isEmpty && _pasados.isEmpty
               ? Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: BioSpacing.pageAll,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(_error!, textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
+                        BioAlert.danger(message: _error!),
+                        BioSpacing.gapH(BioSpacing.lg),
+                        BioButton.primary(
+                          label: 'Reintentar',
+                          icon: Icons.refresh,
                           onPressed: _cargarInicial,
-                          child: const Text('Reintentar'),
                         ),
                       ],
                     ),
@@ -164,58 +161,53 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
               : RefreshIndicator(
                   onRefresh: _cargarInicial,
                   child: ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: BioSpacing.pageAll,
                     children: [
-                      if (_error != null)
+                      if (_error != null) ...[
+                        BioAlert.danger(message: _error!),
+                        BioSpacing.gapH(BioSpacing.md),
+                      ],
+                      _seccionTitle('Próximos'),
+                      BioSpacing.gapH(BioSpacing.sm),
+                      if (_pendientes.isEmpty)
+                        _empty('No tenés turnos próximos.'),
+                      ..._pendientes.map((t) => Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: BioSpacing.sm),
+                            child: _cardTurno(context, t),
+                          )),
+                      if (_loadingMasP) _loaderInline(),
+                      if (_hayMasP && !_loadingMasP)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(
-                            _error!,
-                            style: tt.bodySmall?.copyWith(color: cs.error),
+                          padding: const EdgeInsets.only(top: BioSpacing.sm),
+                          child: BioButton(
+                            label: 'Cargar más',
+                            intent: UiIntent.neutral,
+                            variant: BioButtonVariant.soft,
+                            size: BioButtonSize.sm,
+                            onPressed: _cargarMasPendientes,
                           ),
                         ),
-                      Text(
-                        'Próximos',
-                        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      if (_pendientes.isEmpty)
-                        Text(
-                          'No tenés turnos próximos.',
-                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                      ..._pendientes.map((t) => _cardTurno(context, t)),
-                      if (_loadingMasP)
-                        const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                        ),
-                      if (_hayMasP && !_loadingMasP)
-                        TextButton(
-                          onPressed: _cargarMasPendientes,
-                          child: const Text('Cargar más'),
-                        ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Anteriores',
-                        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      if (_pasados.isEmpty)
-                        Text(
-                          'No hay turnos anteriores.',
-                          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                        ),
-                      ..._pasados.map((t) => _cardTurno(context, t)),
-                      if (_loadingMasPa)
-                        const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                        ),
+                      BioSpacing.gapH(BioSpacing.xl),
+                      _seccionTitle('Anteriores'),
+                      BioSpacing.gapH(BioSpacing.sm),
+                      if (_pasados.isEmpty) _empty('No hay turnos anteriores.'),
+                      ..._pasados.map((t) => Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: BioSpacing.sm),
+                            child: _cardTurno(context, t),
+                          )),
+                      if (_loadingMasPa) _loaderInline(),
                       if (_hayMasPa && !_loadingMasPa)
-                        TextButton(
-                          onPressed: _cargarMasPasados,
-                          child: const Text('Cargar más'),
+                        Padding(
+                          padding: const EdgeInsets.only(top: BioSpacing.sm),
+                          child: BioButton(
+                            label: 'Cargar más',
+                            intent: UiIntent.neutral,
+                            variant: BioButtonVariant.soft,
+                            size: BioButtonSize.sm,
+                            onPressed: _cargarMasPasados,
+                          ),
                         ),
                     ],
                   ),
@@ -223,9 +215,32 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     );
   }
 
+  Widget _seccionTitle(String label) {
+    return Text(label, style: BioTypography.h3);
+  }
+
+  Widget _empty(String text) {
+    return Text(
+      text,
+      style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
+    );
+  }
+
+  Widget _loaderInline() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: BioSpacing.sm),
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+
   Widget _cardTurno(BuildContext context, Map<String, dynamic> t) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
     final tipoAtencion = t['tipo_atencion'] as String? ?? 'presencial';
     final idConsulta = t['id_consulta'];
     final puedeChat = tipoAtencion == 'teleconsulta' && idConsulta != null;
@@ -233,85 +248,100 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     final tituloMotivos = 'Motivos · ${t['fecha']} ${t['hora']}';
     final estado = t['estado_label']?.toString() ?? '';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${t['fecha']} · ${t['hora']}',
-              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            if (estado.isNotEmpty)
-              Text(
-                estado,
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+    final acciones = <Widget>[
+      if (puedeMotivos)
+        BioButton.outlinePrimary(
+          label: 'Cargar motivos',
+          size: BioButtonSize.sm,
+          icon: Icons.edit_note,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatMotivosScreen(
+                  consultaId: idConsulta as int,
+                  authToken: widget.authToken,
+                  userId: widget.userId,
+                  userName: widget.userName ?? 'Paciente',
+                  titulo: tituloMotivos,
+                ),
               ),
-            if (t['servicio'] != null)
-              Text(
-                t['servicio'].toString(),
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            );
+          },
+        ),
+      if (puedeChat)
+        BioButton.primary(
+          label: 'Abrir chat',
+          size: BioButtonSize.sm,
+          icon: Icons.chat_bubble_outline,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatMedicoScreen(
+                  consultaId: idConsulta as int,
+                  authToken: widget.authToken,
+                  userId: widget.userId,
+                  userName: widget.userName ?? 'Paciente',
+                  titulo: 'Chat con ${t['profesional'] ?? 'médico'}',
+                ),
               ),
-            if (t['profesional'] != null)
-              Text(
-                'Con: ${t['profesional']}',
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            );
+          },
+        ),
+    ];
+
+    return BioCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  '${t['fecha']} · ${t['hora']}',
+                  style: BioTypography.title,
+                ),
               ),
-            Text(
-              tipoAtencion == 'teleconsulta' ? 'Consulta por chat' : 'Presencial',
-              style: tt.labelSmall?.copyWith(
-                color: tipoAtencion == 'teleconsulta' ? cs.primary : cs.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                if (puedeMotivos)
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.edit_note, size: 18),
-                    label: const Text('Cargar motivos'),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatMotivosScreen(
-                            consultaId: idConsulta as int,
-                            authToken: widget.authToken,
-                            userId: widget.userId,
-                            userName: widget.userName ?? 'Paciente',
-                            titulo: tituloMotivos,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                if (puedeChat)
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.chat, size: 18),
-                    label: const Text('Abrir chat'),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ChatMedicoScreen(
-                            consultaId: idConsulta as int,
-                            authToken: widget.authToken,
-                            userId: widget.userId,
-                            userName: widget.userName ?? 'Paciente',
-                            titulo: 'Chat con ${t['profesional'] ?? 'médico'}',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+              if (estado.isNotEmpty) ...[
+                BioSpacing.gapW(BioSpacing.sm),
+                BioBadge.neutral(estado),
               ],
+            ],
+          ),
+          if (t['servicio'] != null) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(t['servicio'].toString(), style: BioTypography.bodySm),
+          ],
+          if (t['profesional'] != null) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              'Con: ${t['profesional']}',
+              style: BioTypography.bodySm,
             ),
           ],
-        ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            tipoAtencion == 'teleconsulta'
+                ? 'Consulta por chat'
+                : 'Presencial',
+            style: BioTypography.caption.copyWith(
+              color: tipoAtencion == 'teleconsulta'
+                  ? IntentPalette.of(UiIntent.primary).base
+                  : tokens.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (acciones.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.xs,
+              children: acciones,
+            ),
+          ],
+        ],
       ),
     );
   }

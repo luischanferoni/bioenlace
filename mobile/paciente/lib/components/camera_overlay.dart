@@ -3,7 +3,7 @@ import 'package:camera/camera.dart';
 import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
-import '../theme/paciente_theme_extensions.dart';
+import 'package:shared/shared.dart';
 
 class CameraOverlay extends StatefulWidget {
   final bool isSelfie;
@@ -96,7 +96,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Primero valida la posición presionando el botón de enfoque'),
-          backgroundColor: context.pacienteSemantic.warning,
+          backgroundColor: IntentPalette.of(UiIntent.warning).base,
         ),
       );
       return;
@@ -106,7 +106,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_validationMessage),
-          backgroundColor: context.pacienteSemantic.warning,
+          backgroundColor: IntentPalette.of(UiIntent.warning).base,
         ),
       );
       return;
@@ -125,7 +125,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error al capturar la imagen'),
-          backgroundColor: context.pacienteColors.error,
+          backgroundColor: IntentPalette.of(UiIntent.danger).base,
         ),
       );
     } finally {
@@ -562,8 +562,8 @@ class _CameraOverlayState extends State<CameraOverlay> {
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _isValidPosition 
-            ? context.pacienteSemantic.success.withValues(alpha: 0.9)
-            : context.pacienteSemantic.warning.withValues(alpha: 0.9),
+            ? IntentPalette.of(UiIntent.success).base.withValues(alpha: 0.9)
+            : IntentPalette.of(UiIntent.warning).base.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -636,7 +636,7 @@ class _CameraOverlayState extends State<CameraOverlay> {
             decoration: BoxDecoration(
               color: _isCapturing 
                   ? Theme.of(context).colorScheme.outline 
-                  : (_isValidPosition ? context.pacienteSemantic.success : Theme.of(context).colorScheme.primary),
+                  : (_isValidPosition ? IntentPalette.of(UiIntent.success).base : Theme.of(context).colorScheme.primary),
               shape: BoxShape.circle,
             ),
             child: _isCapturing

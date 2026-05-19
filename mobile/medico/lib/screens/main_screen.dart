@@ -70,22 +70,13 @@ class _MainScreenState extends State<MainScreen> {
         index: _selectedIndex,
         children: _buildScreens(),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: BioBottomNav(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bolt),
-            label: 'Acciones',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configuración',
-          ),
+          BioBottomNavItem(icon: Icons.home_outlined, label: 'Inicio'),
+          BioBottomNavItem(icon: Icons.bolt_outlined, label: 'Acciones'),
+          BioBottomNavItem(icon: Icons.settings_outlined, label: 'Configuración'),
         ],
       ),
     );

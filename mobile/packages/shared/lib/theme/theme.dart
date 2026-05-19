@@ -1,160 +1,327 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'tokens/tokens.dart';
+
+/// Tema único de BioEnlace ("papel" monocromático con acentos de marca).
+///
+/// Decisiones:
+/// - Fondo de pantalla `PaperPalette.paper50`.
+/// - AppBar fondo papel, alineado a la izquierda, con borde inferior en widget propio.
+/// - Tipografía: Open Sans (única familia), escala [BioTypography].
+/// - Sin dark mode.
+/// - Splash táctil cálido (no tinta primaria).
+/// - Acentos de marca solo en estados / CTAs.
 class AppTheme {
-  const AppTheme();
-  
-  // Definición de colores centralizados - Nueva paleta BioEnlace
-  // #0081A7 -> azul (primary)
-  static const Color primaryColor = Color(0xFF0081A7);
-  static const Color primaryColorDark = Color(0xffffffff);
-  // #00AFB9 -> celeste (secondary/info)
-  static const Color primaryColorLight = Color(0xFF00AFB9);
+  AppTheme._();
 
-  static const Color secondaryColor = Color(0xFF00AFB9);
-  static const Color secondaryContainerColor = Color(0xFF0081A7);
+  /// Acceso semántico a la paleta neutra (preferir `context.bio` cuando se pueda).
+  static const Color background = PaperPalette.paper50;
+  static const Color surface = PaperPalette.paper50;
+  static const Color surfaceSunken = PaperPalette.paper100;
+  static const Color borderDefault = PaperPalette.paper300;
+  static const Color borderEmphasis = PaperPalette.paper400;
+  static const Color textTitle = PaperPalette.paper700;
+  static const Color textBody = PaperPalette.paper600;
+  static const Color textMuted = PaperPalette.paper500;
 
-  static const Color successColor = Color(0xFF28A745);
-  // #F07167 -> rojo (danger)
-  static const Color dangerColor = Color(0xFFF07167);
-  // #FED9B7 -> naranja (warning)
-  static const Color warningColor = Color(0xFFFED9B7);
-  static const Color infoColor = Color(0xFF00AFB9);
-  // #fafafa -> gris claro (light/background)
-  static const Color light = Color(0xFFFAFAFA);
-  static const Color dark = Color(0xFF324356);
+  /// Acentos BioEnlace (uso quirúrgico: estados, CTAs primarios).
+  static Color get primary => IntentPalette.of(UiIntent.primary).base;
+  static Color get secondary => IntentPalette.of(UiIntent.secondary).base;
+  static Color get danger => IntentPalette.of(UiIntent.danger).base;
+  static Color get warning => IntentPalette.of(UiIntent.warning).base;
+  static Color get success => IntentPalette.of(UiIntent.success).base;
 
-  // #fafafa -> gris claro (background)
-  static const Color backgroundColor = Color(0xFFFAFAFA);
-  static const Color cardColor = Color.fromRGBO(255, 255, 255, 1);
-  static const Color titleTextColor = Color(0xFF0081A7);
-  static const Color subTitleTextColor = Color(0xff797878);
-  static const Color iconColor = Color(0xFF0081A7);
-  static const Color dividerColor = Color(0xFFE0E0E0);  
-  
-  
-  /// Color del placeholder (hint) en inputs - gris visible sobre fondo blanco
-  static const Color hintColor = Color(0xFF6C757D);
+  static ThemeData get lightTheme {
+    final colorScheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: primary,
+      onPrimary: IntentPalette.of(UiIntent.primary).onBase,
+      primaryContainer: IntentPalette.of(UiIntent.primary).softBg,
+      onPrimaryContainer: IntentPalette.of(UiIntent.primary).softFg,
+      secondary: secondary,
+      onSecondary: IntentPalette.of(UiIntent.secondary).onBase,
+      secondaryContainer: IntentPalette.of(UiIntent.secondary).softBg,
+      onSecondaryContainer: IntentPalette.of(UiIntent.secondary).softFg,
+      tertiary: warning,
+      onTertiary: IntentPalette.of(UiIntent.warning).onBase,
+      error: danger,
+      onError: IntentPalette.of(UiIntent.danger).onBase,
+      errorContainer: IntentPalette.of(UiIntent.danger).softBg,
+      onErrorContainer: IntentPalette.of(UiIntent.danger).softFg,
+      surface: surface,
+      onSurface: textTitle,
+      surfaceContainerHighest: surfaceSunken,
+      onSurfaceVariant: textBody,
+      outline: borderEmphasis,
+      outlineVariant: borderDefault,
+      shadow: PaperPalette.paper900,
+      scrim: const Color(0x4D1A1916),
+      inverseSurface: PaperPalette.paper700,
+      onInverseSurface: PaperPalette.paper50,
+      inversePrimary: IntentPalette.of(UiIntent.primary).softBg,
+      // Deprecados pero requeridos por algunas libs:
+      // ignore: deprecated_member_use
+      background: background,
+      // ignore: deprecated_member_use
+      onBackground: textBody,
+      // ignore: deprecated_member_use
+      surfaceVariant: surfaceSunken,
+    );
 
-  static ThemeData lightTheme = ThemeData.light().copyWith(
-    scaffoldBackgroundColor: backgroundColor,
-    primaryColor: primaryColor,
-    primaryColorDark: primaryColorDark,
-    primaryColorLight: primaryColorLight,
-    cardTheme: CardThemeData(
-      color: cardColor,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: primaryColor,
-      foregroundColor: primaryColorDark,
-      elevation: 0,
-      centerTitle: false,
-      titleTextStyle: GoogleFonts.openSans(
-        fontSize: 22,
-        fontWeight: FontWeight.w600,
-        color: primaryColorDark,
-      ),
-      iconTheme: IconThemeData(color: primaryColorDark),
-    ),
-    bottomNavigationBarTheme: BottomNavigationBarThemeData(
-      backgroundColor: cardColor,
-      selectedItemColor: primaryColor,
-      unselectedItemColor: subTitleTextColor,
-      type: BottomNavigationBarType.fixed,
-      elevation: 8,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
-        foregroundColor: primaryColorDark,
-        elevation: 2,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    ),
-    iconTheme: IconThemeData(color: iconColor),
-    dividerColor: dividerColor,
-    textTheme: GoogleFonts.openSansTextTheme(),
-    inputDecorationTheme: InputDecorationTheme(
-      hintStyle: GoogleFonts.openSans(
-        color: hintColor,
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-      ),
-      labelStyle: GoogleFonts.openSans(
-        color: dark,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-      ),
-      filled: true,
-      fillColor: cardColor,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: dividerColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor, width: 1.5),
-      ),
-    ),
-    snackBarTheme: SnackBarThemeData(
-      backgroundColor: dark,
-      contentTextStyle: GoogleFonts.openSans(color: Colors.white),
-      behavior: SnackBarBehavior.floating,
-    ),
-    colorScheme: ColorScheme(
-        primary: primaryColor,
-        primaryContainer: primaryColor,
-        secondary: secondaryColor,
-        secondaryContainer: secondaryContainerColor,
-        surface: backgroundColor,
-        background: backgroundColor,
-        error: dangerColor,
-        onPrimary: primaryColorDark,
-        onSecondary: Colors.white,
-        onSurface: dark,
-        onBackground: dark,
-        onError: Colors.white,
-        brightness: Brightness.light),
-  );
+    final textTheme = BioTypography.materialTextTheme();
 
-  static TextStyle titleStyle = GoogleFonts.openSans(
-    color: titleTextColor, 
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-  );
-  static TextStyle subTitleStyle = GoogleFonts.openSans(
-    color: subTitleTextColor, 
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-  );
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: background,
+      canvasColor: background,
+      dividerColor: borderDefault,
+      hintColor: textMuted,
+      splashColor: PaperPalette.paper300.withValues(alpha: 0.4),
+      highlightColor: PaperPalette.paper200,
+      splashFactory: InkRipple.splashFactory,
+      colorScheme: colorScheme,
+      textTheme: textTheme,
+      primaryTextTheme: textTheme,
+      fontFamily: GoogleFonts.openSans().fontFamily,
+      extensions: const <ThemeExtension<dynamic>>[
+        BioTokens.light,
+      ],
 
-  static TextStyle h1Style = GoogleFonts.openSans(
-    fontSize: 24, 
-    fontWeight: FontWeight.bold,
-  );
-  static TextStyle h2Style = GoogleFonts.openSans(
-    fontSize: 22,
-    fontWeight: FontWeight.w600,
-  );
-  static TextStyle h3Style = GoogleFonts.openSans(
-    fontSize: 20,
-    fontWeight: FontWeight.w600,
-  );
-  static TextStyle h4Style = GoogleFonts.openSans(
-    fontSize: 18,
-    fontWeight: FontWeight.w600,
-  );
-  static TextStyle h5Style = GoogleFonts.openSans(
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-  );
-  static TextStyle h6Style = GoogleFonts.openSans(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-  );
+      appBarTheme: AppBarTheme(
+        backgroundColor: surface,
+        foregroundColor: textTitle,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: BioTypography.h3,
+        toolbarTextStyle: BioTypography.body,
+        iconTheme: const IconThemeData(color: PaperPalette.paper700, size: 22),
+        actionsIconTheme:
+            const IconThemeData(color: PaperPalette.paper700, size: 22),
+      ),
+
+      iconTheme: const IconThemeData(color: PaperPalette.paper700, size: 22),
+
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: surface,
+        selectedItemColor: primary,
+        unselectedItemColor: textMuted,
+        selectedLabelStyle: BioTypography.caption.copyWith(
+          fontWeight: FontWeight.w600,
+          color: primary,
+        ),
+        unselectedLabelStyle: BioTypography.caption,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+      ),
+
+      cardTheme: CardThemeData(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+          side: const BorderSide(
+            color: borderDefault,
+            width: BorderWidth.thin,
+          ),
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: PaperPalette.paper200,
+        thickness: BorderWidth.thin,
+        space: 1,
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: surface,
+        hintStyle: BioTypography.body.copyWith(color: textMuted),
+        labelStyle: BioTypography.bodySm.copyWith(color: textBody),
+        helperStyle: BioTypography.caption,
+        errorStyle: BioTypography.caption.copyWith(color: danger),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.md,
+          vertical: BioSpacing.md,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+          borderSide: const BorderSide(
+            color: borderDefault,
+            width: BorderWidth.thin,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+          borderSide: const BorderSide(
+            color: borderDefault,
+            width: BorderWidth.thin,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+          borderSide: BorderSide(
+            color: primary,
+            width: BorderWidth.medium,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+          borderSide: BorderSide(
+            color: danger,
+            width: BorderWidth.thin,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+          borderSide: BorderSide(
+            color: danger,
+            width: BorderWidth.medium,
+          ),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+          borderSide: const BorderSide(
+            color: PaperPalette.paper200,
+            width: BorderWidth.thin,
+          ),
+        ),
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: PaperPalette.paper700,
+        contentTextStyle:
+            BioTypography.body.copyWith(color: PaperPalette.paper50),
+        behavior: SnackBarBehavior.floating,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(BioRadius.sm),
+        ),
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(BioRadius.md),
+          side: const BorderSide(
+            color: borderEmphasis,
+            width: BorderWidth.thin,
+          ),
+        ),
+        titleTextStyle: BioTypography.h3,
+        contentTextStyle: BioTypography.body,
+      ),
+
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: surface,
+        modalBackgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        modalElevation: 0,
+        modalBarrierColor: const Color(0x4D1A1916),
+        shape: RoundedRectangleBorder(
+          borderRadius: BioRadius.top(BioRadius.md),
+          side: const BorderSide(
+            color: borderEmphasis,
+            width: BorderWidth.thin,
+          ),
+        ),
+      ),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: surface,
+        selectedColor: IntentPalette.of(UiIntent.primary).softBg,
+        disabledColor: PaperPalette.paper100,
+        labelStyle: BioTypography.bodySm,
+        secondaryLabelStyle: BioTypography.bodySm.copyWith(
+          color: IntentPalette.of(UiIntent.primary).softFg,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(BioRadius.xs),
+          side: const BorderSide(
+            color: borderDefault,
+            width: BorderWidth.thin,
+          ),
+        ),
+        side: const BorderSide(
+          color: borderDefault,
+          width: BorderWidth.thin,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.sm,
+          vertical: BioSpacing.xs,
+        ),
+      ),
+
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: primary,
+        circularTrackColor: PaperPalette.paper200,
+        linearTrackColor: PaperPalette.paper200,
+      ),
+
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(
+          color: PaperPalette.paper700,
+          borderRadius: BorderRadius.circular(BioRadius.xs),
+        ),
+        textStyle:
+            BioTypography.caption.copyWith(color: PaperPalette.paper50),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.sm,
+          vertical: BioSpacing.xs,
+        ),
+      ),
+
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Compatibilidad temporal con el theme anterior (mientras se migran
+  // referencias estáticas: `AppTheme.primaryColor`, etc.). Estos getters
+  // mantienen la misma API y devuelven los nuevos tokens.
+  // ---------------------------------------------------------------------------
+
+  static Color get primaryColor => primary;
+  static Color get primaryColorDark => PaperPalette.paper50;
+  static Color get primaryColorLight => secondary;
+  static Color get secondaryColor => secondary;
+  static Color get secondaryContainerColor => primary;
+  static Color get successColor => success;
+  static Color get dangerColor => danger;
+  static Color get warningColor => warning;
+  static Color get infoColor => secondary;
+  static Color get light => PaperPalette.paper100;
+  static Color get dark => PaperPalette.paper700;
+  static Color get backgroundColor => background;
+  static Color get cardColor => surface;
+  static Color get titleTextColor => textTitle;
+  static Color get subTitleTextColor => textMuted;
+  static Color get iconColor => textTitle;
+  static Color get dividerColor => borderDefault;
+  static Color get hintColor => textMuted;
+
+  /// Estilos de texto históricos.
+  static TextStyle get titleStyle => BioTypography.title;
+  static TextStyle get subTitleStyle => BioTypography.caption;
+  static TextStyle get h1Style => BioTypography.h1;
+  static TextStyle get h2Style => BioTypography.h2;
+  static TextStyle get h3Style => BioTypography.h3;
+  static TextStyle get h4Style => BioTypography.title;
+  static TextStyle get h5Style => BioTypography.body;
+  static TextStyle get h6Style => BioTypography.caption;
 }
-

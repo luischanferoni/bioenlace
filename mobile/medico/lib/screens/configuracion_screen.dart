@@ -47,7 +47,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _currentEncounterCode = prefs.getString('encounter_class') ?? 'AMB';
-      _currentEncounterLabel = prefs.getString('encounter_class_label') ?? 'Ambulatoria';
+      _currentEncounterLabel =
+          prefs.getString('encounter_class_label') ?? 'Ambulatoria';
       _efectorId = prefs.getInt('efector_id');
       _servicioId = prefs.getInt('servicio_id');
     });
@@ -64,9 +65,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoadingClasses = false;
-        });
+        setState(() => _isLoadingClasses = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error al cargar áreas: $e')),
@@ -81,7 +80,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     if (_efectorId == null || _servicioId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Completa la configuración inicial (efector y servicio) para cambiar el área.'),
+          content: Text(
+              'Completá la configuración inicial (efector y servicio) para cambiar el área.'),
         ),
       );
       return;
@@ -96,8 +96,10 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         userId: widget.userId,
       );
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('encounter_class', sessionConfig.encounterClass.code);
-      await prefs.setString('encounter_class_label', sessionConfig.encounterClass.label);
+      await prefs.setString(
+          'encounter_class', sessionConfig.encounterClass.code);
+      await prefs.setString(
+          'encounter_class_label', sessionConfig.encounterClass.label);
       if (mounted) {
         setState(() {
           _currentEncounterCode = sessionConfig.encounterClass.code;
@@ -106,7 +108,9 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         });
         widget.onEncounterChanged?.call();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Área actualizada: ${sessionConfig.encounterClass.label}. Ve a Inicio para ver el cambio.')),
+          SnackBar(
+              content: Text(
+                  'Área actualizada: ${sessionConfig.encounterClass.label}. Andá a Inicio para ver el cambio.')),
         );
       }
     } catch (e) {
@@ -121,242 +125,296 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuración')),
+      appBar: const BioAppBar(title: 'Configuración'),
       body: Container(
-        color: AppTheme.backgroundColor,
+        color: tokens.paperBackground,
         child: ListView(
-          padding: const EdgeInsets.all(16.0),
+          padding: BioSpacing.pageAll,
           children: [
-            // Información del usuario
-            Card(
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Información del Usuario',
-                      style: AppTheme.h4Style.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Icon(Icons.person, color: AppTheme.primaryColor),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Usuario: ${widget.userName}',
-                          style: AppTheme.h5Style,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.badge, color: AppTheme.primaryColor),
-                        const SizedBox(width: 8),
-                        Text(
-                          'ID: ${widget.userId}',
-                          style: AppTheme.subTitleStyle,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            _buildUsuarioCard(),
+            BioSpacing.gapH(BioSpacing.md),
+            _buildAreaCard(),
+            BioSpacing.gapH(BioSpacing.md),
+            _buildOpcionesCard(),
+            BioSpacing.gapH(BioSpacing.md),
+            _buildCerrarSesionCard(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsuarioCard() {
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    return BioCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Información del usuario', style: BioTypography.h3),
+          BioSpacing.gapH(BioSpacing.md),
+          Row(
+            children: [
+              Icon(Icons.person_outline, color: primary, size: 20),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: Text('Usuario: ${widget.userName}',
+                    style: BioTypography.title),
               ),
-            ),
-            const SizedBox(height: 16),
-            // Área de trabajo (Encounter Class)
-            Card(
-              elevation: 0,
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Row(
+            children: [
+              Icon(Icons.badge_outlined, color: primary, size: 20),
+              BioSpacing.gapW(BioSpacing.sm),
+              Text('ID: ${widget.userId}', style: BioTypography.bodySm),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAreaCard() {
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    return BioCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Área de trabajo', style: BioTypography.h3),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            'Según el área, Inicio mostrará turnos, pacientes internados o ingresos en guardia.',
+            style: BioTypography.caption,
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          if (_isLoadingClasses)
+            const Center(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Área de trabajo',
-                      style: AppTheme.h4Style.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Según el área, la pantalla de Inicio mostrará turnos, pacientes internados o ingresos en guardia.',
-                      style: AppTheme.subTitleStyle.copyWith(fontSize: 12),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_isLoadingClasses)
-                      const Center(child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(),
-                      ))
-                    else ...[
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.medical_services, color: AppTheme.primaryColor),
-                        title: Text(_currentEncounterLabel, style: AppTheme.h5Style),
-                        subtitle: Text('Código: $_currentEncounterCode', style: AppTheme.subTitleStyle.copyWith(fontSize: 11)),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _encounterClasses.map((ec) {
-                          final isSelected = ec.code == _currentEncounterCode;
-                          return ChoiceChip(
-                            label: Text(ec.label),
-                            selected: isSelected,
-                            onSelected: _isLoadingEncounter
-                                ? null
-                                : (selected) {
-                                    if (selected) _changeEncounterClass(ec);
-                                  },
-                            selectedColor: AppTheme.primaryColor.withOpacity(0.3),
-                          );
-                        }).toList(),
-                      ),
-                      if (_isLoadingEncounter)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 12.0),
-                          child: Center(child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )),
-                        ),
+                padding: EdgeInsets.all(BioSpacing.md),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else ...[
+            Row(
+              children: [
+                Icon(Icons.medical_services_outlined,
+                    color: primary, size: 20),
+                BioSpacing.gapW(BioSpacing.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(_currentEncounterLabel, style: BioTypography.title),
+                      Text('Código: $_currentEncounterCode',
+                          style: BioTypography.caption),
                     ],
-                  ],
+                  ),
+                ),
+              ],
+            ),
+            BioSpacing.gapH(BioSpacing.md),
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.sm,
+              children: _encounterClasses.map((ec) {
+                final isSelected = ec.code == _currentEncounterCode;
+                return BioChip(
+                  label: ec.label,
+                  selected: isSelected,
+                  onTap: _isLoadingEncounter
+                      ? null
+                      : () => _changeEncounterClass(ec),
+                );
+              }).toList(),
+            ),
+            if (_isLoadingEncounter)
+              const Padding(
+                padding: EdgeInsets.only(top: BioSpacing.md),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 ),
               ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOpcionesCard() {
+    return BioCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          _ConfigTile(
+            icon: Icons.notifications_outlined,
+            title: 'Notificaciones',
+            subtitle: 'Gestionar notificaciones',
+            trailing: Switch(
+              value: true,
+              onChanged: (value) {
+                // TODO: Implementar gestión de notificaciones
+              },
             ),
-            const SizedBox(height: 16),
-            // Opciones de configuración
-            Card(
-              elevation: 0,
+          ),
+          const BioDivider(),
+          _ConfigTile(
+            icon: Icons.language_outlined,
+            title: 'Idioma',
+            subtitle: 'Español',
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showDevSnack(),
+          ),
+          const BioDivider(),
+          _ConfigTile(
+            icon: Icons.dark_mode_outlined,
+            title: 'Tema',
+            subtitle: 'Claro',
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _showDevSnack(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCerrarSesionCard() {
+    final danger = IntentPalette.of(UiIntent.danger).base;
+    return BioCard(
+      padding: EdgeInsets.zero,
+      child: _ConfigTile(
+        icon: Icons.logout,
+        iconColor: danger,
+        title: 'Cerrar sesión',
+        titleColor: danger,
+        onTap: _confirmarLogout,
+      ),
+    );
+  }
+
+  Future<void> _confirmarLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Seguro que querés cerrar sesión?'),
+        actions: [
+          BioButton(
+            label: 'Cancelar',
+            intent: UiIntent.neutral,
+            variant: BioButtonVariant.soft,
+            size: BioButtonSize.sm,
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          BioButton.danger(
+            label: 'Cerrar sesión',
+            size: BioButtonSize.sm,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_logged_in', false);
+      await prefs.remove('user_id');
+      await prefs.remove('user_name');
+
+      navigatorKey.currentState?.pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => LoginScreen(
+            appTitle: 'Bienvenido a BioEnlace Médico',
+            appSubtitle: 'Tu plataforma de gestión médica',
+            onLoginSuccess: (userId, userName, loginContext) async {
+              final p = await SharedPreferences.getInstance();
+              await p.setBool('is_logged_in', true);
+              await p.setString('user_id', userId);
+              await p.setString('user_name', userName);
+              navigatorKey.currentState?.pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => MainScreen(
+                    userId: userId,
+                    userName: userName,
+                    authToken: p.getString('auth_token'),
+                    idProfesionalEfectorServicio:
+                        p.getInt('id_profesional_efector_servicio')?.toString(),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showDevSnack() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Funcionalidad en desarrollo')),
+    );
+  }
+}
+
+class _ConfigTile extends StatelessWidget {
+  const _ConfigTile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.onTap,
+    this.iconColor,
+    this.titleColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  final Color? iconColor;
+  final Color? titleColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    final resolvedIcon = iconColor ?? primary;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.lg,
+          vertical: BioSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: resolvedIcon, size: 22),
+            BioSpacing.gapW(BioSpacing.md),
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListTile(
-                    leading: Icon(Icons.notifications, color: AppTheme.primaryColor),
-                    title: Text('Notificaciones', style: AppTheme.h5Style),
-                    subtitle: Text('Gestionar notificaciones', style: AppTheme.subTitleStyle),
-                    trailing: Switch(
-                      value: true,
-                      onChanged: (value) {
-                        // TODO: Implementar gestión de notificaciones
-                      },
-                    ),
+                  Text(
+                    title,
+                    style: BioTypography.title.copyWith(color: titleColor),
                   ),
-                  const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.language, color: AppTheme.primaryColor),
-                    title: Text('Idioma', style: AppTheme.h5Style),
-                    subtitle: Text('Español', style: AppTheme.subTitleStyle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Funcionalidad en desarrollo'),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: Icon(Icons.dark_mode, color: AppTheme.primaryColor),
-                    title: Text('Tema', style: AppTheme.h5Style),
-                    subtitle: Text('Claro', style: AppTheme.subTitleStyle),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Funcionalidad en desarrollo'),
-                        ),
-                      );
-                    },
-                  ),
+                  if (subtitle != null) ...[
+                    BioSpacing.gapH(2),
+                    Text(subtitle!, style: BioTypography.caption),
+                  ],
                 ],
               ),
             ),
-            
-            const SizedBox(height: 16),
-            
-            // Cerrar sesión
-            Card(
-              elevation: 0,
-              child: ListTile(
-                leading: Icon(Icons.logout, color: AppTheme.dangerColor),
-                title: Text(
-                  'Cerrar Sesión',
-                  style: AppTheme.h5Style.copyWith(
-                    color: AppTheme.dangerColor,
-                  ),
-                ),
-                onTap: () async {
-                  // Confirmar cierre de sesión
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Cerrar Sesión'),
-                      content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancelar'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppTheme.dangerColor,
-                          ),
-                          child: const Text('Cerrar Sesión'),
-                        ),
-                      ],
-                    ),
-                  );
-                  
-                  if (confirm == true) {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('is_logged_in', false);
-                    await prefs.remove('user_id');
-                    await prefs.remove('user_name');
-                    
-                    navigatorKey.currentState?.pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => LoginScreen(
-                          appTitle: 'Bienvenido a BioEnlace Médico',
-                          appSubtitle: 'Tu plataforma de gestión médica',
-                          onLoginSuccess: (userId, userName, loginContext) async {
-                            final p = await SharedPreferences.getInstance();
-                            await p.setBool('is_logged_in', true);
-                            await p.setString('user_id', userId);
-                            await p.setString('user_name', userName);
-                            navigatorKey.currentState?.pushReplacement(
-                              MaterialPageRoute(
-                                builder: (_) => MainScreen(
-                                  userId: userId,
-                                  userName: userName,
-                                  authToken: p.getString('auth_token'),
-                                  idProfesionalEfectorServicio:
-                                      p.getInt('id_profesional_efector_servicio')?.toString(),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ),
+            if (trailing != null) trailing!,
           ],
         ),
       ),
     );
   }
 }
-

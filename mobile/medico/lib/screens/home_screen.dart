@@ -44,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
   DateTime _fechaSeleccionada = DateTime.now();
 
   String _encounterClass = 'AMB';
-  // efector_id se conserva en prefs por otras pantallas (no se usa aquí).
 
   @override
   void initState() {
@@ -148,17 +147,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _formatearFechaAmigable(DateTime fecha) {
     final hoy = DateTime.now();
-    final diferencia = fecha.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
-
-    if (diferencia == 0) {
-      return 'Hoy';
-    } else if (diferencia == 1) {
-      return 'Mañana';
-    } else if (diferencia == -1) {
-      return 'Ayer';
-    } else {
-      return DateFormat('EEEE, d \'de\' MMMM', 'es').format(fecha);
-    }
+    final diferencia =
+        fecha.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+    if (diferencia == 0) return 'Hoy';
+    if (diferencia == 1) return 'Mañana';
+    if (diferencia == -1) return 'Ayer';
+    return DateFormat('EEEE, d \'de\' MMMM', 'es').format(fecha);
   }
 
   Turno? _obtenerSiguienteTurno() {
@@ -175,7 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Turnos pendientes (PENDIENTE), sin incluir el siguiente.
   List<Turno> _getPendientes(Turno? siguienteTurno) {
     final siguienteId = siguienteTurno?.id;
     return _turnos
@@ -186,7 +179,6 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
   }
 
-  /// Turnos ya cargados: ATENDIDO o EN_ATENCION.
   List<Turno> _getConsultasCargadas() {
     return _turnos
         .where((t) =>
@@ -195,115 +187,42 @@ class _HomeScreenState extends State<HomeScreen> {
         .toList();
   }
 
-  VoidCallback get _onRetry {
-    return _cargarListadoPacientes;
+  /// Mapeo estado del turno → intent semántico (UiBadge).
+  UiIntent _intentEstado(String estado) {
+    switch (estado) {
+      case 'PENDIENTE':
+        return UiIntent.warning;
+      case 'ATENDIDO':
+        return UiIntent.success;
+      case 'CANCELADO':
+        return UiIntent.danger;
+      case 'EN_ATENCION':
+        return UiIntent.info;
+      default:
+        return UiIntent.neutral;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
     final esHoy = _fechaSeleccionada.year == DateTime.now().year &&
         _fechaSeleccionada.month == DateTime.now().month &&
         _fechaSeleccionada.day == DateTime.now().day;
     final siguienteTurno = esHoy ? _obtenerSiguienteTurno() : null;
-    final puedeFiltrarFecha = _encounterClass == 'AMB' || _encounterClass == 'IMP';
+    final puedeFiltrarFecha =
+        _encounterClass == 'AMB' || _encounterClass == 'IMP';
 
     return Container(
-      color: AppTheme.backgroundColor,
+      color: tokens.paperBackground,
       child: Column(
         children: [
-          SafeArea(
-            bottom: false,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-              color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      _encounterClass == 'IMP'
-                          ? (_lastListKind == 'cirugias'
-                              ? 'Agenda quirúrgica'
-                              : 'Pacientes internados')
-                          : _encounterClass == 'EMER'
-                              ? 'Ingresos en guardia'
-                              : _formatearFechaAmigable(_fechaSeleccionada),
-                      style: AppTheme.h2Style.copyWith(color: AppTheme.dark, fontSize: 20),
-                    ),
-                  ),
-                  if (puedeFiltrarFecha)
-                    Row(
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () => _cambiarFecha(-1),
-                          icon: const Icon(Icons.chevron_left, size: 16),
-                          label: const Text('Anterior'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppTheme.secondaryColor,
-                            side: const BorderSide(color: AppTheme.secondaryColor),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: _irAHoy,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppTheme.secondaryColor,
-                            side: const BorderSide(color: AppTheme.secondaryColor),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                          child: const Text('Hoy'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          onPressed: () => _cambiarFecha(1),
-                          icon: const Icon(Icons.chevron_right, size: 16),
-                          label: const Text('Siguiente'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: AppTheme.secondaryColor,
-                            side: const BorderSide(color: AppTheme.secondaryColor),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                        ),
-                        if (_encounterClass == 'IMP') ...[
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: const Icon(Icons.refresh),
-                            onPressed: _isLoading ? null : _cargarListadoPacientes,
-                          ),
-                        ],
-                      ],
-                    )
-                  else if (_encounterClass == 'EMER')
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: _isLoading ? null : _cargarListadoPacientes,
-                    )
-                  else
-                    const SizedBox.shrink(),
-                ],
-              ),
-            ),
-          ),
+          _buildHeader(context, puedeFiltrarFecha),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage.isNotEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error_outline, size: 48, color: AppTheme.dangerColor),
-                            const SizedBox(height: 16),
-                            Text(_errorMessage, style: AppTheme.subTitleStyle, textAlign: TextAlign.center),
-                            const SizedBox(height: 16),
-                            ElevatedButton(onPressed: _onRetry, child: const Text('Reintentar')),
-                          ],
-                        ),
-                      )
+                    ? _buildError(context)
                     : _encounterClass == 'IMP'
                         ? (_lastListKind == 'cirugias'
                             ? _buildCirugiasList()
@@ -311,19 +230,125 @@ class _HomeScreenState extends State<HomeScreen> {
                         : _encounterClass == 'EMER'
                             ? _buildGuardiaList()
                             : _turnos.isEmpty
-                                ? Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.info_outline, size: 48, color: AppTheme.infoColor),
-                                        const SizedBox(height: 16),
-                                        Text('No hay turnos programados para esta fecha.', style: AppTheme.subTitleStyle),
-                                      ],
-                                    ),
+                                ? _buildEmpty(
+                                    icon: Icons.event_busy_outlined,
+                                    text: 'No hay turnos programados para esta fecha.',
                                   )
                                 : _buildTurnosPorEstado(siguienteTurno),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, bool puedeFiltrarFecha) {
+    final tokens = context.bio;
+    return SafeArea(
+      bottom: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.lg,
+          vertical: BioSpacing.lg,
+        ),
+        decoration: BoxDecoration(
+          color: tokens.paperSurface,
+          border: BioBorder.bottom(BorderWidth.medium, tokens.paperBorderEmphasis),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _encounterClass == 'IMP'
+                    ? (_lastListKind == 'cirugias'
+                        ? 'Agenda quirúrgica'
+                        : 'Pacientes internados')
+                    : _encounterClass == 'EMER'
+                        ? 'Ingresos en guardia'
+                        : _formatearFechaAmigable(_fechaSeleccionada),
+                style: BioTypography.h3,
+              ),
+            ),
+            if (puedeFiltrarFecha) ...[
+              BioButton(
+                label: 'Anterior',
+                icon: Icons.chevron_left,
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.outline,
+                size: BioButtonSize.sm,
+                onPressed: () => _cambiarFecha(-1),
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              BioButton(
+                label: 'Hoy',
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.outline,
+                size: BioButtonSize.sm,
+                onPressed: _irAHoy,
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              BioButton(
+                label: 'Siguiente',
+                iconRight: Icons.chevron_right,
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.outline,
+                size: BioButtonSize.sm,
+                onPressed: () => _cambiarFecha(1),
+              ),
+              if (_encounterClass == 'IMP') ...[
+                BioSpacing.gapW(BioSpacing.xs),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _isLoading ? null : _cargarListadoPacientes,
+                ),
+              ],
+            ] else if (_encounterClass == 'EMER')
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _isLoading ? null : _cargarListadoPacientes,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: BioSpacing.pageAll,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BioAlert.danger(message: _errorMessage),
+            BioSpacing.gapH(BioSpacing.lg),
+            BioButton.primary(
+              label: 'Reintentar',
+              icon: Icons.refresh,
+              onPressed: _cargarListadoPacientes,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmpty({required IconData icon, required String text}) {
+    final tokens = context.bio;
+    return Center(
+      child: Padding(
+        padding: BioSpacing.pageAll,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: tokens.textMuted),
+            BioSpacing.gapH(BioSpacing.md),
+            Text(
+              text,
+              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -334,36 +359,29 @@ class _HomeScreenState extends State<HomeScreen> {
     const maxCardWidth = 420.0;
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BioSpacing.lg,
+        vertical: BioSpacing.lg,
+      ),
       children: [
-        // Sección: Siguiente turno
         if (siguienteTurno != null) ...[
-          _buildSeccionSubtitulo('Siguiente turno'),
-          const SizedBox(height: 8),
+          _seccionSubtitulo('Siguiente turno'),
+          BioSpacing.gapH(BioSpacing.sm),
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: maxCardWidth),
               child: _buildSiguienteTurnoCard(siguienteTurno),
             ),
           ),
-          const SizedBox(height: 24),
+          BioSpacing.gapH(BioSpacing.xl),
         ],
-        // Sección: Pendientes
-        _buildSeccionSubtitulo('Pendientes'),
-        const SizedBox(height: 8),
+        _seccionSubtitulo('Pendientes'),
+        BioSpacing.gapH(BioSpacing.sm),
         if (pendientes.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: Text(
-                'No hay turnos pendientes.',
-                style: AppTheme.subTitleStyle,
-              ),
-            ),
-          )
+          _emptyInline('No hay turnos pendientes.')
         else
           ...pendientes.map((t) => Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
+                padding: const EdgeInsets.only(bottom: BioSpacing.md),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: maxCardWidth),
@@ -371,23 +389,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               )),
-        const SizedBox(height: 24),
-        // Sección: Consultas cargadas
-        _buildSeccionSubtitulo('Consultas cargadas'),
-        const SizedBox(height: 8),
+        BioSpacing.gapH(BioSpacing.xl),
+        _seccionSubtitulo('Consultas cargadas'),
+        BioSpacing.gapH(BioSpacing.sm),
         if (cargadas.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-              child: Text(
-                'No hay consultas cargadas.',
-                style: AppTheme.subTitleStyle,
-              ),
-            ),
-          )
+          _emptyInline('No hay consultas cargadas.')
         else
           ...cargadas.map((t) => Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
+                padding: const EdgeInsets.only(bottom: BioSpacing.md),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: maxCardWidth),
@@ -399,14 +408,23 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSeccionSubtitulo(String texto) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4.0),
-      child: Text(
-        texto,
-        style: AppTheme.h5Style.copyWith(
-          color: AppTheme.primaryColor,
-          fontWeight: FontWeight.bold,
+  Widget _seccionSubtitulo(String texto) {
+    return Text(
+      texto,
+      style: BioTypography.h3.copyWith(
+        color: IntentPalette.of(UiIntent.primary).base,
+        fontWeight: FontWeight.w700,
+      ),
+    );
+  }
+
+  Widget _emptyInline(String text) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: BioSpacing.md),
+        child: Text(
+          text,
+          style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
         ),
       ),
     );
@@ -414,38 +432,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCirugiasList() {
     if (_cirugias.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.medical_information_outlined, size: 48, color: AppTheme.infoColor),
-            const SizedBox(height: 16),
-            Text('No hay cirugías agendadas para esta fecha.', style: AppTheme.subTitleStyle),
-          ],
-        ),
+      return _buildEmpty(
+        icon: Icons.medical_information_outlined,
+        text: 'No hay cirugías agendadas para esta fecha.',
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
+    return ListView.separated(
+      padding: BioSpacing.pageAll,
       itemCount: _cirugias.length,
+      separatorBuilder: (_, __) => BioSpacing.gapH(BioSpacing.sm),
       itemBuilder: (context, index) {
         final c = _cirugias[index];
-        return Card(
-          elevation: 0,
-          child: ListTile(
-            leading: Icon(Icons.local_hospital, color: AppTheme.primaryColor),
-            title: Text(c.nombrePaciente, style: AppTheme.h5Style),
-            subtitle: Text(
-              [
-                if (c.salaNombre.isNotEmpty) 'Sala ${c.salaNombre}',
-                if (c.fechaHoraInicio != null) c.fechaHoraInicio!,
-                c.estadoLabel,
-              ].where((e) => e.isNotEmpty).join(' · '),
-              style: AppTheme.subTitleStyle,
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _verHistoriaClinicaCirugia(c),
-          ),
+        return _buildSimpleTile(
+          icon: Icons.local_hospital_outlined,
+          title: c.nombrePaciente,
+          subtitle: [
+            if (c.salaNombre.isNotEmpty) 'Sala ${c.salaNombre}',
+            if (c.fechaHoraInicio != null) c.fechaHoraInicio!,
+            c.estadoLabel,
+          ].where((e) => e.isNotEmpty).join(' · '),
+          onTap: () => _verHistoriaClinicaCirugia(c),
         );
       },
     );
@@ -453,36 +459,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildInternadosList() {
     if (_internados.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.bed, size: 48, color: AppTheme.infoColor),
-            const SizedBox(height: 16),
-            Text('No hay pacientes internados.', style: AppTheme.subTitleStyle),
-          ],
-        ),
+      return _buildEmpty(
+        icon: Icons.bed_outlined,
+        text: 'No hay pacientes internados.',
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
+    return ListView.separated(
+      padding: BioSpacing.pageAll,
       itemCount: _internados.length,
+      separatorBuilder: (_, __) => BioSpacing.gapH(BioSpacing.sm),
       itemBuilder: (context, index) {
         final i = _internados[index];
-        return Card(
-          elevation: 0,
-          child: ListTile(
-            leading: Icon(Icons.person, color: AppTheme.primaryColor),
-            title: Text(i.nombreCompleto, style: AppTheme.h5Style),
-            subtitle: Text(
-              [if (i.cama != null) 'Cama ${i.cama}', if (i.sala != null) 'Sala ${i.sala}', if (i.documento != null) 'Doc. ${i.documento}']
-                  .where((e) => e.isNotEmpty)
-                  .join(' · '),
-              style: AppTheme.subTitleStyle,
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _onTapSinTimeline(context),
-          ),
+        return _buildSimpleTile(
+          icon: Icons.person_outline,
+          title: i.nombreCompleto,
+          subtitle: [
+            if (i.cama != null) 'Cama ${i.cama}',
+            if (i.sala != null) 'Sala ${i.sala}',
+            if (i.documento != null) 'Doc. ${i.documento}',
+          ].where((e) => e.isNotEmpty).join(' · '),
+          onTap: () => _onTapSinTimeline(context),
         );
       },
     );
@@ -490,208 +486,180 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildGuardiaList() {
     if (_guardia.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.emergency, size: 48, color: AppTheme.infoColor),
-            const SizedBox(height: 16),
-            Text('No hay ingresos en guardia.', style: AppTheme.subTitleStyle),
-          ],
-        ),
+      return _buildEmpty(
+        icon: Icons.emergency_outlined,
+        text: 'No hay ingresos en guardia.',
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.all(16.0),
+    return ListView.separated(
+      padding: BioSpacing.pageAll,
       itemCount: _guardia.length,
+      separatorBuilder: (_, __) => BioSpacing.gapH(BioSpacing.sm),
       itemBuilder: (context, index) {
         final g = _guardia[index];
-        return Card(
-          elevation: 0,
-          child: ListTile(
-            leading: Icon(Icons.person, color: AppTheme.primaryColor),
-            title: Text(g.nombreCompleto, style: AppTheme.h5Style),
-            subtitle: Text(
-              [if (g.fecha != null) g.fecha!, if (g.hora != null) g.hora!, if (g.documento != null) 'Doc. ${g.documento}']
-                  .where((e) => e.isNotEmpty)
-                  .join(' · '),
-              style: AppTheme.subTitleStyle,
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _onTapSinTimeline(context),
-          ),
+        return _buildSimpleTile(
+          icon: Icons.person_outline,
+          title: g.nombreCompleto,
+          subtitle: [
+            if (g.fecha != null) g.fecha!,
+            if (g.hora != null) g.hora!,
+            if (g.documento != null) 'Doc. ${g.documento}',
+          ].where((e) => e.isNotEmpty).join(' · '),
+          onTap: () => _onTapSinTimeline(context),
         );
       },
     );
   }
 
-  Widget _buildSiguienteTurnoCard(Turno turno) {
-    return Card(
-      elevation: 0,
-      color: AppTheme.primaryColor.withOpacity(0.1),
-      child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
-                    color: AppTheme.primaryColor,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Siguiente Turno',
-                    style: AppTheme.h3Style.copyWith(
-                      color: AppTheme.primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+  Widget _buildSimpleTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    return BioCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, color: primary, size: 22),
+          BioSpacing.gapW(BioSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: BioTypography.title),
+                if (subtitle.isNotEmpty) ...[
+                  BioSpacing.gapH(2),
+                  Text(subtitle, style: BioTypography.bodySm),
                 ],
-              ),
-              const SizedBox(height: 12),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: context.bio.textMuted),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSiguienteTurnoCard(Turno turno) {
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    return BioCard.intent(
+      intent: UiIntent.primary,
+      onTap: () =>
+          _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.calendar_today_outlined, color: primary, size: 22),
+              BioSpacing.gapW(BioSpacing.sm),
               Text(
-                'Paciente: ${turno.paciente?.nombreCompleto ?? "Sin paciente"}',
-                style: AppTheme.h5Style,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Fecha: ${turno.fecha}',
-                style: AppTheme.subTitleStyle,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Hora: ${turno.hora}',
-                style: AppTheme.subTitleStyle,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Haz clic para ver la historia clínica',
-                style: AppTheme.subTitleStyle.copyWith(
-                  fontSize: 11,
-                  fontStyle: FontStyle.italic,
+                'Siguiente turno',
+                style: BioTypography.h3.copyWith(
+                  color: primary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-        ),
+          BioSpacing.gapH(BioSpacing.md),
+          Text(
+            'Paciente: ${turno.paciente?.nombreCompleto ?? "Sin paciente"}',
+            style: BioTypography.title,
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text('Fecha: ${turno.fecha}', style: BioTypography.bodySm),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text('Hora: ${turno.hora}', style: BioTypography.bodySm),
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            'Tocá para ver la historia clínica',
+            style: BioTypography.caption.copyWith(
+              color: context.bio.textMuted,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildTurnoCard(Turno turno) {
-    return Card(
-      elevation: 0,
-      child: InkWell(
-        onTap: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final tokens = context.bio;
+    final primary = IntentPalette.of(UiIntent.primary).base;
+    final estadoIntent = _intentEstado(turno.estado);
+    return BioCard(
+      onTap: () =>
+          _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.person,
-                    color: AppTheme.primaryColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      turno.paciente?.nombreCompleto ?? 'Sin paciente',
-                      style: AppTheme.h3Style,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: AppTheme.subTitleTextColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Hora: ${turno.hora}',
-                    style: AppTheme.subTitleStyle,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.local_hospital, size: 16, color: AppTheme.subTitleTextColor),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      'Servicio: ${turno.servicio ?? "Sin servicio"}',
-                      style: AppTheme.subTitleStyle,
-                    ),
-                  ),
-                ],
-              ),
-              if (turno.observaciones != null && turno.observaciones!.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.note, size: 16, color: AppTheme.subTitleTextColor),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'Observaciones: ${turno.observaciones}',
-                        style: AppTheme.subTitleStyle.copyWith(fontSize: 11),
-                      ),
-                    ),
-                  ],
+              Icon(Icons.person_outline, color: primary, size: 22),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: Text(
+                  turno.paciente?.nombreCompleto ?? 'Sin paciente',
+                  style: BioTypography.h3,
                 ),
-              ],
-              const Spacer(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Chip(
-                    label: Text(
-                      turno.estadoLabel,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                    backgroundColor: _getEstadoColor(turno.estado).withOpacity(0.2),
-                    labelStyle: TextStyle(color: _getEstadoColor(turno.estado)),
-                  ),
-                  TextButton.icon(
-                    icon: const Icon(Icons.medical_services, size: 18),
-                    label: const Text('Historia clínica'),
-                    onPressed: () => _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
               ),
+              BioBadge(label: turno.estadoLabel, intent: estadoIntent),
             ],
           ),
-        ),
+          BioSpacing.gapH(BioSpacing.md),
+          _filaInfo(Icons.access_time, 'Hora: ${turno.hora}'),
+          BioSpacing.gapH(BioSpacing.xs),
+          _filaInfo(
+            Icons.local_hospital_outlined,
+            'Servicio: ${turno.servicio ?? "Sin servicio"}',
+          ),
+          if (turno.observaciones != null && turno.observaciones!.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            _filaInfo(
+              Icons.note_outlined,
+              'Observaciones: ${turno.observaciones}',
+              small: true,
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.md),
+          Align(
+            alignment: Alignment.centerRight,
+            child: BioButton.outlinePrimary(
+              label: 'Historia clínica',
+              icon: Icons.medical_services_outlined,
+              size: BioButtonSize.sm,
+              onPressed: () => _verHistoriaClinica(
+                turno.idPersona,
+                parent: 'TURNO',
+                parentId: turno.id,
+              ),
+            ),
+          ),
+          // tokens used for layout consistency
+          if (tokens.textMuted == Colors.transparent) const SizedBox.shrink(),
+        ],
       ),
     );
   }
 
-  Color _getEstadoColor(String estado) {
-    switch (estado) {
-      case 'PENDIENTE':
-        return AppTheme.warningColor;
-      case 'ATENDIDO':
-        return AppTheme.successColor;
-      case 'CANCELADO':
-        return AppTheme.dangerColor;
-      case 'EN_ATENCION':
-        return AppTheme.infoColor;
-      default:
-        return AppTheme.secondaryColor;
-    }
+  Widget _filaInfo(IconData icon, String text, {bool small = false}) {
+    final tokens = context.bio;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: tokens.textMuted),
+        BioSpacing.gapW(BioSpacing.xs),
+        Expanded(
+          child: Text(
+            text,
+            style: (small ? BioTypography.caption : BioTypography.bodySm),
+          ),
+        ),
+      ],
+    );
   }
 
   static void _onTapSinTimeline(BuildContext context) {

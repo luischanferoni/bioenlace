@@ -11,7 +11,6 @@ import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../utils/turno_resolucion_utils.dart';
 import '../components/dynamic_form.dart';
-import '../theme/paciente_theme_extensions.dart';
 import 'chat_motivos_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -335,24 +334,28 @@ class ChatScreenState extends State<ChatScreen> {
 
   /// Encabezado del flujo: `action_name` pequeño centrado + línea a ancho completo.
   Widget _buildFlowChatHeader(BuildContext context, {required String title}) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final primary = IntentPalette.of(UiIntent.primary).base;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.lg,
+        BioSpacing.sm,
+        BioSpacing.lg,
+        0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             title,
             textAlign: TextAlign.center,
-            style: tt.titleSmall?.copyWith(
+            style: BioTypography.title.copyWith(
               fontWeight: FontWeight.w600,
-              color: cs.primary,
+              color: primary,
             ),
           ),
-          const SizedBox(height: 6),
+          BioSpacing.gapH(BioSpacing.xs + 2),
           Divider(
-            color: cs.primary.withValues(alpha: 0.85),
+            color: primary.withValues(alpha: 0.85),
             thickness: 2,
             height: 2,
           ),
@@ -367,19 +370,22 @@ class ChatScreenState extends State<ChatScreen> {
     String stepText, {
     bool muted = false,
   }) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
-    final stepColor = muted
-        ? cs.onSurfaceVariant.withValues(alpha: 0.72)
-        : cs.onSurface;
+    final tokens = context.bio;
+    final stepColor = muted ? tokens.textMuted : tokens.textTitle;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.lg,
+        BioSpacing.xs,
+        BioSpacing.lg,
+        0,
+      ),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
           stepText,
           textAlign: TextAlign.left,
-          style: tt.titleMedium?.copyWith(
+          style: BioTypography.title.copyWith(
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: stepColor,
           ),
@@ -908,14 +914,17 @@ class ChatScreenState extends State<ChatScreen> {
                   children: [
                     Text(
                       'No hay atajos disponibles.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                      style: BioTypography.bodySm.copyWith(
+                        color: context.bio.textMuted,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    TextButton(
+                    BioSpacing.gapH(BioSpacing.lg),
+                    BioButton(
+                      label: 'Cerrar',
+                      intent: UiIntent.neutral,
+                      variant: BioButtonVariant.soft,
+                      size: BioButtonSize.sm,
                       onPressed: () => Navigator.pop(sheetContext),
-                      child: const Text('Cerrar'),
                     ),
                   ],
                 ),
@@ -984,100 +993,99 @@ class ChatScreenState extends State<ChatScreen> {
     if (cats == null || cats.isEmpty) {
       return const SizedBox.shrink();
     }
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
+    final primary = IntentPalette.of(UiIntent.primary).base;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.lg,
+        BioSpacing.md,
+        BioSpacing.lg,
+        BioSpacing.md,
+      ),
       child: Align(
         alignment: Alignment.topCenter,
         child: FractionallySizedBox(
           widthFactor: 0.8,
-          child: Material(
-            color: cs.surface,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Podés elegir un atajo o escribir tu consulta abajo.',
-                  textAlign: TextAlign.start,
-                  style: tt.titleLarge?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...cats.map(
-                  (cat) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          cat.titulo,
-                          style: tt.titleMedium?.copyWith(
-                            decoration: TextDecoration.underline,
-                            color: cs.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          textAlign: TextAlign.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Podés elegir un atajo o escribir tu consulta abajo.',
+                textAlign: TextAlign.start,
+                style: BioTypography.h3.copyWith(color: tokens.textMuted),
+              ),
+              BioSpacing.gapH(BioSpacing.md),
+              ...cats.map(
+                (cat) => Padding(
+                  padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cat.titulo,
+                        style: BioTypography.title.copyWith(
+                          decoration: TextDecoration.underline,
+                          color: tokens.textMuted,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          alignment: WrapAlignment.start,
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: cat.items
-                              .map(
-                                (item) => ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 280),
-                                  child: Card(
-                                    elevation: 0,
-                                    color: cs.surfaceContainerHighest,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                      side: BorderSide(color: cs.outlineVariant),
-                                    ),
-                                    clipBehavior: Clip.antiAlias,
-                                    child: InkWell(
-                                      onTap: _isSending
-                                          ? null
-                                          : () => _startFlowFromShortcut(item.intentId, item.title),
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              item.title,
-                                              style: tt.titleSmall?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: cs.primary,
-                                              ),
-                                            ),
-                                            if (item.description.isNotEmpty) ...[
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                item.description,
-                                                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                                              ),
-                                            ],
-                                          ],
+                        textAlign: TextAlign.start,
+                      ),
+                      BioSpacing.gapH(BioSpacing.sm),
+                      Wrap(
+                        alignment: WrapAlignment.start,
+                        spacing: BioSpacing.sm,
+                        runSpacing: BioSpacing.sm,
+                        children: cat.items
+                            .map(
+                              (item) => ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 280),
+                                child: BioCard(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: BioSpacing.md,
+                                    vertical: BioSpacing.sm + 2,
+                                  ),
+                                  onTap: _isSending
+                                      ? null
+                                      : () => _startFlowFromShortcut(
+                                            item.intentId,
+                                            item.title,
+                                          ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        item.title,
+                                        style: BioTypography.title.copyWith(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: primary,
                                         ),
                                       ),
-                                    ),
+                                      if (item.description.isNotEmpty) ...[
+                                        BioSpacing.gapH(BioSpacing.xs),
+                                        Text(
+                                          item.description,
+                                          style: BioTypography.bodySm.copyWith(
+                                            color: tokens.textMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
-                              )
-                              .toList(),
-                        ),
-                      ],
-                    ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1688,11 +1696,14 @@ class ChatScreenState extends State<ChatScreen> {
           }
         }
         if (mounted) {
-          final csSnack = context.pacienteColors;
+          final palette = IntentPalette.of(UiIntent.primary);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(successText),
-              backgroundColor: csSnack.primary,
+              content: Text(
+                successText,
+                style: TextStyle(color: palette.onBase),
+              ),
+              backgroundColor: palette.base,
               duration: const Duration(seconds: 4),
             ),
           );
@@ -1735,26 +1746,28 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   void _showErrorSnackbar(String message) {
-    final cs = context.pacienteColors;
+    final palette = IntentPalette.of(UiIntent.danger);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: cs.error,
+        content: Text(message, style: TextStyle(color: palette.onBase)),
+        backgroundColor: palette.base,
         duration: const Duration(seconds: 3),
-      )
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
+    // `cs` y `tt` se mantienen como atajos sobre el theme global "papel",
+    // que ya resuelve primary/surface/onSurface/etc. desde los tokens.
+    // Permite que el resto de los subwidgets de esta pantalla siga usándolos.
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('BioEnlace'),
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
-        elevation: 0,
+      backgroundColor: tokens.paperBackground,
+      appBar: BioAppBar(
+        title: 'BioEnlace',
         actions: [
           IconButton(
             icon: const Icon(Icons.bookmarks_outlined),
@@ -2332,24 +2345,16 @@ class ChatScreenState extends State<ChatScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                         child: Align(
                           alignment: Alignment.centerLeft,
-                          child: ElevatedButton.icon(
+                          child: BioButton.primary(
+                            label: 'Confirmar y enviar',
+                            icon: Icons.check_circle_outline,
+                            loading: message['_flow_submit_busy'] == true,
                             onPressed: (flowUiDisabled ||
                                     flowCollapsing ||
                                     message['_flow_submit_busy'] == true ||
                                     _isSending)
                                 ? null
                                 : () => _postFlowSubmitFromMessage(index),
-                            icon: message['_flow_submit_busy'] == true
-                                ? SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: cs.onPrimary,
-                                    ),
-                                  )
-                                : const Icon(Icons.check_circle_outline),
-                            label: const Text('Confirmar y enviar'),
                           ),
                         ),
                       ),
@@ -2524,28 +2529,14 @@ class ChatScreenState extends State<ChatScreen> {
                           top: 0,
                           bottom: 0,
                         ),
-                        child: OutlinedButton.icon(
+                        child: BioButton.outlinePrimary(
+                          label: suggestedQuery,
+                          icon: Icons.lightbulb_outline,
+                          size: BioButtonSize.sm,
                           onPressed: () {
                             _messageController.text = suggestedQuery;
                             _sendMessage();
                           },
-                          icon: Icon(
-                            Icons.lightbulb_outline,
-                            size: 16,
-                            color: cs.primary,
-                          ),
-                          label: Text(
-                            suggestedQuery,
-                            style: tt.bodyMedium?.copyWith(color: cs.primary),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                              color: cs.primary.withValues(alpha: 0.5),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
                         ),
                       ),
                     ],

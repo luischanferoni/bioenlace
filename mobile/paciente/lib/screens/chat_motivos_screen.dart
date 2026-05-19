@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
+import 'package:shared/shared.dart';
 
 import '../services/motivos_consulta_service.dart';
-import '../theme/paciente_theme_extensions.dart';
 
 /// Chat para cargar motivos de consulta: texto, fotos y audio.
 /// El médico verá luego un resumen estructurado (proceso aparte en backend).
@@ -54,12 +54,20 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     _loadMessages();
   }
 
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadMessages() async {
     setState(() {
       _loading = true;
       _error = null;
     });
     final result = await _service.getMessages(widget.consultaId);
+    if (!mounted) return;
     setState(() {
       _loading = false;
       _messages = result['messages'] ?? [];
@@ -78,8 +86,8 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          duration: BioMotion.normal,
+          curve: BioMotion.standard,
         );
       }
     });
@@ -92,20 +100,13 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     setState(() => _sending = true);
 
     final result = await _service.sendMessage(widget.consultaId, text);
+    if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
       setState(() => _messages = [..._messages, result['data']]);
       _scrollToBottom();
     } else {
-      if (mounted) {
-        final cs = context.pacienteColors;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message']?.toString() ?? 'Error'),
-            backgroundColor: cs.error,
-          ),
-        );
-      }
+      _showError(result['message']?.toString() ?? 'Error');
     }
   }
 
@@ -120,56 +121,61 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     if (_isRecording) {
       final path = await _recorder.stop();
       setState(() => _isRecording = false);
-      if (path != null && path.isNotEmpty) await _uploadFile(File(path), 'audio');
+      if (path != null && path.isNotEmpty) {
+        await _uploadFile(File(path), 'audio');
+      }
       return;
     }
     if (!await _recorder.hasPermission()) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Se necesita permiso de micrófono')),
-        );
+        _showError('Se necesita permiso de micrófono');
       }
       return;
     }
     final dir = await getTemporaryDirectory();
-    final path = '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _recorder.start(const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100), path: path);
+    final path =
+        '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _recorder.start(
+      const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
+      path: path,
+    );
     setState(() => _isRecording = true);
   }
 
   Future<void> _uploadFile(File file, String messageType) async {
     if (!file.existsSync() || _sending) return;
     setState(() => _sending = true);
-    final result = await _service.uploadFile(widget.consultaId, file, messageType: messageType);
+    final result = await _service.uploadFile(
+      widget.consultaId,
+      file,
+      messageType: messageType,
+    );
+    if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
       setState(() => _messages = [..._messages, result['data']]);
       _scrollToBottom();
     } else {
-      if (mounted) {
-        final cs = context.pacienteColors;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message']?.toString() ?? 'Error'),
-            backgroundColor: cs.error,
-          ),
-        );
-      }
+      _showError(result['message']?.toString() ?? 'Error');
     }
+  }
+
+  void _showError(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: IntentPalette.of(UiIntent.danger).base,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
-    final onBubbleSecondary = cs.onPrimary.withValues(alpha: 0.72);
+    final tokens = context.bio;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.titulo),
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
-        elevation: 0,
-      ),
+      backgroundColor: tokens.paperBackground,
+      appBar: BioAppBar(title: widget.titulo),
       body: Column(
         children: [
           Expanded(
@@ -178,166 +184,197 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                 : _error != null
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(24.0),
+                          padding: BioSpacing.pageAll,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(_error!, textAlign: TextAlign.center),
-                              const SizedBox(height: 16),
-                              ElevatedButton(onPressed: _loadMessages, child: const Text('Reintentar')),
+                              BioAlert.danger(message: _error!),
+                              BioSpacing.gapH(BioSpacing.lg),
+                              BioButton.primary(
+                                label: 'Reintentar',
+                                icon: Icons.refresh,
+                                onPressed: _loadMessages,
+                              ),
                             ],
                           ),
                         ),
                       )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        itemCount: _messages.length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return Padding(
-                              padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
-                              child: Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: cs.primary.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: cs.primary.withValues(alpha: 0.2)),
-                                ),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(Icons.info_outline, color: cs.primary, size: 22),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        _welcomeMessage,
-                                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }
-                          final m = _messages[index - 1] as Map<String, dynamic>;
-                          final type = m['message_type'] as String? ?? 'texto';
-                          final content = m['content']?.toString() ?? '';
-
-                          return Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                              padding: const EdgeInsets.all(12),
-                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-                              decoration: BoxDecoration(
-                                color: cs.primary,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (type == 'texto')
-                                    Text(
-                                      content,
-                                      style: tt.bodyMedium?.copyWith(color: cs.onPrimary),
-                                    )
-                                  else if (type == 'imagen' && content.isNotEmpty)
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        content,
-                                        fit: BoxFit.cover,
-                                        width: 200,
-                                        loadingBuilder: (_, child, progress) => progress == null
-                                            ? child
-                                            : SizedBox(
-                                                height: 80,
-                                                width: 80,
-                                                child: Center(
-                                                  child: CircularProgressIndicator(color: onBubbleSecondary),
-                                                ),
-                                              ),
-                                        errorBuilder: (_, __, ___) =>
-                                            Icon(Icons.broken_image, color: onBubbleSecondary, size: 48),
-                                      ),
-                                    )
-                                  else if (type == 'audio')
-                                    Row(
-                                      children: [
-                                        Icon(Icons.mic, color: onBubbleSecondary),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Audio',
-                                          style: tt.labelSmall?.copyWith(color: onBubbleSecondary),
-                                        ),
-                                      ],
-                                    )
-                                  else
-                                    Text(
-                                      content,
-                                      style: tt.labelSmall?.copyWith(color: onBubbleSecondary),
-                                    ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _formatCreatedAt(m['created_at']),
-                                    style: tt.labelSmall?.copyWith(
-                                      color: onBubbleSecondary,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                    : _buildLista(context),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.image),
-                    onPressed: _sending ? null : _pickImage,
-                  ),
-                  IconButton(
-                    icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                    onPressed: _sending ? null : _recordAndSendAudio,
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      decoration: const InputDecoration(
-                        hintText: 'Escribí el motivo o enviá audio/foto...',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                      onSubmitted: (_) => _sendText(),
-                      enabled: !_sending,
-                    ),
-                  ),
-                  IconButton(
-                    icon: _sending
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.send),
-                    onPressed: _sending ? null : _sendText,
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _buildInputBar(context),
         ],
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    _scrollController.dispose();
-    super.dispose();
+  Widget _buildLista(BuildContext context) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(
+        vertical: BioSpacing.sm,
+        horizontal: BioSpacing.md,
+      ),
+      itemCount: _messages.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(
+              BioSpacing.xs,
+              BioSpacing.sm,
+              BioSpacing.xs,
+              BioSpacing.lg,
+            ),
+            child: BioAlert.info(
+              message: _welcomeMessage,
+              icon: Icons.info_outline,
+            ),
+          );
+        }
+        final m = _messages[index - 1] as Map<String, dynamic>;
+        return _buildBubblePropia(context, m);
+      },
+    );
+  }
+
+  Widget _buildBubblePropia(BuildContext context, Map<String, dynamic> m) {
+    final palette = IntentPalette.of(UiIntent.primary);
+    final type = m['message_type'] as String? ?? 'texto';
+    final content = m['content']?.toString() ?? '';
+    final softColor = palette.onBase.withValues(alpha: 0.78);
+
+    Widget child;
+    if (type == 'texto') {
+      child = Text(
+        content,
+        style: BioTypography.body.copyWith(color: palette.onBase),
+      );
+    } else if (type == 'imagen' && content.isNotEmpty) {
+      child = ClipRRect(
+        borderRadius: BorderRadius.circular(BioRadius.sm),
+        child: Image.network(
+          content,
+          fit: BoxFit.cover,
+          width: 200,
+          loadingBuilder: (_, child, progress) => progress == null
+              ? child
+              : SizedBox(
+                  height: 80,
+                  width: 80,
+                  child: Center(
+                    child: CircularProgressIndicator(color: softColor),
+                  ),
+                ),
+          errorBuilder: (_, __, ___) =>
+              Icon(Icons.broken_image, color: softColor, size: 48),
+        ),
+      );
+    } else if (type == 'audio') {
+      child = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.mic, color: softColor, size: 18),
+          BioSpacing.gapW(BioSpacing.sm),
+          Text(
+            'Audio',
+            style: BioTypography.bodySm.copyWith(color: softColor),
+          ),
+        ],
+      );
+    } else {
+      child = Text(
+        content,
+        style: BioTypography.bodySm.copyWith(color: softColor),
+      );
+    }
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+          vertical: BioSpacing.xs,
+          horizontal: BioSpacing.sm,
+        ),
+        padding: const EdgeInsets.all(BioSpacing.md),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: palette.base,
+          borderRadius: BorderRadius.circular(BioRadius.md),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            child,
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              _formatCreatedAt(m['created_at']),
+              style: BioTypography.caption.copyWith(
+                color: softColor,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInputBar(BuildContext context) {
+    final tokens = context.bio;
+    return Container(
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BioSpacing.sm,
+            vertical: BioSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.image_outlined),
+                color: tokens.textBody,
+                onPressed: _sending ? null : _pickImage,
+              ),
+              IconButton(
+                icon: Icon(_isRecording ? Icons.stop_circle : Icons.mic_none),
+                color: _isRecording
+                    ? IntentPalette.of(UiIntent.danger).base
+                    : tokens.textBody,
+                onPressed: _sending ? null : _recordAndSendAudio,
+              ),
+              Expanded(
+                child: TextField(
+                  controller: _textController,
+                  enabled: !_sending,
+                  decoration: const InputDecoration(
+                    hintText: 'Escribí el motivo o enviá audio/foto…',
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _sendText(),
+                ),
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              IconButton(
+                icon: _sending
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send),
+                color: IntentPalette.of(UiIntent.primary).base,
+                onPressed: _sending ? null : _sendText,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

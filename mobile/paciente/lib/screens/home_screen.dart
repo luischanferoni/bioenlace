@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
 
 import '../services/turnos_service.dart';
-import '../theme/paciente_theme_extensions.dart';
 import '../utils/turno_resolucion_utils.dart';
 import 'chat_motivos_screen.dart';
 
-/// Próximo turno pendiente respecto al calendario local (solo fecha, sin hora).
+/// Proximidad de un turno respecto al día actual (sólo fecha, sin hora).
 enum _ProximidadPendiente { hoy, manana, masAdelante }
 
-/// Pantalla de inicio del paciente: saludo y listados (próximos / anteriores) por pestañas.
+/// Pantalla de inicio del paciente: saludo + listado de próximos turnos
+/// (con `EN_RESOLUCION` priorizado) y, en otra pestaña, el historial.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -46,7 +47,6 @@ class HomeScreenState extends State<HomeScreen> {
   bool _loadingInicial = true;
   bool _loadingMasPendientes = false;
   bool _loadingMasPasados = false;
-  /// Recarga del listado al cambiar de pestaña (vuelve a pedir al backend).
   bool _refrescandoTabActivo = false;
   String? _error;
 
@@ -83,7 +83,7 @@ class HomeScreenState extends State<HomeScreen> {
   bool get _hayMasPendientes => _pendientes.length < _totalPendientes;
   bool get _hayMasPasados => _pasados.length < _totalPasados;
 
-  /// Próximos unificados: primero EN_RESOLUCION, luego PENDIENTE por fecha/hora.
+  /// Próximos unificados: primero EN_RESOLUCION, luego pendientes por fecha/hora.
   List<Map<String, dynamic>> get _proximosVisibles {
     final all = <Map<String, dynamic>>[..._enResolucion, ..._pendientes];
     all.sort((a, b) {
@@ -118,7 +118,6 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Primera carga: solo próximos (la pestaña Anteriores pide datos al entrar).
   /// Recarga próximos (incluye EN_RESOLUCION) tras resolver un turno en el asistente.
   Future<void> refrescarProximos() async {
     await _cargarInicial();
@@ -155,7 +154,6 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  /// Pull-to-refresh: actualiza próximos e historial.
   Future<void> _refrescoPullCompleto() async {
     setState(() {
       _error = null;
@@ -177,7 +175,8 @@ class HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     if (r1['success'] != true && r2['success'] != true) {
       setState(() {
-        _error = (r1['message'] ?? r2['message']) as String? ?? 'Error al cargar turnos';
+        _error =
+            (r1['message'] ?? r2['message']) as String? ?? 'Error al cargar turnos';
       });
       return;
     }
@@ -243,7 +242,6 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  /// Inicio combinado fecha+hora en horario local del dispositivo (alinea criterio con lo que ve el usuario).
   DateTime? _inicioTurnoLocal(Map<String, dynamic> t) {
     final fechaRaw = t['fecha'];
     String fechaStr;
@@ -286,11 +284,13 @@ class HomeScreenState extends State<HomeScreen> {
     return !d.isBefore(DateTime.now());
   }
 
-  List<Map<String, dynamic>> _filtrarPasadosLocales(List<Map<String, dynamic>> raw) {
+  List<Map<String, dynamic>> _filtrarPasadosLocales(
+      List<Map<String, dynamic>> raw) {
     return raw.where(_inicioEsEstrictamentePasadoLocal).toList();
   }
 
-  List<Map<String, dynamic>> _filtrarProximosLocales(List<Map<String, dynamic>> raw) {
+  List<Map<String, dynamic>> _filtrarProximosLocales(
+      List<Map<String, dynamic>> raw) {
     return raw.where(_inicioEsProximoOLocal).toList();
   }
 
@@ -386,37 +386,26 @@ class HomeScreenState extends State<HomeScreen> {
     return _ProximidadPendiente.masAdelante;
   }
 
-  ({Color bg, Color? border}) _coloresTarjetaProximo(
-    BuildContext context,
-    _ProximidadPendiente p,
-  ) {
-    final cs = context.pacienteColors;
-    final sem = context.pacienteSemantic;
+  /// Intent semántico para un turno próximo (decide el color de la cinta + badge).
+  UiIntent _intentProximidad(_ProximidadPendiente p) {
     switch (p) {
       case _ProximidadPendiente.hoy:
-        return (
-          bg: Color.alphaBlend(
-            cs.error.withValues(alpha: 0.12),
-            cs.surfaceContainerHighest,
-          ),
-          border: cs.error.withValues(alpha: 0.45),
-        );
+        return UiIntent.danger;
       case _ProximidadPendiente.manana:
-        return (
-          bg: Color.alphaBlend(
-            cs.tertiary.withValues(alpha: 0.14),
-            cs.surfaceContainerHighest,
-          ),
-          border: cs.tertiary.withValues(alpha: 0.4),
-        );
+        return UiIntent.info;
       case _ProximidadPendiente.masAdelante:
-        return (
-          bg: Color.alphaBlend(
-            sem.success.withValues(alpha: 0.10),
-            cs.surfaceContainerHighest,
-          ),
-          border: sem.success.withValues(alpha: 0.35),
-        );
+        return UiIntent.success;
+    }
+  }
+
+  String _labelProximidad(_ProximidadPendiente p) {
+    switch (p) {
+      case _ProximidadPendiente.hoy:
+        return 'Hoy';
+      case _ProximidadPendiente.manana:
+        return 'Mañana';
+      case _ProximidadPendiente.masAdelante:
+        return 'Próximamente';
     }
   }
 
@@ -497,367 +486,377 @@ class HomeScreenState extends State<HomeScreen> {
     return t;
   }
 
-  Widget _leyendaProximidad(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
-    final sem = context.pacienteSemantic;
-    Widget dot(Color c) => Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: c,
-            shape: BoxShape.circle,
-          ),
-        );
-    Widget item(Color c, String label) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            dot(c),
-            const SizedBox(width: 6),
-            Text(label, style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant)),
-          ],
-        );
+  Widget _leyenda(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 4),
+      padding: const EdgeInsets.only(top: BioSpacing.sm, bottom: BioSpacing.xs),
       child: Wrap(
-        spacing: 16,
-        runSpacing: 6,
-        children: [
-          item(cs.error, 'Hoy'),
-          item(cs.tertiary, 'Mañana'),
-          item(sem.success, 'Más adelante'),
-          item(cs.secondary, 'Requiere acción'),
+        spacing: BioSpacing.sm,
+        runSpacing: BioSpacing.xs,
+        children: const [
+          BioBadge(label: 'Hoy', intent: UiIntent.danger),
+          BioBadge(label: 'Mañana', intent: UiIntent.info),
+          BioBadge(label: 'Próximamente', intent: UiIntent.success),
+          BioBadge(label: 'En resolución', intent: UiIntent.warning),
         ],
       ),
     );
   }
 
-  ({Color bg, Color? border}) _coloresTarjetaEnResolucion(BuildContext context) {
-    final cs = context.pacienteColors;
-    return (
-      bg: Color.alphaBlend(
-        cs.secondary.withValues(alpha: 0.22),
-        cs.surfaceContainerHighest,
-      ),
-      border: cs.secondary.withValues(alpha: 0.65),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: tokens.paperBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refrescoPullCompleto,
           child: _loadingInicial
               ? const Center(child: CircularProgressIndicator())
               : _error != null && _pendientes.isEmpty && _pasados.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(_error!, textAlign: TextAlign.center),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: _cargarInicial,
-                              child: const Text('Reintentar'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : ListView(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${_saludo()}, ${widget.userName.split(',').first.trim()}',
-                                style: tt.headlineSmall?.copyWith(
-                                  color: cs.onSurface,
-                                ),
-                              ),
-                            ),
-                            if (widget.onOpenAlertas != null)
-                              IconButton(
-                                tooltip: 'Alertas',
-                                onPressed: widget.onOpenAlertas,
-                                icon: Badge(
-                                  isLabelVisible: widget.alertasNoLeidas > 0,
-                                  label: Text(
-                                    widget.alertasNoLeidas > 99
-                                        ? '99+'
-                                        : '${widget.alertasNoLeidas}',
-                                  ),
-                                  child: const Icon(Icons.notifications_outlined),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        if (_error != null &&
-                            (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty))
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Text(
-                              _error!,
-                              style: tt.bodySmall?.copyWith(color: cs.error),
-                            ),
-                          ),
-                        if (_proximosVisibles.isEmpty) ...[
-                          _buildCardSinTurnos(context),
-                          const SizedBox(height: 20),
-                        ],
-                        if (_refrescandoTabActivo)
-                          const Padding(
-                            padding: EdgeInsets.only(bottom: 8),
-                            child: LinearProgressIndicator(minHeight: 3),
-                          ),
-                        SegmentedButton<int>(
-                          segments: const [
-                            ButtonSegment<int>(
-                              value: 0,
-                              label: Text('Próximos'),
-                              icon: Icon(Icons.event_outlined, size: 18),
-                            ),
-                            ButtonSegment<int>(
-                              value: 1,
-                              label: Text('Anteriores'),
-                              icon: Icon(Icons.history, size: 18),
-                            ),
-                          ],
-                          selected: {_tabTurnos},
-                          onSelectionChanged: (Set<int> next) {
-                            final n = next.first;
-                            _alCambiarTab(n);
-                          },
-                          showSelectedIcon: false,
-                        ),
-                        if (_tabTurnos == 0) ...[
-                          _leyendaProximidad(context),
-                          const SizedBox(height: 8),
-                          if (_refrescandoTabActivo && _proximosVisibles.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                          ..._proximosVisibles.map((t) {
-                            final enRes = TurnoResolucionUtils.esEnResolucion(t);
-                            final prox = enRes ? null : _proximidadPendiente(t);
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: _buildTurnoCompacto(
-                                context,
-                                t,
-                                futuro: true,
-                                proximidad: prox,
-                                enResolucion: enRes,
-                              ),
-                            );
-                          }),
-                          if (_loadingMasPendientes)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                            ),
-                          if (_hayMasPendientes && !_loadingMasPendientes)
-                            TextButton(
-                              onPressed: _cargarMasPendientes,
-                              child: const Text('Cargar más'),
-                            ),
-                        ] else ...[
-                          const SizedBox(height: 12),
-                          if (_refrescandoTabActivo && _pasados.isEmpty)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                          if (!_refrescandoTabActivo && _pasados.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                'No hay turnos anteriores en tu historial.',
-                                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                              ),
-                            ),
-                          ..._pasados.map((t) => Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: _buildTurnoCompacto(context, t, futuro: false),
-                              )),
-                          if (_loadingMasPasados)
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 12),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                            ),
-                          if (_hayMasPasados && !_loadingMasPasados)
-                            TextButton(
-                              onPressed: _cargarMasPasados,
-                              child: const Text('Cargar más'),
-                            ),
-                        ],
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                  ? _buildErrorEstado(context)
+                  : _buildContenido(context),
         ),
       ),
     );
   }
 
-  Widget _buildTurnoCompacto(
+  Widget _buildErrorEstado(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: BioSpacing.pageAll,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BioAlert.danger(message: _error!),
+            BioSpacing.gapH(BioSpacing.lg),
+            BioButton.primary(
+              label: 'Reintentar',
+              onPressed: _cargarInicial,
+              icon: Icons.refresh,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContenido(BuildContext context) {
+    return ListView(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(
+        horizontal: BioSpacing.lg,
+        vertical: BioSpacing.xl,
+      ),
+      children: [
+        _buildHeaderSaludo(context),
+        BioSpacing.gapH(BioSpacing.xl),
+        if (_error != null &&
+            (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty)) ...[
+          BioAlert.danger(message: _error!),
+          BioSpacing.gapH(BioSpacing.md),
+        ],
+        if (_proximosVisibles.isEmpty && _tabTurnos == 0) ...[
+          _buildEmptyProximos(context),
+          BioSpacing.gapH(BioSpacing.lg),
+        ],
+        if (_refrescandoTabActivo)
+          const Padding(
+            padding: EdgeInsets.only(bottom: BioSpacing.sm),
+            child: LinearProgressIndicator(minHeight: 3),
+          ),
+        _buildSelectorTab(context),
+        if (_tabTurnos == 0) ...[
+          _leyenda(context),
+          BioSpacing.gapH(BioSpacing.sm),
+          if (_refrescandoTabActivo && _proximosVisibles.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: BioSpacing.xl),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ..._proximosVisibles.map((t) {
+            final enRes = TurnoResolucionUtils.esEnResolucion(t);
+            final prox = enRes ? null : _proximidadPendiente(t);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+              child: _buildTurnoCard(
+                context,
+                t,
+                futuro: true,
+                proximidad: prox,
+                enResolucion: enRes,
+              ),
+            );
+          }),
+          if (_loadingMasPendientes) _buildLoaderInline(),
+          if (_hayMasPendientes && !_loadingMasPendientes)
+            Padding(
+              padding: const EdgeInsets.only(top: BioSpacing.sm),
+              child: BioButton(
+                label: 'Cargar más',
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.soft,
+                size: BioButtonSize.sm,
+                onPressed: _cargarMasPendientes,
+              ),
+            ),
+        ] else ...[
+          BioSpacing.gapH(BioSpacing.md),
+          if (_refrescandoTabActivo && _pasados.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: BioSpacing.xl),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          if (!_refrescandoTabActivo && _pasados.isEmpty) ...[
+            _buildEmptyPasados(context),
+            BioSpacing.gapH(BioSpacing.sm),
+          ],
+          ..._pasados.map((t) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+                child: _buildTurnoCard(context, t, futuro: false),
+              )),
+          if (_loadingMasPasados) _buildLoaderInline(),
+          if (_hayMasPasados && !_loadingMasPasados)
+            Padding(
+              padding: const EdgeInsets.only(top: BioSpacing.sm),
+              child: BioButton(
+                label: 'Cargar más',
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.soft,
+                size: BioButtonSize.sm,
+                onPressed: _cargarMasPasados,
+              ),
+            ),
+        ],
+        BioSpacing.gapH(BioSpacing.xl),
+      ],
+    );
+  }
+
+  Widget _buildHeaderSaludo(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            '${_saludo()}, ${widget.userName.split(',').first.trim()}',
+            style: BioTypography.h2,
+          ),
+        ),
+        if (widget.onOpenAlertas != null)
+          IconButton(
+            tooltip: 'Alertas',
+            onPressed: widget.onOpenAlertas,
+            icon: Badge(
+              isLabelVisible: widget.alertasNoLeidas > 0,
+              backgroundColor: IntentPalette.of(UiIntent.danger).base,
+              label: Text(
+                widget.alertasNoLeidas > 99 ? '99+' : '${widget.alertasNoLeidas}',
+              ),
+              child: const Icon(Icons.notifications_outlined),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSelectorTab(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: BioChip(
+            label: 'Próximos',
+            icon: Icons.event_outlined,
+            selected: _tabTurnos == 0,
+            onTap: () => _alCambiarTab(0),
+          ),
+        ),
+        BioSpacing.gapW(BioSpacing.sm),
+        Expanded(
+          child: BioChip(
+            label: 'Anteriores',
+            icon: Icons.history,
+            selected: _tabTurnos == 1,
+            onTap: () => _alCambiarTab(1),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoaderInline() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: BioSpacing.sm),
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTurnoCard(
     BuildContext context,
     Map<String, dynamic> t, {
     required bool futuro,
     _ProximidadPendiente? proximidad,
     bool enResolucion = false,
   }) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
+    final tokens = context.bio;
     final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
     final idConsulta = futuro ? _idConsultaDesdeTurno(t) : null;
 
-    Color bg;
-    Color? borderColor;
+    final cabecera = Text(
+      '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
+      style: BioTypography.title,
+    );
+
+    final servicio = t['servicio'] != null
+        ? Text(t['servicio'].toString(), style: BioTypography.bodySm)
+        : null;
+    final profesional = t['profesional'] != null
+        ? Text(
+            'Con: ${_profesionalSinDni(t['profesional']?.toString())}',
+            style: BioTypography.bodySm,
+          )
+        : null;
+
+    Widget? badge;
     if (enResolucion) {
-      final pair = _coloresTarjetaEnResolucion(context);
-      bg = pair.bg;
-      borderColor = pair.border;
+      badge = BioBadge.warning(
+        'En resolución',
+        icon: Icons.warning_amber_outlined,
+      );
     } else if (futuro && proximidad != null) {
-      final pair = _coloresTarjetaProximo(context, proximidad);
-      bg = pair.bg;
-      borderColor = pair.border;
-    } else {
-      bg = futuro ? cs.surfaceContainerHighest : cs.surfaceContainerHigh;
+      badge = BioBadge(
+        label: _labelProximidad(proximidad),
+        intent: _intentProximidad(proximidad),
+      );
+    } else if (!futuro && estado.isNotEmpty) {
+      badge = BioBadge.neutral(estado);
     }
 
-    return Card(
-      elevation: 0,
-      color: bg,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: borderColor != null
-            ? BorderSide(color: borderColor, width: 1.2)
-            : BorderSide.none,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Column(
+    final acciones = <Widget>[];
+    if (enResolucion && widget.onResolverTurno != null) {
+      acciones.add(BioButton(
+        label: 'Resolver',
+        intent: UiIntent.warning,
+        variant: BioButtonVariant.filled,
+        size: BioButtonSize.sm,
+        icon: Icons.build_circle_outlined,
+        onPressed: () => widget.onResolverTurno!(t),
+      ));
+    } else if (!enResolucion && idConsulta != null) {
+      acciones.add(BioButton.outlinePrimary(
+        label: 'Cargar motivos de consulta',
+        size: BioButtonSize.sm,
+        icon: Icons.edit_note,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatMotivosScreen(
+                consultaId: idConsulta,
+                authToken: widget.authToken,
+                userId: widget.userId,
+                userName: widget.userName,
+                titulo:
+                    'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
+              ),
+            ),
+          );
+        },
+      ));
+    }
+
+    final contenido = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
-              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            if (t['servicio'] != null)
-              Text(
-                t['servicio'].toString(),
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            if (t['profesional'] != null)
-              Text(
-                'Con: ${_profesionalSinDni(t['profesional']?.toString())}',
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            if (enResolucion && widget.onResolverTurno != null) ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.build_circle_outlined, size: 18),
-                  label: const Text('Resolver'),
-                  onPressed: () => widget.onResolverTurno!(t),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: cs.secondary,
-                    foregroundColor: cs.onSecondary,
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-              ),
+            Expanded(child: cabecera),
+            if (badge != null) ...[
+              BioSpacing.gapW(BioSpacing.sm),
+              badge,
             ],
-            if (!enResolucion && idConsulta != null) ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.edit_note, size: 18),
-                  label: const Text('Cargar motivos de consulta'),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ChatMotivosScreen(
-                          consultaId: idConsulta,
-                          authToken: widget.authToken,
-                          userId: widget.userId,
-                          userName: widget.userName,
-                          titulo:
-                              'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
-                        ),
-                      ),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: cs.primary,
-                    side: BorderSide(color: cs.primary),
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                ),
-              ),
-            ],
-            if (!futuro && estado.isNotEmpty)
-              Text(
-                estado,
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
           ],
         ),
+        if (servicio != null) ...[
+          BioSpacing.gapH(BioSpacing.xs),
+          servicio,
+        ],
+        if (profesional != null) ...[
+          BioSpacing.gapH(BioSpacing.xs),
+          profesional,
+        ],
+        if (acciones.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          Wrap(
+            spacing: BioSpacing.sm,
+            runSpacing: BioSpacing.xs,
+            children: acciones,
+          ),
+        ],
+      ],
+    );
+
+    if (enResolucion) {
+      return BioCard.intent(
+        intent: UiIntent.warning,
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.md,
+          vertical: BioSpacing.md,
+        ),
+        child: contenido,
+      );
+    }
+    if (futuro && proximidad != null) {
+      return BioCard.intent(
+        intent: _intentProximidad(proximidad),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.md,
+          vertical: BioSpacing.md,
+        ),
+        child: contenido,
+      );
+    }
+    return BioCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: BioSpacing.md,
+        vertical: BioSpacing.md,
+      ),
+      color: tokens.paperSurfaceSunken,
+      child: contenido,
+    );
+  }
+
+  Widget _buildEmptyProximos(BuildContext context) {
+    return BioCard(
+      color: context.bio.paperSurfaceSunken,
+      child: Row(
+        children: [
+          Icon(Icons.event_available, color: context.bio.textMuted),
+          BioSpacing.gapW(BioSpacing.md),
+          Expanded(
+            child: Text(
+              'No tenés turnos pendientes. Podés pedir uno desde el asistente.',
+              style: BioTypography.body,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildCardSinTurnos(BuildContext context) {
-    final cs = context.pacienteColors;
-    final tt = context.pacienteTextTheme;
-    return Card(
-      elevation: 0,
-      color: cs.surfaceContainerHighest,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.event_available, color: cs.onSurfaceVariant),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'No tienes turnos pendientes. Puedes pedir uno desde el chat.',
-                style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-              ),
-            ),
-          ],
-        ),
+  Widget _buildEmptyPasados(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+      child: Text(
+        'No hay turnos anteriores en tu historial.',
+        style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
       ),
     );
   }

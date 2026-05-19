@@ -301,7 +301,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: AppTheme.secondaryColor,
-                          side: const BorderSide(color: AppTheme.secondaryColor),
+                          side: BorderSide(color: AppTheme.secondaryColor),
                         ),
                         child: const Text('Anterior'),
                       )

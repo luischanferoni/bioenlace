@@ -4,58 +4,51 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:didit_sdk/sdk_flutter.dart';
-import '../auth/biometric_auth.dart';
-import '../theme/theme.dart';
-import '../config/api_config.dart';
 
-/// Pantalla de login compartida que acepta callbacks para navegación personalizada
+import '../auth/biometric_auth.dart';
+import '../config/api_config.dart';
+import '../theme/tokens/tokens.dart';
+import '../ui/ui.dart';
+
+/// Pantalla de login compartida con design system "papel".
+/// Acepta callbacks para navegación personalizada por app (paciente / médico).
 class LoginScreen extends StatefulWidget {
   /// Título de la app (ej: "Bienvenido a BioEnlace")
   final String appTitle;
-  
+
   /// Subtítulo de la app (ej: "Tu asistente de salud personal")
   final String appSubtitle;
-  
-  /// Callback cuando el login es exitoso
-  /// Recibe userId, userName y BuildContext del LoginScreen
-  final Function(String userId, String userName, BuildContext context) onLoginSuccess;
-  
-  /// Callback para navegar a la pantalla de registro
-  /// Recibe BuildContext del LoginScreen
+
+  /// Callback cuando el login es exitoso.
+  /// Recibe userId, userName y BuildContext del LoginScreen.
+  final Function(String userId, String userName, BuildContext context)
+      onLoginSuccess;
+
+  /// Callback para navegar a la pantalla de registro.
+  /// Recibe BuildContext del LoginScreen.
   final Function(BuildContext context)? onNavigateToSignup;
-  
-  /// Callback para navegar al inicio de la app sin registrarse (modo visitante)
-  /// Recibe BuildContext del LoginScreen
+
+  /// Callback para navegar al inicio de la app sin registrarse (modo visitante).
+  /// Recibe BuildContext del LoginScreen.
   final Function(BuildContext context)? onNavigateToHome;
-  
+
   // Textos personalizables
-  /// Mensaje cuando la biometría no está disponible
   final String? biometricNotAvailableMessage;
-  
-  /// Mensaje de bienvenida después del login (se puede usar {userName} como placeholder)
+
+  /// Mensaje de bienvenida después del login (acepta `{userName}` como placeholder).
   final String? welcomeMessage;
-  
-  /// Texto del botón mientras se autentica
   final String? authenticatingText;
-  
-  /// Texto del botón cuando la biometría no está disponible
   final String? biometricUnavailableButtonText;
-  
-  /// Texto del botón de registro
   final String? signupButtonText;
-  
-  /// Texto del botón para ir al inicio
   final String? goToHomeButtonText;
-  
-  /// Texto cuando la biometría está disponible
   final String? biometricAvailableText;
 
   /// Workflow ID de Didit para autenticación biométrica ("Ya tengo cuenta").
-  /// Si es null, se usa solo la biometría local del dispositivo.
+  /// Si es `null`, se usa solo la biometría local del dispositivo.
   final String? diditBiometricWorkflowId;
 
   const LoginScreen({
-    Key? key,
+    super.key,
     this.appTitle = 'Bienvenido a BioEnlace',
     this.appSubtitle = 'Tu asistente de salud personal',
     required this.onLoginSuccess,
@@ -69,7 +62,7 @@ class LoginScreen extends StatefulWidget {
     this.goToHomeButtonText,
     this.biometricAvailableText,
     this.diditBiometricWorkflowId,
-  }) : super(key: key);
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -90,21 +83,28 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _checkBiometricAvailability() async {
     final isAvailable = await _biometricAuth.isAvailable();
     final biometricType = await _biometricAuth.getBiometricType();
-    
+
+    if (!mounted) return;
     setState(() {
       _biometricAvailable = isAvailable;
       _biometricType = biometricType;
     });
   }
 
+  void _snack(String message, UiIntent intent) {
+    if (!mounted) return;
+    final palette = IntentPalette.of(intent);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: palette.base),
+    );
+  }
+
   Future<void> _loginWithBiometrics() async {
     if (!_biometricAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.biometricNotAvailableMessage ?? 
-              'La autenticación biométrica no está disponible en este dispositivo'),
-          backgroundColor: AppTheme.warningColor,
-        ),
+      _snack(
+        widget.biometricNotAvailableMessage ??
+            'La autenticación biométrica no está disponible en este dispositivo',
+        UiIntent.warning,
       );
       return;
     }
@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Si no hay workflow de Didit configurado, usar solo biometría local como fallback
+      // Si no hay workflow de Didit configurado, usar solo biometría local como fallback.
       if (widget.diditBiometricWorkflowId == null) {
         final localResult = await _biometricAuth.authenticate(
           'Autenticación con $_biometricType para ingresar a ${widget.appTitle}',
@@ -122,15 +122,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (localResult['success'] == true) {
           final prefs = await SharedPreferences.getInstance();
-          final userId = prefs.getString('user_id') ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+          final userId = prefs.getString('user_id') ??
+              'user_${DateTime.now().millisecondsSinceEpoch}';
           final userName = prefs.getString('user_name') ?? 'Usuario';
 
-          final welcomeMsg = widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(welcomeMsg.replaceAll('{userName}', userName)),
-              backgroundColor: AppTheme.successColor,
-            ),
+          final welcomeMsg =
+              widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
+          _snack(
+            welcomeMsg.replaceAll('{userName}', userName),
+            UiIntent.success,
           );
 
           await Future.delayed(const Duration(milliseconds: 200));
@@ -141,18 +141,13 @@ class _LoginScreenState extends State<LoginScreen> {
           final isUserCancel = localResult['isUserCancel'] == true;
           final error = localResult['error'] as String?;
           if (!isUserCancel && error != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error),
-                backgroundColor: AppTheme.dangerColor,
-              ),
-            );
+            _snack(error, UiIntent.danger);
           }
         }
         return;
       }
 
-      // 1) Autenticación biométrica remota con Didit
+      // 1) Autenticación biométrica remota con Didit.
       final diditResult = await DiditSdk.startVerificationWithWorkflow(
         widget.diditBiometricWorkflowId!,
         config: const DiditConfig(
@@ -163,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       switch (diditResult) {
         case VerificationCompleted(:final session):
-          // 2) Llamar al backend para login biométrico
+          // 2) Llamar al backend para login biométrico.
           final prefs = await SharedPreferences.getInstance();
           String deviceId = prefs.getString('device_id') ??
               'device_${DateTime.now().millisecondsSinceEpoch}';
@@ -199,10 +194,9 @@ class _LoginScreenState extends State<LoginScreen> {
             final token = payload['token'] as String?;
 
             final userId = (user['id'] ?? '').toString();
-            final userName =
-                user['name'] ?? '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
+            final userName = user['name'] ??
+                '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
 
-            // Guardar en SharedPreferences
             await prefs.setBool('is_logged_in', true);
             if (token != null) {
               await prefs.setString('auth_token', token);
@@ -213,30 +207,23 @@ class _LoginScreenState extends State<LoginScreen> {
               await prefs.setString('dni_detected', persona['documento']);
             }
 
-            // 3) Biometría local opcional como segundo factor
+            // 3) Biometría local opcional como segundo factor.
             final localResult = await _biometricAuth.authenticate(
-              'Confirma con $_biometricType para ingresar a ${widget.appTitle}',
+              'Confirmá con $_biometricType para ingresar a ${widget.appTitle}',
             );
             if (localResult['success'] != true) {
               final error = localResult['error'] as String?;
               if (error != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(error),
-                    backgroundColor: AppTheme.dangerColor,
-                  ),
-                );
+                _snack(error, UiIntent.danger);
               }
               return;
             }
 
             final welcomeMsg =
                 widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(welcomeMsg.replaceAll('{userName}', userName)),
-                backgroundColor: AppTheme.successColor,
-              ),
+            _snack(
+              welcomeMsg.replaceAll('{userName}', userName),
+              UiIntent.success,
             );
 
             await Future.delayed(const Duration(milliseconds: 200));
@@ -245,246 +232,128 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           } else {
             final message = data['message'] ?? 'Error en login biométrico';
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(message),
-                backgroundColor: AppTheme.dangerColor,
-              ),
-            );
+            _snack(message.toString(), UiIntent.danger);
           }
           break;
 
         case VerificationCancelled():
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Verificación cancelada por el usuario'),
-              backgroundColor: AppTheme.warningColor,
-            ),
-          );
+          _snack('Verificación cancelada por el usuario', UiIntent.warning);
           break;
 
         case VerificationFailed(:final error):
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error en Didit: ${error.message}'),
-              backgroundColor: AppTheme.dangerColor,
-            ),
-          );
+          _snack('Error en Didit: ${error.message}', UiIntent.danger);
           break;
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error en la autenticación: ${e.toString()}'),
-          backgroundColor: AppTheme.dangerColor,
-        ),
-      );
+      _snack('Error en la autenticación: ${e.toString()}', UiIntent.danger);
     } finally {
-      setState(() {
-        _isAuthenticating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isAuthenticating = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
+    final primary = IntentPalette.of(UiIntent.primary);
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppTheme.backgroundColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: AppTheme.dark),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+      backgroundColor: tokens.paperBackground,
+      appBar: const BioAppBar(title: null),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: BioSpacing.pageAll,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-              // Icono de huella digital grande
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.fingerprint,
-                  size: 60,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Título principal
-              Text(
-                widget.appTitle,
-                style: AppTheme.h1Style.copyWith(
-                  color: AppTheme.dark,
-                  fontSize: 28,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 8),
-              
-              Text(
-                widget.appSubtitle,
-                style: AppTheme.subTitleStyle.copyWith(fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 48),
-              
-              // Información sobre biometría
-              if (_biometricAvailable && _biometricType.isNotEmpty) ...[
                 Container(
-                  padding: EdgeInsets.all(16),
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
-                    color: AppTheme.successColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: primary.softBg,
+                    shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppTheme.successColor.withOpacity(0.3),
-                      width: 1,
+                      color: primary.border,
+                      width: BorderWidth.thin,
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        color: AppTheme.successColor,
-                        size: 20,
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          widget.biometricAvailableText ?? 
-                              '$_biometricType configurada y lista para usar',
-                          style: AppTheme.h6Style.copyWith(
-                            color: AppTheme.successColor,
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: Icon(
+                    Icons.fingerprint,
+                    size: 60,
+                    color: primary.base,
                   ),
                 ),
-                const SizedBox(height: 24),
-              ],
-              
-              // Botón principal de autenticación
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _biometricAvailable 
-                        ? AppTheme.primaryColor 
-                        : AppTheme.secondaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
+                BioSpacing.gapH(BioSpacing.xl),
+                Text(
+                  widget.appTitle,
+                  style: BioTypography.h1,
+                  textAlign: TextAlign.center,
+                ),
+                BioSpacing.gapH(BioSpacing.sm),
+                Text(
+                  widget.appSubtitle,
+                  style: BioTypography.body.copyWith(color: tokens.textMuted),
+                  textAlign: TextAlign.center,
+                ),
+                BioSpacing.gapH(BioSpacing.xxl),
+                if (_biometricAvailable && _biometricType.isNotEmpty) ...[
+                  BioAlert.success(
+                    message: widget.biometricAvailableText ??
+                        '$_biometricType configurada y lista para usar',
                   ),
-                  onPressed: _biometricAvailable && !_isAuthenticating 
-                      ? _loginWithBiometrics 
+                  BioSpacing.gapH(BioSpacing.lg),
+                ],
+                BioButton.primary(
+                  label: _resolveLoginLabel(),
+                  icon: Icons.fingerprint,
+                  size: BioButtonSize.lg,
+                  fullWidth: true,
+                  loading: _isAuthenticating,
+                  onPressed: _biometricAvailable && !_isAuthenticating
+                      ? _loginWithBiometrics
                       : null,
-                  child: _isAuthenticating
-                      ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              widget.authenticatingText ?? 'Autenticando...',
-                              style: AppTheme.h5Style.copyWith(color: Colors.white),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.fingerprint, size: 24),
-                            SizedBox(width: 12),
-                            Text(
-                              _biometricAvailable 
-                                  ? 'Ingresar con $_biometricType'
-                                  : (widget.biometricUnavailableButtonText ?? 'Biometría no disponible'),
-                              style: AppTheme.h5Style.copyWith(color: Colors.white),
-                            ),
-                          ],
-                        ),
                 ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Botón de registro (solo si se proporciona callback)
-              if (widget.onNavigateToSignup != null)
-                TextButton(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppTheme.primaryColor,
+                if (widget.onNavigateToSignup != null) ...[
+                  BioSpacing.gapH(BioSpacing.lg),
+                  BioButton.softPrimary(
+                    label: widget.signupButtonText ??
+                        '¿No tenés cuenta? Registrate acá',
+                    icon: Icons.person_add_alt,
+                    fullWidth: true,
+                    onPressed: () => widget.onNavigateToSignup!(context),
                   ),
-                  child: Text(
-                    widget.signupButtonText ?? '¿No tienes cuenta? Regístrate aquí',
-                    style: AppTheme.subTitleStyle.copyWith(
-                      color: AppTheme.primaryColor,
-                      fontSize: 14,
-                      decoration: TextDecoration.underline,
-                    ),
+                ],
+                if (widget.onNavigateToHome != null) ...[
+                  BioSpacing.gapH(BioSpacing.md),
+                  BioButton(
+                    label: widget.goToHomeButtonText ?? 'Ir al inicio de la app',
+                    icon: Icons.home_outlined,
+                    intent: UiIntent.info,
+                    variant: BioButtonVariant.soft,
+                    fullWidth: true,
+                    onPressed: () => widget.onNavigateToHome!(context),
                   ),
-                  onPressed: () {
-                    if (widget.onNavigateToSignup != null) {
-                      widget.onNavigateToSignup!(context);
-                    }
-                  },
-                ),
-              
-              // Botón para ir al inicio sin registrarse (solo si se proporciona callback)
-              if (widget.onNavigateToHome != null) ...[
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      if (widget.onNavigateToHome != null) {
-                        widget.onNavigateToHome!(context);
-                      }
-                    },
-                    icon: Icon(Icons.home, size: 22),
-                    label: Text(
-                      widget.goToHomeButtonText ?? 'Ir al inicio de la app',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.infoColor,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 3,
-                    ),
-                  ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
         ),
       ),
     );
   }
-}
 
+  String _resolveLoginLabel() {
+    if (_isAuthenticating) {
+      return widget.authenticatingText ?? 'Autenticando…';
+    }
+    if (_biometricAvailable) {
+      return 'Ingresar con $_biometricType';
+    }
+    return widget.biometricUnavailableButtonText ?? 'Biometría no disponible';
+  }
+}

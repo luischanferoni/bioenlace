@@ -1,0 +1,11 @@
+# Service accounts / credenciales locales (FCM, GCP, etc.)
+*-firebase-adminsdk-*.json
+august-cirrus-*.json
+*-service-account-*.json
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

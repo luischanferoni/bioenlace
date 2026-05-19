@@ -289,39 +289,4 @@ class AppTheme {
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Compatibilidad temporal con el theme anterior (mientras se migran
-  // referencias estáticas: `AppTheme.primaryColor`, etc.). Estos getters
-  // mantienen la misma API y devuelven los nuevos tokens.
-  // ---------------------------------------------------------------------------
-
-  static Color get primaryColor => primary;
-  static Color get primaryColorDark => PaperPalette.paper50;
-  static Color get primaryColorLight => secondary;
-  static Color get secondaryColor => secondary;
-  static Color get secondaryContainerColor => primary;
-  static Color get successColor => success;
-  static Color get dangerColor => danger;
-  static Color get warningColor => warning;
-  static Color get infoColor => secondary;
-  static Color get light => PaperPalette.paper100;
-  static Color get dark => PaperPalette.paper700;
-  static Color get backgroundColor => background;
-  static Color get cardColor => surface;
-  static Color get titleTextColor => textTitle;
-  static Color get subTitleTextColor => textMuted;
-  static Color get iconColor => textTitle;
-  static Color get dividerColor => borderDefault;
-  static Color get hintColor => textMuted;
-
-  /// Estilos de texto históricos.
-  static TextStyle get titleStyle => BioTypography.title;
-  static TextStyle get subTitleStyle => BioTypography.caption;
-  static TextStyle get h1Style => BioTypography.h1;
-  static TextStyle get h2Style => BioTypography.h2;
-  static TextStyle get h3Style => BioTypography.h3;
-  static TextStyle get h4Style => BioTypography.title;
-  static TextStyle get h5Style => BioTypography.body;
-  static TextStyle get h6Style => BioTypography.caption;
 }

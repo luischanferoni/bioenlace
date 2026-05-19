@@ -9,8 +9,10 @@ import '../services/consulta_guardar_service.dart';
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
   final String? authToken;
+
   /// true = solo ver historia clínica (sin formulario); false = barra para escribir notas
   final bool soloVer;
+
   /// Contexto de consulta (ej. `CIRUGIA`, `TURNO`) alineado con web / `validarPermisoAtencion`.
   final String? consultParent;
   final int? consultParentId;
@@ -29,7 +31,8 @@ class PatientTimelineScreen extends StatefulWidget {
 }
 
 class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
-  final HistoriaClinicaService _historiaClinicaService = HistoriaClinicaService();
+  final HistoriaClinicaService _historiaClinicaService =
+      HistoriaClinicaService();
   final ConsultaGuardarService _consultaGuardar = ConsultaGuardarService();
   HistoriaClinicaResponse? _historiaClinicaData;
   bool _isLoading = true;
@@ -71,11 +74,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     try {
       final data =
           await _historiaClinicaService.getHistoriaClinica(widget.personaId);
+      if (!mounted) return;
       setState(() {
         _historiaClinicaData = data;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error al cargar historia clínica: ${e.toString()}';
         _isLoading = false;
@@ -85,87 +90,78 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
     return Scaffold(
-      appBar: AppBar(title: const Text('Historia Clínica')),
+      backgroundColor: tokens.paperBackground,
+      appBar: const BioAppBar(title: 'Historia clínica'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: AppTheme.dangerColor,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage,
-                        style: AppTheme.subTitleStyle,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _cargarHistoriaClinica,
-                        child: const Text('Reintentar'),
-                      ),
-                    ],
+                  child: Padding(
+                    padding: BioSpacing.pageAll,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        BioAlert.danger(message: _errorMessage),
+                        BioSpacing.gapH(BioSpacing.lg),
+                        BioButton.primary(
+                          label: 'Reintentar',
+                          icon: Icons.refresh,
+                          onPressed: _cargarHistoriaClinica,
+                        ),
+                      ],
+                    ),
                   ),
                 )
               : _historiaClinicaData == null
-                  ? const Center(child: Text('No hay datos disponibles'))
+                  ? Center(
+                      child: Padding(
+                        padding: BioSpacing.pageAll,
+                        child: BioAlert.info(
+                          message: 'No hay datos disponibles',
+                        ),
+                      ),
+                    )
                   : Column(
                       children: [
                         Expanded(
                           child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(BioSpacing.md),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Header con datos del paciente
-                                _buildPacienteHeader(_historiaClinicaData!.persona),
-                                // Información médica
+                                _buildPacienteHeader(
+                                    _historiaClinicaData!.persona),
+                                BioSpacing.gapH(BioSpacing.md),
                                 _buildInformacionMedica(
                                     _historiaClinicaData!.informacionMedica),
+                                BioSpacing.gapH(BioSpacing.md),
                                 _buildSignosVitales(
                                     _historiaClinicaData!.signosVitales),
-                                // Motivos de esta consulta (API + app paciente)
+                                BioSpacing.gapH(BioSpacing.md),
                                 _buildMotivosConsulta(_historiaClinicaData!),
                               ],
                             ),
                           ),
                         ),
-                        if (_mostrarBarraConsulta) _buildChatInputBar(),
+                        if (_mostrarBarraConsulta) _buildChatInputBar(context),
                       ],
                     ),
     );
   }
 
   Widget _buildPacienteHeader(PersonaData persona) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16.0),
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 8.0),
-      child: Column(
+    return BioCard.intent(
+      intent: UiIntent.primary,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  persona.nombreCompleto,
-                  style: AppTheme.h4Style,
-                ),
-              ),
-              if (persona.edad != null)
-                Text(
-                  '${persona.edad} años',
-                  style: AppTheme.h4Style,
-                ),
-            ],
+          Expanded(
+            child: Text(persona.nombreCompleto, style: BioTypography.h3),
           ),
+          if (persona.edad != null)
+            Text('${persona.edad} años', style: BioTypography.title),
         ],
       ),
     );
@@ -197,56 +193,46 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         peso != null || talla != null || imc != null || tension != null;
 
     final titulo = sv.fechaTitulo.isNotEmpty
-        ? 'SIGNOS VITALES ACTUALES (${sv.fechaTitulo})'
-        : 'SIGNOS VITALES ACTUALES';
+        ? 'Signos vitales actuales (${sv.fechaTitulo})'
+        : 'Signos vitales actuales';
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16.0),
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 8.0),
+    return BioCard.intent(
+      intent: UiIntent.info,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            titulo,
-            style: AppTheme.h4Style.copyWith(
-              color: AppTheme.primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text(titulo, style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.md),
           if (!hayResumen)
-            Text(
-              'Sin datos',
-              style: AppTheme.subTitleStyle,
-            )
+            Text('Sin datos', style: BioTypography.bodySm)
           else
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (peso != null) Text('Peso: $peso kg', style: AppTheme.subTitleStyle),
-                if (talla != null) Text('Altura: $talla cm', style: AppTheme.subTitleStyle),
-                if (imc != null) Text('IMC: $imc', style: AppTheme.subTitleStyle),
+                if (peso != null) Text('Peso: $peso kg', style: BioTypography.body),
+                if (talla != null)
+                  Text('Altura: $talla cm', style: BioTypography.body),
+                if (imc != null) Text('IMC: $imc', style: BioTypography.body),
                 if (tension != null)
-                  Text('Tensión arterial: $tension', style: AppTheme.subTitleStyle),
+                  Text('Tensión arterial: $tension', style: BioTypography.body),
               ],
             ),
-          if (sv.datosSv.isNotEmpty && (sv.tieneMasSv || sv.datosSv.length > 1)) ...[
-            const SizedBox(height: 12),
+          if (sv.datosSv.isNotEmpty &&
+              (sv.tieneMasSv || sv.datosSv.length > 1)) ...[
+            BioSpacing.gapH(BioSpacing.md),
             ExpansionTile(
               tilePadding: EdgeInsets.zero,
               title: Text(
                 'Historial (${sv.totalSv} registros)',
-                style: AppTheme.h6Style,
+                style: BioTypography.title,
               ),
               children: [
                 for (final row in sv.datosSv.take(12))
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
+                    padding: const EdgeInsets.only(bottom: BioSpacing.sm),
                     child: Text(
                       _formatFilaSignosResumen(row),
-                      style: AppTheme.subTitleStyle.copyWith(fontSize: 12),
+                      style: BioTypography.caption,
                     ),
                   ),
               ],
@@ -273,49 +259,36 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildInformacionMedica(InformacionMedica info) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16.0),
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 8.0),
+    return BioCard.intent(
+      intent: UiIntent.warning,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'CONDICIÓN ACTUAL',
-            style: AppTheme.h4Style.copyWith(
-              color: AppTheme.primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Diagnósticos recientes
+          Text('Condición actual', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.lg),
           _buildSeccionInfo(
-            'DIAGNÓSTICOS RECIENTES',
+            'Diagnósticos recientes',
             info.condicionesActivas
                 .map((c) => c.termino ?? 'Sin término')
                 .toList(),
           ),
-          const SizedBox(height: 16),
-          // Condiciones activas
+          BioSpacing.gapH(BioSpacing.lg),
           _buildSeccionInfo(
-            'CONDICIONES ACTIVAS',
+            'Condiciones activas',
             info.condicionesActivas
                 .map((c) => c.termino ?? 'Sin término')
                 .toList(),
           ),
-          const SizedBox(height: 16),
-          // Condiciones crónicas
+          BioSpacing.gapH(BioSpacing.lg),
           _buildSeccionInfo(
-            'CONDICIONES CRÓNICAS',
+            'Condiciones crónicas',
             info.condicionesCronicas
                 .map((c) => c.termino ?? 'Sin término')
                 .toList(),
           ),
-          const SizedBox(height: 16),
-          // Hallazgos (alergias)
+          BioSpacing.gapH(BioSpacing.lg),
           _buildSeccionInfo(
-            'HALLAZGOS',
+            'Hallazgos',
             info.hallazgos.map((h) => h.termino ?? 'Sin término').toList(),
           ),
         ],
@@ -327,32 +300,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          titulo,
-          style: AppTheme.h6Style.copyWith(
-            decoration: TextDecoration.underline,
-          ),
-        ),
-        const SizedBox(height: 8),
+        Text(titulo, style: BioTypography.overline),
+        BioSpacing.gapH(BioSpacing.sm),
         if (items.isEmpty)
-          Text(
-            'Sin datos',
-            style: AppTheme.subTitleStyle,
-          )
+          Text('Sin datos', style: BioTypography.bodySm)
         else
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: items.map((item) {
-              return Chip(
-                label: Text(
-                  item.toUpperCase(),
-                  style: const TextStyle(fontSize: 11),
-                ),
-                backgroundColor: AppTheme.infoColor.withOpacity(0.2),
-                labelStyle: TextStyle(color: AppTheme.infoColor),
-              );
-            }).toList(),
+            spacing: BioSpacing.sm,
+            runSpacing: BioSpacing.sm,
+            children: items
+                .map((item) => BioBadge.info(item.toUpperCase()))
+                .toList(),
           ),
       ],
     );
@@ -363,47 +321,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final msgs = hc.motivosConsultaPaciente.messages;
     final hayResumen = resumen != null && resumen.trim().isNotEmpty;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16.0),
-      color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 8.0),
+    return BioCard.intent(
+      intent: UiIntent.success,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'MOTIVOS DE ESTA CONSULTA',
-            style: AppTheme.h4Style.copyWith(
-              color: AppTheme.primaryColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text('Motivos de esta consulta', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.md),
           if (hayResumen)
-            Text(
-              resumen,
-              style: AppTheme.subTitleStyle,
-            )
+            Text(resumen, style: BioTypography.body)
           else if (msgs.isNotEmpty)
             Text(
-              'Aún no hay texto de motivo consolidado; revise los mensajes enviados por el paciente desde la app.',
-              style: AppTheme.subTitleStyle,
+              'Aún no hay texto de motivo consolidado; revisá los mensajes enviados por el paciente desde la app.',
+              style: BioTypography.bodySm,
             )
           else
             Text(
               'Sin motivos registrados para esta consulta.',
-              style: AppTheme.subTitleStyle,
+              style: BioTypography.bodySm,
             ),
           if (msgs.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              'Mensajes del paciente (app)',
-              style: AppTheme.h6Style.copyWith(
-                color: AppTheme.primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
+            BioSpacing.gapH(BioSpacing.lg),
+            Text('Mensajes del paciente (app)', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.sm),
             ...msgs.map(_buildMotivoMensajeTile),
           ],
         ],
@@ -412,6 +352,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildMotivoMensajeTile(MotivoConsultaMensajeApi m) {
+    final tokens = context.bio;
     final tipo = m.messageType.toLowerCase();
     final uri = Uri.tryParse(m.content);
     final esHttp = uri != null &&
@@ -419,41 +360,35 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     Widget cuerpo;
     if (tipo == 'texto') {
-      cuerpo = Text(
-        m.content,
-        style: AppTheme.subTitleStyle,
-      );
+      cuerpo = Text(m.content, style: BioTypography.body);
     } else if (tipo == 'imagen' && esHttp) {
-      cuerpo = Image.network(
-        m.content,
-        height: 140,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => SelectableText(m.content),
+      cuerpo = ClipRRect(
+        borderRadius: BorderRadius.circular(BioRadius.sm),
+        child: Image.network(
+          m.content,
+          height: 140,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => SelectableText(m.content),
+        ),
       );
     } else if (tipo == 'audio' && esHttp) {
       cuerpo = SelectableText(
         'Audio: ${m.content}',
-        style: AppTheme.subTitleStyle,
+        style: BioTypography.bodySm,
       );
     } else {
-      cuerpo = SelectableText(
-        m.content,
-        style: AppTheme.subTitleStyle,
-      );
+      cuerpo = SelectableText(m.content, style: BioTypography.bodySm);
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.only(bottom: BioSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (m.createdAt.isNotEmpty)
             Text(
               m.createdAt,
-              style: AppTheme.subTitleStyle.copyWith(
-                fontSize: 11,
-                color: Colors.grey.shade600,
-              ),
+              style: BioTypography.caption.copyWith(color: tokens.textMuted),
             ),
           cuerpo,
         ],
@@ -477,16 +412,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           texto: text,
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Consulta guardada')),
-        );
+        _snack('Consulta guardada', UiIntent.success);
         _chatController.clear();
         _chatFocusNode.unfocus();
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        _snack('Error: $e', UiIntent.danger);
       } finally {
         if (mounted) setState(() => _guardandoConsulta = false);
       }
@@ -494,64 +425,74 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
 
     if (!widget.soloVer) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Defina contexto de consulta (parent) o use el flujo web para analizar con IA.'),
-        ),
+      _snack(
+        'Defina contexto de consulta (parent) o usá el flujo web para analizar con IA.',
+        UiIntent.warning,
       );
       return;
     }
   }
 
-  Widget _buildChatInputBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-        color: Colors.white,
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _chatController,
-                focusNode: _chatFocusNode,
-                minLines: 4,
-                maxLines: 8,
-                decoration: const InputDecoration(
-                  hintText: 'Escribir consulta',
-                  border: OutlineInputBorder(),
-                  isDense: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  void _snack(String msg, UiIntent intent) {
+    final palette = IntentPalette.of(intent);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: palette.base),
+    );
+  }
+
+  Widget _buildChatInputBar(BuildContext context) {
+    final tokens = context.bio;
+    return Container(
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BioSpacing.md,
+            vertical: BioSpacing.sm,
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _chatController,
+                  focusNode: _chatFocusNode,
+                  minLines: 2,
+                  maxLines: 6,
+                  decoration: const InputDecoration(
+                    hintText: 'Escribir consulta',
+                    isDense: true,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.mic),
-              color: AppTheme.primaryColor,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Envío de audios en desarrollo'),
-                  ),
-                );
-              },
-            ),
-            IconButton(
-              icon: _guardandoConsulta
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send),
-              color: AppTheme.primaryColor,
-              onPressed: _guardandoConsulta ? null : _enviarConsulta,
-            ),
-          ],
+              BioSpacing.gapW(BioSpacing.sm),
+              IconButton(
+                icon: const Icon(Icons.mic),
+                color: IntentPalette.of(UiIntent.primary).base,
+                onPressed: () => _snack(
+                  'Envío de audios en desarrollo',
+                  UiIntent.info,
+                ),
+              ),
+              IconButton(
+                icon: _guardandoConsulta
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send),
+                color: IntentPalette.of(UiIntent.primary).base,
+                onPressed: _guardandoConsulta ? null : _enviarConsulta,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
-

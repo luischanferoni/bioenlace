@@ -246,7 +246,7 @@ class MyApp extends StatelessWidget {
                           content: Text(
                             'Sesión de prueba: ${user['name'] ?? displayName} (id $_kSimulacionMedicoUserId)',
                           ),
-                          backgroundColor: AppTheme.successColor,
+                          backgroundColor: IntentPalette.of(UiIntent.success).base,
                           duration: const Duration(seconds: 2),
                         ),
                       );
@@ -272,7 +272,7 @@ class MyApp extends StatelessWidget {
                         content: const Text(
                           'No se pudo simular el acceso del médico de prueba. Revisá la API o el user_id.',
                         ),
-                        backgroundColor: AppTheme.warningColor,
+                        backgroundColor: IntentPalette.of(UiIntent.warning).base,
                         duration: const Duration(seconds: 4),
                       ),
                     );
@@ -285,7 +285,7 @@ class MyApp extends StatelessWidget {
                   ScaffoldMessenger.of(loginContext).showSnackBar(
                     SnackBar(
                       content: Text('Error: $e'),
-                      backgroundColor: AppTheme.dangerColor,
+                      backgroundColor: IntentPalette.of(UiIntent.danger).base,
                       duration: const Duration(seconds: 4),
                     ),
                   );

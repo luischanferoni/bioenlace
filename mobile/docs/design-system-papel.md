@@ -13,9 +13,22 @@ al sistema "papel" sin romper el resto de la app.
   + backdrop cálido + splash neutro).
 - ✅ Widgets `Bio*` listos (AppBar, BottomNav, Button, Badge, Card, Chip,
   Divider, Input, Alert).
-- ✅ Shims de compatibilidad: `AppTheme.primaryColor`, `secondaryColor`,
-  `dark`, `h1Style`, etc. siguen funcionando como getters.
-- ⏳ Pantallas existentes — **migración manual**, pantalla por pantalla.
+- ✅ Pantallas migradas:
+  - **`mobile/paciente/lib/screens/*.dart`** (100%, `flutter analyze` = 0 errores).
+  - **`mobile/medico/lib/screens/*.dart`** (100%, `flutter analyze` = 0 errores).
+    Incluye `config_wizard`, `patient_timeline`, `chat_consulta`,
+    `medico_signup`, `main`, `home`, `appointments`, `acciones`, `configuracion`.
+  - **`mobile/packages/shared/lib/widgets/login_screen.dart`** (Bloque D
+    cerrado): `BioAppBar`, `BioAlert.success`, `BioButton.primary` (`lg`,
+    `fullWidth`, `loading`), `BioButton.softPrimary` (signup) y
+    `BioButton(intent: info, variant: soft)` (modo visitante). Snackbars
+    via helper con `IntentPalette`.
+- 🗑 Eliminado (Bloque D): `theme/color_palette.dart`, `theme/button_styles.dart`,
+  getters legacy `AppTheme.primaryColor / successColor / dangerColor /
+  warningColor / infoColor / dark / backgroundColor / cardColor /
+  titleStyle / subTitleStyle / h1Style…h6Style` y los `export` correspondientes
+  en `shared.dart`. La tabla de equivalencias de más abajo se mantiene como
+  guía histórica para entender qué reemplazó a qué.
 
 ## Tabla de equivalencias (cheatsheet)
 
@@ -187,7 +200,11 @@ flutter analyze
 (`use_build_context_synchronously` en `main.dart`, etc.) se ignoran hasta
 limpieza dedicada.
 
-## Orden sugerido para `mobile/paciente`
+## Orden sugerido (referencia histórica)
+
+> Las apps `mobile/paciente` y `mobile/medico` ya están migradas. La guía
+> de orden queda como referencia para pantallas nuevas o para iteraciones
+> futuras que toquen `shared/`.
 
 1. **Home / próximos turnos** — alta visibilidad, prueba `BioAppBar` +
    `BioCard.intent(UiIntent.warning)` + `BioBadge.warning` para
@@ -217,16 +234,22 @@ limpieza dedicada.
   `BioCard` / `BioAlert` / etc. → proponer un nuevo widget `Bio*` en
   `packages/shared/lib/ui/` y documentarlo en `ui/README.md`.
 
-## Limpieza final (cuando todo esté migrado)
+## Limpieza final (✅ ejecutada en Bloque D)
 
-Cuando ya no haya referencias a `AppTheme.primaryColor` / `secondaryColor` /
-`titleStyle` / etc. en las apps:
+La limpieza ya se hizo. Quedan acá los pasos a modo de bitácora:
 
-1. Borrar los getters legacy en `packages/shared/lib/theme/theme.dart`
+1. ✅ Borrados los getters legacy en `packages/shared/lib/theme/theme.dart`
    (sección "Compatibilidad temporal").
-2. Borrar `packages/shared/lib/theme/color_palette.dart` y
-   `button_styles.dart`.
-3. Borrar la deprecación de `PacienteSemanticColors` (o el archivo entero
-   si nadie lo usa).
-4. Quitar el export legacy del `shared.dart` correspondiente.
-5. PR de limpieza única.
+2. ✅ Borrados `packages/shared/lib/theme/color_palette.dart` y
+   `packages/shared/lib/theme/button_styles.dart`.
+3. ✅ Borrado el archivo huérfano `mobile/paciente/lib/styles/color_palette.dart`
+   (era una copia local de `AppColors`, ya sin imports).
+4. ✅ Quitados los `export 'theme/color_palette.dart'` y
+   `export 'theme/button_styles.dart'` de `packages/shared/lib/shared.dart`.
+5. ✅ `flutter analyze` en paciente / médico / shared → 0 errores, 0 warnings.
+   Solo quedan **2 infos** preexistentes en `shared` (deprecaciones de
+   `Radio.groupValue/onChanged` en `ui_json_screen.dart`).
+
+Si alguna pantalla nueva intenta usar `AppTheme.primaryColor` o similares,
+ya no compila: usar `IntentPalette`, `PaperPalette` o `context.bio` según
+la tabla de equivalencias.

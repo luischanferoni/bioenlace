@@ -26,19 +26,17 @@ class ConfigWizardScreen extends StatefulWidget {
 class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   final ConfigService _configService = ConfigService();
   final PageController _pageController = PageController();
-  
+
   int _currentStep = 0;
   bool _isLoading = false;
   String _errorMessage = '';
 
-  // Datos disponibles (modo opciones unificado vía POST sesion-operativa/establecer)
   SessionWizardOptions? _wizardOptions;
   List<Efector> _efectores = [];
   List<Servicio> _servicios = [];
   List<EncounterClass> _encounterClasses = [];
   List<EfectorConProblema> _efectoresConProblemas = [];
 
-  // Selecciones
   Efector? _selectedEfector;
   Servicio? _selectedServicio;
   EncounterClass? _selectedEncounterClass;
@@ -65,7 +63,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     try {
       final options =
           await _configService.loadSessionWizardOptions(userId: widget.userId);
-
+      if (!mounted) return;
       setState(() {
         _wizardOptions = options;
         _efectores = options.efectores;
@@ -74,12 +72,12 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         _isLoading = false;
       });
 
-      // Si solo hay un efector, seleccionarlo autom?ticamente
       if (_efectores.length == 1) {
         _selectedEfector = _efectores.first;
         _loadServicios(_efectores.first.id);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error al cargar datos: ${e.toString()}';
         _isLoading = false;
@@ -100,16 +98,17 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         throw Exception('Opciones de sesión no cargadas');
       }
       final servicios = _configService.serviciosParaEfector(efectorId, opts);
+      if (!mounted) return;
       setState(() {
         _servicios = servicios;
         _isLoading = false;
       });
 
-      // Si solo hay un servicio, seleccionarlo autom?ticamente
       if (_servicios.length == 1) {
         _selectedServicio = _servicios.first;
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error al cargar servicios: ${e.toString()}';
         _isLoading = false;
@@ -143,8 +142,8 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
 
     if (_currentStep < 2) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: BioMotion.normal,
+        curve: BioMotion.standard,
       );
       setState(() {
         _currentStep++;
@@ -157,8 +156,8 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   void _previousStep() {
     if (_currentStep > 0) {
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: BioMotion.normal,
+        curve: BioMotion.standard,
       );
       setState(() {
         _currentStep--;
@@ -167,7 +166,9 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
   }
 
   Future<void> _saveConfiguration() async {
-    if (_selectedEfector == null || _selectedServicio == null || _selectedEncounterClass == null) {
+    if (_selectedEfector == null ||
+        _selectedServicio == null ||
+        _selectedEncounterClass == null) {
       return;
     }
 
@@ -184,22 +185,23 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         userId: widget.userId,
       );
 
-      // Guardar en SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('efector_id', sessionConfig.efector.id);
       await prefs.setString('efector_nombre', sessionConfig.efector.nombre);
       await prefs.setInt('servicio_id', sessionConfig.servicio.id);
       await prefs.setString('servicio_nombre', sessionConfig.servicio.nombre);
-      await prefs.setString('encounter_class', sessionConfig.encounterClass.code);
-      await prefs.setString('encounter_class_label', sessionConfig.encounterClass.label);
-      await prefs.setInt('id_profesional_efector_servicio', sessionConfig.idProfesionalEfectorServicio);
+      await prefs.setString(
+          'encounter_class', sessionConfig.encounterClass.code);
+      await prefs.setString(
+          'encounter_class_label', sessionConfig.encounterClass.label);
+      await prefs.setInt('id_profesional_efector_servicio',
+          sessionConfig.idProfesionalEfectorServicio);
       await prefs.setBool('config_completed', true);
-      // Usar el token con contexto operativo para el resto de llamadas (stateless; no depende de cookies).
-      if (sessionConfig.contextToken != null && sessionConfig.contextToken!.isNotEmpty) {
+      if (sessionConfig.contextToken != null &&
+          sessionConfig.contextToken!.isNotEmpty) {
         await prefs.setString('auth_token', sessionConfig.contextToken!);
       }
 
-      // Navegar al MainScreen
       if (mounted) {
         navigatorKey.currentState?.pushReplacement(
           MaterialPageRoute(
@@ -207,14 +209,16 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
               userId: widget.userId,
               userName: widget.userName,
               authToken: widget.authToken,
-              idProfesionalEfectorServicio: sessionConfig.idProfesionalEfectorServicio.toString(),
+              idProfesionalEfectorServicio:
+                  sessionConfig.idProfesionalEfectorServicio.toString(),
             ),
           ),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _errorMessage = 'Error al guardar configuraci?n: ${e.toString()}';
+        _errorMessage = 'Error al guardar configuración: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -222,113 +226,112 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuración Inicial')),
-      body: Container(
-        color: AppTheme.backgroundColor,
-        child: Column(
-          children: [
-            // Indicador de pasos
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              color: Colors.white,
+      backgroundColor: tokens.paperBackground,
+      appBar: const BioAppBar(title: 'Configuración inicial'),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: BioSpacing.lg,
+              vertical: BioSpacing.md,
+            ),
+            decoration: BoxDecoration(
+              color: tokens.paperSurface,
+              border: BioBorder.bottom(BorderWidth.thin, tokens.paperBorderDefault),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildStepIndicator(0, 'Efector'),
+                _buildStepConnector(connectedDone: _currentStep >= 1),
+                _buildStepIndicator(1, 'Servicio'),
+                _buildStepConnector(connectedDone: _currentStep >= 2),
+                _buildStepIndicator(2, 'Área'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _isLoading && _efectores.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage.isNotEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: BioSpacing.pageAll,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              BioAlert.danger(message: _errorMessage),
+                              BioSpacing.gapH(BioSpacing.lg),
+                              BioButton.primary(
+                                label: 'Reintentar',
+                                icon: Icons.refresh,
+                                onPressed: _loadInitialData,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          _buildEfectorStep(),
+                          _buildServicioStep(),
+                          _buildEncounterClassStep(),
+                        ],
+                      ),
+          ),
+          SafeArea(
+            top: false,
+            child: Container(
+              padding: const EdgeInsets.all(BioSpacing.lg),
+              decoration: BoxDecoration(
+                color: tokens.paperSurface,
+                border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildStepIndicator(0, 'Efector'),
-                  _buildStepConnector(),
-                  _buildStepIndicator(1, 'Servicio'),
-                  _buildStepConnector(),
-                  _buildStepIndicator(2, 'Área'),
+                  if (_currentStep > 0)
+                    BioButton.outlinePrimary(
+                      label: 'Anterior',
+                      icon: Icons.arrow_back,
+                      onPressed: _previousStep,
+                    )
+                  else
+                    const SizedBox(),
+                  BioButton.primary(
+                    label: _currentStep == 2 ? 'Finalizar' : 'Siguiente',
+                    icon: _currentStep == 2 ? Icons.check : Icons.arrow_forward,
+                    onPressed: _canProceed() ? _nextStep : null,
+                    loading: _isLoading && _currentStep == 2,
+                  ),
                 ],
               ),
             ),
-            
-            // Contenido
-            Expanded(
-              child: _isLoading && _efectores.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage.isNotEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 48,
-                                  color: AppTheme.dangerColor,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _errorMessage,
-                                  style: AppTheme.subTitleStyle,
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _loadInitialData,
-                                  child: const Text('Reintentar'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : PageView(
-                          controller: _pageController,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: [
-                            _buildEfectorStep(),
-                            _buildServicioStep(),
-                            _buildEncounterClassStep(),
-                          ],
-                        ),
-            ),
-            
-            // Botones de navegación
-            SafeArea(
-              top: false,
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                color: Colors.white,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (_currentStep > 0)
-                      ElevatedButton(
-                        onPressed: _previousStep,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.secondaryColor,
-                          side: BorderSide(color: AppTheme.secondaryColor),
-                        ),
-                        child: const Text('Anterior'),
-                      )
-                    else
-                      const SizedBox(),
-                    ElevatedButton(
-                      onPressed: _canProceed() ? _nextStep : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: Text(_currentStep == 2 ? 'Finalizar' : 'Siguiente'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStepIndicator(int step, String label) {
+    final tokens = context.bio;
     final isActive = step == _currentStep;
     final isCompleted = step < _currentStep;
-    
+    final primary = IntentPalette.of(UiIntent.primary);
+    final success = IntentPalette.of(UiIntent.success);
+
+    final Color bg = isCompleted
+        ? success.base
+        : isActive
+            ? primary.base
+            : tokens.paperSurfaceSunken;
+    final Color fg = isCompleted || isActive ? Colors.white : tokens.textMuted;
+    final Color labelColor = isActive ? primary.base : tokens.textMuted;
+
     return Column(
       children: [
         Container(
@@ -336,39 +339,41 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
           height: 32,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isCompleted
-                ? AppTheme.successColor
-                : isActive
-                    ? AppTheme.primaryColor
-                    : AppTheme.secondaryColor,
+            color: bg,
+            border: Border.all(
+              color: isActive || isCompleted ? bg : tokens.paperBorderDefault,
+              width: BorderWidth.thin,
+            ),
           ),
           child: Center(
             child: isCompleted
                 ? const Icon(Icons.check, color: Colors.white, size: 20)
                 : Text(
                     '${step + 1}',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: BioTypography.title.copyWith(color: fg),
                   ),
           ),
         ),
-        const SizedBox(height: 4),
+        BioSpacing.gapH(BioSpacing.xs),
         Text(
           label,
-          style: AppTheme.subTitleStyle.copyWith(
-            color: isActive ? AppTheme.primaryColor : AppTheme.secondaryColor,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          style: BioTypography.caption.copyWith(
+            color: labelColor,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStepConnector() {
+  Widget _buildStepConnector({required bool connectedDone}) {
+    final tokens = context.bio;
+    final success = IntentPalette.of(UiIntent.success);
     return Expanded(
       child: Container(
         height: 2,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        color: _currentStep > 0 ? AppTheme.successColor : AppTheme.secondaryColor,
+        margin: const EdgeInsets.symmetric(horizontal: BioSpacing.sm),
+        color: connectedDone ? success.base : tokens.paperDividerDefault,
       ),
     );
   }
@@ -389,61 +394,41 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
 
   Widget _buildEfectorStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: BioSpacing.pageAll,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Seleccione el Efector',
-            style: AppTheme.h2Style,
-          ),
-          const SizedBox(height: 8),
+          Text('Seleccioná el efector', style: BioTypography.h2),
+          BioSpacing.gapH(BioSpacing.sm),
           if (_efectoresConProblemas.isNotEmpty) ...[
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Algunos efectores requieren configuración',
-                    style: AppTheme.subTitleStyle.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ..._efectoresConProblemas.map((p) {
-                    var t = p.message;
-                    if (p.nombre != null && p.nombre!.isNotEmpty) {
-                      t += ' (${p.nombre})';
-                    }
-                    if (p.contactosNombreCompleto.isNotEmpty) {
-                      t += '\nContacto: ${p.contactosNombreCompleto.join(', ')}';
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Text(t, style: AppTheme.subTitleStyle.copyWith(fontSize: 13)),
-                    );
-                  }),
-                ],
-              ),
+            BioAlert.warning(
+              title: 'Algunos efectores requieren configuración',
+              message: _efectoresConProblemas.map((p) {
+                var t = p.message;
+                if (p.nombre != null && p.nombre!.isNotEmpty) {
+                  t += ' (${p.nombre})';
+                }
+                if (p.contactosNombreCompleto.isNotEmpty) {
+                  t += '\nContacto: ${p.contactosNombreCompleto.join(', ')}';
+                }
+                return t;
+              }).join('\n\n'),
             ),
+            BioSpacing.gapH(BioSpacing.lg),
           ],
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else
-            ..._efectores.map((efector) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: _buildSelectionCard(
-                    title: efector.nombre,
-                    isSelected: _selectedEfector?.id == efector.id,
-                    onTap: () => _selectEfector(efector),
-                  ),
-                )),
+            ..._efectores.map(
+              (efector) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                child: _buildSelectionCard(
+                  title: efector.nombre,
+                  isSelected: _selectedEfector?.id == efector.id,
+                  onTap: () => _selectEfector(efector),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -451,38 +436,32 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
 
   Widget _buildServicioStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: BioSpacing.pageAll,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('Seleccioná el servicio', style: BioTypography.h2),
+          BioSpacing.gapH(BioSpacing.sm),
           Text(
-            'Seleccione el Servicio',
-            style: AppTheme.h2Style,
+            'Elegí el servicio donde vas a trabajar.',
+            style: BioTypography.bodySm,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Elija el servicio donde trabajar?',
-            style: AppTheme.subTitleStyle,
-          ),
-          const SizedBox(height: 24),
+          BioSpacing.gapH(BioSpacing.xl),
           if (_isLoading)
             const Center(child: CircularProgressIndicator())
           else if (_servicios.isEmpty)
-            Center(
-              child: Text(
-                'No hay servicios disponibles',
-                style: AppTheme.subTitleStyle,
-              ),
-            )
+            BioAlert.info(message: 'No hay servicios disponibles')
           else
-            ..._servicios.map((servicio) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: _buildSelectionCard(
-                    title: servicio.nombre,
-                    isSelected: _selectedServicio?.id == servicio.id,
-                    onTap: () => _selectServicio(servicio),
-                  ),
-                )),
+            ..._servicios.map(
+              (servicio) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                child: _buildSelectionCard(
+                  title: servicio.nombre,
+                  isSelected: _selectedServicio?.id == servicio.id,
+                  onTap: () => _selectServicio(servicio),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -490,29 +469,29 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
 
   Widget _buildEncounterClassStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: BioSpacing.pageAll,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text('Seleccioná el área', style: BioTypography.h2),
+          BioSpacing.gapH(BioSpacing.sm),
           Text(
-            'Seleccione el Área',
-            style: AppTheme.h2Style,
+            'Elegí el tipo de atención (ambulatorio, guardia, internación, etc.).',
+            style: BioTypography.bodySm,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Elija el Área donde trabajar?',
-            style: AppTheme.subTitleStyle,
+          BioSpacing.gapH(BioSpacing.xl),
+          ..._encounterClasses.map(
+            (encounterClass) => Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.md),
+              child: _buildSelectionCard(
+                title: encounterClass.label,
+                subtitle: encounterClass.code,
+                isSelected:
+                    _selectedEncounterClass?.code == encounterClass.code,
+                onTap: () => _selectEncounterClass(encounterClass),
+              ),
+            ),
           ),
-          const SizedBox(height: 24),
-          ..._encounterClasses.map((encounterClass) => Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: _buildSelectionCard(
-                  title: encounterClass.label,
-                  subtitle: encounterClass.code,
-                  isSelected: _selectedEncounterClass?.code == encounterClass.code,
-                  onTap: () => _selectEncounterClass(encounterClass),
-                ),
-              )),
         ],
       ),
     );
@@ -524,57 +503,54 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 0,
-      color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected ? AppTheme.primaryColor : AppTheme.secondaryColor,
-                    width: 2,
-                  ),
-                  color: isSelected ? AppTheme.primaryColor : Colors.transparent,
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 16)
-                    : null,
+    final tokens = context.bio;
+    final primary = IntentPalette.of(UiIntent.primary);
+    final card = BioCard(
+      padding: const EdgeInsets.all(BioSpacing.lg),
+      onTap: onTap,
+      color: isSelected ? primary.softBg : tokens.paperSurface,
+      border: isSelected
+          ? Border.all(color: primary.base, width: BorderWidth.medium)
+          : BioBorder.paperDefault,
+      child: Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? primary.base : tokens.paperBorderDefault,
+                width: BorderWidth.medium,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTheme.h5Style.copyWith(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: AppTheme.subTitleStyle.copyWith(fontSize: 12),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+              color: isSelected ? primary.base : Colors.transparent,
+            ),
+            child: isSelected
+                ? const Icon(Icons.check, color: Colors.white, size: 16)
+                : null,
           ),
-        ),
+          BioSpacing.gapW(BioSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: BioTypography.title.copyWith(
+                    fontWeight:
+                        isSelected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  BioSpacing.gapH(BioSpacing.xs),
+                  Text(subtitle, style: BioTypography.caption),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
+    return card;
   }
 }
-

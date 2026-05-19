@@ -13,8 +13,6 @@ lib/
 ├── config/                     # ApiConfig (URLs, headers).
 ├── theme/                      # Design system "papel" — ver theme/README.md
 │   ├── theme.dart              # AppTheme.lightTheme (Material 3 configurado).
-│   ├── color_palette.dart      # [legacy] paleta vieja.
-│   ├── button_styles.dart      # [legacy] estilos de botón anteriores.
 │   └── tokens/                 # ← Tokens del design system (paper, intent, ...).
 ├── ui/                         # ← Widgets Bio* del design system — ver ui/README.md
 └── ui_json/                    # Renderer de descriptores ui_json (flows del asistente).
@@ -51,18 +49,23 @@ está documentado en dos lugares:
 Para migrar una pantalla existente al sistema "papel" hay una guía paso a paso
 en [`mobile/docs/design-system-papel.md`](../../../mobile/docs/design-system-papel.md).
 
-## Compatibilidad con código legacy
+## Estado de migración
 
-Mientras se migran pantallas, conviven:
+Migración al sistema "papel" **cerrada** (Bloques A→D del plan
+[`mobile/docs/migracion-medico-cierre.md`](../../../mobile/docs/migracion-medico-cierre.md)):
 
-- **Nuevo**: `AppTheme.lightTheme` consume `PaperPalette` + `IntentPalette`.
-  Los componentes `Bio*` son la API recomendada.
-- **Legacy**: `AppTheme.primaryColor`, `secondaryColor`, `dark`, `h1Style`, etc.
-  siguen como getters (delegan a tokens nuevos). `color_palette.dart` y
-  `button_styles.dart` quedan hasta que todas las apps migren — luego se borran.
-
-Cuando todo `mobile/paciente` y `mobile/medico` use solo `Bio*` y `context.bio`,
-se eliminan los shims legacy en una sola PR.
+- `mobile/paciente`, `mobile/medico` y `mobile/packages/shared` solo dependen
+  de `AppTheme.lightTheme`, `Bio*`, `context.bio`, `IntentPalette` y
+  `PaperPalette`.
+- Los archivos legacy `theme/color_palette.dart`, `theme/button_styles.dart` y
+  los getters de compatibilidad `AppTheme.primaryColor / successColor /
+  dangerColor / warningColor / infoColor / dark / backgroundColor / cardColor /
+  titleStyle / subTitleStyle / h1Style…h6Style` fueron eliminados. Si necesitás
+  un valor concreto, usá los tokens nuevos:
+  - colores semánticos → `IntentPalette.of(UiIntent.X).{base|onBase|softBg|softFg|border}`.
+  - colores neutros → `context.bio.{paperBackground|paperSurface|textTitle|textMuted|...}`
+    o `PaperPalette.paperXXX` para constantes.
+  - tipografía → `BioTypography.{h1..h3,title,body,bodySm,caption}`.
 
 ## Convenciones
 

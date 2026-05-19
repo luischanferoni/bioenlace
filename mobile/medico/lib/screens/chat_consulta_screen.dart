@@ -51,6 +51,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       _error = null;
     });
     final result = await _chatService.getMessages(widget.consultaId);
+    if (!mounted) return;
     setState(() {
       _loading = false;
       _messages = result['messages'] ?? [];
@@ -64,8 +65,8 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          duration: BioMotion.normal,
+          curve: BioMotion.standard,
         );
       }
     });
@@ -77,16 +78,13 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     _textController.clear();
     setState(() => _sending = true);
     final result = await _chatService.sendMessage(widget.consultaId, text);
+    if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
       setState(() => _messages = [..._messages, result['data']]);
       _scrollToBottom();
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message']?.toString() ?? 'Error'), backgroundColor: Colors.red),
-        );
-      }
+      _showError(result['message']?.toString() ?? 'Error');
     }
   }
 
@@ -100,24 +98,37 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   Future<void> _uploadFile(File file, String messageType) async {
     if (!file.existsSync() || _sending) return;
     setState(() => _sending = true);
-    final result = await _chatService.uploadFile(widget.consultaId, file, messageType: messageType);
+    final result = await _chatService.uploadFile(
+      widget.consultaId,
+      file,
+      messageType: messageType,
+    );
+    if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
       setState(() => _messages = [..._messages, result['data']]);
       _scrollToBottom();
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message']?.toString() ?? 'Error'), backgroundColor: Colors.red),
-        );
-      }
+      _showError(result['message']?.toString() ?? 'Error');
     }
+  }
+
+  void _showError(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: IntentPalette.of(UiIntent.danger).base,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
     return Scaffold(
-      appBar: AppBar(title: Text(widget.titulo)),
+      backgroundColor: tokens.paperBackground,
+      appBar: BioAppBar(title: widget.titulo),
       body: Column(
         children: [
           Expanded(
@@ -126,111 +137,252 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
                 : _error != null
                     ? Center(
                         child: Padding(
-                          padding: const EdgeInsets.all(24.0),
+                          padding: BioSpacing.pageAll,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(_error!, textAlign: TextAlign.center),
-                              const SizedBox(height: 16),
-                              ElevatedButton(onPressed: _loadMessages, child: const Text('Reintentar')),
+                              BioAlert.danger(message: _error!),
+                              BioSpacing.gapH(BioSpacing.lg),
+                              BioButton.primary(
+                                label: 'Reintentar',
+                                icon: Icons.refresh,
+                                onPressed: _loadMessages,
+                              ),
                             ],
                           ),
                         ),
                       )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, i) {
-                          final m = _messages[i] as Map<String, dynamic>;
-                          final isMe = m['user_role'] == 'medico' || m['user_id'].toString() == widget.userId;
-                          final type = m['message_type'] as String? ?? 'texto';
-                          final content = m['content']?.toString() ?? '';
-
-                          return Align(
-                            alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                              padding: const EdgeInsets.all(12),
-                              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
-                              decoration: BoxDecoration(
-                                color: isMe ? Theme.of(context).primaryColor : Colors.grey[200],
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (type == 'texto')
-                                    Text(
-                                      content,
-                                      style: TextStyle(color: isMe ? Colors.white : Colors.black87, fontSize: 14),
-                                    )
-                                  else if (type == 'imagen' && content.isNotEmpty)
-                                    Image.network(
-                                      content,
-                                      fit: BoxFit.cover,
-                                      loadingBuilder: (_, child, progress) => progress == null
-                                          ? child
-                                          : const SizedBox(
-                                              height: 80,
-                                              width: 80,
-                                              child: Center(child: CircularProgressIndicator()),
-                                            ),
-                                    )
-                                  else
-                                    Text(
-                                      type == 'audio' ? 'Audio' : type == 'video' ? 'Video' : content,
-                                      style: TextStyle(color: isMe ? Colors.white70 : Colors.grey[700], fontSize: 12),
-                                    ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    m['created_at']?.toString().substring(0, 16) ?? '',
-                                    style: TextStyle(color: isMe ? Colors.white70 : Colors.grey[600], fontSize: 10),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                    : _buildLista(context),
           ),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.image),
-                    onPressed: _sending ? null : _pickImage,
-                  ),
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      decoration: const InputDecoration(
-                        hintText: 'Escribí un mensaje...',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                      onSubmitted: (_) => _sendText(),
-                      enabled: !_sending,
-                    ),
-                  ),
-                  IconButton(
-                    icon: _sending
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send),
-                    onPressed: _sending ? null : _sendText,
-                  ),
-                ],
+          _buildInputBar(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLista(BuildContext context) {
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(
+        vertical: BioSpacing.sm,
+        horizontal: BioSpacing.md,
+      ),
+      itemCount: _messages.length,
+      itemBuilder: (context, i) {
+        final m = _messages[i] as Map<String, dynamic>;
+        final isMe = m['user_role'] == 'medico' ||
+            m['user_id'].toString() == widget.userId;
+        return isMe ? _buildBubbleMe(context, m) : _buildBubbleOther(context, m);
+      },
+    );
+  }
+
+  Widget _buildBubbleMe(BuildContext context, Map<String, dynamic> m) {
+    final palette = IntentPalette.of(UiIntent.primary);
+    final type = m['message_type'] as String? ?? 'texto';
+    final content = m['content']?.toString() ?? '';
+    final softColor = palette.onBase.withValues(alpha: 0.78);
+
+    Widget child = _buildContent(
+      type,
+      content,
+      textColor: palette.onBase,
+      mutedColor: softColor,
+    );
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+          vertical: BioSpacing.xs,
+          horizontal: BioSpacing.sm,
+        ),
+        padding: const EdgeInsets.all(BioSpacing.md),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: palette.base,
+          borderRadius: BorderRadius.circular(BioRadius.md),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            child,
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              _formatCreatedAt(m['created_at']),
+              style: BioTypography.caption.copyWith(
+                color: softColor,
+                fontSize: 10,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBubbleOther(BuildContext context, Map<String, dynamic> m) {
+    final tokens = context.bio;
+    final type = m['message_type'] as String? ?? 'texto';
+    final content = m['content']?.toString() ?? '';
+
+    Widget child = _buildContent(
+      type,
+      content,
+      textColor: tokens.textTitle,
+      mutedColor: tokens.textMuted,
+    );
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(
+          vertical: BioSpacing.xs,
+          horizontal: BioSpacing.sm,
+        ),
+        padding: const EdgeInsets.all(BioSpacing.md),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+        ),
+        decoration: BoxDecoration(
+          color: tokens.paperSurfaceSunken,
+          borderRadius: BorderRadius.circular(BioRadius.md),
+          border: Border.all(
+            color: tokens.paperBorderDefault,
+            width: BorderWidth.thin,
           ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            child,
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              _formatCreatedAt(m['created_at']),
+              style: BioTypography.caption.copyWith(
+                color: tokens.textMuted,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    String type,
+    String content, {
+    required Color textColor,
+    required Color mutedColor,
+  }) {
+    if (type == 'texto') {
+      return Text(
+        content,
+        style: BioTypography.body.copyWith(color: textColor),
+      );
+    }
+    if (type == 'imagen' && content.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(BioRadius.sm),
+        child: Image.network(
+          content,
+          fit: BoxFit.cover,
+          width: 200,
+          loadingBuilder: (_, child, progress) => progress == null
+              ? child
+              : SizedBox(
+                  height: 80,
+                  width: 80,
+                  child: Center(
+                    child: CircularProgressIndicator(color: mutedColor),
+                  ),
+                ),
+          errorBuilder: (_, __, ___) =>
+              Icon(Icons.broken_image, color: mutedColor, size: 48),
+        ),
+      );
+    }
+    if (type == 'audio') {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.mic, color: mutedColor, size: 18),
+          BioSpacing.gapW(BioSpacing.sm),
+          Text('Audio', style: BioTypography.bodySm.copyWith(color: mutedColor)),
         ],
+      );
+    }
+    if (type == 'video') {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.videocam, color: mutedColor, size: 18),
+          BioSpacing.gapW(BioSpacing.sm),
+          Text('Video', style: BioTypography.bodySm.copyWith(color: mutedColor)),
+        ],
+      );
+    }
+    return Text(
+      content,
+      style: BioTypography.bodySm.copyWith(color: mutedColor),
+    );
+  }
+
+  String _formatCreatedAt(dynamic v) {
+    final s = v?.toString() ?? '';
+    return s.length >= 16 ? s.substring(0, 16) : s;
+  }
+
+  Widget _buildInputBar(BuildContext context) {
+    final tokens = context.bio;
+    return Container(
+      decoration: BoxDecoration(
+        color: tokens.paperSurface,
+        border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BioSpacing.sm,
+            vertical: BioSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.image_outlined),
+                color: tokens.textBody,
+                onPressed: _sending ? null : _pickImage,
+              ),
+              Expanded(
+                child: TextField(
+                  controller: _textController,
+                  enabled: !_sending,
+                  decoration: const InputDecoration(
+                    hintText: 'Escribí un mensaje…',
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _sendText(),
+                ),
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              IconButton(
+                icon: _sending
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send),
+                color: IntentPalette.of(UiIntent.primary).base,
+                onPressed: _sending ? null : _sendText,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

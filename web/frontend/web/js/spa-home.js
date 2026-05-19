@@ -404,13 +404,46 @@
     }
 
     /**
-     * POST de cierre declarativo (`flow_submit`) sin GET de descriptor: botón en el último paso embebido.
-     * @param {HTMLElement} hostEl contenedor (p. ej. la mini-UI del paso o el bloque del flow)
-     * @param {{ route: string, body?: object }} fsr `flow_submit_request` del payload
+     * Resuelve `body_template` del `flow_submit` con el `draft` actual del chat.
+     * @param {object} bodyTemplate mapa `apiKey -> "draft.<campo>"` o literal.
+     * @returns {{ body: object, missing: string[] }}
+     */
+    function resolveFlowSubmitBody(bodyTemplate) {
+        var body = {};
+        var missing = [];
+        if (!bodyTemplate || typeof bodyTemplate !== 'object') {
+            return { body: body, missing: missing };
+        }
+        Object.keys(bodyTemplate).forEach(function (k) {
+            var raw = bodyTemplate[k];
+            var s = (raw == null ? '' : String(raw)).trim();
+            if (s.indexOf('draft.') === 0) {
+                var field = s.substring(6);
+                var val = (field && draft && Object.prototype.hasOwnProperty.call(draft, field))
+                    ? draft[field]
+                    : '';
+                var sv = (val == null ? '' : String(val)).trim();
+                if (!field || sv === '') {
+                    missing.push(field || k);
+                } else {
+                    body[k] = sv;
+                }
+            } else if (s !== '') {
+                body[k] = s;
+            }
+        });
+        return { body: body, missing: missing };
+    }
+
+    /**
+     * Render del botón "Confirmar y enviar" del último paso del flow (integrado al `open_ui` terminal).
+     * Resuelve `body_template` con el `draft` global al apretar; si faltan campos, muestra error inline.
+     * @param {HTMLElement} hostEl contenedor (la mini-UI del paso o el bloque del flow)
+     * @param {{ route: string, method?: string, action_id?: string, body_template?: object }} fs `flow_submit` del payload
      * @param {function(): void} onFlowCleared tras éxito (limpiar intent/draft en el chat)
      */
-    function appendFlowInlineSubmit(hostEl, fsr, onFlowCleared) {
-        if (!hostEl || !fsr || !fsr.route) {
+    function appendFlowInlineSubmit(hostEl, fs, onFlowCleared) {
+        if (!hostEl || !fs || !fs.route) {
             return;
         }
         var wrap = document.createElement('div');
@@ -428,9 +461,17 @@
         btn.addEventListener('click', function () {
             errBox.classList.add('d-none');
             errBox.textContent = '';
+            var resolved = resolveFlowSubmitBody(fs.body_template);
+            if (resolved.missing.length > 0) {
+                errBox.textContent = resolved.missing.length === 1
+                    ? ('Falta elegir: ' + resolved.missing[0].replace(/_/g, ' '))
+                    : ('Faltan datos: ' + resolved.missing.map(function (m) { return m.replace(/_/g, ' '); }).join(', '));
+                errBox.classList.remove('d-none');
+                return;
+            }
             btn.disabled = true;
-            var postUrl = resolveSpaFetchUrl(String(fsr.route));
-            var bodyObj = (fsr.body && typeof fsr.body === 'object') ? fsr.body : {};
+            var postUrl = resolveSpaFetchUrl(String(fs.route));
+            var bodyObj = resolved.body;
             fetch(postUrl, {
                 method: 'POST',
                 headers: window.BioenlaceApiClient.mergeHeaders({
@@ -487,7 +528,7 @@
                     throw new Error((json && json.message) ? String(json.message) : 'Respuesta inesperada');
                 })
                 .catch(function (err) {
-                    console.error('flow_submit_request POST:', err);
+                    console.error('flow_submit POST:', err);
                     errBox.textContent = (err && err.message) ? String(err.message) : 'Error al enviar';
                     errBox.classList.remove('d-none');
                     btn.disabled = false;
@@ -1237,8 +1278,8 @@
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
-                const fsr = result && result.flow_submit_request && typeof result.flow_submit_request === 'object'
-                    ? result.flow_submit_request
+                const fsr = result && result.flow_submit && typeof result.flow_submit === 'object'
+                    ? result.flow_submit
                     : null;
 
                 // `open_ui` en esta respuesta: lo que el servidor pide montar ahora. El manifiesto describe el paso
@@ -1253,8 +1294,9 @@
                     bioFlowPlanPendingContext = null;
                 }
 
-                // Resolver URL: primero `client_open` ui_json del payload; si hay `flow_submit_request`, seguir
-                // montando la mini-UI del paso activo (tabs) y el POST de cierre va aparte (botón).
+                // Resolver URL: primero `client_open` ui_json del payload; si hay `flow_submit` adjunto,
+                // se monta la mini-UI del paso activo y el botón de cierre se integra al final del bloque
+                // (mismo paso, no mensaje aparte).
                 let fullUrl = '';
                 if (okUiJson) {
                     const route = String(co.api.route || '');
@@ -1292,7 +1334,7 @@
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }
-                    if (fsr && fsr.route && fsr.body && typeof fsr.body === 'object') {
+                    if (fsr && fsr.route && fsr.body_template && typeof fsr.body_template === 'object') {
                         removeFlowPlanStrip();
                         bioFlowPlanPendingContext = null;
                         appendFlowInlineSubmit(flowSectionInner, fsr, flowSubmitClearState);

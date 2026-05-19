@@ -86,7 +86,80 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   bool _messageHasFlowInteractiveUi(Map<String, dynamic> message) {
-    return message['inline_ui'] is Map || message['flow_submit_request'] is Map;
+    return message['inline_ui'] is Map || message['flow_submit'] is Map;
+  }
+
+  /// Mensaje del bot cuyo step es **terminal** (último paso del flow): trae `flow_submit`
+  /// integrado y el botón "Confirmar y enviar" se renderiza debajo del `UiJsonScreen`.
+  /// El tap en items del `kind: list` no debe disparar `procesarInteraccion('')` (Cambio 2).
+  bool _messageIsTerminalFlowStep(Map<String, dynamic> message) {
+    return message['flow_submit'] is Map;
+  }
+
+  /// Normaliza el envelope `flow_submit` del motor (`route`/`method`/`action_id`/`body_template`).
+  /// Devuelve `null` si el descriptor es inválido (ruta vacía).
+  Map<String, dynamic>? _normalizeFlowSubmit(dynamic raw) {
+    if (raw is! Map) return null;
+    final route = raw['route']?.toString().trim() ?? '';
+    if (route.isEmpty) return null;
+    final method = (raw['method']?.toString().trim().isNotEmpty ?? false)
+        ? raw['method'].toString().trim()
+        : 'POST';
+    return <String, dynamic>{
+      'route': route,
+      'method': method,
+      'action_id': raw['action_id']?.toString() ?? '',
+      'body_template': raw['body_template'] is Map
+          ? Map<String, dynamic>.from(raw['body_template'] as Map)
+          : <String, dynamic>{},
+    };
+  }
+
+  /// Texto del aviso "faltan datos" del botón "Confirmar y enviar". Usa el `flow_snapshot`
+  /// vivo para mostrar etiquetas legibles cuando estén disponibles.
+  String _missingFieldsMessage(List<String> missing) {
+    if (missing.isEmpty) {
+      return 'Faltan datos para enviar.';
+    }
+    final labels = missing.map((k) {
+      final entry = _flowSnapshot[k];
+      if (entry is Map) {
+        final label = entry['label']?.toString().trim() ?? '';
+        if (label.isNotEmpty) return label;
+      }
+      return k.replaceAll('_', ' ');
+    }).toList();
+    if (labels.length == 1) {
+      return 'Falta elegir: ${labels.first}.';
+    }
+    return 'Faltan datos: ${labels.join(', ')}.';
+  }
+
+  /// Resuelve el `body_template` con el `_draft` actual. Devuelve `(body, missingFields)`.
+  /// Las claves del template con valor `draft.<campo>` se reemplazan por `_draft[campo]`;
+  /// si el campo está vacío, se acumula en `missingFields`. Valores no-`draft.*` se copian
+  /// literales (raro, pero soportado).
+  ({Map<String, dynamic> body, List<String> missing}) _resolveFlowSubmitBody(
+    Map<String, dynamic> bodyTemplate,
+  ) {
+    final body = <String, dynamic>{};
+    final missing = <String>[];
+    bodyTemplate.forEach((k, v) {
+      final s = v?.toString().trim() ?? '';
+      if (s.startsWith('draft.')) {
+        final field = s.substring(6);
+        final raw = _draft[field];
+        final str = raw?.toString().trim() ?? '';
+        if (field.isEmpty || str.isEmpty) {
+          missing.add(field.isEmpty ? k : field);
+        } else {
+          body[k] = str;
+        }
+      } else if (s.isNotEmpty) {
+        body[k] = s;
+      }
+    });
+    return (body: body, missing: missing);
   }
 
   String? _flowIntentIdFromMessage(Map<String, dynamic> message) {
@@ -121,34 +194,55 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  /// Mismo flow: solo el último paso con mini-UI / submit permanece habilitado.
-  void _supersedeOlderStepsOfActiveFlow(String activeIntentId) {
-    int? lastIdx;
+  /// Último mensaje interactivo del flow activo (mini-UI o submit), o `null` si no hay.
+  int? _lastFlowInteractiveMessageIndex(String activeIntentId) {
     for (var i = _chatHistory.length - 1; i >= 0; i--) {
       final m = _chatHistory[i];
       if (m['type'] != 'bot' || !_messageHasFlowInteractiveUi(m)) {
         continue;
       }
       if (_flowIntentIdFromMessage(m) == activeIntentId) {
-        lastIdx = i;
-        break;
+        return i;
       }
     }
-    if (lastIdx == null) {
-      return;
-    }
-    for (var i = 0; i < _chatHistory.length; i++) {
-      if (i == lastIdx) {
-        continue;
-      }
+    return null;
+  }
+
+  /// Cambio 1: al tocar un list de un paso anterior, se eliminan los mensajes
+  /// posteriores del mismo flow y se limpian las keys del draft que esos pasos
+  /// proveyeron (`flow_provides`). Luego el motor recalcula desde el paso editado.
+  void _truncateFlowAfter(int messageIndex) {
+    if (messageIndex < 0 || messageIndex >= _chatHistory.length - 1) return;
+    final activeIntent = _intentId;
+    if (activeIntent == null || activeIntent.isEmpty) return;
+
+    // Recolectar keys del draft a borrar y mensajes a eliminar (mismo flow activo).
+    final keysToRemove = <String>{};
+    final indicesToRemove = <int>[];
+    for (var i = messageIndex + 1; i < _chatHistory.length; i++) {
       final m = _chatHistory[i];
-      if (m['type'] != 'bot' || !_messageHasFlowInteractiveUi(m)) {
-        continue;
+      if (m['type'] != 'bot') continue;
+      if (_flowIntentIdFromMessage(m) != activeIntent) continue;
+      final provides = m['flow_provides'];
+      if (provides is List) {
+        for (final p in provides) {
+          final s = p?.toString().trim() ?? '';
+          if (s.isNotEmpty) keysToRemove.add(s);
+        }
       }
-      if (_flowIntentIdFromMessage(m) == activeIntentId) {
-        m['flow_superseded'] = true;
-      }
+      indicesToRemove.add(i);
     }
+    if (indicesToRemove.isEmpty) return;
+
+    // Borrar de atrás hacia adelante para no invalidar índices.
+    for (var i = indicesToRemove.length - 1; i >= 0; i--) {
+      _chatHistory.removeAt(indicesToRemove[i]);
+    }
+    for (final k in keysToRemove) {
+      _draft.remove(k);
+      _flowSnapshot.remove(k);
+    }
+    _asistenteService.draft = Map<String, dynamic>.from(_draft);
   }
 
   void _beginNewFlowActivation() {
@@ -182,7 +276,9 @@ class ChatScreenState extends State<ChatScreen> {
       _supersedeDiscardedFlowUIs(activeIntentId);
       _beginNewFlowActivation();
     }
-    _supersedeOlderStepsOfActiveFlow(activeIntentId);
+    // Nota (Cambio 1): los pasos previos del MISMO flow activo NO se marcan
+    // `flow_superseded`. Quedan clickables para "rebobinar" — el tap dispara
+    // `_truncateFlowAfter` y el motor recalcula desde ese paso.
   }
 
   void _applyDraftDelta(Map<String, dynamic> delta) {
@@ -640,18 +736,18 @@ class ChatScreenState extends State<ChatScreen> {
       _asistenteService.draft = Map<String, dynamic>.from(_draft);
     }
 
-    final fsrRaw = data['flow_submit_request'];
-    final hasFlowSubmitRequest = fsrRaw is Map &&
-        (fsrRaw['route']?.toString().trim().isNotEmpty ?? false);
+    final flowSubmit = _normalizeFlowSubmit(data['flow_submit']);
+    final providesList = (data['provides'] is List)
+        ? List<String>.from((data['provides'] as List).map((e) => e.toString()))
+        : <String>[];
 
     final openUi = data['open_ui'];
-    if (openUi is Map || hasFlowSubmitRequest) {
+    if (openUi is Map || flowSubmit != null) {
       final co = openUi is Map ? openUi['client_open'] : null;
       final actionId = openUi is Map ? openUi['action_id']?.toString() : null;
-      if (hasFlowSubmitRequest) {
-        final fsrBody = fsrRaw['body'] is Map
-            ? Map<String, dynamic>.from(fsrRaw['body'] as Map)
-            : <String, dynamic>{};
+      // Caso "submit-only": el motor cerró el flow sin UI previa (ver `buildTerminalSubmitOnlyResponse`).
+      // Mensaje sólo con `flow_submit` → render del botón "Confirmar y enviar" sin `inline_ui`.
+      if (flowSubmit != null && !(co is Map && actionId != null && actionId.isNotEmpty)) {
         setState(() {
           _isSending = false;
           _chatHistory.add({
@@ -659,13 +755,8 @@ class ChatScreenState extends State<ChatScreen> {
             'content': explanation,
             'actions': null,
             if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
-            'flow_submit_request': <String, dynamic>{
-              'route': fsrRaw['route']!.toString().trim(),
-              'method': (fsrRaw['method']?.toString().trim().isNotEmpty ?? false)
-                  ? fsrRaw['method'].toString()
-                  : 'POST',
-              'body': fsrBody,
-            },
+            'flow_submit': flowSubmit,
+            if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
           });
           _stampLastBotMessageFlowActivation();
@@ -710,6 +801,8 @@ class ChatScreenState extends State<ChatScreen> {
             'content': explanation,
             'actions': null,
             if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+            if (flowSubmit != null) 'flow_submit': flowSubmit,
+            if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
           });
           _stampLastBotMessageFlowActivation();
@@ -764,6 +857,8 @@ class ChatScreenState extends State<ChatScreen> {
               'content': explanation,
               'actions': null,
               if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+              if (flowSubmit != null) 'flow_submit': flowSubmit,
+              if (providesList.isNotEmpty) 'flow_provides': providesList,
               'timestamp': DateTime.now(),
             });
             _stampLastBotMessageFlowActivation();
@@ -1658,16 +1753,30 @@ class ChatScreenState extends State<ChatScreen> {
   Future<void> _postFlowSubmitFromMessage(int index) async {
     if (index < 0 || index >= _chatHistory.length) return;
     final msg = _chatHistory[index];
-    final fsr = msg['flow_submit_request'];
-    if (fsr is! Map) return;
-    final route = fsr['route']?.toString().trim() ?? '';
+    final fs = msg['flow_submit'];
+    if (fs is! Map) return;
+    final route = fs['route']?.toString().trim() ?? '';
     if (route.isEmpty) return;
-    setState(() => msg['_flow_submit_busy'] = true);
+
+    // Resolver body_template con el draft actual. Si faltan campos, mostrar error inline
+    // (Cambio 2: botón siempre habilitado; descubrible).
+    final tpl = fs['body_template'] is Map
+        ? Map<String, dynamic>.from(fs['body_template'] as Map)
+        : <String, dynamic>{};
+    final resolved = _resolveFlowSubmitBody(tpl);
+    if (resolved.missing.isNotEmpty) {
+      setState(() {
+        msg['_flow_submit_missing'] = resolved.missing;
+      });
+      return;
+    }
+    setState(() {
+      msg.remove('_flow_submit_missing');
+      msg['_flow_submit_busy'] = true;
+    });
     try {
       final uri = Uri.parse(resolveApiAbsoluteUrl(route));
-      final bodyMap = fsr['body'] is Map
-          ? Map<String, dynamic>.from(fsr['body'] as Map)
-          : <String, dynamic>{};
+      final bodyMap = resolved.body;
       final headers = AppConfig.jsonHeaders(
         bearerToken: _asistenteService.authToken,
         appClient: 'bioenlace-paciente',
@@ -1796,7 +1905,7 @@ class ChatScreenState extends State<ChatScreen> {
                 final inlineUi = message['inline_ui'];
                 final hasEmbeddedUi = !isUser && inlineUi is Map;
                 final flowActionTitle = !isUser ? _flowActionTitleFromMessage(message) : null;
-                final hasFlowSubmit = !isUser && message['flow_submit_request'] is Map;
+                final hasFlowSubmit = !isUser && message['flow_submit'] is Map;
                 final hasFlowContext =
                     flowActionTitle != null && (hasEmbeddedUi || hasFlowSubmit);
                 final showFlowHeader = hasFlowContext &&
@@ -2096,6 +2205,20 @@ class ChatScreenState extends State<ChatScreen> {
                                   ? null
                                   : (_inlineUiIsConfirmacionTurno(inlineUi) ? _resetAssistantToWelcome : null),
                               onDraftDelta: flowUiDisabled ? null : (dd) async {
+                                // Cambio 1: si este mensaje NO es el último interactivo del flow
+                                // activo, "rebobinar" el flow: eliminar mensajes posteriores del
+                                // mismo flow y limpiar las keys del draft que esos pasos proveyeron.
+                                // Luego se vuelve a pedir el siguiente paso al motor con el draft
+                                // truncado + la nueva elección.
+                                final activeIid = _intentId;
+                                if (activeIid != null && activeIid.isNotEmpty) {
+                                  final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
+                                  if (lastIdx != null && index < lastIdx) {
+                                    setState(() {
+                                      _truncateFlowAfter(index);
+                                    });
+                                  }
+                                }
                                 _applyDraftDelta(Map<String, dynamic>.from(dd));
                                 // El descriptor GET puede llevar filtros en query (`id_servicio`, …) vía `provided`;
                                 // si el draft local no tiene aún `id_servicio_asignado`, lo tomamos de la URL resuelta
@@ -2119,6 +2242,19 @@ class ChatScreenState extends State<ChatScreen> {
                                   }
                                 }
                                 _asistenteService.draft = Map<String, dynamic>.from(_draft);
+
+                                // Step terminal (último del flow): el tap mergeó local; NO postear al motor.
+                                // El submit lo dispara el botón "Confirmar y enviar" del mismo mensaje.
+                                if (_messageIsTerminalFlowStep(message)) {
+                                  // Si había un aviso previo de "falta X" y ahora X está en el draft, limpiarlo.
+                                  if (message['_flow_submit_missing'] is List) {
+                                    setState(() {
+                                      message.remove('_flow_submit_missing');
+                                    });
+                                  }
+                                  return;
+                                }
+
                                 // Avanzar el flow automáticamente (snapshot) sin texto.
                                 final res = await _asistenteService.procesarInteraccion('');
                                 if (!mounted) return;
@@ -2144,26 +2280,24 @@ class ChatScreenState extends State<ChatScreen> {
 
                                     final t = data['text']?.toString();
                                     final msgText = (t != null && t.trim().isNotEmpty) ? t.trim() : 'Ok.';
-                                    final fsrRaw = data['flow_submit_request'];
-                                    final Map<String, dynamic>? fsrPayload =
-                                        (fsrRaw is Map && (fsrRaw['route']?.toString().trim().isNotEmpty ?? false))
-                                            ? <String, dynamic>{
-                                                'route': fsrRaw['route']!.toString().trim(),
-                                                'method': (fsrRaw['method']?.toString().trim().isNotEmpty ?? false)
-                                                    ? fsrRaw['method'].toString()
-                                                    : 'POST',
-                                                'body': fsrRaw['body'] is Map
-                                                    ? Map<String, dynamic>.from(fsrRaw['body'] as Map)
-                                                    : <String, dynamic>{},
-                                              }
-                                            : null;
+                                    final fsPayload = _normalizeFlowSubmit(data['flow_submit']);
+                                    final providesPayload = (data['provides'] is List)
+                                        ? List<String>.from((data['provides'] as List).map((e) => e.toString()))
+                                        : <String>[];
+                                    final openUiNext = data['open_ui'];
+                                    final coNext = openUiNext is Map ? openUiNext['client_open'] : null;
+                                    final hasInlineUi = coNext is Map &&
+                                        (openUiNext['action_id']?.toString().trim().isNotEmpty ?? false);
+                                    // Caso "submit-only": flow_submit sin open_ui → mensaje con sólo el botón.
+                                    final isSubmitOnly = fsPayload != null && !hasInlineUi;
                                     setState(() {
                                       _chatHistory.add({
                                         'type': 'bot',
                                         'content': msgText,
                                         'actions': null,
                                         if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
-                                        if (fsrPayload != null) 'flow_submit_request': fsrPayload,
+                                        if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
+                                        if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
                                         'timestamp': DateTime.now(),
                                       });
                                       _stampLastBotMessageFlowActivation();
@@ -2171,9 +2305,12 @@ class ChatScreenState extends State<ChatScreen> {
                                     });
                                     _scrollToBottom();
 
-                                    // Si el paso siguiente trae open_ui (sin cierre POST en línea), abrirla inline.
+                                    // Si el paso siguiente trae open_ui, abrirla inline. Si además es terminal
+                                    // (`flow_submit` adjunto), el `_tryOpenClientNative` arma el inline_ui y
+                                    // luego adjuntamos `flow_submit` al mismo mensaje para que el botón
+                                    // "Confirmar y enviar" aparezca debajo del UiJsonScreen.
                                     final openUi = data['open_ui'];
-                                    if (openUi is Map && fsrPayload == null) {
+                                    if (openUi is Map && !isSubmitOnly) {
                                       final actionId = openUi['action_id']?.toString();
                                       final co = openUi['client_open'];
                                       if (actionId != null && actionId.isNotEmpty) {
@@ -2227,6 +2364,14 @@ class ChatScreenState extends State<ChatScreen> {
                                             pseudoAction,
                                             messageIndex: _chatHistory.length - 1,
                                           );
+                                          // Step terminal con `open_ui`: adjuntar `flow_submit` al mismo mensaje
+                                          // recién enriquecido con `inline_ui`, para que el botón "Confirmar y enviar"
+                                          // se renderice debajo del UiJsonScreen (Cambio 2).
+                                          if (fsPayload != null && mounted && _chatHistory.isNotEmpty) {
+                                            setState(() {
+                                              _chatHistory.last['flow_submit'] = fsPayload;
+                                            });
+                                          }
                                         }
                                       }
                                     }
@@ -2283,35 +2428,33 @@ class ChatScreenState extends State<ChatScreen> {
                                     final explanation = (text != null && text.trim().isNotEmpty)
                                         ? text.trim()
                                         : 'Listo.';
-                                    final fsrRaw = data['flow_submit_request'];
-                                    final Map<String, dynamic>? fsrPayload =
-                                        (fsrRaw is Map && (fsrRaw['route']?.toString().trim().isNotEmpty ?? false))
-                                            ? <String, dynamic>{
-                                                'route': fsrRaw['route']!.toString().trim(),
-                                                'method': (fsrRaw['method']?.toString().trim().isNotEmpty ?? false)
-                                                    ? fsrRaw['method'].toString()
-                                                    : 'POST',
-                                                'body': fsrRaw['body'] is Map
-                                                    ? Map<String, dynamic>.from(fsrRaw['body'] as Map)
-                                                    : <String, dynamic>{},
-                                              }
-                                            : null;
+                                    final fsPayload = _normalizeFlowSubmit(data['flow_submit']);
+                                    final providesPayload = (data['provides'] is List)
+                                        ? List<String>.from((data['provides'] as List).map((e) => e.toString()))
+                                        : <String>[];
+                                    final openUiNext = data['open_ui'];
+                                    final coNext = openUiNext is Map ? openUiNext['client_open'] : null;
+                                    final hasInlineUi = coNext is Map &&
+                                        (openUiNext['action_id']?.toString().trim().isNotEmpty ?? false);
+                                    final isSubmitOnly = fsPayload != null && !hasInlineUi;
                                     setState(() {
                                       _chatHistory.add({
                                         'type': 'bot',
                                         'content': explanation,
                                         'actions': null,
                                         if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
-                                        if (fsrPayload != null) 'flow_submit_request': fsrPayload,
+                                        if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
+                                        if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
                                         'timestamp': DateTime.now(),
                                       });
                                       _stampLastBotMessageFlowActivation();
                                       _applyFlowSupersession(activeIntentId: _intentId);
                                     });
                                     _scrollToBottom();
-                                    // Si hay UI siguiente (sin cierre POST en línea), abrirla.
+                                    // Si hay UI siguiente (con open_ui), abrirla. Adjuntamos `flow_submit` después
+                                    // al mismo mensaje si este step es terminal.
                                     final openUi = data['open_ui'];
-                                    if (openUi is Map && fsrPayload == null) {
+                                    if (openUi is Map && !isSubmitOnly) {
                                       final actionId = openUi['action_id']?.toString();
                                       final co = openUi['client_open'];
                                       if (actionId != null && actionId.isNotEmpty && co is Map) {
@@ -2322,6 +2465,11 @@ class ChatScreenState extends State<ChatScreen> {
                                           'parameters': {'provided': _draft},
                                         };
                                         await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+                                        if (fsPayload != null && mounted && _chatHistory.isNotEmpty) {
+                                          setState(() {
+                                            _chatHistory.last['flow_submit'] = fsPayload;
+                                          });
+                                        }
                                       }
                                     }
                                   }
@@ -2338,26 +2486,46 @@ class ChatScreenState extends State<ChatScreen> {
                           ],
                         ),
                       ),
-                    if (!isUser && message['flow_submit_request'] is Map)
+                    if (!isUser && message['flow_submit'] is Map)
                       _wrapFlowInteractiveCollapse(
                         collapsing: flowCollapsing,
                         child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: BioButton.primary(
-                            label: 'Confirmar y enviar',
-                            icon: Icons.check_circle_outline,
-                            loading: message['_flow_submit_busy'] == true,
-                            onPressed: (flowUiDisabled ||
-                                    flowCollapsing ||
-                                    message['_flow_submit_busy'] == true ||
-                                    _isSending)
-                                ? null
-                                : () => _postFlowSubmitFromMessage(index),
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Aviso inline si faltan campos del draft al apretar (Cambio 2).
+                              if (message['_flow_submit_missing'] is List &&
+                                  (message['_flow_submit_missing'] as List).isNotEmpty) ...[
+                                BioAlert.danger(
+                                  message: _missingFieldsMessage(
+                                    List<String>.from(
+                                      (message['_flow_submit_missing'] as List)
+                                          .map((e) => e.toString()),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              BioButton.primary(
+                                label: 'Confirmar y enviar',
+                                icon: Icons.check_circle_outline,
+                                size: BioButtonSize.lg,
+                                fullWidth: true,
+                                loading: message['_flow_submit_busy'] == true,
+                                // Siempre habilitado salvo: flow superseded / colapsando / submit en curso.
+                                // Si faltan campos del draft, `_postFlowSubmitFromMessage` muestra el alert
+                                // inline y no envía (descubrible para el usuario).
+                                onPressed: (flowUiDisabled ||
+                                        flowCollapsing ||
+                                        message['_flow_submit_busy'] == true ||
+                                        _isSending)
+                                    ? null
+                                    : () => _postFlowSubmitFromMessage(index),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
                       ),
                     // Formulario dinámico si hay form_config (viene de getActionFormConfig)
                     if (!isUser) ...[

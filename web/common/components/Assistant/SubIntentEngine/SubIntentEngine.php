@@ -62,6 +62,8 @@ final class SubIntentEngine
             return self::handleConfirmSelection($intentId, $currentId, $draft, $interaction, $userId);
         }
 
+        $flowSubmitBlock = isset($intent['flow_submit']) && is_array($intent['flow_submit']) ? $intent['flow_submit'] : null;
+
         // Determinar qué falta según requires.
         $missing = self::missingDraftFields($current, $draft);
         if ($missing !== []) {
@@ -71,11 +73,12 @@ final class SubIntentEngine
                 return self::buildOpenUiResponse(
                     $intentId,
                     $currentId,
-                    (string) $open['action_id'],
+                    $current,
                     self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
                     $userId,
                     $open,
-                    $content
+                    $content,
+                    $flowSubmitBlock
                 );
             }
             return self::withFlowManifest([
@@ -90,7 +93,6 @@ final class SubIntentEngine
 
         // Si el subintent provee algo y ya está en draft, avanzar al siguiente.
         $next = self::resolveNextSubintentId($current, $draft);
-        $flowSubmitBlock = isset($intent['flow_submit']) && is_array($intent['flow_submit']) ? $intent['flow_submit'] : null;
 
         if ($next !== '') {
             $nextSub = self::findSubintent($subintents, $next);
@@ -100,21 +102,27 @@ final class SubIntentEngine
                     return self::buildOpenUiResponse(
                         $intentId,
                         (string) $nextSub['id'],
-                        (string) $open['action_id'],
+                        $nextSub,
                         self::assistantTextForPrompt($nextSub, 'Perfecto, sigamos con el siguiente paso.'),
                         $userId,
                         $open,
-                        $content
+                        $content,
+                        $flowSubmitBlock
                     );
                 }
-                // Siguiente paso sin open_ui: cierre de rama (p. ej. sin agenda) o paso vacío → flow_submit o Listo.
+                // Siguiente paso sin open_ui: cierre de rama → mensaje de submit (botón sin UI previa).
                 $missingNext = self::missingDraftFields($nextSub, $draft);
                 $nextNext = isset($nextSub['next']) ? trim((string) $nextSub['next']) : '';
                 $hasOpenAction = is_array($open) && !empty($open['action_id']);
                 if ($missingNext === [] && !$hasOpenAction && $nextNext === '') {
                     $nextIdStr = (string) ($nextSub['id'] ?? '');
                     if ($flowSubmitBlock !== null && self::flowSubmitHasActionId($flowSubmitBlock)) {
-                        return self::emitFlowSubmitPayload($intentId, $nextIdStr, $draft, $userId, $flowSubmitBlock);
+                        return self::buildTerminalSubmitOnlyResponse(
+                            $intentId,
+                            $nextIdStr,
+                            self::assistantTextForPrompt($nextSub, 'Confirmemos y enviemos.'),
+                            $flowSubmitBlock
+                        );
                     }
 
                     return self::withFlowManifest([
@@ -128,8 +136,14 @@ final class SubIntentEngine
             }
         }
 
+        // No quedan pasos por delante: cierre por flow_submit (sin UI previa).
         if ($flowSubmitBlock !== null && self::flowSubmitHasActionId($flowSubmitBlock)) {
-            return self::emitFlowSubmitPayload($intentId, $currentId, $draft, $userId, $flowSubmitBlock);
+            return self::buildTerminalSubmitOnlyResponse(
+                $intentId,
+                $currentId,
+                'Confirmemos y enviemos.',
+                $flowSubmitBlock
+            );
         }
 
         return self::withFlowManifest([
@@ -292,56 +306,121 @@ final class SubIntentEngine
     }
 
     /**
+     * Un subintent es "terminal" si después de él el flow ya no espera otro paso interactivo:
+     * no declara `next` ni `next_routing`, y el intent expone `flow_submit` con `action_id`.
+     *
+     * El cálculo es **declarativo** (no depende del draft del usuario) para no marcar terminal
+     * un paso cuyo `next_routing` aún no se puede resolver. Si un YAML quiere "rama de cierre"
+     * dentro de routing, debe modelar el cierre como un subintent sin `next` y dejar que el
+     * motor caiga acá.
+     *
+     * @param array<string, mixed> $subintent
+     * @param array<string, mixed>|null $flowSubmitBlock
+     */
+    private static function isTerminalSubintent(array $subintent, ?array $flowSubmitBlock): bool
+    {
+        if ($flowSubmitBlock === null || !self::flowSubmitHasActionId($flowSubmitBlock)) {
+            return false;
+        }
+        $hasNext = isset($subintent['next']) && trim((string) $subintent['next']) !== '';
+        $hasRouting = isset($subintent['next_routing'])
+            && is_array($subintent['next_routing'])
+            && $subintent['next_routing'] !== [];
+
+        return !$hasNext && !$hasRouting;
+    }
+
+    /**
+     * `flow_submit` template para el cliente: el cliente resuelve los placeholders `draft.x`
+     * con su `_draft` local al apretar el botón "Confirmar y enviar".
+     *
+     * @param array<string, mixed> $flowSubmitBlock
+     * @return array{action_id: string, route: string, method: string, body_template: array<string, string>}|null
+     */
+    private static function buildFlowSubmitTemplate(array $flowSubmitBlock): ?array
+    {
+        $actionId = trim((string) ($flowSubmitBlock['action_id'] ?? ''));
+        if ($actionId === '') {
+            return null;
+        }
+        $route = self::apiRouteForActionId($actionId);
+        if ($route === '') {
+            return null;
+        }
+        $paramsMap = isset($flowSubmitBlock['params']) && is_array($flowSubmitBlock['params'])
+            ? $flowSubmitBlock['params']
+            : [];
+        $template = [];
+        foreach ($paramsMap as $k => $v) {
+            $key = is_string($k) ? trim($k) : '';
+            if ($key === '') {
+                continue;
+            }
+            $vv = is_string($v) ? trim($v) : '';
+            if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $template[$key] = $vv;
+        }
+        if ($template === []) {
+            return null;
+        }
+
+        return [
+            'action_id' => $actionId,
+            'route' => $route,
+            'method' => 'POST',
+            'body_template' => $template,
+        ];
+    }
+
+    /**
+     * Cierre de flow sin `open_ui` previo: el cliente sólo muestra el botón "Confirmar y enviar".
+     *
      * @param array<string, mixed> $flowSubmitBlock
      * @return array<string, mixed>
      */
-    private static function emitFlowSubmitPayload(string $intentId, string $subintentId, array $draft, int $userId, array $flowSubmitBlock): array
+    private static function buildTerminalSubmitOnlyResponse(string $intentId, string $subintentId, string $text, array $flowSubmitBlock): array
     {
-        $submitActionId = trim((string) $flowSubmitBlock['action_id']);
-        $openSubmit = self::resolveClientOpen($submitActionId, $userId);
-        $openSubmit = self::applyDraftParamsMapToOpenUi($openSubmit, $draft, $flowSubmitBlock);
-
+        $template = self::buildFlowSubmitTemplate($flowSubmitBlock);
         $payload = [
             'success' => true,
-            'text' => 'Confirmemos y enviemos.',
+            'text' => $text,
             'intent_id' => $intentId,
             'subintent_id' => $subintentId,
-            'open_ui' => $openSubmit,
             'draft_delta' => (object) [],
         ];
-        $inlineSubmit = self::buildFlowSubmitRequestDescriptor($submitActionId, $draft, $flowSubmitBlock);
-        if ($inlineSubmit !== null) {
-            $payload['flow_submit_request'] = $inlineSubmit;
-            // Cierre en línea (botón POST): no reabrir el mismo intent ni otra mini-UI por `client_open`.
-            $openSubmit['client_open'] = null;
-            $payload['open_ui'] = $openSubmit;
+        if ($template !== null) {
+            $payload['flow_submit'] = $template;
         }
 
         return self::withFlowManifest($payload, $intentId, $subintentId);
     }
 
     /**
-     * POST listo para clientes que no abren GET de descriptor (`client_open` null): mismo mapeo `params` que `flow_submit` en YAML.
+     * Extrae los nombres "limpios" de campos declarados en `provides` (sin el prefijo `draft.`).
      *
-     * @param array<string, mixed> $flowSubmitBlock
-     * @return array{method: string, route: string, body: array<string, string>}|null
+     * @param mixed $provides
+     * @return list<string>
      */
-    private static function buildFlowSubmitRequestDescriptor(string $submitActionId, array $draft, array $flowSubmitBlock): ?array
+    private static function extractDraftKeys($provides): array
     {
-        $route = self::apiRouteForActionId($submitActionId);
-        if ($route === '') {
-            return null;
+        if (!is_array($provides)) {
+            return [];
         }
-        $body = self::buildSubmitBodyFromParamsMap($draft, $flowSubmitBlock);
-        if ($body === []) {
-            return null;
+        $out = [];
+        foreach ($provides as $p) {
+            $p = is_string($p) ? trim($p) : '';
+            if ($p === '' || strncmp($p, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $field = substr($p, 6);
+            if ($field !== '') {
+                $out[] = $field;
+            }
         }
 
-        return [
-            'method' => 'POST',
-            'route' => $route,
-            'body' => $body,
-        ];
+        return array_values(array_unique($out));
     }
 
     private static function apiRouteForActionId(string $actionId): string
@@ -352,89 +431,6 @@ final class SubIntentEngine
         }
 
         return '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
-    }
-
-    /**
-     * @param array<string, mixed> $draft
-     * @param array<string, mixed>|null $submitBlock
-     * @return array<string, string>
-     */
-    private static function buildSubmitBodyFromParamsMap(array $draft, ?array $submitBlock): array
-    {
-        $paramsMap = is_array($submitBlock) && isset($submitBlock['params']) && is_array($submitBlock['params'])
-            ? $submitBlock['params']
-            : null;
-        if ($paramsMap === null || $paramsMap === []) {
-            return [];
-        }
-        $out = [];
-        foreach ($paramsMap as $k => $v) {
-            $key = is_string($k) ? trim($k) : '';
-            if ($key === '') {
-                continue;
-            }
-            $vv = is_string($v) ? trim($v) : '';
-            if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
-                continue;
-            }
-            $field = substr($vv, 6);
-            if ($field === '') {
-                continue;
-            }
-            if (!isset($draft[$field]) || $draft[$field] === null || trim((string) $draft[$field]) === '') {
-                continue;
-            }
-            $out[$key] = (string) $draft[$field];
-        }
-
-        return $out;
-    }
-
-    /**
-     * Añade query params al `client_open.api` desde `params` de `flow_submit` o `submit` en YAML (valores `draft.*`).
-     *
-     * @param array<string, mixed> $open
-     * @param array<string, mixed> $draft
-     * @param array<string, mixed>|null $submitBlock
-     * @return array<string, mixed>
-     */
-    private static function applyDraftParamsMapToOpenUi(array $open, array $draft, ?array $submitBlock): array
-    {
-        $paramsMap = is_array($submitBlock) && isset($submitBlock['params']) && is_array($submitBlock['params'])
-            ? $submitBlock['params']
-            : null;
-        if ($paramsMap === null || $paramsMap === [] || !isset($open['client_open']) || !is_array($open['client_open'])) {
-            return $open;
-        }
-        $co = $open['client_open'];
-        if (!isset($co['api']) || !is_array($co['api'])) {
-            return $open;
-        }
-        $api = $co['api'];
-        $query = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
-        foreach ($paramsMap as $k => $v) {
-            $key = is_string($k) ? trim($k) : '';
-            if ($key === '') {
-                continue;
-            }
-            $vv = is_string($v) ? trim($v) : '';
-            if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
-                continue;
-            }
-            $field = substr($vv, 6);
-            if ($field === '') {
-                continue;
-            }
-            if (!isset($draft[$field]) || $draft[$field] === null || trim((string) $draft[$field]) === '') {
-                continue;
-            }
-            $query[$key] = (string) $draft[$field];
-        }
-        $api['query'] = $query;
-        $co['api'] = $api;
-        $open['client_open'] = $co;
-
-        return $open;
     }
 
     /**
@@ -561,10 +557,32 @@ final class SubIntentEngine
     }
 
     /**
+     * Arma la respuesta del motor para emitir un `open_ui`.
+     *
+     * Enriquecimientos del envelope:
+     * - `provides`: lista de campos del draft que este subintent producirá. El cliente la usa
+     *   para limpiar el draft al "rebobinar" un paso anterior (Cambio 1: editar list ya elegido).
+     * - `flow_submit`: si el subintent es **terminal** (ver `isTerminalSubintent`), se adjunta el
+     *   template del cierre con `route`, `method` y `body_template` (Cambio 2: botón
+     *   "Confirmar y enviar" integrado en el último paso). El cliente NO debe re-postear este
+     *   paso al motor: el tap en el último `kind: list` sólo mergea local, y el submit lo dispara
+     *   el botón "Confirmar y enviar" del propio paso, POSTeando directo a `flow_submit.route`.
+     *
+     * @param array<string, mixed> $subintent
      * @param array<string, mixed> $openUiDef
+     * @param array<string, mixed>|null $flowSubmitBlock
      */
-    private static function buildOpenUiResponse(string $intentId, string $subintentId, string $actionId, string $text, int $userId, array $openUiDef = [], string $flowUserContent = ''): array
-    {
+    private static function buildOpenUiResponse(
+        string $intentId,
+        string $subintentId,
+        array $subintent,
+        string $text,
+        int $userId,
+        array $openUiDef,
+        string $flowUserContent,
+        ?array $flowSubmitBlock
+    ): array {
+        $actionId = (string) ($openUiDef['action_id'] ?? '');
         $open = self::resolveClientOpen($actionId, $userId);
 
         // Parametrización declarativa: mapear draft -> query params del open_ui.
@@ -617,14 +635,24 @@ final class SubIntentEngine
             }
         }
 
-        return self::withFlowManifest([
+        $payload = [
             'success' => true,
             'text' => $text,
             'intent_id' => $intentId,
             'subintent_id' => $subintentId,
             'open_ui' => $open,
+            'provides' => self::extractDraftKeys($subintent['provides'] ?? []),
             'draft_delta' => (object) [],
-        ], $intentId, $subintentId);
+        ];
+
+        if (self::isTerminalSubintent($subintent, $flowSubmitBlock)) {
+            $template = self::buildFlowSubmitTemplate($flowSubmitBlock);
+            if ($template !== null) {
+                $payload['flow_submit'] = $template;
+            }
+        }
+
+        return self::withFlowManifest($payload, $intentId, $subintentId);
     }
 
     /**

@@ -15,7 +15,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `subintents` | **Obligatorio**: lista ordenada de pasos. |
-| `flow_submit` | **Opcional.** Cierre del flujo: cuando el motor determina paso terminal (sin siguiente `open_ui` pendiente, `next` vacío o rama vacía) y el draft cumple `requires`/`provides`, emite `open_ui` con el `client_open` de esta acción (GET descriptor + POST mutación), igual que antes el `submit` por subintent. **No** declarar cierre por subintent: usar solo `flow_submit` en la raíz. Además, si el mapeo `params` produce al menos un valor, el motor incluye **`flow_submit_request`** (`method`, `route` `/api/v1/...`, `body` clave→valor desde el draft) para que los clientes muestren un **botón de confirmación** en el último paso sin depender de abrir otra pantalla cuando `client_open` sea `null`. |
+| `flow_submit` | **Opcional.** Cierre del flujo. El motor detecta automáticamente el **paso terminal** (subintent sin `next` ni `next_routing`) y, cuando ese paso emite `open_ui`, adjunta el descriptor `flow_submit` al envelope (ver más abajo). Si el último paso no tiene `open_ui`, el envelope se emite **solo** con `flow_submit` (texto + botón "Confirmar y enviar"). **No** declarar cierre por subintent: usar solo `flow_submit` en la raíz. |
 
 ## Nodo `subintents[]` — claves soportadas
 
@@ -46,34 +46,78 @@ open_ui:
 
 ```yaml
 flow_submit:
-  action_id: <action_id del catálogo>
-  params:   # opcional; mismas reglas que mapean draft → query del client_open
-    id: "draft.id"
+  action_id: <action_id del catálogo>      # ej. "turnos.crear-como-paciente"
+  params:                                  # mapa apiKey -> "draft.<campo>"
+    id_efector: "draft.id_efector"
+    id_servicio: "draft.id_servicio"
+    id_profesional_efector_servicio: "draft.id_pes"
+    id_slot: "draft.id_slot"
 ```
 
-### Payload JSON: `flow_submit_request` (respuesta del motor)
+## Envelope de respuesta del motor
 
-Cuando el cierre del flujo emite `flow_submit`, el motor puede adjuntar (además de `open_ui`):
+Cada call a `SubIntentEngine::process` devuelve un envelope. Los clientes (web Yii `spa-home.js`, móvil paciente `chat_screen.dart`) deben leerlo así:
+
+| Clave | Cuándo aparece | Uso del cliente |
+|--------|---------------|----------------|
+| `intent_id`, `subintent_id` | siempre | Mantener estado del flow activo. |
+| `text` | siempre | Mensaje del bot. |
+| `draft_delta` | siempre (puede ser `{}`) | Merge en el `_draft` local. |
+| `open_ui` | cuando hay un paso con UI a mostrar | Abrir mini-UI embebida (`UiJsonScreen` / `renderDynamicUi`). |
+| `provides` | con cada `open_ui` | Lista de claves del draft que el paso producirá (sin prefijo `draft.`). El cliente la usa para limpiar el draft al **rebobinar** un paso anterior — ver "Cambio 1" abajo. |
+| `flow_submit` | sólo en pasos **terminales** | Descriptor para el botón "Confirmar y enviar" del último paso. Ver tabla siguiente. |
+| `flow_manifest` | cuando hay flow activo | Slice del manifiesto para UI (título, tabs). |
+
+### `flow_submit` (descriptor del cierre)
 
 | Clave | Uso |
 |--------|-----|
+| `action_id` | `<entidad>.<accion>`, para tracing y eventuales fallbacks. |
+| `route` | Ruta API canónica `/api/v1/<entidad>/<accion>`. |
 | `method` | Hoy siempre `POST`. |
-| `route` | Ruta API canónica `/api/v1/<entidad>/<accion>` derivada de `action_id`. |
-| `body` | Objeto string→string: cada clave del `params` del YAML cuyo valor es `draft.<campo>` y el draft tiene valor. Es el cuerpo del POST de cierre (`kind: ui_submit_result`). |
+| `body_template` | Mapa `apiKey -> "draft.<campo>"`. **No** está resuelto; el cliente lo expande con su `_draft` local al apretar el botón. |
 
-**Cierres POST-only (sin UI en GET):** algunos `flow_submit.action_id` apuntan a endpoints que **solo aceptan POST** y devuelven `ui_submit_result` (acuse), sin descriptor `ui_definition`. El `rbac_route` del YAML debe coincidir con el permiso webvimark (sin `v1`), p. ej. `rbac_route: "/api/profesional-agenda/crear-agenda-flow"` → API `POST /api/v1/profesional-agenda/crear-agenda-flow`. El motor emite `open_ui.client_open: null` y **`flow_submit_request`** para el botón de confirmación; no abrir GET. Ver `AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute`.
+El cliente, al presionar "Confirmar y enviar", resuelve `body_template` (cualquier valor `draft.x` ausente se reporta como aviso inline) y POSTea a `route`. La respuesta esperada es `kind: ui_submit_result`. No se vuelve a llamar a `/asistente/enviar` para cerrar.
 
-**Cuándo usar `flow_submit`:**
+## Semántica de "paso terminal" (Cambio 2)
 
-1. **Paso dedicado** sin listado previo: el último dato ya está en `draft` y solo falta abrir la pantalla de cierre (ej. cancelar turno con `id`).
-2. **Tras un picker + `next: ""`**: mientras falten `requires` / `provides`, el motor abre `open_ui` del paso; cuando el draft está completo y no hay siguiente paso, emite el `client_open` del `flow_submit` (ej. slot elegido → `turnos.crear-como-paciente`). Si no hay descriptor en catálogo/RBAC, **`flow_submit_request`** permite al cliente POSTear el cierre **en línea** (p. ej. botón bajo la misma mini-UI de slots) sin forzar un segundo `open_ui` fallido.
-3. **Rama sin `open_ui` siguiente**: si `next` apunta a un subintent “vacío” (sin UI, `next` vacío) y el draft ya cumple, el motor puede emitir `flow_submit` desde ese id de paso.
+Un subintent es **terminal** si:
 
-**Cuándo no hace falta `flow_submit`:**
+1. No declara `next` ni `next_routing` (el YAML dice "después de este paso no hay otro paso interactivo"), y
+2. El intent tiene `flow_submit` con `action_id` válido.
 
-- Toda la interacción, incluido el cierre satisfactorio para el usuario, ocurre dentro de una `open_ui` que ya persiste en su POST (p. ej. condición laboral). Aun así puede existir `rbac_route` apuntando a una ruta de permiso “stub” si el producto la usa solo para RBAC.
+Cuando el motor va a emitir el `open_ui` de un paso terminal, adjunta `flow_submit` al **mismo** envelope. El cliente entonces:
 
-**Importante:** si un paso con `open_ui` y `next: ""` no declara `provides` para “haber completado” esa pantalla, el motor puede considerar el draft ya completo y disparar `flow_submit` demasiado pronto. Añadir `provides` (p. ej. un flag que el POST de esa UI devuelve en `data`) o encadenar un paso explícito.
+- Muestra el `open_ui` normalmente (p. ej. `kind: list` de slots).
+- **El tap en items del último `kind: list` no postea al motor**: sólo mergea local en `_draft`. (Esto cambia el comportamiento "tap = commit" que aplica a los pasos intermedios.)
+- Renderiza el botón "Confirmar y enviar" debajo de la UI principal, full-width, **siempre habilitado**. Si el `_draft` no cubre todo `body_template` al apretar, muestra un aviso inline (`Falta elegir: <campo>`) sin enviar.
+- Al apretar el botón con todos los campos: POST directo a `flow_submit.route` con el body resuelto.
+
+### Caso "cierre sin UI previa"
+
+Si el último paso no tiene `open_ui` (subintent vacío conectado por `next`), el motor emite un envelope **sólo con `flow_submit`** (sin `open_ui`). El cliente renderiza un mensaje del bot con texto + botón "Confirmar y enviar", sin mini-UI.
+
+### Cuándo NO se marca terminal
+
+- El subintent declara `next_routing`. El motor no puede saber cuál rama tomará sin el valor del draft del paso actual; por seguridad lo deja como **no terminal**. Si una rama de routing es un cierre, modelarla como subintent **sin** `next` (que el motor detecte el cierre cuando salte allí).
+- No hay `flow_submit` en la raíz: no hay nada que cerrar.
+
+## Edición hacia atrás (Cambio 1)
+
+Los lists de pasos **previos del mismo flow activo** quedan clickables (no se marcan `flow_superseded`). Cuando el usuario tapea un item de un list previo, el cliente:
+
+1. Elimina del historial todos los mensajes posteriores del mismo flow.
+2. Limpia del `_draft` (y del snapshot) las claves listadas en `provides` de cada mensaje eliminado.
+3. Aplica el nuevo `draft_delta` del tap y dispara `procesarInteraccion('')` con el draft truncado.
+4. El motor recalcula desde el paso editado.
+
+`provides` se emite por eso en **cada** envelope con `open_ui`, terminal o no.
+
+## Cierres POST-only (sin UI en GET)
+
+Algunos `flow_submit.action_id` apuntan a endpoints que **sólo aceptan POST** y devuelven `ui_submit_result`, sin descriptor `ui_definition` (no se puede "abrir" con GET). El `rbac_route` del YAML debe coincidir con el permiso webvimark (sin `v1`), p. ej. `rbac_route: "/api/profesional-agenda/crear-agenda-flow"` → API `POST /api/v1/profesional-agenda/crear-agenda-flow`. Ver `AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute`.
+
+Para esos flujos el motor emite el envelope con `flow_submit` (y eventualmente `open_ui` del último paso si lo hay); el cliente nunca intenta abrir GET sobre la ruta de cierre.
 
 ## Alineación entre intents
 
@@ -83,4 +127,11 @@ Cuando el cierre del flujo emite `flow_submit`, el motor puede adjuntar (además
 
 ## Referencia de código
 
-- Implementación: `SubIntentEngine/SubIntentEngine.php` (`resolveOpenUiForSubintent`, `emitFlowSubmitPayload`, `applyDraftParamsMapToOpenUi`).
+- Implementación motor: `SubIntentEngine/SubIntentEngine.php`
+  - `process()`, `buildOpenUiResponse()`, `buildTerminalSubmitOnlyResponse()`.
+  - `isTerminalSubintent()`, `buildFlowSubmitTemplate()`, `extractDraftKeys()`.
+- Cliente móvil paciente: `mobile/paciente/lib/screens/chat_screen.dart`
+  - `_normalizeFlowSubmit()`, `_resolveFlowSubmitBody()`, `_postFlowSubmitFromMessage()`.
+  - `_truncateFlowAfter()`, `_lastFlowInteractiveMessageIndex()`, `_messageIsTerminalFlowStep()`.
+- Cliente web Yii: `web/frontend/web/js/spa-home.js`
+  - `resolveFlowSubmitBody()`, `appendFlowInlineSubmit()`.

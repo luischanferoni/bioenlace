@@ -90,7 +90,7 @@ Campos típicos por paso:
 - **`next`**: id del siguiente paso (cadena vacía para terminar la cadena lineal)
 - **`next_routing`** (opcional): lista de reglas `{ when: { draft_equals: { campo: valor } } | { default: true }, next: subintent_id }`. El motor **no** hidrata campos desde BD automáticamente: si una regla depende de `draft.servicio_acepta_turnos` (u otra), el cliente debe enviarlo en el `draft` o el flow debe incluir un paso que lo complete. Si `next_routing` está presente, tiene prioridad sobre `next` para decidir el siguiente paso.
 - **`open_ui`** / **`chooser`**: metadatos para abrir mini-UIs (`action_id`, `params` → `draft.*`)
-- **`flow_submit`** (solo en la **raíz** del intent): `action_id` + `params` opcionales para el cierre GET+POST del flujo cuando el draft está listo y no hay siguiente paso con UI (ver `SUBINTENT_CONTRACT.md`).
+- **`flow_submit`** (solo en la **raíz** del intent): `action_id` + `params` (`apiKey → "draft.<campo>"`). El motor detecta el **paso terminal** (subintent sin `next` ni `next_routing`) y adjunta al envelope un descriptor `flow_submit` con `route`, `method` y `body_template`. El cliente integra el botón "Confirmar y enviar" en el mismo paso y POSTea directo a `route` con `body_template` resuelto al draft local (ver `SUBINTENT_CONTRACT.md`).
 
 El cliente obtiene tabs/rutas ya **derivadas** del YAML vía `flow_manifest.active_step` cuando aplica.
 

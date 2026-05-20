@@ -526,6 +526,43 @@
     transform: scale(0.98);
 }
 
+/* UI JSON list: presets `presentation.tile` × `presentation.shape` */
+.bio-ui-json-list--tile-compact.bio-ui-json-list--shape-square button[data-embed-pick="1"] {
+    min-width: 3.25rem;
+    min-height: 3.25rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.8125rem;
+}
+.bio-ui-json-list--tile-compact.bio-ui-json-list--shape-wide button[data-embed-pick="1"],
+.bio-ui-json-list--tile-compact.bio-ui-json-list--shape-auto button[data-embed-pick="1"] {
+    min-width: 5.5rem;
+    min-height: 2.5rem;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.8125rem;
+}
+.bio-ui-json-list--tile-medium.bio-ui-json-list--shape-square button[data-embed-pick="1"] {
+    min-width: 4.5rem;
+    min-height: 4.5rem;
+    padding: 0.5rem 0.65rem;
+}
+.bio-ui-json-list--tile-medium.bio-ui-json-list--shape-wide button[data-embed-pick="1"],
+.bio-ui-json-list--tile-medium.bio-ui-json-list--shape-auto button[data-embed-pick="1"] {
+    min-width: 8.5rem;
+    min-height: 3.25rem;
+    padding: 0.5rem 0.75rem;
+}
+.bio-ui-json-list--tile-large.bio-ui-json-list--shape-square button[data-embed-pick="1"] {
+    min-width: 5.5rem;
+    min-height: 5.5rem;
+    padding: 0.65rem 0.75rem;
+}
+.bio-ui-json-list--tile-large.bio-ui-json-list--shape-wide button[data-embed-pick="1"],
+.bio-ui-json-list--tile-large.bio-ui-json-list--shape-auto button[data-embed-pick="1"] {
+    min-width: 11rem;
+    min-height: 4rem;
+    padding: 0.65rem 0.85rem;
+}
+
 /* UI JSON list (embebible): estilos por Bootstrap (sin clases custom de selección) */
 
 .spa-alertas-toggle-btn .spa-alertas-badge {

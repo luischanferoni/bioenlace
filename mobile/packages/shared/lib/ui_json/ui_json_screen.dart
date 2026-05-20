@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../theme/tokens/tokens.dart';
+import 'ui_json_list_presentation.dart';
 import 'weekly_scheduler_widget.dart';
 
 String _messageFromErrorBody(http.Response res) {
@@ -228,7 +230,8 @@ class UiJsonScreen extends StatefulWidget {
   /// Título visible para el usuario (por ejemplo action_name/display_name).
   final String? title;
 
-  /// Si true, renderiza sin Scaffold/AppBar para embebido en chat.
+  /// Si true, renderiza sin Scaffold/AppBar para embebido en chat (solo el body,
+  /// sin `Card` ni borde extra; el host define el marco visual).
   final bool embedded;
 
   /// Callback opcional para listados inline: aplicar draft_delta en el host (chat) y continuar flow.
@@ -1011,7 +1014,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   Widget build(BuildContext context) {
     Widget wrap({required Widget body, required String title}) {
       if (widget.embedded) {
-        return Card(margin: EdgeInsets.zero, child: body);
+        return body;
       }
       return Scaffold(
         appBar: AppBar(title: Text(title)),
@@ -1070,8 +1073,10 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final draftField = b['draft_field']?.toString() ?? '';
       final title = b['title']?.toString();
       final emptyMessage = (b['empty_message'] ?? b['list_empty_message'])?.toString().trim();
-      const double listRowHeight = 88;
-      const double cardWidth = 148;
+      final pres = UiJsonListPresentationMetrics.fromBlock(b);
+      final listRowHeight = pres.rowHeight;
+      final cardWidth = pres.tileWidth;
+      final tileMaxLines = pres.maxLines;
       if (draftField.isEmpty) {
         return const Text('UI inválida: falta draft_field');
       }
@@ -1084,10 +1089,10 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           children: [
             if (title != null && title.trim().isNotEmpty) ...[
               Text(title, style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
             ],
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
               child: Text(msg, style: theme.textTheme.bodyMedium),
             ),
           ],
@@ -1098,7 +1103,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         children: [
           if (title != null && title.trim().isNotEmpty) ...[
             Text(title, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
           ],
           _HorizontalScrollInteraction(
             height: listRowHeight,
@@ -1117,27 +1122,26 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
                 if (id.isEmpty) return const SizedBox.shrink();
                 final selected = _listEmbedSelectedId == id;
+                final tokens = context.bio;
+                final primary = IntentPalette.of(UiIntent.primary);
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: SizedBox(
                     width: cardWidth,
                     child: Material(
-                      elevation: selected ? 2 : 0,
-                      borderRadius: BorderRadius.circular(10),
-                      color: selected
-                          ? theme.colorScheme.primaryContainer.withAlpha((0.35 * 255).round())
-                          : theme.colorScheme.surfaceContainerHighest.withAlpha((0.55 * 255).round()),
+                      elevation: 0,
+                      borderRadius: BorderRadius.circular(BioRadius.sm),
+                      color: selected ? primary.softBg : tokens.paperSurfaceSunken,
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(BioRadius.sm),
                         onTap: () async {
                           if (_listEmbedLocked) return;
+                          // Ya elegido: no re-aplicar draft ni avanzar el flow.
+                          if (_listEmbedSelectedId == id) return;
                           if (requiresConfirmation) {
                             setState(() => _listEmbedSelectedId = id);
                             return;
                           }
-                          // Cambio 1: el lock es **transitorio**, sólo para evitar dobles
-                          // taps mientras se aplica el delta. Se libera al final del await
-                          // para permitir cambiar la elección (re-tap del mismo o de otro item).
                           setState(() {
                             _listEmbedSelectedId = id;
                             _listEmbedLocked = true;
@@ -1156,22 +1160,27 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                         },
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(BioRadius.sm),
                             border: Border.all(
-                              color: selected ? theme.colorScheme.primary : theme.dividerColor,
-                              width: selected ? 2 : 1,
+                              color: selected ? primary.base : tokens.paperBorderDefault,
+                              width: selected ? BorderWidth.medium : BorderWidth.thin,
                             ),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: BioSpacing.sm,
+                              vertical: BioSpacing.sm,
+                            ),
                             child: Center(
                               child: Text(
                                 name,
                                 textAlign: TextAlign.center,
-                                maxLines: 3,
+                                maxLines: tileMaxLines,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                                  fontWeight:
+                                      selected ? FontWeight.w700 : FontWeight.w500,
+                                  color: selected ? primary.softFg : tokens.textBody,
                                 ),
                               ),
                             ),
@@ -1185,7 +1194,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
             ),
           ),
           if (requiresConfirmation) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Row(
               children: [
                 const Spacer(),
@@ -1291,7 +1300,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 );
               },
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           if (b['hide_submit'] != true && b['hide_submit'] != 1 && b['hide_submit'] != '1')
             Row(
               children: [
@@ -1311,7 +1320,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       );
     }
 
-    const blocksPadding = EdgeInsets.fromLTRB(12, 10, 12, 0);
+    /// Padding del bloque embebido en chat; reducir aquí el aire alrededor de listas/forms.
+    const blocksPadding = EdgeInsets.fromLTRB(8, 0, 8, 0);
     final blocksColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -1320,7 +1330,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           if (bRaw is Map) ...[
             if (bRaw['kind']?.toString() == 'list') renderListBlock(Map<String, dynamic>.from(bRaw)),
             if (bRaw['kind']?.toString() == 'fields') renderFieldsBlock(Map<String, dynamic>.from(bRaw)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
           ],
         ],
       ],

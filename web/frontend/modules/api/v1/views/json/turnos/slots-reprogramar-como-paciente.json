@@ -15,6 +15,7 @@
       "draft_field": "slot_id",
       "empty_message": "No hay horarios alternativos disponibles para reprogramar en este momento.",
       "item": { "kind": "slot", "id_field": "id", "label_field": "label" },
+      "presentation": { "tile": "compact", "shape": "square" },
       "items": []
     }
   ]

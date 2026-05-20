@@ -185,6 +185,7 @@ final class TurnoSlotOfferUiPresenter
             'selection' => ['mode' => 'single'],
             'draft_field' => 'slot_id',
             'item' => ['kind' => 'slot', 'id_field' => 'id', 'label_field' => 'label'],
+            'presentation' => ['tile' => 'compact', 'shape' => 'square'],
             'items' => $items,
         ];
     }

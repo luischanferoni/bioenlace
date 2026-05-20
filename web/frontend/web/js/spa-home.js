@@ -1874,6 +1874,17 @@
         }
     }
 
+    function uiJsonListPresentationClass(block) {
+        const allowedTile = { compact: 1, medium: 1, large: 1 };
+        const allowedShape = { square: 1, wide: 1, auto: 1 };
+        const p = block.presentation && typeof block.presentation === 'object' ? block.presentation : {};
+        let tile = p.tile != null ? String(p.tile).trim().toLowerCase() : 'medium';
+        let shape = p.shape != null ? String(p.shape).trim().toLowerCase() : 'wide';
+        if (!allowedTile[tile]) tile = 'medium';
+        if (!allowedShape[shape]) shape = 'wide';
+        return 'bio-ui-json-list--tile-' + tile + ' bio-ui-json-list--shape-' + shape;
+    }
+
     function renderUiJsonListBlock(block, container, options = {}) {
         const title = block.title ? String(block.title) : '';
         const items = Array.isArray(block.items) ? block.items : [];
@@ -1884,6 +1895,7 @@
         const itemKind = block.item && block.item.kind ? String(block.item.kind) : '';
         const blockId = block.id != null ? String(block.id) : '';
         const baseListUrl = options.url ? String(options.url) : '';
+        const presClass = uiJsonListPresentationClass(block);
 
         let locked = false;
         let selectedId = '';
@@ -1916,7 +1928,7 @@
 
         const showPersonaSearch = itemKind === 'persona' && baseListUrl !== '';
 
-        let html = '<div class="bio-ui-json-list">';
+        let html = '<div class="bio-ui-json-list ' + presClass + '">';
         if (title) {
             html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
         }

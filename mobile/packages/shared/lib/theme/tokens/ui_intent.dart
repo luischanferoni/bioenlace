@@ -5,6 +5,9 @@ import 'paper_palette.dart';
 /// Intenciones semánticas (Bootstrap-like): primary, secondary, success, danger,
 /// warning, info, neutral, dark. Cada componente consume `IntentPalette.of(intent)`
 /// para tomar `base`, `onBase`, `softBg`, `softFg`, `border`.
+///
+/// Colores base alineados con la web:
+/// `web/frontend/web/custom-template/css/bootstrap-custom.css` (`--bioenlace-*`).
 enum UiIntent {
   primary,
   secondary,
@@ -16,8 +19,8 @@ enum UiIntent {
   dark,
 }
 
-/// Paleta resuelta por [UiIntent]. Mezcla acentos BioEnlace con la escala
-/// neutra "papel" para soft backgrounds (sin saturar).
+/// Paleta resuelta por [UiIntent]. Acentos = Bootstrap Bioenlace (web);
+/// [neutral] y [dark] siguen en escala "papel".
 @immutable
 class IntentPalette {
   const IntentPalette({
@@ -34,13 +37,13 @@ class IntentPalette {
   /// Color del texto/ícono sobre [base].
   final Color onBase;
 
-  /// Fondo "soft" (12–14% del base, sobre fondo papel).
+  /// Fondo "soft" (~10% del base sobre blanco, como `--bs-*-bg-subtle` en web).
   final Color softBg;
 
-  /// Texto/ícono sobre [softBg] (más oscuro que [base] para legibilidad).
+  /// Texto/ícono sobre [softBg] (hover web `--bioenlace-*-hover`).
   final Color softFg;
 
-  /// Color del borde (outline / softBorder).
+  /// Color del borde (outline / softBorder, ~20% como `--bs-*-border-subtle`).
   final Color border;
 
   static IntentPalette of(UiIntent intent) {
@@ -64,60 +67,61 @@ class IntentPalette {
     }
   }
 
-  // Acentos BioEnlace
-  static const _primaryBase = Color(0xFF0081A7);
-  static const _secondaryBase = Color(0xFF00AFB9);
-  static const _successBase = Color(0xFF28A745);
-  static const _dangerBase = Color(0xFFF07167);
-  static const _warningBase = Color(0xFFE08A3F); // ajustado para legibilidad sobre papel
-  static const _infoBase = Color(0xFF00AFB9);
+  // --bioenlace-* (bootstrap-custom.css)
+  static const _onLightBase = Color(0xFFFFFFFF);
+  static const _primaryBase = Color(0xFF54A0FF);
+  static const _secondaryBase = Color(0xFF6C757D);
+  static const _successBase = Color(0xFF10AC84);
+  static const _dangerBase = Color(0xFFEE5253);
+  static const _warningBase = Color(0xFFFF9800);
+  static const _infoBase = Color(0xFF0ABDE3);
 
   static const _primary = IntentPalette(
     base: _primaryBase,
-    onBase: PaperPalette.paper50,
-    softBg: Color(0xFFE3EFF4),
-    softFg: Color(0xFF005F7A),
-    border: Color(0xFFB6D6E0),
+    onBase: _onLightBase,
+    softBg: Color(0xFFECF5FF),
+    softFg: Color(0xFF0876FF),
+    border: Color(0xFFB3D4FF),
   );
 
   static const _secondary = IntentPalette(
     base: _secondaryBase,
-    onBase: PaperPalette.paper50,
-    softBg: Color(0xFFE0F4F5),
-    softFg: Color(0xFF00808A),
-    border: Color(0xFFB7E1E4),
+    onBase: _onLightBase,
+    softBg: Color(0xFFF4F7FA),
+    softFg: Color(0xFF5C636A),
+    border: Color(0xFFD3D7DB),
   );
 
   static const _success = IntentPalette(
     base: _successBase,
-    onBase: PaperPalette.paper50,
-    softBg: Color(0xFFE6F3E9),
-    softFg: Color(0xFF1B6E2E),
-    border: Color(0xFFC2DFC8),
+    onBase: _onLightBase,
+    softBg: Color(0xFFE8F7F2),
+    softFg: Color(0xFF0D9670),
+    border: Color(0xFFB8E8DC),
   );
 
   static const _danger = IntentPalette(
     base: _dangerBase,
-    onBase: PaperPalette.paper50,
-    softBg: Color(0xFFFBE5E2),
-    softFg: Color(0xFFB04A41),
-    border: Color(0xFFF1C4BF),
+    onBase: _onLightBase,
+    softBg: Color(0xFFFDECEC),
+    softFg: Color(0xFFE63C3C),
+    border: Color(0xFFF5C4C4),
   );
 
   static const _warning = IntentPalette(
     base: _warningBase,
     onBase: PaperPalette.paper900,
-    softBg: Color(0xFFFAEAD4),
-    softFg: Color(0xFF8A4F18),
-    border: Color(0xFFEED2A8),
+    softBg: Color(0xFFFFF4E5),
+    softFg: Color(0xFFE68900),
+    border: Color(0xFFFFE0B2),
   );
 
   static const _info = IntentPalette(
     base: _infoBase,
-    onBase: PaperPalette.paper50,
-    softBg: Color(0xFFE0F4F5),
-    softFg: Color(0xFF00808A),
-    border: Color(0xFFB7E1E4),
+    onBase: _onLightBase,
+    softBg: Color(0xFFE6F9FD),
+    softFg: Color(0xFF0998C4),
+    border: Color(0xFFB3EBF5),
   );
 
   static const _neutral = IntentPalette(
@@ -129,7 +133,7 @@ class IntentPalette {
   );
 
   static const _dark = IntentPalette(
-    base: PaperPalette.paper900,
+    base: Color(0xFF222222),
     onBase: PaperPalette.paper50,
     softBg: PaperPalette.paper150,
     softFg: PaperPalette.paper900,

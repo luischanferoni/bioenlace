@@ -262,7 +262,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: null),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

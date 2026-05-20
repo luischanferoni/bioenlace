@@ -1930,14 +1930,13 @@ class ChatScreenState extends State<ChatScreen> {
                 final hasRemediationRow = !isUser &&
                     message['remediation'] is List &&
                     (message['remediation'] as List).isNotEmpty;
-                /// Separación antes de tabs/UI inline.
-                double inlineUiLeadGapHeight = 12.0;
+                /// Separación antes de tabs/UI inline (ver también padding del [UiJsonScreen] abajo).
+                double inlineUiLeadGapHeight = 4.0;
                 if (!hasFormConfig && !isUser && inlineUi is Map && hasEmbeddedUi) {
                   if (hasFlowContext) {
-                    // Con encabezado de flujo el texto del paso ya aporta margen; evitar 12px extra.
-                    inlineUiLeadGapHeight = showFlowStepText ? 2.0 : 4.0;
+                    inlineUiLeadGapHeight = showFlowStepText ? 0.0 : 2.0;
                   } else if (content.isNotEmpty && !hasActionsRow && !hasRemediationRow) {
-                    inlineUiLeadGapHeight = 4.0;
+                    inlineUiLeadGapHeight = 2.0;
                   }
                 }
 
@@ -2168,10 +2167,10 @@ class ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                       ],
                       Padding(
-                        padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 0.0, bottom: 10),
+                        padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 0.0, bottom: 0),
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: ConstrainedBox(

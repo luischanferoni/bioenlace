@@ -64,12 +64,12 @@ Equivalente a las clases `*-primary / *-danger / *-warning` de Bootstrap.
 
 | Intent | Base hex | Cuándo usar |
 |---|---|---|
-| `primary`   | `#0081A7` | CTA principal, links, foco de input. |
-| `secondary` | `#00AFB9` | CTA secundario, badge "info-like". |
-| `success`   | `#28A745` | Confirmaciones, turno confirmado. |
-| `danger`    | `#F07167` | Errores, cancelar, eliminar. |
-| `warning`   | `#E08A3F` | Atención requerida — **`EN_RESOLUCION` usa éste**. |
-| `info`      | `#00AFB9` | Tips, alertas informativas. |
+| `primary`   | `#54A0FF` | CTA principal, links, foco de input (web `--bioenlace-primary`). |
+| `secondary` | `#6C757D` | CTA secundario neutro (web `--bioenlace-secondary`). |
+| `success`   | `#10AC84` | Confirmaciones, turno confirmado. |
+| `danger`    | `#EE5253` | Errores, cancelar, eliminar. |
+| `warning`   | `#FF9800` | Atención requerida — **`EN_RESOLUCION` usa éste**. |
+| `info`      | `#0ABDE3` | Tips, alertas informativas. |
 | `neutral`   | `paper600` | Botones secundarios sin carga emocional. |
 | `dark`      | `paper900` | Tag/badge de énfasis sobre fondo claro. |
 
@@ -86,7 +86,7 @@ cinco roles:
 
 ```dart
 final palette = IntentPalette.of(UiIntent.warning);
-// palette.base   → #E08A3F
+// palette.base   → #FF9800
 // palette.softBg → #FAEAD4
 // palette.softFg → #8A4F18 (legible sobre softBg)
 ```

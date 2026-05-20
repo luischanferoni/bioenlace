@@ -48,7 +48,10 @@ Propiedades soportadas:
   - `mode`: hoy se soporta `"single"`.
   - `requires_confirmation`: si `true`, muestra botón “Confirmar”; si `false`, confirma al tocar un item.
 - **`title`** (opcional): encabezado de sección (p. ej. agrupación por día/franja).
-- **`item`** (opcional): metadata del tipo de item (p. ej. `"efector"`, `"slot"`). Es informativo para el cliente.
+- **`item`** (opcional): metadata del tipo de item (p. ej. `"efector"`, `"slot"`). Es semántico (no define tamaño visual).
+- **`presentation`** (opcional): cómo dibujar cada tile de la lista. Si falta, el cliente usa `medium` + `wide`.
+  - `tile`: `compact` \| `medium` \| `large` (default `medium`).
+  - `shape`: `square` \| `wide` \| `auto` (default `wide`). Horarios/slots suelen usar `compact` + `square`.
 - **`items`** (array, obligatorio): items a renderizar (inyectados por controller/servicio).
 
 Shape mínimo de item:

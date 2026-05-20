@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\EntryPoints\Chat\Channels\Informational;
 
+use common\components\Assistant\EntryPoints\Chat\Channels\Conversational\ConversationalChannel;
 use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\IntentEngine\IntentEngine;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
@@ -20,6 +21,10 @@ final class InformationalChannel
             return self::finalize(IntentEngine::processQuery($content, $userId, null));
         }
 
+        if (!self::isCapabilityMenuQuery($content)) {
+            return ConversationalChannel::handle($content, $userId);
+        }
+
         $catalog = UiActionCatalog::forUser($userId);
         $buttons = [];
         foreach (array_slice($catalog->items, 0, 8) as $it) {
@@ -32,6 +37,22 @@ final class InformationalChannel
         return AssistantEnvelope::interactive(
             'Estas son algunas cosas que podés hacer. Elegí una opción o contame qué necesitás.',
             $buttons
+        );
+    }
+
+    /**
+     * Pregunta explícita por capacidades/menú (no síntomas ni charla clínica).
+     */
+    public static function isCapabilityMenuQuery(string $content): bool
+    {
+        $lower = mb_strtolower(trim($content), 'UTF-8');
+        if ($lower === '') {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace|qué se puede|que se puede|listar|mostrar acciones)\b/u',
+            $lower
         );
     }
 

@@ -2123,7 +2123,7 @@ class ChatScreenState extends State<ChatScreen> {
                             ),
                           ),
                         )
-                      else if (hasEmbeddedUi)
+                      else if (hasEmbeddedUi) ...[
                         if (!hasFlowContext && content.isNotEmpty)
                           Align(
                             alignment: Alignment.centerLeft,
@@ -2139,8 +2139,8 @@ class ChatScreenState extends State<ChatScreen> {
                                 style: tt.titleMedium?.copyWith(color: cs.onSurface),
                               ),
                             ),
-                          )
-                      else if (!hasFlowContext)
+                          ),
+                      ] else if (!hasFlowContext)
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Container(

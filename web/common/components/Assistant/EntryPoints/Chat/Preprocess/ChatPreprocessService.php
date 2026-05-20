@@ -88,7 +88,9 @@ Respondé ÚNICAMENTE con JSON:
 
 Reglas:
 - user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar).
-- conversational si es saludo o charla sin acción operativa.
+- conversational si es saludo, consulta de salud/síntomas, malestar o charla sin pedir una acción del sistema (no confundir con informational).
+- informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas ni quejas clínicas.
+- meta: preguntas sobre el asistente o la app (no operativas).
 - extractions: solo menciones de entidades del mundo (servicio, centro, persona), no verbos ni la acción.
 - synonyms: máximo 2 strings por extracción.
 PROMPT;
@@ -171,10 +173,12 @@ PROMPT;
         $goal = 'unclear';
         if (preg_match('/\b(turno|turnos|reservar|sacar turno|cancelar turno|agenda|cita)\b/u', $lower)) {
             $goal = 'operational';
+        } elseif (preg_match('/\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace)\b/u', $lower)) {
+            $goal = 'informational';
         } elseif (preg_match('/\b(hola|buenos|gracias|qué tal|como estas)\b/u', $lower)) {
             $goal = 'conversational';
-        } elseif (preg_match('/\b(ayuda|qué puedo|menu|menú)\b/u', $lower)) {
-            $goal = 'informational';
+        } elseif (preg_match('/\b(problema|dolor|duele|síntoma|sintoma|malestar|enfermo|manos|pies|cabeza|fiebre|tos)\b/u', $lower)) {
+            $goal = 'conversational';
         }
 
         return [

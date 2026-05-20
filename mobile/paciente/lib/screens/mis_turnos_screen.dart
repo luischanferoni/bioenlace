@@ -170,7 +170,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                       _seccionTitle('Próximos'),
                       BioSpacing.gapH(BioSpacing.sm),
                       if (_pendientes.isEmpty)
-                        _empty('No tenés turnos próximos.'),
+                        _empty('No tienes turnos próximos.'),
                       ..._pendientes.map((t) => Padding(
                             padding:
                                 const EdgeInsets.only(bottom: BioSpacing.sm),

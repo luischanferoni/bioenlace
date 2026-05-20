@@ -142,7 +142,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
                 BioSpacing.gapW(BioSpacing.md),
                 Expanded(
                   child: Text(
-                    'No tenés alertas.',
+                    'No tienes alertas.',
                     style: BioTypography.body,
                   ),
                 ),

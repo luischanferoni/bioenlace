@@ -322,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   BioSpacing.gapH(BioSpacing.lg),
                   BioButton.softPrimary(
                     label: widget.signupButtonText ??
-                        '¿No tenés cuenta? Registrate acá',
+                        '¿No tienes cuenta? Registrate aquí',
                     icon: Icons.person_add_alt,
                     fullWidth: true,
                     onPressed: () => widget.onNavigateToSignup!(context),

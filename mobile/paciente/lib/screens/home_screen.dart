@@ -842,7 +842,7 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapW(BioSpacing.md),
           Expanded(
             child: Text(
-              'No tenés turnos pendientes. Podés pedir uno desde el asistente.',
+              'No tienes turnos pendientes. Puede pedir uno desde el asistente.',
               style: BioTypography.body,
             ),
           ),

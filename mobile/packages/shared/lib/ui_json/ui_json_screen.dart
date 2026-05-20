@@ -249,6 +249,9 @@ class UiJsonScreen extends StatefulWidget {
   /// Persistir la definición en el host tras el primer GET exitoso.
   final void Function(Map<String, dynamic> definition)? onDefinitionLoaded;
 
+  /// Embebido en chat: el host puede mostrar `flow_submit` cuando la UI terminó de cargar.
+  final VoidCallback? onEmbeddedReady;
+
   /// Solo en encadenamiento de flow: lista de 1 ítem → auto-elegir y avanzar (primera carga del paso).
   final bool enableFlowChainAutoAdvance;
 
@@ -264,6 +267,7 @@ class UiJsonScreen extends StatefulWidget {
     this.onCancel,
     this.initialDefinition,
     this.onDefinitionLoaded,
+    this.onEmbeddedReady,
     this.enableFlowChainAutoAdvance = false,
   }) : super(key: key);
 
@@ -378,7 +382,16 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         _error = _humanizeExceptionMessage(e);
         _loading = false;
       });
+      _scheduleEmbeddedReady();
     }
+  }
+
+  void _scheduleEmbeddedReady() {
+    if (!widget.embedded || widget.onEmbeddedReady == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.onEmbeddedReady?.call();
+    });
   }
 
   void _hydrateFromDefinition(Map<String, dynamic> m, {required bool fromNetwork}) {
@@ -397,6 +410,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
       _scheduleFlowChainSingleListPick();
     }
+    _scheduleEmbeddedReady();
   }
 
   /// Encadenamiento de flow: un solo ítem en lista → elegir y avanzar (solo tras GET inicial del paso).

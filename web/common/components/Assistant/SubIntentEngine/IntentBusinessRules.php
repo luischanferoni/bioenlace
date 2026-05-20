@@ -8,7 +8,7 @@ use Yii;
 /**
  * Reglas de negocio declarativas en YAML (`business_rules`) evaluadas antes de entrar al flow.
  *
- * Cada regla con `when: pre_flow` puede disparar `kind=intent_remediation` en {@see IntentEngine}
+ * Cada regla con `when: pre_flow` puede devolver `remediation[]` vía {@see IntentEngine} (sobre `interactive` en API).
  * si el checker asociado indica violación (desambiguación / guía).
  */
 final class IntentBusinessRules

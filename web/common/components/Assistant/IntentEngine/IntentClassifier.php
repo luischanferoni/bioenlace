@@ -77,6 +77,50 @@ final class IntentClassifier
         ];
     }
 
+    public static function scoreItemPublic(string $messageLower, UiActionCatalogItem $item): int
+    {
+        return self::scoreItem($messageLower, $item);
+    }
+
+    /**
+     * Clasificación sobre un subconjunto del catálogo (top-K); IA solo entre esos ítems.
+     *
+     * @param UiActionCatalogItem[] $items
+     * @return array<string, mixed>|null
+     */
+    public static function classifyAmongItems(string $message, array $items, UiActionCatalog $catalog): ?array
+    {
+        if ($items === []) {
+            return null;
+        }
+
+        $rules = self::classifyByRules($message, $items);
+        if ($rules !== null && $rules['confidence'] >= self::RULES_HIGH_CONFIDENCE) {
+            return $rules;
+        }
+
+        $subset = self::catalogSubset($catalog, $items);
+        $ai = self::classifyByAi($message, $subset, $rules);
+        if ($ai !== null) {
+            return $ai;
+        }
+
+        return $rules;
+    }
+
+    /**
+     * @param UiActionCatalogItem[] $items
+     */
+    private static function catalogSubset(UiActionCatalog $catalog, array $items): UiActionCatalog
+    {
+        $byId = [];
+        foreach ($items as $it) {
+            $byId[$it->action_id] = $it;
+        }
+
+        return UiActionCatalog::fromItems(array_values($items), $byId);
+    }
+
     private static function scoreItem(string $messageLower, UiActionCatalogItem $item): int
     {
         $score = 0;

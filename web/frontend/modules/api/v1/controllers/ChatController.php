@@ -3,25 +3,19 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Assistant\IntentEngine\IntentEngine;
-use common\components\Assistant\SubIntentEngine\SubIntentEngine;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
+use common\components\Assistant\EntryPoints\Chat\ChatOrchestrator;
+use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 
 /**
- * Asistente conversacional: pipeline unificado vía {@see IntentEngine}.
+ * Asistente conversacional vía {@see ChatOrchestrator}.
  *
- * - GET/OPTIONS `asistente/estado` — estado ligero para clientes que consultan historial vacío/plantilla.
- * - POST/OPTIONS `asistente/enviar` — contrato único:
- *   - Root (IntentEngine): `content` o `action_id`.
- *   - Dentro de intent (SubIntentEngine): `intent_id`, `subintent_id`, `draft`, y `content` o `interaction`.
- *     Opcional: claves planas del mismo cuerpo (p. ej. `id_servicio_asignado` / `id_servicio`) se fusionan al `draft` antes de evaluar `requires`.
- *   - Raíz (IntentEngine): si un intent YAML define `business_rules` (`when: pre_flow`), puede devolverse
- *     `kind=intent_remediation` con `text`, `rule_id`, `remediation[]` (botones → nuevo `intent_id`; siguiente envío
- *     suele ser `content: ""` en modo flow, sin burbuja de usuario en cliente).
- *   Identidad: usuario autenticado (Yii). `senderId` opcional; si se envía, debe coincidir con el usuario.
- *   Respuesta estándar v1: `success`, `message`, `data` (payload del agente), HTTP 200.
+ * - GET/OPTIONS `asistente/estado` — estado ligero para clientes.
+ * - POST/OPTIONS `asistente/enviar` — sobre en raíz (`kind`: message | interactive | flow).
+ *   Request: `content`, `action_id`, o modo flow (`intent_id`, `subintent_id`, `draft`, `interaction`).
+ *   HTTP 200: payload del sobre (sin wrapper `{ success, message, data }`).
+ *   HTTP 400: errores del motor (`success: false` interno, no convertido a sobre).
  */
 class ChatController extends BaseController
 {
@@ -40,38 +34,9 @@ class ChatController extends BaseController
     public function actionRecibir()
     {
         $body = Yii::$app->request->getBodyParams();
+        $body = is_array($body) ? $body : [];
+
         $intentId = isset($body['intent_id']) ? trim((string) $body['intent_id']) : '';
-
-        // Modo intent (SubIntentEngine): solo rutas del motor de intents.
-        if ($intentId !== '') {
-            $userId = (int) Yii::$app->user->id;
-            $body = is_array($body) ? $body : [];
-            if ($intentId === 'agenda.crear-profesional-flow') {
-                try {
-                    ProfesionalEfectorServicioCrearFlowDraftHydrator::hydrate($body);
-                } catch (\InvalidArgumentException $e) {
-                    return $this->error($e->getMessage(), null, 400);
-                } catch (\RuntimeException $e) {
-                    return $this->error($e->getMessage(), null, 400);
-                }
-            }
-            try {
-                $out = SubIntentEngine::process($body, $userId);
-            } catch (\Throwable $e) {
-                Yii::error('SubIntentEngine en asistente/enviar: ' . $e->getMessage(), 'asistente');
-                return $this->error('Error al procesar el intent', null, 500);
-            }
-
-            if (empty($out['success'])) {
-                $err = isset($out['error']) ? (string) $out['error'] : 'Error';
-                return $this->error($err, $out, 400);
-            }
-
-            // Contrato chat v2: no envolver en {success,message,data}; devolver payload del motor directamente.
-            // (Evita doble `success`, `message` genérico, y deja `kind` en raíz del payload.)
-            return $out;
-        }
-
         $content = isset($body['content']) ? trim((string) $body['content']) : '';
         $actionId = $body['action_id'] ?? null;
         if ($actionId !== null && $actionId !== '') {
@@ -80,74 +45,83 @@ class ChatController extends BaseController
             $actionId = null;
         }
 
-        if ($content === '' && $actionId === null) {
+        if ($intentId === '' && $content === '' && $actionId === null) {
             return $this->error('Se requiere content o action_id (o intent_id)', null, 400);
         }
 
-        $userId = Yii::$app->user->id;
+        $userId = (int) Yii::$app->user->id;
         $uidStr = (string) $userId;
 
         if (isset($body['senderId']) && (string) $body['senderId'] !== $uidStr) {
             return $this->error('senderId no coincide con el usuario autenticado', null, 403);
         }
 
-        $textoPersistUsuario = $content !== ''
-            ? $content
-            : ($actionId !== null ? '[action_id:' . $actionId . ']' : ' ');
+        if ($intentId === '') {
+            $textoPersistUsuario = $content !== ''
+                ? $content
+                : ($actionId !== null ? '[action_id:' . $actionId . ']' : ' ');
 
-        $conversacion = AsistenteConversacion::findOne(['usuario_id' => $uidStr, 'bot_id' => 'BOT']);
-        if (!$conversacion) {
-            $conversacion = new AsistenteConversacion([
-                'usuario_id' => $uidStr,
-                'bot_id' => 'BOT',
+            $conversacion = AsistenteConversacion::findOne(['usuario_id' => $uidStr, 'bot_id' => 'BOT']);
+            if (!$conversacion) {
+                $conversacion = new AsistenteConversacion([
+                    'usuario_id' => $uidStr,
+                    'bot_id' => 'BOT',
+                ]);
+                if (!$conversacion->save()) {
+                    Yii::error('No se pudo crear asistente_conversacion: ' . json_encode($conversacion->errors), 'asistente');
+                    return $this->error('No se pudo registrar la conversación', null, 500);
+                }
+            }
+
+            $interaccionUsuario = new AsistenteInteraccion([
+                'conversacion_id' => $conversacion->id,
+                'sender_id' => $uidStr,
+                'sender_name' => $uidStr,
+                'texto' => $textoPersistUsuario,
+                'status' => 'recibido',
+                'message_type' => 'texto',
+                'is_resent' => !empty($body['isResent']),
             ]);
-            if (!$conversacion->save()) {
-                Yii::error('No se pudo crear asistente_conversacion: ' . json_encode($conversacion->errors), 'asistente');
-                return $this->error('No se pudo registrar la conversación', null, 500);
+            if (!$interaccionUsuario->save()) {
+                Yii::error('No se pudo guardar interacción usuario: ' . json_encode($interaccionUsuario->errors), 'asistente');
             }
         }
 
-        $interaccionUsuario = new AsistenteInteraccion([
-            'conversacion_id' => $conversacion->id,
-            'sender_id' => $uidStr,
-            'sender_name' => $uidStr,
-            'texto' => $textoPersistUsuario,
-            'status' => 'recibido',
-            'message_type' => 'texto',
-            'is_resent' => !empty($body['isResent']),
-        ]);
-        if (!$interaccionUsuario->save()) {
-            Yii::error('No se pudo guardar interacción usuario: ' . json_encode($interaccionUsuario->errors), 'asistente');
-        }
-
         try {
-            $agentResult = IntentEngine::processQuery($content, (int) $userId, $actionId);
+            $out = ChatOrchestrator::handle($body, $userId);
         } catch (\Throwable $e) {
-            Yii::error('IntentEngine en asistente/enviar: ' . $e->getMessage(), 'asistente');
+            Yii::error('ChatOrchestrator en asistente/enviar: ' . $e->getMessage(), 'asistente');
             return $this->error('Error al procesar la consulta', null, 500);
         }
 
-        // En hosting compartido con `wait_timeout` muy bajo (p. ej. 20s), la conexión MySQL puede cerrarse
-        // mientras el motor realiza llamadas externas (IA/HTTP). Reabrir evita `server has gone away` en el save siguiente.
-        Yii::$app->db->close();
-        Yii::$app->db->open();
-
-        $replyText = (string) ($agentResult['explanation'] ?? $agentResult['error'] ?? 'Consulta procesada');
-
-        $interaccionBot = new AsistenteInteraccion([
-            'conversacion_id' => $conversacion->id,
-            'sender_id' => 'BOT',
-            'sender_name' => 'Bot',
-            'texto' => $replyText,
-            'status' => 'enviado',
-            'message_type' => 'texto',
-            'is_resent' => 0,
-        ]);
-        if (!$interaccionBot->save()) {
-            Yii::error('No se pudo guardar interacción bot: ' . json_encode($interaccionBot->errors), 'asistente');
+        if (!AssistantEnvelope::isPublicEnvelope($out) && empty($out['success'])) {
+            $err = isset($out['error']) ? (string) $out['error'] : 'Error';
+            return $this->error($err, $out, 400);
         }
 
-        // Contrato chat v2: devolver payload directo (sin wrapper).
-        return $agentResult;
+        if ($intentId === '') {
+            Yii::$app->db->close();
+            Yii::$app->db->open();
+
+            $replyText = ChatOrchestrator::botReplyTextForPersistence($out);
+
+            $conversacion = AsistenteConversacion::findOne(['usuario_id' => $uidStr, 'bot_id' => 'BOT']);
+            if ($conversacion) {
+                $interaccionBot = new AsistenteInteraccion([
+                    'conversacion_id' => $conversacion->id,
+                    'sender_id' => 'BOT',
+                    'sender_name' => 'Bot',
+                    'texto' => $replyText,
+                    'status' => 'enviado',
+                    'message_type' => 'texto',
+                    'is_resent' => 0,
+                ]);
+                if (!$interaccionBot->save()) {
+                    Yii::error('No se pudo guardar interacción bot: ' . json_encode($interaccionBot->errors), 'asistente');
+                }
+            }
+        }
+
+        return $out;
     }
 }

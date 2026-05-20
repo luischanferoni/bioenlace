@@ -140,8 +140,8 @@ final class YamlIntentCatalogService
                 'tags' => [],
                 'parameters' => [],
                 'intent_semantics' => $sem,
-                // Hint para clientes: item conversacional.
-                'kind' => 'intent_flow',
+                // Hint interno: intent ejecutable como flow YAML (no es `kind` del sobre HTTP).
+                'flow_capable' => true,
             ];
             $loadedIds[] = $intentId;
         }

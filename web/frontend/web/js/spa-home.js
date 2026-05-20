@@ -442,12 +442,34 @@
      * @param {{ route: string, method?: string, action_id?: string, body_template?: object }} fs `flow_submit` del payload
      * @param {function(): void} onFlowCleared tras éxito (limpiar intent/draft en el chat)
      */
-    function appendFlowInlineSubmit(hostEl, fs, onFlowCleared) {
+    function revealFlowInlineSubmit(hostEl) {
+        if (!hostEl) return;
+        try {
+            hostEl.querySelectorAll('.spa-flow-submit-inline--pending').forEach(function (el) {
+                el.classList.remove('spa-flow-submit-inline--pending');
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    function scheduleRevealFlowInlineSubmit(hostEl) {
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                revealFlowInlineSubmit(hostEl);
+            });
+        });
+    }
+
+    /**
+     * @param {{ deferReveal?: boolean }} opts si true, el botón queda oculto hasta `scheduleRevealFlowInlineSubmit`.
+     */
+    function appendFlowInlineSubmit(hostEl, fs, onFlowCleared, opts) {
+        opts = opts && typeof opts === 'object' ? opts : {};
         if (!hostEl || !fs || !fs.route) {
             return;
         }
         var wrap = document.createElement('div');
-        wrap.className = 'mt-3 pt-2 border-top spa-flow-submit-inline';
+        wrap.className = 'mt-3 pt-2 border-top spa-flow-submit-inline' +
+            (opts.deferReveal === true ? ' spa-flow-submit-inline--pending' : '');
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn btn-primary';
@@ -560,7 +582,8 @@
                     clearFlowState();
                     removeFlowPlanStrip();
                     bioFlowPlanPendingContext = null;
-                });
+                }, { deferReveal: true });
+                scheduleRevealFlowInlineSubmit(mountEl);
             }
         } else {
             mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
@@ -681,7 +704,7 @@
     }
     /** Una sola tira de plan en el DOM; se mueve al montaje activo del paso. */
     let bioFlowPlanStripEl = null;
-    /** Contexto del último paso `intent_flow` para pintar la tira tras cargar la UI (`flow_manifest` + título). */
+    /** Contexto del último paso `flow` para pintar la tira tras cargar la UI (`manifest` + título). */
     let bioFlowPlanPendingContext = null;
     /** Una activación = un inicio de flow (atajo, cambio de intent o vuelta tras otro flow). */
     let bioFlowActivationSeq = 0;
@@ -937,7 +960,7 @@
     }
 
     /**
-     * Bloque a ancho completo del panel de chat para respuestas `intent_flow`: encabezado + zona para mini-UI.
+     * Bloque a ancho completo del panel de chat para respuestas `flow`: encabezado + zona para mini-UI.
      * No usa burbuja angosta; el JSON embebido se monta debajo del título (mismo patrón en todo el asistente SPA).
      *
      * @param {string} stepText - Texto del paso (p. ej. `text` del motor).
@@ -1145,6 +1168,49 @@
         scheduleFlowPlanStickySync();
     }
 
+    /** @param {object|null|undefined} envelope */
+    function assistantFlowSession(envelope) {
+        const s = envelope && envelope.session;
+        return (s && typeof s === 'object') ? s : {};
+    }
+
+    /** @param {object|null|undefined} envelope */
+    function assistantFlowStep(envelope) {
+        const st = envelope && envelope.step;
+        return (st && typeof st === 'object') ? st : {};
+    }
+
+    /** @param {object|null|undefined} envelope */
+    function assistantFlowManifest(envelope) {
+        const m = envelope && envelope.manifest;
+        return (m && typeof m === 'object') ? m : null;
+    }
+
+    /** @param {object|null|undefined} envelope */
+    function assistantFlowOpenUi(envelope) {
+        const step = assistantFlowStep(envelope);
+        if (!step.active) {
+            return null;
+        }
+        return {
+            action_id: step.action_id != null ? String(step.action_id) : '',
+            client_open: step.client_open && typeof step.client_open === 'object' ? step.client_open : null
+        };
+    }
+
+    /** @param {object|null|undefined} envelope */
+    function assistantFlowSubmit(envelope) {
+        const sub = envelope && envelope.submit;
+        if (!sub || typeof sub !== 'object' || !sub.active) {
+            return null;
+        }
+        return {
+            route: sub.route != null ? String(sub.route) : '',
+            method: sub.method != null ? String(sub.method) : 'POST',
+            body_template: sub.body_template && typeof sub.body_template === 'object' ? sub.body_template : {}
+        };
+    }
+
     /**
      * Procesar payload JSON del asistente (POST /api/v1/asistente/enviar).
      * También usado al ejecutar una acción tipo intent desde una card.
@@ -1152,36 +1218,31 @@
     function handleAssistantResponse(data) {
             const intentIdBeforeResponse = currentIntentId ? String(currentIntentId) : '';
 
-            // Compat: antes venía { success, message, data }, ahora el endpoint devuelve el payload directo.
-            let result = data;
-            if (data && data.data && typeof data.data === 'object' && (data.data.success !== undefined || data.data.explanation !== undefined || data.data.action !== undefined)) {
-                result = data.data;
+            const envelope = data && typeof data === 'object' ? data : {};
+            const kind = envelope.kind ? String(envelope.kind) : '';
+            const flowText = typeof envelope.text === 'string' ? envelope.text : null;
+            const primaryText = (flowText && flowText.trim() !== '') ? flowText.trim() : '';
+            const session = assistantFlowSession(envelope);
+
+            if (kind === 'message') {
+                setLoadingState(false);
+                removeFlowPlanStrip();
+                bioFlowPlanPendingContext = null;
+                appendChatBubble('bot', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + escapeHtml(primaryText || 'Ok.') + '</div>');
+                setTimeout(scrollChatToBottom, 20);
+                return;
             }
 
-            // Normalizar flow: si viene `kind=intent_flow` usamos `text` como respuesta principal.
-            const kind = result && result.kind ? String(result.kind) : '';
-            const flowText = result && typeof result.text === 'string' ? result.text : null;
-            const explanationText = typeof result.explanation === 'string' ? result.explanation : null;
-            const primaryText = (flowText && flowText.trim() !== '') ? flowText.trim() : (explanationText || '');
-
-            if (kind === 'intent_remediation') {
+            if (kind === 'interactive') {
                 setLoadingState(false);
                 supersedeAllFlowRows();
-                let remText = primaryText || 'Elegí una opción';
-                try {
-                    const ai = result && result.match && result.match.ai && typeof result.match.ai === 'object' ? result.match.ai : null;
-                    const ut = ai && typeof ai.user_text === 'string' ? ai.user_text.trim() : '';
-                    if (ut) {
-                        remText = ut;
-                    }
-                } catch (e) { /* ignore */ }
-
-                // Remediation es conversacional, pero no es "flow": usar burbuja para el texto (no bloque ancho).
+                const remText = primaryText || 'Elegí una opción';
                 const wrap = appendChatBubble('bot', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + escapeHtml(remText) + '</div>');
-                if (wrap && Array.isArray(result.remediation) && result.remediation.length > 0) {
+                const buttons = Array.isArray(envelope.buttons) ? envelope.buttons : [];
+                if (wrap && buttons.length > 0) {
                     const row = document.createElement('div');
                     row.className = 'd-flex flex-wrap justify-content-center gap-2 mt-2 spa-intent-remediation';
-                    result.remediation.forEach(function (ch) {
+                    buttons.forEach(function (ch) {
                         if (!ch || !ch.intent_id) {
                             return;
                         }
@@ -1190,7 +1251,6 @@
                         b.className = 'btn btn-sm btn-outline-secondary';
                         b.textContent = ch.label ? String(ch.label) : String(ch.intent_id);
                         b.addEventListener('click', function () {
-                            // Al elegir una opción: deshabilitar todas y marcar la seleccionada.
                             row.querySelectorAll('button').forEach(function (x) {
                                 x.disabled = true;
                                 x.classList.remove('btn-secondary');
@@ -1209,7 +1269,6 @@
                         });
                         row.appendChild(b);
                     });
-                    // Insertar el row como "mensaje" separado debajo de la burbuja.
                     if (chatMessagesDiv) {
                         const rowWrap = document.createElement('div');
                         rowWrap.className = 'd-flex justify-content-center w-100 mb-3';
@@ -1221,9 +1280,9 @@
                 return;
             }
 
-            // Si trae intent_id/subintent_id, sincronizar estado conversacional.
-            if (result && result.intent_id) {
-                const newIntentId = String(result.intent_id);
+            // Si trae session, sincronizar estado conversacional.
+            if (session.intent_id) {
+                const newIntentId = String(session.intent_id);
                 if (intentIdBeforeResponse && intentIdBeforeResponse !== newIntentId) {
                     supersedeDiscardedFlowRows(newIntentId);
                     beginNewFlowActivation();
@@ -1231,22 +1290,22 @@
                 currentIntentId = newIntentId;
                 writeFlowState();
             }
-            if (result && result.subintent_id) {
-                currentSubintentId = String(result.subintent_id);
+            if (session.subintent_id) {
+                currentSubintentId = String(session.subintent_id);
                 writeFlowState();
             }
-            if (result && result.draft_delta && typeof result.draft_delta === 'object') {
+            if (session.draft_delta && typeof session.draft_delta === 'object') {
                 try {
-                    applyDraftDelta(result.draft_delta || {});
+                    applyDraftDelta(session.draft_delta || {});
                     writeFlowState();
                 } catch (e) {
                     // ignore
                 }
             }
 
-            // Flow conversacional: no renderizar cards/botones; mini-UI en bloque a ancho completo (no burbuja angosta).
-            if (kind === 'intent_flow' || (result && result.intent_id && flowText)) {
-                const fm = result.flow_manifest && typeof result.flow_manifest === 'object' ? result.flow_manifest : null;
+            // Flow conversacional: mini-UI en bloque a ancho completo (no burbuja angosta).
+            if (kind === 'flow') {
+                const fm = assistantFlowManifest(envelope);
 
                 let flowActionTitle = '';
                 if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
@@ -1255,7 +1314,7 @@
                 bioFlowPlanPendingContext = fm ? { fm: fm, actionTitle: flowActionTitle } : null;
 
                 const flowIntentId = fm && fm.intent_id != null ? String(fm.intent_id).trim()
-                    : (result.intent_id ? String(result.intent_id).trim() : '');
+                    : (session.intent_id ? String(session.intent_id).trim() : '');
                 if (flowIntentId) {
                     supersedeOlderStepsOfActiveFlow(flowIntentId);
                 }
@@ -1270,7 +1329,7 @@
                     return;
                 }
 
-                const openUi = result && result.open_ui && typeof result.open_ui === 'object' ? result.open_ui : null;
+                const openUi = assistantFlowOpenUi(envelope);
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
                 const activeStep = fm && fm.active_step && typeof fm.active_step === 'object' ? fm.active_step : null;
 
@@ -1278,9 +1337,7 @@
                 const tabs = uiMeta && Array.isArray(uiMeta.tabs) ? uiMeta.tabs : [];
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
-                const fsr = result && result.flow_submit && typeof result.flow_submit === 'object'
-                    ? result.flow_submit
-                    : null;
+                const fsr = assistantFlowSubmit(envelope);
 
                 // `open_ui` en esta respuesta: lo que el servidor pide montar ahora. El manifiesto describe el paso
                 // (puede incluir tabs del paso anterior); no implica que siempre haya que abrir URL en este turno.
@@ -1439,6 +1496,9 @@
 
             removeFlowPlanStrip();
             bioFlowPlanPendingContext = null;
+
+            // Respuestas legacy (CRUD / motor antiguo sin sobre v3).
+            const result = envelope;
             
             // Si tiene explicación, mostrar respuesta (incluso si success es false)
             if (result.explanation !== undefined) {

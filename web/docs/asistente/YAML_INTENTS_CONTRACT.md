@@ -27,7 +27,7 @@ Campos típicos:
 - **`intent_semantics`** (opcional): semántica declarativa del intent para mejorar clasificación IA y explicación (`goal/how/preconditions/constraints/outcome/keyphrases`).
 - `subintents`: lista ordenada de pasos conversacionales
 - `draft_keys_extra` (opcional): claves de draft usadas sin listarse en `requires`/`provides`
-- **`business_rules`** (opcional): reglas evaluadas **antes** de ejecutar el flow cuando el usuario entra al intent vía `IntentEngine` (mensaje raíz o `action_id`). Si una regla aplica, la API puede responder `kind=intent_remediation` en lugar de `intent_flow`.
+- **`business_rules`** (opcional): reglas evaluadas **antes** de ejecutar el flow cuando el usuario entra al intent vía `IntentEngine` (mensaje raíz o `action_id`). Si una regla aplica, la API responde `kind=interactive` (botones) en lugar de `kind=flow`.
 
 ### `intent_semantics`
 

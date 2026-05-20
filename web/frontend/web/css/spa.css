@@ -517,6 +517,16 @@
     padding: 0.125rem 0.25rem;
 }
 
+/* flow_submit integrado: oculto hasta que la mini-UI del paso terminó de montarse. */
+.spa-flow-submit-inline--pending {
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
 /* Lista embebida UI JSON: transición suave al seleccionar ítem. */
 .bio-ui-json-list button[data-embed-pick="1"] {
     transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.22s ease, opacity 0.22s ease;
@@ -541,14 +551,14 @@
     font-size: 0.8125rem;
 }
 .bio-ui-json-list--tile-medium.bio-ui-json-list--shape-square button[data-embed-pick="1"] {
-    min-width: 4.5rem;
-    min-height: 4.5rem;
+    min-width: 3.6rem;
+    min-height: 3.6rem;
     padding: 0.5rem 0.65rem;
 }
 .bio-ui-json-list--tile-medium.bio-ui-json-list--shape-wide button[data-embed-pick="1"],
 .bio-ui-json-list--tile-medium.bio-ui-json-list--shape-auto button[data-embed-pick="1"] {
-    min-width: 8.5rem;
-    min-height: 3.25rem;
+    min-width: 7.65rem;
+    min-height: 2.6rem;
     padding: 0.5rem 0.75rem;
 }
 .bio-ui-json-list--tile-large.bio-ui-json-list--shape-square button[data-embed-pick="1"] {
@@ -559,7 +569,7 @@
 .bio-ui-json-list--tile-large.bio-ui-json-list--shape-wide button[data-embed-pick="1"],
 .bio-ui-json-list--tile-large.bio-ui-json-list--shape-auto button[data-embed-pick="1"] {
     min-width: 11rem;
-    min-height: 4rem;
+    min-height: 2.6rem;
     padding: 0.65rem 0.85rem;
 }
 

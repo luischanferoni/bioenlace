@@ -96,6 +96,13 @@ class ChatScreenState extends State<ChatScreen> {
     return message['flow_submit'] is Map;
   }
 
+  /// `flow_submit` visible: sin `inline_ui` (submit-only) o tras `onEmbeddedReady` del paso.
+  bool _showFlowSubmitButton(Map<String, dynamic> message) {
+    if (message['flow_submit'] is! Map) return false;
+    if (message['inline_ui'] is! Map) return true;
+    return message['_flow_submit_ready'] == true;
+  }
+
   /// Normaliza el envelope `flow_submit` del motor (`route`/`method`/`action_id`/`body_template`).
   /// Devuelve `null` si el descriptor es inválido (ruta vacía).
   Map<String, dynamic>? _normalizeFlowSubmit(dynamic raw) {
@@ -113,6 +120,129 @@ class ChatScreenState extends State<ChatScreen> {
           ? Map<String, dynamic>.from(raw['body_template'] as Map)
           : <String, dynamic>{},
     };
+  }
+
+  void _syncFlowSessionFromView(AssistantFlowView flow) {
+    if (flow.intentId.isNotEmpty) {
+      _intentId = flow.intentId;
+      _asistenteService.currentIntentId = _intentId;
+    }
+    if (flow.subintentId.isNotEmpty) {
+      _subintentId = flow.subintentId;
+      _asistenteService.currentSubintentId = _subintentId;
+    }
+    if (flow.draftDelta.isNotEmpty) {
+      _applyDraftDelta(flow.draftDelta);
+      _asistenteService.draft = Map<String, dynamic>.from(_draft);
+    }
+  }
+
+  /// Tras un POST al asistente en modo flow: sincroniza sesión, agrega burbuja y abre mini-UI si aplica.
+  Future<void> _handleFlowEnvelopeResponse(Map<String, dynamic> envelope) async {
+    final nextFlow = AssistantFlowView.fromEnvelope(envelope);
+    if (nextFlow == null) {
+      final t = envelope['text']?.toString() ?? 'Ok.';
+      setState(() {
+        _chatHistory.add({
+          'type': 'bot',
+          'content': t,
+          'actions': null,
+          'timestamp': DateTime.now(),
+        });
+      });
+      _scrollToBottom();
+      return;
+    }
+
+    _syncFlowSessionFromView(nextFlow);
+    final msgText = nextFlow.text.trim().isNotEmpty ? nextFlow.text.trim() : 'Ok.';
+    final fsPayload = _normalizeFlowSubmit(nextFlow.flowSubmit);
+    final providesPayload = nextFlow.provides;
+    final openUi = nextFlow.openUi;
+    final co = openUi != null ? openUi['client_open'] : null;
+    final actionId = openUi != null ? openUi['action_id']?.toString() : null;
+    final hasInlineUi =
+        co is Map && (actionId != null && actionId.isNotEmpty);
+    final isSubmitOnly = fsPayload != null && !hasInlineUi;
+
+    setState(() {
+      _chatHistory.add({
+        'type': 'bot',
+        'content': msgText,
+        'actions': null,
+        if (nextFlow.manifest != null) 'flow_manifest': nextFlow.manifest,
+        if (nextFlow.hints.isNotEmpty) 'hints': nextFlow.hints,
+        if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
+        if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
+        'timestamp': DateTime.now(),
+      });
+      _stampLastBotMessageFlowActivation();
+      _applyFlowSupersession(activeIntentId: _intentId);
+    });
+    _scrollToBottom();
+
+    if (openUi == null || isSubmitOnly) {
+      return;
+    }
+    if (actionId == null || actionId.isEmpty) {
+      return;
+    }
+
+    Map<String, dynamic>? pseudoAction;
+    if (co is Map) {
+      pseudoAction = <String, dynamic>{
+        'action_id': actionId,
+        'display_name': actionId,
+        'client_open': Map<String, dynamic>.from(co),
+        'parameters': {'provided': _draft},
+      };
+    } else {
+      String? route;
+      final fm = nextFlow.manifest;
+      if (fm != null) {
+        final step = fm['active_step'];
+        if (step is Map) {
+          final ui = step['ui'];
+          if (ui is Map && ui['tabs'] is List) {
+            final tabs = ui['tabs'] as List;
+            final defId = ui['default_tab']?.toString() ?? '';
+            Map? picked;
+            for (final tt in tabs) {
+              if (tt is Map && defId.isNotEmpty && tt['id']?.toString() == defId) {
+                picked = tt;
+                break;
+              }
+            }
+            picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
+            route = picked is Map ? picked['route']?.toString() : null;
+          }
+        }
+      }
+      route ??= _apiRouteFromActionId(actionId);
+      if (route != null && route.isNotEmpty) {
+        pseudoAction = <String, dynamic>{
+          'action_id': actionId,
+          'display_name': actionId,
+          'client_open': {
+            'kind': 'ui_json',
+            'api': {'route': route, 'method': 'GET|POST'},
+          },
+          'parameters': {'provided': _draft},
+        };
+      }
+    }
+
+    if (pseudoAction == null) {
+      return;
+    }
+
+    await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+    if (fsPayload != null && mounted && _chatHistory.isNotEmpty) {
+      setState(() {
+        _chatHistory.last['flow_submit'] = fsPayload;
+        _chatHistory.last['_flow_submit_ready'] = false;
+      });
+    }
   }
 
   /// Texto del aviso "faltan datos" del botón "Confirmar y enviar". Usa el `flow_snapshot`
@@ -550,6 +680,7 @@ class ChatScreenState extends State<ChatScreen> {
     _asistenteService = AsistenteService(
       userId: widget.chatService.currentUserId,
       authToken: authToken,
+      appClient: 'paciente-flutter',
     );
     try {
       final atajos = await _asistenteService.cargarAtajos();
@@ -621,24 +752,13 @@ class ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  /// Mensaje genérico post-intent (acciones sugeridas, etc.) cuando no aplicó open_ui / intent_flow / remedación.
+  /// Mensaje genérico cuando el sobre no fue consumido por flow/interactive/message.
   void _appendGenericAsistenteBotMessage(Map<String, dynamic> data) {
     final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
-    String explanation = (data['explanation']?.toString()) ?? 'Consulta procesada';
     final textField = data['text']?.toString();
-    if (textField != null && textField.trim().isNotEmpty) {
-      explanation = textField.trim();
-    }
-
-    if (data['kind']?.toString() == 'ui_intent_match' && actions is List && actions.isNotEmpty) {
-      final a0 = actions[0];
-      if (a0 is Map) {
-        final dn = a0['display_name']?.toString();
-        if (dn != null && dn.isNotEmpty) {
-          explanation = 'Puedo ayudarte con “$dn”.';
-        }
-      }
-    }
+    final explanation = (textField != null && textField.trim().isNotEmpty)
+        ? textField.trim()
+        : 'Consulta procesada';
     final suggestedQuery = data['interaccion_sugerida']?['texto'];
     final queryType = data['query_type'];
     final matchedBy = data['matched_by'];
@@ -682,44 +802,17 @@ class ChatScreenState extends State<ChatScreen> {
   /// `true` si ya se actualizó la UI y no debe ejecutarse el branch genérico de acciones.
   Future<bool> _consumeAsistenteSuccessData(Map<String, dynamic> data) async {
     final kind = data['kind']?.toString();
-    String explanation = (data['explanation']?.toString()) ?? 'Consulta procesada';
     final textField = data['text']?.toString();
-    if (textField != null && textField.trim().isNotEmpty) {
-      explanation = textField.trim();
-    }
+    final explanation = (textField != null && textField.trim().isNotEmpty)
+        ? textField.trim()
+        : 'Consulta procesada';
 
-    if (kind == 'intent_remediation') {
-      // Preferir `match.ai.user_text` si existe (texto apto para UI); fallback a `text/explanation`.
-      try {
-        final match = data['match'];
-        if (match is Map) {
-          final ai = match['ai'];
-          if (ai is Map) {
-            final ut = ai['user_text']?.toString();
-            if (ut != null && ut.trim().isNotEmpty) {
-              explanation = ut.trim();
-            }
-          }
-        }
-      } catch (_) {
-        // ignore
-      }
+    if (kind == 'message') {
       setState(() {
         _isSending = false;
-        _supersedeAllFlowInteractiveMessages();
-        _clearFlowState();
-        final rem = data['remediation'];
-        List<Map<String, dynamic>>? remList;
-        if (rem is List) {
-          remList = rem
-              .whereType<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
-        }
         _chatHistory.add({
           'type': 'bot',
           'content': explanation,
-          'remediation': remList,
           'timestamp': DateTime.now(),
         });
       });
@@ -727,33 +820,44 @@ class ChatScreenState extends State<ChatScreen> {
       return true;
     }
 
+    if (kind == 'interactive') {
+      setState(() {
+        _isSending = false;
+        _supersedeAllFlowInteractiveMessages();
+        _clearFlowState();
+        final buttons = data['buttons'];
+        List<Map<String, dynamic>>? buttonList;
+        if (buttons is List) {
+          buttonList = buttons
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
+        }
+        _chatHistory.add({
+          'type': 'bot',
+          'content': explanation,
+          'buttons': buttonList,
+          'timestamp': DateTime.now(),
+        });
+      });
+      _scrollToBottom();
+      return true;
+    }
+
+    final flow = AssistantFlowView.fromEnvelope(data);
+    if (flow == null) {
+      return false;
+    }
+
     final previousIntentId = _intentId;
-    final iid = data['intent_id']?.toString();
-    final sid = data['subintent_id']?.toString();
-    if (iid != null && iid.isNotEmpty) {
-      _intentId = iid;
-      _asistenteService.currentIntentId = _intentId;
-    }
-    if (sid != null && sid.isNotEmpty) {
-      _subintentId = sid;
-      _asistenteService.currentSubintentId = _subintentId;
-    }
+    _syncFlowSessionFromView(flow);
 
-    final dd = data['draft_delta'];
-    if (dd is Map && dd.isNotEmpty) {
-      _applyDraftDelta(Map<String, dynamic>.from(dd));
-      _asistenteService.draft = Map<String, dynamic>.from(_draft);
-    }
-
-    final flowSubmit = _normalizeFlowSubmit(data['flow_submit']);
-    final providesList = (data['provides'] is List)
-        ? List<String>.from((data['provides'] as List).map((e) => e.toString()))
-        : <String>[];
-
-    final openUi = data['open_ui'];
-    if (openUi is Map || flowSubmit != null) {
-      final co = openUi is Map ? openUi['client_open'] : null;
-      final actionId = openUi is Map ? openUi['action_id']?.toString() : null;
+    final flowSubmit = _normalizeFlowSubmit(flow.flowSubmit);
+    final providesList = flow.provides;
+    final openUi = flow.openUi;
+    if (openUi != null || flowSubmit != null) {
+      final co = openUi != null ? openUi['client_open'] : null;
+      final actionId = openUi != null ? openUi['action_id']?.toString() : null;
       // Caso "submit-only": el motor cerró el flow sin UI previa (ver `buildTerminalSubmitOnlyResponse`).
       // Mensaje sólo con `flow_submit` → render del botón "Confirmar y enviar" sin `inline_ui`.
       if (flowSubmit != null && !(co is Map && actionId != null && actionId.isNotEmpty)) {
@@ -763,7 +867,8 @@ class ChatScreenState extends State<ChatScreen> {
             'type': 'bot',
             'content': explanation,
             'actions': null,
-            if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+            if (flow.manifest != null) 'flow_manifest': flow.manifest,
+            if (flow.hints.isNotEmpty) 'hints': flow.hints,
             'flow_submit': flowSubmit,
             if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
@@ -809,8 +914,10 @@ class ChatScreenState extends State<ChatScreen> {
             'type': 'bot',
             'content': explanation,
             'actions': null,
-            if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+            if (flow.manifest != null) 'flow_manifest': flow.manifest,
+            if (flow.hints.isNotEmpty) 'hints': flow.hints,
             if (flowSubmit != null) 'flow_submit': flowSubmit,
+            if (flowSubmit != null && hasUiJsonRoute) '_flow_submit_ready': false,
             if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
           });
@@ -826,9 +933,9 @@ class ChatScreenState extends State<ChatScreen> {
       }
 
       if (actionId != null && actionId.isNotEmpty && co == null) {
-        final fm = data['flow_manifest'];
+        final fm = flow.manifest;
         String? route;
-        if (fm is Map) {
+        if (fm != null) {
           final step = fm['active_step'];
           if (step is Map) {
             final ui = step['ui'];
@@ -865,8 +972,9 @@ class ChatScreenState extends State<ChatScreen> {
               'type': 'bot',
               'content': explanation,
               'actions': null,
-              if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+              if (flow.manifest != null) 'flow_manifest': flow.manifest,
               if (flowSubmit != null) 'flow_submit': flowSubmit,
+              if (flowSubmit != null) '_flow_submit_ready': false,
               if (providesList.isNotEmpty) 'flow_provides': providesList,
               'timestamp': DateTime.now(),
             });
@@ -895,14 +1003,14 @@ class ChatScreenState extends State<ChatScreen> {
       }
     }
 
-    if (kind == 'intent_flow') {
+    if (openUi == null && flowSubmit == null) {
       setState(() {
         _isSending = false;
         _chatHistory.add({
           'type': 'bot',
           'content': explanation,
           'actions': null,
-          if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
+          if (flow.manifest != null) 'flow_manifest': flow.manifest,
           'timestamp': DateTime.now(),
         });
         _stampLastBotMessageFlowActivation();
@@ -916,6 +1024,18 @@ class ChatScreenState extends State<ChatScreen> {
     }
 
     return false;
+  }
+
+  List<Map<String, dynamic>> _messageInteractiveButtons(Map<String, dynamic> message) {
+    final buttons = message['buttons'];
+    if (buttons is List && buttons.isNotEmpty) {
+      return buttons.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    }
+    final rem = message['remediation'];
+    if (rem is List && rem.isNotEmpty) {
+      return rem.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    }
+    return [];
   }
 
   Future<void> _onRemediationChoice(Map<String, dynamic> opt) async {
@@ -1244,15 +1364,16 @@ class ChatScreenState extends State<ChatScreen> {
           });
         }
       } else {
-        // Si hay explanation en los datos, usarla aunque success sea false (compatibilidad)
         final data = result['data'];
-        final explanation = data?['explanation'];
-        
+        final textFromEnvelope = data is Map ? data['text']?.toString() : null;
+
         setState(() {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': explanation ?? result['message'] ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.',
+            'content': (textFromEnvelope != null && textFromEnvelope.trim().isNotEmpty)
+                ? textFromEnvelope.trim()
+                : (result['message']?.toString() ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.'),
             'suggested_query': data?['interaccion_sugerida']?['texto'],
             'timestamp': DateTime.now(),
           });
@@ -1483,7 +1604,7 @@ class ChatScreenState extends State<ChatScreen> {
     final mobile = co['mobile'];
     final web = co['web'];
 
-    // Intent conversacional (YAML): POST /asistente/enviar con action_id → intent_flow.
+    // Intent conversacional (YAML): POST /asistente/enviar con action_id → kind flow.
     if (kind == 'intent') {
       final intentId = co['intent_id']?.toString() ?? action['action_id']?.toString() ?? '';
       if (intentId.isEmpty) {
@@ -1927,9 +2048,8 @@ class ChatScreenState extends State<ChatScreen> {
                 final hasFormConfig = message['form_config'] != null;
                 final hasActionsRow =
                     !isUser && actions != null && actions.isNotEmpty;
-                final hasRemediationRow = !isUser &&
-                    message['remediation'] is List &&
-                    (message['remediation'] as List).isNotEmpty;
+                final hasRemediationRow =
+                    !isUser && _messageInteractiveButtons(message).isNotEmpty;
                 /// Separación antes de tabs/UI inline (ver también padding del [UiJsonScreen] abajo).
                 double inlineUiLeadGapHeight = 4.0;
                 if (!hasFormConfig && !isUser && inlineUi is Map && hasEmbeddedUi) {
@@ -2092,18 +2212,14 @@ class ChatScreenState extends State<ChatScreen> {
                       ),
                     ],
                     if (!isUser &&
-                        message['remediation'] is List &&
-                        (message['remediation'] as List).isNotEmpty) ...[
+                        _messageInteractiveButtons(message).isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: (message['remediation'] as List).map((raw) {
-                            if (raw is! Map) {
-                              return const SizedBox.shrink();
-                            }
+                          children: _messageInteractiveButtons(message).map((raw) {
                             final opt = Map<String, dynamic>.from(raw);
                             final label = opt['label']?.toString() ??
                                 opt['intent_id']?.toString() ??
@@ -2197,6 +2313,18 @@ class ChatScreenState extends State<ChatScreen> {
                                   : (def) {
                                       inlineUi['ui_definition'] = def;
                                     },
+                              onEmbeddedReady: flowUiDisabled
+                                  ? null
+                                  : () {
+                                      if (!mounted ||
+                                          index < 0 ||
+                                          index >= _chatHistory.length) {
+                                        return;
+                                      }
+                                      setState(() {
+                                        _chatHistory[index]['_flow_submit_ready'] = true;
+                                      });
+                                    },
                               enableFlowChainAutoAdvance: !flowUiDisabled &&
                                   inlineUi['ui_definition'] == null,
                               apiAbsoluteUrl: (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty
@@ -2269,131 +2397,9 @@ class ChatScreenState extends State<ChatScreen> {
                                 if (res['success'] == true) {
                                   final data = res['data'];
                                   if (data is Map) {
-                                    // Sincronizar estado flow local.
-                                    final iid = data['intent_id']?.toString();
-                                    final sid = data['subintent_id']?.toString();
-                                    if (iid != null && iid.isNotEmpty) {
-                                      _intentId = iid;
-                                      _asistenteService.currentIntentId = _intentId;
-                                    }
-                                    if (sid != null && sid.isNotEmpty) {
-                                      _subintentId = sid;
-                                      _asistenteService.currentSubintentId = _subintentId;
-                                    }
-                                    final dd2 = data['draft_delta'];
-                                    if (dd2 is Map && dd2.isNotEmpty) {
-                                      _applyDraftDelta(Map<String, dynamic>.from(dd2));
-                                      _asistenteService.draft = Map<String, dynamic>.from(_draft);
-                                    }
-
-                                    final t = data['text']?.toString();
-                                    final msgText = (t != null && t.trim().isNotEmpty) ? t.trim() : 'Ok.';
-                                    final fsPayload = _normalizeFlowSubmit(data['flow_submit']);
-                                    final providesPayload = (data['provides'] is List)
-                                        ? List<String>.from((data['provides'] as List).map((e) => e.toString()))
-                                        : <String>[];
-                                    final openUiNext = data['open_ui'];
-                                    final coNext = openUiNext is Map ? openUiNext['client_open'] : null;
-                                    final hasInlineUi = coNext is Map &&
-                                        (openUiNext['action_id']?.toString().trim().isNotEmpty ?? false);
-                                    // Caso "submit-only": flow_submit sin open_ui → mensaje con sólo el botón.
-                                    final isSubmitOnly = fsPayload != null && !hasInlineUi;
-                                    setState(() {
-                                      _chatHistory.add({
-                                        'type': 'bot',
-                                        'content': msgText,
-                                        'actions': null,
-                                        if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
-                                        if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
-                                        if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
-                                        'timestamp': DateTime.now(),
-                                      });
-                                      _stampLastBotMessageFlowActivation();
-                                      _applyFlowSupersession(activeIntentId: _intentId);
-                                    });
-                                    _scrollToBottom();
-
-                                    // Si el paso siguiente trae open_ui, abrirla inline. Si además es terminal
-                                    // (`flow_submit` adjunto), el `_tryOpenClientNative` arma el inline_ui y
-                                    // luego adjuntamos `flow_submit` al mismo mensaje para que el botón
-                                    // "Confirmar y enviar" aparezca debajo del UiJsonScreen.
-                                    final openUi = data['open_ui'];
-                                    if (openUi is Map && !isSubmitOnly) {
-                                      final actionId = openUi['action_id']?.toString();
-                                      final co = openUi['client_open'];
-                                      if (actionId != null && actionId.isNotEmpty) {
-                                        Map<String, dynamic>? pseudoAction;
-                                        if (co is Map) {
-                                          pseudoAction = <String, dynamic>{
-                                            'action_id': actionId,
-                                            'display_name': actionId,
-                                            'client_open': Map<String, dynamic>.from(co),
-                                            'parameters': {'provided': _draft},
-                                          };
-                                        } else {
-                                          // Fallback flow: usar route del active_step/tab default.
-                                          final fm = data['flow_manifest'];
-                                          String? route;
-                                          if (fm is Map) {
-                                            final step = fm['active_step'];
-                                            if (step is Map) {
-                                              final ui = step['ui'];
-                                              if (ui is Map && ui['tabs'] is List) {
-                                                final tabs = ui['tabs'] as List;
-                                                final defId = ui['default_tab']?.toString() ?? '';
-                                                Map? picked;
-                                                for (final tt in tabs) {
-                                                  if (tt is Map && defId.isNotEmpty && tt['id']?.toString() == defId) {
-                                                    picked = tt;
-                                                    break;
-                                                  }
-                                                }
-                                                picked ??= tabs.isNotEmpty && tabs.first is Map ? (tabs.first as Map) : null;
-                                                route = picked is Map ? picked['route']?.toString() : null;
-                                              }
-                                            }
-                                          }
-                                          route ??= _apiRouteFromActionId(actionId);
-                                          if (route != null && route.isNotEmpty) {
-                                            pseudoAction = <String, dynamic>{
-                                              'action_id': actionId,
-                                              'display_name': actionId,
-                                              'client_open': {
-                                                'kind': 'ui_json',
-                                                'api': {'route': route, 'method': 'GET|POST'},
-                                              },
-                                              'parameters': {'provided': _draft},
-                                            };
-                                          }
-                                        }
-
-                                        if (pseudoAction != null) {
-                                          await _tryOpenClientNative(
-                                            pseudoAction,
-                                            messageIndex: _chatHistory.length - 1,
-                                          );
-                                          // Step terminal con `open_ui`: adjuntar `flow_submit` al mismo mensaje
-                                          // recién enriquecido con `inline_ui`, para que el botón "Confirmar y enviar"
-                                          // se renderice debajo del UiJsonScreen (Cambio 2).
-                                          if (fsPayload != null && mounted && _chatHistory.isNotEmpty) {
-                                            setState(() {
-                                              _chatHistory.last['flow_submit'] = fsPayload;
-                                            });
-                                          }
-                                        }
-                                      }
-                                    }
-                                  } else {
-                                    final t = (data is Map ? data['text']?.toString() : null) ?? 'Ok.';
-                                    setState(() {
-                                      _chatHistory.add({
-                                        'type': 'bot',
-                                        'content': t,
-                                        'actions': null,
-                                        'timestamp': DateTime.now(),
-                                      });
-                                    });
-                                    _scrollToBottom();
+                                    await _handleFlowEnvelopeResponse(
+                                      Map<String, dynamic>.from(data),
+                                    );
                                   }
                                 }
                               },
@@ -2417,69 +2423,9 @@ class ChatScreenState extends State<ChatScreen> {
                                 if (res['success'] == true) {
                                   final data = res['data'];
                                   if (data is Map) {
-                                    final iid = data['intent_id']?.toString();
-                                    final sid = data['subintent_id']?.toString();
-                                    if (iid != null && iid.isNotEmpty) {
-                                      _intentId = iid;
-                                      _asistenteService.currentIntentId = _intentId;
-                                    }
-                                    if (sid != null && sid.isNotEmpty) {
-                                      _subintentId = sid;
-                                      _asistenteService.currentSubintentId = _subintentId;
-                                    }
-                                    final dd = data['draft_delta'];
-                                    if (dd is Map && dd.isNotEmpty) {
-                                      _applyDraftDelta(Map<String, dynamic>.from(dd));
-                                      _asistenteService.draft = Map<String, dynamic>.from(_draft);
-                                    }
-                                    final text = data['text']?.toString();
-                                    final explanation = (text != null && text.trim().isNotEmpty)
-                                        ? text.trim()
-                                        : 'Listo.';
-                                    final fsPayload = _normalizeFlowSubmit(data['flow_submit']);
-                                    final providesPayload = (data['provides'] is List)
-                                        ? List<String>.from((data['provides'] as List).map((e) => e.toString()))
-                                        : <String>[];
-                                    final openUiNext = data['open_ui'];
-                                    final coNext = openUiNext is Map ? openUiNext['client_open'] : null;
-                                    final hasInlineUi = coNext is Map &&
-                                        (openUiNext['action_id']?.toString().trim().isNotEmpty ?? false);
-                                    final isSubmitOnly = fsPayload != null && !hasInlineUi;
-                                    setState(() {
-                                      _chatHistory.add({
-                                        'type': 'bot',
-                                        'content': explanation,
-                                        'actions': null,
-                                        if (data['flow_manifest'] != null) 'flow_manifest': data['flow_manifest'],
-                                        if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
-                                        if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
-                                        'timestamp': DateTime.now(),
-                                      });
-                                      _stampLastBotMessageFlowActivation();
-                                      _applyFlowSupersession(activeIntentId: _intentId);
-                                    });
-                                    _scrollToBottom();
-                                    // Si hay UI siguiente (con open_ui), abrirla. Adjuntamos `flow_submit` después
-                                    // al mismo mensaje si este step es terminal.
-                                    final openUi = data['open_ui'];
-                                    if (openUi is Map && !isSubmitOnly) {
-                                      final actionId = openUi['action_id']?.toString();
-                                      final co = openUi['client_open'];
-                                      if (actionId != null && actionId.isNotEmpty && co is Map) {
-                                        final pseudoAction = <String, dynamic>{
-                                          'action_id': actionId,
-                                          'display_name': actionId,
-                                          'client_open': Map<String, dynamic>.from(co),
-                                          'parameters': {'provided': _draft},
-                                        };
-                                        await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
-                                        if (fsPayload != null && mounted && _chatHistory.isNotEmpty) {
-                                          setState(() {
-                                            _chatHistory.last['flow_submit'] = fsPayload;
-                                          });
-                                        }
-                                      }
-                                    }
+                                    await _handleFlowEnvelopeResponse(
+                                      Map<String, dynamic>.from(data),
+                                    );
                                   }
                                 }
                               },
@@ -2494,7 +2440,7 @@ class ChatScreenState extends State<ChatScreen> {
                           ],
                         ),
                       ),
-                    if (!isUser && message['flow_submit'] is Map)
+                    if (!isUser && _showFlowSubmitButton(message))
                       _wrapFlowInteractiveCollapse(
                         collapsing: flowCollapsing,
                         child: Padding(

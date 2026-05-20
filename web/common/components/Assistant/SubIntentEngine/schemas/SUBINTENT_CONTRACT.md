@@ -31,6 +31,7 @@ Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave
 | `next_routing` | Alternativa a `next`: lista de ramas `{ when, next }` (ver motor: `draft_equals`, `default`). |
 | `open_ui` | Objeto **picker / pantalla embebible** vía catálogo: `action_id`, `params` (valores `draft.*`), `pass_content_as_query` opcional. |
 | `chooser` | Objeto con `when_user_says_nearby` / `otherwise`, cada uno con su propio `open_ui` (elección de lista vs cercanía). |
+| `hint` | Opcional: `{ entity, match_property }` para resolver menciones del preprocess → `hints[]` en el envelope (`id`, `value`, `draft_field` inferido de `provides`). |
 
 ### Forma de `open_ui`
 

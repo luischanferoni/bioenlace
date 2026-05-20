@@ -38,6 +38,9 @@ subintents:
     provides:
       - draft.id_servicio_asignado
     next: select_efector
+    hint:
+      entity: servicio
+      match_property: nombre
     open_ui:
       # Lista vía GET /api/v1/servicios/elegir-acepta-turnos: servicios_efector + servicios.acepta_turnos=SI (distinct id_servicio).
       action_id: servicios.elegir-acepta-turnos
@@ -49,6 +52,9 @@ subintents:
     provides:
       - draft.id_efector
     next: select_profesional
+    hint:
+      entity: efector
+      match_property: nombre
     chooser:
       when_user_says_nearby:
         open_ui:
@@ -69,6 +75,9 @@ subintents:
     provides:
       - draft.id_profesional_efector_servicio
     next: select_slot
+    hint:
+      entity: profesional
+      match_property: nombre
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
       params:

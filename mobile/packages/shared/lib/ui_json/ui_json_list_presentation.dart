@@ -33,15 +33,18 @@ class UiJsonListPresentationMetrics {
     final (h, squareW, wideW, autoW, lines) = switch (tile) {
       'compact' => (52.0, 56.0, 96.0, 80.0, 2),
       'large' => (104.0, 104.0, 200.0, 168.0, 4),
-      _ => (88.0, 88.0, 148.0, 120.0, 4), // medium
+      // medium: wide −10% ancho / −20% alto; square −20% ancho y alto (base 88×88 / 148 wide)
+      _ => (70.0, 70.0, 133.0, 108.0, 4),
     };
     final w = switch (shape) {
       'square' => squareW,
       'auto' => autoW,
       _ => wideW,
     };
+    // large+wide/auto: mismo alto de fila que medium+wide (70).
+    final rowHeight = tile == 'large' && shape != 'square' ? 70.0 : h;
     return UiJsonListPresentationMetrics(
-      rowHeight: h,
+      rowHeight: rowHeight,
       tileWidth: w,
       maxLines: lines,
     );

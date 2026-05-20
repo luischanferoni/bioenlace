@@ -1,0 +1,89 @@
+// Sobre v3 de POST /api/v1/asistente/enviar (`message` | `interactive` | `flow`).
+
+/// Vista de un sobre `kind: flow` para el renderer del chat / acciones.
+class AssistantFlowView {
+  final String text;
+  final String intentId;
+  final String subintentId;
+  final Map<String, dynamic> draftDelta;
+  final Map<String, dynamic>? manifest;
+  final List<Map<String, dynamic>> hints;
+  final Map<String, dynamic>? openUi;
+  final Map<String, dynamic>? flowSubmit;
+  final List<String> provides;
+  final List<String> pendingFields;
+
+  const AssistantFlowView({
+    required this.text,
+    required this.intentId,
+    required this.subintentId,
+    required this.draftDelta,
+    this.manifest,
+    this.hints = const [],
+    this.openUi,
+    this.flowSubmit,
+    this.provides = const [],
+    this.pendingFields = const [],
+  });
+
+  static AssistantFlowView? fromEnvelope(Map<String, dynamic> envelope) {
+    if (envelope['kind']?.toString() != 'flow') {
+      return null;
+    }
+
+    final session = envelope['session'];
+    final step = envelope['step'];
+    final submit = envelope['submit'];
+    final sess = session is Map ? Map<String, dynamic>.from(session) : <String, dynamic>{};
+    final st = step is Map ? Map<String, dynamic>.from(step) : <String, dynamic>{};
+    final sub = submit is Map ? Map<String, dynamic>.from(submit) : <String, dynamic>{};
+
+    Map<String, dynamic>? openUi;
+    if (st['active'] == true) {
+      openUi = <String, dynamic>{
+        'action_id': st['action_id']?.toString() ?? '',
+        if (st['client_open'] is Map)
+          'client_open': Map<String, dynamic>.from(st['client_open'] as Map),
+      };
+    }
+
+    Map<String, dynamic>? flowSubmit;
+    if (sub['active'] == true) {
+      flowSubmit = <String, dynamic>{
+        'route': sub['route']?.toString() ?? '',
+        'method': sub['method']?.toString() ?? 'POST',
+        if (sub['body_template'] is Map)
+          'body_template': Map<String, dynamic>.from(sub['body_template'] as Map),
+      };
+    }
+
+    final hintsRaw = envelope['hints'];
+    final hints = hintsRaw is List
+        ? hintsRaw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList()
+        : <Map<String, dynamic>>[];
+
+    return AssistantFlowView(
+      text: envelope['text']?.toString() ?? '',
+      intentId: sess['intent_id']?.toString() ?? '',
+      subintentId: sess['subintent_id']?.toString() ?? '',
+      draftDelta: sess['draft_delta'] is Map
+          ? Map<String, dynamic>.from(sess['draft_delta'] as Map)
+          : <String, dynamic>{},
+      manifest: envelope['manifest'] is Map
+          ? Map<String, dynamic>.from(envelope['manifest'] as Map)
+          : null,
+      hints: hints,
+      openUi: openUi,
+      flowSubmit: flowSubmit,
+      provides: st['provides'] is List
+          ? List<String>.from((st['provides'] as List).map((e) => e.toString()))
+          : <String>[],
+      pendingFields: st['pending_fields'] is List
+          ? List<String>.from((st['pending_fields'] as List).map((e) => e.toString()))
+          : <String>[],
+    );
+  }
+}

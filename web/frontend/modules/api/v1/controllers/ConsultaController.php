@@ -3,10 +3,10 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Services\Consulta\ConsultaProcesamientoService;
+use common\components\Assistant\EntryPoints\ClinicalEncounter\ClinicalEncounterEntry;
 
 /**
- * API Consulta: delega análisis y guardado en {@see ConsultaProcesamientoService}.
+ * API Consulta: delega en {@see ClinicalEncounterEntry} (captura clínica).
  */
 class ConsultaController extends BaseController
 {
@@ -21,7 +21,7 @@ class ConsultaController extends BaseController
 
     public function actionAnalizar()
     {
-        $out = (new ConsultaProcesamientoService())->analizar(Yii::$app->request->getBodyParams());
+        $out = ClinicalEncounterEntry::analizar(Yii::$app->request->getBodyParams());
 
         return $this->applyConsultaHttpStatus($out);
     }
@@ -37,7 +37,7 @@ class ConsultaController extends BaseController
                 'mergedBody' => $body,
             ]), 'consulta-guardar');
         }
-        $out = (new ConsultaProcesamientoService())->guardar($body);
+        $out = ClinicalEncounterEntry::guardar($body);
 
         return $this->applyConsultaHttpStatus($out);
     }

@@ -29,6 +29,15 @@ final class UiActionCatalog
         $this->byActionId = $byActionId;
     }
 
+    /**
+     * @param UiActionCatalogItem[] $items
+     * @param array<string, UiActionCatalogItem> $byActionId
+     */
+    public static function fromItems(array $items, array $byActionId): self
+    {
+        return new self($items, $byActionId);
+    }
+
     public static function forUser(int $userId): self
     {
         $raw = IntentCatalogService::getAvailableUiForUser($userId, true);

@@ -2,7 +2,9 @@
 
 namespace common\components\Assistant\SubIntentEngine;
 
+use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\FlowManifest\FlowManifest;
+use common\components\Services\Assistant\FlowHintService;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
@@ -40,6 +42,16 @@ final class SubIntentEngine
         $draft = self::mergeFlowSnapshotIntoDraft($snapshot, $draft);
         $content = isset($snapshot['content']) ? trim((string) $snapshot['content']) : '';
         $interaction = isset($snapshot['interaction']) && is_array($snapshot['interaction']) ? $snapshot['interaction'] : null;
+
+        $hints = isset($snapshot['hints']) && is_array($snapshot['hints']) ? $snapshot['hints'] : [];
+        if ($hints === []) {
+            $hints = FlowHintService::resolveForIntent(
+                $intentId,
+                ChatPreprocessContext::extractions(),
+                $userId,
+                $draft
+            );
+        }
 
         $intent = self::loadIntentYaml($intentId);
         if ($intent === null) {
@@ -96,18 +108,19 @@ final class SubIntentEngine
                         $userId,
                         $open,
                         $content,
-                        $flowSubmitBlock
+                        $flowSubmitBlock,
+                        $hints
                     );
                 }
                 // Paso pendiente sin `open_ui` resoluble: pedir más info y cortar.
-                return self::withFlowManifest([
+                return self::withFlowManifest(self::attachHints([
                     'success' => true,
                     'text' => 'Necesito más información para continuar.',
                     'intent_id' => $intentId,
                     'subintent_id' => $currentId,
                     'required_draft_fields' => $missing,
                     'draft_delta' => (object) [],
-                ], $intentId, $currentId);
+                ], $hints), $intentId, $currentId);
             }
 
             // Paso completo: intentar avanzar al siguiente.
@@ -130,17 +143,18 @@ final class SubIntentEngine
                 $intentId,
                 $currentId,
                 self::assistantTextForPrompt($current, 'Confirmemos y enviemos.'),
-                $flowSubmitBlock
+                $flowSubmitBlock,
+                $hints
             );
         }
 
-        return self::withFlowManifest([
+        return self::withFlowManifest(self::attachHints([
             'success' => true,
             'text' => self::assistantTextForPrompt($current, 'Listo.'),
             'intent_id' => $intentId,
             'subintent_id' => $currentId,
             'draft_delta' => (object) [],
-        ], $intentId, $currentId);
+        ], $hints), $intentId, $currentId);
     }
 
     /**
@@ -368,8 +382,16 @@ final class SubIntentEngine
      * @param array<string, mixed> $flowSubmitBlock
      * @return array<string, mixed>
      */
-    private static function buildTerminalSubmitOnlyResponse(string $intentId, string $subintentId, string $text, array $flowSubmitBlock): array
-    {
+    /**
+     * @param list<array<string, mixed>> $hints
+     */
+    private static function buildTerminalSubmitOnlyResponse(
+        string $intentId,
+        string $subintentId,
+        string $text,
+        array $flowSubmitBlock,
+        array $hints = []
+    ): array {
         $template = self::buildFlowSubmitTemplate($flowSubmitBlock);
         $payload = [
             'success' => true,
@@ -382,7 +404,7 @@ final class SubIntentEngine
             $payload['flow_submit'] = $template;
         }
 
-        return self::withFlowManifest($payload, $intentId, $subintentId);
+        return self::withFlowManifest(self::attachHints($payload, $hints), $intentId, $subintentId);
     }
 
     /**
@@ -560,6 +582,9 @@ final class SubIntentEngine
      * @param array<string, mixed> $openUiDef
      * @param array<string, mixed>|null $flowSubmitBlock
      */
+    /**
+     * @param list<array<string, mixed>> $hints
+     */
     private static function buildOpenUiResponse(
         string $intentId,
         string $subintentId,
@@ -568,7 +593,8 @@ final class SubIntentEngine
         int $userId,
         array $openUiDef,
         string $flowUserContent,
-        ?array $flowSubmitBlock
+        ?array $flowSubmitBlock,
+        array $hints = []
     ): array {
         $actionId = (string) ($openUiDef['action_id'] ?? '');
         $open = self::resolveClientOpen($actionId, $userId);
@@ -622,6 +648,8 @@ final class SubIntentEngine
                 $open['client_open'] = $co;
             }
         }
+
+        self::mergeHintQueryForSubintent($open, $subintent, $hints);
 
         $payload = [
             'success' => true,
@@ -770,6 +798,65 @@ final class SubIntentEngine
             'action_id' => $actionId,
             'client_open' => $action['client_open'] ?? null,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @param list<array<string, mixed>> $hints
+     * @return array<string, mixed>
+     */
+    private static function attachHints(array $payload, array $hints): array
+    {
+        if ($hints !== []) {
+            $payload['hints'] = array_values($hints);
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Si el paso tiene `hint.entity` y ya hay match, lo pasa a la query del GET (id + filtro `q`).
+     *
+     * @param array<string, mixed> $open
+     * @param array<string, mixed> $subintent
+     * @param list<array<string, mixed>> $hints
+     */
+    private static function mergeHintQueryForSubintent(array &$open, array $subintent, array $hints): void
+    {
+        if ($hints === [] || !isset($open['client_open']) || !is_array($open['client_open'])) {
+            return;
+        }
+        $hintCfg = isset($subintent['hint']) && is_array($subintent['hint']) ? $subintent['hint'] : null;
+        if ($hintCfg === null) {
+            return;
+        }
+        $entity = trim((string) ($hintCfg['entity'] ?? ''));
+        if ($entity === '') {
+            return;
+        }
+        $h = FlowHintService::findHintForEntity($hints, $entity);
+        if ($h === null) {
+            return;
+        }
+        $field = trim((string) ($h['draft_field'] ?? ''));
+        $id = trim((string) ($h['id'] ?? ''));
+        if ($field === '' || $id === '') {
+            return;
+        }
+        $co = $open['client_open'];
+        if (!isset($co['api']) || !is_array($co['api'])) {
+            return;
+        }
+        $api = $co['api'];
+        $query = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
+        $query[$field] = $id;
+        $value = trim((string) ($h['value'] ?? ''));
+        if ($value !== '') {
+            $query['q'] = $value;
+        }
+        $api['query'] = $query;
+        $co['api'] = $api;
+        $open['client_open'] = $co;
     }
 }
 

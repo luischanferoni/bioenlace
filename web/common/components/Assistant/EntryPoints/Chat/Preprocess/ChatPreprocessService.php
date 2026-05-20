@@ -1,0 +1,200 @@
+<?php
+
+namespace common\components\Assistant\EntryPoints\Chat\Preprocess;
+
+use Yii;
+use common\components\Ai\IAManager;
+
+/**
+ * Preprocess: canal (user_goal), texto normalizado y extracciones (spans).
+ */
+final class ChatPreprocessService
+{
+    public const GOALS = [
+        'operational',
+        'conversational',
+        'informational',
+        'in_flow_question',
+        'meta',
+        'unclear',
+    ];
+
+    /**
+     * Categorías de entidad permitidas en extracciones (acotado; ampliar según producto).
+     *
+     * @return list<string>
+     */
+    public static function allowedEntityCategories(): array
+    {
+        return [
+            'servicio',
+            'efector',
+            'persona',
+            'profesional',
+            'turno',
+        ];
+    }
+
+    /**
+     * @return array{
+     *   normalized_text: string,
+     *   user_goal: string,
+     *   action_text: string,
+     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>
+     * }
+     */
+    public static function run(string $content, int $userId): array
+    {
+        $content = trim($content);
+        if ($content === '') {
+            return self::emptyResult('');
+        }
+
+        $ia = self::runAi($content);
+        if ($ia !== null) {
+            return $ia;
+        }
+
+        return self::heuristicFallback($content);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function runAi(string $content): ?array
+    {
+        $categories = json_encode(self::allowedEntityCategories(), JSON_UNESCAPED_UNICODE);
+        $goals = json_encode(self::GOALS, JSON_UNESCAPED_UNICODE);
+
+        $prompt = <<<PROMPT
+Analizá el mensaje del usuario para un asistente de salud.
+
+Mensaje:
+{$content}
+
+Respondé ÚNICAMENTE con JSON:
+{
+  "normalized_text": "mensaje limpio",
+  "user_goal": "uno de {$goals}",
+  "action_text": "fragmento que expresa la acción pedida (turno, cancelar, etc.) o vacío",
+  "extractions": [
+    {
+      "span": "fragmento mencionado (no palabras sueltas)",
+      "category": "una de {$categories}",
+      "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
+    }
+  ]
+}
+
+Reglas:
+- user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar).
+- conversational si es saludo o charla sin acción operativa.
+- extractions: solo menciones de entidades del mundo (servicio, centro, persona), no verbos ni la acción.
+- synonyms: máximo 2 strings por extracción.
+PROMPT;
+
+        try {
+            $raw = IAManager::consultarIA($prompt, 'asistente-preprocess', 'analysis');
+            if (!is_array($raw)) {
+                return null;
+            }
+            return self::normalizeResult($raw, $content);
+        } catch (\Throwable $e) {
+            Yii::warning('ChatPreprocessService IA: ' . $e->getMessage(), 'asistente');
+            return null;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return array<string, mixed>
+     */
+    private static function normalizeResult(array $raw, string $fallbackContent): array
+    {
+        $goal = isset($raw['user_goal']) ? trim((string) $raw['user_goal']) : 'unclear';
+        if (!in_array($goal, self::GOALS, true)) {
+            $goal = 'unclear';
+        }
+
+        $normalized = isset($raw['normalized_text']) ? trim((string) $raw['normalized_text']) : '';
+        if ($normalized === '') {
+            $normalized = $fallbackContent;
+        }
+
+        $actionText = isset($raw['action_text']) ? trim((string) $raw['action_text']) : '';
+
+        $allowedCat = array_flip(self::allowedEntityCategories());
+        $extractions = [];
+        if (isset($raw['extractions']) && is_array($raw['extractions'])) {
+            foreach ($raw['extractions'] as $ex) {
+                if (!is_array($ex)) {
+                    continue;
+                }
+                $span = isset($ex['span']) ? trim((string) $ex['span']) : '';
+                $cat = isset($ex['category']) ? trim((string) $ex['category']) : '';
+                if ($span === '' || $cat === '' || !isset($allowedCat[$cat])) {
+                    continue;
+                }
+                $syns = [];
+                if (isset($ex['synonyms']) && is_array($ex['synonyms'])) {
+                    foreach ($ex['synonyms'] as $s) {
+                        if (is_string($s) && trim($s) !== '') {
+                            $syns[] = trim($s);
+                        }
+                        if (count($syns) >= 2) {
+                            break;
+                        }
+                    }
+                }
+                $extractions[] = [
+                    'span' => $span,
+                    'category' => $cat,
+                    'synonyms' => $syns,
+                ];
+            }
+        }
+
+        return [
+            'normalized_text' => $normalized,
+            'user_goal' => $goal,
+            'action_text' => $actionText,
+            'extractions' => $extractions,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function heuristicFallback(string $content): array
+    {
+        $lower = mb_strtolower($content, 'UTF-8');
+        $goal = 'unclear';
+        if (preg_match('/\b(turno|turnos|reservar|sacar turno|cancelar turno|agenda|cita)\b/u', $lower)) {
+            $goal = 'operational';
+        } elseif (preg_match('/\b(hola|buenos|gracias|qué tal|como estas)\b/u', $lower)) {
+            $goal = 'conversational';
+        } elseif (preg_match('/\b(ayuda|qué puedo|menu|menú)\b/u', $lower)) {
+            $goal = 'informational';
+        }
+
+        return [
+            'normalized_text' => $content,
+            'user_goal' => $goal,
+            'action_text' => $goal === 'operational' ? $content : '',
+            'extractions' => [],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function emptyResult(string $content): array
+    {
+        return [
+            'normalized_text' => $content,
+            'user_goal' => 'unclear',
+            'action_text' => '',
+            'extractions' => [],
+        ];
+    }
+}

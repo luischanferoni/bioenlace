@@ -8,6 +8,8 @@ use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\SubIntentEngine\IntentBusinessRules;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
+use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
+use common\components\Services\Assistant\FlowHintService;
 use common\components\UiDefinitionTemplateManager;
 use yii\helpers\Json;
 
@@ -68,8 +70,7 @@ final class IntentEngine
 
             return [
                 'success' => true,
-                'kind' => 'ui_intents_list',
-                'explanation' => 'Estas son algunas pantallas disponibles para vos.',
+                'text' => 'Estas son algunas pantallas disponibles para vos.',
                 'actions' => $out,
                 'total_actions_available' => count($catalog->items),
             ];
@@ -77,32 +78,7 @@ final class IntentEngine
 
         $classification = IntentClassifier::classify($content, $catalog);
         if ($classification === null) {
-            // Diagnóstico en logs: ayuda a detectar catálogo vacío / YAML no desplegados / filtros.
-            // No depende de YII_DEBUG; el síntoma es crítico para el producto.
-            $actionIds = [];
-            foreach (array_slice($catalog->items, 0, 20) as $it) {
-                $actionIds[] = $it->action_id;
-            }
-            Yii::warning(
-                'IntentEngine: no_intent_match. items=' . count($catalog->items)
-                . ' first_action_ids=' . Json::encode($actionIds)
-                . ' content=' . Json::encode(mb_substr($content, 0, 220, 'UTF-8')),
-                'asistente'
-            );
-
-            $suggest = [];
-            foreach (IntentClassifier::suggestByRules($content, $catalog, 8) as $it) {
-                $suggest[] = self::formatActionForClient($it);
-            }
-            $out = [
-                'success' => true,
-                'kind' => 'no_intent_match',
-                'explanation' => 'No encontré una pantalla que encaje claramente con tu pedido.',
-                // Sugerencias reales del catálogo (ids/labels declarados), para que el cliente
-                // pueda mostrar cards/botones que arrancan el intent con match 100%.
-                'actions' => $suggest,
-            ];
-            return $out;
+            return self::processQueryNoMatch($content, $catalog);
         }
 
         // Si la IA pide desambiguar, devolver intent_remediation antes de arrancar un flow.
@@ -121,7 +97,6 @@ final class IntentEngine
                 }
                 return [
                     'success' => true,
-                    'kind' => 'intent_remediation',
                     'text' => $text,
                     'candidate_intent_id' => $classification['item']->action_id,
                     'rule_id' => 'ai_disambiguation',
@@ -147,6 +122,52 @@ final class IntentEngine
         return $out;
     }
 
+    public static function isListAllQueryPublic(string $q): bool
+    {
+        return self::isListAllQuery($q);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function processQueryNoMatch(string $content, UiActionCatalog $catalog): array
+    {
+        $actionIds = [];
+        foreach (array_slice($catalog->items, 0, 20) as $it) {
+            $actionIds[] = $it->action_id;
+        }
+        Yii::warning(
+            'IntentEngine: no_intent_match. items=' . count($catalog->items)
+            . ' first_action_ids=' . Json::encode($actionIds)
+            . ' content=' . Json::encode(mb_substr($content, 0, 220, 'UTF-8')),
+            'asistente'
+        );
+
+        $suggest = [];
+        foreach (IntentClassifier::suggestByRules($content, $catalog, 8) as $it) {
+            $suggest[] = self::formatActionForClient($it);
+        }
+
+        return [
+            'success' => true,
+            'text' => 'No encontré una pantalla que encaje claramente con tu pedido.',
+            'actions' => $suggest,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function buildSingleActionResponsePublic(
+        UiActionCatalogItem $item,
+        string $method,
+        float $confidence = 1.0,
+        string $content = '',
+        int $userId = 0
+    ): array {
+        return self::buildSingleActionResponse($item, $method, $confidence, $content, $userId);
+    }
+
     private static function buildSingleActionResponse(UiActionCatalogItem $item, string $method, float $confidence = 1.0, string $content = '', int $userId = 0): array
     {
         $action = self::formatActionForClient($item);
@@ -160,7 +181,6 @@ final class IntentEngine
             if ($blocked !== null) {
                 return [
                     'success' => true,
-                    'kind' => 'intent_remediation',
                     'text' => $blocked['text'],
                     'candidate_intent_id' => $item->action_id,
                     'rule_id' => $blocked['rule_id'],
@@ -172,6 +192,13 @@ final class IntentEngine
                     ],
                 ];
             }
+            $hints = FlowHintService::resolveForIntent(
+                $item->action_id,
+                ChatPreprocessContext::extractions(),
+                $userId,
+                $draft
+            );
+
             $flow = SubIntentEngine::process(
                 [
                     'intent_id' => $item->action_id,
@@ -179,19 +206,19 @@ final class IntentEngine
                     'draft' => $draft,
                     'content' => $content,
                     'interaction' => null,
+                    'hints' => $hints,
                 ],
                 $userId
             );
 
             if (!empty($flow['success']) && is_array($flow)) {
-                // Flow conversacional: el cliente NO debe renderizar botones "abrir UI".
-                // Devolvemos `kind=intent_flow` y omitimos `actions`.
                 unset($flow['success']);
+                $intro = $item->display_name !== '' ? ('Iniciar: ' . $item->display_name) : 'Iniciar flujo.';
+                if (!isset($flow['text']) || trim((string) $flow['text']) === '') {
+                    $flow['text'] = $intro;
+                }
                 $base = [
                     'success' => true,
-                    'kind' => 'intent_flow',
-                    // `text` viene del SubIntentEngine. `explanation` queda solo para compat/telemetría.
-                    'explanation' => $item->display_name !== '' ? ('Iniciar: ' . $item->display_name) : 'Iniciar flujo.',
                     'flow_action_id' => $item->action_id,
                     'match' => [
                         'action_id' => $item->action_id,
@@ -199,6 +226,9 @@ final class IntentEngine
                         'method' => $method,
                     ],
                 ];
+                if ($hints !== []) {
+                    $base['hints'] = $hints;
+                }
 
                 return array_merge($base, $flow);
             }
@@ -206,8 +236,7 @@ final class IntentEngine
 
         return [
             'success' => true,
-            'kind' => 'ui_intent_match',
-            'explanation' => $item->display_name !== '' ? ('Abrir: ' . $item->display_name) : 'Acción disponible.',
+            'text' => $item->display_name !== '' ? ('Abrir: ' . $item->display_name) : 'Acción disponible.',
             'actions' => [$action],
             'match' => [
                 'action_id' => $item->action_id,

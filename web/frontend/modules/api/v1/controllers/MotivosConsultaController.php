@@ -7,6 +7,7 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\models\ConsultaMotivosMessage;
 use common\models\Consulta;
+use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
 use common\components\Services\Consulta\ConsultaAccessService;
 
 /**
@@ -58,46 +59,15 @@ class MotivosConsultaController extends BaseController
             return ['success' => false, 'message' => 'Datos requeridos: consulta_id, message', 'data' => null];
         }
 
-        [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
-        if ($err !== null) {
-            return $err;
-        }
-
         $message = $body['message'] ?? null;
         if ($message === null || $message === '') {
             return ['success' => false, 'message' => 'El mensaje no puede estar vacío', 'data' => null];
         }
 
-        $userId = Yii::$app->user->id;
+        $userId = (int) Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
 
-        $msg = new ConsultaMotivosMessage();
-        $msg->consulta_id = (int) $consulta_id;
-        $msg->user_id = $userId;
-        $msg->user_name = $userName;
-        $msg->texto = $message;
-        $msg->message_type = ConsultaMotivosMessage::TYPE_TEXTO;
-
-        if (!$msg->save()) {
-            return [
-                'success' => false,
-                'message' => 'Error guardando mensaje: ' . implode(', ', $msg->getFirstErrors()),
-                'data' => null,
-            ];
-        }
-
-        return [
-            'success' => true,
-            'message' => 'Mensaje enviado exitosamente',
-            'data' => [
-                'id' => $msg->id,
-                'content' => $msg->texto,
-                'user_id' => $msg->user_id,
-                'user_name' => $msg->user_name,
-                'message_type' => $msg->message_type,
-                'created_at' => $msg->created_at,
-            ],
-        ];
+        return AppointmentReasonEntry::enviarTexto((int) $consulta_id, (string) $message, $userId, $userName);
     }
 
     /**

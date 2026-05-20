@@ -15,6 +15,7 @@
       "draft_field": "id",
       "empty_message": "No tienes turnos pendientes en este momento.",
       "item": { "kind": "turno", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
       "items": []
     }
   ]

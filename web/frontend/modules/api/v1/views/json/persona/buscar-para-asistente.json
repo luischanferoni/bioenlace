@@ -15,6 +15,7 @@
       "draft_field": "id_persona",
       "empty_message": "Escribí al menos unas letras o el documento para buscar personas.",
       "item": { "kind": "persona", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
       "items": []
     }
   ]

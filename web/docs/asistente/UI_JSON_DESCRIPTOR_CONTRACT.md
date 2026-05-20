@@ -52,6 +52,15 @@ Propiedades soportadas:
 - **`presentation`** (opcional): cómo dibujar cada tile de la lista. Si falta, el cliente usa `medium` + `wide`.
   - `tile`: `compact` \| `medium` \| `large` (default `medium`).
   - `shape`: `square` \| `wide` \| `auto` (default `wide`). Horarios/slots suelen usar `compact` + `square`.
+
+Convención en templates del repo (ajustable por pantalla):
+
+| `item.kind` (orientativo) | `presentation` típica |
+|---------------------------|------------------------|
+| `slot` | `compact` + `square` |
+| `servicio` | `medium` + `wide` |
+| `efector`, `profesional`, `persona`, `turno` | `large` + `wide` |
+
 - **`items`** (array, obligatorio): items a renderizar (inyectados por controller/servicio).
 
 Shape mínimo de item:

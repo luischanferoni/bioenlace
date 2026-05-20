@@ -14,6 +14,7 @@
       "selection": { "mode": "single" },
       "draft_field": "id_servicio",
       "item": { "kind": "servicio", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "medium", "shape": "wide" },
       "items": []
     }
   ]

@@ -12,7 +12,7 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 | Appointment | `turnos` | `Scheduling\Turno` | `Scheduling\*` | `TurnosController` | pendiente |
 | Encounter | `encounter` | `Clinical\Encounter` | `EncounterLifecycleService` | `clinical/EncounterController` | hecho (AR+svc) |
 | EpisodeOfCare | `episode_of_care` | `Clinical\EpisodeOfCare` | — | `clinical/EpisodeOfCareController` | hecho (AR) |
-| CarePlan | `care_plan` | `Clinical\CarePlan` | `CarePlanService` | `clinical/CarePlanController` | hecho (AR+svc) |
+| CarePlan | `care_plan` | `Clinical\CarePlan` | `CarePlanService`, `CarePlanLifecycleService` | `clinical/CarePlanController` | hecho (Fase 5 lifecycle) |
 | CarePlanActivity | `care_plan_activity` | `Clinical\CarePlanActivity` | (CarePlanService) | — | hecho (AR+svc) |
 | Goal | `goal` | — | — | — | hecho (BD) |
 | Condition | `clinical_condition` | `Clinical\Condition` | (EncounterDocumentationService) | `clinical/ConditionController` | hecho (AR+svc) |

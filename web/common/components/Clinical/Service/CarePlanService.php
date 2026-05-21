@@ -3,6 +3,7 @@
 namespace common\components\Clinical\Service;
 
 use common\components\Clinical\Enum\CarePlanActivityKind;
+use common\components\Clinical\Enum\CarePlanCategory;
 use common\components\Clinical\Enum\CarePlanIntent;
 use common\components\Clinical\Enum\CarePlanStatus;
 use common\components\Clinical\Enum\RequestStatus;
@@ -18,6 +19,9 @@ final class CarePlanService
         ?int $encounterId = null,
         ?int $episodeOfCareId = null
     ): CarePlan {
+        if (!CarePlanCategory::isValid($category)) {
+            throw new \InvalidArgumentException("Categoría care_plan no válida: {$category}");
+        }
         $plan = new CarePlan();
         $plan->subject_persona_id = $subjectPersonaId;
         $plan->status = CarePlanStatus::DRAFT;
@@ -33,8 +37,27 @@ final class CarePlanService
         return $plan;
     }
 
+    public function assertMutable(CarePlan $plan): void
+    {
+        if (in_array($plan->status, [CarePlanStatus::COMPLETED, CarePlanStatus::REVOKED, CarePlanStatus::ENTERED_IN_ERROR], true)) {
+            throw new \InvalidArgumentException(
+                "El care plan #{$plan->id} está en estado «{$plan->status}» y no admite cambios."
+            );
+        }
+    }
+
+    public function hold(CarePlan $plan): CarePlan
+    {
+        $this->assertTransition($plan->status, CarePlanStatus::ON_HOLD);
+        $plan->status = CarePlanStatus::ON_HOLD;
+        $plan->save(false, ['status', 'updated_at', 'updated_by']);
+
+        return $plan;
+    }
+
     public function activate(CarePlan $plan): CarePlan
     {
+        $this->assertMutable($plan);
         $this->assertTransition($plan->status, CarePlanStatus::ACTIVE);
         $plan->status = CarePlanStatus::ACTIVE;
         if ($plan->period_start === null) {
@@ -49,6 +72,7 @@ final class CarePlanService
 
     public function complete(CarePlan $plan): CarePlan
     {
+        $this->assertMutable($plan);
         $this->assertTransition($plan->status, CarePlanStatus::COMPLETED);
         $plan->status = CarePlanStatus::COMPLETED;
         $plan->period_end = date('Y-m-d H:i:s');
@@ -59,6 +83,7 @@ final class CarePlanService
 
     public function revoke(CarePlan $plan): CarePlan
     {
+        $this->assertMutable($plan);
         $this->assertTransition($plan->status, CarePlanStatus::REVOKED);
         $plan->status = CarePlanStatus::REVOKED;
         $plan->period_end = date('Y-m-d H:i:s');
@@ -87,7 +112,7 @@ final class CarePlanService
 
     public function createAcutePlanForEncounter(int $subjectPersonaId, int $encounterId): CarePlan
     {
-        $plan = $this->createDraft($subjectPersonaId, 'acute-ambulatory', $encounterId);
+        $plan = $this->createDraft($subjectPersonaId, CarePlanCategory::ACUTE_AMBULATORY, $encounterId);
 
         return $this->activate($plan);
     }

@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 4](./04-api-clinical-core.md)  
-**Estado:** pendiente
+**Estado:** hecho
 
 ## Objetivo
 
@@ -10,61 +10,73 @@ Implementar reglas de negocio para **cuándo** un CarePlan está activo, pausado
 
 ## Categorías (`care_plan.category`) — lista cerrada v1
 
-| Código | Uso |
-|--------|-----|
-| `acute-ambulatory` | Indicaciones de una consulta / episodio corto |
-| `chronic` | Medicación o cuidado continuo |
-| `program` | Kinesiología, psicología, ortodoncia (N sesiones) |
-| `inpatient` | Plan durante internación |
-| `postoperative` | Post cirugía / procedimiento |
-| `preventive` | Prevención, controles |
-| `palliative` | Cuidados paliativos |
-| `odontology` | Plan odontológico multi-visita |
-| `ophthalmology` | Seguimiento oftalmológico |
-| `mental-health` | Salud mental / psicología |
-| `rehabilitation` | Rehabilitación / kinesiología |
-| `nutrition` | Plan nutricional |
-| `other` | Residual documentado |
+Ver [CARE_PLAN_CATEGORIES.md](../CARE_PLAN_CATEGORIES.md). Validación en código: `CarePlanCategory::isValid()`.
 
-Ampliar según catálogo `servicios` / `encounter_class` sin crear tablas nuevas.
+## Matriz de transición (estado FHIR)
 
-## Reglas de transición
+| Desde | Hacia permitido |
+|-------|-----------------|
+| `draft` | `active`, `revoked`, `entered-in-error` |
+| `active` | `on-hold`, `completed`, `revoked`, `entered-in-error` |
+| `on-hold` | `active`, `completed`, `revoked` |
+| `completed` | — (terminal; API rechaza mutaciones) |
+| `revoked` | — (terminal) |
 
-### Internación
+Implementación: `CarePlanStatus::canTransition()` + `CarePlanService::assertMutable()`.
 
-- Al **ingreso:** crear `EpisodeOfCare` + `CarePlan` (`category=inpatient`, `status=active`).
-- Al **alta:** `EpisodeOfCare.status=finished`, Encounter IMP `finished`, **`CarePlan.status=completed`**, `period.end=fecha alta`.
-- Excepción documentada: plan de continuidad ambulatoria → nuevo `CarePlan` `chronic` o `program` en lugar de extender el inpatient.
+## Reglas por categoría al cerrar encounter
 
-### Ambulatorio agudo
+| Categoría | ¿Se completa al `EncounterLifecycleService::close()`? |
+|-----------|--------------------------------------------------------|
+| `acute-ambulatory`, `postoperative`, `other`, … | Sí |
+| `chronic`, `program`, `inpatient`, `palliative`, `preventive` | No |
 
-- Al abrir encounter: `CarePlan` `draft` o `active` según configuración del servicio.
-- Al cerrar encounter: opción A) completar plan agudo; opción B) promover a `chronic` si médico marca “continuar tratamiento”.
+`continue_treatment=true` en opciones de cierre crea plan `chronic` y revoca crónicos activos previos.
 
-### Crónico
+## Internación
 
-- No se completa al cerrar un Encounter.
-- Nuevo plan del mismo tipo puede **revocar** el anterior (`status=revoked`).
+| Evento | Servicio | Efecto |
+|--------|----------|--------|
+| Ingreso | `CarePlanLifecycleService::onInternacionAdmission()` | `EpisodeOfCare` active + `CarePlan` `inpatient` active |
+| Alta | `CarePlanLifecycleService::completeOnDischarge()` | Episode `finished`, planes inpatient `completed`, encounters IMP `finished` |
 
-### Programa
+Hooks: `InternacionController` (ingreso), `SegNivelInternacionRepository::doExternacion()` (alta).
 
-- `ServiceRequest` o `Appointment` por sesión; contador `occurrenceCount`.
-- Auto-`completed` cuando sesiones agotadas o `period.end` alcanzado.
+## Programa (sesiones)
 
-## Servicios
+Metadatos en `care_plan.description` (JSON): `CarePlanProgramMeta` (`occurrenceTotal`, `occurrenceCount`).  
+`recordProgramSession()` incrementa contador y auto-`completed` si se agotan sesiones o `period_end` venció.
 
-- [ ] `CarePlanLifecycleService` (o métodos en `CarePlanService`): `completeOnDischarge`, `revoke`, `hold`, `activate`.
-- [ ] Hooks desde internación (alta) y desde `EncounterLifecycleService::close`.
+## Servicios (código)
+
+| Clase | Rol |
+|-------|-----|
+| `CarePlanLifecycleService` | Orquestación ingreso/alta/cierre encounter, crónico, programa |
+| `CarePlanService` | CRUD estado (`activate`, `hold`, `complete`, `revoke`) |
+| `EpisodeOfCareService` | Episodio ligado a `seg_nivel_internacion` |
+| `EncounterLifecycleService::close()` | Finaliza encounter + reglas care plan |
 
 ## API
 
-- [ ] Endpoints de transición (fase 4) con validación de permisos.
-- [ ] Mensajes de error claros si se intenta editar plan `completed`.
+| Método | Ruta |
+|--------|------|
+| POST | `/api/v1/clinical/care-plans/<id>/hold` |
+| POST | `/api/v1/clinical/care-plans/<id>/activate` |
+| POST | `/api/v1/clinical/care-plans/<id>/complete` |
+| POST | `/api/v1/clinical/care-plans/<id>/revoke` |
 
-## Definition of Done
+Errores 400 si el plan está `completed` / `revoked`.
 
-- Matriz de transición documentada en este archivo + tests unitarios por escenario (alta, cierre manual, programa agotado).
-- `GET care-plans/active` excluye `completed` y `revoked`; incluye `on-hold` según producto.
+`GET care-plans/active`: `active` + `on-hold`; excluye `completed` y `revoked`.
+
+## Tests
+
+- `common/tests/unit/clinical/CarePlanLifecycleServiceTest.php`
+- `common/tests/unit/clinical/CarePlanServiceTest.php`
+
+## Migraciones RBAC
+
+- `m260521_100005_api_clinical_care_plan_hold_activate_rbac.php`
 
 ## Siguiente fase
 

@@ -6,8 +6,9 @@ Dominio FHIR clínico (Encounter, CarePlan, órdenes).
 
 | Carpeta | Contenido |
 |---------|-----------|
-| `Enum/` | Vocabularios (`CarePlanStatus`, `EncounterStatus`, …) |
-| `Service/` | Negocio sin HTTP (`CarePlanService`, `EncounterAccessService`, …) |
+| `Enum/` | Vocabularios (`CarePlanStatus`, `CarePlanCategory`, `EncounterStatus`, …) |
+| `Support/` | Metadatos JSON (`CarePlanProgramMeta`) |
+| `Service/` | Negocio sin HTTP (`CarePlanService`, `CarePlanLifecycleService`, `EncounterAccessService`, …) |
 | `Workflow/` | Flujos compuestos (`EncounterDocumentationService`) |
 
 Modelos AR: `common/models/Clinical/`.
@@ -20,4 +21,12 @@ use common\components\Clinical\Workflow\EncounterDocumentationService;
 $result = (new EncounterDocumentationService())->guardar($body);
 ```
 
-API actual (`ConsultaController`) delega vía `ClinicalEncounterEntry`.
+API: `clinical/EncounterController`, `clinical/CarePlanController` (ciclo de vida vía `CarePlanLifecycleService`).
+
+```php
+use common\components\Clinical\Service\CarePlanLifecycleService;
+
+// Cierre encounter ambulatorio + completar planes agudos
+$lifecycle = new CarePlanLifecycleService();
+$encounters->close($encounter, ['continue_treatment' => true]);
+```

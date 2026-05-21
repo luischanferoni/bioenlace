@@ -109,6 +109,10 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/complete' => '<version>/clinical/care-plan/complete',
                 'POST api/<version:\w+>/clinical/care-plans/<id:\d+>/revoke' => '<version>/clinical/care-plan/revoke',
                 'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/revoke' => '<version>/clinical/care-plan/revoke',
+                'POST api/<version:\w+>/clinical/care-plans/<id:\d+>/hold' => '<version>/clinical/care-plan/hold',
+                'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/hold' => '<version>/clinical/care-plan/hold',
+                'POST api/<version:\w+>/clinical/care-plans/<id:\d+>/activate' => '<version>/clinical/care-plan/activate',
+                'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/activate' => '<version>/clinical/care-plan/activate',
                 // Legacy consulta (410 Gone — usar clinical/encounter/*)
                 'POST api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
                 'OPTIONS api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',

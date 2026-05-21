@@ -51,6 +51,19 @@ final class EncounterLifecycleService
         return $encounter;
     }
 
+    /**
+     * Cierra encounter y aplica reglas CarePlan asociadas.
+     *
+     * @param array<string, mixed> $carePlanOptions Ver {@see CarePlanLifecycleService::onEncounterClose}
+     */
+    public function close(Encounter $encounter, array $carePlanOptions = []): Encounter
+    {
+        $encounter = $this->finalize($encounter);
+        (new CarePlanLifecycleService(null, $this))->onEncounterClose($encounter, $carePlanOptions);
+
+        return $encounter;
+    }
+
     public function resolveSubjectPersonaId(array $body): ?int
     {
         if (!empty($body['id_persona'])) {

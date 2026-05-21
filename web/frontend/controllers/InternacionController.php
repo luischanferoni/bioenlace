@@ -333,6 +333,15 @@ class InternacionController extends Controller
                         );
                         if ($flag) {
                             $transaction->commit();
+                            try {
+                                (new \common\components\Clinical\Service\CarePlanLifecycleService())
+                                    ->onInternacionAdmission($model);
+                            } catch (\Throwable $e) {
+                                Yii::error(
+                                    'CarePlanLifecycle tras ingreso internación #' . $model->id . ': ' . $e->getMessage(),
+                                    __METHOD__
+                                );
+                            }
 
                             return $this->redirect(['view', 'id' => $model->id]);
                         }

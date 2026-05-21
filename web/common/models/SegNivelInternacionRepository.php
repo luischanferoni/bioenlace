@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\components\Clinical\Service\CarePlanLifecycleService;
 use Yii;
 
 /*
@@ -73,6 +74,16 @@ class SegNivelInternacionRepository
             }
 
             $transaction->commit();
+
+            try {
+                (new \common\components\Clinical\Service\CarePlanLifecycleService())
+                    ->completeOnDischarge($model);
+            } catch (\Throwable $e) {
+                Yii::error(
+                    'CarePlanLifecycle tras alta internación #' . $model->id . ': ' . $e->getMessage(),
+                    __METHOD__
+                );
+            }
         } catch (Exception $e) {
             $transaction->rollBack();
             throw new Exception('Error en proceso de externación.');

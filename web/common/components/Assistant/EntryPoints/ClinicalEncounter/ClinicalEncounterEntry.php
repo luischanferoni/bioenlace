@@ -2,33 +2,32 @@
 
 namespace common\components\Assistant\EntryPoints\ClinicalEncounter;
 
-use common\components\Services\Consulta\ConsultaProcesamientoService;
+use common\components\Clinical\Workflow\EncounterDocumentationService;
 
 /**
- * Captura clínica en consulta (texto/audio → análisis IA → guardar).
- * Sin preprocess del chat asistente; pipeline propio vía {@see ConsultaProcesamientoService}.
+ * Captura clínica en encounter (texto/audio → análisis IA → guardar).
  */
 final class ClinicalEncounterEntry
 {
     /**
-     * POST /api/v1/consulta/analizar
+     * POST /api/v1/clinical/encounter/analizar
      *
      * @param array<string, mixed> $body
      * @return array<string, mixed>
      */
     public static function analizar(array $body): array
     {
-        return (new ConsultaProcesamientoService())->analizar($body);
+        return (new EncounterDocumentationService())->analizar($body);
     }
 
     /**
-     * POST /api/v1/consulta/guardar
+     * POST /api/v1/clinical/encounter/guardar
      *
      * @param array<string, mixed> $body
      * @return array<string, mixed>
      */
     public static function guardar(array $body): array
     {
-        return (new ConsultaProcesamientoService())->guardar($body);
+        return (new EncounterDocumentationService())->guardar($body);
     }
 }

@@ -5,10 +5,10 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\Response;
 use yii\web\UploadedFile;
-use common\models\ConsultaMotivosMessage;
-use common\models\Consulta;
 use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
-use common\components\Services\Consulta\ConsultaAccessService;
+use common\components\Clinical\Service\EncounterAccessService;
+use common\models\Clinical\Encounter;
+use common\models\ConsultaMotivosMessage;
 
 /**
  * API motivos de consulta (mensajes, envío, subida de archivos).
@@ -31,7 +31,7 @@ class MotivosConsultaController extends BaseController
         }
 
         $messages = ConsultaMotivosMessage::find()
-            ->where(['consulta_id' => $consulta_id])
+            ->where(['encounter_id' => $consulta_id])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
@@ -156,26 +156,26 @@ class MotivosConsultaController extends BaseController
      * Paciente: `consulta.id_persona` === sesión `idPersona` ({@see JsonHttpBearerAuth}).
      * Médico: mismo contexto PES que en sesión operativa ({@see ConsultaAccessService::userCanAccessConsultaApi}).
      */
-    protected function canAccessConsulta(Consulta $consulta): bool
+    protected function canAccessEncounter(Encounter $encounter): bool
     {
-        return ConsultaAccessService::userCanAccessConsultaApi($consulta);
+        return EncounterAccessService::userCanAccessEncounterApi($encounter);
     }
 
     /**
-     * Obtiene la consulta y verifica que el usuario tenga acceso. Retorna [consulta, null] o [null, array error].
+     * @return array{0: Encounter|null, 1: array|null}
      */
     protected function requireConsultaAccess($consulta_id)
     {
-        $consulta = Consulta::findOne($consulta_id);
-        if (!$consulta) {
+        $encounter = Encounter::findOne((int) $consulta_id);
+        if (!$encounter) {
             Yii::$app->response->statusCode = 404;
-            return [null, ['success' => false, 'message' => 'Consulta no encontrada', 'data' => null]];
+            return [null, ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null]];
         }
-        if (!$this->canAccessConsulta($consulta)) {
+        if (!$this->canAccessEncounter($encounter)) {
             Yii::$app->response->statusCode = 403;
-            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a esta consulta', 'data' => null]];
+            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a este encounter', 'data' => null]];
         }
-        return [$consulta, null];
+        return [$encounter, null];
     }
 
     private const UPLOAD_MESSAGE_TYPES = ['imagen', 'audio'];

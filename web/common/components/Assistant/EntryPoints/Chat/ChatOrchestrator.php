@@ -7,7 +7,7 @@ use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\EntryPoints\Chat\Routing\ChatRouter;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
 
 /**
  * Punto de entrada único del chat (`POST /api/v1/asistente/enviar`).

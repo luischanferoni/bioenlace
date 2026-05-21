@@ -10,20 +10,20 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 |--------------|----------------|----------|---------|-----|--------|
 | Patient | `personas` | `Person\Persona` | — | existente | pendiente (solo docblock) |
 | Appointment | `turnos` | `Scheduling\Turno` | `Scheduling\*` | `TurnosController` | pendiente |
-| Encounter | `encounter` | `Clinical\Encounter` | `EncounterLifecycleService` | `clinical/EncounterController` | hecho (BD) |
-| EpisodeOfCare | `episode_of_care` | `Clinical\EpisodeOfCare` | `EpisodeOfCareService` | `clinical/EpisodeOfCareController` | hecho (BD) |
-| CarePlan | `care_plan` | `Clinical\CarePlan` | `CarePlanService` | `clinical/CarePlanController` | hecho (BD) |
-| CarePlanActivity | `care_plan_activity` | `Clinical\CarePlanActivity` | (CarePlanService) | — | hecho (BD) |
-| Goal | `goal` | `Clinical\Goal` | `GoalService` | — | hecho (BD) |
-| Condition | `clinical_condition` | `Clinical\Condition` | `ConditionService` | `clinical/ConditionController` | hecho (BD) |
+| Encounter | `encounter` | `Clinical\Encounter` | `EncounterLifecycleService` | `clinical/EncounterController` | hecho (AR+svc) |
+| EpisodeOfCare | `episode_of_care` | `Clinical\EpisodeOfCare` | — | `clinical/EpisodeOfCareController` | hecho (AR) |
+| CarePlan | `care_plan` | `Clinical\CarePlan` | `CarePlanService` | `clinical/CarePlanController` | hecho (AR+svc) |
+| CarePlanActivity | `care_plan_activity` | `Clinical\CarePlanActivity` | (CarePlanService) | — | hecho (AR+svc) |
+| Goal | `goal` | — | — | — | hecho (BD) |
+| Condition | `clinical_condition` | `Clinical\Condition` | (EncounterDocumentationService) | `clinical/ConditionController` | hecho (AR+svc) |
 
 ## Órdenes y ejecución
 
 | Recurso FHIR | Tabla objetivo | Reemplaza | Estado |
 |--------------|----------------|-----------|--------|
-| MedicationRequest | `medication_request` | `consultas_medicamentos` | hecho (BD) |
+| MedicationRequest | `medication_request` | `consultas_medicamentos` | hecho (AR+svc) |
 | MedicationAdministration | `medication_administration` | `consultas_suministro_medicamento` | hecho (BD) |
-| ServiceRequest | `service_request` | `consultas_practicas`, `consultas_derivaciones` | hecho (BD) |
+| ServiceRequest | `service_request` | `consultas_practicas`, `consultas_derivaciones` | hecho (AR+svc) |
 | Procedure | `procedure` | ejecución de prácticas / odonto | hecho (BD) |
 | DeviceRequest | `device_request` | prótesis (odonto, ortopedia) | hecho (BD) |
 | NutritionOrder | `nutrition_order` | `consultas_regimen` | hecho (BD) |
@@ -36,7 +36,7 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 
 | Concepto | Hoy | Objetivo | Estado |
 |----------|-----|----------|--------|
-| Wizard por servicio | `consultas_configuracion` | `encounter_definition` | hecho (BD; drop legacy) |
+| Wizard por servicio | `consultas_configuracion` | `encounter_definition` | hecho (AR alias) |
 | UI JSON templates | `views/json/turnos/...` | `views/json/scheduling/...` | pendiente |
 | UI JSON clínica | — | `views/json/clinical/...` | pendiente |
 | UiScreenService | `components/UiScreenService.php` | `components/Ui/UiScreenService.php` | pendiente |
@@ -52,8 +52,8 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 | `consultas_derivaciones` | `service_request` | hecho (drop) |
 | `consultas_regimen` | `nutrition_order` | hecho (drop) |
 | `seg_nivel_internacion_medicamento/practica` | `episode_of_care` + órdenes | hecho (drop tablas hijas; madre `seg_nivel_internacion` se mantiene) |
-| `common/components/Services/Consulta/` | `components/Clinical/` | pendiente |
-| `ConsultaController` (API) | `clinical/EncounterController` | pendiente |
+| `common/components/Services/Consulta/` | `components/Clinical/` | hecho (Fase 3) |
+| `ConsultaController` (API) | `clinical/EncounterController` | hecho (410 Gone en legacy) |
 
 ## Clientes
 
@@ -61,4 +61,4 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 |---------|---------|--------|
 | Flutter paciente | Care plans activos en inicio | pendiente |
 | Flutter paciente / médico | `id_consulta` → `encounter_id` en flujos | pendiente |
-| Asistente | ClinicalEncounter → Clinical services | pendiente |
+| Asistente | ClinicalEncounter → EncounterDocumentationService | hecho |

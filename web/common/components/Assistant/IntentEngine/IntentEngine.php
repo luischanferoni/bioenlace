@@ -9,8 +9,8 @@ use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\SubIntentEngine\IntentBusinessRules;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
-use common\components\Services\Assistant\FlowHintService;
-use common\components\UiDefinitionTemplateManager;
+use common\components\Assistant\Service\FlowHintService;
+use common\components\Ui\UiDefinitionTemplateManager;
 use yii\helpers\Json;
 
 /**

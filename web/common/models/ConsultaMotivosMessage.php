@@ -2,24 +2,22 @@
 
 namespace common\models;
 
+use common\models\Clinical\Encounter;
 use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Mensajes de la conversación de motivos de consulta (paciente envía texto, audio, fotos).
- * Un proceso posterior en el backend codifica, corrige ortografía y estructura el contenido
- * en Consulta.motivo_consulta y ConsultaMotivos.
+ * Mensajes pre-consulta — tabla `interaccion_motivos_consulta`.
  *
  * @property int $id
- * @property int $consulta_id
+ * @property int $encounter_id
  * @property int $user_id
  * @property string $user_name
- * @property string $texto Texto del mensaje o ruta relativa (imagen/audio)
- * @property string $message_type texto|imagen|audio
+ * @property string $texto
+ * @property string $message_type
  * @property string $created_at
  *
- * @property Consulta $consulta
- * @property User $user
+ * @property Encounter $encounter
  */
 class ConsultaMotivosMessage extends ActiveRecord
 {
@@ -27,54 +25,51 @@ class ConsultaMotivosMessage extends ActiveRecord
     const TYPE_IMAGEN = 'imagen';
     const TYPE_AUDIO = 'audio';
 
-    public static function tableName()
+    public static function tableName(): string
     {
         return 'interaccion_motivos_consulta';
     }
 
-    public function rules()
+    /** Compat API: `consulta_id` = `encounter_id`. */
+    public function getConsulta_id(): int
+    {
+        return (int) $this->encounter_id;
+    }
+
+    public function setConsulta_id($value): void
+    {
+        $this->encounter_id = (int) $value;
+    }
+
+    public function rules(): array
     {
         return [
-            [['consulta_id', 'user_id', 'user_name', 'texto'], 'required'],
-            [['consulta_id', 'user_id'], 'integer'],
+            [['encounter_id', 'user_id', 'user_name', 'texto'], 'required'],
+            [['encounter_id', 'user_id'], 'integer'],
             [['texto'], 'string'],
             [['created_at'], 'safe'],
             [['user_name'], 'string', 'max' => 100],
             [['message_type'], 'string', 'max' => 20],
             [['message_type'], 'in', 'range' => [self::TYPE_TEXTO, self::TYPE_IMAGEN, self::TYPE_AUDIO]],
-            [['consulta_id'], 'exist', 'skipOnError' => true, 'targetClass' => Consulta::class, 'targetAttribute' => ['consulta_id' => 'id_consulta']],
+            [['encounter_id'], 'exist', 'skipOnError' => true, 'targetClass' => Encounter::class, 'targetAttribute' => ['encounter_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 
-    public function attributeLabels()
+    public function getEncounter(): \yii\db\ActiveQuery
     {
-        return [
-            'id' => 'ID',
-            'consulta_id' => 'Consulta ID',
-            'user_id' => 'User ID',
-            'user_name' => 'User Name',
-            'texto' => 'Texto',
-            'message_type' => 'Message Type',
-            'created_at' => 'Created At',
-        ];
+        return $this->hasOne(Encounter::class, ['id' => 'encounter_id']);
     }
 
-    public function getConsulta()
+    /** @deprecated use {@see getEncounter()} */
+    public function getConsulta(): \yii\db\ActiveQuery
     {
-        return $this->hasOne(Consulta::class, ['id_consulta' => 'consulta_id']);
-    }
-
-    public function getUser()
-    {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
+        return $this->getEncounter();
     }
 
     /**
-     * Serializa mensajes como en la API `motivos-consulta/mensajes` (content con URL absoluta si aplica).
-     *
      * @param self[] $messages
-     * @return list<array{id:int, content:string, user_id:int, user_name:string, message_type:string, created_at:string}>
+     * @return list<array<string, mixed>>
      */
     public static function serializeForApi(array $messages, string $hostWithWebAlias): array
     {
@@ -100,15 +95,16 @@ class ConsultaMotivosMessage extends ActiveRecord
         return $out;
     }
 
-    public function beforeSave($insert)
+    public function beforeSave($insert): bool
     {
-        if (parent::beforeSave($insert)) {
-            if ($insert) {
-                $this->created_at = date('Y-m-d H:i:s');
-                $this->message_type = $this->message_type ?: self::TYPE_TEXTO;
-            }
-            return true;
+        if (!parent::beforeSave($insert)) {
+            return false;
         }
-        return false;
+        if ($insert) {
+            $this->created_at = date('Y-m-d H:i:s');
+            $this->message_type = $this->message_type ?: self::TYPE_TEXTO;
+        }
+
+        return true;
     }
 }

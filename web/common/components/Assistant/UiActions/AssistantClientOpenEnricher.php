@@ -3,7 +3,7 @@
 namespace common\components\Assistant\UiActions;
 
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
-use common\components\UiDefinitionTemplateManager;
+use common\components\Ui\UiDefinitionTemplateManager;
 
 /**
  * Enriquece acciones del asistente con {@see $action['client_open']} para que web y apps

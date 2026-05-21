@@ -17,8 +17,8 @@ use common\models\Alergias;
 use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\ConsultaMotivosMessage;
-use common\components\Services\Persona\PersonaSignosVitalesService;
-use common\components\Services\Consulta\ConsultaAccessService;
+use common\components\Person\Service\PersonaSignosVitalesService;
+use common\components\Clinical\Legacy\ConsultaAccessService;
 /**
  * Listado de pacientes por modalidad (encounter): ambulatorio, internación, guardia.
  */

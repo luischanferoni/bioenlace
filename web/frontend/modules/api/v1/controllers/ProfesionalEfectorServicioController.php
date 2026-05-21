@@ -4,9 +4,9 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
-use common\components\UiScreenService;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
+use common\components\Ui\UiScreenService;
 use common\components\UiSelectOptionSourceResolver;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;

@@ -21,7 +21,7 @@ use common\models\ConsultaDerivaciones;
 use common\models\Persona;
 use common\models\User;
 use frontend\components\UserRequest;
-use common\components\Services\Turnos\TurnoSlotFinder;
+use common\components\Scheduling\Service\TurnoSlotFinder;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.

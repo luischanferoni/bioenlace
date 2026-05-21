@@ -16,7 +16,7 @@ $parentId = $parentId ?? null;
 use yii\helpers\Url;
 use yii\helpers\Html;
 ?>
-<form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/consulta/guardar']) ?>">
+<form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/clinical/encounter/guardar']) ?>">
     <?= Html::hiddenInput('id_persona', $paciente->id_persona) ?>
     <?php if (!empty($idConfiguracion)): ?>
         <?= Html::hiddenInput('id_configuracion', (int) $idConfiguracion) ?>

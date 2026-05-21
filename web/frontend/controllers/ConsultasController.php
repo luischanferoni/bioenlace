@@ -21,7 +21,7 @@ use common\models\Consulta;
 use common\models\ConsultasConfiguracion;
 use common\models\busquedas\ConsultaBusqueda;
 use common\models\ConsultaAtencionesEnfermeria;
-use common\components\Services\Consulta\ConsultaAccessService;
+use common\components\Clinical\Legacy\ConsultaAccessService;
 
 use common\models\ValoracionNutricional;
 use common\models\TensionArterial;

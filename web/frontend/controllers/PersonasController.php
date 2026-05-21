@@ -36,7 +36,7 @@ use common\models\ConsultasConfiguracion;
 use common\models\Consulta;
 use common\models\Guardia;
 use common\models\PersonaRepository;
-use common\components\Services\Persona\PersonaSignosVitalesService;
+use common\components\Person\Service\PersonaSignosVitalesService;
 use common\models\Percentilos;
 use common\models\ServiciosEfector;
 use common\models\ProfesionalEfectorServicio;

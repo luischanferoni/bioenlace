@@ -14,7 +14,7 @@ use common\models\Persona;
 use common\models\Consulta;
 use common\models\ConsultaDerivaciones;
 use common\models\Turno;
-use common\components\Services\Consulta\ConsultaAccessService;
+use common\components\Clinical\Legacy\ConsultaAccessService;
 
 class DefaultConsultaController extends Controller
 {

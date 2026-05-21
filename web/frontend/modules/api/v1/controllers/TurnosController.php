@@ -13,27 +13,27 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
-use common\components\UiDefinitionTemplateManager;
-use common\components\UiScreenService;
-use common\components\Services\Turnos\TurnoSlotFinder;
-use common\components\Services\Turnos\TurnoSlotOfferService;
-use common\components\Services\Turnos\TurnoSlotOfferUiPresenter;
-use common\components\Services\Turnos\TurnoPersistService;
-use common\components\Services\Turnos\TurnoCreacionContext;
-use common\components\Services\Turnos\TurnoLifecycleService;
-use common\components\Services\Turnos\TurnoConfirmationService;
-use common\components\Services\Turnos\PolicyModeradaException;
-use common\components\Services\Turnos\AutogestionAnticipacionException;
-use common\components\Services\Turnos\TurnoAutogestionAnticipacionService;
-use common\components\Services\Turnos\TurnoCancellationPolicyService;
-use common\components\Services\Turnos\TurnoCancelacionRazones;
-use common\components\Services\Turnos\BulkCancelDayService;
-use common\components\Services\Turnos\SobreturnoService;
-use common\components\Services\Turnos\TurnoReservaSlotService;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
-use common\components\Services\Turnos\TurnoResolucionService;
-use common\components\Services\Turnos\TurnoResolucionElecciones;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalContextResolver;
+use common\components\Ui\UiDefinitionTemplateManager;
+use common\components\Ui\UiScreenService;
+use common\components\Scheduling\Service\TurnoSlotFinder;
+use common\components\Scheduling\Service\TurnoSlotOfferService;
+use common\components\Scheduling\Service\TurnoSlotOfferUiPresenter;
+use common\components\Scheduling\Service\TurnoPersistService;
+use common\components\Scheduling\Service\TurnoCreacionContext;
+use common\components\Scheduling\Service\TurnoLifecycleService;
+use common\components\Scheduling\Service\TurnoConfirmationService;
+use common\components\Scheduling\Service\PolicyModeradaException;
+use common\components\Scheduling\Service\AutogestionAnticipacionException;
+use common\components\Scheduling\Service\TurnoAutogestionAnticipacionService;
+use common\components\Scheduling\Service\TurnoCancellationPolicyService;
+use common\components\Scheduling\Service\TurnoCancelacionRazones;
+use common\components\Scheduling\Service\BulkCancelDayService;
+use common\components\Scheduling\Service\SobreturnoService;
+use common\components\Scheduling\Service\TurnoReservaSlotService;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
+use common\components\Scheduling\Service\TurnoResolucionService;
+use common\components\Scheduling\Service\TurnoResolucionElecciones;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
@@ -607,7 +607,7 @@ class TurnosController extends BaseController
                     );
                 }
                 $idPersona = (int) Yii::$app->user->getIdPersona();
-                $svc = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
+                $svc = new \common\components\Scheduling\Service\TurnoCancellationPolicyService();
 
                 return ['data' => array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, (int) $idEfector))];
             }
@@ -1549,7 +1549,7 @@ class TurnosController extends BaseController
         if ($turno->estado === Turno::ESTADO_EN_RESOLUCION) {
             throw new BadRequestHttpException('Este turno está en resolución: usá el flujo de reubicación.');
         }
-        $policy = new \common\components\Services\Turnos\TurnoCancellationPolicyService();
+        $policy = new \common\components\Scheduling\Service\TurnoCancellationPolicyService();
         if ($policy->autogestionBloqueada($idPersona, (int) $turno->id_efector)) {
             if ($forUiSubmit) {
                 throw new PolicyModeradaException('Reprogramación por app no disponible: acercate al efector o llamá.');

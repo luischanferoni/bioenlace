@@ -94,10 +94,24 @@ return [
                 // Preflight CORS genérico (evita declarar OPTIONS por endpoint)
                 'OPTIONS api/<version:\w+>/<controller:[\\w-]+>' => '<version>/<controller>/options',
                 'OPTIONS api/<version:\w+>/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/options',
-                // analisis de la consulta
+                // API clínica FHIR (Encounter, CarePlan, Condition)
+                'POST api/<version:\w+>/clinical/encounter/analizar' => '<version>/clinical/encounter/analizar',
+                'OPTIONS api/<version:\w+>/clinical/encounter/analizar' => '<version>/clinical/encounter/analizar',
+                'POST api/<version:\w+>/clinical/encounter/guardar' => '<version>/clinical/encounter/guardar',
+                'OPTIONS api/<version:\w+>/clinical/encounter/guardar' => '<version>/clinical/encounter/guardar',
+                'GET api/<version:\w+>/clinical/encounter/<encounterId:\d+>/conditions' => '<version>/clinical/condition/index',
+                'OPTIONS api/<version:\w+>/clinical/encounter/<encounterId:\d+>/conditions' => '<version>/clinical/condition/index',
+                'GET api/<version:\w+>/clinical/care-plans/active' => '<version>/clinical/care-plan/active',
+                'OPTIONS api/<version:\w+>/clinical/care-plans/active' => '<version>/clinical/care-plan/active',
+                'GET api/<version:\w+>/clinical/care-plans/<id:\d+>' => '<version>/clinical/care-plan/view',
+                'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>' => '<version>/clinical/care-plan/view',
+                'POST api/<version:\w+>/clinical/care-plans/<id:\d+>/complete' => '<version>/clinical/care-plan/complete',
+                'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/complete' => '<version>/clinical/care-plan/complete',
+                'POST api/<version:\w+>/clinical/care-plans/<id:\d+>/revoke' => '<version>/clinical/care-plan/revoke',
+                'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/revoke' => '<version>/clinical/care-plan/revoke',
+                // Legacy consulta (410 Gone — usar clinical/encounter/*)
                 'POST api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
                 'OPTIONS api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
-                // guardar consulta completa
                 'POST api/<version:\w+>/consulta/guardar' => '<version>/consulta/guardar',
                 'OPTIONS api/<version:\w+>/consulta/guardar' => '<version>/consulta/guardar',
 

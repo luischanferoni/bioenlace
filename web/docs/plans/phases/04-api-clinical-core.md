@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 2](./02-common-clinical.md), [Fase 3](./03-reorder-common.md)  
-**Estado:** pendiente
+**Estado:** hecho
 
 ## Objetivo
 
@@ -40,8 +40,8 @@ Propuesta (sin retrocompat):
 
 ## RBAC
 
-- [ ] Permisos ApiGhost: `/api/clinical/encounter/*`, `/api/clinical/care-plans/*`.
-- [ ] Paciente: solo `subject` = su `id_persona`; staff según PES/efector en encounter.
+- [x] Permisos ApiGhost: `/api/clinical/encounter/*`, `/api/clinical/care-plan/*` (`m260521_100004_api_clinical_routes_rbac`).
+- [x] Paciente: solo `subject` = su `id_persona`; staff según PES/efector en encounter.
 
 ## Respuesta JSON
 

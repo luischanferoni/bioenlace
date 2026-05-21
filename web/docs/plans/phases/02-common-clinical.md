@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 1](./01-foundation-db.md)  
-**Estado:** pendiente
+**Estado:** hecho (2026-05-20)
 
 ## Objetivo
 
@@ -38,13 +38,13 @@ common/components/Clinical/
 
 ## Tareas
 
-- [ ] AR con `rules()`, relaciones, soft-delete donde aplique (alinear con traits existentes).
-- [ ] Enums: `CarePlanStatus`, `RequestStatus`, `EncounterStatus`, `ProcedureStatus`, etc. (vocabularios FHIR).
-- [ ] DTOs readonly para respuestas API futuras (`CarePlanDto`, `EncounterDto`, …).
-- [ ] `EncounterAccessService`: reemplazar reglas de `ConsultaAccessService` (paciente por `subject_persona_id`, médico por PES).
-- [ ] `CarePlanService`: crear plan, agregar actividad, transiciones de estado (borrador → active → completed/revoked).
-- [ ] `EncounterDocumentationService`: persistir documentación del encuentro desde payload estructurado (reemplazo de `ConsultaProcesamientoService`).
-- [ ] Registrar namespaces en autoload si hace falta (Composer/Yii alias).
+- [x] AR núcleo + órdenes principales en `common/models/Clinical/`.
+- [x] Enums FHIR en `common/components/Clinical/Enum/`.
+- [ ] DTOs readonly (`CarePlanDto`, `EncounterDto`) — fase API (4).
+- [x] `EncounterAccessService`, `CarePlanService`, `EncounterLifecycleService`, `PatientActiveCarePlanQuery`.
+- [x] `EncounterDocumentationService` (guardar diagnósticos/medicación/prácticas; analizar delega IA legacy).
+- [x] `ConsultasConfiguracion` → alias de `EncounterDefinition`.
+- [x] `ClinicalEncounterEntry` y motivos pre-consulta apuntan a Encounter.
 
 ## Eliminar (cuando servicios nuevos pasen tests)
 

@@ -61,7 +61,7 @@ $period = new DatePeriod(
                 <div id="motivo_cancelacion_div" class="col float-end" style="display: none;">
                 <?php
                     echo html::dropDownList('motivos_cancelacion', [], 
-                                            \common\components\Services\Turnos\TurnoCancelacionRazones::medicoAppOpcionesDropdown(), 
+                                            \common\components\Scheduling\Service\TurnoCancelacionRazones::medicoAppOpcionesDropdown(), 
                                             ['prompt' => 'Motivo de Cancelación', 'class' => 'form-control', 'id' => 'motivo_cancelacion']);
                 ?>
                 </div>

@@ -4,11 +4,11 @@ namespace common\components\Assistant\SubIntentEngine;
 
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\FlowManifest\FlowManifest;
-use common\components\Services\Assistant\FlowHintService;
+use common\components\Assistant\Service\FlowHintService;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
-use common\components\UiDefinitionTemplateManager;
+use common\components\Ui\UiDefinitionTemplateManager;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 

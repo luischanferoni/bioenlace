@@ -8,7 +8,7 @@ use yii\web\NotFoundHttpException;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use Firebase\JWT\JWT;
-use common\components\Services\SesionOperativa\SesionOperativaService;
+use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
 
 /**
  * Componente user para la aplicación web (sesión, cookie, login por formulario).

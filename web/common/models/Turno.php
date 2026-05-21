@@ -852,7 +852,7 @@ class Turno extends \yii\db\ActiveRecord
             return false;
         }
 
-        return !\common\components\Services\Turnos\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
+        return !\common\components\Scheduling\Service\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
     }
 
 

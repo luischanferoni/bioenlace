@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Services\Notificaciones\PersonaNotificacionService;
+use common\components\Core\Service\Notificaciones\PersonaNotificacionService;
 
 /**
  * Bandeja de alertas del usuario autenticado (paciente / cualquier persona con JWT).

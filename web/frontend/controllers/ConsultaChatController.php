@@ -8,7 +8,7 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\models\ConsultaChatMessage;
 use common\models\Consulta;
-use common\components\Services\Consulta\ConsultaAccessService;
+use common\components\Clinical\Legacy\ConsultaAccessService;
 
 /**
  * Chat médicoâ€“paciente por consulta.

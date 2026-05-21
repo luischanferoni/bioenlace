@@ -4,4 +4,4 @@ Entry point para **captura de consulta médica** (profesional en encounter).
 
 - **No** usa `Chat/Preprocess` ni `user_goal`.
 - Expone `analizar` / `guardar` delegando en `ConsultaProcesamientoService`.
-- HTTP: `ConsultaController` (`/api/v1/consulta/analizar`, `/api/v1/consulta/guardar`).
+- HTTP: `clinical/EncounterController` (`/api/v1/clinical/encounter/analizar`, `/api/v1/clinical/encounter/guardar`). Legacy `ConsultaController` responde 410.

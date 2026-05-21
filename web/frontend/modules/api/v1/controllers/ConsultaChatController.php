@@ -3,34 +3,33 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use yii\web\Response;
 use yii\web\UploadedFile;
 use common\models\ConsultaChatMessage;
-use common\models\Consulta;
-use common\components\Services\Consulta\ConsultaAccessService;
+use common\components\Clinical\Service\EncounterAccessService;
+use common\models\Clinical\Encounter;
 
 /**
- * API chat de consulta (mensajes, envío, subida, estado).
+ * API chat clínico por encounter (mensajes, envío, subida, estado).
  *
- * La lógica se implementa directamente aquí, sin usar el controlador del frontend.
+ * La URL conserva el segmento `consulta-chat`; el identificador es `encounter_id`.
  */
 class ConsultaChatController extends BaseController
 {
     public $enableCsrfValidation = false;
 
     /**
-     * GET /api/v1/consulta-chat/mensajes/{id} — {id} = id_consulta.
+     * GET /api/v1/consulta-chat/mensajes/{id} — {id} = encounter_id.
      */
     public function actionListarMensajes($id)
     {
-        $consulta_id = (int) $id;
-        [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
+        $encounterId = (int) $id;
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
         if ($err !== null) {
             return $err;
         }
 
         $messages = ConsultaChatMessage::find()
-            ->where(['consulta_id' => $consulta_id])
+            ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
@@ -53,14 +52,18 @@ class ConsultaChatController extends BaseController
             ];
         }
 
+        $subject = $encounter->subject;
+
         return [
             'success' => true,
             'message' => 'Mensajes obtenidos exitosamente',
             'data' => [
                 'messages' => $formattedMessages,
-                'consulta' => [
-                    'id' => $consulta->id_consulta,
-                    'paciente' => $consulta->paciente ? $consulta->paciente->getNombreCompleto() : 'Paciente',
+                'encounter_id' => (int) $encounter->id,
+                'consulta_id' => (int) $encounter->id,
+                'encounter' => [
+                    'id' => (int) $encounter->id,
+                    'paciente' => $subject ? $subject->getNombreCompleto() : 'Paciente',
                 ],
             ],
         ];
@@ -69,12 +72,12 @@ class ConsultaChatController extends BaseController
     public function actionEnviar()
     {
         $body = Yii::$app->request->getBodyParams();
-        $consulta_id = $body['consulta_id'] ?? null;
-        if (!$consulta_id) {
-            return ['success' => false, 'message' => 'Datos requeridos: consulta_id, message', 'data' => null];
+        $encounterId = $this->resolveEncounterIdFromBody($body);
+        if (!$encounterId) {
+            return ['success' => false, 'message' => 'Datos requeridos: encounter_id (o consulta_id), message', 'data' => null];
         }
 
-        [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
         if ($err !== null) {
             return $err;
         }
@@ -82,13 +85,13 @@ class ConsultaChatController extends BaseController
         $message = $body['message'] ?? null;
         $user_role = $body['user_role'] ?? null;
         if ($message === null || $message === '') {
-            return ['success' => false, 'message' => 'Datos requeridos: consulta_id, message', 'data' => null];
+            return ['success' => false, 'message' => 'Datos requeridos: encounter_id, message', 'data' => null];
         }
 
         $userId = Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Usuario';
         if (!$user_role) {
-            $user_role = (int) $consulta->id_persona === (int) Yii::$app->user->getIdPersona() ? 'paciente' : 'medico';
+            $user_role = (int) $encounter->subject_persona_id === (int) Yii::$app->user->getIdPersona() ? 'paciente' : 'medico';
         }
 
         $messageType = $body['message_type'] ?? 'texto';
@@ -98,7 +101,7 @@ class ConsultaChatController extends BaseController
         }
 
         $chatMessage = new ConsultaChatMessage();
-        $chatMessage->consulta_id = (int) $consulta_id;
+        $chatMessage->encounter_id = $encounterId;
         $chatMessage->user_id = $userId;
         $chatMessage->user_name = $userName;
         $chatMessage->user_role = $user_role;
@@ -131,12 +134,12 @@ class ConsultaChatController extends BaseController
 
     public function actionSubir()
     {
-        $consulta_id = Yii::$app->request->post('consulta_id');
-        if (!$consulta_id) {
-            return ['success' => false, 'message' => 'Falta consulta_id', 'data' => null];
+        $encounterId = $this->resolveEncounterIdFromBody(Yii::$app->request->post());
+        if (!$encounterId) {
+            return ['success' => false, 'message' => 'Falta encounter_id (o consulta_id)', 'data' => null];
         }
 
-        [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
         if ($err !== null) {
             return $err;
         }
@@ -157,15 +160,16 @@ class ConsultaChatController extends BaseController
         }
         $filename = sprintf('%s_%s.%s', date('YmdHis'), uniqid(), $ext);
 
-        $basePath = Yii::getAlias('@frontend/web/uploads/consulta_chat/' . (int) $consulta_id);
+        $basePath = Yii::getAlias('@frontend/web/uploads/consulta_chat/' . $encounterId);
         if (!is_dir($basePath)) {
             if (!@mkdir($basePath, 0755, true)) {
                 Yii::error('No se pudo crear directorio: ' . $basePath);
+
                 return ['success' => false, 'message' => 'Error al guardar el archivo', 'data' => null];
             }
         }
 
-        $relativePath = 'uploads/consulta_chat/' . (int) $consulta_id . '/' . $filename;
+        $relativePath = 'uploads/consulta_chat/' . $encounterId . '/' . $filename;
         $fullPath = Yii::getAlias('@frontend/web') . '/' . $relativePath;
 
         if (!$file->saveAs($fullPath)) {
@@ -174,10 +178,10 @@ class ConsultaChatController extends BaseController
 
         $userId = Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Usuario';
-        $user_role = (int) $consulta->id_persona === (int) Yii::$app->user->getIdPersona() ? 'paciente' : 'medico';
+        $user_role = (int) $encounter->subject_persona_id === (int) Yii::$app->user->getIdPersona() ? 'paciente' : 'medico';
 
         $chatMessage = new ConsultaChatMessage();
-        $chatMessage->consulta_id = (int) $consulta_id;
+        $chatMessage->encounter_id = $encounterId;
         $chatMessage->user_id = $userId;
         $chatMessage->user_name = $userName;
         $chatMessage->user_role = $user_role;
@@ -186,6 +190,7 @@ class ConsultaChatController extends BaseController
 
         if (!$chatMessage->save()) {
             @unlink($fullPath);
+
             return [
                 'success' => false,
                 'message' => 'Error guardando mensaje: ' . implode(', ', $chatMessage->getFirstErrors()),
@@ -212,53 +217,59 @@ class ConsultaChatController extends BaseController
         ];
     }
 
-    public function actionEstado($consulta_id)
+    public function actionEstado($id)
     {
-        [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
+        $encounterId = (int) $id;
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
         if ($err !== null) {
             return $err;
         }
 
         $unreadCount = ConsultaChatMessage::find()
-            ->where(['consulta_id' => $consulta_id, 'is_read' => false])
+            ->where(['encounter_id' => $encounterId, 'is_read' => false])
             ->count();
 
         return [
             'success' => true,
             'message' => 'Estado obtenido exitosamente',
             'data' => [
-                'consulta_id' => $consulta_id,
+                'encounter_id' => $encounterId,
+                'consulta_id' => $encounterId,
                 'unread_count' => $unreadCount,
                 'is_online' => true,
-                'last_activity' => $consulta->updated_at ?? $consulta->created_at,
+                'last_activity' => $encounter->updated_at ?? $encounter->created_at,
             ],
         ];
     }
 
     /**
-     * Paciente: `consulta.id_persona` === sesión `idPersona` ({@see JsonHttpBearerAuth}).
-     * Médico: mismo contexto PES que en sesión operativa ({@see ConsultaAccessService::userCanAccessConsultaApi}).
+     * @param array<string, mixed> $body
      */
-    protected function canAccessConsulta(Consulta $consulta): bool
+    protected function resolveEncounterIdFromBody(array $body): int
     {
-        return ConsultaAccessService::userCanAccessConsultaApi($consulta);
+        $id = $body['encounter_id'] ?? $body['consulta_id'] ?? null;
+
+        return $id ? (int) $id : 0;
     }
 
     /**
-     * Obtiene la consulta y verifica que el usuario tenga acceso. Retorna [consulta, null] o [null, array error].
+     * @return array{0: Encounter|null, 1: array<string, mixed>|null}
      */
-    protected function requireConsultaAccess($consulta_id)
+    protected function requireEncounterAccess(int $encounterId): array
     {
-        $consulta = Consulta::findOne($consulta_id);
-        if (!$consulta) {
+        $encounter = Encounter::findOne($encounterId);
+        if (!$encounter) {
             Yii::$app->response->statusCode = 404;
-            return [null, ['success' => false, 'message' => 'Consulta no encontrada', 'data' => null]];
+
+            return [null, ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null]];
         }
-        if (!$this->canAccessConsulta($consulta)) {
+        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
             Yii::$app->response->statusCode = 403;
-            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a esta consulta', 'data' => null]];
+
+            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a este encounter', 'data' => null]];
         }
-        return [$consulta, null];
+
+        return [$encounter, null];
     }
 
     private const UPLOAD_MESSAGE_TYPES = ['imagen', 'audio', 'video', 'documento'];

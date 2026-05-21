@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Services\Actions\CommonActionsService;
+use common\components\Core\Service\Actions\CommonActionsService;
 
 /**
  * Metadatos de acciones API para clientes (atajos, descubrimiento ligero).

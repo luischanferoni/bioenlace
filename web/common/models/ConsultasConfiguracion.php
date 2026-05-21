@@ -5,33 +5,17 @@ namespace common\models;
 use Yii;
 use yii\helpers\Url;
 
+use common\models\Clinical\EncounterDefinitionQuery;
 use common\models\Consulta;
 
 /**
- * This is the model class for table "consultas_configuracion".
+ * @deprecated Alias de {@see \common\models\Clinical\EncounterDefinition} (`encounter_definition`).
  *
- * @property int $id
- * @property string $id_servicio
- * @property string $pasos
- * @property string $created_at
- * @property string $updated_at
- * @property string|null $deleted_at
- * @property int $created_by
- * @property int|null $updated_by
- * @property int|null $deleted_by
- * @property string $pasos_json
+ * @property int $service_id
+ * @property string $workflow_json
  */
-class ConsultasConfiguracion extends \yii\db\ActiveRecord
+class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
 {
-    use \common\traits\SoftDeleteDateTimeTrait;
-
-    const ENCOUNTER_CLASS_IMP = 'IMP'; //Internacion
-    const ENCOUNTER_CLASS_AMB = 'AMB';
-    const ENCOUNTER_CLASS_OBSENC = 'OBSENC';
-    const ENCOUNTER_CLASS_EMER = 'EMER';
-    const ENCOUNTER_CLASS_VR = 'VR';
-    const ENCOUNTER_CLASS_HH = 'HH';
-
     const ENCOUNTER_CLASS = [
         'IMP' => 'Internación',
         'AMB' => 'Ambulatoria',
@@ -41,97 +25,9 @@ class ConsultasConfiguracion extends \yii\db\ActiveRecord
         'HH' => 'Visita Domiciliaria'
     ];
 
-    /**
-     * {@inheritdoc}
-     */
-    public static function tableName()
+    public static function find(): EncounterDefinitionQuery
     {
-        return 'consultas_configuracion';
-    }
-
-    public function behaviors()
-    {
-        return [
-            'blames' => [
-                'class' => 'yii\behaviors\AttributeBehavior',
-                'attributes' => [
-                    \yii\db\ActiveRecord::EVENT_BEFORE_INSERT => ['created_by'],
-                    \yii\db\ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_by'],
-                    \yii\db\ActiveRecord::EVENT_BEFORE_DELETE => ['deleted_by'],
-                ],
-                'value' => Yii::$app->user->id,
-            ],
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function rules()
-    {
-        return [
-            [['id_servicio', 'encounter_class', 'pasos_json'], 'required'],
-            [['id', 'id_servicio', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
-            [['encounter_class', 'pasos', 'pasos_json'], 'string'],
-            [['created_at', 'updated_at', 'deleted_at'], 'safe'],
-        ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function attributeLabels()
-    {
-        return [
-            'id' => 'ID',
-            'id_servicio' => 'Servicio',
-            'pasos' => 'Pasos',
-            'created_at' => 'Created At',
-            'updated_at' => 'Updated At',
-            'deleted_at' => 'Deleted At',
-            'created_by' => 'Created By',
-            'updated_by' => 'Updated By',
-            'deleted_by' => 'Deleted By',
-        ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getServicio()
-    {
-        return $this->hasOne(Servicio::className(), ['id_servicio' => 'id_servicio']);
-    }
-
-    public static function getUrlPorServicioYEncounterClass($idServicio, $encounterClass, $paso = null)
-    {        
-       
-        $configuracion = self::find()->where(['id_servicio' => $idServicio, 'encounter_class' => $encounterClass])
-                            ->andWhere('deleted_at is null')->one();
-
-        if (!$configuracion) {
-            Yii::error("Servicio sin configuracion de pasos, servicio: ".$idServicio." encounterClass: ".$encounterClass);
-            return [null, null, null, null];
-            //$configuracion = self::find()->where(['id' => 1])->one();
-        }
-        //$arrayPasos = explode(",", $configuracion->pasos);
-        $jsonPasos  = json_decode($configuracion->pasos_json);
-        $arrayPasos = [];
-        foreach ($jsonPasos->conf as  $output) {
-            $arrayPasos[] = $output->url;
-        }
-
-        if ($paso !== null) {
-            $urlAnterior = isset($arrayPasos[$paso - 1]) ? Url::toRoute(trim($arrayPasos[$paso - 1])) : null;
-            $urlActual = isset($arrayPasos[$paso]) ? Url::toRoute(trim($arrayPasos[$paso])) : null;
-            $urlSiguiente = isset($arrayPasos[$paso + 1]) ? Url::toRoute(trim($arrayPasos[$paso + 1])) : null;
-        } else {
-            $urlAnterior = null;
-            $urlActual = Url::toRoute(trim($arrayPasos[0]));
-            $urlSiguiente = isset($arrayPasos[1]) ? Url::toRoute(trim($arrayPasos[1])) : null;
-        }
-
-        return [$urlAnterior, $urlActual, $urlSiguiente, $configuracion->id];
+        return new EncounterDefinitionQuery(static::class);
     }
 
     public static function getRelaciones($idConfiguracion)
@@ -180,62 +76,6 @@ class ConsultasConfiguracion extends \yii\db\ActiveRecord
             }
         }
         return $arrayRelacionesPasos;
-    }
-
-    /**
-     * Obtener categorías con sus campos requeridos para prompts de IA
-     * @param int $idConfiguracion
-     * @return array
-     */
-    public static function getCategoriasParaPrompt($configuracion)
-    {
-        $jsonPasos = json_decode($configuracion->pasos_json);
-        $categorias = [];
-
-        foreach ($jsonPasos->conf as $output) {
-            $categoria = [
-                'titulo' => $output->titulo,
-                'modelo' => $output->relacion,
-                'requerido' => isset($output->requerido) ? (bool)$output->requerido : false,
-                'campos_requeridos' => self::obtenerCamposRequeridosDelModelo($output->relacion)
-            ];
-
-            $categorias[] = $categoria;
-        }
-
-        return $categorias;
-    }
-
-    /**
-     * Obtener campos requeridos desde las reglas de validación del modelo
-     * @param string $nombreModelo
-     * @return array
-     */
-    private static function obtenerCamposRequeridosDelModelo($nombreModelo)
-    {
-        $camposRequeridos = [];
-        
-        try {
-            // Construir el nombre completo de la clase del modelo
-            $claseModelo = "\\common\\models\\{$nombreModelo}";
-            
-            // Verificar si la clase existe
-            if (!class_exists($claseModelo)) {
-                return $camposRequeridos;
-            }
-
-            // Crear instancia temporal del modelo
-            $modelo = new $claseModelo();
-            
-            // Obtener los campos requeridos desde requeridosPrompt
-            $camposRequeridos = $modelo->requeridosPrompt();
-            
-        } catch (\Exception $e) {
-            // Si hay error, devolver array vacío
-            \Yii::error("Error obteniendo campos requeridos para modelo {$nombreModelo}: " . $e->getMessage());
-        }
-        
-        return $camposRequeridos;
     }
 
     public static function getMenuPorIdConfiguracion($idConsulta, $idConfiguracion, $paso = null, $id_persona)

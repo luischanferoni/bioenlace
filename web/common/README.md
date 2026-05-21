@@ -2,34 +2,32 @@
 
 Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 
-## Dominios
+## Dominios (`components/` y `models/`)
 
-| Carpeta | Contenido |
-|---------|-----------|
-| `models/{Dominio}/` | ActiveRecord (solo persistencia) |
-| `components/{Dominio}/` | Dto, Enum, Service, Repository, Workflow |
-| `migrations/` | Migraciones Yii de BD |
-| `config/` | Configuración compartida |
-
-### Dominios previstos
-
-- **`Clinical/`** — FHIR clínico: Encounter, CarePlan, órdenes (Fase 2+). Ver [docs/plans/PROGRAM.md](../docs/plans/PROGRAM.md).
-- **`Scheduling/`** — Turnos (Appointment), agenda, quirófano.
-- **`Person/`** — `Persona` (Patient).
-- **`Organization/`** — Efector, servicio, PES, sesión operativa.
-- **`Terminology/`** — SNOMED y nomencladores (hoy parte en `models/snomed/`).
-- **`Assistant/`** — Asistente conversacional (`components/Assistant/`).
-- **`Ui/`** — UI JSON API (`UiScreenService`, templates).
-- **`Ai/`**, **`Integrations/`**, **`Infrastructure/`** — transversal.
+| Dominio | `components/` | `models/` |
+|---------|---------------|-----------|
+| **Clinical** | `Clinical/` (Service, Workflow, Enum) | `Clinical/` |
+| **Scheduling** | `Scheduling/Service/` (turnos, quirofano) | `Turno` (raíz; → `Scheduling/` en fase posterior) |
+| **Person** | `Person/Service/` | `Persona` (raíz) |
+| **Organization** | `Organization/Service/` (PES, sesión operativa, efectores) | `ProfesionalEfectorServicio`, … |
+| **Core** | `Core/Service/` (push, notificaciones, acciones comunes) | — |
+| **Ui** | `Ui/` (`UiScreenService`, `UiDefinitionTemplateManager`) | — |
+| **Assistant** | `Assistant/` (+ `Assistant/Service/` hints) | — |
+| **Terminology** | `Terminology/` | `snomed/` (→ `Terminology/Snomed/` pendiente) |
+| **Ai**, **Integrations**, **Infrastructure**, **Text**, **Logging** | transversal | — |
 
 ## Reglas
 
-1. **No** nueva lógica de negocio en `models/` ni en controllers API.
-2. **No** carpeta `components/Services/` para código nuevo (en desuso; ver fase 3 del programa Clinical).
-3. **No** DTOs en `models/`; usar `components/{Dominio}/Dto/`.
-4. Nomenclatura FHIR: clases PHP = recurso (`CarePlan`, `MedicationRequest`); tablas = `snake_case` (`care_plan`, `medication_request`).
-5. API clínica bajo **`/api/v1/clinical/...`** (sin alias `/consulta/`).
+1. **No** crear código nuevo bajo `components/Services/` (eliminado en Fase 3).
+2. **No** lógica de negocio en controllers API; usar `*/Service/` del dominio.
+3. Legacy consulta (IA): `components/Clinical/Legacy/ConsultaProcesamientoService.php`.
+4. API clínica futura: `/api/v1/clinical/...`.
 
 ## Migración Clinical
 
-Estado: [docs/plans/MIGRATION_STATUS.md](../docs/plans/MIGRATION_STATUS.md).
+- [docs/plans/MIGRATION_STATUS.md](docs/plans/MIGRATION_STATUS.md)
+- [docs/plans/PROGRAM.md](docs/plans/PROGRAM.md)
+
+## Herramientas
+
+- `tools/migrate_phase3_services.php` — migración one-shot Fase 3 (histórico).

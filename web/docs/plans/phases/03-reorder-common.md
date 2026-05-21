@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 2](./02-common-clinical.md) (puede solaparse parcialmente con 2 al final)  
-**Estado:** pendiente
+**Estado:** hecho (2026-05-20)
 
 ## Objetivo
 
@@ -27,13 +27,13 @@ Aplicar la estructura por dominios en todo `common/`: mover Turnos, Persona, Ui,
 
 ## Actualización de imports
 
-- [ ] Buscar/reemplazar namespaces en `frontend/modules/api/v1`, `console`, `Assistant`.
-- [ ] Alias Yii `@common` sin cambios; solo namespaces PSR-4 si se ajusta `composer.json`.
+- [x] Namespaces actualizados en API, consola, Assistant, common.
+- [x] `@common` sin cambios.
 
 ## Documentación
 
-- [ ] `common/README.md` con árbol de dominios y regla “no más Services/”.
-- [ ] Actualizar `.cursor/rules` si mencionan `Services/Consulta`.
+- [x] `common/README.md` con árbol de dominios.
+- [ ] `models/Turno`, `models/Persona`, `models/snomed/` → subcarpetas (fase posterior opcional).
 
 ## Fuera de alcance
 
@@ -42,9 +42,10 @@ Aplicar la estructura por dominios en todo `common/`: mover Turnos, Persona, Ui,
 
 ## Definition of Done
 
-- Carpeta `common/components/Services/` **vacía o eliminada**.
-- `composer dump-autoload` / app arranca; smoke test API turnos (`listar-como-paciente`).
-- Grep sin `common\components\Services\` salvo menciones en docs históricos.
+- [x] `common/components/Services/` **eliminada**.
+- [x] `UiScreenService` / `UiDefinitionTemplateManager` en `components/Ui/`.
+- [ ] Smoke test API turnos en entorno con BD.
+- [x] Grep PHP sin `common\components\Services\`.
 
 ## Siguiente fase
 

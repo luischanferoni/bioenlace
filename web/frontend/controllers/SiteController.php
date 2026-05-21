@@ -13,8 +13,8 @@ use webvimark\modules\UserManagement\models\User;
 use common\models\Efector;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
-use common\components\Services\SesionOperativa\SesionOperativaService;
-use common\components\Services\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
+use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use Firebase\JWT\JWT;
 
 class SiteController extends Controller
@@ -497,7 +497,7 @@ class SiteController extends Controller
         }
 
         try {
-            $actions = \common\components\Services\Actions\CommonActionsService::getFormattedForUser($userId);
+            $actions = \common\components\Core\Service\Actions\CommonActionsService::getFormattedForUser($userId);
             $out = [];
             foreach ($actions as $row) {
                 $out[] = [

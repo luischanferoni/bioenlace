@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\UiScreenService;
-use common\components\Services\Servicios\ServiciosEfectorAutogestionListadoService;
+use common\components\Ui\UiScreenService;
+use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
 use common\models\Servicio;
 
 /**

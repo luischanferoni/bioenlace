@@ -3,7 +3,7 @@
 namespace common\components\Assistant\UiActions;
 
 /**
- * @deprecated Usar {@see UiDefinitionTemplateManager}. El nombre anterior sugería solo formularios;
+ * @deprecated Usar {@see \common\components\Ui\UiDefinitionTemplateManager}. El nombre anterior sugería solo formularios;
  *             las plantillas describen definiciones de UI más amplias (wizards, listas, etc.).
  */
 class FormConfigTemplateManager
@@ -14,6 +14,6 @@ class FormConfigTemplateManager
      */
     public static function render($entity, $action, $params = [])
     {
-        return \common\components\UiDefinitionTemplateManager::render($entity, $action, $params);
+        return \common\components\Ui\UiDefinitionTemplateManager::render($entity, $action, $params);
     }
 }

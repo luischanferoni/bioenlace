@@ -3,10 +3,11 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Assistant\EntryPoints\ClinicalEncounter\ClinicalEncounterEntry;
 
 /**
- * API Consulta: delega en {@see ClinicalEncounterEntry} (captura clínica).
+ * API Consulta (retirada). Usar {@see clinical\EncounterController}.
+ *
+ * @deprecated POST /api/v1/clinical/encounter/analizar|guardar
  */
 class ConsultaController extends BaseController
 {
@@ -16,65 +17,29 @@ class ConsultaController extends BaseController
     {
         $actions = parent::actions();
         unset($actions['index'], $actions['view'], $actions['create'], $actions['update'], $actions['delete']);
+
         return $actions;
     }
 
     public function actionAnalizar()
     {
-        $out = ClinicalEncounterEntry::analizar(Yii::$app->request->getBodyParams());
-
-        return $this->applyConsultaHttpStatus($out);
+        return $this->goneResponse();
     }
 
     public function actionGuardar()
     {
-        $body = $this->mergeGuardarRequestBody();
-        if (YII_DEBUG) {
-            Yii::info('Datos recibidos en actionGuardar (api): ' . json_encode([
-                'bodyParams' => Yii::$app->request->getBodyParams(),
-                'post' => Yii::$app->request->post(),
-                'rawBody' => substr(Yii::$app->request->getRawBody(), 0, 500),
-                'mergedBody' => $body,
-            ]), 'consulta-guardar');
-        }
-        $out = ClinicalEncounterEntry::guardar($body);
-
-        return $this->applyConsultaHttpStatus($out);
+        return $this->goneResponse();
     }
 
-    /**
-     * @param array $out puede incluir __statusCode para el cliente HTTP
-     * @return array payload sin __statusCode
-     */
-    private function applyConsultaHttpStatus(array $out): array
+    /** @return array<string, mixed> */
+    private function goneResponse(): array
     {
-        if (!empty($out['__statusCode'])) {
-            Yii::$app->response->statusCode = (int) $out['__statusCode'];
-            unset($out['__statusCode']);
-        }
+        Yii::$app->response->statusCode = 410;
 
-        return $out;
-    }
-
-    private function mergeGuardarRequestBody(): array
-    {
-        $body = Yii::$app->request->getBodyParams();
-        $post = Yii::$app->request->post();
-
-        if (empty($body)) {
-            $body = $post;
-        }
-
-        if (empty($body)) {
-            $rawBody = Yii::$app->request->getRawBody();
-            if (!empty($rawBody)) {
-                $decoded = json_decode($rawBody, true);
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    $body = $decoded;
-                }
-            }
-        }
-
-        return is_array($body) ? $body : [];
+        return [
+            'success' => false,
+            'message' => 'Endpoint retirado. Use POST /api/v1/clinical/encounter/analizar o /api/v1/clinical/encounter/guardar.',
+            'data' => null,
+        ];
     }
 }

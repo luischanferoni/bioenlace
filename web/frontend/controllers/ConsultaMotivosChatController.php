@@ -8,7 +8,7 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\models\ConsultaMotivosMessage;
 use common\models\Consulta;
-use common\components\Services\Consulta\ConsultaAccessService;
+use common\components\Clinical\Legacy\ConsultaAccessService;
 
 /**
  * Chat de motivos de consulta (paciente envía texto, audio, fotos).

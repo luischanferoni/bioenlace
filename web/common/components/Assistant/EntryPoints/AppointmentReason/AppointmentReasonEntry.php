@@ -2,8 +2,8 @@
 
 namespace common\components\Assistant\EntryPoints\AppointmentReason;
 
-use common\components\Services\Consulta\ConsultaAccessService;
-use common\models\Consulta;
+use common\components\Clinical\Service\EncounterAccessService;
+use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
 use Yii;
 
@@ -65,22 +65,22 @@ final class AppointmentReasonEntry
     }
 
     /**
-     * @return array{0: Consulta|null, 1: array<string, mixed>|null}
+     * @return array{0: Encounter|null, 1: array<string, mixed>|null}
      */
-    private static function requireConsultaAccess(int $consultaId): array
+    private static function requireConsultaAccess(int $encounterId): array
     {
-        $consulta = Consulta::findOne($consultaId);
-        if (!$consulta) {
+        $encounter = Encounter::findOne($encounterId);
+        if (!$encounter) {
             Yii::$app->response->statusCode = 404;
 
-            return [null, ['success' => false, 'message' => 'Consulta no encontrada', 'data' => null]];
+            return [null, ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null]];
         }
-        if (!ConsultaAccessService::userCanAccessConsultaApi($consulta)) {
+        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
             Yii::$app->response->statusCode = 403;
 
-            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a esta consulta', 'data' => null]];
+            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a este encounter', 'data' => null]];
         }
 
-        return [$consulta, null];
+        return [$encounter, null];
     }
 }

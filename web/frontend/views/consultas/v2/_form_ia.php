@@ -55,7 +55,7 @@ $this->registerJs($header);
 
 // Obtener el ID del textarea de forma segura
 $detalleInputId = Html::getInputId($modelIA, 'detalle');
-$analizarUrl = Url::to(['/api/v1/consulta/analizar']);
+$analizarUrl = Url::to(['/api/v1/clinical/encounter/analizar']);
 ?>
 
 <div id="analisis-resultado" class="mt-4"></div>

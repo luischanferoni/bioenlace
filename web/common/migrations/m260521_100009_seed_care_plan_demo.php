@@ -49,7 +49,14 @@ class m260521_100009_seed_care_plan_demo extends Migration
         $serviceRequestId = $this->insertServiceRequest($personaId, $encounterId, $carePlanId, $now);
         $this->insertCarePlanActivities($carePlanId, $medicationRequestId, $serviceRequestId, $now);
 
-        echo "    > Seed care plan demo: id_persona={$personaId}, care_plan_id={$carePlanId}, encounter_id={$encounterId}\n";
+        $idUser = (new Query())
+            ->select('id_user')
+            ->from('{{%personas}}')
+            ->where(['id_persona' => $personaId])
+            ->scalar($this->db);
+        echo "    > Seed care plan demo: id_persona={$personaId}, id_user={$idUser}, care_plan_id={$carePlanId}, encounter_id={$encounterId}\n";
+        echo "    > La API /clinical/care-plans/active usa el id_persona del JWT; si el paciente móvil es otro, ejecutá:\n";
+        echo "    >   php yii clinical-seed/care-plan-demo-assign --persona=<id_persona_del_paciente>\n";
 
         return true;
     }

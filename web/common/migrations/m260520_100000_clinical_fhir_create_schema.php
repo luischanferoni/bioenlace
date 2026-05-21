@@ -12,14 +12,24 @@ use yii\db\TableSchema;
  */
 class m260520_100000_clinical_fhir_create_schema extends Migration
 {
+    private ?TableSchema $personasSchema = null;
+    private ?TableSchema $turnosSchema = null;
+    private ?TableSchema $serviciosSchema = null;
+    private ?TableSchema $efectoresSchema = null;
+    private ?TableSchema $pesSchema = null;
+
     public function safeUp()
     {
         $opts = $this->mysqlTableOptions();
 
-        $turnos = $this->db->schema->getTableSchema('{{%turnos}}', true);
+        $this->personasSchema = $this->db->schema->getTableSchema('{{%personas}}', true);
+        $this->turnosSchema = $this->db->schema->getTableSchema('{{%turnos}}', true);
+        $this->serviciosSchema = $this->db->schema->getTableSchema('{{%servicios}}', true);
+        $this->efectoresSchema = $this->db->schema->getTableSchema('{{%efectores}}', true);
+        $this->pesSchema = $this->db->schema->getTableSchema('{{%profesional_efector_servicio}}', true);
 
         $this->createEncounterDefinition($opts);
-        $this->createEncounter($opts, $turnos);
+        $this->createEncounter($opts);
         $this->createEpisodeOfCare($opts);
         $this->createCarePlan($opts);
         $this->createCarePlanActivity($opts);
@@ -97,7 +107,7 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%encounter_definition}}', array_merge([
             'id' => $this->primaryKey(),
-            'service_id' => $this->integer()->unsigned()->notNull()->comment('servicios.id_servicio'),
+            'service_id' => $this->colRef($this->serviciosSchema, 'id_servicio', true)->comment('servicios.id_servicio'),
             'encounter_class' => $this->string(10)->notNull()->comment('HL7 encounter-class'),
             'workflow_json' => $this->text()->notNull()->comment('Pasos del wizard (ex pasos_json)'),
             'pasos_legacy' => $this->text()->null()->comment('Texto legacy opcional'),
@@ -106,49 +116,55 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
         $this->createIndex('idx_encounter_def_service_class', '{{%encounter_definition}}', ['service_id', 'encounter_class'], true);
     }
 
-    private function createEncounter(?string $opts, ?TableSchema $turnos): void
+    private function createEncounter(?string $opts): void
     {
-        if ($this->db->schema->getTableSchema('{{%encounter}}', true) !== null) {
-            return;
+        $table = '{{%encounter}}';
+        $exists = $this->db->schema->getTableSchema($table, true) !== null;
+
+        if (!$exists) {
+            $this->createTable($table, array_merge([
+                'id' => $this->primaryKey(),
+                'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
+                'appointment_id' => $this->colRef($this->turnosSchema, 'id_turnos', false)
+                    ->comment('turnos.id_turnos'),
+                'encounter_class' => $this->string(10)->notNull(),
+                'status' => $this->string(32)->notNull()->defaultValue('in-progress')->comment('FHIR EncounterStatus simplificado'),
+                'period_start' => $this->dateTime()->null(),
+                'period_end' => $this->dateTime()->null(),
+                'service_id' => $this->colRef($this->serviciosSchema, 'id_servicio', false),
+                'efector_id' => $this->colRef($this->efectoresSchema, 'id_efector', false),
+                'id_profesional_efector_servicio' => $this->colRef($this->pesSchema, 'id', false),
+                'parent_type' => $this->string(128)->null()->comment('Clase origen (ex parent_class)'),
+                'parent_id' => $this->integer()->null(),
+                'workflow_step' => $this->integer()->null()->comment('Paso actual del wizard'),
+                'reason_text' => $this->text()->null(),
+                'note' => $this->text()->null(),
+            ], $this->auditColumns()), $opts);
+
+            $this->createIndex('idx_encounter_subject_status', $table, ['subject_persona_id', 'status']);
+            $this->createIndex('idx_encounter_appointment', $table, 'appointment_id');
+            $this->createIndex('idx_encounter_parent', $table, ['parent_type', 'parent_id']);
+        } else {
+            $this->alignColumnToReference($table, 'subject_persona_id', $this->personasSchema, 'id_persona', true);
+            $this->alignColumnToReference($table, 'appointment_id', $this->turnosSchema, 'id_turnos', false);
+            $this->alignColumnToReference($table, 'service_id', $this->serviciosSchema, 'id_servicio', false);
+            $this->alignColumnToReference($table, 'efector_id', $this->efectoresSchema, 'id_efector', false);
+            $this->alignColumnToReference($table, 'id_profesional_efector_servicio', $this->pesSchema, 'id', false);
         }
 
-        $appointmentCol = $this->columnDefMatchingTurnosPk($turnos)->null()->comment('turnos.id_turnos');
-
-        $this->createTable('{{%encounter}}', array_merge([
-            'id' => $this->primaryKey(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
-            'appointment_id' => $appointmentCol,
-            'encounter_class' => $this->string(10)->notNull(),
-            'status' => $this->string(32)->notNull()->defaultValue('in-progress')->comment('FHIR EncounterStatus simplificado'),
-            'period_start' => $this->dateTime()->null(),
-            'period_end' => $this->dateTime()->null(),
-            'service_id' => $this->integer()->unsigned()->null(),
-            'efector_id' => $this->integer()->unsigned()->null(),
-            'id_profesional_efector_servicio' => $this->integer()->unsigned()->null(),
-            'parent_type' => $this->string(128)->null()->comment('Clase origen (ex parent_class)'),
-            'parent_id' => $this->integer()->unsigned()->null(),
-            'workflow_step' => $this->integer()->null()->comment('Paso actual del wizard'),
-            'reason_text' => $this->text()->null(),
-            'note' => $this->text()->null(),
-        ], $this->auditColumns()), $opts);
-
-        $this->createIndex('idx_encounter_subject_status', '{{%encounter}}', ['subject_persona_id', 'status']);
-        $this->createIndex('idx_encounter_appointment', '{{%encounter}}', 'appointment_id');
-        $this->createIndex('idx_encounter_parent', '{{%encounter}}', ['parent_type', 'parent_id']);
-
-        $this->addForeignKey(
+        $this->addForeignKeyIfMissing(
             'fk_encounter_subject_persona',
-            '{{%encounter}}',
+            $table,
             'subject_persona_id',
             '{{%personas}}',
             'id_persona',
             'RESTRICT',
             'RESTRICT'
         );
-        if ($this->db->schema->getTableSchema('{{%turnos}}', true) !== null) {
-            $this->addForeignKey(
+        if ($this->turnosSchema !== null) {
+            $this->addForeignKeyIfMissing(
                 'fk_encounter_appointment',
-                '{{%encounter}}',
+                $table,
                 'appointment_id',
                 '{{%turnos}}',
                 'id_turnos',
@@ -166,19 +182,19 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%episode_of_care}}', array_merge([
             'id' => $this->primaryKey(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
             'status' => $this->string(32)->notNull()->defaultValue('active'),
             'type_code' => $this->string(64)->notNull()->comment('inpatient, chronic, program, …'),
             'period_start' => $this->dateTime()->null(),
             'period_end' => $this->dateTime()->null(),
-            'efector_id' => $this->integer()->unsigned()->null(),
+            'efector_id' => $this->colRef($this->efectoresSchema, 'id_efector', false),
             'internacion_id' => $this->integer()->null()->comment('seg_nivel_internacion.id si aplica'),
             'title' => $this->string(255)->null(),
             'description' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_episode_subject_status', '{{%episode_of_care}}', ['subject_persona_id', 'status']);
-        $this->addForeignKey(
+        $this->addForeignKeyIfMissing(
             'fk_episode_subject_persona',
             '{{%episode_of_care}}',
             'subject_persona_id',
@@ -197,23 +213,23 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%care_plan}}', array_merge([
             'id' => $this->primaryKey(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
             'status' => $this->string(32)->notNull()->defaultValue('draft'),
             'intent' => $this->string(16)->notNull()->defaultValue('plan'),
             'category' => $this->string(64)->notNull()->comment('Ver CARE_PLAN_CATEGORIES.md'),
             'period_start' => $this->dateTime()->null(),
             'period_end' => $this->dateTime()->null(),
-            'encounter_id' => $this->integer()->unsigned()->null(),
-            'episode_of_care_id' => $this->integer()->unsigned()->null(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', false),
+            'episode_of_care_id' => $this->colClinicalPkRef('{{%episode_of_care}}', false),
             'title' => $this->string(255)->null(),
             'description' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_care_plan_subject_status', '{{%care_plan}}', ['subject_persona_id', 'status']);
         $this->createIndex('idx_care_plan_encounter', '{{%care_plan}}', 'encounter_id');
-        $this->addForeignKey('fk_care_plan_subject', '{{%care_plan}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
-        $this->addForeignKey('fk_care_plan_encounter', '{{%care_plan}}', 'encounter_id', '{{%encounter}}', 'id', 'SET NULL', 'RESTRICT');
-        $this->addForeignKey('fk_care_plan_episode', '{{%care_plan}}', 'episode_of_care_id', '{{%episode_of_care}}', 'id', 'SET NULL', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_care_plan_subject', '{{%care_plan}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_care_plan_encounter', '{{%care_plan}}', 'encounter_id', '{{%encounter}}', 'id', 'SET NULL', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_care_plan_episode', '{{%care_plan}}', 'episode_of_care_id', '{{%episode_of_care}}', 'id', 'SET NULL', 'RESTRICT');
     }
 
     private function createCarePlanActivity(?string $opts): void
@@ -224,16 +240,16 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%care_plan_activity}}', array_merge([
             'id' => $this->primaryKey(),
-            'care_plan_id' => $this->integer()->unsigned()->notNull(),
+            'care_plan_id' => $this->colClinicalPkRef('{{%care_plan}}', true),
             'kind' => $this->string(64)->notNull()->comment('medication-request, service-request, …'),
             'resource_type' => $this->string(64)->notNull(),
-            'resource_id' => $this->integer()->unsigned()->notNull(),
+            'resource_id' => $this->integer()->notNull(),
             'sort_order' => $this->integer()->notNull()->defaultValue(0),
             'status' => $this->string(32)->notNull()->defaultValue('not-started'),
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_cpa_plan', '{{%care_plan_activity}}', 'care_plan_id');
-        $this->addForeignKey('fk_cpa_care_plan', '{{%care_plan_activity}}', 'care_plan_id', '{{%care_plan}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_cpa_care_plan', '{{%care_plan_activity}}', 'care_plan_id', '{{%care_plan}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createGoal(?string $opts): void
@@ -244,17 +260,17 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%goal}}', array_merge([
             'id' => $this->primaryKey(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
-            'care_plan_id' => $this->integer()->unsigned()->null(),
-            'encounter_id' => $this->integer()->unsigned()->null(),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
+            'care_plan_id' => $this->colClinicalPkRef('{{%care_plan}}', false),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', false),
             'lifecycle_status' => $this->string(32)->notNull()->defaultValue('active'),
             'description' => $this->text()->notNull(),
             'target_json' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
-        $this->addForeignKey('fk_goal_subject', '{{%goal}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
-        $this->addForeignKey('fk_goal_care_plan', '{{%goal}}', 'care_plan_id', '{{%care_plan}}', 'id', 'SET NULL', 'RESTRICT');
-        $this->addForeignKey('fk_goal_encounter', '{{%goal}}', 'encounter_id', '{{%encounter}}', 'id', 'SET NULL', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_goal_subject', '{{%goal}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_goal_care_plan', '{{%goal}}', 'care_plan_id', '{{%care_plan}}', 'id', 'SET NULL', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_goal_encounter', '{{%goal}}', 'encounter_id', '{{%encounter}}', 'id', 'SET NULL', 'RESTRICT');
     }
 
     private function createClinicalCondition(?string $opts): void
@@ -265,8 +281,8 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%clinical_condition}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
             'code' => $this->string(32)->notNull(),
             'code_system' => $this->string(64)->notNull()->defaultValue('http://hl7.org/fhir/sid/icd-10'),
             'display' => $this->string(512)->null(),
@@ -279,8 +295,8 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_clinical_condition_encounter', '{{%clinical_condition}}', 'encounter_id');
-        $this->addForeignKey('fk_clinical_condition_encounter', '{{%clinical_condition}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
-        $this->addForeignKey('fk_clinical_condition_subject', '{{%clinical_condition}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_clinical_condition_encounter', '{{%clinical_condition}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_clinical_condition_subject', '{{%clinical_condition}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
     }
 
     private function createMedicationRequest(?string $opts): void
@@ -291,9 +307,9 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%medication_request}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
-            'care_plan_id' => $this->integer()->unsigned()->null(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
+            'care_plan_id' => $this->colClinicalPkRef('{{%care_plan}}', false),
             'status' => $this->string(32)->notNull()->defaultValue('active'),
             'intent' => $this->string(16)->notNull()->defaultValue('order'),
             'medication_code' => $this->string(64)->null(),
@@ -301,11 +317,11 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
             'dosage_text' => $this->text()->null(),
             'dosage_json' => $this->text()->null(),
             'authored_on' => $this->dateTime()->null(),
-            'id_profesional_efector_servicio' => $this->integer()->unsigned()->null(),
+            'id_profesional_efector_servicio' => $this->colRef($this->pesSchema, 'id', false),
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_medication_request_encounter', '{{%medication_request}}', 'encounter_id');
-        $this->addForeignKey('fk_medication_request_encounter', '{{%medication_request}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_medication_request_encounter', '{{%medication_request}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createServiceRequest(?string $opts): void
@@ -316,9 +332,9 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%service_request}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
-            'care_plan_id' => $this->integer()->unsigned()->null(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
+            'care_plan_id' => $this->colClinicalPkRef('{{%care_plan}}', false),
             'status' => $this->string(32)->notNull()->defaultValue('active'),
             'intent' => $this->string(16)->notNull()->defaultValue('order'),
             'category' => $this->string(64)->notNull()->comment('laboratory, imaging, referral, …'),
@@ -327,11 +343,11 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
             'display' => $this->string(512)->null(),
             'occurrence_datetime' => $this->dateTime()->null(),
             'note' => $this->text()->null(),
-            'id_profesional_efector_servicio' => $this->integer()->unsigned()->null(),
+            'id_profesional_efector_servicio' => $this->colRef($this->pesSchema, 'id', false),
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_service_request_encounter', '{{%service_request}}', 'encounter_id');
-        $this->addForeignKey('fk_service_request_encounter', '{{%service_request}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_service_request_encounter', '{{%service_request}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createProcedure(?string $opts): void
@@ -342,9 +358,9 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%procedure}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
-            'service_request_id' => $this->integer()->unsigned()->null(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
+            'service_request_id' => $this->colClinicalPkRef('{{%service_request}}', false),
             'status' => $this->string(32)->notNull()->defaultValue('in-progress'),
             'code' => $this->string(64)->null(),
             'code_system' => $this->string(64)->null(),
@@ -354,8 +370,8 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_procedure_encounter', '{{%procedure}}', 'encounter_id');
-        $this->addForeignKey('fk_procedure_encounter', '{{%procedure}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
-        $this->addForeignKey('fk_procedure_service_request', '{{%procedure}}', 'service_request_id', '{{%service_request}}', 'id', 'SET NULL', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_procedure_encounter', '{{%procedure}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_procedure_service_request', '{{%procedure}}', 'service_request_id', '{{%service_request}}', 'id', 'SET NULL', 'RESTRICT');
     }
 
     private function createDeviceRequest(?string $opts): void
@@ -366,16 +382,16 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%device_request}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
-            'care_plan_id' => $this->integer()->unsigned()->null(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
+            'care_plan_id' => $this->colClinicalPkRef('{{%care_plan}}', false),
             'status' => $this->string(32)->notNull()->defaultValue('active'),
             'code' => $this->string(64)->null(),
             'display' => $this->string(512)->null(),
             'note' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
-        $this->addForeignKey('fk_device_request_encounter', '{{%device_request}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_device_request_encounter', '{{%device_request}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createNutritionOrder(?string $opts): void
@@ -386,14 +402,14 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%nutrition_order}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
             'status' => $this->string(32)->notNull()->defaultValue('active'),
             'oral_diet_json' => $this->text()->null(),
             'note' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
-        $this->addForeignKey('fk_nutrition_order_encounter', '{{%nutrition_order}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_nutrition_order_encounter', '{{%nutrition_order}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createMedicationAdministration(?string $opts): void
@@ -404,14 +420,14 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%medication_administration}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'medication_request_id' => $this->integer()->unsigned()->null(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'medication_request_id' => $this->colClinicalPkRef('{{%medication_request}}', false),
             'status' => $this->string(32)->notNull()->defaultValue('completed'),
             'effective_datetime' => $this->dateTime()->null(),
             'dosage_json' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
-        $this->addForeignKey('fk_med_admin_encounter', '{{%medication_administration}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_med_admin_encounter', '{{%medication_administration}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createObservation(?string $opts): void
@@ -422,8 +438,8 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%observation}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
             'status' => $this->string(32)->notNull()->defaultValue('final'),
             'category' => $this->string(64)->notNull(),
             'code' => $this->string(64)->notNull(),
@@ -436,7 +452,7 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_observation_encounter', '{{%observation}}', 'encounter_id');
-        $this->addForeignKey('fk_observation_encounter', '{{%observation}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_observation_encounter', '{{%observation}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createClinicalImpression(?string $opts): void
@@ -447,14 +463,14 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%clinical_impression}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
             'status' => $this->string(32)->notNull()->defaultValue('completed'),
             'summary' => $this->text()->notNull(),
             'finding_json' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
-        $this->addForeignKey('fk_clinical_impression_encounter', '{{%clinical_impression}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_clinical_impression_encounter', '{{%clinical_impression}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     private function createAllergyIntolerance(?string $opts): void
@@ -465,8 +481,8 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%allergy_intolerance}}', array_merge([
             'id' => $this->primaryKey(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
-            'encounter_id' => $this->integer()->unsigned()->null(),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', false),
             'clinical_status' => $this->string(32)->notNull(),
             'verification_status' => $this->string(32)->notNull(),
             'type' => $this->string(32)->null(),
@@ -478,7 +494,7 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
         ], $this->auditColumns()), $opts);
 
         $this->createIndex('idx_allergy_subject', '{{%allergy_intolerance}}', 'subject_persona_id');
-        $this->addForeignKey('fk_allergy_subject', '{{%allergy_intolerance}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_allergy_subject', '{{%allergy_intolerance}}', 'subject_persona_id', '{{%personas}}', 'id_persona', 'RESTRICT', 'RESTRICT');
     }
 
     private function createProcedureOdontologyExt(?string $opts): void
@@ -488,14 +504,14 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
         }
 
         $this->createTable('{{%procedure_odontology_ext}}', [
-            'procedure_id' => $this->integer()->unsigned()->notNull(),
+            'procedure_id' => $this->colClinicalPkRef('{{%procedure}}', true),
             'tooth_number' => $this->string(8)->null(),
             'surfaces' => $this->string(32)->null(),
             'time_qualifier' => $this->string(16)->null()->comment('PASADA|PRESENTE|FUTURA'),
         ], $opts);
 
         $this->addPrimaryKey('pk_procedure_odontology_ext', '{{%procedure_odontology_ext}}', 'procedure_id');
-        $this->addForeignKey('fk_procedure_odonto_procedure', '{{%procedure_odontology_ext}}', 'procedure_id', '{{%procedure}}', 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKeyIfMissing('fk_procedure_odonto_procedure', '{{%procedure_odontology_ext}}', 'procedure_id', '{{%procedure}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     private function createVisionPrescription(?string $opts): void
@@ -506,28 +522,119 @@ class m260520_100000_clinical_fhir_create_schema extends Migration
 
         $this->createTable('{{%vision_prescription}}', array_merge([
             'id' => $this->primaryKey(),
-            'encounter_id' => $this->integer()->unsigned()->notNull(),
-            'subject_persona_id' => $this->integer()->unsigned()->notNull(),
+            'encounter_id' => $this->colClinicalPkRef('{{%encounter}}', true),
+            'subject_persona_id' => $this->colRef($this->personasSchema, 'id_persona', true),
             'status' => $this->string(32)->notNull()->defaultValue('active'),
             'lens_spec_json' => $this->text()->null(),
             'note' => $this->text()->null(),
         ], $this->auditColumns()), $opts);
 
-        $this->addForeignKey('fk_vision_prescription_encounter', '{{%vision_prescription}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
+        $this->addForeignKeyIfMissing('fk_vision_prescription_encounter', '{{%vision_prescription}}', 'encounter_id', '{{%encounter}}', 'id', 'CASCADE', 'RESTRICT');
     }
 
     /**
-     * FK a turnos.id_turnos: mismo tipo que la PK legacy.
+     * Columna FK alineada al tipo de la tabla referenciada (signed/unsigned, int/bigint).
      *
      * @return \yii\db\ColumnSchemaBuilder
      */
-    private function columnDefMatchingTurnosPk(?TableSchema $turnos)
+    private function colRef(?TableSchema $table, string $column, bool $notNull)
     {
-        if ($turnos === null || !isset($turnos->columns['id_turnos'])) {
-            return $this->integer()->unsigned();
+        if ($table === null || !isset($table->columns[$column])) {
+            $def = $this->integer();
+
+            return $notNull ? $def->notNull() : $def->null();
         }
 
-        return $this->columnDefFromSchemaColumn($turnos->columns['id_turnos']);
+        $def = $this->columnDefFromSchemaColumn($table->columns[$column]);
+
+        return $notNull ? $def->notNull() : $def->null();
+    }
+
+    /**
+     * FK a PK de tablas clínicas nuevas (mismo tipo que `primaryKey()` / `id` existente).
+     *
+     * @return \yii\db\ColumnSchemaBuilder
+     */
+    private function colClinicalPkRef(string $table, bool $notNull)
+    {
+        $schema = $this->db->schema->getTableSchema($table, true);
+
+        return $this->colRef($schema, 'id', $notNull);
+    }
+
+    private function alignColumnToReference(
+        string $table,
+        string $column,
+        ?TableSchema $refTable,
+        string $refColumn,
+        bool $notNull
+    ): void {
+        if ($refTable === null || !isset($refTable->columns[$refColumn])) {
+            return;
+        }
+        $local = $this->db->schema->getTableSchema($table, true);
+        if ($local === null || !isset($local->columns[$column])) {
+            return;
+        }
+        $current = $local->columns[$column];
+        $target = $refTable->columns[$refColumn];
+        if ($current->type === $target->type && (bool) $current->unsigned === (bool) $target->unsigned) {
+            return;
+        }
+        $def = $this->columnDefFromSchemaColumn($target);
+        $this->alterColumn($table, $column, $notNull ? $def->notNull() : $def->null());
+        $this->db->schema->refreshTableSchema($table);
+    }
+
+    private function addForeignKeyIfMissing(
+        string $name,
+        string $table,
+        string $columns,
+        string $refTable,
+        string $refColumns,
+        ?string $delete = null,
+        ?string $update = null
+    ): void {
+        if ($this->db->schema->getTableSchema($table, true) === null) {
+            return;
+        }
+        if ($this->db->schema->getTableSchema($refTable, true) === null) {
+            return;
+        }
+        if ($this->foreignKeyExists($table, $name)) {
+            return;
+        }
+        try {
+            $this->addForeignKey($name, $table, $columns, $refTable, $refColumns, $delete, $update);
+        } catch (\Throwable $e) {
+            $msg = $e->getMessage();
+            if (stripos($msg, 'Duplicate') !== false || stripos($msg, 'errno: 1826') !== false) {
+                return;
+            }
+            throw $e;
+        }
+    }
+
+    private function foreignKeyExists(string $table, string $fkName): bool
+    {
+        if ($this->db->driverName !== 'mysql') {
+            return false;
+        }
+        $rawTable = $this->db->schema->getRawTableName($table);
+        $exists = $this->db->createCommand(
+            'SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+             WHERE CONSTRAINT_SCHEMA = DATABASE()
+               AND TABLE_NAME = :table
+               AND CONSTRAINT_NAME = :name
+               AND CONSTRAINT_TYPE = :type',
+            [
+                ':table' => $rawTable,
+                ':name' => $fkName,
+                ':type' => 'FOREIGN KEY',
+            ]
+        )->queryScalar();
+
+        return $exists !== false;
     }
 
     /**

@@ -9,6 +9,24 @@ class TurnosService {
 
   TurnosService({this.authToken});
 
+  static String _extractErrorMessage(Map<String, dynamic> data, int statusCode) {
+    if (statusCode == 401) {
+      return data['message'] as String? ??
+          'No autorizado. Iniciá sesión de nuevo para ver tus turnos.';
+    }
+    final errors = data['errors'];
+    if (errors is Map) {
+      final global = errors['_error'];
+      if (global is List && global.isNotEmpty) {
+        return global.first.toString();
+      }
+      if (global is String && global.isNotEmpty) {
+        return global;
+      }
+    }
+    return data['message'] as String? ?? 'Error al cargar turnos';
+  }
+
   /// Obtiene el token a usar: el inyectado o el guardado en SharedPreferences (para evitar 401 en turnos/como-paciente).
   Future<String?> _getEffectiveToken() async {
     if (authToken != null && authToken!.isNotEmpty) return authToken;
@@ -64,9 +82,7 @@ class TurnosService {
           'total': total,
         };
       }
-      final message = response.statusCode == 401
-          ? (data['message'] ?? 'No autorizado. Iniciá sesión de nuevo para ver tus turnos.')
-          : (data['message'] ?? 'Error al cargar turnos');
+      final message = _extractErrorMessage(data, response.statusCode);
       return {
         'success': false,
         'message': message,

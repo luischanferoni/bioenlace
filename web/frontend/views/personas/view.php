@@ -408,16 +408,6 @@ $this->params['breadcrumbs'][] = $this->title;
 
 
 <?php
-
-Modal::begin([
-    'title' => '',
-    'id' => 'modal-consulta',
-    'size' => 'modal-xl',
-    'clientOptions' => ['backdrop' => 'static', 'keyboard' => false]
-]);
-echo "<div id='modal-content-consulta'></div>";
-Modal::end();
-
 Modal::begin([
     'title' => '<h4 id="modal-title"></h4>',
     'id' => 'modal-general',

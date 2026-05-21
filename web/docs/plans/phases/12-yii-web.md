@@ -103,6 +103,10 @@ Tras retirar MVC `Consulta*`, las URLs en `conf[].url` (`consulta-sintomas/creat
 | Auditoría | `php yii encounter-definition/audit-workflow-urls` |
 | Aplicar sin migrar | `php yii encounter-definition/sanitize-workflow-urls` (`--dryRun=1` primero) |
 
+## Código muerto
+
+Ver auditoría detallada: [12-dead-code-audit.md](./12-dead-code-audit.md).
+
 ## Siguiente paso
 
 Cierre del programa: `MIGRATION_STATUS` completo y release notes.

@@ -154,16 +154,6 @@ $this->registerJsFile(
 <?php
 
 Modal::begin([
-    'title' => '',
-    'id' => 'modal-consulta',
-    'size' => 'modal-xl',
-    'clientOptions' => ['backdrop' => 'static', 'keyboard' => false]
-]);
-echo "<div id='modal-content-consulta'></div>";
-Modal::end();
-
-
-Modal::begin([
     'title' => '<h4 id="modal-title"></h4>',
     'id' => 'modal-general',
     'size' => 'modal-xl',
@@ -198,13 +188,6 @@ endif;*/
 
 <?php
 Modal::begin([
-    'title' => 'Ver detalle: ',
-    'id' => 'modal_detail_consulta',
-    'size' => Modal::SIZE_EXTRA_LARGE,
-]);
-Modal::end();
-
-Modal::begin([
     'title' => 'Historial de Vacunas',
     'id' => 'modal-vacunas',
     'size' => Modal::SIZE_EXTRA_LARGE,
@@ -219,8 +202,6 @@ Modal::begin([
 ]);
 echo "<div id='modal-signos-vitales-content'></div>";
 Modal::end();
-
-// El manejo del modal de detalle de consulta ahora está en modal-consulta.js
 ?>
 
 <script>

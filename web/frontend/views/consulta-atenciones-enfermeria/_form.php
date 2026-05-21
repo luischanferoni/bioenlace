@@ -265,6 +265,7 @@ use yii\helpers\Url;
 
 <?php
 $headerMenu = $modelConsulta->getHeader();
-$header = "$('#modal-consulta-label').html('" . $headerMenu . "')";
-$this->registerJs($header);
+$this->registerJs(
+    "$('#modal-general .modal-title, #modal-title').first().html(" . json_encode($headerMenu) . ");"
+);
 ?>

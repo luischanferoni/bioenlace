@@ -63,7 +63,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                 ' Atender',
                             $urlSiguiente,
                             [
-                                'class' => 'atender modal-consulta me-2 btn btn-warning rounded-pill mt-2',
+                                'class' => 'me-2 btn btn-warning rounded-pill mt-2',
                                 'data-bs-toggle' => 'tooltip',
                                 'data-bs-placement' => 'top',
                                 'data-bs-original-title' => 'Atender Paciente',
@@ -256,14 +256,3 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php } ?>
 </div>
 
-
-
-<?php
-Modal::begin([
-    'title' => '<h4 id="modal-title"></h4>',
-    'id' => 'modal-consulta',
-    'size' => 'modal-xl',
-    'clientOptions' => ['backdrop' => 'static', 'keyboard' => false]
-]);
-echo "<div id='modal-content-consulta'></div>";
-Modal::end();

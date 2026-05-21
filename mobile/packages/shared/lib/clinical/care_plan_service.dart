@@ -59,4 +59,43 @@ class CarePlanService {
       };
     }
   }
+
+  /// Detalle de un plan (`GET /clinical/care-plans/<id>`). Paciente recibe resumen con indicaciones.
+  Future<Map<String, dynamic>> fetchById(int id) async {
+    if (id <= 0) {
+      return {'success': false, 'data': null, 'message': 'Plan inválido'};
+    }
+    try {
+      final token = await _effectiveToken();
+      final uri = Uri.parse('${AppConfig.apiUrl}/clinical/care-plans/$id');
+      final response = await http
+          .get(
+            uri,
+            headers: AppConfig.jsonHeaders(
+              bearerToken: token,
+              appClient: 'paciente-flutter',
+            ),
+          )
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+
+      final decoded = json.decode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return {'success': false, 'data': null, 'message': 'Respuesta inválida'};
+      }
+
+      if (response.statusCode == 200 && decoded['success'] == true) {
+        final raw = decoded['data'];
+        final data = raw is Map ? Map<String, dynamic>.from(raw) : null;
+        return {'success': true, 'data': data, 'message': decoded['message']};
+      }
+
+      return {
+        'success': false,
+        'data': null,
+        'message': decoded['message'] ?? 'No se pudo cargar el tratamiento',
+      };
+    } catch (e) {
+      return {'success': false, 'data': null, 'message': e.toString()};
+    }
+  }
 }

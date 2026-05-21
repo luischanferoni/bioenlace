@@ -6,6 +6,7 @@ use common\components\Clinical\Dto\CarePlanActivityDto;
 use common\components\Clinical\Dto\CarePlanDto;
 use common\components\Clinical\Enum\CarePlanActivityKind;
 use common\components\Clinical\Enum\CarePlanCategory;
+use common\components\Clinical\Enum\CarePlanStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;
@@ -32,15 +33,29 @@ final class CarePlanPresentationService
         CarePlanCategory::OTHER => 'Tratamiento',
     ];
 
+    private static array $statusLabels = [
+        CarePlanStatus::DRAFT => 'Borrador',
+        CarePlanStatus::ACTIVE => 'Activo',
+        CarePlanStatus::ON_HOLD => 'En pausa',
+        CarePlanStatus::REVOKED => 'Revocado',
+        CarePlanStatus::COMPLETED => 'Completado',
+        CarePlanStatus::ENTERED_IN_ERROR => 'Con error',
+        CarePlanStatus::UNKNOWN => 'Desconocido',
+    ];
+
     /**
      * @return array<string, mixed>
      */
-    public function toPatientSummary(CarePlan $plan, bool $withActivities = true): array
+    public function toPatientSummary(CarePlan $plan, bool $withActivities = true, ?int $activityLimit = 5): array
     {
         $base = CarePlanDto::fromModel($plan, $withActivities)->toArray();
         $base['categoryLabel'] = self::$categoryLabels[$plan->category] ?? $plan->category;
+        $base['statusLabel'] = self::$statusLabels[$plan->status] ?? $plan->status;
+        $base['title'] = $plan->title !== null && $plan->title !== '' ? (string) $plan->title : null;
+        $base['description'] = $plan->description !== null && $plan->description !== '' ? (string) $plan->description : null;
+        $base['periodStart'] = $plan->period_start;
         if ($withActivities) {
-            $base['activitySummaries'] = $this->summarizeActivities($plan);
+            $base['activitySummaries'] = $this->summarizeActivities($plan, $activityLimit);
         }
 
         return $base;
@@ -49,13 +64,15 @@ final class CarePlanPresentationService
     /**
      * @return list<string>
      */
-    private function summarizeActivities(CarePlan $plan): array
+    private function summarizeActivities(CarePlan $plan, ?int $limit = 5): array
     {
-        $activities = CarePlanActivity::find()
+        $query = CarePlanActivity::find()
             ->where(['care_plan_id' => $plan->id])
-            ->orderBy(['sort_order' => SORT_ASC])
-            ->limit(5)
-            ->all();
+            ->orderBy(['sort_order' => SORT_ASC]);
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+        $activities = $query->all();
 
         $lines = [];
         foreach ($activities as $activity) {

@@ -147,10 +147,15 @@ class CarePlanController extends BaseController
             return $err;
         }
 
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $data = $idPersona > 0 && (int) $plan->subject_persona_id === $idPersona
+            ? $this->presentation->toPatientSummary($plan, true, null)
+            : CarePlanDto::fromModel($plan, true)->toArray();
+
         return [
             'success' => true,
             'message' => 'Care plan',
-            'data' => CarePlanDto::fromModel($plan, true)->toArray(),
+            'data' => $data,
         ];
     }
 

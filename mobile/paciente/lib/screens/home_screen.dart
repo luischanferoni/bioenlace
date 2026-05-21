@@ -3,6 +3,8 @@ import 'package:shared/shared.dart';
 
 import '../services/turnos_service.dart';
 import '../utils/turno_resolucion_utils.dart';
+import 'care_plan_detail_screen.dart';
+import 'care_plans_list_screen.dart';
 import 'chat_motivos_screen.dart';
 
 /// Proximidad de un turno respecto al día actual (sólo fecha, sin hora).
@@ -567,6 +569,10 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       children: [
         _buildHeaderSaludo(context),
+        if (_enResolucion.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.lg),
+          _buildEnResolucionBanner(context),
+        ],
         if (_carePlansActivos.isNotEmpty || _loadingCarePlans) ...[
           BioSpacing.gapH(BioSpacing.lg),
           _buildTratamientoCard(context),
@@ -654,6 +660,73 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _abrirDetalleCarePlan(Map<String, dynamic> plan) {
+    final id = CarePlanUi.idFromMap(plan);
+    if (id == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CarePlanDetailScreen(
+          planId: id,
+          authToken: widget.authToken,
+          initialSummary: plan,
+        ),
+      ),
+    );
+  }
+
+  void _abrirListaCarePlans() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CarePlansListScreen(
+          plans: List<Map<String, dynamic>>.from(_carePlansActivos),
+          authToken: widget.authToken,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnResolucionBanner(BuildContext context) {
+    final turno = _enResolucion.first;
+    final fecha = _fechaAmigable(turno['fecha']?.toString());
+    final hora = _horaSinSegundos(turno['hora']?.toString());
+
+    return BioCard.intent(
+      intent: UiIntent.warning,
+      onTap: widget.onResolverTurno != null ? () => widget.onResolverTurno!(turno) : null,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_outlined, color: IntentPalette.of(UiIntent.warning).base),
+          BioSpacing.gapW(BioSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Turno en resolución', style: BioTypography.title),
+                BioSpacing.gapH(BioSpacing.xs),
+                Text(
+                  '$fecha · $hora',
+                  style: BioTypography.bodySm,
+                ),
+                if (widget.onResolverTurno != null) ...[
+                  BioSpacing.gapH(BioSpacing.sm),
+                  Text(
+                    'Tocá para continuar',
+                    style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (widget.onResolverTurno != null)
+            Icon(Icons.chevron_right, color: context.bio.textMuted),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTratamientoCard(BuildContext context) {
     if (_loadingCarePlans && _carePlansActivos.isEmpty) {
       return const BioCard(
@@ -671,28 +744,35 @@ class HomeScreenState extends State<HomeScreen> {
     }
 
     final plan = _carePlansActivos.first;
-    final label = plan['categoryLabel']?.toString() ?? 'Tu tratamiento';
-    final summaries = plan['activitySummaries'];
-    final lines = summaries is List
-        ? summaries.map((e) => e.toString()).where((s) => s.isNotEmpty).take(3).toList()
-        : <String>[];
+    final status = plan['status']?.toString();
+    final intent = CarePlanUi.intentForStatus(status);
+    final lines = CarePlanUi.activitySummaries(plan, max: 3);
+    final varios = _carePlansActivos.length > 1;
 
     return BioCard.intent(
-      intent: UiIntent.info,
+      intent: intent,
+      onTap: () => _abrirDetalleCarePlan(plan),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.medical_services_outlined, color: context.bio.textMuted, size: 22),
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
                 child: Text('Tu tratamiento', style: BioTypography.h3),
               ),
+              BioBadge(
+                label: CarePlanUi.statusLabel(plan),
+                intent: intent,
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              Icon(Icons.chevron_right, color: context.bio.textMuted, size: 22),
             ],
           ),
           BioSpacing.gapH(BioSpacing.xs),
-          Text(label, style: BioTypography.title),
+          Text(CarePlanUi.categoryLabel(plan), style: BioTypography.title),
           if (lines.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
             ...lines.map(
@@ -702,10 +782,22 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-          if (_carePlansActivos.length > 1) ...[
+          if (varios) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: BioButton(
+                label: 'Ver todos (${_carePlansActivos.length})',
+                intent: UiIntent.neutral,
+                variant: BioButtonVariant.soft,
+                size: BioButtonSize.sm,
+                onPressed: _abrirListaCarePlans,
+              ),
+            ),
+          ] else ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
-              '+${_carePlansActivos.length - 1} plan${_carePlansActivos.length > 2 ? 'es' : ''} más',
+              'Ver detalle',
               style: BioTypography.caption.copyWith(color: context.bio.textMuted),
             ),
           ],

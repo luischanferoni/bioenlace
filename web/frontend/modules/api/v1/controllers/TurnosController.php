@@ -1007,10 +1007,10 @@ class TurnosController extends BaseController
      * - id_efector (opcional; si falta, usa sesión)
      * - id_profesional_efector_servicio (opcional)
      * - limite, franja_tarde_desde (opcionales; defaults `turnosPaciente`)
+     * - fecha (opcional, `Y-m-d`): solo horarios de ese día (paso 2 del flujo asistente)
      * - restricciones (JSON array; mismo formato que {@see TurnoSlotFinder::findAvailableSlots})
      *
-     * Nota: la búsqueda siempre inicia desde la fecha actual y usa max_dias de configuración;
-     * `fecha_desde` y `max_dias` del cliente se ignoran para mantener comportamiento consistente.
+     * Sin `fecha`: búsqueda desde hoy y `max_dias` de configuración. Con `fecha`: un solo día.
      *
      * @action_name Listar horarios disponibles (paciente)
      * @entity Turnos
@@ -1031,100 +1031,17 @@ class TurnosController extends BaseController
             }
         );
 
-        // Para widgets/autocomplete: devolver payload plano (no ui_definition) cuando el cliente lo pide explícitamente.
         $raw = $req->get('raw') ?: $req->post('raw');
         $wantsRaw = $raw === '1' || $raw === 1 || $raw === true;
 
-        // UI JSON inline: varios bloques `list` (día + franja), ver {@see TurnoSlotOfferUiPresenter}.
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
-            $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
-            if (!$idServicio) {
-                throw new BadRequestHttpException('id_servicio es obligatorio');
-            }
-            $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
-            if (!$idEfector) {
-                $idEfector = Yii::$app->user->getIdEfector();
-            }
-            if (!$idEfector) {
-                throw new BadRequestHttpException('No se pudo determinar id_efector');
-            }
-
-            $defaultsSlots = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
-            $criteria = [
-                'id_servicio' => (int) $idServicio,
-                'id_efector' => (int) $idEfector,
-                'fecha_desde' => date('Y-m-d'),
-                'min_minutos_desde_ahora' => $defaultsSlots['min_minutos_desde_ahora'],
-            ];
-
-            $idPesReq = (int) ($req->get('id_profesional_efector_servicio') ?: $req->post('id_profesional_efector_servicio') ?: 0);
-
-            if ($idPesReq > 0) {
-                $criteria['id_profesional_efector_servicio'] = $idPesReq;
-            }
-
-            $restr = $req->get('restricciones') ?: $req->post('restricciones');
-            if (is_string($restr) && $restr !== '') {
-                $decoded = json_decode($restr, true);
-                if (is_array($decoded)) {
-                    $criteria['restricciones'] = $decoded;
-                }
-            } elseif (is_array($restr)) {
-                $criteria['restricciones'] = $restr;
-            }
-
-            $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
-            $p = Yii::$app->params['turnosPaciente'] ?? [];
-            $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
-
-            $limiteRaw = $req->get('limite') ?: $req->post('limite');
-            $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
-            $limite = max(1, min($maxCliente, $limite));
-
-            $maxDias = (int) $defaults['max_dias'];
-            $maxDias = max(1, min(90, $maxDias));
-
-            $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
-            $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
-            if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
-                $franja = $defaults['franja_tarde_desde'];
-            }
-
-            try {
-                $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
-            } catch (\InvalidArgumentException $e) {
-                throw new BadRequestHttpException($e->getMessage());
-            } catch (\RuntimeException $e) {
-                throw new BadRequestHttpException($e->getMessage());
-            }
-
+            $ctx = $this->groupedSlotsDisponiblesPacienteFromRequest($req, false);
             if ($wantsRaw) {
-                return array_merge(['success' => true], $grouped);
+                return array_merge(['success' => true], $ctx['grouped']);
             }
 
-            $anticipSvc = new TurnoAutogestionAnticipacionService();
-            $leyenda = $anticipSvc->textoLeyendaPoliticaAutogestionApp((int) $idEfector);
-            $legendBlock = [
-                'kind' => 'fields',
-                'id' => 'politica_autogestion',
-                'display_order' => -1,
-                'title' => 'Política de cancelación y reprogramación',
-                'hide_submit' => true,
-                'fields' => [
-                    [
-                        'name' => '_leyenda_politica_autogestion',
-                        'type' => 'textarea',
-                        'label' => '',
-                        'rows' => 6,
-                        'required' => false,
-                        'readonly' => true,
-                        'value' => $leyenda,
-                        'include_in_submit' => false,
-                    ],
-                ],
-            ];
-
-            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, (int) $idServicio);
+            $legendBlock = $this->bloqueLeyendaPoliticaAutogestionPaciente($ctx['id_efector']);
+            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($ctx['grouped'], $ctx['id_servicio']);
             if ($blocks !== []) {
                 $out['blocks'] = array_merge([$legendBlock], $blocks);
             } else {
@@ -1135,6 +1052,167 @@ class TurnosController extends BaseController
         }
 
         return $out;
+    }
+
+    /**
+     * Paso 1 autogestión: días con al menos un horario libre (lista corta).
+     *
+     * GET|POST /api/v1/turnos/slots-dias-disponibles-como-paciente
+     * Mismos parámetros base que {@see actionSlotsDisponiblesComoPaciente} (sin `fecha`).
+     *
+     * @action_name Elegir día con turnos (paciente)
+     * @entity Turnos
+     * @tags views, ui, slot, turnos, paciente
+     * @keywords elegir día turno, días disponibles, calendario turnos
+     */
+    public function actionSlotsDiasDisponiblesComoPaciente()
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'slots-dias-disponibles-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        $raw = $req->get('raw') ?: $req->post('raw');
+        $wantsRaw = $raw === '1' || $raw === 1 || $raw === true;
+
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && isset($out['ui_type']) && $out['ui_type'] === 'ui_json') {
+            $ctx = $this->groupedSlotsDisponiblesPacienteFromRequest($req, true);
+            if ($wantsRaw) {
+                return array_merge(['success' => true], $ctx['grouped']);
+            }
+
+            $legendBlock = $this->bloqueLeyendaPoliticaAutogestionPaciente($ctx['id_efector']);
+            $blocks = TurnoSlotOfferUiPresenter::buildDayPickerBlocks($ctx['grouped']);
+            if ($blocks !== []) {
+                $out['blocks'] = array_merge([$legendBlock], $blocks);
+            } else {
+                $out = UiScreenService::withListBlockItems($out, []);
+                $baseBlocks = isset($out['blocks']) && is_array($out['blocks']) ? $out['blocks'] : [];
+                $out['blocks'] = array_merge([$legendBlock], $baseBlocks);
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array{
+     *   grouped: array<string, mixed>,
+     *   id_servicio: int,
+     *   id_efector: int
+     * }
+     */
+    private function groupedSlotsDisponiblesPacienteFromRequest(\yii\web\Request $req, bool $ampliarLimiteParaDias): array
+    {
+        $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
+        if (!$idServicio) {
+            throw new BadRequestHttpException('id_servicio es obligatorio');
+        }
+        $idEfector = $req->get('id_efector') ?: $req->post('id_efector');
+        if (!$idEfector) {
+            $idEfector = Yii::$app->user->getIdEfector();
+        }
+        if (!$idEfector) {
+            throw new BadRequestHttpException('No se pudo determinar id_efector');
+        }
+
+        $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $criteria = [
+            'id_servicio' => (int) $idServicio,
+            'id_efector' => (int) $idEfector,
+            'fecha_desde' => date('Y-m-d'),
+            'min_minutos_desde_ahora' => $defaults['min_minutos_desde_ahora'],
+        ];
+
+        $fechaFiltro = trim((string) ($req->get('fecha') ?: $req->post('fecha') ?: ''));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaFiltro) === 1) {
+            $criteria['fecha_desde'] = $fechaFiltro;
+        }
+
+        $idPesReq = (int) ($req->get('id_profesional_efector_servicio') ?: $req->post('id_profesional_efector_servicio') ?: 0);
+        if ($idPesReq > 0) {
+            $criteria['id_profesional_efector_servicio'] = $idPesReq;
+        }
+
+        $restr = $req->get('restricciones') ?: $req->post('restricciones');
+        if (is_string($restr) && $restr !== '') {
+            $decoded = json_decode($restr, true);
+            if (is_array($decoded)) {
+                $criteria['restricciones'] = $decoded;
+            }
+        } elseif (is_array($restr)) {
+            $criteria['restricciones'] = $restr;
+        }
+
+        $p = Yii::$app->params['turnosPaciente'] ?? [];
+        $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
+
+        $limiteRaw = $req->get('limite') ?: $req->post('limite');
+        $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
+        $limite = max(1, min($maxCliente, $limite));
+
+        $maxDias = (int) $defaults['max_dias'];
+        $maxDias = max(1, min(90, $maxDias));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaFiltro) === 1) {
+            $maxDias = 1;
+        }
+
+        if ($ampliarLimiteParaDias) {
+            $limite = min($maxCliente, max($limite, $maxDias * 24));
+        }
+
+        $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
+        $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
+        if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
+            $franja = $defaults['franja_tarde_desde'];
+        }
+
+        try {
+            $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        } catch (\RuntimeException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        return [
+            'grouped' => $grouped,
+            'id_servicio' => (int) $idServicio,
+            'id_efector' => (int) $idEfector,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function bloqueLeyendaPoliticaAutogestionPaciente(int $idEfector): array
+    {
+        $anticipSvc = new TurnoAutogestionAnticipacionService();
+        $leyenda = $anticipSvc->textoLeyendaPoliticaAutogestionApp($idEfector);
+
+        return [
+            'kind' => 'fields',
+            'id' => 'politica_autogestion',
+            'display_order' => -1,
+            'title' => 'Política de cancelación y reprogramación',
+            'hide_submit' => true,
+            'fields' => [
+                [
+                    'name' => '_leyenda_politica_autogestion',
+                    'type' => 'textarea',
+                    'label' => '',
+                    'rows' => 6,
+                    'required' => false,
+                    'readonly' => true,
+                    'value' => $leyenda,
+                    'include_in_submit' => false,
+                ],
+            ],
+        ];
     }
 
     /**

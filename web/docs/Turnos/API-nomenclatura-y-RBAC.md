@@ -27,10 +27,13 @@ Documento de referencia para convenciones de nombres, URLs públicas y permisos 
 
 ## Oferta de slots (paciente)
 
-- **URL:** `GET|POST /api/v1/turnos/slots-disponibles-como-paciente`
-- **Permiso webvimark:** `/api/turnos/slots-disponibles-como-paciente` (registrar y asignar al rol paciente u otros que correspondan).
+- **Paso 1 — días:** `GET|POST /api/v1/turnos/slots-dias-disponibles-como-paciente` — un bloque `list` con un ítem por fecha (`draft_field`: `fecha_turno`). Permiso: `/api/turnos/slots-dias-disponibles-como-paciente` (hereda roles de `slots-disponibles-como-paciente`).
+- **Paso 2 — horarios:** `GET|POST /api/v1/turnos/slots-disponibles-como-paciente` — query/body **`fecha`** (`Y-m-d`, del paso 1) limita a ese día; sin `fecha`, comportamiento histórico (varios días hasta el límite de slots).
+- **Permiso horarios:** `/api/turnos/slots-disponibles-como-paciente` (registrar y asignar al rol paciente u otros que correspondan).
+- **Flujo asistente:** intent `turnos.crear-como-paciente` → subintents `select_dia` → `select_slot`.
 - **Límites por defecto:** clave `turnosPaciente` en `common/config/params.php` (`slots_oferta_max`, `slots_busqueda_max_dias`, `franja_tarde_desde`, `slots_oferta_max_cliente`).
-- **UI JSON:** el servidor puede devolver **varios bloques** `kind: list` (uno por día y franja). Cada bloque tiene `title` (ej. `Hoy · por la mañana`, `jueves 15/05 · por la tarde`) e `items` con `id` = token `pes:…`, `label` = hora (`HH:MM`) y `meta` compacta (`fecha`, `hora`, `id_profesional_efector_servicio`, `franja`; `servicio` solo si difiere del `id_servicio` pedido). La plantilla base está en `slots-disponibles-como-paciente.json` (sin `chips`; el listado se arma en runtime).
+- **UI JSON horarios:** varios bloques `kind: list` (día + franja: `Hoy · por la mañana`, etc.). `id` = token `pes:…`, `label` = `HH:MM`. Plantilla: `scheduling/turnos/slots-disponibles-como-paciente.json`.
+- **UI JSON días:** plantilla `scheduling/turnos/slots-dias-disponibles-como-paciente.json`; ítems `id`/`label` = fecha amigable (`Hoy`, `Mañana`, `lunes 15/05`).
 - **`slot_id` canónico (4 partes):** `pes:{id_profesional_efector_servicio}|{fecha}|{hora}|{intervalo_minutos}` — ver [agenda-intervalo-y-reservas.md](./agenda-intervalo-y-reservas.md). Compat: 3 partes (intervalo desde versión vigente).
 
 ## Configurar agenda (staff / asistente)

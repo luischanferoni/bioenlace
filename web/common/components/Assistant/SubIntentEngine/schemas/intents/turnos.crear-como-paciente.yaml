@@ -15,12 +15,12 @@ intent_semantics:
   goal: >-
     Reservar un turno de atención seleccionando servicio, centro de salud, profesional y un horario disponible.
   how: >-
-    El flujo guía la selección de servicio → centro de salud (lista o cercano) → profesional → horario; al tener slot, se abre la pantalla de creación del turno (`flow_submit` del intent).
+    El flujo guía servicio → centro de salud (lista o cercano) → profesional → día con cupos → horario de ese día; al tener slot, se abre la creación del turno (`flow_submit`).
   preconditions:
     - El usuario puede autogestionar turnos.
     - Existe disponibilidad (slots) para el servicio/centro/profesional elegidos.
   constraints:
-    - Para ver horarios debe existir un profesional y un centro seleccionados.
+    - Para ver días/horarios debe existir un profesional y un centro seleccionados.
     - La opción “cercano” requiere geolocalización del cliente.
   outcome:
     - Turno creado/confirmado para el slot seleccionado.
@@ -31,6 +31,7 @@ intent_semantics:
 
 draft_keys_extra:
   - tipo_atencion
+  - fecha_turno
 
 subintents:
   - id: select_servicio
@@ -74,7 +75,7 @@ subintents:
       - draft.id_servicio_asignado
     provides:
       - draft.id_profesional_efector_servicio
-    next: select_slot
+    next: select_dia
     hint:
       entity: profesional
       match_property: nombre
@@ -84,10 +85,25 @@ subintents:
         id_efector: "draft.id_efector"
         id_servicio: "draft.id_servicio_asignado"
 
+  - id: select_dia
+    assistant_text: "Día"
+    requires:
+      - draft.id_profesional_efector_servicio
+    provides:
+      - draft.fecha_turno
+    next: select_slot
+    open_ui:
+      action_id: turnos.slots-dias-disponibles-como-paciente
+      params:
+        id_servicio: "draft.id_servicio_asignado"
+        id_efector: "draft.id_efector"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+
   - id: select_slot
     assistant_text: "Horario"
     requires:
       - draft.id_profesional_efector_servicio
+      - draft.fecha_turno
     provides:
       - draft.slot_id
     next: ""
@@ -97,6 +113,7 @@ subintents:
         id_servicio: "draft.id_servicio_asignado"
         id_efector: "draft.id_efector"
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        fecha: "draft.fecha_turno"
 
 flow_submit:
   action_id: turnos.crear-como-paciente

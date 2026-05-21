@@ -68,6 +68,62 @@ final class TurnoSlotOfferUiPresenter
     }
 
     /**
+     * Un solo bloque `list` para elegir día (paso previo a horarios).
+     *
+     * @param array{por_dia?: list<array{fecha?:string, manana?:list<mixed>, tarde?:list<mixed>}>} $grouped
+     * @return list<array<string, mixed>>
+     */
+    public static function buildDayPickerBlocks(array $grouped): array
+    {
+        $porDia = isset($grouped['por_dia']) && is_array($grouped['por_dia']) ? $grouped['por_dia'] : [];
+        usort($porDia, static function ($a, $b): int {
+            $fa = is_array($a) && isset($a['fecha']) ? (string) $a['fecha'] : '';
+            $fb = is_array($b) && isset($b['fecha']) ? (string) $b['fecha'] : '';
+
+            return strcmp($fa, $fb);
+        });
+
+        $items = [];
+        foreach ($porDia as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $fecha = isset($row['fecha']) ? (string) $row['fecha'] : '';
+            if ($fecha === '') {
+                continue;
+            }
+            $manana = isset($row['manana']) && is_array($row['manana']) ? $row['manana'] : [];
+            $tarde = isset($row['tarde']) && is_array($row['tarde']) ? $row['tarde'] : [];
+            if ($manana === [] && $tarde === []) {
+                continue;
+            }
+            $items[] = [
+                'id' => $fecha,
+                'label' => self::friendlyDayHeading($fecha),
+                'meta' => ['fecha' => $fecha],
+            ];
+        }
+
+        if ($items === []) {
+            return [];
+        }
+
+        return [
+            [
+                'kind' => 'list',
+                'id' => 'dias-disponibles',
+                'display_order' => 0,
+                'title' => 'Elegí un día',
+                'selection' => ['mode' => 'single'],
+                'draft_field' => 'fecha_turno',
+                'item' => ['kind' => 'day', 'id_field' => 'id', 'label_field' => 'label'],
+                'presentation' => ['tile' => 'large', 'shape' => 'wide'],
+                'items' => $items,
+            ],
+        ];
+    }
+
+    /**
      * @param list<mixed> $slots
      * @return list<array<string, mixed>>
      */

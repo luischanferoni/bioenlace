@@ -1,0 +1,52 @@
+---
+description: Estructura de web/docs por dominio (README, overview, design, flows)
+globs: web/docs/**/*
+alwaysApply: false
+---
+
+# Documentación — estructura por dominio
+
+Raíz: `web/docs/`. Índice global: `web/docs/README.md`. Plantilla: `web/docs/_template/README.md`.
+
+## Árbol obligatorio por dominio
+
+Cada dominio de negocio vive en `web/docs/<dominio>/`:
+
+| Pieza | Archivo | Contenido |
+|-------|---------|-----------|
+| Índice | `README.md` | Tabla con enlaces a overview, design y cada flow |
+| Qué / para quién | `overview.md` | Qué es, objetivo, actores, alcance (in/out) |
+| Por qué | `design.md` | Decisiones de diseño, alternativas descartadas, diagrama opcional |
+| Cómo | `flows/<nombre>.md` | Pasos, mermaid/tablas, **anclas** (rutas API, métodos, servicios) |
+
+## Dónde va cada tema (dominios actuales)
+
+| Tema | Carpeta |
+|------|---------|
+| Turnos, agenda, RBAC turnos | `Turnos/` |
+| Chat, YAML intents, UI JSON, envelope | `asistente/` |
+| Migración FHIR / CarePlan | `plans/` (mantiene `PROGRAM.md`, `phases/`) |
+| PES, relaciones AR | `dominio/` |
+| Costos IA/infra | `costos/` |
+| Apps paciente/médico, registro | `producto/` |
+| Audio/texto, consulta, corrección, resumen IA | `captura-clinica/` |
+| GCP, anotaciones API, planes internos | `plataforma/` |
+| HIS brechas, quirófano legacy | `legacy/` (+ `legacy/his-completo/`) |
+| ADR transversales | `decisions/` (no duplicar en cada `design.md`) |
+
+## No crear en dominios
+
+- Carpetas sueltas `explanation/`, `use-cases/`, `interfaces.md` en la raíz del dominio.
+- Archivos `.md` sueltos en `web/docs/` (migrar al dominio o a `legacy/`).
+- Duplicar el mismo doc en raíz del dominio **y** en `flows/` (solo `flows/` para el detalle operativo).
+
+## Nuevo dominio
+
+1. Copiar estructura de `_template/`.
+2. Añadir fila en `web/docs/README.md`.
+3. Enlazar desde README de dominios relacionados (máximo 1 salto).
+
+## Meta y archive
+
+- `restructure-phases/`: solo plan/estado de migración de docs, no documentación de producto.
+- `legacy/`: análisis histórico; **no** fuente de verdad operativa (el código y `plans/` mandan).

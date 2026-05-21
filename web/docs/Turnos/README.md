@@ -1,35 +1,33 @@
-# Documentación — Módulo Turnos
+# Turnos
 
-Esta carpeta describe flujos de negocio del **sistema de turnos** (agenda, estados, cancelaciones y extensiones previstas).
+Índice del dominio **agenda y turnos** (reserva, estados, autogestión, notificaciones).
 
-## Índice
+| Documento | Contenido |
+|-----------|-----------|
+| [overview.md](./overview.md) | Qué es, objetivo, actores |
+| [design.md](./design.md) | Por qué está armado así (API, PES, agenda versionada, oferta en dos pasos) |
 
-| Documento | Descripción |
-|-----------|-------------|
-| [Cancelación por el paciente](cancelacion-paciente.md) | Flujo cuando la baja corresponde al paciente (`CANCELADO_X_PACIENTE`). |
-| [Cancelación por el médico / efector](cancelacion-medico.md) | Flujo cuando la baja la realiza el profesional o el establecimiento (`CANCELADO_X_MEDICO`). |
-| [Política autogestión / cancelaciones](politica-cancelacion-autogestion.md) | Umbrales suave y moderada, liberación presencial/teléfono. |
-| [Notificaciones](confirmacion-y-recordatorios.md) | Push, cron, tokens, ubicación stub. |
-| [Sobreturno](sobreturno.md) | Turno urgente y notificaciones de demora. |
-| [Cancelación masiva](cancelacion-masiva.md) | Por día, AdminEfector. |
-| [Solicitudes entre médicos](solicitudes-medicos.md) | Módulo `solicitud_rrhh` y modos. |
-| [Reprogramación UI](reprogramacion-ui.md) | Pantalla `turnos/reprogramar` y API. |
-| [Agenda versionada e intervalo](agenda-intervalo-y-reservas.md) | Grilla 15–60 min, versiones `vigente_desde`, `slot_id`, solapamiento, conflictos y preview. |
-| [Intents asistente (turnos/agenda)](intents-turnos.md) | Matriz intent ↔ API, flujos paciente y staff. |
+## Flujos
 
-## Referencias técnicas en el código
+| Flujo | Archivo |
+|-------|---------|
+| Reserva autogestión (asistente / app) | [flows/intents-turnos.md](./flows/intents-turnos.md) (intent `turnos.crear-como-paciente`) |
+| Agenda, intervalo, `slot_id`, conflictos | [flows/agenda-intervalo-y-reservas.md](./flows/agenda-intervalo-y-reservas.md) |
+| Rutas API y permisos | [flows/API-nomenclatura-y-RBAC.md](./flows/API-nomenclatura-y-RBAC.md) |
+| Cancelación paciente | [flows/cancelacion-paciente.md](./flows/cancelacion-paciente.md) |
+| Cancelación médico/efector | [flows/cancelacion-medico.md](./flows/cancelacion-medico.md) |
+| Política autogestión | [flows/politica-cancelacion-autogestion.md](./flows/politica-cancelacion-autogestion.md) |
+| Reprogramación | [flows/reprogramacion-ui.md](./flows/reprogramacion-ui.md) |
+| Notificaciones push | [flows/notificaciones-push.md](./flows/notificaciones-push.md) |
+| Sobreturno | [flows/sobreturno.md](./flows/sobreturno.md) |
+| Cancelación masiva | [flows/cancelacion-masiva.md](./flows/cancelacion-masiva.md) |
+| Solicitudes entre médicos | [flows/solicitudes-medicos.md](./flows/solicitudes-medicos.md) |
 
-- Modelo: `common\models\Turno` — constantes `ESTADO_CANCELADO`, `ESTADO_MOTIVO_CANCELADO_PACIENTE`, `ESTADO_MOTIVO_CANCELADO_MEDICO`.
-- Cancelación HTTP (frontend): `frontend\controllers\TurnosController::actionDelete`.
-- UI calendario: `frontend\views\turnos\_calendario.php`, `frontend\web\js\turnos_calendario.js`.
-- Búsqueda de slots: `common\components\Scheduling\Service\TurnoSlotFinder` (versión de agenda por fecha).
-- Agenda versionada / intervalo: `ProfesionalEfectorServicioAgendaVersionService`, `AgendaSlotEngine`, `TurnoSlotOccupancyService`, `TurnoReservaSlotService` — ver [agenda-intervalo-y-reservas.md](./agenda-intervalo-y-reservas.md).
-- API v1 turnos: `frontend\modules\api\v1\controllers\TurnosController` — convención y RBAC: **[API-nomenclatura-y-RBAC.md](./API-nomenclatura-y-RBAC.md)** (tabla canónica en el docblock del controlador).
-- Servicios: `common\components\Scheduling\Service\*`, cron `php yii turno-notificacion/run`.
-- Config por efector (backend): `backend\controllers\EfectoresController::actionTurnosIntegralConfig`.
+## Anclas en código (sin abrir los flujos)
 
-## Implementación actual
-
-- Ciclo de vida: `TurnoLifecycleService`, notificaciones en `turno_notificacion_programada`, push vía `Services\Push\PushNotificationSender` (`fcmPush` en params).
-- Política autogestión: `TurnoCancellationPolicyService` + tabla `persona_efector_autogestion_liberacion`.
-- Pendiente de producto: oferta automática de huecos a derivaciones `EN_ESPERA` (no implementado en esta entrega).
+| Rol | Ubicación |
+|-----|-----------|
+| API v1 | `TurnosController`, `ProfesionalAgendaController` |
+| Servicios | `common/components/Scheduling/Service/*` |
+| Modelo | `common/models/Turno`, `Scheduling/Turno` |
+| Intents YAML | `Assistant/SubIntentEngine/schemas/intents/turnos.*.yaml` |

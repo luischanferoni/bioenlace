@@ -10,7 +10,7 @@ use yii\helpers\Console;
  * Generación de resúmenes con IA del historial del paciente (texto base y resúmenes por servicio).
  *
  * Pensado para ejecutarse desde cron. Por ahora es un stub; la lógica se implementará según
- * el plan en web/docs/RESUMEN_TIMELINE_PACIENTE_IA.md (texto base, sensibilidad, resumen por servicio).
+ * el plan en web/docs/captura-clinica/flows/timeline-paciente-ia.md (texto base, sensibilidad, resumen por servicio).
  *
  * Uso:
  *   php yii resumen-paciente/generar              # Procesar todos los pacientes/servicios que apliquen
@@ -55,7 +55,7 @@ class ResumenPacienteController extends Controller
     public function actionGenerar()
     {
         $this->stdout("Resumen paciente (stub) - preparado para cron.\n", Console::FG_YELLOW);
-        $this->stdout("Ver plan: web/docs/RESUMEN_TIMELINE_PACIENTE_IA.md\n");
+        $this->stdout("Ver plan: web/docs/captura-clinica/flows/timeline-paciente-ia.md\n");
         if ($this->personaId !== null) {
             $this->stdout("Persona ID: {$this->personaId}\n");
         }

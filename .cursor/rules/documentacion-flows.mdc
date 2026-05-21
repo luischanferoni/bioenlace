@@ -1,0 +1,46 @@
+---
+description: Plantilla obligatoria para archivos en web/docs/**/flows/
+globs: web/docs/**/flows/**/*.md
+alwaysApply: false
+---
+
+# Documentación — archivos en `flows/`
+
+Cada `flows/<nombre>.md` describe **un flujo o contrato concreto** (reserva paciente, envelope v3, RBAC turnos, etc.).
+
+## Cabecera obligatoria (orden)
+
+```markdown
+# Título del flujo
+
+## Objetivo
+Una o dos frases.
+
+## Actores
+- Rol o sistema (bullet cortos).
+
+## Anclas
+| Paso / área | Método, ruta o componente |
+|-------------|---------------------------|
+| ... | TurnosController::actionX, POST /api/v1/... |
+
+---
+(cuerpo del documento)
+```
+
+Opcional según complejidad: `## Secuencia` (pasos numerados) antes del cuerpo detallado.
+
+## Cuerpo
+
+- Diagramas **mermaid** o tablas para pasos largos.
+- Enlazar otros flows con rutas relativas (`./cancelacion-paciente.md`, `../../asistente/flows/...`).
+- Contratos (YAML, UI JSON): el cuerpo puede ser extenso; la cabecera sigue siendo obligatoria.
+
+## Nombres de archivo
+
+- kebab-case en español o inglés técnico: `cancelacion-paciente.md`, `intents-turnos.md`.
+- Un flujo por archivo; no mezclar dos casos de uso no relacionados.
+
+## Al cambiar código
+
+Si cambia ruta API, `intent_id` o servicio principal, actualizar **Anclas** y cualquier tabla del cuerpo en el mismo PR.

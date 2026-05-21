@@ -1,13 +1,11 @@
-# Planes de migración clínica (FHIR + CarePlan)
+# Programa clínico FHIR + CarePlan
 
-Documentación del **programa de rediseño** del dominio clínico hacia un modelo alineado a HL7 FHIR, con **CarePlan** como eje del tratamiento activo del paciente.
-
-| Documento | Uso |
-|-----------|-----|
-| [PROGRAM.md](./PROGRAM.md) | Visión, arquitectura objetivo, índice de fases, decisiones cerradas |
-| [MIGRATION_STATUS.md](./MIGRATION_STATUS.md) | Tablero vivo: recurso FHIR ↔ tabla ↔ clase ↔ estado |
-| [phases/](./phases/) | Un plan ejecutable por etapa (alcance, DoD, riesgos) |
-
-**Canal de producto:** API v1 (`frontend/modules/api/v1`) + clientes (Flutter, SPA). El frontend Yii clásico (`frontend/controllers`, `frontend/views/consultas`) se trata en la fase final u opcional.
-
-**Fuera de alcance del programa (por ahora):** interoperabilidad export (bundles receta digital), perfiles regulatorios externos.
+| Documento | Contenido |
+|-----------|-----------|
+| [overview.md](./overview.md) | Qué es el programa, objetivo, alcance |
+| [design.md](./design.md) | Por qué greenfield, API clinical, decisiones |
+| [PROGRAM.md](./PROGRAM.md) | Visión extendida e índice de fases |
+| [MIGRATION_STATUS.md](./MIGRATION_STATUS.md) | Tablero vivo FHIR ↔ tabla ↔ estado |
+| [DECISIONS.md](./DECISIONS.md) | Decisiones cerradas (registro global) |
+| [CARE_PLAN_CATEGORIES.md](./CARE_PLAN_CATEGORIES.md) | Categorías de care plan |
+| [phases/](./phases/) | Plan ejecutable por fase |

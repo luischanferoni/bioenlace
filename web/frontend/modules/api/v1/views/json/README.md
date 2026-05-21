@@ -15,4 +15,4 @@ Las rutas HTTP públicas **no cambian** (ej. `GET /api/v1/turnos/crear-como-paci
 
 Convención en código: `handleScreen('<entidad>', '<accion>', …)` — el manager resuelve `{dominio}/{entidad}/{accion}.json`.
 
-Contrato: [`docs/asistente/UI_JSON_DESCRIPTOR_CONTRACT.md`](../../../../docs/asistente/UI_JSON_DESCRIPTOR_CONTRACT.md).
+Contrato: [`docs/asistente/flows/UI_JSON_DESCRIPTOR_CONTRACT.md`](../../../../docs/asistente/flows/UI_JSON_DESCRIPTOR_CONTRACT.md).

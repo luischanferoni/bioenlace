@@ -25,4 +25,4 @@ La conversación se guía por:
   - `turnos.crear-para-paciente-flow.yaml`, `turnos.cancelar-para-paciente-flow.yaml`, `turnos.no-se-presento-flow.yaml`, `turnos.crear-sobreturno-flow.yaml`
   - `turnos.consultar-ocupacion-dia-flow.yaml`, `turnos.ver-agenda-dia-profesional-flow.yaml`
   - `agenda.crear-profesional-flow.yaml`, `agenda.editar-agenda-flow.yaml`, `agenda.resolver-conflictos-staff-flow.yaml`
-  - Matriz intent ↔ API: `web/docs/Turnos/intents-turnos.md`
+  - Matriz intent ↔ API: `web/docs/Turnos/flows/intents-turnos.md`

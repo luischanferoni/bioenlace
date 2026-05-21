@@ -4,7 +4,7 @@ use yii\db\Migration;
 
 /**
  * Tablas para resumen con IA del historial del paciente (texto base y resumen por servicio).
- * Ver plan: web/docs/RESUMEN_TIMELINE_PACIENTE_IA.md
+ * Ver plan: web/docs/captura-clinica/flows/timeline-paciente-ia.md
  */
 class m250305_000002_resumen_paciente_tables extends Migration
 {

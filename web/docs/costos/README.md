@@ -1,41 +1,21 @@
-# Costos – Índice y enfoque
+# Costos IA e infraestructura
 
-Esta carpeta organiza los costos en **dos ejes** para poder ahorrar al máximo:
-
-- **[Infra](infra/costos.md)** – Coste cuando la IA y la carga corren en **nuestra infra** (GPU: RunPod, AWS, GCP).
-- **[API](api/costos.md)** – Coste cuando usamos **APIs externas** (Vertex/Gemini, STT, Vision, videollamadas) y cómo reducirlo.
-
-Cada eje tiene su documento de **costos reales** y su documento de **estrategias de reducción**.
-
----
-
-## Estructura
+Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs externas**.
 
 | Documento | Contenido |
 |-----------|-----------|
-| [infra/costos.md](infra/costos.md) | Planes GPU, $/consulta, $/médico/mes; cargas adicionales de IA en nuestra infra (pre-consulta, onboarding, **comunicación previa al turno**). |
-| [infra/estrategias.md](infra/estrategias.md) | Cómo reducir coste de infra: elección de plan (Spot/Preemptible), optimizaciones de código, economías de escala. |
-| [api/costos.md](api/costos.md) | Precios de referencia (Vertex, STT, Vision, video); coste por capacidad cuando se usa API; **comunicación previa al turno** incluida. |
-| [api/estrategias.md](api/estrategias.md) | Cómo reducir coste vía API: modelo/proveedor, caché, tokens, uso condicional; estrategias por capacidad (pre-consulta, pre-turno, onboarding, medios, video). |
+| [overview.md](./overview.md) | Objetivo del análisis de costos |
+| [design.md](./design.md) | Por qué se separan ejes infra vs API |
 
----
+## Flujos y referencias (`flows/`)
 
-## Comunicación previa al turno (nueva partida)
+| Tema | Archivo |
+|------|---------|
+| Costos infra (GPU) | [flows/infra_costos.md](./flows/infra_costos.md) |
+| Estrategias infra | [flows/infra_estrategias.md](./flows/infra_estrategias.md) |
+| Costos / estrategias API | [flows/costos.md](./flows/costos.md), [flows/estrategias.md](./flows/estrategias.md) |
+| Pruebas simuladas | [flows/pruebas_costos_ia.md](./flows/pruebas_costos_ia.md) |
 
-El chat/bot debe **guiar al paciente en la comunicación previa a sacar el turno**. Es decir, hay una **conversación previa al posible turno** (pre-turno) que puede terminar en turno o no, y que **no estaba contemplada** en los costos anteriores.
+## Relacionado
 
-- Se documenta y presupuesta en [infra/costos.md](infra/costos.md) (si la IA corre en nuestra GPU) y en [api/costos.md](api/costos.md) (si la IA corre vía API).
-- Las estrategias para reducir su coste están en [api/estrategias.md](api/estrategias.md) (caché, reglas, menos % que llama a IA), y el efecto sobre carga de infra en [infra/estrategias.md](infra/estrategias.md).
-
----
-
-## Pruebas de costos de IA
-
-- [pruebas_costos_ia.md](pruebas_costos_ia.md) – Cómo definir conversaciones en archivos JSON, ejecutarlas por CLI o web (siempre con IA simulada) y leer el resumen de costos (evitadas vs simuladas).
-
----
-
-## Referencias
-
-- [CAPACIDADES_PACIENTE_MEDICO.md](../CAPACIDADES_PACIENTE_MEDICO.md) – Descripción de las capacidades.
-- [OPTIMIZACIONES_CODIGO.md](../OPTIMIZACIONES_CODIGO.md) – Optimizaciones desde el código.
+- [producto/flows/capacidades-paciente-medico.md](../producto/flows/capacidades-paciente-medico.md)

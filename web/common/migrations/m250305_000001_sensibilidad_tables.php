@@ -4,7 +4,7 @@ use yii\db\Migration;
 
 /**
  * Tablas para control de sensibilidad del resumen con IA (mapeo SNOMED → categoría, regla por categoría con "generalizar para [servicios]").
- * Ver plan: web/docs/RESUMEN_TIMELINE_PACIENTE_IA.md
+ * Ver plan: web/docs/captura-clinica/flows/timeline-paciente-ia.md
  * Regla: por categoría, una acción (generalizar|ocultar) y una lista de servicios que reciben esa acción; el resto ve completo.
  */
 class m250305_000001_sensibilidad_tables extends Migration

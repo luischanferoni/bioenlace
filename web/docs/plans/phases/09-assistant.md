@@ -14,7 +14,7 @@ Alinear el asistente con Encounter/CarePlan: drafts, entry points, catálogo de 
 - [x] `AppointmentReasonEntry`: API y persistencia por `encounter_id` (`consulta_id` alias en request/response).
 - [x] Draft: `AssistantDraftNormalizer` — `encounter_id` / `care_plan_id`; sin `intent_id` en draft; alias `id_consulta` → `encounter_id` (SubIntentEngine + IntentEngine).
 - [x] `ClinicalUiActionCatalog` + merge en `UiActionCatalog` (rutas `/api/clinical/...` con RBAC).
-- [x] YAML intents: `encounter_id` / `care_plan_id` en [YAML_INTENTS_CONTRACT.md](../../asistente/YAML_INTENTS_CONTRACT.md).
+- [x] YAML intents: `encounter_id` / `care_plan_id` en [YAML_INTENTS_CONTRACT.md](../../asistente/flows/YAML_INTENTS_CONTRACT.md).
 - [x] Canales: síntomas/malestar no abren menú de capacidades (`InformationalChannel` + `ChatPreprocessService::isClinicalSymptomContent` + prompt conversacional).
 
 ## Fuera de alcance (otras fases)

@@ -11,7 +11,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - `EntryPoints/ClinicalEncounter/`: captura clínica (`/api/v1/clinical/encounter/analizar|guardar`), sin preprocess del chat.
 - `Catalog/ClinicalUiActionCatalog.php`: acciones API clínicas en `UiActionCatalog` (RBAC `/api/clinical/...`).
 - `Service/AssistantDraftNormalizer.php`: `encounter_id`, `care_plan_id` en draft de flows.
-- Roadmap: `web/docs/asistente/ASSISTANT_ROADMAP.md`
+- Documentación: [web/docs/asistente/](../../docs/asistente/README.md) — roadmap en [flows/ASSISTANT_ROADMAP.md](../../docs/asistente/flows/ASSISTANT_ROADMAP.md)
 - `SubIntentEngine/`: motor conversacional *dentro* de un intent (YAML); incluye evaluación de **`business_rules`** (`pre_flow`) vía `IntentBusinessRules` antes de entrar al flow cuando el entrypoint es `IntentEngine`.
 - `FlowManifest/`: construye `flow_manifest` **en runtime** a partir del YAML (sin artefactos `ui_type=flow` en `views/json`).
 - `UiActions/`: discovery + RBAC + enriquecedores para construir `client_open` y resolver rutas permitidas.

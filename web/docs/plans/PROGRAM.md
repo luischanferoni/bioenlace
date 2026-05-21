@@ -140,5 +140,5 @@ Detalle de tablas: [MIGRATION_STATUS.md](./MIGRATION_STATUS.md).
 ## Referencias internas
 
 - [MIGRATION_STATUS.md](./MIGRATION_STATUS.md)
-- Asistente (contrato actual): [../asistente/ASSISTANT_ENVELOPE_CONTRACT.md](../asistente/ASSISTANT_ENVELOPE_CONTRACT.md)
+- Asistente (contrato actual): [../asistente/flows/ASSISTANT_ENVELOPE_CONTRACT.md](../asistente/flows/ASSISTANT_ENVELOPE_CONTRACT.md)
 - UI JSON: [../asistente/UI_JSON_DESCRIPTOR_CONTRACT.md](../asistente/UI_JSON_DESCRIPTOR_CONTRACT.md)

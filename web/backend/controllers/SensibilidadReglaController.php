@@ -13,7 +13,7 @@ use common\models\Servicio;
 
 /**
  * CRUD de reglas de sensibilidad (por categoría: acción + lista de servicios que la reciben).
- * Plan: web/docs/RESUMEN_TIMELINE_PACIENTE_IA.md
+ * Plan: web/docs/captura-clinica/flows/timeline-paciente-ia.md
  */
 class SensibilidadReglaController extends Controller
 {

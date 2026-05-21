@@ -1,0 +1,105 @@
+# Views embebibles (chat) — contrato v1
+
+## Objetivo
+
+Documentar el contrato v1 histórico de listados embebibles en chat (supersedido por `ui_json` + `blocks[]`).
+
+## Actores
+
+- Referencia para migración; implementación nueva usa [UI_JSON_DESCRIPTOR_CONTRACT.md](./UI_JSON_DESCRIPTOR_CONTRACT.md).
+
+## Anclas
+
+| Vigente | `UiDefinitionTemplateManager`, `POST /api/v1/asistente/enviar` |
+
+---
+
+> Deprecado (corte total): el contrato vigente está en `UI_JSON_DESCRIPTOR_CONTRACT.md` y modela todo como
+> `ui_type: ui_json` + `blocks[]` (sin `ui_meta.list`, sin `wizard/steps`).
+
+Este documento define el contrato para **views JSON embebibles** que se renderizan dentro del chat (web y Flutter).
+
+### 1. Objetivo
+
+Una view embebible es un descriptor JSON servido bajo `/api/v1/<entidad>/<accion>` que:
+
+- puede mostrar un **listado** de ítems seleccionables (cards/botones)
+- exige **confirmación obligatoria** antes de aplicar cambios al `draft`
+- al confirmar, produce un `draft_delta` (parcial) que el cliente aplica localmente y reenvía en el snapshot siguiente
+
+> Nota: no usamos el término “picker”. El patrón es un **listado** cuando el descriptor incluye `ui_meta.list`.
+
+### 2. Principios
+
+- El servidor (SubIntentEngine) es stateless: no guarda selección “pendiente”.
+- El cliente conserva:
+  - `draft`
+  - `pending_selection` (si aplica)
+  - `current_intent_id` y `current_subintent_id`
+- La confirmación es una interacción tipada (`confirm_selection`) que el cliente envía al backend junto al `selection_payload`.
+
+### 3. Shapes (request/response) — nivel asistente
+
+#### Request (wizard snapshot)
+
+```json
+{
+  "intent_id": "turnos.crear-como-paciente",
+  "subintent_id": "select_efector",
+  "draft": { "id_servicio": "12" },
+  "content": "cerca de casa",
+  "interaction": null
+}
+```
+
+#### Response (SubIntentEngine)
+
+```json
+{
+  "success": true,
+  "text": "Seleccioná un efector.",
+  "open_ui": {
+    "action_id": "efectores.elegir",
+    "client_open": {
+      "kind": "ui_json",
+      "api": { "route": "/api/v1/efectores/elegir", "method": "GET|POST" }
+    }
+  },
+  "draft_delta": {}
+}
+```
+
+### 4. Contrato de confirmación
+
+#### Interacción de confirmación (request)
+
+```json
+{
+  "interaction": {
+    "kind": "confirm_selection",
+    "decision": "confirm",
+    "selection": {
+      "id": "123",
+      "label": "Hospital Central"
+    }
+  }
+}
+```
+
+### 5. Patrón “listado” (nivel descriptor UI JSON)
+
+Cuando una view embebible es un listado, debe exponer en su descriptor `ui_meta.list`:
+
+```json
+{
+  "ui_meta": {
+    "list": {
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "draft_field": "id_efector",
+      "item": { "kind": "efector", "id_field": "id", "label_field": "nombre" }
+    }
+  }
+}
+```
+
+(Filtros tipo “chips” en el bloque `list` del descriptor ya no forman parte del contrato: los clientes actuales no los consumen; la segmentación va en el servidor, p. ej. varios bloques `list` con `title`.)

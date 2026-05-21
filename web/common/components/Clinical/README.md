@@ -10,8 +10,9 @@ Dominio FHIR clínico (Encounter, CarePlan, órdenes).
 | `Support/` | Metadatos JSON (`CarePlanProgramMeta`) |
 | `Service/` | Negocio sin HTTP (`CarePlanService`, `CarePlanLifecycleService`, `EncounterAccessService`, …) |
 | `Workflow/` | Flujos compuestos (`EncounterDocumentationService`) |
+| `Specialty/` | Odontología, oftalmología (Fase 7); ver [Specialty/README.md](Specialty/README.md) |
 
-Modelos AR: `common/models/Clinical/`.
+Modelos AR: `common/models/Clinical/` (`Procedure`, `Observation`, `VisionPrescription`, …).
 
 ## Uso
 

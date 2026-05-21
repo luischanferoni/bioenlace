@@ -94,6 +94,13 @@ Campos típicos por paso:
 
 El cliente obtiene tabs/rutas ya **derivadas** del YAML vía `flow_manifest.active_step` cuando aplica.
 
+## Identificadores clínicos (`encounter_id`, `care_plan_id`)
+
+- En **API v1** el encuentro clínico es `encounter_id` (tabla `encounter`). El alias **`id_consulta`** en respuestas de turnos/listados apunta al mismo valor numérico durante la transición de clientes.
+- En **draft** de flows de turnos/motivos, usar `draft.encounter_id` cuando el paso dependa de un encuentro ya creado (p. ej. cargar motivos pre-consulta). No confundir con `draft.id_turno` / `draft.id_turnos`.
+- **`care_plan_id`**: plan de tratamiento activo del paciente; listado paciente `GET /api/v1/clinical/care-plans/active`. Intents futuros «ver mi tratamiento» pueden fijar `intent_id` + navegación nativa sin flow YAML largo.
+- Captura clínica (staff): `POST /api/v1/clinical/encounter/analizar` y `…/guardar` con `encounter_id` o `id_persona` + `id_configuracion` (definición de encounter). Legacy `POST /consulta/*` → **410 Gone**.
+
 ## Parámetros en tabs (`params`)
 
 Mapa declarativo en YAML, p. ej.:

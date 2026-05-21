@@ -19,7 +19,7 @@
 
 ## Push
 
-Los turnos usan el servicio genérico `common\components\Services\Push\PushNotificationSender` (log `fcm-push`). Tipos en payload: `PushNotificationTypes::*` (p. ej. `TURNO_REMINDER`, `TURNO_REQUIERE_REUBICACION`).
+Los turnos usan el servicio genérico `common\components\Core\Service\Push\PushNotificationSender` (log `fcm-push`). Tipos en payload: `PushNotificationTypes::*` (p. ej. `TURNO_REMINDER`, `TURNO_REQUIERE_REUBICACION`).
 
 Config en `params-local.php` → **`fcmPush`** (proyecto Firebase, independiente de `google_cloud_*`):
 

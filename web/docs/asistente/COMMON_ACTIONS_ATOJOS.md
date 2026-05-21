@@ -6,7 +6,7 @@ Este endpoint alimenta el panel “Atajos” de los clientes (web SPA y Flutter)
 
 - Intents/flows: `common/components/Assistant/SubIntentEngine/schemas/intents/*.yaml`
 - Catálogo YAML: `common/components/Assistant/Catalog/YamlIntentCatalogService.php`
-- Atajos + agrupación + RBAC: `common/components/Services/Actions/CommonActionsService.php`
+- Atajos + agrupación + RBAC: `common/components/Core/Service/Actions/CommonActionsService.php`
 - Endpoint: `frontend/modules/api/v1/controllers/AccionesController.php`
 
 ## Contrato (respuesta)

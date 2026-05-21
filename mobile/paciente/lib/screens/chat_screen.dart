@@ -2667,9 +2667,17 @@ class ChatScreenState extends State<ChatScreen> {
                       Builder(
                         builder: (context) {
                           final data = message['data'];
-                          final idConsulta = data is Map ? data['id_consulta'] : null;
-                          final idConsultaInt = idConsulta is int ? idConsulta : (idConsulta is num ? idConsulta.toInt() : null);
-                          if (idConsultaInt == null) return const SizedBox.shrink();
+                          final rawId = data is Map
+                              ? (data['encounter_id'] ?? data['id_consulta'])
+                              : null;
+                          final idConsultaInt = rawId is int
+                              ? rawId
+                              : (rawId is num
+                                  ? rawId.toInt()
+                                  : int.tryParse('$rawId'));
+                          if (idConsultaInt == null || idConsultaInt <= 0) {
+                            return const SizedBox.shrink();
+                          }
                           return Padding(
                             padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 0.0),
                             child: ActionChip(

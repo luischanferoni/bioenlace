@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 2](./02-common-clinical.md) (puede solaparse parcialmente con 2 al final)  
-**Estado:** hecho (2026-05-20)
+**Estado:** hecho (2026-05-21)
 
 ## Objetivo
 
@@ -33,7 +33,9 @@ Aplicar la estructura por dominios en todo `common/`: mover Turnos, Persona, Ui,
 ## Documentación
 
 - [x] `common/README.md` con árbol de dominios.
-- [ ] `models/Turno`, `models/Persona`, `models/snomed/` → subcarpetas (fase posterior opcional).
+- [x] `models/Turno` → `models/Scheduling/Turno.php` (+ alias raíz).
+- [x] `models/Persona` → `models/Person/Persona.php` (+ alias raíz).
+- [x] `models/snomed/*` → `models/Terminology/Snomed/*` (+ alias en `snomed/`).
 
 ## Fuera de alcance
 
@@ -42,10 +44,10 @@ Aplicar la estructura por dominios en todo `common/`: mover Turnos, Persona, Ui,
 
 ## Definition of Done
 
-- [x] `common/components/Services/` **eliminada**.
+- [x] `common/components/Services/` **eliminada** (migrado a dominios; script histórico `tools/migrate_phase3_services.php`).
 - [x] `UiScreenService` / `UiDefinitionTemplateManager` en `components/Ui/`.
-- [ ] Smoke test API turnos en entorno con BD.
-- [x] Grep PHP sin `common\components\Services\`.
+- [ ] Smoke test API turnos en entorno con BD (manual).
+- [x] Grep PHP sin `common\components\Services\` en código de aplicación.
 
 ## Siguiente fase
 

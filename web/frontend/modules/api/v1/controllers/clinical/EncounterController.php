@@ -11,6 +11,8 @@ use frontend\modules\api\v1\controllers\BaseController;
  *
  * POST /api/v1/clinical/encounter/analizar
  * POST /api/v1/clinical/encounter/guardar
+ *
+ * Especialidades (lectura): GET …/encounter/<id>/odontology | …/ophthalmology
  */
 class EncounterController extends BaseController
 {

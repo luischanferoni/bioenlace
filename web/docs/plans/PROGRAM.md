@@ -41,7 +41,7 @@ common/
   docs/plans/          # este programa
 ```
 
-**Eliminar al completar migración:** `common/components/Services/` (carpeta entera), AR `Consulta*` y `DiagnosticoConsulta` en raíz, `SegNivelInternacion*` duplicado.
+**Eliminado (Fase 3):** `common/components/Services/`. Modelos: `Person/Persona`, `Scheduling/Turno`, `Terminology/Snomed/*` (+ alias en raíz). Pendiente: AR `Consulta*` y `SegNivelInternacion*` duplicado.
 
 ## Hub CarePlan (resumen)
 

@@ -10,6 +10,8 @@ use common\components\Clinical\Enum\RequestStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;
+use common\models\Clinical\Procedure;
+use common\models\Clinical\ServiceRequest;
 
 final class CarePlanService
 {
@@ -105,6 +107,42 @@ final class CarePlanService
         $activity->status = $medication->status ?? RequestStatus::ACTIVE;
         if (!$activity->save()) {
             throw new \RuntimeException('No se pudo registrar care_plan_activity: ' . json_encode($activity->getErrors()));
+        }
+
+        return $activity;
+    }
+
+    public function addServiceRequestActivity(CarePlan $plan, ServiceRequest $request): CarePlanActivity
+    {
+        $sort = (int) CarePlanActivity::find()->where(['care_plan_id' => $plan->id])->max('sort_order');
+
+        $activity = new CarePlanActivity();
+        $activity->care_plan_id = $plan->id;
+        $activity->kind = CarePlanActivityKind::SERVICE_REQUEST;
+        $activity->resource_type = 'ServiceRequest';
+        $activity->resource_id = $request->id;
+        $activity->sort_order = $sort + 1;
+        $activity->status = $request->status ?? RequestStatus::ACTIVE;
+        if (!$activity->save()) {
+            throw new \RuntimeException('No se pudo registrar care_plan_activity: ' . json_encode($activity->getErrors()));
+        }
+
+        return $activity;
+    }
+
+    public function addProcedureActivity(CarePlan $plan, Procedure $procedure): CarePlanActivity
+    {
+        $sort = (int) CarePlanActivity::find()->where(['care_plan_id' => $plan->id])->max('sort_order');
+
+        $activity = new CarePlanActivity();
+        $activity->care_plan_id = $plan->id;
+        $activity->kind = CarePlanActivityKind::PROCEDURE;
+        $activity->resource_type = 'Procedure';
+        $activity->resource_id = $procedure->id;
+        $activity->sort_order = $sort + 1;
+        $activity->status = $procedure->status ?? RequestStatus::ACTIVE;
+        if (!$activity->save()) {
+            throw new \RuntimeException('No se pudo registrar care_plan_activity (procedure): ' . json_encode($activity->getErrors()));
         }
 
         return $activity;

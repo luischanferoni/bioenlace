@@ -18,7 +18,7 @@ La tabla `profesional_efector_servicio_agenda` sigue siendo el **espejo** de la 
 
 ## Intervalo de turnos
 
-- Constantes y validación: `common/components/Services/ProfesionalEfectorServicio/AgendaIntervaloMinutos.php`.
+- Constantes y validación: `common/components/Organization/Service/ProfesionalEfectorServicio/AgendaIntervaloMinutos.php`.
 - Default: **15** minutos.
 - **Máximo 2 cambios de intervalo por año calendario** por PES (cuenta versiones distintas en el mismo año).
 - `duracion_slot_minutos` en agenda espejo se deja en `null` al publicar una versión; no usar para nueva lógica.

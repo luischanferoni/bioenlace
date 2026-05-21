@@ -2,14 +2,10 @@
 
 namespace common\models\snomed;
 
-use Yii;
-
 /**
- * La clase padre de todos los modelos snomed
- *
+ * @deprecated Alias de {@see \common\models\Terminology\Snomed\Snomed}.
  */
-abstract class Snomed extends \yii\db\ActiveRecord
-{   
-    // Este método debe ser implementado en las clases hijas
-    // No se puede instanciar una clase abstracta
+class Snomed extends \common\models\Terminology\Snomed\Snomed
+{
 }
+

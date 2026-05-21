@@ -2,54 +2,10 @@
 
 namespace common\models\snomed;
 
-use Yii;
-
 /**
- * This is the model class for table "snomed_situacion".
- *
- * @property integer $conceptId
- * @property string $term
+ * @deprecated Alias de {@see \common\models\Terminology\Snomed\SnomedSituacion}.
  */
-class SnomedSituacion extends \yii\db\ActiveRecord
+class SnomedSituacion extends \common\models\Terminology\Snomed\SnomedSituacion
 {
-    /**
-     * @inheritdoc
-     */
-    public static function tableName()
-    {
-        return 'snomed_situacion';
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function rules()
-    {
-        return [
-            [['conceptId', 'term'], 'string'],
-        ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function attributeLabels()
-    {
-        return [
-            'conceptId' => 'Concept Id',
-            'term' => 'Término',
-        ];
-    }
-
-    public static function crearSiNoExiste($codigo, $termino)
-    {
-        $snoMed = self::findOne(['conceptId' => $codigo]);
-        if (!$snoMed) {
-            $snoMed = new self();
-            $snoMed->conceptId = $codigo;
-            
-            $snoMed->term = $termino;
-            $snoMed->save();
-        }
-    }    
 }
+

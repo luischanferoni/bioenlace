@@ -2,15 +2,17 @@
 
 namespace common\components\Clinical\Workflow;
 
-use common\components\Clinical\Enum\RequestStatus;
 use common\components\Clinical\Service\CarePlanService;
 use common\components\Clinical\Service\EncounterLifecycleService;
+use common\components\Clinical\Service\MedicationRequestService;
+use common\components\Clinical\Service\ServiceRequestService;
+use common\components\Clinical\Specialty\EncounterDefinitionSpecialtyRegistry;
+use common\components\Clinical\Specialty\Odontology\OdontologyEncounterService;
+use common\components\Clinical\Specialty\Ophthalmology\OphthalmologyEncounterService;
 use common\components\Clinical\Legacy\ConsultaProcesamientoService;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\Clinical\MedicationRequest;
-use common\models\Clinical\ServiceRequest;
 use common\models\ConsultasConfiguracion;
 use common\models\DiagnosticoConsulta;
 use common\models\Persona;
@@ -24,11 +26,29 @@ class EncounterDocumentationService extends Component
 {
     private EncounterLifecycleService $lifecycle;
     private CarePlanService $carePlans;
+    private MedicationRequestService $medications;
+    private ServiceRequestService $serviceRequests;
+    private OdontologyEncounterService $odontology;
+    private OphthalmologyEncounterService $ophthalmology;
+    private EncounterDefinitionSpecialtyRegistry $specialtyRegistry;
 
-    public function __construct($config = [], EncounterLifecycleService $lifecycle = null, CarePlanService $carePlans = null)
-    {
+    public function __construct(
+        $config = [],
+        EncounterLifecycleService $lifecycle = null,
+        CarePlanService $carePlans = null,
+        MedicationRequestService $medications = null,
+        ServiceRequestService $serviceRequests = null,
+        OdontologyEncounterService $odontology = null,
+        OphthalmologyEncounterService $ophthalmology = null,
+        EncounterDefinitionSpecialtyRegistry $specialtyRegistry = null
+    ) {
         $this->lifecycle = $lifecycle ?? new EncounterLifecycleService();
         $this->carePlans = $carePlans ?? new CarePlanService();
+        $this->medications = $medications ?? new MedicationRequestService($this->carePlans);
+        $this->serviceRequests = $serviceRequests ?? new ServiceRequestService($this->carePlans);
+        $this->odontology = $odontology ?? new OdontologyEncounterService($this->carePlans);
+        $this->ophthalmology = $ophthalmology ?? new OphthalmologyEncounterService();
+        $this->specialtyRegistry = $specialtyRegistry ?? new EncounterDefinitionSpecialtyRegistry();
         parent::__construct($config);
     }
 
@@ -170,6 +190,9 @@ class EncounterDocumentationService extends Component
             if (!$modelo || !isset($datosExtraidos[$modelo])) {
                 continue;
             }
+            if (!$this->specialtyRegistry->isModelAllowed($configuracion, $modelo)) {
+                continue;
+            }
             $payload = $datosExtraidos[$modelo];
 
             switch ($modelo) {
@@ -186,6 +209,19 @@ class EncounterDocumentationService extends Component
                 case 'ConsultaPracticas':
                 case 'ConsultaDerivaciones':
                     $this->persistServiceRequests($encounter, $payload, $modelo);
+                    break;
+                case 'ConsultaOdontologiaPracticas':
+                    $carePlan = $this->odontology->persistPractices($encounter, $payload, $carePlan);
+                    break;
+                case 'ConsultaOdontologiaDiagnosticos':
+                    $this->odontology->persistDiagnostics($encounter, $payload);
+                    break;
+                case 'ConsultaPracticasOftalmologia':
+                case 'ConsultaPracticasOftalmologiaEstudios':
+                    $this->ophthalmology->persistPractices($encounter, $payload);
+                    break;
+                case 'ConsultasRecetaLentes':
+                    $this->ophthalmology->persistLensPrescription($encounter, $payload);
                     break;
             }
         }
@@ -235,29 +271,7 @@ class EncounterDocumentationService extends Component
             if (!is_array($row)) {
                 continue;
             }
-            $mr = new MedicationRequest();
-            $mr->encounter_id = $encounter->id;
-            $mr->subject_persona_id = $encounter->subject_persona_id;
-            $mr->care_plan_id = $carePlan->id;
-            $mr->status = RequestStatus::ACTIVE;
-            $mr->intent = 'order';
-            $mr->medication_code = (string) (
-                $row['id_snomed_medicamento'] ?? $row['snomed_code'] ?? $row['conceptId'] ?? ''
-            );
-            $mr->medication_display = $row['Nombre del medicamento'] ?? $row['termino'] ?? $row['medicamento'] ?? null;
-            $parts = array_filter([
-                isset($row['cantidad']) ? 'cant: ' . $row['cantidad'] : null,
-                $row['Frecuencia de administracion'] ?? $row['frecuencia'] ?? null,
-                $row['Duracion del tratamiento'] ?? $row['durante'] ?? null,
-                $row['indicaciones'] ?? null,
-            ]);
-            $mr->dosage_text = $parts ? implode('; ', $parts) : null;
-            $mr->authored_on = date('Y-m-d H:i:s');
-            $mr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
-            if (!$mr->save()) {
-                throw new \RuntimeException('MedicationRequest: ' . json_encode($mr->getErrors()));
-            }
-            $this->carePlans->addMedicationActivity($carePlan, $mr);
+            $this->medications->createFromExtractedRow($encounter, $carePlan, $row);
         }
     }
 
@@ -269,20 +283,8 @@ class EncounterDocumentationService extends Component
         if (!is_array($payload)) {
             return;
         }
-        $category = $modelo === 'ConsultaDerivaciones' ? 'referral' : 'procedure';
         foreach ($payload as $row) {
-            $sr = new ServiceRequest();
-            $sr->encounter_id = $encounter->id;
-            $sr->subject_persona_id = $encounter->subject_persona_id;
-            $sr->status = RequestStatus::ACTIVE;
-            $sr->intent = 'order';
-            $sr->category = $category;
-            if (is_array($row)) {
-                $sr->code = (string) ($row['codigo'] ?? $row['conceptId'] ?? '');
-                $sr->display = $row['termino'] ?? $row['texto'] ?? null;
-            }
-            $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
-            $sr->save(false);
+            $this->serviceRequests->createFromExtractedRow($encounter, $row, $modelo);
         }
     }
 

@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 4](./04-api-clinical-core.md), [Fase 5](./05-care-plan-lifecycle.md)  
-**Estado:** pendiente
+**Estado:** hecho (2026-05-20)
 
 ## Objetivo
 
@@ -10,10 +10,10 @@ Consumir `GET /api/v1/clinical/care-plans/active` en inicio del paciente y panta
 
 ## Tareas
 
-- [ ] `TratamientoService` o ampliar `AsistenteService` en `mobile/packages/shared` (preferible servicio dedicado `CarePlanService`).
-- [ ] `HomeScreen`: card “Tu tratamiento” con resumen de actividades.
-- [ ] Modelos Dart: DTOs alineados a JSON API (`CarePlan`, activities polimórficas).
-- [ ] Reemplazar referencias `id_consulta` en chat/motivos por `encounter_id` donde API ya cambió.
+- [x] `CarePlanService` en `mobile/packages/shared/lib/clinical/care_plan_service.dart`.
+- [x] `HomeScreen`: card “Tu tratamiento” con resumen (`activitySummaries`, `categoryLabel`).
+- [x] Consumo JSON API (`CarePlan` + `activities` / resúmenes).
+- [x] `encounter_id` en turnos API y lectura en home/chat (alias `id_consulta` mantenido).
 - [ ] App médico: misma API si staff debe ver plan del paciente (opcional en esta fase).
 
 ## Fuera de alcance

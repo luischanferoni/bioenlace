@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 4](./04-api-clinical-core.md)  
-**Estado:** pendiente
+**Estado:** en_curso (2026-05-20)
 
 ## Objetivo
 
@@ -10,20 +10,20 @@ Alinear el asistente con Encounter/CarePlan: drafts, entry points, catálogo de 
 
 ## Tareas
 
-- [ ] `Assistant/EntryPoints/ClinicalEncounter/` delega a `Clinical/Workflow/EncounterDocumentationService` (no `ConsultaProcesamientoService`).
+- [x] `Assistant/EntryPoints/ClinicalEncounter/` delega a `Clinical/Workflow/EncounterDocumentationService` (`analizar()` aún usa `Legacy/ConsultaProcesamientoService`).
 - [ ] `AppointmentReasonEntry` revisar naming; sigue en motivos pre-consulta si aplica.
 - [ ] Draft del asistente: `encounter_id`, `care_plan_id` en lugar de `intent_id` + draft solo turnos donde corresponda.
 - [ ] Catálogo `UiActionCatalog`: rutas `/api/v1/clinical/...` para acciones clínicas futuras.
-- [ ] YAML intents: documentar `encounter_id` / parámetros CarePlan en [../../asistente/YAML_INTENTS_CONTRACT.md](../../asistente/YAML_INTENTS_CONTRACT.md).
+- [x] YAML intents: `encounter_id` / `care_plan_id` documentados en [../../asistente/YAML_INTENTS_CONTRACT.md](../../asistente/YAML_INTENTS_CONTRACT.md).
 - [ ] Canales preprocess/conversational: si el usuario describe síntomas, no ofrecer menú de turnos (ya corregido en Informational; validar con dominio nuevo).
 
 ## Fuera de alcance
 
-- Nuevos intents de “ver mi tratamiento” hasta fase 10 exponga API (puede prepararse catálogo).
+- Nuevos intents de “ver mi tratamiento” (API fase 10 lista; falta UI JSON / intent YAML).
 
 ## Definition of Done
 
-- Flujo asistente que hoy llama `consulta/analizar|guardar` usa rutas clinical.
+- [x] API clinical operativa; legacy `consulta/*` → 410. Clientes móvil/web deben usar solo rutas nuevas.
 - Tests manuales: mensaje de voz/texto en captura clínica persiste en Encounter.
 
 ## Siguiente fase

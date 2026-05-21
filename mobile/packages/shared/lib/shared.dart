@@ -12,4 +12,5 @@ export 'ui_json/flow_snapshot.dart';
 export 'ui_json/weekly_scheduler_widget.dart';
 export 'assistant/assistant_envelope.dart';
 export 'assistant/asistente_service.dart';
+export 'clinical/care_plan_service.dart';
 

@@ -6,6 +6,7 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
+use common\models\Clinical\Encounter;
 use common\models\Consulta;
 use common\models\Turno;
 use common\models\AgendaFeriados;
@@ -1354,7 +1355,8 @@ class TurnosController extends BaseController
     {
         $servicioNombre = $turno->getNombreServicioParaDisplay();
         $servicioObj = $turno->getServicioEmbebidoParaApi();
-        $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+        $encounter = Encounter::findOne(['appointment_id' => $turno->id_turnos]);
+        $encounterId = $encounter ? (int) $encounter->id : null;
         $profPersona = $turno->getProfesionalPersonaParaDisplay();
         $profesional = $profPersona
             ? $profPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
@@ -1377,7 +1379,8 @@ class TurnosController extends BaseController
             'estado' => $turno->estado,
             'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
             'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
-            'id_consulta' => $consulta ? $consulta->id_consulta : null,
+            'encounter_id' => $encounterId,
+            'id_consulta' => $encounterId,
             'profesional' => $profesional,
             'created_at' => $turno->created_at,
             'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION,

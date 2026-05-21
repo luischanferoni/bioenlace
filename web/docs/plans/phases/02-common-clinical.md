@@ -49,7 +49,7 @@ common/components/Clinical/
 ## Eliminar (cuando servicios nuevos pasen tests)
 
 - [ ] `common/models/Consulta.php` y hijos listados en MIGRATION_STATUS.
-- [ ] `common/components/Services/Consulta/`.
+- [x] `common/components/Services/Consulta/` → `Clinical/Legacy/` (carpeta `Services/` eliminada).
 
 ## Fuera de alcance
 

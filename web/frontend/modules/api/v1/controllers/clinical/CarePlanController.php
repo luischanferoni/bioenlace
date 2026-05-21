@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 use Yii;
 use common\components\Clinical\Dto\CarePlanDto;
 use common\components\Clinical\Service\CarePlanLifecycleService;
+use common\components\Clinical\Service\CarePlanPresentationService;
 use common\components\Clinical\Service\PatientActiveCarePlanQuery;
 use frontend\modules\api\v1\controllers\BaseController;
 
@@ -24,12 +25,14 @@ class CarePlanController extends BaseController
 
     private CarePlanLifecycleService $lifecycle;
     private PatientActiveCarePlanQuery $activeQuery;
+    private CarePlanPresentationService $presentation;
 
     public function init()
     {
         parent::init();
         $this->lifecycle = new CarePlanLifecycleService();
         $this->activeQuery = new PatientActiveCarePlanQuery();
+        $this->presentation = new CarePlanPresentationService();
     }
 
     public function actions()
@@ -54,10 +57,11 @@ class CarePlanController extends BaseController
             );
         }
 
+        $includeActivities = Yii::$app->request->get('includeActivities', '1') !== '0';
         $plans = $this->activeQuery->listActive($idPersona);
         $data = [];
         foreach ($plans as $plan) {
-            $data[] = CarePlanDto::fromModel($plan)->toArray();
+            $data[] = $this->presentation->toPatientSummary($plan, $includeActivities);
         }
 
         return [

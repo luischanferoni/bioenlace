@@ -10,7 +10,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
 
 - Pasar de un mundo centrado en **`id_rr_hh` / `rrhh_efector` / `rrhh_servicio`** a uno donde la **asignación operativa canónica** es **`profesional_efector_servicio` (PES)**.
 - Hacerlo **por módulos**, sin big-bang: conviven filas con solo RRHH, solo PES, o ambos, durante la transición.
-- **API v1** y **Services** (`web/common/components/Services/…`) son la referencia de negocio; controladores web delgados.
+- **API v1** y **servicios por dominio** (`web/common/components/{Organization|Scheduling|Clinical|Person}/Service/…`) son la referencia de negocio; controladores web delgados.
 
 ---
 
@@ -26,7 +26,7 @@ Documento operativo para **retomar el trabajo** sin perder el hilo: qué es PES,
    - `resolvePesIdFromPkEnEfector` (cuando el valor ya es PK PES en el efector)
 5. **Consulta** sincroniza PES en `beforeSave` vía `syncProfesionalEfectorServicioFromContext()` cuando hay contexto efector/servicio y/o turno con PES (sin atributo `id_rr_hh` en AR).
 6. **Bridges temporales PES→RRHH**: centralizar la resolución en un único helper para no duplicar lógica en controladores:
-   - `web/common/components/Services/ProfesionalEfectorServicio/ProfesionalContextResolver.php`
+   - `web/common/components/Organization/Service/ProfesionalEfectorServicio/ProfesionalContextResolver.php`
 
 ---
 

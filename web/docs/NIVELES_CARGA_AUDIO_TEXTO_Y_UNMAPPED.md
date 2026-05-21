@@ -21,7 +21,7 @@ Una carga corresponde a Nivel 1 cuando el flujo utiliza una `consulta` configura
 
 Referencias en el repo:
 - `web/frontend/modules/api/v1/controllers/ConsultaController.php` (endpoints `consulta/analizar` y `consulta/guardar`)
-- `web/common/components/Services/Consulta/ConsultaProcesamientoService.php` (interpretacion y persistencia multi-modelo)
+- `web/common/components/Clinical/Legacy/ConsultaProcesamientoService.php` (interpretación IA; persistencia nueva vía `EncounterDocumentationService`)
 - `web/common/models/ConsultasConfiguracion.php` (contrato `pasos_json`)
 
 Ejemplos:

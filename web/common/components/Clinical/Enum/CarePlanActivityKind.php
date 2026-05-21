@@ -8,5 +8,6 @@ final class CarePlanActivityKind
     public const SERVICE_REQUEST = 'service-request';
     public const DEVICE_REQUEST = 'device-request';
     public const NUTRITION_ORDER = 'nutrition-order';
+    public const PROCEDURE = 'procedure';
     public const GOAL = 'goal';
 }

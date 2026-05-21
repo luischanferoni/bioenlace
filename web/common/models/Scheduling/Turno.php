@@ -1,0 +1,859 @@
+<?php
+
+namespace common\models\Scheduling;
+
+use Yii;
+use yii\helpers\ArrayHelper;
+use yii\helpers\Url;
+use common\models\Persona;
+use common\traits\ParameterQuestionsTrait;
+
+
+
+/**
+ * This is the model class for table "turnos".
+ *
+ * @property string $id_turnos
+ * @property integer $id_persona
+ * @property string $fech
+ * @property string $hora
+ * @property int|null $id_profesional_efector_servicio
+ * @property string $confirmado
+ * @property string $referenciado
+ * @property integer $id_consulta_referencia
+ * @property int|null $id_efector
+ * @property string $id_servicio
+ * @property string $usuario_alta
+ * @property string $fecha_alta
+ * @property string $usuario_mod
+ * @property string $fecha_mod
+ * @property-read Persona|null $paciente Paciente que toma el turno ({@see self::getPaciente()}).
+ *
+ * @chatbot-category turnos
+ * @chatbot-category-name "GestiÃ³n de Turnos"
+ * @chatbot-category-description "Acciones concretas relacionadas con turnos mÃ©dicos"
+ * 
+ * @chatbot-intent crear_turno
+ * @chatbot-intent-name "Crear Turno"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority high
+ * @chatbot-intent-keywords "sacar turno,reservar turno,agendar turno,pedir turno,necesito turno,quiero turno,turno para,turno con,agendar,reservar,sacar cita,cita mÃ©dica"
+ * @chatbot-intent-patterns "/\b(sacar|reservar|agendar|pedir|necesito|quiero)\s+(un\s+)?turno/i,/turno\s+(para|con|de)/i,/agendar\s+(cita|consulta)/i"
+ * @chatbot-intent-required-params servicio,fecha,hora
+ * @chatbot-intent-optional-params profesional,efector,observaciones
+ * @chatbot-intent-lifetime 600
+ * @chatbot-intent-patient-profile-can-use professional,efector,service
+ * @chatbot-intent-patient-profile-resolve-references true
+ * @chatbot-intent-patient-profile-update-on-complete-type professional
+ * @chatbot-intent-patient-profile-update-on-complete-fields id_profesional_efector_servicio,id_efector,servicio
+ * @chatbot-intent-patient-profile-cache-ttl 3600
+ * 
+ * @chatbot-intent modificar_turno
+ * @chatbot-intent-name "Modificar Turno"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority high
+ * @chatbot-intent-keywords "cambiar turno,modificar turno,reagendar turno,cambiar fecha,cambiar horario,mover turno,reagendar,modificar cita"
+ * @chatbot-intent-patterns "/\b(cambiar|modificar|reagendar|mover)\s+(el\s+)?turno/i,/cambiar\s+(fecha|horario|hora)/i"
+ * @chatbot-intent-required-params turno_id
+ * @chatbot-intent-optional-params fecha,hora,profesional
+ * @chatbot-intent-lifetime 600
+ * @chatbot-intent-patient-profile-can-use professional
+ * @chatbot-intent-patient-profile-resolve-references false
+ * @chatbot-intent-patient-profile-cache-ttl 3600
+ * 
+ * @chatbot-intent cancelar_turno
+ * @chatbot-intent-name "Cancelar Turno"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority high
+ * @chatbot-intent-keywords "cancelar turno,anular turno,borrar turno,no puedo ir,no voy a ir,cancelar cita"
+ * @chatbot-intent-patterns "/\b(cancelar|anular|borrar)\s+(el\s+)?turno/i,/no\s+(puedo|voy)\s+a\s+ir/i"
+ * @chatbot-intent-required-params turno_id
+ * @chatbot-intent-optional-params
+ * @chatbot-intent-lifetime 300
+ * @chatbot-intent-patient-profile-can-use
+ * @chatbot-intent-patient-profile-resolve-references false
+ * 
+ * @chatbot-intent consultar_turnos
+ * @chatbot-intent-name "Consultar Turnos"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority medium
+ * @chatbot-intent-keywords "mis turnos,ver turnos,turnos futuros,prÃ³ximo turno,cuÃ¡ndo es mi turno,quÃ© turnos tengo,turnos pasados"
+ * @chatbot-intent-patterns "/\b(mis|ver|consultar)\s+turnos/i,/pr[oÃ³]ximo\s+turno/i,/cu[Ã¡a]ndo\s+es\s+mi\s+turno/i"
+ * @chatbot-intent-required-params
+ * @chatbot-intent-optional-params fecha_desde,fecha_hasta,servicio
+ * @chatbot-intent-lifetime 300
+ * @chatbot-intent-patient-profile-can-use
+ * @chatbot-intent-patient-profile-resolve-references false
+ * 
+ * @chatbot-intent disponibilidad_turnos
+ * @chatbot-intent-name "Disponibilidad de Turnos"
+ * @chatbot-intent-handler TurnosHandler
+ * @chatbot-intent-priority medium
+ * @chatbot-intent-keywords "horarios disponibles,disponibilidad,turnos disponibles,quÃ© horarios hay,cuÃ¡ndo hay turno"
+ * @chatbot-intent-patterns "/horarios?\s+disponibles/i,/turnos?\s+disponibles/i,/cu[Ã¡a]ndo\s+hay\s+turno/i"
+ * @chatbot-intent-required-params
+ * @chatbot-intent-optional-params servicio
+ * @chatbot-intent-lifetime 300
+ * @chatbot-intent-patient-profile-can-use
+ * @chatbot-intent-patient-profile-resolve-references false
+ */
+class Turno extends \yii\db\ActiveRecord
+{
+    use ParameterQuestionsTrait;
+    use \common\traits\SoftDeleteDateTimeTrait;
+
+    public $cant_turnos;
+
+    const ESTADO_PENDIENTE = 'PENDIENTE';
+    const ESTADO_EN_RESOLUCION = 'EN_RESOLUCION';
+    const ESTADO_CANCELADO = 'CANCELADO';
+    const ESTADO_EN_ATENCION = 'EN_ATENCION';
+    const ESTADO_ATENDIDO = 'ATENDIDO';
+    const ESTADO_SIN_ATENDER = 'SIN_ATENDER';
+
+    const ESTADO_MOTIVO_ERROR_CARGA = 'ERROR_CARGA';
+    const ESTADO_MOTIVO_CANCELADO_PACIENTE = 'CANCELADO_X_PACIENTE';
+    const ESTADO_MOTIVO_CANCELADO_MEDICO = 'CANCELADO_X_MEDICO';
+    const ESTADO_MOTIVO_SIN_ATENDER_PACIENTE = 'SIN_ATENDER_X_PACIENTE';
+    const ESTADO_MOTIVO_SIN_ATENDER_MEDICO = 'SIN_ATENDER_X_MEDICO';
+
+    const TIPO_ATENCION_PRESENCIAL = 'presencial';
+    const TIPO_ATENCION_TELECONSULTA = 'teleconsulta';
+
+    //Esta constante considera los estados de los turnos que me deshabilitan slots en el calendario.
+    const ESTADOS_PARA_DESHABILITAR = [
+        self::ESTADO_PENDIENTE,
+        self::ESTADO_EN_RESOLUCION,
+        self::ESTADO_ATENDIDO,
+        self::ESTADO_EN_ATENCION,
+
+    ];
+
+    const ESTADOS = [
+        self::ESTADO_PENDIENTE => 'Pendiente',
+        self::ESTADO_EN_RESOLUCION => 'En resoluciÃ³n',
+        self::ESTADO_CANCELADO => 'Cancelado',
+        self::ESTADO_EN_ATENCION => 'En Atencion',
+        self::ESTADO_ATENDIDO => 'Atendido',
+        self::ESTADO_SIN_ATENDER => 'Sin atender'
+    ];
+    // Estado Motivos: key => Descripcion
+    const ESTADO_MOTIVO = [
+        self::ESTADO_MOTIVO_ERROR_CARGA => 'ERROR DE CARGA',
+        self::ESTADO_MOTIVO_CANCELADO_PACIENTE => 'CANCELADO POR PACIENTE',
+        self::ESTADO_MOTIVO_CANCELADO_MEDICO => 'CANCELADO POR MEDICO',
+        self::ESTADO_MOTIVO_SIN_ATENDER_PACIENTE => 'SIN ATENDER POR PACIENTE',
+        self::ESTADO_MOTIVO_SIN_ATENDER_MEDICO => 'SIN ATENDER POR MEDICO'
+    ];
+    // las siguientes van a ser reemplazadas por ESTADOS
+    const ATENDIDO_SI = 'SI';
+    const ATENDIDO_NO = 'NO';
+    const ATENDIDO_EN_ATENCION = 'EN ATENCION';
+
+    public static function getMotivosCancelacion()
+    {
+        $motivos_cancel = [self::ESTADO_MOTIVO_ERROR_CARGA, self::ESTADO_MOTIVO_CANCELADO_PACIENTE,  self::ESTADO_MOTIVO_CANCELADO_MEDICO];
+        $motivos = [];
+        foreach ($motivos_cancel as $key) {
+            $motivos[$key] = Turno::ESTADO_MOTIVO[$key];
+        }
+        return $motivos;
+    }
+    /**
+     * @inheritdoc
+     */
+    public static function tableName()
+    {
+        return 'turnos';
+    }
+
+    public function behaviors()
+    {
+        return [
+            'blames' => [
+                'class' => 'yii\behaviors\AttributeBehavior',
+                'attributes' => [
+                    \yii\db\ActiveRecord::EVENT_BEFORE_INSERT => ['created_by'],
+                    \yii\db\ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_by'],
+                ],
+                'value' => isset(Yii::$app->user->id) ? Yii::$app->user->id : 1,
+            ],
+        ];
+    }
+
+    public function beforeSave($insert)
+    {
+        return parent::beforeSave($insert);
+    }
+
+    /**
+     * Reservado; las columnas antiguas en `turnos` fueron retiradas (solo PES).
+     */
+    public function hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded(): void
+    {
+    }
+
+    /**
+     * En escenario delegar: exige PES.
+     */
+    public function validateDelegarRequiereProfesional(): void
+    {
+        if ($this->scenario !== ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL) {
+            return;
+        }
+        if ((int) $this->id_profesional_efector_servicio <= 0) {
+            $this->addError(
+                'id_profesional_efector_servicio',
+                'Indique id_profesional_efector_servicio.'
+            );
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        return [
+            [['id_persona', 'hora', 'fecha', 'id_efector', 'id_servicio_asignado'], 'required'],
+            [['id_persona'], 'validateDelegarRequiereProfesional', 'on' => ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL],
+            [['id_servicio_asignado'], 'required', 'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS],
+            [['id_persona', 'id_consulta_referencia', 'id_servicio_asignado', 'id_servicio', 'id_profesional_efector_servicio', 'id_efector', 'programado'], 'integer'],
+            // no deja crear un turno para la misma persona para el mismo recurso en el mismo dia
+            [
+                ['fecha', 'id_persona', 'id_profesional_efector_servicio'], 'unique',
+                'targetAttribute' => ['fecha', 'id_persona', 'id_profesional_efector_servicio'],
+                'filter' => function ($query) {
+                    $query->andWhere(['estado' => 'PENDIENTE']);
+                },
+                'message' => 'Ya existe un turno para este paciente para este mÃ©dico para la fecha indicada',
+                'on' => ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL,
+                'when' => function ($model) {
+                    return (int) $model->id_profesional_efector_servicio > 0;
+                },
+            ],
+            [
+                ['fecha', 'id_persona', 'id_servicio_asignado'], 'unique',
+                'targetAttribute' => ['fecha', 'id_persona', 'id_servicio_asignado'],
+                'filter' => function ($query) {
+                    $query->andWhere(['estado' => 'PENDIENTE']);
+                },
+                'message' => 'Ya existe un turno para este paciente para este servicio para la fecha indicada',
+                'on' => ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS,
+            ],
+            [['fecha', 'hora', 'fecha_alta', 'fecha_mod'], 'safe'],
+            [['confirmado', 'referenciado'], 'string'],
+            [['usuario_alta', 'usuario_mod'], 'string', 'max' => 40],
+            ['hora', 'compare', 'compareValue' => date("H:i"), 'operator' => '>', 'when' => function ($model) {
+                if ($model->fecha == date('Y-m-d')) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }],
+            [['tipo_atencion'], 'string', 'max' => 20],
+            [['tipo_atencion'], 'in', 'range' => [self::TIPO_ATENCION_PRESENCIAL, self::TIPO_ATENCION_TELECONSULTA]],
+            [['tipo_atencion'], 'default', 'value' => self::TIPO_ATENCION_PRESENCIAL],
+            ['estado_motivo', 'in', 'range' => array_keys(Turno::ESTADO_MOTIVO)],
+            [['es_sobreturno'], 'boolean'],
+            [['orden_atencion', 'minutos_desplazamiento_estimado'], 'integer'],
+            [['confirmado_en'], 'safe'],
+            [['confirmacion_token'], 'string', 'max' => 64],
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id_turnos' => 'Id Turnos',
+            'id_persona' => 'Paciente',
+            'fecha' => 'Fecha del Turno',
+            'hora' => 'Hora del Turno',
+            'id_profesional_efector_servicio' => 'Profesional (PES)',
+            'confirmado' => 'Confirmado',
+            'referenciado' => 'Referenciado',
+            'id_consulta_referencia' => 'Efector de Referencia',
+            'id_servicio_asignado' => 'Servicio',
+            'usuario_alta' => 'Usuario Alta',
+            'fecha_alta' => 'Fecha Alta',
+            'usuario_mod' => 'Usuario Mod',
+            'fecha_mod' => 'Fecha Mod',
+            'tipo_atencion' => 'Tipo de atenciÃ³n',
+        ];
+    }
+    
+    /**
+     * Preguntas para parÃ¡metros del chatbot
+     * @return array
+     */
+    public function parameterQuestions()
+    {
+        return [
+            'fecha' => 'Â¿Para quÃ© dÃ­a querÃ©s el turno?',
+            'hora' => 'Â¿En quÃ© horario te gustarÃ­a?',
+            'horario' => 'Â¿En quÃ© horario te gustarÃ­a?',
+            'turno_id' => 'Â¿QuÃ© turno querÃ©s modificar/cancelar?',
+            'id_turnos' => 'Â¿QuÃ© turno querÃ©s modificar/cancelar?',
+        ];
+    }
+
+    /**
+     * Paciente asociado al turno (alineado con {@see Consulta::getPaciente()} / {@see Guardia::getPaciente()}).
+     */
+    public function getPaciente()
+    {
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
+    }
+
+    /**
+     * Alias histÃ³rico (`persona`).
+     */
+    public function getPersona()
+    {
+        return $this->getPaciente();
+    }
+
+    public function getServicio()
+    {
+        return $this->hasOne(Servicio::className(), ['id_servicio' => 'id_servicio_asignado']);
+    }
+
+    public function getEfector()
+    {
+        return $this->hasOne(Efector::className(), ['id_efector' => 'id_efector']);
+    }
+    /**
+     * Persona del profesional vÃ­a fila PES del turno.
+     */
+    public function getProfesionalPersona()
+    {
+        return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona'])
+            ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
+    }
+
+    /**
+     * Texto de servicio para UI/API sin depender de PES cuando hay `servicio` o PES.
+     */
+    public function getNombreServicioParaDisplay(): string
+    {
+        if ($this->servicio) {
+            return (string) $this->servicio->nombre;
+        }
+        $pes = $this->profesionalEfectorServicio;
+        if ($pes !== null && $pes->servicio) {
+            return (string) $pes->servicio->nombre;
+        }
+        return 'Sin servicio';
+    }
+
+    /**
+     * Fragmento JSON canÃ³nico para clientes (PES-first).
+     *
+     * @return array{id_servicio: int, nombre: string}|null
+     */
+    public function getServicioEmbebidoParaApi(): ?array
+    {
+        if ($this->servicio) {
+            return [
+                'id_servicio' => (int) $this->servicio->id_servicio,
+                'nombre' => (string) $this->servicio->nombre,
+            ];
+        }
+        $pes = $this->profesionalEfectorServicio;
+        if ($pes !== null && $pes->servicio) {
+            return [
+                'id_servicio' => (int) $pes->servicio->id_servicio,
+                'nombre' => (string) $pes->servicio->nombre,
+            ];
+        }
+        $idServ = (int) ($this->id_servicio_asignado ?? 0);
+        if ($idServ > 0) {
+            $nombre = $this->getNombreServicioParaDisplay();
+
+            return ['id_servicio' => $idServ, 'nombre' => $nombre !== 'Sin servicio' ? $nombre : ('Servicio #' . $idServ)];
+        }
+
+        return null;
+    }
+
+    /**
+     * Persona del profesional del turno (PES obligatorio para vÃ­nculo consistente).
+     */
+    public function getProfesionalPersonaParaDisplay(): ?Persona
+    {
+        $pes = $this->profesionalEfectorServicio;
+        if ($pes !== null) {
+            return $pes->persona;
+        }
+        if ($this->profesionalPersona) {
+            return $this->profesionalPersona;
+        }
+
+        return null;
+    }
+
+    public function getProfesionalEfectorServicio()
+    {
+        return $this->hasOne(ProfesionalEfectorServicio::className(), ['id' => 'id_profesional_efector_servicio']);
+    }
+
+    public function getUserAlta()
+    {
+        return $this->hasOne(Persona::className(), ['id_user' => 'usuario_alta']);
+    }
+
+    public function getUserModificacion()
+    {
+        return $this->hasOne(Persona::className(), ['id_user' => 'usuario_mod']);
+    }
+
+    /**
+     * Servicios e ids PES para filtrar turnos del profesional en un efector.
+     *
+     * @return array{0: list<int>, 1: list<int>, 2: list<int>} reservado (vacÃ­o), servicioIds, pesIds
+     */
+    private static function contextoProfesionalTurnosDesdePersonaEfector(?int $idPersona, ?int $idEfector): array
+    {
+        if ($idPersona === null || $idPersona <= 0 || $idEfector === null || $idEfector <= 0) {
+            return [[], [], []];
+        }
+        $servicioIds = [];
+        $pesRows = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
+            ->all();
+        $pesIds = [];
+        foreach ($pesRows as $pes) {
+            $pesIds[] = (int) $pes->id;
+            $servicioIds[] = (int) $pes->id_servicio;
+        }
+        $servicioIds = array_values(array_unique(array_filter($servicioIds, static function ($v) {
+            return $v !== null && $v !== '' && (int) $v > 0;
+        })));
+        $pesIds = array_values(array_unique(array_filter($pesIds, static function ($v) {
+            return (int) $v > 0;
+        })));
+
+        return [[], $servicioIds, $pesIds];
+    }
+
+    public static function getTurnosPorContextoProfesionalPorFecha($fecha, $staffContextId)
+    {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $staffContextId);
+        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
+            return [];
+        }
+        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, $idEfectorSesion);
+
+        // Servicios que pueden exigir pase previo por el servicio actual del profesional
+        $serviciosConPasePrevio = $idsServicios !== []
+            ? ServiciosEfector::find()
+                ->andWhere(['servicios_efector.id_efector' => Yii::$app->user->getIdEfector()])
+                ->andWhere(['in', 'servicios_efector.pase_previo', $idsServicios])
+                ->all()
+            : [];
+
+        $idServiciosConPasePrevio = ArrayHelper::getColumn($serviciosConPasePrevio, 'id_servicio');
+
+        $totalIdsServicios = array_unique(array_merge($idsServicios, $idServiciosConPasePrevio));
+        //echo $serviciosConPasePrevio->createCommand()->getRawSql();die;
+        $query = Turno::findActive()->where(['id_efector' => Yii::$app->user->getIdEfector()]);
+
+        $or = [];
+        if ($idsPes !== []) {
+            $or[] = ['in', 'id_profesional_efector_servicio', $idsPes];
+        }
+        $or[] = [
+            'and',
+            [
+                'or',
+                ['id_profesional_efector_servicio' => null],
+                ['id_profesional_efector_servicio' => 0],
+            ],
+            ['in', 'id_servicio_asignado', $totalIdsServicios !== [] ? $totalIdsServicios : [-1]],
+
+        ];
+        $or[] = [
+            'and',
+            ['in', 'id_servicio_asignado', $idServiciosConPasePrevio !== [] ? $idServiciosConPasePrevio : [-1]],
+        ];
+
+        $query->andFilterWhere(array_merge(['or'], $or));
+
+        $turnos = $query->andWhere(['fecha' => $fecha])
+            ->andWhere(['estado' => 'PENDIENTE'])
+            ->andWhere(['is', 'atendido', NULL])
+            ->orderBy('hora')
+            //echo $query->createCommand()->getRawSql();die;
+            ->all();
+        // SELECT * FROM `turnos` WHERE ((`id_profesional_efector_servicio`=1273) OR ((`id_servicio_asignado`=6) AND (`id_efector`='786'))) AND (`fecha`='2023-09-07') AND (turnos.atendido IS NULL) ORDER BY `hora`
+        return $turnos;
+    }
+
+    public static function getAllTurnosPorContextoProfesionalPorFecha($fecha, $staffContextId)
+    {
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $staffContextId);
+        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
+        if ($idPersona === null || $idPersona <= 0 || $idEfectorSesion <= 0) {
+            return [];
+        }
+        [, $idsServicios, $idsPes] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, $idEfectorSesion);
+
+        // Servicios que pueden exigir pase previo por el servicio actual del profesional
+        $serviciosConPasePrevio = $idsServicios !== []
+            ? ServiciosEfector::find()
+                ->andWhere(['servicios_efector.id_efector' => Yii::$app->user->getIdEfector()])
+                ->andWhere(['in', 'servicios_efector.pase_previo', $idsServicios])
+                ->all()
+            : [];
+        $idServiciosConPasePrevio = ArrayHelper::getColumn($serviciosConPasePrevio, 'id_servicio');
+
+        $totalIdsServicios = array_unique(array_merge($idsServicios, $idServiciosConPasePrevio));
+        //echo $serviciosConPasePrevio->createCommand()->getRawSql();die;
+        $query = Turno::findActive();
+
+        $or = [];
+        if ($idsPes !== []) {
+            $or[] = ['in', 'id_profesional_efector_servicio', $idsPes];
+        }
+        $or[] = [
+            'and',
+            [
+                'or',
+                ['id_profesional_efector_servicio' => null],
+                ['id_profesional_efector_servicio' => 0],
+            ],
+            ['id_servicio_asignado' => $totalIdsServicios !== [] ? $totalIdsServicios : [-1]],
+            ['id_efector' => Yii::$app->user->getIdEfector()],
+        ];
+
+        $query->andFilterWhere(array_merge(['or'], $or));
+
+        $turnos = $query->andWhere(['fecha' => $fecha])
+            #->andWhere(['estado' => 'PENDIENTE'])            
+            ->orderBy('hora')
+            //echo $query->createCommand()->getRawSql();die;
+            ->all();
+        // SELECT * FROM `turnos` WHERE ((`id_profesional_efector_servicio`=1273) OR ((`id_servicio_asignado`=6) AND (`id_efector`='786'))) AND (`fecha`='2023-09-07') AND (turnos.atendido IS NULL) ORDER BY `hora`
+        return $turnos;
+    }
+
+    public function formatearFecha($date)
+    {
+        list($d, $m, $y) = explode("-", $date);
+        return "$y-$m-$d";
+    }
+
+
+    public static function NoSePresento($id_turno)
+    {
+        $connection = new \yii\db\Query;
+        $connection->createCommand()
+            ->update(
+                'turnos',
+                [
+                    'atendido' => 'NO',
+                    'estado' => 'SIN_ATENDER',
+                    'estado_motivo' => 'SIN_ATENDER_X_PACIENTE'
+                ],
+                'id_turnos = ' . $id_turno
+            )
+            ->execute();
+    }
+
+    public static function cambiarCampoAtendido($id_turnos, $estado)
+    {
+
+        Yii::$app->db->createCommand()
+            ->update(
+                'turnos',
+                [
+                    'atendido' => $estado,
+                    'estado' => 'ATENDIDO'
+                ],
+                'id_turnos = ' . $id_turnos
+            )
+            ->execute();
+    }
+
+    public static function sincronizarProfesionalEfectorServicioDesdeSesion(int $id_turnos, $id_servicio_asignado): void
+    {
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $pesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
+        $idPes = null;
+
+        if ($pesSesionRaw !== null && $pesSesionRaw !== '' && (int) $pesSesionRaw > 0) {
+            $pesS = ProfesionalEfectorServicio::findOne(['id' => (int) $pesSesionRaw, 'deleted_at' => null]);
+            if (
+                $pesS !== null
+                && (int) $pesS->id_servicio === (int) $id_servicio_asignado
+                && ($idEfector <= 0 || (int) $pesS->id_efector === $idEfector)
+            ) {
+                $idPes = (int) $pesS->id;
+            }
+        }
+
+        Yii::$app->db->createCommand()
+            ->update('turnos', [
+                'id_profesional_efector_servicio' => $idPes,
+            ], 'id_turnos = ' . $id_turnos)
+            ->execute();
+    }
+
+    public static function cantidadDePacientesxDia()
+    {
+        $fecha = '2023-11-21';
+
+        $cantTurnos = self::find()
+            ->where(['fecha' => $fecha])
+            ->all();
+
+        return count($cantTurnos);
+    }
+
+    public static function estadisticasDiariasPorContextoProfesional()
+    {
+
+        $fecha = date("Y-m-d");
+        $idPesSesion = Yii::$app->user->getIdProfesionalEfectorServicio();
+        $efector = Yii::$app->user->getIdEfector();
+        $servicio = Yii::$app->user->getServicioActual();
+        $cantAtendidos = 0;
+        $cantNoAtendidos = 0;
+        $cantTurnos = 0;
+
+        //Traer todos los turnos dados al servicio de la persona en sesion
+
+        $turnos = self::find()
+            ->where([['fecha' => $fecha]])
+            ->andWhere(['id_efector' => $efector])
+            ->andWhere(['id_servicio_asignado' => $servicio])
+            ->all();
+
+        //Calculamos los turnos atendidos y los no atendidos
+
+        foreach ($turnos as $turno) {
+
+            if ($turno->atendido == 'SI') {
+                $cantAtendidos++;
+            } else {
+                $cantNoAtendidos++;
+            }
+        }
+
+        $idPersona = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId((int) $idPesSesion);
+        $turnosAtendidos = [];
+        if ($idPersona !== null && $idPersona > 0 && $efector) {
+            [, , $pesIds] = self::contextoProfesionalTurnosDesdePersonaEfector($idPersona, (int) $efector);
+
+            $turnosAtendidosQuery = self::find()
+                ->where([['fecha' => $fecha]])
+                ->andWhere(['id_efector' => $efector])
+                ->andWhere(['atendido' => 'SI']);
+            if ($pesIds !== []) {
+                $turnosAtendidosQuery->andWhere(['in', 'id_profesional_efector_servicio', $pesIds]);
+                $turnosAtendidos = $turnosAtendidosQuery->all();
+            }
+        }
+
+        return [count($turnos), $cantAtendidos, $cantNoAtendidos, count($turnosAtendidos)];
+    }
+
+    public static function pacienteEsperandoTurno($id_persona)
+    {
+        $turnos = self::find()
+            ->where(['id_persona' => $id_persona])
+            ->andWhere(['fecha' => date("Y-m-d")])
+            ->andWhere(['estado' => self::ESTADO_PENDIENTE])
+            ->all();
+
+
+        return $turnos;
+    }
+
+    public static function footerTimeline($tipo, $id, $idServicioAsignado = '', $pase_previo = '', $id_persona = '', $fecha)
+    {
+
+        $footer = "";
+        switch ($tipo) {
+            case self::ESTADO_PENDIENTE:
+                // SisseGhostHtml::a
+
+                $idServicioSesion = Yii::$app->user->getServicioActual();
+                $idServicioTurno = $idServicioAsignado;
+                $ocultaBotonAtender = false;
+                $ocultarBotonNoSePresento = false;
+                $puedeAtender = true;
+
+                $fecha_hoy = date('Y-m-d');
+                $fecha_turno = date('Y-m-d',strtotime($fecha));
+
+                if ($fecha_turno <= $fecha_hoy) {
+
+
+                    if ($idServicioSesion != $idServicioTurno) {
+
+                        $servicioPasePrevioTurno = ServiciosEfector::find()
+                            ->where(['id_efector' => Yii::$app->user->getIdEfector()])
+                            ->andWhere(['id_servicio' => $idServicioTurno])
+                            ->one();
+
+                        //AQUI CHEQUEO SI EL ID SERVICIO EN SESION COINCIDE CON EL PASE PREVIO
+
+                        if ($idServicioSesion != $servicioPasePrevioTurno->pase_previo) {
+                            return '<h6><span class="text-danger"><b>Para realizar la atencion usted debe CAMBIAR de Servicio</b></span></h6>';
+                        }
+
+                        $ocultarBotonNoSePresento = true;
+
+                        if (!Consulta::existeConsultaPasePrevio($id, $idServicioSesion)) {
+                            $url = Consulta::armarUrlAConsultadesdeParent(Consulta::PARENT_PASE_PREVIO, $id, $idServicioSesion, $id_persona);
+                        } else {
+                            $ocultaBotonAtender = true;
+                        }
+                    } else {
+                        $url = Consulta::armarUrlAConsultadesdeParent(Consulta::PARENT_TURNO, $id, $idServicioAsignado, $id_persona);
+                    }
+                } else {
+                    $puedeAtender = false;
+                }
+
+                if ($puedeAtender) {
+
+                    if (!$ocultaBotonAtender) {
+                        $a = yii\helpers\Html::a(
+                            '<b>Atender</b>',
+                            $url,
+                            [
+                                'class' => 'btn btn-sm btn-outline-info rounded-pill atender',
+                                'title' => 'Atender',
+                            ]
+                        );
+                    } else {
+
+                        $a = '<span class="badge bg-warning">PASE PREVIO COMPLETADO</span>';
+                    }
+
+                    if (!$ocultarBotonNoSePresento) {
+                        $b = yii\helpers\Html::a(
+                            'No se presentÃ³',
+                            ['turnos/no-se-presento'],
+                            [
+                                'class' => 'btn btn-sm btn-outline-danger rounded-pill ms-4 cambiar_estado_turno',
+                                'alert_title' => 'Confirme la ausencia del paciente',
+                                'title' => 'No se presentÃ³',
+                                'post_data' => '{"id_turno": ' . $id . '}'
+                            ]
+                        );
+                    } else {
+                        $b = '';
+                    }
+
+                    $c = '';
+                    $d = '';
+
+                    //TODO: CONTROLAR QUE EL SERVICIO DEFINIDO PARA PASE PREVIO TIENE UNA CONFIGURACION EN EL BACKEND.
+
+                    if ($pase_previo == 27 || $pase_previo == 25) {
+
+                        $c = yii\helpers\Html::a(
+                            '<b>Nueva Atencion de Enfermeria</b>',
+                            Consulta::armarUrlAConsultadesdeParent(Consulta::PARENT_PASE_PREVIO, $id, '', $id_persona),
+                            [
+                                'class' => 'btn btn-sm btn-outline-info rounded-pill ms-4 text-dark atender',
+                                'title' => 'Atender',
+                            ]
+                        );
+
+                        $consultaAE = ConsultaAtencionesEnfermeria::obtenerUltimaAtencionPorPaciente($id_persona);
+                        if ($consultaAE) {
+
+                            $d = yii\helpers\Html::button(
+                                '<b>Ver Ãºltima AE</b>',
+                                [
+                                    'class' => 'btn btn-sm btn-outline-info rounded-pill text-dark ms-4',
+                                    'title' => 'Ver ultima atenciÃ³n de enfermeria',
+                                    "data-bs-toggle" => "modal",
+                                    "data-bs-target" => "#modal_detail_consulta",
+                                    'data-bs-consulta_id' => $consultaAE->id_consulta,
+                                    'data-bs-consulta_detalle_url' => Url::toRoute('consultas/view'),
+                                ]
+                            );
+                        }
+                    }
+                } else {
+                    $a = '<span class="badge bg-warning">NO SE PUEDE ATENDER TURNOS CON FECHA FUTURA</span>';
+                    $b = '';
+                    $c = '';
+                    $d = '';
+                }
+
+
+                $footer = $a . $b . $c . $d;
+
+                break;
+            case self::ESTADO_SIN_ATENDER:
+                $footer = '<h5><span class="text-danger">No se presentÃ³</span></h5>';
+                break;
+            case self::ESTADO_CANCELADO:
+                $footer = '<h5><span class="text-danger">Cancelado</span></h5>';
+                break;
+            case self::ESTADO_ATENDIDO:
+                $footer = '<h5><span class="text-success">Atendido</span></h5>';
+                break;
+        }
+
+        return $footer;
+    }
+
+
+    public static function paraEnfermeria($turno)
+    {
+        if ($turno->servicio->nombre == 'ENFERMERIA') {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
+    //Este metodo me devuelve la cantidad de turnos otorgados a un PES en una fecha particular, siempre y cuando tenga los estados
+    //PENDIENTE, EN_ATENCION o ATENDIDO
+
+    /**
+     * Cupo delegado: cuenta turnos del dÃ­a para la misma asignaciÃ³n PES.
+     */
+    public static function cantidadDeTurnosOtorgadosPorProfesionalEfectorServicio(int $idPes, string $fecha): int
+    {
+        if ($idPes <= 0) {
+            return 0;
+        }
+        $q = self::find()
+            ->andWhere(['fecha' => $fecha])
+            ->andWhere(['in', 'estado', self::ESTADOS_PARA_DESHABILITAR])
+            ->andWhere(['id_profesional_efector_servicio' => $idPes]);
+
+        return (int) $q->count();
+    }
+
+    /**
+     * OcupaciÃ³n de slot por asignaciÃ³n PES.
+     */
+    public static function estaOcupadoSlotPorProfesionalEfectorServicio(int $idPes, string $fecha, string $hora): bool
+    {
+        if ($idPes <= 0) {
+            return false;
+        }
+
+        return !\common\components\Scheduling\Service\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
+    }
+
+
+}

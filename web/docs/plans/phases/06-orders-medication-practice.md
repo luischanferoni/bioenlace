@@ -2,7 +2,7 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 4](./04-api-clinical-core.md), [Fase 5](./05-care-plan-lifecycle.md)  
-**Estado:** pendiente
+**Estado:** hecho (2026-05-20)
 
 ## Objetivo
 
@@ -26,8 +26,8 @@ Implementar recursos de **órdenes** y su vínculo a CarePlan: medicación, estu
 
 ## Encounter documentation
 
-- [ ] `EncounterDocumentationService` acepta payload por tipo de recurso (reemplazo pasos `ConsultaMedicamentos`, `ConsultaPracticas` en JSON IA).
-- [ ] `EncounterDefinition.workflow_json` declara pasos permitidos por servicio.
+- [x] `EncounterDocumentationService` persiste vía `MedicationRequestService` / `ServiceRequestService` (payload IA `ConsultaMedicamentos`, `ConsultaPracticas`, `ConsultaDerivaciones`).
+- [ ] `EncounterDefinition.workflow_json` declara pasos permitidos por servicio (mejora posterior).
 
 ## Fuera de alcance
 

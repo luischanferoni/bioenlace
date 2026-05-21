@@ -36,7 +36,11 @@ class HomeScreenState extends State<HomeScreen> {
   static const int _pageLimit = 12;
 
   late TurnosService _turnosService;
+  late CarePlanService _carePlanService;
   final ScrollController _scrollController = ScrollController();
+
+  List<Map<String, dynamic>> _carePlansActivos = [];
+  bool _loadingCarePlans = false;
 
   final List<Map<String, dynamic>> _pendientes = [];
   final List<Map<String, dynamic>> _enResolucion = [];
@@ -57,6 +61,7 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _turnosService = TurnosService(authToken: widget.authToken);
+    _carePlanService = CarePlanService(authToken: widget.authToken);
     _scrollController.addListener(_onScroll);
     _cargarInicial();
   }
@@ -123,6 +128,18 @@ class HomeScreenState extends State<HomeScreen> {
     await _cargarInicial();
   }
 
+  Future<void> _cargarCarePlans() async {
+    setState(() => _loadingCarePlans = true);
+    final r = await _carePlanService.fetchActivePlans();
+    if (!mounted) return;
+    setState(() {
+      _loadingCarePlans = false;
+      if (r['success'] == true) {
+        _carePlansActivos = _asMapList(r['data']);
+      }
+    });
+  }
+
   Future<void> _cargarInicial() async {
     setState(() {
       _loadingInicial = true;
@@ -136,7 +153,7 @@ class HomeScreenState extends State<HomeScreen> {
       limit: _pageLimit,
       offset: 0,
     );
-    await _cargarEnResolucion();
+    await Future.wait([_cargarEnResolucion(), _cargarCarePlans()]);
     if (!mounted) return;
     if (r1['success'] != true) {
       setState(() {
@@ -166,7 +183,7 @@ class HomeScreenState extends State<HomeScreen> {
       limit: _pageLimit,
       offset: 0,
     );
-    await _cargarEnResolucion();
+    await Future.wait([_cargarEnResolucion(), _cargarCarePlans()]);
     final r2 = await _turnosService.getMisTurnos(
       alcance: 'pasados',
       limit: _pageLimit,
@@ -459,9 +476,9 @@ class HomeScreenState extends State<HomeScreen> {
     return '$name ${d.toString().padLeft(2, '0')}/${mo.toString().padLeft(2, '0')}';
   }
 
-  /// `id_consulta` en el listado de turnos (si existe, el paciente puede cargar motivos).
-  int? _idConsultaDesdeTurno(Map<String, dynamic> t) {
-    final raw = t['id_consulta'];
+  /// `encounter_id` (alias legacy `id_consulta`) en el listado de turnos.
+  int? _encounterIdDesdeTurno(Map<String, dynamic> t) {
+    final raw = t['encounter_id'] ?? t['id_consulta'];
     if (raw == null) return null;
     if (raw is int) return raw > 0 ? raw : null;
     final n = int.tryParse(raw.toString());
@@ -550,6 +567,10 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       children: [
         _buildHeaderSaludo(context),
+        if (_carePlansActivos.isNotEmpty || _loadingCarePlans) ...[
+          BioSpacing.gapH(BioSpacing.lg),
+          _buildTratamientoCard(context),
+        ],
         BioSpacing.gapH(BioSpacing.xl),
         if (_error != null &&
             (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty)) ...[
@@ -633,6 +654,66 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildTratamientoCard(BuildContext context) {
+    if (_loadingCarePlans && _carePlansActivos.isEmpty) {
+      return const BioCard(
+        child: Padding(
+          padding: EdgeInsets.all(BioSpacing.md),
+          child: Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final plan = _carePlansActivos.first;
+    final label = plan['categoryLabel']?.toString() ?? 'Tu tratamiento';
+    final summaries = plan['activitySummaries'];
+    final lines = summaries is List
+        ? summaries.map((e) => e.toString()).where((s) => s.isNotEmpty).take(3).toList()
+        : <String>[];
+
+    return BioCard.intent(
+      intent: UiIntent.info,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.medical_services_outlined, color: context.bio.textMuted, size: 22),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: Text('Tu tratamiento', style: BioTypography.h3),
+              ),
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(label, style: BioTypography.title),
+          if (lines.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            ...lines.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                child: Text('• $line', style: BioTypography.body),
+              ),
+            ),
+          ],
+          if (_carePlansActivos.length > 1) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              '+${_carePlansActivos.length - 1} plan${_carePlansActivos.length > 2 ? 'es' : ''} más',
+              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeaderSaludo(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -706,7 +787,7 @@ class HomeScreenState extends State<HomeScreen> {
   }) {
     final tokens = context.bio;
     final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
-    final idConsulta = futuro ? _idConsultaDesdeTurno(t) : null;
+    final idConsulta = futuro ? _encounterIdDesdeTurno(t) : null;
 
     final cabecera = Text(
       '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',

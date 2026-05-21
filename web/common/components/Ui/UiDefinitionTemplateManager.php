@@ -10,8 +10,10 @@ use yii\helpers\Json;
  * No está limitado a formularios: el descriptor puede evolucionar según `ui_type` / `kind` en la respuesta.
  *
  * Estructura de archivos (bajo el módulo API v1):
- * - frontend/modules/api/v1/views/json/common/_form.json (fragmentos comunes dentro de wizard_config)
- * - frontend/modules/api/v1/views/json/{entidad}/{accion}.json (descriptor por flujo)
+ * - `views/json/{dominio}/{entidad}/{accion}.json` (preferido: scheduling, clinical, persona, organization)
+ * - `views/json/{entidad}/{accion}.json` (legacy; se resuelve si no existe en dominio)
+ *
+ * Rutas HTTP `/api/v1/<entidad>/<accion>` sin cambio; clínica UI: `/api/v1/clinical/<entidad>/<accion>`.
  *
  * Metadatos opcionales de compatibilidad por cliente (en el JSON del flujo, típicamente junto a steps/fields):
  *
@@ -51,16 +53,12 @@ class UiDefinitionTemplateManager
             $path = $route;
         }
 
-        if (preg_match('#^/api/v\d+/([\\w-]+)/([\\w-]+)$#', $path, $m) !== 1) {
+        $parsed = UiJsonDomain::parseApiV1UiRoute($path);
+        if ($parsed === null) {
             return false;
         }
 
-        $entity = strtolower((string) $m[1]);
-        $action = (string) $m[2];
-
-        $templatePath = Yii::getAlias(self::TEMPLATE_BASE_PATH . '/' . $entity . '/' . $action . '.json');
-
-        return is_string($templatePath) && $templatePath !== '' && file_exists($templatePath);
+        return self::resolveTemplateAbsolutePath($parsed['entity'], $parsed['action']) !== null;
     }
 
     /**
@@ -201,14 +199,17 @@ class UiDefinitionTemplateManager
 
     private static function loadSpecificTemplate($entity, $action)
     {
-        $templatePath = Yii::getAlias(
-            self::TEMPLATE_BASE_PATH . '/' . strtolower($entity) . '/' . $action . '.json'
+        $templatePath = self::resolveTemplateAbsolutePath($entity, $action);
+
+        Yii::info(
+            'Buscando template específico: ' . ($templatePath ?? '(no encontrado)')
+            . " entity={$entity} action={$action}",
+            self::LOG_CATEGORY
         );
 
-        Yii::info("Buscando template específico en: {$templatePath}", self::LOG_CATEGORY);
+        if ($templatePath === null || !file_exists($templatePath)) {
+            Yii::warning("Template específico no encontrado: {$entity}/{$action}", self::LOG_CATEGORY);
 
-        if (!file_exists($templatePath)) {
-            Yii::warning("Template específico no encontrado: {$templatePath}", self::LOG_CATEGORY);
             return [];
         }
 
@@ -221,7 +222,23 @@ class UiDefinitionTemplateManager
         }
 
         Yii::info('Template específico decodificado: ' . json_encode($decoded), self::LOG_CATEGORY);
+
         return $decoded;
+    }
+
+    /**
+     * Ruta absoluta del template JSON o null.
+     */
+    public static function resolveTemplateAbsolutePath(string $entity, string $action): ?string
+    {
+        foreach (UiJsonDomain::candidateRelativePaths($entity, $action) as $relative) {
+            $absolute = Yii::getAlias(self::TEMPLATE_BASE_PATH . '/' . $relative);
+            if (is_string($absolute) && $absolute !== '' && file_exists($absolute)) {
+                return $absolute;
+            }
+        }
+
+        return null;
     }
 
     /**

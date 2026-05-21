@@ -43,7 +43,7 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 |----------|-----|----------|--------|
 | Wizard por servicio | `encounter_definition` (+ alias `ConsultasConfiguracion`) | `encounter_definition` | hecho |
 | UI JSON turnos | `views/json/turnos/…` | `views/json/scheduling/…` | pendiente (fase 11) |
-| UI JSON clínica | — | `views/json/clinical/…` | pendiente (fase 11) |
+| UI JSON clínica | `views/json/clinical/…` | `UiScreenService` + dominios `scheduling/`/`clinical/` | hecho (fase 11) |
 | UiScreenService | `components/Ui/UiScreenService.php` | `components/Ui/` | hecho |
 
 ## Legacy a eliminar
@@ -53,7 +53,7 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 | `consultas` (tabla) | `encounter` | hecho (drop) |
 | `consultas_medicamentos` (tabla) | `medication_request` | hecho (drop) |
 | `seg_nivel_internacion_medicamento` / `_practica` | `medication_request` / `service_request` | hecho (drop; escritura vía `InternacionClinicalBridge`) |
-| `seg_nivel_internacion_diagnostico` | `clinical_condition` | en_curso (bridge FHIR; tabla legacy aún existe) |
+| `seg_nivel_internacion_diagnostico` | `clinical_condition` | hecho escritura fase 8; drop tabla pendiente fase 1 (omisión migración) |
 | `Consulta.php` (AR) | `Clinical\Encounter` | pendiente (Yii web + referencias) |
 | `common/components/Services/` | dominios `Scheduling/`, `Clinical/`, … | hecho (eliminada) |
 | `ConsultaProcesamientoService` (AR legacy) | `Clinical/Legacy/` + `EncounterDocumentationService` | en_curso (solo `analizar()` delega legacy) |
@@ -66,7 +66,8 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 | Flutter paciente | Care plans activos en inicio (`CarePlanService` + card) | hecho |
 | Flutter paciente | `encounter_id` en turnos y chat (alias `id_consulta`) | hecho |
 | Asistente | `ClinicalEncounter` → `EncounterDocumentationService` | hecho |
-| Asistente | Intent «ver mi tratamiento» + catálogo clinical UI JSON | pendiente (fase 9/11) |
+| Asistente | Draft `encounter_id` / `care_plan_id`, `ClinicalUiActionCatalog`, canales síntomas | hecho (fase 9) |
+| Asistente | Intent «ver mi tratamiento» + UI JSON | pendiente (fase 11) |
 
 ## Fases del programa (resumen)
 
@@ -77,6 +78,7 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 | 6 | **hecho** | Medication/Service request services + API; E2E vía `encounter/guardar` |
 | 7 | **hecho (pilotos)** | Odonto + oftalmo; psico/obstetricia/enfermería pendientes |
 | 8 | **hecho** | EpisodeOfCare + IMP + bridge medicación/práctica/diagnóstico; API bundle |
-| 9 | **en_curso** | Entry point ok; intents/YAML/draft clínico pendiente |
+| 9 | **hecho** | Draft clínico, catálogo `/api/clinical/*`, AppointmentReason por encounter_id |
 | 10 | **hecho** | Home paciente + API active con resumen |
-| 11–12 | pendiente | UI JSON clínica; Yii web |
+| 11 | **hecho** | Dominios views/json + pilotos care-plan / encounter UI |
+| 12 | pendiente | Yii web clínico |

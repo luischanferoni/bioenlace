@@ -1,6 +1,6 @@
 ## Views JSON vs vistas nativas (Web / Flutter)
 
-Este documento resume **cuándo usamos vistas basadas en JSON** (templates en `frontend/modules/api/v1/json/<entidad>/<accion>.json`) y **cuándo preferimos vistas nativas**:
+Este documento resume **cuándo usamos vistas basadas en JSON** (templates en `frontend/modules/api/v1/views/json/<dominio>/<entidad>/<accion>.json`) y **cuándo preferimos vistas nativas**:
 
 - **Web**: vistas PHP/HTML de Yii2 (`views/.../*.php`, componentes JS/SPA).
 - **Móvil**: pantallas nativas Flutter (widgets y layouts propios de la app).

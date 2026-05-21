@@ -4,6 +4,7 @@ namespace common\components\Assistant\EntryPoints\Chat\Channels\Informational;
 
 use common\components\Assistant\EntryPoints\Chat\Channels\Conversational\ConversationalChannel;
 use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
+use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\IntentEngine;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 
@@ -22,6 +23,10 @@ final class InformationalChannel
         }
 
         if (!self::isCapabilityMenuQuery($content)) {
+            return ConversationalChannel::handle($content, $userId);
+        }
+
+        if (ChatPreprocessService::isClinicalSymptomContent($content)) {
             return ConversationalChannel::handle($content, $userId);
         }
 

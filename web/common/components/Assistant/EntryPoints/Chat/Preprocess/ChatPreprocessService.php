@@ -24,6 +24,22 @@ final class ChatPreprocessService
      *
      * @return list<string>
      */
+    /**
+     * Contenido clínico (síntomas, malestar) sin pedido operativo del sistema.
+     */
+    public static function isClinicalSymptomContent(string $content): bool
+    {
+        $lower = mb_strtolower(trim($content), 'UTF-8');
+        if ($lower === '') {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\b(problema|dolor|duele|síntoma|sintoma|malestar|enfermo|fiebre|tos|náusea|nausea|vómito|vomito|mareo|hinchazón|hinchazon|presión|presion|diabetes|hipertensión|hipertension)\b/u',
+            $lower
+        );
+    }
+
     public static function allowedEntityCategories(): array
     {
         return [

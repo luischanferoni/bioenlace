@@ -2,37 +2,43 @@
 
 **Programa:** [PROGRAM.md](../PROGRAM.md)  
 **Depende de:** [Fase 4](./04-api-clinical-core.md), [Fase 6](./06-orders-medication-practice.md)  
-**Estado:** pendiente
+**Estado:** hecho
 
 ## Objetivo
 
-Reorganizar plantillas UI JSON bajo dominios y crear descriptores clínicos donde la captura use `UiScreenService`.
+Reorganizar plantillas UI JSON bajo dominios y crear descriptores clínicos servidos por `UiScreenService`.
 
 ## Reorganización carpetas
 
 ```text
 frontend/modules/api/v1/views/json/
-  scheduling/          # mover turnos/, profesional-agenda/, efectores/ (rutas en JSON internas)
-  clinical/            # nuevos: encounter/, care-plan/, medication-request/, …
-  organization/        # PES, servicios (opcional)
-  persona/             # buscar-para-asistente, etc.
+  scheduling/          # turnos, profesional-agenda, efectores, servicios
+  clinical/            # care-plan, encounter
+  persona/             # persona/buscar-para-asistente
+  organization/        # profesional-efector-servicio
+  README.md
 ```
+
+Resolución: `UiJsonDomain` + `UiDefinitionTemplateManager::resolveTemplateAbsolutePath()` (dominio primero, fallback `{entidad}/{accion}.json` legacy).
 
 ## Tareas
 
-- [ ] Actualizar `UiDefinitionTemplateManager` paths si usan rutas `entity/action` → reflejar subcarpetas o mantener convención `clinical/encounter/guardar.json`.
-- [ ] Controllers que llaman `handleScreen('turnos', ...)` → `handleScreen` con path actualizado o alias en manager.
-- [ ] Descriptores para listados/confirmación de órdenes si el producto usa mini-UI nativa vía JSON.
-- [ ] Documentar en [../../asistente/UI_JSON_DESCRIPTOR_CONTRACT.md](../../asistente/UI_JSON_DESCRIPTOR_CONTRACT.md).
+- [x] `UiDefinitionTemplateManager` / `UiJsonDomain`: paths por subcarpeta de dominio.
+- [x] Controllers: sin cambio de `handleScreen('turnos', …)` — rutas HTTP estables.
+- [x] Descriptores clínicos: `ver-tratamiento-paciente`, `listar-ordenes-activas`.
+- [x] Endpoints: `CarePlanController::actionVerTratamientoPaciente`, `EncounterController::actionListarOrdenesActivas`.
+- [x] RBAC: `m260521_100007_api_clinical_ui_json_rbac`.
+- [x] Contrato actualizado: [UI_JSON_DESCRIPTOR_CONTRACT.md](../../asistente/UI_JSON_DESCRIPTOR_CONTRACT.md).
 
 ## Compatibilidad rutas HTTP
 
-- Rutas públicas `/api/v1/turnos/*` **sin cambio** aunque el JSON viva en `scheduling/`.
+- `/api/v1/turnos/*` y resto scheduling **sin cambio**.
+- Clínica UI: `/api/v1/clinical/care-plan/ver-tratamiento-paciente`, `/api/v1/clinical/encounter/listar-ordenes-activas`.
 
 ## Definition of Done
 
-- Build API encuentra todos los JSON (grep + smoke `crear-como-paciente`).
-- Al menos un descriptor clínico piloto servido por `UiScreenService`.
+- [x] Templates scheduling/persona/organization movidos bajo dominio; `crear-como-paciente` en `scheduling/turnos/`.
+- [x] Al menos un descriptor clínico piloto servido por `UiScreenService` (dos: care plan paciente + órdenes encounter).
 
 ## Siguiente fase
 

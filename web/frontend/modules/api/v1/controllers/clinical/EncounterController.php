@@ -4,6 +4,11 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
 use common\components\Assistant\EntryPoints\ClinicalEncounter\ClinicalEncounterEntry;
+use common\components\Clinical\Dto\MedicationRequestDto;
+use common\components\Clinical\Dto\ServiceRequestDto;
+use common\components\Clinical\Service\MedicationRequestService;
+use common\components\Clinical\Service\ServiceRequestService;
+use common\components\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 
 /**
@@ -16,6 +21,8 @@ use frontend\modules\api\v1\controllers\BaseController;
  */
 class EncounterController extends BaseController
 {
+    use ClinicalAccessTrait;
+
     public static $authenticatorExcept = [];
 
     public function actions()
@@ -38,6 +45,66 @@ class EncounterController extends BaseController
         $out = ClinicalEncounterEntry::guardar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
+    }
+
+    /**
+     * UI JSON: medicación y prácticas activas de un encounter (staff).
+     *
+     * GET /api/v1/clinical/encounter/listar-ordenes-activas?encounter_id=
+     */
+    public function actionListarOrdenesActivas(): array
+    {
+        $req = Yii::$app->request;
+        $params = $req->get();
+        $encounterId = (int) ($params['encounter_id'] ?? $params['id_consulta'] ?? 0);
+        if ($encounterId <= 0) {
+            return $this->clinicalError('Se requiere encounter_id en query.', null, 400);
+        }
+
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
+        if ($err !== null) {
+            return $err;
+        }
+
+        $params['encounter_id'] = (string) $encounterId;
+
+        $out = UiScreenService::handleScreen(
+            'encounter',
+            'listar-ordenes-activas',
+            $params,
+            $req->post(),
+            static function (): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (($out['kind'] ?? '') !== 'ui_definition' || !$req->isGet) {
+            return $out;
+        }
+
+        $medItems = [];
+        foreach ((new MedicationRequestService())->listForEncounter($encounter->id) as $mr) {
+            $dto = MedicationRequestDto::fromModel($mr)->toArray();
+            $medItems[] = [
+                'id' => (string) $mr->id,
+                'name' => (string) ($dto['medicationDisplay'] ?? $dto['medicationCode'] ?? 'Medicación'),
+                'subtitle' => (string) ($dto['dosageText'] ?? ''),
+            ];
+        }
+
+        $practItems = [];
+        foreach ((new ServiceRequestService())->listForEncounter($encounter->id) as $sr) {
+            $dto = ServiceRequestDto::fromModel($sr)->toArray();
+            $practItems[] = [
+                'id' => (string) $sr->id,
+                'name' => (string) ($dto['display'] ?? $dto['code'] ?? 'Indicación'),
+                'subtitle' => (string) ($dto['category'] ?? ''),
+            ];
+        }
+
+        $out = UiScreenService::withListBlockItems($out, $medItems, 'medicaciones');
+
+        return UiScreenService::withListBlockItems($out, $practItems, 'practicas');
     }
 
     /**

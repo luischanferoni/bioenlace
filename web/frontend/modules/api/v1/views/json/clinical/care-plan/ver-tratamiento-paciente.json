@@ -1,0 +1,57 @@
+{
+  "ui_type": "ui_json",
+  "title": "Tu tratamiento",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "planes",
+      "title": "Planes de tratamiento activos",
+      "draft_field": "care_plan_id",
+      "item": { "kind": "care_plan" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": true },
+      "items": []
+    },
+    {
+      "kind": "fields",
+      "id": "detalle",
+      "title": "Resumen",
+      "fields": [
+        {
+          "name": "care_plan_id",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "category_label",
+          "label": "Tipo de plan",
+          "type": "text",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "status",
+          "label": "Estado",
+          "type": "text",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "activity_summary",
+          "label": "Indicaciones",
+          "type": "text",
+          "required": false,
+          "readonly": true
+        }
+      ]
+    }
+  ]
+}

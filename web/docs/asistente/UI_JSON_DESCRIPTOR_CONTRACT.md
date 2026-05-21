@@ -2,14 +2,33 @@
 
 Este documento define el **único contrato** válido para descriptores de UI servidos por endpoints:
 
-- `GET /api/v1/<entidad>/<accion>` → `kind: ui_definition`
-- `POST /api/v1/<entidad>/<accion>` → `kind: ui_submit_result` (ok) o `kind: ui_definition` con `success=false` + `errors` (error de validación/negocio)
+- `GET /api/v1/<entidad>/<accion>` → `kind: ui_definition` (scheduling, persona, organization)
+- `GET /api/v1/clinical/<entidad>/<accion>` → `kind: ui_definition` (dominio clínico)
+- `POST` en la misma ruta → `kind: ui_submit_result` (ok) o `kind: ui_definition` con `success=false` + `errors`
 
 ## Fuente de verdad
 
-- Backend: `common/components/UiDefinitionTemplateManager.php` + `common/components/UiScreenService.php`.
-- Templates: `frontend/modules/api/v1/views/json/<entidad>/<accion>.json`.
-- Clientes: renderer web (`web/frontend/web/js/spa-home.js`) y Flutter shared (`mobile/packages/shared/lib/ui_json/ui_json_wizard_screen.dart`).
+- Backend: `common/components/Ui/UiDefinitionTemplateManager.php`, `UiJsonDomain.php`, `UiScreenService.php`.
+- Templates (resolución por dominio, luego legacy plano):
+
+```text
+frontend/modules/api/v1/views/json/
+  scheduling/{entidad}/{accion}.json    # turnos, profesional-agenda, efectores, servicios
+  clinical/{entidad}/{accion}.json      # care-plan, encounter, …
+  persona/{entidad}/{accion}.json
+  organization/{entidad}/{accion}.json
+  {entidad}/{accion}.json               # fallback legacy (evitar en código nuevo)
+```
+
+- `UiScreenService::handleScreen('care-plan', 'ver-tratamiento-paciente', …)` no cambia: la entidad sigue siendo kebab del controller.
+- Clientes: renderer web (`spa-home.js`) y Flutter (`ui_json_wizard_screen.dart`).
+
+### Pilotos clínicos (fase 11)
+
+| Ruta HTTP | Template | Uso |
+|-----------|----------|-----|
+| `GET /api/v1/clinical/care-plan/ver-tratamiento-paciente` | `clinical/care-plan/ver-tratamiento-paciente.json` | Paciente: lista care plans activos (`draft_field`: `care_plan_id`) |
+| `GET /api/v1/clinical/encounter/listar-ordenes-activas?encounter_id=` | `clinical/encounter/listar-ordenes-activas.json` | Staff: medicación y prácticas del encounter |
 
 ## Shape mínimo (obligatorio)
 

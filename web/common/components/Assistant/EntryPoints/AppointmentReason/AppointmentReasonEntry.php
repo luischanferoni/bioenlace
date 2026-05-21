@@ -18,7 +18,7 @@ final class AppointmentReasonEntry
      *
      * @return array<string, mixed>
      */
-    public static function enviarTexto(int $consultaId, string $message, int $userId, string $userName): array
+    public static function enviarTexto(int $encounterId, string $message, int $userId, string $userName): array
     {
         $message = trim($message);
         if ($message === '') {
@@ -29,14 +29,14 @@ final class AppointmentReasonEntry
             ];
         }
 
-        [$consulta, $err] = self::requireConsultaAccess($consultaId);
+        [$encounter, $err] = self::requireEncounterAccess($encounterId);
         if ($err !== null) {
             return $err;
         }
-        unset($consulta);
+        unset($encounter);
 
         $msg = new ConsultaMotivosMessage();
-        $msg->consulta_id = $consultaId;
+        $msg->encounter_id = $encounterId;
         $msg->user_id = $userId;
         $msg->user_name = $userName !== '' ? $userName : 'Paciente';
         $msg->texto = $message;
@@ -55,6 +55,8 @@ final class AppointmentReasonEntry
             'message' => 'Mensaje enviado exitosamente',
             'data' => [
                 'id' => $msg->id,
+                'encounter_id' => (int) $encounterId,
+                'consulta_id' => (int) $encounterId,
                 'content' => $msg->texto,
                 'user_id' => $msg->user_id,
                 'user_name' => $msg->user_name,
@@ -67,7 +69,7 @@ final class AppointmentReasonEntry
     /**
      * @return array{0: Encounter|null, 1: array<string, mixed>|null}
      */
-    private static function requireConsultaAccess(int $encounterId): array
+    private static function requireEncounterAccess(int $encounterId): array
     {
         $encounter = Encounter::findOne($encounterId);
         if (!$encounter) {

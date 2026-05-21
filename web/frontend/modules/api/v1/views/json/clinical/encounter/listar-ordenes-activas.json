@@ -1,0 +1,44 @@
+{
+  "ui_type": "ui_json",
+  "title": "Órdenes del encuentro",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "filtro",
+      "fields": [
+        {
+          "name": "encounter_id",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": false
+        }
+      ]
+    },
+    {
+      "kind": "list",
+      "id": "medicaciones",
+      "title": "Medicación",
+      "draft_field": "medication_request_id",
+      "item": { "kind": "medication_request" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    },
+    {
+      "kind": "list",
+      "id": "practicas",
+      "title": "Prácticas e indicaciones",
+      "draft_field": "service_request_id",
+      "item": { "kind": "service_request" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    }
+  ]
+}

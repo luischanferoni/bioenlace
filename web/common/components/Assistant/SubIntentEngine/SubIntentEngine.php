@@ -3,6 +3,7 @@
 namespace common\components\Assistant\SubIntentEngine;
 
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\FlowManifest\FlowManifest;
 use common\components\Assistant\Service\FlowHintService;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
@@ -39,7 +40,7 @@ final class SubIntentEngine
 
         $subintentId = isset($snapshot['subintent_id']) ? trim((string) $snapshot['subintent_id']) : '';
         $draft = isset($snapshot['draft']) && is_array($snapshot['draft']) ? $snapshot['draft'] : [];
-        $draft = self::mergeFlowSnapshotIntoDraft($snapshot, $draft);
+        $draft = AssistantDraftNormalizer::normalize(self::mergeFlowSnapshotIntoDraft($snapshot, $draft));
         $content = isset($snapshot['content']) ? trim((string) $snapshot['content']) : '';
         $interaction = isset($snapshot['interaction']) && is_array($snapshot['interaction']) ? $snapshot['interaction'] : null;
 

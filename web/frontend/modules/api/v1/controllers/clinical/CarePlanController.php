@@ -7,6 +7,7 @@ use common\components\Clinical\Dto\CarePlanDto;
 use common\components\Clinical\Service\CarePlanLifecycleService;
 use common\components\Clinical\Service\CarePlanPresentationService;
 use common\components\Clinical\Service\PatientActiveCarePlanQuery;
+use common\components\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 
 /**
@@ -14,6 +15,7 @@ use frontend\modules\api\v1\controllers\BaseController;
  *
  * GET  /api/v1/clinical/care-plans/active
  * GET  /api/v1/clinical/care-plans/<id>
+ * GET|POST /api/v1/clinical/care-plan/ver-tratamiento-paciente (UI JSON)
  * POST /api/v1/clinical/care-plans/<id>/complete
  * POST /api/v1/clinical/care-plans/<id>/revoke
  * POST /api/v1/clinical/care-plans/<id>/hold
@@ -46,6 +48,73 @@ class CarePlanController extends BaseController
     /**
      * Planes activos del paciente autenticado.
      */
+    /**
+     * UI JSON: listado de care plans activos del paciente (asistente / móvil).
+     *
+     * @tags clinical, care-plan, paciente, ui_json
+     * @keywords ver mi tratamiento, plan de tratamiento, care plan activo
+     */
+    public function actionVerTratamientoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return $this->clinicalError(
+                'Solo pacientes autenticados pueden ver tratamientos activos.',
+                null,
+                400
+            );
+        }
+
+        $out = UiScreenService::handleScreen(
+            'care-plan',
+            'ver-tratamiento-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($idPersona): array {
+                $planId = (int) ($post['care_plan_id'] ?? 0);
+                if ($planId <= 0) {
+                    throw new \InvalidArgumentException('Seleccioná un plan de tratamiento.');
+                }
+                $plan = null;
+                foreach ($this->activeQuery->listActive($idPersona) as $p) {
+                    if ((int) $p->id === $planId) {
+                        $plan = $p;
+                        break;
+                    }
+                }
+                if ($plan === null) {
+                    throw new \InvalidArgumentException('Plan no encontrado o no activo.');
+                }
+
+                return ['data' => $this->presentation->toPatientSummary($plan, true)];
+            }
+        );
+
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet) {
+            $items = [];
+            foreach ($this->activeQuery->listActive($idPersona) as $plan) {
+                $summary = $this->presentation->toPatientSummary($plan, true);
+                $lines = $summary['activitySummaries'] ?? [];
+                $subtitle = is_array($lines) && $lines !== [] ? implode(' · ', array_slice($lines, 0, 2)) : '';
+                $items[] = [
+                    'id' => (string) $plan->id,
+                    'name' => (string) ($summary['categoryLabel'] ?? $summary['category'] ?? 'Tratamiento'),
+                    'label' => (string) ($summary['categoryLabel'] ?? 'Tratamiento'),
+                    'subtitle' => $subtitle,
+                    'meta' => [
+                        'status' => $plan->status,
+                        'category' => $plan->category,
+                    ],
+                ];
+            }
+
+            return UiScreenService::withListBlockItems($out, $items, 'planes');
+        }
+
+        return $out;
+    }
+
     public function actionActive()
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();

@@ -5,6 +5,7 @@ namespace common\components\Assistant\IntentEngine;
 use Yii;
 use common\components\Assistant\Catalog\IntentCatalogService;
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\SubIntentEngine\IntentBusinessRules;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
@@ -282,7 +283,7 @@ final class IntentEngine
             $draft[$key] = $s;
         }
 
-        return $draft;
+        return AssistantDraftNormalizer::normalize($draft);
     }
 
     /**

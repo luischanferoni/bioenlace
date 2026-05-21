@@ -20,18 +20,19 @@ class MotivosConsultaController extends BaseController
     public $enableCsrfValidation = false;
 
     /**
-     * GET /api/v1/motivos-consulta/mensajes/{id} — {id} = id_consulta.
+     * GET /api/v1/motivos-consulta/mensajes/{id} — {id} = encounter_id (alias legacy en clientes).
      */
     public function actionListarMensajes($id)
     {
-        $consulta_id = (int) $id;
-        [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
+        $encounterId = (int) $id;
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
         if ($err !== null) {
             return $err;
         }
+        unset($encounter);
 
         $messages = ConsultaMotivosMessage::find()
-            ->where(['encounter_id' => $consulta_id])
+            ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
@@ -43,7 +44,8 @@ class MotivosConsultaController extends BaseController
             'message' => 'Mensajes obtenidos exitosamente',
             'data' => [
                 'messages' => $formattedMessages,
-                'consulta_id' => (int) $consulta_id,
+                'encounter_id' => $encounterId,
+                'consulta_id' => $encounterId,
             ],
         ];
     }
@@ -54,9 +56,9 @@ class MotivosConsultaController extends BaseController
     public function actionEnviar()
     {
         $body = Yii::$app->request->getBodyParams();
-        $consulta_id = $body['consulta_id'] ?? null;
-        if (!$consulta_id) {
-            return ['success' => false, 'message' => 'Datos requeridos: consulta_id, message', 'data' => null];
+        $encounterId = $this->resolveEncounterIdFromInput($body);
+        if ($encounterId === null) {
+            return ['success' => false, 'message' => 'Datos requeridos: encounter_id (o consulta_id), message', 'data' => null];
         }
 
         $message = $body['message'] ?? null;
@@ -67,7 +69,7 @@ class MotivosConsultaController extends BaseController
         $userId = (int) Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
 
-        return AppointmentReasonEntry::enviarTexto((int) $consulta_id, (string) $message, $userId, $userName);
+        return AppointmentReasonEntry::enviarTexto($encounterId, (string) $message, $userId, $userName);
     }
 
     /**
@@ -75,15 +77,16 @@ class MotivosConsultaController extends BaseController
      */
     public function actionSubir()
     {
-        $consulta_id = Yii::$app->request->post('consulta_id');
-        if (!$consulta_id) {
-            return ['success' => false, 'message' => 'Falta consulta_id', 'data' => null];
+        $encounterId = $this->resolveEncounterIdFromInput(Yii::$app->request->post());
+        if ($encounterId === null) {
+            return ['success' => false, 'message' => 'Falta encounter_id (o consulta_id)', 'data' => null];
         }
 
-        [$consulta, $err] = $this->requireConsultaAccess($consulta_id);
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
         if ($err !== null) {
             return $err;
         }
+        unset($encounter);
 
         $messageType = Yii::$app->request->post('message_type', 'imagen');
         if (!in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
@@ -101,7 +104,7 @@ class MotivosConsultaController extends BaseController
         }
         $filename = sprintf('%s_%s.%s', date('YmdHis'), uniqid(), $ext);
 
-        $basePath = Yii::getAlias('@frontend/web/uploads/motivos_consulta/' . (int) $consulta_id);
+        $basePath = Yii::getAlias('@frontend/web/uploads/motivos_consulta/' . $encounterId);
         if (!is_dir($basePath)) {
             if (!@mkdir($basePath, 0755, true)) {
                 Yii::error('No se pudo crear directorio: ' . $basePath);
@@ -109,7 +112,7 @@ class MotivosConsultaController extends BaseController
             }
         }
 
-        $relativePath = 'uploads/motivos_consulta/' . (int) $consulta_id . '/' . $filename;
+        $relativePath = 'uploads/motivos_consulta/' . $encounterId . '/' . $filename;
         $fullPath = Yii::getAlias('@frontend/web') . '/' . $relativePath;
 
         if (!$file->saveAs($fullPath)) {
@@ -120,7 +123,7 @@ class MotivosConsultaController extends BaseController
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
 
         $msg = new ConsultaMotivosMessage();
-        $msg->consulta_id = (int) $consulta_id;
+        $msg->encounter_id = $encounterId;
         $msg->user_id = $userId;
         $msg->user_name = $userName;
         $msg->texto = $relativePath;
@@ -143,6 +146,8 @@ class MotivosConsultaController extends BaseController
             'message' => 'Archivo enviado exitosamente',
             'data' => [
                 'id' => $msg->id,
+                'encounter_id' => $encounterId,
+                'consulta_id' => $encounterId,
                 'content' => $contentUrl,
                 'user_id' => $msg->user_id,
                 'user_name' => $msg->user_name,
@@ -150,6 +155,19 @@ class MotivosConsultaController extends BaseController
                 'created_at' => $msg->created_at,
             ],
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function resolveEncounterIdFromInput(array $input): ?int
+    {
+        $raw = $input['encounter_id'] ?? $input['consulta_id'] ?? null;
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        return (int) $raw;
     }
 
     /**
@@ -164,9 +182,9 @@ class MotivosConsultaController extends BaseController
     /**
      * @return array{0: Encounter|null, 1: array|null}
      */
-    protected function requireConsultaAccess($consulta_id)
+    protected function requireEncounterAccess($encounterId)
     {
-        $encounter = Encounter::findOne((int) $consulta_id);
+        $encounter = Encounter::findOne((int) $encounterId);
         if (!$encounter) {
             Yii::$app->response->statusCode = 404;
             return [null, ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null]];

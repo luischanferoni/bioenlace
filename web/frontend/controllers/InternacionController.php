@@ -224,7 +224,8 @@ class InternacionController extends Controller
         }
 
 
-        $urlSiguiente = Consulta::armarUrlAConsultaDesdeParent(Consulta::PARENT_INTERNACION, $model->id, '', $model->id_persona);
+        // Captura clínica: API + SPA/Flutter (MVC Consulta* retirado en fase 12).
+        $urlSiguiente = null;
 
         return $this->render('view', [
             'model' => $model,

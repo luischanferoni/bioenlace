@@ -71,7 +71,7 @@ use yii\web\JsExpression;
                                                 //                                                'allowClear' => true
                                                 'minimumInputLength' => 3,
                                                 'ajax' => [
-                                                    'url' => Url::to(['consultas/snomed-diagnosticos']),
+                                                    'url' => Url::to(['snowstorm/diagnosticos']),
                                                     'dataType' => 'json',
                                                     'delay'=> 500,
                                                     'data' => new JsExpression('function(params) { return {q:params.term}; }')

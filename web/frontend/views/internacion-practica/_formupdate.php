@@ -42,7 +42,7 @@ select[readonly].select2-hidden-accessible + .select2-container {
             'pluginOptions' => [
                 'minimumInputLength' => 3,
                 'ajax' => [
-                    'url' => Url::to(['consultas/snomed-practicas']),
+                    'url' => Url::to(['snowstorm/practicas']),
                     'dataType' => 'json',
                     'delay'=> 500,
                     'data' => new JsExpression('function(params) { return {q:params.term}; }')

@@ -23,11 +23,6 @@ $this->title = 'Persona';
 $this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['buscar-persona']];
 $this->params['breadcrumbs'][] = $this->title;
 
-$this->registerJsFile(
-    '@web/js/consultas.js',
-    ['depends' => [\yii\web\JqueryAsset::class]]
-);
-
 ?>
 
 <style>
@@ -153,16 +148,6 @@ $this->registerJsFile(
                 <div class="card-body">
                     <h4 class="mb-2">Más datos</h4>
                     <?= '<div class="row">' . Html::a(
-                        'HC Externa (Nacional)',
-                        ['consultas/ips-historia-clinica', 'id' => $model->id_persona],
-                        $options = [
-                            'class' => 'linkaModalGeneral ms-2',
-                            'data-title' => "Historia Clinica IPS",
-                            'title' => 'Ir a historia clinica IPS',
-                        ]
-                    ) . '</div>'; ?>
-
-                    <?= '<div class="row">' . Html::a(
                         'Coberturas',
                         ['personas/viewpuco', 'dni' => $model->documento, 'sexo' =>  $model->sexo_biologico],
                         $options = [
@@ -181,17 +166,6 @@ $this->registerJsFile(
                             'data-title' => 'Vacunas'
                         ]
                     ) . '</div>'; ?>
-
-                    <?= '<div class="row">' . Html::a(
-                        'Antecedentes',
-                        ['consultas/historialantecedentes', 'id' => $model->id_persona],
-                        $options = [
-                            'class' => 'linkaModalGeneral ms-2',
-                            'data-title' => "Historial de Antecedentes",
-                            'title' => 'Ir a listado historial de antecedentes',
-                        ]
-                    ) . '</div>'; ?>
-
 
                 </div>
 

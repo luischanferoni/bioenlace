@@ -37,7 +37,7 @@ use yii\helpers\Url;
                                 'pluginOptions' => [
                                     'minimumInputLength' => 3,
                                         'ajax' => [
-                                            'url' => Url::to(['consultas/snomed']),
+                                            'url' => Url::to(['snowstorm/medicamentos']),
                                             'dataType' => 'json',
                                             'delay'=> 500,
                                             'data' => new JsExpression('function(params) { return {q:params.term}; }')

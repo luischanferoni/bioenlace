@@ -4,7 +4,7 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 
 **Leyenda:** `pendiente` | `en_curso` | `hecho` | `n/a`
 
-**Última revisión:** 2026-05-20 — fase 8 internación (EpisodeOfCare + bridge Yii + API).
+**Última revisión:** 2026-05-20 — fase 12 retirada MVC `Consulta*` web (API + SPA + Flutter + nativas agenda/internación).
 
 ## Recursos núcleo
 
@@ -42,7 +42,7 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 | Concepto | Hoy | Objetivo | Estado |
 |----------|-----|----------|--------|
 | Wizard por servicio | `encounter_definition` (+ alias `ConsultasConfiguracion`) | `encounter_definition` | hecho |
-| UI JSON turnos | `views/json/turnos/…` | `views/json/scheduling/…` | pendiente (fase 11) |
+| UI JSON turnos | `views/json/turnos/…` | `views/json/scheduling/…` | hecho (fase 11) |
 | UI JSON clínica | `views/json/clinical/…` | `UiScreenService` + dominios `scheduling/`/`clinical/` | hecho (fase 11) |
 | UiScreenService | `components/Ui/UiScreenService.php` | `components/Ui/` | hecho |
 
@@ -54,7 +54,7 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 | `consultas_medicamentos` (tabla) | `medication_request` | hecho (drop) |
 | `seg_nivel_internacion_medicamento` / `_practica` | `medication_request` / `service_request` | hecho (drop; escritura vía `InternacionClinicalBridge`) |
 | `seg_nivel_internacion_diagnostico` | `clinical_condition` | hecho escritura fase 8; drop tabla pendiente fase 1 (omisión migración) |
-| `Consulta.php` (AR) | `Clinical\Encounter` | pendiente (Yii web + referencias) |
+| `Consulta.php` (AR) | `Clinical\Encounter` | pendiente (informes/API legacy; **MVC web retirado**) |
 | `common/components/Services/` | dominios `Scheduling/`, `Clinical/`, … | hecho (eliminada) |
 | `ConsultaProcesamientoService` (AR legacy) | `Clinical/Legacy/` + `EncounterDocumentationService` | en_curso (solo `analizar()` delega legacy) |
 | `ConsultaController` (API) | `clinical/EncounterController` | hecho (410 Gone) |
@@ -81,4 +81,8 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 | 9 | **hecho** | Draft clínico, catálogo `/api/clinical/*`, AppointmentReason por encounter_id |
 | 10 | **hecho** | Home paciente + API active con resumen |
 | 11 | **hecho** | Dominios views/json + pilotos care-plan / encounter UI |
-| 12 | pendiente | Yii web clínico |
+| 12 | **hecho** | Retirados `frontend/controllers/Consulta*`, `views/consultas/*`, oftalmo/receta/balance/régimen; SNOMED vía `SnowstormController` |
+
+## Canal web clínico ambulatorio
+
+**Yii MVC `Consulta*` / `views/consultas/`:** retirado. Captura y lectura clínica → **API v1** (`clinical/encounter/*`, órdenes, especialidades) + **SPA asistente** + **Flutter**. Nativas que permanecen: agenda laboral, internación (cama/consumos), partials API (`paciente/_formulario_consulta.php`).

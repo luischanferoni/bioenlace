@@ -14,10 +14,6 @@ use common\models\Persona;
 $this->title = 'Guardias';
 $this->params['breadcrumbs'][] = $this->title;
 
-$this->registerJsFile(
-    '@web/js/consultas.js',
-    ['depends' => [\yii\web\JqueryAsset::class]]
-);
 ?>
 <div class="guardia-index">
 <div class="card">

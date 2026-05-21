@@ -75,7 +75,7 @@ trait AdjuntoTrait
                 'caption' => $archivo->nombre_archivo . '.' . $archivo->tipo,
                 'type' => $archivo->tipo,
                 'size' => $archivo->size_archivo,
-                'url' => Url::to(['consulta-practicas/eliminar-adjunto', 'id' => $archivo->id])
+                'url' => Url::to(['documentos-externos/eliminar-adjunto', 'id' => $archivo->id])
             ];
         }
 

@@ -17,11 +17,6 @@ $this->params['breadcrumbs'][] = ['label' => 'Internaciones', 'url' => ['index']
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 
-$this->registerJsFile(
-    '@web/js/consultas.js',
-    ['depends' => [\yii\web\JqueryAsset::class]]
-);
-
 ?>
 
 <?= $this->render('_modal_alta.php', ['model' => $model]); ?>
@@ -54,7 +49,7 @@ $this->registerJsFile(
                     <?php endif; ?>
                     <?php
 
-                    if ($puedeAtender && (!$model->internacionConAlta())) : ?>
+                    if ($puedeAtender && $urlSiguiente && (!$model->internacionConAlta())) : ?>
                         <?= Html::a(
                             '<svg width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                         <defs>                        
@@ -240,19 +235,6 @@ $this->registerJsFile(
 
             <div class="col-sm-12 d-flex">
                 <?= $this->render('v2/_view_enfermeria', ['atencionEnfermeria' => $atencionEnfermeria]); ?>
-            </div>
-
-            <div class="col-sm-12 d-flex">
-                <?= $this->render(
-                    '../consulta-balance-hidrico/_internacion_card.php',
-                    ['balances_list' => $balances_list]
-                ); ?>
-            </div>
-            <div class="col-sm-12 d-flex">
-                <?= $this->render(
-                    '../consulta-regimen/_internacion_card.php',
-                    ['regimenes_list' => $regimenes_list]
-                ); ?>
             </div>
 
             <?php /*

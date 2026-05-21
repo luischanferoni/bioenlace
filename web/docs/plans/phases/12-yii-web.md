@@ -79,6 +79,12 @@ Fase 12 **no** migra agenda ni internación a `views/clinical/`; como mucho actu
 - [ ] `MIGRATION_STATUS.md` fases 0–12 coherentes.
 - [ ] Release notes interno.
 
+## Turno / Guardia (timeline)
+
+- `PatientHistoriaUrl::captura()` → `/paciente/historia?id=&parent=&parent_id=` (mismo contrato que `pacientes-listado.js`).
+- Eliminadas llamadas a `Consulta::armarUrlAConsultadesdeParent` y `consultas/view` en `footerTimeline`.
+- «Ver última AE» → `atenciones-enfermeria/view`.
+
 ## encounter_definition.workflow_json
 
 Tras retirar MVC `Consulta*`, las URLs en `conf[].url` (`consulta-sintomas/create`, etc.) no deben usarse.

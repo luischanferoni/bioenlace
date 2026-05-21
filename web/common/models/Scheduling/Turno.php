@@ -2,8 +2,13 @@
 
 namespace common\models\Scheduling;
 
+use common\components\Clinical\PatientHistoriaUrl;
+use common\models\Consulta;
+use common\models\ConsultaAtencionesEnfermeria;
+use common\models\ServiciosEfector;
 use Yii;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 use yii\helpers\Url;
 use common\models\Persona;
 use common\traits\ParameterQuestionsTrait;
@@ -684,123 +689,116 @@ class Turno extends \yii\db\ActiveRecord
         $footer = "";
         switch ($tipo) {
             case self::ESTADO_PENDIENTE:
-                // SisseGhostHtml::a
-
                 $idServicioSesion = Yii::$app->user->getServicioActual();
                 $idServicioTurno = $idServicioAsignado;
                 $ocultaBotonAtender = false;
                 $ocultarBotonNoSePresento = false;
                 $puedeAtender = true;
+                $url = null;
+                $a = '';
+                $b = '';
+                $c = '';
+                $d = '';
 
                 $fecha_hoy = date('Y-m-d');
-                $fecha_turno = date('Y-m-d',strtotime($fecha));
+                $fecha_turno = date('Y-m-d', strtotime($fecha));
 
                 if ($fecha_turno <= $fecha_hoy) {
-
-
                     if ($idServicioSesion != $idServicioTurno) {
-
                         $servicioPasePrevioTurno = ServiciosEfector::find()
                             ->where(['id_efector' => Yii::$app->user->getIdEfector()])
                             ->andWhere(['id_servicio' => $idServicioTurno])
                             ->one();
 
-                        //AQUI CHEQUEO SI EL ID SERVICIO EN SESION COINCIDE CON EL PASE PREVIO
-
-                        if ($idServicioSesion != $servicioPasePrevioTurno->pase_previo) {
-                            return '<h6><span class="text-danger"><b>Para realizar la atencion usted debe CAMBIAR de Servicio</b></span></h6>';
+                        if ($servicioPasePrevioTurno === null || $idServicioSesion != $servicioPasePrevioTurno->pase_previo) {
+                            return '<h6><span class="text-danger"><b>Para realizar la atención usted debe CAMBIAR de Servicio</b></span></h6>';
                         }
 
                         $ocultarBotonNoSePresento = true;
 
                         if (!Consulta::existeConsultaPasePrevio($id, $idServicioSesion)) {
-                            $url = Consulta::armarUrlAConsultadesdeParent(Consulta::PARENT_PASE_PREVIO, $id, $idServicioSesion, $id_persona);
+                            $url = PatientHistoriaUrl::captura(
+                                (int) $id_persona,
+                                Consulta::PARENT_PASE_PREVIO,
+                                (int) $id
+                            );
                         } else {
                             $ocultaBotonAtender = true;
                         }
                     } else {
-                        $url = Consulta::armarUrlAConsultadesdeParent(Consulta::PARENT_TURNO, $id, $idServicioAsignado, $id_persona);
+                        $url = PatientHistoriaUrl::captura(
+                            (int) $id_persona,
+                            Consulta::PARENT_TURNO,
+                            (int) $id
+                        );
                     }
                 } else {
                     $puedeAtender = false;
                 }
 
                 if ($puedeAtender) {
-
-                    if (!$ocultaBotonAtender) {
-                        $a = yii\helpers\Html::a(
+                    if (!$ocultaBotonAtender && $url !== null) {
+                        $a = Html::a(
                             '<b>Atender</b>',
                             $url,
                             [
                                 'class' => 'btn btn-sm btn-outline-info rounded-pill atender',
                                 'title' => 'Atender',
+                                'data-spa-nav' => '1',
                             ]
                         );
-                    } else {
-
+                    } elseif ($ocultaBotonAtender) {
                         $a = '<span class="badge bg-warning">PASE PREVIO COMPLETADO</span>';
                     }
 
                     if (!$ocultarBotonNoSePresento) {
-                        $b = yii\helpers\Html::a(
-                            'No se presentÃ³',
+                        $b = Html::a(
+                            'No se presentó',
                             ['turnos/no-se-presento'],
                             [
                                 'class' => 'btn btn-sm btn-outline-danger rounded-pill ms-4 cambiar_estado_turno',
                                 'alert_title' => 'Confirme la ausencia del paciente',
-                                'title' => 'No se presentÃ³',
-                                'post_data' => '{"id_turno": ' . $id . '}'
+                                'title' => 'No se presentó',
+                                'post_data' => '{"id_turno": ' . $id . '}',
                             ]
                         );
-                    } else {
-                        $b = '';
                     }
 
-                    $c = '';
-                    $d = '';
-
-                    //TODO: CONTROLAR QUE EL SERVICIO DEFINIDO PARA PASE PREVIO TIENE UNA CONFIGURACION EN EL BACKEND.
-
                     if ($pase_previo == 27 || $pase_previo == 25) {
-
-                        $c = yii\helpers\Html::a(
-                            '<b>Nueva Atencion de Enfermeria</b>',
-                            Consulta::armarUrlAConsultadesdeParent(Consulta::PARENT_PASE_PREVIO, $id, '', $id_persona),
+                        $c = Html::a(
+                            '<b>Nueva atención de enfermería</b>',
+                            PatientHistoriaUrl::captura(
+                                (int) $id_persona,
+                                Consulta::PARENT_PASE_PREVIO,
+                                (int) $id
+                            ),
                             [
-                                'class' => 'btn btn-sm btn-outline-info rounded-pill ms-4 text-dark atender',
-                                'title' => 'Atender',
+                                'class' => 'btn btn-sm btn-outline-info rounded-pill ms-4 text-dark',
+                                'title' => 'Captura clínica (timeline)',
+                                'data-spa-nav' => '1',
                             ]
                         );
 
-                        $consultaAE = ConsultaAtencionesEnfermeria::obtenerUltimaAtencionPorPaciente($id_persona);
-                        if ($consultaAE) {
-
-                            $d = yii\helpers\Html::button(
-                                '<b>Ver Ãºltima AE</b>',
+                        if (ConsultaAtencionesEnfermeria::obtenerUltimaAtencionPorPaciente($id_persona)) {
+                            $d = Html::a(
+                                '<b>Ver última AE</b>',
+                                ['atenciones-enfermeria/view', 'id' => $id_persona],
                                 [
                                     'class' => 'btn btn-sm btn-outline-info rounded-pill text-dark ms-4',
-                                    'title' => 'Ver ultima atenciÃ³n de enfermeria',
-                                    "data-bs-toggle" => "modal",
-                                    "data-bs-target" => "#modal_detail_consulta",
-                                    'data-bs-consulta_id' => $consultaAE->id_consulta,
-                                    'data-bs-consulta_detalle_url' => Url::toRoute('consultas/view'),
+                                    'title' => 'Ver última atención de enfermería',
                                 ]
                             );
                         }
                     }
                 } else {
                     $a = '<span class="badge bg-warning">NO SE PUEDE ATENDER TURNOS CON FECHA FUTURA</span>';
-                    $b = '';
-                    $c = '';
-                    $d = '';
                 }
-
 
                 $footer = $a . $b . $c . $d;
 
                 break;
             case self::ESTADO_SIN_ATENDER:
-                $footer = '<h5><span class="text-danger">No se presentÃ³</span></h5>';
+                $footer = '<h5><span class="text-danger">No se presentó</span></h5>';
                 break;
             case self::ESTADO_CANCELADO:
                 $footer = '<h5><span class="text-danger">Cancelado</span></h5>';

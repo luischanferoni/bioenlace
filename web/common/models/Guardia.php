@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\components\Clinical\PatientHistoriaUrl;
 use Yii;
 use yii\helpers\Console;
 
@@ -228,9 +229,12 @@ class Guardia extends \yii\db\ActiveRecord
             case 'pendiente':
                 if ($guardia->id_efector == Yii::$app->user->getIdEfector()) {
 
-                    if ($encounterClass ==  Consulta::ENCOUNTER_CLASS_EMER) {
-
-                        $url = Consulta::armarUrlAConsultadesdeParent(Consulta::PARENT_GUARDIA, $id, '', $id_persona);
+                    if ($encounterClass == Consulta::ENCOUNTER_CLASS_EMER) {
+                        $url = PatientHistoriaUrl::captura(
+                            (int) $id_persona,
+                            Consulta::PARENT_GUARDIA,
+                            (int) $id
+                        );
 
                         $a = yii\helpers\Html::a(
                             'Atender',
@@ -238,6 +242,7 @@ class Guardia extends \yii\db\ActiveRecord
                             [
                                 'class' => 'btn btn-sm btn-outline-info rounded-pill atender',
                                 'title' => 'Atender',
+                                'data-spa-nav' => '1',
                             ]
                         );
                     } else {

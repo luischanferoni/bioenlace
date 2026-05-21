@@ -4,7 +4,7 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 
 **Leyenda:** `pendiente` | `en_curso` | `hecho` | `n/a`
 
-**Última revisión:** 2026-05-21 — fase 3 cerrada (dominios + modelos); fases 6 y 10 hechas.
+**Última revisión:** 2026-05-20 — fase 8 internación (EpisodeOfCare + bridge Yii + API).
 
 ## Recursos núcleo
 
@@ -13,7 +13,7 @@ Tablero vivo. Actualizar al cerrar tareas de cada fase.
 | Patient | `personas` | `Person\Persona` (+ alias) | `Person/Service/*` | existente | hecho |
 | Appointment | `turnos` | `Scheduling\Turno` (+ alias) | `Scheduling/Service/*` | `TurnosController` | hecho |
 | Encounter | `encounter` | `Clinical\Encounter` | `EncounterLifecycleService` | `clinical/EncounterController` | hecho |
-| EpisodeOfCare | `episode_of_care` | `Clinical\EpisodeOfCare` | `EpisodeOfCareService` | — | hecho (AR+svc; API fase 8) |
+| EpisodeOfCare | `episode_of_care` | `Clinical\EpisodeOfCare` | `EpisodeOfCareService`, `InpatientClinicalQuery` | `clinical/episode-of-care/*` | hecho |
 | CarePlan | `care_plan` | `Clinical\CarePlan` | `CarePlanService`, `CarePlanLifecycleService`, `CarePlanPresentationService` | `clinical/CarePlanController` | hecho |
 | CarePlanActivity | `care_plan_activity` | `Clinical\CarePlanActivity` | (CarePlanService) | — | hecho |
 | Goal | `goal` | — | — | — | hecho (BD) |
@@ -52,6 +52,8 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 |---------------|-----------|-------------------|
 | `consultas` (tabla) | `encounter` | hecho (drop) |
 | `consultas_medicamentos` (tabla) | `medication_request` | hecho (drop) |
+| `seg_nivel_internacion_medicamento` / `_practica` | `medication_request` / `service_request` | hecho (drop; escritura vía `InternacionClinicalBridge`) |
+| `seg_nivel_internacion_diagnostico` | `clinical_condition` | en_curso (bridge FHIR; tabla legacy aún existe) |
 | `Consulta.php` (AR) | `Clinical\Encounter` | pendiente (Yii web + referencias) |
 | `common/components/Services/` | dominios `Scheduling/`, `Clinical/`, … | hecho (eliminada) |
 | `ConsultaProcesamientoService` (AR legacy) | `Clinical/Legacy/` + `EncounterDocumentationService` | en_curso (solo `analizar()` delega legacy) |
@@ -74,7 +76,7 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 | 3 | **hecho** | Dominios + modelos `Person/`, `Scheduling/`, `Terminology/Snomed/` |
 | 6 | **hecho** | Medication/Service request services + API; E2E vía `encounter/guardar` |
 | 7 | **hecho (pilotos)** | Odonto + oftalmo; psico/obstetricia/enfermería pendientes |
-| 8 | pendiente | Internación / EpisodeOfCare en Yii |
+| 8 | **hecho** | EpisodeOfCare + IMP + bridge medicación/práctica/diagnóstico; API bundle |
 | 9 | **en_curso** | Entry point ok; intents/YAML/draft clínico pendiente |
 | 10 | **hecho** | Home paciente + API active con resumen |
 | 11–12 | pendiente | UI JSON clínica; Yii web |

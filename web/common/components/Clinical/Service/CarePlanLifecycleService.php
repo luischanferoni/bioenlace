@@ -39,6 +39,8 @@ final class CarePlanLifecycleService
             ->andWhere(['deleted_at' => null])
             ->one();
         if ($existing !== null) {
+            $this->ensureInpatientEncounter($internacion, $episode);
+
             return $episode;
         }
 
@@ -49,8 +51,37 @@ final class CarePlanLifecycleService
             (int) $episode->id
         );
         $this->carePlans->activate($plan);
+        $this->ensureInpatientEncounter($internacion, $episode);
 
         return $episode;
+    }
+
+    private function ensureInpatientEncounter(SegNivelInternacion $internacion, EpisodeOfCare $episode): Encounter
+    {
+        $parentType = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION];
+        $existing = Encounter::find()
+            ->andWhere([
+                'parent_type' => $parentType,
+                'parent_id' => (int) $internacion->id,
+                'encounter_class' => Encounter::ENCOUNTER_CLASS_IMP,
+                'status' => EncounterStatus::IN_PROGRESS,
+            ])
+            ->andWhere(['deleted_at' => null])
+            ->one();
+
+        if ($existing instanceof Encounter) {
+            return $existing;
+        }
+
+        return $this->encounters->start([
+            'subject_persona_id' => (int) $internacion->id_persona,
+            'encounter_class' => Encounter::ENCOUNTER_CLASS_IMP,
+            'parent_type' => $parentType,
+            'parent_id' => (int) $internacion->id,
+            'efector_id' => $episode->efector_id,
+            'id_profesional_efector_servicio' => $internacion->id_profesional_efector_servicio,
+            'reason_text' => 'Internación #' . $internacion->id,
+        ]);
     }
 
     /**

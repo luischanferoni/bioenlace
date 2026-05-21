@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use Yii;
+use common\components\Clinical\Legacy\InternacionClinicalBridge;
 use common\models\SegNivelInternacionDiagnostico;
 use common\models\snomed\SnomedProblemas;
 use common\models\busquedas\SegNivelInternacionDiagnosticoBusqueda;
@@ -99,33 +100,24 @@ class InternacionDiagnosticoController extends Controller
 
             //$valid = Model::validateMultiple($models);
             //if ($valid) {
-                $transaction = \Yii::$app->db->beginTransaction();
                 try {
                     foreach ($models as $model) {
                         $model->id_internacion = $id_internacion;
                         $model->created_at = date('Y-m-d H:i:s');
                         $model->created_by = Yii::$app->user->id;
-                        if (! ($flag = $model->save())) {
-                            $transaction->rollBack();
-                            break;
-                        }else{
-                            /* Guardo el conceptId & term localmente */
-                            $snoMed = SnomedProblemas::findOne(['conceptId' => $model->conceptId]);
-                            if (!$snoMed) {
-                                $snoMed = new SnomedProblemas();
-                                $snoMed->conceptId = $model->conceptId;
-                                $snoMed->term = Yii::$app->snowstorm->busquedaPorConceptId($snoMed->conceptId);
-                                $snoMed->save();// Si el registro ya existe
-                            }
+                        $snoMed = SnomedProblemas::findOne(['conceptId' => $model->conceptId]);
+                        if (!$snoMed && $model->conceptId) {
+                            $snoMed = new SnomedProblemas();
+                            $snoMed->conceptId = $model->conceptId;
+                            $snoMed->term = Yii::$app->snowstorm->busquedaPorConceptId($snoMed->conceptId);
+                            $snoMed->save();
                         }
                     }
-                    if ($flag) {
-                        $transaction->commit();                       
-                        
-                         return $this->redirect(['internacion/view', 'id' => $model->id_internacion]);
-                    }
-                } catch (Exception $e) {
-                    $transaction->rollBack();
+                    (new InternacionClinicalBridge())->persistDiagnosticos((int) $id_internacion, $models);
+
+                    return $this->redirect(['internacion/view', 'id' => $id_internacion]);
+                } catch (\Throwable $e) {
+                    Yii::$app->session->setFlash('error', $e->getMessage());
                 }
             //}         
         }

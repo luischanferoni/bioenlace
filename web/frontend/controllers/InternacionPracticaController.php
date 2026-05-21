@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use Yii;
+use common\components\Clinical\Legacy\InternacionClinicalBridge;
 use common\models\SegNivelInternacionPractica;
 use common\models\busquedas\SegNivelInternacionPracticaBusqueda;
 use yii\web\Controller;
@@ -99,7 +100,6 @@ class InternacionPracticaController extends Controller
             );
         }
 
-        $transaction = \Yii::$app->db->beginTransaction();
         try {
             foreach ($models as $model) {
                 $model->created_at = date('Y-m-d H:i:s');
@@ -108,24 +108,19 @@ class InternacionPracticaController extends Controller
                 $rawSol = Yii::$app->request->post('id_profesional_efector_servicio_solicita');
                 $model->id_profesional_efector_servicio_solicita = $rawSol !== null && $rawSol !== ''
                     ? (int) $rawSol : null;
-                if (! ($flag = $model->save())) {
-                    $transaction->rollBack();
-                    break;
-                }
                 $snoMed = SnomedProcedimientos::findOne(['conceptId' => $model->conceptId]);
-                if (!$snoMed) {
+                if (!$snoMed && $model->conceptId) {
                     $snoMed = new SnomedProcedimientos();
                     $snoMed->conceptId = $model->conceptId;
                     $snoMed->term = Yii::$app->snowstorm->busquedaPorConceptId($snoMed->conceptId);
-                    $snoMed->save();// Si el registro ya existe
+                    $snoMed->save();
                 }
             }
-            if ($flag) {
-                $transaction->commit();                        
-                return $this->redirect(['internacion/view', 'id' => $model->id_internacion]);
-            }
-        } catch (Exception $e) {
-            $transaction->rollBack();
+            (new InternacionClinicalBridge())->persistPracticas((int) $id_internacion, $models);
+
+            return $this->redirect(['internacion/view', 'id' => $id_internacion]);
+        } catch (\Throwable $e) {
+            Yii::$app->session->setFlash('error', $e->getMessage());
         }
     }
 

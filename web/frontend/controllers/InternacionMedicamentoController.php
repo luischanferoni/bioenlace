@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use Yii;
+use common\components\Clinical\Legacy\InternacionClinicalBridge;
 use common\models\SegNivelInternacionMedicamento;
 use common\models\busquedas\SegNivelInternacionMedicamentoBusqueda;
 use yii\web\Controller;
@@ -95,36 +96,26 @@ class InternacionMedicamentoController extends Controller
                 );
             }
 
-            $transaction = \Yii::$app->db->beginTransaction();
             try {
-                    foreach ($models as $model) {  
-                        $model->id_internacion = $id_internacion;                      
-                        $model->created_at = date('Y-m-d H:i:s');
-                        $model->fecha_indicacion = date('Y-m-d H:i:s');
-                        $model->fecha_suspencion = date('Y-m-d H:i:s');
-                        $model->user_suspencion = Yii::$app->user->id;
-                        $model->create_user = Yii::$app->user->id;
-                         if (! ($flag = $model->save())) {
-                            $transaction->rollBack();
-                            break;
-                        }else{
-
-                            $snoMed = SnomedMedicamentos::findOne(['conceptId' => $model->conceptId]);
-                            if (!$snoMed) {
-                                $snoMed = new SnomedMedicamentos();
-                                $snoMed->conceptId = $model->conceptId;
-                                $snoMed->term = Yii::$app->snowstorm->busquedaPorConceptId($snoMed->conceptId);
-                                $snoMed->save();// Si el registro ya existe
-                            }
-                        }
-                    }        
-                    if ($flag) {
-                        $transaction->commit();                        
-                        return $this->redirect(['internacion/view', 'id' => $model->id_internacion]);
+                foreach ($models as $model) {
+                    $model->id_internacion = $id_internacion;
+                    $model->created_at = date('Y-m-d H:i:s');
+                    $model->fecha_indicacion = date('Y-m-d H:i:s');
+                    $model->create_user = Yii::$app->user->id;
+                    $snoMed = SnomedMedicamentos::findOne(['conceptId' => $model->conceptId]);
+                    if (!$snoMed && $model->conceptId) {
+                        $snoMed = new SnomedMedicamentos();
+                        $snoMed->conceptId = $model->conceptId;
+                        $snoMed->term = Yii::$app->snowstorm->busquedaPorConceptId($snoMed->conceptId);
+                        $snoMed->save();
                     }
-                } catch (Exception $e) {
-                    $transaction->rollBack();
                 }
+                (new InternacionClinicalBridge())->persistMedicamentos((int) $id_internacion, $models);
+
+                return $this->redirect(['internacion/view', 'id' => $id_internacion]);
+            } catch (\Throwable $e) {
+                Yii::$app->session->setFlash('error', $e->getMessage());
+            }
         }
 
         return $this->render('create', [

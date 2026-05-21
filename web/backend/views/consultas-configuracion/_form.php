@@ -36,7 +36,11 @@ use common\models\ConsultasConfiguracion;
         <?= $form->field($model, 'encounter_class', ['labelOptions' =>  ['class' => 'control-label']])->dropDownList(ConsultasConfiguracion::ENCOUNTER_CLASS, ['prompt' => '']); ?>
     </div>
 
-    <?= $form->field($model, 'pasos_json')->textarea(['rows' => 10]) ?>
+    <?= $form->field($model, 'pasos_json')->textarea(['rows' => 10])->hint(
+        'JSON con clave conf[]. Campos titulo, relacion y requerido definen categorías para IA/API. '
+        . 'El campo url ya no debe apuntar a rutas consulta-* ni consultas/* (MVC retirado); dejar url vacío. '
+        . 'Auditoría: php yii encounter-definition/audit-workflow-urls'
+    ) ?>
 
     <div id="resultado_urls"></div>
     <div class="form-group">

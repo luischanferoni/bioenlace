@@ -2,8 +2,8 @@
 
 namespace common\models;
 
+use common\components\Clinical\EncounterDefinitionWorkflowSanitizer;
 use Yii;
-use yii\helpers\Url;
 
 use common\models\Clinical\EncounterDefinitionQuery;
 use common\models\Consulta;
@@ -134,15 +134,24 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
         }
 
         if ($paso !== null) {
-            $urlAnterior = isset($arrayPasos[$paso - 1]) ? Url::toRoute(trim($arrayPasos[$paso - 1])) : null;
-            $urlActual = isset($arrayPasos[$paso]) ? Url::toRoute(trim($arrayPasos[$paso])) : null;
-            $urlSiguiente = isset($arrayPasos[$paso + 1]) ? Url::toRoute(trim($arrayPasos[$paso + 1])) : null;
+            $urlAnterior = isset($arrayPasos[$paso - 1])
+                ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[$paso - 1])
+                : null;
+            $urlActual = isset($arrayPasos[$paso])
+                ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[$paso])
+                : null;
+            $urlSiguiente = isset($arrayPasos[$paso + 1])
+                ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[$paso + 1])
+                : null;
+
             return [$urlAnterior, $urlActual, $urlSiguiente];
         }
 
         $urlAnterior = null;
-        $urlActual = Url::toRoute(trim($arrayPasos[0]));
-        $urlSiguiente = isset($arrayPasos[1]) ? Url::toRoute(trim($arrayPasos[1])) : null;
+        $urlActual = EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[0] ?? null);
+        $urlSiguiente = isset($arrayPasos[1])
+            ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[1])
+            : null;
 
         return [$urlAnterior, $urlActual, $urlSiguiente];
     }

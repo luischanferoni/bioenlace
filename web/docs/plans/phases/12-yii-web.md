@@ -79,6 +79,18 @@ Fase 12 **no** migra agenda ni internación a `views/clinical/`; como mucho actu
 - [ ] `MIGRATION_STATUS.md` fases 0–12 coherentes.
 - [ ] Release notes interno.
 
+## encounter_definition.workflow_json
+
+Tras retirar MVC `Consulta*`, las URLs en `conf[].url` (`consulta-sintomas/create`, etc.) no deben usarse.
+
+| Acción | Detalle |
+|--------|---------|
+| Migración BD | `m260521_100008_encounter_definition_sanitize_legacy_workflow_urls` — vacía `url` legacy |
+| Runtime | `EncounterDefinitionWorkflowSanitizer` — `getUrlPor*` devuelve `null` en pasos MVC |
+| IA / API | Sin cambio: `titulo`, `relacion`, `requerido` en `workflow_json` |
+| Auditoría | `php yii encounter-definition/audit-workflow-urls` |
+| Aplicar sin migrar | `php yii encounter-definition/sanitize-workflow-urls` (`--dryRun=1` primero) |
+
 ## Siguiente paso
 
-No requiere logs: ejecutar la fase con la tabla “API ya anula” de arriba y un PR de eliminación/410 acotado.
+Cierre del programa: `MIGRATION_STATUS` completo y release notes.

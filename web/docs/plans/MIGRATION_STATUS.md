@@ -86,3 +86,5 @@ Persistencia vía `EncounterDocumentationService::guardar` (IA) delega en `Medic
 ## Canal web clínico ambulatorio
 
 **Yii MVC `Consulta*` / `views/consultas/`:** retirado. Captura y lectura clínica → **API v1** (`clinical/encounter/*`, órdenes, especialidades) + **SPA asistente** + **Flutter**. Nativas que permanecen: agenda laboral, internación (cama/consumos), partials API (`paciente/_formulario_consulta.php`).
+
+**`encounter_definition.workflow_json`:** migración `m260521_100008` + `EncounterDefinitionWorkflowSanitizer` — URLs legacy MVC vaciadas; `relacion`/`titulo`/`requerido` siguen alimentando IA. Auditoría: `yii encounter-definition/audit-workflow-urls`.

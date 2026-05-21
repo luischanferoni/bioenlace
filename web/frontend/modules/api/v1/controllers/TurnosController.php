@@ -1040,14 +1040,11 @@ class TurnosController extends BaseController
                 return array_merge(['success' => true], $ctx['grouped']);
             }
 
-            $legendBlock = $this->bloqueLeyendaPoliticaAutogestionPaciente($ctx['id_efector']);
             $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($ctx['grouped'], $ctx['id_servicio']);
             if ($blocks !== []) {
-                $out['blocks'] = array_merge([$legendBlock], $blocks);
+                $out['blocks'] = $this->appendPoliticaAutogestionDespuesDeBloques($blocks, $ctx['id_efector']);
             } else {
                 $out = UiScreenService::withListBlockItems($out, []);
-                $baseBlocks = isset($out['blocks']) && is_array($out['blocks']) ? $out['blocks'] : [];
-                $out['blocks'] = array_merge([$legendBlock], $baseBlocks);
             }
         }
 
@@ -1087,14 +1084,11 @@ class TurnosController extends BaseController
                 return array_merge(['success' => true], $ctx['grouped']);
             }
 
-            $legendBlock = $this->bloqueLeyendaPoliticaAutogestionPaciente($ctx['id_efector']);
             $blocks = TurnoSlotOfferUiPresenter::buildDayPickerBlocks($ctx['grouped']);
             if ($blocks !== []) {
-                $out['blocks'] = array_merge([$legendBlock], $blocks);
+                $out['blocks'] = $blocks;
             } else {
                 $out = UiScreenService::withListBlockItems($out, []);
-                $baseBlocks = isset($out['blocks']) && is_array($out['blocks']) ? $out['blocks'] : [];
-                $out['blocks'] = array_merge([$legendBlock], $baseBlocks);
             }
         }
 
@@ -1188,6 +1182,17 @@ class TurnosController extends BaseController
         ];
     }
 
+    /**
+     * Leyenda de política solo en el paso de horarios, debajo de los listados (SPA ordena por display_order).
+     *
+     * @param list<array<string, mixed>> $blocks
+     * @return list<array<string, mixed>>
+     */
+    private function appendPoliticaAutogestionDespuesDeBloques(array $blocks, int $idEfector): array
+    {
+        return array_merge($blocks, [$this->bloqueLeyendaPoliticaAutogestionPaciente($idEfector)]);
+    }
+
     /** @return array<string, mixed> */
     private function bloqueLeyendaPoliticaAutogestionPaciente(int $idEfector): array
     {
@@ -1197,7 +1202,7 @@ class TurnosController extends BaseController
         return [
             'kind' => 'fields',
             'id' => 'politica_autogestion',
-            'display_order' => -1,
+            'display_order' => 10000,
             'title' => 'Política de cancelación y reprogramación',
             'hide_submit' => true,
             'fields' => [
@@ -1205,7 +1210,7 @@ class TurnosController extends BaseController
                     'name' => '_leyenda_politica_autogestion',
                     'type' => 'textarea',
                     'label' => '',
-                    'rows' => 6,
+                    'rows' => 4,
                     'required' => false,
                     'readonly' => true,
                     'value' => $leyenda,

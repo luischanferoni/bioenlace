@@ -79,6 +79,12 @@ Fase 12 **no** migra agenda ni internación a `views/clinical/`; como mucho actu
 - [ ] `MIGRATION_STATUS.md` fases 0–12 coherentes.
 - [ ] Release notes interno.
 
+## Backoffice (`backend/views/personas`)
+
+- Quitados enlaces `consultas/historialconsultas`, `ips-historia-clinica`, `historialantecedentes`.
+- Timeline: `frontend/paciente/historia` (pestaña nueva).
+- Enfermería: rutas explícitas `frontend/atenciones-enfermeria/*` en modal.
+
 ## Turno / Guardia (timeline)
 
 - `PatientHistoriaUrl::captura()` → `/paciente/historia?id=&parent=&parent_id=` (mismo contrato que `pacientes-listado.js`).

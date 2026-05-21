@@ -60,20 +60,12 @@ $esAdmin = User::hasRole(['Admin']);
                             'opciones' => function ($url, $model) {
                                 $array_opciones = [
                                     [
-                                        'label' => 'Consultas',
-                                        'url' => ['consultas/historialconsultas', 'id' => $model->id_persona],
+                                        'label' => 'Timeline clínico',
+                                        'url' => ['frontend/paciente/historia', 'id' => $model->id_persona],
                                         'linkOptions' => [
-                                            'class' => 'modalGeneral',
-                                            'data-title' => 'Historial de Consultas',
-                                        ]
-                                    ],
-                                    [
-                                        'label' => 'Antecedentes',
-                                        'url' => ['consultas/historialantecedentes', 'id' => $model->id_persona],
-                                        'linkOptions' => [
-                                            'class' => 'modalGeneral',
-                                            'data-title' => 'Historial de Antecedentes',
-                                        ]
+                                            'target' => '_blank',
+                                            'rel' => 'noopener noreferrer',
+                                        ],
                                     ],
                                     [
                                         'label' => 'Coberturas',

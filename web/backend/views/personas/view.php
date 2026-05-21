@@ -77,22 +77,25 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div class="card-body">
                     <h4 class="mb-2">Enfermería</h4>
                     <div class="row"><?= Html::a(
-                                            'Atención Enfermería',
-                                            ['atenciones-enfermeria/create', 'id_persona' => $model->id_persona],
-                                            $options = [
-                                                'class' => 'linkaModalGeneral ms-2',
-                                                'id' => 'linkaModalGeneral_' . $model->id_persona,
-                                                'title' => 'Valores de Atenciones/Controles',
-                                                'data-title' => "Atencion de Enfermeria"
-                                            ]
-                                        ); ?></div>
+                        'Atención Enfermería',
+                        ['frontend/atenciones-enfermeria/create', 'id_persona' => $model->id_persona],
+                        [
+                            'class' => 'linkaModalGeneral ms-2',
+                            'id' => 'linkaModalGeneral_' . $model->id_persona,
+                            'title' => 'Valores de Atenciones/Controles',
+                            'data-title' => 'Atención de enfermería',
+                        ]
+                    ); ?></div>
 
                     <div class="row"><?= Html::a(
-                                            'Ver Atenciones de Enfermería',
-                                            ['atenciones-enfermeria/view', 'id' => $model->id_persona],
-                                            ['class' => 'ms-2'],
-                                            ['title' => 'Valores de Atenciones/Controles']
-                                        ); ?></div>
+                        'Ver Atenciones de Enfermería',
+                        ['frontend/atenciones-enfermeria/view', 'id' => $model->id_persona],
+                        [
+                            'class' => 'linkaModalGeneral ms-2',
+                            'title' => 'Valores de Atenciones/Controles',
+                            'data-title' => 'Atenciones de enfermería',
+                        ]
+                    ); ?></div>
                 </div>
             </div>
 
@@ -142,35 +145,14 @@ $this->params['breadcrumbs'][] = $this->title;
                     ?>
 
 
-                    <?php
-                    echo '<div class="row">' . Html::a(
-                        'Historia Clinica',
-                        ['consultas/historialconsultas', 'id' => $model->id_persona . (isset($mpi_id) && $mpi_id != '' ? '&mpi_id=' . $mpi_id : '')],
-                        $options = [
-                            'class' => 'linkaModalGeneral ms-2',
-                            'data-title' => "Historial de Consultas",
-                            'title' => 'Ir a listado historial de consultas',
-                        ]
-                    ) . '</div>';
-                    ?>
-
                     <?= '<div class="row">' . Html::a(
-                        'HC Externa',
-                        ['consultas/ips-historia-clinica', 'id' => $model->id_persona],
-                        $options = [
-                            'class' => 'linkaModalGeneral ms-2',
-                            'data-title' => "Historia Clinica IPS",
-                            'title' => 'Ir a historia clinica IPS',
-                        ]
-                    ) . '</div>'; ?>
-
-                    <?= '<div class="row">' . Html::a(
-                        'Antecedentes',
-                        ['consultas/historialantecedentes', 'id' => $model->id_persona],
-                        $options = [
-                            'class' => 'linkaModalGeneral ms-2',
-                            'data-title' => "Historial de Antecedentes",
-                            'title' => 'Ir a listado historial de antecedentes',
+                        'Timeline clínico (captura / API)',
+                        ['frontend/paciente/historia', 'id' => $model->id_persona],
+                        [
+                            'class' => 'ms-2',
+                            'title' => 'Abrir timeline del paciente en la aplicación web',
+                            'target' => '_blank',
+                            'rel' => 'noopener noreferrer',
                         ]
                     ) . '</div>'; ?>
                 </div>

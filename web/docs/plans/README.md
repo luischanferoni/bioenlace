@@ -6,7 +6,9 @@ Solo **planes largos activos** (multi-fase, varios PR). Cuando un plan termina, 
 
 | Plan | Carpeta | Estado |
 |------|---------|--------|
-| Laboratorio externo FHIR | [laboratorio-external-fhir/](./laboratorio-external-fhir/README.md) | en curso |
+| *(ninguno)* | — | — |
+
+Plan laboratorio FHIR **cerrado** — documentación en [laboratorio/](../laboratorio/README.md).
 
 Para abrir un plan: crear `plans/<slug>/` según [design.md](./design.md) y registrar la fila anterior.
 

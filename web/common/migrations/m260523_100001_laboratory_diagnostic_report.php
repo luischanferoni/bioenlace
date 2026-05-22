@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Laboratorio externo FHIR: diagnostic_report + trazabilidad en observation.
  *
- * Plan: web/docs/plans/laboratorio-external-fhir/phases/01-foundation-db.md
+ * Docs: web/docs/laboratorio/
  */
 class m260523_100001_laboratory_diagnostic_report extends Migration
 {

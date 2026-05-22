@@ -15,7 +15,7 @@ Dominio FHIR clínico (Encounter, CarePlan, órdenes).
 
 Modelos AR: `common/models/Clinical/` (`Procedure`, `Observation`, `DiagnosticReport`, …).
 
-Integraciones HTTP: `common/components/Integrations/Laboratory/`. Plan activo: `web/docs/plans/laboratorio-external-fhir/`.
+Integraciones HTTP: `common/components/Integrations/Laboratory/`. Docs: `web/docs/laboratorio/`.
 
 ## Uso
 

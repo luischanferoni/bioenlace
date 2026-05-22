@@ -51,7 +51,7 @@ class EclSnomed extends MapearActiveRecord
     
     /**
      * {@inheritdoc}
-     * @return LaboratorioQuery the active query used by this AR class.
+     * @return \yii\db\ActiveQuery the active query used by this AR class.
      */
 //     public static function find()
 //     {

@@ -25,6 +25,7 @@ Sin fragmentos de código en los cuerpos: solo nombres de métodos, rutas y serv
 | [captura-clinica](./captura-clinica/README.md) | Audio/texto, niveles de carga, corrección, resumen IA |
 | [plataforma](./plataforma/README.md) | GCP, anotaciones API, plan interno |
 | [legacy](./legacy/README.md) | Análisis HIS histórico (archive) |
+| [laboratorio](./laboratorio/README.md) | Resultados LIS externos (FHIR pull) |
 
 ## Convenciones (Cursor rules)
 

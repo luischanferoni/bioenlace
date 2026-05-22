@@ -11,8 +11,11 @@ Dominio FHIR clínico (Encounter, CarePlan, órdenes).
 | `Service/` | Negocio sin HTTP (`CarePlanService`, `CarePlanLifecycleService`, `EncounterAccessService`, …) |
 | `Workflow/` | Flujos compuestos (`EncounterDocumentationService`) |
 | `Specialty/` | Odontología, oftalmología (Fase 7); ver [Specialty/README.md](Specialty/README.md) |
+| `Laboratory/` | Ingesta pull LIS FHIR → `diagnostic_report` / `observation` |
 
-Modelos AR: `common/models/Clinical/` (`Procedure`, `Observation`, `VisionPrescription`, …).
+Modelos AR: `common/models/Clinical/` (`Procedure`, `Observation`, `DiagnosticReport`, …).
+
+Integraciones HTTP: `common/components/Integrations/Laboratory/`. Plan activo: `web/docs/plans/laboratorio-external-fhir/`.
 
 ## Uso
 

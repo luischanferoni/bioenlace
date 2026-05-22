@@ -19,4 +19,4 @@ Experiencia de **paciente y médico** en apps móvil, SPA y alta de identidad.
 - [Turnos](../Turnos/README.md) — reserva y autogestión
 - [asistente](../asistente/README.md) — intents y chat
 - [costos](../costos/README.md) — estimación IA/medios
-- Plan móvil paciente: [plans/phases/10-mobile-paciente.md](../plans/phases/10-mobile-paciente.md)
+- Care plans en app paciente: API `GET /api/v1/clinical/care-plans/active` (ver [decisions/fhir-clinical.md](../decisions/fhir-clinical.md))

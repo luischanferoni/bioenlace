@@ -4,7 +4,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 
 | ID | Título | Ubicación |
 |----|--------|-----------|
-| Programa FHIR | Producto, modelo, API clínica, greenfield | [plans/DECISIONS.md](../plans/DECISIONS.md) |
+| Dominio clínico FHIR | Producto, modelo, API clínica, greenfield | [fhir-clinical.md](./fhir-clinical.md) |
 
 ## Formato sugerido para nuevas entradas
 

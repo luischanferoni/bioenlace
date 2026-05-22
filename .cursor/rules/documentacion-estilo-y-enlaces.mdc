@@ -25,7 +25,7 @@ alwaysApply: false
 
 ## Decisiones
 
-- Decisión **cerrada** que afecta varios módulos → `web/docs/decisions/` (formato en `decisions/README.md`) o `plans/DECISIONS.md` para el programa FHIR.
+- Decisión **cerrada** que afecta varios módulos → `web/docs/decisions/`. Los planes en `web/docs/plans/` son temporales y se borran al cerrar el plan.
 - Decisión local al dominio → sección en `design.md` (“alternativa descartada”), no un ADR duplicado.
 
 ## Referencias desde código

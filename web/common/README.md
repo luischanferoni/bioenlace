@@ -26,8 +26,8 @@ Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 
 ## Migración Clinical
 
-- [docs/plans/MIGRATION_STATUS.md](docs/plans/MIGRATION_STATUS.md)
-- [docs/plans/PROGRAM.md](docs/plans/PROGRAM.md)
+- [docs/plans/README.md](docs/plans/README.md) (solo planes en ejecución)
+- [docs/decisions/fhir-clinical.md](docs/decisions/fhir-clinical.md)
 
 ## Herramientas
 

@@ -25,7 +25,7 @@ Cada dominio de negocio vive en `web/docs/<dominio>/`:
 |------|---------|
 | Turnos, agenda, RBAC turnos | `Turnos/` |
 | Chat, YAML intents, UI JSON, envelope | `asistente/` |
-| Migración FHIR / CarePlan | `plans/` (mantiene `PROGRAM.md`, `phases/`) |
+| Planes largos en ejecución | `plans/<slug>/` (solo mientras el plan está abierto; al cerrar, borrar carpeta) |
 | PES, relaciones AR | `dominio/` |
 | Costos IA/infra | `costos/` |
 | Apps paciente/médico, registro | `producto/` |
@@ -49,4 +49,4 @@ Cada dominio de negocio vive en `web/docs/<dominio>/`:
 ## Meta y archive
 
 - `restructure-phases/`: solo plan/estado de migración de docs, no documentación de producto.
-- `legacy/`: análisis histórico; **no** fuente de verdad operativa (el código y `plans/` mandan).
+- `legacy/`: análisis histórico; **no** fuente de verdad operativa (el código y dominios en `web/docs/` mandan).

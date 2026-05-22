@@ -15,3 +15,4 @@ Conceptos que cruzan varios módulos (no son un producto de usuario final).
 | Estado migración PES | [flows/MIGRACION_PES_ESTADO.md](./flows/MIGRACION_PES_ESTADO.md) |
 | Convenciones relaciones AR | [flows/CONVENCIONES_RELACIONES_AR.md](./flows/CONVENCIONES_RELACIONES_AR.md) |
 | API relaciones expand | [flows/API_RELACIONES_EXPAND.md](./flows/API_RELACIONES_EXPAND.md) |
+| Categorías CarePlan (FHIR) | [flows/care-plan-categories.md](./flows/care-plan-categories.md) |

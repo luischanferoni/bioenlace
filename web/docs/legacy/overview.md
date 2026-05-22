@@ -18,5 +18,5 @@ Material que describe **cómo era** o **qué falta** respecto a un HIS hospitala
 
 | Incluido | No incluido |
 |----------|-------------|
-| Carpeta [his-completo](./his-completo/00-README.md) | Roadmap activo → `plans/` |
+| Carpeta [his-completo](./his-completo/00-README.md) | Solo análisis de brechas (archive) |
 | Quirófano columnas legacy | Flujos nuevos de reserva/captura |

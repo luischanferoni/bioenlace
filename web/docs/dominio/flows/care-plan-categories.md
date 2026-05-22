@@ -1,5 +1,20 @@
 # `care_plan.category` — lista cerrada v1
 
+## Objetivo
+
+Definir códigos permitidos en `care_plan.category` y valores FHIR de `intent` / `status`.
+
+## Actores
+
+- Backend (`CarePlanService`, enums).
+- Producto clínico al definir nuevas categorías.
+
+## Anclas
+
+| Área | `common/components/Clinical/Enum/CarePlanCategory.php` |
+
+---
+
 Códigos almacenados en `care_plan.category` (string, indexado). Ampliar solo con acuerdo clínico + actualización de este archivo.
 
 | Código | Descripción |

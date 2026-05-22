@@ -8,7 +8,7 @@ Dominio `producto/` con documentación de apps móvil/SPA y matrices de capacida
 
 - `CAPACIDADES_PACIENTE_MEDICO.md`
 - `REGISTRO_PACIENTE.md`
-- Fragmentos útiles de `plans/phases/10-mobile-paciente.md` (enlace, no duplicar)
+- Care plans paciente: API `clinical/care-plans/active` (sin duplicar doc de plan cerrado)
 
 ## Entregables
 

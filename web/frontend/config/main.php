@@ -131,6 +131,12 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/hold' => '<version>/clinical/care-plan/hold',
                 'POST api/<version:\w+>/clinical/care-plans/<id:\d+>/activate' => '<version>/clinical/care-plan/activate',
                 'OPTIONS api/<version:\w+>/clinical/care-plans/<id:\d+>/activate' => '<version>/clinical/care-plan/activate',
+                'GET api/<version:\w+>/clinical/laboratory-results/mis-resultados' => '<version>/clinical/laboratory-result/mis-resultados',
+                'OPTIONS api/<version:\w+>/clinical/laboratory-results/mis-resultados' => '<version>/clinical/laboratory-result/mis-resultados',
+                'POST api/<version:\w+>/clinical/laboratory-results/sincronizar' => '<version>/clinical/laboratory-result/sincronizar',
+                'OPTIONS api/<version:\w+>/clinical/laboratory-results/sincronizar' => '<version>/clinical/laboratory-result/sincronizar',
+                'GET api/<version:\w+>/clinical/encounter/<encounterId:\d+>/laboratory-results' => '<version>/clinical/laboratory-result/por-encounter',
+                'OPTIONS api/<version:\w+>/clinical/encounter/<encounterId:\d+>/laboratory-results' => '<version>/clinical/laboratory-result/por-encounter',
                 // Legacy consulta (410 Gone — usar clinical/encounter/*)
                 'POST api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
                 'OPTIONS api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',

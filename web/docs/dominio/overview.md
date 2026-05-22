@@ -10,4 +10,4 @@ Evitar que cada módulo replique definiciones contradictorias del mismo concepto
 
 ## Alcance
 
-No describe flujos de usuario; para turnos ver [turnos/](../turnos/), para clínica [plans/](../plans/).
+No describe flujos de usuario; para turnos ver [Turnos/](../Turnos/); para clínica FHIR ver [decisions/fhir-clinical.md](../decisions/fhir-clinical.md) y `common/components/Clinical/`.

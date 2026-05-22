@@ -18,4 +18,4 @@ Documentación transversal de **infraestructura y convenciones de desarrollo** q
 
 ## Alcance
 
-Incluye guías operativas y convenciones. El roadmap de producto clínico vive en [plans](../plans/README.md).
+Incluye guías operativas y convenciones. Producto clínico: dominios en `web/docs/` y [decisions/](../decisions/README.md); planes largos solo en [plans/](../plans/README.md) mientras estén abiertos.

@@ -59,4 +59,22 @@ return [
     'apiActionCatalog' => [
         'useCache' => false,
     ],
+    /**
+     * Conectores LIS externos (FHIR pull). Credenciales en params-local.
+     *
+     * laboratoryConnectors.default — clave activa por defecto
+     * laboratoryConnectors.connectors.<key> — class, baseUrl, clientId, clientSecret, …
+     */
+    'laboratoryConnectors' => [
+        'default' => 'sianlabs',
+        'connectors' => [
+            'sianlabs' => [
+                'class' => \common\components\Integrations\Laboratory\Connector\SianlabsFhirConnector::class,
+                'baseUrl' => 'https://sianlabs.msalsgo.gob.ar/api/fhir/',
+                'tokenUrl' => 'https://sianlabs.msalsgo.gob.ar/oauth/token',
+                'clientId' => null,
+                'clientSecret' => null,
+            ],
+        ],
+    ],
 ];

@@ -3,7 +3,7 @@
 namespace common\components\Clinical\Enum;
 
 /**
- * Códigos `care_plan.category` — ver `web/docs/plans/CARE_PLAN_CATEGORIES.md`.
+ * Códigos `care_plan.category` — ver `web/docs/dominio/flows/care-plan-categories.md`.
  */
 final class CarePlanCategory
 {

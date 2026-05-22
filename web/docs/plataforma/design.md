@@ -14,4 +14,4 @@ Ver [flows/action-parameter-annotations.md](./flows/action-parameter-annotations
 
 ## Plan de trabajo en `flows/`
 
-Contenido de convocatoria (presupuesto, cronograma) se conserva como referencia archivada, no como fuente de verdad del estado del repo — el estado técnico está en [plans/MIGRATION_STATUS.md](../plans/MIGRATION_STATUS.md).
+Contenido de convocatoria (presupuesto, cronograma) se conserva como referencia archivada, no como fuente de verdad del estado del repo — el estado del producto está en dominios y código; [plans/README.md](../plans/README.md) solo lista planes largos **en ejecución**.

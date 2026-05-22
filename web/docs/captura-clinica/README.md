@@ -18,5 +18,5 @@ Audio y texto libre → interpretación → persistencia clínica o formulario g
 ## Relacionado
 
 - [asistente](../asistente/README.md) — Nivel 2 (intents, chat)
-- [plans](../plans/README.md) — encounter FHIR / documentación clínica
+- [decisions/fhir-clinical.md](../decisions/fhir-clinical.md) — encounter / API clínica
 - Código: `common/components/Assistant/EntryPoints/ClinicalEncounter/`

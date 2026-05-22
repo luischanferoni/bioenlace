@@ -1,6 +1,6 @@
 # Legacy (archive)
 
-Documentación de **análisis histórico** y transición desde modelos antiguos. **No** es fuente de verdad operativa: la API v1 y [plans](../plans/README.md) definen el estado actual.
+Documentación de **análisis histórico** y transición desde modelos antiguos. **No** es fuente de verdad operativa: la API v1 y los dominios en `web/docs/` definen el estado actual.
 
 | Documento | Contenido |
 |-----------|-----------|
@@ -20,4 +20,4 @@ Documentación de **análisis histórico** y transición desde modelos antiguos.
 ## Relacionado
 
 - [captura-clinica](../captura-clinica/README.md) — Nivel 1 consulta / informe quirúrgico actual
-- [plans](../plans/README.md) — migración FHIR
+- [decisions/fhir-clinical.md](../decisions/fhir-clinical.md) — decisiones clínico FHIR

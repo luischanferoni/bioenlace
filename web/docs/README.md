@@ -18,7 +18,7 @@ Sin fragmentos de código en los cuerpos: solo nombres de métodos, rutas y serv
 |---------|-------------|
 | [turnos](./Turnos/README.md) | Agenda, reserva, cancelación, autogestión paciente |
 | [asistente](./asistente/README.md) | Chat, intents YAML, UI JSON embebible |
-| [plans](./plans/README.md) | Programa migración clínica FHIR / CarePlan |
+| [plans](./plans/README.md) | Planes largos en ejecución |
 | [dominio](./dominio/README.md) | Conceptos transversales (PES, relaciones AR) |
 | [costos](./costos/README.md) | Costos IA e infraestructura estimada |
 | [producto](./producto/README.md) | Apps paciente/médico, registro, capacidades |

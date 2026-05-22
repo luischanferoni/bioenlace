@@ -1,45 +1,27 @@
-# Programa clínico FHIR — Diseño
+# Design — Planes activos
 
-## Por qué está estructurado así
+## Regla principal
 
-### Greenfield en desarrollo (sin dual-write)
+**Solo planes en ejecución.** Al cerrar el plan, eliminar `plans/<slug>/` por completo. Decisiones que sigan vigentes → `web/docs/decisions/`. Comportamiento operativo → dominio correspondiente (`dominio/flows/`, `Turnos/`, etc.).
 
-Las migraciones crean esquema nuevo y eliminan tablas clínicas legacy en entornos de desarrollo. No se mantiene sincronización bidireccional con `consultas_*`.
+## Estructura mientras el plan está abierto
 
-**Alternativa descartada:** convivencia indefinida MVC + API duplicando escritura.
+```text
+plans/<slug>/
+  README.md       ← índice, dueño, estado
+  overview.md     ← alcance del programa
+  design.md       ← decisiones propias del plan (si aún no están cerradas)
+  phases/         ← una fase por archivo, checklist
+```
 
-**Alternativa descartada:** ETL masivo en la misma entrega que el esquema; quedó como sub-proyecto si producción lo requiere.
+Opcional durante la ejecución: `MIGRATION_STATUS.md` o tablero equivalente **solo** mientras el plan sigue abierto.
 
-### Prefijo `/api/v1/clinical/...`
+## Abrir un plan
 
-Recursos clínicos (encounter, care-plan, medication-request, …) viven bajo módulo clinical para permisos y plantillas JSON separadas de scheduling.
+1. Crear `plans/<slug>/` (`kebab-case`, ej. `laboratorio-external-fhir`).
+2. Añadir fila en [README.md](./README.md).
+3. Al cerrar: mover decisiones finales a `decisions/` si aplica, luego **borrar** `plans/<slug>/`.
 
-**Alternativa descartada:** mezclar todo bajo `/turnos` o controllers Yii por especialidad sin API.
+## Alternativa descartada
 
-### `personas` como Patient
-
-No hay tabla `patient` paralela: `Person\Persona` es el sujeto.
-
-### CarePlan con categorías cerradas
-
-Las categorías (`chronic`, `inpatient`, `program`, …) gobiernan ciclo de vida al cerrar encounters. Documento de negocio: [CARE_PLAN_CATEGORIES.md](./CARE_PLAN_CATEGORIES.md).
-
-## Decisiones cerradas (resumen)
-
-La tabla completa está en [DECISIONS.md](./DECISIONS.md). Entradas relevantes:
-
-| Tema | Decisión |
-|------|----------|
-| Retrocompatibilidad HTTP clínica | No |
-| Canal principal | API v1 + clientes |
-| Encounter | Tabla `encounter`, no `consultas` |
-| Condition SQL | Tabla `clinical_condition` |
-
-## Fases y PRs
-
-Una **fase** (o subfase) por PR; no mezclar BD + Flutter + Yii web en el mismo cambio. Detalle de gobernanza: [phases/00-governance.md](./phases/00-governance.md).
-
-## Relacionado
-
-- [README.md](./README.md) — índice de fases
-- [MIGRATION_STATUS.md](./MIGRATION_STATUS.md) — estado por recurso
+Mantener `plans/completed/` o programas archivados — añade ruido; el repo y los dominios ya documentan lo construido.

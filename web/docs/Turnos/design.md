@@ -51,8 +51,8 @@ Los flujos conversacionales se declaran en **YAML** (`SubIntentEngine/schemas/in
 
 | Tema | Dónde se registró |
 |------|------------------|
-| Programa FHIR, canal API | [plans/DECISIONS.md](../plans/DECISIONS.md) |
-| Tabla `turnos` como Appointment | [plans/DECISIONS.md](../plans/DECISIONS.md) |
+| Dominio clínico FHIR, canal API | [decisions/fhir-clinical.md](../decisions/fhir-clinical.md) |
+| Tabla `turnos` como Appointment | [decisions/fhir-clinical.md](../decisions/fhir-clinical.md) |
 
 ## Diagrama — reserva autogestión (simplificado)
 

@@ -1,6 +1,6 @@
 # HIS completo (carpeta de análisis) — **archive**
 
-> **Estado:** documentación de referencia histórica, no fuente de verdad operativa. Índice del dominio archive: [legacy/README.md](../README.md). Roadmap técnico activo: [plans/README.md](../../plans/README.md).
+> **Estado:** documentación de referencia histórica, no fuente de verdad operativa. Índice del dominio archive: [legacy/README.md](../README.md).
 
 Esta carpeta organiza, en un archivo por dominio, el análisis del estado actual del código en Bioenlace y la distancia hacia un HIS hospitalario “absolutamente completo”.
 

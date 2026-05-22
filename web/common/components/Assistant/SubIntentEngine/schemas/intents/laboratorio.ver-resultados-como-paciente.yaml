@@ -1,0 +1,30 @@
+intent_id: laboratorio.ver-resultados-como-paciente
+version: 1
+
+action_name: "Ver resultados de laboratorio"
+description: "Listado de informes de laboratorio del paciente autenticado (copia en Bioenlace)."
+rbac_route: "/api/clinical/laboratory-results/mis-resultados-como-paciente"
+keywords:
+  - mis resultados
+  - laboratorio
+  - análisis
+  - estudios
+  - informes de laboratorio
+  - ver análisis
+
+intent_semantics:
+  goal: >-
+    Mostrar los informes de laboratorio ya sincronizados en Bioenlace.
+  how: >-
+    Pantalla lista con informes y analitos; sin llamar al LIS en este paso.
+  outcome:
+    - El paciente consulta sus resultados guardados.
+
+subintents:
+  - id: ver_listado
+    assistant_text: "Tus resultados de laboratorio"
+    provides:
+      - draft.report_id
+    next: ""
+    open_ui:
+      action_id: clinical.laboratory-results.mis-resultados-como-paciente

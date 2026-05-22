@@ -28,3 +28,9 @@ Se intenta `Encounter/{id}` del recurso FHIR; si no, encounter del mismo pacient
 ## Terminología
 
 Códigos tal como vienen en FHIR (LOINC/SNOMED). Sin tabla `laboratorio_nbu_snomed`.
+
+## Canal paciente
+
+- **Consultar**: lectura local; `GET mis-resultados` — [flow](./flows/consultar-resultados-paciente.md).
+- **Solicitar resultados** (lenguaje usuario): **sync pull**; `POST sincronizar` — [flow](./flows/solicitar-resultados-paciente.md). No implica ordenar estudios nuevos en el LIS.
+- Asistente: intents `laboratorio.ver-resultados-como-paciente` y `laboratorio.sincronizar-resultados-como-paciente` (ver [intents](./flows/intents-laboratorio-paciente.md)).

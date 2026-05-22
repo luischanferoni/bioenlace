@@ -105,6 +105,14 @@ final class CommonActionsService
                     'turnos.modificar-como-paciente-flow',
                 ],
             ],
+            [
+                'id' => 'laboratorio',
+                'titulo' => 'Laboratorio',
+                'models' => [
+                    'laboratorio.ver-resultados-como-paciente',
+                    'laboratorio.sincronizar-resultados-como-paciente',
+                ],
+            ],
         ];
     }
 

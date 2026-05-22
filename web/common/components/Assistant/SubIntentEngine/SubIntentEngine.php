@@ -365,7 +365,7 @@ final class SubIntentEngine
             }
             $template[$key] = $vv;
         }
-        if ($template === []) {
+        if ($template === [] && $paramsMap !== []) {
             return null;
         }
 
@@ -437,6 +437,11 @@ final class SubIntentEngine
     private static function apiRouteForActionId(string $actionId): string
     {
         $actionId = trim($actionId);
+        if (preg_match('#^clinical\.([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
+            return '/api/v1/clinical/'
+                . rawurlencode((string) $m[1]) . '/'
+                . rawurlencode((string) $m[2]);
+        }
         if (preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) !== 1) {
             return '';
         }
@@ -754,7 +759,8 @@ final class SubIntentEngine
             // pero sí existan como templates y estén permitidas por RBAC por ruta.
             // Resolvemos de forma determinística: action_id "entidad.accion" => "/api/v1/entidad/accion".
             $route = null;
-            if (preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
+            $route = self::apiRouteForActionId($actionId);
+            if ($route === '' && preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
                 $route = '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
             }
             if ($route && !AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute($route)

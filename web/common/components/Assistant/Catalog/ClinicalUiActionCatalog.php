@@ -78,6 +78,20 @@ final class ClinicalUiActionCatalog
                 '/api/clinical/episode-of-care/clinical-bundle',
                 ['internación', 'medicación', 'indicaciones']
             ),
+            self::def(
+                'clinical.laboratory-results.mis-resultados-como-paciente',
+                'Ver resultados de laboratorio (UI)',
+                'Listado UI JSON de informes del paciente autenticado.',
+                '/api/clinical/laboratory-results/mis-resultados-como-paciente',
+                ['mis resultados', 'laboratorio', 'análisis', 'estudios']
+            ),
+            self::def(
+                'clinical.laboratory-results.sincronizar-como-paciente',
+                'Actualizar resultados de laboratorio (UI)',
+                'Sincronización pull desde LIS; POST devuelve ui_submit_result.',
+                '/api/clinical/laboratory-results/sincronizar-como-paciente',
+                ['actualizar resultados', 'sincronizar laboratorio', 'traer análisis']
+            ),
         ];
 
         return self::$definitions;

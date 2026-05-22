@@ -1,0 +1,24 @@
+{
+  "ui_type": "ui_json",
+  "title": "Mis resultados de laboratorio",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "informes",
+      "title": "Informes",
+      "draft_field": "report_id",
+      "empty_message": "No hay resultados guardados. Podés actualizar desde el laboratorio.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    }
+  ]
+}

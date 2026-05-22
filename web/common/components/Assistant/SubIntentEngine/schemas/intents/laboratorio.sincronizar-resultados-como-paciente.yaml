@@ -1,0 +1,30 @@
+intent_id: laboratorio.sincronizar-resultados-como-paciente
+version: 1
+
+action_name: "Actualizar resultados de laboratorio"
+description: "Sincroniza informes desde el LIS externo (pull FHIR) para el paciente autenticado."
+rbac_route: "/api/clinical/laboratory-results/sincronizar-como-paciente"
+keywords:
+  - actualizar resultados
+  - sincronizar laboratorio
+  - traer análisis
+  - pedir resultados
+  - buscar en laboratorio
+
+intent_semantics:
+  goal: >-
+    Traer informes nuevos o actualizados desde el laboratorio externo.
+  how: >-
+    Confirmación → POST sincronizar → resumen imported/skipped/errors.
+  outcome:
+    - Resultados persistidos en Bioenlace; el paciente puede ver el listado.
+
+subintents:
+  - id: confirmar
+    assistant_text: "Actualizar desde el laboratorio"
+    next: ""
+    open_ui:
+      action_id: clinical.laboratory-results.sincronizar-como-paciente
+
+flow_submit:
+  action_id: clinical.laboratory-results.sincronizar-como-paciente

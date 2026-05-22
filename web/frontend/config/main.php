@@ -357,22 +357,9 @@ return [
         'imagenes' => [
             'class' => 'frontend\components\Pentalogic',
         ],
-        'sianlabs' => [
-            'class' => 'frontend\components\apis\Sianlabs',
-        ],
         'forms' => [
             'class' => 'frontend\components\apis\Forms',
-        ],       
-        'authClientCollection' => [
-            'class' => 'yii\authclient\Collection',
-            'clients' => [
-                'sianlabs' => [
-                    'class' => 'frontend\components\apis\Sianlabs',
-                    'clientId' => 2,
-                    'clientSecret' => 'NmB3hxSzUBpDnCcg7zbcDxvy4Ior02HVeTDuUQcb',
-                ],        
-            ],
-        ],        
+        ],
     ],
     'params' => $params,
     'modules' => [

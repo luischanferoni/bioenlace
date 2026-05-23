@@ -8,7 +8,6 @@ use common\components\Assistant\FlowManifest\FlowManifest;
 use common\components\Assistant\Service\FlowHintService;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
-use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\Ui\UiDefinitionTemplateManager;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
@@ -755,37 +754,15 @@ final class SubIntentEngine
         $catalog = UiActionCatalog::forUser($userId);
         $item = $catalog->byActionId[$actionId] ?? null;
         if ($item === null) {
-            // Dentro de un flow, el YAML puede referenciar UIs embebibles que no estén en el catálogo UI global,
-            // pero sí existan como templates y estén permitidas por RBAC por ruta.
-            // Resolvemos de forma determinística: action_id "entidad.accion" => "/api/v1/entidad/accion".
-            $route = null;
             $route = self::apiRouteForActionId($actionId);
             if ($route === '' && preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
                 $route = '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
             }
-            if ($route && !AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute($route)
-                && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
-                $map = AllowedRoutesResolver::getTargetRoutesMapForUserId($userId, true);
-                if (AllowedRoutesResolver::routeAllowedByMap($route, $map)) {
-                    $action = [
-                        'action_id' => $actionId,
-                        'display_name' => $actionId,
-                        'description' => '',
-                        'entity' => null,
-                        'route' => $route,
-                        'parameters' => ['expected' => [], 'provided' => []],
-                    ];
-                    $action = AssistantClientOpenEnricher::enrich($action);
-                    return [
-                        'action_id' => $actionId,
-                        'client_open' => $action['client_open'] ?? null,
-                    ];
-                }
-            }
+            $clientOpen = $route !== '' ? self::clientOpenFromHttpRoute($route, $actionId) : null;
 
             return [
                 'action_id' => $actionId,
-                'client_open' => null,
+                'client_open' => $clientOpen,
             ];
         }
         $action = [
@@ -800,10 +777,53 @@ final class SubIntentEngine
             $action['client_open'] = $item->client_open;
         }
         $action = AssistantClientOpenEnricher::enrich($action);
+        $clientOpen = $action['client_open'] ?? null;
+        if (!is_array($clientOpen) || trim((string) ($clientOpen['kind'] ?? '')) === '') {
+            $clientOpen = self::clientOpenFromHttpRoute($item->route, $actionId);
+        }
 
         return [
             'action_id' => $actionId,
-            'client_open' => $action['client_open'] ?? null,
+            'client_open' => $clientOpen,
+        ];
+    }
+
+    /**
+     * Arma `client_open` para un paso de flow a partir de la ruta HTTP del descriptor UI.
+     *
+     * @return array<string, mixed>|null
+     */
+    private static function clientOpenFromHttpRoute(string $route, string $actionId): ?array
+    {
+        $route = trim($route);
+        if ($route === '' || AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute($route)) {
+            return null;
+        }
+
+        $action = [
+            'action_id' => $actionId,
+            'display_name' => $actionId,
+            'description' => '',
+            'entity' => null,
+            'route' => $route,
+            'parameters' => ['expected' => [], 'provided' => []],
+        ];
+        $enriched = AssistantClientOpenEnricher::enrich($action);
+        $clientOpen = $enriched['client_open'] ?? null;
+        if (is_array($clientOpen) && trim((string) ($clientOpen['kind'] ?? '')) !== '') {
+            return $clientOpen;
+        }
+
+        if (!UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
+            return null;
+        }
+
+        return [
+            'kind' => 'ui_json',
+            'api' => [
+                'route' => $route,
+                'method' => 'GET|POST',
+            ],
         ];
     }
 

@@ -83,21 +83,24 @@ final class ClinicalUiActionCatalog
                 'Ver resultados de laboratorio (UI)',
                 'Listado UI JSON de informes del paciente autenticado.',
                 '/api/clinical/laboratory-results/mis-resultados-como-paciente',
-                ['mis resultados', 'laboratorio', 'análisis', 'estudios']
+                ['mis resultados', 'laboratorio', 'análisis', 'estudios'],
+                true
             ),
             self::def(
                 'clinical.laboratory-results.sincronizar-como-paciente',
                 'Actualizar resultados de laboratorio (UI)',
                 'Sincronización pull desde LIS; POST devuelve ui_submit_result.',
                 '/api/clinical/laboratory-results/sincronizar-como-paciente',
-                ['actualizar resultados', 'sincronizar laboratorio', 'traer análisis']
+                ['actualizar resultados', 'sincronizar laboratorio', 'traer análisis'],
+                true
             ),
             self::def(
                 'clinical.laboratory-results.ver-informe-como-paciente',
                 'Detalle informe de laboratorio (UI)',
                 'Analitos, conclusión y descarga PDF del informe elegido.',
                 '/api/clinical/laboratory-results/ver-informe-como-paciente',
-                ['detalle laboratorio', 'ver informe', 'analitos']
+                ['detalle laboratorio', 'ver informe', 'analitos'],
+                true
             ),
             self::def(
                 'clinical.laboratory-results.descargar-pdf-como-paciente',
@@ -128,11 +131,12 @@ final class ClinicalUiActionCatalog
         string $actionName,
         string $description,
         string $rbacRoute,
-        array $keywords
+        array $keywords,
+        bool $uiJsonDescriptor = false
     ): array {
         $httpRoute = '/api/v1' . $rbacRoute;
 
-        return [
+        $row = [
             'action_id' => $actionId,
             'action_name' => $actionName,
             'display_name' => $actionName,
@@ -153,5 +157,18 @@ final class ClinicalUiActionCatalog
             'intent_semantics' => null,
             'flow_capable' => false,
         ];
+
+        if ($uiJsonDescriptor) {
+            $row['client_open'] = [
+                'kind' => 'ui_json',
+                'api' => [
+                    'route' => $httpRoute,
+                    'method' => 'GET|POST',
+                ],
+            ];
+            $row['client_interaction'] = 'ui_asistente_json';
+        }
+
+        return $row;
     }
 }

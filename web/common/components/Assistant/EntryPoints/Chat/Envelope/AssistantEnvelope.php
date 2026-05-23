@@ -3,6 +3,8 @@
 namespace common\components\Assistant\EntryPoints\Chat\Envelope;
 
 use common\components\Assistant\FlowManifest\FlowManifest;
+use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Ui\UiDefinitionTemplateManager;
 
 /**
  * Sobre público del chat (`kind`: message | interactive | flow).
@@ -182,7 +184,7 @@ final class AssistantEnvelope
         }
 
         $openUi = isset($motor['open_ui']) && is_array($motor['open_ui']) ? $motor['open_ui'] : null;
-        $step = self::buildStepFromOpenUi($openUi, $motor);
+        $step = self::buildStepFromOpenUi($openUi, $motor, $manifest);
 
         $flowSubmit = isset($motor['flow_submit']) && is_array($motor['flow_submit']) ? $motor['flow_submit'] : null;
         $submit = self::buildSubmit($flowSubmit);
@@ -207,9 +209,10 @@ final class AssistantEnvelope
     /**
      * @param array<string, mixed>|null $openUi
      * @param array<string, mixed> $motor
+     * @param array<string, mixed>|null $manifest
      * @return array<string, mixed>
      */
-    private static function buildStepFromOpenUi(?array $openUi, array $motor): array
+    private static function buildStepFromOpenUi(?array $openUi, array $motor, ?array $manifest = null): array
     {
         $provides = [];
         if (isset($motor['provides']) && is_array($motor['provides'])) {
@@ -242,6 +245,12 @@ final class AssistantEnvelope
         }
 
         $co = isset($openUi['client_open']) && is_array($openUi['client_open']) ? $openUi['client_open'] : [];
+        if (trim((string) ($co['kind'] ?? '')) === '' && $manifest !== null) {
+            $fromManifest = self::clientOpenFromManifest($manifest);
+            if ($fromManifest !== null) {
+                $co = $fromManifest;
+            }
+        }
 
         return [
             'active' => true,
@@ -292,6 +301,57 @@ final class AssistantEnvelope
             'method' => $method,
             'body_template' => $template === [] ? (object) [] : $template,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $manifest
+     * @return array<string, mixed>|null
+     */
+    private static function clientOpenFromManifest(array $manifest): ?array
+    {
+        $active = isset($manifest['active_step']) && is_array($manifest['active_step']) ? $manifest['active_step'] : null;
+        if ($active === null) {
+            return null;
+        }
+        $ui = isset($active['ui']) && is_array($active['ui']) ? $active['ui'] : null;
+        if ($ui === null) {
+            return null;
+        }
+        $tabs = isset($ui['tabs']) && is_array($ui['tabs']) ? $ui['tabs'] : [];
+        foreach ($tabs as $tab) {
+            if (!is_array($tab)) {
+                continue;
+            }
+            $route = trim((string) ($tab['route'] ?? ''));
+            if ($route === '') {
+                continue;
+            }
+            $actionId = trim((string) ($tab['action_id'] ?? ''));
+            $action = [
+                'action_id' => $actionId !== '' ? $actionId : 'flow.ui',
+                'display_name' => $actionId,
+                'description' => '',
+                'entity' => null,
+                'route' => $route,
+                'parameters' => ['expected' => [], 'provided' => []],
+            ];
+            $enriched = AssistantClientOpenEnricher::enrich($action);
+            $co = $enriched['client_open'] ?? null;
+            if (is_array($co) && trim((string) ($co['kind'] ?? '')) !== '') {
+                return $co;
+            }
+            if (UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
+                return [
+                    'kind' => 'ui_json',
+                    'api' => [
+                        'route' => $route,
+                        'method' => 'GET|POST',
+                    ],
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -113,6 +113,10 @@ final class UiActionCatalog
                 continue;
             }
             $display = (string) ($a['action_name'] ?? $a['display_name'] ?? $actionId);
+            $clientOpen = isset($a['client_open']) && is_array($a['client_open']) ? $a['client_open'] : null;
+            $clientInteraction = isset($a['client_interaction']) && is_string($a['client_interaction'])
+                ? $a['client_interaction']
+                : null;
             $item = new UiActionCatalogItem(
                 $actionId,
                 $display,
@@ -122,8 +126,8 @@ final class UiActionCatalog
                 is_array($a['keywords'] ?? null) ? array_values($a['keywords']) : [],
                 is_array($a['parameters'] ?? null) ? $a['parameters'] : ['expected' => [], 'provided' => []],
                 is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
-                null,
-                null,
+                $clientOpen,
+                $clientInteraction,
                 null
             );
             $items[] = $item;

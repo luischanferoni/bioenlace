@@ -1,46 +1,33 @@
-# Solicitar / actualizar resultados de laboratorio (paciente)
+# Ingesta pull — laboratorio (operaciones)
+
+> **Nota:** El flujo de “actualizar resultados” desde el **asistente / app del paciente** fue retirado. La ingesta queda en **consola y cron**. Ver [ingesta-cron.md](./ingesta-cron.md).
 
 ## Objetivo
 
-Que el paciente dispare la sincronización pull desde el LIS externo (FHIR) para traer informes nuevos o actualizados a Bioenlace (“pedir mis resultados” = actualizar desde el laboratorio).
+Traer informes nuevos o actualizados del LIS externo (FHIR) hacia Bioenlace para que el paciente los vea en el listado local.
 
 ## Actores
 
-- Paciente autenticado (app / asistente).
-- Conector LIS (`LabConnectorRegistry`).
-- Operaciones (alternativa): `php yii laboratory-sync/persona` — [ingesta-pull.md](./ingesta-pull.md).
+- Operaciones / cron (`laboratory-sync/lote`).
+- Soporte puntual (`laboratory-sync/persona`).
+- `LaboratoryIngestService::syncForPersona`.
 
 ## Anclas
 
-| Paso | Método / componente |
-|------|---------------------|
-| API JSON | `LaboratoryResultController::actionSincronizar` — `POST /api/v1/clinical/laboratory-result/sincronizar` |
-| API UI | `LaboratoryResultController::actionSincronizarComoPaciente` — `GET\|POST /api/v1/clinical/laboratory-result/sincronizar-como-paciente` |
+| Paso | Componente |
+|------|------------|
 | Servicio | `LaboratoryIngestService::syncForPersona` |
-| Intent | `laboratorio.sincronizar-resultados-como-paciente` |
-| RBAC | `/api/clinical/laboratory-result/sincronizar`, `/api/clinical/laboratory-result/sincronizar-como-paciente` |
+| Lote | `LaboratorySyncBatchService` + `php yii laboratory-sync/lote` |
+| Una persona | `php yii laboratory-sync/persona <id_persona> [connector]` |
+| Demo sin LIS | `php yii clinical-seed/laboratory-demo <id_persona>` |
 
----
+## Secuencia (lote)
 
-## Secuencia
-
-1. Paciente inicia “Actualizar resultados” en asistente (`laboratorio.sincronizar-resultados-como-paciente`).
-2. Mini-UI de confirmación (`sincronizar-como-paciente.json`); opcional `connector` en body.
-3. `flow_submit` → `POST sincronizar-como-paciente`.
-4. Respuesta `ui_submit_result` con `imported`, `skipped`, `errors`.
-5. Refrescar listado vía [consultar-resultados-paciente.md](./consultar-resultados-paciente.md).
-
-## Parámetros
-
-| Parámetro | Descripción |
-|-----------|-------------|
-| `connector` | Clave en `params['laboratoryConnectors']['connectors']`; si se omite, usa `default`. |
-
-## Configuración
-
-Credenciales en `params-local.php` bajo `laboratoryConnectors` (ver [ingesta-pull.md](./ingesta-pull.md)).
+1. Cron invoca `laboratory-sync/lote` con `limit` / `offset`.
+2. Por cada persona con documento (y opcionalmente `id_user`): pull FHIR → upsert `diagnostic_report` / `observation`.
+3. El paciente consulta con [consultar-resultados-paciente.md](./consultar-resultados-paciente.md) (solo BD).
 
 ## Relacionado
 
-- [consultar-resultados-paciente.md](./consultar-resultados-paciente.md)
-- [intents-laboratorio-paciente.md](./intents-laboratorio-paciente.md)
+- [ingesta-cron.md](./ingesta-cron.md)
+- [ingesta-pull.md](./ingesta-pull.md)

@@ -2,7 +2,6 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Laboratory\Service\LaboratoryIngestService;
 use common\components\Clinical\Laboratory\Service\LaboratoryReportPdfService;
 use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\components\Ui\UiScreenService;
@@ -14,29 +13,26 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
 /**
- * Resultados de laboratorio (ingesta pull + lectura).
+ * Resultados de laboratorio (lectura paciente + listado por encounter).
  *
- * GET  /api/v1/clinical/laboratory-result/mis-resultados
- * GET|POST /api/v1/clinical/laboratory-result/mis-resultados-como-paciente (UI JSON)
- * POST /api/v1/clinical/laboratory-result/sincronizar
- * GET|POST /api/v1/clinical/laboratory-result/sincronizar-como-paciente (UI JSON)
+ * GET|POST /api/v1/clinical/laboratory-result/mis-resultados-como-paciente (UI JSON listado paciente)
  * GET|POST /api/v1/clinical/laboratory-result/ver-informe-como-paciente (UI JSON detalle)
  * GET  /api/v1/clinical/laboratory-result/descargar-pdf-como-paciente?report_id=
  * GET  /api/v1/clinical/encounter/<encounterId>/laboratory-result
+ *
+ * Ingesta LIS: consola `php yii laboratory-sync/persona|lote` (ver docs/laboratorio/flows/ingesta-cron.md).
  */
 class LaboratoryResultController extends BaseController
 {
     use ClinicalAccessTrait;
 
     private LaboratoryResultQueryService $query;
-    private LaboratoryIngestService $ingest;
     private LaboratoryReportPdfService $pdf;
 
     public function init()
     {
         parent::init();
         $this->query = new LaboratoryResultQueryService();
-        $this->ingest = new LaboratoryIngestService();
         $this->pdf = new LaboratoryReportPdfService();
     }
 
@@ -49,54 +45,7 @@ class LaboratoryResultController extends BaseController
     }
 
     /**
-     * Listado de informes del paciente autenticado.
-     */
-    public function actionMisResultados(): array
-    {
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona <= 0) {
-            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
-        }
-
-        return [
-            'success' => true,
-            'message' => 'Resultados de laboratorio',
-            'data' => [
-                'reports' => $this->query->listForPersona($idPersona),
-            ],
-        ];
-    }
-
-    /**
-     * Pull desde LIS configurado (paciente autenticado = su persona).
-     */
-    public function actionSincronizar(): array
-    {
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona <= 0) {
-            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
-        }
-
-        $connectorKey = Yii::$app->request->post('connector')
-            ?? Yii::$app->request->get('connector');
-
-        try {
-            $result = $this->ingest->syncForPersona($idPersona, is_string($connectorKey) ? $connectorKey : null);
-        } catch (\Throwable $e) {
-            Yii::error($e, 'laboratory-sync');
-
-            return $this->clinicalError($e->getMessage(), null, 502);
-        }
-
-        return [
-            'success' => true,
-            'message' => 'Sincronización de laboratorio',
-            'data' => $result,
-        ];
-    }
-
-    /**
-     * UI JSON: listado de informes del paciente (asistente / móvil).
+     * UI JSON: listado de informes del paciente (asistente / móvil). Solo lectura en BD local.
      *
      * @tags clinical, laboratory, paciente, ui_json
      * @keywords mis resultados, laboratorio, análisis, estudios
@@ -144,54 +93,6 @@ class LaboratoryResultController extends BaseController
     }
 
     /**
-     * UI JSON: sincronizar resultados desde el LIS (asistente / móvil).
-     *
-     * @tags clinical, laboratory, paciente, ui_json
-     * @keywords actualizar resultados, sincronizar laboratorio, traer análisis
-     */
-    public function actionSincronizarComoPaciente(): array
-    {
-        $req = Yii::$app->request;
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona <= 0) {
-            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
-        }
-
-        return UiScreenService::handleScreen(
-            'laboratory-result',
-            'sincronizar-como-paciente',
-            $req->get(),
-            $req->post(),
-            function (array $post) use ($idPersona, $req): array {
-                $connectorKey = $post['connector'] ?? $req->get('connector');
-                try {
-                    $result = $this->ingest->syncForPersona(
-                        $idPersona,
-                        is_string($connectorKey) && $connectorKey !== '' ? $connectorKey : null
-                    );
-                } catch (\Throwable $e) {
-                    Yii::error($e, 'laboratory-sync');
-                    throw new \RuntimeException($e->getMessage());
-                }
-
-                $msg = 'Se importaron ' . (int) ($result['imported'] ?? 0) . ' informe(s).';
-                $errors = $result['errors'] ?? [];
-                if (is_array($errors) && $errors !== []) {
-                    $msg .= ' ' . implode(' ', array_map('strval', $errors));
-                }
-
-                return [
-                    'data' => [
-                        'success' => true,
-                        'message' => $msg,
-                        'sync' => $result,
-                    ],
-                ];
-            }
-        );
-    }
-
-    /**
      * UI JSON: detalle de un informe (paso 2 del flow paciente).
      *
      * @tags clinical, laboratory, paciente, ui_json
@@ -223,10 +124,7 @@ class LaboratoryResultController extends BaseController
                 array_merge($req->get(), ['report_id' => $reportId]),
                 [
                     'report_id' => (string) $reportId,
-                    'titulo_informe' => (string) ($serialized['display'] ?? 'Informe de laboratorio'),
-                    'fecha_informe' => (string) ($serialized['issuedAt'] ?? ''),
-                    'analitos_texto' => $this->query->formatAnalitosText($serialized),
-                    'conclusion' => (string) ($serialized['conclusion'] ?? ''),
+                    'detalle_mensaje' => $this->query->formatReportDetailMessage($serialized),
                     'pdf_url' => $pdfPath,
                     'filename' => 'informe-laboratorio-' . $reportId . '.pdf',
                 ]

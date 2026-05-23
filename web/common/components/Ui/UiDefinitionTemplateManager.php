@@ -314,6 +314,14 @@ class UiDefinitionTemplateManager
                 if ($kind === 'fields' && isset($b['fields']) && is_array($b['fields'])) {
                     self::processFieldsList($b['fields'], $params);
                 }
+                if ($kind === 'message') {
+                    $textKey = isset($b['text_field']) && is_string($b['text_field']) && $b['text_field'] !== ''
+                        ? $b['text_field']
+                        : 'text';
+                    if (isset($params[$textKey]) && $params[$textKey] !== null && $params[$textKey] !== '') {
+                        $b['text'] = (string) $params[$textKey];
+                    }
+                }
             }
             unset($b);
         }

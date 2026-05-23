@@ -13,15 +13,14 @@ Permitir que el paciente autenticado vea sus informes de laboratorio ya persisti
 
 | Paso | Método / componente |
 |------|---------------------|
-| API JSON | `LaboratoryResultController::actionMisResultados` — `GET /api/v1/clinical/laboratory-result/mis-resultados` |
-| API UI | `LaboratoryResultController::actionMisResultadosComoPaciente` — `GET /api/v1/clinical/laboratory-result/mis-resultados-como-paciente` |
+| API UI (listado) | `LaboratoryResultController::actionMisResultadosComoPaciente` — `GET /api/v1/clinical/laboratory-result/mis-resultados-como-paciente` |
 | Permiso RBAC (ApiGhost) | `/api/clinical/laboratory-result/mis-resultados-como-paciente` (singular `laboratory-result`, **sin** `/api/v1`) |
-| Consulta | `LaboratoryResultQueryService::listForPersona` |
+| Consulta | `LaboratoryResultQueryService::listForPersona` (**solo BD local**, sin llamar al LIS) |
 | Intent | `laboratorio.ver-resultados-como-paciente` (2 pasos) |
 | Lista UI | `clinical.laboratory-result.mis-resultados-como-paciente` |
 | Detalle UI | `clinical.laboratory-result.ver-informe-como-paciente` |
 | PDF | `GET clinical/laboratory-result/descargar-pdf-como-paciente?report_id=` |
-| RBAC | `mis-resultados*`, `ver-informe-como-paciente`, `descargar-pdf-como-paciente` |
+| RBAC | `mis-resultados-como-paciente`, `ver-informe-como-paciente`, `descargar-pdf-como-paciente` |
 
 ---
 
@@ -31,7 +30,8 @@ Permitir que el paciente autenticado vea sus informes de laboratorio ya persisti
 2. Asistente: `ver_listado` → `GET mis-resultados-como-paciente` (lista, confirmar ítem → `draft.report_id`).
 3. `ver_detalle` → `GET ver-informe-como-paciente?report_id=` (analitos, conclusión, botón PDF).
 4. Descarga: `GET descargar-pdf-como-paciente` (PDF generado en servidor con mPDF).
-5. Si el listado está vacío, ofrecer [solicitar-resultados-paciente.md](./solicitar-resultados-paciente.md).
+
+Si el listado está vacío, los informes aún no fueron importados; la ingesta es responsabilidad de operaciones/cron ([ingesta-cron.md](./ingesta-cron.md)).
 
 ## Contrato
 
@@ -47,5 +47,5 @@ Permitir que el paciente autenticado vea sus informes de laboratorio ya persisti
 
 ## Relacionado
 
-- [solicitar-resultados-paciente.md](./solicitar-resultados-paciente.md)
+- [ingesta-cron.md](./ingesta-cron.md)
 - [intents-laboratorio-paciente.md](./intents-laboratorio-paciente.md)

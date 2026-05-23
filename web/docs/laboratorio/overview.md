@@ -15,14 +15,19 @@ Integración con **laboratorios externos** que publican resultados en FHIR (`Dia
 | Necesidad | Flow |
 |-----------|------|
 | Ver informes y analitos ya en Bioenlace | [consultar-resultados-paciente](./flows/consultar-resultados-paciente.md) |
-| Traer novedades del LIS (“actualizar / pedir resultados”) | [solicitar-resultados-paciente](./flows/solicitar-resultados-paciente.md) |
 | Asistente | [intents-laboratorio-paciente](./flows/intents-laboratorio-paciente.md) |
+
+### Operaciones
+
+| Necesidad | Flow |
+|-----------|------|
+| Ingesta pull LIS (cron / lote) | [ingesta-cron](./flows/ingesta-cron.md) |
 
 ## Actores
 
-- Paciente: listar (`mis-resultados`) y sincronizar (`sincronizar`) sus resultados.
-- Profesional: ver resultados del encounter con acceso clínico.
-- Operaciones: `php yii laboratory-sync/persona`.
+- Paciente: listar y ver detalle (`mis-resultados-como-paciente`, ui_json) — **solo lectura en BD**.
+- Profesional: ver resultados del encounter (`por-encounter`) con acceso clínico.
+- Operaciones / cron: `php yii laboratory-sync/lote` o `laboratory-sync/persona`.
 
 ## Fuera de alcance
 

@@ -10,44 +10,17 @@
   },
   "blocks": [
     {
-      "kind": "fields",
+      "kind": "message",
       "id": "detalle",
       "title": "Resultados",
+      "text_field": "detalle_mensaje",
+      "text": ""
+    },
+    {
+      "kind": "fields",
+      "id": "acciones",
+      "hide_submit": true,
       "fields": [
-        {
-          "name": "report_id",
-          "type": "hidden",
-          "required": true,
-          "include_in_submit": true
-        },
-        {
-          "name": "titulo_informe",
-          "label": "Informe",
-          "type": "text",
-          "required": false,
-          "readonly": true
-        },
-        {
-          "name": "fecha_informe",
-          "label": "Fecha",
-          "type": "text",
-          "required": false,
-          "readonly": true
-        },
-        {
-          "name": "analitos_texto",
-          "label": "Analitos",
-          "type": "textarea",
-          "required": false,
-          "readonly": true
-        },
-        {
-          "name": "conclusion",
-          "label": "Conclusión",
-          "type": "textarea",
-          "required": false,
-          "readonly": true
-        },
         {
           "name": "descargar_pdf",
           "label": "Descargar",

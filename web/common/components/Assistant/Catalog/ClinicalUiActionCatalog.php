@@ -89,14 +89,6 @@ final class ClinicalUiActionCatalog
                 true
             ),
             self::def(
-                'clinical.laboratory-result.sincronizar-como-paciente',
-                'Actualizar resultados de laboratorio (UI)',
-                'Sincronización pull desde LIS; POST devuelve ui_submit_result.',
-                '/api/clinical/laboratory-result/sincronizar-como-paciente',
-                ['actualizar resultados', 'sincronizar laboratorio', 'traer análisis'],
-                true
-            ),
-            self::def(
                 'clinical.laboratory-result.ver-informe-como-paciente',
                 'Detalle informe de laboratorio (UI)',
                 'Analitos, conclusión y descarga PDF del informe elegido.',

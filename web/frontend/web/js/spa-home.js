@@ -1815,6 +1815,8 @@
             if (!mount) return;
             if (kind === 'list') {
                 renderUiJsonListBlock(b, mount, options);
+            } else if (kind === 'message') {
+                renderUiJsonMessageBlock(b, mount);
             } else if (kind === 'fields') {
                 renderUiJsonFieldsBlock(b, mount, options);
             } else {
@@ -1946,6 +1948,19 @@
         if (!allowedTile[tile]) tile = 'medium';
         if (!allowedShape[shape]) shape = 'wide';
         return 'bio-ui-json-list--tile-' + tile + ' bio-ui-json-list--shape-' + shape;
+    }
+
+    function renderUiJsonMessageBlock(block, container) {
+        const title = block.title ? String(block.title) : '';
+        const text = block.text != null ? String(block.text) : '';
+        let html = '<div class="bio-ui-json-message">';
+        if (title) {
+            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+        }
+        html += '<div class="bio-ui-json-message-body small mb-0" style="white-space:pre-wrap;">'
+            + escapeHtml(text)
+            + '</div></div>';
+        container.innerHTML = html;
     }
 
     function renderUiJsonListBlock(block, container, options = {}) {

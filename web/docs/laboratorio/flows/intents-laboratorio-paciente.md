@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Índice de `intent_id` para ver y actualizar resultados de laboratorio, alineados con API v1 y RBAC.
+Índice de `intent_id` para **ver** resultados de laboratorio ya en Bioenlace.
 
 ## Actores
 
@@ -11,10 +11,9 @@
 
 ## Anclas
 
-| intent_id | RBAC | `open_ui` / cierre |
-|-----------|------|-------------------|
+| intent_id | RBAC | `open_ui` |
+|-----------|------|-----------|
 | `laboratorio.ver-resultados-como-paciente` | `/api/clinical/laboratory-result/mis-resultados-como-paciente` | lista → `ver-informe-como-paciente` + PDF |
-| `laboratorio.sincronizar-resultados-como-paciente` | `/api/clinical/laboratory-result/sincronizar-como-paciente` | `clinical.laboratory-result.sincronizar-como-paciente` + `flow_submit` |
 
 ---
 
@@ -22,8 +21,7 @@
 
 | Archivo | Flujo |
 |---------|--------|
-| `schemas/intents/laboratorio.ver-resultados-como-paciente.yaml` | Ver listado |
-| `schemas/intents/laboratorio.sincronizar-resultados-como-paciente.yaml` | Confirmar → sync |
+| `schemas/intents/laboratorio.ver-resultados-como-paciente.yaml` | Listado → detalle |
 
 Registro en atajos: `CommonActionsService` categoría `laboratorio`.
 
@@ -33,11 +31,11 @@ Catálogo UI: `ClinicalUiActionCatalog` (`clinical.laboratory-result.*`).
 
 | Usuario dice | Intent |
 |--------------|--------|
-| ver / mis resultados / mis análisis | `laboratorio.ver-resultados-como-paciente` |
-| actualizar / traer / pedir resultados | `laboratorio.sincronizar-resultados-como-paciente` |
+| ver / mis resultados / mis análisis / laboratorio | `laboratorio.ver-resultados-como-paciente` |
+
+La ingesta desde el LIS **no** se dispara desde el asistente; ver [ingesta-cron.md](./ingesta-cron.md).
 
 ## Relacionado
 
 - [consultar-resultados-paciente.md](./consultar-resultados-paciente.md)
-- [solicitar-resultados-paciente.md](./solicitar-resultados-paciente.md)
-- [Turnos: intents paciente](../../Turnos/flows/intents-turnos.md)
+- [ingesta-cron.md](./ingesta-cron.md)

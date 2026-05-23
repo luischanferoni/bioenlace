@@ -31,6 +31,6 @@ Códigos tal como vienen en FHIR (LOINC/SNOMED). Sin tabla `laboratorio_nbu_snom
 
 ## Canal paciente
 
-- **Consultar**: lectura local; `GET mis-resultados` — [flow](./flows/consultar-resultados-paciente.md).
-- **Solicitar resultados** (lenguaje usuario): **sync pull**; `POST sincronizar` — [flow](./flows/solicitar-resultados-paciente.md). No implica ordenar estudios nuevos en el LIS.
-- Asistente: intents `laboratorio.ver-resultados-como-paciente` y `laboratorio.sincronizar-resultados-como-paciente` (ver [intents](./flows/intents-laboratorio-paciente.md)).
+- **Consultar**: lectura local; `GET mis-resultados-como-paciente` (ui_json) — [flow](./flows/consultar-resultados-paciente.md).
+- **Ingesta**: consola/cron (`laboratory-sync/lote`) — [ingesta-cron](./flows/ingesta-cron.md). No expuesta al paciente en API ni asistente.
+- Asistente: intent `laboratorio.ver-resultados-como-paciente` (ver [intents](./flows/intents-laboratorio-paciente.md)).

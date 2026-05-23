@@ -7,9 +7,10 @@ Resultados de laboratorio por **pull** desde sistemas externos (FHIR R4). Sin m�
 | [overview.md](./overview.md) | Alcance y actores |
 | [design.md](./design.md) | Conectores, persistencia, encounter |
 | [flows/consultar-resultados-paciente.md](./flows/consultar-resultados-paciente.md) | Ver informes (paciente) |
-| [flows/solicitar-resultados-paciente.md](./flows/solicitar-resultados-paciente.md) | Sincronizar desde LIS (paciente) |
 | [flows/intents-laboratorio-paciente.md](./flows/intents-laboratorio-paciente.md) | Intents asistente (índice) |
+| [flows/ingesta-cron.md](./flows/ingesta-cron.md) | Ingesta programada (cron / lote) |
 | [flows/ingesta-pull.md](./flows/ingesta-pull.md) | Ingesta técnica, consola |
+| [flows/solicitar-resultados-paciente.md](./flows/solicitar-resultados-paciente.md) | Ingesta operaciones (redirect a cron) |
 
 ## Anclas código
 

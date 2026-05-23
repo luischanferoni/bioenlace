@@ -6,8 +6,7 @@ Traer `DiagnosticReport` del LIS, persistir en BD e idempotizar por proveedor.
 
 ## Actores
 
-- Paciente (API sync propio).
-- Consola / job (`LaboratorySyncController`).
+- Consola / cron (`LaboratorySyncController`).
 
 ## Anclas
 
@@ -15,11 +14,10 @@ Traer `DiagnosticReport` del LIS, persistir en BD e idempotizar por proveedor.
 |------|-------------------|
 | Registry | `LabConnectorRegistry` |
 | Ingesta | `LaboratoryIngestService::syncForPersona` |
-| Listado paciente | `GET /api/v1/clinical/laboratory-result/mis-resultados` |
-| Sync paciente | `POST /api/v1/clinical/laboratory-result/sincronizar` |
-| UI paciente | [intents-laboratorio-paciente.md](./intents-laboratorio-paciente.md) |
+| Listado paciente (UI) | `GET /api/v1/clinical/laboratory-result/mis-resultados-como-paciente` (solo BD) |
 | Por encounter | `GET /api/v1/clinical/encounter/<id>/laboratory-result` |
-| Consola | `php yii laboratory-sync/persona <id_persona> [connector]` |
+| Consola una persona | `php yii laboratory-sync/persona <id_persona> [connector]` |
+| Consola lote (cron) | `php yii laboratory-sync/lote [limit] [offset] [connector]` — [ingesta-cron.md](./ingesta-cron.md) |
 | Seed demo (sin LIS) | `php yii clinical-seed/laboratory-demo <id_persona>` |
 
 ---

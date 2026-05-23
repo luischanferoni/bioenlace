@@ -1248,6 +1248,24 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       );
     }
 
+    Widget renderMessageBlock(Map<String, dynamic> b) {
+      final title = b['title']?.toString();
+      final text = b['text']?.toString() ?? '';
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (title != null && title.trim().isNotEmpty) ...[
+            Text(title, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+          ],
+          SelectableText(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+          ),
+        ],
+      );
+    }
+
     Widget renderFieldsBlock(Map<String, dynamic> b) {
       final title = b['title']?.toString();
       final fieldsRaw = b['fields'];
@@ -1349,6 +1367,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         for (final bRaw in blocks) ...[
           if (bRaw is Map) ...[
             if (bRaw['kind']?.toString() == 'list') renderListBlock(Map<String, dynamic>.from(bRaw)),
+            if (bRaw['kind']?.toString() == 'message') renderMessageBlock(Map<String, dynamic>.from(bRaw)),
             if (bRaw['kind']?.toString() == 'fields') renderFieldsBlock(Map<String, dynamic>.from(bRaw)),
             const SizedBox(height: 8),
           ],

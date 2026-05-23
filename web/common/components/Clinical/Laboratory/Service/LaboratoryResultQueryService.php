@@ -70,6 +70,54 @@ final class LaboratoryResultQueryService
     }
 
     /**
+     * Texto plano para bloque ui_json `message` (saltos de línea y viñetas con asterisco).
+     *
+     * @param array<string, mixed> $serialized
+     */
+    public function formatReportDetailMessage(array $serialized): string
+    {
+        $lines = [];
+        $title = trim((string) ($serialized['display'] ?? 'Informe de laboratorio'));
+        $lines[] = $title !== '' ? $title : 'Informe de laboratorio';
+
+        $fecha = trim((string) ($serialized['issuedAt'] ?? ''));
+        if ($fecha !== '') {
+            $lines[] = '';
+            $lines[] = 'Fecha: ' . $fecha;
+        }
+
+        $lines[] = '';
+        $lines[] = 'Analitos:';
+        $hasObs = false;
+        foreach ($serialized['observations'] ?? [] as $obs) {
+            if (!is_array($obs)) {
+                continue;
+            }
+            $hasObs = true;
+            $label = trim((string) ($obs['display'] ?? $obs['code'] ?? 'Analito'));
+            $val = trim((string) ($obs['valueQuantity'] ?? $obs['display'] ?? '—'));
+            $unit = trim((string) ($obs['valueUnit'] ?? ''));
+            $piece = $val;
+            if ($unit !== '') {
+                $piece .= ' ' . $unit;
+            }
+            $lines[] = '* ' . ($label !== '' ? $label : 'Analito') . ': ' . $piece;
+        }
+        if (!$hasObs) {
+            $lines[] = '* Sin analitos en este informe.';
+        }
+
+        $conclusion = trim((string) ($serialized['conclusion'] ?? ''));
+        if ($conclusion !== '') {
+            $lines[] = '';
+            $lines[] = 'Conclusión:';
+            $lines[] = $conclusion;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function listForEncounter(int $encounterId): array

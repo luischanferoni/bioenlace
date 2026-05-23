@@ -110,7 +110,6 @@ final class CommonActionsService
                 'titulo' => 'Laboratorio',
                 'models' => [
                     'laboratorio.ver-resultados-como-paciente',
-                    'laboratorio.sincronizar-resultados-como-paciente',
                 ],
             ],
         ];

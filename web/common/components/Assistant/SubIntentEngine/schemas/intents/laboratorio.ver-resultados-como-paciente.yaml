@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Ver resultados de laboratorio"
 description: "Listado y detalle de informes de laboratorio del paciente (copia en Bioenlace)."
-rbac_route: "/api/clinical/laboratory-results/mis-resultados-como-paciente"
+rbac_route: "/api/clinical/laboratory-result/mis-resultados-como-paciente"
 keywords:
   - mis resultados
   - laboratorio

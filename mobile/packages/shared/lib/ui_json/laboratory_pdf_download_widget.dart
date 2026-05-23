@@ -1,13 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 
 import '../config/api_config.dart';
+import 'laboratory_pdf_save.dart';
 import 'ui_json_screen.dart';
 
-/// Descarga PDF de laboratorio vía API autenticada (GET binario).
+/// Descarga PDF de laboratorio vía API autenticada.
+/// Web (Chrome): descarga directa; móvil: hoja de compartir del SO.
 class LaboratoryPdfDownloadWidget extends StatefulWidget {
   const LaboratoryPdfDownloadWidget({
     super.key,
@@ -29,17 +28,13 @@ class LaboratoryPdfDownloadWidget extends StatefulWidget {
 class _LaboratoryPdfDownloadWidgetState extends State<LaboratoryPdfDownloadWidget> {
   bool _loading = false;
 
-  String _resolveUrl(String path) {
-    return resolveApiAbsoluteUrl(path);
-  }
-
   Future<void> _download() async {
     if (widget.pdfPath.trim().isEmpty) {
       return;
     }
     setState(() => _loading = true);
     try {
-      final url = _resolveUrl(widget.pdfPath);
+      final url = resolveApiAbsoluteUrl(widget.pdfPath);
       final headers = AppConfig.jsonHeaders(
         bearerToken: widget.authToken,
         appClient: widget.appClient,
@@ -54,16 +49,15 @@ class _LaboratoryPdfDownloadWidgetState extends State<LaboratoryPdfDownloadWidge
         throw Exception('HTTP ${res.statusCode}');
       }
 
-      final dir = await getTemporaryDirectory();
-      final name = widget.filename.trim().isEmpty ? 'informe-laboratorio.pdf' : widget.filename.trim();
-      final file = File('${dir.path}/$name');
-      await file.writeAsBytes(res.bodyBytes);
+      final name =
+          widget.filename.trim().isEmpty ? 'informe-laboratorio.pdf' : widget.filename.trim();
+      await saveLaboratoryPdfBytes(res.bodyBytes, name);
 
       if (!mounted) {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PDF guardado: ${file.path}')),
+        SnackBar(content: Text('PDF listo: $name')),
       );
     } catch (e) {
       if (mounted) {

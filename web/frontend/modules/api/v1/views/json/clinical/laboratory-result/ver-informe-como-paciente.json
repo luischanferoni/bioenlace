@@ -12,7 +12,7 @@
     {
       "kind": "message",
       "id": "detalle",
-      "title": "Resultados",
+      "title": "",
       "text_field": "detalle_mensaje",
       "text": ""
     },

@@ -12,7 +12,7 @@
     {
       "kind": "list",
       "id": "informes",
-      "title": "Informes",
+      "title": "",
       "draft_field": "report_id",
       "empty_message": "No hay resultados guardados. Podés actualizar desde el laboratorio.",
       "item": { "kind": "generic", "id_field": "id", "label_field": "name" },

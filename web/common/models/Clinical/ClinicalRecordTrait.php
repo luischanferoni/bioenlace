@@ -23,9 +23,12 @@ trait ClinicalRecordTrait
                     ActiveRecord::EVENT_BEFORE_DELETE => ['deleted_by'],
                 ],
                 'value' => static function () {
-                    return Yii::$app->user && !Yii::$app->user->isGuest
-                        ? (int) Yii::$app->user->id
-                        : null;
+                    if (!Yii::$app->has('user')) {
+                        return null;
+                    }
+                    $user = Yii::$app->get('user');
+
+                    return $user && !$user->isGuest ? (int) $user->id : null;
                 },
             ],
         ];

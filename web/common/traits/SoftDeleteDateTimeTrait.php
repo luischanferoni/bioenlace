@@ -15,7 +15,7 @@ trait SoftDeleteDateTimeTrait {
     public function softDelete()
     {
         $this->{self::getDeletedAtAttribute()} = new Expression('NOW()');
-        $this->deleted_by = \Yii::$app->user->id;
+        $this->deleted_by = self::resolveAuditUserId();
         $ret = $this->save(false, [self::getDeletedAtAttribute(), 'deleted_by']);
         $this->afterSoftDelete();
         return $ret;
@@ -72,7 +72,7 @@ trait SoftDeleteDateTimeTrait {
         $command = static::getDb()->createCommand();
         
         $command->update(static::tableName(), 
-                    ['deleted_at' => new Expression('NOW()'), 'deleted_by' => \Yii::$app->user->id], 
+                    ['deleted_at' => new Expression('NOW()'), 'deleted_by' => self::resolveAuditUserId()], 
                     $condition, $params);        
         //echo $command->getRawSql();die;
         return $command->execute();
@@ -158,6 +158,19 @@ trait SoftDeleteDateTimeTrait {
         $this->deleted_by = null;
         return $this->save(false, [self::getDeletedAtAttribute(), 'deleted_by']);
 	}
+
+    /**
+     * Usuario de auditoría (web/API). En consola (`yii …`) no hay componente `user` → null.
+     */
+    private static function resolveAuditUserId(): ?int
+    {
+        if (!\Yii::$app->has('user')) {
+            return null;
+        }
+        $user = \Yii::$app->get('user');
+
+        return $user && !$user->isGuest ? (int) $user->id : null;
+    }
 
 
 }

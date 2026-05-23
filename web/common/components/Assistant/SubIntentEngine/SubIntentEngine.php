@@ -8,6 +8,7 @@ use common\components\Assistant\FlowManifest\FlowManifest;
 use common\components\Assistant\Service\FlowHintService;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Ui\ApiV1HttpRoute;
 use common\components\Ui\UiDefinitionTemplateManager;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
@@ -795,7 +796,7 @@ final class SubIntentEngine
      */
     private static function clientOpenFromHttpRoute(string $route, string $actionId): ?array
     {
-        $route = trim($route);
+        $route = ApiV1HttpRoute::normalize($route);
         if ($route === '' || AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute($route)) {
             return null;
         }

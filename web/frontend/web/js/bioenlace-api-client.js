@@ -36,4 +36,19 @@
 
   /** Alias de {@link NS.mergeHeaders} (mismo contrato). */
   NS.apiHeaders = NS.mergeHeaders;
+
+  /**
+   * Path HTTP bajo `/api/v1/...` (p. ej. `/api/clinical/...` de RBAC → `/api/v1/clinical/...`).
+   * @param {string} path
+   * @returns {string}
+   */
+  NS.normalizeApiV1Path = function (path) {
+    var p = String(path || '').trim();
+    if (!p) return '';
+    if (/^https?:\/\//i.test(p)) return p;
+    if (p.charAt(0) !== '/') p = '/' + p;
+    if (/^\/api\/v\d+\//i.test(p)) return p;
+    if (p.indexOf('/api/') === 0) return '/api/v1/' + p.slice(5);
+    return '/api/v1/' + p.replace(/^\//, '');
+  };
 })(window);

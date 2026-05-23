@@ -104,22 +104,16 @@ class _HorizontalScrollInteractionState extends State<_HorizontalScrollInteracti
 
 /// Resuelve ruta devuelta por el backend (`/api/v1/...`) contra [AppConfig.apiUrl].
 String resolveApiAbsoluteUrl(String routeOrPath) {
-  final r = routeOrPath.trim();
+  final r = AppConfig.normalizeApiV1Path(routeOrPath);
   if (r.startsWith('http://') || r.startsWith('https://')) {
     return r;
   }
   final base = AppConfig.apiUrl.replaceAll(RegExp(r'/$'), '');
   final origin = Uri.parse('$base/').origin;
-  if (r.startsWith('/api/v1/')) {
-    // Ruta absoluta de API: resolver siempre contra el origin (evita duplicar /api/v1 según configuración de base).
+  if (r.startsWith('/api/')) {
     return origin + r;
   }
   if (r.startsWith('/')) {
-    // En este proyecto los endpoints del descriptor (p. ej. `/efectores/buscar`) son relativos a `/api/v1`.
-    // Si ya viniera una ruta absoluta de API (`/api/...`), usar origin.
-    if (r.startsWith('/api/')) {
-      return origin + r;
-    }
     return base + r;
   }
   return '$base/$r';

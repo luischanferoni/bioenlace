@@ -13,6 +13,12 @@
         if (path.indexOf('http') === 0) {
             return path;
         }
+        if (global.BioenlaceApiClient && typeof global.BioenlaceApiClient.normalizeApiV1Path === 'function') {
+            path = global.BioenlaceApiClient.normalizeApiV1Path(path);
+        }
+        if (path.indexOf('/api/') === 0) {
+            return global.location.origin + path;
+        }
         var base = (global.spaConfig && global.spaConfig.apiBase) ? String(global.spaConfig.apiBase) : '';
         if (base && base.slice(-1) === '/') {
             base = base.slice(0, -1);

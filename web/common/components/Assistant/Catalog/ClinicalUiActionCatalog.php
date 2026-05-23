@@ -2,6 +2,8 @@
 
 namespace common\components\Assistant\Catalog;
 
+use common\components\Ui\ApiV1HttpRoute;
+
 /**
  * Acciones API clínicas FHIR para el catálogo del asistente (no son flows YAML).
  *
@@ -134,7 +136,7 @@ final class ClinicalUiActionCatalog
         array $keywords,
         bool $uiJsonDescriptor = false
     ): array {
-        $httpRoute = '/api/v1' . $rbacRoute;
+        $httpRoute = ApiV1HttpRoute::normalize($rbacRoute);
 
         $row = [
             'action_id' => $actionId,

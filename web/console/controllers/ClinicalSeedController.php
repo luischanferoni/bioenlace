@@ -2,6 +2,8 @@
 
 namespace console\controllers;
 
+use common\components\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
+use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\db\Query;
@@ -22,7 +24,7 @@ class ClinicalSeedController extends Controller
     public function options($actionID): array
     {
         $opts = parent::options($actionID);
-        if ($actionID === 'care-plan-demo-assign') {
+        if (in_array($actionID, ['care-plan-demo-assign', 'laboratory-demo', 'laboratory-demo-remove', 'laboratory-demo-info'], true)) {
             $opts[] = 'persona';
         }
 
@@ -123,6 +125,117 @@ class ClinicalSeedController extends Controller
             "OK: care plan demo id={$planId} reasignado a id_persona={$persona}.\n",
             Console::FG_GREEN
         );
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Crea o actualiza un informe de laboratorio demo para pruebas (lista, detalle, PDF).
+     *
+     * Uso: php yii clinical-seed/laboratory-demo 920779
+     *   o: php yii clinical-seed/laboratory-demo --persona=920779
+     *
+     * @param int $personaId id_persona (argumento posicional; si es 0, usa --persona)
+     */
+    public function actionLaboratoryDemo(int $personaId = 0): int
+    {
+        $persona = $personaId > 0 ? $personaId : (int) $this->persona;
+        if ($persona <= 0) {
+            $this->stderr("Indicá id_persona: php yii clinical-seed/laboratory-demo 920779\n", Console::FG_RED);
+
+            return ExitCode::USAGE;
+        }
+
+        try {
+            $result = (new LaboratoryDemoSeedService())->upsertForPersona($persona);
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+
+        $verb = $result['created'] ? 'creado' : 'actualizado';
+        $this->stdout(
+            "OK: informe demo {$verb} id={$result['report_id']} para id_persona={$persona} "
+            . "({$result['observations']} analitos).\n",
+            Console::FG_GREEN
+        );
+        $this->stdout(
+            "Probá con JWT del paciente (idPersona={$persona}):\n"
+            . "  GET /api/v1/clinical/laboratory-results/mis-resultados-como-paciente\n"
+            . "  Flow asistente: laboratorio.ver-resultados-como-paciente\n",
+            Console::FG_YELLOW
+        );
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Lista informes de laboratorio guardados para una persona.
+     *
+     * @param int $personaId id_persona
+     */
+    public function actionLaboratoryDemoInfo(int $personaId = 0): int
+    {
+        $persona = $personaId > 0 ? $personaId : (int) $this->persona;
+        if ($persona <= 0) {
+            $this->stderr("Indicá id_persona: php yii clinical-seed/laboratory-demo-info 920779\n", Console::FG_RED);
+
+            return ExitCode::USAGE;
+        }
+
+        if (!(new Query())->from('{{%personas}}')->where(['id_persona' => $persona])->exists()) {
+            $this->stderr("No existe personas.id_persona={$persona}\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        $reports = (new LaboratoryResultQueryService())->listForPersona($persona);
+        if ($reports === []) {
+            $this->stdout("Sin informes para id_persona={$persona}. Ejecutá: php yii clinical-seed/laboratory-demo {$persona}\n");
+
+            return ExitCode::OK;
+        }
+
+        foreach ($reports as $r) {
+            $this->stdout(
+                sprintf(
+                    "- id=%s | %s | issued=%s | source=%s | obs=%d\n",
+                    (string) ($r['id'] ?? ''),
+                    (string) ($r['display'] ?? ''),
+                    (string) ($r['issuedAt'] ?? ''),
+                    (string) ($r['sourceSystem'] ?? ''),
+                    is_array($r['observations'] ?? null) ? count($r['observations']) : 0
+                ),
+                Console::FG_CYAN
+            );
+        }
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Elimina el informe demo (source=demo, external_id seed-lab-demo-{persona}).
+     *
+     * @param int $personaId id_persona
+     */
+    public function actionLaboratoryDemoRemove(int $personaId = 0): int
+    {
+        $persona = $personaId > 0 ? $personaId : (int) $this->persona;
+        if ($persona <= 0) {
+            $this->stderr("Indicá id_persona: php yii clinical-seed/laboratory-demo-remove 920779\n", Console::FG_RED);
+
+            return ExitCode::USAGE;
+        }
+
+        $removed = (new LaboratoryDemoSeedService())->removeForPersona($persona);
+        if (!$removed) {
+            $this->stdout("No había informe demo para id_persona={$persona}.\n", Console::FG_YELLOW);
+
+            return ExitCode::OK;
+        }
+
+        $this->stdout("OK: informe demo eliminado para id_persona={$persona}.\n", Console::FG_GREEN);
 
         return ExitCode::OK;
     }

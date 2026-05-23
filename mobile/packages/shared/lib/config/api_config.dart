@@ -9,6 +9,23 @@ class AppConfig {
     defaultValue: 'https://app.bioenlace.io/api/v1',
   );
 
+  /// `/api/clinical/...` (RBAC) → `/api/v1/clinical/...` para fetch HTTP.
+  static String normalizeApiV1Path(String path) {
+    var p = path.trim();
+    if (p.isEmpty) return p;
+    if (p.startsWith('http://') || p.startsWith('https://')) {
+      return p;
+    }
+    if (!p.startsWith('/')) p = '/$p';
+    if (RegExp(r'^/api/v\d+/').hasMatch(p)) {
+      return p;
+    }
+    if (p.startsWith('/api/')) {
+      return '/api/v1/${p.substring(5)}';
+    }
+    return '/api/v1/${p.replaceFirst(RegExp(r'^/+'), '')}';
+  }
+
   /// Versión de app para compatibilidad de descriptores UI (`X-App-Version`), alineado con la web.
   static const String appVersion = String.fromEnvironment(
     'APP_VERSION',

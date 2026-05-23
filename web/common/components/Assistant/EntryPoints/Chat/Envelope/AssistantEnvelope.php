@@ -4,6 +4,7 @@ namespace common\components\Assistant\EntryPoints\Chat\Envelope;
 
 use common\components\Assistant\FlowManifest\FlowManifest;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Ui\ApiV1HttpRoute;
 use common\components\Ui\UiDefinitionTemplateManager;
 
 /**
@@ -322,7 +323,7 @@ final class AssistantEnvelope
             if (!is_array($tab)) {
                 continue;
             }
-            $route = trim((string) ($tab['route'] ?? ''));
+            $route = ApiV1HttpRoute::normalize(trim((string) ($tab['route'] ?? '')));
             if ($route === '') {
                 continue;
             }

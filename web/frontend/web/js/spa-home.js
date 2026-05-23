@@ -17,6 +17,9 @@
         if (url.startsWith('http://') || url.startsWith('https://')) {
             return url;
         }
+        if (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.normalizeApiV1Path === 'function') {
+            url = window.BioenlaceApiClient.normalizeApiV1Path(url);
+        }
         if (url.startsWith('/api/')) {
             return window.location.origin + url;
         }

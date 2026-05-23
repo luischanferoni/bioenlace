@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
 import '../config/api_config.dart';
+import 'ui_json_screen.dart';
 
 /// Descarga PDF de laboratorio vía API autenticada (GET binario).
 class LaboratoryPdfDownloadWidget extends StatefulWidget {
@@ -29,18 +30,7 @@ class _LaboratoryPdfDownloadWidgetState extends State<LaboratoryPdfDownloadWidge
   bool _loading = false;
 
   String _resolveUrl(String path) {
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-    final base = AppConfig.apiUrl;
-    final uri = Uri.parse(base);
-    if (path.startsWith('/api/v1')) {
-      final port = uri.hasPort ? ':${uri.port}' : '';
-      return '${uri.scheme}://${uri.host}$port$path';
-    }
-    final prefix = base.endsWith('/') ? base.substring(0, base.length - 1) : base;
-    final p = path.startsWith('/') ? path : '/$path';
-    return '$prefix$p';
+    return resolveApiAbsoluteUrl(path);
   }
 
   Future<void> _download() async {

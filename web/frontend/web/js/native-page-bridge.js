@@ -13,10 +13,18 @@
    */
   function apiV1Url(path) {
     var p = String(path || '');
+    if (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.normalizeApiV1Path === 'function') {
+      p = window.BioenlaceApiClient.normalizeApiV1Path(p);
+    } else if (p && !p.startsWith('/')) {
+      p = '/' + p;
+      if (p.indexOf('/api/') === 0 && p.indexOf('/api/v1/') !== 0) {
+        p = '/api/v1/' + p.slice(5);
+      }
+    }
     if (!p) return window.location.origin + '/api/v1';
     if (!p.startsWith('/')) p = '/' + p;
-    if (p.startsWith('/api/v1/')) return window.location.origin + p;
-    return window.location.origin + '/api/v1' + p;
+    if (p.startsWith('/api/')) return window.location.origin + p;
+    return window.location.origin + '/api/v1/' + p.replace(/^\//, '');
   }
 
   async function fetchJson(url, options) {

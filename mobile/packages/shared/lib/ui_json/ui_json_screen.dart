@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 import '../theme/tokens/tokens.dart';
 import 'ui_json_list_presentation.dart';
+import 'laboratory_pdf_download_widget.dart';
 import 'weekly_scheduler_widget.dart';
 
 String _messageFromErrorBody(http.Response res) {
@@ -643,6 +644,17 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 onChanged: (m) => setState(() => _accum.addAll(m)),
               ),
             ],
+          );
+        }
+        if (wid == 'laboratory_pdf_download') {
+          final iv = field['initial_values'] is Map
+              ? Map<String, dynamic>.from(field['initial_values'] as Map)
+              : <String, dynamic>{};
+          return LaboratoryPdfDownloadWidget(
+            pdfPath: iv['pdf_url']?.toString() ?? '',
+            filename: iv['filename']?.toString() ?? 'informe-laboratorio.pdf',
+            authToken: widget.authToken,
+            appClient: 'paciente-flutter',
           );
         }
         return Text('Widget no soportado: $wid');

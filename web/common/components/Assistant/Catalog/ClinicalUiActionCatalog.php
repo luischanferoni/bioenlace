@@ -92,6 +92,20 @@ final class ClinicalUiActionCatalog
                 '/api/clinical/laboratory-results/sincronizar-como-paciente',
                 ['actualizar resultados', 'sincronizar laboratorio', 'traer análisis']
             ),
+            self::def(
+                'clinical.laboratory-results.ver-informe-como-paciente',
+                'Detalle informe de laboratorio (UI)',
+                'Analitos, conclusión y descarga PDF del informe elegido.',
+                '/api/clinical/laboratory-results/ver-informe-como-paciente',
+                ['detalle laboratorio', 'ver informe', 'analitos']
+            ),
+            self::def(
+                'clinical.laboratory-results.descargar-pdf-como-paciente',
+                'Descargar PDF de laboratorio',
+                'PDF generado en servidor para un informe del paciente.',
+                '/api/clinical/laboratory-results/descargar-pdf-como-paciente',
+                ['pdf laboratorio', 'descargar informe']
+            ),
         ];
 
         return self::$definitions;

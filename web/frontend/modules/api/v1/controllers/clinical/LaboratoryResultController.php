@@ -3,10 +3,15 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Laboratory\Service\LaboratoryIngestService;
+use common\components\Clinical\Laboratory\Service\LaboratoryReportPdfService;
 use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\components\Ui\UiScreenService;
+use common\models\Clinical\DiagnosticReport;
+use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
+use yii\web\NotFoundHttpException;
+use yii\web\Response;
 
 /**
  * Resultados de laboratorio (ingesta pull + lectura).
@@ -15,6 +20,8 @@ use Yii;
  * GET|POST /api/v1/clinical/laboratory-results/mis-resultados-como-paciente (UI JSON)
  * POST /api/v1/clinical/laboratory-results/sincronizar
  * GET|POST /api/v1/clinical/laboratory-results/sincronizar-como-paciente (UI JSON)
+ * GET|POST /api/v1/clinical/laboratory-results/ver-informe-como-paciente (UI JSON detalle)
+ * GET  /api/v1/clinical/laboratory-results/descargar-pdf-como-paciente?report_id=
  * GET  /api/v1/clinical/encounter/<encounterId>/laboratory-results
  */
 class LaboratoryResultController extends BaseController
@@ -23,12 +30,14 @@ class LaboratoryResultController extends BaseController
 
     private LaboratoryResultQueryService $query;
     private LaboratoryIngestService $ingest;
+    private LaboratoryReportPdfService $pdf;
 
     public function init()
     {
         parent::init();
         $this->query = new LaboratoryResultQueryService();
         $this->ingest = new LaboratoryIngestService();
+        $this->pdf = new LaboratoryReportPdfService();
     }
 
     public function actions()
@@ -180,6 +189,99 @@ class LaboratoryResultController extends BaseController
                 ];
             }
         );
+    }
+
+    /**
+     * UI JSON: detalle de un informe (paso 2 del flow paciente).
+     *
+     * @tags clinical, laboratory, paciente, ui_json
+     */
+    public function actionVerInformeComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
+        }
+
+        $reportId = (int) ($req->get('report_id') ?? $req->post('report_id') ?? 0);
+
+        if (!$req->isPost) {
+            if ($reportId <= 0) {
+                throw new \InvalidArgumentException('Seleccioná un informe de la lista.');
+            }
+            $serialized = $this->query->getReportForPersona($idPersona, $reportId);
+            if ($serialized === null) {
+                throw new \InvalidArgumentException('Informe no encontrado.');
+            }
+
+            $pdfPath = '/api/v1/clinical/laboratory-results/descargar-pdf-como-paciente?report_id=' . $reportId;
+
+            return UiScreenService::renderUiDefinition(
+                'laboratory-results',
+                'ver-informe-como-paciente',
+                array_merge($req->get(), ['report_id' => $reportId]),
+                [
+                    'report_id' => (string) $reportId,
+                    'titulo_informe' => (string) ($serialized['display'] ?? 'Informe de laboratorio'),
+                    'fecha_informe' => (string) ($serialized['issuedAt'] ?? ''),
+                    'analitos_texto' => $this->query->formatAnalitosText($serialized),
+                    'conclusion' => (string) ($serialized['conclusion'] ?? ''),
+                    'pdf_url' => $pdfPath,
+                    'filename' => 'informe-laboratorio-' . $reportId . '.pdf',
+                ]
+            );
+        }
+
+        return UiScreenService::handleScreen(
+            'laboratory-results',
+            'ver-informe-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true, 'report_id' => (int) ($post['report_id'] ?? 0)]];
+            }
+        );
+    }
+
+    /**
+     * Descarga PDF generado en servidor para un informe del paciente autenticado.
+     *
+     * GET /api/v1/clinical/laboratory-results/descargar-pdf-como-paciente?report_id=
+     */
+    public function actionDescargarPdfComoPaciente()
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new NotFoundHttpException('Solo pacientes autenticados.');
+        }
+
+        $reportId = (int) Yii::$app->request->get('report_id');
+        if ($reportId <= 0) {
+            throw new NotFoundHttpException('report_id requerido.');
+        }
+
+        $model = DiagnosticReport::findOne([
+            'id' => $reportId,
+            'subject_persona_id' => $idPersona,
+            'deleted_at' => null,
+        ]);
+        if ($model === null) {
+            throw new NotFoundHttpException('Informe no encontrado.');
+        }
+
+        $serialized = $this->query->getReportForPersona($idPersona, $reportId);
+        $persona = Persona::findOne($idPersona);
+        $binary = $this->pdf->renderBinary($model, $serialized ?? [], $persona);
+
+        $filename = 'informe-laboratorio-' . $reportId . '.pdf';
+        $response = Yii::$app->response;
+        $response->format = Response::FORMAT_RAW;
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->content = $binary;
+
+        return $response;
     }
 
     /**

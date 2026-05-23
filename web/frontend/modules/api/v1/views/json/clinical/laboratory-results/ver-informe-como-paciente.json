@@ -1,0 +1,65 @@
+{
+  "ui_type": "ui_json",
+  "title": "Detalle del informe",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "detalle",
+      "title": "Resultados",
+      "fields": [
+        {
+          "name": "report_id",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "titulo_informe",
+          "label": "Informe",
+          "type": "text",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "fecha_informe",
+          "label": "Fecha",
+          "type": "text",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "analitos_texto",
+          "label": "Analitos",
+          "type": "textarea",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "conclusion",
+          "label": "Conclusión",
+          "type": "textarea",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "descargar_pdf",
+          "label": "Descargar",
+          "type": "custom_widget",
+          "widget_id": "laboratory_pdf_download",
+          "value_fields": ["pdf_url", "filename"],
+          "assets": {
+            "js": ["/js/widgets/ui-widget-laboratory-pdf-download.js"]
+          },
+          "initial_values": {}
+        }
+      ]
+    }
+  ]
+}

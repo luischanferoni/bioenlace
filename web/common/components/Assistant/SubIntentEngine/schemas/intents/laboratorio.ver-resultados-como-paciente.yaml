@@ -2,7 +2,7 @@ intent_id: laboratorio.ver-resultados-como-paciente
 version: 1
 
 action_name: "Ver resultados de laboratorio"
-description: "Listado de informes de laboratorio del paciente autenticado (copia en Bioenlace)."
+description: "Listado y detalle de informes de laboratorio del paciente (copia en Bioenlace)."
 rbac_route: "/api/clinical/laboratory-results/mis-resultados-como-paciente"
 keywords:
   - mis resultados
@@ -14,17 +14,28 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Mostrar los informes de laboratorio ya sincronizados en Bioenlace.
+    Mostrar los informes de laboratorio ya sincronizados en Bioenlace, con detalle y PDF.
   how: >-
-    Pantalla lista con informes y analitos; sin llamar al LIS en este paso.
+    Lista de informes → detalle con analitos → descarga PDF generada en servidor.
   outcome:
-    - El paciente consulta sus resultados guardados.
+    - El paciente consulta y puede descargar sus resultados.
 
 subintents:
   - id: ver_listado
-    assistant_text: "Tus resultados de laboratorio"
+    assistant_text: "Elegí un informe de laboratorio"
     provides:
       - draft.report_id
-    next: ""
+    next: ver_detalle
     open_ui:
       action_id: clinical.laboratory-results.mis-resultados-como-paciente
+
+  - id: ver_detalle
+    assistant_text: "Detalle del informe"
+    requires:
+      - draft.report_id
+    provides: []
+    next: ""
+    open_ui:
+      action_id: clinical.laboratory-results.ver-informe-como-paciente
+      params:
+        report_id: "draft.report_id"

@@ -50,6 +50,11 @@ class ChatScreenState extends State<ChatScreen> {
   /// `turnos.crear-como-paciente` → `/api/v1/turnos/crear-como-paciente` (fallback si `client_open` viene null).
   String? _apiRouteFromActionId(String actionId) {
     final aid = actionId.trim().toLowerCase();
+    final clinical = RegExp(r'^clinical\.([\w-]+)\.([\w-]+)$');
+    final m3 = clinical.firstMatch(aid);
+    if (m3 != null) {
+      return '/api/v1/clinical/${m3.group(1)}/${m3.group(2)}';
+    }
     final dot = aid.indexOf('.');
     if (dot <= 0 || dot >= aid.length - 1) {
       return null;

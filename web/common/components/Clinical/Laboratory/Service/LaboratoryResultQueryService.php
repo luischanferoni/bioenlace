@@ -23,6 +23,53 @@ final class LaboratoryResultQueryService
     }
 
     /**
+     * Informe del paciente o null si no existe / no pertenece.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getReportForPersona(int $idPersona, int $reportId): ?array
+    {
+        if ($reportId <= 0) {
+            return null;
+        }
+        $report = DiagnosticReport::findOne([
+            'id' => $reportId,
+            'subject_persona_id' => $idPersona,
+            'deleted_at' => null,
+        ]);
+        if ($report === null) {
+            return null;
+        }
+
+        return $this->serializeReport($report);
+    }
+
+    /**
+     * Texto multilínea para UI readonly (detalle de analitos).
+     *
+     * @param array<string, mixed> $serialized
+     */
+    public function formatAnalitosText(array $serialized): string
+    {
+        $lines = [];
+        foreach ($serialized['observations'] ?? [] as $obs) {
+            if (!is_array($obs)) {
+                continue;
+            }
+            $label = (string) ($obs['display'] ?? $obs['code'] ?? 'Analito');
+            $val = trim((string) ($obs['valueQuantity'] ?? $obs['display'] ?? '—'));
+            $unit = trim((string) ($obs['valueUnit'] ?? ''));
+            $piece = $val;
+            if ($unit !== '') {
+                $piece .= ' ' . $unit;
+            }
+            $lines[] = $label . ': ' . $piece;
+        }
+
+        return $lines === [] ? 'Sin analitos en este informe.' : implode("\n", $lines);
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function listForEncounter(int $encounterId): array

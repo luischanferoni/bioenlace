@@ -136,14 +136,6 @@ class ApiGhostAccessControl extends ActionFilter
             $out[] = preg_replace('#^/api/v\d+/#', '/api/', $route, 1);
         }
 
-        // urlManager: /clinical/laboratory-results/... → controller uniqueId clinical/laboratory-result/...
-        if (preg_match('#^/api/clinical/laboratory-result(/|$)#', $route) === 1) {
-            $out[] = preg_replace('#/laboratory-result(?=/|$)#', '/laboratory-results', $route, 1);
-        }
-        if (preg_match('#^/api/clinical/laboratory-results(/|$)#', $route) === 1) {
-            $out[] = preg_replace('#/laboratory-results(?=/|$)#', '/laboratory-result', $route, 1);
-        }
-
         return array_values(array_unique($out));
     }
 

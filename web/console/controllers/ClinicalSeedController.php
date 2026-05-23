@@ -162,7 +162,7 @@ class ClinicalSeedController extends Controller
         );
         $this->stdout(
             "Probá con JWT del paciente (idPersona={$persona}):\n"
-            . "  GET /api/v1/clinical/laboratory-results/mis-resultados-como-paciente\n"
+            . "  GET /api/v1/clinical/laboratory-result/mis-resultados-como-paciente\n"
             . "  Flow asistente: laboratorio.ver-resultados-como-paciente\n",
             Console::FG_YELLOW
         );

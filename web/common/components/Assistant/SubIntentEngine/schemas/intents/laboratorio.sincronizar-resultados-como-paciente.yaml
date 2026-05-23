@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Actualizar resultados de laboratorio"
 description: "Sincroniza informes desde el LIS externo (pull FHIR) para el paciente autenticado."
-rbac_route: "/api/clinical/laboratory-results/sincronizar-como-paciente"
+rbac_route: "/api/clinical/laboratory-result/sincronizar-como-paciente"
 keywords:
   - actualizar resultados
   - sincronizar laboratorio
@@ -24,7 +24,7 @@ subintents:
     assistant_text: "Actualizar desde el laboratorio"
     next: ""
     open_ui:
-      action_id: clinical.laboratory-results.sincronizar-como-paciente
+      action_id: clinical.laboratory-result.sincronizar-como-paciente
 
 flow_submit:
-  action_id: clinical.laboratory-results.sincronizar-como-paciente
+  action_id: clinical.laboratory-result.sincronizar-como-paciente

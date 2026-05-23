@@ -13,8 +13,8 @@
 
 | intent_id | RBAC | `open_ui` / cierre |
 |-----------|------|-------------------|
-| `laboratorio.ver-resultados-como-paciente` | `/api/clinical/laboratory-results/mis-resultados-como-paciente` | lista → `ver-informe-como-paciente` + PDF |
-| `laboratorio.sincronizar-resultados-como-paciente` | `/api/clinical/laboratory-results/sincronizar-como-paciente` | `clinical.laboratory-results.sincronizar-como-paciente` + `flow_submit` |
+| `laboratorio.ver-resultados-como-paciente` | `/api/clinical/laboratory-result/mis-resultados-como-paciente` | lista → `ver-informe-como-paciente` + PDF |
+| `laboratorio.sincronizar-resultados-como-paciente` | `/api/clinical/laboratory-result/sincronizar-como-paciente` | `clinical.laboratory-result.sincronizar-como-paciente` + `flow_submit` |
 
 ---
 
@@ -27,7 +27,7 @@
 
 Registro en atajos: `CommonActionsService` categoría `laboratorio`.
 
-Catálogo UI: `ClinicalUiActionCatalog` (`clinical.laboratory-results.*`).
+Catálogo UI: `ClinicalUiActionCatalog` (`clinical.laboratory-result.*`).
 
 ## Desambiguación
 

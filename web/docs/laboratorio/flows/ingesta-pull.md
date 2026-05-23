@@ -15,10 +15,10 @@ Traer `DiagnosticReport` del LIS, persistir en BD e idempotizar por proveedor.
 |------|-------------------|
 | Registry | `LabConnectorRegistry` |
 | Ingesta | `LaboratoryIngestService::syncForPersona` |
-| Listado paciente | `GET /api/v1/clinical/laboratory-results/mis-resultados` |
-| Sync paciente | `POST /api/v1/clinical/laboratory-results/sincronizar` |
+| Listado paciente | `GET /api/v1/clinical/laboratory-result/mis-resultados` |
+| Sync paciente | `POST /api/v1/clinical/laboratory-result/sincronizar` |
 | UI paciente | [intents-laboratorio-paciente.md](./intents-laboratorio-paciente.md) |
-| Por encounter | `GET /api/v1/clinical/encounter/<id>/laboratory-results` |
+| Por encounter | `GET /api/v1/clinical/encounter/<id>/laboratory-result` |
 | Consola | `php yii laboratory-sync/persona <id_persona> [connector]` |
 | Seed demo (sin LIS) | `php yii clinical-seed/laboratory-demo <id_persona>` |
 

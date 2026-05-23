@@ -13,14 +13,14 @@ Permitir que el paciente autenticado vea sus informes de laboratorio ya persisti
 
 | Paso | Método / componente |
 |------|---------------------|
-| API JSON | `LaboratoryResultController::actionMisResultados` — `GET /api/v1/clinical/laboratory-results/mis-resultados` |
-| API UI | `LaboratoryResultController::actionMisResultadosComoPaciente` — `GET /api/v1/clinical/laboratory-results/mis-resultados-como-paciente` |
+| API JSON | `LaboratoryResultController::actionMisResultados` — `GET /api/v1/clinical/laboratory-result/mis-resultados` |
+| API UI | `LaboratoryResultController::actionMisResultadosComoPaciente` — `GET /api/v1/clinical/laboratory-result/mis-resultados-como-paciente` |
 | Permiso RBAC (ApiGhost) | `/api/clinical/laboratory-result/mis-resultados-como-paciente` (singular `laboratory-result`, **sin** `/api/v1`) |
 | Consulta | `LaboratoryResultQueryService::listForPersona` |
 | Intent | `laboratorio.ver-resultados-como-paciente` (2 pasos) |
-| Lista UI | `clinical.laboratory-results.mis-resultados-como-paciente` |
-| Detalle UI | `clinical.laboratory-results.ver-informe-como-paciente` |
-| PDF | `GET clinical/laboratory-results/descargar-pdf-como-paciente?report_id=` |
+| Lista UI | `clinical.laboratory-result.mis-resultados-como-paciente` |
+| Detalle UI | `clinical.laboratory-result.ver-informe-como-paciente` |
+| PDF | `GET clinical/laboratory-result/descargar-pdf-como-paciente?report_id=` |
 | RBAC | `mis-resultados*`, `ver-informe-como-paciente`, `descargar-pdf-como-paciente` |
 
 ---

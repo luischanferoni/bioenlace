@@ -14,11 +14,11 @@ Que el paciente dispare la sincronización pull desde el LIS externo (FHIR) para
 
 | Paso | Método / componente |
 |------|---------------------|
-| API JSON | `LaboratoryResultController::actionSincronizar` — `POST /api/v1/clinical/laboratory-results/sincronizar` |
-| API UI | `LaboratoryResultController::actionSincronizarComoPaciente` — `GET\|POST /api/v1/clinical/laboratory-results/sincronizar-como-paciente` |
+| API JSON | `LaboratoryResultController::actionSincronizar` — `POST /api/v1/clinical/laboratory-result/sincronizar` |
+| API UI | `LaboratoryResultController::actionSincronizarComoPaciente` — `GET\|POST /api/v1/clinical/laboratory-result/sincronizar-como-paciente` |
 | Servicio | `LaboratoryIngestService::syncForPersona` |
 | Intent | `laboratorio.sincronizar-resultados-como-paciente` |
-| RBAC | `/api/clinical/laboratory-results/sincronizar`, `/api/clinical/laboratory-results/sincronizar-como-paciente` |
+| RBAC | `/api/clinical/laboratory-result/sincronizar`, `/api/clinical/laboratory-result/sincronizar-como-paciente` |
 
 ---
 

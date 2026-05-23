@@ -81,34 +81,34 @@ final class ClinicalUiActionCatalog
                 ['internación', 'medicación', 'indicaciones']
             ),
             self::def(
-                'clinical.laboratory-results.mis-resultados-como-paciente',
+                'clinical.laboratory-result.mis-resultados-como-paciente',
                 'Ver resultados de laboratorio (UI)',
                 'Listado UI JSON de informes del paciente autenticado.',
-                '/api/clinical/laboratory-results/mis-resultados-como-paciente',
+                '/api/clinical/laboratory-result/mis-resultados-como-paciente',
                 ['mis resultados', 'laboratorio', 'análisis', 'estudios'],
                 true
             ),
             self::def(
-                'clinical.laboratory-results.sincronizar-como-paciente',
+                'clinical.laboratory-result.sincronizar-como-paciente',
                 'Actualizar resultados de laboratorio (UI)',
                 'Sincronización pull desde LIS; POST devuelve ui_submit_result.',
-                '/api/clinical/laboratory-results/sincronizar-como-paciente',
+                '/api/clinical/laboratory-result/sincronizar-como-paciente',
                 ['actualizar resultados', 'sincronizar laboratorio', 'traer análisis'],
                 true
             ),
             self::def(
-                'clinical.laboratory-results.ver-informe-como-paciente',
+                'clinical.laboratory-result.ver-informe-como-paciente',
                 'Detalle informe de laboratorio (UI)',
                 'Analitos, conclusión y descarga PDF del informe elegido.',
-                '/api/clinical/laboratory-results/ver-informe-como-paciente',
+                '/api/clinical/laboratory-result/ver-informe-como-paciente',
                 ['detalle laboratorio', 'ver informe', 'analitos'],
                 true
             ),
             self::def(
-                'clinical.laboratory-results.descargar-pdf-como-paciente',
+                'clinical.laboratory-result.descargar-pdf-como-paciente',
                 'Descargar PDF de laboratorio',
                 'PDF generado en servidor para un informe del paciente.',
-                '/api/clinical/laboratory-results/descargar-pdf-como-paciente',
+                '/api/clinical/laboratory-result/descargar-pdf-como-paciente',
                 ['pdf laboratorio', 'descargar informe']
             ),
         ];

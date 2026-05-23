@@ -16,13 +16,13 @@ use yii\web\Response;
 /**
  * Resultados de laboratorio (ingesta pull + lectura).
  *
- * GET  /api/v1/clinical/laboratory-results/mis-resultados
- * GET|POST /api/v1/clinical/laboratory-results/mis-resultados-como-paciente (UI JSON)
- * POST /api/v1/clinical/laboratory-results/sincronizar
- * GET|POST /api/v1/clinical/laboratory-results/sincronizar-como-paciente (UI JSON)
- * GET|POST /api/v1/clinical/laboratory-results/ver-informe-como-paciente (UI JSON detalle)
- * GET  /api/v1/clinical/laboratory-results/descargar-pdf-como-paciente?report_id=
- * GET  /api/v1/clinical/encounter/<encounterId>/laboratory-results
+ * GET  /api/v1/clinical/laboratory-result/mis-resultados
+ * GET|POST /api/v1/clinical/laboratory-result/mis-resultados-como-paciente (UI JSON)
+ * POST /api/v1/clinical/laboratory-result/sincronizar
+ * GET|POST /api/v1/clinical/laboratory-result/sincronizar-como-paciente (UI JSON)
+ * GET|POST /api/v1/clinical/laboratory-result/ver-informe-como-paciente (UI JSON detalle)
+ * GET  /api/v1/clinical/laboratory-result/descargar-pdf-como-paciente?report_id=
+ * GET  /api/v1/clinical/encounter/<encounterId>/laboratory-result
  */
 class LaboratoryResultController extends BaseController
 {
@@ -110,7 +110,7 @@ class LaboratoryResultController extends BaseController
         }
 
         $out = UiScreenService::handleScreen(
-            'laboratory-results',
+            'laboratory-result',
             'mis-resultados-como-paciente',
             $req->get(),
             $req->post(),
@@ -158,7 +158,7 @@ class LaboratoryResultController extends BaseController
         }
 
         return UiScreenService::handleScreen(
-            'laboratory-results',
+            'laboratory-result',
             'sincronizar-como-paciente',
             $req->get(),
             $req->post(),
@@ -215,10 +215,10 @@ class LaboratoryResultController extends BaseController
                 throw new \InvalidArgumentException('Informe no encontrado.');
             }
 
-            $pdfPath = '/api/v1/clinical/laboratory-results/descargar-pdf-como-paciente?report_id=' . $reportId;
+            $pdfPath = '/api/v1/clinical/laboratory-result/descargar-pdf-como-paciente?report_id=' . $reportId;
 
             return UiScreenService::renderUiDefinition(
-                'laboratory-results',
+                'laboratory-result',
                 'ver-informe-como-paciente',
                 array_merge($req->get(), ['report_id' => $reportId]),
                 [
@@ -234,7 +234,7 @@ class LaboratoryResultController extends BaseController
         }
 
         return UiScreenService::handleScreen(
-            'laboratory-results',
+            'laboratory-result',
             'ver-informe-como-paciente',
             $req->get(),
             $req->post(),
@@ -247,7 +247,7 @@ class LaboratoryResultController extends BaseController
     /**
      * Descarga PDF generado en servidor para un informe del paciente autenticado.
      *
-     * GET /api/v1/clinical/laboratory-results/descargar-pdf-como-paciente?report_id=
+     * GET /api/v1/clinical/laboratory-result/descargar-pdf-como-paciente?report_id=
      */
     public function actionDescargarPdfComoPaciente()
     {

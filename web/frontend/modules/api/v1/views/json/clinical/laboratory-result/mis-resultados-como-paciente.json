@@ -17,7 +17,7 @@
       "empty_message": "No hay resultados guardados. Podés actualizar desde el laboratorio.",
       "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
       "presentation": { "tile": "large", "shape": "wide" },
-      "selection": { "mode": "single", "requires_confirmation": true },
+      "selection": { "mode": "single", "requires_confirmation": false },
       "items": []
     }
   ]

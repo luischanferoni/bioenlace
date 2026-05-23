@@ -19,7 +19,6 @@ final class UiJsonDomain
         'efectores' => self::SCHEDULING,
         'servicios' => self::SCHEDULING,
         'care-plan' => self::CLINICAL,
-        'laboratory-results' => self::CLINICAL,
         'laboratory-result' => self::CLINICAL,
         'encounter' => self::CLINICAL,
         'medication-request' => self::CLINICAL,

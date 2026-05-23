@@ -124,9 +124,23 @@ final class SubIntentEngine
                 ], $hints), $intentId, $currentId);
             }
 
-            // Paso completo: intentar avanzar al siguiente.
+            // Paso completo: si es terminal y tiene UI (p. ej. detalle tras elegir ítem), mostrarla.
             $nextId = self::resolveNextSubintentId($current, $draft);
+            $openWhenComplete = self::resolveOpenUiForSubintent($current, $content, $draft);
             if ($nextId === '') {
+                if ($openWhenComplete && !empty($openWhenComplete['action_id'])) {
+                    return self::buildOpenUiResponse(
+                        $intentId,
+                        $currentId,
+                        $current,
+                        self::assistantTextForPrompt($current, 'Listo.'),
+                        $userId,
+                        $openWhenComplete,
+                        $content,
+                        $flowSubmitBlock,
+                        $hints
+                    );
+                }
                 break;
             }
             $nextSub = self::findSubintent($subintents, $nextId);

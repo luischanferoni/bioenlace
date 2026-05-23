@@ -27,7 +27,7 @@ subintents:
       - draft.report_id
     next: ver_detalle
     open_ui:
-      action_id: clinical.laboratory-results.mis-resultados-como-paciente
+      action_id: clinical.laboratory-result.mis-resultados-como-paciente
 
   - id: ver_detalle
     assistant_text: "Detalle del informe"
@@ -36,6 +36,6 @@ subintents:
     provides: []
     next: ""
     open_ui:
-      action_id: clinical.laboratory-results.ver-informe-como-paciente
+      action_id: clinical.laboratory-result.ver-informe-como-paciente
       params:
         report_id: "draft.report_id"

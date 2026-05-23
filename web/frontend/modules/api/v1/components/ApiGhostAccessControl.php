@@ -83,7 +83,7 @@ class ApiGhostAccessControl extends ActionFilter
             return true;
         }
 
-        if (User::canRoute($route)) {
+        if ($this->userCanAccessApiRoute($route)) {
             return true;
         }
 
@@ -109,6 +109,42 @@ class ApiGhostAccessControl extends ActionFilter
 
         $this->denyAccessJson();
         return false;
+    }
+
+    private function userCanAccessApiRoute(string $route): bool
+    {
+        foreach (self::permissionRouteCandidates($route) as $candidate) {
+            if (User::canRoute($candidate)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Rutas equivalentes en `auth_item` (permiso webvimark ≠ path HTTP público).
+     *
+     * @return list<string>
+     */
+    public static function permissionRouteCandidates(string $route): array
+    {
+        $route = '/' . ltrim($route, '/');
+        $out = [$route];
+
+        if (preg_match('#^/api/v\d+/#', $route) === 1) {
+            $out[] = preg_replace('#^/api/v\d+/#', '/api/', $route, 1);
+        }
+
+        // urlManager: /clinical/laboratory-results/... → controller uniqueId clinical/laboratory-result/...
+        if (preg_match('#^/api/clinical/laboratory-result(/|$)#', $route) === 1) {
+            $out[] = preg_replace('#/laboratory-result(?=/|$)#', '/laboratory-results', $route, 1);
+        }
+        if (preg_match('#^/api/clinical/laboratory-results(/|$)#', $route) === 1) {
+            $out[] = preg_replace('#/laboratory-results(?=/|$)#', '/laboratory-result', $route, 1);
+        }
+
+        return array_values(array_unique($out));
     }
 
     /**

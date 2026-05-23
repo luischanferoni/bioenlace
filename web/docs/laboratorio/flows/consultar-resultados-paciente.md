@@ -15,6 +15,7 @@ Permitir que el paciente autenticado vea sus informes de laboratorio ya persisti
 |------|---------------------|
 | API JSON | `LaboratoryResultController::actionMisResultados` — `GET /api/v1/clinical/laboratory-results/mis-resultados` |
 | API UI | `LaboratoryResultController::actionMisResultadosComoPaciente` — `GET /api/v1/clinical/laboratory-results/mis-resultados-como-paciente` |
+| Permiso RBAC (ApiGhost) | `/api/clinical/laboratory-result/mis-resultados-como-paciente` (singular `laboratory-result`, **sin** `/api/v1`) |
 | Consulta | `LaboratoryResultQueryService::listForPersona` |
 | Intent | `laboratorio.ver-resultados-como-paciente` (2 pasos) |
 | Lista UI | `clinical.laboratory-results.mis-resultados-como-paciente` |

@@ -15,7 +15,7 @@ Receta emitida **consultable y descargable** por el paciente; integridad documen
 - [x] Intent `receta.ver-recetas-como-paciente`
 - [x] Widget PDF web + Flutter
 - [ ] Firma PKI / repositorio nacional (Fase 3)
-- [ ] Imagen QR embebida en PDF (opcional librería QR)
+- [x] Imagen QR embebida en PDF (mPDF `<barcode type="QR">` si hay `verificationPublicBaseUrl`)
 
 ## Nota firma
 

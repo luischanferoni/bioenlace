@@ -77,4 +77,27 @@ return [
             ],
         ],
     ],
+    /**
+     * Repositorio nacional de recetas (MSAL RDI). Sin credenciales reales usa conector `null`.
+     *
+     * verificationPublicBaseUrl — base pública para QR (ej. https://app.example.com/api/v1).
+     * Sobrescribir en params-local.php.
+     */
+    'recetaDigitalRepository' => [
+        'default' => 'null',
+        'verificationPublicBaseUrl' => null,
+        'connectors' => [
+            'null' => [
+                'class' => \common\components\Integrations\Prescription\Connector\NullRecetaDigitalRepositoryConnector::class,
+            ],
+            'msal-rdi' => [
+                'class' => \common\components\Integrations\Prescription\Connector\HttpRecetaDigitalRepositoryConnector::class,
+                'enabled' => false,
+                'baseUrl' => null,
+                'tokenUrl' => null,
+                'clientId' => null,
+                'clientSecret' => null,
+            ],
+        ],
+    ],
 ];

@@ -2,6 +2,7 @@
 
 namespace common\components\Clinical\Prescription\Service;
 
+use common\components\Clinical\Prescription\Support\PrescriptionDocumentSupport;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Person\Persona;
 
@@ -49,6 +50,11 @@ final class ElectronicPrescriptionPresentationService
             $lines[] = '';
             $lines[] = 'Código de verificación:';
             $lines[] = (string) $rx->verification_token;
+            $verifyUrl = PrescriptionDocumentSupport::buildVerificationUrl($rx);
+            if ($verifyUrl !== null) {
+                $lines[] = 'Verificación (URL):';
+                $lines[] = $verifyUrl;
+            }
         }
 
         $notes = trim((string) ($rx->notes ?? ''));

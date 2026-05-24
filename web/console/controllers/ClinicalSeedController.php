@@ -4,6 +4,8 @@ namespace console\controllers;
 
 use common\components\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
 use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\components\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
+use common\components\Clinical\Prescription\Support\PrescriptionDocumentSupport;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\db\Query;
@@ -24,7 +26,15 @@ class ClinicalSeedController extends Controller
     public function options($actionID): array
     {
         $opts = parent::options($actionID);
-        if (in_array($actionID, ['care-plan-demo-assign', 'laboratory-demo', 'laboratory-demo-remove', 'laboratory-demo-info'], true)) {
+        if (in_array($actionID, [
+            'care-plan-demo-assign',
+            'laboratory-demo',
+            'laboratory-demo-remove',
+            'laboratory-demo-info',
+            'prescription-demo',
+            'prescription-demo-remove',
+            'prescription-demo-info',
+        ], true)) {
             $opts[] = 'persona';
         }
 
@@ -236,6 +246,113 @@ class ClinicalSeedController extends Controller
         }
 
         $this->stdout("OK: informe demo eliminado para id_persona={$persona}.\n", Console::FG_GREEN);
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Crea o actualiza una receta electrónica emitida demo (lista, detalle, PDF, QR).
+     *
+     * Uso: php yii clinical-seed/prescription-demo 920779
+     */
+    public function actionPrescriptionDemo(int $personaId = 0): int
+    {
+        $persona = $personaId > 0 ? $personaId : (int) $this->persona;
+        if ($persona <= 0) {
+            $this->stderr("Indicá id_persona: php yii clinical-seed/prescription-demo 920779\n", Console::FG_RED);
+
+            return ExitCode::USAGE;
+        }
+
+        try {
+            $result = (new ElectronicPrescriptionDemoSeedService())->upsertForPersona($persona);
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+
+        $verb = $result['created'] ? 'creada' : 'actualizada';
+        $this->stdout(
+            "OK: receta demo {$verb} id={$result['prescription_id']} número={$result['prescription_number']} "
+            . "para id_persona={$persona}.\n",
+            Console::FG_GREEN
+        );
+        $verifyBase = PrescriptionDocumentSupport::resolveVerificationPublicBaseUrl();
+        if ($verifyBase === null) {
+            $this->stdout(
+                "QR en PDF: definí recetaDigitalRepository.verificationPublicBaseUrl en params-local.php "
+                . "(ej. https://tu-host/api/v1).\n",
+                Console::FG_YELLOW
+            );
+        }
+        $this->stdout(
+            "Probá con JWT del paciente (idPersona={$persona}):\n"
+            . "  GET /api/v1/clinical/electronic-prescription/mis-recetas-como-paciente\n"
+            . "  Flow asistente: receta.ver-recetas-como-paciente\n",
+            Console::FG_YELLOW
+        );
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Lista recetas emitidas de una persona.
+     */
+    public function actionPrescriptionDemoInfo(int $personaId = 0): int
+    {
+        $persona = $personaId > 0 ? $personaId : (int) $this->persona;
+        if ($persona <= 0) {
+            $this->stderr("Indicá id_persona: php yii clinical-seed/prescription-demo-info 920779\n", Console::FG_RED);
+
+            return ExitCode::USAGE;
+        }
+
+        $rows = (new ElectronicPrescriptionDemoSeedService())->listIssuedForPersona($persona);
+        if ($rows === []) {
+            $this->stdout("Sin recetas emitidas para id_persona={$persona}. Ejecutá: php yii clinical-seed/prescription-demo {$persona}\n");
+
+            return ExitCode::OK;
+        }
+
+        foreach ($rows as $r) {
+            $demo = !empty($r['is_demo']) ? ' [demo]' : '';
+            $this->stdout(
+                sprintf(
+                    "- id=%d | %s | issued=%s | %s%s\n",
+                    (int) $r['id'],
+                    (string) ($r['prescription_number'] ?? ''),
+                    (string) ($r['issued_at'] ?? ''),
+                    (string) ($r['diagnosis_display'] ?? ''),
+                    $demo
+                ),
+                Console::FG_CYAN
+            );
+        }
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Elimina la receta demo (número DEV-RX-{persona}).
+     */
+    public function actionPrescriptionDemoRemove(int $personaId = 0): int
+    {
+        $persona = $personaId > 0 ? $personaId : (int) $this->persona;
+        if ($persona <= 0) {
+            $this->stderr("Indicá id_persona: php yii clinical-seed/prescription-demo-remove 920779\n", Console::FG_RED);
+
+            return ExitCode::USAGE;
+        }
+
+        $removed = (new ElectronicPrescriptionDemoSeedService())->removeForPersona($persona);
+        if (!$removed) {
+            $this->stdout("No había receta demo para id_persona={$persona}.\n", Console::FG_YELLOW);
+
+            return ExitCode::OK;
+        }
+
+        $this->stdout("OK: receta demo eliminada para id_persona={$persona}.\n", Console::FG_GREEN);
 
         return ExitCode::OK;
     }

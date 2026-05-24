@@ -3,6 +3,7 @@
 namespace common\components\Clinical\Prescription\Support;
 
 use common\models\Clinical\ElectronicPrescription;
+use Yii;
 
 final class PrescriptionDocumentSupport
 {
@@ -35,5 +36,42 @@ final class PrescriptionDocumentSupport
         ]);
 
         return implode('|', $parts);
+    }
+
+    /**
+     * URL pública para verificación (QR / farmacia). Requiere params[recetaDigitalRepository][verificationPublicBaseUrl].
+     */
+    public static function buildVerificationUrl(ElectronicPrescription $rx): ?string
+    {
+        $token = trim((string) ($rx->verification_token ?? ''));
+        if ($token === '') {
+            return null;
+        }
+
+        $base = self::resolveVerificationPublicBaseUrl();
+        if ($base === null) {
+            return null;
+        }
+
+        return $base . '/clinical/electronic-prescription/verificar-receta?token=' . rawurlencode($token);
+    }
+
+    public static function resolveVerificationPublicBaseUrl(): ?string
+    {
+        $config = Yii::$app->params['recetaDigitalRepository'] ?? [];
+        $base = isset($config['verificationPublicBaseUrl']) ? trim((string) $config['verificationPublicBaseUrl']) : '';
+        if ($base === '') {
+            return null;
+        }
+        $base = rtrim($base, '/');
+        if (!str_ends_with($base, '/api/v1')) {
+            if (str_ends_with($base, '/api')) {
+                $base .= '/v1';
+            } elseif (!str_contains($base, '/api/v1')) {
+                $base .= '/api/v1';
+            }
+        }
+
+        return $base;
     }
 }

@@ -21,13 +21,16 @@ final class ElectronicPrescriptionService
 {
     private MedicationRequestService $medicationRequests;
     private FhirRecetaDigitalBundleMapper $bundleMapper;
+    private ElectronicPrescriptionRepositoryService $repository;
 
     public function __construct(
         ?MedicationRequestService $medicationRequests = null,
-        ?FhirRecetaDigitalBundleMapper $bundleMapper = null
+        ?FhirRecetaDigitalBundleMapper $bundleMapper = null,
+        ?ElectronicPrescriptionRepositoryService $repository = null
     ) {
         $this->medicationRequests = $medicationRequests ?? new MedicationRequestService();
         $this->bundleMapper = $bundleMapper ?? new FhirRecetaDigitalBundleMapper();
+        $this->repository = $repository ?? new ElectronicPrescriptionRepositoryService();
     }
 
     /**
@@ -109,6 +112,10 @@ final class ElectronicPrescriptionService
             }
 
             $this->recordEvent($rx, PrescriptionEventType::ISSUED, ['prescription_number' => $rx->prescription_number]);
+
+            $repoResult = $this->repository->syncAfterIssue($rx, $bundleJson);
+            $this->recordEvent($rx, PrescriptionEventType::REPOSITORY_SYNC, $repoResult->toArray());
+
             $tx->commit();
         } catch (\Throwable $e) {
             $tx->rollBack();

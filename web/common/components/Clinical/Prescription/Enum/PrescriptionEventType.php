@@ -1,0 +1,11 @@
+<?php
+
+namespace common\components\Clinical\Prescription\Enum;
+
+final class PrescriptionEventType
+{
+    public const DRAFT_CREATED = 'draft_created';
+    public const ISSUED = 'issued';
+    public const CANCELLED = 'cancelled';
+    public const VIEWED = 'viewed';
+}

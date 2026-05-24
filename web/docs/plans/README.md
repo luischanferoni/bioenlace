@@ -6,7 +6,7 @@ Solo **planes largos activos** (multi-fase, varios PR). Cuando un plan termina, 
 
 | Plan | Carpeta | Estado |
 |------|---------|--------|
-| *(ninguno)* | — | — |
+| Receta electrónica (AR) | [receta-electronica/](./receta-electronica/) | Fase 1 en curso |
 
 Plan laboratorio FHIR **cerrado** — documentación en [laboratorio/](../laboratorio/README.md).
 

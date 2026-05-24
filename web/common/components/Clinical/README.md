@@ -12,6 +12,7 @@ Dominio FHIR clínico (Encounter, CarePlan, órdenes).
 | `Workflow/` | Flujos compuestos (`EncounterDocumentationService`) |
 | `Specialty/` | Odontología, oftalmología (Fase 7); ver [Specialty/README.md](Specialty/README.md) |
 | `Laboratory/` | Ingesta pull LIS FHIR → `diagnostic_report` / `observation` |
+| `Prescription/` | Receta electrónica emitida (`electronic_prescription`) — ver `web/docs/receta-electronica/` |
 
 Modelos AR: `common/models/Clinical/` (`Procedure`, `Observation`, `DiagnosticReport`, …).
 

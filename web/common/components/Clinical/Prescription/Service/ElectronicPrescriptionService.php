@@ -6,6 +6,7 @@ use common\components\Clinical\Enum\RequestStatus;
 use common\components\Clinical\Prescription\Enum\PrescriptionEventType;
 use common\components\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use common\components\Clinical\Prescription\Mapper\FhirRecetaDigitalBundleMapper;
+use common\components\Clinical\Prescription\Support\PrescriptionDocumentSupport;
 use common\components\Clinical\Service\MedicationRequestService;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionEvent;
@@ -99,7 +100,9 @@ final class ElectronicPrescriptionService
 
             $patient = Persona::findOne((int) $rx->subject_persona_id);
             $bundle = $this->bundleMapper->toBundleArray($rx, $patient);
-            $rx->fhir_bundle_json = json_encode($bundle, JSON_UNESCAPED_UNICODE);
+            $bundleJson = json_encode($bundle, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $rx->fhir_bundle_json = $bundleJson;
+            PrescriptionDocumentSupport::applyIssuanceSecurityFields($rx, $bundleJson);
 
             if (!$rx->save()) {
                 throw new \RuntimeException('ElectronicPrescription: ' . json_encode($rx->getErrors()));
@@ -137,6 +140,34 @@ final class ElectronicPrescriptionService
     public function getById(int $id): ?ElectronicPrescription
     {
         return ElectronicPrescription::findOne(['id' => $id, 'deleted_at' => null]);
+    }
+
+    public function findIssuedByVerificationToken(string $token): ?ElectronicPrescription
+    {
+        $token = trim($token);
+        if ($token === '') {
+            return null;
+        }
+
+        return ElectronicPrescription::findOne([
+            'verification_token' => $token,
+            'status' => PrescriptionLegalStatus::ISSUED,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function getIssuedForPersona(int $idPersona, int $prescriptionId): ?ElectronicPrescription
+    {
+        if ($idPersona <= 0 || $prescriptionId <= 0) {
+            return null;
+        }
+
+        return ElectronicPrescription::findOne([
+            'id' => $prescriptionId,
+            'subject_persona_id' => $idPersona,
+            'status' => PrescriptionLegalStatus::ISSUED,
+            'deleted_at' => null,
+        ]);
     }
 
     /**

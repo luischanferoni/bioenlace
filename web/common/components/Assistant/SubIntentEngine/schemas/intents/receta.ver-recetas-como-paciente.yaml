@@ -1,0 +1,40 @@
+intent_id: receta.ver-recetas-como-paciente
+version: 1
+
+action_name: "Ver mis recetas electrónicas"
+description: "Listado y detalle de recetas electrónicas emitidas en Bioenlace."
+rbac_route: "/api/clinical/electronic-prescription/mis-recetas-como-paciente"
+keywords:
+  - mis recetas
+  - receta electrónica
+  - receta digital
+  - medicación prescrita
+  - ver recetas
+
+intent_semantics:
+  goal: >-
+    Mostrar las recetas electrónicas ya emitidas en Bioenlace, con detalle y PDF.
+  how: >-
+    Lista de recetas → detalle con medicación → descarga PDF generada en servidor.
+  outcome:
+    - El paciente consulta y puede descargar sus recetas.
+
+subintents:
+  - id: ver_listado
+    assistant_text: "Elegí una receta electrónica"
+    provides:
+      - draft.prescription_id
+    next: ver_detalle
+    open_ui:
+      action_id: clinical.electronic-prescription.mis-recetas-como-paciente
+
+  - id: ver_detalle
+    assistant_text: "Detalle de la receta"
+    requires:
+      - draft.prescription_id
+    provides: []
+    next: ""
+    open_ui:
+      action_id: clinical.electronic-prescription.ver-receta-como-paciente
+      params:
+        prescription_id: "draft.prescription_id"

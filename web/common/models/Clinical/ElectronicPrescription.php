@@ -27,6 +27,10 @@ class ElectronicPrescription extends ActiveRecord
             [['diagnosis_display'], 'string', 'max' => 512],
             [['valid_from', 'valid_until', 'issued_at', 'cancelled_at'], 'safe'],
             [['cancellation_reason', 'fhir_bundle_json', 'notes'], 'string'],
+            [['verification_token'], 'string', 'max' => 64],
+            [['document_hash'], 'string', 'max' => 64],
+            [['signature_provider'], 'string', 'max' => 64],
+            [['signed_at'], 'safe'],
         ];
     }
 

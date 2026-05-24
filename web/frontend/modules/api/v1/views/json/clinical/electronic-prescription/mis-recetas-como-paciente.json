@@ -1,0 +1,24 @@
+{
+  "ui_type": "ui_json",
+  "title": "Mis recetas electrónicas",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "recetas",
+      "title": "",
+      "draft_field": "prescription_id",
+      "empty_message": "No tenés recetas electrónicas emitidas.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    }
+  ]
+}

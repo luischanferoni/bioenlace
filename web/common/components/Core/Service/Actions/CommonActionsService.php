@@ -112,6 +112,13 @@ final class CommonActionsService
                     'laboratorio.ver-resultados-como-paciente',
                 ],
             ],
+            [
+                'id' => 'recetas',
+                'titulo' => 'Recetas',
+                'models' => [
+                    'receta.ver-recetas-como-paciente',
+                ],
+            ],
         ];
     }
 

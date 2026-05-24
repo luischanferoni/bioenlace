@@ -1,0 +1,38 @@
+{
+  "ui_type": "ui_json",
+  "title": "Detalle de la receta",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "detalle",
+      "title": "Receta",
+      "text_field": "detalle_mensaje",
+      "text": ""
+    },
+    {
+      "kind": "fields",
+      "id": "acciones",
+      "hide_submit": true,
+      "fields": [
+        {
+          "name": "descargar_pdf",
+          "label": "Descargar",
+          "type": "custom_widget",
+          "widget_id": "prescription_pdf_download",
+          "value_fields": ["pdf_url", "filename"],
+          "assets": {
+            "js": ["/js/widgets/ui-widget-prescription-pdf-download.js"]
+          },
+          "initial_values": {}
+        }
+      ]
+    }
+  ]
+}

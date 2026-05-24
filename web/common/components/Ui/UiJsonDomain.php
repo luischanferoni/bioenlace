@@ -20,6 +20,7 @@ final class UiJsonDomain
         'servicios' => self::SCHEDULING,
         'care-plan' => self::CLINICAL,
         'laboratory-result' => self::CLINICAL,
+        'electronic-prescription' => self::CLINICAL,
         'encounter' => self::CLINICAL,
         'medication-request' => self::CLINICAL,
         'service-request' => self::CLINICAL,

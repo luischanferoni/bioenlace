@@ -23,6 +23,10 @@ final class ElectronicPrescriptionDto
     public ?string $cancelledAt;
     public ?string $cancellationReason;
     public ?string $notes;
+    public ?string $verificationToken;
+    public ?string $documentHash;
+    public ?string $signatureProvider;
+    public ?string $signedAt;
 
     /** @var list<ElectronicPrescriptionItemDto> */
     public array $items = [];
@@ -47,6 +51,10 @@ final class ElectronicPrescriptionDto
         $dto->cancelledAt = $rx->cancelled_at !== null ? (string) $rx->cancelled_at : null;
         $dto->cancellationReason = $rx->cancellation_reason !== null ? (string) $rx->cancellation_reason : null;
         $dto->notes = $rx->notes !== null ? (string) $rx->notes : null;
+        $dto->verificationToken = $rx->verification_token !== null ? (string) $rx->verification_token : null;
+        $dto->documentHash = $rx->document_hash !== null ? (string) $rx->document_hash : null;
+        $dto->signatureProvider = $rx->signature_provider !== null ? (string) $rx->signature_provider : null;
+        $dto->signedAt = $rx->signed_at !== null ? (string) $rx->signed_at : null;
 
         if ($withItems) {
             foreach ($rx->items as $item) {
@@ -77,6 +85,10 @@ final class ElectronicPrescriptionDto
             'cancelledAt' => $this->cancelledAt,
             'cancellationReason' => $this->cancellationReason,
             'notes' => $this->notes,
+            'verificationToken' => $this->verificationToken,
+            'documentHash' => $this->documentHash,
+            'signatureProvider' => $this->signatureProvider,
+            'signedAt' => $this->signedAt,
             'items' => array_map(static fn (ElectronicPrescriptionItemDto $i) => $i->toArray(), $this->items),
         ];
     }

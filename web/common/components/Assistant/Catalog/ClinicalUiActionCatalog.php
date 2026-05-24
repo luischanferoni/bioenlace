@@ -103,6 +103,36 @@ final class ClinicalUiActionCatalog
                 '/api/clinical/laboratory-result/descargar-pdf-como-paciente',
                 ['pdf laboratorio', 'descargar informe']
             ),
+            self::def(
+                'clinical.electronic-prescription.mis-recetas-como-paciente',
+                'Ver recetas electrónicas (UI)',
+                'Listado UI JSON de recetas emitidas del paciente autenticado.',
+                '/api/clinical/electronic-prescription/mis-recetas-como-paciente',
+                ['mis recetas', 'receta electrónica', 'medicación'],
+                true
+            ),
+            self::def(
+                'clinical.electronic-prescription.ver-receta-como-paciente',
+                'Detalle receta electrónica (UI)',
+                'Medicación prescrita y descarga PDF de la receta elegida.',
+                '/api/clinical/electronic-prescription/ver-receta-como-paciente',
+                ['detalle receta', 'ver receta', 'pdf receta'],
+                true
+            ),
+            self::def(
+                'clinical.electronic-prescription.descargar-pdf-como-paciente',
+                'Descargar PDF de receta',
+                'PDF generado en servidor para una receta emitida del paciente.',
+                '/api/clinical/electronic-prescription/descargar-pdf-como-paciente',
+                ['pdf receta', 'descargar receta']
+            ),
+            self::def(
+                'clinical.electronic-prescription.verificar-receta',
+                'Verificar receta por token',
+                'Consulta de vigencia e integridad por código de verificación.',
+                '/api/clinical/electronic-prescription/verificar-receta',
+                ['verificar receta', 'código receta', 'farmacia']
+            ),
         ];
 
         return self::$definitions;

@@ -1,14 +1,21 @@
-# Plantilla de dominio
+# Plantilla — nuevo tema en producto
 
-Copiar esta estructura al crear `web/docs/<dominio>/`:
+Copiar a `web/docs/producto/<tema>.md`:
 
-```text
-<dominio>/
-  README.md       ← índice (tabla overview, design, flows)
-  overview.md     ← qué es, objetivo, actores, alcance
-  design.md       ← por qué así + alternativas descartadas + diagrama opcional
-  flows/
-    <flujo>.md    ← cómo: pasos, mermaid, tabla anclas (métodos/rutas)
+```markdown
+# Título
+
+## De qué se trata
+(1–2 párrafos)
+
+## Actores
+- ...
+
+## Cómo funciona
+(diagrama mermaid + pasos numerados en lenguaje natural)
+
+## Relación con el resto
+(enlaces a otros .md en producto/ o his-completo/)
 ```
 
-Sin bloques de código fuente; solo nombres como anclas.
+Añadir fila en `producto/README.md`.

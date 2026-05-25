@@ -15,4 +15,4 @@ Comparar escenarios **GPU propia** vs **API managed** y registrar estrategias pa
 | Infra | ¿Cuánto cuesta correr modelos en nuestra GPU? |
 | API | ¿Cuánto cuesta Vertex/STT/Vision por consulta o por médico/mes? |
 
-Detalle en [flows/](./flows/).
+Detalle en los archivos listados en [README.md](./README.md).

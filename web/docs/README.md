@@ -1,38 +1,25 @@
-# Documentación Bioenlace (web)
+# Documentación Bioenlace
 
-Mapa de documentación por **dominio de negocio**. Cada dominio sigue la misma forma:
+Documentación en **lenguaje natural**: cómo funciona cada área del producto de punta a punta, no el detalle de un endpoint o un archivo suelto.
 
-| Archivo / carpeta | Contenido |
-|-------------------|-----------|
-| `README.md` | Índice del dominio |
-| `overview.md` | Qué es, objetivo, actores, alcance |
-| `design.md` | Por qué está armado así; alternativas consideradas |
-| `flows/` | Cómo funciona (diagramas, pasos, anclas con nombres de métodos/rutas) |
-| `decisions/` (global) | Decisiones cerradas con impacto en varios dominios |
+## Dónde está cada cosa
 
-Sin fragmentos de código en los cuerpos: solo nombres de métodos, rutas y servicios como anclas al repositorio.
+| Carpeta | Para qué sirve |
+|---------|----------------|
+| [producto/](./producto/README.md) | Historias por área (turnos, laboratorio, apps, clínica…) — cómo se conectan cron, API, IA y base de datos |
+| [arquitectura/](./arquitectura/README.md) | Cómo está armado el asistente (IntentEngine, SubIntentEngine) — con diagramas, sin código |
+| [his-completo/](./his-completo/README.md) | Mapa de madurez hacia un HIS hospitalario completo (qué hay / qué falta) |
+| [costos/](./costos/README.md) | Estimación de costos de IA e infraestructura |
+| [decisions/](./decisions/README.md) | Decisiones técnicas transversales cerradas |
 
-## Dominios
+`plans/` es carpeta **temporal de trabajo** (programas grandes en construcción). No se enlaza desde el resto de esta documentación; al terminar un programa se borra su carpeta y lo estable queda en `producto/` o `decisions/`. Ver [plans/README.md](./plans/README.md) solo si estás ejecutando un plan activo.
 
-| Dominio | Descripción |
-|---------|-------------|
-| [turnos](./Turnos/README.md) | Agenda, reserva, cancelación, autogestión paciente |
-| [asistente](./asistente/README.md) | Chat, intents YAML, UI JSON embebible |
-| [plans](./plans/README.md) | Planes largos en ejecución |
-| [dominio](./dominio/README.md) | Conceptos transversales (PES, relaciones AR) |
-| [costos](./costos/README.md) | Costos IA e infraestructura estimada |
-| [producto](./producto/README.md) | Apps paciente/médico, registro, capacidades |
-| [captura-clinica](./captura-clinica/README.md) | Audio/texto, niveles de carga, corrección, resumen IA |
-| [plataforma](./plataforma/README.md) | GCP, anotaciones API, plan interno |
-| [legacy](./legacy/README.md) | Análisis HIS histórico (archive) |
-| [laboratorio](./laboratorio/README.md) | Resultados LIS externos (FHIR pull) |
+## Convención de nombres
 
-## Convenciones (Cursor rules)
+- Archivos en **minúsculas** y **kebab-case** (`turnos.md`, `asistente-motores.md`).
+- Sin carpeta `flows/` por dominio: los flujos end-to-end viven en `producto/`.
+- Sin fragmentos de código en la documentación de producto y arquitectura.
 
-Al editar documentación, aplicar las rules `.cursor/rules/documentacion-*.mdc` (estructura, `flows/`, estilo).
+## Código como referencia
 
-Migración histórica: [restructure-phases/](./restructure-phases/README.md) (fases 01–10 completadas).
-
-## Decisiones globales
-
-Ver [decisions/README.md](./decisions/README.md).
+La implementación vive en el repositorio (`web/common/components/…`, API v1, clientes de Bioenlace). Esta documentación no sustituye leer el código cuando hace falta un detalle exacto.

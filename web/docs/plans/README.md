@@ -1,28 +1,28 @@
-# Planes en ejecución
+# Planes en ejecución (uso interno)
 
-Solo **planes largos activos** (multi-fase, varios PR). Cuando un plan termina, se elimina su carpeta aquí; lo operativo queda en dominios (`Turnos/`, `asistente/`, `dominio/`, `decisions/`).
+Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR). Solo existe **mientras se construye**.
+
+## Reglas
+
+1. Al **terminar** la construcción: borrar `plans/<slug>/` por completo.
+2. Antes de borrar: dejar lo que siga vigente en `producto/<tema>.md` o `decisions/`.
+3. **Ningún** otro archivo en `web/docs/` debe enlazar a rutas bajo `plans/` (ni `README` global, ni `producto/`, ni `his-completo/`). Los planes son para quien ejecuta el programa, no para lectores de documentación estable.
 
 ## Planes activos
 
-| Plan | Carpeta | Estado |
+| Plan | Carpeta | Notas |
 |------|---------|--------|
-| Receta electrónica (AR) | [receta-electronica/](./receta-electronica/) | Fases 1–2 hechas; Fase 3 repositorio nacional pendiente |
-| Resumen de atención (paciente) | [resumen-atencion-paciente/](./resumen-atencion-paciente/) | Fase 1 API + push (UI Fase 3 pendiente) |
-| Recordatorios care plan | — | **Cerrado** — ver [care-plan-recordatorios-paciente.md](../dominio/flows/care-plan-recordatorios-paciente.md) |
+| Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 
-Plan laboratorio FHIR **cerrado** — documentación en [laboratorio/](../laboratorio/README.md).
-
-Para abrir un plan: crear `plans/<slug>/` según [design.md](./design.md) y registrar la fila anterior.
-
-## Convenciones
+## Convenciones (solo dentro de `plans/`)
 
 - [overview.md](./overview.md)
 - [design.md](./design.md)
 
-## Fuera de `plans/`
+## Dónde documentar lo ya construido
 
 | Necesidad | Dónde |
 |-----------|--------|
+| Narrativa de producto | [producto/](../producto/README.md) |
 | Decisiones cerradas | [decisions/](../decisions/README.md) |
-| Flujos y contratos vigentes | [dominios en `web/docs/`](../README.md) |
-| Código clínico | `common/components/Clinical/README.md` |
+| Madurez HIS | [his-completo/](../his-completo/README.md) |

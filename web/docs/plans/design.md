@@ -2,26 +2,32 @@
 
 ## Regla principal
 
-**Solo planes en ejecución.** Al cerrar el plan, eliminar `plans/<slug>/` por completo. Decisiones que sigan vigentes → `web/docs/decisions/`. Comportamiento operativo → dominio correspondiente (`dominio/flows/`, `Turnos/`, etc.).
+**Solo planes en ejecución.** Al cerrar la construcción, eliminar `plans/<slug>/` por completo.
+
+## Sin enlaces desde fuera
+
+`producto/`, `arquitectura/`, `his-completo/`, `costos/`, `decisions/` y el [README global](../README.md) **no** referencian rutas bajo `plans/`. Si hace falta contar el recorrido del feature de punta a punta, eso va en `producto/<tema>.md` en lenguaje natural.
+
+Los comentarios en código tampoco deberían apuntar a `web/docs/plans/…` como documentación duradera; como mucho, nota breve en el PR o en el plan mientras exista.
 
 ## Estructura mientras el plan está abierto
 
 ```text
 plans/<slug>/
-  README.md       ← índice, dueño, estado
-  overview.md     ← alcance del programa
-  design.md       ← decisiones propias del plan (si aún no están cerradas)
-  phases/         ← una fase por archivo, checklist
+  README.md
+  overview.md
+  design.md
+  phases/
 ```
 
-Opcional durante la ejecución: `MIGRATION_STATUS.md` o tablero equivalente **solo** mientras el plan sigue abierto.
+Opcional durante la ejecución: estado de migraciones **solo** mientras el plan sigue abierto.
 
-## Abrir un plan
+## Cierre
 
-1. Crear `plans/<slug>/` (`kebab-case`, ej. `laboratorio-external-fhir`).
-2. Añadir fila en [README.md](./README.md).
-3. Al cerrar: mover decisiones finales a `decisions/` si aplica, luego **borrar** `plans/<slug>/`.
+1. Narrativa y comportamiento → `web/docs/producto/<tema>.md`.
+2. Decisiones transversales cerradas → `web/docs/decisions/`.
+3. Borrar `plans/<slug>/` y quitar la fila de [README.md](./README.md).
 
 ## Alternativa descartada
 
-Mantener `plans/completed/` o programas archivados — añade ruido; el repo y los dominios ya documentan lo construido.
+`plans/completed/` o planes archivados: duplica lo que ya está en producto y enlaces rotos cuando se borra el plan.

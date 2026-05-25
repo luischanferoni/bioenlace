@@ -20,7 +20,7 @@ Todo lo relativo al asistente vive en:
 - `Assistant/FlowManifest/`: construcción de `flow_manifest` en runtime desde YAML (sin `ui_type=flow` en `views/json`).
 - `Assistant/UiActions/`: discovery + RBAC + enrichers (`client_open`, allowed routes, etc.).
 
-Documentación específica: [web/docs/asistente/](../docs/asistente/README.md), [web/docs/Turnos/](../docs/Turnos/README.md).
+Documentación: [web/docs/producto/](../docs/producto/README.md), [web/docs/arquitectura/](../docs/arquitectura/README.md).
 
 ## Quirófano
 

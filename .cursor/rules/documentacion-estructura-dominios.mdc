@@ -1,52 +1,32 @@
 ---
-description: Estructura de web/docs por dominio (README, overview, design, flows)
+description: Estructura de web/docs (producto, arquitectura, his-completo)
 globs: web/docs/**/*
 alwaysApply: false
 ---
 
-# Documentación — estructura por dominio
+# Documentación — estructura
 
-Raíz: `web/docs/`. Índice global: `web/docs/README.md`. Plantilla: `web/docs/_template/README.md`.
+Raíz: `web/docs/`. Índice: `web/docs/README.md`.
 
-## Árbol obligatorio por dominio
+## Carpetas principales
 
-Cada dominio de negocio vive en `web/docs/<dominio>/`:
+| Carpeta | Uso |
+|---------|-----|
+| `producto/` | Narrativa end-to-end por área (`turnos.md`, `laboratorio.md`, …). Lenguaje natural, diagramas mermaid. **Sin** código ni listas de clases. No usar «película»; no contrastar app / web / asistente (hablar de Bioenlace). |
+| `arquitectura/` | Piezas transversales (p. ej. IntentEngine / SubIntentEngine). Puede nombrar archivos del repo, **sin** bloques de código. |
+| `his-completo/` | Madurez HIS: qué hay / qué falta por módulo. Sin rutas API ni paths de código. |
+| `costos/` | Estimación IA e infra. |
+| `plans/<slug>/` | Planes largos **solo mientras se construye**; al cerrar, volcar a `producto/` o `decisions/` y **borrar** la carpeta. **Prohibido** enlazar a `plans/` desde `producto/`, `README` global, `his-completo/`, etc. |
+| `decisions/` | ADR transversales. |
 
-| Pieza | Archivo | Contenido |
-|-------|---------|-----------|
-| Índice | `README.md` | Tabla con enlaces a overview, design y cada flow |
-| Qué / para quién | `overview.md` | Qué es, objetivo, actores, alcance (in/out) |
-| Por qué | `design.md` | Decisiones de diseño, alternativas descartadas, diagrama opcional |
-| Cómo | `flows/<nombre>.md` | Pasos, mermaid/tablas, **anclas** (rutas API, métodos, servicios) |
+## No usar
 
-## Dónde va cada tema (dominios actuales)
+- Carpetas por “dominio” sueltos (`Turnos/`, `laboratorio/`, `dominio/`, `plataforma/`, `legacy/`) — sustituidos por `producto/` + `his-completo/`.
+- Subcarpeta `flows/` bajo cada tema — el flujo completo va en un `.md` en `producto/`.
+- Nombres `MAYUSCULAS.md` o mezcla arbitraria — usar **kebab-case** en minúsculas (`asistente-motores.md`).
 
-| Tema | Carpeta |
-|------|---------|
-| Turnos, agenda, RBAC turnos | `Turnos/` |
-| Chat, YAML intents, UI JSON, envelope | `asistente/` |
-| Planes largos en ejecución | `plans/<slug>/` (solo mientras el plan está abierto; al cerrar, borrar carpeta) |
-| PES, relaciones AR | `dominio/` |
-| Costos IA/infra | `costos/` |
-| Apps paciente/médico, registro | `producto/` |
-| Audio/texto, consulta, corrección, resumen IA | `captura-clinica/` |
-| GCP, anotaciones API, planes internos | `plataforma/` |
-| HIS brechas, quirófano legacy | `legacy/` (+ `legacy/his-completo/`) |
-| ADR transversales | `decisions/` (no duplicar en cada `design.md`) |
+## Nuevo tema de producto
 
-## No crear en dominios
-
-- Carpetas sueltas `explanation/`, `use-cases/`, `interfaces.md` en la raíz del dominio.
-- Archivos `.md` sueltos en `web/docs/` (migrar al dominio o a `legacy/`).
-- Duplicar el mismo doc en raíz del dominio **y** en `flows/` (solo `flows/` para el detalle operativo).
-
-## Nuevo dominio
-
-1. Copiar estructura de `_template/`.
-2. Añadir fila en `web/docs/README.md`.
-3. Enlazar desde README de dominios relacionados (máximo 1 salto).
-
-## Meta y archive
-
-- `restructure-phases/`: solo plan/estado de migración de docs, no documentación de producto.
-- `legacy/`: análisis histórico; **no** fuente de verdad operativa (el código y dominios en `web/docs/` mandan).
+1. Un archivo `producto/<tema>.md` con introducción, actores y diagrama de punta a punta.
+2. Enlace desde `producto/README.md`.
+3. Si hay checklist HIS, actualizar `his-completo/` si aplica.

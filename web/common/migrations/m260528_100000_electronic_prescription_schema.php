@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Receta electrónica — documento emitido (modo A, MVP Fase 1).
  *
- * Plan: web/docs/plans/receta-electronica/
+ * Receta electrónica: ver web/docs/producto/receta-electronica.md
  */
 class m260528_100000_electronic_prescription_schema extends Migration
 {

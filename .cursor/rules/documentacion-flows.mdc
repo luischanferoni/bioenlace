@@ -1,46 +1,34 @@
 ---
-description: Plantilla obligatoria para archivos en web/docs/**/flows/
-globs: web/docs/**/flows/**/*.md
+description: Documentación de producto en web/docs/producto/ (sin carpeta flows/)
+globs: web/docs/producto/**/*.md
 alwaysApply: false
 ---
 
-# Documentación — archivos en `flows/`
+# Documentación — narrativa en `producto/`
 
-Cada `flows/<nombre>.md` describe **un flujo o contrato concreto** (reserva paciente, envelope v3, RBAC turnos, etc.).
+Cada archivo describe **una historia de punta a punta** (no un solo endpoint ni contrato YAML).
 
-## Cabecera obligatoria (orden)
+## Estructura recomendada
 
 ```markdown
-# Título del flujo
+# Título
 
-## Objetivo
-Una o dos frases.
-
+## De qué se trata
 ## Actores
-- Rol o sistema (bullet cortos).
-
-## Anclas
-| Paso / área | Método, ruta o componente |
-|-------------|---------------------------|
-| ... | TurnosController::actionX, POST /api/v1/... |
-
----
-(cuerpo del documento)
+## Cómo funciona
+(mermaid + pasos en lenguaje natural)
+## Relación con el resto
 ```
 
-Opcional según complejidad: `## Secuencia` (pasos numerados) antes del cuerpo detallado.
+## Estilo de producto
 
-## Cuerpo
+- No usar la palabra «película».
+- No contrastar app vs web vs asistente: hablar de **Bioenlace** o **el usuario**.
 
-- Diagramas **mermaid** o tablas para pasos largos.
-- Enlazar otros flows con rutas relativas (`./cancelacion-paciente.md`, `../../asistente/flows/...`).
-- Contratos (YAML, UI JSON): el cuerpo puede ser extenso; la cabecera sigue siendo obligatoria.
+## Estilo
 
-## Nombres de archivo
+- Sin bloques de código del repositorio.
+- Diagramas mermaid cuando ayuden a ver cron → API → BD → usuario.
+- Nombres de archivo en **kebab-case** minúsculas.
 
-- kebab-case en español o inglés técnico: `cancelacion-paciente.md`, `intents-turnos.md`.
-- Un flujo por archivo; no mezclar dos casos de uso no relacionados.
-
-## Al cambiar código
-
-Si cambia ruta API, `intent_id` o servicio principal, actualizar **Anclas** y cualquier tabla del cuerpo en el mismo PR.
+Contratos técnicos del asistente: `web/docs/arquitectura/asistente-motores.md` (lenguaje accesible, sin código).

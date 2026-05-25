@@ -1,22 +1,22 @@
-# Producto (apps y registro)
+# Producto
 
-Experiencia de **paciente y médico** en apps móvil, SPA y alta de identidad.
+Cada archivo cuenta **una historia de punta a punta**: qué problema resuelve, qué actores intervienen y cómo se enlazan procesos que viven en sitios distintos del sistema (cron, servicio externo, base de datos, API, IA, interfaz de Bioenlace).
 
-| Documento | Contenido |
-|-----------|-----------|
-| [overview.md](./overview.md) | Qué cubre este dominio |
-| [design.md](./design.md) | Por qué API de registro vs alta manual web |
+No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 
-## Flujos
+| Documento | Tema |
+|-----------|------|
+| [apps-paciente-medico.md](./apps-paciente-medico.md) | Experiencia paciente y médico, registro, medios |
+| [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |
+| [asistente-y-chat.md](./asistente-y-chat.md) | Conversación y acciones en lenguaje natural |
+| [captura-clinica.md](./captura-clinica.md) | Audio/texto, corrección, resumen con IA |
+| [laboratorio.md](./laboratorio.md) | Resultados externos, ingestas, consulta paciente |
+| [resumen-atencion-paciente.md](./resumen-atencion-paciente.md) | Resumen post-consulta y expediente staff |
+| [planes-de-tratamiento.md](./planes-de-tratamiento.md) | Care plans y recordatorios |
+| [receta-electronica.md](./receta-electronica.md) | Receta emitida, PDF, paciente |
 
-| Flujo | Archivo |
-|-------|---------|
-| Capacidades transversales (chat, IA, medios, video) | [flows/capacidades-paciente-medico.md](./flows/capacidades-paciente-medico.md) |
-| Registro paciente/médico (Verifik, MPI, REFEPS) | [flows/registro-paciente.md](./flows/registro-paciente.md) |
+## Otros mapas
 
-## Relacionado
-
-- [Turnos](../Turnos/README.md) — reserva y autogestión
-- [asistente](../asistente/README.md) — intents y chat
-- [costos](../costos/README.md) — estimación IA/medios
-- Care plans en app paciente: API `GET /api/v1/clinical/care-plans/active` (ver [decisions/fhir-clinical.md](../decisions/fhir-clinical.md))
+- [Arquitectura del asistente](../arquitectura/asistente-motores.md)
+- [Madurez HIS](../his-completo/README.md)
+- [Costos IA/infra](../costos/README.md)

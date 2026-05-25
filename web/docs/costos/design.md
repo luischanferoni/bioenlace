@@ -8,8 +8,8 @@ Permite decidir **dónde corre el compute** sin mezclar precios de RunPod/GPU co
 
 ## Comunicación pre-turno
 
-Se modela aparte porque es conversación **antes** de confirmar turno y puede no terminar en reserva. Impacta ambos ejes; ver secciones en [flows/infra_costos.md](./flows/infra_costos.md) y [flows/costos.md](./flows/costos.md).
+Se modela aparte porque es conversación **antes** de confirmar turno y puede no terminar en reserva. Impacta ambos ejes; ver [infra-costos.md](./infra-costos.md) y [costos-api.md](./costos-api.md).
 
 ## Pruebas
 
-[flows/pruebas_costos_ia.md](./flows/pruebas_costos_ia.md) define conversaciones JSON y CLI para simular costo sin llamar a proveedores reales en cada corrida.
+[pruebas-costos-ia.md](./pruebas-costos-ia.md) define conversaciones JSON y CLI para simular costo sin llamar a proveedores reales en cada corrida.

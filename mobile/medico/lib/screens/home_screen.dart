@@ -9,6 +9,7 @@ import '../models/cirugia_agenda_item.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/pacientes_service.dart';
+import 'emergency/emergency_guardia_actions.dart';
 import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
 
@@ -670,9 +671,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          Icon(
-            g.needsTriage ? Icons.assignment_outlined : Icons.chevron_right,
-            color: context.bio.textMuted,
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!g.needsTriage &&
+                  !EmergencyGuardiaActions.episodioCerrado(g))
+                IconButton(
+                  icon: const Icon(Icons.more_vert),
+                  tooltip: 'Más acciones',
+                  onPressed: () {
+                    EmergencyGuardiaActions.showActionSheet(
+                      context: context,
+                      item: g,
+                      api: _emergencyApi,
+                      onChanged: () => _cargarListadoPacientes(silent: true),
+                    );
+                  },
+                ),
+              Icon(
+                g.needsTriage
+                    ? Icons.assignment_outlined
+                    : Icons.chevron_right,
+                color: context.bio.textMuted,
+              ),
+            ],
           ),
         ],
       ),

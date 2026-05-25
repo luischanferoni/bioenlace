@@ -9,11 +9,11 @@ Cerrar el circuito clínico-administrativo: vincular consulta EMER al episodio, 
 - [x] `POST iniciar-atencion`: circuito `en_atencion`, evento, `captura_url` (consulta al abrir historia)
 - [x] Sincronizar `guardia.estado` → `atendida` al iniciar atención
 - [x] `POST asignar` + `POST derivar` + `POST finalizar` (`GuardiaOperacionService`)
-- [ ] Push (opcional): `EMERGENCY_*`
-- [ ] UI JSON / intents asistente (opcional)
-- [x] Web: Atender → `iniciar-atencion`; Triage → modal + `registrar-triage`
-- [x] Móvil: Atender → `iniciar-atencion` + timeline
-- [ ] Deprecar `Guardia::footerTimeline` (legacy web)
+- [x] Push servidor: `EMERGENCY_ASSIGNED_TO_YOU`, `EMERGENCY_PATIENT_CRITICAL` (`GuardiaPushNotifier`)
+- [x] Intents asistente `urgencias.ver-tablero-guardia`, `urgencias.triage-paciente-guardia`
+- [x] Web: Atender, Triage, re-triage, Tomar caso, Derivar, Egreso (modales + API)
+- [x] Móvil: Atender, Triage, menú acciones (derivar, egreso, tomar caso, re-triage)
+- [x] Deprecar `Guardia::footerTimeline` hacia inicio EMER
 
 ## Derivación a internación
 

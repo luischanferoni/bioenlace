@@ -108,9 +108,13 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
                 </div>
             </div>
         </div>
-        <div class="d-flex flex-column gap-1 ms-2">
+        <div class="d-flex flex-column gap-1 ms-2 align-items-stretch" style="min-width: 7.5rem;">
             <a class="btn btn-dark btn-sm" href="#" data-role="cta-atender" data-spa-nav="1">Atender</a>
             <button type="button" class="btn btn-outline-primary btn-sm d-none" data-role="cta-triage">Triage</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-role="cta-retriage">Actualizar triage</button>
+            <button type="button" class="btn btn-outline-success btn-sm d-none" data-role="cta-tomar">Tomar caso</button>
+            <button type="button" class="btn btn-outline-warning btn-sm d-none" data-role="cta-derivar">Derivar</button>
+            <button type="button" class="btn btn-outline-danger btn-sm d-none" data-role="cta-finalizar">Egreso</button>
         </div>
     </div>
 </template>

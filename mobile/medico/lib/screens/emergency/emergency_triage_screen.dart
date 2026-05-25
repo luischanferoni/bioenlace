@@ -10,12 +10,18 @@ class EmergencyTriageScreen extends StatefulWidget {
   final int guardiaId;
   final String pacienteNombre;
   final EmergencyGuardiaApi api;
+  final bool isRetriage;
+  final int? initialLevel;
+  final String? initialReason;
 
   const EmergencyTriageScreen({
     Key? key,
     required this.guardiaId,
     required this.pacienteNombre,
     required this.api,
+    this.isRetriage = false,
+    this.initialLevel,
+    this.initialReason,
   }) : super(key: key);
 
   @override
@@ -23,8 +29,8 @@ class EmergencyTriageScreen extends StatefulWidget {
 }
 
 class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
-  int _level = 3;
-  final _reasonController = TextEditingController();
+  late int _level;
+  late final TextEditingController _reasonController;
   final _hrController = TextEditingController();
   final _sysController = TextEditingController();
   final _diaController = TextEditingController();
@@ -37,6 +43,13 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     Color(0xFF27AE60),
     Color(0xFF3498DB),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _level = widget.initialLevel ?? 3;
+    _reasonController = TextEditingController(text: widget.initialReason ?? '');
+  }
 
   @override
   void dispose() {
@@ -91,7 +104,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     return Scaffold(
       backgroundColor: tokens.paperBackground,
       appBar: AppBar(
-        title: const Text('Triage'),
+        title: Text(widget.isRetriage ? 'Actualizar triage' : 'Triage'),
         backgroundColor: tokens.paperSurface,
       ),
       body: ListView(
@@ -165,7 +178,9 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
           ),
           BioSpacing.gapH(BioSpacing.xl),
           BioButton(
-            label: _saving ? 'Guardando…' : 'Registrar triage',
+            label: _saving
+                ? 'Guardando…'
+                : (widget.isRetriage ? 'Guardar cambios' : 'Registrar triage'),
             intent: UiIntent.primary,
             onPressed: _saving ? null : _guardar,
           ),

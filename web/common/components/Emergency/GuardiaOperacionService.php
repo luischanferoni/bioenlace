@@ -34,6 +34,8 @@ final class GuardiaOperacionService
         $this->circuito->recordEvent($guardiaId, CircuitoEventType::ASIGNACION, $idPes, [
             'id_profesional_efector_servicio' => $idPes,
         ]);
+        $guardia = Guardia::find()->where(['id' => $guardiaId])->with('paciente')->one() ?? $guardia;
+        (new GuardiaPushNotifier())->notifyAssigned($guardia, $idPes);
 
         return $this->serializeOperacion($guardia);
     }

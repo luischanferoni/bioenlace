@@ -27,7 +27,10 @@ final class GuardiaTriageService
             throw new \InvalidArgumentException('Guardia no encontrada.');
         }
         GuardiaEfectorAccess::assertGuardiaEnEfector($guardia, $idEfector);
-        $this->circuito->assertCanRegisterTriage($guardia);
+        $existing = GuardiaTriage::findOne(['guardia_id' => $guardiaId]);
+        $isUpdate = $existing !== null;
+        $previousLevel = $isUpdate ? (int) $existing->level : null;
+        $this->circuito->assertCanRegisterTriage($guardia, $isUpdate);
 
         $scale = (string) ($body['scale'] ?? TriageScale::MANCHESTER);
         if (!TriageScale::isValid($scale)) {
@@ -54,7 +57,7 @@ final class GuardiaTriageService
         );
 
         $now = date('Y-m-d H:i:s');
-        $row = GuardiaTriage::findOne(['guardia_id' => $guardiaId]);
+        $row = $existing;
         if ($row === null) {
             $row = new GuardiaTriage();
             $row->guardia_id = $guardiaId;
@@ -76,12 +79,22 @@ final class GuardiaTriageService
         }
 
         $this->circuito->afterTriage($guardia, $level, $pesId);
+        if ($isUpdate) {
+            $this->circuito->recordEvent($guardiaId, CircuitoEventType::RE_TRIAGE, $pesId, [
+                'previous_level' => $previousLevel,
+                'level' => $level,
+            ]);
+        }
+
+        $guardia = Guardia::find()->where(['id' => $guardiaId])->with('paciente')->one() ?? $guardia;
+        (new GuardiaPushNotifier())->notifyCriticalTriage($guardia, $level, $pesId);
 
         return [
             'guardia_id' => $guardiaId,
             'triage' => $this->serializeTriage($row),
             'circuito_estado' => CircuitoEstado::ESPERA_MEDICO,
             'prioridad_triage' => $level,
+            're_triage' => $isUpdate,
         ];
     }
 

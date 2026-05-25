@@ -8,11 +8,11 @@ Dar visibilidad a **dirección y calidad**: tiempos door-to-triage y door-to-doc
 
 - [x] Medianas desde eventos en `GuardiaIndicadoresService` (ingreso → triage → médico, día actual)
 - [x] API `GET /api/v1/clinical/emergency-guardia/indicadores-resumen`
-- [ ] API export CSV
+- [ ] API export CSV (excluido por decisión de producto)
 - [x] Resumen en cabecera del tablero (inicio web EMER)
 - [ ] Vista `guardia/indicadores` dedicada (no requerida si inicio basta)
-- [ ] Re-triage con historial
-- [ ] Job materialización diaria
+- [x] Re-triage con evento `re_triage` en `guardia_circuito_event`
+- [x] Job materialización diaria (`guardia_metrics_daily`, `php yii emergency-guardia/materialize-metrics`)
 
 ## KPIs v1
 
@@ -31,6 +31,6 @@ Dar visibilidad a **dirección y calidad**: tiempos door-to-triage y door-to-doc
 
 ## Cierre del programa
 
-- Actualizar [02-urgencias.md](../../his-completo/02-urgencias.md).
-- Crear `producto/urgencias-guardia.md`.
-- Eliminar `plans/urgencias-triage-tablero/`.
+- [x] Actualizar [02-urgencias.md](../../his-completo/02-urgencias.md).
+- [x] Crear [producto/urgencias-guardia.md](../../producto/urgencias-guardia.md).
+- [ ] Eliminar `plans/urgencias-triage-tablero/` (cuando el equipo archive el plan).

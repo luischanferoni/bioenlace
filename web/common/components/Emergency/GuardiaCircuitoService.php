@@ -25,7 +25,7 @@ final class GuardiaCircuitoService
         return CircuitoEstado::ESPERA_TRIAGE;
     }
 
-    public function assertCanRegisterTriage(Guardia $guardia): void
+    public function assertCanRegisterTriage(Guardia $guardia, bool $isUpdate = false): void
     {
         $estado = $this->effectiveEstado($guardia);
         if ($estado === CircuitoEstado::FINALIZADO) {

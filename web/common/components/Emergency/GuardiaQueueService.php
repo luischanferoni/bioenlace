@@ -2,6 +2,7 @@
 
 namespace common\components\Emergency;
 
+use common\models\Efector;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
 use common\models\Persona;
@@ -78,6 +79,27 @@ final class GuardiaQueueService
                 'prioridad_triage' => $row['prioridad_triage'],
                 'minutos_espera' => $row['minutos_espera'],
                 'triage_level_label' => $row['triage']['level_label'] ?? null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<int, array{id_efector: int, nombre: string}>
+     */
+    public function listarEfectoresDerivacion(): array
+    {
+        $rows = Efector::getTodosLosEfectores();
+        $out = [];
+        foreach ($rows as $row) {
+            $id = (int) ($row['id_efector'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            $out[] = [
+                'id_efector' => $id,
+                'nombre' => (string) ($row['nombre'] ?? ''),
             ];
         }
 

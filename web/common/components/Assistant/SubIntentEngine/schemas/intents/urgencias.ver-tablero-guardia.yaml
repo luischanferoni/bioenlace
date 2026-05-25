@@ -1,0 +1,29 @@
+intent_id: urgencias.ver-tablero-guardia
+version: 1
+
+action_name: "Ver tablero de guardia"
+description: "Cola priorizada de pacientes en guardia del efector actual."
+rbac_route: "/api/clinical/emergency-guardia/tablero"
+keywords:
+  - tablero guardia
+  - urgencias
+  - guardia
+  - sala de espera
+  - pacientes en guardia
+  - cola de emergencia
+
+intent_semantics:
+  goal: >-
+    Mostrar el tablero operativo de guardia con prioridad de triage y tiempos de espera.
+  how: >-
+    Abre el inicio con ámbito EMER; requiere sesión operativa en guardia/urgencias.
+  outcome:
+    - El staff ve y actualiza la cola en tiempo casi real.
+
+subintents:
+  - id: abrir_tablero
+    assistant_text: "Abro el tablero de guardia"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: clinical.emergency-guardia.tablero

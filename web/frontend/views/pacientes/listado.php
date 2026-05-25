@@ -137,6 +137,51 @@ $this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
         </div>
     </div>
 </div>
+<div class="modal fade" id="guardia-derivar-modal" tabindex="-1" aria-labelledby="guardiaDerivarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="guardiaDerivarModalLabel">Derivar paciente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3" id="guardia-derivar-paciente-nombre"></p>
+                <div class="mb-3">
+                    <label for="guardia-derivar-efector" class="form-label">Efector destino</label>
+                    <select class="form-select" id="guardia-derivar-efector" required></select>
+                </div>
+                <div class="mb-3">
+                    <label for="guardia-derivar-condiciones" class="form-label">Condiciones / motivo</label>
+                    <textarea class="form-control" id="guardia-derivar-condiciones" rows="2"></textarea>
+                </div>
+                <div id="guardia-derivar-error" class="alert alert-danger d-none mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="guardia-derivar-submit">Confirmar derivación</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="guardia-finalizar-modal" tabindex="-1" aria-labelledby="guardiaFinalizarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="guardiaFinalizarModalLabel">Egreso de guardia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3" id="guardia-finalizar-paciente-nombre"></p>
+                <p class="small">Confirme el egreso del episodio en el tablero (libro de guardia).</p>
+                <div id="guardia-finalizar-error" class="alert alert-danger d-none mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="guardia-finalizar-submit">Confirmar egreso</button>
+            </div>
+        </div>
+    </div>
+</div>
 <?php endif; ?>
 
 <?php

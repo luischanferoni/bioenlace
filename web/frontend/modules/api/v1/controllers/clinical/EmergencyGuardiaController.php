@@ -18,6 +18,7 @@ use Yii;
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/registrar-triage
  * GET  /api/v1/clinical/emergency-guardia/tablero
  * GET  /api/v1/clinical/emergency-guardia/indicadores-resumen
+ * GET  /api/v1/clinical/emergency-guardia/listar-efectores-derivacion
  * GET  /api/v1/clinical/emergency-guardia/<guardiaId>/ver
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/asignar
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/iniciar-atencion
@@ -113,6 +114,20 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $this->success($data, 'Detalle de guardia');
+    }
+
+    public function actionListarEfectoresDerivacion(): array
+    {
+        try {
+            GuardiaEfectorAccess::assertCanAccessEfector(
+                GuardiaEfectorAccess::resolveIdEfector((int) Yii::$app->request->get('id_efector', 0) ?: null)
+            );
+            $data = $this->queue->listarEfectoresDerivacion();
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        return $this->success($data, 'Efectores para derivación');
     }
 
     public function actionIndicadoresResumen(): array

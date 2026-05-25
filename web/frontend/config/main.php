@@ -134,6 +134,8 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/ver' => '<version>/clinical/emergency-guardia/ver',
                 'GET api/<version:\w+>/clinical/emergency-guardia/indicadores-resumen' => '<version>/clinical/emergency-guardia/indicadores-resumen',
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/indicadores-resumen' => '<version>/clinical/emergency-guardia/indicadores-resumen',
+                'GET api/<version:\w+>/clinical/emergency-guardia/listar-efectores-derivacion' => '<version>/clinical/emergency-guardia/listar-efectores-derivacion',
+                'OPTIONS api/<version:\w+>/clinical/emergency-guardia/listar-efectores-derivacion' => '<version>/clinical/emergency-guardia/listar-efectores-derivacion',
                 'POST api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/asignar' => '<version>/clinical/emergency-guardia/asignar',
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/asignar' => '<version>/clinical/emergency-guardia/asignar',
                 'POST api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/iniciar-atencion' => '<version>/clinical/emergency-guardia/iniciar-atencion',

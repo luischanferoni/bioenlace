@@ -12,6 +12,7 @@ class m260603_100002_api_emergency_guardia_operaciones_rbac extends Migration
 
     private const GHOST_ROUTES = [
         '/api/clinical/emergency-guardia/indicadores-resumen',
+        '/api/clinical/emergency-guardia/listar-efectores-derivacion',
         '/api/clinical/emergency-guardia/asignar',
         '/api/clinical/emergency-guardia/iniciar-atencion',
         '/api/clinical/emergency-guardia/derivar',

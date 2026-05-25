@@ -21,5 +21,11 @@ final class PushNotificationTypes
     /** Expediente legal PDF listo para descarga (staff solicitante). */
     public const LEGAL_RECORD_EXPORT_READY = 'LEGAL_RECORD_EXPORT_READY';
 
+    /** Guardia: paciente asignado al PES del médico. */
+    public const EMERGENCY_ASSIGNED_TO_YOU = 'EMERGENCY_ASSIGNED_TO_YOU';
+
+    /** Guardia: triage nivel 1–2 (Manchester). */
+    public const EMERGENCY_PATIENT_CRITICAL = 'EMERGENCY_PATIENT_CRITICAL';
+
     public const GENERICO = 'GENERICO';
 }

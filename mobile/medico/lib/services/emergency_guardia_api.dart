@@ -67,6 +67,20 @@ class EmergencyBoardItem {
   }
 }
 
+class EfectorDerivacionItem {
+  final int idEfector;
+  final String nombre;
+
+  EfectorDerivacionItem({required this.idEfector, required this.nombre});
+
+  factory EfectorDerivacionItem.fromJson(Map<String, dynamic> json) {
+    return EfectorDerivacionItem(
+      idEfector: (json['id_efector'] as int?) ?? 0,
+      nombre: (json['nombre'] as String?) ?? '',
+    );
+  }
+}
+
 class EmergencyGuardiaApi {
   String? authToken;
   String? userId;
@@ -151,6 +165,69 @@ class EmergencyGuardiaApi {
       final decoded = json.decode(response.body);
       throw Exception(
         decoded is Map ? (decoded['message'] ?? 'Error al asignar') : 'Error',
+      );
+    }
+  }
+
+  Future<List<EfectorDerivacionItem>> listarEfectoresDerivacion({int? idEfector}) async {
+    final query = <String, String>{};
+    if (idEfector != null) query['id_efector'] = idEfector.toString();
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/listar-efectores-derivacion',
+    ).replace(queryParameters: query.isNotEmpty ? query : null);
+    final response = await http.get(uri, headers: _headers);
+    final decoded = json.decode(response.body);
+    if (response.statusCode != 200 ||
+        decoded is! Map<String, dynamic> ||
+        decoded['success'] != true) {
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error efectores') : 'Error efectores',
+      );
+    }
+    final data = decoded['data'] as List<dynamic>? ?? [];
+    return data
+        .map((e) => EfectorDerivacionItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> derivar({
+    required int guardiaId,
+    required int idEfectorDerivacion,
+    String? condicionesDerivacion,
+  }) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/derivar',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode({
+        'id_efector_derivacion': idEfectorDerivacion,
+        if (condicionesDerivacion != null && condicionesDerivacion.isNotEmpty)
+          'condiciones_derivacion': condicionesDerivacion,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final decoded = json.decode(response.body);
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error al derivar') : 'Error',
+      );
+    }
+  }
+
+  Future<void> finalizar(int guardiaId) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/finalizar',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: '{}',
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final decoded = json.decode(response.body);
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error al egresar') : 'Error',
       );
     }
   }

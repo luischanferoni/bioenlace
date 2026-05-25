@@ -46,6 +46,12 @@
     var pollTimer = null;
     var triageModal = null;
     var triageModalGuardiaId = 0;
+    var triageModalIsRetriage = false;
+    var derivarModal = null;
+    var derivarModalGuardiaId = 0;
+    var finalizarModal = null;
+    var finalizarModalGuardiaId = 0;
+    var efectoresDerivacionCache = null;
 
     function setLoading(isLoading) {
       loading.classList.toggle('d-none', !isLoading);
@@ -158,6 +164,16 @@
       });
     }
 
+    function guardiaEpisodioCerrado(g) {
+      var e = g.circuito_estado || '';
+      return e === 'finalizado' || e === 'derivado';
+    }
+
+    function nombrePacienteGuardia(g) {
+      var paciente = g.paciente || {};
+      return paciente.nombre_completo || g.nombre_completo || '';
+    }
+
     function nivelRowClass(g) {
       var level = g.prioridad_triage;
       if (level == null || level === '') {
@@ -212,10 +228,11 @@
         profLine.classList.remove('d-none');
       }
 
+      var cerrado = guardiaEpisodioCerrado(g);
       var sinTriage = g.circuito_estado === 'espera_triage' || g.prioridad_triage == null;
       var ctaAtender = rowEl.querySelector('[data-role="cta-atender"]');
       if (ctaAtender) {
-        ctaAtender.classList.toggle('d-none', sinTriage);
+        ctaAtender.classList.toggle('d-none', sinTriage || cerrado);
         ctaAtender.onclick = function (ev) {
           ev.preventDefault();
           iniciarAtencionGuardia(g);
@@ -224,9 +241,42 @@
 
       var ctaTriage = rowEl.querySelector('[data-role="cta-triage"]');
       if (ctaTriage) {
-        ctaTriage.classList.toggle('d-none', !sinTriage);
+        ctaTriage.classList.toggle('d-none', !sinTriage || cerrado);
         ctaTriage.onclick = function () {
-          openTriageModal(g);
+          openTriageModal(g, false);
+        };
+      }
+
+      var ctaRetriage = rowEl.querySelector('[data-role="cta-retriage"]');
+      if (ctaRetriage) {
+        ctaRetriage.classList.toggle('d-none', sinTriage || cerrado);
+        ctaRetriage.onclick = function () {
+          openTriageModal(g, true);
+        };
+      }
+
+      var ctaTomar = rowEl.querySelector('[data-role="cta-tomar"]');
+      if (ctaTomar) {
+        var sinAsignar = !g.profesional_asignado && !g.id_profesional_efector_servicio;
+        ctaTomar.classList.toggle('d-none', !sinAsignar || cerrado);
+        ctaTomar.onclick = function () {
+          tomarCasoGuardia(g);
+        };
+      }
+
+      var ctaDerivar = rowEl.querySelector('[data-role="cta-derivar"]');
+      if (ctaDerivar) {
+        ctaDerivar.classList.toggle('d-none', sinTriage || cerrado);
+        ctaDerivar.onclick = function () {
+          openDerivarModal(g);
+        };
+      }
+
+      var ctaFinalizar = rowEl.querySelector('[data-role="cta-finalizar"]');
+      if (ctaFinalizar) {
+        ctaFinalizar.classList.toggle('d-none', sinTriage || cerrado);
+        ctaFinalizar.onclick = function () {
+          openFinalizarModal(g);
         };
       }
     }
@@ -241,18 +291,215 @@
       return triageModal;
     }
 
-    function openTriageModal(g) {
-      var paciente = g.paciente || {};
-      var nombre = paciente.nombre_completo || g.nombre_completo || '';
+    function openTriageModal(g, isRetriage) {
+      triageModalIsRetriage = !!isRetriage;
       triageModalGuardiaId = g.id;
       var nameEl = document.getElementById('guardia-triage-paciente-nombre');
-      if (nameEl) nameEl.textContent = nombre;
+      if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
+      var titleEl = document.getElementById('guardiaTriageModalLabel');
+      if (titleEl) {
+        titleEl.textContent = triageModalIsRetriage ? 'Actualizar triage' : 'Triage';
+      }
+      var submitBtn = document.getElementById('guardia-triage-submit');
+      if (submitBtn) {
+        submitBtn.textContent = triageModalIsRetriage ? 'Guardar cambios' : 'Registrar triage';
+      }
       var reasonEl = document.getElementById('guardia-triage-reason');
-      if (reasonEl) reasonEl.value = '';
+      var triage = g.triage || {};
+      if (reasonEl) {
+        reasonEl.value = triageModalIsRetriage ? (triage.reason_text || '') : '';
+      }
+      if (triageModalIsRetriage && g.prioridad_triage != null) {
+        var levelRadio = document.getElementById('guardia-triage-level-' + String(g.prioridad_triage));
+        if (levelRadio) levelRadio.checked = true;
+      }
       var errEl = document.getElementById('guardia-triage-error');
       if (errEl) errEl.classList.add('d-none');
       var modal = getTriageModal();
       if (modal) modal.show();
+    }
+
+    async function tomarCasoGuardia(g) {
+      var api = window.BioenlaceNativePage;
+      if (!api || !g.id) return;
+      try {
+        var url = api.apiV1Url('clinical/emergency-guardia/' + g.id + '/asignar');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: '{}',
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo asignar el caso');
+        }
+        await loadGuardiaTablero(false);
+      } catch (e) {
+        showError(errorEl, e && e.message ? e.message : 'No se pudo tomar el caso.');
+      }
+    }
+
+    function getDerivarModal() {
+      if (!derivarModal) {
+        var el = document.getElementById('guardia-derivar-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          derivarModal = new window.bootstrap.Modal(el);
+        }
+      }
+      return derivarModal;
+    }
+
+    function getFinalizarModal() {
+      if (!finalizarModal) {
+        var el = document.getElementById('guardia-finalizar-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          finalizarModal = new window.bootstrap.Modal(el);
+        }
+      }
+      return finalizarModal;
+    }
+
+    async function loadEfectoresDerivacionSelect(selectEl) {
+      var api = window.BioenlaceNativePage;
+      if (!api || !selectEl) return;
+      if (efectoresDerivacionCache) {
+        fillEfectoresSelect(selectEl, efectoresDerivacionCache);
+        return;
+      }
+      var url = api.apiV1Url('clinical/emergency-guardia/listar-efectores-derivacion');
+      var json = await api.fetchJson(url, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      if (json.success === false) {
+        throw new Error(json.message || 'No se pudieron cargar efectores');
+      }
+      efectoresDerivacionCache = json.data || [];
+      fillEfectoresSelect(selectEl, efectoresDerivacionCache);
+    }
+
+    function fillEfectoresSelect(selectEl, items) {
+      selectEl.innerHTML = '';
+      var opt0 = document.createElement('option');
+      opt0.value = '';
+      opt0.textContent = 'Seleccione efector…';
+      selectEl.appendChild(opt0);
+      (items || []).forEach(function (ef) {
+        var opt = document.createElement('option');
+        opt.value = String(ef.id_efector);
+        opt.textContent = ef.nombre || ('Efector ' + ef.id_efector);
+        selectEl.appendChild(opt);
+      });
+    }
+
+    async function openDerivarModal(g) {
+      derivarModalGuardiaId = g.id;
+      var nameEl = document.getElementById('guardia-derivar-paciente-nombre');
+      if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
+      var errEl = document.getElementById('guardia-derivar-error');
+      if (errEl) errEl.classList.add('d-none');
+      var selectEl = document.getElementById('guardia-derivar-efector');
+      var condEl = document.getElementById('guardia-derivar-condiciones');
+      if (condEl) condEl.value = '';
+      try {
+        await loadEfectoresDerivacionSelect(selectEl);
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al cargar efectores.';
+          errEl.classList.remove('d-none');
+        }
+      }
+      var modal = getDerivarModal();
+      if (modal) modal.show();
+    }
+
+    async function submitDerivarModal() {
+      var api = window.BioenlaceNativePage;
+      if (!api || !derivarModalGuardiaId) return;
+      var selectEl = document.getElementById('guardia-derivar-efector');
+      var condEl = document.getElementById('guardia-derivar-condiciones');
+      var errEl = document.getElementById('guardia-derivar-error');
+      var idDest = selectEl ? parseInt(selectEl.value, 10) : 0;
+      if (!idDest) {
+        if (errEl) {
+          errEl.textContent = 'Seleccione el efector destino.';
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
+      var submitBtn = document.getElementById('guardia-derivar-submit');
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        var url = api.apiV1Url('clinical/emergency-guardia/' + derivarModalGuardiaId + '/derivar');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            id_efector_derivacion: idDest,
+            condiciones_derivacion: condEl ? condEl.value.trim() : '',
+          }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'Error al derivar');
+        }
+        var modal = getDerivarModal();
+        if (modal) modal.hide();
+        await loadGuardiaTablero(false);
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'No se pudo derivar.';
+          errEl.classList.remove('d-none');
+        }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+
+    function openFinalizarModal(g) {
+      finalizarModalGuardiaId = g.id;
+      var nameEl = document.getElementById('guardia-finalizar-paciente-nombre');
+      if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
+      var errEl = document.getElementById('guardia-finalizar-error');
+      if (errEl) errEl.classList.add('d-none');
+      var modal = getFinalizarModal();
+      if (modal) modal.show();
+    }
+
+    async function submitFinalizarModal() {
+      var api = window.BioenlaceNativePage;
+      if (!api || !finalizarModalGuardiaId) return;
+      var errEl = document.getElementById('guardia-finalizar-error');
+      var submitBtn = document.getElementById('guardia-finalizar-submit');
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        var url = api.apiV1Url('clinical/emergency-guardia/' + finalizarModalGuardiaId + '/finalizar');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: '{}',
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'Error al finalizar');
+        }
+        var modal = getFinalizarModal();
+        if (modal) modal.hide();
+        await loadGuardiaTablero(false);
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'No se pudo registrar el egreso.';
+          errEl.classList.remove('d-none');
+        }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     }
 
     async function submitTriageModal() {
@@ -541,6 +788,14 @@
     var triageSubmit = document.getElementById('guardia-triage-submit');
     if (triageSubmit) {
       triageSubmit.addEventListener('click', submitTriageModal);
+    }
+    var derivarSubmit = document.getElementById('guardia-derivar-submit');
+    if (derivarSubmit) {
+      derivarSubmit.addEventListener('click', submitDerivarModal);
+    }
+    var finalizarSubmit = document.getElementById('guardia-finalizar-submit');
+    if (finalizarSubmit) {
+      finalizarSubmit.addEventListener('click', submitFinalizarModal);
     }
 
     load();

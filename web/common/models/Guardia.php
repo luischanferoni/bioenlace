@@ -219,52 +219,39 @@ class Guardia extends \yii\db\ActiveRecord
         return $guardias;
     }
 
+    /**
+     * Timeline legacy: atención vía tablero/inicio EMER o captura con parent GUARDIA.
+     *
+     * @deprecated Preferir tablero en {@see \frontend\controllers\SiteController::actionPacientes} y API emergency-guardia.
+     */
     public static function footerTimeline($tipo, $id, $id_persona)
     {
-
         $guardia = self::findOne($id);
-        $encounterClass = Yii::$app->user->getEncounterClass();
-
-        $a = '';
-
-        switch ($tipo) {
-
-            case 'pendiente':
-                if ($guardia->id_efector == Yii::$app->user->getIdEfector()) {
-
-                    if ($encounterClass == Consulta::ENCOUNTER_CLASS_EMER) {
-                        $url = PatientHistoriaUrl::captura(
-                            (int) $id_persona,
-                            Consulta::PARENT_GUARDIA,
-                            (int) $id
-                        );
-
-                        $a = yii\helpers\Html::a(
-                            'Atender',
-                            $url,
-                            [
-                                'class' => 'btn btn-sm btn-outline-info rounded-pill atender',
-                                'title' => 'Atender',
-                                'data-spa-nav' => '1',
-                            ]
-                        );
-                    } else {
-
-                        $a = '<span class="badge bg-soft-warning">Para atender esta guardia usted debe cambiar al ambito "EMERGENCIA".</span>';
-                    }
-
-                } else {
-                    $a = '<span class="badge bg-soft-warning">Esta guardia corresponde a otro efector.</span>';
-                }
-                break;
-
-            default:
-                break;
+        if ($guardia === null) {
+            return '';
         }
 
-        $footer = $a;
+        if ($tipo !== 'pendiente' || (int) $guardia->id_efector !== (int) Yii::$app->user->getIdEfector()) {
+            return $guardia->id_efector == Yii::$app->user->getIdEfector()
+                ? ''
+                : '<span class="badge bg-soft-warning">Esta guardia corresponde a otro efector.</span>';
+        }
 
-        return $footer;
+        if (Yii::$app->user->getEncounterClass() !== Consulta::ENCOUNTER_CLASS_EMER) {
+            return '<span class="badge bg-soft-warning">Use el ámbito Guardia (EMER) en inicio o cambie el encounter en el menú superior.</span>';
+        }
+
+        $url = PatientHistoriaUrl::captura((int) $id_persona, Consulta::PARENT_GUARDIA, (int) $id);
+
+        return yii\helpers\Html::a(
+            'Atender',
+            $url,
+            [
+                'class' => 'btn btn-sm btn-outline-info rounded-pill atender',
+                'title' => 'Atender',
+                'data-spa-nav' => '1',
+            ]
+        );
     }
 
 

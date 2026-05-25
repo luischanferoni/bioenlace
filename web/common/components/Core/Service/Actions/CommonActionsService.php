@@ -134,6 +134,13 @@ final class CommonActionsService
                     'atencion.mis-atenciones-como-paciente',
                 ],
             ],
+            [
+                'id' => 'urgencias',
+                'titulo' => 'Urgencias / guardia',
+                'models' => [
+                    'urgencias.ver-tablero-guardia',
+                ],
+            ],
         ];
     }
 

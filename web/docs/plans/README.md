@@ -6,8 +6,9 @@ Solo **planes largos activos** (multi-fase, varios PR). Cuando un plan termina, 
 
 | Plan | Carpeta | Estado |
 |------|---------|--------|
-| Receta electrónica (AR) | [receta-electronica/](./receta-electronica/) | Fases 1–2 en curso |
-| Recordatorios care plan (paciente) | [care-plan-recordatorios/](./care-plan-recordatorios/) | Planificado (Fase 0) |
+| Receta electrónica (AR) | [receta-electronica/](./receta-electronica/) | Fases 1–2 hechas; Fase 3 repositorio nacional pendiente |
+| Resumen de atención (paciente) | [resumen-atencion-paciente/](./resumen-atencion-paciente/) | Planificado — Fase 0 |
+| Recordatorios care plan | — | **Cerrado** — ver [care-plan-recordatorios-paciente.md](../dominio/flows/care-plan-recordatorios-paciente.md) |
 
 Plan laboratorio FHIR **cerrado** — documentación en [laboratorio/](../laboratorio/README.md).
 

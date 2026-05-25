@@ -1,5 +1,7 @@
 # Recordatorios de care plan (paciente)
 
+> Programa implementado (fases 1–4). El plan de trabajo en `plans/care-plan-recordatorios/` fue archivado; esta es la documentación operativa.
+
 ## Resumen
 
 Agenda derivada en API; el dispositivo programa **notificaciones locales** (no FCM por toma). El paciente activa/desactiva en Configuración y por plan/actividad. Las preferencias pueden sincronizarse en servidor.

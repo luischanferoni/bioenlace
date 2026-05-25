@@ -6,15 +6,15 @@ Que el **médico de guardia** pueda operar el turno completo desde el teléfono:
 
 ## Checklist implementación
 
-- [ ] `EmergencyGuardiaApi` en `mobile/packages/shared` (o `medico/lib/services/`) con auth JWT + headers `BioenlaceApiClient`
-- [ ] Pantalla **Cola guardia** (reemplaza/amplia lista plana en `home_screen` cuando `encounterClass == EMER`)
-- [ ] Orden: prioridad triage → tiempo espera; indicador visual nivel (color)
-- [ ] Pantalla **Triage** formulario corto (un scroll): nivel (chips 1–5), motivo, vitales numéricos con teclado numérico
-- [ ] Acción **Tomar caso** → `POST asignar` con PES de sesión
-- [ ] Acción **Atender** → `POST iniciar-atencion` → navegación a captura clínica (ruta web existente en WebView o pantalla nativa si ya existe bridge)
-- [ ] Pull-to-refresh + auto-refresh en foreground (30 s)
-- [ ] Manejo offline: mensaje “sin conexión”; no cola local MVP
-- [ ] Sesión: recordar efector EMER; validar `set-session` con `encounterClass: EMER` en wizard si falta
+- [x] `EmergencyGuardiaApi` en `mobile/medico/lib/services/emergency_guardia_api.dart`
+- [x] Tablero en **Inicio** (`home_screen`) cuando `encounterClass == EMER`
+- [x] Orden por API (prioridad + ingreso); badge nivel con color Manchester
+- [x] Pantalla **Triage** (`emergency_triage_screen.dart`): nivel, motivo, TA/FC → `registrar-triage`
+- [ ] **Tomar caso** → `POST asignar` (Fase 4)
+- [x] **Atender** → `PatientTimelineScreen` con `parent: GUARDIA` si ya hay triage
+- [x] Pull-to-refresh + repoll ~30 s
+- [ ] Offline explícito
+- [x] Cambio de encounter en Configuración recrea Inicio (`MainScreen` refresh key)
 
 ## Flujo UX móvil
 

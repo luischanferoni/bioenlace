@@ -76,23 +76,39 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
 
 <template id="tpl-pacientes-guardias-wrap">
     <div class="card" data-role="guardias-wrap">
-        <div class="card-header bg-light">
-            <h4 class="mb-0">Pacientes en guardia</h4>
+        <div class="card-header bg-light d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <h4 class="mb-0">Tablero de guardia</h4>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-role="tablero-refresh">
+                <i class="bi bi-arrow-clockwise"></i> Actualizar
+            </button>
         </div>
-        <div class="card-body" data-slot="guardias-rows"></div>
-        <div class="card-footer">
-            <a href="<?= Html::encode($urlGuardiaIndex) ?>" class="btn btn-success float-end">Ver todos los ingresos activos</a>
+        <div class="card-body p-0" data-slot="guardias-rows"></div>
+        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="text-muted small" data-role="tablero-updated"></span>
+            <a href="<?= Html::encode($urlGuardiaIndex) ?>" class="btn btn-success btn-sm">Ingresos y libro</a>
         </div>
     </div>
 </template>
 
 <template id="tpl-paciente-guardia-row">
-    <div class="d-flex align-items-center justify-content-between p-3 mb-2 bg-soft-gray rounded" data-role="guardia-row">
-        <div class="ms-3" style="flex:1;">
-            <h5 class="card-title mb-0" data-field="nombre"></h5>
-            <p class="mb-1"><span data-field="documento-line"></span></p>
+    <div class="d-flex align-items-center justify-content-between p-3 mb-0 border-bottom guardia-tablero-row" data-role="guardia-row">
+        <div class="d-flex align-items-start gap-3 flex-grow-1">
+            <span class="badge guardia-tablero-badge-nivel" data-field="nivel-badge">—</span>
+            <div style="flex:1;">
+                <h5 class="mb-1" data-field="nombre"></h5>
+                <p class="mb-1 small text-muted"><span data-field="documento-line"></span></p>
+                <p class="mb-1 small" data-field="motivo-line"></p>
+                <div class="d-flex flex-wrap gap-2 small">
+                    <span class="badge bg-secondary" data-field="circuito-badge"></span>
+                    <span class="text-muted" data-field="espera-line"></span>
+                    <span class="text-muted d-none" data-field="profesional-line"></span>
+                </div>
+            </div>
         </div>
-        <a class="btn btn-dark btn-sm me-2" href="#" data-role="cta-atender" data-spa-nav="1"><i class="bi bi-chevron-right"></i> Atender</a>
+        <div class="d-flex flex-column gap-1 ms-2">
+            <a class="btn btn-dark btn-sm" href="#" data-role="cta-atender" data-spa-nav="1">Atender</a>
+            <button type="button" class="btn btn-outline-primary btn-sm d-none" data-role="cta-triage">Triage</button>
+        </div>
     </div>
 </template>
 

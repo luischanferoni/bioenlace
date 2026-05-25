@@ -7,12 +7,13 @@ import 'package:shared/shared.dart';
 import '../models/turno.dart';
 import '../models/cirugia_agenda_item.dart';
 import '../services/internados_service.dart';
-import '../services/guardia_service.dart';
+import '../services/emergency_guardia_api.dart';
 import '../services/pacientes_service.dart';
+import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
-/// AMB/VR/OBSENC/HH = turnos; IMP = pacientes internados; EMER = ingresos en guardia.
+/// AMB/VR/OBSENC/HH = turnos; IMP = internados/cirugías; EMER = tablero operativo de guardia.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -33,10 +34,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final PacientesService _pacientesService = PacientesService();
+  late final EmergencyGuardiaApi _emergencyApi = EmergencyGuardiaApi(
+    authToken: widget.authToken,
+    userId: widget.userId,
+  );
 
   List<Turno> _turnos = [];
   List<InternadoItem> _internados = [];
-  List<GuardiaItem> _guardia = [];
+  List<EmergencyBoardItem> _guardiaTablero = [];
   List<CirugiaAgendaItem> _cirugias = [];
   String _lastListKind = '';
   bool _isLoading = true;
@@ -49,7 +54,14 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pacientesService.userId = widget.userId;
+    _emergencyApi.userId = widget.userId;
     _init();
+  }
+
+  @override
+  void dispose() {
+    _stopTableroPoll();
+    super.dispose();
   }
 
   Future<void> _init() async {
@@ -67,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final token = prefs.getString('auth_token');
       if (token != null && token.isNotEmpty) {
         _pacientesService.authToken = token;
+        _emergencyApi.authToken = token;
       } else {
         _pacientesService.userId = widget.userId;
       }
@@ -87,19 +100,38 @@ class _HomeScreenState extends State<HomeScreen> {
     await _cargarListadoPacientes();
   }
 
-  Future<void> _cargarListadoPacientes() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-      _lastListKind = '';
-    });
+  Future<void> _cargarListadoPacientes({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+        _lastListKind = '';
+      });
+    }
     try {
+      if (_encounterClass == 'EMER') {
+        final items = await _emergencyApi.getTablero();
+        if (!mounted) return;
+        setState(() {
+          _guardiaTablero = items;
+          _turnos = [];
+          _internados = [];
+          _cirugias = [];
+          _lastListKind = 'guardias';
+          _isLoading = false;
+          _errorMessage = '';
+        });
+        _startTableroPoll();
+        return;
+      }
+      _stopTableroPoll();
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
       final res = await _pacientesService.getListado(fecha: fechaStr);
+      if (!mounted) return;
       setState(() {
         _turnos = [];
         _internados = [];
-        _guardia = [];
+        _guardiaTablero = [];
         _cirugias = [];
         _lastListKind = res.kind;
         if (res.kind == 'turnos') {
@@ -109,10 +141,6 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (res.kind == 'internados') {
           _internados = res.data
               .map((e) => InternadoItem.fromJson(e as Map<String, dynamic>))
-              .toList();
-        } else if (res.kind == 'guardias') {
-          _guardia = res.data
-              .map((e) => GuardiaItem.fromJson(e as Map<String, dynamic>))
               .toList();
         } else if (res.kind == 'cirugias') {
           _cirugias = res.data
@@ -124,11 +152,26 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'Error al cargar pacientes: ${e.toString()}';
         _isLoading = false;
       });
     }
+  }
+
+  void _startTableroPoll() {
+    _stopTableroPoll();
+    if (_encounterClass != 'EMER') return;
+    Future.delayed(const Duration(seconds: 30), () async {
+      if (!mounted || _encounterClass != 'EMER') return;
+      await _cargarListadoPacientes(silent: true);
+      _startTableroPoll();
+    });
+  }
+
+  void _stopTableroPoll() {
+    // repoll encadenado; al cambiar encounter se corta por _encounterClass check
   }
 
   void _cambiarFecha(int dias) {
@@ -228,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ? _buildCirugiasList()
                             : _buildInternadosList())
                         : _encounterClass == 'EMER'
-                            ? _buildGuardiaList()
+                            ? _buildGuardiaTableroList()
                             : _turnos.isEmpty
                                 ? _buildEmpty(
                                     icon: Icons.event_busy_outlined,
@@ -263,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ? 'Agenda quirúrgica'
                         : 'Pacientes internados')
                     : _encounterClass == 'EMER'
-                        ? 'Ingresos en guardia'
+                        ? 'Tablero de guardia'
                         : _formatearFechaAmigable(_fechaSeleccionada),
                 style: BioTypography.h3,
               ),
@@ -484,30 +527,145 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildGuardiaList() {
-    if (_guardia.isEmpty) {
+  Color? _colorFromHex(String? hex) {
+    if (hex == null || hex.isEmpty) return null;
+    var h = hex.replaceFirst('#', '');
+    if (h.length == 6) h = 'FF$h';
+    try {
+      return Color(int.parse(h, radix: 16));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _onGuardiaTap(EmergencyBoardItem g) async {
+    if (g.needsTriage) {
+      final ok = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EmergencyTriageScreen(
+            guardiaId: g.id,
+            pacienteNombre: g.nombreCompleto,
+            api: _emergencyApi,
+          ),
+        ),
+      );
+      if (ok == true) {
+        await _cargarListadoPacientes(silent: true);
+      }
+      return;
+    }
+    _verHistoriaClinica(
+      g.idPersona,
+      parent: 'GUARDIA',
+      parentId: g.id,
+    );
+  }
+
+  Widget _buildGuardiaTableroList() {
+    if (_guardiaTablero.isEmpty) {
       return _buildEmpty(
         icon: Icons.emergency_outlined,
-        text: 'No hay ingresos en guardia.',
+        text: 'No hay pacientes en el tablero de guardia.',
       );
     }
-    return ListView.separated(
-      padding: BioSpacing.pageAll,
-      itemCount: _guardia.length,
-      separatorBuilder: (_, __) => BioSpacing.gapH(BioSpacing.sm),
-      itemBuilder: (context, index) {
-        final g = _guardia[index];
-        return _buildSimpleTile(
-          icon: Icons.person_outline,
-          title: g.nombreCompleto,
-          subtitle: [
-            if (g.fecha != null) g.fecha!,
-            if (g.hora != null) g.hora!,
-            if (g.documento != null) 'Doc. ${g.documento}',
-          ].where((e) => e.isNotEmpty).join(' · '),
-          onTap: () => _onTapSinTimeline(context),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () => _cargarListadoPacientes(silent: true),
+      child: ListView.separated(
+        padding: BioSpacing.pageAll,
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _guardiaTablero.length,
+        separatorBuilder: (_, __) => BioSpacing.gapH(BioSpacing.sm),
+        itemBuilder: (context, index) {
+          final g = _guardiaTablero[index];
+          return _buildGuardiaTableroCard(g);
+        },
+      ),
+    );
+  }
+
+  Widget _buildGuardiaTableroCard(EmergencyBoardItem g) {
+    final nivelColor = _colorFromHex(g.triageLevelColor) ??
+        (g.prioridadTriage != null
+            ? IntentPalette.of(
+                g.prioridadTriage! <= 2 ? UiIntent.danger : UiIntent.warning,
+              ).base
+            : context.bio.textMuted);
+    final estadoIntent = g.needsTriage
+        ? UiIntent.warning
+        : (g.circuitoEstado == 'en_atencion'
+            ? UiIntent.info
+            : UiIntent.neutral);
+
+    return BioCard(
+      onTap: () => _onGuardiaTap(g),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
+            decoration: BoxDecoration(
+              color: nivelColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: nivelColor, width: 2),
+            ),
+            child: Text(
+              g.prioridadTriage != null ? '${g.prioridadTriage}' : '?',
+              style: BioTypography.title.copyWith(
+                color: nivelColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          BioSpacing.gapW(BioSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(g.nombreCompleto, style: BioTypography.title),
+                if (g.documento != null && g.documento!.isNotEmpty) ...[
+                  BioSpacing.gapH(2),
+                  Text('Doc. ${g.documento}', style: BioTypography.bodySm),
+                ],
+                if (g.triageReasonText != null &&
+                    g.triageReasonText!.isNotEmpty) ...[
+                  BioSpacing.gapH(BioSpacing.xs),
+                  Text(g.triageReasonText!, style: BioTypography.bodySm),
+                ],
+                BioSpacing.gapH(BioSpacing.sm),
+                Wrap(
+                  spacing: BioSpacing.xs,
+                  runSpacing: BioSpacing.xs,
+                  children: [
+                    BioBadge(
+                      label: g.circuitoEstadoLabel ??
+                          g.circuitoEstado ??
+                          '—',
+                      intent: estadoIntent,
+                    ),
+                    Text(
+                      '${g.minutosEspera} min',
+                      style: BioTypography.caption,
+                    ),
+                    if (g.profesionalAsignado != null &&
+                        g.profesionalAsignado!.isNotEmpty)
+                      Text(
+                        g.profesionalAsignado!,
+                        style: BioTypography.caption,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            g.needsTriage ? Icons.assignment_outlined : Icons.chevron_right,
+            color: context.bio.textMuted,
+          ),
+        ],
+      ),
     );
   }
 

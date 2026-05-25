@@ -6,14 +6,15 @@ Pantalla de **sala de guardia** para admisión, enfermería y coordinación: ver
 
 ## Checklist implementación
 
-- [ ] Vista web dedicada `guardia/tablero` (o módulo SPA ligero) — **sin** lógica de negocio en `registerJs` masivo; JS en `frontend/web/js/guardia/tablero.js` + AssetBundle
-- [ ] Polling cada 15–30 s (o WebSocket futuro; MVP polling)
-- [ ] Tarjetas por paciente: nombre, documento, nivel/color, minutos espera, estado, médico asignado
-- [ ] Acciones: asignar PES, abrir detalle, marcar “llamado” (evento opcional), link derivación
-- [ ] Filtros: sin triage / espera médico / en atención / todos activos
-- [ ] Sonido o badge opcional cuando SLA superado (config por nivel)
-- [ ] App móvil staff: vista **solo lectura + asignar** en tablet (misma API); prioridad menor que Fase 3 si hay presión de tiempo
-- [ ] Unificar `PacientesController::guardiasPendientesPorEfector` → delegar en `GuardiaQueueService`
+- [x] Tablero en **inicio web** (`site/pacientes` con EMER): `pacientes-listado.js` + plantillas + `guardia-tablero.css`
+- [x] Polling 30 s en web (EMER)
+- [x] Tarjetas: nivel/color, minutos, circuito, motivo triage, profesional, Atender / Triage
+- [ ] Vista dedicada `guardia/tablero` full-screen (opcional; ingreso/libro siguen en `guardia/index`)
+- [ ] Acciones: asignar PES, llamar, derivación (Fase 4)
+- [ ] Filtros query en UI
+- [ ] Sonido SLA superado
+- [x] App móvil: tablero en **Inicio** cuando `encounter_class == EMER` (misma API)
+- [x] `PacientesController` EMER → `GuardiaQueueService::listadoCompacto` (compat); inicio EMER usa endpoint `tablero`
 
 ## UX web (referencia)
 

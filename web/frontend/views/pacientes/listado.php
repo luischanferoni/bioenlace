@@ -1,6 +1,7 @@
 <?php
 
 use frontend\assets\AppAsset;
+use frontend\assets\GuardiaTableroAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\Json;
@@ -9,6 +10,7 @@ use common\models\Servicio;
 
 $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Consulta::ENCOUNTER_CLASS_AMB);
+$esGuardia = ($encounter_class === Consulta::ENCOUNTER_CLASS_EMER);
 $esImpQuirurgico = ($encounter_class === Consulta::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
 $fechaAnterior = date('Y-m-d', strtotime($fecha . ' -1 day'));
 $fechaSiguiente = date('Y-m-d', strtotime($fecha . ' +1 day'));
@@ -31,7 +33,7 @@ $metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
 
 $encounterJson = Json::encode($encounter_class);
 
-$this->title = 'Pacientes';
+$this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
 ?>
 
 <div class="mb-4">
@@ -73,8 +75,9 @@ $this->title = 'Pacientes';
      data-url-internacion-view="<?= Html::encode(Url::to(['internacion/view'], true)) ?>"
      data-msg-empty-turnos="<?= Html::encode('No hay pacientes con turno pendiente de atención en la fecha seleccionada.') ?>"
      data-msg-empty-internados="<?= Html::encode('No hay pacientes internados para mostrar.') ?>"
-     data-msg-empty-guardias="<?= Html::encode('No hay ingresos en guardia pendientes.') ?>"
+     data-msg-empty-guardias="<?= Html::encode('No hay pacientes en el tablero de guardia.') ?>"
      data-msg-empty-cirugias="<?= Html::encode('No hay cirugías agendadas para la fecha seleccionada.') ?>"
+     data-es-guardia="<?= $esGuardia ? '1' : '0' ?>"
 >
     <div id="pacientes-listado-loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -90,5 +93,10 @@ $this->title = 'Pacientes';
 
 <?php
 // Tras AppAsset: BioenlaceApiClient.mergeHeaders + native-page-bridge (BioenlaceNativePage).
-$this->registerJsFile('@web/js/pacientes-listado.js', ['depends' => [AppAsset::class]]);
+$jsDepends = [AppAsset::class];
+if ($esGuardia) {
+    GuardiaTableroAsset::register($this);
+    $jsDepends[] = GuardiaTableroAsset::class;
+}
+$this->registerJsFile('@web/js/pacientes-listado.js', ['depends' => $jsDepends]);
 ?>

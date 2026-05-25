@@ -29,4 +29,19 @@ final class CircuitoEstado
     {
         return $estado !== null && $estado !== '' && in_array($estado, self::ACTIVOS, true);
     }
+
+    public static function label(?string $estado): string
+    {
+        $map = [
+            self::INGRESADO => 'Ingresado',
+            self::ESPERA_TRIAGE => 'Espera triage',
+            self::ESPERA_MEDICO => 'En cola',
+            self::EN_ATENCION => 'En atención',
+            self::ATENDIDO => 'Atendido',
+            self::DERIVADO => 'Derivado',
+            self::FINALIZADO => 'Finalizado',
+        ];
+
+        return $map[$estado ?? ''] ?? (string) $estado;
+    }
 }

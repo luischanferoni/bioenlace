@@ -168,6 +168,7 @@ final class GuardiaQueueService
             'id_efector' => (int) $guardia->id_efector,
             'estado' => $guardia->estado,
             'circuito_estado' => $circuito,
+            'circuito_estado_label' => CircuitoEstado::label($circuito),
             'prioridad_triage' => $prioridad,
             'fecha' => $guardia->fecha,
             'hora' => $guardia->hora,

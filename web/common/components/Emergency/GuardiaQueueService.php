@@ -1,0 +1,191 @@
+<?php
+
+namespace common\components\Emergency;
+
+use common\models\Emergency\GuardiaTriage;
+use common\models\Guardia;
+use common\models\Persona;
+use yii\db\ActiveQuery;
+
+final class GuardiaQueueService
+{
+    /** @var GuardiaCircuitoService */
+    private $circuito;
+
+    /** @var GuardiaTriageService */
+    private $triageSerializer;
+
+    public function __construct(
+        ?GuardiaCircuitoService $circuito = null,
+        ?GuardiaTriageService $triageSerializer = null
+    ) {
+        $this->circuito = $circuito ?? new GuardiaCircuitoService();
+        $this->triageSerializer = $triageSerializer ?? new GuardiaTriageService();
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     * @return array{items: array<int, array<string, mixed>>, total: int}
+     */
+    public function tablero(int $idEfector, array $filters = []): array
+    {
+        $query = $this->baseActiveQuery($idEfector, $filters);
+        $rows = $query->all();
+        $items = [];
+        foreach ($rows as $guardia) {
+            $items[] = $this->serializeBoardRow($guardia);
+        }
+        usort($items, static function (array $a, array $b): int {
+            $pa = $a['prioridad_triage'];
+            $pb = $b['prioridad_triage'];
+            if ($pa === null && $pb !== null) {
+                return 1;
+            }
+            if ($pa !== null && $pb === null) {
+                return -1;
+            }
+            if ($pa !== null && $pb !== null && $pa !== $pb) {
+                return $pa <=> $pb;
+            }
+
+            return strcmp((string) $a['ingreso_at'], (string) $b['ingreso_at']);
+        });
+
+        return ['items' => $items, 'total' => count($items)];
+    }
+
+    /**
+     * Listado compacto compatible con PacientesController (kind guardias).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function listadoCompacto(int $idEfector): array
+    {
+        $result = $this->tablero($idEfector, ['solo_activos' => true]);
+        $out = [];
+        foreach ($result['items'] as $row) {
+            $paciente = $row['paciente'] ?? [];
+            $out[] = [
+                'id' => $row['id'],
+                'id_persona' => $row['id_persona'],
+                'nombre_completo' => $paciente['nombre_completo'] ?? 'Sin nombre',
+                'documento' => $paciente['documento'] ?? null,
+                'tipo_documento' => $paciente['tipo_documento'] ?? null,
+                'fecha' => $row['fecha'],
+                'hora' => $row['hora'],
+                'estado' => $row['estado'],
+                'circuito_estado' => $row['circuito_estado'],
+                'prioridad_triage' => $row['prioridad_triage'],
+                'minutos_espera' => $row['minutos_espera'],
+                'triage_level_label' => $row['triage']['level_label'] ?? null,
+            ];
+        }
+
+        return $out;
+    }
+
+    public function detalle(int $guardiaId, int $idEfector): ?array
+    {
+        $guardia = Guardia::find()
+            ->where(['id' => $guardiaId, 'id_efector' => $idEfector])
+            ->with(['paciente.tipoDocumento', 'profesionalEfectorServicio.persona'])
+            ->one();
+        if ($guardia === null) {
+            return null;
+        }
+
+        $row = $this->serializeBoardRow($guardia);
+        $triage = GuardiaTriage::findOne(['guardia_id' => $guardiaId]);
+        if ($triage !== null) {
+            $row['triage'] = $this->triageSerializer->serializeTriage($triage);
+        }
+
+        return $row;
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     */
+    private function baseActiveQuery(int $idEfector, array $filters): ActiveQuery
+    {
+        $query = Guardia::find()
+            ->alias('g')
+            ->where(['g.id_efector' => $idEfector])
+            ->with(['paciente.tipoDocumento', 'profesionalEfectorServicio.persona']);
+
+        $soloActivos = !isset($filters['incluir_finalizados']) || !$filters['incluir_finalizados'];
+        if ($soloActivos || ($filters['solo_activos'] ?? false)) {
+            $query->andWhere(['<>', 'g.estado', Guardia::ESTADO_FINALIZADA]);
+            $query->andWhere([
+                'or',
+                ['g.circuito_estado' => null],
+                ['<>', 'g.circuito_estado', CircuitoEstado::FINALIZADO],
+            ]);
+        }
+
+        $circuito = isset($filters['circuito_estado']) ? (string) $filters['circuito_estado'] : '';
+        if ($circuito !== '') {
+            $query->andWhere(['g.circuito_estado' => $circuito]);
+        }
+
+        if (!empty($filters['sin_triage'])) {
+            $query->leftJoin(['gt' => GuardiaTriage::tableName()], 'gt.guardia_id = g.id')
+                ->andWhere(['gt.id' => null]);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeBoardRow(Guardia $guardia): array
+    {
+        $paciente = $guardia->paciente;
+        $circuito = $this->circuito->effectiveEstado($guardia);
+        $ingresoAt = $guardia->ingreso_at
+            ?: ($guardia->created_at ?: ($guardia->fecha . ' ' . ($guardia->hora ?? '00:00:00')));
+        $minutos = max(0, (int) floor((time() - strtotime((string) $ingresoAt)) / 60));
+
+        $triage = GuardiaTriage::findOne(['guardia_id' => (int) $guardia->id]);
+        $triagePayload = null;
+        $prioridad = $guardia->prioridad_triage !== null ? (int) $guardia->prioridad_triage : null;
+        if ($triage !== null) {
+            $triagePayload = $this->triageSerializer->serializeTriage($triage);
+            $prioridad = (int) $triage->level;
+        }
+
+        $pesNombre = null;
+        if ($guardia->profesionalEfectorServicio && $guardia->profesionalEfectorServicio->persona) {
+            $pesNombre = $guardia->profesionalEfectorServicio->persona->getNombreCompleto(
+                Persona::FORMATO_NOMBRE_A_OA_N_ON
+            );
+        }
+
+        return [
+            'id' => (int) $guardia->id,
+            'id_persona' => (int) $guardia->id_persona,
+            'id_efector' => (int) $guardia->id_efector,
+            'estado' => $guardia->estado,
+            'circuito_estado' => $circuito,
+            'prioridad_triage' => $prioridad,
+            'fecha' => $guardia->fecha,
+            'hora' => $guardia->hora,
+            'ingreso_at' => $ingresoAt,
+            'minutos_espera' => $minutos,
+            'id_profesional_efector_servicio' => $guardia->id_profesional_efector_servicio,
+            'profesional_asignado' => $pesNombre,
+            'paciente' => [
+                'id' => $paciente ? (int) $paciente->id_persona : null,
+                'nombre_completo' => $paciente
+                    ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
+                    : 'Sin nombre',
+                'documento' => $paciente ? $paciente->documento : null,
+                'tipo_documento' => $paciente && $paciente->tipoDocumento
+                    ? $paciente->tipoDocumento->nombre
+                    : null,
+            ],
+            'triage' => $triagePayload,
+        ];
+    }
+}

@@ -34,6 +34,9 @@ use yii\helpers\Console;
  * @property string|null $condiciones_derivacion
  * @property int|null $notificar_internacion_id_efector
  * @property int|null $id_efector
+ * @property string|null $circuito_estado
+ * @property int|null $prioridad_triage
+ * @property string|null $ingreso_at
  */
 class Guardia extends \yii\db\ActiveRecord
 {

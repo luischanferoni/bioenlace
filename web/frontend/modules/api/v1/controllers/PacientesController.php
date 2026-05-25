@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\models\Cirugia;
 use common\models\Consulta;
+use common\components\Emergency\GuardiaQueueService;
 use common\models\Guardia;
 use common\models\InfraestructuraPiso;
 use common\models\Persona;
@@ -441,24 +442,11 @@ class PacientesController extends BaseController
      */
     private function guardiasPendientesPorEfector(): array
     {
-        $idEfector = Yii::$app->user->getIdEfector();
-        if (!$idEfector) {
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
             return [];
         }
-        $out = [];
-        foreach (Guardia::pacientesPendientesPorEfector($idEfector) as $guardia) {
-            $paciente = $guardia->paciente;
-            $out[] = [
-                'id' => $guardia->id,
-                'id_persona' => $guardia->id_persona,
-                'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Sin nombre',
-                'documento' => $paciente ? $paciente->documento : null,
-                'tipo_documento' => $paciente && $paciente->tipoDocumento ? $paciente->tipoDocumento->nombre : null,
-                'fecha' => $guardia->fecha,
-                'hora' => $guardia->hora,
-                'estado' => $guardia->estado,
-            ];
-        }
-        return $out;
+
+        return (new GuardiaQueueService())->listadoCompacto($idEfector);
     }
 }

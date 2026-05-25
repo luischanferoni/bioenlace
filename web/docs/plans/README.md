@@ -13,6 +13,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Plan | Carpeta | Notas |
 |------|---------|--------|
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
+| Urgencias — triage + tablero | `urgencias-triage-tablero/` | En ejecución — Fase 1 (API dominio) |
 
 ## Convenciones (solo dentro de `plans/`)
 

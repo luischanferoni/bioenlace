@@ -2,6 +2,8 @@
 
 namespace common\components\Clinical\Service;
 
+use common\components\Clinical\CarePlan\Reminder\ActivityReminderTimingParser;
+use common\components\Clinical\CarePlan\Reminder\ReminderTimingJsonBuilder;
 use common\components\Clinical\Enum\RequestStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
@@ -73,6 +75,7 @@ final class ServiceRequestService
         $sr->category = (string) ($body['category'] ?? 'procedure');
         $sr->code = isset($body['code']) ? (string) $body['code'] : null;
         $sr->display = $body['display'] ?? null;
+        $sr->reminder_json = $this->resolveReminderJson($body);
         $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
         if (!$sr->save()) {
             throw new \InvalidArgumentException('ServiceRequest: ' . json_encode($sr->getErrors()));
@@ -82,5 +85,35 @@ final class ServiceRequestService
         }
 
         return $sr;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function resolveReminderJson(array $body): ?string
+    {
+        if (isset($body['reminder_json'])) {
+            if (is_string($body['reminder_json'])) {
+                $json = trim($body['reminder_json']) !== '' ? $body['reminder_json'] : null;
+            } elseif (is_array($body['reminder_json'])) {
+                $json = json_encode($body['reminder_json'], JSON_UNESCAPED_UNICODE);
+            } else {
+                $json = null;
+            }
+        } else {
+            $json = (new ReminderTimingJsonBuilder())->fromRequestBody($body);
+        }
+
+        if ($json === null) {
+            return null;
+        }
+
+        if ((new ActivityReminderTimingParser())->parse($json) === null) {
+            throw new \InvalidArgumentException(
+                'reminder_json.timing inválido: use timeOfDay en formato HH:MM (ej. ["07:00"]).'
+            );
+        }
+
+        return $json;
     }
 }

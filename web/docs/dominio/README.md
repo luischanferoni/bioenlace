@@ -16,3 +16,4 @@ Conceptos que cruzan varios módulos (no son un producto de usuario final).
 | Convenciones relaciones AR | [flows/CONVENCIONES_RELACIONES_AR.md](./flows/CONVENCIONES_RELACIONES_AR.md) |
 | API relaciones expand | [flows/API_RELACIONES_EXPAND.md](./flows/API_RELACIONES_EXPAND.md) |
 | Categorías CarePlan (FHIR) | [flows/care-plan-categories.md](./flows/care-plan-categories.md) |
+| Recordatorios care plan (paciente) | [flows/care-plan-recordatorios-paciente.md](./flows/care-plan-recordatorios-paciente.md) |

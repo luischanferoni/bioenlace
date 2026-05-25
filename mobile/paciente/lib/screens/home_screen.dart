@@ -140,6 +140,7 @@ class HomeScreenState extends State<HomeScreen> {
         _carePlansActivos = _asMapList(r['data']);
       }
     });
+    await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
   }
 
   Future<void> _cargarInicial() async {

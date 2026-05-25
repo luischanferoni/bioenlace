@@ -53,6 +53,33 @@ final class ClinicalUiActionCatalog
                 ['ver mi tratamiento', 'plan de tratamiento', 'ui tratamiento']
             ),
             self::def(
+                'clinical.care-plan.gestionar-recordatorios-como-paciente',
+                'Recordatorios de tratamiento',
+                'Activar alarmas locales y horarios de medicación o estudios.',
+                '/api/clinical/care-plan/preferencias-recordatorios-como-paciente',
+                ['recordatorios', 'alarmas', 'medicación', 'tomar medicamento', 'recordatorio estudio'],
+                false,
+                [
+                    'kind' => 'native',
+                    'mobile' => ['screen_id' => 'care_plan_reminders_settings'],
+                    'web' => ['path' => '/configuracion'],
+                ]
+            ),
+            self::def(
+                'clinical.care-plan.recordatorios-como-paciente',
+                'Agenda de recordatorios (API)',
+                'Horarios derivados de care plans activos para programar alarmas locales.',
+                '/api/clinical/care-plan/recordatorios-como-paciente',
+                ['agenda recordatorios', 'horarios medicación']
+            ),
+            self::def(
+                'clinical.care-plan.preferencias-recordatorios-como-paciente',
+                'Preferencias de recordatorios (API)',
+                'Sincronización de activación y horarios personalizados del paciente.',
+                '/api/clinical/care-plan/preferencias-recordatorios-como-paciente',
+                ['preferencias recordatorios', 'activar recordatorios']
+            ),
+            self::def(
                 'clinical.encounter.listar-ordenes-activas',
                 'Órdenes activas del encounter (UI)',
                 'Listado UI JSON de medicación y prácticas del encuentro.',
@@ -150,13 +177,18 @@ final class ClinicalUiActionCatalog
      * @param list<string> $keywords
      * @return array<string, mixed>
      */
+    /**
+     * @param list<string> $keywords
+     * @param array<string, mixed>|null $clientOpen
+     */
     private static function def(
         string $actionId,
         string $actionName,
         string $description,
         string $rbacRoute,
         array $keywords,
-        bool $uiJsonDescriptor = false
+        bool $uiJsonDescriptor = false,
+        ?array $clientOpen = null
     ): array {
         $httpRoute = ApiV1HttpRoute::normalize($rbacRoute);
 
@@ -191,6 +223,11 @@ final class ClinicalUiActionCatalog
                 ],
             ];
             $row['client_interaction'] = 'ui_asistente_json';
+        } elseif ($clientOpen !== null) {
+            $row['client_open'] = $clientOpen;
+            $row['client_interaction'] = ($clientOpen['kind'] ?? '') === 'native'
+                ? 'native_screen'
+                : 'open';
         }
 
         return $row;

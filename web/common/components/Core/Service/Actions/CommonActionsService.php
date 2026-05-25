@@ -119,6 +119,13 @@ final class CommonActionsService
                     'receta.ver-recetas-como-paciente',
                 ],
             ],
+            [
+                'id' => 'tratamiento',
+                'titulo' => 'Tratamiento',
+                'models' => [
+                    'tratamiento.recordatorios-como-paciente',
+                ],
+            ],
         ];
     }
 

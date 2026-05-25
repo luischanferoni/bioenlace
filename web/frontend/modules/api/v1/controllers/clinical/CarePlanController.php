@@ -3,6 +3,8 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
+use common\components\Clinical\CarePlan\Reminder\CarePlanReminderPreferenceService;
+use common\components\Clinical\CarePlan\Reminder\CarePlanReminderScheduleBuilder;
 use common\components\Clinical\Dto\CarePlanDto;
 use common\components\Clinical\Service\CarePlanLifecycleService;
 use common\components\Clinical\Service\CarePlanPresentationService;
@@ -20,6 +22,9 @@ use frontend\modules\api\v1\controllers\BaseController;
  * POST /api/v1/clinical/care-plans/<id>/revoke
  * POST /api/v1/clinical/care-plans/<id>/hold
  * POST /api/v1/clinical/care-plans/<id>/activate
+ * GET  /api/v1/clinical/care-plans/recordatorios-como-paciente
+ * GET  /api/v1/clinical/care-plans/preferencias-recordatorios-como-paciente
+ * PUT  /api/v1/clinical/care-plans/preferencias-recordatorios-como-paciente
  */
 class CarePlanController extends BaseController
 {
@@ -28,6 +33,8 @@ class CarePlanController extends BaseController
     private CarePlanLifecycleService $lifecycle;
     private PatientActiveCarePlanQuery $activeQuery;
     private CarePlanPresentationService $presentation;
+    private CarePlanReminderScheduleBuilder $reminderSchedule;
+    private CarePlanReminderPreferenceService $reminderPreferences;
 
     public function init()
     {
@@ -35,6 +42,8 @@ class CarePlanController extends BaseController
         $this->lifecycle = new CarePlanLifecycleService();
         $this->activeQuery = new PatientActiveCarePlanQuery();
         $this->presentation = new CarePlanPresentationService();
+        $this->reminderSchedule = new CarePlanReminderScheduleBuilder($this->activeQuery);
+        $this->reminderPreferences = new CarePlanReminderPreferenceService();
     }
 
     public function actions()
@@ -113,6 +122,102 @@ class CarePlanController extends BaseController
         }
 
         return $out;
+    }
+
+    /**
+     * Agenda de recordatorios derivada de care plans activos (cliente programa alarmas locales).
+     *
+     * GET /api/v1/clinical/care-plans/recordatorios-como-paciente
+     * Query opcional: care_plan_id
+     */
+    public function actionRecordatoriosComoPaciente(): array
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return $this->clinicalError(
+                'Solo pacientes autenticados pueden obtener recordatorios de tratamiento.',
+                null,
+                400
+            );
+        }
+
+        $carePlanId = (int) Yii::$app->request->get('care_plan_id', 0);
+        $filter = $carePlanId > 0 ? $carePlanId : null;
+        if ($filter !== null) {
+            [$plan, $err] = $this->requireCarePlanAccess($filter);
+            if ($err !== null) {
+                return $err;
+            }
+            if ((int) $plan->subject_persona_id !== $idPersona) {
+                return $this->clinicalError('No tiene permiso para este plan.', null, 403);
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Agenda de recordatorios',
+            'data' => $this->reminderSchedule->buildForPersona($idPersona, $filter),
+        ];
+    }
+
+    /**
+     * Preferencias de recordatorios (sincronización multi-dispositivo).
+     *
+     * GET /api/v1/clinical/care-plans/preferencias-recordatorios-como-paciente
+     */
+    public function actionPreferenciasRecordatoriosComoPaciente(): array
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return $this->clinicalError(
+                'Solo pacientes autenticados pueden consultar preferencias de recordatorios.',
+                null,
+                400
+            );
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Preferencias de recordatorios',
+            'data' => $this->reminderPreferences->exportForPersona($idPersona),
+        ];
+    }
+
+    /**
+     * Reemplazo parcial de preferencias (última escritura gana por ámbito).
+     *
+     * PUT /api/v1/clinical/care-plans/preferencias-recordatorios-como-paciente
+     */
+    public function actionActualizarPreferenciasRecordatoriosComoPaciente(): array
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return $this->clinicalError(
+                'Solo pacientes autenticados pueden guardar preferencias de recordatorios.',
+                null,
+                400
+            );
+        }
+
+        $body = Yii::$app->request->getBodyParams();
+        if (empty($body)) {
+            $body = Yii::$app->request->post();
+        }
+        if (!is_array($body)) {
+            return $this->clinicalError('Cuerpo JSON inválido', null, 400);
+        }
+
+        try {
+            $this->reminderPreferences->importForPersona($idPersona, $body);
+        } catch (\InvalidArgumentException $e) {
+            return $this->clinicalError($e->getMessage(), null, 400);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Preferencias guardadas',
+            'data' => $this->reminderPreferences->exportForPersona($idPersona),
+        ];
     }
 
     public function actionActive()

@@ -14,4 +14,11 @@ export 'assistant/assistant_envelope.dart';
 export 'assistant/asistente_service.dart';
 export 'clinical/care_plan_service.dart';
 export 'clinical/care_plan_ui.dart';
+export 'clinical/care_plan_reminder_api.dart';
+export 'clinical/care_plan_reminder_pref_sync.dart';
+export 'clinical/care_plan_reminder_bootstrap.dart';
+export 'clinical/care_plan_reminder_preferences.dart';
+export 'clinical/care_plan_local_reminder_service.dart';
+export 'clinical/care_plan_reminder_settings_tile.dart';
+export 'clinical/care_plan_reminder_plan_panel.dart';
 

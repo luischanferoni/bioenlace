@@ -26,7 +26,7 @@ class ServiceRequest extends ActiveRecord
             [['code_system'], 'string', 'max' => 64],
             [['display'], 'string', 'max' => 512],
             [['occurrence_datetime'], 'safe'],
-            [['note'], 'string'],
+            [['note', 'reminder_json'], 'string'],
         ];
     }
 

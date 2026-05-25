@@ -8,6 +8,7 @@ import '../utils/turno_resolucion_utils.dart';
 import 'alertas_screen.dart';
 import 'home_screen.dart';
 import 'chat_screen.dart';
+import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
 
 /// Pantalla principal del paciente con bottom nav: Inicio, Asistente, Configuración.
@@ -35,7 +36,28 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _initPush();
+    _initCarePlanReminders();
     _refreshAlertasCount();
+  }
+
+  void _initCarePlanReminders() {
+    CarePlanLocalReminderService.onNotificationTap = ({
+      required int carePlanId,
+      required int activityId,
+    }) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CarePlanDetailScreen(
+            planId: carePlanId,
+            authToken: widget.authToken,
+          ),
+        ),
+      );
+    };
+    CarePlanLocalReminderService.instance.syncFromApi(
+      authToken: widget.authToken,
+    );
   }
 
   Future<void> _initPush() async {

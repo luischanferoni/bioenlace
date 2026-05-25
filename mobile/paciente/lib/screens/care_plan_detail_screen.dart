@@ -87,6 +87,11 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
                         BioSpacing.gapH(BioSpacing.md),
                       ],
                       _buildResumen(context, _plan!),
+                      BioSpacing.gapH(BioSpacing.lg),
+                      CarePlanReminderPlanPanel(
+                        carePlanId: widget.planId,
+                        authToken: widget.authToken,
+                      ),
                     ],
                   ),
                 ),

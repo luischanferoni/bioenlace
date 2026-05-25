@@ -1,0 +1,29 @@
+intent_id: tratamiento.recordatorios-como-paciente
+version: 1
+
+action_name: "Recordatorios de tratamiento"
+description: "Activar alarmas locales de medicación y estudios del plan de tratamiento."
+rbac_route: "/api/clinical/care-plan/preferencias-recordatorios-como-paciente"
+keywords:
+  - recordatorios
+  - alarmas
+  - medicación
+  - tomar medicamento
+  - recordatorio de estudio
+  - horarios de tratamiento
+
+intent_semantics:
+  goal: >-
+    Configurar recordatorios locales de medicación y preparación de estudios del care plan activo.
+  how: >-
+    Abre la pantalla de configuración del paciente para activar recordatorios y ajustar horarios.
+  outcome:
+    - El paciente activa o desactiva alarmas en el dispositivo.
+
+subintents:
+  - id: abrir_configuracion
+    assistant_text: "Configurá tus recordatorios de tratamiento"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: clinical.care-plan.gestionar-recordatorios-como-paciente

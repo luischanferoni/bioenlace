@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../navigation/native_screen_router.dart';
 import '../services/chat_service.dart';
 import '../services/acciones_service.dart';
 import '../utils/turno_resolucion_utils.dart';
@@ -1747,9 +1748,13 @@ class ChatScreenState extends State<ChatScreen> {
         _showErrorSnackbar('Acción nativa sin screen_id para móvil.');
         return true;
       }
-      // TODO: mapear screen_id -> pantalla Flutter.
-      // Por ahora, avisar claramente en UI para no abrir navegador/webview.
-      _showErrorSnackbar('Pantalla nativa móvil pendiente: $screenId');
+      await NativeScreenRouter.open(
+        context,
+        screenId: screenId,
+        userId: widget.chatService.currentUserId,
+        userName: widget.chatService.currentUserName,
+        authToken: _asistenteService.authToken,
+      );
       return true;
     }
 

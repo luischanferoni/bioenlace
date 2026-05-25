@@ -105,6 +105,8 @@ class ConfiguracionScreen extends StatelessWidget {
                 },
           ),
           BioDivider.subtle(),
+          CarePlanReminderGlobalSwitch(authToken: authToken),
+          BioDivider.subtle(),
           _ConfigTile(
             icon: Icons.language_outlined,
             title: 'Idioma',

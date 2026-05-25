@@ -4,6 +4,7 @@ namespace console\controllers;
 
 use common\components\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
 use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\components\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
 use common\components\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
 use common\components\Clinical\Prescription\Support\PrescriptionDocumentSupport;
 use yii\console\Controller;
@@ -34,6 +35,7 @@ class ClinicalSeedController extends Controller
             'prescription-demo',
             'prescription-demo-remove',
             'prescription-demo-info',
+            'care-plan-reminder-demo',
         ], true)) {
             $opts[] = 'persona';
         }
@@ -353,6 +355,44 @@ class ClinicalSeedController extends Controller
         }
 
         $this->stdout("OK: receta demo eliminada para id_persona={$persona}.\n", Console::FG_GREEN);
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Añade dosage_json.timing a medicación del care plan demo (recordatorios locales).
+     *
+     * Uso: php yii clinical-seed/care-plan-reminder-demo --persona=920779
+     */
+    public function actionCarePlanReminderDemo(int $personaId = 0): int
+    {
+        $persona = $personaId > 0 ? $personaId : (int) $this->persona;
+        if ($persona <= 0) {
+            $this->stderr("Indicá id_persona: php yii clinical-seed/care-plan-reminder-demo 920779\n", Console::FG_RED);
+
+            return ExitCode::USAGE;
+        }
+
+        $result = (new CarePlanReminderDemoTimingService())->applyTimingToDemoCarePlan($persona);
+        if (($result['care_plan_id'] ?? null) === null) {
+            $this->stderr(
+                "No hay care plan demo para id_persona={$persona}. Ejecutá migración m260521_100009 o care-plan-demo-assign.\n",
+                Console::FG_RED
+            );
+
+            return ExitCode::DATAERR;
+        }
+
+        $this->stdout(
+            'OK: timing medication=' . ($result['updated_medication'] ?? 0)
+            . ', service=' . ($result['updated_service'] ?? 0)
+            . ", care_plan_id={$result['care_plan_id']}.\n",
+            Console::FG_GREEN
+        );
+        $this->stdout(
+            "GET /api/v1/clinical/care-plans/recordatorios-como-paciente\n",
+            Console::FG_YELLOW
+        );
 
         return ExitCode::OK;
     }

@@ -2,6 +2,8 @@
 
 namespace common\components\Clinical\Service;
 
+use common\components\Clinical\CarePlan\Reminder\ActivityReminderTimingParser;
+use common\components\Clinical\CarePlan\Reminder\ReminderTimingJsonBuilder;
 use common\components\Clinical\Enum\RequestStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
@@ -76,6 +78,7 @@ final class MedicationRequestService
         $mr->medication_code = isset($body['medication_code']) ? (string) $body['medication_code'] : null;
         $mr->medication_display = $body['medication_display'] ?? $body['display'] ?? null;
         $mr->dosage_text = $body['dosage_text'] ?? null;
+        $mr->dosage_json = $this->resolveDosageJson($body);
         $mr->authored_on = date('Y-m-d H:i:s');
         $mr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
         if (!$mr->save()) {
@@ -86,5 +89,35 @@ final class MedicationRequestService
         }
 
         return $mr;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function resolveDosageJson(array $body): ?string
+    {
+        if (isset($body['dosage_json'])) {
+            if (is_string($body['dosage_json'])) {
+                $json = trim($body['dosage_json']) !== '' ? $body['dosage_json'] : null;
+            } elseif (is_array($body['dosage_json'])) {
+                $json = json_encode($body['dosage_json'], JSON_UNESCAPED_UNICODE);
+            } else {
+                $json = null;
+            }
+        } else {
+            $json = (new ReminderTimingJsonBuilder())->fromRequestBody($body);
+        }
+
+        if ($json === null) {
+            return null;
+        }
+
+        if ((new ActivityReminderTimingParser())->parse($json) === null) {
+            throw new \InvalidArgumentException(
+                'dosage_json.timing inválido: use timeOfDay en formato HH:MM (ej. ["08:00","20:00"]).'
+            );
+        }
+
+        return $json;
     }
 }

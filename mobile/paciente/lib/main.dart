@@ -13,6 +13,7 @@ import 'screens/signup_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseBootstrap.ensureInitialized();
+  await bootstrapCarePlanReminders();
 
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('is_logged_in') ?? false;

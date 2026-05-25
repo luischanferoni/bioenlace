@@ -19,6 +19,9 @@ class CarePlanLocalReminderService {
   CarePlanLocalReminderService._();
   static final CarePlanLocalReminderService instance = CarePlanLocalReminderService._();
 
+  /// Alarmas locales solo en Android/iOS (flutter_local_notifications no soporta web).
+  static bool get isSupported => !kIsWeb;
+
   /// Registrado por la app host (paciente) para navegar al detalle del plan.
   static CarePlanReminderTapCallback? onNotificationTap;
 
@@ -29,6 +32,9 @@ class CarePlanLocalReminderService {
   bool _initialized = false;
 
   Future<void> ensureInitialized() async {
+    if (!isSupported) {
+      return;
+    }
     if (_initialized) {
       return;
     }
@@ -78,7 +84,7 @@ class CarePlanLocalReminderService {
   }
 
   Future<bool> requestPermissionIfNeeded() async {
-    if (kIsWeb) {
+    if (!isSupported) {
       return false;
     }
     final status = await Permission.notification.status;
@@ -90,17 +96,24 @@ class CarePlanLocalReminderService {
   }
 
   Future<void> cancelAll() async {
+    if (!isSupported) {
+      return;
+    }
     await ensureInitialized();
     await _plugin.cancelAll();
   }
 
   /// Sincroniza alarmas si el switch global está activo.
   Future<String?> syncFromApi({String? authToken, bool pullPrefsFirst = true}) async {
-    await ensureInitialized();
-
     if (pullPrefsFirst) {
       await CarePlanReminderPrefSync.pullFromServer(authToken: authToken);
     }
+
+    if (!isSupported) {
+      return null;
+    }
+
+    await ensureInitialized();
 
     final globalOn = await CarePlanReminderPreferences.isGlobalEnabled();
     if (!globalOn) {
@@ -146,6 +159,10 @@ class CarePlanLocalReminderService {
   }
 
   Future<int> _scheduleItem(Map<String, dynamic> item, {required int leadMinutes}) async {
+    if (!isSupported) {
+      return 0;
+    }
+
     final carePlanId = _asInt(item['carePlanId']);
     final activityId = _asInt(item['activityId']);
     if (carePlanId <= 0 || activityId <= 0) {

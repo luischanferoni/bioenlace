@@ -166,6 +166,14 @@ class _CarePlanReminderPlanPanelState extends State<CarePlanReminderPlanPanel> {
       );
     }
 
+    if (!CarePlanLocalReminderService.isSupported) {
+      return BioAlert.info(
+        message:
+            'Las alarmas de recordatorio están disponibles en la app para Android o iPhone. '
+            'En el navegador podés ver el plan; las preferencias se sincronizan al usar el celular.',
+      );
+    }
+
     if (!_globalOn) {
       return BioAlert.info(
         message: 'Activá "Recordatorios de tratamiento" en Configuración para usar alarmas de este plan.',

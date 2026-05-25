@@ -5,6 +5,9 @@ import 'care_plan_local_reminder_service.dart';
 
 /// Inicialización de zona horaria y plugin de notificaciones locales.
 Future<void> bootstrapCarePlanReminders() async {
+  if (!CarePlanLocalReminderService.isSupported) {
+    return;
+  }
   tz_data.initializeTimeZones();
   try {
     tz.setLocalLocation(tz.getLocation('America/Argentina/Buenos_Aires'));

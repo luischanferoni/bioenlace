@@ -42,6 +42,17 @@ class _CarePlanReminderGlobalSwitchState extends State<CarePlanReminderGlobalSwi
       _status = null;
     });
 
+    if (value && !CarePlanLocalReminderService.isSupported) {
+      if (!mounted) return;
+      setState(() {
+        _enabled = false;
+        _loading = false;
+        _status =
+            'Los recordatorios con alarma están disponibles en la app para Android o iPhone.';
+      });
+      return;
+    }
+
     if (value) {
       final ok = await CarePlanLocalReminderService.instance.requestPermissionIfNeeded();
       if (!ok) {
@@ -94,11 +105,15 @@ class _CarePlanReminderGlobalSwitchState extends State<CarePlanReminderGlobalSwi
                 )
               : const Icon(Icons.medication_outlined),
           title: const Text('Recordatorios de tratamiento'),
-          subtitle: const Text(
-            'Alarmas locales según tus planes activos (medicación con horario cargado).',
+          subtitle: Text(
+            CarePlanLocalReminderService.isSupported
+                ? 'Alarmas locales según tus planes activos (medicación y estudios con horario).'
+                : 'En el navegador no hay alarmas; usá la app en el celular.',
           ),
           value: _enabled,
-          onChanged: _loading ? null : _onChanged,
+          onChanged: _loading || !CarePlanLocalReminderService.isSupported
+              ? null
+              : _onChanged,
         ),
         if (_status != null && _status!.isNotEmpty)
           Padding(

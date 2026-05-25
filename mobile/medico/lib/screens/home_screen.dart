@@ -555,6 +555,16 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       return;
     }
+    try {
+      await _emergencyApi.iniciarAtencion(g.id);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo iniciar atención: $e')),
+        );
+      }
+      return;
+    }
     _verHistoriaClinica(
       g.idPersona,
       parent: 'GUARDIA',

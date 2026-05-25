@@ -74,7 +74,7 @@ Rutas y permisos ApiGhost: nombres explícitos (`triage-para-guardia`, `tablero-
 
 | Cliente | Fases | Notas |
 |---------|-------|-------|
-| Web `GuardiaController` | 2 | Tablero principal; ingreso puede migrar a API + vista delgada |
+| Web inicio `site/pacientes` (EMER) | 2 | Tablero + modal triage; sin vista `guardia/tablero` dedicada |
 | `mobile/medico` | 3 | Home EMER → cola priorizada → triage compacto → atender |
 | Web listado pacientes EMER | 2 | Reemplazar/ampliar datos de `PacientesController` vía mismo endpoint tablero |
 | Push | 4 | Opcional: `EMERGENCY_PATIENT_READY`, asignación al médico |

@@ -10,8 +10,8 @@ Que el **médico de guardia** pueda operar el turno completo desde el teléfono:
 - [x] Tablero en **Inicio** (`home_screen`) cuando `encounterClass == EMER`
 - [x] Orden por API (prioridad + ingreso); badge nivel con color Manchester
 - [x] Pantalla **Triage** (`emergency_triage_screen.dart`): nivel, motivo, TA/FC → `registrar-triage`
-- [ ] **Tomar caso** → `POST asignar` (Fase 4)
-- [x] **Atender** → `PatientTimelineScreen` con `parent: GUARDIA` si ya hay triage
+- [ ] **Tomar caso** → `POST asignar` (API lista; UI explícita opcional)
+- [x] **Atender** → `iniciar-atencion` + `PatientTimelineScreen` (`GUARDIA`)
 - [x] Pull-to-refresh + repoll ~30 s
 - [ ] Offline explícito
 - [x] Cambio de encounter en Configuración recrea Inicio (`MainScreen` refresh key)

@@ -114,6 +114,47 @@ class EmergencyGuardiaApi {
         .toList();
   }
 
+  Future<Map<String, dynamic>> iniciarAtencion(int guardiaId) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/iniciar-atencion',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: '{}',
+    );
+    final decoded = json.decode(response.body);
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        decoded is! Map<String, dynamic> ||
+        decoded['success'] != true) {
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error al iniciar atención') : 'Error',
+      );
+    }
+    return (decoded['data'] as Map<String, dynamic>?) ?? {};
+  }
+
+  Future<void> asignar({required int guardiaId, int? idPes}) async {
+    final body = <String, dynamic>{
+      if (idPes != null) 'id_profesional_efector_servicio': idPes,
+    };
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/asignar',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode(body),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final decoded = json.decode(response.body);
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error al asignar') : 'Error',
+      );
+    }
+  }
+
   Future<void> registrarTriage({
     required int guardiaId,
     required int level,

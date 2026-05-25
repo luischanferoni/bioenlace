@@ -6,12 +6,13 @@ Dar visibilidad a **dirección y calidad**: tiempos door-to-triage y door-to-doc
 
 ## Checklist implementación
 
-- [ ] `GuardiaTimingService`: calcular desde `guardia_circuito_event` (ingreso → triage → inicio_atencion → egreso)
-- [ ] API `GET /api/v1/emergency/indicadores/resumen` (rango fechas, `id_efector`)
-- [ ] API `GET /api/v1/emergency/indicadores/export` (CSV) — permiso restringido
-- [ ] Vista web `guardia/indicadores` (gráficos simples: barras por nivel, mediana tiempos)
-- [ ] Auditoría: quién cambió triage (historial si se permite re-triage con motivo)
-- [ ] Job nocturno opcional: materializar métricas en tabla `guardia_metrics_daily` si el volumen lo requiere
+- [x] Medianas desde eventos en `GuardiaIndicadoresService` (ingreso → triage → médico, día actual)
+- [x] API `GET /api/v1/clinical/emergency-guardia/indicadores-resumen`
+- [ ] API export CSV
+- [x] Resumen en cabecera del tablero (inicio web EMER)
+- [ ] Vista `guardia/indicadores` dedicada (no requerida si inicio basta)
+- [ ] Re-triage con historial
+- [ ] Job materialización diaria
 
 ## KPIs v1
 

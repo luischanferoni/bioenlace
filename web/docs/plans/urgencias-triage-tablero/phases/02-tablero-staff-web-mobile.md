@@ -9,7 +9,8 @@ Pantalla de **sala de guardia** para admisión, enfermería y coordinación: ver
 - [x] Tablero en **inicio web** (`site/pacientes` con EMER): `pacientes-listado.js` + plantillas + `guardia-tablero.css`
 - [x] Polling 30 s en web (EMER)
 - [x] Tarjetas: nivel/color, minutos, circuito, motivo triage, profesional, Atender / Triage
-- [ ] Vista dedicada `guardia/tablero` full-screen (opcional; ingreso/libro siguen en `guardia/index`)
+- [x] Sin vista dedicada (decisión producto): solo inicio `site/pacientes` EMER
+- [x] Modal Bootstrap de triage en inicio (sin salir de la página)
 - [ ] Acciones: asignar PES, llamar, derivación (Fase 4)
 - [ ] Filtros query en UI
 - [ ] Sonido SLA superado

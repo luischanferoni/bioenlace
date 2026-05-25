@@ -91,6 +91,54 @@ $this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
 
 <?= $this->render('_listado_templates') ?>
 
+<?php if ($esGuardia): ?>
+<div class="modal fade" id="guardia-triage-modal" tabindex="-1" aria-labelledby="guardiaTriageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="guardiaTriageModalLabel">Triage</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3" id="guardia-triage-paciente-nombre"></p>
+                <div class="mb-3">
+                    <label class="form-label">Prioridad (Manchester)</label>
+                    <div class="d-flex flex-wrap gap-2" id="guardia-triage-levels">
+                        <?php for ($n = 1; $n <= 5; $n++): ?>
+                        <input type="radio" class="btn-check" name="guardia_triage_level" id="guardia-triage-level-<?= $n ?>" value="<?= $n ?>"<?= $n === 3 ? ' checked' : '' ?>>
+                        <label class="btn btn-outline-secondary btn-sm" for="guardia-triage-level-<?= $n ?>"><?= $n ?></label>
+                        <?php endfor; ?>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="guardia-triage-reason" class="form-label">Motivo de consulta</label>
+                    <textarea class="form-control" id="guardia-triage-reason" rows="2" required></textarea>
+                </div>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <label class="form-label" for="guardia-triage-bp-sys">TA sist.</label>
+                        <input type="number" class="form-control form-control-sm" id="guardia-triage-bp-sys" min="0">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label" for="guardia-triage-bp-dia">TA diast.</label>
+                        <input type="number" class="form-control form-control-sm" id="guardia-triage-bp-dia" min="0">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label" for="guardia-triage-hr">FC</label>
+                        <input type="number" class="form-control form-control-sm" id="guardia-triage-hr" min="0">
+                    </div>
+                </div>
+                <div id="guardia-triage-error" class="alert alert-danger d-none mt-3 mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardia-triage-submit">Registrar triage</button>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <?php
 // Tras AppAsset: BioenlaceApiClient.mergeHeaders + native-page-bridge (BioenlaceNativePage).
 $jsDepends = [AppAsset::class];

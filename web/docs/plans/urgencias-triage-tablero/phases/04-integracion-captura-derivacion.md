@@ -6,14 +6,14 @@ Cerrar el circuito clínico-administrativo: vincular consulta EMER al episodio, 
 
 ## Checklist implementación
 
-- [ ] `POST iniciar-atencion`: crear o reutilizar `Consulta` con `parent_class = GUARDIA`, `parent_id`, encounter EMER; idempotente si ya existe consulta abierta
-- [ ] Sincronizar `guardia.estado` legacy `atendida` al guardar consulta / al iniciar según regla acordada
-- [ ] `POST derivar`: campos existentes (`id_efector_derivacion`, `condiciones_derivacion`, `notificar_internacion_id_efector`) + evento + cambio `circuito_estado`
-- [ ] `POST finalizar`: egreso administrativo; validar consulta cerrada si política del efector lo exige
-- [ ] Push (opcional): `EMERGENCY_ASSIGNED_TO_YOU` al asignar PES; `EMERGENCY_PATIENT_CRITICAL` nivel 1–2 (solo roles configurados)
-- [ ] UI JSON / intents (opcional): `urgencias.ver-tablero`, `urgencias.triage-paciente` en `Assistant/SubIntentEngine/schemas/intents/` + catálogo `ClinicalUiActionCatalog`
-- [ ] Web: botón “Atender” en tablero usa misma API que móvil
-- [ ] Deprecar duplicación `Guardia::footerTimeline` lógica en API-driven actions donde sea posible
+- [x] `POST iniciar-atencion`: circuito `en_atencion`, evento, `captura_url` (consulta al abrir historia)
+- [x] Sincronizar `guardia.estado` → `atendida` al iniciar atención
+- [x] `POST asignar` + `POST derivar` + `POST finalizar` (`GuardiaOperacionService`)
+- [ ] Push (opcional): `EMERGENCY_*`
+- [ ] UI JSON / intents asistente (opcional)
+- [x] Web: Atender → `iniciar-atencion`; Triage → modal + `registrar-triage`
+- [x] Móvil: Atender → `iniciar-atencion` + timeline
+- [ ] Deprecar `Guardia::footerTimeline` (legacy web)
 
 ## Derivación a internación
 

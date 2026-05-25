@@ -77,7 +77,10 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
 <template id="tpl-pacientes-guardias-wrap">
     <div class="card" data-role="guardias-wrap">
         <div class="card-header bg-light d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <h4 class="mb-0">Tablero de guardia</h4>
+            <div>
+                <h4 class="mb-0">Tablero de guardia</h4>
+                <p class="text-muted small mb-0 d-none" data-role="tablero-resumen"></p>
+            </div>
             <button type="button" class="btn btn-outline-secondary btn-sm" data-role="tablero-refresh">
                 <i class="bi bi-arrow-clockwise"></i> Actualizar
             </button>

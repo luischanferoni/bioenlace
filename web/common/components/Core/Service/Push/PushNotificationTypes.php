@@ -15,5 +15,8 @@ final class PushNotificationTypes
     public const TURNO_CONFIRMAR = 'TURNO_CONFIRMAR';
     public const TURNO_RETRASO_SOBRETURNO = 'TURNO_RETRASO_SOBRETURNO';
 
+    /** Resumen de atención ambulatoria publicado al paciente. */
+    public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
+
     public const GENERICO = 'GENERICO';
 }

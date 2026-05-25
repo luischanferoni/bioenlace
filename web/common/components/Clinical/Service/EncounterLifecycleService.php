@@ -3,6 +3,7 @@
 namespace common\components\Clinical\Service;
 
 use common\components\Clinical\Enum\EncounterStatus;
+use common\components\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
 use common\models\Clinical\Encounter;
 use common\models\Persona;
 use Yii;
@@ -46,6 +47,10 @@ final class EncounterLifecycleService
         $encounter->period_end = date('Y-m-d H:i:s');
         if (!$encounter->save(false, ['status', 'period_end', 'updated_at', 'updated_by'])) {
             throw new \RuntimeException('No se pudo finalizar el encounter.');
+        }
+
+        if ($encounter->encounter_class === Encounter::ENCOUNTER_CLASS_AMB) {
+            (new PatientEncounterSummaryPublishService())->schedulePublication($encounter);
         }
 
         return $encounter;

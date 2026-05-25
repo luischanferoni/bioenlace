@@ -6,16 +6,16 @@ Snapshot del resumen IA, endpoints paciente y job post-`close`.
 
 ## Checklist
 
-- [ ] Migración: `encounter_patient_summary` (o columnas en `encounter`: `patient_summary_text`, `patient_summary_published_at`, `patient_summary_version`)
-- [ ] `PatientEncounterSummaryBuilder` — lee `encounter.note`, metadatos efector/profesional, artefactos básicos
-- [ ] Hook en `EncounterLifecycleService::close` → encolar job con `run_at = now + Δ`
-- [ ] Job: validar `AMB` + `finished`; no publicar si cancelado/reabierto según regla
-- [ ] `GET listar-atenciones-como-paciente` (paginado, solo publicados o todos finished con flag)
-- [ ] `GET ver-resumen-como-paciente?encounter_id=`
-- [ ] `GET ultima-atencion-como-paciente`
-- [ ] RBAC rutas ApiGhost + migración auth_item
-- [ ] Reglas en `main.php`
-- [ ] Tests manuales: cerrar encounter demo con `note` poblado
+- [x] Migración: `encounter_patient_summary` + `encounter_patient_summary_publish_queue`
+- [x] `PatientEncounterSummaryBuilder` — `encounter.note`, efector, profesional, recetas emitidas, pedidos
+- [x] Hook en `EncounterLifecycleService::finalize` → cola T+3 min
+- [x] `php yii encounter-patient-summary/run` + `publish <id>`
+- [x] `GET listar-atenciones-como-paciente` (paginado, solo publicados)
+- [x] `GET ver-resumen-como-paciente?encounter_id=`
+- [x] `GET ultima-atencion-como-paciente`
+- [x] RBAC + rutas `main.php`
+- [x] Push `ENCOUNTER_SUMMARY_READY` al publicar (adelanto Fase 2)
+- [ ] Tests manuales: finalizar encounter AMB con `note` + cron run
 
 ## Contrato resumen (mínimo)
 

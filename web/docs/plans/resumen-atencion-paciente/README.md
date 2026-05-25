@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `resumen-atencion-paciente` |
-| Estado | Planificado — Fase 0 |
+| Estado | Fase 1 en curso (API + cola + push) |
 | Dueño | Equipo clínico / API / app paciente |
 
 ## Objetivo

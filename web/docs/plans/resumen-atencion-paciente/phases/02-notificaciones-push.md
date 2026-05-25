@@ -6,9 +6,9 @@ Avisar al paciente cuando el resumen está publicado (minutos después de finali
 
 ## Checklist
 
-- [ ] `PushNotificationTypes::ENCOUNTER_SUMMARY_READY`
-- [ ] Integrar en job de Fase 1: `PushNotificationSender` + payload `{ type, encounter_id }`
-- [ ] Fila en `persona_notificacion` (título, cuerpo corto, deep link data)
+- [x] `PushNotificationTypes::ENCOUNTER_SUMMARY_READY`
+- [x] Integrado en `PatientEncounterSummaryPublishService::publishEncounter`
+- [x] Fila en `persona_notificacion` vía `PushNotificationSender`
 - [ ] Deep link documentado para Flutter (`encounter_id`)
 - [ ] (Opcional) Segundo tipo `LAB_RESULT_READY` con `report_id` + `encounter_id` si no existe push paciente lab
 

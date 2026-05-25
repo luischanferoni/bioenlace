@@ -6,12 +6,13 @@ Generación **async** del expediente amplio para roles autorizados; **no** desca
 
 ## Checklist
 
-- [ ] Tabla cola `legal_record_export_request` (id_persona, solicitante, estado, path archivo, created_at, ready_at)
-- [ ] Servicio generación PDF/ZIP (alcance legal a definir con jurídico/clínica)
-- [ ] Rol RBAC dedicado (generar / descargar)
-- [ ] Job consola o worker: procesar cola, notificar staff (email o `persona_notificacion` interna)
-- [ ] Endpoint staff: solicitar, listar mis solicitudes, descargar cuando `ready`
-- [ ] Auditoría: quién solicitó y quién descargó
+- [x] Tabla cola `legal_record_export_request` + `legal_record_export_audit`
+- [x] Servicio generación PDF (`LegalRecordExportPdfService` + `LegalRecordExportDataCollector`)
+- [x] Permiso RBAC `ExpedienteLegalGenerar` + rutas ApiGhost
+- [x] Consola `php yii legal-record-export/run` | `process <id>`
+- [x] Endpoints staff: solicitar, listar mis solicitudes, ver estado, descargar
+- [x] Auditoría: SOLICITADO, GENERADO, DESCARGADO, FALLIDO
+- [x] Notificación staff `LEGAL_RECORD_EXPORT_READY` (push + bandeja)
 
 ## Fuera de alcance paciente
 

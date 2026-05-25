@@ -45,4 +45,4 @@ Tipo FCM: `ENCOUNTER_SUMMARY_READY` — payload `{ encounter_id }` (sin PHI en e
 
 ## Plan de trabajo
 
-Ver `web/docs/plans/resumen-atencion-paciente/` (Fases 3–4 cerradas; Fase 5 expediente legal staff pendiente).
+Ver `web/docs/plans/resumen-atencion-paciente/` y [expediente legal staff](./expediente-legal-staff.md) (Fase 5).

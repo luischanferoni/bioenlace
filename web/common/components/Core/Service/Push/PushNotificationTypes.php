@@ -18,5 +18,8 @@ final class PushNotificationTypes
     /** Resumen de atención ambulatoria publicado al paciente. */
     public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
 
+    /** Expediente legal PDF listo para descarga (staff solicitante). */
+    public const LEGAL_RECORD_EXPORT_READY = 'LEGAL_RECORD_EXPORT_READY';
+
     public const GENERICO = 'GENERICO';
 }

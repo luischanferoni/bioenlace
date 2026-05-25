@@ -13,7 +13,7 @@ Alinear producto, contenido del resumen y límites de seguridad antes de API.
 - [x] Expediente legal solo staff (Fase 5, cola async)
 - [ ] Validar con clínica: Δ en minutos (3 vs 5) y mensaje push
 - [ ] Validar: encounter sin `note` (solo artefactos) — copy UX
-- [ ] Rol staff para expediente legal (nombre permiso webvimark)
+- [x] Rol staff para expediente legal (`ExpedienteLegalGenerar` + rutas API)
 
 ## Criterio de cierre
 

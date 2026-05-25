@@ -6,12 +6,12 @@ Navegar entre atención, receta, pedidos y resultados (datos parciales + enlaces
 
 ## Checklist
 
-- [ ] Extender DTO resumen: `prescriptions[]`, `orders[]` (service_request por categoría)
-- [ ] CTAs en UI JSON / Flutter: ver receta, ver pedido, abrir care plan si aplica
-- [ ] Laboratorio: en `ver-informe-como-paciente`, bloque `relatedEncounter` (id, fecha, profesional, teaser narrative)
-- [ ] Derivaciones: enlazar `parent` / encounter hijo `finished` o turno futuro
-- [ ] Pedidos sin resultado aún: estado “pendiente” vs “con informe”
-- [ ] No duplicar lógica lab/receta — reutilizar endpoints existentes con `encounter_id` en query
+- [x] Extender DTO resumen: `prescriptions[]`, `orders[]`, `laboratoryReports[]`
+- [x] CTAs Flutter: ver receta / informe lab vía `UiJsonScreen` (`detailApiRoute`)
+- [x] Laboratorio: `ver-informe-como-paciente` con `related_encounter_*`
+- [ ] Derivaciones: enlazar `parent` / encounter hijo `finished` o turno futuro (opcional / siguiente iteración)
+- [x] Pedidos sin resultado: `resultStatus` pending vs available
+- [x] Reutilizar endpoints receta/lab existentes
 
 ## Modelo de enlaces (UI)
 

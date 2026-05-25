@@ -1,0 +1,28 @@
+intent_id: atencion.ver-ultima-como-paciente
+version: 1
+
+action_name: "Ver mi última atención"
+description: "Abre el resumen de la atención ambulatoria más reciente publicada."
+rbac_route: "/api/clinical/encounter/ultima-atencion-ui-como-paciente"
+keywords:
+  - última atención
+  - última consulta
+  - qué me dijeron
+  - resumen de la consulta
+  - mi última consulta
+
+intent_semantics:
+  goal: >-
+    Mostrar el resumen de la última atención ambulatoria finalizada.
+  how: >-
+    Carga directa del detalle de la atención más reciente.
+  outcome:
+    - El paciente revisa el resumen de su última consulta.
+
+subintents:
+  - id: ver_ultima
+    assistant_text: "Tu última atención"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: clinical.encounter.ultima-atencion-ui-como-paciente

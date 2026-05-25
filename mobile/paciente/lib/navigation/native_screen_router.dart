@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../screens/configuracion_screen.dart';
+import '../screens/encounter_summary_list_screen.dart';
 
 /// Traduce `client_open.mobile.screen_id` del asistente a pantallas Flutter.
 class NativeScreenRouter {
@@ -48,6 +49,10 @@ class NativeScreenRouter {
             onOpenAlertas: onOpenAlertas,
             alertasNoLeidas: alertasNoLeidas,
           ),
+        );
+      case 'encounter_summary_list':
+        return MaterialPageRoute(
+          builder: (_) => EncounterSummaryListScreen(authToken: authToken),
         );
       default:
         return null;

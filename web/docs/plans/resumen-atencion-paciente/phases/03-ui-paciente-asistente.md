@@ -6,14 +6,17 @@ Descubrimiento y lectura del resumen en app y asistente (patrón laboratorio/rec
 
 ## Checklist
 
-- [ ] UI JSON: `encounter/listar-atenciones-como-paciente`, `encounter/ver-resumen-como-paciente`
-- [ ] `ClinicalUiActionCatalog` + intents YAML:
+- [x] UI JSON: `mis-atenciones-como-paciente`, `ver-resumen-atencion-como-paciente`, `ultima-atencion-ui-como-paciente`
+- [x] JSON API: `listar-atenciones-como-paciente`, `ver-resumen-como-paciente`, `ultima-atencion-como-paciente`
+- [x] `ClinicalUiActionCatalog` + intents YAML:
   - `atencion.ver-ultima-como-paciente`
-  - `atencion.listar-atenciones-como-paciente` (o `atencion.mis-atenciones-como-paciente`)
-- [ ] Categoría en `CommonActionsService` (ej. “Mi salud” / “Atenciones”)
-- [ ] Flutter: pantalla detalle resumen; lista atenciones; handler push → detalle
-- [ ] `NativeScreenRouter` o ruta dedicada si aplica
-- [ ] Render `narrativeText` (markdown o texto plano con saltos de línea)
+  - `atencion.mis-atenciones-como-paciente`
+- [x] Categoría en `CommonActionsService` (“Mis atenciones”)
+- [x] RBAC UI: `m260601_100002_api_encounter_patient_summary_ui_rbac.php`
+- [x] Flutter: lista + detalle nativo; handler push `ENCOUNTER_SUMMARY_READY` → detalle
+- [x] `NativeScreenRouter`: `encounter_summary_list`
+- [x] Acceso desde Inicio (tarjeta “Mis atenciones”)
+- [x] Render `narrativeText` (texto plano con saltos de línea)
 
 ## Criterio de cierre
 

@@ -10,6 +10,7 @@ import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
+import 'encounter_summary_detail_screen.dart';
 
 /// Pantalla principal del paciente con bottom nav: Inicio, Asistente, Configuración.
 class MainScreen extends StatefulWidget {
@@ -63,6 +64,11 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _initPush() async {
     await PushNotificationService.instance.init(
       onOpen: (data) {
+        final encounterId = PushNotificationService.encounterIdDesdePush(data);
+        if (encounterId != null) {
+          _abrirResumenAtencion(encounterId);
+          return;
+        }
         final stub = PushNotificationService.turnoStubDesdePush(data);
         if (stub != null) {
           _abrirResolverTurno(stub);
@@ -88,6 +94,17 @@ class _MainScreenState extends State<MainScreen> {
       _selectedIndex = 1;
       _pendingResolver = PendingTurnoResolver(turno);
     });
+  }
+
+  void _abrirResumenAtencion(int encounterId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EncounterSummaryDetailScreen(
+          encounterId: encounterId,
+          authToken: widget.authToken,
+        ),
+      ),
+    );
   }
 
   void _onPendingResolverHandled() {

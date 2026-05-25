@@ -21,4 +21,5 @@ export 'clinical/care_plan_reminder_preferences.dart';
 export 'clinical/care_plan_local_reminder_service.dart';
 export 'clinical/care_plan_reminder_settings_tile.dart';
 export 'clinical/care_plan_reminder_plan_panel.dart';
+export 'clinical/encounter_patient_summary_api.dart';
 

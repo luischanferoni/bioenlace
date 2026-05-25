@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Laboratory\Service\LaboratoryReportPdfService;
 use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\components\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
 use common\components\Ui\UiScreenService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Person\Persona;
@@ -118,15 +119,41 @@ class LaboratoryResultController extends BaseController
 
             $pdfPath = '/api/v1/clinical/laboratory-result/descargar-pdf-como-paciente?report_id=' . $reportId;
 
+            $mensaje = $this->query->formatReportDetailMessage($serialized);
+            $related = (new PatientEncounterSummaryQueryService())->getRelatedEncounterForLabReport(
+                $idPersona,
+                $reportId
+            );
+            if ($related !== null) {
+                $mensaje .= "\n\n---\n";
+                $mensaje .= 'Atención vinculada: ';
+                if (!empty($related['efectorNombre'])) {
+                    $mensaje .= $related['efectorNombre'];
+                }
+                if (!empty($related['periodEnd'])) {
+                    $mensaje .= ' (' . $related['periodEnd'] . ')';
+                }
+                if (!empty($related['teaser'])) {
+                    $mensaje .= "\n" . $related['teaser'];
+                }
+                if (($related['published'] ?? false) === true) {
+                    $mensaje .= "\n(Abrí «Mis atenciones» en la app para ver el resumen completo.)";
+                }
+            }
+
             return UiScreenService::renderUiDefinition(
                 'laboratory-result',
                 'ver-informe-como-paciente',
                 array_merge($req->get(), ['report_id' => $reportId]),
                 [
                     'report_id' => (string) $reportId,
-                    'detalle_mensaje' => $this->query->formatReportDetailMessage($serialized),
+                    'detalle_mensaje' => $mensaje,
                     'pdf_url' => $pdfPath,
                     'filename' => 'informe-laboratorio-' . $reportId . '.pdf',
+                    'related_encounter_id' => $related !== null ? (string) ($related['encounterId'] ?? '') : '',
+                    'related_encounter_json' => $related !== null
+                        ? json_encode($related, JSON_UNESCAPED_UNICODE)
+                        : '',
                 ]
             );
         }

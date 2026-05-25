@@ -5,6 +5,8 @@ namespace common\components\Clinical\PatientSummary;
 use common\components\Clinical\Enum\EncounterStatus;
 use common\components\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use common\components\Clinical\Enum\RequestStatus;
+use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
@@ -53,7 +55,8 @@ final class PatientEncounterSummaryBuilder
             ],
             'profesional' => $this->resolveProfesionalDisplay($encounter),
             'prescriptions' => $this->listPrescriptions((int) $encounter->id),
-            'orders' => $this->listOrders((int) $encounter->id),
+            'orders' => $this->listOrders((int) $encounter->id, (int) $encounter->id),
+            'laboratoryReports' => $this->listLaboratoryReports((int) $encounter->id),
         ];
 
         return $dto;
@@ -100,6 +103,7 @@ final class PatientEncounterSummaryBuilder
                 'id' => (int) $rx->id,
                 'issuedAt' => $rx->issued_at ?? null,
                 'status' => (string) $rx->status,
+                'detailApiRoute' => '/api/v1/clinical/electronic-prescription/ver-receta-como-paciente?prescription_id=' . (int) $rx->id,
             ];
         }
 
@@ -109,8 +113,33 @@ final class PatientEncounterSummaryBuilder
     /**
      * @return list<array<string, mixed>>
      */
-    private function listOrders(int $encounterId): array
+    private function listLaboratoryReports(int $encounterId): array
     {
+        $out = [];
+        foreach ((new LaboratoryResultQueryService())->listForEncounter($encounterId) as $report) {
+            if (!is_array($report)) {
+                continue;
+            }
+            $out[] = [
+                'id' => (int) ($report['id'] ?? 0),
+                'display' => (string) ($report['display'] ?? 'Informe de laboratorio'),
+                'issuedAt' => $report['issuedAt'] ?? null,
+                'detailApiRoute' => '/api/v1/clinical/laboratory-result/ver-informe-como-paciente?report_id=' . (int) ($report['id'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function listOrders(int $encounterId, int $encounterIdForLab): array
+    {
+        $hasLabReport = DiagnosticReport::find()
+            ->where(['encounter_id' => $encounterIdForLab, 'deleted_at' => null])
+            ->exists();
+
         $rows = ServiceRequest::find()
             ->where([
                 'encounter_id' => $encounterId,
@@ -122,11 +151,16 @@ final class PatientEncounterSummaryBuilder
 
         $out = [];
         foreach ($rows as $sr) {
+            $category = (string) $sr->category;
+            $isLabLike = in_array($category, ['procedure', 'laboratory', 'lab'], true);
+            $resultStatus = $isLabLike && $hasLabReport ? 'available' : ($isLabLike ? 'pending' : 'n/a');
+
             $out[] = [
                 'id' => (int) $sr->id,
-                'category' => (string) $sr->category,
+                'category' => $category,
                 'display' => (string) ($sr->display ?? ''),
                 'note' => trim((string) ($sr->note ?? '')),
+                'resultStatus' => $resultStatus,
             ];
         }
 

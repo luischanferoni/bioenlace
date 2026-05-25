@@ -4,6 +4,7 @@ namespace common\components\Clinical\PatientSummary;
 
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;
+use common\models\Clinical\DiagnosticReport;
 use Yii;
 use yii\db\Query;
 
@@ -91,6 +92,47 @@ final class PatientEncounterSummaryQueryService
         }
 
         return $this->getDetailForPersona($idPersona, (int) $summary->encounter_id);
+    }
+
+    /**
+     * Teaser de la atención vinculada a un informe de laboratorio (Fase 4).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getRelatedEncounterForLabReport(int $idPersona, int $reportId): ?array
+    {
+        $report = DiagnosticReport::findOne([
+            'id' => $reportId,
+            'subject_persona_id' => $idPersona,
+            'deleted_at' => null,
+        ]);
+        if ($report === null || $report->encounter_id === null) {
+            return null;
+        }
+
+        $encounterId = (int) $report->encounter_id;
+        $detail = $this->getDetailForPersona($idPersona, $encounterId);
+        if ($detail === null) {
+            return [
+                'encounterId' => $encounterId,
+                'published' => false,
+                'teaser' => 'Atención del ' . ($report->issued_at ?? ''),
+            ];
+        }
+
+        $teaser = trim((string) ($detail['narrativeText'] ?? ''));
+        if ($teaser !== '') {
+            $teaser = mb_substr($teaser, 0, 120) . (mb_strlen($teaser) > 120 ? '…' : '');
+        }
+
+        return [
+            'encounterId' => $encounterId,
+            'published' => true,
+            'periodEnd' => $detail['periodEnd'] ?? null,
+            'efectorNombre' => $detail['efector']['nombre'] ?? null,
+            'profesionalDisplay' => $detail['profesional']['display'] ?? null,
+            'teaser' => $teaser !== '' ? $teaser : 'Ver atención donde se solicitó el estudio',
+        ];
     }
 
     /**

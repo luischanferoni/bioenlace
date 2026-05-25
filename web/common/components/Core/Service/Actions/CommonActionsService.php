@@ -126,6 +126,14 @@ final class CommonActionsService
                     'tratamiento.recordatorios-como-paciente',
                 ],
             ],
+            [
+                'id' => 'atenciones',
+                'titulo' => 'Mis atenciones',
+                'models' => [
+                    'atencion.ver-ultima-como-paciente',
+                    'atencion.mis-atenciones-como-paciente',
+                ],
+            ],
         ];
     }
 

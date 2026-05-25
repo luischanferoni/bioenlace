@@ -161,6 +161,16 @@ class PushNotificationService {
     }
   }
 
+  /// Resumen de atención publicado (`ENCOUNTER_SUMMARY_READY`).
+  static int? encounterIdDesdePush(Map<String, dynamic> data) {
+    if (data['type']?.toString() != 'ENCOUNTER_SUMMARY_READY') {
+      return null;
+    }
+    final raw = data['encounter_id']?.toString() ?? '';
+    final id = int.tryParse(raw);
+    return id != null && id > 0 ? id : null;
+  }
+
   /// Abre el flow adecuado según payload push (desde MainScreen).
   static Map<String, dynamic>? turnoStubDesdePush(Map<String, dynamic> data) {
     final type = data['type']?.toString() ?? '';

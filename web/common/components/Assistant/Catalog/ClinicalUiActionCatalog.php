@@ -131,6 +131,37 @@ final class ClinicalUiActionCatalog
                 ['pdf laboratorio', 'descargar informe']
             ),
             self::def(
+                'clinical.encounter.mis-atenciones-como-paciente',
+                'Ver mis atenciones (UI)',
+                'Listado de atenciones ambulatorias con resumen publicado.',
+                '/api/clinical/encounter/mis-atenciones-como-paciente',
+                ['mis atenciones', 'mis consultas', 'historial consultas'],
+                true
+            ),
+            self::def(
+                'clinical.encounter.ver-resumen-atencion-como-paciente',
+                'Detalle resumen de atención (UI)',
+                'Texto IA, recetas y pedidos de la atención elegida.',
+                '/api/clinical/encounter/ver-resumen-atencion-como-paciente',
+                ['detalle atención', 'resumen consulta'],
+                true
+            ),
+            self::def(
+                'clinical.encounter.ultima-atencion-ui-como-paciente',
+                'Última atención (UI)',
+                'Resumen de la atención ambulatoria más reciente.',
+                '/api/clinical/encounter/ultima-atencion-ui-como-paciente',
+                ['última atención', 'última consulta', 'qué me dijeron'],
+                true
+            ),
+            self::def(
+                'clinical.encounter.listar-atenciones-como-paciente',
+                'Listar atenciones (API)',
+                'JSON de atenciones publicadas para cliente nativo.',
+                '/api/clinical/encounter/listar-atenciones-como-paciente',
+                ['api atenciones paciente']
+            ),
+            self::def(
                 'clinical.electronic-prescription.mis-recetas-como-paciente',
                 'Ver recetas electrónicas (UI)',
                 'Listado UI JSON de recetas emitidas del paciente autenticado.',

@@ -1,0 +1,20 @@
+{
+  "ui_type": "ui_json",
+  "title": "Resumen de atención",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "resumen",
+      "title": "",
+      "text_field": "resumen_mensaje",
+      "text": ""
+    }
+  ]
+}

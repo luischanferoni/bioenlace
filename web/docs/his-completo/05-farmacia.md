@@ -4,12 +4,13 @@
 
 ## Lo que tenemos
 
-- [x] Prescripción en contexto clínico (consulta / internación).
+- [x] Prescripción y órdenes de medicación en atención (encounter / consulta / internación).
+- [x] Receta electrónica emitida con PDF para el paciente (ver módulo 06).
 - [x] Nomencladores y medicamentos codificados en parte del flujo.
 
 ## Lo que falta
 
-- [ ] Dispensación hospitalaria integrada con stock.
-- [ ] Validación farmacéutica y alertas clínicas centralizadas.
+- [ ] Dispensación hospitalaria integrada con stock y estado “dispensada”.
+- [ ] Validación farmacéutica centralizada y alertas de interacción en tiempo real.
 - [ ] Trazabilidad de lote y cadena de frío donde aplique.
-- [ ] Interfaz con receta electrónica nacional y farmacia comunitaria.
+- [ ] Cierre del circuito receta emitida → farmacia comunitaria / nacional.

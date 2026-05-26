@@ -2,13 +2,16 @@
 
 namespace common\models\busquedas;
 
+use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use common\models\DiagnosticoConsulta;
 
-class DiagnosticoConsultasBusqueda extends DiagnosticoConsulta
+class DiagnosticoConsultasBusqueda extends Model
 {
+    public $terminos_motivos;
+    public $id_servicio;
+
     public function rules()
     {
         return [
@@ -24,6 +27,7 @@ class DiagnosticoConsultasBusqueda extends DiagnosticoConsulta
     public function search($params, $servicio)
     {
         $encTable = Encounter::tableName();
+        $ccTable = Condition::tableName();
         $query = (new \yii\db\Query())
             ->select([
                 'id_servicio' => 'enc.service_id',
@@ -33,7 +37,7 @@ class DiagnosticoConsultasBusqueda extends DiagnosticoConsulta
                 'cantidad' => new \yii\db\Expression('count(enc.id)'),
             ])
             ->from(['enc' => $encTable])
-            ->innerJoin('condition c', 'c.encounter_id = enc.id')
+            ->innerJoin(['c' => $ccTable], 'c.encounter_id = enc.id AND c.deleted_at IS NULL')
             ->leftJoin('snomed_hallazgos sh', 'c.code = sh.conceptId')
             ->innerJoin('servicios s', 'enc.service_id = s.id_servicio')
             ->where(['enc.deleted_at' => null])

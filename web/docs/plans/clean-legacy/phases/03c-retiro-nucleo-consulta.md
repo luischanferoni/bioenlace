@@ -56,9 +56,6 @@
 - AR `Consulta` y `ConsultaBusqueda` marcados `@deprecated`; shim `existeConsultaPasePrevio` → `Encounter::findPasePrevioEncounter()`.
 - Detalle: [03c-paso8-retiro-shim-consulta.md](./03c-paso8-retiro-shim-consulta.md).
 
-## Paso 9+ (backlog)
+## Paso 9+ → Fase 03e
 
-- Eliminar AR `Consulta` y modelos hijos tras drop BD.
-- `ConsultasConfiguracion` → `EncounterDefinition` único en callers.
-- Vista `view_consulta_diagnostico` → FHIR `condition`.
-- Internación operativa: flows cambio cama / ingreso; mapa en inicio — ver [03d-internacion-mvc-retiro.md](./03d-internacion-mvc-retiro.md).
+Ver [03e-tablas-hijas-fhir.md](./03e-tablas-hijas-fhir.md) y [NEXT.md](../NEXT.md).

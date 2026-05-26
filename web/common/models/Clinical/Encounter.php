@@ -190,35 +190,48 @@ class Encounter extends ActiveRecord
         return $this->getConditions()->all();
     }
 
-    /** Motivos codificados legacy (`consultas_motivos.id_consulta` = encounter id). */
-    public function getMotivoConsulta(): \yii\db\ActiveQuery
-    {
-        return $this->hasMany(\common\models\ConsultaMotivos::class, ['id_consulta' => 'id']);
-    }
-
     public function getAtencionEnfermeria(): \yii\db\ActiveQuery
     {
         return $this->hasOne(\common\models\ConsultaAtencionesEnfermeria::class, ['encounter_id' => 'id']);
     }
 
-    /** Medicación legacy activa vinculada por encounter id en `id_consulta`. */
-    public function getMedicamentos(): \yii\db\ActiveQuery
+    /**
+     * Medicación activa (FHIR). Sustituye `getMedicamentos()` legacy.
+     *
+     * @return MedicationRequest[]
+     */
+    public function getMedicamentosActivos(): array
     {
-        return $this->hasMany(\common\models\ConsultaMedicamentos::class, ['id_consulta' => 'id'])
-            ->andOnCondition(['estado' => 'ACTIVO']);
+        return $this->getMedicationRequests()
+            ->andWhere(['deleted_at' => null])
+            ->all();
     }
 
-    /** Diagnósticos legacy para reporte farmacia (previo a FHIR). */
+    /** @deprecated Tabla `consultas_motivos` en retiro (03e). Usar {@see $reason_text}. */
+    public function getMotivoConsulta(): \yii\db\ActiveQuery
+    {
+        return $this->hasMany(\common\models\ConsultaMotivos::class, ['id_consulta' => 'id']);
+    }
+
+    /** @deprecated Usar {@see getMedicamentosActivos()} o {@see getMedicationRequests()}. */
+    public function getMedicamentos(): \yii\db\ActiveQuery
+    {
+        return $this->getMedicationRequests();
+    }
+
+    /** @deprecated Usar {@see getConditions()} / {@see getDiagnosticos()}. */
     public function getDiagnosticoConsultasLegacy(): \yii\db\ActiveQuery
     {
         return $this->hasMany(\common\models\DiagnosticoConsulta::class, ['id_consulta' => 'id']);
     }
 
+    /** @deprecated Odontología → {@see getConditions()} con nota odontology o Procedure ext (03e-5). */
     public function getOdontologiaDiagnosticos(): \yii\db\ActiveQuery
     {
         return $this->hasMany(\common\models\ConsultaOdontologiaDiagnosticos::class, ['id_consulta' => 'id']);
     }
 
+    /** @deprecated Odontología → {@see getServiceRequests()} / Procedure (03e-5). */
     public function getOdontologiaPracticas(): \yii\db\ActiveQuery
     {
         return $this->hasMany(\common\models\ConsultaOdontologiaPracticas::class, ['id_consulta' => 'id']);

@@ -5,6 +5,7 @@ namespace common\models;
 use Yii;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
+use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 
 /*
@@ -282,38 +283,48 @@ class DiagnosticoConsultaRepository
      */
     public static function saveDiagnosticosPrevios($consulta, $diagsp) {
         $encounterId = self::resolveEncounterId($consulta);
+        $encounter = Encounter::findOne($encounterId);
+        if ($encounter === null) {
+            throw new \InvalidArgumentException('Encounter not found.');
+        }
 
-        # Se borran los anteriore si fue una edición
-        DiagnosticoConsulta::deleteAll(
-            ['and',
-                ['id_consulta' => $encounterId],
-                ['not', ['root_id' => null]],
-            ]);
-        
-        foreach($diagsp as $dp) {
-            if($dp->resolve == 'N')
+        Condition::updateAll(
+            ['deleted_at' => date('Y-m-d H:i:s')],
+            [
+                'and',
+                ['encounter_id' => $encounterId],
+                ['like', 'note', '%"previo":true%', false],
+                ['deleted_at' => null],
+            ]
+        );
+
+        foreach ($diagsp as $dp) {
+            if ($dp->resolve == 'N') {
                 continue;
-            $d = new DiagnosticoConsulta();
-            $d->id_consulta = $encounterId;
-            $d->codigo = $dp->codigo;
-            $d->tipo_diagnostico = $dp->tipo_diagnostico;
-            $d->cronico = $dp->cronico;
-            $d->condition_clinical_status = $dp->new_cclinical_status;
-            $d->condition_verification_status = $dp->new_cverification_status;
-            $d->tipo_prestacion = $dp->tipo_prestacion;
-            $d->objeto_prestacion = $dp->objeto_prestacion;
-            $root_id = $dp->root_id === null? $dp->id: $dp->root_id;
-            $d->root_id = $root_id;
-            
-            if($dp->isCronico()) {
-                # si es cronico el estado no se puede editar,
-                # fijo el estado anterior definido.
-                $d->condition_clinical_status = $dp->condition_clinical_status;
-                $d->condition_verification_status = $dp->condition_verification_status;
             }
-            
-            if(!$d->save()) {
-                throw new \Exception("Error saving Diagnostico Previo.");
+            $condition = new Condition();
+            $condition->encounter_id = $encounterId;
+            $condition->subject_persona_id = (int) $encounter->subject_persona_id;
+            $condition->code = (string) $dp->codigo;
+            $condition->clinical_status = $dp->isCronico()
+                ? (string) $dp->condition_clinical_status
+                : (string) $dp->new_cclinical_status;
+            $condition->verification_status = $dp->isCronico()
+                ? (string) $dp->condition_verification_status
+                : (string) $dp->new_cverification_status;
+            $condition->diagnosis_role = $dp->tipo_prestacion ?? null;
+            $rootId = $dp->root_id === null ? $dp->id : $dp->root_id;
+            $condition->note = json_encode([
+                'previo' => true,
+                'cronico' => $dp->cronico,
+                'tipo_diagnostico' => $dp->tipo_diagnostico,
+                'objeto_prestacion' => $dp->objeto_prestacion,
+                'root_id' => $rootId,
+            ], JSON_UNESCAPED_UNICODE);
+            $condition->recorded_date = date('Y-m-d H:i:s');
+
+            if (!$condition->save()) {
+                throw new \Exception('Error saving Condition (diagnóstico previo).');
             }
         }
     }
@@ -326,11 +337,14 @@ class DiagnosticoConsultaRepository
      */
     public static function getDiagnosticos($consulta) {
         $encounterId = self::resolveEncounterId($consulta);
-        $query = DiagnosticoConsulta::find()
-            ->where(
-                "id_consulta = :consulta_id", 
-                [':consulta_id' => $encounterId])
-            ->andWhere('root_id IS NULL');
-        return $query->all();
+
+        return Condition::find()
+            ->where(['encounter_id' => $encounterId, 'deleted_at' => null])
+            ->andWhere([
+                'or',
+                ['note' => null],
+                ['not like', 'note', '%"previo":true%', false],
+            ])
+            ->all();
     }
 }

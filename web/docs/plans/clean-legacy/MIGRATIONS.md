@@ -6,7 +6,17 @@ Ejecutar desde `web/` (o ruta del proyecto Yii) con backup previo:
 php yii migrate --migrationPath=@common/migrations
 ```
 
-## Orden obligatorio (staging / producción con datos)
+## Estado
+
+Migraciones base **aplicadas** (incluye drop tabla padre `consultas`).
+
+**Pendiente de código antes de ejecutar:** `m260526_150002` (drop tablas hijas).
+
+**Puente derivaciones (si 150002 ya corrió):** `m260526_160001_recreate_consultas_derivaciones` — hasta cerrar 03e-1.
+
+---
+
+## Orden histórico (staging / producción con datos)
 
 | # | Migración | Qué hace |
 |---|-----------|----------|

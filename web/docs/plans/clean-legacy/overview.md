@@ -27,9 +27,10 @@ Quedaron capas **Yii MVC** (controllers, vistas, rutas API 410), widgets de inic
 | **02b** | Sub-controllers internación MVC clínico, facturación/reportes, encuesta parches | Parcial — clínico IMP 410 (03d); hcama/ingreso pendiente flow |
 | **03** | Desacople guardia (`Encounter`), huérfanos `Consulta*`; bloqueo núcleo `Consulta` documentado | Hecho (parcial) |
 | **03b** | Encuesta parches → `Encounter`, `ConsultaAtencionesEnfermeria.encounter_id`, constantes en turnos/listado | Hecho (parcial) |
-| **03c** | Retiro `Consulta` + derivaciones, autofacturación, `dropTable consultas` | En curso |
-| **03d** | Retiro MVC clínico internación → timeline + encounter IMP | Hecho (parcial; ver fase) |
-| **04** | Turnos MVC residual, nomenclador/referencias, RBAC web | Pendiente |
+| **03c** | Retiro `Consulta` + shim, drop tabla `consultas` | Hecho |
+| **03d** | Retiro MVC clínico internación → timeline + encounter IMP | Hecho |
+| **03e** | Tablas hijas legacy → FHIR + drop `m260526_150002` | **Activa** — [NEXT.md](./NEXT.md) |
+| **04** | Turnos MVC residual, RBAC web | Pendiente |
 
 ## Fuera de alcance (por ahora)
 

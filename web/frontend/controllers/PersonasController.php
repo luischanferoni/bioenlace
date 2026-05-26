@@ -39,7 +39,6 @@ use common\components\Person\Service\PersonaSignosVitalesService;
 use common\models\Percentilos;
 use common\models\ServiciosEfector;
 use common\models\ProfesionalEfectorServicio;
-use common\models\DiagnosticoConsulta;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
 use frontend\controllers\Model;

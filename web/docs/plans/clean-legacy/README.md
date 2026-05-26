@@ -3,14 +3,16 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `clean-legacy` |
-| Estado | En ejecución — Fase 03c (drop BD pendiente) + **03d** internación MVC clínico retirado |
+| Estado | **Fase 03e** — tablas hijas → FHIR. Ver [NEXT.md](./NEXT.md) |
 | Objetivo | Retirar MVC Yii, modelos, búsquedas y tablas que quedaron reemplazados por **API v1**, **UI JSON/flows** y dominio **FHIR** (`encounter`, `clinical/*`). |
 | Decisión base | [fhir-clinical.md](../../decisions/fhir-clinical.md) — sin retrocompat HTTP legacy de consulta |
 
 ## Índice
 
 - [overview.md](./overview.md) — alcance, reglas, fuera de alcance
-- [PROGRESS.md](./PROGRESS.md) — **seguimiento vivo** (checklist por ítem)
+- **[NEXT.md](./NEXT.md)** — **qué hacer ahora** (fase activa + orden)
+- [PROGRESS.md](./PROGRESS.md) — seguimiento vivo (checklist por ítem)
+- [MIGRATIONS.md](./MIGRATIONS.md) — migraciones BD
 - [phases/01-eliminacion-segura-y-fuerte.md](./phases/01-eliminacion-segura-y-fuerte.md)
 - [phases/02-covid-y-vistas-huerfanas.md](./phases/02-covid-y-vistas-huerfanas.md) — COVID + limpieza enfermería
 - [phases/03-consulta-desacople-y-huerfanos.md](./phases/03-consulta-desacople-y-huerfanos.md) — guardia → Encounter + huérfanos
@@ -18,6 +20,8 @@
 - [phases/03c-paso7-drop-consultas-audit.md](./phases/03c-paso7-drop-consultas-audit.md)
 - [phases/03c-paso8-retiro-shim-consulta.md](./phases/03c-paso8-retiro-shim-consulta.md)
 - [phases/03d-internacion-mvc-retiro.md](./phases/03d-internacion-mvc-retiro.md) — internación: timeline IMP, 410 sub-controllers
+- [phases/03e-tablas-hijas-fhir.md](./phases/03e-tablas-hijas-fhir.md) — **fase activa**
+- [phases/04-turnos-nomenclador-rbac.md](./phases/04-turnos-nomenclador-rbac.md)
 - Producto: [superficies-ui.md](../../producto/superficies-ui.md) — inicio vs captura vs flows (web = móvil)
 
 ## Reglas del programa

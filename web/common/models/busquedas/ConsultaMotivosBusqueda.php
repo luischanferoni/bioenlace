@@ -5,10 +5,12 @@ namespace common\models\busquedas;
 use common\models\Clinical\Encounter;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
-use common\models\ConsultaMotivos;
 
-class ConsultaMotivosBusqueda extends ConsultaMotivos
+class ConsultaMotivosBusqueda extends Model
 {
+    public $terminos_motivos;
+    public $id_servicio;
+
     public function rules()
     {
         return [
@@ -28,17 +30,16 @@ class ConsultaMotivosBusqueda extends ConsultaMotivos
             ->select([
                 'idservicio' => 'enc.service_id',
                 'nombre' => 's.nombre',
-                'concepto' => 'sh.conceptId',
-                'termino' => 'sh.term',
+                'concepto' => new \yii\db\Expression("''"),
+                'termino' => 'enc.reason_text',
                 'cantidad' => new \yii\db\Expression('count(enc.id)'),
             ])
             ->from(['enc' => $encTable])
-            ->innerJoin('consultas_motivos cm', 'cm.id_consulta = enc.id')
-            ->innerJoin('snomed_hallazgos sh', 'cm.codigo = sh.conceptId')
             ->innerJoin('servicios s', 'enc.service_id = s.id_servicio')
-            ->where(['IS NOT', 'sh.conceptId', null])
-            ->andWhere(['enc.deleted_at' => null])
-            ->groupBy(['enc.service_id', 'sh.conceptId', 'sh.term'])
+            ->where(['enc.deleted_at' => null])
+            ->andWhere(['not', ['enc.reason_text' => null]])
+            ->andWhere(['<>', 'enc.reason_text', ''])
+            ->groupBy(['enc.service_id', 's.nombre', 'enc.reason_text'])
             ->orderBy(['s.nombre' => SORT_ASC, 'cantidad' => SORT_DESC]);
 
         $dataProvider = new ActiveDataProvider([
@@ -51,7 +52,7 @@ class ConsultaMotivosBusqueda extends ConsultaMotivos
             return $dataProvider;
         }
 
-        $query->andFilterWhere(['like', 'sh.term', $this->terminos_motivos]);
+        $query->andFilterWhere(['like', 'enc.reason_text', $this->terminos_motivos]);
         $query->andFilterWhere(['enc.service_id' => $this->id_servicio]);
 
         return $dataProvider;

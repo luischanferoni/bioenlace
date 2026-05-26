@@ -1,8 +1,26 @@
 # Progreso — clean-legacy
 
-Última actualización: 2026-05-26 (drop `consultas` + limpieza AR)
+Última actualización: 2026-05-26
+
+**→ Fase activa y orden:** [NEXT.md](./NEXT.md) · Detalle 03e: [phases/03e-tablas-hijas-fhir.md](./phases/03e-tablas-hijas-fhir.md)
 
 Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
+
+---
+
+## Fase 03e — Tablas hijas → FHIR (activa)
+
+| Paso | Estado | Notas |
+|------|--------|-------|
+| 0 Nomenclador + reportes FHIR | [x] | Busquedas dx/motivos/alergias; farmacia |
+| 1 Derivaciones → referral | [ ] | Puente: `m260526_160001` si falta tabla |
+| 2 Diagnósticos → Condition | [x] | `DiagnosticoConsultaRepository` |
+| 3 Alergias → allergy_intolerance | [x] | AR + `AlergiasBusqueda` |
+| 4 Motivos SNOMED | [x] | Nomenclador vía `reason_text` |
+| 5 Odontología reportes | [ ] | Planilla C7 |
+| 6 Internación auxiliar | [ ] | Balance/régimen/suministro |
+| 7 Limpieza AR | [x] | Forms huérfanos, evolución/síntomas/obstetricia, dead code IA |
+| 8 Drop hijas `m260526_150002` | [ ] | Tras smoke |
 
 ---
 

@@ -93,7 +93,7 @@ use common\models\Servicio;
         $modelPersona = $persona::findOne($record['id_persona']);
         $encounterId = (int) ($record['encounter_id'] ?? $record['id_consulta']);
         $modelEncounter = Encounter::findOne($encounterId);
-        $diagnosticosConsulta = $modelEncounter ? $modelEncounter->diagnosticoConsultasLegacy : [];
+        $diagnosticosConsulta = $modelEncounter ? $modelEncounter->diagnosticos : [];
         $practicasConsulta = $modelEncounter ? $modelEncounter->practicasPostDiagnostico : [];
         $domicilio = ($modelPersona->getDomicilioActivo()) ? $modelPersona->getDomicilioActivo()->getDomicilioCompleto() : "No especificado.";
         $pProf = $modelEncounter ? $modelEncounter->profesionalPes : null;
@@ -151,31 +151,18 @@ use common\models\Servicio;
                 $diagnosticos = '';
                 if (count($diagnosticosConsulta) > 0) {
                     foreach ($diagnosticosConsulta as $diagnostico) {
-                        $term = isset($diagnostico->codigoSnomed->term) ? $diagnostico->codigoSnomed->term : '';
-                        $diagnosticos .= '<p><h4>' . $term . '</h4>';
-                        if ($diagnostico->medicamentos) {
-                            $diagnosticos .= '<ol>';
-                            foreach ($diagnostico->medicamentos as $medicamento) {
-                                $diagnosticos .= '<li>' . $medicamento->snomedMedicamento->term . '</li>';
-                            }
-                            $diagnosticos .= '</ol>';
-                        } else {
-                            $diagnosticos .= '<p><b>sin tratamiento indicado</b></p>';
-                        }
-                        $diagnosticos .= '</p>';
+                        $term = $diagnostico->display ?: $diagnostico->code ?: '';
+                        $diagnosticos .= '<p><h4>' . htmlspecialchars($term) . '</h4></p>';
                     }
-                } elseif ($modelEncounter) {
-                    foreach ($modelEncounter->conditions as $condition) {
-                        $diagnosticos .= '<p><h4>' . ($condition->display ?: $condition->code) . '</h4></p>';
-                    }
-                    $meds = $modelEncounter->medicationRequests;
+                    $meds = $modelEncounter ? $modelEncounter->medicationRequests : [];
                     if (count($meds) > 0) {
                         $diagnosticos .= '<ol>';
                         foreach ($meds as $medicamento) {
-                            $diagnosticos .= '<li>' . ($medicamento->medication_display ?: $medicamento->medication_code) . '</li>';
+                            $label = $medicamento->medication_display ?? $medicamento->display ?? $medicamento->medication_code ?? $medicamento->code ?? '';
+                            $diagnosticos .= '<li>' . htmlspecialchars((string) $label) . '</li>';
                         }
                         $diagnosticos .= '</ol>';
-                    } elseif ($diagnosticos === '') {
+                    } else {
                         $diagnosticos .= '<p><b>sin tratamiento indicado</b></p>';
                     }
                 }

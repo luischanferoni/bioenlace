@@ -10,8 +10,8 @@ use common\components\Logging\ConsultaLogger;
 use common\components\Terminology\Snomed\DeferredSnomedProcessor;
 
 /**
- * Análisis IA y persistencia de consultas (agnóstico de capa HTTP).
- * El controller API arma el body, llama aquí y aplica statusCode según __statusCode en la respuesta.
+ * AnÃ¡lisis IA y persistencia de consultas (agnÃ³stico de capa HTTP).
+ * El controller API arma el body, llama aquÃ­ y aplica statusCode segÃºn __statusCode en la respuesta.
  */
 class ConsultaProcesamientoService extends Component
 {
@@ -45,7 +45,7 @@ class ConsultaProcesamientoService extends Component
                 return [
                     '__statusCode' => 400,
                     'success' => false,
-                    'message' => 'Servicio no encontrado. Por favor, verifique la configuración.',
+                    'message' => 'Servicio no encontrado. Por favor, verifique la configuraciÃ³n.',
                     'errors' => null,
                 ];
             }
@@ -90,14 +90,14 @@ class ConsultaProcesamientoService extends Component
             // $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
             // if ($esSimple) {
             //     $logger->registrar(
-            //         'ANÁLISIS SIMPLE',
+            //         'ANÃLISIS SIMPLE',
             //         $textoProcesado,
             //         null,
             //         ['metodo' => 'ConsultaClassifier::procesarConsultaSimple']
             //     );
             //     $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
             //     $logger->registrar(
-            //         'ANÁLISIS SIMPLE',
+            //         'ANÃLISIS SIMPLE',
             //         null,
             //         'Consulta simple procesada sin GPU',
             //         [
@@ -108,7 +108,7 @@ class ConsultaProcesamientoService extends Component
             // } else {
 
             $logger->registrar(
-                'ANÁLISIS IA',
+                'ANÃLISIS IA',
                 $textoProcesado,
                 null,
                 ['metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA']
@@ -117,16 +117,16 @@ class ConsultaProcesamientoService extends Component
             $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
 
             $logger->registrar(
-                'ANÁLISIS IA',
+                'ANÃLISIS IA',
                 null,
-                $resultadoIA ? 'Análisis completado' : 'Error en análisis',
+                $resultadoIA ? 'AnÃ¡lisis completado' : 'Error en anÃ¡lisis',
                 [
                     'metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA',
                     'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
                 ]
             );
 
-            // } // al reactivar if ($esSimple) … else { … }, descomentar este cierre antes de $datosConSnomed
+            // } // al reactivar if ($esSimple) â€¦ else { â€¦ }, descomentar este cierre antes de $datosConSnomed
 
             $datosConSnomed = null;
             $estadisticasSnomed = null;
@@ -177,7 +177,7 @@ class ConsultaProcesamientoService extends Component
                     <div class="mt-2">
                         <small class="text-muted">
                             <i class="bi bi-info-circle me-1"></i>
-                            Las palabras subrayadas han sido corregidas automáticamente
+                            Las palabras subrayadas han sido corregidas automÃ¡ticamente
                         </small>
                     </div>
                 </div>
@@ -228,7 +228,7 @@ HTML;
             return [
                 '__statusCode' => 500,
                 'success' => false,
-                'message' => 'Ocurrió un error al procesar la consulta. Por favor, intente nuevamente en unos momentos. Si el problema persiste, contacte al soporte técnico.',
+                'message' => 'OcurriÃ³ un error al procesar la consulta. Por favor, intente nuevamente en unos momentos. Si el problema persiste, contacte al soporte tÃ©cnico.',
                 'errors' => YII_DEBUG ? [
                     'error' => $e->getMessage(),
                     'file' => $e->getFile(),
@@ -250,7 +250,7 @@ HTML;
             return [
                 '__statusCode' => 500,
                 'success' => false,
-                'message' => 'Ocurrió un error al guardar el encounter. Por favor, intente nuevamente.',
+                'message' => 'OcurriÃ³ un error al guardar el encounter. Por favor, intente nuevamente.',
                 'errors' => YII_DEBUG ? [
                     'error' => $e->getMessage(),
                     'file' => $e->getFile(),
@@ -270,8 +270,8 @@ HTML;
                 return [
                     'datosExtraidos' => [
                         'Error' => [
-                            'texto' => 'Error en la configuración del sistema. Por favor, contacte al administrador.',
-                            'detalle' => 'No se pudo procesar la consulta debido a un error en la configuración.',
+                            'texto' => 'Error en la configuraciÃ³n del sistema. Por favor, contacte al administrador.',
+                            'detalle' => 'No se pudo procesar la consulta debido a un error en la configuraciÃ³n.',
                             'tipo' => 'error_configuracion',
                         ],
                     ],
@@ -298,8 +298,8 @@ HTML;
             return [
                 'datosExtraidos' => [
                     'Error' => [
-                        'texto' => 'Ocurrió un error al procesar la consulta.',
-                        'detalle' => 'Por favor, intente nuevamente. Si el problema persiste, contacte al soporte técnico.',
+                        'texto' => 'OcurriÃ³ un error al procesar la consulta.',
+                        'detalle' => 'Por favor, intente nuevamente. Si el problema persiste, contacte al soporte tÃ©cnico.',
                         'tipo' => 'error_sistema',
                     ],
                 ],
@@ -331,9 +331,9 @@ HTML;
 
                         if ($logger) {
                             $logger->registrar(
-                                'VALIDACIÓN',
+                                'VALIDACIÃ“N',
                                 null,
-                                "Categoría requerida faltante: {$categoria['titulo']}",
+                                "CategorÃ­a requerida faltante: {$categoria['titulo']}",
                                 [
                                     'metodo' => 'ConsultaProcesamientoService::generateAnalysisHtml',
                                     'tipo' => 'categoria_requerida_faltante',
@@ -350,9 +350,9 @@ HTML;
 
             if ($logger) {
                 $logger->registrar(
-                    'VALIDACIÓN',
+                    'VALIDACIÃ“N',
                     null,
-                    $tieneDatosFaltantes ? 'Se detectaron datos faltantes' : 'Validación completada sin datos faltantes',
+                    $tieneDatosFaltantes ? 'Se detectaron datos faltantes' : 'ValidaciÃ³n completada sin datos faltantes',
                     [
                         'metodo' => 'ConsultaProcesamientoService::generateAnalysisHtml',
                         'tiene_datos_faltantes' => $tieneDatosFaltantes,
@@ -399,16 +399,16 @@ HTML;
             return null;
         }
 
-        $prompt = "Extrae datos en JSON. Categorías: " . $categoriasTexto . ". Sin datos: [].
+        $prompt = "Extrae datos en JSON. CategorÃ­as: " . $categoriasTexto . ". Sin datos: [].
 
-IMPORTANTE: Genera un JSON completo y válido. Asegúrate de cerrar todas las llaves, corchetes y comillas.
+IMPORTANTE: Genera un JSON completo y vÃ¡lido. AsegÃºrate de cerrar todas las llaves, corchetes y comillas.
 
 Formato:
 {\"datosExtraidos\":{\"categoria\":[\"valor\"]}}
 
 Texto: \"" . $texto . "\"
 
-Responde SOLO con el JSON, sin texto adicional antes o después.";
+Responde SOLO con el JSON, sin texto adicional antes o despuÃ©s.";
 
         return [
             'prompt' => $prompt,
@@ -455,284 +455,4 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
 
         return substr($texto, 0, -2);
     }
-
-    private function guardarDatosCategoria($modelConsulta, $nombreModelo, $datosCategoria, $tituloCategoria, $pasoConfig = null)
-    {
-        $claseModelo = "\\common\\models\\{$nombreModelo}";
-
-        if (!class_exists($claseModelo)) {
-            throw new \Exception("Modelo {$nombreModelo} no existe");
-        }
-
-        $relacion = $this->obtenerRelacionConsulta($nombreModelo);
-        $modelosExistentes = [];
-        if ($relacion && method_exists($modelConsulta, $relacion)) {
-            $modelosExistentes = $modelConsulta->$relacion;
-            if (!is_array($modelosExistentes)) {
-                $modelosExistentes = $modelosExistentes ? [$modelosExistentes] : [];
-            }
-        }
-
-        $idsGuardados = [];
-        foreach ($modelosExistentes as $modelo) {
-            if (isset($modelo->id)) {
-                $idsGuardados[] = $modelo->id;
-            }
-        }
-
-        $nuevosIds = [];
-
-        switch ($nombreModelo) {
-            case 'ConsultaMedicamentos':
-                $nuevosIds = $this->guardarMedicamentos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig);
-                break;
-            case 'ConsultaSintomas':
-            case 'ConsultaMotivos':
-                $nuevosIds = $this->guardarSintomasOMotivos($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig);
-                break;
-            case 'ConsultaPracticas':
-            case 'ConsultaPracticasOftalmologia':
-                $nuevosIds = $this->guardarPracticas($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig);
-                break;
-            case 'ConsultaDiagnosticos':
-                $nuevosIds = $this->guardarDiagnosticos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig);
-                break;
-            default:
-                $nuevosIds = $this->guardarGenerico($modelConsulta, $claseModelo, $datosCategoria, $modelosExistentes, $pasoConfig);
-                break;
-        }
-
-        $idsAEliminar = array_diff($idsGuardados, $nuevosIds);
-        if (!empty($idsAEliminar) && method_exists($claseModelo, 'hardDeleteGrupo')) {
-            $claseModelo::hardDeleteGrupo($modelConsulta->id_consulta, $idsAEliminar);
-        }
-    }
-
-    private function obtenerRelacionConsulta($nombreModelo)
-    {
-        $mapa = [
-            'ConsultaMedicamentos' => 'medicamentos',
-            'ConsultaSintomas' => 'sintomas',
-            'ConsultaMotivos' => 'motivoConsulta',
-            'ConsultaPracticas' => 'practicasPostDiagnostico',
-            'ConsultaPracticasOftalmologia' => 'oftalmologiasDP',
-            'ConsultaDiagnosticos' => 'diagnosticos',
-        ];
-
-        return $mapa[$nombreModelo] ?? null;
-    }
-
-    private function guardarMedicamentos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig = null)
-    {
-        $nuevosIds = [];
-
-        if (!is_array($datosCategoria)) {
-            return $nuevosIds;
-        }
-
-        foreach ($datosCategoria as $medicamentoData) {
-            $modelo = new \common\models\ConsultaMedicamentos();
-
-            if (is_array($medicamentoData)) {
-                $this->mapearDatosAModelo($modelo, $medicamentoData, $pasoConfig, [
-                    'id_snomed_medicamento' => ['id_snomed_medicamento', 'snomed_code', 'codigo_snomed', 'conceptId'],
-                    'cantidad' => ['Cantidad del medicamento', 'cantidad', 'quantity'],
-                    'frecuencia' => ['Frecuencia de administracion', 'frecuencia', 'frequency'],
-                    'durante' => ['Duracion del tratamiento', 'durante', 'duration', 'duracion'],
-                    'indicaciones' => ['indicaciones', 'indicacion', 'instructions'],
-                ]);
-
-                $termino = $medicamentoData['Nombre del medicamento'] ?? $medicamentoData['termino'] ?? $medicamentoData['medicamento'] ?? null;
-                $codigoSnomed = $modelo->id_snomed_medicamento;
-
-                if ($termino && $codigoSnomed) {
-                    \common\models\snomed\SnomedMedicamentos::crearSiNoExiste($codigoSnomed, $termino);
-                }
-            }
-
-            $modelo->id_consulta = $modelConsulta->id_consulta;
-            $modelo->estado = \common\models\ConsultaMedicamentos::ESTADO_ACTIVO;
-
-            if ($modelo->save()) {
-                $nuevosIds[] = $modelo->id;
-            }
-        }
-
-        return $nuevosIds;
-    }
-
-    private function guardarSintomasOMotivos($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig = null)
-    {
-        $nuevosIds = [];
-
-        if (!is_array($datosCategoria)) {
-            return $nuevosIds;
-        }
-
-        $claseModelo = "\\common\\models\\{$nombreModelo}";
-
-        foreach ($datosCategoria as $item) {
-            $modelo = new $claseModelo();
-
-            if (is_string($item)) {
-                $modelo->codigo = null;
-            } elseif (is_array($item)) {
-                $this->mapearDatosAModelo($modelo, $item, $pasoConfig, [
-                    'codigo' => ['codigo', 'id_snomed', 'snomed_code', 'conceptId', 'codigo_snomed'],
-                ]);
-
-                $termino = $item['termino'] ?? $item['texto'] ?? $item['nombre'] ?? null;
-                $codigoSnomed = $modelo->codigo;
-
-                if ($termino && $codigoSnomed && $nombreModelo === 'ConsultaSintomas') {
-                    \common\models\snomed\SnomedProblemas::crearSiNoExiste($codigoSnomed, $termino);
-                }
-            }
-
-            $modelo->id_consulta = $modelConsulta->id_consulta;
-            if ($nombreModelo === 'ConsultaMotivos') {
-                $modelo->origen = \common\models\ConsultaMotivos::ORIGEN_MEDICO;
-            }
-
-            if ($modelo->save()) {
-                $nuevosIds[] = $modelo->id;
-            }
-        }
-
-        return $nuevosIds;
-    }
-
-    private function guardarPracticas($modelConsulta, $datosCategoria, $nombreModelo, $modelosExistentes, $pasoConfig = null)
-    {
-        $nuevosIds = [];
-
-        if (!is_array($datosCategoria)) {
-            return $nuevosIds;
-        }
-
-        $claseModelo = "\\common\\models\\{$nombreModelo}";
-
-        foreach ($datosCategoria as $practicaData) {
-            $modelo = new $claseModelo();
-
-            if (is_string($practicaData)) {
-                $modelo->codigo = null;
-            } elseif (is_array($practicaData)) {
-                $this->mapearDatosAModelo($modelo, $practicaData, $pasoConfig, [
-                    'codigo' => ['codigo', 'id_snomed', 'snomed_code', 'conceptId', 'codigo_snomed'],
-                ]);
-            }
-
-            $modelo->id_consulta = $modelConsulta->id_consulta;
-
-            if ($modelo->save()) {
-                $nuevosIds[] = $modelo->id;
-            }
-        }
-
-        return $nuevosIds;
-    }
-
-    private function guardarDiagnosticos($modelConsulta, $datosCategoria, $modelosExistentes, $pasoConfig = null)
-    {
-        $nuevosIds = [];
-
-        if (!is_array($datosCategoria)) {
-            return $nuevosIds;
-        }
-
-        foreach ($datosCategoria as $diagnosticoData) {
-            $modelo = new \common\models\DiagnosticoConsulta();
-
-            if (is_string($diagnosticoData)) {
-                $modelo->codigo = null;
-            } elseif (is_array($diagnosticoData)) {
-                $this->mapearDatosAModelo($modelo, $diagnosticoData, $pasoConfig, [
-                    'codigo' => ['codigo', 'codigo_cie10', 'cie10', 'id_cie10'],
-                ]);
-            }
-
-            $modelo->id_consulta = $modelConsulta->id_consulta;
-
-            if ($modelo->save()) {
-                $nuevosIds[] = $modelo->id;
-            }
-        }
-
-        return $nuevosIds;
-    }
-
-    private function guardarGenerico($modelConsulta, $claseModelo, $datosCategoria, $modelosExistentes, $pasoConfig = null)
-    {
-        $nuevosIds = [];
-
-        if (!is_array($datosCategoria)) {
-            return $nuevosIds;
-        }
-
-        foreach ($datosCategoria as $item) {
-            $modelo = new $claseModelo();
-
-            if (is_array($item)) {
-                if ($pasoConfig) {
-                    $this->mapearDatosAModelo($modelo, $item, $pasoConfig);
-                } else {
-                    foreach ($item as $key => $value) {
-                        if ($modelo->hasAttribute($key)) {
-                            $modelo->$key = $value;
-                        }
-                    }
-                }
-            }
-
-            if ($modelo->hasAttribute('id_consulta')) {
-                $modelo->id_consulta = $modelConsulta->id_consulta;
-            }
-
-            if ($modelo->save()) {
-                $nuevosIds[] = $modelo->id ?? $modelo->primaryKey;
-            }
-        }
-
-        return $nuevosIds;
-    }
-
-    private function mapearDatosAModelo($modelo, $datos, $pasoConfig = null, $mapaCampos = null)
-    {
-        if ($pasoConfig && isset($pasoConfig['campos'])) {
-            foreach ($pasoConfig['campos'] as $campoConfig) {
-                $nombreCampo = $campoConfig['nombre'] ?? null;
-                $fuentesDatos = $campoConfig['fuentes'] ?? [];
-
-                if ($nombreCampo && $modelo->hasAttribute($nombreCampo)) {
-                    foreach ($fuentesDatos as $fuente) {
-                        if (isset($datos[$fuente])) {
-                            $modelo->$nombreCampo = $datos[$fuente];
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if ($mapaCampos) {
-            foreach ($mapaCampos as $campoModelo => $fuentesPosibles) {
-                if ($modelo->hasAttribute($campoModelo)) {
-                    foreach ($fuentesPosibles as $fuente) {
-                        if (isset($datos[$fuente])) {
-                            $modelo->$campoModelo = $datos[$fuente];
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        foreach ($datos as $key => $value) {
-            if ($modelo->hasAttribute($key) && !isset($modelo->$key)) {
-                $modelo->$key = $value;
-            }
-        }
-    }
 }
-

@@ -65,6 +65,9 @@ final class InpatientClinicalQuery
         $medications = $this->listMedications($encounterIds, $carePlanIds);
         $practices = $this->listServiceRequests($encounterIds, $carePlanIds);
         $conditions = $this->listConditions($encounterIds);
+        $aux = new InpatientEncounterAuxService();
+        $internacionId = $internacion ? (int) $internacion->id : (int) $episode->internacion_id;
+        $internacionModel = $internacion ?? SegNivelInternacion::findOne($internacionId);
 
         $planDtos = [];
         foreach ($carePlans as $plan) {
@@ -79,6 +82,25 @@ final class InpatientClinicalQuery
             'medicationRequests' => $medications,
             'serviceRequests' => $practices,
             'conditions' => $conditions,
+            'fluidBalances' => $internacionModel
+                ? array_map(static fn ($row) => [
+                    'id' => (int) $row->id,
+                    'encounterId' => (int) $row->id_consulta,
+                    'fecha' => $row->fecha,
+                    'tipoRegistro' => $row->tipo_registro,
+                    'cantidad' => $row->cantidad,
+                    'descripcion' => $row->getCodigoRegistroDescription(),
+                ], $aux->listFluidBalancesForInternacion($internacionModel))
+                : [],
+            'nutritionOrders' => $internacionModel
+                ? array_map(static fn ($row) => [
+                    'id' => (int) $row->id,
+                    'encounterId' => (int) $row->id_consulta,
+                    'conceptId' => $row->concept_id,
+                    'indicaciones' => $row->indicaciones,
+                    'consultaFecha' => $row->getQueryExtraData('consulta_fecha'),
+                ], $aux->listRegimensForInternacion($internacionModel))
+                : [],
             'isActive' => $episode->status === 'active',
         ];
     }

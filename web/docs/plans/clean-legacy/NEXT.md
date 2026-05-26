@@ -28,7 +28,7 @@
 | 7 | `03e-7` | Limpieza AR | Borrar AR huérfanos, dead code `ConsultaProcesamientoService`, forms sin callers |
 | 8 | `03e-8` | Drop BD hijas | `php yii migrate` → `m260526_150002` + smoke [MIGRATIONS.md](./MIGRATIONS.md) |
 
-**Ahora (agente / PR):** pasos **6** (internación auxiliar) y **8** (drop hijas tras smoke).
+**Ahora (agente / PR):** paso **8** (drop hijas `m260526_150002` + smoke) y luego **fase 04**.
 
 Detalle: [phases/03e-tablas-hijas-fhir.md](./phases/03e-tablas-hijas-fhir.md)
 

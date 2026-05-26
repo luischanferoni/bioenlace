@@ -252,9 +252,16 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
 
     /**
      * Prácticas registradas en la internación.
+     *
+     * @deprecated En greenfield use {@see InpatientClinicalQuery::bundleForInternacion()}.
      */
     public function getPracticas()
     {
+        if (!self::legacyChildTableExists(SegNivelInternacionPractica::tableName())) {
+            return $this->hasMany(SegNivelInternacionPractica::className(), ['id_internacion' => 'id'])
+                ->where('0=1');
+        }
+
         return $this->hasMany(SegNivelInternacionPractica::className(), ['id_internacion' => 'id']);
     }
 
@@ -268,9 +275,16 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
 
     /**
      * Plan / ítems de medicación de internación ({@see SegNivelInternacionMedicamento}).
+     *
+     * @deprecated En greenfield use {@see InpatientClinicalQuery::bundleForInternacion()}.
      */
     public function getMedicamentos()
     {
+        if (!self::legacyChildTableExists(SegNivelInternacionMedicamento::tableName())) {
+            return $this->hasMany(SegNivelInternacionMedicamento::className(), ['id_internacion' => 'id'])
+                ->where('0=1');
+        }
+
         return $this->hasMany(SegNivelInternacionMedicamento::className(), ['id_internacion' => 'id']);
     }
 
@@ -546,6 +560,8 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         return $footer;
     }
 
-
-
+    private static function legacyChildTableExists(string $table): bool
+    {
+        return Yii::$app->db->schema->getTableSchema($table, true) !== null;
+    }
 }

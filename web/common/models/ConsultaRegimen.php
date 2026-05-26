@@ -86,6 +86,11 @@ class ConsultaRegimen extends \yii\db\ActiveRecord
         return !$this->concept ? '' : $this->concept->term;
     }
 
+    public function setQueryExtraValue(string $name, $value): void
+    {
+        $this->_query_extra_data[$name] = $value;
+    }
+
     /**
      * Mientras la consulta no este finalizada (nueva o editando) el usuario
      * puede hacer un hard delete

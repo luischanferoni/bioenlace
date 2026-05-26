@@ -7,6 +7,7 @@ use common\components\Clinical\Service\EncounterLifecycleService;
 use common\components\Clinical\Service\MedicationRequestService;
 use common\components\Clinical\Service\ServiceRequestService;
 use common\components\Clinical\Specialty\EncounterDefinitionSpecialtyRegistry;
+use common\components\Clinical\Specialty\Inpatient\InpatientEncounterAuxService;
 use common\components\Clinical\Specialty\Odontology\OdontologyEncounterService;
 use common\components\Clinical\Specialty\Ophthalmology\OphthalmologyEncounterService;
 use common\components\Clinical\Legacy\ConsultaProcesamientoService;
@@ -30,6 +31,7 @@ class EncounterDocumentationService extends Component
     private ServiceRequestService $serviceRequests;
     private OdontologyEncounterService $odontology;
     private OphthalmologyEncounterService $ophthalmology;
+    private InpatientEncounterAuxService $inpatientAux;
     private EncounterDefinitionSpecialtyRegistry $specialtyRegistry;
 
     public function __construct(
@@ -40,6 +42,7 @@ class EncounterDocumentationService extends Component
         ServiceRequestService $serviceRequests = null,
         OdontologyEncounterService $odontology = null,
         OphthalmologyEncounterService $ophthalmology = null,
+        InpatientEncounterAuxService $inpatientAux = null,
         EncounterDefinitionSpecialtyRegistry $specialtyRegistry = null
     ) {
         $this->lifecycle = $lifecycle ?? new EncounterLifecycleService();
@@ -48,6 +51,7 @@ class EncounterDocumentationService extends Component
         $this->serviceRequests = $serviceRequests ?? new ServiceRequestService($this->carePlans);
         $this->odontology = $odontology ?? new OdontologyEncounterService($this->carePlans);
         $this->ophthalmology = $ophthalmology ?? new OphthalmologyEncounterService();
+        $this->inpatientAux = $inpatientAux ?? new InpatientEncounterAuxService();
         $this->specialtyRegistry = $specialtyRegistry ?? new EncounterDefinitionSpecialtyRegistry();
         parent::__construct($config);
     }
@@ -226,6 +230,15 @@ class EncounterDocumentationService extends Component
                 case 'ConsultasRecetaLentes':
                     $this->ophthalmology->persistLensPrescription($encounter, $payload);
                     break;
+                case 'ConsultaBalanceHidrico':
+                    $this->persistFluidBalances($encounter, $payload);
+                    break;
+                case 'ConsultaRegimen':
+                    $this->persistRegimens($encounter, $payload);
+                    break;
+                case 'ConsultaSuministroMedicamento':
+                    $this->persistMedicationSupplies($encounter, $payload);
+                    break;
             }
         }
     }
@@ -275,6 +288,54 @@ class EncounterDocumentationService extends Component
                 continue;
             }
             $this->medications->createFromExtractedRow($encounter, $carePlan, $row);
+        }
+    }
+
+    /**
+     * @param mixed $payload
+     */
+    private function persistFluidBalances(Encounter $encounter, $payload): void
+    {
+        if (!is_array($payload)) {
+            return;
+        }
+        foreach ($payload as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $this->inpatientAux->persistFluidBalanceRow($encounter, $row);
+        }
+    }
+
+    /**
+     * @param mixed $payload
+     */
+    private function persistRegimens(Encounter $encounter, $payload): void
+    {
+        if (!is_array($payload)) {
+            return;
+        }
+        foreach ($payload as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $this->inpatientAux->persistRegimenRow($encounter, $row);
+        }
+    }
+
+    /**
+     * @param mixed $payload
+     */
+    private function persistMedicationSupplies(Encounter $encounter, $payload): void
+    {
+        if (!is_array($payload)) {
+            return;
+        }
+        foreach ($payload as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $this->inpatientAux->persistMedicationSupplyRow($encounter, $row);
         }
     }
 

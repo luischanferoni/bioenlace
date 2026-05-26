@@ -58,8 +58,12 @@ Tabla `consultas_derivaciones` → `service_request` con `category=referral` + c
 
 ## Paso 6 — Internación auxiliar
 
-- `SegNivelInternacionRepository` balance/régimen → `Observation` / `NutritionOrder` / `DeviceRequest` (definir por producto)
-- `ConsultaSuministroMedicamento`, `seg_nivel_internacion_medicamento/practica`
+- [x] `InpatientEncounterAuxService`: balance → `Observation` (`fluid-balance`), régimen → `NutritionOrder`, suministro → `MedicationAdministration`
+- [x] `SegNivelInternacionRepository::getBalancesHidricos` / `getRegimenes` con fallback FHIR si no hay tablas legacy
+- [x] Captura IA: `ConsultaBalanceHidrico`, `ConsultaRegimen`, `ConsultaSuministroMedicamento` en `EncounterDocumentationService`
+- [x] AR `Clinical\NutritionOrder`, `Clinical\MedicationAdministration`
+- [x] `InpatientClinicalQuery` expone `fluidBalances` y `nutritionOrders` en bundle
+- [x] Medicación/prácticas de internación: ya vía `InternacionClinicalBridge` → `InpatientOrderService` (sin `seg_nivel_internacion_*` hijas)
 
 ## Paso 7 — Limpieza
 

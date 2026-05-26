@@ -3,6 +3,7 @@
 namespace common\models;
 
 use common\components\Clinical\Service\CarePlanLifecycleService;
+use common\components\Clinical\Specialty\Inpatient\InpatientEncounterAuxService;
 use common\models\Clinical\Encounter;
 use Yii;
 
@@ -14,6 +15,10 @@ class SegNivelInternacionRepository
 {
     public static function getBalancesHidricos(SegNivelInternacion $internacion)
     {
+        if (!self::legacyTableExists(ConsultaBalanceHidrico::tableName())) {
+            return (new InpatientEncounterAuxService())->listFluidBalancesForInternacion($internacion);
+        }
+
         $query = ConsultaBalanceHidrico::find()
             ->alias('bh')
             ->leftJoin(
@@ -29,6 +34,10 @@ class SegNivelInternacionRepository
     
     public static function getRegimenes(SegNivelInternacion $internacion)
     {
+        if (!self::legacyTableExists(ConsultaRegimen::tableName())) {
+            return (new InpatientEncounterAuxService())->listRegimensForInternacion($internacion);
+        }
+
         $query = ConsultaRegimen::find()
             ->alias('r')
             ->addSelect([
@@ -125,5 +134,10 @@ class SegNivelInternacionRepository
                 throw Exception('Error al crear Historia Cama.');
             }
         }
+    }
+
+    private static function legacyTableExists(string $table): bool
+    {
+        return Yii::$app->db->schema->getTableSchema($table, true) !== null;
     }
 }

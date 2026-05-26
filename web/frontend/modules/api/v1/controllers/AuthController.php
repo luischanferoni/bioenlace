@@ -292,17 +292,23 @@ class AuthController extends BaseController
 
     /**
      * Endpoint de prueba: Generar token para paciente por DNI o por user_id.
-     * Solo para desarrollo/pruebas. Parámetros: dni O user_id.
+     * Solo para desarrollo/pruebas. Parámetros: dni O user_id; opcional id_persona con user_id.
      */
     public function actionGenerarTokenPrueba()
     {
         $request = Yii::$app->request;
         $dni = $request->post('dni') ?? $request->get('dni');
         $userId = $request->post('user_id') ?? $request->get('user_id');
+        $idPersonaParam = $request->post('id_persona') ?? $request->get('id_persona');
         if ($userId !== null && $userId !== '') {
             $userId = (int) $userId;
         } else {
             $userId = null;
+        }
+        if ($idPersonaParam !== null && $idPersonaParam !== '') {
+            $idPersonaParam = (int) $idPersonaParam;
+        } else {
+            $idPersonaParam = null;
         }
 
         if ($userId !== null) {
@@ -311,9 +317,23 @@ class AuthController extends BaseController
             if (!$user) {
                 return $this->error('No se encontró usuario con id: ' . $userId, null, 404);
             }
-            $persona = Persona::findOne(['id_user' => $user->id]);
-            if (!$persona) {
-                return $this->error('El usuario ' . $userId . ' no tiene persona asociada', null, 404);
+            if ($idPersonaParam !== null) {
+                $persona = Persona::findOne(['id_persona' => $idPersonaParam]);
+                if (!$persona) {
+                    return $this->error('No se encontró persona con id_persona: ' . $idPersonaParam, null, 404);
+                }
+                if ((int) $persona->id_user !== (int) $user->id) {
+                    return $this->error(
+                        'id_persona ' . $idPersonaParam . ' no está vinculada al user_id ' . $userId,
+                        null,
+                        400
+                    );
+                }
+            } else {
+                $persona = Persona::findOne(['id_user' => $user->id]);
+                if (!$persona) {
+                    return $this->error('El usuario ' . $userId . ' no tiene persona asociada', null, 404);
+                }
             }
         } elseif ($dni) {
             // Por DNI: buscar persona y luego su usuario
@@ -336,7 +356,7 @@ class AuthController extends BaseController
             return $this->error('Usuario inactivo', null, 401);
         }
 
-        $token = $this->generateJwtToken($user);
+        $token = $this->generateJwtToken($user, (int) $persona->id_persona);
         $role = $this->getUserRole($user);
         $permissions = $this->getUserPermissions($user);
 

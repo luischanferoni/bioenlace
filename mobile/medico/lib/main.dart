@@ -12,8 +12,17 @@ import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
 import 'screens/medico_signup_screen.dart';
 
-/// Usuario de prueba para simulación en login (mismo mecanismo que paciente vía `generar-token-prueba`).
+/// Sesión de prueba médico — botón «Ir al inicio» en login (`generar-token-prueba`).
 const int _kSimulacionMedicoUserId = 5748;
+const int _kSimulacionMedicoPersonaId = 920778;
+
+Uri _simulacionMedicoTokenUri() {
+  return Uri.parse(
+    '${AppConfig.apiUrl}/auth/generar-token-prueba'
+    '?user_id=$_kSimulacionMedicoUserId'
+    '&id_persona=$_kSimulacionMedicoPersonaId',
+  );
+}
 
 // Clave global para el Navigator
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -207,11 +216,7 @@ class MyApp extends StatelessWidget {
 
                 try {
                   final tokenResponse = await http
-                      .get(
-                        Uri.parse(
-                          '${AppConfig.apiUrl}/auth/generar-token-prueba?user_id=$_kSimulacionMedicoUserId',
-                        ),
-                      )
+                      .get(_simulacionMedicoTokenUri())
                       .timeout(const Duration(seconds: 10));
 
                   if (tokenResponse.statusCode == 200) {
@@ -230,6 +235,11 @@ class MyApp extends StatelessWidget {
                       await prefs.setBool('is_logged_in', true);
                       await prefs.setString('auth_token', token);
                       await prefs.setString('user_id', user['id'].toString());
+                      await prefs.setInt(
+                        'id_persona',
+                        (persona['id_persona'] as num?)?.toInt() ??
+                            _kSimulacionMedicoPersonaId,
+                      );
                       await prefs.setString('user_name', displayName);
                       if (persona['documento'] != null) {
                         await prefs.setString(
@@ -246,7 +256,8 @@ class MyApp extends StatelessWidget {
                       ScaffoldMessenger.of(loginContext).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Sesión de prueba: ${user['name'] ?? displayName} (id $_kSimulacionMedicoUserId)',
+                            'Sesión de prueba: ${user['name'] ?? displayName} '
+                            '(user $_kSimulacionMedicoUserId · persona $_kSimulacionMedicoPersonaId)',
                           ),
                           backgroundColor: IntentPalette.of(UiIntent.success).base,
                           duration: const Duration(seconds: 2),

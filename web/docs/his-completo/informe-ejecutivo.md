@@ -2,15 +2,17 @@
 
 **Fuente interna:** mapa de madurez (revisión alineada al producto en construcción)
 
+**Última revisión del informe:** 2026-05-20 — alineado a módulos `his-completo/` y al registro clínico unificado de atención ambulatoria y planes de tratamiento.
+
 ---
 
 ## 1. ¿Qué es un HIS?
 
 Un **HIS** (Hospital Information System, en español: **sistema de información hospitalario**) es el conjunto de software y procesos que permite a una institución de salud operar de punta a punta: **agendar**, **atender**, **prescribir**, **pedir estudios**, **recibir resultados**, **internar**, **facturar** y **gestionar stock**, sobre **un mismo registro del paciente**.
 
-En un hospital muy digitalizado, esos circuitos están conectados: lo que ocurre en consulta alimenta laboratorio y farmacia; lo que ocurre en guardia puede derivar en internación; la facturación refleja lo clínico real. Un HIS “completo” es ese **estado de referencia**, no un único proveedor ni un único módulo.
+En un hospital muy digitalizado, esos circuitos están conectados: lo que ocurre en la atención ambulatoria alimenta laboratorio y farmacia; lo que ocurre en guardia puede derivar en internación; la facturación refleja lo clínico real. Un HIS “completo” es ese **estado de referencia**, no un único proveedor ni un único módulo.
 
-**Bioenlace** hoy es una plataforma fuerte en **consulta ambulatoria**, **agenda y relación con el paciente** (turnos, resúmenes, notificaciones, recetas y laboratorio integrado desde proveedores externos). Aún tiene **brechas importantes** en facturación hospitalaria plena, farmacia con stock, logística y quirófano avanzado.
+**Bioenlace** hoy es una plataforma fuerte en **atención ambulatoria**, **agenda y relación con el paciente** (turnos, resúmenes, notificaciones, recetas y laboratorio integrado desde proveedores externos). El núcleo clínico nuevo se apoya en un **registro unificado de cada atención** (ambulatoria, guardia e internación en avance), no en el modelo antiguo de “ficha de consulta” aislada. Aún hay **brechas importantes** en facturación hospitalaria plena, farmacia con stock, logística y quirófano avanzado, y en pantallas administrativas que siguen terminología legacy.
 
 ---
 
@@ -42,8 +44,8 @@ Cada área del hospital se califica de **0 a 4**:
 ### Dónde Bioenlace ya compite con fuerza
 
 - **Acceso y demanda:** agenda por institución y profesional, autogestión del paciente, reprogramación y notificaciones.
-- **Consulta ambulatoria:** registro de la atención, captura asistida (texto/voz), pedidos, receta emitida y resumen claro para el paciente tras la consulta.
-- **Engagement del paciente:** resumen post-consulta automático, consulta de recetas y laboratorio, conversación guiada para acciones frecuentes.
+- **Atención ambulatoria:** registro unificado de la atención, captura asistida (texto/voz), diagnósticos, pedidos, receta emitida y resumen claro para el paciente al cerrar.
+- **Engagement del paciente:** resumen post-atención automático, consulta de recetas y laboratorio, conversación guiada para acciones frecuentes.
 - **Urgencias / guardia:** triage (incl. flujo UI en asistente), tablero en inicio (web y móvil), pedidos/lab, cama, SLA, asignación y egreso auditable.
 - **Gestión de demanda:** KPIs de agenda (no-show, días hasta la cita) y adherencia a planes de tratamiento para el equipo.
 - **Cumplimiento orientado a staff:** expediente amplio bajo demanda (generación en segundo plano, sin exposición al paciente).
@@ -63,7 +65,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 | Dimensión | Lectura breve |
 |-----------|----------------|
-| **Producto actual vendible** | Consulta + agenda + paciente digital + receta + lab externo |
+| **Producto actual vendible** | Atención ambulatoria + agenda + paciente digital + receta + lab externo + guardia operativa |
 | **Expansión AR/LatAm** | Receta nacional y obras sociales en agenda/facturación son palancas regulatorias y de monetización |
 
 ---
@@ -78,10 +80,10 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 | Laboratorio | 2,5 | 63 % | Trae resultados de labs externos; no es lab propio |
 | Farmacia | 1,5 | 38 % | Prescripción y receta; sin dispensación ni stock |
 | Receta electrónica | 3 | 75 % | Emisión y PDF paciente; falta homologación nacional plena |
-| Servicios y especialidades | 3 | 75 % | Catálogo, profesional por institución, turnos y consultas |
+| Servicios y especialidades | 3 | 75 % | Catálogo, profesional por institución, turnos y atenciones |
 | Materiales y logística | 1,5 | 38 % | Consumos parciales; sin depósito ni compras |
 | Facturación y contabilidad | 1,5 | 38 % | Bases de nomenclador; sin ciclo factura–cobro pleno |
-| Atención ambulatoria | 3 | 75 % | Núcleo clínico actual + resumen paciente + expediente staff |
+| Atención ambulatoria | 3 | 75 % | Registro unificado de atención + resumen paciente + expediente staff |
 | Agenda y turnos | 3,25 | 81 % | Reserva, conflicto, notificaciones y KPIs no-show / lead time |
 | Planes de tratamiento | 3 | 75 % | Planes activos, recordatorios paciente y dashboard adherencia staff |
 
@@ -113,7 +115,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ### 5.2 Urgencias y guardia (95 %)
 
-**Qué es:** atención de urgencias, registro del episodio, priorización, cola operativa y derivación a internación o consulta.
+**Qué es:** atención de urgencias, registro del episodio, priorización, cola operativa y derivación a internación o atención ambulatoria.
 
 **Lo que Bioenlace cubre hoy**
 
@@ -123,16 +125,16 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - **Circuito:** tomar caso, iniciar atención con captura clínica, derivar a otro efector, egreso alineado al libro.
 - **Indicadores** door-to-triage y door-to-doctor (día actual + materialización nocturna opcional).
 - Notificaciones push (servidor + FCM app médico); intents de asistente para tablero y triage con **UI JSON** (lista sin triage + formulario).
-- **Pedidos y laboratorio** en el tablero (resumen clínico, alta rápida de pedidos, informes por encounter).
-- **Internación:** solicitud de cama, badge pendiente e ingreso web con vínculo `id_guardia`.
-- **SLA** configurable por efector (`efector_emergency_config`) con alerta visual en tablero.
+- **Pedidos y laboratorio** en el tablero (resumen clínico, alta rápida de pedidos, informes ligados a la atención de guardia).
+- **Internación:** solicitud de cama, badge pendiente e ingreso web con trazabilidad desde el ingreso de guardia.
+- **SLA** configurable por institución con alerta visual en tablero.
 - **Export CSV** de indicadores para dirección médica.
 
 **Lo que falta (refinamiento)**
 
 - Catálogo de estudios / envío directo al LIS (hoy la indicación queda en Bioenlace).
 - UI de administración para umbrales SLA y alerta sonora en sala.
-- Integración FHIR de guardia al mismo nivel que ambulatorio en una sola pantalla longitudinal.
+- Historia clínica longitudinal única que una guardia y ambulatorio en la misma vista para el médico (hoy son módulos fuertes pero separados).
 
 **Implicación de producto:** guardia vendible como módulo operativo completo en hospitales medianos; el siguiente salto es **interoperabilidad LIS nativa** y **mapa de camas en tiempo real**.
 
@@ -147,19 +149,20 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Episodios de internación con pisos y camas.
 - Prácticas, consumos y medicación ligados al episodio.
 - Vínculo parcial con nomencladores y facturación según la institución.
-- Ingreso desde guardia con trazabilidad `id_guardia`.
+- Ingreso desde guardia con trazabilidad al episodio de urgencia.
 - **Mapa de camas** en web y app médico: libre, ocupada, bloqueada, aislamiento; cambio de estado desde web.
-- **Indicadores** de ocupación y estadía (media/mediana) en API y cabecera web.
+- **Indicadores** de ocupación y estadía (media/mediana) en tablero web y cabecera operativa.
 - **Alta estructurada** con epicrisis, checklist, responsable de sesión y vista previa de plantilla.
 - **Plantillas de epicrisis** por efector/servicio (y globales de sistema) con placeholders clínicos.
-- **ABM administrativo** de plantillas en web y API (alta, edición, activar/desactivar).
-- Flujos de asistente para mapa de camas y alta estructurada (UI JSON).
+- **ABM administrativo** de plantillas en web (alta, edición, activar/desactivar).
+- Flujos de asistente para mapa de camas y alta estructurada (formularios guiados en conversación).
+- **Continuidad clínica al ingreso y al alta:** al internar se abre el episodio de cuidado de internación con su plan asociado; al dar el alta hospitalaria ese plan se cierra junto con el episodio (salvo continuidad ambulatoria explícita que el producto aún no expone en pantalla).
 
 **Lo que falta**
 
 - Firma digital del responsable del alta.
 - Integración quirófano–internación–facturación en un solo flujo.
-- Administración de plantillas en app móvil (hoy web + API).
+- Administración de plantillas en app móvil (hoy web y operación básica en móvil).
 
 ---
 
@@ -170,11 +173,11 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 **Lo que Bioenlace cubre hoy**
 
 - Obtención periódica de informes desde laboratorios externos.
-- Almacenamiento y consulta por paciente y por consulta.
+- Almacenamiento y consulta por paciente y por atención (ambulatoria, guardia o internación según corresponda).
 - Sincronización programada (lotes o por paciente).
 - Informe en PDF para el paciente.
 - Listado y detalle dentro de Bioenlace, también vía conversación guiada.
-- Enlace del informe a la consulta donde se pidió el estudio, cuando corresponde.
+- Enlace del informe a la atención donde se pidió el estudio, cuando corresponde.
 - Estado del pedido (pendiente / con resultado) en el resumen de atención al paciente.
 
 **Lo que falta**
@@ -195,7 +198,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 **Lo que Bioenlace cubre hoy**
 
-- Indicación y prescripción en la consulta o internación.
+- Indicación y prescripción en la atención ambulatoria o en internación.
 - Receta electrónica emitida con documento para el paciente (ver receta electrónica).
 - Medicamentos codificados en parte de los flujos.
 
@@ -214,7 +217,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 **Lo que Bioenlace cubre hoy**
 
-- Documento de receta separado de la mera indicación en consulta.
+- Documento de receta separado de la mera indicación en la atención.
 - Borrador, emisión y anulación desde la atención.
 - Numeración, vigencia, código de verificación e integridad del documento.
 - PDF generado en servidor y descarga para el paciente.
@@ -238,10 +241,10 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 **Lo que Bioenlace cubre hoy**
 
 - Catálogo de servicios por institución (efector).
-- Profesional asignado a institución y servicio para agenda y consulta.
-- Turnos y consultas ambulatorias ligados al servicio.
+- Profesional asignado a institución y servicio para agenda y atención.
+- Turnos y atenciones ambulatorias ligados al servicio.
 - Contexto de trabajo del staff (institución, servicio, tipo de atención).
-- Motivos de consulta y captura alineados al turno.
+- Motivos de atención y captura clínica alineados al turno.
 
 **Lo que falta**
 
@@ -257,7 +260,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 **Lo que Bioenlace cubre hoy**
 
-- Registro de consumos en internación y parte de consultas.
+- Registro de consumos en internación y parte de atenciones ambulatorias.
 - Nomencladores de prácticas y suministros en configuraciones existentes.
 
 **Lo que falta**
@@ -291,23 +294,25 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ### 5.10 Atención ambulatoria (75 %)
 
-**Qué es:** la consulta en consultorio (o equivalente ambulatorio): registro, evolución, pedidos, recetas y cierre de la atención.
+**Qué es:** la atención en consultorio (o equivalente ambulatorio): registro, evolución, pedidos, recetas y cierre del encuentro clínico sobre un mismo registro del paciente.
 
 **Lo que Bioenlace cubre hoy**
 
-- Registro de consultas ambulatorias con ciclo de vida (incluido cierre de la atención).
+- **Registro unificado de la atención ambulatoria** con ciclo de vida completo (incluido cierre), sustituto del modelo anterior de “consulta” aislada en sistemas nuevos (app paciente, captura clínica, resúmenes).
 - Captura por texto o voz, asistencia para estructurar y guardar la evolución (incluye texto claro para el paciente al cerrar).
-- Diagnósticos y problemas activos, pedidos de estudios, medicación y receta vinculados a la misma consulta.
+- Diagnósticos, pedidos de estudios, medicación y receta electrónica vinculados a **esa misma atención**.
 - Resultados de laboratorio visibles en el contexto de la atención.
-- **Resumen para el paciente:** unos minutos después de finalizar la consulta, publicación automática, notificación y vista con enlaces a receta, laboratorio y pedidos.
+- **Resumen para el paciente:** unos minutos después de finalizar, publicación automática, notificación y vista con enlaces a receta, laboratorio y pedidos con su estado.
 - **Expediente amplio para el equipo:** el staff autorizado puede solicitar un PDF completo generado en segundo plano; el paciente no lo descarga desde la app de paciente.
+- Listado de atenciones previas y última atención para el paciente en la app (historial orientado al ciudadano, no expediente legal completo).
 
 **Lo que falta**
 
 - Historia clínica longitudinal única en pantalla para el médico (sin depender de exportar PDF).
-- Misma profundidad de modelo en internación y guardia que en ambulatorio.
-- Derivaciones estructuradas (nueva consulta, turno futuro) como producto explícito.
+- Misma profundidad de registro unificado en **toda** internación y en guardia que en ambulatorio (guardia ya tiene tablero y captura; falta experiencia unificada).
+- Derivaciones estructuradas (nueva atención, turno futuro) como producto explícito.
 - Intercambio estándar con otras redes de salud (mensajería clínica entre sistemas).
+- Retiro completo de pantallas administrativas que aún hablan de “consulta” en lugar de “atención”.
 
 **Implicación de producto:** este es el **core** actual; buena historia para retención de pacientes y diferenciación frente a agenda suelta.
 
@@ -341,16 +346,17 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ### 5.12 Planes de tratamiento (75 %)
 
-**Qué es:** plan de seguimiento post consulta o crónico (medicación, controles, hábitos) con seguimiento del paciente.
+**Qué es:** plan de seguimiento posterior a una atención o de carácter crónico/programado (medicación, controles, rehabilitación, etc.) con seguimiento del paciente y del equipo.
 
 **Lo que Bioenlace cubre hoy**
 
-- Plan vinculado al paciente y opcionalmente a una consulta.
-- Actividades con estados (pendiente, hecho, etc.).
-- Vista de planes activos para el paciente.
-- Recordatorios en el dispositivo del paciente, con preferencias por actividad cuando aplica.
-- Pantalla de detalle del plan.
-- **Dashboard staff de adherencia** por efector: resumen global y lista de planes con % de actividades completadas.
+- **Plan de tratamiento** vinculado al paciente y, cuando corresponde, a la atención que lo originó.
+- Tipos de plan reconocidos en producto: agudo ambulatorio, crónico, programa con sesiones, internación, y otras categorías clínicas (odontología, rehabilitación, etc.).
+- Actividades del plan (medicación, controles, etc.) con estados (activo, en pausa, completado, revocado).
+- Vista de planes activos para el paciente; recordatorios en el dispositivo con preferencias por actividad cuando aplica.
+- Pantalla de detalle del plan para seguimiento.
+- Reglas de ciclo de vida: los planes agudos pueden cerrarse al terminar la atención; los crónicos y de programa **no** se cierran solos al cerrar una atención ambulatoria suelta; al alta de internación se cierra el plan de internación.
+- **Dashboard staff de adherencia** por institución: resumen global y lista de planes con porcentaje de actividades completadas (también accesible desde el asistente conversacional).
 
 **Lo que falta**
 
@@ -358,6 +364,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Integración automática con laboratorio de controles o farmacia.
 - Sugerencias asistidas por IA con aprobación médica explícita.
 - Versionado y auditoría regulatoria del plan.
+- Continuidad ambulatoria explícita al alta (nuevo plan crónico) como flujo guiado en pantalla.
 
 **Implicación de producto:** refuerzo de retención y chronic care; el equipo ya puede priorizar seguimiento por baja adherencia.
 
@@ -377,4 +384,6 @@ Orden orientativo de **retorno vs esfuerzo**, no compromiso de roadmap (actualiz
 | **6** | **Facturación integrada** | Enterprise revenue; integraciones pesadas por institución. |
 | **7** | **Farmacia + stock / quirófano + logística** | Módulos largos; vender por proyecto cuando el cliente lo exija. |
 
-**Hecho recientemente (no repetir como prioridad inmediata):** guardia post-v1 (pedidos, cama, SLA, CSV); triage UI JSON en asistente; KPIs agenda (`indicadores-agenda`); dashboard adherencia planes staff; internación operativa (mapa, indicadores, alta estructurada, ABM plantillas epicrisis, mapa móvil IMP).
+**Hecho recientemente (no repetir como prioridad inmediata):** guardia post-v1 (pedidos, cama, SLA, CSV); triage con formularios guiados en asistente; métricas de agenda para staff (no-show y plazos de acceso); dashboard de adherencia a planes de tratamiento; internación operativa (mapa, indicadores, alta estructurada, ABM plantillas de epicrisis, mapa móvil en internación); **núcleo clínico unificado** (registro de atención ambulatoria, planes de tratamiento con ciclo de vida, cierre de plan al alta de internación) en sustitución del modelo legacy de consulta en canales nuevos.
+
+**Nota sobre el PDF:** si existe `informe-ejecutivo.pdf` en esta carpeta, regenerarlo desde este Markdown tras cada revisión sustancial.

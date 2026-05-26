@@ -127,7 +127,7 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
       widgets.add(
         Text(
           'Piso: ${piso['descripcion'] ?? ''}',
-          style: BioTypography.h4,
+          style: BioTypography.h3,
         ),
       );
       widgets.add(BioSpacing.gapH(BioSpacing.sm));
@@ -137,7 +137,7 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
         widgets.add(
           Padding(
             padding: const EdgeInsets.only(left: 8, bottom: 8),
-            child: Text('Sala: ${sala['descripcion'] ?? ''}', style: BioTypography.bodyBold),
+            child: Text('Sala: ${sala['descripcion'] ?? ''}', style: BioTypography.title),
           ),
         );
         final camas = sala['camas'] as List<dynamic>? ?? [];

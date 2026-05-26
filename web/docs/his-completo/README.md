@@ -2,7 +2,7 @@
 
 Documento de **producto y cobertura**, no manual técnico. Responde: *¿qué parte de un hospital information system tenemos hoy y qué falta?*
 
-**Última revisión:** 2026-05-20 (internación operativa + ABM plantillas epicrisis; urgencias triage UI; KPIs agenda; adherencia planes staff).
+**Última revisión:** 2026-05-20 (internación operativa + ABM plantillas epicrisis; urgencias triage UI; KPIs agenda; adherencia planes staff; informe ejecutivo alineado a registro unificado de atención y planes).
 
 Escala por módulo (orientativa):
 

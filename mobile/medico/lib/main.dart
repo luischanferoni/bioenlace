@@ -12,24 +12,12 @@ import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
 import 'screens/medico_signup_screen.dart';
 
-/// Sesión de prueba médico — botón «Ir al inicio» en login (`generar-token-prueba`).
+/// Usuario de prueba — botón «Ir al inicio». PES/efector los resuelve la API desde BD.
 const int _kSimulacionMedicoUserId = 5748;
-const int _kSimulacionMedicoPersonaId = 920778;
-/// Opcional: si el id no coincide con la persona, la API elige el primer PES de esa persona.
-const int? _kSimulacionMedicoPesId = null;
-const String _kSimulacionMedicoEncounterClass = 'AMB';
 
 Uri _simulacionMedicoTokenUri() {
-  final query = <String, String>{
-    'user_id': '$_kSimulacionMedicoUserId',
-    'id_persona': '$_kSimulacionMedicoPersonaId',
-    'encounter_class': _kSimulacionMedicoEncounterClass,
-  };
-  if (_kSimulacionMedicoPesId != null) {
-    query['id_profesional_efector_servicio'] = '$_kSimulacionMedicoPesId';
-  }
   return Uri.parse('${AppConfig.apiUrl}/auth/generar-token-prueba').replace(
-    queryParameters: query,
+    queryParameters: {'user_id': '$_kSimulacionMedicoUserId'},
   );
 }
 
@@ -42,7 +30,7 @@ Future<Map<String, dynamic>> _getUserData() async {
     final authToken = prefs.getString('auth_token');
     
     // Contexto PES (profesional_efector_servicio) persistido tras el wizard.
-    String idProfesionalEfectorServicio = '7830';
+    String idProfesionalEfectorServicio = '0';
     final pesInt = prefs.getInt('id_profesional_efector_servicio');
     if (pesInt != null) {
       idProfesionalEfectorServicio = pesInt.toString();
@@ -64,7 +52,7 @@ Future<Map<String, dynamic>> _getUserData() async {
     // Si hay error, retornar valores por defecto
     return {
       'authToken': null,
-      'idProfesionalEfectorServicio': '7830',
+      'idProfesionalEfectorServicio': '0',
       'configCompleted': false,
     };
   }
@@ -180,7 +168,7 @@ class MyApp extends StatelessWidget {
                   userName: userName,
                   authToken: authToken,
                   idProfesionalEfectorServicio:
-                      data['idProfesionalEfectorServicio'] as String? ?? '7830',
+                      data['idProfesionalEfectorServicio'] as String? ?? '0',
                 );
               },
             )
@@ -244,11 +232,10 @@ class MyApp extends StatelessWidget {
                       await prefs.setBool('is_logged_in', true);
                       await prefs.setString('auth_token', token);
                       await prefs.setString('user_id', user['id'].toString());
-                      await prefs.setInt(
-                        'id_persona',
-                        (persona['id_persona'] as num?)?.toInt() ??
-                            _kSimulacionMedicoPersonaId,
-                      );
+                      final idPersona = (persona['id_persona'] as num?)?.toInt();
+                      if (idPersona != null) {
+                        await prefs.setInt('id_persona', idPersona);
+                      }
                       await prefs.setString('user_name', displayName);
                       if (persona['documento'] != null) {
                         await prefs.setString(
@@ -296,8 +283,8 @@ class MyApp extends StatelessWidget {
                       ScaffoldMessenger.of(loginContext).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Sesión de prueba: ${user['name'] ?? displayName} '
-                            '(user $_kSimulacionMedicoUserId · persona $_kSimulacionMedicoPersonaId)',
+                            'Sesión de prueba: ${user['name'] ?? displayName}'
+                            '${idPersona != null ? ' (persona $idPersona)' : ''}',
                           ),
                           backgroundColor: IntentPalette.of(UiIntent.success).base,
                           duration: const Duration(seconds: 2),

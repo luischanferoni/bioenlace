@@ -304,7 +304,8 @@ class AuthController extends BaseController
         Persona $persona,
         ?int $idEfector = null,
         ?int $idPes = null,
-        ?string $encounterClass = null
+        ?string $encounterClass = null,
+        bool $autoPes = true
     ): array {
         $identity = \webvimark\modules\UserManagement\models\User::findOne((int) $user->id);
         if (!$identity) {
@@ -328,7 +329,10 @@ class AuthController extends BaseController
 
         $jwtClaims = [];
         $pesMeta = null;
-        if (($idPes !== null && $idPes > 0) || ($idEfector !== null && $idEfector > 0)) {
+        $solicitaPes = $autoPes
+            || ($idPes !== null && $idPes > 0)
+            || ($idEfector !== null && $idEfector > 0);
+        if ($solicitaPes) {
             [$pes, $pesMeta] = $this->resolvePesForDevToken($persona, $idPes, $idEfector);
             if ($pes === null) {
                 $disponibles = $this->listPesIdsForDevToken((int) $persona->id_persona);
@@ -453,8 +457,9 @@ class AuthController extends BaseController
 
     /**
      * Endpoint de prueba: Generar token para paciente por DNI o por user_id.
-     * Solo para desarrollo/pruebas. Parámetros: dni O user_id; opcional id_persona, id_efector,
-     * id_profesional_efector_servicio (o id_pes) para permisos de staff como en sesión operativa.
+     * Solo para desarrollo/pruebas. Identidad: user_id, id_persona o dni (uno alcanza).
+     * PES/efector/servicio: por defecto auto_pes=1 resuelve el primer PES de la persona en BD.
+     * Opcional: id_efector, id_profesional_efector_servicio (o id_pes), encounter_class, auto_pes=0.
      */
     public function actionGenerarTokenPrueba()
     {
@@ -473,6 +478,8 @@ class AuthController extends BaseController
         $encounterClass = is_string($encounterClassParam) && $encounterClassParam !== ''
             ? $encounterClassParam
             : null;
+        $autoPesParam = $request->post('auto_pes') ?? $request->get('auto_pes', '1');
+        $autoPes = !in_array(strtolower((string) $autoPesParam), ['0', 'false', 'no'], true);
         if ($userId !== null && $userId !== '') {
             $userId = (int) $userId;
         } else {
@@ -521,8 +528,24 @@ class AuthController extends BaseController
             if (!$user) {
                 return $this->error('Usuario no encontrado para id_user: ' . $persona->id_user, null, 404);
             }
+        } elseif ($idPersonaParam !== null) {
+            $persona = Persona::findOne(['id_persona' => $idPersonaParam]);
+            if (!$persona) {
+                return $this->error('No se encontró persona con id_persona: ' . $idPersonaParam, null, 404);
+            }
+            if (!$persona->id_user) {
+                return $this->error(
+                    'La persona ' . $idPersonaParam . ' no tiene usuario asociado',
+                    null,
+                    404
+                );
+            }
+            $user = User::findIdentity((int) $persona->id_user);
+            if (!$user) {
+                return $this->error('Usuario no encontrado para id_user: ' . $persona->id_user, null, 404);
+            }
         } else {
-            return $this->error('Se requiere dni o user_id', null, 400);
+            return $this->error('Se requiere user_id, id_persona o dni', null, 400);
         }
 
         if ($user->status !== User::STATUS_ACTIVE) {
@@ -535,7 +558,8 @@ class AuthController extends BaseController
                 $persona,
                 $idEfector,
                 $idPes,
-                $encounterClass
+                $encounterClass,
+                $autoPes
             );
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);

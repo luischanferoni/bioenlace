@@ -1,0 +1,31 @@
+{
+  "ui_type": "ui_json",
+  "title": "Mapa de camas",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "medico-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "resumen",
+      "title": "Ocupación",
+      "text_field": "resumen_texto",
+      "text": ""
+    },
+    {
+      "kind": "list",
+      "id": "camas",
+      "title": "Camas",
+      "draft_field": "id_cama",
+      "empty_message": "No hay camas configuradas para este efector.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    }
+  ]
+}

@@ -35,8 +35,8 @@ Cada área del hospital se califica de **0 a 4**:
 | Indicador | Valor |
 |-----------|--------|
 | Áreas evaluadas | 12 |
-| **Completitud media orientativa** | **~62 %** |
-| Áreas ≥ 75 % (nivel 3) | 7 de 12 |
+| **Completitud media orientativa** | **~65 %** |
+| Áreas ≥ 75 % (nivel 3) | 8 de 12 |
 | Áreas ≤ 50 % (nivel ≤ 2) | 4 de 12 |
 
 ### Dónde Bioenlace ya compite con fuerza
@@ -44,7 +44,8 @@ Cada área del hospital se califica de **0 a 4**:
 - **Acceso y demanda:** agenda por institución y profesional, autogestión del paciente, reprogramación y notificaciones.
 - **Consulta ambulatoria:** registro de la atención, captura asistida (texto/voz), pedidos, receta emitida y resumen claro para el paciente tras la consulta.
 - **Engagement del paciente:** resumen post-consulta automático, consulta de recetas y laboratorio, conversación guiada para acciones frecuentes.
-- **Urgencias / guardia:** triage, tablero en inicio (web y móvil), asignación, derivación y egreso sobre un circuito auditable.
+- **Urgencias / guardia:** triage (incl. flujo UI en asistente), tablero en inicio (web y móvil), pedidos/lab, cama, SLA, asignación y egreso auditable.
+- **Gestión de demanda:** KPIs de agenda (no-show, días hasta la cita) y adherencia a planes de tratamiento para el equipo.
 - **Cumplimiento orientado a staff:** expediente amplio bajo demanda (generación en segundo plano, sin exposición al paciente).
 
 Eso define un **wedge** claro: instituciones que quieren **mejor experiencia ambulatoria y captación/retención de pacientes**, no aún un HIS monolítico de facturación y logística.
@@ -54,7 +55,8 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - **Facturación y cobranza** integradas al acto médico en todos los puntos de atención.
 - **Farmacia hospitalaria** (stock, dispensación, validación) y cierre con receta nacional homologada.
 - **Quirófano y materiales** (trazabilidad, tablero de salas, insumos).
-- **Guardia post-v1:** pedidos/resultados en el módulo, derivación a cama con trazabilidad, SLA por nivel y export de indicadores para dirección.
+- **Internación (refinamiento):** plantillas de epicrisis y cliente móvil del mapa.
+- **Regulatorio y cobranza:** receta nacional homologada y obras sociales en reserva/atención.
 
 
 ### Lectura para inversión
@@ -72,7 +74,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 |------|-------------|---|----------------------|
 | Quirófanos | 2 | 50 % | Cirugía y agenda básica; falta quirófano “enterprise” |
 | Urgencias / guardia | 4 | 95 % | Triage, tablero, pedidos/lab, cama, SLA y CSV |
-| Internación | 2,5 | 63 % | Episodios y camas; falta mapa de camas y alta estructurada |
+| Internación | 3,25 | 78 % | Mapa web/móvil, plantillas epicrisis, alta con responsable |
 | Laboratorio | 2,5 | 63 % | Trae resultados de labs externos; no es lab propio |
 | Farmacia | 1,5 | 38 % | Prescripción y receta; sin dispensación ni stock |
 | Receta electrónica | 3 | 75 % | Emisión y PDF paciente; falta homologación nacional plena |
@@ -80,8 +82,8 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 | Materiales y logística | 1,5 | 38 % | Consumos parciales; sin depósito ni compras |
 | Facturación y contabilidad | 1,5 | 38 % | Bases de nomenclador; sin ciclo factura–cobro pleno |
 | Atención ambulatoria | 3 | 75 % | Núcleo clínico actual + resumen paciente + expediente staff |
-| Agenda y turnos | 3 | 75 % | Fuerte en reserva, conflicto y notificaciones |
-| Planes de tratamiento | 2,5 | 63 % | Planes activos y recordatorios; falta adherencia medible |
+| Agenda y turnos | 3,25 | 81 % | Reserva, conflicto, notificaciones y KPIs no-show / lead time |
+| Planes de tratamiento | 3 | 75 % | Planes activos, recordatorios paciente y dashboard adherencia staff |
 
 ---
 
@@ -120,7 +122,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - **Tablero operativo** en inicio web y app médico (cola, estado del circuito, minutos de espera, indicadores resumen).
 - **Circuito:** tomar caso, iniciar atención con captura clínica, derivar a otro efector, egreso alineado al libro.
 - **Indicadores** door-to-triage y door-to-doctor (día actual + materialización nocturna opcional).
-- Notificaciones push (servidor + FCM app médico); intents de asistente para tablero y triage.
+- Notificaciones push (servidor + FCM app médico); intents de asistente para tablero y triage con **UI JSON** (lista sin triage + formulario).
 - **Pedidos y laboratorio** en el tablero (resumen clínico, alta rápida de pedidos, informes por encounter).
 - **Internación:** solicitud de cama, badge pendiente e ingreso web con vínculo `id_guardia`.
 - **SLA** configurable por efector (`efector_emergency_config`) con alerta visual en tablero.
@@ -136,7 +138,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ---
 
-### 5.3 Internación (63 %)
+### 5.3 Internación (78 %)
 
 **Qué es:** paciente internado, cama, evolución, prácticas y consumos del episodio.
 
@@ -145,12 +147,13 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Episodios de internación con pisos y camas.
 - Prácticas, consumos y medicación ligados al episodio.
 - Vínculo parcial con nomencladores y facturación según la institución.
+- Ingreso desde guardia con trazabilidad `id_guardia`.
+- Mapa de camas en web y app médico (IMP): libre, ocupada, bloqueada, aislamiento.
+- Indicadores de ocupación y estadía; alta con plantillas de epicrisis y responsable de sesión.
 
 **Lo que falta**
 
-- Mapa de camas en tiempo real (libre, bloqueada, aislamiento).
-- Alta hospitalaria y epicrisis con checklist.
-- Indicadores de ocupación y estadía.
+- ABM de plantillas por efector en UI y firma digital del alta.
 - Integración quirófano–internación–facturación en un solo flujo.
 
 ---
@@ -305,7 +308,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ---
 
-### 5.11 Agenda y turnos (75 %)
+### 5.11 Agenda y turnos (81 %)
 
 **Qué es:** reserva de citas, políticas de cancelación, conflictos de agenda y recordatorios.
 
@@ -318,19 +321,20 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Notificaciones al paciente (recordatorios, cambios, resumen listo, etc.).
 - Alta de turno por staff para un tercero.
 - Flujos guiados por conversación para turnos.
+- **Indicadores de agenda (staff):** no-show, tasa y mediana de días entre alta del turno y fecha de la cita, con filtro por período y PES.
 
 **Lo que falta**
 
 - Lista de espera entre instituciones con prioridad clínica.
 - Autorización de obra social en el mismo flujo de reserva.
 - Teleconsulta como modalidad nativa en agenda donde aplique.
-- Métricas estándar de acceso (tiempo hasta cita, ausentismo).
+- Export histórico (CSV/PDF) y comparación entre servicios del efector.
 
-**Implicación de producto:** motor de adquisición y uso; métricas de no-show son palanca de ROI para la institución.
+**Implicación de producto:** motor de adquisición y uso; las métricas ya permiten demostrar ROI (ausentismo y plazos de acceso).
 
 ---
 
-### 5.12 Planes de tratamiento (63 %)
+### 5.12 Planes de tratamiento (75 %)
 
 **Qué es:** plan de seguimiento post consulta o crónico (medicación, controles, hábitos) con seguimiento del paciente.
 
@@ -341,25 +345,31 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Vista de planes activos para el paciente.
 - Recordatorios en el dispositivo del paciente, con preferencias por actividad cuando aplica.
 - Pantalla de detalle del plan.
+- **Dashboard staff de adherencia** por efector: resumen global y lista de planes con % de actividades completadas.
 
 **Lo que falta**
 
-- Medición de adherencia conectada a outcomes en dashboard del equipo.
+- Adherencia vinculada a outcomes clínicos (no solo tareas marcadas).
 - Integración automática con laboratorio de controles o farmacia.
 - Sugerencias asistidas por IA con aprobación médica explícita.
 - Versionado y auditoría regulatoria del plan.
 
-**Implicación de producto:** refuerzo de retención y chronic care; buen upsell a instituciones con programas de seguimiento.
+**Implicación de producto:** refuerzo de retención y chronic care; el equipo ya puede priorizar seguimiento por baja adherencia.
 
 ---
 
 ## 6. Priorización sugerida (lente producto / inversión)
 
-Orden orientativo de **retorno vs esfuerzo**, no compromiso de roadmap:
+Orden orientativo de **retorno vs esfuerzo**, no compromiso de roadmap (actualizado tras métricas agenda, adherencia planes y triage UI):
 
-1. **Homologación receta y obras sociales en agenda** — desbloquea mercado y ticket en Argentina.  
-2. **Métricas de agenda y adherencia a planes** — ROI demostrable para la institución.  
-3. **Guardia post-v1** (pedidos en guardia, derivación a cama, SLA) — profundiza el wedge hospitalario ya abierto con triage + tablero.  
-4. **Facturación integrada** — enterprise revenue, integraciones pesadas.  
-5. **Farmacia + stock** — solo si el cliente objetivo es hospital con internación fuerte.  
-6. **Quirófano + logística** — módulos largos, venta por proyecto.
+| Prioridad | Iniciativa | Por qué ahora |
+|-----------|------------|----------------|
+| **1** | **Receta nacional + obras sociales en agenda** | Desbloquea mercado AR/LatAm y ticket; gap regulatorio explícito. |
+| **2** | **Historia clínica longitudinal (médico)** | El core ambulatorio ya es fuerte; falta una sola vista sin exportar PDF. |
+| **3** | **Receta nacional + obras sociales** | Desbloquea mercado AR; puede ir en paralelo al ítem 2. |
+| **4** | **Guardia refinamiento** | SLA por UI admin, aviso sonoro, catálogo LIS en pedidos de guardia. |
+| **5** | **Adherencia → outcomes** | Extender el dashboard staff con labs de control y dispensación cuando existan. |
+| **6** | **Facturación integrada** | Enterprise revenue; integraciones pesadas por institución. |
+| **7** | **Farmacia + stock / quirófano + logística** | Módulos largos; vender por proyecto cuando el cliente lo exija. |
+
+**Hecho recientemente (no repetir):** guardia post-v1 (pedidos, cama, SLA, CSV), triage UI JSON, KPIs agenda, dashboard adherencia planes.

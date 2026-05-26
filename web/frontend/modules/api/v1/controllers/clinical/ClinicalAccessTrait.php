@@ -3,8 +3,11 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Clinical\Specialty\Inpatient\InpatientClinicalContext;
+use common\components\Inpatient\InternacionEfectorAccess;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
+use common\models\SegNivelInternacion;
 use Yii;
 
 trait ClinicalAccessTrait
@@ -27,6 +30,46 @@ trait ClinicalAccessTrait
         }
 
         return [$encounter, null];
+    }
+
+    protected function staffCanAccessInternacion(SegNivelInternacion $internacion): bool
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona > 0 && (int) $internacion->id_persona === $idPersona) {
+            return true;
+        }
+
+        $encounter = InpatientClinicalContext::findOpenInpatientEncounter((int) $internacion->id);
+        if ($encounter !== null && EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+            return true;
+        }
+
+        $idEfector = InternacionEfectorAccess::resolveIdEfector(null);
+        if ($idEfector > 0 && InternacionEfectorAccess::internacionPerteneceEfector($internacion, $idEfector)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array{0: SegNivelInternacion|null, 1: array<string, mixed>|null}
+     */
+    protected function requireInternacionStaffAccess(int $internacionId): array
+    {
+        $internacion = SegNivelInternacion::findOne($internacionId);
+        if ($internacion === null) {
+            Yii::$app->response->statusCode = 404;
+
+            return [null, $this->clinicalError('Internación no encontrada', null, 404)];
+        }
+        if (!$this->staffCanAccessInternacion($internacion)) {
+            Yii::$app->response->statusCode = 403;
+
+            return [null, $this->clinicalError('No tiene permiso para acceder a esta internación', null, 403)];
+        }
+
+        return [$internacion, null];
     }
 
     protected function canAccessCarePlan(CarePlan $plan): bool

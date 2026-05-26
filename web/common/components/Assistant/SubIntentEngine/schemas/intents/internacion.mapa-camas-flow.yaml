@@ -1,0 +1,29 @@
+intent_id: internacion.mapa-camas-flow
+version: 1
+
+action_name: "Mapa de camas"
+description: "Vista operativa de camas del efector: libres, ocupadas, bloqueadas y aislamiento."
+rbac_route: "/api/clinical/internacion/mapa-camas"
+keywords:
+  - mapa de camas
+  - camas libres
+  - ocupación internación
+  - plano de piso
+  - disponibilidad camas
+
+intent_semantics:
+  goal: >-
+    Conocer en tiempo real qué camas están libres u ocupadas y quién está internado.
+  how: >-
+    Pantalla mapa-camas con resumen de ocupación y lista por piso/sala.
+  outcome:
+    - El equipo asigna ingresos o gestiona bloqueos con información actualizada.
+
+subintents:
+  - id: ver_mapa
+    assistant_text: "Mapa de camas del efector"
+    provides:
+      - draft.id_cama
+    next: ""
+    open_ui:
+      action_id: clinical.internacion.mapa-camas

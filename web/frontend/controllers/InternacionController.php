@@ -92,9 +92,23 @@ class InternacionController extends Controller
 
 
         $pisos_efector = $pisos->pisosPorEfector($efector);
+        $mapa = null;
+        if ($efector > 0) {
+            try {
+                $mapa = (new \common\components\Inpatient\InternacionMapaCamasService())->mapa(
+                    (int) $efector,
+                    (int) (Yii::$app->request->post('piso') ?? 0) ?: null,
+                    (int) (Yii::$app->request->post('sala') ?? 0) ?: null
+                );
+            } catch (\Throwable $e) {
+                Yii::warning('Mapa de camas: ' . $e->getMessage(), __METHOD__);
+            }
+        }
+
         return $this->render('index', [
             'pisos_efector' => $pisos_efector,
-            'pacienteInternado' => $pacienteInternado
+            'pacienteInternado' => $pacienteInternado,
+            'mapa' => $mapa,
         ]);
     }
 
@@ -223,6 +237,18 @@ class InternacionController extends Controller
             $puedeAtender = true;
         }
 
+        $altaCtx = [];
+        if ($model->enableExternacion()) {
+            try {
+                $idEfector = (int) Yii::$app->user->getIdEfector();
+                if ($idEfector > 0) {
+                    $altaCtx = (new \common\components\Inpatient\InternacionAltaEstructuradaService())
+                        ->contextoAlta($model, $idEfector);
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('Contexto alta API: ' . $e->getMessage(), __METHOD__);
+            }
+        }
 
         // Captura clínica: API + SPA/Flutter (MVC Consulta* retirado en fase 12).
         $urlSiguiente = null;
@@ -242,7 +268,8 @@ class InternacionController extends Controller
             'regimenes_list' => $regimenes_list,
             'type' =>  Yii::$app->getRequest()->getQueryParam('type'),
             'urlSiguiente' => $urlSiguiente,
-            'puedeAtender' => $puedeAtender
+            'puedeAtender' => $puedeAtender,
+            'altaCtx' => $altaCtx,
         ]);
     }
 

@@ -235,6 +235,29 @@ final class ClinicalUiActionCatalog
                 ['adherencia tratamiento', 'planes activos', 'cumplimiento terapia'],
                 true
             ),
+            self::def(
+                'clinical.internacion.mapa-camas',
+                'Mapa de camas (UI)',
+                'Ocupación por piso y sala: libre, ocupada, bloqueada o aislamiento.',
+                '/api/clinical/internacion/mapa-camas',
+                ['mapa de camas', 'camas libres', 'ocupación internación', 'plano de camas'],
+                true
+            ),
+            self::def(
+                'clinical.internacion.indicadores-resumen',
+                'Indicadores de internación',
+                'Ocupación de camas y estadía media de pacientes activos.',
+                '/api/clinical/internacion/indicadores-resumen',
+                ['indicadores internación', 'ocupación camas', 'estadía']
+            ),
+            self::def(
+                'clinical.internacion.alta-formulario',
+                'Alta hospitalaria (UI)',
+                'Epicrisis y checklist de egreso estructurado.',
+                '/api/clinical/internacion/alta-formulario',
+                ['alta internación', 'epicrisis', 'egreso hospitalario'],
+                true
+            ),
         ];
 
         return self::$definitions;

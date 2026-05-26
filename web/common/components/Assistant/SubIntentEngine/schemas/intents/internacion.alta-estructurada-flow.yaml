@@ -1,0 +1,43 @@
+intent_id: internacion.alta-estructurada-flow
+version: 1
+
+action_name: "Alta hospitalaria"
+description: "Registrar egreso con epicrisis y checklist de alta (staff)."
+rbac_route: "/api/clinical/internacion/alta-formulario"
+keywords:
+  - alta internación
+  - epicrisis
+  - egreso hospitalario
+  - dar de alta paciente
+
+intent_semantics:
+  goal: >-
+    Cerrar el episodio de internación con documentación mínima obligatoria.
+  how: >-
+    Formulario UI con tipo de alta, epicrisis y checklist de egreso.
+  outcome:
+    - La cama queda libre y el episodio queda cerrado en el sistema.
+
+subintents:
+  - id: completar_alta
+    assistant_text: "Completá epicrisis y checklist de alta"
+    requires:
+      - draft.internacion_id
+    provides: []
+    next: ""
+    open_ui:
+      action_id: clinical.internacion.alta-formulario
+      params:
+        internacion_id: "draft.internacion_id"
+
+flow_submit:
+  action_id: clinical.internacion.alta-formulario
+  params:
+    internacion_id: "draft.internacion_id"
+    fecha_fin: "draft.fecha_fin"
+    hora_fin: "draft.hora_fin"
+    id_tipo_alta: "draft.id_tipo_alta"
+    epicrisis: "draft.epicrisis"
+    checklist_medicacion: "draft.checklist_medicacion"
+    checklist_indicaciones: "draft.checklist_indicaciones"
+    checklist_pedidos: "draft.checklist_pedidos"

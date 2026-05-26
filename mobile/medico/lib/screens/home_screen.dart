@@ -12,6 +12,7 @@ import '../services/pacientes_service.dart';
 import 'emergency/emergency_guardia_actions.dart';
 import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
+import 'internacion/internacion_mapa_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
 /// AMB/VR/OBSENC/HH = turnos; IMP = internados/cirugías; EMER = tablero operativo de guardia.
@@ -340,6 +341,22 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (_encounterClass == 'IMP') ...[
                 BioSpacing.gapW(BioSpacing.xs),
+                IconButton(
+                  icon: const Icon(Icons.bed_outlined),
+                  tooltip: 'Mapa de camas',
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => InternacionMapaScreen(
+                                authToken: widget.authToken,
+                                userId: widget.userId,
+                              ),
+                            ),
+                          );
+                        },
+                ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: _isLoading ? null : _cargarListadoPacientes,

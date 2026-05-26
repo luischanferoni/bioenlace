@@ -1,0 +1,91 @@
+{
+  "ui_type": "ui_json",
+  "title": "Alta hospitalaria",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "paciente",
+      "title": "Paciente",
+      "text_field": "resumen_texto",
+      "text": ""
+    },
+    {
+      "kind": "fields",
+      "id": "alta",
+      "title": "Datos del egreso",
+      "fields": [
+        {
+          "name": "internacion_id",
+          "label": "ID internación",
+          "type": "text",
+          "required": true,
+          "readonly": true
+        },
+        {
+          "name": "fecha_fin",
+          "label": "Fecha de alta",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "hora_fin",
+          "label": "Hora",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "responsable_alta",
+          "label": "Profesional responsable del alta",
+          "type": "text",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "id_tipo_alta",
+          "label": "Tipo de alta",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "plantilla_id",
+          "label": "Plantilla de epicrisis",
+          "type": "select",
+          "required": false,
+          "options": []
+        },
+        {
+          "name": "epicrisis",
+          "label": "Epicrisis",
+          "type": "textarea",
+          "required": true,
+          "rows": 5
+        },
+        {
+          "name": "checklist_medicacion",
+          "label": "Medicación e indicaciones entregadas al egreso",
+          "type": "checkbox",
+          "required": true
+        },
+        {
+          "name": "checklist_indicaciones",
+          "label": "Indicaciones explicadas al paciente o familiar",
+          "type": "checkbox",
+          "required": true
+        },
+        {
+          "name": "checklist_pedidos",
+          "label": "Pedidos y estudios pendientes resueltos o planificados",
+          "type": "checkbox",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

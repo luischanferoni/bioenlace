@@ -144,6 +144,14 @@ final class CommonActionsService
                     'urgencias.triage-paciente-guardia',
                 ],
             ],
+            [
+                'id' => 'internacion',
+                'titulo' => 'Internación',
+                'models' => [
+                    'internacion.mapa-camas-flow',
+                    'internacion.alta-estructurada-flow',
+                ],
+            ],
         ];
     }
 

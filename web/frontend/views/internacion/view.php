@@ -19,7 +19,18 @@ $this->params['breadcrumbs'][] = $this->title;
 
 ?>
 
+<?php
+
+use frontend\assets\InternacionAltaAsset;
+
+InternacionAltaAsset::register($this);
+?>
+
 <?= $this->render('_modal_alta.php', ['model' => $model]); ?>
+
+<?php if (!empty($altaCtx) && $model->enableExternacion()): ?>
+    <?= $this->render('_alta_api', ['model' => $model, 'ctx' => $altaCtx]) ?>
+<?php endif; ?>
 
 <div class="seg-nivel-internacion-view">
 

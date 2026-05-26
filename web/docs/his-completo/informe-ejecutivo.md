@@ -35,7 +35,7 @@ Cada área del hospital se califica de **0 a 4**:
 | Indicador | Valor |
 |-----------|--------|
 | Áreas evaluadas | 12 |
-| **Completitud media orientativa** | **~65 %** |
+| **Completitud media orientativa** | **~66 %** |
 | Áreas ≥ 75 % (nivel 3) | 8 de 12 |
 | Áreas ≤ 50 % (nivel ≤ 2) | 4 de 12 |
 
@@ -55,8 +55,8 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - **Facturación y cobranza** integradas al acto médico en todos los puntos de atención.
 - **Farmacia hospitalaria** (stock, dispensación, validación) y cierre con receta nacional homologada.
 - **Quirófano y materiales** (trazabilidad, tablero de salas, insumos).
-- **Internación (refinamiento):** plantillas de epicrisis y cliente móvil del mapa.
 - **Regulatorio y cobranza:** receta nacional homologada y obras sociales en reserva/atención.
+- **Internación (refinamiento):** firma digital del alta; flujo único quirófano–internación–facturación.
 
 
 ### Lectura para inversión
@@ -74,7 +74,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 |------|-------------|---|----------------------|
 | Quirófanos | 2 | 50 % | Cirugía y agenda básica; falta quirófano “enterprise” |
 | Urgencias / guardia | 4 | 95 % | Triage, tablero, pedidos/lab, cama, SLA y CSV |
-| Internación | 3,25 | 78 % | Mapa web/móvil, plantillas epicrisis, alta con responsable |
+| Internación | 3,3 | 82 % | Mapa web/móvil, alta con plantillas, ABM plantillas por efector |
 | Laboratorio | 2,5 | 63 % | Trae resultados de labs externos; no es lab propio |
 | Farmacia | 1,5 | 38 % | Prescripción y receta; sin dispensación ni stock |
 | Receta electrónica | 3 | 75 % | Emisión y PDF paciente; falta homologación nacional plena |
@@ -138,7 +138,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ---
 
-### 5.3 Internación (78 %)
+### 5.3 Internación (82 %)
 
 **Qué es:** paciente internado, cama, evolución, prácticas y consumos del episodio.
 
@@ -148,13 +148,18 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Prácticas, consumos y medicación ligados al episodio.
 - Vínculo parcial con nomencladores y facturación según la institución.
 - Ingreso desde guardia con trazabilidad `id_guardia`.
-- Mapa de camas en web y app médico (IMP): libre, ocupada, bloqueada, aislamiento.
-- Indicadores de ocupación y estadía; alta con plantillas de epicrisis y responsable de sesión.
+- **Mapa de camas** en web y app médico: libre, ocupada, bloqueada, aislamiento; cambio de estado desde web.
+- **Indicadores** de ocupación y estadía (media/mediana) en API y cabecera web.
+- **Alta estructurada** con epicrisis, checklist, responsable de sesión y vista previa de plantilla.
+- **Plantillas de epicrisis** por efector/servicio (y globales de sistema) con placeholders clínicos.
+- **ABM administrativo** de plantillas en web y API (alta, edición, activar/desactivar).
+- Flujos de asistente para mapa de camas y alta estructurada (UI JSON).
 
 **Lo que falta**
 
-- ABM de plantillas por efector en UI y firma digital del alta.
+- Firma digital del responsable del alta.
 - Integración quirófano–internación–facturación en un solo flujo.
+- Administración de plantillas en app móvil (hoy web + API).
 
 ---
 
@@ -360,16 +365,16 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ## 6. Priorización sugerida (lente producto / inversión)
 
-Orden orientativo de **retorno vs esfuerzo**, no compromiso de roadmap (actualizado tras métricas agenda, adherencia planes y triage UI):
+Orden orientativo de **retorno vs esfuerzo**, no compromiso de roadmap (actualizado mayo 2026):
 
 | Prioridad | Iniciativa | Por qué ahora |
 |-----------|------------|----------------|
 | **1** | **Receta nacional + obras sociales en agenda** | Desbloquea mercado AR/LatAm y ticket; gap regulatorio explícito. |
 | **2** | **Historia clínica longitudinal (médico)** | El core ambulatorio ya es fuerte; falta una sola vista sin exportar PDF. |
-| **3** | **Receta nacional + obras sociales** | Desbloquea mercado AR; puede ir en paralelo al ítem 2. |
-| **4** | **Guardia refinamiento** | SLA por UI admin, aviso sonoro, catálogo LIS en pedidos de guardia. |
-| **5** | **Adherencia → outcomes** | Extender el dashboard staff con labs de control y dispensación cuando existan. |
+| **3** | **Guardia refinamiento** | SLA por UI admin, aviso sonoro, catálogo LIS en pedidos de guardia. |
+| **4** | **Adherencia → outcomes** | Extender el dashboard staff con labs de control y dispensación cuando existan. |
+| **5** | **Internación — firma y facturación** | Cerrar alta con validez legal e integración financiera del episodio. |
 | **6** | **Facturación integrada** | Enterprise revenue; integraciones pesadas por institución. |
 | **7** | **Farmacia + stock / quirófano + logística** | Módulos largos; vender por proyecto cuando el cliente lo exija. |
 
-**Hecho recientemente (no repetir):** guardia post-v1 (pedidos, cama, SLA, CSV), triage UI JSON, KPIs agenda, dashboard adherencia planes.
+**Hecho recientemente (no repetir como prioridad inmediata):** guardia post-v1 (pedidos, cama, SLA, CSV); triage UI JSON en asistente; KPIs agenda (`indicadores-agenda`); dashboard adherencia planes staff; internación operativa (mapa, indicadores, alta estructurada, ABM plantillas epicrisis, mapa móvil IMP).

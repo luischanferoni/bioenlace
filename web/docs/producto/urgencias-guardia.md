@@ -61,7 +61,7 @@ App **médico**: registro FCM vía `POST /devices/push-token` (`appClient: medic
 Intents YAML (sin hardcode de pantalla):
 
 - `urgencias.ver-tablero-guardia` — navega a inicio EMER  
-- `urgencias.triage-paciente-guardia` — flujo conversacional de triage  
+- `urgencias.triage-paciente-guardia` — flujo conversacional de triage (UI JSON `elegir-paciente-triage` → `registrar-triage-formulario`)  
 
 Catálogo: `ClinicalUiActionCatalog` + categoría en `CommonActionsService`.
 

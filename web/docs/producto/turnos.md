@@ -39,10 +39,21 @@ flowchart TB
 - El médico o staff puede cancelar con otro alcance de permisos.
 - La política evita huecos imposibles y mantiene trazabilidad del cambio.
 
+## Indicadores de agenda (staff)
+
+Para **dirección y coordinación** del efector, el equipo puede consultar métricas de acceso sin exportar planillas:
+
+- **No-show:** turnos `SIN_ATENDER` atribuibles al paciente en el período.
+- **Tasa de no-show** sobre turnos cerrados (atendidos + ausentes).
+- **Lead time:** mediana y promedio de días entre la **fecha de reserva** y la **fecha de la cita**.
+
+Superficies: API `GET /api/v1/turnos/indicadores-agenda` (filtros por período y PES); intent de asistente `turnos.indicadores-agenda-flow` (UI JSON embebida).
+
 ## Relación con el resto del producto
 
 - Un turno puede originar un **encounter** ambulatorio al atenderse (captura clínica).
 - Los turnos también se pueden iniciar por conversación; el detalle técnico del motor está en [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).
+- Madurez HIS del módulo: [his-completo/11-agenda-turnos.md](../his-completo/11-agenda-turnos.md).
 
 ## Fuera de este documento
 

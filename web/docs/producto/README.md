@@ -15,6 +15,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [planes-de-tratamiento.md](./planes-de-tratamiento.md) | Care plans y recordatorios |
 | [receta-electronica.md](./receta-electronica.md) | Receta emitida, PDF, paciente |
 | [urgencias-guardia.md](./urgencias-guardia.md) | Triage, tablero operativo, circuito EMER |
+| [internacion.md](./internacion.md) | Mapa de camas, alta estructurada, plantillas de epicrisis (ABM) |
 
 ## Otros mapas
 

@@ -23,6 +23,17 @@ flowchart TB
 3. El dispositivo dispara avisos según horarios (con preferencias por ítem cuando existen).
 4. Al tocar el aviso, abre el detalle del plan en Bioenlace.
 
+## Adherencia para el equipo (staff)
+
+El efector puede ver **qué planes tienen baja cumplimiento** sin revisar paciente por paciente:
+
+- Resumen global: cantidad de planes activos y **porcentaje medio de actividades completadas**.
+- Listado de planes con adherencia por plan (útil para priorizar llamados o controles).
+
+API: `GET /api/v1/clinical/care-plans/adherencia-resumen-staff`. Intent: `tratamiento.adherencia-resumen-staff` (pantalla UI JSON en asistente o cliente que la consuma).
+
+Requiere sesión con efector; la autorización sigue el mismo criterio que otros endpoints clínicos del staff.
+
 ## Fuera de alcance aquí
 
-Prescripción electrónica emitida (ver [receta-electronica.md](./receta-electronica.md)).
+Prescripción electrónica emitida (ver [receta-electronica.md](./receta-electronica.md)). Outcomes clínicos automáticos vinculados a la adherencia (pendiente de producto).

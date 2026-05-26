@@ -39,7 +39,10 @@ flowchart LR
 
 - Sesión con **efector y servicio**; agenda del día; pacientes en consulta.
 - Captura clínica y prescripción según [captura-clinica.md](./captura-clinica.md) y [receta-electronica.md](./receta-electronica.md).
+- Con **encounterClass = EMER** (guardia): tablero operativo, triage, atender, derivar y egreso — ver [urgencias-guardia.md](./urgencias-guardia.md).
+- **Internación (IMP):** desde inicio con efector en sesión, acceso al **mapa de camas** del establecimiento (misma API que web).
 
 ## Relación con otros documentos
 
 - [turnos.md](./turnos.md), [laboratorio.md](./laboratorio.md), [resumen-atencion-paciente.md](./resumen-atencion-paciente.md)
+- [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md)

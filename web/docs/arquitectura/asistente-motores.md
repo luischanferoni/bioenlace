@@ -120,4 +120,5 @@ Comparten ideas de draft y permisos, pero **no siempre** pasan por el clasificad
 ## Dónde profundizar en producto
 
 - Experiencia de usuario: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)
-- Turnos, laboratorio, recetas: documentos homónimos en [producto/](../producto/README.md)
+- Turnos, laboratorio, recetas, guardia, internación: [producto/README.md](../producto/README.md)
+- Intents clínicos recientes (tabla resumida): sección “Intents de dominio” en [asistente-y-chat.md](../producto/asistente-y-chat.md)

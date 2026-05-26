@@ -40,3 +40,16 @@ Los intents YAML pueden declarar `intent_semantics` (`goal/how/preconditions/con
 
 No hay comando de compilación de `ui_type=flow` hacia `views/json`. El servidor usa YAML en runtime.
 
+## Intents clínicos / operativos (referencia)
+
+| Intent | Área |
+|--------|------|
+| `urgencias.ver-tablero-guardia` | Guardia EMER |
+| `urgencias.triage-paciente-guardia` | Triage Manchester (UI JSON) |
+| `internacion.mapa-camas-flow` | Mapa de camas |
+| `internacion.alta-estructurada-flow` | Alta estructurada |
+| `turnos.indicadores-agenda-flow` | KPIs agenda staff |
+| `tratamiento.adherencia-resumen-staff` | Adherencia care plans |
+
+Documentación de producto: [internacion.md](../../docs/producto/internacion.md), [urgencias-guardia.md](../../docs/producto/urgencias-guardia.md).
+

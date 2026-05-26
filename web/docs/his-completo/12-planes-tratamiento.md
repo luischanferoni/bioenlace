@@ -20,4 +20,6 @@
 
 ## En producto hoy
 
-[producto/planes-de-tratamiento.md](../producto/planes-de-tratamiento.md)
+- API: `GET /api/v1/clinical/care-plans/adherencia-resumen-staff`
+- Asistente: intent `tratamiento.adherencia-resumen-staff`
+- Historia de producto: [planes-de-tratamiento.md](../producto/planes-de-tratamiento.md)

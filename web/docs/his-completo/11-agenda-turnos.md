@@ -22,4 +22,6 @@
 
 ## En producto hoy
 
-[producto/turnos.md](../producto/turnos.md)
+- API: `GET /api/v1/turnos/indicadores-agenda`
+- Asistente: intent `turnos.indicadores-agenda-flow`
+- Historia de producto: [turnos.md](../producto/turnos.md)

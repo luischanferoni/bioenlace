@@ -6,7 +6,7 @@ Documentación en **lenguaje natural**: cómo funciona cada área del producto d
 
 | Carpeta | Para qué sirve |
 |---------|----------------|
-| [producto/](./producto/README.md) | Historias por área (turnos, laboratorio, apps, clínica…) — cómo se conectan cron, API, IA y base de datos |
+| [producto/](./producto/README.md) | Historias por área (turnos, guardia, internación, laboratorio, apps, clínica…) — cómo se conectan cron, API, IA y base de datos |
 | [arquitectura/](./arquitectura/README.md) | Cómo está armado el asistente (IntentEngine, SubIntentEngine) — con diagramas, sin código |
 | [his-completo/](./his-completo/README.md) | Mapa de madurez hacia un HIS hospitalario completo (qué hay / qué falta) |
 | [costos/](./costos/README.md) | Estimación de costos de IA e infraestructura |

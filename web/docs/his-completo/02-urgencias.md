@@ -25,6 +25,12 @@
 - [ ] Configuración SLA por UI de administración (hoy defaults en BD).
 - [ ] Pedidos con catálogo SNOMED / envío directo al LIS (sigue siendo indicación en Bioenlace).
 
+## En producto hoy
+
+- API base: `/api/v1/clinical/emergency-guardia`
+- Web/móvil: tablero en inicio con `encounterClass = EMER`
+- Asistente: `urgencias.ver-tablero-guardia`, `urgencias.triage-paciente-guardia`
+
 ## Documentación de producto
 
 Ver [urgencias-guardia.md](../producto/urgencias-guardia.md).

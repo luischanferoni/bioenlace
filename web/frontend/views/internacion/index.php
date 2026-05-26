@@ -27,7 +27,14 @@ $hola = 1;
 <div>
 <div class="card">
     <div class="card-body">
-        <p>Disponibilidad de Camas</p>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <p class="mb-0">Disponibilidad de Camas</p>
+            <?= Html::a(
+                'Plantillas de epicrisis',
+                ['/internacion-epicrisis-plantilla/index'],
+                ['class' => 'btn btn-sm btn-outline-secondary rounded-pill']
+            ) ?>
+        </div>
     <div class="row">
         <?php $urlReset = "index";
               echo $this->render('_searchPorPisoSala', ['pisos_efector'=>$pisos_efector, 'urlReset'=> $urlReset]) ?>   

@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
 
 /**
@@ -24,6 +25,16 @@ class InternacionEpicrisisPlantilla extends ActiveRecord
         return '{{%internacion_epicrisis_plantilla}}';
     }
 
+    public function behaviors(): array
+    {
+        return [
+            [
+                'class' => TimestampBehavior::class,
+                'value' => static fn () => time(),
+            ],
+        ];
+    }
+
     public function rules(): array
     {
         return [
@@ -32,6 +43,20 @@ class InternacionEpicrisisPlantilla extends ActiveRecord
             [['cuerpo'], 'string'],
             [['activo'], 'boolean'],
             [['nombre'], 'string', 'max' => 120],
+            [['id_efector'], 'default', 'value' => 0],
+        ];
+    }
+
+    public function attributeLabels(): array
+    {
+        return [
+            'id' => 'ID',
+            'id_efector' => 'Efector',
+            'id_servicio' => 'Servicio',
+            'nombre' => 'Nombre',
+            'cuerpo' => 'Cuerpo de la plantilla',
+            'activo' => 'Activa',
+            'orden' => 'Orden',
         ];
     }
 }

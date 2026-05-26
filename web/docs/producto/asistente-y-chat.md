@@ -41,6 +41,21 @@ flowchart TB
 
 Comparten ideas de borrador y permisos; no siempre pasan por el mismo clasificador de intents.
 
+## Intents de dominio (referencia mayo 2026)
+
+Ejemplos de flujos conversacionales con UI JSON (YAML en `SubIntentEngine/schemas/intents/`):
+
+| Dominio | Intent | Uso |
+|---------|--------|-----|
+| Urgencias | `urgencias.ver-tablero-guardia` | Navegar al tablero EMER |
+| Urgencias | `urgencias.triage-paciente-guardia` | Lista sin triage → formulario Manchester |
+| Internación | `internacion.mapa-camas-flow` | Mapa de camas del efector |
+| Internación | `internacion.alta-estructurada-flow` | Alta con epicrisis y plantilla |
+| Agenda | `turnos.indicadores-agenda-flow` | KPIs no-show y lead time (staff) |
+| Planes | `tratamiento.adherencia-resumen-staff` | Dashboard adherencia por efector |
+
+Detalle operativo por área: [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md), [turnos.md](./turnos.md), [planes-de-tratamiento.md](./planes-de-tratamiento.md).
+
 ## Costos
 
 Uso de IA en clasificación y respuestas: ver [costos/](../costos/README.md).

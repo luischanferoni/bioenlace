@@ -2,7 +2,7 @@
 
 Documento de **producto y cobertura**, no manual técnico. Responde: *¿qué parte de un hospital information system tenemos hoy y qué falta?*
 
-**Última revisión:** 2026-05-20 (internación: mapa de camas, indicadores, alta estructurada API).
+**Última revisión:** 2026-05-20 (internación operativa + ABM plantillas epicrisis; urgencias triage UI; KPIs agenda; adherencia planes staff).
 
 Escala por módulo (orientativa):
 
@@ -20,7 +20,7 @@ Escala por módulo (orientativa):
 |--------|-------------|----------|
 | [01 Quirófanos](./01-quirofanos.md) | 2 | 50 % |
 | [02 Urgencias](./02-urgencias.md) | 4 | 95 % |
-| [03 Internación](./03-internacion.md) | 3,25 | 78 % |
+| [03 Internación](./03-internacion.md) | 3,3 | 82 % |
 | [04 Laboratorio (LIS)](./04-lis.md) | 2,5 | 63 % |
 | [05 Farmacia](./05-farmacia.md) | 1,5 | 38 % |
 | [06 Receta electrónica](./06-receta-electronica.md) | 3 | 75 % |
@@ -31,9 +31,9 @@ Escala por módulo (orientativa):
 | [11 Agenda y turnos](./11-agenda-turnos.md) | 3,25 | 81 % |
 | [12 Planes de tratamiento](./12-planes-tratamiento.md) | 3 | 75 % |
 
-**Promedio orientativo del mapa (12 módulos): ~65 %** hacia un HIS hospitalario “completo”.
+**Promedio orientativo del mapa (12 módulos): ~66 %** hacia un HIS hospitalario “completo”.
 
-Interpretación: Bioenlace está **fuerte en consulta ambulatoria, agenda (con KPIs de acceso), guardia operativa (triage + tablero), integración LIS externa, receta emitida y seguimiento de planes**; **débil en farmacia dispensación, logística, facturación plena y quirófano avanzado**. El porcentaje no es certificación ni auditoría: es una brújula interna para priorizar producto.
+Interpretación: Bioenlace está **fuerte en consulta ambulatoria, agenda (con KPIs de acceso), guardia operativa (triage + tablero + UI asistente), internación (mapa, alta con plantillas y ABM), integración LIS externa, receta emitida y seguimiento de planes (adherencia staff)**; **débil en farmacia dispensación, logística, facturación plena y quirófano avanzado**. El porcentaje no es certificación ni auditoría: es una brújula interna para priorizar producto.
 
 ## Módulos (detalle)
 

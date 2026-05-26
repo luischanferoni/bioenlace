@@ -20,15 +20,17 @@
 - [x] `AlergiasBusqueda` → `allergy_intolerance`
 - [x] `Encounter`: relaciones legacy marcadas `@deprecated`; getters FHIR preferidos
 - [x] `_reporteFarmacia.php`: diagnósticos/meds vía `Condition` / `MedicationRequest`
-- [ ] `EncounterReporteBusqueda` odontología sin `consultas_odontologia_*`
+- [x] `EncounterReporteBusqueda` odontología vía `procedure` + ext (sin `consultas_odontologia_*`)
 
 ## Paso 1 — Derivaciones
 
-Tabla `consultas_derivaciones` → `service_request` con `category=referral` + metadatos de workflow (`note` JSON o columnas dedicadas).
+Tabla `consultas_derivaciones` → `service_request` con `category=referral` + columnas workflow (`target_*`, `referral_status`, …).
+
+- [x] Migración `m260526_160002_service_request_referral_workflow`
+- [x] AR shim `ConsultaDerivaciones` extends `ServiceRequest`
+- [x] `ReferralRequestService` + integración turnos / captura IA
 
 **Callers:** `ReferenciasController`, `TurnosController`, API `TurnosController`, `TurnoPersistService`, `ConsultasConfiguracion` (parent derivación).
-
-**Interim (solo si 150002 ya corrió sin paso 1):** `m260526_160001_recreate_consultas_derivaciones` — recrea tabla sin FK a `consultas`; retirar al cerrar paso 1.
 
 ## Paso 2 — Diagnósticos
 
@@ -49,8 +51,10 @@ Tabla `consultas_derivaciones` → `service_request` con `category=referral` + m
 
 ## Paso 5 — Odontología
 
-- `ConsultaOdontologiaEstados::getCPOHastaEncounter` desde `procedure` / `procedure_odontology_ext`
-- `Encounter::getOdontologia*` → FHIR
+- [x] `ConsultaOdontologiaEstados::getCPOHastaEncounter` desde `clinical_condition` (`odontology_state:`) si no hay tabla legacy
+- [x] `OdontologyEncounterService::persistToothStates` + captura IA
+- [x] `EncounterReporteBusqueda::searchReporteOdontologia` → `procedure` + `procedure_odontology_ext`
+- [ ] `Encounter::getOdontologia*` → relaciones FHIR (opcional; callers deprecados)
 
 ## Paso 6 — Internación auxiliar
 

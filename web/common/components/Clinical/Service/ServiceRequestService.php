@@ -3,6 +3,7 @@
 namespace common\components\Clinical\Service;
 
 use common\components\Clinical\CarePlan\Reminder\ActivityReminderTimingParser;
+use common\components\Clinical\Service\ReferralRequestService;
 use common\components\Clinical\CarePlan\Reminder\ReminderTimingJsonBuilder;
 use common\components\Clinical\Enum\RequestStatus;
 use common\models\Clinical\CarePlan;
@@ -39,13 +40,16 @@ final class ServiceRequestService
         string $legacyModelo = 'ConsultaPracticas',
         ?CarePlan $carePlan = null
     ): ServiceRequest {
-        $category = $legacyModelo === 'ConsultaDerivaciones' ? 'referral' : 'procedure';
+        if ($legacyModelo === 'ConsultaDerivaciones' && is_array($row)) {
+            return ReferralRequestService::createFromExtractedRow($encounter, $row);
+        }
+
         $sr = new ServiceRequest();
         $sr->encounter_id = $encounter->id;
         $sr->subject_persona_id = $encounter->subject_persona_id;
         $sr->status = RequestStatus::ACTIVE;
         $sr->intent = 'order';
-        $sr->category = $category;
+        $sr->category = 'procedure';
         if (is_array($row)) {
             $sr->code = (string) ($row['codigo'] ?? $row['conceptId'] ?? '');
             $sr->display = $row['termino'] ?? $row['texto'] ?? null;

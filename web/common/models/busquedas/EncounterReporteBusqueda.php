@@ -293,23 +293,30 @@ class EncounterReporteBusqueda extends Model
      */
     public function searchReporteOdontologia($id_efector, $idServicio, $fecha): array
     {
+        $procTable = \common\models\Clinical\Procedure::tableName();
+
         return (new \yii\db\Query())
             ->select([
-                'consultas_odontologia_practicas.codigo',
-                'cantidad' => new \yii\db\Expression('count(enc.id)'),
+                'codigo' => 'p.code',
+                'cantidad' => new \yii\db\Expression('count(DISTINCT enc.id)'),
             ])
             ->from(['enc' => Encounter::tableName()])
-            ->leftJoin(
-                'consultas_odontologia_practicas',
-                'enc.id = consultas_odontologia_practicas.id_consulta'
+            ->innerJoin(
+                ['p' => $procTable],
+                'p.encounter_id = enc.id AND p.deleted_at IS NULL'
+            )
+            ->innerJoin(
+                ['e' => \common\models\Clinical\ProcedureOdontologyExt::tableName()],
+                'e.procedure_id = p.id'
             )
             ->andWhere(['enc.efector_id' => (int) $id_efector])
             ->andWhere(['DATE_FORMAT(enc.created_at, "%Y-%m")' => $fecha])
             ->andWhere(['enc.service_id' => (int) $idServicio])
             ->andWhere(['enc.deleted_at' => null])
-            ->andWhere(['IS NOT', 'consultas_odontologia_practicas.codigo', null])
-            ->orderBy(['enc.created_at' => SORT_ASC])
-            ->groupBy(['consultas_odontologia_practicas.codigo'])
+            ->andWhere(['IS NOT', 'p.code', null])
+            ->andWhere(['!=', 'p.code', ''])
+            ->groupBy(['p.code'])
+            ->orderBy(['p.code' => SORT_ASC])
             ->all();
     }
 

@@ -1779,8 +1779,7 @@ class TurnosController extends BaseController
         if (count($cps) > 0) {
             $parent_id = null;
             foreach ($cps as $cp) {
-                $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
-                $cp->save();
+                \common\components\Clinical\Service\ReferralRequestService::markBooked($cp);
                 $parent_id = $cp->id;
             }
             $model->parent_class = Encounter::PARENT_DERIVACION;

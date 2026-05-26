@@ -359,6 +359,11 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
 
     public static function getPorPaciente($idPersona)
     {
+        if (!self::legacyTableExists()) {
+            return (new \common\components\Clinical\Specialty\Odontology\OdontologyEncounterService())
+                ->getCpoStatesForPerson((int) $idPersona);
+        }
+
         return self::find()
             ->innerJoin(
                 ['enc' => \common\models\Clinical\Encounter::tableName()],
@@ -373,6 +378,11 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
 
     public static function getPorPacienteHastaEncounter($idPersona, $encounterId)
     {
+        if (!self::legacyTableExists()) {
+            return (new \common\components\Clinical\Specialty\Odontology\OdontologyEncounterService())
+                ->getCpoStatesForPersonUntilEncounter((int) $idPersona, (int) $encounterId);
+        }
+
         return self::find()
             ->innerJoin(
                 ['enc' => \common\models\Clinical\Encounter::tableName()],
@@ -465,5 +475,10 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
                 ['=', 'id_consulta', $id_consulta]
             ]);
         }
-    }     
+    }
+
+    private static function legacyTableExists(): bool
+    {
+        return Yii::$app->db->schema->getTableSchema(self::tableName(), true) !== null;
+    }
 }

@@ -12,7 +12,7 @@ Migraciones base **aplicadas** (incluye drop tabla padre `consultas`).
 
 **Pendiente de código antes de ejecutar:** `m260526_150002` (drop tablas hijas).
 
-**Puente derivaciones (si 150002 ya corrió):** `m260526_160001_recreate_consultas_derivaciones` — hasta cerrar 03e-1.
+**Derivaciones (03e-1):** `m260526_160002_service_request_referral_workflow` — columnas referral en `service_request` + drop vista huérfana `view_consulta_motivo`. Ejecutar en greenfield (no existe `consultas_derivaciones`).
 
 ---
 
@@ -28,6 +28,7 @@ Migraciones base **aplicadas** (incluye drop tabla padre `consultas`).
 | 6 | `m260526_140001_api_internacion_ingreso_rbac` | Permisos API ingreso internación |
 | 7 | `m260520_100002_clinical_fhir_drop_legacy` | **Drop** `consultas`, `consultas_ia`, `consultas_configuracion` |
 | 8 | `m260520_100003_turnos_appointment_fhir_columns` | Columnas appointment en turnos (si aplica) |
+| 9 | `m260526_160002_service_request_referral_workflow` | Columnas workflow referral en `service_request`; drop `view_consulta_motivo` |
 
 Opcionales / catálogo (sin dependencia del drop):
 
@@ -41,6 +42,8 @@ Opcionales / catálogo (sin dependencia del drop):
 | `m260526_150002_clinical_fhir_drop_legacy_child_tables` | Elimina `consultas_motivos`, `consultas_derivaciones`, `diagnostico_consultas`, etc. El código aún lee esas tablas (columna `id_consulta` = `encounter.id`). Ejecutar solo cuando captura y reportes usen 100 % FHIR. |
 
 ## Greenfield
+
+Referencia de esquema: `web/u257309594_bioenlace.sql` — sin tablas `consultas*` ni `consultas_derivaciones`; sí `encounter`, `clinical_condition`, `service_request`, `procedure`, `procedure_odontology_ext`.
 
 Si nunca existió `diagnostico_consultas`, `m260526_130001` crea la vista desde `clinical_condition`.
 

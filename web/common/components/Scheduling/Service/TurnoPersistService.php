@@ -8,6 +8,7 @@ use common\models\Clinical\Encounter;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ServiciosEfector;
+use common\components\Clinical\Service\ReferralRequestService;
 use common\models\ConsultaDerivaciones;
 use common\models\EfectorTurnosConfig;
 
@@ -69,8 +70,7 @@ class TurnoPersistService
             if (count($cps) > 0) {
                 $parent_id = null;
                 foreach ($cps as $cp) {
-                    $cp->estado = ConsultaDerivaciones::ESTADO_CON_TURNO;
-                    $cp->save();
+                    ReferralRequestService::markBooked($cp);
                     $parent_id = $cp->id;
                 }
                 $model->parent_class = Encounter::PARENT_DERIVACION;

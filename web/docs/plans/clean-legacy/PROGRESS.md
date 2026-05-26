@@ -13,11 +13,11 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Paso | Estado | Notas |
 |------|--------|-------|
 | 0 Nomenclador + reportes FHIR | [x] | Busquedas dx/motivos/alergias; farmacia |
-| 1 Derivaciones → referral | [ ] | Puente: `m260526_160001` si falta tabla |
+| 1 Derivaciones → referral | [x] | `ConsultaDerivaciones` → `service_request`; `ReferralRequestService`; migración `160002` |
 | 2 Diagnósticos → Condition | [x] | `DiagnosticoConsultaRepository` |
 | 3 Alergias → allergy_intolerance | [x] | AR + `AlergiasBusqueda` |
 | 4 Motivos SNOMED | [x] | Nomenclador vía `reason_text` |
-| 5 Odontología reportes | [ ] | Planilla C7 |
+| 5 Odontología reportes | [x] | CPO vía `odontology_state:` + planilla C7; reporte mensual vía `procedure` |
 | 6 Internación auxiliar | [ ] | Balance/régimen/suministro |
 | 7 Limpieza AR | [x] | Forms huérfanos, evolución/síntomas/obstetricia, dead code IA |
 | 8 Drop hijas `m260526_150002` | [ ] | Tras smoke |

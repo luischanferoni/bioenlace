@@ -19,9 +19,11 @@ class ServiceRequest extends ActiveRecord
         return [
             [['encounter_id', 'subject_persona_id', 'status', 'intent', 'category'], 'required'],
             [['encounter_id', 'subject_persona_id', 'care_plan_id', 'id_profesional_efector_servicio'], 'integer'],
+            [['target_efector_id', 'target_service_id', 'responded_encounter_id'], 'integer'],
             [['status'], 'string', 'max' => 32],
             [['intent'], 'string', 'max' => 16],
             [['category'], 'string', 'max' => 64],
+            [['referral_status', 'referral_kind', 'request_kind'], 'string', 'max' => 32],
             [['code'], 'string', 'max' => 64],
             [['code_system'], 'string', 'max' => 64],
             [['display'], 'string', 'max' => 512],

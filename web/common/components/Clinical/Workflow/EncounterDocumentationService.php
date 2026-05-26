@@ -216,6 +216,9 @@ class EncounterDocumentationService extends Component
                 case 'ConsultaOdontologiaDiagnosticos':
                     $this->odontology->persistDiagnostics($encounter, $payload);
                     break;
+                case 'ConsultaOdontologiaEstados':
+                    $this->odontology->persistToothStates($encounter, $payload);
+                    break;
                 case 'ConsultaPracticasOftalmologia':
                 case 'ConsultaPracticasOftalmologiaEstudios':
                     $this->ophthalmology->persistPractices($encounter, $payload);

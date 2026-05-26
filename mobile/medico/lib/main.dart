@@ -15,17 +15,21 @@ import 'screens/medico_signup_screen.dart';
 /// Sesión de prueba médico — botón «Ir al inicio» en login (`generar-token-prueba`).
 const int _kSimulacionMedicoUserId = 5748;
 const int _kSimulacionMedicoPersonaId = 920778;
-/// PES de prueba (profesional_efector_servicio.id). Ajustar según BD / wizard habitual.
-const int _kSimulacionMedicoPesId = 7830;
+/// Opcional: si el id no coincide con la persona, la API elige el primer PES de esa persona.
+const int? _kSimulacionMedicoPesId = null;
 const String _kSimulacionMedicoEncounterClass = 'AMB';
 
 Uri _simulacionMedicoTokenUri() {
-  return Uri.parse(
-    '${AppConfig.apiUrl}/auth/generar-token-prueba'
-    '?user_id=$_kSimulacionMedicoUserId'
-    '&id_persona=$_kSimulacionMedicoPersonaId'
-    '&id_profesional_efector_servicio=$_kSimulacionMedicoPesId'
-    '&encounter_class=$_kSimulacionMedicoEncounterClass',
+  final query = <String, String>{
+    'user_id': '$_kSimulacionMedicoUserId',
+    'id_persona': '$_kSimulacionMedicoPersonaId',
+    'encounter_class': _kSimulacionMedicoEncounterClass,
+  };
+  if (_kSimulacionMedicoPesId != null) {
+    query['id_profesional_efector_servicio'] = '$_kSimulacionMedicoPesId';
+  }
+  return Uri.parse('${AppConfig.apiUrl}/auth/generar-token-prueba').replace(
+    queryParameters: query,
   );
 }
 
@@ -253,6 +257,7 @@ class MyApp extends StatelessWidget {
                         );
                       }
                       final sesion = data['sesion_operativa'];
+                      final pesResuelto = data['pes_resuelto'];
                       if (sesion is Map<String, dynamic>) {
                         final pes = sesion['id_profesional_efector_servicio'];
                         if (pes != null) {
@@ -265,10 +270,24 @@ class MyApp extends StatelessWidget {
                         if (ef != null) {
                           await prefs.setInt('id_efector', (ef as num).toInt());
                         }
+                      } else if (pesResuelto is Map<String, dynamic>) {
+                        final pes = pesResuelto['id'];
+                        if (pes != null) {
+                          await prefs.setInt(
+                            'id_profesional_efector_servicio',
+                            (pes as num).toInt(),
+                          );
+                        }
+                        final ef = pesResuelto['id_efector'];
+                        if (ef != null) {
+                          await prefs.setInt('id_efector', (ef as num).toInt());
+                        }
                       }
                       // Con PES en el JWT puede omitirse el wizard; si no hay contexto, forzarlo.
-                      final tieneContextoOperativo = sesion is Map &&
-                          sesion['id_profesional_efector_servicio'] != null;
+                      final tieneContextoOperativo =
+                          (sesion is Map &&
+                              sesion['id_profesional_efector_servicio'] != null) ||
+                          (pesResuelto is Map && pesResuelto['id'] != null);
                       await prefs.setBool('config_completed', tieneContextoOperativo);
 
                       if (!loginContext.mounted) return;
@@ -296,7 +315,7 @@ class MyApp extends StatelessWidget {
                               idProfesionalEfectorServicio: prefs
                                       .getInt('id_profesional_efector_servicio')
                                       ?.toString() ??
-                                  '$_kSimulacionMedicoPesId',
+                                  '0',
                             ),
                           ),
                         );

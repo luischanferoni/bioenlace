@@ -297,7 +297,7 @@ class AuthController extends BaseController
     /**
      * Hidrata sesión + RBAC como tras login API (solo endpoint de prueba).
      *
-     * @return array{roles: list<string>, primary_role: string, permissions: list<string>, jwt_claims: array<string, mixed>}
+     * @return array{roles: list<string>, primary_role: string, permissions: list<string>, jwt_claims: array<string, mixed>, pes_resuelto: array<string, mixed>|null}
      */
     private function bootstrapDevAuthContext(
         User $user,
@@ -327,11 +327,14 @@ class AuthController extends BaseController
         Yii::$app->user->setIdentity($identity);
 
         $jwtClaims = [];
-        if ($idPes !== null && $idPes > 0) {
-            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-            if (!$pes || (int) $pes->id_persona !== (int) $persona->id_persona) {
+        $pesMeta = null;
+        if (($idPes !== null && $idPes > 0) || ($idEfector !== null && $idEfector > 0)) {
+            [$pes, $pesMeta] = $this->resolvePesForDevToken($persona, $idPes, $idEfector);
+            if ($pes === null) {
+                $disponibles = $this->listPesIdsForDevToken((int) $persona->id_persona);
                 throw new \InvalidArgumentException(
-                    'id_profesional_efector_servicio no corresponde a la persona del token de prueba.'
+                    'Sin asignación PES para id_persona ' . $persona->id_persona
+                    . ($disponibles !== [] ? '. IDs PES en BD: ' . implode(', ', $disponibles) : '.')
                 );
             }
             Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
@@ -340,9 +343,6 @@ class AuthController extends BaseController
             $jwtClaims['id_profesional_efector_servicio'] = (int) $pes->id;
             $jwtClaims['id_efector'] = (int) $pes->id_efector;
             $jwtClaims['servicio_actual'] = (int) $pes->id_servicio;
-        } elseif ($idEfector !== null && $idEfector > 0) {
-            Yii::$app->user->setIdEfector($idEfector);
-            $jwtClaims['id_efector'] = $idEfector;
         }
 
         if ($encounterClass !== null && $encounterClass !== '') {
@@ -364,7 +364,60 @@ class AuthController extends BaseController
             'primary_role' => $this->resolvePrimaryRoleName($roleNames),
             'permissions' => $permissions,
             'jwt_claims' => $jwtClaims,
+            'pes_resuelto' => $pesMeta,
         ];
+    }
+
+    /**
+     * @return array{0: ProfesionalEfectorServicio|null, 1: array<string, mixed>|null}
+     */
+    private function resolvePesForDevToken(Persona $persona, ?int $idPes, ?int $idEfector): array
+    {
+        $idPersona = (int) $persona->id_persona;
+
+        if ($idPes !== null && $idPes > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if ($pes !== null && (int) $pes->id_persona === $idPersona) {
+                return [$pes, [
+                    'id' => (int) $pes->id,
+                    'id_efector' => (int) $pes->id_efector,
+                    'id_servicio' => (int) $pes->id_servicio,
+                    'solicitado' => $idPes,
+                    'auto' => false,
+                ]];
+            }
+        }
+
+        $query = ProfesionalEfectorServicio::find()
+            ->where(['id_persona' => $idPersona, 'deleted_at' => null]);
+        if ($idEfector !== null && $idEfector > 0) {
+            $query->andWhere(['id_efector' => $idEfector]);
+        }
+        /** @var ProfesionalEfectorServicio|null $pes */
+        $pes = $query->orderBy(['id' => SORT_ASC])->one();
+        if ($pes === null) {
+            return [null, null];
+        }
+
+        return [$pes, [
+            'id' => (int) $pes->id,
+            'id_efector' => (int) $pes->id_efector,
+            'id_servicio' => (int) $pes->id_servicio,
+            'solicitado' => $idPes,
+            'auto' => $idPes === null || $idPes !== (int) $pes->id,
+        ]];
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function listPesIdsForDevToken(int $idPersona): array
+    {
+        return ProfesionalEfectorServicio::find()
+            ->select('id')
+            ->where(['id_persona' => $idPersona, 'deleted_at' => null])
+            ->orderBy(['id' => SORT_ASC])
+            ->column();
     }
 
     /**
@@ -514,6 +567,7 @@ class AuthController extends BaseController
                 'documento' => $persona->documento,
             ],
             'sesion_operativa' => $authContext['jwt_claims'] !== [] ? $authContext['jwt_claims'] : null,
+            'pes_resuelto' => $authContext['pes_resuelto'],
             'token' => $token,
         ], 'Token generado exitosamente');
     }

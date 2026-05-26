@@ -527,7 +527,9 @@ class Consulta extends \yii\db\ActiveRecord
 
     public function getAutofacturacion()
     {
-        return $this->hasOne(Autofacturacion::className(), ['id_consulta' => 'id_consulta']);
+        $fk = Autofacturacion::legacyConsultaFkAttribute();
+
+        return $this->hasOne(Autofacturacion::className(), [$fk => 'id_consulta']);
     }
 
     public function getOdontologiaEstados()

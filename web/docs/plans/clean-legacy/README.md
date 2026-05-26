@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `clean-legacy` |
-| Estado | En ejecución — Fase 03c (Paso 2 motivos API hecho) |
+| Estado | En ejecución — Fase 03c (Paso 4 autofacturación/referencias hecho) |
 | Objetivo | Retirar MVC Yii, modelos, búsquedas y tablas que quedaron reemplazados por **API v1**, **UI JSON/flows** y dominio **FHIR** (`encounter`, `clinical/*`). |
 | Decisión base | [fhir-clinical.md](../../decisions/fhir-clinical.md) — sin retrocompat HTTP legacy de consulta |
 

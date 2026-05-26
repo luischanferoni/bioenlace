@@ -15,8 +15,21 @@
 - `EncounterAppointmentReasonLookupService`: último motivo / encounter desde turno (sin `consultas`).
 - `PacientesController::actionInformacionMedica` y agenda ambulatoria: `Encounter` + mensajes por `encounter_id`; alias API `consulta_id` = `encounter_id`.
 
-## Paso 3+ (pendiente)
+## Paso 3 — Persistencia clínica sin `consultas` (hecho)
 
-- `ConsultaProcesamientoService` sin escribir `consultas`.
-- Autofacturación / referencias con `legacy_id_consulta`.
+- `ConsultaProcesamientoService::guardar()` delega en `EncounterDocumentationService` (FHIR) y deja de crear filas en tabla `consultas`.
+
+## Paso 4 — Autofacturación / referencias (hecho)
+
+- `LegacyIdConsultaAsEncounterColumnTrait`: columna `legacy_id_consulta` (fallback `id_consulta`) → encounter id.
+- `Autofacturacion`, `Referencia`: FK dinámica + relación `getEncounter()`.
+- `EncounterSumarAutofacturacionContext` + `AutofacturacionEncounterBusqueda`: listados SUMAR sobre `Encounter`.
+- `AutofacturacionController`: index / enviadas / no procesadas / mapear / enviar sin `Consulta::findOne`.
+- `Referencia::getDatosPersona*`: joins `encounter` + `turnos` + `personas` (sin `consultas`).
+- Vistas autofacturación: diagnósticos/prácticas vía `Condition` / `ServiceRequest`.
+
+## Paso 5+ (pendiente)
+
 - Drop `consultas`.
+- `ReporteController` + planillas (backlog facturación).
+- Migración BD `personas_antecedentes.id_consulta` → `encounter_id` (03c.2).

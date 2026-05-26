@@ -5,6 +5,7 @@ namespace common\components\Clinical\Legacy;
 use Yii;
 use yii\base\Component;
 use common\models\Consulta;
+use common\components\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Text\ProcesadorTextoMedico;
 use common\components\Logging\ConsultaLogger;
 use common\components\Terminology\Snomed\DeferredSnomedProcessor;
@@ -240,6 +241,25 @@ HTML;
 
     public function guardar(array $body): array
     {
+        // clean-legacy (Fase 03c): no persistir en tablas legacy `consultas` desde este pipeline.
+        // Se mantiene el entrypoint para compatibilidad interna, delegando a EncounterDocumentationService (FHIR).
+        try {
+            return (new EncounterDocumentationService())->guardar($body);
+        } catch (\Throwable $e) {
+            Yii::error('Error delegando a EncounterDocumentationService::guardar: ' . $e->getMessage(), 'consulta-guardar');
+
+            return [
+                '__statusCode' => 500,
+                'success' => false,
+                'message' => 'Ocurrió un error al guardar el encounter. Por favor, intente nuevamente.',
+                'errors' => YII_DEBUG ? [
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ] : null,
+            ];
+        }
+
         try {
             $idConfiguracion = $body['id_configuracion'] ?? null;
             $idPersona = $body['id_persona'] ?? null;

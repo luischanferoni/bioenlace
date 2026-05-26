@@ -104,6 +104,33 @@ class Encounter extends ActiveRecord
         return $this->hasOne(ProfesionalEfectorServicio::class, ['id' => 'id_profesional_efector_servicio']);
     }
 
+    /** Persona del profesional que atiende (vía PES), para nombre en UI legacy. */
+    public function getProfesionalPes(): \yii\db\ActiveQuery
+    {
+        return $this->hasOne(Persona::class, ['id_persona' => 'id_persona'])
+            ->viaTable(ProfesionalEfectorServicio::tableName(), ['id' => 'id_profesional_efector_servicio']);
+    }
+
+    /**
+     * Padre operativo (turno u otro contexto) para vistas que usaban `Consulta::getParent()`.
+     */
+    public function getParent(): \yii\db\ActiveQuery
+    {
+        if ($this->appointment_id !== null && (int) $this->appointment_id > 0) {
+            return $this->hasOne(Turno::class, ['id_turnos' => 'appointment_id']);
+        }
+
+        $class = self::PARENT_CLASSES[$this->parent_type] ?? null;
+        if ($class === Turno::class || $class === '\common\models\Turno') {
+            return $this->hasOne(Turno::class, ['id_turnos' => 'parent_id']);
+        }
+        if ($class !== null && class_exists($class)) {
+            return $this->hasOne($class, ['id' => 'parent_id']);
+        }
+
+        return $this->hasOne(Turno::class, ['id_turnos' => 'parent_id']);
+    }
+
     public function getConditions(): \yii\db\ActiveQuery
     {
         return $this->hasMany(Condition::class, ['encounter_id' => 'id']);
@@ -122,6 +149,41 @@ class Encounter extends ActiveRecord
     public function getCarePlans(): \yii\db\ActiveQuery
     {
         return $this->hasMany(CarePlan::class, ['encounter_id' => 'id']);
+    }
+
+    public function getAutofacturacion(): \yii\db\ActiveQuery
+    {
+        $fk = \common\models\sumar\Autofacturacion::legacyConsultaFkAttribute();
+
+        return $this->hasOne(\common\models\sumar\Autofacturacion::class, [$fk => 'id']);
+    }
+
+    /** Alias para vistas legacy de autofacturación. */
+    public function getId_consulta(): int
+    {
+        return (int) $this->id;
+    }
+
+    /** Alias para vistas legacy de autofacturación. */
+    public function getPaciente(): \yii\db\ActiveQuery
+    {
+        return $this->getSubject();
+    }
+
+    /**
+     * Prácticas / pedidos asociados (reemplazo de `practicasPostDiagnostico` en consulta legacy).
+     *
+     * @return ServiceRequest[]
+     */
+    public function getPracticasPostDiagnostico(): array
+    {
+        return $this->getServiceRequests()->all();
+    }
+
+    /** @return Condition[] */
+    public function getDiagnosticos(): array
+    {
+        return $this->getConditions()->all();
     }
 
     public function isInProgress(): bool

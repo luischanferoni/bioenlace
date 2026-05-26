@@ -4,7 +4,6 @@ use yii\helpers\Url;
 use yii\grid\GridView;
 use yii\widgets\LinkPager;
 
-use common\models\Consulta;
 use common\models\Persona;
 
 
@@ -30,22 +29,21 @@ $this->title = 'Autofacturación';
                 'headerRowOptions' => ['class' => 'bg-primary text-white'],
                 'filterRowOptions' => ['class' => 'bg-white'],
                 'afterRow' => function($model, $key, $index) {
-                    
+                    $encounterId = (int) $model->id;
 
-                    if ($model->autofacturacion) {                                             
-
+                    if ($model->autofacturacion) {
                         $vista = Yii::$app->controller->renderPartial('_mapeado', [
-                            'id_consulta' => $model->id_consulta,
+                            'id_consulta' => $encounterId,
                             'autofacturacion' => $model->autofacturacion,
                             'beneficiarios' => json_decode($model->autofacturacion->beneficiarios),
                             'codigos' => $model->autofacturacion->codigos
                         ]);
                     } else {
-                        $vista = "Aún no se han generado los códigos de sumar para esta consulta.";
+                        $vista = "Aún no se han generado los códigos de sumar para este encounter.";
                     }
 
-                    return '<tr id="div_mapear_<?=$id_consulta?>">
-                                <td colspan="5">'.$vista.'</td>
+                    return '<tr id="div_mapear_' . $encounterId . '">
+                                <td colspan="5">' . $vista . '</td>
                             </tr>';
                 },
                 'columns' => [
@@ -68,10 +66,10 @@ $this->title = 'Autofacturación';
                         'label' => 'Diagnósticos',
                         'value' => function($data) {
                             $diagnosticos = [];
-                            foreach($data->diagnosticos as $diagnostico) {
-                                $diagnosticos[] = isset($diagnostico->codigoSnomed->term) ? $diagnostico->codigoSnomed->term:"";
+                            foreach ($data->diagnosticos as $diagnostico) {
+                                $diagnosticos[] = $diagnostico->display ?: $diagnostico->code ?: '';
                             }
-                            return '<ul><li>'.implode("</li><li>", $diagnosticos).'</li></ul>';
+                            return '<ul><li>' . implode('</li><li>', array_filter($diagnosticos)) . '</li></ul>';
                         }
                     ],
                     [
@@ -80,10 +78,10 @@ $this->title = 'Autofacturación';
                         'label' => 'Prácticas',
                         'value' => function($data) {
                             $practicas = [];
-                            foreach($data->practicasPostDiagnostico as $practica) {
-                                $practicas[] = $practica->codigoSnomed->term;
+                            foreach ($data->practicasPostDiagnostico as $practica) {
+                                $practicas[] = $practica->display ?: $practica->code ?: '';
                             }
-                            return '<ul><li>'.implode("</li><li>", $practicas).'</li></ul>';
+                            return '<ul><li>' . implode('</li><li>', array_filter($practicas)) . '</li></ul>';
                         }
                     ],
                 ]

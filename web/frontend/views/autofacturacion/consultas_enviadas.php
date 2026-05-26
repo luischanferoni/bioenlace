@@ -73,9 +73,9 @@ $form = ActiveForm::begin();
                         'label' => 'Profesional de Salud',
                         'contentOptions' => ['class' => 'text-wrap'],
                         'value' => function ($data) {
-                            $parent = $data->parent;
-                            if ($parent instanceof Turno) {
-                                $p = $parent->getProfesionalPersonaParaDisplay();
+                            $turno = $data->appointment ?? $data->parent;
+                            if ($turno instanceof Turno) {
+                                $p = $turno->getProfesionalPersonaParaDisplay();
 
                                 return $p ? $p->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : '';
                             }

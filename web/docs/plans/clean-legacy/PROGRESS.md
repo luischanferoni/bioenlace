@@ -88,7 +88,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `ConsultaIA`, `ConsultarValidaciones` | model | [x] | Huérfanos |
 | Búsquedas oftalmología/receta/suministro sin uso | busqueda | [x] | 3 archivos |
 | Modelo `Consulta` + `ConsultaBusqueda` | model | [ ] | Fase 03b |
-| `ConsultaProcesamientoService` → solo FHIR | service | [ ] | Bridge activo |
+| `ConsultaProcesamientoService` → solo FHIR | service | [x] | `guardar()` delega a `EncounterDocumentationService` |
 | `EncuestaParchesMamarios` crea `Consulta` | controller | [x] | Fase 03b → `EncounterLifecycleService` |
 
 ---
@@ -107,7 +107,9 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 |------|------|--------|-------|
 | `PersonasAntecedente.id_consulta` → `encounter_id` | model + BD | [x] | Paso 1: trait + alias PHP; rename BD pendiente |
 | `PacientesController` motivos vía `Encounter` | API | [x] | `EncounterAppointmentReasonLookupService` |
-| `ConsultaProcesamientoService` sin `consultas` | service | [ ] | |
+| `ConsultaProcesamientoService` sin `consultas` | service | [x] | Sin escrituras en tabla `consultas` |
+| Autofacturación SUMAR sobre `Encounter` | controller + model | [x] | `AutofacturacionEncounterBusqueda` |
+| `Referencia` + datos persona sin `consultas` | model | [x] | `legacy_id_consulta` / trait |
 
 ---
 
@@ -140,9 +142,9 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
 | Ítem | Prioridad | Estado |
 |------|-----------|--------|
-| `AutofacturacionController` + vistas | Media | [ ] |
+| `AutofacturacionController` + vistas | Media | [x] | Encounter + SUMAR |
 | `ReporteController` + planillas | Media | [ ] |
-| `ReferenciasController` | Media | [ ] |
+| `ReferenciasController` | Media | [x] | `$idc` = encounter id (alias URL) |
 | `TurnosController` vistas `index2`, `espera2`, `show-calendar` | Baja | [ ] Auditar rutas |
 | `NomencladorController` (refs `Consulta`) | Baja | [ ] |
 

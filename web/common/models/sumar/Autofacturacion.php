@@ -4,19 +4,21 @@ namespace common\models\sumar;
 
 use Yii;
 use common\models\BeneficiarioSumar;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use common\models\ProfesionalEfectorServicio;
+use common\traits\LegacyIdConsultaAsEncounterColumnTrait;
 
 /**
- * Registro de envío / autofacturación SUMAR vinculado a una consulta.
+ * Registro de envío / autofacturación SUMAR vinculado a un encounter.
  *
- * @property-read Consulta|null $consulta
+ * @property-read Encounter|null $encounter
  * @property-read BeneficiarioSumar|null $beneficiario
  * @property-read \common\models\Persona|null $profesionalPersona Persona del profesional vía PES.
  * @property-read ProfesionalEfectorServicio|null $profesionalEfectorServicio
  */
 class Autofacturacion extends \yii\db\ActiveRecord
 {
+    use LegacyIdConsultaAsEncounterColumnTrait;
     /**
      * {@inheritdoc}
      */
@@ -30,7 +32,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
         if (!parent::beforeSave($insert)) {
             return false;
         }
-        if ($insert || $this->isAttributeChanged('id_consulta', false)) {
+        if ($insert || $this->isAttributeChanged(static::legacyConsultaFkAttribute(), false)) {
             $this->syncProfesionalEfectorServicioFromContext();
         }
         return true;
@@ -38,26 +40,26 @@ class Autofacturacion extends \yii\db\ActiveRecord
 
     public function syncProfesionalEfectorServicioFromContext(): void
     {
-        if (!$this->id_consulta) {
+        $encounterId = $this->getEncounter_id();
+        if (!$encounterId) {
             $this->id_profesional_efector_servicio = null;
             return;
         }
-        $c = \common\models\Consulta::findOne($this->id_consulta);
-        if ($c && (int) $c->id_profesional_efector_servicio > 0) {
-            $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
+        $encounter = Encounter::findOne($encounterId);
+        if ($encounter !== null && (int) $encounter->id_profesional_efector_servicio > 0) {
+            $this->id_profesional_efector_servicio = (int) $encounter->id_profesional_efector_servicio;
             return;
         }
         $this->id_profesional_efector_servicio = null;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
+        $fk = static::legacyConsultaFkAttribute();
+
         return [
-            [['id_consulta', 'beneficiarios', 'codigos'], 'required'],
-            [['id_consulta', 'beneficiario_enviado', 'id_profesional_efector_servicio'], 'integer'],
+            [[$fk, 'beneficiarios', 'codigos'], 'required'],
+            [[$fk, 'beneficiario_enviado', 'id_profesional_efector_servicio'], 'integer'],
             [['codigos', 'codigo_enviado', 'beneficiarios'], 'string'],
         ];
     }
@@ -69,7 +71,7 @@ class Autofacturacion extends \yii\db\ActiveRecord
     {
         return [
             'id_sumar_autofacturacion' => 'ID',
-            'id_consulta' => 'Consulta',
+            static::legacyConsultaFkAttribute() => 'Encounter',
             'id_efector' => 'Efector',
             'beneficiarios' => 'Beneficiario Sumar',
             'codigos' => 'Codigos Mapeados',
@@ -78,12 +80,10 @@ class Autofacturacion extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * Consulta asociada (FK `id_consulta` en esta tabla).
-     */
+    /** @deprecated use {@see getEncounter()} */
     public function getConsulta()
     {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
+        return $this->getEncounter();
     }
 
     /**

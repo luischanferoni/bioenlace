@@ -2,7 +2,6 @@
 
 namespace frontend\controllers;
 
-use common\models\Consulta;
 use common\models\Servicio;
 use Yii;
 use common\models\Referencia;
@@ -109,7 +108,7 @@ class ReferenciasController extends Controller
         $persona = Referencia::getDatosPersonaxIdConsulta($idc);
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             // $this->generarSMS('actualizacion', $model->id_efector_referenciado);
-            return $this->redirect(['view', 'id' => $model->id_referencia, 'idc' => $model->id_consulta]);
+            return $this->redirect(['view', 'id' => $model->id_referencia, 'idc' => $model->getEncounter_id()]);
         } else {
             return $this->render('update', [
                 'model' => $model,

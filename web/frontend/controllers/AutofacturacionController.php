@@ -15,9 +15,9 @@ use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\httpclient\Client;
 
+use common\components\Clinical\Service\EncounterSumarAutofacturacionContext;
 use common\models\sumar\Autofacturacion;
-use common\models\Consulta;
-use common\models\busquedas\ConsultaBusqueda;
+use common\models\busquedas\AutofacturacionEncounterBusqueda;
 use common\models\ProfesionalEfectorServicio;
 
 class AutofacturacionController extends Controller
@@ -39,7 +39,7 @@ class AutofacturacionController extends Controller
     */
     public function actionIndex()
     {
-        $searchModel = new ConsultaBusqueda();
+        $searchModel = new AutofacturacionEncounterBusqueda();
         $searchModel->id_efector = Yii::$app->user->getIdEfector();
         $searchModel->conAutofacturacion = true;
         $searchModel->listadoConsultasEnviadas = false;
@@ -62,11 +62,15 @@ class AutofacturacionController extends Controller
     {
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;       
 
-        $id_consulta = Yii::$app->request->post('id_consulta');
-
-        $consulta = Consulta::findOne($id_consulta);    
-        
-        $persona = $consulta->obtenerPaciente();       
+        $ctx = $this->requireSumarContext(Yii::$app->request->post());
+        if ($ctx === null) {
+            return ['error' => true, 'message' => 'Encounter no encontrado'];
+        }
+        $encounterId = (int) $ctx->encounter->id;
+        $persona = $ctx->obtenerPaciente();
+        if ($persona === null) {
+            return ['error' => true, 'message' => 'Paciente no encontrado para el encounter'];
+        }
 
         $beneficiariosSumar = Yii::$app->autofacturacionSumar->consultaBeneficiarioConDatos($persona->documento, $persona->sexoLetra, $persona->fecha_nacimiento, $persona->tipoDocumento->nombre);
        // var_dump($beneficiariosSumar);die;
@@ -121,23 +125,9 @@ class AutofacturacionController extends Controller
                             ];
         }*/
         //$ambitos = ['ATECION_AMBULATORIA', 'SegNivelInternacion' => 'INTERNACION', 'bla' => 'VISITA_DOMICILIARIA'];
-        switch ($consulta->parent_class) {
-            case '\common\models\Turno':
-                $ambito = 712877007;
-                break;
-            case '\common\models\SegNivelInternacion':
-                $ambito = 'INTERNACION';
-                break;
-            case '\common\models\Guardia':
-                $ambito = 'GUARDIA';
-                break;
-            default:
-                $ambito = 712877007;
-                break;
-        }
+        $ambito = $ctx->ambitoSumar();
         
-        $diagnosticos = $consulta->diagnosticos;
-        $codigosDiagnosticos = ArrayHelper::getColumn($diagnosticos, 'codigo');
+        $codigosDiagnosticos = $ctx->codigosDiagnosticosSnomed();
 
         //$codigosDiagnosticos = '102506008';
        
@@ -187,7 +177,8 @@ class AutofacturacionController extends Controller
             $datos_respuesta = Yii::$app->autofacturacionSumar->consultaDatosCodigo($codigo);
             $array_respuestas = json_decode($datos_respuesta);            
             //var_dump($consulta->parent->fecha);die;
-            $grupoEtario = $persona->getGrupoEtareoSumar($consulta->parent->fecha);
+            $fechaRef = $ctx->fechaReferenciaPaciente() ?? date('Y-m-d');
+            $grupoEtario = $persona->getGrupoEtareoSumar($fechaRef);
             //$grupoEtario = "HOMBRES";
             //$sexoLetra = "M";
             $banderaPrestacion = false;
@@ -204,10 +195,7 @@ class AutofacturacionController extends Controller
             }
             
         }
-        var_dump($codigos_finales);
        
-       // var_dump($codigos);die;
-
         // $codigos = \common\models\NomencladorSumar::find()
         //                 ->select('codigo')
         //                 ->where([
@@ -218,7 +206,7 @@ class AutofacturacionController extends Controller
 
         
         $autofacturacion = new Autofacturacion();
-        $autofacturacion->id_consulta = $id_consulta;
+        $autofacturacion->encounter_id = $encounterId;
         $arrayBeneficiarios = isset($arrayBeneficiarios) && is_array($arrayBeneficiarios) ? $arrayBeneficiarios : [];
         $autofacturacion->beneficiarios = json_encode($arrayBeneficiarios);
         $autofacturacion->codigos = json_encode($codigos_finales);
@@ -239,7 +227,7 @@ class AutofacturacionController extends Controller
             'message' => $this->renderPartial(
                 '_resultado_mapear',
                 [
-                    'id_consulta' => $id_consulta,
+                    'id_consulta' => $encounterId,
                     'beneficiario' => $arrayBeneficiarios,
                     'codigos' => $codigos
                 ]
@@ -255,31 +243,43 @@ class AutofacturacionController extends Controller
 
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        $id_consulta = Yii::$app->request->post('id_consulta');
+        $ctx = $this->requireSumarContext(Yii::$app->request->post());
+        if ($ctx === null) {
+            return ['error' => true, 'message' => 'Encounter no encontrado'];
+        }
+        $encounterId = (int) $ctx->encounter->id;
         $codigo_prestacion = Yii::$app->request->post('codigo');
         $clave_beneficiario = Yii::$app->request->post('beneficiario');
 
-        //$beneficiario = BeneficiarioSumar::buscarBeneficiario($clave_beneficiario);
-        $consulta = Consulta::findOne($id_consulta);
-        $fecha_hora = (explode(" ", $consulta->created_at));
-        $fecha_prestacion = $fecha_hora[0];
+        $autofacturacion = $ctx->getAutofacturacion();
+        if ($autofacturacion === null) {
+            return ['error' => true, 'message' => 'No hay mapeo SUMAR para este encounter'];
+        }
 
         $prestaciones = [
-            'prestacion_id' => $id_consulta, 'cuie' => 'G07080', 'clave_beneficiario' => '1401601601002895', 'codigo' => $codigo_prestacion,
-            'cantidad' => 1, 'apellido' => 'Sezella', 'nombre' => 'Mauro', 'dni' => 38227268, 'fecha_prestacion' => $fecha_prestacion
+            'prestacion_id' => $encounterId, 'cuie' => 'G07080', 'clave_beneficiario' => '1401601601002895', 'codigo' => $codigo_prestacion,
+            'cantidad' => 1, 'apellido' => 'Sezella', 'nombre' => 'Mauro', 'dni' => 38227268, 'fecha_prestacion' => $ctx->fechaPrestacion()
         ];
 
         $respuesta_sumar = Yii::$app->autofacturacionSumar->informarPrestaciones($prestaciones);
-        $consulta->autofacturacion->codigo_enviado = $codigo_prestacion;
-        $consulta->autofacturacion->beneficiario_enviado = $clave_beneficiario;
-        $consulta->autofacturacion->fecha_envio = date("Y-m-d h:i:s");
-        $consulta->autofacturacion->respuesta_sumar = $respuesta_sumar;
+        $autofacturacion->codigo_enviado = $codigo_prestacion;
+        $autofacturacion->beneficiario_enviado = $clave_beneficiario;
+        $autofacturacion->fecha_envio = date("Y-m-d h:i:s");
+        $autofacturacion->respuesta_sumar = $respuesta_sumar;
 
-        if (!$consulta->autofacturacion->save()) {
+        if (!$autofacturacion->save()) {
             return ['error' => true, 'message' => 'Ocurrió un error al intentar mapear'];
         }
 
-        return ['error' => false, 'message' => 'La consulta fue enviada a sumar'];
+        return ['error' => false, 'message' => 'El encounter fue enviado a sumar'];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function requireSumarContext(array $input): ?EncounterSumarAutofacturacionContext
+    {
+        return EncounterSumarAutofacturacionContext::fromRequest($input);
     }
 
     /**
@@ -287,7 +287,7 @@ class AutofacturacionController extends Controller
     */
     public function actionConsultasEnviadas()
     {
-        $searchModel = new ConsultaBusqueda();
+        $searchModel = new AutofacturacionEncounterBusqueda();
         $searchModel->id_efector = Yii::$app->user->getIdEfector();
         
         $searchModel->conAutofacturacion = true;
@@ -314,7 +314,7 @@ class AutofacturacionController extends Controller
     */
     public function actionConsultasNoProcesadas()
     {
-        $searchModel = new ConsultaBusqueda();
+        $searchModel = new AutofacturacionEncounterBusqueda();
         $searchModel->id_efector = Yii::$app->user->getIdEfector();
 
         $searchModel->conAutofacturacion = false;      

@@ -197,10 +197,14 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setInt('id_profesional_efector_servicio',
           sessionConfig.idProfesionalEfectorServicio);
       await prefs.setBool('config_completed', true);
-      if (sessionConfig.contextToken != null &&
-          sessionConfig.contextToken!.isNotEmpty) {
-        await prefs.setString('auth_token', sessionConfig.contextToken!);
+      final sessionToken = sessionConfig.contextToken;
+      if (sessionToken != null && sessionToken.isNotEmpty) {
+        await prefs.setString('auth_token', sessionToken);
       }
+      final authTokenForApp =
+          (sessionToken != null && sessionToken.isNotEmpty)
+              ? sessionToken
+              : widget.authToken;
 
       if (mounted) {
         navigatorKey.currentState?.pushReplacement(
@@ -208,7 +212,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             builder: (_) => MainScreen(
               userId: widget.userId,
               userName: widget.userName,
-              authToken: widget.authToken,
+              authToken: authTokenForApp,
               idProfesionalEfectorServicio:
                   sessionConfig.idProfesionalEfectorServicio.toString(),
             ),

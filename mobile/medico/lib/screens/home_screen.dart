@@ -67,21 +67,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _init() async {
-    if (widget.authToken != null && widget.authToken!.isNotEmpty) {
-      _pacientesService.authToken = widget.authToken;
-    } else {
-      await _loadAuthToken();
-    }
+    await _loadAuthToken();
     await _loadEncounterAndData();
   }
 
   Future<void> _loadAuthToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      // Tras el wizard, prefs tiene el context_token con encounter_class en el JWT.
       final token = prefs.getString('auth_token');
       if (token != null && token.isNotEmpty) {
         _pacientesService.authToken = token;
         _emergencyApi.authToken = token;
+      } else if (widget.authToken != null && widget.authToken!.isNotEmpty) {
+        _pacientesService.authToken = widget.authToken;
+        _emergencyApi.authToken = widget.authToken;
       } else {
         _pacientesService.userId = widget.userId;
       }
@@ -95,7 +95,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadEncounterAndData() async {
     final prefs = await SharedPreferences.getInstance();
-    final encounter = prefs.getString('encounter_class') ?? 'AMB';
+    final encounter = prefs.getString('encounter_class');
+    if (encounter == null || encounter.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage =
+            'No hay área de atención configurada. Completá la configuración inicial.';
+        _isLoading = false;
+      });
+      return;
+    }
     setState(() {
       _encounterClass = encounter;
     });

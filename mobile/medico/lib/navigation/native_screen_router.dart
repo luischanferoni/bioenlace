@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// Router de pantallas nativas del asistente (móvil médico).
-///
-/// El backend envía `client_open.mobile.screen_id` y esta capa lo traduce a una pantalla Flutter.
+import '../screens/configuracion_screen.dart';
+
+/// Traduce `client_open.mobile.screen_id` del asistente a pantallas Flutter (médico).
 class NativeScreenRouter {
   static Future<void> open(
     BuildContext context, {
     required String screenId,
-    Map<String, dynamic>? args,
-    String? title,
+    required String userId,
+    required String userName,
+    String? authToken,
   }) async {
-    final route = _resolve(screenId, args: args, title: title);
+    final route = _resolve(
+      screenId,
+      userId: userId,
+      userName: userName,
+      authToken: authToken,
+    );
     if (route == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Pantalla no implementada: $screenId')),
@@ -22,17 +28,17 @@ class NativeScreenRouter {
 
   static MaterialPageRoute<void>? _resolve(
     String screenId, {
-    Map<String, dynamic>? args,
-    String? title,
+    required String userId,
+    required String userName,
+    String? authToken,
   }) {
-    final id = screenId.trim().toLowerCase();
-    switch (id) {
-      case 'agenda.crear':
+    switch (screenId.trim().toLowerCase()) {
+      case 'care_plan_reminders_settings':
         return MaterialPageRoute(
-          builder: (_) => _PlaceholderNativeScreen(
-            title: title ?? 'Agenda laboral',
-            body:
-                'Obsoleto: usar UI JSON /api/v1/profesional-agenda/configurar-agenda (UiJsonScreen). Ajustar el intent o implementar redirección.',
+          builder: (_) => ConfiguracionScreen(
+            userId: userId,
+            userName: userName,
+            authToken: authToken,
           ),
         );
       default:
@@ -40,22 +46,3 @@ class NativeScreenRouter {
     }
   }
 }
-
-class _PlaceholderNativeScreen extends StatelessWidget {
-  final String title;
-  final String body;
-
-  const _PlaceholderNativeScreen({required this.title, required this.body});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(body),
-      ),
-    );
-  }
-}
-

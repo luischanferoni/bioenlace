@@ -100,6 +100,11 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           'encounter_class', sessionConfig.encounterClass.code);
       await prefs.setString(
           'encounter_class_label', sessionConfig.encounterClass.label);
+      final sessionToken = sessionConfig.contextToken;
+      if (sessionToken != null && sessionToken.isNotEmpty) {
+        await prefs.setString('auth_token', sessionToken);
+        _configService.authToken = sessionToken;
+      }
       if (mounted) {
         setState(() {
           _currentEncounterCode = sessionConfig.encounterClass.code;

@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import '../services/push_notification_service.dart';
+import '../services/chat_service.dart';
 import 'home_screen.dart';
-import 'acciones_screen.dart';
+import 'chat_screen.dart';
 import 'configuracion_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -57,6 +58,11 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   List<Widget> _buildScreens() {
+    final chatService = ChatService(
+      currentUserId: widget.userId,
+      currentUserName: widget.userName,
+      authToken: widget.authToken,
+    );
     return [
       HomeScreen(
         key: ValueKey('home_$_homeRefreshKey'),
@@ -65,11 +71,7 @@ class _MainScreenState extends State<MainScreen> {
         authToken: widget.authToken,
         idProfesionalEfectorServicio: widget.idProfesionalEfectorServicio,
       ),
-      AccionesScreen(
-        userId: widget.userId,
-        userName: widget.userName,
-        authToken: widget.authToken,
-      ),
+      ChatScreen(chatService: chatService),
       ConfiguracionScreen(
         userId: widget.userId,
         userName: widget.userName,
@@ -97,7 +99,7 @@ class _MainScreenState extends State<MainScreen> {
         onTap: _onItemTapped,
         items: const [
           BioBottomNavItem(icon: Icons.home_outlined, label: 'Inicio'),
-          BioBottomNavItem(icon: Icons.bolt_outlined, label: 'Acciones'),
+          BioBottomNavItem(icon: Icons.chat_bubble_outline, label: 'Asistente'),
           BioBottomNavItem(icon: Icons.settings_outlined, label: 'Configuración'),
         ],
       ),

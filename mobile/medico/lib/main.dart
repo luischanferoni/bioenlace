@@ -36,7 +36,9 @@ Future<Map<String, dynamic>> _getUserData() async {
       idProfesionalEfectorServicio = pesInt.toString();
     }
     
-    final configCompleted = prefs.getBool('config_completed') ?? false;
+    // config_completed solo vale si el wizard fijó encounter_class (sesión operativa completa).
+    final configCompleted = (prefs.getBool('config_completed') ?? false) &&
+        ((prefs.getString('encounter_class') ?? '').isNotEmpty);
     
     print('[DEBUG] _getUserData() - authToken: ${authToken != null ? "${authToken.substring(0, authToken.length > 20 ? 20 : authToken.length)}..." : "null"}');
     print('[DEBUG] _getUserData() - idProfesionalEfectorServicio: $idProfesionalEfectorServicio');
@@ -270,12 +272,19 @@ class MyApp extends StatelessWidget {
                           await prefs.setInt('id_efector', (ef as num).toInt());
                         }
                       }
-                      // Con PES en el JWT puede omitirse el wizard; si no hay contexto, forzarlo.
-                      final tieneContextoOperativo =
-                          (sesion is Map &&
-                              sesion['id_profesional_efector_servicio'] != null) ||
-                          (pesResuelto is Map && pesResuelto['id'] != null);
-                      await prefs.setBool('config_completed', tieneContextoOperativo);
+                      // PES en el JWT no alcanza: encounter_class lo fija el wizard (establecer).
+                      final encounterClass = sesion is Map<String, dynamic>
+                          ? sesion['encounter_class']?.toString()
+                          : null;
+                      final tieneSesionCompleta =
+                          encounterClass != null && encounterClass.isNotEmpty;
+                      if (tieneSesionCompleta) {
+                        await prefs.setString('encounter_class', encounterClass);
+                      } else {
+                        await prefs.remove('encounter_class');
+                        await prefs.remove('encounter_class_label');
+                      }
+                      await prefs.setBool('config_completed', tieneSesionCompleta);
 
                       if (!loginContext.mounted) return;
                       Navigator.pop(loginContext);
@@ -291,7 +300,7 @@ class MyApp extends StatelessWidget {
                         ),
                       );
 
-                      if (tieneContextoOperativo) {
+                      if (tieneSesionCompleta) {
                         Navigator.pushReplacement(
                           loginContext,
                           MaterialPageRoute(

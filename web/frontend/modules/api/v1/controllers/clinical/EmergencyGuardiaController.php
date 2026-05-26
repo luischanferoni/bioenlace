@@ -352,7 +352,7 @@ class EmergencyGuardiaController extends BaseController
             }
         );
 
-        if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet()) {
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
             $idEfector = GuardiaEfectorAccess::resolveIdEfector(
                 (int) ($req->get('id_efector') ?? 0) ?: null
             );
@@ -424,7 +424,7 @@ class EmergencyGuardiaController extends BaseController
             }
         );
 
-        if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet()) {
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
             $guardiaId = (int) ($req->get('guardia_id') ?? 0);
             if ($guardiaId > 0) {
                 $out = UiScreenService::renderUiDefinition(

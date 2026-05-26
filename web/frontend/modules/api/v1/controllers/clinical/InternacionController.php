@@ -163,7 +163,7 @@ class InternacionController extends BaseController
             }
         );
 
-        if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet()) {
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
             [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId);
             if ($err !== null) {
                 return $err;

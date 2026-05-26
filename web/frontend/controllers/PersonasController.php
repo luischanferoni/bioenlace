@@ -32,7 +32,6 @@ use common\models\Departamento;
 use common\models\Persona_mails;
 use common\models\Persona_hc;
 use common\models\Tipo_documento;
-use common\models\ConsultasConfiguracion;
 use common\models\Guardia;
 use common\models\PersonaRepository;
 use common\components\Person\Service\PersonaSignosVitalesService;

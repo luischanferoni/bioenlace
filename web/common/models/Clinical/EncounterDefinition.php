@@ -19,6 +19,16 @@ class EncounterDefinition extends ActiveRecord
 {
     use ClinicalRecordTrait;
 
+    /** Etiquetas UI por código FHIR encounter class. */
+    public const ENCOUNTER_CLASS = [
+        'IMP' => 'Internación',
+        'AMB' => 'Ambulatoria',
+        'OBSENC' => 'Observación',
+        'EMER' => 'Emergencia',
+        'VR' => 'Virtual',
+        'HH' => 'Visita Domiciliaria',
+    ];
+
     public static function tableName(): string
     {
         return 'encounter_definition';

@@ -34,6 +34,7 @@ class TurnosController extends Controller
         'view' => ['GET', 'HEAD', 'OPTIONS'],
         'update' => ['PUT', 'PATCH', 'OPTIONS'],
         'eventos' => ['GET', 'OPTIONS'],
+        'espera' => ['GET', 'HEAD', 'OPTIONS'],
         'como-paciente' => ['GET', 'OPTIONS'],
         'proximo-disponible' => ['GET', 'POST', 'OPTIONS'],
         'reprogramar' => ['GET', 'HEAD', 'OPTIONS'],
@@ -111,12 +112,48 @@ class TurnosController extends Controller
 
         $feriados = AgendaFeriados::getFeriados();
 
-        return $this->render('index2', [
+        return $this->render('index', [
             'persona' => $session_persona,
             'serviciosXEfector' => $serviciosXEfector,
             'referencias' => $referencias,
             'ultimoHC' => intval($ultimoHC) + 1,
             'feriados' => $feriados
+        ]);
+    }
+
+    /**
+     * Lista de espera del día (staff / pantalla recepción).
+     *
+     * @no_intent_catalog
+     */
+    public function actionEspera()
+    {
+        $fecha = Yii::$app->request->get('fecha', date('Y-m-d'));
+        $pesId = Yii::$app->request->get('pes');
+        $profesional = '';
+        $staffContextId = (int) Yii::$app->user->getIdProfesionalEfectorServicio();
+
+        if ($pesId !== null && $pesId !== '') {
+            $pes = ProfesionalEfectorServicio::findOne((int) $pesId);
+            if ($pes !== null) {
+                $profesional = $pes;
+                $staffContextId = (int) $pes->id;
+            }
+        } elseif ($staffContextId > 0) {
+            $pes = ProfesionalEfectorServicio::findOne($staffContextId);
+            if ($pes !== null) {
+                $profesional = $pes;
+            }
+        }
+
+        $turnos = $staffContextId > 0
+            ? Turno::getTurnosPorContextoProfesionalPorFecha($fecha, $staffContextId)
+            : [];
+
+        return $this->render('espera', [
+            'turnos' => $turnos,
+            'fecha' => $fecha,
+            'profesional' => $profesional,
         ]);
     }
 

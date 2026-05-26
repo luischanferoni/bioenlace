@@ -2,13 +2,13 @@
 
 Última actualización: 2026-05-26
 
-**→ Fase activa y orden:** [NEXT.md](./NEXT.md) · Detalle 03e: [phases/03e-tablas-hijas-fhir.md](./phases/03e-tablas-hijas-fhir.md)
+**→ Estado:** Fases 01–03e y 04 (código) **completas**. [NEXT.md](./NEXT.md)
 
 Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
 ---
 
-## Fase 03e — Tablas hijas → FHIR (activa)
+## Fase 03e — Tablas hijas → FHIR (cerrada)
 
 | Paso | Estado | Notas |
 |------|--------|-------|
@@ -20,7 +20,19 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | 5 Odontología reportes | [x] | CPO vía `odontology_state:` + planilla C7; reporte mensual vía `procedure` |
 | 6 Internación auxiliar | [x] | Balance/régimen/suministro → Observation/NutritionOrder/MedicationAdministration |
 | 7 Limpieza AR | [x] | Forms huérfanos, evolución/síntomas/obstetricia, dead code IA |
-| 8 Drop hijas `m260526_150002` | [ ] | Tras smoke |
+| 8 Drop hijas `m260526_150002` | [x] | Código listo; ejecutar migrate en BD |
+
+---
+
+## Fase 04 — Turnos, nomenclador, RBAC (cerrada)
+
+| Ítem | Estado | Notas |
+|------|--------|-------|
+| Turnos `index` canónico + `actionEspera` | [x] | Fix 404 lista de espera |
+| Vistas turnos huérfanas | [x] | `espera2`, `show-calendar` |
+| RBAC rutas MVC retiradas | [x] | `m260526_170001` |
+| Nomenclador sin imports muertos | [x] | |
+| `ENCOUNTER_CLASS` en `EncounterDefinition` | [x] | Alias en `ConsultasConfiguracion` |
 
 ---
 

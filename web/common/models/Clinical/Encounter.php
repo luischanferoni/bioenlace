@@ -7,6 +7,7 @@ use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Efector;
 use common\models\Turno;
+use Yii;
 use yii\db\ActiveRecord;
 
 /**
@@ -207,10 +208,10 @@ class Encounter extends ActiveRecord
             ->all();
     }
 
-    /** @deprecated Tabla `consultas_motivos` en retiro (03e). Usar {@see $reason_text}. */
+    /** @deprecated Tabla `consultas_motivos` retirada (03e-8). Usar {@see $reason_text}. */
     public function getMotivoConsulta(): \yii\db\ActiveQuery
     {
-        return $this->hasMany(\common\models\ConsultaMotivos::class, ['id_consulta' => 'id']);
+        return $this->legacyChildRelation(\common\models\ConsultaMotivos::class, ['id_consulta' => 'id']);
     }
 
     /** @deprecated Usar {@see getMedicamentosActivos()} o {@see getMedicationRequests()}. */
@@ -222,19 +223,44 @@ class Encounter extends ActiveRecord
     /** @deprecated Usar {@see getConditions()} / {@see getDiagnosticos()}. */
     public function getDiagnosticoConsultasLegacy(): \yii\db\ActiveQuery
     {
-        return $this->hasMany(\common\models\DiagnosticoConsulta::class, ['id_consulta' => 'id']);
+        return $this->legacyChildRelation(\common\models\DiagnosticoConsulta::class, ['id_consulta' => 'id']);
     }
 
-    /** @deprecated Odontología → {@see getConditions()} con nota odontology o Procedure ext (03e-5). */
+    /** @deprecated Odontología → {@see getConditions()} con nota odontology (03e-5). */
     public function getOdontologiaDiagnosticos(): \yii\db\ActiveQuery
     {
-        return $this->hasMany(\common\models\ConsultaOdontologiaDiagnosticos::class, ['id_consulta' => 'id']);
+        return $this->legacyChildRelation(
+            \common\models\ConsultaOdontologiaDiagnosticos::class,
+            ['id_consulta' => 'id']
+        );
     }
 
-    /** @deprecated Odontología → {@see getServiceRequests()} / Procedure (03e-5). */
+    /** @deprecated Odontología → {@see getProcedures()} / Procedure ext (03e-5). */
     public function getOdontologiaPracticas(): \yii\db\ActiveQuery
     {
-        return $this->hasMany(\common\models\ConsultaOdontologiaPracticas::class, ['id_consulta' => 'id']);
+        return $this->legacyChildRelation(
+            \common\models\ConsultaOdontologiaPracticas::class,
+            ['id_consulta' => 'id']
+        );
+    }
+
+    /**
+     * @param class-string<\yii\db\ActiveRecord> $class
+     * @param array<string, string> $link
+     */
+    private function legacyChildRelation(string $class, array $link): \yii\db\ActiveQuery
+    {
+        $query = $this->hasMany($class, $link);
+        if (!self::legacyTableExists($class::tableName())) {
+            $query->where('0=1');
+        }
+
+        return $query;
+    }
+
+    private static function legacyTableExists(string $table): bool
+    {
+        return Yii::$app->db->schema->getTableSchema($table, true) !== null;
     }
 
     public function isInProgress(): bool

@@ -74,4 +74,6 @@ Tabla `consultas_derivaciones` → `service_request` con `category=referral` + c
 
 ## Paso 8 — Drop + verificación
 
-Ver checklist en [MIGRATIONS.md](../MIGRATIONS.md).
+- [x] Migración `m260526_150002` lista; idempotente en greenfield
+- [x] `Encounter`: relaciones legacy con guard `legacyTableExists`
+- [x] Ejecutar en BD: `php yii migrate` (ver [MIGRATIONS.md](../MIGRATIONS.md))

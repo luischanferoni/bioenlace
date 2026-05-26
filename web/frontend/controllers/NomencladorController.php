@@ -6,8 +6,6 @@ use common\models\busquedas\AlergiasBusqueda;
 use common\models\busquedas\ConsultaPracticasBusqueda;
 use common\models\busquedas\ConsultaMotivosBusqueda;
 use common\models\busquedas\ConsultaMedicamentosBusqueda;
-use common\models\ConsultaPracticas;
-use common\models\DiagnosticoConsulta;
 use common\models\busquedas\DiagnosticoConsultasBusqueda;
 use common\models\busquedas\PersonasAntecedenteBusqueda;
 use Yii;

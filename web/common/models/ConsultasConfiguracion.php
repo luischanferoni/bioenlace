@@ -5,6 +5,7 @@ namespace common\models;
 use common\components\Clinical\EncounterDefinitionWorkflowSanitizer;
 use Yii;
 
+use common\models\Clinical\EncounterDefinition;
 use common\models\Clinical\EncounterDefinitionQuery;
 use common\models\Clinical\Encounter;
 
@@ -16,14 +17,8 @@ use common\models\Clinical\Encounter;
  */
 class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
 {
-    const ENCOUNTER_CLASS = [
-        'IMP' => 'Internación',
-        'AMB' => 'Ambulatoria',
-        'OBSENC' => 'Observación',
-        'EMER' => 'Emergencia',
-        'VR' => 'Virtual',
-        'HH' => 'Visita Domiciliaria'
-    ];
+    /** @deprecated use {@see EncounterDefinition::ENCOUNTER_CLASS} */
+    public const ENCOUNTER_CLASS = EncounterDefinition::ENCOUNTER_CLASS;
 
     public static function find(): EncounterDefinitionQuery
     {

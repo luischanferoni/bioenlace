@@ -10,9 +10,13 @@ php yii migrate --migrationPath=@common/migrations
 
 Migraciones base **aplicadas** (incluye drop tabla padre `consultas`).
 
-**Pendiente de código antes de ejecutar:** `m260526_150002` (drop tablas hijas).
+**Pendiente de código antes de ejecutar:** ninguna (03e completa).
 
-**Derivaciones (03e-1):** `m260526_160002_service_request_referral_workflow` — columnas referral en `service_request` + drop vista huérfana `view_consulta_motivo`. Ejecutar en greenfield (no existe `consultas_derivaciones`).
+**Ejecutar en orden:**
+
+1. `m260526_160002_service_request_referral_workflow` — columnas referral en `service_request`
+2. `m260526_150002_clinical_fhir_drop_legacy_child_tables` — drop tablas hijas legacy (no-op en greenfield si ya no existen)
+3. `m260526_170001_web_retired_mvc_rbac` — limpieza RBAC fase 04
 
 ---
 
@@ -29,6 +33,8 @@ Migraciones base **aplicadas** (incluye drop tabla padre `consultas`).
 | 7 | `m260520_100002_clinical_fhir_drop_legacy` | **Drop** `consultas`, `consultas_ia`, `consultas_configuracion` |
 | 8 | `m260520_100003_turnos_appointment_fhir_columns` | Columnas appointment en turnos (si aplica) |
 | 9 | `m260526_160002_service_request_referral_workflow` | Columnas workflow referral en `service_request`; drop `view_consulta_motivo` |
+| 10 | `m260526_150002_clinical_fhir_drop_legacy_child_tables` | Drop tablas hijas legacy (idempotente en greenfield) |
+| 11 | `m260526_170001_web_retired_mvc_rbac` | RBAC: rutas guardia/internacion-* clínico/turnos MVC muertos |
 
 Opcionales / catálogo (sin dependencia del drop):
 
@@ -37,9 +43,13 @@ Opcionales / catálogo (sin dependencia del drop):
 
 ## NO ejecutar aún
 
+_Ninguna migración bloqueada por código (fase 03e cerrada)._
+
+<!--
 | Migración | Motivo |
 |-----------|--------|
-| `m260526_150002_clinical_fhir_drop_legacy_child_tables` | Elimina `consultas_motivos`, `consultas_derivaciones`, `diagnostico_consultas`, etc. El código aún lee esas tablas (columna `id_consulta` = `encounter.id`). Ejecutar solo cuando captura y reportes usen 100 % FHIR. |
+| `m260526_150002_clinical_fhir_drop_legacy_child_tables` | ... |
+-->
 
 ## Greenfield
 

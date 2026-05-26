@@ -13,6 +13,7 @@ use yii\helpers\Url;
 
 // Modelos
 use common\models\Persona;
+use common\models\Clinical\Encounter;
 use common\models\Consulta;
 use common\models\Turno;
 use common\models\ServiciosEfector;
@@ -98,9 +99,9 @@ class PacienteController extends Controller
             if (!$idConsulta && ($parent === null || $parent === '')) {
                 $idTurnoGet = Yii::$app->request->get('id_turno');
                 if ($idTurnoGet !== null && $idTurnoGet !== '') {
-                    $parent = Consulta::PARENT_TURNO;
+                    $parent = Encounter::PARENT_TURNO;
                     $parentId = (int) $idTurnoGet;
-                } elseif (Yii::$app->user->getEncounterClass() === Consulta::ENCOUNTER_CLASS_AMB) {
+                } elseif (Yii::$app->user->getEncounterClass() === Encounter::ENCOUNTER_CLASS_AMB) {
                     // turnoHoy también coincide por id_profesional_efector_servicio en sesión (PES)
                     $turnoSesion = $paciente->turnoHoy(
                         Yii::$app->user->getServicioActual(),
@@ -108,7 +109,7 @@ class PacienteController extends Controller
                         Yii::$app->user->getIdEfector()
                     );
                     if ($turnoSesion) {
-                        $parent = Consulta::PARENT_TURNO;
+                        $parent = Encounter::PARENT_TURNO;
                         $parentId = (int) $turnoSesion->id_turnos;
                     }
                 }

@@ -5,25 +5,25 @@ use frontend\assets\GuardiaTableroAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\Json;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use common\models\Servicio;
 
 $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
-$esAmbulatorio = ($encounter_class === Consulta::ENCOUNTER_CLASS_AMB);
-$esGuardia = ($encounter_class === Consulta::ENCOUNTER_CLASS_EMER);
-$esImpQuirurgico = ($encounter_class === Consulta::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
+$esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
+$esGuardia = ($encounter_class === Encounter::ENCOUNTER_CLASS_EMER);
+$esImpQuirurgico = ($encounter_class === Encounter::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
 $fechaAnterior = date('Y-m-d', strtotime($fecha . ' -1 day'));
 $fechaSiguiente = date('Y-m-d', strtotime($fecha . ' +1 day'));
 $hoy = date('Y-m-d');
 
 $encounterMeta = [
-    Consulta::ENCOUNTER_CLASS_AMB => [
+    Encounter::ENCOUNTER_CLASS_AMB => [
         'label' => 'Ambulatorio',
     ],
-    Consulta::ENCOUNTER_CLASS_IMP => [
+    Encounter::ENCOUNTER_CLASS_IMP => [
         'label' => 'Internación',
     ],
-    Consulta::ENCOUNTER_CLASS_EMER => [
+    Encounter::ENCOUNTER_CLASS_EMER => [
         'label' => 'Guardia',
     ],
 ];

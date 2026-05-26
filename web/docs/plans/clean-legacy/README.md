@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `clean-legacy` |
-| Estado | En ejecución — Fase 2 |
+| Estado | En ejecución — Fase 3b |
 | Objetivo | Retirar MVC Yii, modelos, búsquedas y tablas que quedaron reemplazados por **API v1**, **UI JSON/flows** y dominio **FHIR** (`encounter`, `clinical/*`). |
 | Decisión base | [fhir-clinical.md](../../decisions/fhir-clinical.md) — sin retrocompat HTTP legacy de consulta |
 
@@ -13,6 +13,8 @@
 - [PROGRESS.md](./PROGRESS.md) — **seguimiento vivo** (checklist por ítem)
 - [phases/01-eliminacion-segura-y-fuerte.md](./phases/01-eliminacion-segura-y-fuerte.md)
 - [phases/02-covid-y-vistas-huerfanas.md](./phases/02-covid-y-vistas-huerfanas.md) — COVID + limpieza enfermería
+- [phases/03-consulta-desacople-y-huerfanos.md](./phases/03-consulta-desacople-y-huerfanos.md) — guardia → Encounter + huérfanos
+- [phases/03b-encounter-parches-y-constantes.md](./phases/03b-encounter-parches-y-constantes.md) — encuesta parches + `atenciones_enfermeria.encounter_id`
 
 ## Reglas del programa
 

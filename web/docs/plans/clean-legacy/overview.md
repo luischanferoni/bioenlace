@@ -25,7 +25,9 @@ Quedaron capas **Yii MVC** (controllers, vistas, rutas API 410), widgets de inic
 | **01** | Eliminación segura + candidatos fuertes | Hecho |
 | **02** | COVID (modelos + BD), vistas huérfanas enfermería, modelo duplicado `AtencionesEnfermeria` | Hecho |
 | **02b** | Sub-controllers internación MVC, facturación/reportes, encuesta parches | Pendiente (aún cableados) |
-| **03** | Modelo `Consulta` y tablas hijas legacy (`consultas`, `consulta_*`) | Pendiente |
+| **03** | Desacople guardia (`Encounter`), huérfanos `Consulta*`; bloqueo núcleo `Consulta` documentado | Hecho (parcial) |
+| **03b** | Encuesta parches → `Encounter`, `ConsultaAtencionesEnfermeria.encounter_id`, constantes en turnos/listado | Hecho (parcial) |
+| **03c** | Retiro `Consulta` + derivaciones, autofacturación, `dropTable consultas` | Pendiente |
 | **04** | Turnos MVC residual, nomenclador/referencias, RBAC web | Pendiente |
 
 ## Fuera de alcance (por ahora)

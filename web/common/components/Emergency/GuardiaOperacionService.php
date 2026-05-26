@@ -3,7 +3,7 @@
 namespace common\components\Emergency;
 
 use common\components\Clinical\PatientHistoriaUrl;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use common\models\Guardia;
 use Yii;
 
@@ -15,9 +15,13 @@ final class GuardiaOperacionService
     /** @var GuardiaCircuitoService */
     private $circuito;
 
-    public function __construct(?GuardiaCircuitoService $circuito = null)
+    /** @var GuardiaEncounterResolver */
+    private $encounterResolver;
+
+    public function __construct(?GuardiaCircuitoService $circuito = null, ?GuardiaEncounterResolver $encounterResolver = null)
     {
         $this->circuito = $circuito ?? new GuardiaCircuitoService();
+        $this->encounterResolver = $encounterResolver ?? new GuardiaEncounterResolver();
     }
 
     /**
@@ -66,16 +70,16 @@ final class GuardiaOperacionService
         $pesId = GuardiaEfectorAccess::resolvePesId(null);
         $this->circuito->recordEvent($guardiaId, CircuitoEventType::INICIO_ATENCION, $pesId);
 
-        $consultaAbierta = $this->findConsultaRecientePorGuardia($guardia);
+        $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);
         $capturaUrl = PatientHistoriaUrl::captura(
             (int) $guardia->id_persona,
-            Consulta::PARENT_GUARDIA,
+            Encounter::PARENT_GUARDIA,
             (int) $guardia->id
         );
 
         $out = $this->serializeOperacion($guardia);
         $out['captura_url'] = $capturaUrl;
-        $out['id_consulta'] = $consultaAbierta ? (int) $consultaAbierta->id : null;
+        $out['encounter_id'] = $encounter !== null ? (int) $encounter->id : null;
 
         return $out;
     }
@@ -155,21 +159,6 @@ final class GuardiaOperacionService
         GuardiaEfectorAccess::assertGuardiaEnEfector($guardia, $idEfector);
 
         return $guardia;
-    }
-
-    private function findConsultaRecientePorGuardia(Guardia $guardia): ?Consulta
-    {
-        $parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_GUARDIA] ?? '\common\models\Guardia';
-
-        return Consulta::find()
-            ->where([
-                'parent_id' => (int) $guardia->id,
-                'parent_class' => $parentClass,
-                'id_persona' => (int) $guardia->id_persona,
-            ])
-            ->andWhere(['deleted_at' => null])
-            ->orderBy(['id' => SORT_DESC])
-            ->one();
     }
 
     /**

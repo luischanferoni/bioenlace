@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\models\Clinical\Encounter;
 use Yii;
 use yii\validators\NumberValidator;
 
@@ -20,7 +21,8 @@ use yii\validators\NumberValidator;
  * @property string $per_perim_cefalico
  * @property string $imc
  * @property string $per_imc
- * @property string $id_consulta
+ * @property int|null $encounter_id
+ * @property int|null $id_consulta Compat escritura: alias de {@see $encounter_id}.
  *
  * @property Persona|null $profesionalPersona Profesional vía PES.
  * @property Personas $id_persona
@@ -50,12 +52,25 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         ];
     }
 
+    /** Compat legacy: `id_consulta` = `encounter_id`. */
+    public function getId_consulta(): ?int
+    {
+        $id = $this->encounter_id ?? null;
+
+        return $id !== null && $id !== '' ? (int) $id : null;
+    }
+
+    public function setId_consulta($value): void
+    {
+        $this->encounter_id = $value !== null && $value !== '' ? (int) $value : null;
+    }
+
     public function syncProfesionalEfectorServicioFromContext(): void
     {
-        if ($this->id_consulta) {
-            $c = Consulta::findOne($this->id_consulta);
-            if ($c && (int) $c->id_profesional_efector_servicio > 0) {
-                $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
+        if ($this->encounter_id) {
+            $encounter = Encounter::findOne($this->encounter_id);
+            if ($encounter && (int) $encounter->id_profesional_efector_servicio > 0) {
+                $this->id_profesional_efector_servicio = (int) $encounter->id_profesional_efector_servicio;
                 return;
             }
         }
@@ -79,8 +94,9 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     {
         return [
             [['fecha_creacion', 'hora_creacion'], 'safe'],
-            [['id_consulta', 'id_persona', 'id_user', 'id_profesional_efector_servicio'], 'integer'],
-            [['datos', 'id_consulta'], 'required'],
+            [['encounter_id', 'id_persona', 'id_user', 'id_profesional_efector_servicio'], 'integer'],
+            [['datos', 'encounter_id'], 'required'],
+            [['encounter_id'], 'exist', 'skipOnError' => true, 'targetClass' => Encounter::class, 'targetAttribute' => ['encounter_id' => 'id']],
             [['datos'], 'validarDatos'],
         ];
     }
@@ -116,9 +132,15 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
+    public function getEncounter()
+    {
+        return $this->hasOne(Encounter::class, ['id' => 'encounter_id']);
+    }
+
+    /** @deprecated use {@see getEncounter()} */
     public function getConsulta()
     {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
+        return $this->getEncounter();
     }
 
     /**
@@ -241,7 +263,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     public static function obtenerValoracionNutricionalPorIdConsulta($idConsulta)
     {
         $query = ConsultaAtencionesEnfermeria::find()
-            ->andWhere(['id_consulta' => $idConsulta])
+            ->andWhere(['encounter_id' => $idConsulta])
             ->limit(1);
 
         return $query->one();
@@ -434,7 +456,9 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
 
         $persona = Persona::findOne($this->id_persona);
         $edadPersona = $persona->edad;
-        $esInternacion = $this->consulta->parent_class == Consulta::PARENT_CLASSES[Consulta::PARENT_INTERNACION];
+        $parentInternacion = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION] ?? SegNivelInternacion::class;
+        $esInternacion = $this->parent_class === $parentInternacion
+            || ($this->encounter && $this->encounter->parent_type === $parentInternacion);
 
         if ($datos != "") {
             foreach ($datos as $key => $value) {
@@ -740,7 +764,7 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
         }
 
         if ($insert
-            || $this->isAttributeChanged('id_consulta', false)
+            || $this->isAttributeChanged('encounter_id', false)
             || $this->isAttributeChanged('id_profesional_efector_servicio', false)
         ) {
             $this->syncProfesionalEfectorServicioFromContext();

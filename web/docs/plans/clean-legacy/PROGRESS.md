@@ -79,7 +79,39 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
 ---
 
-## Backlog completo (fases 03+)
+## Fase 03 — Consulta: desacople guardia + huérfanos
+
+| Ítem | Tipo | Estado | Notas |
+|------|------|--------|-------|
+| `GuardiaOperacionService` → `encounter_id` | service | [x] | `GuardiaEncounterResolver` |
+| Guardia / queue / summary → `Encounter::PARENT_*` | service | [x] | Sin `Consulta::` en guardia |
+| `ConsultaIA`, `ConsultarValidaciones` | model | [x] | Huérfanos |
+| Búsquedas oftalmología/receta/suministro sin uso | busqueda | [x] | 3 archivos |
+| Modelo `Consulta` + `ConsultaBusqueda` | model | [ ] | Fase 03b |
+| `ConsultaProcesamientoService` → solo FHIR | service | [ ] | Bridge activo |
+| `EncuestaParchesMamarios` crea `Consulta` | controller | [x] | Fase 03b → `EncounterLifecycleService` |
+
+---
+
+## Fase 03b — Encounter parches + atenciones enfermería
+
+| Ítem | Tipo | Estado | Notas |
+|------|------|--------|-------|
+| `EncuestaParchesMamariosController` → `Encounter` | controller | [x] | Sin fila en `consultas` |
+| `ConsultaAtencionesEnfermeria.encounter_id` + compat `id_consulta` | model | [x] | Post migración `m260520_100001` |
+| Constantes `Encounter` en `Turno`, `PacienteController`, listado | varios | [x] | Sin cambiar `Consulta::find*` |
+
+### Fase 03b — Pendiente (03c)
+
+| Ítem | Tipo | Estado | Notas |
+|------|------|--------|-------|
+| `PersonasAntecedente.id_consulta` → `encounter_id` | model + BD | [ ] | Encuesta usa encounter id en columna legacy |
+| `PacientesController` motivos vía `Encounter` | API | [ ] | Sigue `Consulta::findOne` |
+| `ConsultaProcesamientoService` sin `consultas` | service | [ ] | |
+
+---
+
+## Backlog completo (fases 03c+)
 
 ### Captura / consulta legacy
 
@@ -89,9 +121,9 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Vistas huérfanas `consulta-atenciones-enfermeria/*` | — | [x] Fase 02 |
 | `AtencionesEnfermeriaController` (solo view + reporte) | Media | [-] Mantener hasta API reporte |
 | `InternacionAtencionesEnfermeriaController` | Alta | [ ] |
-| `EncuestaParchesMamariosController` (crea `Consulta`) | Media | [ ] |
+| `EncuestaParchesMamariosController` | — | [x] Fase 03b |
 | `PacienteController::actionFormularioConsulta` | Mantener | [-] Renombrar `id_consulta` → `encounter_id` |
-| Modelo AR `Consulta` + tablas `consultas`, `consulta_*` | Alta | [ ] |
+| Modelo AR `Consulta` + tablas `consultas`, `consulta_*` | Alta | [ ] Fase 03b + migración/ETL |
 | `ConsultaAtencionesEnfermeria`, `ConsultaPracticas*`, etc. | Alta | [ ] |
 
 ### Internación MVC por pestaña
@@ -137,3 +169,15 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 - [ ] `php yii migrate --migrationPath=@common/migrations` (drop COVID) en entorno con backup
 - [ ] Persona backend/frontend: «Ver Atenciones de Enfermería» abre modal histórico
 - [ ] Menú Enfermería → reporte mensual genera PDF/planilla
+
+### Fase 03
+
+- [ ] `POST .../clinical/emergency-guardia/iniciar-atencion` devuelve `encounter_id` (no `id_consulta`)
+- [ ] Tablero guardia web: botón «Atender» con sesión EMER
+- [ ] Sin referencias rotas a clases borradas (`ConsultaIA`, búsquedas oftalmología)
+
+### Fase 03b
+
+- [ ] Crear encuesta parches con peso/talla: fila en `encounter` + `atenciones_enfermeria.encounter_id`
+- [ ] Antecedentes SNOMED vinculados al encounter (columna `personas_antecedentes.id_consulta` = id encounter)
+- [ ] Listado pacientes / turnos: enlaces «Atender» siguen abriendo timeline

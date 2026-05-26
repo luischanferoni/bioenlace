@@ -3,6 +3,7 @@
 namespace common\models;
 
 use common\components\Clinical\PatientHistoriaUrl;
+use common\models\Clinical\Encounter;
 use Yii;
 use yii\helpers\Console;
 
@@ -237,11 +238,11 @@ class Guardia extends \yii\db\ActiveRecord
                 : '<span class="badge bg-soft-warning">Esta guardia corresponde a otro efector.</span>';
         }
 
-        if (Yii::$app->user->getEncounterClass() !== Consulta::ENCOUNTER_CLASS_EMER) {
+        if (Yii::$app->user->getEncounterClass() !== Encounter::ENCOUNTER_CLASS_EMER) {
             return '<span class="badge bg-soft-warning">Use el ámbito Guardia (EMER) en inicio o cambie el encounter en el menú superior.</span>';
         }
 
-        $url = PatientHistoriaUrl::captura((int) $id_persona, Consulta::PARENT_GUARDIA, (int) $id);
+        $url = PatientHistoriaUrl::captura((int) $id_persona, Encounter::PARENT_GUARDIA, (int) $id);
 
         return yii\helpers\Html::a(
             'Atender',

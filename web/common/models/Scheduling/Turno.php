@@ -3,6 +3,7 @@
 namespace common\models\Scheduling;
 
 use common\components\Clinical\PatientHistoriaUrl;
+use common\models\Clinical\Encounter;
 use common\models\Consulta;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\Efector;
@@ -722,7 +723,7 @@ class Turno extends \yii\db\ActiveRecord
                         if (!Consulta::existeConsultaPasePrevio($id, $idServicioSesion)) {
                             $url = PatientHistoriaUrl::captura(
                                 (int) $id_persona,
-                                Consulta::PARENT_PASE_PREVIO,
+                                Encounter::PARENT_PASE_PREVIO,
                                 (int) $id
                             );
                         } else {
@@ -731,7 +732,7 @@ class Turno extends \yii\db\ActiveRecord
                     } else {
                         $url = PatientHistoriaUrl::captura(
                             (int) $id_persona,
-                            Consulta::PARENT_TURNO,
+                            Encounter::PARENT_TURNO,
                             (int) $id
                         );
                     }
@@ -772,7 +773,7 @@ class Turno extends \yii\db\ActiveRecord
                             '<b>Nueva atención de enfermería</b>',
                             PatientHistoriaUrl::captura(
                                 (int) $id_persona,
-                                Consulta::PARENT_PASE_PREVIO,
+                                Encounter::PARENT_PASE_PREVIO,
                                 (int) $id
                             ),
                             [

@@ -14,8 +14,9 @@ use common\models\EncuestaParchesMamarios;
 use common\models\PersonasAntecedente;
 use common\models\ProfesionalEfectorServicio;
 use common\models\busquedas\EncuestaParchesMamariosBusqueda;
+use common\components\Clinical\Service\EncounterLifecycleService;
+use common\models\Clinical\Encounter;
 use common\models\ConsultaAtencionesEnfermeria;
-use common\models\Consulta;
 
 /**
  * EncuestaParchesMamariosController implements the CRUD actions for EncuestaParchesMamarios model.
@@ -137,29 +138,35 @@ class EncuestaParchesMamariosController extends Controller
                 if (!$persona) {
                     $model->addError('id', 'Hubo un error, por favor intente crear la encuesta luego');
                     throw new Exception();
-                }                
-                if(isset($post['162879003p']) || isset($post['162879003t'])){
-                    $nuevaConsulta = new Consulta();
-                    $nuevaConsulta->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_ENCUESTA_PARCHES];
-                    $nuevaConsulta->parent_id = $model->id;
-                    $nuevaConsulta->id_persona = $persona->id_persona;
-                    $nuevaConsulta->id_efector = $model->profesionalEfectorServicio
+                }
+
+                $encounter = null;
+                $needsEncounter = (isset($post['162879003p']) || isset($post['162879003t']))
+                    || $model->antecedente_cancer_mama === 'SI'
+                    || $model->antecedente_cirugia_mamaria === 'SI'
+                    || $model->antecedente_familiar_cancer_mamario_ovarico === 'SI';
+
+                if ($needsEncounter) {
+                    $idEfector = $model->profesionalEfectorServicio
                         ? (int) $model->profesionalEfectorServicio->id_efector
                         : (int) $model->id_efector;
-                    $nuevaConsulta->id_profesional_efector_servicio = (int) ($model->id_profesional_efector_servicio ?? 0) ?: null;
-                    $nuevaConsulta->id_servicio = 5;
-                    $nuevaConsulta->id_configuracion = 0;
-                    $nuevaConsulta->paso_completado = 999;
-                    $nuevaConsulta->save();
+                    $lifecycle = new EncounterLifecycleService();
+                    $encounter = $lifecycle->start([
+                        'subject_persona_id' => (int) $persona->id_persona,
+                        'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
+                        'service_id' => 5,
+                        'efector_id' => $idEfector,
+                        'parent_type' => Encounter::PARENT_CLASSES[Encounter::PARENT_ENCUESTA_PARCHES],
+                        'parent_id' => (int) $model->id,
+                        'id_profesional_efector_servicio' => (int) ($model->id_profesional_efector_servicio ?? 0) ?: null,
+                        'workflow_step' => 999,
+                    ]);
+                    $lifecycle->finalize($encounter);
+                }
 
-                    if (!$nuevaConsulta->validate()) {
-                       // var_dump($nuevaConsulta->getErrors());
-                        $model->addError('id', 'Hubo un error con la consulta, por favor intente crear la encuesta luego');
-                        throw new Exception();
-                    }
-
+                if (isset($post['162879003p']) || isset($post['162879003t'])) {
                     $model_a_enf = new ConsultaAtencionesEnfermeria();
-                    $model_a_enf->id_consulta = $nuevaConsulta->id_consulta;
+                    $model_a_enf->encounter_id = (int) $encounter->id;
                     // TODO: rehacer todo esto, el id de persona va en el before save de Atenciones Enfermeria
                     $post_a_e = ['162879003p'=> $post['162879003p'], '162879003t' => $post['162879003t']];
                     $codificado = json_encode($post_a_e);
@@ -179,11 +186,11 @@ class EncuestaParchesMamariosController extends Controller
                 }
                 // Registramos con snomed los antecedentes en caso de tenerlos y de no tenerlos aún registrados en el sistema
                 // 254837009
-                if ($model->antecedente_cancer_mama == 'SI') {
+                if ($model->antecedente_cancer_mama == 'SI' && $encounter !== null) {
                     $antecedente = PersonasAntecedente::getPersonasAntecedentePorSnomed($persona->id_persona, '254837009', 'Personal');
                     if (count($antecedente) <= 0) {
                         $p_a = new PersonasAntecedente();
-                        $p_a->id_consulta = $nuevaConsulta->id_consulta;
+                        $p_a->id_consulta = (int) $encounter->id;
                         $p_a->id_persona = $persona->id_persona;
                         $p_a->codigo = '254837009';
                         $p_a->tipo_antecedente = 'Personal';
@@ -196,11 +203,11 @@ class EncuestaParchesMamariosController extends Controller
                     }
                 }
 
-                if ($model->antecedente_cirugia_mamaria == 'SI') {
+                if ($model->antecedente_cirugia_mamaria == 'SI' && $encounter !== null) {
                     $antecedente = PersonasAntecedente::getPersonasAntecedentePorSnomed($persona->id_persona, '428540007', 'Personal');
                     if (count($antecedente) <= 0) {
                         $p_a = new PersonasAntecedente();
-                        $p_a->id_consulta = $nuevaConsulta->id_consulta;
+                        $p_a->id_consulta = (int) $encounter->id;
                         $p_a->id_persona = $persona->id_persona;
                         $p_a->codigo = '428540007';
                         $p_a->tipo_antecedente = 'Personal';
@@ -213,12 +220,12 @@ class EncuestaParchesMamariosController extends Controller
                     }
                 }
 
-                if ($model->antecedente_familiar_cancer_mamario_ovarico == 'SI') {
+                if ($model->antecedente_familiar_cancer_mamario_ovarico == 'SI' && $encounter !== null) {
                     $antecedente = PersonasAntecedente::getPersonasAntecedentePorSnomed($persona->id_persona, '254843006', 'Familiar');
                     
                     if (count($antecedente) <= 0) {
                         $p_a = new PersonasAntecedente();
-                        $p_a->id_consulta = $nuevaConsulta->id_consulta;
+                        $p_a->id_consulta = (int) $encounter->id;
                         $p_a->id_persona = $persona->id_persona;
                         $p_a->codigo = '254843006';
                         $p_a->tipo_antecedente = 'Familiar';

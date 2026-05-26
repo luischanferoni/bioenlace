@@ -422,16 +422,6 @@ HTML;
                         throw new \Exception('Error al crear la consulta: ' . json_encode($modelConsulta->getErrors()));
                     }
 
-                    if (isset($body['texto_original']) || isset($body['texto_procesado'])) {
-                        $consultaIA = new \common\models\ConsultaIa();
-                        $consultaIA->id_consulta = $modelConsulta->id_consulta;
-                        $consultaIA->detalle = json_encode([
-                            'texto_original' => $body['texto_original'] ?? $body['consulta_inicial'] ?? '',
-                            'texto_procesado' => $body['texto_procesado'] ?? '',
-                            'fecha_procesamiento' => date('Y-m-d H:i:s'),
-                        ]);
-                        $consultaIA->save(false);
-                    }
                 }
 
                 $jsonPasos = json_decode($configuracion->pasos_json, true);

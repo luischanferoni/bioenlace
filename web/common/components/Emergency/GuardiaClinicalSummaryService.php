@@ -9,7 +9,6 @@ use common\components\Clinical\Service\ServiceRequestService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
-use common\models\Consulta;
 use common\models\Guardia;
 
 /**
@@ -38,7 +37,7 @@ final class GuardiaClinicalSummaryService
         $encounter = $this->encounters->findLatestForGuardia($guardiaId);
         $capturaUrl = PatientHistoriaUrl::captura(
             (int) $guardia->id_persona,
-            Consulta::PARENT_GUARDIA,
+            Encounter::PARENT_GUARDIA,
             (int) $guardia->id
         );
 

@@ -5,7 +5,7 @@ namespace common\components\Emergency;
 use common\components\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ServiceRequest;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use common\models\Efector;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
@@ -248,7 +248,7 @@ final class GuardiaQueueService
     {
         $capturaUrl = PatientHistoriaUrl::captura(
             (int) $guardia->id_persona,
-            Consulta::PARENT_GUARDIA,
+            Encounter::PARENT_GUARDIA,
             (int) $guardia->id
         );
         $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);

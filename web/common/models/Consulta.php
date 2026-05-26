@@ -320,14 +320,6 @@ class Consulta extends \yii\db\ActiveRecord
     }
 
     /**
-     * @return \yii\db\ActiveQuery
-     */    
-    public function getIa()
-    {
-        return $this->hasMany(ConsultaIa::className(), ['id_consulta' => 'id_consulta']);
-    }
-
-    /**
      * Diagnósticos asociados a la consulta (tabla {@see DiagnosticoConsulta}).
      */
     public function getDiagnosticos()

@@ -15,12 +15,17 @@ import 'screens/medico_signup_screen.dart';
 /// Sesión de prueba médico — botón «Ir al inicio» en login (`generar-token-prueba`).
 const int _kSimulacionMedicoUserId = 5748;
 const int _kSimulacionMedicoPersonaId = 920778;
+/// PES de prueba (profesional_efector_servicio.id). Ajustar según BD / wizard habitual.
+const int _kSimulacionMedicoPesId = 7830;
+const String _kSimulacionMedicoEncounterClass = 'AMB';
 
 Uri _simulacionMedicoTokenUri() {
   return Uri.parse(
     '${AppConfig.apiUrl}/auth/generar-token-prueba'
     '?user_id=$_kSimulacionMedicoUserId'
-    '&id_persona=$_kSimulacionMedicoPersonaId',
+    '&id_persona=$_kSimulacionMedicoPersonaId'
+    '&id_profesional_efector_servicio=$_kSimulacionMedicoPesId'
+    '&encounter_class=$_kSimulacionMedicoEncounterClass',
   );
 }
 
@@ -247,8 +252,24 @@ class MyApp extends StatelessWidget {
                           persona['documento'].toString(),
                         );
                       }
-                      // Forzar wizard con el nuevo usuario (evita PES/efector de otra sesión).
-                      await prefs.setBool('config_completed', false);
+                      final sesion = data['sesion_operativa'];
+                      if (sesion is Map<String, dynamic>) {
+                        final pes = sesion['id_profesional_efector_servicio'];
+                        if (pes != null) {
+                          await prefs.setInt(
+                            'id_profesional_efector_servicio',
+                            (pes as num).toInt(),
+                          );
+                        }
+                        final ef = sesion['id_efector'];
+                        if (ef != null) {
+                          await prefs.setInt('id_efector', (ef as num).toInt());
+                        }
+                      }
+                      // Con PES en el JWT puede omitirse el wizard; si no hay contexto, forzarlo.
+                      final tieneContextoOperativo = sesion is Map &&
+                          sesion['id_profesional_efector_servicio'] != null;
+                      await prefs.setBool('config_completed', tieneContextoOperativo);
 
                       if (!loginContext.mounted) return;
                       Navigator.pop(loginContext);
@@ -264,16 +285,33 @@ class MyApp extends StatelessWidget {
                         ),
                       );
 
-                      Navigator.pushReplacement(
-                        loginContext,
-                        MaterialPageRoute(
-                          builder: (_) => ConfigWizardScreen(
-                            userId: user['id'].toString(),
-                            userName: displayName,
-                            authToken: token,
+                      if (tieneContextoOperativo) {
+                        Navigator.pushReplacement(
+                          loginContext,
+                          MaterialPageRoute(
+                            builder: (_) => MainScreen(
+                              userId: user['id'].toString(),
+                              userName: displayName,
+                              authToken: token,
+                              idProfesionalEfectorServicio: prefs
+                                      .getInt('id_profesional_efector_servicio')
+                                      ?.toString() ??
+                                  '$_kSimulacionMedicoPesId',
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      } else {
+                        Navigator.pushReplacement(
+                          loginContext,
+                          MaterialPageRoute(
+                            builder: (_) => ConfigWizardScreen(
+                              userId: user['id'].toString(),
+                              userName: displayName,
+                              authToken: token,
+                            ),
+                          ),
+                        );
+                      }
                       return;
                     }
                   }

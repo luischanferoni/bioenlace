@@ -5,9 +5,13 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\UnauthorizedHttpException;
+use common\components\Assistant\UiActions\AllowedRoutesResolver;
+use common\models\BioenlaceDbManager;
+use common\models\ProfesionalEfectorServicio;
 use common\models\User;
 use common\models\Persona;
 use common\components\DiditClient;
+use webvimark\modules\UserManagement\components\AuthHelper;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -233,66 +237,171 @@ class AuthController extends BaseController
     }
 
     /**
-     * Obtener el rol del usuario (primer rol asignado o 'usuario' por defecto)
+     * Rol principal para JWT / respuesta (evita devolver solo «paciente» si hay roles de staff).
      */
     private function getUserRole($user)
     {
         $roles = Role::getUserRoles($user->id);
-        if (!empty($roles)) {
-            // Obtener el primer rol
-            $firstRole = reset($roles);
-            return $firstRole->name ?? 'usuario';
+        $names = [];
+        foreach ($roles as $role) {
+            if (!empty($role->name)) {
+                $names[] = (string) $role->name;
+            }
         }
-        return 'usuario';
+
+        return $this->resolvePrimaryRoleName($names);
     }
 
     /**
-     * Obtener los permisos del usuario
+     * @param list<string> $roleNames
+     */
+    private function resolvePrimaryRoleName(array $roleNames): string
+    {
+        if ($roleNames === []) {
+            return 'usuario';
+        }
+
+        $staff = array_values(array_filter($roleNames, static function (string $name): bool {
+            return $name !== 'paciente'
+                && (str_contains($name, '_x_efector_') || str_contains($name, '_sin_efector_'));
+        }));
+        if ($staff !== []) {
+            return $staff[0];
+        }
+
+        foreach ($roleNames as $name) {
+            if ($name !== 'paciente') {
+                return $name;
+            }
+        }
+
+        return $roleNames[0];
+    }
+
+    /**
+     * Obtener los permisos del usuario (requiere identidad en Yii::$app->user para BioenlaceDbManager).
      */
     private function getUserPermissions($user)
     {
         try {
             $permissions = Yii::$app->authManager->getPermissionsByUser($user->id);
-            // Convertir a array de nombres de permisos
+
             return array_keys($permissions);
         } catch (\Exception $e) {
-            // Si hay error, retornar array vacío
             Yii::warning('Error obteniendo permisos del usuario: ' . $e->getMessage());
+
             return [];
         }
     }
 
     /**
-     * Generar token JWT
+     * Hidrata sesión + RBAC como tras login API (solo endpoint de prueba).
+     *
+     * @return array{roles: list<string>, primary_role: string, permissions: list<string>, jwt_claims: array<string, mixed>}
      */
-    private function generateJwtToken($user, ?int $idPersona = null)
-    {
-        $role = $this->getUserRole($user);
+    private function bootstrapDevAuthContext(
+        User $user,
+        Persona $persona,
+        ?int $idEfector = null,
+        ?int $idPes = null,
+        ?string $encounterClass = null
+    ): array {
+        $identity = \webvimark\modules\UserManagement\models\User::findOne((int) $user->id);
+        if (!$identity) {
+            throw new \RuntimeException('No se pudo cargar identidad webvimark para user_id ' . $user->id);
+        }
 
-        // Si no viene id_persona (casos como refresh-token o generate-test-token),
-        // buscarlo una sola vez aquí.
+        $session = Yii::$app->session;
+        if (!$session->isActive) {
+            $session->open();
+        }
+
+        $session->set('idPersona', (int) $persona->id_persona);
+        $session->set('nombreUsuario', $persona->nombre);
+        $session->set('apellidoUsuario', $persona->apellido);
+        $session->set(
+            'efectores',
+            ProfesionalEfectorServicio::getEfectoresParaSesion((int) $persona->id_persona)
+        );
+
+        Yii::$app->user->setIdentity($identity);
+
+        $jwtClaims = [];
+        if ($idPes !== null && $idPes > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if (!$pes || (int) $pes->id_persona !== (int) $persona->id_persona) {
+                throw new \InvalidArgumentException(
+                    'id_profesional_efector_servicio no corresponde a la persona del token de prueba.'
+                );
+            }
+            Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
+            Yii::$app->user->setIdEfector((int) $pes->id_efector);
+            Yii::$app->user->setServicioActual((int) $pes->id_servicio);
+            $jwtClaims['id_profesional_efector_servicio'] = (int) $pes->id;
+            $jwtClaims['id_efector'] = (int) $pes->id_efector;
+            $jwtClaims['servicio_actual'] = (int) $pes->id_servicio;
+        } elseif ($idEfector !== null && $idEfector > 0) {
+            Yii::$app->user->setIdEfector($idEfector);
+            $jwtClaims['id_efector'] = $idEfector;
+        }
+
+        if ($encounterClass !== null && $encounterClass !== '') {
+            Yii::$app->user->setEncounterClass($encounterClass);
+            $jwtClaims['encounter_class'] = $encounterClass;
+        }
+
+        BioenlaceDbManager::asignarRolPacienteSiNoExiste((int) $user->id);
+        AuthHelper::updatePermissions($identity);
+        AllowedRoutesResolver::markSessionRoutesOwner((int) $user->id);
+
+        $authManager = Yii::$app->authManager;
+        $rolesMap = $authManager->getRolesByUser((string) $user->id);
+        $roleNames = array_keys($rolesMap);
+        $permissions = array_keys($authManager->getPermissionsByUser($user->id));
+
+        return [
+            'roles' => $roleNames,
+            'primary_role' => $this->resolvePrimaryRoleName($roleNames),
+            'permissions' => $permissions,
+            'jwt_claims' => $jwtClaims,
+        ];
+    }
+
+    /**
+     * Generar token JWT
+     *
+     * @param array<string, mixed> $extraClaims p. ej. role, id_efector, id_profesional_efector_servicio
+     */
+    private function generateJwtToken($user, ?int $idPersona = null, array $extraClaims = []): string
+    {
+        $role = isset($extraClaims['role'])
+            ? (string) $extraClaims['role']
+            : $this->getUserRole($user);
+        unset($extraClaims['role']);
+
         if ($idPersona === null) {
-            $persona = \common\models\Persona::findOne(['id_user' => $user->id]);
+            $persona = Persona::findOne(['id_user' => $user->id]);
             if ($persona) {
-                $idPersona = $persona->id_persona;
+                $idPersona = (int) $persona->id_persona;
             }
         }
-        
-        $payload = [
+
+        $payload = array_merge([
             'user_id' => $user->id,
             'email' => $user->email,
             'role' => $role,
-            'id_persona' => $idPersona, // Agregar id_persona al token
+            'id_persona' => $idPersona,
             'iat' => time(),
-            'exp' => time() + (24 * 60 * 60), // 24 horas
-        ];
+            'exp' => time() + (24 * 60 * 60),
+        ], $extraClaims);
 
         return JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
     }
 
     /**
      * Endpoint de prueba: Generar token para paciente por DNI o por user_id.
-     * Solo para desarrollo/pruebas. Parámetros: dni O user_id; opcional id_persona con user_id.
+     * Solo para desarrollo/pruebas. Parámetros: dni O user_id; opcional id_persona, id_efector,
+     * id_profesional_efector_servicio (o id_pes) para permisos de staff como en sesión operativa.
      */
     public function actionGenerarTokenPrueba()
     {
@@ -300,6 +409,17 @@ class AuthController extends BaseController
         $dni = $request->post('dni') ?? $request->get('dni');
         $userId = $request->post('user_id') ?? $request->get('user_id');
         $idPersonaParam = $request->post('id_persona') ?? $request->get('id_persona');
+        $idEfectorParam = $request->post('id_efector') ?? $request->get('id_efector');
+        $idPesParam = $request->post('id_profesional_efector_servicio')
+            ?? $request->get('id_profesional_efector_servicio')
+            ?? $request->post('id_pes')
+            ?? $request->get('id_pes');
+        $idEfector = ($idEfectorParam !== null && $idEfectorParam !== '') ? (int) $idEfectorParam : null;
+        $idPes = ($idPesParam !== null && $idPesParam !== '') ? (int) $idPesParam : null;
+        $encounterClassParam = $request->post('encounter_class') ?? $request->get('encounter_class');
+        $encounterClass = is_string($encounterClassParam) && $encounterClassParam !== ''
+            ? $encounterClassParam
+            : null;
         if ($userId !== null && $userId !== '') {
             $userId = (int) $userId;
         } else {
@@ -356,17 +476,36 @@ class AuthController extends BaseController
             return $this->error('Usuario inactivo', null, 401);
         }
 
-        $token = $this->generateJwtToken($user, (int) $persona->id_persona);
-        $role = $this->getUserRole($user);
-        $permissions = $this->getUserPermissions($user);
+        try {
+            $authContext = $this->bootstrapDevAuthContext(
+                $user,
+                $persona,
+                $idEfector,
+                $idPes,
+                $encounterClass
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage(), __METHOD__);
+
+            return $this->error('No se pudo preparar contexto RBAC: ' . $e->getMessage(), null, 500);
+        }
+
+        $jwtClaims = array_merge(
+            ['role' => $authContext['primary_role']],
+            $authContext['jwt_claims']
+        );
+        $token = $this->generateJwtToken($user, (int) $persona->id_persona, $jwtClaims);
 
         return $this->success([
             'user' => [
                 'id' => $user->id,
                 'name' => $user->username,
                 'email' => $user->email,
-                'role' => $role,
-                'permissions' => $permissions,
+                'role' => $authContext['primary_role'],
+                'roles' => $authContext['roles'],
+                'permissions' => $authContext['permissions'],
             ],
             'persona' => [
                 'id_persona' => $persona->id_persona,
@@ -374,6 +513,7 @@ class AuthController extends BaseController
                 'apellido' => $persona->apellido,
                 'documento' => $persona->documento,
             ],
+            'sesion_operativa' => $authContext['jwt_claims'] !== [] ? $authContext['jwt_claims'] : null,
             'token' => $token,
         ], 'Token generado exitosamente');
     }

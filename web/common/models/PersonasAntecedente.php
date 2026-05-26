@@ -8,10 +8,10 @@ use common\traits\EncounterIdLegacyConsultaColumnTrait;
 /**
  * Antecedentes de persona — tabla `personas_antecedentes`.
  *
- * La columna `id_consulta` almacena el id de {@see Encounter} (legacy hasta migración BD).
+ * La columna `encounter_id` (legacy `id_consulta`) almacena el id de {@see Encounter}.
  *
- * @property int|null $id_consulta Columna BD; valor = encounter id.
- * @property int|null $encounter_id Alias de {@see $id_consulta}.
+ * @property int|null $encounter_id
+ * @property int|null $id_consulta Alias deprecated de {@see $encounter_id}.
  * @property int|null $id_antecedente
  * @property int|null $id_snomed_situacion
  * @property string|null $deleted_at

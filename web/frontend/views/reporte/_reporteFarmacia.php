@@ -2,7 +2,7 @@
 
 use yii\helpers\ArrayHelper;
 use common\models\Persona;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use frontend\controllers\MpiApiController;
 use common\models\Servicio;
 
@@ -91,13 +91,12 @@ use common\models\Servicio;
     foreach ($resultados as $record) {
         $persona = new Persona();
         $modelPersona = $persona::findOne($record['id_persona']);
-        $consulta = new Consulta();
-        $modelConsulta = $consulta::findOne($record['id_consulta']);
-        $medicamentosConsulta = $modelConsulta->medicamentos;
-        $diagnosticosConsulta = $modelConsulta->diagnosticos;
-        $practicasConsulta = $modelConsulta->practicasPostDiagnostico;
+        $encounterId = (int) ($record['encounter_id'] ?? $record['id_consulta']);
+        $modelEncounter = Encounter::findOne($encounterId);
+        $diagnosticosConsulta = $modelEncounter ? $modelEncounter->diagnosticoConsultasLegacy : [];
+        $practicasConsulta = $modelEncounter ? $modelEncounter->practicasPostDiagnostico : [];
         $domicilio = ($modelPersona->getDomicilioActivo()) ? $modelPersona->getDomicilioActivo()->getDomicilioCompleto() : "No especificado.";
-        $pProf = $modelConsulta->profesionalPes;
+        $pProf = $modelEncounter ? $modelEncounter->profesionalPes : null;
         $nombreMedico = $pProf !== null ? $pProf->getNombreCompleto('') : '';
         $coberturas_api = [];
         $cobertura_medica_key = sprintf("cobertura_medica_%s", $persona->id_persona);
@@ -150,30 +149,45 @@ use common\models\Servicio;
             <td style="width:232pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt">
                 <?php
                 $diagnosticos = '';
-                foreach ($diagnosticosConsulta as $diagnostico) {
-                    $diagnosticos .= '<p><h4>' . $diagnostico->codigoSnomed->term . '</h4>';
-                    if ($diagnostico->medicamentos) {
+                if (count($diagnosticosConsulta) > 0) {
+                    foreach ($diagnosticosConsulta as $diagnostico) {
+                        $term = isset($diagnostico->codigoSnomed->term) ? $diagnostico->codigoSnomed->term : '';
+                        $diagnosticos .= '<p><h4>' . $term . '</h4>';
+                        if ($diagnostico->medicamentos) {
+                            $diagnosticos .= '<ol>';
+                            foreach ($diagnostico->medicamentos as $medicamento) {
+                                $diagnosticos .= '<li>' . $medicamento->snomedMedicamento->term . '</li>';
+                            }
+                            $diagnosticos .= '</ol>';
+                        } else {
+                            $diagnosticos .= '<p><b>sin tratamiento indicado</b></p>';
+                        }
+                        $diagnosticos .= '</p>';
+                    }
+                } elseif ($modelEncounter) {
+                    foreach ($modelEncounter->conditions as $condition) {
+                        $diagnosticos .= '<p><h4>' . ($condition->display ?: $condition->code) . '</h4></p>';
+                    }
+                    $meds = $modelEncounter->medicationRequests;
+                    if (count($meds) > 0) {
                         $diagnosticos .= '<ol>';
-                        foreach ($diagnostico->medicamentos as $medicamento) {
-                            $diagnosticos .= '<li>' . $medicamento->snomedMedicamento->term . '</li>';
+                        foreach ($meds as $medicamento) {
+                            $diagnosticos .= '<li>' . ($medicamento->medication_display ?: $medicamento->medication_code) . '</li>';
                         }
                         $diagnosticos .= '</ol>';
-                    } else {
+                    } elseif ($diagnosticos === '') {
                         $diagnosticos .= '<p><b>sin tratamiento indicado</b></p>';
                     }
-                    $diagnosticos .= '</p>';
                 }
                 echo $diagnosticos;
 
                 $medicamentos = '';
 
                 if ($nombreServicio == 'FARMACIA') {
-
                     foreach ($practicasConsulta as $practica) {
-
-                        if ($practica->codigo == '373784005') {
-
-                            $medicamentos .= '<p>' . $practica->informe . '</p>';
+                        $codigo = $practica->code ?? $practica->codigo ?? '';
+                        if ($codigo == '373784005') {
+                            $medicamentos .= '<p>' . ($practica->note ?? $practica->informe ?? '') . '</p>';
                         }
                     }
                 }

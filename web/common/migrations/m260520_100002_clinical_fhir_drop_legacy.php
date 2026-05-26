@@ -3,7 +3,10 @@
 use yii\db\Migration;
 
 /**
- * Elimina tablas clínicas legacy (greenfield). Requiere {@see m260520_100001_clinical_fhir_prepare_external_refs}.
+ * Elimina tablas clínicas legacy (greenfield).
+ *
+ * Requiere {@see m260520_100001_clinical_fhir_prepare_external_refs} y
+ * {@see m260526_100002_personas_antecedentes_encounter_id} antes de ejecutar en entornos con datos.
  */
 class m260520_100002_clinical_fhir_drop_legacy extends Migration
 {

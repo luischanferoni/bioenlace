@@ -10,7 +10,7 @@ use yii\filters\VerbFilter;
 use webvimark\modules\UserManagement\models\User;
 use common\models\Persona;
 use common\models\ServiciosEfector;
-use common\models\busquedas\ConsultaBusqueda;
+use common\models\busquedas\EncounterReporteBusqueda;
 
 use kartik\mpdf\Pdf;
 use common\models\Servicio;
@@ -72,16 +72,11 @@ class ReporteController extends Controller
                 $anioH = date("Y",strtotime($hasta));
                 $mismoDia = ($desde == $hasta)? true: false;
 
-                $searchModel = new ConsultaBusqueda();
-                $searchModel->id_efector = $idEfector;
-                // $medico = id_profesional_efector_servicio del DepDrop; la búsqueda incluye consultas con id_profesional_efector_servicio alineado (PES)
-                $resultados = $searchModel->searchParaReporteC4($idEfector,$servicio,$medico, $desde, $hasta, $tipoAtencion);
+                $searchModel = new EncounterReporteBusqueda();
+                $resultados = $searchModel->searchParaReporteC4($idEfector, $servicio, $medico, $desde, $hasta, $tipoAtencion);
 
-                
-                if(count($resultados) > 0){ 
-                    
-
-                    $content =  $this->renderPartial('_planilla4', [ 
+                if (count($resultados) > 0) {
+                    $content = $this->renderPartial('_planilla4', [
                         'nombreEfector'=> $nombreEfector,
                         'nombreDepartamento'=> $nombreDepartamento,
                         'nombreServicio' => $nombreServicio,
@@ -94,7 +89,7 @@ class ReporteController extends Controller
                         'anioH'=> $anioH,
                         'mismoDia'=> $mismoDia,
                         'resultados'=> $resultados
-                    ]);            
+                    ]);
                     
                     $pdf = new Pdf([                    
                         'mode' => Pdf::MODE_CORE,                    
@@ -162,9 +157,8 @@ class ReporteController extends Controller
                 $nombreServicio = Servicio::findOne(["id_servicio" => $servicio])->nombre;           
                 
 
-                $searchModel = new ConsultaBusqueda();
-                $searchModel->id_efector = $idEfector;
-                $resultados = $searchModel->searchParaReporte5($idEfector,$servicio, $fecha);
+                $searchModel = new EncounterReporteBusqueda();
+                $resultados = $searchModel->searchParaReporte5($idEfector, $servicio, $fecha);
                 $dia = date("d",strtotime($fecha));
                 $mes = date("m",strtotime($fecha));
                 $anio = date("Y",strtotime($fecha));
@@ -257,9 +251,8 @@ class ReporteController extends Controller
                     
                     $nombreServicio = Servicio::findOne(["id_servicio" => $servicio])->nombre;            
                     
-                    $searchModel = new ConsultaBusqueda();
-                    $searchModel->id_efector = $idEfector;
-                    $resultados = $searchModel->searchReporteFarmacia($idEfector,$servicio, $fecha, $tipoAtencion);
+                    $searchModel = new EncounterReporteBusqueda();
+                    $resultados = $searchModel->searchReporteFarmacia($idEfector, $servicio, $fecha, $tipoAtencion);
                     
                     if(count($resultados) > 0){ 
 
@@ -332,9 +325,8 @@ class ReporteController extends Controller
             $nombreServicio = Servicio::findOne(["id_servicio" => $servicio])->nombre;            
             $fecha = Yii::$app->request->post('fecha');
 
-            $searchModel = new ConsultaBusqueda();
-            $searchModel->id_efector = $idEfector;
-            $resultados = $searchModel->searchReporteOdontologia($idEfector,$servicio, $fecha);
+            $searchModel = new EncounterReporteBusqueda();
+            $resultados = $searchModel->searchReporteOdontologia($idEfector, $servicio, $fecha);
             
             //var_dump($resultados);die();
             if(count($resultados) > 0){ 
@@ -414,9 +406,7 @@ class ReporteController extends Controller
                 $hasta = Yii::$app->request->post('hasta');                
 
 
-                $searchModel = new ConsultaBusqueda();
-                $searchModel->id_efector = $idEfector;
-                // $medico = id_profesional_efector_servicio del DepDrop; la búsqueda incluye consultas con PES alineado
+                $searchModel = new EncounterReporteBusqueda();
                 $resultados = $searchModel->searchParaReporteC4($idEfector, $servicio, $medico, $desde, $hasta, $tipoAtencion);
 
                 $diaD = date("d",strtotime($desde));

@@ -186,6 +186,40 @@ class Encounter extends ActiveRecord
         return $this->getConditions()->all();
     }
 
+    /** Motivos codificados legacy (`consultas_motivos.id_consulta` = encounter id). */
+    public function getMotivoConsulta(): \yii\db\ActiveQuery
+    {
+        return $this->hasMany(\common\models\ConsultaMotivos::class, ['id_consulta' => 'id']);
+    }
+
+    public function getAtencionEnfermeria(): \yii\db\ActiveQuery
+    {
+        return $this->hasOne(\common\models\ConsultaAtencionesEnfermeria::class, ['encounter_id' => 'id']);
+    }
+
+    /** Medicación legacy activa vinculada por encounter id en `id_consulta`. */
+    public function getMedicamentos(): \yii\db\ActiveQuery
+    {
+        return $this->hasMany(\common\models\ConsultaMedicamentos::class, ['id_consulta' => 'id'])
+            ->andOnCondition(['estado' => 'ACTIVO']);
+    }
+
+    /** Diagnósticos legacy para reporte farmacia (previo a FHIR). */
+    public function getDiagnosticoConsultasLegacy(): \yii\db\ActiveQuery
+    {
+        return $this->hasMany(\common\models\DiagnosticoConsulta::class, ['id_consulta' => 'id']);
+    }
+
+    public function getOdontologiaDiagnosticos(): \yii\db\ActiveQuery
+    {
+        return $this->hasMany(\common\models\ConsultaOdontologiaDiagnosticos::class, ['id_consulta' => 'id']);
+    }
+
+    public function getOdontologiaPracticas(): \yii\db\ActiveQuery
+    {
+        return $this->hasMany(\common\models\ConsultaOdontologiaPracticas::class, ['id_consulta' => 'id']);
+    }
+
     public function isInProgress(): bool
     {
         return $this->status === EncounterStatus::IN_PROGRESS;

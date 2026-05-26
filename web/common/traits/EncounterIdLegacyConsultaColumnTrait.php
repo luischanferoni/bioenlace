@@ -5,15 +5,24 @@ namespace common\traits;
 use common\models\Clinical\Encounter;
 
 /**
- * Mapea la columna legacy `id_consulta` al id de {@see Encounter}.
- *
- * Usar hasta migración `renameColumn id_consulta → encounter_id` en la tabla correspondiente.
+ * Columna `encounter_id` (o legacy `id_consulta` pre-migración) almacena el id de {@see Encounter}.
  */
 trait EncounterIdLegacyConsultaColumnTrait
 {
+    public static function encounterFkAttribute(): string
+    {
+        $schema = static::getTableSchema();
+        if ($schema !== null && isset($schema->columns['encounter_id'])) {
+            return 'encounter_id';
+        }
+
+        return 'id_consulta';
+    }
+
     public function getEncounter_id(): ?int
     {
-        $id = $this->getAttribute('id_consulta');
+        $col = static::encounterFkAttribute();
+        $id = $this->getAttribute($col);
 
         return $id !== null && $id !== '' ? (int) $id : null;
     }
@@ -21,23 +30,35 @@ trait EncounterIdLegacyConsultaColumnTrait
     public function setEncounter_id($value): void
     {
         $this->setAttribute(
-            'id_consulta',
+            static::encounterFkAttribute(),
             $value !== null && $value !== '' ? (int) $value : null
         );
     }
 
+    /** @deprecated Alias de {@see getEncounter_id()} */
+    public function getId_consulta(): ?int
+    {
+        return $this->getEncounter_id();
+    }
+
+    /** @deprecated Alias de {@see setEncounter_id()} */
+    public function setId_consulta($value): void
+    {
+        $this->setEncounter_id($value);
+    }
+
     public function getEncounter(): \yii\db\ActiveQuery
     {
-        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
+        $col = static::encounterFkAttribute();
+
+        return $this->hasOne(Encounter::class, ['id' => $col]);
     }
 
     /**
-     * Condición de query por encounter (columna legacy `id_consulta`).
-     *
      * @return array<string, int>
      */
     protected static function encounterIdQueryCondition(int $encounterId): array
     {
-        return ['id_consulta' => $encounterId];
+        return [static::encounterFkAttribute() => $encounterId];
     }
 }

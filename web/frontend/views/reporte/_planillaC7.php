@@ -1,7 +1,7 @@
 <?php
 use yii\helpers\ArrayHelper;
 use common\models\Persona;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use common\models\ConsultaOdontologiaEstados;
 use frontend\controllers\MpiApiController;
 ?>
@@ -97,10 +97,10 @@ use frontend\controllers\MpiApiController;
              foreach($resultados as $record) {  
                 $persona = new Persona();
                 $modelPersona = $persona::findOne($record['id_persona']);
-                $consulta = new Consulta();
-                $modelConsulta = $consulta::findOne($record['id_consulta']);                
-                $diagnosticosConsulta = $modelConsulta->odontologiaDiagnosticos; //$modelConsulta->diagnosticos;
-                $practicasOdontologicas = $modelConsulta->odontologiaPracticas;
+                $encounterId = (int) ($record['encounter_id'] ?? $record['id_consulta']);
+                $modelEncounter = Encounter::findOne($encounterId);
+                $diagnosticosConsulta = $modelEncounter ? $modelEncounter->odontologiaDiagnosticos : [];
+                $practicasOdontologicas = $modelEncounter ? $modelEncounter->odontologiaPracticas : [];
                 $domicilio = ($modelPersona->getDomicilioActivo())? $modelPersona->getDomicilioActivo()->getDomicilioCompleto(): "No especificado.";
                 
 
@@ -150,7 +150,7 @@ use frontend\controllers\MpiApiController;
             </td>
             <td style="width:80pt;border-top-style:solid;border-top-width:1pt;border-left-style:solid;border-left-width:1pt;border-bottom-style:solid;border-bottom-width:1pt;border-right-style:solid;border-right-width:1pt; text-align:center;">
                <?php 
-                    $cpo_ceo = ConsultaOdontologiaEstados::getCPOHastaConsulta($record['id_persona'], $record['id_consulta']); 
+                    $cpo_ceo = ConsultaOdontologiaEstados::getCPOHastaEncounter($record['id_persona'], $encounterId);
                 
                     if ($modelPersona->getEdad($record['fecha']) < 6) {
                         echo "c:" . $cpo_ceo['c'] . " / e:" . $cpo_ceo['e'] . "/ o:" . $cpo_ceo['o'];

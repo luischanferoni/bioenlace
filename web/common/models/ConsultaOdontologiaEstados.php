@@ -367,6 +367,26 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
             ->all();
     }
 
+    public static function getPorPacienteHastaEncounter($idPersona, $encounterId)
+    {
+        return self::find()
+            ->innerJoin(
+                ['enc' => \common\models\Clinical\Encounter::tableName()],
+                'enc.id = consultas_odontologia_estados.id_consulta'
+                . ' AND enc.subject_persona_id = ' . (int) $idPersona
+                . ' AND enc.id <= ' . (int) $encounterId
+                . ' AND consultas_odontologia_estados.condicion = "' . self::CONDICION_ACTIVO . '"'
+                . ' AND enc.deleted_at IS NULL'
+            )
+            ->asArray()
+            ->all();
+    }
+
+    public static function getCPOHastaEncounter($idPersona, $encounterId)
+    {
+        return self::getCPO(self::getPorPacienteHastaEncounter($idPersona, $encounterId));
+    }
+
     public static function getPorPacienteHastaConsulta($idPersona, $idConsulta)
     {
         return self::find()

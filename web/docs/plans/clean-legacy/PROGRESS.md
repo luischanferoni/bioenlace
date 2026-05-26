@@ -105,11 +105,13 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
 | Ítem | Tipo | Estado | Notas |
 |------|------|--------|-------|
-| `PersonasAntecedente.id_consulta` → `encounter_id` | model + BD | [x] | Paso 1: trait + alias PHP; rename BD pendiente |
+| `PersonasAntecedente.id_consulta` → `encounter_id` | model + BD | [x] | `m260526_100002` + trait FK dinámica |
 | `PacientesController` motivos vía `Encounter` | API | [x] | `EncounterAppointmentReasonLookupService` |
 | `ConsultaProcesamientoService` sin `consultas` | service | [x] | Sin escrituras en tabla `consultas` |
 | Autofacturación SUMAR sobre `Encounter` | controller + model | [x] | `AutofacturacionEncounterBusqueda` |
 | `Referencia` + datos persona sin `consultas` | model | [x] | `legacy_id_consulta` / trait |
+| `ReporteController` + planillas ministeriales | controller + views | [x] | `EncounterReporteBusqueda` |
+| Drop tabla `consultas` + hijas | migration | [ ] | `m260520_100002` (Paso 7) |
 
 ---
 
@@ -143,7 +145,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Ítem | Prioridad | Estado |
 |------|-----------|--------|
 | `AutofacturacionController` + vistas | Media | [x] | Encounter + SUMAR |
-| `ReporteController` + planillas | Media | [ ] |
+| `ReporteController` + planillas | Media | [x] | Encounter + planillas 4/5/7/9/farmacia |
 | `ReferenciasController` | Media | [x] | `$idc` = encounter id (alias URL) |
 | `TurnosController` vistas `index2`, `espera2`, `show-calendar` | Baja | [ ] Auditar rutas |
 | `NomencladorController` (refs `Consulta`) | Baja | [ ] |
@@ -181,7 +183,8 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 ### Fase 03b
 
 - [ ] Crear encuesta parches con peso/talla: fila en `encounter` + `atenciones_enfermeria.encounter_id`
-- [ ] Antecedentes SNOMED vinculados al encounter (columna `personas_antecedentes.id_consulta` = id encounter)
+- [ ] Antecedentes SNOMED vinculados al encounter (`personas_antecedentes.encounter_id`)
+- [ ] Migración `m260526_100002_personas_antecedentes_encounter_id` en entorno con backup
 - [ ] Listado pacientes / turnos: enlaces «Atender» siguen abriendo timeline
 - [ ] `GET .../personas/{id}/historia-clinica`: motivos vía `Encounter` (sin `Consulta::findOne`)
 - [ ] Agenda ambulatoria en `PacientesController`: `encounter_id` por turno (alias `id_consulta`)

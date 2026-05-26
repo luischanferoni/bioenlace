@@ -1,7 +1,7 @@
 <?php
 use yii\helpers\ArrayHelper;
 use common\models\Persona;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use frontend\controllers\MpiApiController;
 
 ?>
@@ -89,12 +89,12 @@ use frontend\controllers\MpiApiController;
              foreach($resultados as $record) {  
                 $persona = new Persona();
                 $modelPersona = $persona::findOne($record['id_persona']);
-                $consulta = new Consulta();
-                $modelConsulta = $consulta::findOne($record['id_consulta']);
-                $motivosConsulta = $modelConsulta->motivoConsulta;
-                $diagnosticosConsulta = $modelConsulta->diagnosticos;
-                $practicasConsulta = $modelConsulta->practicasPostDiagnostico;
-                $atencionesConsulta = $modelConsulta->atencionEnfermeria;
+                $encounterId = (int) ($record['encounter_id'] ?? $record['id_consulta']);
+                $modelEncounter = Encounter::findOne($encounterId);
+                $motivosConsulta = $modelEncounter ? $modelEncounter->motivoConsulta : [];
+                $diagnosticosConsulta = $modelEncounter ? $modelEncounter->diagnosticos : [];
+                $practicasConsulta = $modelEncounter ? $modelEncounter->practicasPostDiagnostico : [];
+                $atencionesConsulta = $modelEncounter ? $modelEncounter->atencionEnfermeria : null;
                 $domicilio = ($modelPersona->getDomicilioActivo())? $modelPersona->getDomicilioActivo()->getDomicilioCompleto(): "No especificado.";
 
                 $coberturas_api = [];   
@@ -149,25 +149,27 @@ use frontend\controllers\MpiApiController;
                 <?php 
                 if($motivosConsulta){
                     echo 'Motivo de consulta: ';
-                    foreach ($motivosConsulta as $motivo) {                    
-                        
-                        echo $motivo->codigoSnomed->term.'<br>';
+                    foreach ($motivosConsulta as $motivo) {
+                        $term = isset($motivo->codigoSnomed->term) ? $motivo->codigoSnomed->term : '';
+                        echo $term . '<br>';
                     }
-                }                    
+                } elseif ($modelEncounter && trim((string) $modelEncounter->reason_text) !== '') {
+                    echo 'Motivo de consulta: ' . htmlspecialchars($modelEncounter->reason_text) . '<br>';
+                }
                 $diagnosticos = "";
                 if($diagnosticosConsulta){                
                     echo 'Diagnosticos: ';                
-                    foreach ($diagnosticosConsulta as $diagnostico) {                    
-                        $diagnosticos .= " ". $diagnostico->codigoSnomed->term;
-                        echo $diagnostico->codigoSnomed->term.'<br>';
+                    foreach ($diagnosticosConsulta as $diagnostico) {
+                        $term = $diagnostico->display ?: $diagnostico->code ?: '';
+                        $diagnosticos .= " " . $term;
+                        echo $term . '<br>';
                     }
                 }
                 
                 if($practicasConsulta){                
                     echo 'Prácticas: ';                
-                    foreach ($practicasConsulta as $practica) {                    
-                        
-                        echo $practica->codigoSnomed->term.'<br>';
+                    foreach ($practicasConsulta as $practica) {
+                        echo ($practica->display ?: $practica->code ?: '') . '<br>';
                     }
                 }
                 if($atencionesConsulta){

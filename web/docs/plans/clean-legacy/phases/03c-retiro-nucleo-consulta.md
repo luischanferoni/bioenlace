@@ -28,8 +28,19 @@
 - `Referencia::getDatosPersona*`: joins `encounter` + `turnos` + `personas` (sin `consultas`).
 - Vistas autofacturación: diagnósticos/prácticas vía `Condition` / `ServiceRequest`.
 
-## Paso 5+ (pendiente)
+## Paso 5 — Reportes / planillas (hecho)
 
-- Drop `consultas`.
-- `ReporteController` + planillas (backlog facturación).
-- Migración BD `personas_antecedentes.id_consulta` → `encounter_id` (03c.2).
+- `EncounterReporteBusqueda`: planillas 4, 5, 7, 9 y reporte farmacia sobre `encounter` (sin `consultas` en listados).
+- `ReporteController`: usa `EncounterReporteBusqueda` en todas las acciones.
+- Vistas `_planilla4`, `_planillaC7`, `_reporteFarmacia`: cargan `Encounter` + FHIR (`Condition`, `ServiceRequest`, `MedicationRequest`) con fallback tablas hijas legacy.
+- `ConsultaOdontologiaEstados::getCPOHastaEncounter()`: CPO/CEO sin join a `consultas`.
+
+## Paso 6 — `personas_antecedentes.encounter_id` (hecho)
+
+- Migración `m260526_100002_personas_antecedentes_encounter_id`: rename `id_consulta` → `encounter_id`.
+- `EncounterIdLegacyConsultaColumnTrait`: FK dinámica (`encounter_id` / fallback `id_consulta`).
+- `PersonasAntecedenteBusqueda`: agregados por servicio vía `encounter` (sin `consultas`).
+
+## Paso 7 — Drop `consultas` (pendiente)
+
+- Migración existente `m260520_100002_clinical_fhir_drop_legacy` (aplicar solo tras auditar referencias PHP restantes: `Consulta` AR, búsquedas estadísticas, odontología legacy, derivaciones, etc.).

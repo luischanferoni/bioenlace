@@ -8,8 +8,8 @@ use common\traits\EncounterIdLegacyConsultaColumnTrait;
 /**
  * Antecedentes familiares — misma tabla `personas_antecedentes`.
  *
- * @property int|null $id_consulta Columna BD; valor = encounter id.
- * @property int|null $encounter_id Alias de {@see $id_consulta}.
+ * @property int|null $encounter_id
+ * @property int|null $id_consulta Alias deprecated de {@see $encounter_id}.
  * @property-read Encounter|null $encounter
  */
 class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord

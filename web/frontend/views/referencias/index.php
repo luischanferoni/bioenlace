@@ -3,6 +3,7 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use webvimark\modules\UserManagement\models\User;
+use common\models\Clinical\Encounter;
 use common\models\Persona;
 use yii\helpers\Url;
 
@@ -41,7 +42,14 @@ $id_efector = Yii::$app->user->idEfector;
                             #'attribute'=>'id_consulta_solicitante.consulta.paciente',
                             'label' => 'Paciente',
                             'value' => function ($data) {
-                                return $data->id_consulta_solicitante ? $data->consulta->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON) : 'No definida';
+                                if (!$data->id_consulta_solicitante) {
+                                    return 'No definida';
+                                }
+                                $subject = $data->encounter->subject ?? null;
+
+                                return $subject
+                                    ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                                    : 'No definida';
                             }
                         ],
 

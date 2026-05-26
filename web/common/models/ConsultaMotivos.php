@@ -16,6 +16,7 @@ use Yii;
  */
 class ConsultaMotivos extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
 
     const ORIGEN_MEDICO = 'medico';
@@ -72,14 +73,6 @@ class ConsultaMotivos extends \yii\db\ActiveRecord
             'select2_codigo' => 'Motivos de consulta',
             'detalle' => 'Detalle',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
 

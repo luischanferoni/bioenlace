@@ -19,6 +19,7 @@ use Yii;
  */
 class TensionArterial extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     /**
      * @inheritdoc
      */
@@ -52,14 +53,6 @@ class TensionArterial extends \yii\db\ActiveRecord
             'diastolica' => 'Diastólica',
             'id_consulta' => 'Id Consulta',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**

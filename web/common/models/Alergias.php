@@ -21,6 +21,7 @@ use Yii;
  */
 class Alergias extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
 
     const TIPO_ALERGIA = 'allergy';
@@ -111,11 +112,6 @@ class Alergias extends \yii\db\ActiveRecord
     public function getPersona()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
-    }
-
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**

@@ -125,7 +125,10 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Pase previo turnos → `Encounter::findPasePrevioEncounter` | model | [x] | |
 | AR `Consulta` / `ConsultaBusqueda` `@deprecated` | model | [x] | Eliminar post-drop BD |
 | Callers odontología / balance / régimen / suministro sin join `consultas` | model | [x] | Join `encounter`; console motivos → `reason_text` |
-| Vista `view_consulta_diagnostico` → FHIR | BD + repo | [x] | Vista dual: legacy `diagnostico_consultas` o `clinical_condition` |
+| `LegacyConsultaIdAsEncounterFkTrait` en tablas hijas `id_consulta` | model | [x] | AR clínicos → `getEncounter()`; `getConsulta()` deprecated |
+| `referencias/index.php` paciente vía `encounter->subject` | view | [x] | Sin `$data->consulta->paciente` |
+| `DiagnosticoConsultaRepository::resolveEncounterId()` | repository | [x] | `saveDiagnosticosPrevios` / `getDiagnosticos` |
+| Vista `view_encounter_diagnostico` → FHIR | BD + repo | [x] | Vista dual: legacy `diagnostico_consultas` o `clinical_condition` |
 
 ### Fase 03d — Internación MVC clínico (producto: web = móvil)
 
@@ -158,7 +161,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `InternacionAtencionesEnfermeriaController` | — | [x] | 410 (03d) |
 | `PacienteController::actionFormularioConsulta` | Mantener | [-] | Camino único captura; renombrar `id_consulta` → `encounter_id` |
 | Modelo AR `Consulta` + tablas `consultas`, `consulta_*` | Alta | [ ] | `@deprecated` Paso 8; drop `m260520_100002` |
-| `ConsultaAtencionesEnfermeria`, `ConsultaPracticas*`, etc. | Alta | [ ] |
+| `ConsultaAtencionesEnfermeria`, `ConsultaPracticas*`, etc. | Alta | [x] | Trait FK encounter; drop tablas pendiente |
 
 ### Internación — operativo (sin MVC clínico)
 

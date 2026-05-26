@@ -19,6 +19,7 @@ use common\models\snomed\SnomedProcedimientos;
  */
 class ConsultaRegimen extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\QueryExtraDataTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
     
@@ -68,22 +69,6 @@ class ConsultaRegimen extends \yii\db\ActiveRecord
             'concept_id' => 'Concept ID',
             'indicaciones' => 'Indicaciones',
         ];
-    }
-
-    /**
-     * Gets query for [[Consulta]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getEncounter()
-    {
-        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
-    }
-
-    /** @deprecated use {@see getEncounter()} */
-    public function getConsulta()
-    {
-        return $this->getEncounter();
     }
 
     /**

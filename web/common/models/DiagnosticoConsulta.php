@@ -19,6 +19,7 @@ use Yii;
  */
 class DiagnosticoConsulta extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     # Comento la linea de abajo, ya que no se implementaron
     # los cambios necesarios para usar el trait SoftDeleteDateTimeTrait
     # en esta clase.
@@ -116,14 +117,6 @@ class DiagnosticoConsulta extends \yii\db\ActiveRecord
     public function getCodigo0()
     {
         return $this->hasOne(Cie10::className(), ['codigo' => 'codigo']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     //Busca los diagnósticos por consulta

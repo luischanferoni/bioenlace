@@ -16,6 +16,7 @@ use Yii;
  */
 class ConsultaPracticas extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
     
     public $select2_codigo;
@@ -119,15 +120,7 @@ class ConsultaPracticas extends \yii\db\ActiveRecord
     }
     
     
-     /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
-    }
-
-    public function getDiagnostico()
+     public function getDiagnostico()
     {
         return $this->hasOne(DiagnosticoConsulta::className(), ['id' => 'id_consultas_diagnosticos']);
     }

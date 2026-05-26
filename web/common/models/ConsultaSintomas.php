@@ -18,6 +18,7 @@ use common\traits\ParameterQuestionsTrait;
  */
 class ConsultaSintomas extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
     use ParameterQuestionsTrait;
 
@@ -74,14 +75,6 @@ class ConsultaSintomas extends \yii\db\ActiveRecord
         return [
             'sintoma' => '¿Qué síntoma tenés?',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**

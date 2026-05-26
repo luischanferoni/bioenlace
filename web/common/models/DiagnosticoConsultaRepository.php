@@ -96,6 +96,27 @@ class DiagnosticoConsultaRepository
     }
 
     /**
+     * @param Encounter|object $consultaOrEncounter
+     */
+    protected static function resolveEncounterId($consultaOrEncounter): int
+    {
+        if ($consultaOrEncounter instanceof Encounter) {
+            return (int) $consultaOrEncounter->id;
+        }
+        if (isset($consultaOrEncounter->id_consulta) && (int) $consultaOrEncounter->id_consulta > 0) {
+            return (int) $consultaOrEncounter->id_consulta;
+        }
+        if (method_exists($consultaOrEncounter, 'getEncounter_id')) {
+            $id = $consultaOrEncounter->getEncounter_id();
+            if ($id !== null && (int) $id > 0) {
+                return (int) $id;
+            }
+        }
+
+        throw new \InvalidArgumentException('Encounter id required.');
+    }
+
+    /**
      * Crea query diagnosticos previos de una persona.
      *
      * Retorna los diagnosticos previos que no tiene seguimiento (root_id = Null)
@@ -260,10 +281,12 @@ class DiagnosticoConsultaRepository
      * de Diagnosticos.
      */
     public static function saveDiagnosticosPrevios($consulta, $diagsp) {
+        $encounterId = self::resolveEncounterId($consulta);
+
         # Se borran los anteriore si fue una edición
         DiagnosticoConsulta::deleteAll(
             ['and',
-                ['id_consulta' => $consulta->id_consulta],
+                ['id_consulta' => $encounterId],
                 ['not', ['root_id' => null]],
             ]);
         
@@ -271,7 +294,7 @@ class DiagnosticoConsultaRepository
             if($dp->resolve == 'N')
                 continue;
             $d = new DiagnosticoConsulta();
-            $d->id_consulta = $consulta->id_consulta;
+            $d->id_consulta = $encounterId;
             $d->codigo = $dp->codigo;
             $d->tipo_diagnostico = $dp->tipo_diagnostico;
             $d->cronico = $dp->cronico;
@@ -302,10 +325,11 @@ class DiagnosticoConsultaRepository
      * Se utiliza en furmulario de diagnosticos.
      */
     public static function getDiagnosticos($consulta) {
+        $encounterId = self::resolveEncounterId($consulta);
         $query = DiagnosticoConsulta::find()
             ->where(
                 "id_consulta = :consulta_id", 
-                [':consulta_id' => $consulta->id_consulta])
+                [':consulta_id' => $encounterId])
             ->andWhere('root_id IS NULL');
         return $query->all();
     }

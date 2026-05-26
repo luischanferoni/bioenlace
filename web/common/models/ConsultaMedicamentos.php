@@ -26,6 +26,7 @@ use Yii;
  */
 class ConsultaMedicamentos extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
     
     const ESTADO_SUSPENDIDO = 'SUSPENDIDO';
@@ -105,14 +106,6 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
             'durante_tipo' => 'Unidad durante',
             'indicaciones' => 'Indicaciones',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**

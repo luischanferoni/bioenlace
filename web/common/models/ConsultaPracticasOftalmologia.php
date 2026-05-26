@@ -22,6 +22,7 @@ use Yii;
  */
 class ConsultaPracticasOftalmologia extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
 
     const SCENARIOTIPOGRUPO1 = 'scenario1';
@@ -82,8 +83,7 @@ class ConsultaPracticasOftalmologia extends \yii\db\ActiveRecord
                 ['id_consulta'],
                 'exist',
                 'skipOnError' => true,
-                'targetClass' => Consulta::className(),
-                'targetAttribute' => ['id_consulta' => 'id_consulta']
+                'targetClass' => \common\models\Clinical\Encounter::class, 'targetAttribute' => ['id_consulta' => 'id']
             ],
         ];
     }
@@ -155,14 +155,6 @@ class ConsultaPracticasOftalmologia extends \yii\db\ActiveRecord
         }
     }
 
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
-    }
 
     /**
      * @return \yii\db\ActiveQuery

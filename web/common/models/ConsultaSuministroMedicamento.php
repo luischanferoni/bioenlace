@@ -19,6 +19,8 @@ use common\models\snomed\SnomedMedicamentos;
  */
 class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
+
     /**
      * {@inheritdoc}
      */
@@ -111,17 +113,6 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
     public function getInternacionMedicamento()
     {
         return $this->hasOne(SegNivelInternacionMedicamento::className(), ['id' => 'id_internacion_medicamento']);
-    }
-
-    public function getEncounter()
-    {
-        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
-    }
-
-    /** @deprecated use {@see getEncounter()} */
-    public function getConsulta()
-    {
-        return $this->getEncounter();
     }
 
     public function getProfesionalEfectorServicio()

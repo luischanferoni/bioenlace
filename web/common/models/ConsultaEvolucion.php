@@ -20,6 +20,7 @@ use Yii;
  */
 class ConsultaEvolucion extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     use \common\traits\SoftDeleteDateTimeTrait;
     /**
      * {@inheritdoc}
@@ -86,11 +87,4 @@ class ConsultaEvolucion extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
-    }
 }

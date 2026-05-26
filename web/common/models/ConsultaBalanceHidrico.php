@@ -23,6 +23,7 @@ use Yii;
 class ConsultaBalanceHidrico extends \yii\db\ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
 
     const TREG_INGRESO = 'Ingreso';
     const TREG_EGRESO = 'Egreso';
@@ -78,8 +79,8 @@ class ConsultaBalanceHidrico extends \yii\db\ActiveRecord
             [['tipo_registro'], 'string'],
             [['id_consulta'], 'exist', 
                 'skipOnError' => true, 
-                'targetClass' => Consulta::className(), 
-                'targetAttribute' => ['id_consulta' => 'id_consulta']],
+                'targetClass' => Encounter::class, 
+                'targetAttribute' => ['id_consulta' => 'id']],
         ];
     }
 
@@ -116,22 +117,6 @@ class ConsultaBalanceHidrico extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * Gets query for [[Internacion]].
-     *
-     * @return \yii\db\ActiveQuery
-     */
-    public function getEncounter()
-    {
-        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
-    }
-
-    /** @deprecated use {@see getEncounter()} */
-    public function getConsulta()
-    {
-        return $this->getEncounter();
-    }
-    
     public function afterFind()
     {
         $this->fecha = date_format(

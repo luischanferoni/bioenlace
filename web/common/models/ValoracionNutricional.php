@@ -25,6 +25,7 @@ use Yii;
  */
 class ValoracionNutricional extends \yii\db\ActiveRecord
 {
+    use \common\traits\LegacyConsultaIdAsEncounterFkTrait;
     /**
      * @inheritdoc
      */
@@ -66,14 +67,6 @@ class ValoracionNutricional extends \yii\db\ActiveRecord
             'per_imc' => 'Per Imc',
             'id_consulta' => 'Id Consulta',
         ];
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsulta()
-    {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
     }
 
     /**

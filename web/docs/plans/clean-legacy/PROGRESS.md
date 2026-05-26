@@ -105,7 +105,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
 | Ítem | Tipo | Estado | Notas |
 |------|------|--------|-------|
-| `PersonasAntecedente.id_consulta` → `encounter_id` | model + BD | [ ] | Encuesta usa encounter id en columna legacy |
+| `PersonasAntecedente.id_consulta` → `encounter_id` | model + BD | [x] | Paso 1: trait + alias PHP; rename BD pendiente |
 | `PacientesController` motivos vía `Encounter` | API | [ ] | Sigue `Consulta::findOne` |
 | `ConsultaProcesamientoService` sin `consultas` | service | [ ] | |
 

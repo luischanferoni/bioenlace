@@ -2,114 +2,107 @@
 
 namespace common\models;
 
-use Yii;
+use common\models\Clinical\Encounter;
+use common\traits\EncounterIdLegacyConsultaColumnTrait;
 
 /**
- * This is the model class for table "personas_antecedentes".
+ * Antecedentes familiares — misma tabla `personas_antecedentes`.
  *
- * @property integer $id_consulta
- * @property integer $id_antecedente
- * @property integer $id_snomed_situacion
- * @property string|null $deleted_at
- * @property-read Antecedente|null $antecedente
- * @property-read Persona|null $persona
+ * @property int|null $id_consulta Columna BD; valor = encounter id.
+ * @property int|null $encounter_id Alias de {@see $id_consulta}.
+ * @property-read Encounter|null $encounter
  */
 class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
+    use EncounterIdLegacyConsultaColumnTrait;
 
     public $select2_codigo;
 
-    /**
-     * @inheritdoc
-     */
     public static function tableName()
     {
         return 'personas_antecedentes';
     }
 
-    /**
-     * @inheritdoc
-     */
     public function rules()
     {
         return [
-            [['id_consulta'], 'required'],
-            [['id_consulta', 'id_antecedente','id_persona'], 'integer'],
-            [['tipo_antecedente', 'origen_id_antecedente','codigo'], 'string'],
+            [['encounter_id'], 'required'],
+            [['encounter_id', 'id_antecedente', 'id_persona'], 'integer'],
+            [['encounter_id'], 'exist', 'skipOnError' => true, 'targetClass' => Encounter::class, 'targetAttribute' => ['encounter_id' => 'id']],
+            [['tipo_antecedente', 'origen_id_antecedente', 'codigo'], 'string'],
             ['select2_codigo', 'each', 'rule' => ['string']],
             [['id_antecedente'], 'default', 'value' => 0],
-            [['codigo'], 'unique', 
-                'targetAttribute' => ['tipo_antecedente', 'codigo', 'id_persona', 'deleted_at'], 
+            [['codigo'], 'unique',
+                'targetAttribute' => ['tipo_antecedente', 'codigo', 'id_persona', 'deleted_at'],
                 'message' => 'El antecedente {value} ya se encuentra cargado para el paciente'],
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
     public function attributeLabels()
     {
         return [
-            'id_consulta' => 'Id Consulta',
+            'encounter_id' => 'Encounter',
+            'id_consulta' => 'Encounter (legacy)',
             'id_antecedente' => '',
             'id_snomed_situacion' => '',
             'select2_codigo' => 'Antecedentes Familiares',
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getAntecedente()
     {
         return $this->hasOne(Antecedente::className(), ['id_antecedente' => 'id_antecedente']);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getSnomedSituacion()
     {
         return $this->hasOne(snomed\SnomedSituacion::className(), ['conceptId' => 'codigo']);
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    /**
-     * Paciente (`personas_antecedentes.id_persona`).
-     */
     public function getPersona()
     {
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
-    
-    //Busca los antecedentes familiares de una persona por consulta
-    public static function getPersonasAntecedenteFamiliarPorConsulta($id_cons)
+
+    /**
+     * @return static[]
+     */
+    public static function getPersonasAntecedenteFamiliarPorEncounter(int $encounterId): array
     {
-       $personas_antecedente_familiar = PersonasAntecedenteFamiliar::find()
-                                ->where(['tipo_antecedente' => 'Familiar'])
-                                ->andWhere(['id_consulta'=>$id_cons])
-                                ->andWhere(['deleted_at'=> NULL])
-                                ->all();
-       return $personas_antecedente_familiar;
-               
+        return static::find()
+            ->where(['tipo_antecedente' => 'Familiar'])
+            ->andWhere(static::encounterIdQueryCondition($encounterId))
+            ->andWhere(['deleted_at' => null])
+            ->all();
     }
 
     /**
-     * Mientras la consulta no este finalizada (nueva o editando) el usuario
-     * puede hacer un hard delete
+     * @deprecated use {@see getPersonasAntecedenteFamiliarPorEncounter()}
+     * @return static[]
+     */
+    public static function getPersonasAntecedenteFamiliarPorConsulta($id_cons)
+    {
+        return static::getPersonasAntecedenteFamiliarPorEncounter((int) $id_cons);
+    }
+
+    public static function hardDeleteGrupoPorEncounter(int $encounterId, array $ids): void
+    {
+        if ($ids === [] || $encounterId <= 0) {
+            return;
+        }
+        static::hardDeleteAll([
+            'AND',
+            ['in', 'id', $ids],
+            static::encounterIdQueryCondition($encounterId),
+        ]);
+    }
+
+    /**
+     * @deprecated use {@see hardDeleteGrupoPorEncounter()}
      */
     public static function hardDeleteGrupo($id_consulta, $ids)
     {
-        if (count($ids) > 0 && isset($id_consulta) && $id_consulta != "" && $id_consulta != 0) {
-            self::hardDeleteAll([
-                'AND',
-                ['in', 'id', $ids],
-                ['=', 'id_consulta', $id_consulta]
-            ]);
-        }
+        static::hardDeleteGrupoPorEncounter((int) $id_consulta, $ids);
     }
-
 }

@@ -14,7 +14,7 @@
 - [phases/01-eliminacion-segura-y-fuerte.md](./phases/01-eliminacion-segura-y-fuerte.md)
 - [phases/02-covid-y-vistas-huerfanas.md](./phases/02-covid-y-vistas-huerfanas.md) — COVID + limpieza enfermería
 - [phases/03-consulta-desacople-y-huerfanos.md](./phases/03-consulta-desacople-y-huerfanos.md) — guardia → Encounter + huérfanos
-- [phases/03b-encounter-parches-y-constantes.md](./phases/03b-encounter-parches-y-constantes.md) — encuesta parches + `atenciones_enfermeria.encounter_id`
+- [phases/03c-retiro-nucleo-consulta.md](./phases/03c-retiro-nucleo-consulta.md) — Paso 1 antecedentes + backlog 03c
 
 ## Reglas del programa
 

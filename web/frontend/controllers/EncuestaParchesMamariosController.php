@@ -190,7 +190,7 @@ class EncuestaParchesMamariosController extends Controller
                     $antecedente = PersonasAntecedente::getPersonasAntecedentePorSnomed($persona->id_persona, '254837009', 'Personal');
                     if (count($antecedente) <= 0) {
                         $p_a = new PersonasAntecedente();
-                        $p_a->id_consulta = (int) $encounter->id;
+                        $p_a->encounter_id = (int) $encounter->id;
                         $p_a->id_persona = $persona->id_persona;
                         $p_a->codigo = '254837009';
                         $p_a->tipo_antecedente = 'Personal';
@@ -207,7 +207,7 @@ class EncuestaParchesMamariosController extends Controller
                     $antecedente = PersonasAntecedente::getPersonasAntecedentePorSnomed($persona->id_persona, '428540007', 'Personal');
                     if (count($antecedente) <= 0) {
                         $p_a = new PersonasAntecedente();
-                        $p_a->id_consulta = (int) $encounter->id;
+                        $p_a->encounter_id = (int) $encounter->id;
                         $p_a->id_persona = $persona->id_persona;
                         $p_a->codigo = '428540007';
                         $p_a->tipo_antecedente = 'Personal';
@@ -225,7 +225,7 @@ class EncuestaParchesMamariosController extends Controller
                     
                     if (count($antecedente) <= 0) {
                         $p_a = new PersonasAntecedente();
-                        $p_a->id_consulta = (int) $encounter->id;
+                        $p_a->encounter_id = (int) $encounter->id;
                         $p_a->id_persona = $persona->id_persona;
                         $p_a->codigo = '254843006';
                         $p_a->tipo_antecedente = 'Familiar';

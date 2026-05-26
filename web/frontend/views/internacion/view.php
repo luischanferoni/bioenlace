@@ -60,7 +60,7 @@ InternacionAltaAsset::register($this);
                     <?php endif; ?>
                     <?php
 
-                    if ($puedeAtender && $urlSiguiente && (!$model->internacionConAlta())) : ?>
+                    if ($puedeAtender && $urlCapturaClinica && (!$model->internacionConAlta())) : ?>
                         <?= Html::a(
                             '<svg width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                         <defs>                        
@@ -72,7 +72,7 @@ InternacionAltaAsset::register($this);
                         </g>                        
                         </svg>' .
                                 ' Atender',
-                            $urlSiguiente,
+                            $urlCapturaClinica,
                             [
                                 'class' => 'me-2 btn btn-warning rounded-pill mt-2',
                                 'data-bs-toggle' => 'tooltip',
@@ -214,54 +214,34 @@ InternacionAltaAsset::register($this);
         </div>
 
     </div>
-    <?php if ($puedeAtender) { ?>
+    <?php if ($puedeAtender && !empty($urlCapturaClinica)) { ?>
         <div class="row">
-            <div class="col-sm-12 col-md-6 d-flex">
-                <?= $this->render('v2/_view_sintomas', ['sintomas' => $sintomas]); ?>
-            </div>
-            <div class="col-sm-12 col-md-6 d-flex">
-                <?= $this->render('v2/_view_diagnostico', ['diagnosticos' => $diagnosticos]); ?>
-            </div>
-
-            <div class="col-sm-12 col-md-6 d-flex">
-                <?= $this->render('v2/_view_medicamentos', ['medicamentos' => $medicamentos]); ?>
-            </div>
-
-            <div class="col-sm-12 col-md-6 d-flex">
-                <?= $this->render('v2/_view_practica', ['practicas' => $practicas]); ?>
-            </div>
-
-            <?php if (count($oftalmologias) > 0) { ?>
-                
-                <div class="col-sm-12 d-flex">
-                    <?= $this->render('v2/_view_oftalmologia', ['oftalmologias' => $oftalmologias]); ?>
+            <div class="col-12">
+                <div class="card border-primary">
+                    <div class="card-header bg-soft-primary">
+                        <h4 class="mb-0">Captura clínica del episodio</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">
+                            La evolución, diagnósticos, medicación y prácticas se registran en la
+                            <strong>historia clínica</strong> (encounter IMP), con el mismo formulario que ambulatorio y guardia.
+                        </p>
+                        <?= Html::a(
+                            '<i class="bi bi-journal-medical"></i> Abrir historia clínica',
+                            $urlCapturaClinica,
+                            ['class' => 'btn btn-warning rounded-pill']
+                        ) ?>
+                    </div>
                 </div>
-
-            <?php } ?>
-
-            <div class="col-sm-12 d-flex">
-                <?= $this->render('v2/_view_evolucion', ['evoluciones' => $evoluciones]); ?>
             </div>
-
-
-            <div class="col-sm-12 d-flex">
-                <?= $this->render('v2/_view_enfermeria', ['atencionEnfermeria' => $atencionEnfermeria]); ?>
-            </div>
-
-            <?php /*
-        <div class="col-sm-12 d-flex">
-            <?= $this->render('v2/_view_suministros', ['evoluciones' => $evoluciones]); ?>
         </div>
-        */ ?>
-
-        </div>
-    <?php } else { ?>
+    <?php } elseif (!$puedeAtender) { ?>
         <div class="card">
             <div class="card-header bg-soft-info">
-                <h4>Historia clínica de la internación</h4>
+                <h4>Historia clínica del episodio</h4>
             </div>
             <div class="card-body">
-                <h4 class="text-center">Estos datos solo pueden ser visualizados por los profesionales de la salud.</h4>
+                <p class="text-center mb-0">La captura clínica solo está disponible para profesionales con permiso de atención en el servicio actual.</p>
             </div>
         </div>
     <?php } ?>

@@ -14,11 +14,16 @@ use common\models\FormularioDinamico;
 use common\models\SegNivelInternacion;
 use yii\filters\AccessControl;
 use yii\filters\AccessRule;
+use frontend\components\RetiredInternacionClinicalMvcTrait;
+
 /**
+ * @deprecated Captura clínica vía timeline + encounter IMP. Rutas retornan 410.
+ *
  * InternacionDiagnosticoController implements the CRUD actions for SegNivelInternacionDiagnostico model.
  */
 class InternacionDiagnosticoController extends Controller
 {
+    use RetiredInternacionClinicalMvcTrait;
     /**
      * {@inheritdoc}
      */

@@ -49,6 +49,9 @@ class Encounter extends ActiveRecord
     const PARENT_ENCUESTA_PARCHES = 'ENCUESTA_PARCHES';
     const PARENT_CIRUGIA = 'CIRUGIA';
 
+    /** Paso de workflow para encounter finalizado (legacy {@see \common\models\Consulta::PASO_FINALIZADA}). */
+    const WORKFLOW_STEP_FINALIZED = 999;
+
     const PARENT_CLASSES = [
         self::PARENT_TURNO => '\common\models\Turno',
         self::PARENT_DERIVACION => '\common\models\ConsultaDerivaciones',
@@ -235,5 +238,21 @@ class Encounter extends ActiveRecord
         $efector = Efector::findOne((int) $encounter->efector_id);
 
         return $efector !== null ? (string) $efector->nombre : '';
+    }
+
+    /**
+     * Encounter de pase previo para servicio/efector (reemplazo de {@see Consulta::existeConsultaPasePrevio}).
+     */
+    public static function findPasePrevioEncounter(int $parentId, int $serviceId): ?self
+    {
+        $row = self::find()
+            ->where([
+                'parent_type' => self::PARENT_PASE_PREVIO,
+                'parent_id' => $parentId,
+                'service_id' => $serviceId,
+            ])
+            ->one();
+
+        return $row instanceof self ? $row : null;
     }
 }

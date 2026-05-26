@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 
 /*
   Logica de Negocio de procesos que involucra DiagnosticoConsulta.
@@ -73,11 +73,34 @@ class DiagnosticoConsultaRepository
     }
     
     /**
+     * Contexto parent/persona desde {@see Encounter} o AR legacy `Consulta`.
+     *
+     * @param Encounter|object $consulta
+     * @return array{persona_id: int, parent_id: int, parent_class: string}
+     */
+    protected static function resolveConsultaContext($consulta): array
+    {
+        if ($consulta instanceof Encounter) {
+            return [
+                'persona_id' => (int) $consulta->subject_persona_id,
+                'parent_id' => (int) $consulta->parent_id,
+                'parent_class' => Encounter::PARENT_CLASSES[$consulta->parent_type] ?? '',
+            ];
+        }
+
+        return [
+            'persona_id' => (int) $consulta->id_persona,
+            'parent_id' => (int) $consulta->parent_id,
+            'parent_class' => (string) $consulta->parent_class,
+        ];
+    }
+
+    /**
      * Crea query diagnosticos previos de una persona.
-     * 
+     *
      * Retorna los diagnosticos previos que no tiene seguimiento (root_id = Null)
      * y el ultimo seguimiento realizado a un diagnostico asosiado a la persona.
-     * 
+     *
      * Retorna la query a la que luego pueden agregarsele mas filtros.
      * Ver funciones que la usan.
      */
@@ -142,15 +165,15 @@ class DiagnosticoConsultaRepository
      * Diagnosticos previos pendientes en internación.
      */
     public static function getDiagnosticosPreviosPendientesIMP($consulta) {
-        $query = self::getQueryDiagnosticosPreviosPendientes(
-            $consulta->id_persona);
+        $ctx = self::resolveConsultaContext($consulta);
+        $query = self::getQueryDiagnosticosPreviosPendientes($ctx['persona_id']);
         $query->andWhere(
             'dcm.c_parent_id = :parent_id',
-            [':parent_id' => $consulta->parent_id]
+            [':parent_id' => $ctx['parent_id']]
             )
             ->andWhere(
             'dcm.c_parent_class = :parent_class',
-            [':parent_class' => $consulta->parent_class]
+            [':parent_class' => $ctx['parent_class']]
             )
             ;
         return $query->all();
@@ -164,8 +187,8 @@ class DiagnosticoConsultaRepository
             )
             ->andWhere(
                 'dcm.c_parent_class = :parent_class',
-                [':parent_class' => Consulta::PARENT_CLASSES[
-                    Consulta::PARENT_INTERNACION
+                [':parent_class' => Encounter::PARENT_CLASSES[
+                    Encounter::PARENT_INTERNACION
                 ]]
             )
             ->addOrderBy('dcm.id DESC')

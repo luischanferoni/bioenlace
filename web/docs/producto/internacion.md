@@ -2,18 +2,22 @@
 
 Gestión del **episodio de internación** en el efector: camas, indicadores operativos, alta estructurada con epicrisis y **administración de plantillas** por institución. La fuente de verdad es la API v1 `clinical/internacion` y `clinical/internacion-epicrisis-plantilla`; web y app médico consumen la misma capa.
 
+Modelo de superficies (web = móvil): [superficies-ui.md](./superficies-ui.md).
+
 ## Roles y superficies
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff de piso / admisión | Web `/internacion/index` | Mapa de camas (libre, ocupada, bloqueada, aislamiento), indicadores de ocupación y estadía |
-| Médico / coordinación | Web `/internacion/view` | Evolución del episodio; **alta estructurada** (API + modal clásico) con plantilla y checklist |
-| Administración clínica | Web `/internacion-epicrisis-plantilla/*` | ABM de plantillas de epicrisis del efector |
-| Médico (IMP) | App médico — icono cama en inicio | Mapa de camas del efector en sesión |
+| Staff de piso / admisión | **Inicio** — mapa de camas (`/internacion/index` o intent `internacion.mapa-camas-flow`) | Libre, ocupada, bloqueada, aislamiento; indicadores |
+| Médico / enfermería en piso | **Captura clínica** — timeline + formulario encounter | `parent=INTERNACION`, `parent_id=<id_internacion>`; workflow IMP por servicio/especialidad |
+| Médico / coordinación | **Flow** — alta estructurada (`internacion.alta-estructurada-flow`) | Epicrisis, plantilla, checklist → externación |
+| Staff | **Ficha episodio** — `/internacion/view` | Datos administrativos (cama, ingreso); enlace a historia clínica; **sin** pestañas clínicas MVC |
+| Administración clínica | Web `/internacion-epicrisis-plantilla/*` | ABM plantillas epicrisis del efector |
+| Médico (IMP) | App médico — inicio con efector en sesión | Mapa de camas (misma API que web) |
 
 Requiere **sesión operativa** con efector (staff). Paciente móvil sin `set-session` no usa estos flujos.
 
-## Mapa de camas
+## Mapa de camas (inicio / panel)
 
 Estados operativos en mapa (`estado_mapa`):
 
@@ -22,16 +26,22 @@ Estados operativos en mapa (`estado_mapa`):
 - `bloqueada` — fuera de servicio (con `motivo_estado` opcional)  
 - `aislamiento` — reservada / aislamiento  
 
-En web, acciones rápidas **B** / **A** / **L** (bloquear, aislamiento, liberar) vía API.
+En web, acciones rápidas **B** / **A** / **L** (bloquear, aislamiento, liberar) vía API. Desde ronda/mapa, **Atender** abre la **historia clínica** con contexto de internación (no el formulario MVC legacy).
 
-## Alta estructurada
+## Captura clínica en internación
+
+- Mismo pipeline que ambulatorio/guardia: timeline + `_formulario_consulta.php` → `POST …/clinical/encounter/guardar`.
+- Contexto: `PatientHistoriaUrl::captura($idPersona, Encounter::PARENT_INTERNACION, $idInternacion)`.
+- Evoluciones, diagnósticos, medicación y prácticas del piso se documentan como **encounters IMP** vinculados al episodio (`parent_type` / `parent_id`), no en sub-controllers Yii retirados.
+
+## Alta estructurada (flow)
 
 Flujo guiado por UI JSON (`internacion/alta-formulario`):
 
 1. Checklist y tipo de alta.  
 2. Selección de **plantilla de epicrisis** (opcional) con vista previa.  
 3. Epicrisis editable; responsable de sesión (PES) en checklist.  
-4. Persistencia vía servicio de dominio → `doExternacion` (flujo legacy integrado).
+4. Persistencia vía servicio de dominio → `doExternacion`.
 
 **Placeholders** al aplicar plantilla: `{paciente}`, `{fecha_ingreso}`, `{dias_internacion}`, `{documento}`.
 
@@ -49,9 +59,7 @@ Tabla `internacion_epicrisis_plantilla`:
 | Crear / editar | `/create`, `/update/<id>` | `POST …/crear`, `PUT/PATCH …/actualizar/<id>` |
 | Activar / desactivar | POST en grilla | `POST …/activar/<id>`, `POST …/desactivar/<id>` |
 | Listar (operativo, solo activas) | — | `GET …/internacion/plantillas-epicrisis` |
-| Vista previa en alta | panel en `view` | `GET …/internacion/<id>/preview-plantilla-epicrisis` |
-
-Enlace desde **Internaciones** → “Plantillas de epicrisis”.
+| Vista previa en alta | panel en flow / view | `GET …/internacion/<id>/preview-plantilla-epicrisis` |
 
 ## API principal — internación operativa
 
@@ -68,7 +76,7 @@ Base: `/api/v1/clinical/internacion`
 
 ## Vínculo con guardia
 
-Ingreso desde urgencias: `internacion/create?id_guardia=` tras `POST …/emergency-guardia/<id>/solicitar-internacion`. Columna `seg_nivel_internacion.id_guardia` para trazabilidad.
+Ingreso desde urgencias: `internacion/create?id_guardia=` tras `POST …/emergency-guardia/<id>/solicitar-internacion`. Columna `seg_nivel_internacion.id_guardia` para trazabilidad. Candidato a flow `internacion.ingreso-flow`.
 
 ## Asistente
 
@@ -76,13 +84,13 @@ Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 
 - `internacion.mapa-camas-flow` — mapa + listado embebible  
 - `internacion.alta-estructurada-flow` — formulario de alta  
+- *(backlog)* `internacion.cambio-cama-flow`, `internacion.ingreso-flow`
 
-## Operación — migraciones (orden sugerido)
+## Retiro MVC clínico (clean-legacy)
 
-1. `m260604_100002_api_clinical_internacion_operativa_rbac`  
-2. `m260604_100003_internacion_refinamiento` (tabla plantillas, `motivo_estado` en cama, seed globales)  
-3. `m260604_100004_api_internacion_refinamiento_rbac`  
-4. `m260604_100005_api_internacion_epicrisis_plantilla_abm_rbac`  
+**Eliminado / 410:** captura por pestañas (`InternacionDiagnostico*`, `InternacionMedicamento*`, `InternacionPractica*`, `InternacionAtencionesEnfermeria*`, partials `internacion/v2/_view_*`).
+
+**Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso, ronda), `InternacionHcamaController` (cambio de cama hasta flow), ABM plantillas.
 
 ## Fuera de alcance actual
 
@@ -94,5 +102,5 @@ Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 
 - HIS madurez: [his-completo/03-internacion.md](../his-completo/03-internacion.md)  
 - Guardia e ingreso: [urgencias-guardia.md](./urgencias-guardia.md)  
-- Motores asistente: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md)  
-- Código: `web/common/components/Inpatient/`, `InternacionController`, `InternacionEpicrisisPlantillaController` (API)
+- Captura clínica: [captura-clinica.md](./captura-clinica.md)  
+- Motores asistente: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md)

@@ -72,8 +72,9 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
 | Ítem | Tipo | Estado | Notas |
 |------|------|--------|-------|
-| Sub-controllers internación (`InternacionDiagnostico*`, etc.) | controller | [-] | `internacion/v2/_view_*` |
-| `InternacionAtencionesEnfermeriaController` | controller | [-] | Flujo activo |
+| Sub-controllers internación clínicos (`InternacionDiagnostico*`, medicamento, práctica, enfermería) | controller | [x] | 410 + trait 03d; captura → timeline IMP |
+| `InternacionAtencionesEnfermeriaController` | controller | [x] | 410 (03d) |
+| `InternacionHcamaController` | controller | [-] | Pendiente flow cambio cama |
 | `EncuestaParchesMamariosController` | controller | [-] | `personas/view` |
 | `AutofacturacionController`, `ReporteController` | controller | [-] | SUMAR / planillas |
 
@@ -87,7 +88,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Guardia / queue / summary → `Encounter::PARENT_*` | service | [x] | Sin `Consulta::` en guardia |
 | `ConsultaIA`, `ConsultarValidaciones` | model | [x] | Huérfanos |
 | Búsquedas oftalmología/receta/suministro sin uso | busqueda | [x] | 3 archivos |
-| Modelo `Consulta` + `ConsultaBusqueda` | model | [ ] | Fase 03b |
+| Modelo `Consulta` + `ConsultaBusqueda` | model | [x] | `@deprecated`; shim hasta drop BD |
 | `ConsultaProcesamientoService` → solo FHIR | service | [x] | `guardar()` delega a `EncounterDocumentationService` |
 | `EncuestaParchesMamarios` crea `Consulta` | controller | [x] | Fase 03b → `EncounterLifecycleService` |
 
@@ -113,6 +114,33 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `ReporteController` + planillas ministeriales | controller + views | [x] | `EncounterReporteBusqueda` |
 | Drop tabla `consultas` + hijas | migration | [ ] | Código listo; aplicar `m260520_100002` tras auditoría |
 
+### Fase 03c — Paso 8 (shim Consulta)
+
+| Ítem | Tipo | Estado | Notas |
+|------|------|--------|-------|
+| Dead code `ConsultaProcesamientoService::guardar()` | service | [x] | Solo delega a FHIR |
+| `ConsultasConfiguracion` → constantes `Encounter` | model | [x] | Fix `ENCOUNTER_CLASS_EMER` |
+| `SegNivelInternacionRepository` sin join `consultas` | repository | [x] | Join `encounter` |
+| `DiagnosticoConsultaRepository` IMP + contexto Encounter | repository | [x] | `resolveConsultaContext()` |
+| Pase previo turnos → `Encounter::findPasePrevioEncounter` | model | [x] | |
+| AR `Consulta` / `ConsultaBusqueda` `@deprecated` | model | [x] | Eliminar post-drop BD |
+| Vista `view_consulta_diagnostico` → FHIR | BD + repo | [ ] | |
+
+### Fase 03d — Internación MVC clínico (producto: web = móvil)
+
+| Ítem | Tipo | Estado | Notas |
+|------|------|--------|-------|
+| Docs producto `superficies-ui.md`, internacion, captura | docs | [x] | Inicio vs encounter vs flows |
+| `InternacionController::actionView` sin agregación `Consulta` | controller | [x] | Ficha admin + enlace timeline |
+| Ronda «Atender» → `PatientHistoriaUrl` IMP | view | [x] | |
+| Sub-controllers clínicos → 410 | controller | [x] | `RetiredInternacionClinicalMvcTrait` |
+| Vistas `internacion/v2/_view_*` | view | [x] | Eliminadas |
+| `InternacionHcamaController` | controller | [ ] | Flow cambio cama |
+| Mapa camas solo en inicio / asistente | varios | [ ] | Reducir MVC index |
+| Mapa camas: cama ocupada → timeline IMP | view | [x] | `_mapa_camas.php` |
+| `SegNivelInternacion::getEncounters()` | model | [x] | `getAtenciones()` deprecated |
+| Borrar vistas `internacion-diagnostico/*`, etc. | view | [x] | 5 carpetas eliminadas |
+
 ---
 
 ## Backlog completo (fases 03c+)
@@ -124,21 +152,21 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Controllers Yii `consulta-*` (ya eliminados) | — | [x] Fase 12 previa |
 | Vistas huérfanas `consulta-atenciones-enfermeria/*` | — | [x] Fase 02 |
 | `AtencionesEnfermeriaController` (solo view + reporte) | Media | [-] Mantener hasta API reporte |
-| `InternacionAtencionesEnfermeriaController` | Alta | [ ] |
-| `EncuestaParchesMamariosController` | — | [x] Fase 03b |
-| `PacienteController::actionFormularioConsulta` | Mantener | [-] Renombrar `id_consulta` → `encounter_id` |
-| Modelo AR `Consulta` + tablas `consultas`, `consulta_*` | Alta | [ ] Fase 03b + migración/ETL |
+| `InternacionAtencionesEnfermeriaController` | — | [x] | 410 (03d) |
+| `PacienteController::actionFormularioConsulta` | Mantener | [-] | Camino único captura; renombrar `id_consulta` → `encounter_id` |
+| Modelo AR `Consulta` + tablas `consultas`, `consulta_*` | Alta | [ ] | `@deprecated` Paso 8; drop `m260520_100002` |
 | `ConsultaAtencionesEnfermeria`, `ConsultaPracticas*`, etc. | Alta | [ ] |
 
-### Internación MVC por pestaña
+### Internación — operativo (sin MVC clínico)
 
 | Ítem | Prioridad | Estado |
 |------|-----------|--------|
-| `InternacionDiagnosticoController` | Media | [ ] Bridge FHIR existe |
-| `InternacionMedicamentoController` | Media | [ ] |
-| `InternacionPracticaController` | Media | [ ] |
-| `InternacionHcamaController` | Media | [ ] |
-| `views/internacion/v2/_view_*.php` (datos legacy) | Media | [ ] |
+| `InternacionDiagnosticoController` | — | [x] | 410 (03d) |
+| `InternacionMedicamentoController` | — | [x] | 410 (03d) |
+| `InternacionPracticaController` | — | [x] | 410 (03d) |
+| `views/internacion/v2/_view_*.php` | — | [x] | Eliminadas (03d) |
+| `InternacionHcamaController` | Media | [ ] | Flow cambio cama |
+| `InternacionController` index/ronda/view admin | Baja | [-] | Panel hasta inicio unificado |
 
 ### Facturación / reportes / turnos
 

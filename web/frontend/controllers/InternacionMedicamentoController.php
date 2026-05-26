@@ -13,12 +13,17 @@ use common\models\snomed\SnomedMedicamentos;
 use common\models\FormularioDinamico;
 use yii\filters\AccessControl;
 use yii\filters\AccessRule;
+use frontend\components\RetiredInternacionClinicalMvcTrait;
 
 /**
+ * @deprecated Captura clínica vía timeline + encounter IMP. Rutas retornan 410.
+ *
  * InternacionMedicamentoController implements the CRUD actions for SegNivelInternacionMedicamento model.
  */
 class InternacionMedicamentoController extends Controller
 {
+    use RetiredInternacionClinicalMvcTrait;
+
     /**
      * {@inheritdoc}
      */

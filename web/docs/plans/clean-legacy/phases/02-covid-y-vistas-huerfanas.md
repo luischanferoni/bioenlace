@@ -24,8 +24,9 @@
 
 | Ítem | Motivo |
 |------|--------|
-| Sub-controllers internación (`InternacionDiagnostico*`, medicamento, práctica, hcama) | `internacion/v2/_view_*` y `internacion/view` los invocan |
-| `InternacionAtencionesEnfermeriaController` | Flujo activo internación |
+| Sub-controllers internación (`InternacionDiagnostico*`, medicamento, práctica, enfermería) | `internacion/v2/_view_*` y rutas legacy | **Retirado 03d** — 410; captura → timeline IMP |
+| `InternacionAtencionesEnfermeriaController` | Idem | **Retirado 03d** |
+| `InternacionHcamaController` | Cambio de cama | Pendiente flow |
 | `EncuestaParchesMamariosController` | Enlaces en `personas/view` |
 | `AutofacturacionController`, `ReporteController` | SUMAR / planillas operativas |
 | Modelo `Consulta` + tablas `consultas` | Fase 03 |

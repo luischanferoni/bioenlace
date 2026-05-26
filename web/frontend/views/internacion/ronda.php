@@ -5,6 +5,8 @@ use yii\grid\GridView;
 use yii\helpers\Url;
 
 use common\models\Persona;
+use common\components\Clinical\PatientHistoriaUrl;
+use common\models\Clinical\Encounter;
 use webvimark\modules\UserManagement\models\User;
 
 
@@ -75,8 +77,24 @@ $hola = 1;
                                                 $esEnfermero = User::hasRole(['enfermeria']) ? true : false;
                                                 $esMedico = User::hasRole(['Medico'], $superAdminAllowed = true);
 
-                                                $operaciones = ($esEnfermero || $esMedico)? Html::a('Atender', ['internacion/view', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';
-                                                // Timeline deshabilitado: $operaciones .= ($esEnfermero || $esMedico)?Html::a('Ver Historial', ['paciente/historia', 'id' => $pacienteId], $options = ['class' => 'buttonsli dropdown-item']):'';
+                                                $operaciones = ($esEnfermero || $esMedico)
+                                                    ? Html::a(
+                                                        'Atender',
+                                                        PatientHistoriaUrl::captura(
+                                                            (int) $pacienteId,
+                                                            Encounter::PARENT_INTERNACION,
+                                                            (int) $id
+                                                        ),
+                                                        ['class' => 'buttonsli dropdown-item']
+                                                    )
+                                                    : '';
+                                                $operaciones .= ($esEnfermero || $esMedico)
+                                                    ? Html::a(
+                                                        'Ver episodio',
+                                                        ['internacion/view', 'id' => $id],
+                                                        ['class' => 'buttonsli dropdown-item']
+                                                    )
+                                                    : '';
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Tratamientos', ['internacion/view', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Solicitar Practica', ['internacion-practica/create', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item buttonAltaMedica']):'';
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Medicamentos', ['internacion-suministro-medicamento/create', 'idi' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';

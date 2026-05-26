@@ -9,7 +9,6 @@ use yii\bootstrap5\NavBar;
 use frontend\assets\AppAsset;
 use yii\helpers\Url;
 use common\models\ConsultasConfiguracion;
-use common\models\Consulta;
 
 AppAsset::register($this);
 

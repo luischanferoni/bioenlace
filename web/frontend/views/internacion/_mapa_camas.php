@@ -2,7 +2,9 @@
 
 use yii\helpers\Html;
 use yii\helpers\Url;
+use common\components\Clinical\PatientHistoriaUrl;
 use common\components\Inpatient\InternacionMapaCamasService;
+use common\models\Clinical\Encounter;
 
 /** @var array<string, mixed>|null $mapa */
 if (!isset($mapa) || !is_array($mapa) || ($mapa['pisos'] ?? []) === []) {
@@ -43,9 +45,20 @@ $aislamiento = InternacionMapaCamasService::ESTADO_AISLAMIENTO;
                             $title .= ': ' . $cama['paciente_nombre'];
                         }
                         $camaId = (int) ($cama['id'] ?? 0);
-                        $url = $estado === $ocupada && !empty($cama['internacion_id'])
-                            ? Url::to(['internacion/view', 'id' => $cama['internacion_id']])
-                            : Url::to(['internacion/create', 'id' => $camaId]);
+                        $internacionId = (int) ($cama['internacion_id'] ?? 0);
+                        $idPersona = (int) ($cama['id_persona'] ?? 0);
+                        if ($estado === $ocupada && $internacionId > 0 && $idPersona > 0) {
+                            $url = PatientHistoriaUrl::captura(
+                                $idPersona,
+                                Encounter::PARENT_INTERNACION,
+                                $internacionId
+                            );
+                            $title .= ' — clic: atender (historia clínica)';
+                        } elseif ($estado === $ocupada && $internacionId > 0) {
+                            $url = Url::to(['internacion/view', 'id' => $internacionId]);
+                        } else {
+                            $url = Url::to(['internacion/create', 'id' => $camaId]);
+                        }
                         $opts = ['class' => $class, 'title' => $title];
                         if ($estado !== $ocupada && !empty($pacienteInternado)) {
                             $opts['class'] .= ' disabled';

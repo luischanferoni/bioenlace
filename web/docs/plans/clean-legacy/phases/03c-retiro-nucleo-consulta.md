@@ -49,7 +49,16 @@
 
 **Pendiente operativo:** aplicar `m260520_100002_clinical_fhir_drop_legacy` tras smoke en staging y cerrar bloqueadores listados en la auditoría.
 
-## Paso 8+ (backlog)
+## Paso 8 — Retiro shim `Consulta` (hecho en código)
 
-- Retirar AR `Consulta` y tablas hijas ya dropeadas.
-- Internación MVC por pestaña, `ConsultasConfiguracion` → `EncounterDefinition` único.
+- Código muerto eliminado en `ConsultaProcesamientoService::guardar()`.
+- `ConsultasConfiguracion`, internación (`SegNivelInternacionRepository`, `DiagnosticoConsultaRepository`), turnos pase previo: constantes y queries sobre `Encounter`.
+- AR `Consulta` y `ConsultaBusqueda` marcados `@deprecated`; shim `existeConsultaPasePrevio` → `Encounter::findPasePrevioEncounter()`.
+- Detalle: [03c-paso8-retiro-shim-consulta.md](./03c-paso8-retiro-shim-consulta.md).
+
+## Paso 9+ (backlog)
+
+- Eliminar AR `Consulta` y modelos hijos tras drop BD.
+- `ConsultasConfiguracion` → `EncounterDefinition` único en callers.
+- Vista `view_consulta_diagnostico` → FHIR `condition`.
+- Internación operativa: flows cambio cama / ingreso; mapa en inicio — ver [03d-internacion-mvc-retiro.md](./03d-internacion-mvc-retiro.md).

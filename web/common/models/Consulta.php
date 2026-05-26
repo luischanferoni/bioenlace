@@ -14,6 +14,9 @@ use common\models\sumar\Autofacturacion;
 use common\models\Clinical\Encounter;
 
 /**
+ * @deprecated Tabla `consultas` en retiro (Fase 03c). Usar {@see Encounter} y FHIR.
+ * Constantes y helpers se mantienen como shim hasta eliminar callers legacy.
+ *
  * This is the model class for table "consultas".
  *
  * @property string $id_consulta
@@ -1309,16 +1312,12 @@ class Consulta extends \yii\db\ActiveRecord
 
     }
 
-    public static function existeConsultaPasePrevio($parent_id, $id_servicio){
-
-        $consulta = self::find()
-                    ->where(['parent_class' => self::PARENT_CLASSES[self::PARENT_PASE_PREVIO]])
-                    ->andWhere(['parent_id' => $parent_id])
-                    ->andWhere(['id_servicio' => $id_servicio])
-                    ->one();
-
-        return $consulta;
-
+    /**
+     * @deprecated Usar {@see Encounter::findPasePrevioEncounter()}.
+     */
+    public static function existeConsultaPasePrevio($parent_id, $id_servicio)
+    {
+        return Encounter::findPasePrevioEncounter((int) $parent_id, (int) $id_servicio);
     }
     
     /*

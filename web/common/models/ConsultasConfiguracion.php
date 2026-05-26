@@ -6,7 +6,7 @@ use common\components\Clinical\EncounterDefinitionWorkflowSanitizer;
 use Yii;
 
 use common\models\Clinical\EncounterDefinitionQuery;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 
 /**
  * @deprecated Alias de {@see \common\models\Clinical\EncounterDefinition} (`encounter_definition`).
@@ -202,8 +202,8 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
             $idServicio = Yii::$app->user->getServicioActual();
 
             $isValidEncounter = in_array($encounterClass, [
-                Consulta::ENCOUNTER_CLASS_AMB, 
-                Consulta::PARENT_GENERICO_EMER
+                Encounter::ENCOUNTER_CLASS_AMB,
+                Encounter::ENCOUNTER_CLASS_EMER,
             ]);
             
             if (!$isValidEncounter) {
@@ -211,22 +211,22 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
             }
             
-            $parent = ($encounterClass === Consulta::ENCOUNTER_CLASS_AMB) 
-                        ? Consulta::PARENT_GENERICO_AMB 
-                        : Consulta::PARENT_GENERICO_EMER;
+            $parent = ($encounterClass === Encounter::ENCOUNTER_CLASS_AMB) 
+                        ? Encounter::PARENT_GENERICO_AMB 
+                        : Encounter::PARENT_GENERICO_EMER;
             
             $parentId = 0;
         }
         
         // la consulta se inicia desde un turno
-        if ($parent == Consulta::PARENT_TURNO) {
+        if ($parent == Encounter::PARENT_TURNO) {
             $turno = Turno::findOne($parentId);
 
             if (!$turno) {
                 Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no existe, parentId: ' . $parentId);
                 $mensajeError = 'Ocurrio un error con el turno, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                //return Consulta::returnMsjError($mensajeError);
+                //return Encounter::returnMsjError($mensajeError);
             }
 
             // verifico que el turno este en el estado correcto
@@ -234,31 +234,31 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                 Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no pendiente, parentId: ' . $parentId);
                 $mensajeError = 'Ocurrio un error el turno ya fue atendido, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                //return Consulta::returnMsjError($mensajeError);
+                //return Encounter::returnMsjError($mensajeError);
             }
 
             $idServicio = $turno->id_servicio_asignado;
             $encounterClass = self::ENCOUNTER_CLASS_AMB;
 
-            //$parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_TURNO];
+            //$parentClass = Encounter::PARENT_CLASSES[Encounter::PARENT_TURNO];
             $parentId = $turno->id_turnos;
         }
 
-        if ($parent == Consulta::PARENT_INTERNACION) {
+        if ($parent == Encounter::PARENT_INTERNACION) {
             $idSegNivelInternacion = SegNivelInternacion::personaInternadaEnEfector($paciente->id_persona, Yii::$app->user->getIdEfector());
 
             if (!$idSegNivelInternacion) {
                 Yii::warning('Llamada a getModeloConsulta parentId a un SegNivelInternacion que no existe, parentId: ' . $parentId);
                 $mensajeError = 'Ocurrio un error con la internacion, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                //return Consulta::returnMsjError($mensajeError);
+                //return Encounter::returnMsjError($mensajeError);
             }
 
             $idServicio = Yii::$app->user->getServicioActual();
             $encounterClass = self::ENCOUNTER_CLASS_IMP;
         }
 
-        if ($parent == Consulta::PARENT_DERIVACION) {
+        if ($parent == Encounter::PARENT_DERIVACION) {
 
             $derivacion = ConsultaDerivaciones::findOne($parentId);
 
@@ -266,14 +266,14 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                 Yii::warning('Llamada a getModeloConsulta parentId a una Derivacion que no existe, parentId: ' . $parentId);
                 $mensajeError = 'Ocurrio un error con la derivacion, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                //return Consulta::returnMsjError($mensajeError);
+                //return Encounter::returnMsjError($mensajeError);
             }
 
             $idServicio = $derivacion->id_servicio;
             $encounterClass = self::ENCOUNTER_CLASS_AMB;
         }
 
-        if ($parent == Consulta::PARENT_CIRUGIA) {
+        if ($parent == Encounter::PARENT_CIRUGIA) {
             $cirugia = Cirugia::findOne((int) $parentId);
             if (!$cirugia) {
                 Yii::warning('validarPermisoAtencion: cirugía inexistente, parentId: ' . $parentId);
@@ -295,14 +295,14 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
             $encounterClass = self::ENCOUNTER_CLASS_IMP;
         }
 
-        if ($parent == Consulta::PARENT_GUARDIA) {
+        if ($parent == Encounter::PARENT_GUARDIA) {
             $guardia = Guardia::findOne($parentId);
 
             if (!$guardia) {
                 Yii::warning('Llamada a getModeloConsulta parentId a una Guardia que no existe, parentId: ' . $parentId);
                 $mensajeError =  'Ocurrio un error con la Guardia, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                //return Consulta::returnMsjError($mensajeError);
+                //return Encounter::returnMsjError($mensajeError);
             }
 
             $idServicio = Yii::$app->user->getServicioActual();
@@ -311,7 +311,7 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
 
         // Por mas que se intente una atencion generica
         // verificamos que existan Turnos, Internaciones, etc        
-        if ($parent == Consulta::PARENT_GENERICO_AMB || $parent == Consulta::PARENT_GENERICO_EMER) {
+        if ($parent == Encounter::PARENT_GENERICO_AMB || $parent == Encounter::PARENT_GENERICO_EMER) {
             $idServicio = Yii::$app->user->getServicioActual();
             $encounterClass = Yii::$app->user->getEncounterClass();
             if ($encounterClass == self::ENCOUNTER_CLASS_AMB) {
@@ -322,8 +322,8 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                 if ($turno) {
                     $mensajeError = 'El paciente tiene un turno para hoy, para su servicio. Por favor busque el turno en la historia clínica y realice la atención desde dicho turno.';
                     return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                    //return Consulta::returnMsjError($mensajeError);                    
-                    //$parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_TURNO];
+                    //return Encounter::returnMsjError($mensajeError);                    
+                    //$parentClass = Encounter::PARENT_CLASSES[Encounter::PARENT_TURNO];
                     //$parentId = $turno->id_turnos;
                 } else {
 
@@ -335,9 +335,9 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                     if ($idSegNivelInternacion) {
                         $mensajeError = 'El paciente se encuentra actualmente internado. En su historia clínica verifique los detalles de la internación y comuníquese con el personal indicado para solicitar el alta de ser necesario';
                         return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                        //return Consulta::returnMsjError($mensajeError);
+                        //return Encounter::returnMsjError($mensajeError);
                        /* $encounterClass = self::ENCOUNTER_CLASS_IMP;
-                        $parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_INTERNACION];
+                        $parentClass = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION];
                         $parentId = $idSegNivelInternacion;*/
 
                     } else {
@@ -351,12 +351,12 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                         if (count($derivaciones) > 0) {
                             $mensajeError = 'El paciente tiene un derivación para su servicio. Por favor busque el turno en la historia clínica y realice la atención desde dicho turno.';
                             return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];                            
-                            //$parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+                            //$parentClass = Encounter::PARENT_CLASSES[Encounter::PARENT_DERIVACION];
                             //$parentId = $derivaciones[0]->id;
                         } else {
                             // No posee derivaciones ni turnos, se permite el generico si el servicio
                             // en session no requiere derivacion                        
-                            //$parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_GENERICO_AMB];
+                            //$parentClass = Encounter::PARENT_CLASSES[Encounter::PARENT_GENERICO_AMB];
 
                             $servicio = ServiciosEfector::find()->andWhere(
                                 [
@@ -369,7 +369,7 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                                 Yii::warning('No se puede determinar el servicio del usuario, id_servicio: ' . Yii::$app->user->getServicioActual() . ', id_efector: ' . Yii::$app->user->getIdEfector());
                                 $mensajeError = 'Ocurrio un error con la atencion, por favor comunicarse con los administradores de SISSE';
                                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                                //return Consulta::returnMsjError($mensajeError);
+                                //return Encounter::returnMsjError($mensajeError);
                             }
 
                             // No se permite atender sin derivacion
@@ -379,7 +379,7 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                             ) {
                                 $mensajeError = 'Este servicio solo acepta consultas con derivación previa';
                                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                                //return Consulta::returnMsjError($mensajeError);
+                                //return Encounter::returnMsjError($mensajeError);
                             }
                         }
                     }
@@ -387,7 +387,7 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
             }
         }
 
-        if ($parent == Consulta::PARENT_PASE_PREVIO) {
+        if ($parent == Encounter::PARENT_PASE_PREVIO) {
 
             //PRIMERO CONTROLAMOS QUE EL TURNO DE LA ATENCION CON PASE PREVIO EXISTA Y SI NO ESTA CERRADO.
 
@@ -397,7 +397,7 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                 Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no existe, parentId: ' . $parentId);
                 $mensajeError = 'Ocurrio un error con el turno, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                //return Consulta::returnMsjError($mensajeError);
+                //return Encounter::returnMsjError($mensajeError);
             }
 
             // verifico que el turno este en el estado correcto
@@ -405,7 +405,7 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
                 Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no pendiente, parentId: ' . $parentId);
                 $mensajeError = 'Ocurrio un error el turno ya fue atendido, por favor comunicarse con los administradores de SISSE';
                 return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-                //return Consulta::returnMsjError($mensajeError);
+                //return Encounter::returnMsjError($mensajeError);
             }
 
             //AHORA CONTROLO QUE MI SERVICO TIENE PASE PREVIO CORRESPONDIENTE AL TURNO QUE QUIERO ATENDER
@@ -429,7 +429,7 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
             
             $idServicio = $idServiocioPP;
             $encounterClass = self::ENCOUNTER_CLASS_AMB;
-            $parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_PASE_PREVIO];
+            $parentClass = Encounter::PARENT_CLASSES[Encounter::PARENT_PASE_PREVIO];
             $parentId = $turno->id_turnos;
             
         }
@@ -438,12 +438,12 @@ class ConsultasConfiguracion extends \common\models\Clinical\EncounterDefinition
             Yii::warning('Llamada a getModeloConsulta sin parentId');
             $mensajeError =  'Ocurrio un error, por favor comunicarse con los administradores de SISSE';
             return ['success' => false, 'msg' => $mensajeError, 'idServicio' => null, 'encounterClass' => null];
-            //return Consulta::returnMsjError($mensajeError);
+            //return Encounter::returnMsjError($mensajeError);
         }
 
         /*
         if ($encounterClass == self::ENCOUNTER_CLASS_EMER) {
-            $parentClass = Consulta::PARENT_CLASSES[Consulta::PARENT_GENERICO_EMER];
+            $parentClass = Encounter::PARENT_CLASSES[Encounter::PARENT_GENERICO_EMER];
         }
         */
         return ['success' => true, 'msg' => '', 'idServicio' => $idServicio, 'encounterClass' => $encounterClass];        

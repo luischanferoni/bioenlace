@@ -16,6 +16,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [receta-electronica.md](./receta-electronica.md) | Receta emitida, PDF, paciente |
 | [urgencias-guardia.md](./urgencias-guardia.md) | Triage, tablero operativo, circuito EMER |
 | [internacion.md](./internacion.md) | Mapa de camas, alta estructurada, plantillas de epicrisis (ABM) |
+| [superficies-ui.md](./superficies-ui.md) | Inicio vs captura encounter vs flows (web = móvil) |
 
 ## Otros mapas
 

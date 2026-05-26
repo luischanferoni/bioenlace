@@ -107,14 +107,13 @@ class DeferredSnomedProcessor
     private static function actualizarConsulta($consultaId, $datosConSnomed)
     {
         try {
-            $consulta = \common\models\Consulta::findOne($consultaId);
-            if ($consulta) {
-                // Aquí se puede actualizar la consulta con los datos SNOMED
-                // Por ejemplo, guardar en un campo JSON o en una tabla relacionada
-                Yii::info("Consulta {$consultaId} actualizada con datos SNOMED", 'snomed-codificador');
+            $encounter = \common\models\Clinical\Encounter::findOne($consultaId);
+            if ($encounter) {
+                // Aquí se puede actualizar el encounter con los datos SNOMED
+                Yii::info("Encounter {$consultaId} actualizado con datos SNOMED", 'snomed-codificador');
             }
         } catch (\Exception $e) {
-            Yii::error("Error actualizando consulta {$consultaId} con SNOMED: " . $e->getMessage(), 'snomed-codificador');
+            Yii::error("Error actualizando encounter {$consultaId} con SNOMED: " . $e->getMessage(), 'snomed-codificador');
         }
     }
 }

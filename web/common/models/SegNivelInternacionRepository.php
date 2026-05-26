@@ -3,6 +3,7 @@
 namespace common\models;
 
 use common\components\Clinical\Service\CarePlanLifecycleService;
+use common\models\Clinical\Encounter;
 use Yii;
 
 /*
@@ -16,17 +17,13 @@ class SegNivelInternacionRepository
         $query = ConsultaBalanceHidrico::find()
             ->alias('bh')
             ->leftJoin(
-                'consultas',
-                'consultas.id_consulta = bh.id_consulta')
-            ->where(
-                'consultas.parent_class = "\\\common\\\models\\\SegNivelInternacion"')
-            ->andWhere(
-                'consultas.parent_id = :internacion_id')
+                ['enc' => Encounter::tableName()],
+                'enc.id = bh.id_consulta'
+            )
+            ->where(['enc.parent_type' => Encounter::PARENT_INTERNACION])
+            ->andWhere(['enc.parent_id' => $internacion->id])
             ->orderBy('bh.fecha')
-            ->addOrderBy('bh.hora_inicio')
-            ->addParams(
-                [':internacion_id' => $internacion->id]
-            );
+            ->addOrderBy('bh.hora_inicio');
         return $query->all();
     }
     
@@ -35,19 +32,15 @@ class SegNivelInternacionRepository
         $query = ConsultaRegimen::find()
             ->alias('r')
             ->addSelect([
-                '*', 
-                'DATE_FORMAT(consultas.created_at, "%d/%m/%Y %H:%i") as consulta_fecha'
-                ])
+                'r.*',
+                'DATE_FORMAT(enc.created_at, "%d/%m/%Y %H:%i") as consulta_fecha',
+            ])
             ->leftJoin(
-                'consultas',
-                'consultas.id_consulta = r.id_consulta')
-            ->where(
-                'consultas.parent_class = "\\\common\\\models\\\SegNivelInternacion"')
-            ->andWhere(
-                'consultas.parent_id = :internacion_id')
-            ->addParams(
-                [':internacion_id' => $internacion->id]
-            );
+                ['enc' => Encounter::tableName()],
+                'enc.id = r.id_consulta'
+            )
+            ->where(['enc.parent_type' => Encounter::PARENT_INTERNACION])
+            ->andWhere(['enc.parent_id' => $internacion->id]);
         return $query->all();
     }
     

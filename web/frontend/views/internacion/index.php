@@ -29,11 +29,18 @@ $hola = 1;
     <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
             <p class="mb-0">Disponibilidad de Camas</p>
-            <?= Html::a(
-                'Plantillas de epicrisis',
-                ['/internacion-epicrisis-plantilla/index'],
-                ['class' => 'btn btn-sm btn-outline-secondary rounded-pill']
-            ) ?>
+            <div class="d-flex flex-wrap gap-2">
+                <?= Html::a(
+                    'Ronda de pacientes',
+                    ['/internacion/ronda'],
+                    ['class' => 'btn btn-sm btn-outline-primary rounded-pill']
+                ) ?>
+                <?= Html::a(
+                    'Plantillas de epicrisis',
+                    ['/internacion-epicrisis-plantilla/index'],
+                    ['class' => 'btn btn-sm btn-outline-secondary rounded-pill']
+                ) ?>
+            </div>
         </div>
     <div class="row">
         <?php $urlReset = "index";

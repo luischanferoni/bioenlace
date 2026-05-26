@@ -27,11 +27,10 @@ use frontend\controllers\MpiApiController;
 use common\models\Telefono;
 use frontend\components\CPacienteHistorial;
 use frontend\components\PacienteHistorial;
-use common\models\ConsultasConfiguracion;
-use common\models\Consulta;
 use common\models\ProfesionalEfectorServicio;
+use common\components\Clinical\PatientHistoriaUrl;
+use common\models\Clinical\Encounter;
 use webvimark\modules\UserManagement\models\User;
-use common\models\DiagnosticoConsultaRepository as DCRepo;
 
 /**
  * InternacionController implements the CRUD actions for SegNivelInternacion model.
@@ -169,52 +168,8 @@ class InternacionController extends Controller
 
         $model = $this->findModel($id);
 
-        $atenciones = $model->atenciones;
-        $balances_list = SegNivelInternacionRepository::getBalancesHidricos($model);
-        $regimenes_list = SegNivelInternacionRepository::getRegimenes($model);
-        $diagnosticos = DCRepo::getDiagnosticosPersonaIMP($model);
-        
-        foreach ($atenciones as $key => $atencion) {
-            # agrupar evoluciones
-            if ($atencion->evolucion) {
-                $evoluciones[] = $atencion->evolucion;
-            }
-
-            # agrupar SINTOMAS
-            if ($atencion->sintomas) {
-                $sintomas[] = $atencion->sintomas;
-            }
-
-            # agrupar DIAGNOSTICOS
-            #if($atencion->diagnosticos){
-            #    $diagnosticos[] = $atencion->diagnosticos;
-            #}
-
-            # agrupar Medicamentos
-            if ($atencion->medicamentos) {
-                $medicamentos[] = $atencion->medicamentos;
-            }
-
-            # agrupar PRACTICAS REALIZADAS
-            if ($atencion->practicasPostDiagnostico) {
-                $practicas[] = $atencion->practicasPostDiagnostico;
-            }
-
-            # agrupar ATENCIONES ENFERMERIA
-            if ($atencion->atencionEnfermeria) {
-                $atencionEnfermeria[] = $atencion->atencionEnfermeria;
-            }
-
-            # agrupar PRACTICAS DE OFTALMOLOGIA
-            if ($atencion->oftalmologias) {
-                $oftalmologia[] = $atencion->oftalmologias;
-            }
-        }
-
         if ($idPersona != $model->id_persona) {
             $model_persona = Persona::findOne($model->id_persona);
-            //$model_persona->establecerEstadoPaciente();
-
             $session = Yii::$app->getSession();
             $session->set('persona', serialize($model_persona));
         }
@@ -230,12 +185,7 @@ class InternacionController extends Controller
         }
         $datosProfesional = $model_profesional_pes !== null ? $this->formatearDatosProfesional($model_profesional_pes) : [];
 
-        $puedeAtender = false;
-        $servicioProfesionalSesion = Yii::$app->user->getServicioActual();
-
-        if(Servicio::puedeAtender($servicioProfesionalSesion)){
-            $puedeAtender = true;
-        }
+        $puedeAtender = Servicio::puedeAtender(Yii::$app->user->getServicioActual());
 
         $altaCtx = [];
         if ($model->enableExternacion()) {
@@ -250,24 +200,22 @@ class InternacionController extends Controller
             }
         }
 
-        // Captura clínica: API + SPA/Flutter (MVC Consulta* retirado en fase 12).
-        $urlSiguiente = null;
+        // Captura clínica: timeline + formulario encounter (IMP), no pestañas MVC legacy.
+        $urlCapturaClinica = null;
+        if ($puedeAtender && !$model->internacionConAlta()) {
+            $urlCapturaClinica = PatientHistoriaUrl::captura(
+                (int) $model->id_persona,
+                Encounter::PARENT_INTERNACION,
+                (int) $model->id
+            );
+        }
 
         return $this->render('view', [
             'model' => $model,
             'model_profesional_pes' => $model_profesional_pes,
             'datosProfesional' => $datosProfesional,
-            'evoluciones' => empty($evoluciones) ? [] : $evoluciones,
-            'sintomas' => empty($sintomas) ? [] : $sintomas,
-            'diagnosticos' => empty($diagnosticos) ? [] : $diagnosticos,
-            'medicamentos' => empty($medicamentos) ? [] : $medicamentos,
-            'practicas' => empty($practicas) ? [] : $practicas,
-            'atencionEnfermeria' => empty($atencionEnfermeria) ? [] : $atencionEnfermeria,
-            'oftalmologias' => empty($oftalmologia) ? [] : $oftalmologia,
-            'balances_list' => $balances_list,
-            'regimenes_list' => $regimenes_list,
-            'type' =>  Yii::$app->getRequest()->getQueryParam('type'),
-            'urlSiguiente' => $urlSiguiente,
+            'type' => Yii::$app->getRequest()->getQueryParam('type'),
+            'urlCapturaClinica' => $urlCapturaClinica,
             'puedeAtender' => $puedeAtender,
             'altaCtx' => $altaCtx,
         ]);

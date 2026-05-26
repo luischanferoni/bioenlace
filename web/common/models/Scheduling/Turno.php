@@ -4,7 +4,6 @@ namespace common\models\Scheduling;
 
 use common\components\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
-use common\models\Consulta;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\Efector;
 use common\models\ProfesionalEfectorServicio;
@@ -720,7 +719,7 @@ class Turno extends \yii\db\ActiveRecord
 
                         $ocultarBotonNoSePresento = true;
 
-                        if (!Consulta::existeConsultaPasePrevio($id, $idServicioSesion)) {
+                        if (!Encounter::findPasePrevioEncounter((int) $id, (int) $idServicioSesion)) {
                             $url = PatientHistoriaUrl::captura(
                                 (int) $id_persona,
                                 Encounter::PARENT_PASE_PREVIO,

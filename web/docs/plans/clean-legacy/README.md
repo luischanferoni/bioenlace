@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `clean-legacy` |
-| Estado | En ejecución — Fase 03c (Paso 7 preparación drop; migración BD pendiente) |
+| Estado | En ejecución — Fase 03c (drop BD pendiente) + **03d** internación MVC clínico retirado |
 | Objetivo | Retirar MVC Yii, modelos, búsquedas y tablas que quedaron reemplazados por **API v1**, **UI JSON/flows** y dominio **FHIR** (`encounter`, `clinical/*`). |
 | Decisión base | [fhir-clinical.md](../../decisions/fhir-clinical.md) — sin retrocompat HTTP legacy de consulta |
 
@@ -14,7 +14,11 @@
 - [phases/01-eliminacion-segura-y-fuerte.md](./phases/01-eliminacion-segura-y-fuerte.md)
 - [phases/02-covid-y-vistas-huerfanas.md](./phases/02-covid-y-vistas-huerfanas.md) — COVID + limpieza enfermería
 - [phases/03-consulta-desacople-y-huerfanos.md](./phases/03-consulta-desacople-y-huerfanos.md) — guardia → Encounter + huérfanos
-- [phases/03c-retiro-nucleo-consulta.md](./phases/03c-retiro-nucleo-consulta.md) — Paso 1 antecedentes + backlog 03c
+- [phases/03c-retiro-nucleo-consulta.md](./phases/03c-retiro-nucleo-consulta.md) — retiro núcleo Consulta
+- [phases/03c-paso7-drop-consultas-audit.md](./phases/03c-paso7-drop-consultas-audit.md)
+- [phases/03c-paso8-retiro-shim-consulta.md](./phases/03c-paso8-retiro-shim-consulta.md)
+- [phases/03d-internacion-mvc-retiro.md](./phases/03d-internacion-mvc-retiro.md) — internación: timeline IMP, 410 sub-controllers
+- Producto: [superficies-ui.md](../../producto/superficies-ui.md) — inicio vs captura vs flows (web = móvil)
 
 ## Reglas del programa
 

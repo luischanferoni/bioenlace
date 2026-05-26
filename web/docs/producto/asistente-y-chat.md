@@ -41,6 +41,10 @@ flowchart TB
 
 Comparten ideas de borrador y permisos; no siempre pasan por el mismo clasificador de intents.
 
+## Modelo de superficies
+
+Web staff y app médico comparten API; tres tipos de UI: **inicio** (tableros), **captura encounter** (timeline + formulario), **flows** (asistente). Detalle: [superficies-ui.md](./superficies-ui.md).
+
 ## Intents de dominio (referencia mayo 2026)
 
 Ejemplos de flujos conversacionales con UI JSON (YAML en `SubIntentEngine/schemas/intents/`):

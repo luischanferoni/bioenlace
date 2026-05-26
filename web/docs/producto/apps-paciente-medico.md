@@ -37,12 +37,13 @@ flowchart LR
 
 ## Médico en el día a día
 
-- Sesión con **efector y servicio**; agenda del día; pacientes en consulta.
-- Captura clínica y prescripción según [captura-clinica.md](./captura-clinica.md) y [receta-electronica.md](./receta-electronica.md).
-- Con **encounterClass = EMER** (guardia): tablero operativo, triage, atender, derivar y egreso — ver [urgencias-guardia.md](./urgencias-guardia.md).
-- **Internación (IMP):** desde inicio con efector en sesión, acceso al **mapa de camas** del establecimiento (misma API que web).
+- Sesión con **efector y servicio**; la **página de inicio muta** según `encounter_class` y rol (tablero EMER, mapa IMP, agenda AMB, etc.) — ver [superficies-ui.md](./superficies-ui.md).
+- **Captura clínica** unificada: timeline del paciente + formulario encounter (texto/audio → API `clinical/encounter/*`); muta por encounter, rol y especialidad — [captura-clinica.md](./captura-clinica.md).
+- Operaciones puntuales (alta internación, triage, etc.) vía **flows del asistente** cuando aplica — [asistente-y-chat.md](./asistente-y-chat.md).
+- Con **encounterClass = EMER** (guardia): tablero operativo, triage, atender, derivar y egreso — [urgencias-guardia.md](./urgencias-guardia.md).
+- **Internación (IMP):** mapa de camas en inicio; atención en piso vía timeline con `parent=INTERNACION` — [internacion.md](./internacion.md).
 
 ## Relación con otros documentos
 
-- [turnos.md](./turnos.md), [laboratorio.md](./laboratorio.md), [resumen-atencion-paciente.md](./resumen-atencion-paciente.md)
+- [superficies-ui.md](./superficies-ui.md) — inicio vs captura vs flows (web = móvil)
 - [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md)

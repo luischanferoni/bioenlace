@@ -10,6 +10,9 @@ use common\models\ProfesionalEfectorServicio;
 use yii\db\Query;
 
 /**
+ * @deprecated Sin callers activos; búsqueda sobre tabla `consultas` en retiro (Fase 03c).
+ * Usar búsquedas sobre {@see \common\models\Clinical\Encounter}.
+ *
  * ConsultaBusqueda represents the model behind the search form about `common\models\Consulta`.
  */
 class ConsultaBusqueda extends Consulta

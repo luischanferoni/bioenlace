@@ -25,11 +25,13 @@
 
 | Superficie | Ruta / entry |
 |------------|----------------|
-| Mapa + indicadores | Web `/internacion/index` |
-| Episodio y alta | Web `/internacion/view`, `/internacion/ronda` |
+| Mapa + indicadores | Inicio web / app; `/internacion/index` (transitorio) |
+| Captura clínica piso | Timeline + formulario encounter (`parent=INTERNACION`) |
+| Ficha episodio (admin) | Web `/internacion/view`, `/internacion/ronda` |
+| Alta estructurada | Flow `internacion.alta-estructurada-flow` + API |
 | ABM plantillas | Web `/internacion-epicrisis-plantilla/index` |
 | Mapa móvil | App médico — inicio (efector en sesión) |
 | API operativa | `GET/POST /api/v1/clinical/internacion/*` |
 | API ABM plantillas | `/api/v1/clinical/internacion-epicrisis-plantilla/*` |
 
-Documentación de producto: [internacion.md](../producto/internacion.md).
+Documentación de producto: [internacion.md](../producto/internacion.md), [superficies-ui.md](../producto/superficies-ui.md).

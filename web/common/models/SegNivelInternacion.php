@@ -3,6 +3,7 @@
 namespace common\models;
 
 use Yii;
+use common\models\Clinical\Encounter;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
 /**
@@ -31,7 +32,8 @@ use common\models\DiagnosticoConsultaRepository as DCRepo;
  * @property-read Efector|null $efectorOrigen
  * @property-read Efector|null $efectorDerivacion
  * @property-read SegNivelInternacionTipoIngreso|null $tipoIngreso
- * @property-read Consulta[] $atenciones Consultas vinculadas como episodios hijos de esta internación
+ * @property-read Encounter[] $encounters Encounters IMP vinculados al episodio
+ * @property-read Consulta[] $atenciones @deprecated Usar {@see getEncounters()}
  * @property-read SegNivelInternacionDiagnostico[] $diagnosticos
  * @property-read SegNivelInternacionPractica[] $practicas
  * @property-read SegNivelInternacionMedicamento[] $medicamentos
@@ -212,12 +214,21 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
         return $this->hasOne(Persona::className(), ['id_persona' => 'id_persona']);
     }
 
-      /**
-     * Gets query for [[Consulta]].
-     *
-     * @return \yii\db\ActiveQuery
+    /**
+     * Encounters de atención en piso vinculados a este episodio (IMP).
      */
-    public function getAtenciones() {
+    public function getEncounters(): \yii\db\ActiveQuery
+    {
+        return $this->hasMany(Encounter::class, ['parent_id' => 'id'])
+            ->andOnCondition(['parent_type' => Encounter::PARENT_INTERNACION])
+            ->orderBy(['created_at' => SORT_DESC]);
+    }
+
+    /**
+     * @deprecated Tabla `consultas` en retiro. Usar {@see getEncounters()}.
+     */
+    public function getAtenciones(): \yii\db\ActiveQuery
+    {
         return $this
             ->hasMany(Consulta::className(), ['parent_id' => 'id'])
             ->onCondition(['parent_class' => '\common\models\SegNivelInternacion'])

@@ -12,12 +12,17 @@ use yii\validators\NumberValidator;
 use yii\validators\RequiredValidator;
 use yii\validators\StringValidator;
 use yii\web\Response;
+use frontend\components\RetiredInternacionClinicalMvcTrait;
 
 /**
+ * @deprecated Captura clínica vía timeline + encounter IMP. Rutas retornan 410.
+ *
  * InternacionAtencionesEnfermeriaController implements the CRUD actions for SegNivelInternacionAtencionesEnfermeria model.
  */
 class InternacionAtencionesEnfermeriaController extends Controller
 {
+    use RetiredInternacionClinicalMvcTrait;
+
     /**
      * {@inheritdoc}
      */

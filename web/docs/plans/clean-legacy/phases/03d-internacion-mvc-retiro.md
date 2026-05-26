@@ -59,7 +59,7 @@ Vistas eliminadas: `frontend/views/internacion/v2/_view_*.php`.
 
 | Ítem | Destino |
 |------|---------|
-| Mapa de camas web | Absorber en inicio / intent (reducir `/internacion/index` MVC) |
+| Mapa de camas web | Absorber en inicio / intent | [x] Panel en `site/pacientes` (IMP piso); index → hub/redirect |
 | `InternacionHcamaController` | Flow `internacion.cambio-cama-flow` + API | [x] Paso 3; MVC create → 410 |
 | `internacion/create` ingreso | Flow `internacion.ingreso-flow` | [x] |
 | Borrar vistas huérfanas `internacion-*` (diagnóstico, medicamento, …) | [x] Paso 2 |

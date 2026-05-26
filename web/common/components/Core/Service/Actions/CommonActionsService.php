@@ -149,6 +149,8 @@ final class CommonActionsService
                 'titulo' => 'Internación',
                 'models' => [
                     'internacion.mapa-camas-flow',
+                    'internacion.ingreso-flow',
+                    'internacion.cambio-cama-flow',
                     'internacion.alta-estructurada-flow',
                 ],
             ],

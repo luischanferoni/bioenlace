@@ -29,6 +29,7 @@ use frontend\components\CPacienteHistorial;
 use frontend\components\PacienteHistorial;
 use common\models\ProfesionalEfectorServicio;
 use common\components\Clinical\PatientHistoriaUrl;
+use common\components\Inpatient\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
 use webvimark\modules\UserManagement\models\User;
 
@@ -64,51 +65,11 @@ class InternacionController extends Controller
     */
     public function actionIndex()
     {
-
-        $persona = Yii::$app->session['persona'];
-        $persona =  unserialize($persona);
-        $idPersonaEnSesion = (isset($persona->id_persona)) ? $persona->id_persona : null;
-
-        $id = Yii::$app->request->get('id');
-
-        if (isset($id) && $idPersonaEnSesion != $id) {
-            $model_persona = persona::findOne(Yii::$app->request->get('id'));
-            $model_persona->establecerEstadoPaciente();
-            $persona = $model_persona;
-            $session = Yii::$app->getSession();
-            $session->set('persona', serialize($model_persona));
+        if (Yii::$app->user->getEncounterClass() === Encounter::ENCOUNTER_CLASS_IMP) {
+            return $this->redirect(['site/pacientes']);
         }
 
-        $pacienteInternado = false;
-
-        if (isset($persona->id_persona) && SegNivelInternacion::personaInternada($persona->id_persona)) {
-
-            $pacienteInternado = true;
-        }
-
-        $pisos = new InfraestructuraPiso();
-        $efector = Yii::$app->user->getIdEfector();
-
-
-        $pisos_efector = $pisos->pisosPorEfector($efector);
-        $mapa = null;
-        if ($efector > 0) {
-            try {
-                $mapa = (new \common\components\Inpatient\InternacionMapaCamasService())->mapa(
-                    (int) $efector,
-                    (int) (Yii::$app->request->post('piso') ?? 0) ?: null,
-                    (int) (Yii::$app->request->post('sala') ?? 0) ?: null
-                );
-            } catch (\Throwable $e) {
-                Yii::warning('Mapa de camas: ' . $e->getMessage(), __METHOD__);
-            }
-        }
-
-        return $this->render('index', [
-            'pisos_efector' => $pisos_efector,
-            'pacienteInternado' => $pacienteInternado,
-            'mapa' => $mapa,
-        ]);
+        return $this->render('hub');
     }
 
     /**

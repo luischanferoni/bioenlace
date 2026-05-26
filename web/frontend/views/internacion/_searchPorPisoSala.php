@@ -5,7 +5,10 @@ use yii\bootstrap5\ActiveForm;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 
+$formAction = $formAction ?? ($urlReset ?? '');
 $form = ActiveForm::begin([
+            'action' => $formAction !== '' ? $formAction : null,
+            'method' => 'post',
             'options' => ['id' => 'form-internados', 'class' => 'form-horizontal'], 'layout' => 'horizontal',
             'fieldConfig' => [
                 'template' => "{label}\n{beginWrapper}\n{input}\n{hint}\n{error}\n{endWrapper}",

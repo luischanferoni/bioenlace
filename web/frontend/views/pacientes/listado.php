@@ -12,6 +12,8 @@ $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
 $esGuardia = ($encounter_class === Encounter::ENCOUNTER_CLASS_EMER);
 $esImpQuirurgico = ($encounter_class === Encounter::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
+$esImpPiso = !empty($es_imp_piso);
+$mapaCtx = $mapa_ctx ?? null;
 $fechaAnterior = date('Y-m-d', strtotime($fecha . ' -1 day'));
 $fechaSiguiente = date('Y-m-d', strtotime($fecha . ' +1 day'));
 $hoy = date('Y-m-d');
@@ -66,6 +68,15 @@ $this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
         </a>
     </div>
 </div>
+<?php endif; ?>
+
+<?php if ($esImpPiso && is_array($mapaCtx)): ?>
+    <?= $this->render('//internacion/_mapa_panel', [
+        'pisos_efector' => $mapaCtx['pisos_efector'] ?? [],
+        'mapa' => $mapaCtx['mapa'] ?? null,
+        'pacienteInternado' => !empty($mapaCtx['paciente_internado']),
+        'formAction' => Url::to(['site/pacientes', 'fecha' => $fecha]),
+    ]) ?>
 <?php endif; ?>
 
 <div id="pacientes-listado-container"

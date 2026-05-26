@@ -10,9 +10,12 @@ use yii\helpers\ArrayHelper;
 //use webvimark\modules\UserManagement\UserManagementModule;
 use webvimark\modules\UserManagement\models\User;
 
+use common\components\Inpatient\InternacionMapaWebContext;
+use common\models\Clinical\Encounter;
 use common\models\Efector;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
+use common\models\Servicio;
 use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use Firebase\JWT\JWT;
@@ -97,11 +100,27 @@ class SiteController extends Controller
     {
         $fechaParam = Yii::$app->request->get('fecha');
         $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
+        $encounterClass = Yii::$app->user->getEncounterClass();
+        $idServicio = (int) Yii::$app->user->getServicioActual();
+        $esImpPiso = $encounterClass === Encounter::ENCOUNTER_CLASS_IMP
+            && (!$idServicio || !Servicio::esServicioAgendaQuirurgica($idServicio));
+
+        $mapaCtx = null;
+        if ($esImpPiso) {
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+            $mapaCtx = InternacionMapaWebContext::build(
+                $idEfector,
+                (int) (Yii::$app->request->post('piso') ?? 0) ?: null,
+                (int) (Yii::$app->request->post('sala') ?? 0) ?: null
+            );
+        }
 
         return $this->render('//pacientes/listado', [
             'fecha' => $fecha,
-            'encounter_class' => Yii::$app->user->getEncounterClass(),
-            'id_servicio_actual' => (int) Yii::$app->user->getServicioActual(),
+            'encounter_class' => $encounterClass,
+            'id_servicio_actual' => $idServicio,
+            'es_imp_piso' => $esImpPiso,
+            'mapa_ctx' => $mapaCtx,
         ]);
     }
 

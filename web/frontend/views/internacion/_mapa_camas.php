@@ -57,7 +57,7 @@ $aislamiento = InternacionMapaCamasService::ESTADO_AISLAMIENTO;
                         } elseif ($estado === $ocupada && $internacionId > 0) {
                             $url = Url::to(['internacion/view', 'id' => $internacionId]);
                         } else {
-                            $url = Url::to(['internacion/create', 'id' => $camaId]);
+                            $url = Url::to(['internacion/ingreso', 'id' => $camaId]);
                         }
                         $opts = ['class' => $class, 'title' => $title];
                         if ($estado !== $ocupada && !empty($pacienteInternado)) {

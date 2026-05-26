@@ -148,7 +148,7 @@ final class InternacionMapaCamasService
                 ? (int) $internacion->id_guardia
                 : null,
             'ingreso_url' => $estadoMapa === self::ESTADO_LIBRE
-                ? '/internacion/create?id=' . (int) $cama->id
+                ? '/internacion/ingreso?id=' . (int) $cama->id
                 : null,
             'ver_url' => $internacion
                 ? '/internacion/view?id=' . (int) $internacion->id

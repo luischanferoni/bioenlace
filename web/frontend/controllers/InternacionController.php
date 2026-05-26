@@ -236,141 +236,56 @@ class InternacionController extends Controller
     }
 
     /**
-     * Creates a new SegNivelInternacion model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
+     * Ingreso vía API (sustituye formulario MVC legacy).
+     *
      * @return mixed
      * @no_intent_catalog
-    */
+     */
+    public function actionIngreso()
+    {
+        $raw = Yii::$app->session['persona'] ?? null;
+        if ($raw === null) {
+            Yii::$app->session->setFlash('error', 'Seleccione un paciente antes del ingreso.');
+            return $this->redirect(['index']);
+        }
+        $persona = unserialize($raw);
+        if (!$persona instanceof Persona) {
+            Yii::$app->session->setFlash('error', 'Sesión de paciente inválida.');
+            return $this->redirect(['index']);
+        }
+
+        $get = Yii::$app->request->get();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idCama = isset($get['id']) ? (int) $get['id'] : null;
+        $idGuardia = isset($get['id_guardia']) ? (int) $get['id_guardia'] : null;
+
+        try {
+            $ctx = (new \common\components\Inpatient\InternacionIngresoService())->contextoIngreso(
+                (int) $persona->id_persona,
+                $idEfector,
+                $idCama > 0 ? $idCama : null,
+                $idGuardia > 0 ? $idGuardia : null
+            );
+        } catch (\InvalidArgumentException $e) {
+            Yii::$app->session->setFlash('error', $e->getMessage());
+            return $this->redirect(['index']);
+        }
+
+        return $this->render('ingreso', [
+            'persona' => $persona,
+            'ctx' => $ctx,
+        ]);
+    }
+
+    /**
+     * @deprecated Redirige a {@see actionIngreso()}.
+     * @return \yii\web\Response
+     * @no_intent_catalog
+     */
     public function actionCreate()
     {
-        $persona = Yii::$app->session['persona'];
-        $persona =  unserialize($persona);
-
-
-        //Solicitamos coberturas activas para el paciente seleccionado.
-        $coberturas_api = [];
-        $cobertura_medica_key = sprintf("cobertura_medica_%s", $persona->id_persona);
-        // Yii::$app->session->remove($cobertura_medica_key); // Para debug
-        if (! Yii::$app->session->has($cobertura_medica_key)) {
-            $mpi = new MpiApiController;
-            $sexo_map = ['m' => 0, 'f' => 1];
-            $persona_sexo = ArrayHelper::getValue($sexo_map, strtolower($persona->sexo), 0);
-            $coberturas_api = $mpi->get_cobertura_social($persona->documento, $persona_sexo);
-            Yii::$app->session->set($cobertura_medica_key, $coberturas_api);
-        } else {
-            $coberturas_api = Yii::$app->session->get($cobertura_medica_key);
-        }
-        $filtro_cobertura = Null;
-        $coberturas_count = count($coberturas_api);
-        $cobertura_default = Null;
-        if ($coberturas_count > 0) {
-            $filtro_cobertura = ArrayHelper::getColumn($coberturas_api, 'codigo');
-            if ($coberturas_count == 1)
-                $cobertura_default = $filtro_cobertura[0];
-        }
-        $coberturas = CoberturaMedica::getCoberturasForSelect($filtro_cobertura);
-        $coberturas = ArrayHelper::map($coberturas, 'codigo', 'nombre');
-
-        $model = new SegNivelInternacion();
-        $model->fecha_inicio = date("d/m/Y");
-        $model_cama = new InfraestructuraCama();
-        $telefono = new Telefono();
-        $get = Yii::$app->request->get();
-
-        if (isset($get['id'])) {
-            $model_cama = $model_cama->findOne($get['id']);
-            $model->id_cama = $model_cama->id;
-        }
-
-        $idGuardia = isset($get['id_guardia']) ? (int) $get['id_guardia'] : 0;
-        if ($idGuardia > 0) {
-            $guardia = \common\models\Guardia::findOne($idGuardia);
-            if ($guardia !== null) {
-                $model->id_guardia = $idGuardia;
-                $model->id_tipo_ingreso = 1;
-                if (!empty($guardia->condiciones_derivacion)) {
-                    $model->condiciones_derivacion = (string) $guardia->condiciones_derivacion;
-                }
-            }
-        }
-
-        if ($cobertura_default !== null) {
-            $model->obra_social = $cobertura_default;
-        }
-
-        if ($model->load(Yii::$app->request->post())) {
-
-            $telefono->load(Yii::$app->request->post());
-
-            $model->datos_contacto_tel = '';
-
-            if ($model->ingresa_con == 'familiar' || $model->ingresa_con == 'otro' || $model->ingresa_con == 'policia') {
-
-                $telefono->scenario = Telefono::VALIDAR_TELEFONO;
-                $validarTelefono = $telefono->validate();
-
-                if ($validarTelefono) {
-                    $model->datos_contacto_tel = $telefono->prefijo . $telefono->codArea . $telefono->numTelefono;
-                }
-            }
-
-            $model->scenario = SegNivelInternacion::INGRESO_PACIENTE;
-            $model_cama->estado = 'ocupada';
-
-            $validar = $model->validate();
-            $validar = $validar && $model_cama->validate();
-
-
-            if ($validar) {
-                $transaction = \Yii::$app->db->beginTransaction();
-                try {
-                    if ($flag = $model->save()) {
-
-                        if (!($flag = $model_cama->save())) {
-                            $transaction->rollBack();
-                            exit();
-                        }
-                        SegNivelInternacionRepository::doAgregarHistoriaCama(
-                            $model
-                        );
-                        if ($flag) {
-                            $transaction->commit();
-                            try {
-                                (new \common\components\Clinical\Service\CarePlanLifecycleService())
-                                    ->onInternacionAdmission($model);
-                            } catch (\Throwable $e) {
-                                Yii::error(
-                                    'CarePlanLifecycle tras ingreso internación #' . $model->id . ': ' . $e->getMessage(),
-                                    __METHOD__
-                                );
-                            }
-
-                            if ($idGuardia > 0) {
-                                (new \common\components\Emergency\GuardiaInternacionService())
-                                    ->marcarInternacionDesdeGuardia($idGuardia, (int) $model->id);
-                            }
-
-                            return $this->redirect(['view', 'id' => $model->id]);
-                        }
-                    }
-                } catch (Exception $e) {
-                    // var_dump($e->getMessage());die;
-                    $model->addError('*', "Error de BD, comuniquese con los administradores de SISSE");
-                    $transaction->rollBack();
-                }
-            }
-        }
-
-        $efectores = Efector::find()->all();
-
-        return $this->render('create', [
-            'model' => $model,
-            'model_cama' => $model_cama,
-            'persona' => $persona,
-            'telefono' => $telefono,
-            'coberturas' => $coberturas,
-            'efectores' => $efectores
-        ]);
+        $params = Yii::$app->request->get();
+        return $this->redirect(array_merge(['ingreso'], $params));
     }
 
     /**

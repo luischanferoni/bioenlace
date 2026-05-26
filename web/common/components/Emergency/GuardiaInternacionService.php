@@ -92,7 +92,7 @@ final class GuardiaInternacionService
     private function buildInternacionIngresoUrl(Guardia $guardia): string
     {
         return Url::to([
-            '/internacion/create',
+            '/internacion/ingreso',
             'id_guardia' => (int) $guardia->id,
         ]);
     }

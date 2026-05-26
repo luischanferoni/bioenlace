@@ -1,0 +1,136 @@
+{
+  "ui_type": "ui_json",
+  "title": "Ingreso a internación",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "paciente",
+      "title": "Paciente",
+      "text_field": "resumen_texto",
+      "text": ""
+    },
+    {
+      "kind": "message",
+      "id": "cama",
+      "title": "Cama",
+      "text_field": "cama_label",
+      "text": ""
+    },
+    {
+      "kind": "fields",
+      "id": "ingreso",
+      "title": "Datos del ingreso",
+      "fields": [
+        {
+          "name": "id_persona",
+          "label": "ID paciente",
+          "type": "text",
+          "required": true,
+          "readonly": true
+        },
+        {
+          "name": "id_cama",
+          "label": "Cama",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "id_guardia",
+          "label": "ID guardia",
+          "type": "text",
+          "required": false,
+          "readonly": true
+        },
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "Profesional responsable",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "fecha_inicio",
+          "label": "Fecha de ingreso",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "hora_inicio",
+          "label": "Hora",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "id_tipo_ingreso",
+          "label": "Tipo de ingreso",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "id_efector_origen",
+          "label": "Efector origen (derivación)",
+          "type": "select",
+          "required": false,
+          "options": []
+        },
+        {
+          "name": "ingresa_en",
+          "label": "Ingresa en",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "ingresa_con",
+          "label": "Ingresa con",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "datos_contacto_nombre",
+          "label": "Nombre acompañante",
+          "type": "text",
+          "required": false,
+          "max_length": 128
+        },
+        {
+          "name": "datos_contacto_tel",
+          "label": "Teléfono acompañante",
+          "type": "text",
+          "required": false,
+          "max_length": 32
+        },
+        {
+          "name": "situacion_al_ingresar",
+          "label": "Situación al ingresar",
+          "type": "textarea",
+          "required": false,
+          "rows": 3
+        },
+        {
+          "name": "obra_social",
+          "label": "Obra social",
+          "type": "select",
+          "required": false,
+          "options": []
+        },
+        {
+          "name": "condiciones_derivacion",
+          "label": "Condiciones (derivación)",
+          "type": "textarea",
+          "required": false,
+          "rows": 2
+        }
+      ]
+    }
+  ]
+}

@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Inpatient\InternacionAltaEstructuradaService;
 use common\components\Inpatient\InternacionCambioCamaService;
+use common\components\Inpatient\InternacionIngresoService;
 use common\components\Inpatient\InternacionCamaEstadoService;
 use common\components\Inpatient\InternacionEfectorAccess;
 use common\components\Inpatient\InternacionIndicadoresService;
@@ -22,6 +23,7 @@ use Yii;
  * POST /api/v1/clinical/internacion/cama/<camaId>/marcar-estado
  * GET|POST /api/v1/clinical/internacion/<internacionId>/alta-formulario
  * GET|POST /api/v1/clinical/internacion/<internacionId>/cambio-cama-formulario
+ * GET|POST /api/v1/clinical/internacion/ingreso-formulario
  * GET  /api/v1/clinical/internacion/plantillas-epicrisis
  * GET  /api/v1/clinical/internacion/<internacionId>/preview-plantilla-epicrisis
  */
@@ -34,6 +36,7 @@ class InternacionController extends BaseController
     private InternacionCamaEstadoService $camaEstado;
     private InternacionAltaEstructuradaService $alta;
     private InternacionCambioCamaService $cambioCama;
+    private InternacionIngresoService $ingreso;
 
     public function init(): void
     {
@@ -43,6 +46,7 @@ class InternacionController extends BaseController
         $this->camaEstado = new InternacionCamaEstadoService();
         $this->alta = new InternacionAltaEstructuradaService();
         $this->cambioCama = new InternacionCambioCamaService();
+        $this->ingreso = new InternacionIngresoService();
     }
 
     public function actionMapaCamas(): array
@@ -291,6 +295,119 @@ class InternacionController extends BaseController
                             [['value' => '', 'label' => '— Elegir cama —']],
                             $camaOptions
                         );
+                    }
+                    $block['fields'][$fIdx] = $field;
+                }
+                $out['blocks'][$idx] = $block;
+            }
+        }
+
+        return $out;
+    }
+
+    public function actionIngresoFormulario(): array
+    {
+        $req = Yii::$app->request;
+        try {
+            $idEfector = InternacionEfectorAccess::resolveIdEfector(
+                (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0) ?: null
+            );
+            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        $out = UiScreenService::handleScreen(
+            'internacion',
+            'ingreso-formulario',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($idEfector): array {
+                $data = $this->ingreso->registrarIngreso($idEfector, $post);
+
+                return [
+                    'data' => $data,
+                    'message' => (string) ($data['message'] ?? 'Ingreso registrado'),
+                ];
+            }
+        );
+
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
+            $idPersona = (int) ($req->get('id_persona') ?? 0);
+            if ($idPersona <= 0) {
+                return $this->error('Se requiere id_persona.', null, 400);
+            }
+            try {
+                $ctx = $this->ingreso->contextoIngreso(
+                    $idPersona,
+                    $idEfector,
+                    (int) ($req->get('id_cama') ?? 0) ?: null,
+                    (int) ($req->get('id_guardia') ?? 0) ?: null
+                );
+            } catch (\InvalidArgumentException $e) {
+                return $this->error($e->getMessage(), null, 400);
+            }
+
+            $params = array_merge($req->get(), [
+                'id_persona' => (string) $idPersona,
+                'resumen_texto' => 'Ingreso — ' . ($ctx['paciente_nombre'] ?? 'paciente'),
+                'cama_label' => (string) ($ctx['cama_label'] ?? ''),
+                'fecha_inicio' => (string) ($ctx['fecha_inicio'] ?? date('Y-m-d')),
+                'hora_inicio' => (string) ($ctx['hora_inicio'] ?? date('H:i')),
+                'obra_social' => $ctx['obra_social_default'] !== null
+                    ? (string) $ctx['obra_social_default']
+                    : '',
+                'id_tipo_ingreso' => $ctx['id_tipo_ingreso_default'] !== null
+                    ? (string) $ctx['id_tipo_ingreso_default']
+                    : '',
+                'id_cama' => $ctx['id_cama'] !== null ? (string) $ctx['id_cama'] : '',
+                'id_guardia' => $ctx['id_guardia'] !== null ? (string) $ctx['id_guardia'] : '',
+            ]);
+            $out = UiScreenService::renderUiDefinition('internacion', 'ingreso-formulario', $params, $params);
+            $out['data'] = $ctx;
+
+            $optionMap = [
+                'id_profesional_efector_servicio' => $ctx['profesionales'] ?? [],
+                'id_cama' => $ctx['camas_disponibles'] ?? [],
+                'obra_social' => $ctx['coberturas'] ?? [],
+                'id_efector_origen' => $ctx['efectores_origen'] ?? [],
+                'id_tipo_ingreso' => $ctx['tipos_ingreso'] ?? [],
+                'ingresa_en' => $ctx['ingresa_en'] ?? [],
+                'ingresa_con' => $ctx['ingresa_con'] ?? [],
+            ];
+
+            foreach ($out['blocks'] ?? [] as $idx => $block) {
+                if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
+                    continue;
+                }
+                foreach ($block['fields'] ?? [] as $fIdx => $field) {
+                    if (!is_array($field)) {
+                        continue;
+                    }
+                    $name = (string) ($field['name'] ?? '');
+                    if (isset($optionMap[$name])) {
+                        $opts = $optionMap[$name];
+                        if ($name === 'id_cama' && empty($params['id_cama'])) {
+                            $field['options'] = array_merge(
+                                [['value' => '', 'label' => '— Elegir cama —']],
+                                $opts
+                            );
+                        } elseif ($name === 'obra_social') {
+                            $field['options'] = array_merge(
+                                [['value' => '', 'label' => '— Cobertura —']],
+                                $opts
+                            );
+                        } elseif ($name === 'id_efector_origen') {
+                            $field['options'] = array_merge(
+                                [['value' => '', 'label' => '— Efector origen —']],
+                                $opts
+                            );
+                        } else {
+                            $field['options'] = $opts;
+                        }
+                    }
+                    if ($name === 'id_cama' && !empty($params['id_cama'])) {
+                        $field['readonly'] = true;
                     }
                     $block['fields'][$fIdx] = $field;
                 }

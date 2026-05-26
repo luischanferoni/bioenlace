@@ -1,0 +1,54 @@
+intent_id: internacion.ingreso-flow
+version: 1
+
+action_name: "Ingreso a internación"
+description: "Admisión de paciente a cama en el efector (episodio IMP)."
+rbac_route: "/api/clinical/internacion/ingreso-formulario"
+keywords:
+  - ingreso internación
+  - internar paciente
+  - admitir paciente
+  - asignar cama
+  - nuevo ingreso piso
+
+intent_semantics:
+  goal: >-
+    Registrar el ingreso de un paciente a una cama libre del efector.
+  how: >-
+    Formulario con profesional, tipo de ingreso, situación y cobertura; ocupa la cama.
+  outcome:
+    - Queda un episodio de internación activo listo para captura clínica IMP.
+
+subintents:
+  - id: ingresar
+    assistant_text: "Completá los datos del ingreso"
+    requires:
+      - draft.id_persona
+    provides:
+      - draft.internacion_id
+    next: ""
+    open_ui:
+      action_id: clinical.internacion.ingreso-formulario
+      params:
+        id_persona: "draft.id_persona"
+        id_cama: "draft.id_cama"
+        id_guardia: "draft.id_guardia"
+
+flow_submit:
+  action_id: clinical.internacion.ingreso-formulario
+  params:
+    id_persona: "draft.id_persona"
+    id_cama: "draft.id_cama"
+    id_guardia: "draft.id_guardia"
+    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+    fecha_inicio: "draft.fecha_inicio"
+    hora_inicio: "draft.hora_inicio"
+    id_tipo_ingreso: "draft.id_tipo_ingreso"
+    id_efector_origen: "draft.id_efector_origen"
+    ingresa_en: "draft.ingresa_en"
+    ingresa_con: "draft.ingresa_con"
+    datos_contacto_nombre: "draft.datos_contacto_nombre"
+    datos_contacto_tel: "draft.datos_contacto_tel"
+    situacion_al_ingresar: "draft.situacion_al_ingresar"
+    obra_social: "draft.obra_social"
+    condiciones_derivacion: "draft.condiciones_derivacion"

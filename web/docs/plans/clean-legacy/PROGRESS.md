@@ -139,6 +139,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `InternacionHcamaController` create/update/delete | controller | [x] | 410; API + view#cambio-cama |
 | Intent `internacion.cambio-cama-flow` | assistant | [x] | |
 | Mapa camas solo en inicio / asistente | varios | [ ] | Reducir MVC index |
+| Flow `internacion.ingreso-flow` + API ingreso | assistant + API | [x] | `internacion/ingreso` web; create → redirect |
 | Mapa camas: cama ocupada → timeline IMP | view | [x] | `_mapa_camas.php` |
 | `SegNivelInternacion::getEncounters()` | model | [x] | `getAtenciones()` deprecated |
 | Borrar vistas `internacion-diagnostico/*`, etc. | view | [x] | 5 carpetas eliminadas |

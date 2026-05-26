@@ -266,6 +266,14 @@ final class ClinicalUiActionCatalog
                 ['cambio de cama', 'traslado internación', 'mover cama'],
                 true
             ),
+            self::def(
+                'clinical.internacion.ingreso-formulario',
+                'Ingreso a internación (UI)',
+                'Admisión de paciente a cama libre del efector.',
+                '/api/clinical/internacion/ingreso-formulario',
+                ['ingreso internación', 'internar paciente', 'asignar cama', 'admitir paciente'],
+                true
+            ),
         ];
 
         return self::$definitions;

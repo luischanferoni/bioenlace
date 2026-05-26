@@ -4,8 +4,10 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\Cirugia;
-use common\models\Consulta;
+use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
 use common\components\Emergency\GuardiaQueueService;
+use common\models\Clinical\Encounter;
 use common\models\Guardia;
 use common\models\InfraestructuraPiso;
 use common\models\Persona;
@@ -19,7 +21,6 @@ use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\ConsultaMotivosMessage;
 use common\components\Person\Service\PersonaSignosVitalesService;
-use common\components\Clinical\Legacy\ConsultaAccessService;
 /**
  * Listado de pacientes por modalidad (encounter): ambulatorio, internación, guardia.
  */
@@ -46,7 +47,7 @@ class PacientesController extends BaseController
         }
 
         switch ($encounterClass) {
-            case Consulta::ENCOUNTER_CLASS_AMB:
+            case Encounter::ENCOUNTER_CLASS_AMB:
                 $conPrueba = Yii::$app->request->get('prueba') === '1';
                 $payload = $this->turnosAmbulatorioMedico($fecha, null, $conPrueba);
                 return [
@@ -58,7 +59,7 @@ class PacientesController extends BaseController
                     'fecha' => $payload['fecha'],
                     'total' => $payload['total'],
                 ];
-            case Consulta::ENCOUNTER_CLASS_IMP:
+            case Encounter::ENCOUNTER_CLASS_IMP:
                 $idServicioSesion = (int) Yii::$app->user->getServicioActual();
                 if ($idServicioSesion && Servicio::esServicioAgendaQuirurgica($idServicioSesion)) {
                     $data = $this->cirugiasAgendadasPorEfectorYFecha($fecha);
@@ -81,7 +82,7 @@ class PacientesController extends BaseController
                     'data' => $data,
                     'fecha' => $fecha,
                 ];
-            case Consulta::ENCOUNTER_CLASS_EMER:
+            case Encounter::ENCOUNTER_CLASS_EMER:
                 $data = $this->guardiasPendientesPorEfector();
                 return [
                     'success' => true,
@@ -158,24 +159,32 @@ class PacientesController extends BaseController
         }
 
         $idEfector = Yii::$app->user->getIdEfector();
-        $motivosConsulta = $idEfector ? Consulta::getUltimoMotivoConsultaTurno((int) $persona->id_persona, (int) $idEfector) : null;
+        $motivosLookup = new EncounterAppointmentReasonLookupService();
+        $motivosConsulta = $idEfector
+            ? $motivosLookup->ultimoMotivoTextoDesdeTurno((int) $persona->id_persona, (int) $idEfector)
+            : null;
 
         $motivosConsultaPaciente = [
+            'encounter_id' => null,
             'consulta_id' => null,
             'messages' => [],
         ];
         if ($idEfector) {
-            $idConsultaMotivos = Consulta::getUltimaConsultaIdDesdeTurno((int) $persona->id_persona, (int) $idEfector);
-            if ($idConsultaMotivos) {
-                $consultaMotivos = Consulta::findOne($idConsultaMotivos);
-                if ($consultaMotivos && $this->canAccessConsultaMotivos($consultaMotivos)) {
+            $encounterIdMotivos = $motivosLookup->ultimoEncounterIdDesdeTurno(
+                (int) $persona->id_persona,
+                (int) $idEfector
+            );
+            if ($encounterIdMotivos !== null) {
+                $encounterMotivos = Encounter::findOne($encounterIdMotivos);
+                if ($encounterMotivos !== null && EncounterAccessService::userCanAccessEncounterApi($encounterMotivos)) {
                     $mensajes = ConsultaMotivosMessage::find()
-                        ->where(['consulta_id' => $idConsultaMotivos])
+                        ->where(['encounter_id' => $encounterIdMotivos])
                         ->orderBy(['created_at' => SORT_ASC])
                         ->all();
                     $hostBase = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
                     $motivosConsultaPaciente = [
-                        'consulta_id' => $idConsultaMotivos,
+                        'encounter_id' => $encounterIdMotivos,
+                        'consulta_id' => $encounterIdMotivos,
                         'messages' => ConsultaMotivosMessage::serializeForApi($mensajes, $hostBase),
                     ];
                 }
@@ -211,14 +220,6 @@ class PacientesController extends BaseController
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
         ], 'OK');
-    }
-
-    /**
-     * Misma regla que {@see MotivosConsultaController::canAccessConsulta}.
-     */
-    private function canAccessConsultaMotivos(Consulta $consulta): bool
-    {
-        return ConsultaAccessService::userCanAccessConsultaApi($consulta);
     }
 
     /**
@@ -290,13 +291,14 @@ class PacientesController extends BaseController
         }
 
         $turnos = $turnosQuery->all();
+        $motivosLookup = new EncounterAppointmentReasonLookupService();
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
             $paciente = $turno->paciente;
             $servicioNombre = $turno->getNombreServicioParaDisplay();
             $servicioObj = $turno->getServicioEmbebidoParaApi();
-            $consulta = Consulta::findOne(['id_turnos' => $turno->id_turnos]);
+            $encounterId = $motivosLookup->encounterIdParaTurno((int) $turno->id_turnos);
             $pesTurno = (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null;
             $formattedTurnos[] = [
                 'id' => $turno->id_turnos,
@@ -315,7 +317,8 @@ class PacientesController extends BaseController
                 'estado' => $turno->estado,
                 'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
                 'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
-                'id_consulta' => $consulta ? $consulta->id_consulta : null,
+                'encounter_id' => $encounterId,
+                'id_consulta' => $encounterId,
                 'atendido' => $turno->atendido,
                 'created_at' => $turno->created_at,
                 'observaciones' => $turno->hasAttribute('observaciones') ? $turno->observaciones : null,

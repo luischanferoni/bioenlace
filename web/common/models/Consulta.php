@@ -629,6 +629,7 @@ class Consulta extends \yii\db\ActiveRecord
      * @param int $personaId
      * @param int|null $idEfector
      * @return string|null
+     * @deprecated Use {@see \common\components\Clinical\Service\EncounterAppointmentReasonLookupService::ultimoMotivoTextoDesdeTurno()}
      */
     public static function getUltimoMotivoConsultaTurno(int $personaId, ?int $idEfector = null): ?string
     {
@@ -674,6 +675,7 @@ class Consulta extends \yii\db\ActiveRecord
      * @param int $personaId
      * @param int|null $idEfector
      * @return int|null id_consulta
+     * @deprecated Use {@see \common\components\Clinical\Service\EncounterAppointmentReasonLookupService::ultimoEncounterIdDesdeTurno()}
      */
     public static function getUltimaConsultaIdDesdeTurno(int $personaId, ?int $idEfector = null): ?int
     {

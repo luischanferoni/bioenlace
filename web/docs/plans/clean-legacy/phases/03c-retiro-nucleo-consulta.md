@@ -9,9 +9,11 @@
 
 **BD:** sin rename aún; migración `id_consulta` → `encounter_id` en `personas_antecedentes` queda para 03c.2.
 
-## Paso 2 — Motivos API (pendiente)
+## Paso 2 — Motivos API (hecho)
 
-- `PacientesController`, `MotivosConsultaController` → `Encounter` + `ConsultaMotivosMessage`.
+- `MotivosConsultaController` ya operaba sobre `encounter_id` + `EncounterAccessService`.
+- `EncounterAppointmentReasonLookupService`: último motivo / encounter desde turno (sin `consultas`).
+- `PacientesController::actionInformacionMedica` y agenda ambulatoria: `Encounter` + mensajes por `encounter_id`; alias API `consulta_id` = `encounter_id`.
 
 ## Paso 3+ (pendiente)
 

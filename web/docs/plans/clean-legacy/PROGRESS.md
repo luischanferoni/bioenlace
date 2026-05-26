@@ -1,6 +1,6 @@
 # Progreso — clean-legacy
 
-Última actualización: 2026-05-20
+Última actualización: 2026-05-26
 
 Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
@@ -106,7 +106,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Ítem | Tipo | Estado | Notas |
 |------|------|--------|-------|
 | `PersonasAntecedente.id_consulta` → `encounter_id` | model + BD | [x] | Paso 1: trait + alias PHP; rename BD pendiente |
-| `PacientesController` motivos vía `Encounter` | API | [ ] | Sigue `Consulta::findOne` |
+| `PacientesController` motivos vía `Encounter` | API | [x] | `EncounterAppointmentReasonLookupService` |
 | `ConsultaProcesamientoService` sin `consultas` | service | [ ] | |
 
 ---
@@ -181,3 +181,5 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 - [ ] Crear encuesta parches con peso/talla: fila en `encounter` + `atenciones_enfermeria.encounter_id`
 - [ ] Antecedentes SNOMED vinculados al encounter (columna `personas_antecedentes.id_consulta` = id encounter)
 - [ ] Listado pacientes / turnos: enlaces «Atender» siguen abriendo timeline
+- [ ] `GET .../personas/{id}/historia-clinica`: motivos vía `Encounter` (sin `Consulta::findOne`)
+- [ ] Agenda ambulatoria en `PacientesController`: `encounter_id` por turno (alias `id_consulta`)

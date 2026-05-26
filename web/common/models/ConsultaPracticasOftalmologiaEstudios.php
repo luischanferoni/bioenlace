@@ -2,7 +2,6 @@
 
 namespace common\models;
 
-use common\models\Consulta;
 use common\models\snomed\SnomedProcedimientos;
 use Yii;
 

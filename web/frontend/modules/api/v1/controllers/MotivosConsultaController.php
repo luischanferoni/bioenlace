@@ -172,7 +172,7 @@ class MotivosConsultaController extends BaseController
 
     /**
      * Paciente: `consulta.id_persona` === sesión `idPersona` ({@see JsonHttpBearerAuth}).
-     * Médico: mismo contexto PES que en sesión operativa ({@see ConsultaAccessService::userCanAccessConsultaApi}).
+     * Médico: mismo contexto PES que en sesión operativa ({@see EncounterAccessService::userCanAccessEncounterApi}).
      */
     protected function canAccessEncounter(Encounter $encounter): bool
     {

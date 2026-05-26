@@ -84,15 +84,6 @@ class Medicamento extends \yii\db\ActiveRecord
         return $this->getMedicamentosConsultas();
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsultas()
-    {
-        return $this->hasMany(Consulta::className(), ['id_consulta' => 'id_consulta'])
-            ->viaTable(ConsultaMedicamentos::tableName(), ['id_medicamento' => 'id_medicamento']);
-    }
-    
     public function getMedicamentoConcat() {
         return $this->generico.' - '.$this->presentacion;
     }

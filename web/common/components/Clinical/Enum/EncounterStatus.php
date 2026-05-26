@@ -15,7 +15,7 @@ final class EncounterStatus
     public const ENTERED_IN_ERROR = 'entered-in-error';
     public const UNKNOWN = 'unknown';
 
-    /** Legacy {@see \common\models\Consulta::ESTADO_*} */
+    /** Valores legacy pre-FHIR (tabla `consultas`). */
     public const LEGACY_EN_PROGRESO = 'EN_PROGRESO';
     public const LEGACY_FINALIZADA = 'FINALIZADA';
     public const LEGACY_CANCELADA = 'CANCELADA';

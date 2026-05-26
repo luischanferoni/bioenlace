@@ -43,14 +43,6 @@ class TipoConsulta extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @return \yii\db\ActiveQuery
-     */
-    public function getConsultas()
-    {
-        return $this->hasMany(Consulta::className(), ['id_tipo_consulta' => 'id_tipo_consulta']);
-    }
-    
     //Agregamos esta función para traer los nombres de los tipos de consultas
     public static function getListaTiposConsultas()
     {

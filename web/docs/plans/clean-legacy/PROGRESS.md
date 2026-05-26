@@ -1,6 +1,6 @@
 # Progreso — clean-legacy
 
-Última actualización: 2026-05-26
+Última actualización: 2026-05-26 (drop `consultas` + limpieza AR)
 
 Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 
@@ -112,7 +112,11 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Autofacturación SUMAR sobre `Encounter` | controller + model | [x] | `AutofacturacionEncounterBusqueda` |
 | `Referencia` + datos persona sin `consultas` | model | [x] | `legacy_id_consulta` / trait |
 | `ReporteController` + planillas ministeriales | controller + views | [x] | `EncounterReporteBusqueda` |
-| Drop tabla `consultas` + hijas | migration | [ ] | Código listo; aplicar `m260520_100002` tras auditoría |
+| Drop tabla `consultas` (padre) | migration | [x] | `m260520_100002` solo `consultas` + ia + config legacy |
+| Drop tablas hijas legacy | migration | [ ] | `m260526_150002` — no ejecutar hasta FHIR 100 % |
+| AR `Consulta` / `ConsultaBusqueda` | model | [x] | Eliminados; constantes en `Encounter` |
+| `ConsultaAccessService` | service | [x] | `EncounterAccessService` |
+| Doc orden migraciones | docs | [x] | `MIGRATIONS.md` |
 
 ### Fase 03c — Paso 8 (shim Consulta)
 
@@ -123,7 +127,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `SegNivelInternacionRepository` sin join `consultas` | repository | [x] | Join `encounter` |
 | `DiagnosticoConsultaRepository` IMP + contexto Encounter | repository | [x] | `resolveConsultaContext()` |
 | Pase previo turnos → `Encounter::findPasePrevioEncounter` | model | [x] | |
-| AR `Consulta` / `ConsultaBusqueda` `@deprecated` | model | [x] | Eliminar post-drop BD |
+| AR `Consulta` / `ConsultaBusqueda` | model | [x] | Eliminados post-drop padre |
 | Callers odontología / balance / régimen / suministro sin join `consultas` | model | [x] | Join `encounter`; console motivos → `reason_text` |
 | `LegacyConsultaIdAsEncounterFkTrait` en tablas hijas `id_consulta` | model | [x] | AR clínicos → `getEncounter()`; `getConsulta()` deprecated |
 | `referencias/index.php` paciente vía `encounter->subject` | view | [x] | Sin `$data->consulta->paciente` |
@@ -160,8 +164,10 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `AtencionesEnfermeriaController` (solo view + reporte) | Media | [-] Mantener hasta API reporte |
 | `InternacionAtencionesEnfermeriaController` | — | [x] | 410 (03d) |
 | `PacienteController::actionFormularioConsulta` | Mantener | [-] | Camino único captura; renombrar `id_consulta` → `encounter_id` |
-| Modelo AR `Consulta` + tablas `consultas`, `consulta_*` | Alta | [ ] | `@deprecated` Paso 8; drop `m260520_100002` |
-| `ConsultaAtencionesEnfermeria`, `ConsultaPracticas*`, etc. | Alta | [x] | Trait FK encounter; drop tablas pendiente |
+| Modelo AR `Consulta` + tabla `consultas` | Alta | [x] | AR eliminado; drop padre en `m260520_100002` |
+| Tablas hijas `consultas_*` / `diagnostico_consultas` | Alta | [ ] | `m260526_150002` diferido |
+| `ConsultaAtencionesEnfermeria`, `ConsultaPracticas*`, etc. | Alta | [x] | Trait FK encounter |
+| Vistas `internacion/index`, `internacion/create` | Baja | [x] | Hub + ingreso API; create → redirect |
 
 ### Internación — operativo (sin MVC clínico)
 

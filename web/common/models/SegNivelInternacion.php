@@ -225,14 +225,11 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
     }
 
     /**
-     * @deprecated Tabla `consultas` en retiro. Usar {@see getEncounters()}.
+     * @deprecated Usar {@see getEncounters()}.
      */
     public function getAtenciones(): \yii\db\ActiveQuery
     {
-        return $this
-            ->hasMany(Consulta::className(), ['parent_id' => 'id'])
-            ->onCondition(['parent_class' => '\common\models\SegNivelInternacion'])
-            ->orderBy(['created_at' => SORT_DESC]);
+        return $this->getEncounters();
     }
 
    

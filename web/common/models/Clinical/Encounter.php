@@ -49,7 +49,7 @@ class Encounter extends ActiveRecord
     const PARENT_ENCUESTA_PARCHES = 'ENCUESTA_PARCHES';
     const PARENT_CIRUGIA = 'CIRUGIA';
 
-    /** Paso de workflow para encounter finalizado (legacy {@see \common\models\Consulta::PASO_FINALIZADA}). */
+    /** Paso de workflow para encounter finalizado (legacy paso 999). */
     const WORKFLOW_STEP_FINALIZED = 999;
 
     const PARENT_CLASSES = [

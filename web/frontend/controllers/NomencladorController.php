@@ -4,7 +4,6 @@ namespace frontend\controllers;
 
 use common\models\busquedas\AlergiasBusqueda;
 use common\models\busquedas\ConsultaPracticasBusqueda;
-use common\models\Consulta;
 use common\models\busquedas\ConsultaMotivosBusqueda;
 use common\models\busquedas\ConsultaMedicamentosBusqueda;
 use common\models\ConsultaPracticas;

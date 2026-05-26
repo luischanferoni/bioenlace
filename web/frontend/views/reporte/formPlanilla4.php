@@ -4,7 +4,6 @@ use kartik\select2\Select2;
 use kartik\date\DatePicker;
 use kartik\depdrop\DepDrop;
 use yii\helpers\Url;
-use common\models\Consulta;
 use yii\widgets\ActiveForm;
 ?>
 

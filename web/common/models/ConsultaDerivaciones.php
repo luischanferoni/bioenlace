@@ -3,7 +3,6 @@
 namespace common\models;
 use common\models\snomed\SnomedProcedimientos;
 use yii\data\ActiveDataProvider;
-use common\models\Consulta;
 use common\models\Clinical\Encounter;
 use Yii;
 

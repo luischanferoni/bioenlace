@@ -152,9 +152,14 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
      */
     public static function getMedicamentos($id_internacion) {
         return ConsultaMedicamentos::find()
-                ->join('JOIN','consultas', '`consultas`.`id_consulta` = `consultas_medicamentos`.`id_consulta`')
-                ->where(['consultas.parent_class' => '\common\models\SegNivelInternacion'])
-                ->andWhere(['consultas.parent_id' => $id_internacion])
+                ->innerJoin(
+                    ['enc' => \common\models\Clinical\Encounter::tableName()],
+                    'enc.id = consultas_medicamentos.id_consulta AND enc.deleted_at IS NULL'
+                )
+                ->where([
+                    'enc.parent_type' => \common\models\Clinical\Encounter::PARENT_INTERNACION,
+                    'enc.parent_id' => (int) $id_internacion,
+                ])
                 ->all();
     }
 }

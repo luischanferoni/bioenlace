@@ -11,7 +11,6 @@ use yii\filters\VerbFilter;
 
 use common\models\busquedas\TurnoLibreBusqueda;
 use common\models\busquedas\TurnoBusqueda;
-use common\models\Consulta;
 use common\models\Turno;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;

@@ -57,14 +57,6 @@ class TipoIngreso extends \yii\db\ActiveRecord
     /**
      * @return \yii\db\ActiveQuery
      */
-    public function getConsultas()
-    {
-        return $this->hasMany(Consulta::className(), ['id_tipo_ingreso' => 'id_tipo_ingreso']);
-    }
-
-    /**
-     * @return \yii\db\ActiveQuery
-     */
     public function getTipoConsulta()
     {
         return $this->hasOne(TipoConsulta::className(), ['id_tipo_consulta' => 'id_tipo_consulta']);

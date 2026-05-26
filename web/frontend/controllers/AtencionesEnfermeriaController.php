@@ -2,8 +2,7 @@
 namespace frontend\controllers;
 
 use Yii;
-use common\models\AtencionesEnfermeria;
-//use common\models\busquedas\AtencionesEnfermeriaBusqueda;
+use common\models\ConsultaAtencionesEnfermeria;
 use common\models\busquedas\PersonaBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -66,7 +65,7 @@ class AtencionesEnfermeriaController extends Controller
         $this->layout = 'imprimir';
         $fecha_inicio = date("$anio-$mes-01");
         
-        $model = new AtencionesEnfermeria();
+        $model = new ConsultaAtencionesEnfermeria();
         return $this->render('/consulta-atenciones-enfermeria/reporte', [
             'resultados' => $model->informeCantidadesMensuales($fecha_inicio),
         ]);

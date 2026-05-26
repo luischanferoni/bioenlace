@@ -10,7 +10,6 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 use frontend\filters\SisseActionFilter;
-use common\models\AtencionesEnfermeria;
 use common\models\EncuestaParchesMamarios;
 use common\models\PersonasAntecedente;
 use common\models\ProfesionalEfectorServicio;

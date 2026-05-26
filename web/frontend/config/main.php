@@ -260,12 +260,6 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/laboratory-result/descargar-pdf-como-paciente' => '<version>/clinical/laboratory-result/descargar-pdf-como-paciente',
                 'GET api/<version:\w+>/clinical/encounter/<encounterId:\d+>/laboratory-result' => '<version>/clinical/laboratory-result/por-encounter',
                 'OPTIONS api/<version:\w+>/clinical/encounter/<encounterId:\d+>/laboratory-result' => '<version>/clinical/laboratory-result/por-encounter',
-                // Legacy consulta (410 Gone — usar clinical/encounter/*)
-                'POST api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
-                'OPTIONS api/<version:\w+>/consulta/analizar' => '<version>/consulta/analizar',
-                'POST api/<version:\w+>/consulta/guardar' => '<version>/consulta/guardar',
-                'OPTIONS api/<version:\w+>/consulta/guardar' => '<version>/consulta/guardar',
-
                 // sign up
                 'POST api/<version:\w+>/signup' => '<version>/signup/registrar',
                 // OPTIONS: cubierto por behaviors del controller (CORS/preflight) si aplica

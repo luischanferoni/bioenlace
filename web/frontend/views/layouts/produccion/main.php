@@ -99,15 +99,13 @@ if(Yii::$app->user->idEfector){
             ],
             ['label' => 'Enfermería', 
                 'items' => [
-                    ['label' => 'Controles/Atenciones', 'url' => ['/atenciones-enfermeria/index']],
-                    ['label' => 'Reporte', 
+                    ['label' => 'Reporte mensual', 
                         'url' => ['/atenciones-enfermeria/generar-reporte'], 
                         'linkOptions' => [
                             'target' => '_blank'
                         ]]    
                 ]
             ],
-            ['label' => 'Consultas', 'url' => ['/consultas']],
             [
                 'label' => 'Profesionales',
                 'items' => [

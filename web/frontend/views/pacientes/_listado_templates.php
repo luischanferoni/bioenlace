@@ -8,7 +8,6 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 
 $urlInternacionRonda = Url::to(['internacion/ronda'], true);
-$urlGuardiaIndex = Url::to(['guardia/index'], true);
 ?>
 
 <template id="tpl-pacientes-alert-empty">
@@ -91,7 +90,6 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
         <div class="card-body p-0" data-slot="guardias-rows"></div>
         <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span class="text-muted small" data-role="tablero-updated"></span>
-            <a href="<?= Html::encode($urlGuardiaIndex) ?>" class="btn btn-success btn-sm">Ingresos y libro</a>
         </div>
     </div>
 </template>

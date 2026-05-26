@@ -2,8 +2,8 @@ intent_id: urgencias.triage-paciente-guardia
 version: 1
 
 action_name: "Triage en guardia"
-description: "Registrar o actualizar triage Manchester de un paciente en guardia."
-rbac_route: "/api/clinical/emergency-guardia/registrar-triage"
+description: "Registrar triage Manchester de un paciente en guardia (lista + formulario UI)."
+rbac_route: "/api/clinical/emergency-guardia/elegir-paciente-triage"
 keywords:
   - triage
   - clasificar urgencia
@@ -15,20 +15,36 @@ intent_semantics:
   goal: >-
     Clasificar la urgencia del paciente y ordenar la cola.
   how: >-
-    Necesita el id de guardia; en la app móvil o web se abre el formulario de triage.
+    Elegir ingreso sin triage y completar nivel, motivo y signos opcionales en formulario UI.
   outcome:
     - Prioridad y motivo quedan registrados en el episodio.
 
 subintents:
-  - id: solicitar_guardia_id
-    assistant_text: "Indicá el número de ingreso en guardia (id) del paciente"
+  - id: elegir_paciente
+    assistant_text: "Elegí el paciente en guardia pendiente de triage"
     provides:
       - draft.guardia_id
     next: registrar_triage
+    open_ui:
+      action_id: clinical.emergency-guardia.elegir-paciente-triage
 
   - id: registrar_triage
-    assistant_text: "Completá nivel (1–5) y motivo en el tablero o formulario de triage"
+    assistant_text: "Completá nivel (1–5), motivo y signos vitales si corresponde"
     requires:
       - draft.guardia_id
     provides: []
     next: ""
+    open_ui:
+      action_id: clinical.emergency-guardia.registrar-triage-formulario
+      params:
+        guardia_id: "draft.guardia_id"
+
+flow_submit:
+  action_id: clinical.emergency-guardia.registrar-triage-formulario
+  params:
+    guardia_id: "draft.guardia_id"
+    level: "draft.level"
+    reason_text: "draft.reason_text"
+    bp_sys: "draft.bp_sys"
+    bp_dia: "draft.bp_dia"
+    hr: "draft.hr"

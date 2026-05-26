@@ -211,6 +211,30 @@ final class ClinicalUiActionCatalog
                 '/api/clinical/emergency-guardia/indicadores-resumen',
                 ['indicadores guardia', 'kpi urgencias']
             ),
+            self::def(
+                'clinical.emergency-guardia.elegir-paciente-triage',
+                'Elegir paciente sin triage (UI)',
+                'Lista de ingresos en guardia pendientes de clasificación Manchester.',
+                '/api/clinical/emergency-guardia/elegir-paciente-triage',
+                ['triage guardia', 'paciente sin triage', 'clasificar urgencia'],
+                true
+            ),
+            self::def(
+                'clinical.emergency-guardia.registrar-triage-formulario',
+                'Registrar triage (UI)',
+                'Formulario de prioridad, motivo y signos vitales opcionales.',
+                '/api/clinical/emergency-guardia/registrar-triage-formulario',
+                ['formulario triage', 'manchester', 'prioridad guardia'],
+                true
+            ),
+            self::def(
+                'clinical.care-plan.adherencia-resumen-staff',
+                'Adherencia a tratamientos (staff)',
+                'Dashboard de planes activos y cumplimiento de actividades por efector.',
+                '/api/clinical/care-plans/adherencia-resumen-staff',
+                ['adherencia tratamiento', 'planes activos', 'cumplimiento terapia'],
+                true
+            ),
         ];
 
         return self::$definitions;

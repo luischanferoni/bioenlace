@@ -32,6 +32,7 @@ use common\components\Scheduling\Service\BulkCancelDayService;
 use common\components\Scheduling\Service\SobreturnoService;
 use common\components\Scheduling\Service\TurnoReservaSlotService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
+use common\components\Scheduling\Service\TurnoAgendaMetricsService;
 use common\components\Scheduling\Service\TurnoResolucionService;
 use common\components\Scheduling\Service\TurnoResolucionElecciones;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
@@ -1878,5 +1879,63 @@ class TurnosController extends BaseController
             'eventos' => $eventos,
             'mensaje_feriado' => $mensajeFeriado,
         ];
+    }
+
+    /**
+     * KPIs de agenda: no-show y días hasta la cita (staff). GET|POST /api/v1/turnos/indicadores-agenda.
+     * RBAC: /api/turnos/indicadores-agenda
+     *
+     * @tags turnos, staff, indicadores, ui_json
+     */
+    public function actionIndicadoresAgenda(): array
+    {
+        $req = Yii::$app->request;
+        $metrics = new TurnoAgendaMetricsService();
+
+        if ($req->isPost) {
+            try {
+                $params = array_merge($req->get(), $req->post());
+                $idEfector = (int) Yii::$app->user->getIdEfector();
+                if ($idEfector <= 0) {
+                    $idEfector = (int) ($params['id_efector'] ?? 0);
+                }
+                if ($idEfector <= 0) {
+                    throw new \InvalidArgumentException('Se requiere id_efector (sesión operativa o parámetro).');
+                }
+                $params['id_efector'] = $idEfector;
+                $data = $metrics->resumen($params);
+                $values = array_merge($params, [
+                    'resumen_texto' => (string) ($data['resumen_texto'] ?? ''),
+                ]);
+                $ui = UiScreenService::renderUiDefinition('turnos', 'indicadores-agenda', $req->get(), $values);
+                $ui['success'] = true;
+                $ui['data'] = $data;
+
+                return $ui;
+            } catch (\Throwable $e) {
+                $values = array_merge($req->get(), $req->post());
+                $ui = UiScreenService::renderUiDefinition('turnos', 'indicadores-agenda', $req->get(), $values);
+                $ui['success'] = false;
+                $ui['errors'] = ['_error' => [$e->getMessage()]];
+                $ui['values'] = $values;
+                $ui['action_id'] = 'turnos.indicadores-agenda';
+
+                return $ui;
+            }
+        }
+
+        $params = $req->get();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector > 0) {
+            $params['id_efector'] = (string) $idEfector;
+        }
+        if (!isset($params['fecha_hasta']) || $params['fecha_hasta'] === '') {
+            $params['fecha_hasta'] = date('Y-m-d');
+        }
+        if (!isset($params['fecha_desde']) || $params['fecha_desde'] === '') {
+            $params['fecha_desde'] = date('Y-m-d', strtotime((string) $params['fecha_hasta'] . ' -30 days'));
+        }
+
+        return UiScreenService::renderUiDefinition('turnos', 'indicadores-agenda', $params, null);
     }
 }

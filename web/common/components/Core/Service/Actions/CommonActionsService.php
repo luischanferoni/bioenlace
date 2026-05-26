@@ -94,6 +94,7 @@ final class CommonActionsService
                 'models' => [
                     'agenda.crear-profesional-flow',
                     'agenda.editar-agenda-flow',
+                    'turnos.indicadores-agenda-flow',
                 ],
             ],
             [
@@ -124,6 +125,7 @@ final class CommonActionsService
                 'titulo' => 'Tratamiento',
                 'models' => [
                     'tratamiento.recordatorios-como-paciente',
+                    'tratamiento.adherencia-resumen-staff',
                 ],
             ],
             [
@@ -139,6 +141,7 @@ final class CommonActionsService
                 'titulo' => 'Urgencias / guardia',
                 'models' => [
                     'urgencias.ver-tablero-guardia',
+                    'urgencias.triage-paciente-guardia',
                 ],
             ],
         ];

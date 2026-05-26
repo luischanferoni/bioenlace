@@ -12,6 +12,7 @@ use common\components\Emergency\GuardiaOperacionService;
 use common\components\Emergency\GuardiaQueueService;
 use common\components\Emergency\GuardiaSlaService;
 use common\components\Emergency\GuardiaTriageService;
+use common\components\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\Response;
@@ -34,6 +35,8 @@ use yii\web\Response;
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/solicitar-internacion
  * GET  /api/v1/clinical/emergency-guardia/indicadores-export-csv
  * GET  /api/v1/clinical/emergency-guardia/sla-config
+ * GET|POST /api/v1/clinical/emergency-guardia/elegir-paciente-triage (UI JSON)
+ * GET|POST /api/v1/clinical/emergency-guardia/registrar-triage-formulario (UI JSON)
  */
 class EmergencyGuardiaController extends BaseController
 {
@@ -320,5 +323,119 @@ class EmergencyGuardiaController extends BaseController
         $response->content = "\xEF\xBB\xBF" . $built['content'];
 
         return $response;
+    }
+
+    /**
+     * UI JSON: pacientes en guardia pendientes de triage (staff EMER).
+     *
+     * @tags clinical, emergency-guardia, staff, ui_json
+     */
+    public function actionElegirPacienteTriage(): array
+    {
+        $req = Yii::$app->request;
+        try {
+            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                (int) ($req->get('id_efector') ?? 0) ?: null
+            );
+            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        $out = UiScreenService::handleScreen(
+            'emergency-guardia',
+            'elegir-paciente-triage',
+            $req->get(),
+            $req->post(),
+            static function (): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet()) {
+            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                (int) ($req->get('id_efector') ?? 0) ?: null
+            );
+            $tablero = $this->queue->tablero($idEfector, ['sin_triage' => true, 'solo_activos' => true]);
+            $items = [];
+            foreach ($tablero['items'] as $row) {
+                $paciente = $row['paciente'] ?? [];
+                $nombre = $paciente['nombre_completo'] ?? 'Sin nombre';
+                $min = (int) ($row['minutos_espera'] ?? 0);
+                $items[] = [
+                    'id' => (string) ($row['id'] ?? ''),
+                    'name' => $nombre . ' · ' . $min . ' min',
+                    'label' => $nombre,
+                    'subtitle' => (string) ($paciente['documento'] ?? ''),
+                ];
+            }
+
+            return UiScreenService::withListBlockItems($out, $items, 'guardias');
+        }
+
+        return $out;
+    }
+
+    /**
+     * UI JSON: formulario de triage Manchester (staff).
+     *
+     * @tags clinical, emergency-guardia, staff, ui_json
+     */
+    public function actionRegistrarTriageFormulario(): array
+    {
+        $req = Yii::$app->request;
+        $out = UiScreenService::handleScreen(
+            'emergency-guardia',
+            'registrar-triage-formulario',
+            $req->get(),
+            $req->post(),
+            function (array $post): array {
+                $guardiaId = (int) ($post['guardia_id'] ?? 0);
+                if ($guardiaId <= 0) {
+                    throw new \InvalidArgumentException('Se requiere guardia_id.');
+                }
+                $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                    (int) ($post['id_efector'] ?? 0) ?: null
+                );
+                GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+
+                $vitals = [];
+                if (!empty($post['bp_sys'])) {
+                    $vitals['bp_sys'] = (int) $post['bp_sys'];
+                }
+                if (!empty($post['bp_dia'])) {
+                    $vitals['bp_dia'] = (int) $post['bp_dia'];
+                }
+                if (!empty($post['hr'])) {
+                    $vitals['hr'] = (int) $post['hr'];
+                }
+
+                $data = $this->triage->registrar($guardiaId, [
+                    'level' => (int) ($post['level'] ?? 3),
+                    'reason_text' => (string) ($post['reason_text'] ?? ''),
+                    'vitals' => $vitals,
+                    'id_efector' => $idEfector,
+                ], $idEfector);
+
+                return [
+                    'data' => $data,
+                    'message' => 'Triage registrado correctamente.',
+                ];
+            }
+        );
+
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet()) {
+            $guardiaId = (int) ($req->get('guardia_id') ?? 0);
+            if ($guardiaId > 0) {
+                $out = UiScreenService::renderUiDefinition(
+                    'emergency-guardia',
+                    'registrar-triage-formulario',
+                    $req->get(),
+                    ['guardia_id' => (string) $guardiaId, 'level' => '3']
+                );
+            }
+        }
+
+        return $out;
     }
 }

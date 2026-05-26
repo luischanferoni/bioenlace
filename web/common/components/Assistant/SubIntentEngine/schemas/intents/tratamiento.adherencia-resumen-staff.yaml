@@ -1,0 +1,29 @@
+intent_id: tratamiento.adherencia-resumen-staff
+version: 1
+
+action_name: "Adherencia a tratamientos (staff)"
+description: "Dashboard de planes activos y cumplimiento de actividades en el efector actual."
+rbac_route: "/api/clinical/care-plans/adherencia-resumen-staff"
+keywords:
+  - adherencia tratamiento
+  - planes de tratamiento
+  - cumplimiento terapia
+  - care plan staff
+  - seguimiento tratamiento
+
+intent_semantics:
+  goal: >-
+    Visualizar adherencia global y por paciente a planes de tratamiento activos del efector.
+  how: >-
+    Abre el resumen staff con lista de planes y porcentaje de actividades completadas.
+  outcome:
+    - El equipo identifica planes con baja adherencia para seguimiento.
+
+subintents:
+  - id: ver_dashboard
+    assistant_text: "Resumen de adherencia en el efector"
+    provides:
+      - draft.care_plan_id
+    next: ""
+    open_ui:
+      action_id: clinical.care-plan.adherencia-resumen-staff

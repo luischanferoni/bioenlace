@@ -1,0 +1,65 @@
+{
+  "ui_type": "ui_json",
+  "title": "Registrar triage",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "medico-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "triage",
+      "title": "Triage Manchester",
+      "fields": [
+        {
+          "name": "guardia_id",
+          "label": "ID guardia",
+          "type": "text",
+          "required": true,
+          "readonly": true
+        },
+        {
+          "name": "level",
+          "label": "Prioridad (1 = inmediato, 5 = no urgente)",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "1", "label": "1 — Inmediato" },
+            { "value": "2", "label": "2 — Muy urgente" },
+            { "value": "3", "label": "3 — Urgente" },
+            { "value": "4", "label": "4 — Estándar" },
+            { "value": "5", "label": "5 — No urgente" }
+          ]
+        },
+        {
+          "name": "reason_text",
+          "label": "Motivo de consulta",
+          "type": "textarea",
+          "required": true,
+          "rows": 3
+        },
+        {
+          "name": "bp_sys",
+          "label": "TA sistólica (opcional)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "bp_dia",
+          "label": "TA diastólica (opcional)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "hr",
+          "label": "FC (opcional)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "ui_type": "ui_json",
+  "title": "Paciente sin triage",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "medico-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "guardias",
+      "title": "Seleccioná el ingreso en guardia",
+      "draft_field": "guardia_id",
+      "empty_message": "No hay pacientes pendientes de triage en este efector.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    }
+  ]
+}

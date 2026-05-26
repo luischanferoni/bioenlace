@@ -8,6 +8,7 @@ use common\components\Clinical\CarePlan\Reminder\CarePlanReminderScheduleBuilder
 use common\components\Clinical\Dto\CarePlanDto;
 use common\components\Clinical\Service\CarePlanLifecycleService;
 use common\components\Clinical\Service\CarePlanPresentationService;
+use common\components\Clinical\CarePlan\CarePlanAdherenceStaffService;
 use common\components\Clinical\Service\PatientActiveCarePlanQuery;
 use common\components\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
@@ -25,6 +26,7 @@ use frontend\modules\api\v1\controllers\BaseController;
  * GET  /api/v1/clinical/care-plans/recordatorios-como-paciente
  * GET  /api/v1/clinical/care-plans/preferencias-recordatorios-como-paciente
  * PUT  /api/v1/clinical/care-plans/preferencias-recordatorios-como-paciente
+ * GET  /api/v1/clinical/care-plans/adherencia-resumen-staff (UI JSON dashboard staff)
  */
 class CarePlanController extends BaseController
 {
@@ -122,6 +124,60 @@ class CarePlanController extends BaseController
         }
 
         return $out;
+    }
+
+    /**
+     * UI JSON: adherencia a planes activos del efector (staff).
+     *
+     * @tags clinical, care-plan, staff, ui_json
+     */
+    public function actionAdherenciaResumenStaff(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            $idEfector = (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0);
+        }
+        if ($idEfector <= 0) {
+            return $this->clinicalError(
+                'Se requiere contexto de efector (sesión operativa o id_efector).',
+                null,
+                400
+            );
+        }
+
+        try {
+            $resumen = (new CarePlanAdherenceStaffService())->resumen($idEfector);
+        } catch (\InvalidArgumentException $e) {
+            return $this->clinicalError($e->getMessage(), null, 400);
+        }
+
+        $params = array_merge($req->get(), $req->post(), [
+            'resumen_texto' => (string) ($resumen['resumen_texto'] ?? ''),
+        ]);
+        $out = UiScreenService::renderUiDefinition('care-plan', 'adherencia-resumen-staff', $params, null);
+
+        $items = [];
+        foreach ($resumen['planes'] as $row) {
+            $pct = $row['adherencia_pct'] ?? null;
+            $suffix = $pct !== null ? " · {$pct}%" : '';
+            $items[] = [
+                'id' => (string) ($row['care_plan_id'] ?? ''),
+                'name' => ((string) ($row['paciente_nombre'] ?? 'Paciente')) . $suffix,
+                'label' => (string) ($row['paciente_nombre'] ?? 'Paciente'),
+                'subtitle' => (string) ($row['category_label'] ?? ''),
+                'meta' => [
+                    'actividades_total' => $row['actividades_total'] ?? 0,
+                    'actividades_completadas' => $row['actividades_completadas'] ?? 0,
+                    'adherencia_pct' => $pct,
+                ],
+            ];
+        }
+
+        $out['success'] = true;
+        $out['data'] = $resumen;
+
+        return UiScreenService::withListBlockItems($out, $items, 'planes');
     }
 
     /**

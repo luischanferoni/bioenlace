@@ -1,0 +1,44 @@
+{
+  "ui_type": "ui_json",
+  "title": "Métricas de agenda",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "filtros",
+      "title": "Período",
+      "fields": [
+        {
+          "name": "fecha_desde",
+          "label": "Desde",
+          "type": "date",
+          "required": false
+        },
+        {
+          "name": "fecha_hasta",
+          "label": "Hasta",
+          "type": "date",
+          "required": false
+        },
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "ID PES (opcional, filtrar profesional)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "kind": "message",
+      "id": "resumen",
+      "title": "Resultados",
+      "text_field": "resumen_texto",
+      "text": "Indicá el período y confirme para calcular."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+intent_id: turnos.indicadores-agenda-flow
+version: 1
+
+action_name: "Indicadores de agenda"
+description: "Staff: no-show y días desde reserva hasta la cita en un período."
+rbac_route: "/api/turnos/indicadores-agenda"
+keywords:
+  - indicadores agenda
+  - no show
+  - ausentismo turnos
+  - tiempo hasta cita
+  - métricas turnos
+  - kpi agenda
+
+intent_semantics:
+  goal: >-
+    Medir ausentismo (no-show) y el intervalo entre alta del turno y fecha de la cita.
+  how: >-
+    Pantalla indicadores-agenda con rango de fechas y filtro opcional por profesional (PES).
+  outcome:
+    - Resumen con totales, tasa de no-show y mediana de días hasta la cita.
+
+subintents:
+  - id: consultar_indicadores
+    assistant_text: "Período y filtros de agenda"
+    provides:
+      - draft.fecha_desde
+      - draft.fecha_hasta
+      - draft.id_profesional_efector_servicio
+    next: ""
+    open_ui:
+      action_id: turnos.indicadores-agenda
+
+flow_submit:
+  action_id: turnos.indicadores-agenda
+  params:
+    fecha_desde: "draft.fecha_desde"
+    fecha_hasta: "draft.fecha_hasta"
+    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

@@ -2,9 +2,9 @@
 
 namespace common\components\Scheduling\Service;
 
-use Yii;
+use common\components\Clinical\Service\EncounterLifecycleService;
 use common\models\Turno;
-use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ServiciosEfector;
@@ -73,7 +73,7 @@ class TurnoPersistService
                     $cp->save();
                     $parent_id = $cp->id;
                 }
-                $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+                $model->parent_class = Encounter::PARENT_DERIVACION;
                 $model->parent_id = $parent_id;
             }
         }
@@ -109,7 +109,7 @@ class TurnoPersistService
             throw new \InvalidArgumentException(implode(', ', $model->getErrorSummary(true)));
         }
 
-        Consulta::createFromTurno($model);
+        (new EncounterLifecycleService())->ensureFromTurno($model);
         try {
             (new TurnoLifecycleService())->afterTurnoCreado($model);
         } catch (\Throwable $e) {

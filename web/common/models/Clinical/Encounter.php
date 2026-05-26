@@ -5,6 +5,7 @@ namespace common\models\Clinical;
 use common\components\Clinical\Enum\EncounterStatus;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
+use common\models\Efector;
 use common\models\Turno;
 use yii\db\ActiveRecord;
 
@@ -223,5 +224,16 @@ class Encounter extends ActiveRecord
     public function isInProgress(): bool
     {
         return $this->status === EncounterStatus::IN_PROGRESS;
+    }
+
+    public static function getEfectorNombreById(int $encounterId): string
+    {
+        $encounter = static::findOne($encounterId);
+        if ($encounter === null || (int) $encounter->efector_id <= 0) {
+            return '';
+        }
+        $efector = Efector::findOne((int) $encounter->efector_id);
+
+        return $efector !== null ? (string) $efector->nombre : '';
     }
 }

@@ -11,6 +11,7 @@ use yii\data\ActiveDataProvider;
 use yii\data\Pagination;
 use yii\db\QueryInterface;
 use common\models\sumar\Autofacturacion;
+use common\models\Clinical\Encounter;
 
 /**
  * This is the model class for table "consultas".
@@ -811,19 +812,10 @@ class Consulta extends \yii\db\ActiveRecord
         return $nombre_efector;
     }
 
+    /** @deprecated use {@see \common\models\Clinical\Encounter::getEfectorNombreById()} */
     public static function getEfectorByIdConsulta($id_consulta)
     {
-        $efector = Efector::find()
-            ->select('*'
-            )->from('efectores')
-            ->join('INNER JOIN','consultas', '`efectores`.`id_efector` = `consultas`.`id_efector`')
-            ->where(['`consultas`.`id_consulta`' => $id_consulta])
-            ->one();
-        $nombre_efector="";
-        if(is_object($efector)){
-            $nombre_efector=$efector->nombre;
-        }
-        return $nombre_efector;
+        return Encounter::getEfectorNombreById((int) $id_consulta);
     }
     
     /**
@@ -1248,40 +1240,10 @@ class Consulta extends \yii\db\ActiveRecord
      * @param Turno $turno turno recién guardado
      * @return Consulta|null la consulta creada o existente, o null si falla
      */
+    /** @deprecated Delega en {@see EncounterLifecycleService::ensureFromTurno()}. */
     public static function createFromTurno(Turno $turno)
     {
-        $existente = self::findOne(['id_turnos' => $turno->id_turnos]);
-        if ($existente) {
-            return $existente;
-        }
-        $consulta = new self();
-        $consulta->id_turnos = $turno->id_turnos;
-        $consulta->parent_class = self::PARENT_CLASSES[self::PARENT_TURNO];
-        $consulta->parent_id = $turno->id_turnos;
-        $consulta->id_persona = $turno->id_persona;
-        if ((int) $turno->id_profesional_efector_servicio > 0) {
-            $consulta->id_profesional_efector_servicio = (int) $turno->id_profesional_efector_servicio;
-        }
-        $consulta->id_efector = $turno->getAttribute('id_efector') ?: null;
-        $consulta->id_servicio = $turno->id_servicio_asignado ?: $turno->getAttribute('id_servicio');
-        if ($consulta->id_efector === null) {
-            $idEfTurno = (int) ($turno->getAttribute('id_efector') ?: 0);
-            if ($idEfTurno > 0) {
-                $consulta->id_efector = $idEfTurno;
-            } elseif ((int) $turno->id_profesional_efector_servicio > 0) {
-                $pes = ProfesionalEfectorServicio::findOne([
-                    'id' => (int) $turno->id_profesional_efector_servicio,
-                    'deleted_at' => null,
-                ]);
-                if ($pes !== null) {
-                    $consulta->id_efector = (int) $pes->id_efector;
-                }
-            }
-        }
-        if (!$consulta->id_efector || !$consulta->id_servicio) {
-            return null;
-        }
-        return $consulta->save(false) ? $consulta : null;
+        return (new \common\components\Clinical\Service\EncounterLifecycleService())->ensureFromTurno($turno);
     }
     
     public static function returnMsjError($mensaje)

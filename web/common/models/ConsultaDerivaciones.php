@@ -4,6 +4,7 @@ namespace common\models;
 use common\models\snomed\SnomedProcedimientos;
 use yii\data\ActiveDataProvider;
 use common\models\Consulta;
+use common\models\Clinical\Encounter;
 use Yii;
 
 /**
@@ -126,9 +127,8 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
     public static function getDerivacionesPorPersona($id_persona, $id_efector, $id_servicio, $estado)
     {
         return self::find()
-        #echo self::find()
-        ->join('INNER JOIN','consultas', '`consultas`.`id_consulta` = `consultas_derivaciones`.`id_consulta_solicitante`')
-        ->join('INNER JOIN','personas', '`personas`.`id_persona` = `consultas`.`id_persona`')
+        ->innerJoin(['enc' => Encounter::tableName()], 'enc.id = consultas_derivaciones.id_consulta_solicitante')
+        ->innerJoin('personas', 'personas.id_persona = enc.subject_persona_id')
         ->where('consultas_derivaciones.estado = :estado')
         ->andWhere('consultas_derivaciones.id_efector = :id_efector')
         ->andWhere('consultas_derivaciones.id_servicio = :id_servicio')
@@ -142,9 +142,8 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
     public static function getDerivacionesRechazadaPorPersona($id_consulta, $id_persona, $id_efector, $id_servicio, $estado)
     {
         return self::find()
-            #echo self::find()
-            ->join('INNER JOIN','consultas', '`consultas`.`id_consulta` = `consultas_derivaciones`.`id_consulta_solicitante`')
-            ->join('INNER JOIN','personas', '`personas`.`id_persona` = `consultas`.`id_persona`')
+            ->innerJoin(['enc' => Encounter::tableName()], 'enc.id = consultas_derivaciones.id_consulta_solicitante')
+            ->innerJoin('personas', 'personas.id_persona = enc.subject_persona_id')
             ->where('consultas_derivaciones.estado = :estado')
             ->andWhere('consultas_derivaciones.id_efector = :id_efector')
             ->andWhere('consultas_derivaciones.id_servicio = :id_servicio')
@@ -158,9 +157,15 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
      /**
      * @return \yii\db\ActiveQuery
      */
+    public function getEncounter()
+    {
+        return $this->hasOne(Encounter::class, ['id' => 'id_consulta_solicitante']);
+    }
+
+    /** @deprecated use {@see getEncounter()} */
     public function getConsulta()
     {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta_solicitante']);
+        return $this->getEncounter();
     }
 
     
@@ -275,11 +280,11 @@ class ConsultaDerivaciones extends \yii\db\ActiveRecord
      */
     public static function getDerivacionesActivasPorPacientePorServiciosPorEfector($idPaciente, $idsServicios, $idEfector)
     {
-        return self::find()                                
+        return self::find()
                 ->andWhere('consultas_derivaciones.estado = "'.self::ESTADO_EN_ESPERA.'"')
                 ->andWhere('consultas_derivaciones.id_efector = '.$idEfector)
                 ->andWhere(['in', 'consultas_derivaciones.id_servicio', $idsServicios])
-                ->join('INNER JOIN', 'consultas', 'id_consulta_solicitante = consultas.id_consulta AND consultas.id_persona = ' . $idPaciente)
+                ->innerJoin(['enc' => Encounter::tableName()], 'consultas_derivaciones.id_consulta_solicitante = enc.id AND enc.subject_persona_id = ' . (int) $idPaciente)
                 ->all();
     }    
 }

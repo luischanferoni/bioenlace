@@ -14,7 +14,6 @@ use yii\helpers\Url;
 // Modelos
 use common\models\Persona;
 use common\models\Clinical\Encounter;
-use common\models\Consulta;
 use common\models\Turno;
 use common\models\ServiciosEfector;
 use common\models\ConsultaAtencionesEnfermeria;
@@ -248,9 +247,13 @@ class PacienteController extends Controller
     private function obtenerConfiguracion($idConsulta, $paciente, $parent, $parentId)
     {
         if ($idConsulta) {
-            $modelConsulta = Consulta::findOne($idConsulta);
-            if ($modelConsulta) {
-                $configuracion = \common\models\ConsultasConfiguracion::findOne($modelConsulta->id_configuracion);
+            $encounter = Encounter::findOne((int) $idConsulta);
+            if ($encounter !== null) {
+                $configuracion = \common\models\ConsultasConfiguracion::find()
+                    ->where(['id_servicio' => $encounter->service_id])
+                    ->andWhere(['encounter_class' => $encounter->encounter_class])
+                    ->andWhere('deleted_at is null')
+                    ->one();
             }
         } else {
             // Determinar configuración basada en el servicio y encounter class

@@ -360,9 +360,13 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
     public static function getPorPaciente($idPersona)
     {
         return self::find()
-            ->innerJoin('consultas', 
-                'consultas.id_consulta = consultas_odontologia_estados.id_consulta AND id_persona = '.$idPersona.
-                ' AND consultas_odontologia_estados.condicion = "'.self::CONDICION_ACTIVO.'"'. ' AND consultas.deleted_at IS NULL')
+            ->innerJoin(
+                ['enc' => \common\models\Clinical\Encounter::tableName()],
+                'enc.id = consultas_odontologia_estados.id_consulta'
+                . ' AND enc.subject_persona_id = ' . (int) $idPersona
+                . ' AND consultas_odontologia_estados.condicion = "' . self::CONDICION_ACTIVO . '"'
+                . ' AND enc.deleted_at IS NULL'
+            )
             ->asArray()
             ->all();
     }

@@ -2,54 +2,41 @@
 
 namespace common\models\busquedas;
 
-use Yii;
-use yii\base\Model;
-use yii\data\ActiveDataProvider;
+use common\models\Clinical\Encounter;
 use common\models\Referencia;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use webvimark\modules\UserManagement\models\User;
+use Yii;
+use yii\base\Model;
+use yii\data\ActiveDataProvider;
 
 /**
- * ReferenciasBusquedas represents the model behind the search form about `common\models\Referencia`.
+ * Listado de referencias sobre {@see Encounter} (sin tabla `consultas`).
  */
 class ReferenciasBusquedas extends Referencia
 {
-    /**
-     * @inheritdoc
-     */
     public function rules()
     {
+        $fk = static::legacyConsultaFkAttribute();
+
         return [
-            [['id_referencia', 'id_consulta', 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'integer'],
+            [['id_referencia', $fk, 'id_efector_referenciado', 'id_motivo_derivacion', 'id_servicio', 'id_estado'], 'integer'],
             [['estudios_complementarios', 'resumen_hc', 'tratamiento_previo', 'tratamiento', 'fecha_turno', 'hora_turno', 'observacion'], 'safe'],
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
     public function scenarios()
     {
-        // bypass scenarios() implementation in the parent class
         return Model::scenarios();
     }
 
-    /**
-     * Creates data provider instance with search query applied
-     * Si el Rol del usuario es "Medico" se muestran las referencias creadas por
-     * dicho médico en el efector con el cual esta logeado
-     * Si el Rol del usuario es "Administrativo" se muestran las referencias creadas en
-     * el efector en el cual esta logeado 
-     * @param array $params
-     *
-     * @return ActiveDataProvider
-     */
     public function search($params)
     {
-
         $id_user = Yii::$app->user->id;
         $id_efector = Yii::$app->user->idEfector;
+        $fk = static::legacyConsultaFkAttribute();
+        $encTable = Encounter::tableName();
 
         $idPersonaSesion = (int) Yii::$app->user->getIdPersona();
         if ($idPersonaSesion <= 0) {
@@ -63,48 +50,34 @@ class ReferenciasBusquedas extends Referencia
                 ->column();
         }
 
-        $esAdministrativo = User::hasRole(['Administrativo'], $superAdminAllowed = true);
-        $esMedico = User::hasRole(['Medico'], $superAdminAllowed = true);
-        if ($esMedico) {
-            $query = Referencia::find()
-                    ->select(
-                    ['id_referencia' => 'referencia.id_referencia',
-                      'id_consulta' => 'consultas.id_consulta'  ,
-                      'id_efector_referenciado' => 'referencia.id_efector_referenciado',
-                      'id_motivo_derivacion' => 'referencia.id_motivo_derivacion',
-                      'id_servicio' => 'referencia.id_servicio',
-                      'id_estado' => 'referencia.id_estado',
-                      'fecha_turno' => 'referencia.fecha_turno',
-                      'hora_turno' => 'referencia.hora_turno',
-                            ])
-                    ->from('referencia')
-                    ->join('INNER JOIN','consultas','referencia.id_consulta=consultas.id_consulta')
-                    ->join('INNER JOIN','turnos','consultas.id_turnos=turnos.id_turnos')
-                    ->join('INNER JOIN','efectores','turnos.id_efector=efectores.id_efector')
-                    ->where(['turnos.id_efector' => $id_efector]);
+        $select = [
+            'id_referencia' => 'referencia.id_referencia',
+            'id_consulta' => 'enc.id',
+            'encounter_id' => 'enc.id',
+            'id_efector_referenciado' => 'referencia.id_efector_referenciado',
+            'id_motivo_derivacion' => 'referencia.id_motivo_derivacion',
+            'id_servicio' => 'referencia.id_servicio',
+            'id_estado' => 'referencia.id_estado',
+            'fecha_turno' => 'referencia.fecha_turno',
+            'hora_turno' => 'referencia.hora_turno',
+        ];
+
+        $query = Referencia::find()
+            ->select($select)
+            ->from('referencia')
+            ->innerJoin(['enc' => $encTable], "referencia.{$fk} = enc.id")
+            ->leftJoin('turnos', 'enc.appointment_id = turnos.id_turnos')
+            ->innerJoin('efectores', 'turnos.id_efector = efectores.id_efector')
+            ->where(['turnos.id_efector' => $id_efector]);
+
+        if (User::hasRole(['Medico'], true)) {
             if ($pesIdsProfesional !== []) {
                 $query->andWhere(['turnos.id_profesional_efector_servicio' => $pesIdsProfesional]);
             } else {
                 $query->andWhere('0=1');
             }
-        } else {
-           $query = Referencia::find()
-                    -> select
-                    (['id_referencia' => 'referencia.id_referencia',
-                      'id_consulta' => 'consultas.id_consulta'  , 
-                      'id_efector_referenciado' => 'referencia.id_efector_referenciado',
-                      'id_motivo_derivacion' => 'referencia.id_motivo_derivacion',
-                      'id_servicio' => 'referencia.id_servicio',
-                      'id_estado' => 'referencia.id_estado',
-                      'fecha_turno' => 'referencia.fecha_turno',
-                      'hora_turno' => 'referencia.hora_turno',
-                            ])
-                    ->from('referencia')
-                    ->join('INNER JOIN','consultas','referencia.id_consulta=consultas.id_consulta')
-                    ->join('INNER JOIN','turnos','consultas.id_turnos=turnos.id_turnos')
-                    ->join('INNER JOIN','efectores','turnos.id_efector=efectores.id_efector')
-                    ->where(['turnos.id_efector' => $id_efector]);
         }
+
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
         ]);
@@ -112,27 +85,25 @@ class ReferenciasBusquedas extends Referencia
         $this->load($params);
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
 
         $query->andFilterWhere([
-            'id_referencia' => $this->id_referencia,
-            'id_consulta' => $this->id_consulta,
-            'id_efector_referenciado' => $this->id_efector_referenciado,
-            'id_motivo_derivacion' => $this->id_motivo_derivacion,
-            'id_servicio' => $this->id_servicio,
-            'id_estado' => $this->id_estado,
-            'fecha_turno' => $this->fecha_turno,
-            'hora_turno' => $this->hora_turno,
+            'referencia.id_referencia' => $this->id_referencia,
+            "referencia.{$fk}" => $this->getEncounter_id(),
+            'referencia.id_efector_referenciado' => $this->id_efector_referenciado,
+            'referencia.id_motivo_derivacion' => $this->id_motivo_derivacion,
+            'referencia.id_servicio' => $this->id_servicio,
+            'referencia.id_estado' => $this->id_estado,
+            'referencia.fecha_turno' => $this->fecha_turno,
+            'referencia.hora_turno' => $this->hora_turno,
         ]);
 
-        $query->andFilterWhere(['like', 'estudios_complementarios', $this->estudios_complementarios])
-            ->andFilterWhere(['like', 'resumen_hc', $this->resumen_hc])
-            ->andFilterWhere(['like', 'tratamiento_previo', $this->tratamiento_previo])
-            ->andFilterWhere(['like', 'tratamiento', $this->tratamiento])
-            ->andFilterWhere(['like', 'observacion', $this->observacion]);
+        $query->andFilterWhere(['like', 'referencia.estudios_complementarios', $this->estudios_complementarios])
+            ->andFilterWhere(['like', 'referencia.resumen_hc', $this->resumen_hc])
+            ->andFilterWhere(['like', 'referencia.tratamiento_previo', $this->tratamiento_previo])
+            ->andFilterWhere(['like', 'referencia.tratamiento', $this->tratamiento])
+            ->andFilterWhere(['like', 'referencia.observacion', $this->observacion]);
 
         return $dataProvider;
     }

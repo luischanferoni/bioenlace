@@ -2,18 +2,13 @@
 
 namespace common\models\busquedas;
 
+use common\models\Clinical\Encounter;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\ConsultaPracticas;
 
-/**
- * ConsultaPracticasBusqueda represents the model behind the search form of `\common\models\ConsultaPracticas`.
- */
 class ConsultaPracticasBusqueda extends ConsultaPracticas
 {
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
@@ -21,36 +16,30 @@ class ConsultaPracticasBusqueda extends ConsultaPracticas
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function scenarios()
     {
-        // bypass scenarios() implementation in the parent class
         return Model::scenarios();
     }
 
-    /**
-     * Creates data provider instance with search query applied
-     *
-     * @param array $params
-     *
-     * @return ActiveDataProvider
-     */
-    public function search($params,$servicio)
+    public function search($params, $servicio)
     {
+        $encTable = Encounter::tableName();
         $query = (new \yii\db\Query())
-            ->select(['c.id_servicio as idservicio, s.nombre as nombre, sp.conceptId as concepto, sp.term as termino, count(c.id_consulta) as cantidad'])
-            ->from('consultas c')
-            ->join('JOIN','consultas_practicas cp', 'c.id_consulta = cp.id_consulta')
-            ->join('JOIN','snomed_procedimientos sp', 'cp.codigo = sp.conceptId')
-            ->join('JOIN','servicios s', 'c.id_servicio=s.id_servicio')
-            ->where(['IS NOT','sp.conceptId' , null])
-            #->andWhere(['=','c.id_efector', $efector])
-            ->groupBy(['c.id_servicio', 'sp.conceptId', 'sp.term'])
-            ->orderBy(['s.nombre' => SORT_ASC, 'count(c.id_consulta)' => SORT_DESC]);
-
-        // add conditions that should always apply here
+            ->select([
+                'idservicio' => 'enc.service_id',
+                'nombre' => 's.nombre',
+                'concepto' => 'sp.conceptId',
+                'termino' => 'sp.term',
+                'cantidad' => new \yii\db\Expression('count(enc.id)'),
+            ])
+            ->from(['enc' => $encTable])
+            ->innerJoin('service_request sr', 'sr.encounter_id = enc.id')
+            ->innerJoin('snomed_procedimientos sp', 'sr.code = sp.conceptId')
+            ->innerJoin('servicios s', 'enc.service_id = s.id_servicio')
+            ->where(['IS NOT', 'sp.conceptId', null])
+            ->andWhere(['enc.deleted_at' => null])
+            ->groupBy(['enc.service_id', 'sp.conceptId', 'sp.term'])
+            ->orderBy(['s.nombre' => SORT_ASC, 'cantidad' => SORT_DESC]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -59,14 +48,11 @@ class ConsultaPracticasBusqueda extends ConsultaPracticas
         $this->load($params);
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
 
-
         $query->andFilterWhere(['like', 'sp.term', $this->terminos_motivos]);
-        $query->andFilterWhere([ 'c.id_servicio' => $this->id_servicio]);
+        $query->andFilterWhere(['enc.service_id' => $this->id_servicio]);
 
         return $dataProvider;
     }

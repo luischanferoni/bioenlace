@@ -41,6 +41,15 @@
 - `EncounterIdLegacyConsultaColumnTrait`: FK dinámica (`encounter_id` / fallback `id_consulta`).
 - `PersonasAntecedenteBusqueda`: agregados por servicio vía `encounter` (sin `consultas`).
 
-## Paso 7 — Drop `consultas` (pendiente)
+## Paso 7 — Preparación drop `consultas` (hecho en código)
 
-- Migración existente `m260520_100002_clinical_fhir_drop_legacy` (aplicar solo tras auditar referencias PHP restantes: `Consulta` AR, búsquedas estadísticas, odontología legacy, derivaciones, etc.).
+- Sin nuevas filas en `consultas` al crear turnos (`ensureFromTurno`).
+- Búsquedas nomenclador / referencias / derivaciones sin join a `consultas`.
+- Auditoría y orden de migraciones: [03c-paso7-drop-consultas-audit.md](./03c-paso7-drop-consultas-audit.md).
+
+**Pendiente operativo:** aplicar `m260520_100002_clinical_fhir_drop_legacy` tras smoke en staging y cerrar bloqueadores listados en la auditoría.
+
+## Paso 8+ (backlog)
+
+- Retirar AR `Consulta` y tablas hijas ya dropeadas.
+- Internación MVC por pestaña, `ConsultasConfiguracion` → `EncounterDefinition` único.

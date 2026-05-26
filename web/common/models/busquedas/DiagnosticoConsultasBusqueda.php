@@ -2,54 +2,43 @@
 
 namespace common\models\busquedas;
 
+use common\models\Clinical\Encounter;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\DiagnosticoConsulta;
 
-/**
- * DiagnosticoConsultasBusqueda represents the model behind the search form of `\common\models\DiagnosticoConsulta`.
- */
 class DiagnosticoConsultasBusqueda extends DiagnosticoConsulta
 {
-    /**
-     * {@inheritdoc}
-     */
     public function rules()
     {
         return [
-            [['terminos_motivos','id_servicio'], 'string'],
+            [['terminos_motivos', 'id_servicio'], 'string'],
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function scenarios()
     {
-        // bypass scenarios() implementation in the parent class
         return Model::scenarios();
     }
 
-    /**
-     * Creates data provider instance with search query applied
-     *
-     * @param array $params
-     *
-     * @return ActiveDataProvider
-     */
-    public function search($params,$servicio)
+    public function search($params, $servicio)
     {
-
+        $encTable = Encounter::tableName();
         $query = (new \yii\db\Query())
-            ->select(['vcm.id_servicio, s.nombre as nombre, codigo as concepto, sh.term as termino, count(vcm.id_consulta) as cantidad'])
-            ->from([ 'vcm' => 'view_consulta_diagnostico'])
-            ->join('JOIN','snomed_hallazgos sh', 'vcm.codigo = sh.conceptId')
-            ->join('JOIN','servicios s', 'vcm.id_servicio=s.id_servicio')
-            ->where(['IS NOT','sh.conceptId' , null])
-            ->groupBy(['vcm.id_servicio', 'sh.conceptId', 'sh.term'])
-            ->orderBy(['s.nombre' => SORT_ASC, 'cantidad' => SORT_DESC]);;
-
-        // add conditions that should always apply here
+            ->select([
+                'id_servicio' => 'enc.service_id',
+                'nombre' => 's.nombre',
+                'concepto' => 'c.code',
+                'termino' => new \yii\db\Expression('COALESCE(NULLIF(c.display, ""), sh.term)'),
+                'cantidad' => new \yii\db\Expression('count(enc.id)'),
+            ])
+            ->from(['enc' => $encTable])
+            ->innerJoin('condition c', 'c.encounter_id = enc.id')
+            ->leftJoin('snomed_hallazgos sh', 'c.code = sh.conceptId')
+            ->innerJoin('servicios s', 'enc.service_id = s.id_servicio')
+            ->where(['enc.deleted_at' => null])
+            ->groupBy(['enc.service_id', 'c.code', 'c.display', 'sh.term'])
+            ->orderBy(['s.nombre' => SORT_ASC, 'cantidad' => SORT_DESC]);
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
@@ -58,14 +47,16 @@ class DiagnosticoConsultasBusqueda extends DiagnosticoConsulta
         $this->load($params);
 
         if (!$this->validate()) {
-            // uncomment the following line if you do not want to return any records when validation fails
-            // $query->where('0=1');
             return $dataProvider;
         }
 
+        $query->andFilterWhere([
+            'or',
+            ['like', 'c.display', $this->terminos_motivos],
+            ['like', 'sh.term', $this->terminos_motivos],
+        ]);
+        $query->andFilterWhere(['enc.service_id' => $this->id_servicio]);
 
-        $query->andFilterWhere(['like', 'sh.term', $this->terminos_motivos]);
-        $query->andFilterWhere(['vcm.id_servicio' => $this->id_servicio]);
         return $dataProvider;
     }
 }

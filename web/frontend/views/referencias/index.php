@@ -52,7 +52,7 @@ $id_efector = Yii::$app->user->idEfector;
                                 'class' => 'text-wrap'
                             ],
                             'value' => function ($data) {
-                                return common\models\Consulta::getEfectorByIdConsulta($data->id_consulta_solicitante);
+                                return Encounter::getEfectorNombreById((int) $data->id_consulta_solicitante);
                             }
                         ],
 
@@ -77,27 +77,28 @@ $id_efector = Yii::$app->user->idEfector;
                         [
                             'format' => 'raw',
                             'value' => function ($data) {
-                                $consulta = \common\models\Consulta::findOne(['id_consulta' => $data->id_consulta_solicitante]);
-
-                                if ($consulta->parent_class == '\common\models\SegNivelInternacion'):
-                                    $url    = ['internacion/' . $consulta->parent_id];
-                                    $button = 'Internacion';
-                                    $class  = 'btn btn-outline-success me-2';
-                                else:
-                                    $url    = ['turnos/index', 'id' => $data->consulta->paciente->id_persona, 'id_servicio' => $data->id_servicio];
-                                    $button = 'Asignar Turno';
-                                    $class  = 'btn btn-outline-info me-2';
-                                endif;
-
-                                if (Yii::$app->user->getServicioActual() != 62):
-                                    return Html::a(
-                                        $button,
-                                        $url,
-                                        ['class' => $class]
-                                    );
-                                else:
+                                $encounterId = (int) $data->id_consulta_solicitante;
+                                $encounter = \common\models\Clinical\Encounter::findOne($encounterId);
+                                if ($encounter === null) {
                                     return false;
-                                endif;
+                                }
+
+                                if ($encounter->parent_type === \common\models\Clinical\Encounter::PARENT_INTERNACION) {
+                                    $url = ['internacion/' . $encounter->parent_id];
+                                    $button = 'Internacion';
+                                    $class = 'btn btn-outline-success me-2';
+                                } else {
+                                    $paciente = $data->encounter ? $data->encounter->subject : null;
+                                    $url = ['turnos/index', 'id' => $paciente ? $paciente->id_persona : 0, 'id_servicio' => $data->id_servicio];
+                                    $button = 'Asignar Turno';
+                                    $class = 'btn btn-outline-info me-2';
+                                }
+
+                                if (Yii::$app->user->getServicioActual() != 62) {
+                                    return Html::a($button, $url, ['class' => $class]);
+                                }
+
+                                return false;
                             }
                         ],
                     ],

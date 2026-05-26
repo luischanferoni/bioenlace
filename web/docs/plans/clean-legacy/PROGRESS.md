@@ -111,7 +111,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Autofacturación SUMAR sobre `Encounter` | controller + model | [x] | `AutofacturacionEncounterBusqueda` |
 | `Referencia` + datos persona sin `consultas` | model | [x] | `legacy_id_consulta` / trait |
 | `ReporteController` + planillas ministeriales | controller + views | [x] | `EncounterReporteBusqueda` |
-| Drop tabla `consultas` + hijas | migration | [ ] | `m260520_100002` (Paso 7) |
+| Drop tabla `consultas` + hijas | migration | [ ] | Código listo; aplicar `m260520_100002` tras auditoría |
 
 ---
 

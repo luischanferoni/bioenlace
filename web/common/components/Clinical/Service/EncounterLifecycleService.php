@@ -6,6 +6,9 @@ use common\components\Clinical\Enum\EncounterStatus;
 use common\components\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
 use common\models\Clinical\Encounter;
 use common\models\Persona;
+use common\models\ProfesionalEfectorServicio;
+use common\models\Scheduling\Turno;
+use common\models\Turno as TurnoAlias;
 use Yii;
 
 final class EncounterLifecycleService
@@ -88,5 +91,51 @@ final class EncounterLifecycleService
     public function findSubject(int $idPersona): ?Persona
     {
         return Persona::findOne(['id_persona' => $idPersona]);
+    }
+
+    /**
+     * Encounter ambulatorio vinculado a un turno (motivos pre-consulta). Idempotente.
+     */
+    public function ensureFromTurno(Turno|TurnoAlias $turno): ?Encounter
+    {
+        $turnoId = (int) $turno->id_turnos;
+        if ($turnoId <= 0) {
+            return null;
+        }
+
+        $existing = Encounter::find()
+            ->where(['appointment_id' => $turnoId])
+            ->andWhere(['deleted_at' => null])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+        if ($existing instanceof Encounter) {
+            return $existing;
+        }
+
+        $efectorId = (int) ($turno->getAttribute('id_efector') ?: 0);
+        $serviceId = (int) ($turno->id_servicio_asignado ?: $turno->getAttribute('id_servicio') ?: 0);
+        if ($efectorId <= 0 && (int) $turno->id_profesional_efector_servicio > 0) {
+            $pes = ProfesionalEfectorServicio::findOne([
+                'id' => (int) $turno->id_profesional_efector_servicio,
+                'deleted_at' => null,
+            ]);
+            if ($pes !== null) {
+                $efectorId = (int) $pes->id_efector;
+            }
+        }
+        if ($efectorId <= 0 || $serviceId <= 0 || (int) $turno->id_persona <= 0) {
+            return null;
+        }
+
+        return $this->start([
+            'subject_persona_id' => (int) $turno->id_persona,
+            'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
+            'service_id' => $serviceId,
+            'efector_id' => $efectorId,
+            'appointment_id' => $turnoId,
+            'parent_type' => Encounter::PARENT_TURNO,
+            'parent_id' => $turnoId,
+            'id_profesional_efector_servicio' => (int) $turno->id_profesional_efector_servicio ?: null,
+        ]);
     }
 }

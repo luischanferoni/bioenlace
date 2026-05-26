@@ -6,8 +6,8 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
+use common\components\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
-use common\models\Consulta;
 use common\models\Turno;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
@@ -1783,7 +1783,7 @@ class TurnosController extends BaseController
                 $cp->save();
                 $parent_id = $cp->id;
             }
-            $model->parent_class = Consulta::PARENT_CLASSES[Consulta::PARENT_DERIVACION];
+            $model->parent_class = Encounter::PARENT_DERIVACION;
             $model->parent_id = $parent_id;
         }
 
@@ -1804,7 +1804,7 @@ class TurnosController extends BaseController
         if (!$model->save()) {
             throw new BadRequestHttpException('No se pudo guardar el turno.');
         }
-        Consulta::createFromTurno($model);
+        (new EncounterLifecycleService())->ensureFromTurno($model);
         try {
             (new SobreturnoService())->notificarRetrasoPorSobreturno($model);
             (new TurnoLifecycleService())->afterTurnoCreado($model);

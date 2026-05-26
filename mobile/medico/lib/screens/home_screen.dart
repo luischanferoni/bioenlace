@@ -610,7 +610,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return BioCard(
       onTap: () => _onGuardiaTap(g),
-      child: Row(
+      child: Container(
+        decoration: g.slaViolado
+            ? BoxDecoration(
+                border: Border.all(
+                  color: IntentPalette.of(UiIntent.danger).base.withOpacity(0.6),
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              )
+            : null,
+        padding: g.slaViolado ? const EdgeInsets.all(4) : EdgeInsets.zero,
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
@@ -650,6 +661,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   spacing: BioSpacing.xs,
                   runSpacing: BioSpacing.xs,
                   children: [
+                    if (g.slaViolado)
+                      BioBadge(
+                        label: g.slaTipo == 'triage' ? 'SLA triage' : 'SLA médico',
+                        intent: UiIntent.danger,
+                      ),
+                    if (g.internacionPendiente)
+                      const BioBadge(
+                        label: 'Cama pend.',
+                        intent: UiIntent.info,
+                      ),
+                    if (g.ordersLabPending > 0)
+                      BioBadge(
+                        label: '${g.ordersLabPending} lab pend.',
+                        intent: UiIntent.warning,
+                      ),
                     BioBadge(
                       label: g.circuitoEstadoLabel ??
                           g.circuitoEstado ??
@@ -697,6 +723,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ],
+        ),
       ),
     );
   }

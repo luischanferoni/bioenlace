@@ -35,8 +35,8 @@ Cada área del hospital se califica de **0 a 4**:
 | Indicador | Valor |
 |-----------|--------|
 | Áreas evaluadas | 12 |
-| **Completitud media orientativa** | **~61 %** |
-| Áreas ≥ 75 % (nivel 3) | 6 de 12 |
+| **Completitud media orientativa** | **~62 %** |
+| Áreas ≥ 75 % (nivel 3) | 7 de 12 |
 | Áreas ≤ 50 % (nivel ≤ 2) | 4 de 12 |
 
 ### Dónde Bioenlace ya compite con fuerza
@@ -44,6 +44,7 @@ Cada área del hospital se califica de **0 a 4**:
 - **Acceso y demanda:** agenda por institución y profesional, autogestión del paciente, reprogramación y notificaciones.
 - **Consulta ambulatoria:** registro de la atención, captura asistida (texto/voz), pedidos, receta emitida y resumen claro para el paciente tras la consulta.
 - **Engagement del paciente:** resumen post-consulta automático, consulta de recetas y laboratorio, conversación guiada para acciones frecuentes.
+- **Urgencias / guardia:** triage, tablero en inicio (web y móvil), asignación, derivación y egreso sobre un circuito auditable.
 - **Cumplimiento orientado a staff:** expediente amplio bajo demanda (generación en segundo plano, sin exposición al paciente).
 
 Eso define un **wedge** claro: instituciones que quieren **mejor experiencia ambulatoria y captación/retención de pacientes**, no aún un HIS monolítico de facturación y logística.
@@ -53,7 +54,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - **Facturación y cobranza** integradas al acto médico en todos los puntos de atención.
 - **Farmacia hospitalaria** (stock, dispensación, validación) y cierre con receta nacional homologada.
 - **Quirófano y materiales** (trazabilidad, tablero de salas, insumos).
-- **Guardia** con triage y tablero operativo de nivel hospitalario.
+- **Guardia post-v1:** pedidos/resultados en el módulo, derivación a cama con trazabilidad, SLA por nivel y export de indicadores para dirección.
 
 
 ### Lectura para inversión
@@ -70,7 +71,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 | Área | Nivel (0–4) | % | Mensaje en una línea |
 |------|-------------|---|----------------------|
 | Quirófanos | 2 | 50 % | Cirugía y agenda básica; falta quirófano “enterprise” |
-| Urgencias / guardia | 3 | 75 % | Guardia operativa; falta triage y tablero maduro |
+| Urgencias / guardia | 4 | 95 % | Triage, tablero, pedidos/lab, cama, SLA y CSV |
 | Internación | 2,5 | 63 % | Episodios y camas; falta mapa de camas y alta estructurada |
 | Laboratorio | 2,5 | 63 % | Trae resultados de labs externos; no es lab propio |
 | Farmacia | 1,5 | 38 % | Prescripción y receta; sin dispensación ni stock |
@@ -108,25 +109,30 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 
 ---
 
-### 5.2 Urgencias y guardia (75 %)
+### 5.2 Urgencias y guardia (95 %)
 
-**Qué es:** atención de urgencias, registro del episodio y derivación a internación o consulta.
+**Qué es:** atención de urgencias, registro del episodio, priorización, cola operativa y derivación a internación o consulta.
 
 **Lo que Bioenlace cubre hoy**
 
-- Registro de episodios de guardia por paciente e institución.
-- Pantallas de trabajo para el equipo de guardia.
-- Base para continuar el caso en consulta o internación.
+- Registro de episodios de guardia por paciente e institución (libro e ingresos).
+- **Triage** Manchester (1–5), motivo, signos vitales opcionales y **re-triage** con evento auditable.
+- **Tablero operativo** en inicio web y app médico (cola, estado del circuito, minutos de espera, indicadores resumen).
+- **Circuito:** tomar caso, iniciar atención con captura clínica, derivar a otro efector, egreso alineado al libro.
+- **Indicadores** door-to-triage y door-to-doctor (día actual + materialización nocturna opcional).
+- Notificaciones push (servidor + FCM app médico); intents de asistente para tablero y triage.
+- **Pedidos y laboratorio** en el tablero (resumen clínico, alta rápida de pedidos, informes por encounter).
+- **Internación:** solicitud de cama, badge pendiente e ingreso web con vínculo `id_guardia`.
+- **SLA** configurable por efector (`efector_emergency_config`) con alerta visual en tablero.
+- **Export CSV** de indicadores para dirección médica.
 
-**Lo que falta**
+**Lo que falta (refinamiento)**
 
-- Triage con escala de gravedad y tiempos estándar.
-- Tablero de cola (espera, en atención, observación, alta).
-- Pedidos y resultados de estudios sin salir del módulo de guardia.
-- Derivación a cama con trazabilidad completa.
-- Indicadores y auditoría de desempeño de guardia.
+- Catálogo de estudios / envío directo al LIS (hoy la indicación queda en Bioenlace).
+- UI de administración para umbrales SLA y alerta sonora en sala.
+- Integración FHIR de guardia al mismo nivel que ambulatorio en una sola pantalla longitudinal.
 
-**Implicación de producto:** buen “soporte operativo”; para hospitales de alta complejidad en urgencias falta el tablero.
+**Implicación de producto:** guardia vendible como módulo operativo completo en hospitales medianos; el siguiente salto es **interoperabilidad LIS nativa** y **mapa de camas en tiempo real**.
 
 ---
 
@@ -353,7 +359,7 @@ Orden orientativo de **retorno vs esfuerzo**, no compromiso de roadmap:
 
 1. **Homologación receta y obras sociales en agenda** — desbloquea mercado y ticket en Argentina.  
 2. **Métricas de agenda y adherencia a planes** — ROI demostrable para la institución.  
-3. **Guardia: triage + tablero** — abre hospitales medianos sin vender HIS completo.  
+3. **Guardia post-v1** (pedidos en guardia, derivación a cama, SLA) — profundiza el wedge hospitalario ya abierto con triage + tablero.  
 4. **Facturación integrada** — enterprise revenue, integraciones pesadas.  
 5. **Farmacia + stock** — solo si el cliente objetivo es hospital con internación fuerte.  
 6. **Quirófano + logística** — módulos largos, venta por proyecto.

@@ -95,7 +95,12 @@ final class GuardiaOperacionService
         $guardia->condiciones_derivacion = isset($body['condiciones_derivacion'])
             ? (string) $body['condiciones_derivacion']
             : null;
-        if (isset($body['notificar_internacion_id_efector'])) {
+        if (!empty($body['solicitar_internacion'])) {
+            $idInternacionEfector = (int) ($body['notificar_internacion_id_efector'] ?? $idEfectorDerivacion);
+            if ($idInternacionEfector > 0) {
+                $guardia->notificar_internacion_id_efector = $idInternacionEfector;
+            }
+        } elseif (isset($body['notificar_internacion_id_efector'])) {
             $guardia->notificar_internacion_id_efector = (int) $body['notificar_internacion_id_efector'] ?: null;
         }
         $guardia->circuito_estado = CircuitoEstado::DERIVADO;

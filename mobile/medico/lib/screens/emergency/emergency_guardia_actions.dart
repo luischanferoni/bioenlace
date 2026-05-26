@@ -35,6 +35,16 @@ class EmergencyGuardiaActions {
         onTap: () => _tomarCaso(context, item, api, onChanged),
       ));
       actions.add(_ActionDef(
+        label: 'Pedidos / laboratorio',
+        icon: Icons.biotech_outlined,
+        onTap: () => _clinical(context, item, api, onChanged),
+      ));
+      actions.add(_ActionDef(
+        label: 'Solicitar cama',
+        icon: Icons.hotel_outlined,
+        onTap: () => _solicitarInternacion(context, item, api, onChanged),
+      ));
+      actions.add(_ActionDef(
         label: 'Derivar',
         icon: Icons.transfer_within_a_station,
         onTap: () => _derivar(context, item, api, onChanged),
@@ -108,6 +118,120 @@ class EmergencyGuardiaActions {
     if (ok == true) onChanged();
   }
 
+  static Future<void> _clinical(
+    BuildContext context,
+    EmergencyBoardItem item,
+    EmergencyGuardiaApi api,
+    VoidCallback onChanged,
+  ) async {
+    Map<String, dynamic> resumen;
+    try {
+      resumen = await api.getResumenClinico(item.id);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+      return;
+    }
+    if (!context.mounted) return;
+
+    final pedidoCtrl = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        final orders = resumen['orders'] as List<dynamic>? ?? [];
+        final labs = resumen['laboratory_reports'] as List<dynamic>? ?? [];
+        return AlertDialog(
+          title: Text('Pedidos — ${item.nombreCompleto}'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (orders.isEmpty && labs.isEmpty)
+                  const Text('Sin pedidos ni informes aún.'),
+                ...orders.map((o) {
+                  final m = o as Map<String, dynamic>;
+                  return Text('• ${m['display']} (${m['result_status']})');
+                }),
+                ...labs.map((r) {
+                  final m = r as Map<String, dynamic>;
+                  return Text('• ${m['display']}');
+                }),
+                BioSpacing.gapH(BioSpacing.md),
+                TextField(
+                  controller: pedidoCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nuevo pedido lab',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cerrar'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final text = pedidoCtrl.text.trim();
+                if (text.isEmpty) return;
+                try {
+                  await api.crearPedido(guardiaId: item.id, display: text);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  onChanged();
+                } catch (e) {
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(content: Text('$e')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Agregar'),
+            ),
+          ],
+        );
+      },
+    );
+    pedidoCtrl.dispose();
+  }
+
+  static Future<void> _solicitarInternacion(
+    BuildContext context,
+    EmergencyBoardItem item,
+    EmergencyGuardiaApi api,
+    VoidCallback onChanged,
+  ) async {
+    if (item.internacionPendiente && item.internacionIngresoUrl != null) {
+      // En móvil abrimos URL web de ingreso si está disponible
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ingreso pendiente: ${item.internacionIngresoUrl}'),
+        ),
+      );
+      return;
+    }
+    try {
+      await api.solicitarInternacion(item.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Solicitud de cama registrada')),
+        );
+      }
+      onChanged();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
   static Future<void> _tomarCaso(
     BuildContext context,
     EmergencyBoardItem item,
@@ -152,18 +276,21 @@ class EmergencyGuardiaActions {
 
     int? selectedId = efectores.isNotEmpty ? efectores.first.idEfector : null;
     final condicionesCtrl = TextEditingController();
+    var solicitarCama = false;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
           title: const Text('Derivar paciente'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<int>(
-                  value: selectedId,
+                  initialValue: selectedId,
                   decoration: const InputDecoration(labelText: 'Efector destino'),
                   items: efectores
                       .map(
@@ -183,6 +310,12 @@ class EmergencyGuardiaActions {
                   ),
                   maxLines: 2,
                 ),
+                CheckboxListTile(
+                  value: solicitarCama,
+                  onChanged: (v) => setState(() => solicitarCama = v ?? false),
+                  title: const Text('Solicitar internación (cama)'),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ],
             ),
           ),
@@ -196,6 +329,8 @@ class EmergencyGuardiaActions {
               child: const Text('Derivar'),
             ),
           ],
+            );
+          },
         );
       },
     );
@@ -207,6 +342,7 @@ class EmergencyGuardiaActions {
         guardiaId: item.id,
         idEfectorDerivacion: selectedId!,
         condicionesDerivacion: condicionesCtrl.text.trim(),
+        solicitarInternacion: solicitarCama,
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

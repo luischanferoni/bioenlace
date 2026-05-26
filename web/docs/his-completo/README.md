@@ -2,7 +2,7 @@
 
 Documento de **producto y cobertura**, no manual técnico. Responde: *¿qué parte de un hospital information system tenemos hoy y qué falta?*
 
-**Última revisión:** 2026-05 (alineado a laboratorio FHIR, receta electrónica Fase 2, resumen de atención paciente, expediente legal staff, care plans con recordatorios).
+**Última revisión:** 2026-05 (circuito operativo de guardia v1: triage, tablero web/móvil, asignación, derivación, egreso, indicadores y job de métricas).
 
 Escala por módulo (orientativa):
 
@@ -19,7 +19,7 @@ Escala por módulo (orientativa):
 | Módulo | Nivel (0–4) | % módulo |
 |--------|-------------|----------|
 | [01 Quirófanos](./01-quirofanos.md) | 2 | 50 % |
-| [02 Urgencias](./02-urgencias.md) | 3 | 75 % |
+| [02 Urgencias](./02-urgencias.md) | 4 | 95 % |
 | [03 Internación](./03-internacion.md) | 2,5 | 63 % |
 | [04 Laboratorio (LIS)](./04-lis.md) | 2,5 | 63 % |
 | [05 Farmacia](./05-farmacia.md) | 1,5 | 38 % |
@@ -31,9 +31,9 @@ Escala por módulo (orientativa):
 | [11 Agenda y turnos](./11-agenda-turnos.md) | 3 | 75 % |
 | [12 Planes de tratamiento](./12-planes-tratamiento.md) | 2,5 | 63 % |
 
-**Promedio orientativo del mapa (12 módulos): ~61 %** hacia un HIS hospitalario “completo”.
+**Promedio orientativo del mapa (12 módulos): ~63 %** hacia un HIS hospitalario “completo”.
 
-Interpretación: Bioenlace está **fuerte en consulta ambulatoria, agenda, urgencias parcial, integración LIS externa y receta emitida**; **débil en farmacia dispensación, logística, facturación plena y quirófano avanzado**. El porcentaje no es certificación ni auditoría: es una brújula interna para priorizar producto.
+Interpretación: Bioenlace está **fuerte en consulta ambulatoria, agenda, guardia operativa (triage + tablero), integración LIS externa y receta emitida**; **débil en farmacia dispensación, logística, facturación plena y quirófano avanzado**. El porcentaje no es certificación ni auditoría: es una brújula interna para priorizar producto.
 
 ## Módulos (detalle)
 

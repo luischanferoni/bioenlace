@@ -175,11 +175,17 @@
     }
 
     function nivelRowClass(g) {
+      var parts = [];
       var level = g.prioridad_triage;
       if (level == null || level === '') {
-        return 'guardia-tablero-row--sin-triage';
+        parts.push('guardia-tablero-row--sin-triage');
+      } else {
+        parts.push('guardia-tablero-row--nivel-' + String(level));
       }
-      return 'guardia-tablero-row--nivel-' + String(level);
+      if (g.sla_violado) {
+        parts.push('guardia-tablero-row--sla-violado');
+      }
+      return parts.join(' ');
     }
 
     function fillGuardiaTableroRow(rowEl, g) {
@@ -226,6 +232,43 @@
       if (profLine && g.profesional_asignado) {
         profLine.textContent = 'Asignado: ' + g.profesional_asignado;
         profLine.classList.remove('d-none');
+      }
+
+      var slaBadge = rowEl.querySelector('[data-field="sla-badge"]');
+      if (slaBadge) {
+        if (g.sla_violado) {
+          var slaLabel = g.sla_tipo === 'triage' ? 'SLA triage' : 'SLA médico';
+          slaBadge.textContent = slaLabel + (g.sla_umbral_minutos != null ? ' >' + g.sla_umbral_minutos + 'm' : '');
+          slaBadge.classList.remove('d-none');
+        } else {
+          slaBadge.classList.add('d-none');
+        }
+      }
+
+      var internacionBadge = rowEl.querySelector('[data-field="internacion-badge"]');
+      if (internacionBadge) {
+        internacionBadge.classList.toggle('d-none', !g.internacion_pendiente);
+      }
+
+      var clinical = g.clinical || {};
+      var clinicalLine = rowEl.querySelector('[data-field="clinical-line"]');
+      if (clinicalLine) {
+        var parts = [];
+        if (clinical.orders_count > 0) {
+          parts.push(clinical.orders_count + ' pedido(s)');
+        }
+        if (clinical.orders_lab_pending > 0) {
+          parts.push(clinical.orders_lab_pending + ' lab pend.');
+        }
+        if (clinical.laboratory_reports_count > 0) {
+          parts.push(clinical.laboratory_reports_count + ' informe(s)');
+        }
+        if (parts.length) {
+          clinicalLine.textContent = parts.join(' · ');
+          clinicalLine.classList.remove('d-none');
+        } else {
+          clinicalLine.classList.add('d-none');
+        }
       }
 
       var cerrado = guardiaEpisodioCerrado(g);
@@ -278,6 +321,155 @@
         ctaFinalizar.onclick = function () {
           openFinalizarModal(g);
         };
+      }
+
+      var ctaClinical = rowEl.querySelector('[data-role="cta-clinical"]');
+      if (ctaClinical) {
+        ctaClinical.classList.toggle('d-none', cerrado);
+        ctaClinical.onclick = function () {
+          openClinicalModal(g);
+        };
+      }
+
+      var ctaInternacion = rowEl.querySelector('[data-role="cta-internacion"]');
+      if (ctaInternacion) {
+        var showInt = !cerrado && !g.internacion_pendiente;
+        ctaInternacion.classList.toggle('d-none', !showInt);
+        ctaInternacion.onclick = function () {
+          solicitarInternacionGuardia(g);
+        };
+      }
+      if (g.internacion_pendiente && g.internacion_ingreso_url) {
+        var linkInt = rowEl.querySelector('[data-role="cta-internacion-link"]');
+        if (!linkInt && ctaInternacion) {
+          ctaInternacion.textContent = 'Ingresar cama';
+          ctaInternacion.classList.remove('d-none');
+          ctaInternacion.onclick = function () {
+            window.location.href = g.internacion_ingreso_url;
+          };
+        }
+      }
+    }
+
+    var clinicalModal = null;
+    var clinicalModalGuardiaId = 0;
+
+    function getClinicalModal() {
+      if (!clinicalModal) {
+        var el = document.getElementById('guardia-clinical-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          clinicalModal = new window.bootstrap.Modal(el);
+        }
+      }
+      return clinicalModal;
+    }
+
+    async function openClinicalModal(g) {
+      clinicalModalGuardiaId = g.id;
+      var nameEl = document.getElementById('guardia-clinical-paciente-nombre');
+      if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
+      var errEl = document.getElementById('guardia-clinical-error');
+      if (errEl) errEl.classList.add('d-none');
+      var modal = getClinicalModal();
+      if (modal) modal.show();
+      await loadClinicalModalContent(g);
+    }
+
+    async function loadClinicalModalContent(g) {
+      var api = window.BioenlaceNativePage;
+      if (!api || !clinicalModalGuardiaId) return;
+      var loading = document.getElementById('guardia-clinical-loading');
+      var ordersEl = document.getElementById('guardia-clinical-orders');
+      var labEl = document.getElementById('guardia-clinical-lab');
+      var capturaLink = document.getElementById('guardia-clinical-captura-link');
+      if (loading) loading.classList.remove('d-none');
+      if (ordersEl) ordersEl.classList.add('d-none');
+      if (labEl) labEl.classList.add('d-none');
+      try {
+        var url = api.apiV1Url('clinical/emergency-guardia/' + clinicalModalGuardiaId + '/resumen-clinico');
+        var json = await api.fetchJson(url, {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        var d = json.data || {};
+        if (capturaLink && d.captura_url) {
+          capturaLink.href = d.captura_url;
+          capturaLink.classList.remove('d-none');
+        }
+        if (ordersEl) {
+          ordersEl.innerHTML = '';
+          (d.orders || []).forEach(function (o) {
+            var li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between';
+            li.innerHTML = '<span>' + (o.display || 'Pedido') + '</span><span class="badge bg-secondary">' + (o.result_status || '') + '</span>';
+            ordersEl.appendChild(li);
+          });
+          ordersEl.classList.toggle('d-none', !(d.orders && d.orders.length));
+        }
+        if (labEl) {
+          labEl.innerHTML = '';
+          (d.laboratory_reports || []).forEach(function (r) {
+            var li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = (r.display || 'Informe') + (r.issued_at ? ' — ' + r.issued_at : '');
+            labEl.appendChild(li);
+          });
+          labEl.classList.toggle('d-none', !(d.laboratory_reports && d.laboratory_reports.length));
+        }
+      } catch (e) {
+        var errEl = document.getElementById('guardia-clinical-error');
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'No se pudo cargar el resumen.';
+          errEl.classList.remove('d-none');
+        }
+      } finally {
+        if (loading) loading.classList.add('d-none');
+      }
+    }
+
+    async function submitClinicalPedido() {
+      var api = window.BioenlaceNativePage;
+      var input = document.getElementById('guardia-clinical-pedido-display');
+      var display = input ? input.value.trim() : '';
+      if (!api || !clinicalModalGuardiaId || !display) return;
+      try {
+        var url = api.apiV1Url('clinical/emergency-guardia/' + clinicalModalGuardiaId + '/crear-pedido');
+        await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ display: display, category: 'laboratory' }),
+        });
+        if (input) input.value = '';
+        await loadGuardiaTablero(false);
+        await loadClinicalModalContent({ id: clinicalModalGuardiaId });
+      } catch (e) {
+        var errEl = document.getElementById('guardia-clinical-error');
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'No se pudo crear el pedido.';
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    async function solicitarInternacionGuardia(g) {
+      var api = window.BioenlaceNativePage;
+      if (!api || !g.id) return;
+      try {
+        var url = api.apiV1Url('clinical/emergency-guardia/' + g.id + '/solicitar-internacion');
+        await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: '{}',
+        });
+        await loadGuardiaTablero(false);
+      } catch (e) {
+        showError(errorEl, e && e.message ? e.message : 'No se pudo solicitar internación.');
       }
     }
 
@@ -442,6 +634,8 @@
           body: JSON.stringify({
             id_efector_derivacion: idDest,
             condiciones_derivacion: condEl ? condEl.value.trim() : '',
+            solicitar_internacion: !!(document.getElementById('guardia-derivar-solicitar-internacion') || {}).checked,
+            notificar_internacion_id_efector: idDest,
           }),
         });
         if (json.success === false) {
@@ -598,6 +792,9 @@
         var parts = [];
         if (d.activos != null) parts.push(d.activos + ' activos');
         if (d.sin_triage != null) parts.push(d.sin_triage + ' sin triage');
+        if (d.sla_incumplidos_tablero != null) {
+          parts.push(d.sla_incumplidos_tablero + ' SLA incumplido(s)');
+        }
         var t = d.tiempos_hoy || {};
         if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + t.minutos_a_medico + ' min');
         el.textContent = parts.join(' · ');
@@ -611,6 +808,14 @@
       if (btn) {
         btn.addEventListener('click', function () {
           loadGuardiaTablero(false);
+        });
+      }
+      var exportBtn = wrapEl.querySelector('[data-role="tablero-export-csv"]');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', function (ev) {
+          var api = window.BioenlaceNativePage;
+          if (!api) return;
+          exportBtn.href = api.apiV1Url('clinical/emergency-guardia/indicadores-export-csv');
         });
       }
     }
@@ -796,6 +1001,10 @@
     var finalizarSubmit = document.getElementById('guardia-finalizar-submit');
     if (finalizarSubmit) {
       finalizarSubmit.addEventListener('click', submitFinalizarModal);
+    }
+    var clinicalPedidoSubmit = document.getElementById('guardia-clinical-pedido-submit');
+    if (clinicalPedidoSubmit) {
+      clinicalPedidoSubmit.addEventListener('click', submitClinicalPedido);
     }
 
     load();

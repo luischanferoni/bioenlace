@@ -14,6 +14,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [resumen-atencion-paciente.md](./resumen-atencion-paciente.md) | Resumen post-consulta y expediente staff |
 | [planes-de-tratamiento.md](./planes-de-tratamiento.md) | Care plans y recordatorios |
 | [receta-electronica.md](./receta-electronica.md) | Receta emitida, PDF, paciente |
+| [urgencias-guardia.md](./urgencias-guardia.md) | Triage, tablero operativo, circuito EMER |
 
 ## Otros mapas
 

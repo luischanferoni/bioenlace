@@ -17,7 +17,9 @@ Núcleo clínico actual de Bioenlace para consulta externa: modelo **encounter**
 ## Lo que falta
 
 - [ ] Historia clínica longitudinal única “tipo expediente” para staff sin export PDF (timeline unificado en UI).
-- [ ] Internación y urgencias en el mismo modelo FHIR con la misma profundidad que AMB.
+- [ ] Internación en el mismo modelo FHIR con la misma profundidad que AMB.
+- [x] Guardia: captura clínica vía consulta hijo (`GUARDIA`) y tablero operativo EMER (circuito v1).
+- [ ] Pedidos y resultados en guardia con la misma UX que ambulatorio sin salir del módulo.
 - [ ] Derivaciones estructuradas (encounter hijo / turno futuro) en producto.
 - [ ] Interoperabilidad saliente (HL7/FHIR bundle) a redes de salud.
 

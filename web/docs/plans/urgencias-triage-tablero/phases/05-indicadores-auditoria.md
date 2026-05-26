@@ -8,7 +8,7 @@ Dar visibilidad a **dirección y calidad**: tiempos door-to-triage y door-to-doc
 
 - [x] Medianas desde eventos en `GuardiaIndicadoresService` (ingreso → triage → médico, día actual)
 - [x] API `GET /api/v1/clinical/emergency-guardia/indicadores-resumen`
-- [ ] API export CSV (excluido por decisión de producto)
+- [x] API export CSV (`GET indicadores-export-csv`)
 - [x] Resumen en cabecera del tablero (inicio web EMER)
 - [ ] Vista `guardia/indicadores` dedicada (no requerida si inicio basta)
 - [x] Re-triage con evento `re_triage` en `guardia_circuito_event`

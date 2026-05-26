@@ -293,6 +293,18 @@ class InternacionController extends Controller
             $model->id_cama = $model_cama->id;
         }
 
+        $idGuardia = isset($get['id_guardia']) ? (int) $get['id_guardia'] : 0;
+        if ($idGuardia > 0) {
+            $guardia = \common\models\Guardia::findOne($idGuardia);
+            if ($guardia !== null) {
+                $model->id_guardia = $idGuardia;
+                $model->id_tipo_ingreso = 1;
+                if (!empty($guardia->condiciones_derivacion)) {
+                    $model->condiciones_derivacion = (string) $guardia->condiciones_derivacion;
+                }
+            }
+        }
+
         if ($cobertura_default !== null) {
             $model->obra_social = $cobertura_default;
         }
@@ -342,6 +354,11 @@ class InternacionController extends Controller
                                     'CarePlanLifecycle tras ingreso internación #' . $model->id . ': ' . $e->getMessage(),
                                     __METHOD__
                                 );
+                            }
+
+                            if ($idGuardia > 0) {
+                                (new \common\components\Emergency\GuardiaInternacionService())
+                                    ->marcarInternacionDesdeGuardia($idGuardia, (int) $model->id);
                             }
 
                             return $this->redirect(['view', 'id' => $model->id]);

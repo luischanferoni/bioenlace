@@ -60,6 +60,8 @@ final class GuardiaIndicadoresService
 
         $medianas = $this->medianasTiemposHoy($idEfector);
 
+        $slaIncumplidos = $this->contarSlaIncumplidosTablero($idEfector);
+
         return [
             'activos' => (int) $activos,
             'sin_triage' => $sinTriage,
@@ -67,7 +69,22 @@ final class GuardiaIndicadoresService
             'por_nivel' => $porNivel,
             'por_circuito' => $porCircuito,
             'tiempos_hoy' => $medianas,
+            'sla_incumplidos_tablero' => $slaIncumplidos,
+            'sla_config' => (new GuardiaSlaService())->configForEfector($idEfector),
         ];
+    }
+
+    public function contarSlaIncumplidosTablero(int $idEfector): int
+    {
+        $items = (new GuardiaQueueService())->tablero($idEfector, ['solo_activos' => true])['items'];
+        $n = 0;
+        foreach ($items as $row) {
+            if (!empty($row['sla_violado'])) {
+                $n++;
+            }
+        }
+
+        return $n;
     }
 
     /**

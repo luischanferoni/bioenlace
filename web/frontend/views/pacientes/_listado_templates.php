@@ -81,9 +81,12 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
                 <h4 class="mb-0">Tablero de guardia</h4>
                 <p class="text-muted small mb-0 d-none" data-role="tablero-resumen"></p>
             </div>
-            <button type="button" class="btn btn-outline-secondary btn-sm" data-role="tablero-refresh">
-                <i class="bi bi-arrow-clockwise"></i> Actualizar
-            </button>
+            <div class="d-flex gap-1">
+                <a href="#" class="btn btn-outline-secondary btn-sm" data-role="tablero-export-csv" download>Exportar CSV</a>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-role="tablero-refresh">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+            </div>
         </div>
         <div class="card-body p-0" data-slot="guardias-rows"></div>
         <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -103,9 +106,12 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
                 <p class="mb-1 small" data-field="motivo-line"></p>
                 <div class="d-flex flex-wrap gap-2 small">
                     <span class="badge bg-secondary" data-field="circuito-badge"></span>
+                    <span class="badge bg-danger d-none" data-field="sla-badge">SLA</span>
+                    <span class="badge bg-info text-dark d-none" data-field="internacion-badge">Cama pendiente</span>
                     <span class="text-muted" data-field="espera-line"></span>
                     <span class="text-muted d-none" data-field="profesional-line"></span>
                 </div>
+                <p class="mb-1 small text-muted d-none" data-field="clinical-line"></p>
             </div>
         </div>
         <div class="d-flex flex-column gap-1 ms-2 align-items-stretch" style="min-width: 7.5rem;">
@@ -115,6 +121,8 @@ $urlGuardiaIndex = Url::to(['guardia/index'], true);
             <button type="button" class="btn btn-outline-success btn-sm d-none" data-role="cta-tomar">Tomar caso</button>
             <button type="button" class="btn btn-outline-warning btn-sm d-none" data-role="cta-derivar">Derivar</button>
             <button type="button" class="btn btn-outline-danger btn-sm d-none" data-role="cta-finalizar">Egreso</button>
+            <button type="button" class="btn btn-outline-dark btn-sm d-none" data-role="cta-clinical">Pedidos / Lab</button>
+            <button type="button" class="btn btn-outline-info btn-sm d-none" data-role="cta-internacion">Solicitar cama</button>
         </div>
     </div>
 </template>

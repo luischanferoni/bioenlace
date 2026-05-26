@@ -1,6 +1,6 @@
 # Urgencias / guardia
 
-**Madurez orientativa:** 4/4 (circuito operativo v1)
+**Madurez orientativa:** 4 / 4 (~95 %) — circuito v1 + post-v1 (pedidos/lab, cama, SLA, CSV, FCM médico).
 
 ## Lo que tenemos
 
@@ -11,16 +11,18 @@
 - [x] Tablero operativo en inicio web y móvil médico (cola, estados, minutos de espera).
 - [x] Asignación, inicio de atención con `captura_url`, derivación y egreso vía API.
 - [x] Indicadores resumen (medianas door-to-triage / door-to-doctor) + materialización diaria opcional.
-- [x] Push servidor (`EMERGENCY_ASSIGNED_TO_YOU`, `EMERGENCY_PATIENT_CRITICAL`).
+- [x] Push servidor y cliente FCM app médico (`EMERGENCY_*`).
 - [x] Intents asistente `urgencias.*` para tablero y triage.
+- [x] Pedidos y resultados de lab en tablero (`resumen-clinico`, `crear-pedido`).
+- [x] Solicitud de internación + badge “cama pendiente” + ingreso web con `id_guardia`.
+- [x] SLA por efector (`efector_emergency_config`) y alerta visual en tablero.
+- [x] Export CSV de indicadores (`indicadores-export-csv`).
 
-## Lo que falta (post v1)
+## Lo que falta (refinamiento)
 
-- [ ] Pedidos y resultados integrados desde guardia sin salir del módulo.
-- [ ] Derivación a cama con trazabilidad completa (badge “pendiente” en tablero).
-- [ ] Export CSV de indicadores para dirección médica.
-- [ ] FCM en app médico para recibir push de guardia.
-- [ ] SLA por nivel con `efector_emergency_config`.
+- [ ] Aviso sonoro en tablero al superar SLA.
+- [ ] Configuración SLA por UI de administración (hoy defaults en BD).
+- [ ] Pedidos con catálogo SNOMED / envío directo al LIS (sigue siendo indicación en Bioenlace).
 
 ## Documentación de producto
 

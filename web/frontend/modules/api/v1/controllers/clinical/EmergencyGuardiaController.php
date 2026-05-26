@@ -2,14 +2,19 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
+use common\components\Emergency\GuardiaClinicalSummaryService;
 use common\components\Emergency\GuardiaEfectorAccess;
+use common\components\Emergency\GuardiaIndicadoresExportService;
 use common\components\Emergency\GuardiaIndicadoresService;
 use common\components\Emergency\GuardiaIngresoService;
+use common\components\Emergency\GuardiaInternacionService;
 use common\components\Emergency\GuardiaOperacionService;
 use common\components\Emergency\GuardiaQueueService;
+use common\components\Emergency\GuardiaSlaService;
 use common\components\Emergency\GuardiaTriageService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
+use yii\web\Response;
 
 /**
  * Urgencias / guardia: ingreso, triage y tablero operativo (staff / médico EMER).
@@ -24,6 +29,11 @@ use Yii;
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/iniciar-atencion
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/derivar
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/finalizar
+ * GET  /api/v1/clinical/emergency-guardia/<guardiaId>/resumen-clinico
+ * POST /api/v1/clinical/emergency-guardia/<guardiaId>/crear-pedido
+ * POST /api/v1/clinical/emergency-guardia/<guardiaId>/solicitar-internacion
+ * GET  /api/v1/clinical/emergency-guardia/indicadores-export-csv
+ * GET  /api/v1/clinical/emergency-guardia/sla-config
  */
 class EmergencyGuardiaController extends BaseController
 {
@@ -32,6 +42,9 @@ class EmergencyGuardiaController extends BaseController
     private GuardiaQueueService $queue;
     private GuardiaOperacionService $operacion;
     private GuardiaIndicadoresService $indicadores;
+    private GuardiaClinicalSummaryService $clinical;
+    private GuardiaInternacionService $internacion;
+    private GuardiaIndicadoresExportService $export;
 
     public function init(): void
     {
@@ -41,6 +54,9 @@ class EmergencyGuardiaController extends BaseController
         $this->queue = new GuardiaQueueService();
         $this->operacion = new GuardiaOperacionService();
         $this->indicadores = new GuardiaIndicadoresService();
+        $this->clinical = new GuardiaClinicalSummaryService();
+        $this->internacion = new GuardiaInternacionService();
+        $this->export = new GuardiaIndicadoresExportService();
     }
 
     public function actionIngresar(): array
@@ -211,5 +227,98 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $this->success($data, 'Egreso registrado');
+    }
+
+    public function actionResumenClinico(int $guardiaId): array
+    {
+        try {
+            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                (int) Yii::$app->request->get('id_efector', 0) ?: null
+            );
+            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $data = $this->clinical->resumen($guardiaId, $idEfector);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        return $this->success($data, 'Resumen clínico de guardia');
+    }
+
+    public function actionCrearPedido(int $guardiaId): array
+    {
+        try {
+            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
+            );
+            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $data = $this->clinical->crearPedido($guardiaId, $idEfector, Yii::$app->request->post());
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        return $this->success($data, 'Pedido registrado', 201);
+    }
+
+    public function actionSolicitarInternacion(int $guardiaId): array
+    {
+        try {
+            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
+            );
+            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfectorInternacion = (int) (
+                Yii::$app->request->post('notificar_internacion_id_efector')
+                ?? Yii::$app->request->post('id_efector_internacion')
+                ?? $idEfector
+            );
+            $data = $this->internacion->solicitarInternacion($guardiaId, $idEfector, $idEfectorInternacion);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        return $this->success($data, 'Internación solicitada');
+    }
+
+    public function actionSlaConfig(): array
+    {
+        try {
+            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                (int) Yii::$app->request->get('id_efector', 0) ?: null
+            );
+            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $data = (new GuardiaSlaService())->configForEfector($idEfector);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        return $this->success($data, 'Configuración SLA de guardia');
+    }
+
+    public function actionIndicadoresExportCsv()
+    {
+        try {
+            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
+                (int) Yii::$app->request->get('id_efector', 0) ?: null
+            );
+            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $built = $this->export->buildCsv(
+                $idEfector,
+                Yii::$app->request->get('fecha_desde'),
+                Yii::$app->request->get('fecha_hasta')
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        $response = Yii::$app->response;
+        $response->format = Response::FORMAT_RAW;
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set(
+            'Content-Disposition',
+            'attachment; filename="' . $built['filename'] . '"'
+        );
+        $response->content = "\xEF\xBB\xBF" . $built['content'];
+
+        return $response;
     }
 }

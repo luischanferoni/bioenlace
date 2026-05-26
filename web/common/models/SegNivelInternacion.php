@@ -20,6 +20,7 @@ use common\models\DiagnosticoConsultaRepository as DCRepo;
  * @property int|null $id_cama
  * @property int|null $id_persona
  * @property int|null $id_profesional_efector_servicio
+ * @property int|null $id_guardia Episodio de guardia que originó el ingreso (si aplica)
  * @property string $created_at 
  * @property int $create_user 
  * @property string|null $updated_at 
@@ -91,7 +92,7 @@ class SegNivelInternacion extends \yii\db\ActiveRecord
             [
                 [['fecha_inicio','hora_inicio', 'fecha_fin', 'hora_fin'], 'safe'],
                 [['observaciones_alta', 'condiciones_derivacion', 'situacion_al_ingresar', 'ingresa_en', 'ingresa_con', 'datos_contacto_nombre', 'datos_contacto_tel'], 'string'],
-                [['id_tipo_alta', 'id_efector_derivacion', 'id_cama', 'id_persona', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'obra_social'], 'integer'],
+                [['id_tipo_alta', 'id_efector_derivacion', 'id_cama', 'id_persona', 'id_profesional_efector_servicio', 'id_guardia', 'created_by', 'updated_by', 'obra_social'], 'integer'],
                 [['id_cama'], 'exist', 'skipOnError' => true, 'targetClass' => InfraestructuraCama::className(), 'targetAttribute' => ['id_cama' => 'id']],
                 [['id_tipo_alta'], 'exist', 'skipOnError' => true, 'targetClass' => SegNivelInternacionTipoAlta::className(), 'targetAttribute' => ['id_tipo_alta' => 'id']],
                 [['id_efector_derivacion'], 'exist', 'skipOnError' => true, 'targetClass' => Efector::className(), 'targetAttribute' => ['id_efector_derivacion' => 'id_efector']],

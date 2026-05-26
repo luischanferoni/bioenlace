@@ -19,6 +19,13 @@ class EmergencyBoardItem {
   final String? triageLevelLabel;
   final String? triageLevelColor;
   final String? triageReasonText;
+  final bool slaViolado;
+  final String? slaTipo;
+  final bool internacionPendiente;
+  final String? internacionIngresoUrl;
+  final int ordersCount;
+  final int ordersLabPending;
+  final int laboratoryReportsCount;
 
   EmergencyBoardItem({
     required this.id,
@@ -35,6 +42,13 @@ class EmergencyBoardItem {
     this.triageLevelLabel,
     this.triageLevelColor,
     this.triageReasonText,
+    this.slaViolado = false,
+    this.slaTipo,
+    this.internacionPendiente = false,
+    this.internacionIngresoUrl,
+    this.ordersCount = 0,
+    this.ordersLabPending = 0,
+    this.laboratoryReportsCount = 0,
   });
 
   bool get needsTriage =>
@@ -43,6 +57,7 @@ class EmergencyBoardItem {
   factory EmergencyBoardItem.fromJson(Map<String, dynamic> json) {
     final paciente = json['paciente'] as Map<String, dynamic>?;
     final triage = json['triage'] as Map<String, dynamic>?;
+    final clinical = json['clinical'] as Map<String, dynamic>? ?? {};
     return EmergencyBoardItem(
       id: (json['id'] as int?) ?? 0,
       idPersona: (json['id_persona'] as int?) ??
@@ -63,6 +78,13 @@ class EmergencyBoardItem {
       triageLevelLabel: triage?['level_label'] as String?,
       triageLevelColor: triage?['level_color'] as String?,
       triageReasonText: triage?['reason_text'] as String?,
+      slaViolado: json['sla_violado'] == true,
+      slaTipo: json['sla_tipo'] as String?,
+      internacionPendiente: json['internacion_pendiente'] == true,
+      internacionIngresoUrl: json['internacion_ingreso_url'] as String?,
+      ordersCount: (clinical['orders_count'] as int?) ?? 0,
+      ordersLabPending: (clinical['orders_lab_pending'] as int?) ?? 0,
+      laboratoryReportsCount: (clinical['laboratory_reports_count'] as int?) ?? 0,
     );
   }
 }
@@ -190,10 +212,68 @@ class EmergencyGuardiaApi {
         .toList();
   }
 
+  Future<Map<String, dynamic>> getResumenClinico(int guardiaId) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/resumen-clinico',
+    );
+    final response = await http.get(uri, headers: _headers);
+    final decoded = json.decode(response.body);
+    if (response.statusCode != 200 ||
+        decoded is! Map<String, dynamic> ||
+        decoded['success'] != true) {
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error resumen clínico') : 'Error',
+      );
+    }
+    return (decoded['data'] as Map<String, dynamic>?) ?? {};
+  }
+
+  Future<void> crearPedido({
+    required int guardiaId,
+    required String display,
+    String category = 'laboratory',
+  }) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/crear-pedido',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode({'display': display, 'category': category}),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final decoded = json.decode(response.body);
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error al crear pedido') : 'Error',
+      );
+    }
+  }
+
+  Future<void> solicitarInternacion(int guardiaId, {int? idEfectorInternacion}) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/solicitar-internacion',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode({
+        if (idEfectorInternacion != null)
+          'notificar_internacion_id_efector': idEfectorInternacion,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final decoded = json.decode(response.body);
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error internación') : 'Error',
+      );
+    }
+  }
+
   Future<void> derivar({
     required int guardiaId,
     required int idEfectorDerivacion,
     String? condicionesDerivacion,
+    bool solicitarInternacion = false,
   }) async {
     final uri = Uri.parse(
       '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/derivar',
@@ -205,6 +285,9 @@ class EmergencyGuardiaApi {
         'id_efector_derivacion': idEfectorDerivacion,
         if (condicionesDerivacion != null && condicionesDerivacion.isNotEmpty)
           'condiciones_derivacion': condicionesDerivacion,
+        'solicitar_internacion': solicitarInternacion,
+        if (solicitarInternacion)
+          'notificar_internacion_id_efector': idEfectorDerivacion,
       }),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -219,11 +302,7 @@ class EmergencyGuardiaApi {
     final uri = Uri.parse(
       '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/finalizar',
     );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: '{}',
-    );
+    final response = await http.post(uri, headers: _headers, body: '{}');
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final decoded = json.decode(response.body);
       throw Exception(

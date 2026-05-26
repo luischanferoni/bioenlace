@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'firebase/firebase_bootstrap.dart';
 import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
 import 'screens/medico_signup_screen.dart';
@@ -53,7 +54,8 @@ Future<Map<String, dynamic>> _getUserData() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+  await FirebaseBootstrap.ensureInitialized();
+
   // Inicializar formato de fechas localizado para español
   await initializeDateFormatting('es', null);
   

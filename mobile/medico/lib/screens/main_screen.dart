@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../services/push_notification_service.dart';
 import 'home_screen.dart';
 import 'acciones_screen.dart';
 import 'configuracion_screen.dart';
@@ -27,6 +28,27 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   int _homeRefreshKey = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _initPush();
+  }
+
+  Future<void> _initPush() async {
+    await PushNotificationService.instance.init(
+      onOpen: (data) {
+        final guardiaId = PushNotificationService.guardiaIdDesdePush(data);
+        if (guardiaId != null && mounted) {
+          setState(() {
+            _selectedIndex = 0;
+            _homeRefreshKey++;
+          });
+        }
+      },
+    );
+    await PushNotificationService.instance.registerTokenIfLoggedIn();
+  }
 
   void _onEncounterChanged() {
     setState(() {

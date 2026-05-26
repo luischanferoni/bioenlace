@@ -45,7 +45,16 @@ Backend envía:
 - `EMERGENCY_ASSIGNED_TO_YOU` — al asignar médico  
 - `EMERGENCY_PATIENT_CRITICAL` — triage nivel 1–2  
 
-La app **médico** aún no integra FCM (solo paciente); las notificaciones quedan listas en servidor para cuando se habilite Firebase en médico.
+App **médico**: registro FCM vía `POST /devices/push-token` (`appClient: medico-flutter`). Requiere `google-services.json` / configuración Firebase (mismo patrón que paciente).
+
+## Post-v1 (paquete A)
+
+| Capacidad | API / UI |
+|-----------|----------|
+| Pedidos y lab en guardia | `GET …/resumen-clinico`, `POST …/crear-pedido`, modal web / menú móvil |
+| Internación (cama) | `POST …/solicitar-internacion`, badge en tablero, ingreso web `internacion/create?id_guardia=` |
+| SLA por efector | Tabla `efector_emergency_config`, flags `sla_violado` en tablero |
+| Export CSV indicadores | `GET …/indicadores-export-csv` |
 
 ## Asistente
 
@@ -64,6 +73,8 @@ Migraciones (orden):
 2. `m260603_100001_api_emergency_guardia_rbac`  
 3. `m260603_100002_api_emergency_guardia_operaciones_rbac`  
 4. `m260603_100003_guardia_metrics_daily`  
+5. `m260603_100005_efector_emergency_config` (+ `seg_nivel_internacion.id_guardia`)  
+6. `m260603_100007_api_emergency_guardia_post_v1_rbac`  
 
 Job métricas (cron nocturno sugerido):
 
@@ -72,10 +83,10 @@ php yii emergency-guardia/materialize-metrics
 # opcional fecha: php yii emergency-guardia/materialize-metrics 2026-05-19
 ```
 
-## Fuera de alcance v1
+## Fuera de alcance actual
 
-- Export CSV de indicadores (pedido explícito de excluirlo)  
-- Vista web dedicada solo de indicadores (el resumen en inicio basta en v1)
+- Vista web dedicada solo de indicadores (el resumen en inicio basta)  
+- Sonido automático en tablero al violar SLA (solo alerta visual por ahora)
 
 ## Referencias
 

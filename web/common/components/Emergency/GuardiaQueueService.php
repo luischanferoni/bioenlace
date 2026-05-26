@@ -2,6 +2,10 @@
 
 namespace common\components\Emergency;
 
+use common\components\Clinical\PatientHistoriaUrl;
+use common\models\Clinical\DiagnosticReport;
+use common\models\Clinical\ServiceRequest;
+use common\models\Consulta;
 use common\models\Efector;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
@@ -16,12 +20,27 @@ final class GuardiaQueueService
     /** @var GuardiaTriageService */
     private $triageSerializer;
 
+    /** @var GuardiaSlaService */
+    private $sla;
+
+    /** @var GuardiaInternacionService */
+    private $internacion;
+
+    /** @var GuardiaEncounterResolver */
+    private $encounterResolver;
+
     public function __construct(
         ?GuardiaCircuitoService $circuito = null,
-        ?GuardiaTriageService $triageSerializer = null
+        ?GuardiaTriageService $triageSerializer = null,
+        ?GuardiaSlaService $sla = null,
+        ?GuardiaInternacionService $internacion = null,
+        ?GuardiaEncounterResolver $encounterResolver = null
     ) {
         $this->circuito = $circuito ?? new GuardiaCircuitoService();
         $this->triageSerializer = $triageSerializer ?? new GuardiaTriageService();
+        $this->sla = $sla ?? new GuardiaSlaService();
+        $this->internacion = $internacion ?? new GuardiaInternacionService();
+        $this->encounterResolver = $encounterResolver ?? new GuardiaEncounterResolver();
     }
 
     /**
@@ -184,6 +203,10 @@ final class GuardiaQueueService
             );
         }
 
+        $sla = $this->sla->evaluate($guardia, $minutos, $circuito, $prioridad);
+        $internacion = $this->internacion->serializePendiente($guardia);
+        $clinical = $this->serializeClinicalCompact($guardia);
+
         return [
             'id' => (int) $guardia->id,
             'id_persona' => (int) $guardia->id_persona,
@@ -198,6 +221,12 @@ final class GuardiaQueueService
             'minutos_espera' => $minutos,
             'id_profesional_efector_servicio' => $guardia->id_profesional_efector_servicio,
             'profesional_asignado' => $pesNombre,
+            'sla_violado' => $sla['sla_violado'],
+            'sla_tipo' => $sla['sla_tipo'],
+            'sla_umbral_minutos' => $sla['sla_umbral_minutos'],
+            'internacion_pendiente' => $internacion['internacion_pendiente'],
+            'internacion_ingreso_url' => $internacion['internacion_ingreso_url'],
+            'clinical' => $clinical,
             'paciente' => [
                 'id' => $paciente ? (int) $paciente->id_persona : null,
                 'nombre_completo' => $paciente
@@ -209,6 +238,55 @@ final class GuardiaQueueService
                     : null,
             ],
             'triage' => $triagePayload,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeClinicalCompact(Guardia $guardia): array
+    {
+        $capturaUrl = PatientHistoriaUrl::captura(
+            (int) $guardia->id_persona,
+            Consulta::PARENT_GUARDIA,
+            (int) $guardia->id
+        );
+        $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);
+        if ($encounter === null) {
+            return [
+                'encounter_id' => null,
+                'captura_url' => $capturaUrl,
+                'orders_count' => 0,
+                'orders_lab_pending' => 0,
+                'laboratory_reports_count' => 0,
+            ];
+        }
+
+        $encounterId = (int) $encounter->id;
+        $ordersCount = (int) ServiceRequest::find()
+            ->where(['encounter_id' => $encounterId, 'deleted_at' => null])
+            ->count();
+        $hasLab = DiagnosticReport::find()
+            ->where(['encounter_id' => $encounterId, 'deleted_at' => null])
+            ->exists();
+        $labOrders = (int) ServiceRequest::find()
+            ->where([
+                'encounter_id' => $encounterId,
+                'deleted_at' => null,
+            ])
+            ->andWhere(['category' => ['procedure', 'laboratory', 'lab']])
+            ->count();
+        $labPending = $hasLab ? 0 : $labOrders;
+        $labReportsCount = (int) DiagnosticReport::find()
+            ->where(['encounter_id' => $encounterId, 'deleted_at' => null])
+            ->count();
+
+        return [
+            'encounter_id' => $encounterId,
+            'captura_url' => $capturaUrl,
+            'orders_count' => $ordersCount,
+            'orders_lab_pending' => $labPending,
+            'laboratory_reports_count' => $labReportsCount,
         ];
     }
 }

@@ -38,6 +38,14 @@ Vistas eliminadas: `frontend/views/internacion/v2/_view_*.php`.
   - `internacion-diagnostico/`, `internacion-medicamento/`, `internacion-practica/`
   - `internacion-atenciones-enfermeria/`, `internacion-suministro-medicamento/` (sin controller)
 
+## Paso 3 — Cambio de cama API + flow (hecho)
+
+- `InternacionCambioCamaService` + `GET|POST …/internacion/<id>/cambio-cama-formulario`.
+- UI JSON `cambio-cama-formulario.json`, intent `internacion.cambio-cama-flow`.
+- Web: `_cambio_cama_api.php` + widget JS en `/internacion/view#cambio-cama`.
+- `InternacionHcamaController` create/update/delete → **410**.
+- Migración RBAC `m260526_120001_api_internacion_cambio_cama_rbac`.
+
 ## Mantenido (operativo / pendiente flow)
 
 | Ítem | Motivo |
@@ -52,8 +60,8 @@ Vistas eliminadas: `frontend/views/internacion/v2/_view_*.php`.
 | Ítem | Destino |
 |------|---------|
 | Mapa de camas web | Absorber en inicio / intent (reducir `/internacion/index` MVC) |
-| `InternacionHcamaController` | Flow `internacion.cambio-cama-flow` |
-| `internacion/create` ingreso | Flow `internacion.ingreso-flow` |
+| `InternacionHcamaController` | Flow `internacion.cambio-cama-flow` + API | [x] Paso 3; MVC create → 410 |
+| `internacion/create` ingreso | Flow `internacion.ingreso-flow` | [ ] |
 | Borrar vistas huérfanas `internacion-*` (diagnóstico, medicamento, …) | [x] Paso 2 |
 | RBAC rutas web `internacion-diagnostico/*`, etc. | Fase 04 |
 | `SegNivelInternacion::getConsultas()` / tablas hijas legacy | Tras drop `consultas` (03c) |

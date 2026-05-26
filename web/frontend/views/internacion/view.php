@@ -1,6 +1,7 @@
 <?php
 
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\widgets\DetailView;
 
 use common\models\SegNivelInternacion;
@@ -22,14 +23,21 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php
 
 use frontend\assets\InternacionAltaAsset;
+use frontend\assets\InternacionCambioCamaAsset;
 
 InternacionAltaAsset::register($this);
+InternacionCambioCamaAsset::register($this);
 ?>
 
 <?= $this->render('_modal_alta.php', ['model' => $model]); ?>
 
 <?php if (!empty($altaCtx) && $model->enableExternacion()): ?>
     <?= $this->render('_alta_api', ['model' => $model, 'ctx' => $altaCtx]) ?>
+<?php endif; ?>
+
+<?php if (!empty($cambioCtx) && $model->enableCambioCama()): ?>
+    <div id="cambio-cama"></div>
+    <?= $this->render('_cambio_cama_api', ['model' => $model, 'ctx' => $cambioCtx]) ?>
 <?php endif; ?>
 
 <div class="seg-nivel-internacion-view">
@@ -49,7 +57,9 @@ InternacionAltaAsset::register($this);
                             </g>                            
                             </svg>'
                                 . ' Cambiar Cama',
-                            ['internacion-hcama/create', 'id' => $model->id],
+                            !empty($cambioCtx)
+                                ? Url::to(['internacion/view', 'id' => $model->id]) . '#cambio-cama'
+                                : ['internacion-hcama/create', 'id' => $model->id],
                             [
                                 'class' => 'btn btn-primary rounded-pill mt-2 me-2',
                                 'data-bs-toggle' => 'tooltip',

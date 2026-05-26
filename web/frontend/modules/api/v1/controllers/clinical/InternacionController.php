@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Inpatient\InternacionAltaEstructuradaService;
+use common\components\Inpatient\InternacionCambioCamaService;
 use common\components\Inpatient\InternacionCamaEstadoService;
 use common\components\Inpatient\InternacionEfectorAccess;
 use common\components\Inpatient\InternacionIndicadoresService;
@@ -20,6 +21,7 @@ use Yii;
  * GET  /api/v1/clinical/internacion/indicadores-resumen
  * POST /api/v1/clinical/internacion/cama/<camaId>/marcar-estado
  * GET|POST /api/v1/clinical/internacion/<internacionId>/alta-formulario
+ * GET|POST /api/v1/clinical/internacion/<internacionId>/cambio-cama-formulario
  * GET  /api/v1/clinical/internacion/plantillas-epicrisis
  * GET  /api/v1/clinical/internacion/<internacionId>/preview-plantilla-epicrisis
  */
@@ -31,6 +33,7 @@ class InternacionController extends BaseController
     private InternacionIndicadoresService $indicadores;
     private InternacionCamaEstadoService $camaEstado;
     private InternacionAltaEstructuradaService $alta;
+    private InternacionCambioCamaService $cambioCama;
 
     public function init(): void
     {
@@ -39,6 +42,7 @@ class InternacionController extends BaseController
         $this->indicadores = new InternacionIndicadoresService();
         $this->camaEstado = new InternacionCamaEstadoService();
         $this->alta = new InternacionAltaEstructuradaService();
+        $this->cambioCama = new InternacionCambioCamaService();
     }
 
     public function actionMapaCamas(): array
@@ -209,6 +213,83 @@ class InternacionController extends BaseController
                         $field['options'] = array_merge(
                             [['value' => '', 'label' => '— Sin plantilla —']],
                             $plantillaOptions
+                        );
+                    }
+                    $block['fields'][$fIdx] = $field;
+                }
+                $out['blocks'][$idx] = $block;
+            }
+        }
+
+        return $out;
+    }
+
+    public function actionCambioCamaFormulario(int $internacionId): array
+    {
+        $req = Yii::$app->request;
+        try {
+            $idEfector = InternacionEfectorAccess::resolveIdEfector(
+                (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0) ?: null
+            );
+            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        $out = UiScreenService::handleScreen(
+            'internacion',
+            'cambio-cama-formulario',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($internacionId, $idEfector): array {
+                [, $err] = $this->requireInternacionStaffAccess($internacionId);
+                if ($err !== null) {
+                    throw new \InvalidArgumentException((string) ($err['message'] ?? 'Sin permiso'));
+                }
+                $data = $this->cambioCama->registrarCambioCama($internacionId, $idEfector, $post);
+
+                return [
+                    'data' => $data,
+                    'message' => (string) ($data['message'] ?? 'Cambio de cama registrado'),
+                ];
+            }
+        );
+
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
+            [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId);
+            if ($err !== null) {
+                return $err;
+            }
+
+            try {
+                $ctx = $this->cambioCama->contextoCambioCama($internacion, $idEfector);
+            } catch (\InvalidArgumentException $e) {
+                return $this->error($e->getMessage(), null, 400);
+            }
+
+            $camaOptions = $ctx['camas_disponibles'] ?? [];
+
+            $params = array_merge($req->get(), [
+                'internacion_id' => (string) $internacionId,
+                'resumen_texto' => 'Cambio de cama — ' . ($ctx['paciente_nombre'] ?? 'paciente')
+                    . " (internación #{$internacionId})",
+                'cama_actual_label' => (string) ($ctx['cama_actual_label'] ?? ''),
+            ]);
+            $out = UiScreenService::renderUiDefinition('internacion', 'cambio-cama-formulario', $params, $params);
+            $out['data'] = $ctx;
+
+            foreach ($out['blocks'] ?? [] as $idx => $block) {
+                if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
+                    continue;
+                }
+                foreach ($block['fields'] ?? [] as $fIdx => $field) {
+                    if (!is_array($field)) {
+                        continue;
+                    }
+                    if ((string) ($field['name'] ?? '') === 'id_cama') {
+                        $field['options'] = array_merge(
+                            [['value' => '', 'label' => '— Elegir cama —']],
+                            $camaOptions
                         );
                     }
                     $block['fields'][$fIdx] = $field;

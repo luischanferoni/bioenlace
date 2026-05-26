@@ -3,7 +3,6 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\Url;
-
 use common\models\Persona;
 use common\components\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
@@ -99,8 +98,14 @@ $hola = 1;
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Solicitar Practica', ['internacion-practica/create', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item buttonAltaMedica']):'';
                                                 //$operaciones .= ($esEnfermero || $esMedico)? Html::a('Medicamentos', ['internacion-suministro-medicamento/create', 'idi' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';
                                                 
-                                                if($cama->internacionActual->enableCambioCama()) {
-                                                    $operaciones .= ($esEnfermero || $esMedico)? Html::a('Cambio Cama', ['internacion-hcama/create', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item']):'';
+                                                if ($cama->internacionActual->enableCambioCama()) {
+                                                    $operaciones .= ($esEnfermero || $esMedico)
+                                                        ? Html::a(
+                                                            'Cambio Cama',
+                                                            Url::to(['internacion/view', 'id' => $id]) . '#cambio-cama',
+                                                            ['class' => 'buttonsli dropdown-item']
+                                                        )
+                                                        : '';
                                                 }
                                                 $operaciones .= ($esEnfermero || $esMedico)? '<li>'.Html::a('Alta Médica', ['/internacion/update', 'id' => $id], $options = ['class' => 'buttonsli dropdown-item']).'</li>':'';
                                                 $nroCama = $cama->nro_cama;

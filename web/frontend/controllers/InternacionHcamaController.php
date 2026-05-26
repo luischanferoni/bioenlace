@@ -12,12 +12,33 @@ use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionRepository;
 use common\models\SegNivelInternacionHcama;
 use common\models\Persona;
+use yii\web\GoneHttpException;
 
 /**
+ * @deprecated Cambio de cama vía API / intent `internacion.cambio-cama-flow`. Index/view historial conservados.
+ *
  * InternacionHcamaController implements the CRUD actions for SegNivelInternacionHcama model.
  */
 class InternacionHcamaController extends Controller
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeAction($action)
+    {
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+        if (in_array($action->id, ['create', 'update', 'delete'], true)) {
+            throw new GoneHttpException(
+                'Cambio de cama migrado a API e asistente. '
+                . 'Use /internacion/view#cambio-cama o intent internacion.cambio-cama-flow.'
+            );
+        }
+
+        return true;
+    }
+
     /**
      * {@inheritdoc}
      */

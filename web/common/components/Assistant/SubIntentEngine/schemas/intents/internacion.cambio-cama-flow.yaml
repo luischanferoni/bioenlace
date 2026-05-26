@@ -1,0 +1,38 @@
+intent_id: internacion.cambio-cama-flow
+version: 1
+
+action_name: "Cambio de cama"
+description: "Traslado del paciente internado a otra cama del efector."
+rbac_route: "/api/clinical/internacion/cambio-cama-formulario"
+keywords:
+  - cambio de cama
+  - traslado de cama
+  - mover paciente internado
+  - reubicar internación
+
+intent_semantics:
+  goal: >-
+    Registrar el traslado de un paciente internado a otra cama disponible.
+  how: >-
+    Formulario con cama destino y motivo; libera la cama anterior.
+  outcome:
+    - El episodio queda asociado a la nueva cama y queda historial de movimiento.
+
+subintents:
+  - id: cambiar_cama
+    assistant_text: "Seleccioná la cama destino y el motivo"
+    requires:
+      - draft.internacion_id
+    provides: []
+    next: ""
+    open_ui:
+      action_id: clinical.internacion.cambio-cama-formulario
+      params:
+        internacion_id: "draft.internacion_id"
+
+flow_submit:
+  action_id: clinical.internacion.cambio-cama-formulario
+  params:
+    internacion_id: "draft.internacion_id"
+    id_cama: "draft.id_cama"
+    motivo: "draft.motivo"

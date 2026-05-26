@@ -1,0 +1,54 @@
+{
+  "ui_type": "ui_json",
+  "title": "Cambio de cama",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "paciente",
+      "title": "Paciente",
+      "text_field": "resumen_texto",
+      "text": ""
+    },
+    {
+      "kind": "message",
+      "id": "cama_actual",
+      "title": "Cama actual",
+      "text_field": "cama_actual_label",
+      "text": ""
+    },
+    {
+      "kind": "fields",
+      "id": "cambio",
+      "title": "Nueva ubicación",
+      "fields": [
+        {
+          "name": "internacion_id",
+          "label": "ID internación",
+          "type": "text",
+          "required": true,
+          "readonly": true
+        },
+        {
+          "name": "id_cama",
+          "label": "Cama destino",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "motivo",
+          "label": "Motivo del cambio",
+          "type": "text",
+          "required": true,
+          "max_length": 128
+        }
+      ]
+    }
+  ]
+}

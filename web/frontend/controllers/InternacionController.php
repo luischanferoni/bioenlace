@@ -200,6 +200,19 @@ class InternacionController extends Controller
             }
         }
 
+        $cambioCtx = [];
+        if ($model->enableCambioCama()) {
+            try {
+                $idEfector = (int) Yii::$app->user->getIdEfector();
+                if ($idEfector > 0) {
+                    $cambioCtx = (new \common\components\Inpatient\InternacionCambioCamaService())
+                        ->contextoCambioCama($model, $idEfector);
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('Contexto cambio cama API: ' . $e->getMessage(), __METHOD__);
+            }
+        }
+
         // Captura clínica: timeline + formulario encounter (IMP), no pestañas MVC legacy.
         $urlCapturaClinica = null;
         if ($puedeAtender && !$model->internacionConAlta()) {
@@ -218,6 +231,7 @@ class InternacionController extends Controller
             'urlCapturaClinica' => $urlCapturaClinica,
             'puedeAtender' => $puedeAtender,
             'altaCtx' => $altaCtx,
+            'cambioCtx' => $cambioCtx,
         ]);
     }
 

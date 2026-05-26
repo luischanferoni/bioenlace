@@ -70,6 +70,7 @@ Base: `/api/v1/clinical/internacion`
 | Mapa de camas | `GET` (y `POST` para UI JSON asistente) | Filtros `id_piso`, `id_sala`; intent `internacion.mapa-camas-flow` |
 | Indicadores | `GET indicadores-resumen` | Ocupación %, activas, estadía media/mediana |
 | Marcar estado cama | `POST cama/<camaId>/marcar-estado` | `estado_mapa`, `motivo` opcional |
+| Cambio de cama | `GET\|POST <internacionId>/cambio-cama-formulario` | UI JSON + submit; intent `internacion.cambio-cama-flow` |
 | Alta formulario | `GET\|POST <internacionId>/alta-formulario` | UI JSON + submit; intent `internacion.alta-estructurada-flow` |
 | Plantillas (uso) | `GET plantillas-epicrisis` | Solo activas para el efector |
 | Preview plantilla | `GET <internacionId>/preview-plantilla-epicrisis` | Query `plantilla_id` |
@@ -84,13 +85,14 @@ Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 
 - `internacion.mapa-camas-flow` — mapa + listado embebible  
 - `internacion.alta-estructurada-flow` — formulario de alta  
-- *(backlog)* `internacion.cambio-cama-flow`, `internacion.ingreso-flow`
+- `internacion.cambio-cama-flow` — traslado a otra cama  
+- *(backlog)* `internacion.ingreso-flow`
 
 ## Retiro MVC clínico (clean-legacy)
 
 **Eliminado / 410:** captura por pestañas (`InternacionDiagnostico*`, `InternacionMedicamento*`, `InternacionPractica*`, `InternacionAtencionesEnfermeria*`, partials `internacion/v2/_view_*`).
 
-**Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso, ronda), `InternacionHcamaController` (cambio de cama hasta flow), ABM plantillas.
+**Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso, ronda), historial `InternacionHcamaController` (index), ABM plantillas. Cambio de cama vía API + `#cambio-cama` en view.
 
 ## Fuera de alcance actual
 

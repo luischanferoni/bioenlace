@@ -74,7 +74,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 |------|------|--------|-------|
 | Sub-controllers internación clínicos (`InternacionDiagnostico*`, medicamento, práctica, enfermería) | controller | [x] | 410 + trait 03d; captura → timeline IMP |
 | `InternacionAtencionesEnfermeriaController` | controller | [x] | 410 (03d) |
-| `InternacionHcamaController` | controller | [-] | Pendiente flow cambio cama |
+| `InternacionHcamaController` | controller | [x] | create/update/delete 410; historial en index |
 | `EncuestaParchesMamariosController` | controller | [-] | `personas/view` |
 | `AutofacturacionController`, `ReporteController` | controller | [-] | SUMAR / planillas |
 
@@ -135,7 +135,8 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | Ronda «Atender» → `PatientHistoriaUrl` IMP | view | [x] | |
 | Sub-controllers clínicos → 410 | controller | [x] | `RetiredInternacionClinicalMvcTrait` |
 | Vistas `internacion/v2/_view_*` | view | [x] | Eliminadas |
-| `InternacionHcamaController` | controller | [ ] | Flow cambio cama |
+| `InternacionHcamaController` create/update/delete | controller | [x] | 410; API + view#cambio-cama |
+| Intent `internacion.cambio-cama-flow` | assistant | [x] | |
 | Mapa camas solo en inicio / asistente | varios | [ ] | Reducir MVC index |
 | Mapa camas: cama ocupada → timeline IMP | view | [x] | `_mapa_camas.php` |
 | `SegNivelInternacion::getEncounters()` | model | [x] | `getAtenciones()` deprecated |
@@ -165,7 +166,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `InternacionMedicamentoController` | — | [x] | 410 (03d) |
 | `InternacionPracticaController` | — | [x] | 410 (03d) |
 | `views/internacion/v2/_view_*.php` | — | [x] | Eliminadas (03d) |
-| `InternacionHcamaController` | Media | [ ] | Flow cambio cama |
+| `InternacionHcamaController` | — | [x] | API + flow cambio cama (03d paso 3) |
 | `InternacionController` index/ronda/view admin | Baja | [-] | Panel hasta inicio unificado |
 
 ### Facturación / reportes / turnos

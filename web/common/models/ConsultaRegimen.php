@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\models\Clinical\Encounter;
 use Yii;
 use common\models\snomed\SnomedProcedimientos;
 
@@ -39,7 +40,7 @@ class ConsultaRegimen extends \yii\db\ActiveRecord
             [['id_consulta'], 'integer'],
             [['concept_id'], 'string', 'max' => 25],
             [['indicaciones'], 'string', 'max' => 512],
-            [['id_consulta'], 'exist', 'skipOnError' => true, 'targetClass' => Consulta::className(), 'targetAttribute' => ['id_consulta' => 'id_consulta']],
+            [['id_consulta'], 'exist', 'skipOnError' => true, 'targetClass' => Encounter::class, 'targetAttribute' => ['id_consulta' => 'id']],
             [['concept_id'], 'exist', 'skipOnError' => true, 'targetClass' => SnomedProcedimientos::className(), 'targetAttribute' => ['concept_id' => 'conceptId']],
         ];
     }
@@ -74,9 +75,15 @@ class ConsultaRegimen extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
+    public function getEncounter()
+    {
+        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
+    }
+
+    /** @deprecated use {@see getEncounter()} */
     public function getConsulta()
     {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
+        return $this->getEncounter();
     }
 
     /**

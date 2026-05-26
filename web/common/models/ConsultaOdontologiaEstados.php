@@ -391,22 +391,16 @@ class ConsultaOdontologiaEstados extends \yii\db\ActiveRecord
         return self::getCPO(self::getPorPacienteHastaEncounter($idPersona, $encounterId));
     }
 
+    /** @deprecated use {@see getPorPacienteHastaEncounter()} */
     public static function getPorPacienteHastaConsulta($idPersona, $idConsulta)
     {
-        return self::find()
-            ->innerJoin('consultas', 
-                'consultas.id_consulta = consultas_odontologia_estados.id_consulta AND id_persona = '.$idPersona.
-                ' AND consultas.id_consulta <= '.$idConsulta.
-                ' AND consultas_odontologia_estados.condicion = "'.self::CONDICION_ACTIVO.'"'. ' AND consultas.deleted_at IS NULL')
-            ->asArray()
-            ->all();
+        return self::getPorPacienteHastaEncounter($idPersona, (int) $idConsulta);
     }
 
+    /** @deprecated use {@see getCPOHastaEncounter()} */
     public static function getCPOHastaConsulta($idPersona, $idConsulta)
     {
-        $estados = self::getPorPacienteHastaConsulta($idPersona, $idConsulta);
-
-        return self::getCPO($estados);
+        return self::getCPOHastaEncounter($idPersona, (int) $idConsulta);
     }
 
     public static function getCPO($estados)

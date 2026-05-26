@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\models\Clinical\Encounter;
 use Yii;
 
 /**
@@ -120,9 +121,15 @@ class ConsultaBalanceHidrico extends \yii\db\ActiveRecord
      *
      * @return \yii\db\ActiveQuery
      */
+    public function getEncounter()
+    {
+        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
+    }
+
+    /** @deprecated use {@see getEncounter()} */
     public function getConsulta()
     {
-        return $this->hasOne(Consulta::className(), ['id' => 'id_consulta']);
+        return $this->getEncounter();
     }
     
     public function afterFind()

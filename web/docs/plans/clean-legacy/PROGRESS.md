@@ -124,7 +124,8 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[-]` no aplica esta fase
 | `DiagnosticoConsultaRepository` IMP + contexto Encounter | repository | [x] | `resolveConsultaContext()` |
 | Pase previo turnos → `Encounter::findPasePrevioEncounter` | model | [x] | |
 | AR `Consulta` / `ConsultaBusqueda` `@deprecated` | model | [x] | Eliminar post-drop BD |
-| Vista `view_consulta_diagnostico` → FHIR | BD + repo | [ ] | |
+| Callers odontología / balance / régimen / suministro sin join `consultas` | model | [x] | Join `encounter`; console motivos → `reason_text` |
+| Vista `view_consulta_diagnostico` → FHIR | BD + repo | [x] | `view_encounter_diagnostico` + `DiagnosticoConsultaRepository` |
 
 ### Fase 03d — Internación MVC clínico (producto: web = móvil)
 

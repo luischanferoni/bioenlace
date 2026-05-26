@@ -13,7 +13,7 @@ use common\models\ServiciosEfector;
             </div>
             <?php if($referencia != null): ?>
             <div class="d-inline-flex">
-                <h7><span><?php echo common\models\Consulta::getEfectorByIdConsulta($referencia['id_consulta_solicitante'])?></span></h7>
+                <h7><span><?php echo \common\models\Clinical\Encounter::getEfectorNombreById((int) $referencia['id_consulta_solicitante'])?></span></h7>
             </div>
             <div class="d-inline-flex">
                 <h7><span><?php echo 'Indicaciones: '.$referencia['indicaciones'] ?></span></h7>

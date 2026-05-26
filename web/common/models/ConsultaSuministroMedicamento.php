@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\models\Clinical\Encounter;
 use Yii;
 use common\models\snomed\SnomedMedicamentos;
 
@@ -42,9 +43,9 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
     public function syncProfesionalEfectorServicioFromContext(): void
     {
         if ($this->id_consulta) {
-            $c = Consulta::findOne($this->id_consulta);
-            if ($c && (int) $c->id_profesional_efector_servicio > 0) {
-                $this->id_profesional_efector_servicio = (int) $c->id_profesional_efector_servicio;
+            $encounter = Encounter::findOne((int) $this->id_consulta);
+            if ($encounter && (int) $encounter->id_profesional_efector_servicio > 0) {
+                $this->id_profesional_efector_servicio = (int) $encounter->id_profesional_efector_servicio;
                 return;
             }
         }
@@ -112,9 +113,15 @@ class ConsultaSuministroMedicamento extends \yii\db\ActiveRecord
         return $this->hasOne(SegNivelInternacionMedicamento::className(), ['id' => 'id_internacion_medicamento']);
     }
 
+    public function getEncounter()
+    {
+        return $this->hasOne(Encounter::class, ['id' => 'id_consulta']);
+    }
+
+    /** @deprecated use {@see getEncounter()} */
     public function getConsulta()
     {
-        return $this->hasOne(Consulta::className(), ['id_consulta' => 'id_consulta']);
+        return $this->getEncounter();
     }
 
     public function getProfesionalEfectorServicio()

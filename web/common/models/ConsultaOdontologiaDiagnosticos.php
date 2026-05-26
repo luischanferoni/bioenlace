@@ -102,9 +102,13 @@ class ConsultaOdontologiaDiagnosticos extends \yii\db\ActiveRecord
     {
         return self::find()
             ->select('consultas_odontologia_diagnosticos.*, snomed_hallazgos.term')
-            ->innerJoin('consultas', 
-                'consultas.id_consulta = consultas_odontologia_diagnosticos.id_consulta AND id_persona = '.$idPersona.
-                ' AND consultas_odontologia_diagnosticos.condicion = "'.self::CONDICION_ACTIVO.'"'.' AND consultas.deleted_at IS NULL')
+            ->innerJoin(
+                ['enc' => \common\models\Clinical\Encounter::tableName()],
+                'enc.id = consultas_odontologia_diagnosticos.id_consulta'
+                . ' AND enc.subject_persona_id = ' . (int) $idPersona
+                . ' AND consultas_odontologia_diagnosticos.condicion = "' . self::CONDICION_ACTIVO . '"'
+                . ' AND enc.deleted_at IS NULL'
+            )
             ->innerJoin('snomed_hallazgos', 
                 'consultas_odontologia_diagnosticos.codigo = snomed_hallazgos.conceptId')                
             ->asArray()

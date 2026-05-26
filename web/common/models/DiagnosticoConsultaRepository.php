@@ -105,7 +105,7 @@ class DiagnosticoConsultaRepository
      * Ver funciones que la usan.
      */
     protected static function getQueryDiagPreviosByPersona($persona_id) {
-        $view_diagnosticos = "view_consulta_diagnostico";
+        $view_diagnosticos = 'view_encounter_diagnostico';
         
         # Sq0, Lista el ulitmo movimiento de los diagnosticos
         # con seguimiento, para persona. 

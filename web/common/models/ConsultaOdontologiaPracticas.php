@@ -127,8 +127,12 @@ class ConsultaOdontologiaPracticas extends \yii\db\ActiveRecord
             ->innerJoin(
                 ['dcy' => 'consultas_odontologia_practicas'],
                 'dcx.id_consultas_odontologia_practicas = dcy.root_id')
-            ->innerJoin('consultas', 
-                'consultas.id_consulta = dcx.id_consulta AND id_persona = '.$idPersona . ' AND consultas.deleted_at IS NULL')
+            ->innerJoin(
+                ['enc' => \common\models\Clinical\Encounter::tableName()],
+                'enc.id = dcx.id_consulta'
+                . ' AND enc.subject_persona_id = ' . (int) $idPersona
+                . ' AND enc.deleted_at IS NULL'
+            )
             ->groupBy('dcx.id_consultas_odontologia_practicas');
 
         $sq1 = (new Query())
@@ -137,8 +141,12 @@ class ConsultaOdontologiaPracticas extends \yii\db\ActiveRecord
             ->leftJoin(
                 ['cdb' => 'consultas_odontologia_practicas'],
                 'cda.id_consultas_odontologia_practicas = cdb.root_id')
-            ->innerJoin('consultas', 
-                'consultas.id_consulta = cda.id_consulta AND id_persona = '.$idPersona . ' AND consultas.deleted_at IS NULL')
+            ->innerJoin(
+                ['enc' => \common\models\Clinical\Encounter::tableName()],
+                'enc.id = cda.id_consulta'
+                . ' AND enc.subject_persona_id = ' . (int) $idPersona
+                . ' AND enc.deleted_at IS NULL'
+            )
             ->where('cda.root_id IS NULL')
             ->andWhere('cdb.root_id IS NULL');
 

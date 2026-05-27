@@ -111,6 +111,42 @@ La diferenciación por UI/UX **no se sostiene** solo bajando el precio del HIS: 
 
 ## Propuesta: cuatro modelos diferenciados
 
+A diferencia del modelo D2C («consulta gratis + margen Rx»), Bioenlace en **Argentina** combina las [ocho vías de ingreso](./mapa-vias-ingreso-bioenlace.md) del sector privado. No todas aplican hoy con el mismo peso; la fórmula agrupa **todas las fuentes posibles** y el horizonte típico en AR.
+
+```
+Ingreso Bioenlace (AR) ≈
+  licencia clínica + add-ons por módulo                    [Vía 1 — SaaS / HIS]
++ implementación + integraciones (LIS, lab) one-shot         [Vía 1, 7]
++ soporte y evolutivos anuales                              [Vía 1, 7]
++ pack OS / prepaga + autorizaciones digitales              [Vía 2]
++ facturación RCM + % recupero opcional                     [Vía 3]
++ analytics financiador (PMPM) + proyectos auditoría B2G    [Vía 4]
++ recetas enrutadas + rev share farmacia                    [Vía 5 — puente, no retail]
++ upsell retención (resumen, app, adherencia)               [Vía 6 — indirecto; sube ticket V1]
++ licitación provincial / SUMAR + contrato marco            [Vía 7]
++ pathways + PMPM afiliado gestionado                       [Vía 8 — prepaga/OS con riesgo]
++ variables por continuidad (turno, resumen, adherencia, Rx) [Modelos A, C]
++ pathway fees completados                                  [Modelo B]
+− (costo IA + infra + soporte entregado + ventas + implementación)
+```
+
+| Vía | Componente en la fórmula | Horizonte AR | Quién paga (AR) |
+|-----|--------------------------|--------------|-----------------|
+| **1** | Licencia base, add-ons guardia/internación/receta, soporte | **Corto** | Sanatorio, clínica, red ambulatoria |
+| **2** | Pack OS, autorización en agenda/Encounter, impl. financiador | **Mediano** | Sanatorio (cobro más rápido); prepaga/OS (control) |
+| **3** | RCM, factura–cobro–conciliación, fee transaccional o % recupero | **Mediano–largo** | Sanatorio alto volumen OS |
+| **4** | Analytics PMPM, informes, licitación antifraude/glosas | **Largo** | OS grande, prepaga, PAMI (muy largo), Estado |
+| **5** | Receta digital enrutada, rev share, white-label checkout | **Mediano** | Cadena farmacia; grupo sanitario con farmacia |
+| **6** | No línea propia: **mayor ARPU** vía módulos que retienen paciente de pago | **Corto** | Efector (particular / fuera de cartilla) |
+| **7** | Módulo licitado + impl. + soporte (ambulatorio, guardia, reporting) | **Largo** | Provincia, hospital público, SUMAR |
+| **8** | PMPM + módulo pathways/SLA clínico | **Mediano** (referencia AR) | Prepaga/OS con modelo de riesgo o capitación parcial |
+
+**Lectura rápida:** hoy el núcleo es **V1 + V6** (SaaS clínico + argumento de retención). El escalón de ticket en AR es **V2 + V5** (autorización OS + puente receta). **V3, V4 y V7** son enterprise/B2G. **V8** es referencia para prepagas, no el modelo dominante en AR (más por evento/OS que UPC pura).
+
+Los cuatro modelos siguientes (A–D) son **formas de empaquetar** esas vías — sobre todo V1, V5, V6 y V8 — sin subsidiar la consulta al paciente.
+
+---
+
 ### Modelo A — «Pago por continuidad» (recomendado)
 
 **Idea:** cobrar menos por sillón/licencia y más por **resultados medibles** que el producto ya soporta o está cerca de soportar.

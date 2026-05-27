@@ -247,4 +247,5 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 | **Mediano** | 2 (autorización OS), 5 (puente receta), 8 (pathways) | «Del acto clínico al cobro y la continuidad, sin retail» |
 | **Largo** | 3 (RCM pleno), 4 (auditoría B2G), 7 (licitación pública) | «Enterprise + financiador + Estado» |
 
-Ver matriz operativa para Argentina: [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).
+Ver matriz operativa para Argentina: [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).  
+Modelos de pricing diferenciados (continuidad B2B2C): [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).

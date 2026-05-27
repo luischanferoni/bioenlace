@@ -10,6 +10,7 @@ No es proyección financiera ni compromiso de roadmap; son **hipótesis orientat
 |---------|-----------|
 | [mapa-vias-ingreso-bioenlace.md](./mapa-vias-ingreso-bioenlace.md) | Vías de ingreso del sector privado (casos país) × encaje con Bioenlace, con detalle por vía |
 | [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md) | Módulos Bioenlace × comprador AR × precio orientativo × build faltante |
+| [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md) | Modelos A–D (continuidad, white-label, B2B2C Rx, freemium); unit economics; qué evitar |
 
 ## Convenciones
 

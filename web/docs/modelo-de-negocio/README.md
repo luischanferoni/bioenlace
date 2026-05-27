@@ -41,4 +41,6 @@ Documentación de **referencia comparativa**: cómo distintos países organizan 
 
 ## Objetivo para Bioenlace
 
-Contrastar **quién paga el acto clínico** (Estado, seguro social, prepaga, bolsillo) vs. **quién paga la plataforma** (hospital, financiador, licitación, paciente).
+Contrastar **quién paga el acto clínico** (Estado, seguro social, prepaga, bolsillo) vs. **quién paga la plataforma** (hospital, financiador, licitación, partners).
+
+El [business-plan](./business-plan/README.md) modela **ingreso institucional** (licencia, add-ons, autorización OS, RCM, receta enrutada, B2G). No incluye retención del paciente final ni pricing variable por comportamiento post-consulta.

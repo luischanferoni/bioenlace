@@ -50,7 +50,7 @@ Cada área del hospital se califica de **0 a 4**:
 - **Gestión de demanda:** KPIs de agenda (no-show, días hasta la cita) y adherencia a planes de tratamiento para el equipo.
 - **Cumplimiento orientado a staff:** expediente amplio bajo demanda (generación en segundo plano, sin exposición al paciente).
 
-Eso define un **wedge** claro: instituciones que quieren **mejor experiencia ambulatoria y captación/retención de pacientes**, no aún un HIS monolítico de facturación y logística.
+Eso define un **wedge** claro: instituciones que quieren **mejor operación ambulatoria, agenda y captura clínica**, no aún un HIS monolítico de facturación y logística. El [modelo de ingreso comercial](../modelo-de-negocio/business-plan/README.md) se apoya en licencia institucional y vías OS/receta — no en monetizar retención del paciente.
 
 ### Dónde está el mayor gap de mercado (y de inversión)
 
@@ -314,7 +314,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Intercambio estándar con otras redes de salud (mensajería clínica entre sistemas).
 - Retiro completo de pantallas administrativas que aún hablan de “consulta” en lugar de “atención”.
 
-**Implicación de producto:** este es el **core** actual; buena historia para retención de pacientes y diferenciación frente a agenda suelta.
+**Implicación de producto:** este es el **core** actual; diferenciación frente a agenda suelta y captura fragmentada. **Comercial:** licencia por efector/profesional ([matriz AR](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md)).
 
 ---
 
@@ -366,7 +366,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor experiencia amb
 - Versionado y auditoría regulatoria del plan.
 - Continuidad ambulatoria explícita al alta (nuevo plan crónico) como flujo guiado en pantalla.
 
-**Implicación de producto:** refuerzo de retención y chronic care; el equipo ya puede priorizar seguimiento por baja adherencia.
+**Implicación de producto:** soporte a crónicos y seguimiento clínico; el equipo ya puede priorizar planes por baja adherencia (dashboard staff). **Comercial:** add-on de módulo, no pricing por adherencia del paciente.
 
 ---
 

@@ -142,9 +142,10 @@ Menor volumen que Brasil o Colombia, pero presente:
 ## Lecturas para Bioenlace (Argentina)
 
 - Producto debe contemplar **múltiples roles**: prestador (efector), profesional, **financiador** (OS/prepaga) y paciente.
-- **Autorización y facturación** son tan importantes como la captura clínica en segmento privado/OS.
+- **Autorización y facturación** son tan importantes como la captura clínica en segmento privado/OS (vías 2 y 3 del [mapa de ingreso](../business-plan/mapa-vias-ingreso-bioenlace.md)).
 - **API + UI JSON** encajan con prepagas y grupos sanitarios que quieren canal digital sin reemplazar legacy de liquidación de un día.
-- Sector público provincial: oportunidad por **licitación**, ciclos largos, requisitos de soberanía de datos.
+- Sector público provincial: oportunidad por **licitación**, ciclos largos, requisitos de soberanía de datos (vía 6).
+- **Monetización comercial:** licencia y add-ons al efector/financiador; receta enrutada con partner farmacia. No se modela ingreso por retención del paciente ([pricing](../business-plan/modelos-pricing-diferenciados.md)).
 
 ---
 

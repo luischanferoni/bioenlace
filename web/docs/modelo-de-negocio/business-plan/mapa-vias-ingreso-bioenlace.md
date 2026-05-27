@@ -2,7 +2,7 @@
 
 **Tipo:** business plan · estrategia producto  
 **Última actualización:** 2026-05-27  
-**Fuentes:** casos en [`../`](../README.md), madurez en [`../../his-completo/informe-ejecutivo.md`](../../his-completo/informe-ejecutivo.md)
+**Fuentes:** casos en `[../](../README.md)`, madurez en `[../../his-completo/informe-ejecutivo.md](../../his-completo/informe-ejecutivo.md)`
 
 ---
 
@@ -10,83 +10,179 @@
 
 ### Abreviaturas
 
-| Sigla | Significado | En castellano / contexto |
-|-------|-------------|--------------------------|
-| **HIS** | *Hospital Information System* | Sistema de información hospitalario (historia, turnos, internación, facturación). |
-| **OS** | *Obra Social* (Argentina) | Financiador prepago de salud; aquí no es *Operating System*. |
-| **EPS** | *Entidad Promotora de Salud* (Colombia) | Financiador / aseguradora que administra el régimen contributivo y subsidio. |
-| **IPS** | *Instituciones Prestadoras de Salud* (Colombia) | Prestador que atiende afiliados de una EPS (equivalente a clínica/sanatorio). |
-| **RCM** | *Revenue Cycle Management* | Gestión del ciclo de ingresos: acto clínico → factura/claim → cobro → conciliación. |
-| **B2G** | *Business to Government* | Venta o licitación al Estado (ministerio, hospital público, programa). |
-| **B2B2C** | *Business to Business to Consumer* | Cliente institucional; el usuario final es el paciente (efector compra, paciente usa app). |
-| **Rx** | *Prescription* | Receta médica / receta electrónica. |
-| **PMPM** | *Per Member Per Month* | Precio por afiliado por mes (típico en prepagas y analytics). |
-| **UPC** | *Unidad de Pago por Capitación* (Colombia) | Monto fijo que recibe la EPS por afiliado; modelo de capitación. |
-| **KPI** | *Key Performance Indicator* | Indicador clave (no-show, lead time, % adherencia, etc.). |
-| **SLA** | *Service Level Agreement* | Acuerdo de nivel de servicio (ej. tiempos máximos en guardia). |
-| **ROI** | *Return on Investment* | Retorno de la inversión para el comprador del software. |
-| **LIS** | *Laboratory Information System* | Sistema de laboratorio; integración de resultados con la historia clínica. |
-| **PMO** | *Programa Médico Obligatorio* (Argentina) | Nomenclador y prestaciones mínimas de las obras sociales. |
-| **COO** | *Chief Operating Officer* | Director de operaciones; comprador frecuente en sanatorios. |
-| **NHSA** | *National Healthcare Security Administration* (China) | Administración nacional de seguro médico; auditoría y control de claims. |
-| **RNOS** | *Registro Nacional de Obras Sociales* (Argentina) | Registro de obras sociales; contexto de auditoría y normativa. |
-| **ANS** | *Agência Nacional de Saúde Suplementar* (Brasil) | Regulador de operadoras de salud privadas. |
-| **CCSS** | *Caja Costarricense de Seguro Social* | Seguro social integrado de Costa Rica. |
-| **SUS** | *Sistema Único de Saúde* (Brasil) | Sistema público de salud brasileño. |
-| **IMSS** | *Instituto Mexicano del Seguro Social* | Seguro social mexicano. |
-| **FONASA** | *Fondo Nacional de Salud* (Chile) | Financiador público chileno. |
-| **MLE** | *Modalidad de Libre Elección* (Chile) | Régimen FONASA con elección de prestador y copagos. |
-| **MA** | *Medicare Advantage* (EE.UU.) | Plan de Medicare gestionado por aseguradora privada (modelo capitado). |
-| **GP** | *General Practitioner* (Reino Unido) | Médico de cabecera en atención primaria. |
+
+| Sigla      | Significado                                           | En castellano / contexto                                                                   |
+| ---------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **HIS**    | *Hospital Information System*                         | Sistema de información hospitalario (historia, turnos, internación, facturación).          |
+| **OS**     | *Obra Social* (Argentina)                             | Financiador prepago de salud; aquí no es *Operating System*.                               |
+| **EPS**    | *Entidad Promotora de Salud* (Colombia)               | Financiador / aseguradora que administra el régimen contributivo y subsidio.               |
+| **IPS**    | *Instituciones Prestadoras de Salud* (Colombia)       | Prestador que atiende afiliados de una EPS (equivalente a clínica/sanatorio).              |
+| **RCM**    | *Revenue Cycle Management*                            | Gestión del ciclo de ingresos: acto clínico → factura/claim → cobro → conciliación.        |
+| **B2G**    | *Business to Government*                              | Venta o licitación al Estado (ministerio, hospital público, programa).                     |
+| **B2B2C**  | *Business to Business to Consumer*                    | Cliente institucional; el usuario final es el paciente (efector compra, paciente usa app). |
+| **Rx**     | *Prescription*                                        | Receta médica / receta electrónica.                                                        |
+| **PMPM**   | *Per Member Per Month*                                | Precio por afiliado por mes (típico en prepagas y analytics).                              |
+| **UPC**    | *Unidad de Pago por Capitación* (Colombia)            | Monto fijo que recibe la EPS por afiliado; modelo de capitación.                           |
+| **KPI**    | *Key Performance Indicator*                           | Indicador clave (no-show, lead time, % adherencia, etc.).                                  |
+| **SLA**    | *Service Level Agreement*                             | Acuerdo de nivel de servicio (ej. tiempos máximos en guardia).                             |
+| **ROI**    | *Return on Investment*                                | Retorno de la inversión para el comprador del software.                                    |
+| **LIS**    | *Laboratory Information System*                       | Sistema de laboratorio; integración de resultados con la historia clínica.                 |
+| **PMO**    | *Programa Médico Obligatorio* (Argentina)             | Nomenclador y prestaciones mínimas de las obras sociales.                                  |
+| **COO**    | *Chief Operating Officer*                             | Director de operaciones; comprador frecuente en sanatorios.                                |
+| **NHSA**   | *National Healthcare Security Administration* (China) | Administración nacional de seguro médico; auditoría y control de claims.                   |
+| **RNOS**   | *Registro Nacional de Obras Sociales* (Argentina)     | Registro de obras sociales; contexto de auditoría y normativa.                             |
+| **ANS**    | *Agência Nacional de Saúde Suplementar* (Brasil)      | Regulador de operadoras de salud privadas.                                                 |
+| **CCSS**   | *Caja Costarricense de Seguro Social*                 | Seguro social integrado de Costa Rica.                                                     |
+| **SUS**    | *Sistema Único de Saúde* (Brasil)                     | Sistema público de salud brasileño.                                                        |
+| **IMSS**   | *Instituto Mexicano del Seguro Social*                | Seguro social mexicano.                                                                    |
+| **FONASA** | *Fondo Nacional de Salud* (Chile)                     | Financiador público chileno.                                                               |
+| **MLE**    | *Modalidad de Libre Elección* (Chile)                 | Régimen FONASA con elección de prestador y copagos.                                        |
+| **MA**     | *Medicare Advantage* (EE.UU.)                         | Plan de Medicare gestionado por aseguradora privada (modelo capitado).                     |
+| **GP**     | *General Practitioner* (Reino Unido)                  | Médico de cabecera en atención primaria.                                                   |
+
 
 ### Términos en inglés (negocio y producto)
 
-| Término | Significado |
-|---------|-------------|
-| **wedge** (*cuña*) | Punto de entrada comercial donde Bioenlace ya encaja fuerte (ambulatorio + Encounter + agenda + guardia). |
-| **Encounter** | Encuentro clínico atendido: unidad central del registro FHIR y del flujo Bioenlace. |
-| **claim** | Reclamo de cobro al financiador (EE.UU. y modelos similares): traducción del acto clínico en ítems facturables. |
-| **handoff** | Traspaso del paciente o del dato entre actores (consulta → autorización → farmacia → liquidación). |
-| **build** | Capacidad de producto que falta desarrollar o integrar («build faltante»). |
-| **retail** | Venta minorista al consumidor final; en vía 5, operar farmacia propia (Bioenlace no lo hace). |
-| **checkout** | Cierre de compra en app o web (modelo China super-app). |
-| **white-label** | Producto con marca del cliente (prepaga, OS) en lugar de Bioenlace. |
-| **pathway** | Camino clínico acotado y medible (crónico, renovación Rx, post-alta). |
-| **enterprise** | Segmento institucional grande (sanatorio, red, financiador) con integraciones pesadas. |
-| **end-to-end** | De punta a punta (ej. guardia facturable desde ingreso hasta cobro). |
-| **one-shot** | Pago único por implementación o integración, no recurrente. |
-| **rev share** (*revenue share*) | Reparto de ingresos con un socio comercial (ej. farmacia). |
-| **upsell** | Venta de módulos adicionales al cliente existente. |
-| **no-show** | Paciente que no asiste al turno reservado. |
-| **batch** | Procesamiento por lotes (archivos periódicos) en lugar de integración en tiempo real. |
-| **outcomes** | Resultados clínicos medibles vinculados a adherencia o pathways. |
-| **loop** | Ciclo cerrado (ej. receta → dispensación → confirmación de cumplimiento). |
-| **retailer** | Operador que vende al consumidor final; Bioenlace actúa como puente, no retailer. |
-| **prior authorization** | Autorización previa del financiador antes de una práctica o estudio de alto costo. |
-| **puente clínico** | Rol de Bioenlace: receta digital y derivación sin operar farmacia ni logística. |
+
+| Término                         | Significado                                                                                                     |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **wedge** (*cuña*)              | Punto de entrada comercial donde Bioenlace ya encaja fuerte (ambulatorio + Encounter + agenda + guardia).       |
+| **Encounter**                   | Encuentro clínico atendido: unidad central del registro FHIR y del flujo Bioenlace.                             |
+| **claim**                       | Reclamo de cobro al financiador (EE.UU. y modelos similares): traducción del acto clínico en ítems facturables. |
+| **handoff**                     | Traspaso del paciente o del dato entre actores (consulta → autorización → farmacia → liquidación).              |
+| **build**                       | Capacidad de producto que falta desarrollar o integrar («build faltante»).                                      |
+| **retail**                      | Venta minorista al consumidor final; en vía 5, operar farmacia propia (Bioenlace no lo hace).                   |
+| **checkout**                    | Cierre de compra en app o web (modelo China super-app).                                                         |
+| **white-label**                 | Producto con marca del cliente (prepaga, OS) en lugar de Bioenlace.                                             |
+| **pathway**                     | Camino clínico acotado y medible (crónico, renovación Rx, post-alta).                                           |
+| **enterprise**                  | Segmento institucional grande (sanatorio, red, financiador) con integraciones pesadas.                          |
+| **end-to-end**                  | De punta a punta (ej. guardia facturable desde ingreso hasta cobro).                                            |
+| **one-shot**                    | Pago único por implementación o integración, no recurrente.                                                     |
+| **rev share** (*revenue share*) | Reparto de ingresos con un socio comercial (ej. farmacia).                                                      |
+| **upsell**                      | Venta de módulos adicionales al cliente existente.                                                              |
+| **no-show**                     | Paciente que no asiste al turno reservado.                                                                      |
+| **batch**                       | Procesamiento por lotes (archivos periódicos) en lugar de integración en tiempo real.                           |
+| **outcomes**                    | Resultados clínicos medibles vinculados a adherencia o pathways.                                                |
+| **loop**                        | Ciclo cerrado (ej. receta → dispensación → confirmación de cumplimiento).                                       |
+| **retailer**                    | Operador que vende al consumidor final; Bioenlace actúa como puente, no retailer.                               |
+| **prior authorization**         | Autorización previa del financiador antes de una práctica o estudio de alto costo.                              |
+| **puente clínico**              | Rol de Bioenlace: receta digital y derivación sin operar farmacia ni logística.                                 |
+
 
 ---
 
 ## Resumen
 
-Las vías de ingreso del sector privado documentadas por país (China, Argentina, Colombia, etc.) no son todas atacables por Bioenlace con el mismo esfuerzo. Este mapa clasifica cada vía según **encaje actual**, **quién paga**, **cómo monetizar** y **qué falta construir**.
+Las vías de ingreso del sector privado documentadas por país (China, Argentina, Colombia, etc.) **no son todas atacables** por Bioenlace con el mismo esfuerzo ni el mismo horizonte de producto. Este mapa clasifica cada vía según:
 
-**Wedge actual de Bioenlace:** atención ambulatoria + Encounter unificado, agenda con KPIs, paciente digital, guardia operativa, planes de tratamiento y asistente conversacional. **No** es aún un HIS enterprise de facturación, farmacia con stock ni retail Rx.
+
+| Criterio                | Pregunta que responde                                                                                          |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Encaje actual**       | ¿Qué tan listo está el producto hoy? (madurez en [informe ejecutivo](../../his-completo/informe-ejecutivo.md)) |
+| **Quién paga**          | Efector, financiador (OS/prepaga), farmacia partner, Estado                                                    |
+| **Cómo monetizar**      | Licencia, add-on, transacción, rev share, licitación                                                           |
+| **Qué falta construir** | Gap de producto o integración antes de escalar ventas                                                          |
+
+
+**Wedge actual de Bioenlace:** atención ambulatoria + Encounter unificado, agenda con KPIs, paciente digital, guardia operativa, planes de tratamiento y asistente conversacional. **No** es aún un HIS enterprise de facturación completa, operador de farmacia con stock ni retail Rx propio.
+
+**En Argentina (lectura rápida):** el núcleo comercial hoy es **vía 1** (SaaS / HIS clínico). El escalón de ticket es **vía 2 + vía 5** (autorización OS + receta enrutada a farmacia). **Vías 3, 4 y 6** son enterprise o B2G (ciclos largos). **Vía 7** es referencia para prepagas con modelo de riesgo. No se modela ingreso por retención del paciente final (ex vía copagos/bolsillo). Detalle: [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
+
+---
+
+### Componentes de ingreso que aparecen en varias vías
+
+Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten en la fórmula de ingreso y en propuestas comerciales:
+
+#### Licencia base y add-ons por módulo (vía 1)
+
+- **Licencia base:** ambulatorio + agenda + captura (Encounter) — lo que casi todo efector necesita para operar.
+- **Add-on:** módulo adicional con precio propio, sumado al fee mensual. No es otro producto: es el mismo Bioenlace, facturado por capacidades activadas.
+
+
+| Add-on típico (AR)  | Para qué                       | Orden de magnitud  |
+| ------------------- | ------------------------------ | ------------------ |
+| Guardia / urgencias | Tablero EMER, triage, circuito | +USD 3–8k/mes      |
+| Internación         | Mapa, ingreso, alta, ronda     | +USD 2–6k/mes      |
+| Planes + adherencia | Crónicos, recordatorios        | +USD 1–3k/mes      |
+| Receta electrónica  | Si no va en base               | +USD 500–2k/mes    |
+| Captura IA premium  | Asistente / voz ampliada       | +USD 3–10/prof/mes |
+
+
+Ver [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).
+
+#### Soporte y evolutivos anuales (vías 1 y 6)
+
+Dos rubros distintos, a menudo en contrato anual aparte del fee mensual de licencia:
+
+
+| Rubro          | Qué cubre                                                                                                                                               |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Soporte**    | Operación en producción: incidencias, actualizaciones de seguridad, mesa de ayuda, capacitación recurrente.                                             |
+| **Evolutivos** | Mejoras o integraciones acordadas (LIS, reporte regulatorio, regla de autorización por financiador). No es corrección de bugs; es desarrollo negociado. |
+
+
+La **implementación one-shot** (arranque, integración lab) es pago único al inicio; soporte + evolutivos es el **año en curso y siguientes**. En licitación pública suele ir como contrato marco + soporte anual obligatorio.
+
+#### Facturación RCM (vía 3)
+
+**RCM** (*Revenue Cycle Management*): gestión del ciclo de ingresos del prestador — desde la atención documentada hasta el cobro y la conciliación con obra social o prepaga.
+
+```
+Encounter documentado
+  → ítems nomenclador / PMO
+  → factura o liquidación al financiador
+  → seguimiento (glosas, rechazos)
+  → cobro y conciliación contable
+```
+
+**Encaje Bioenlace hoy:** bajo (~38% facturación en informe ejecutivo). Hay nomenclador en parte del recorrido; falta el ciclo factura–cobro–contabilidad end-to-end.
+
+**Monetización cuando exista el módulo:** suscripción por volumen facturado o puesto administrativo; opcional % sobre recupero (más complejo en AR). **Quién paga:** sanatorio con alto volumen OS. No es el comprador típico de una clínica ambulatoria chica.
+
+#### Recetas enrutadas (vía 5)
+
+El médico emite la **receta digital en Bioenlace** y el sistema **deriva al paciente** a dispensación en farmacia de red o partner («Retirar en X», checkout en app). Bioenlace **no** compra stock ni opera logística: hace el **puente clínico** (receta válida + handoff).
+
+**Ingreso:** tarifa por receta enrutada y/o **rev share** con farmacia o prepaga. **Quién paga:** cadena farmacéutica o grupo sanitario con farmacia; el efector sigue pagando el software clínico.
+
+**No confundir** con el modelo China (consulta gratis + margen retail propio). Bioenlace cobra por conectar consulta → dispensación, no por vender medicamentos. Build pendiente: homologación receta nacional, API con cadenas piloto.
+
+---
+
+### Fórmula de ingreso (Argentina, siete vías)
+
+Vista agregada; empaquetado comercial en [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md#propuesta-tres-modelos-diferenciados):
+
+```
+Ingreso Bioenlace (AR) ≈
+  licencia clínica + add-ons por módulo              [Vía 1]
++ implementación + integraciones one-shot            [Vías 1, 6]
++ soporte y evolutivos anuales                       [Vías 1, 6]
++ pack OS + autorizaciones digitales                 [Vía 2]
++ facturación RCM + % recupero opcional              [Vía 3]
++ analytics financiador + auditoría B2G              [Vía 4]
++ recetas enrutadas + rev share farmacia             [Vía 5]
++ licitación / contrato marco                        [Vía 6]
++ pathways + PMPM afiliado                           [Vía 7]
+− (IA + infra + soporte entregado + ventas + implementación)
+```
 
 ---
 
 ## Tabla resumen
 
-| # | Vía (casos país) | Encaje Bioenlace | Comprador principal | Modelo de ingreso | Horizonte |
-|---|------------------|------------------|---------------------|-------------------|-----------|
-| 1 | SaaS / HIS clínico | **Alto** | Efector privado, red ambulatoria | Licencia + implementación + soporte | Corto |
-| 2 | Autorización + liquidación OS/EPS | **Medio → alto** | Prestador; prepaga/OS | Módulo premium; fee por transacción | Mediano |
-| 3 | RCM / facturación al acto clínico | **Bajo hoy** | Prestador | SaaS + % recupero (opcional) | Mediano–largo |
-| 4 | Auditoría / antifraude / analytics | **Bajo → medio** | Financiador; Estado | B2G licitación; SaaS analytics | Largo |
-| 5 | Retail Rx + delivery (China) | **Puente, no retailer** | Farmacia / plataforma | API por receta enrutada | Mediano (partner) |
-| 6 | Copagos / bolsillo paciente | **Indirecto** | Paciente → efector | Retención del cliente de Bioenlace | Corto |
-| 7 | Compra pública de prestación / IT | **Indirecto** | Estado / CCSS / SUS | Licitación; módulo + reporting | Largo |
-| 8 | Capitación / UPC (Colombia, MA) | **Medio** | EPS / aseguradora | SaaS control de costo | Mediano (fuera AR foco) |
+
+| #   | Vía (casos país)                   | Encaje Bioenlace        | Comprador principal              | Modelo de ingreso                   | Horizonte               |
+| --- | ---------------------------------- | ----------------------- | -------------------------------- | ----------------------------------- | ----------------------- |
+| 1   | SaaS / HIS clínico                 | **Alto**                | Efector privado, red ambulatoria | Licencia + implementación + soporte | Corto                   |
+| 2   | Autorización + liquidación OS/EPS  | **Medio → alto**        | Prestador; prepaga/OS            | Módulo premium; fee por transacción | Mediano                 |
+| 3   | RCM / facturación al acto clínico  | **Bajo hoy**            | Prestador                        | SaaS + % recupero (opcional)        | Mediano–largo           |
+| 4   | Auditoría / antifraude / analytics | **Bajo → medio**        | Financiador; Estado              | B2G licitación; SaaS analytics      | Largo                   |
+| 5   | Retail Rx + delivery (China)       | **Puente, no retailer** | Farmacia / plataforma            | API por receta enrutada             | Mediano (partner)       |
+| 6   | Compra pública de prestación / IT  | **Indirecto**           | Estado / CCSS / SUS              | Licitación; módulo + reporting      | Largo                   |
+| 7   | Capitación / UPC (Colombia, MA)    | **Medio**               | EPS / aseguradora                | SaaS control de costo               | Mediano (fuera AR foco) |
+
 
 ---
 
@@ -98,13 +194,12 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 
 **Qué es:** licencia de software para operar agenda, atención, guardia, internación, receta y reporting sobre un registro clínico común.
 
-**Encaje Bioenlace:** **Alto.** Es el core vendible hoy: ambulatorio (~75%), agenda (~81%), guardia (~95%), internación (~82%), receta (~75%), planes de tratamiento (~75%).
+**Encaje Bioenlace:** **Alto.** Es el core vendible hoy: ambulatorio (~~75%), agenda (~~81%), guardia (~~95%), internación (~~82%), receta (~~75%), planes de tratamiento (~~75%).
 
 **Dónde reduce costos para el comprador:**
 
 - Menos tiempo de documentación (captura asistida texto/voz).
 - Menos no-shows y mejor uso de agenda (KPIs staff).
-- Menos reconsultas por falta de resumen al paciente.
 - Guardia con SLA: menos caos operativo y horas improductivas.
 
 **Quién paga:** director médico / COO / IT del **efector** (sanatorio, policlínica, red ambulatoria). En público: licitación provincial (ciclo largo).
@@ -217,7 +312,6 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 **Dónde reduce costos:**
 
 - Institución: no opera farmacia ni delivery.
-- Paciente: continuidad de tratamiento (menos abandono) — beneficio indirecto al efector.
 
 **Quién paga:** cadena farmacéutica o plataforma de delivery (B2B2C); efector paga SaaS clínico, no el margen retail.
 
@@ -232,27 +326,7 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 
 ---
 
-### 6. Copagos / bolsillo del paciente
-
-**Ejemplos en casos país:** Chile (copagos FONASA MLE); Argentina (prácticas fuera de cartilla); Singapur (copagos altos).
-
-**Qué es:** ingreso del prestador cuando el financiador no cubre 100% o el paciente elige fuera de red.
-
-**Encaje Bioenlace:** **Indirecto.** Bioenlace no cobra al paciente por el acto; mejora la experiencia que retiene pacientes de pago al efector.
-
-**Dónde reduce costos:** no aplica como ingreso Bioenlace; sí **aumenta retención** del cliente (sanatorio) que cobra copagos.
-
-**Quién paga:** paciente al prestador. Bioenlace se cobra al prestador por plataforma.
-
-**Cómo generar ingresos:** upsell de módulos que demuestren más retención (resumen paciente, app, planes de tratamiento).
-
-**Build faltante:** estimación de copago en agenda/reserva; integración medios de pago (opcional, no core HIS).
-
-**Prioridad:** **Corto plazo** como argumento de venta al efector, no como línea de ingreso directa.
-
----
-
-### 7. Compra pública de prestación e IT
+### 6. Compra pública de prestación e IT
 
 **Ejemplos en casos país:** UK (NHS → privados); Costa Rica (CCSS outsourcing); Brasil (SUS compra servicios); México (IMSS); Argentina (provincias).
 
@@ -276,7 +350,7 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 
 ---
 
-### 8. Capitación / UPC (control de costo en aseguramiento)
+### 7. Capitación / UPC (control de costo en aseguramiento)
 
 **Ejemplos en casos país:** Colombia (UPC a EPS); EE.UU. (Medicare Advantage); Brasil (capitación en algunos modelos).
 
@@ -287,8 +361,8 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 **Dónde reduce costos:**
 
 - Menos reingresos por mala adherencia.
-- Menos estudios duplicados si hay continuidad clínica.
-- Priorización de seguimiento crónico (dashboard adherencia ya ~75%).
+- Menos estudios duplicados con registro clínico unificado.
+- Priorización de seguimiento crónico (pathways, adherencia staff ~75%).
 
 **Quién paga:** EPS / aseguradora con modelo capitado.
 
@@ -302,11 +376,13 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 
 ## Lectura estratégica
 
-| Horizonte | Vías a priorizar | Mensaje comercial |
-|-----------|------------------|-------------------|
-| **Corto** | 1 (SaaS clínico), 6 (indirecto vía retención) | «Mejor ambulatorio + agenda + paciente digital con ROI medible» |
-| **Mediano** | 2 (autorización OS), 5 (puente receta), 8 (pathways) | «Del acto clínico al cobro y la continuidad, sin retail» |
-| **Largo** | 3 (RCM pleno), 4 (auditoría B2G), 7 (licitación pública) | «Enterprise + financiador + Estado» |
+
+| Horizonte   | Vías a priorizar                                         | Mensaje comercial                                               |
+| ----------- | -------------------------------------------------------- | --------------------------------------------------------------- |
+| **Corto**   | 1 (SaaS clínico)                                         | «Ambulatorio + agenda + guardia con ROI operativo»               |
+| **Mediano** | 2 (autorización OS), 5 (puente receta), 7 (pathways)     | «Del acto clínico al cobro y la receta enrutada, sin retail»    |
+| **Largo**   | 3 (RCM pleno), 4 (auditoría B2G), 6 (licitación pública) | «Enterprise + financiador + Estado»                             |
+
 
 Ver matriz operativa para Argentina: [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).  
-Modelos de pricing diferenciados (continuidad B2B2C): [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
+Modelos de pricing diferenciados (B2B clínico): [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).

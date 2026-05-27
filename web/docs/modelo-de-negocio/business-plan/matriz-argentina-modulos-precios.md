@@ -8,13 +8,15 @@ Precios **orientativos** en USD; no incluyen IVA ni implementación salvo donde 
 
 **Referencia de madurez:** [`../../his-completo/informe-ejecutivo.md`](../../his-completo/informe-ejecutivo.md) (niveles 0–4).
 
+**Alcance comercial:** precios por **licencia, add-ons e integraciones** al comprador institucional. No se cotiza por retención del paciente ni por hitos de uso del paciente (resumen abierto, adherencia, etc.). Ver [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md) y [mapa de vías](./mapa-vias-ingreso-bioenlace.md) (siete vías; sin ex vía copagos/bolsillo).
+
 ---
 
 ## Compradores típicos en Argentina
 
 | Comprador | Motivación de compra | Ciclo de venta |
 |-----------|----------------------|----------------|
-| **Sanatorio privado mediano** | Operación ambulatoria + guardia; OS en red; retención paciente | 3–6 meses |
+| **Sanatorio privado mediano** | Operación ambulatoria + guardia; OS en red; eficiencia y cobro a financiador | 3–6 meses |
 | **Clínica / policlínica ambulatoria** | Agenda, atención, receta; poco internación | 1–3 meses |
 | **Grupo sanitario / prepaga** | Canal digital paciente; autorización; no reemplazar liquidación legacy de golpe | 6–12 meses |
 | **Obra social mediana** | Autorizaciones; auditoría; portal prestadores | 6–12 meses |
@@ -28,9 +30,9 @@ Precios **orientativos** en USD; no incluyen IVA ni implementación salvo donde 
 |------------------|----------------|---------------------|--------------------|----------------------------|-------------|
 | **Ambulatorio + Encounter** | ~75% | Sanatorio, clínica | **USD 8–25/prof./mes** o **USD 1.5–4k/mes** por efector chico | HC longitudinal médica; derivaciones estructuradas; retiro UI legacy «consulta» | Corto |
 | **Agenda y turnos** | ~81% | Todos los efectores | Incluido en base o **USD 2–6k/mes** standalone grande | Autorización OS en reserva; teleconsulta nativa; lista espera inter-servicio | Corto |
-| **Paciente digital** (app + resumen post-atención) | ~75% | Sanatorio, prepaga white-label | **USD 1–3k/mes** o **USD 0.5–1.5/afiliado activo/mes** (prepaga) | Más acciones self-service; pago copagos (opcional) | Corto |
+| **Paciente digital** (app + resumen post-atención) | ~75% | Sanatorio, prepaga white-label | **USD 1–3k/mes** o **USD 0.5–1.5/afiliado activo/mes** (prepaga) | Más acciones self-service; integración medios de pago (opcional) | Corto |
 | **Guardia / urgencias** | ~95% | Sanatorio con guardia | **USD 3–8k/mes** add-on | SLA admin UI; aviso sonoro; catálogo LIS en pedidos guardia | Corto |
-| **Internación** | ~82% | Sanatorio con camas | **USD 2–6k/mes** add-on | Firma digital alta; facturación episodio; continuidad ambulatoria guiada post-alta | Mediano |
+| **Internación** | ~82% | Sanatorio con camas | **USD 2–6k/mes** add-on | Firma digital alta; facturación episodio; handoff post-alta ambulatorio | Mediano |
 | **Planes de tratamiento + adherencia** | ~75% | Sanatorio crónicos; prepaga | **USD 1–3k/mes** | Adherencia → outcomes (labs); IA sugerencias con aprobación médica | Corto–mediano |
 | **Receta electrónica** | ~75% | Todos | Incluido o **USD 500–2k/mes** | **Homologación receta nacional**; integración redes farmacia | Corto (bloqueante mercado) |
 | **Laboratorio** (integración externa) | ~63% | Sanatorio, clínica | **USD 2–8k** one-shot + **USD 200–800/mes** mant. | Lab propio in-house (fuera de scope); más conectores LIS | Corto |
@@ -94,7 +96,7 @@ Orden alineado al [informe ejecutivo](../../his-completo/informe-ejecutivo.md) y
 | Orden | Iniciativa comercial | Módulo | Efecto en ticket |
 |-------|----------------------|--------|------------------|
 | 1 | Vender **Pack ambulatorio** a clínicas y sanatorios | Ambulatorio + agenda + paciente | Base recurrente |
-| 2 | **Receta nacional** como requisito y upsell regulatorio | Receta electrónica | Desbloquea LATAM; +retención |
+| 2 | **Receta nacional** como requisito y add-on regulatorio | Receta electrónica | Desbloquea LATAM; habilita receta enrutada (vía 5) |
 | 3 | Add-on **guardia** donde ya hay cliente ambulatorio | Guardia | +USD 3–8k/mes |
 | 4 | **Autorización OS** a sanatorios con dolor de glosas | Autorización | +USD 2–5k/mes; puerta a prepaga |
 | 5 | **Pack financiador** a 1 prepaga piloto | API + autorización + app | Ticket alto, pocas cuentas |
@@ -114,5 +116,6 @@ Orden alineado al [informe ejecutivo](../../his-completo/informe-ejecutivo.md) y
 ## Referencias
 
 - [Argentina — vías de ingreso privado](../argentina/sistema-salud-publico-y-sector-privado.md)
-- [Mapa vías × Bioenlace](./mapa-vias-ingreso-bioenlace.md)
+- [Mapa vías × Bioenlace](./mapa-vias-ingreso-bioenlace.md) (siete vías)
+- [Modelos de pricing](./modelos-pricing-diferenciados.md)
 - [Informe ejecutivo madurez](../../his-completo/informe-ejecutivo.md)

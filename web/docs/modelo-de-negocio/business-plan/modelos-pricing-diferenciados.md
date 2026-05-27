@@ -6,6 +6,62 @@
 
 ---
 
+## Glosario — abreviaturas y términos en inglés
+
+### Abreviaturas
+
+| Sigla | Significado | En castellano / contexto Bioenlace |
+|-------|-------------|-------------------------------------|
+| **B2B** | *Business to Business* | Venta entre empresas: el cliente es el efector, sanatorio, prepaga u obra social, no el paciente final. |
+| **B2C** | *Business to Consumer* | Venta directa al paciente o consumidor final. |
+| **B2B2C** | *Business to Business to Consumer* | El cliente comercial es institucional (B2B); el beneficiario del servicio es el paciente (B2C). Bioenlace vende al efector y el paciente usa la app/flujo. |
+| **D2C** | *Direct to Consumer* | Modelo en el que la plataforma llega al paciente sin intermediario institucional (ej. app de telemedicina + farmacia propia). |
+| **HIS** | *Hospital Information System* | Sistema de información hospitalario: software clínico-administrativo tradicional (historia, turnos, internación, facturación). |
+| **Rx** | *Prescription* | Receta médica / receta electrónica. |
+| **OTC** | *Over the counter* | Medicamentos de venta libre (sin receta). |
+| **CAC** | *Customer Acquisition Cost* | Costo de adquisición de cliente: lo que cuesta conseguir un usuario o paciente nuevo (marketing, promos, etc.). |
+| **STT** | *Speech to Text* | Transcripción de voz a texto (audio de consulta → texto para captura clínica). |
+| **GTM** | *Go to Market* | Estrategia comercial de salida al mercado: a quién vendés, por qué canal y con qué propuesta. |
+| **ROI** | *Return on Investment* | Retorno de la inversión: beneficio obtenido respecto de lo gastado (ej. recuperar plata por bajar no-shows). |
+| **OS** | *Obra Social* (en Argentina) | Financiador prepago de salud; en otros países a veces se confunde con *Operating System* — aquí siempre es obra social. |
+| **PMPM** | *Per Member Per Month* | Precio por afiliado por mes: métrica típica de prepagas (ej. USD 0,50/afiliado/mes). |
+| **KPI** | *Key Performance Indicator* | Indicador clave de desempeño (ej. % resumen abierto, % adherencia). |
+
+### Términos en inglés (negocio y producto)
+
+| Término | Significado |
+|---------|-------------|
+| **Encounter** | Encuentro clínico atendido (consulta, guardia, internación): unidad central del modelo FHIR y del flujo Bioenlace. |
+| **fulfillment** | Cumplimiento / entrega del pedido: que la receta se dispense, retire o llegue al paciente (farmacia y envío). |
+| **rev share** (*revenue share*) | Reparto de ingresos: parte del fee que cobra un socio (ej. farmacia) y se comparte con Bioenlace. |
+| **retail** | Venta minorista al consumidor final (farmacia de mostrador u online). |
+| **checkout** | Paso de pago / cierre de compra en la app o web. |
+| **funnel** (*embudo*) | Recorrido desde el primer contacto hasta la conversión (ej. descarga app → consulta → receta → compra). |
+| **upsell** | Venta adicional o de mayor valor (ej. ofrecer OTC junto con la receta). |
+| **white-label** | Producto con marca del cliente (prepaga u OS) en lugar de la marca Bioenlace. |
+| **pathway** | Camino clínico acotado y medible (ej. crónico: consulta → resumen → receta → control a los 30 días). |
+| **split** | Reparto porcentual de un ingreso entre varias partes (prepaga, farmacia, Bioenlace). |
+| **build** | Desarrollo / capacidad de producto que falta construir o integrar (ej. «build crítico: receta nacional»). |
+| **freemium** | Modelo freemium: tier gratuito con límites + tier pago al superar umbral o por funciones avanzadas. |
+| **tier** | Nivel o plan de producto (gratis, básico, pago). |
+| **unit economics** | Economía unitaria: ingresos y costos por unidad de negocio (por profesional, encounter, receta, afiliado). |
+| **gross margin** | Margen bruto: ingresos menos costos directos del servicio, antes de gastos generales (meta ~70 % en software por suscripción). |
+| **headcount** | Cantidad de personas en el equipo (costo fijo de nómina amortizado por cliente). |
+| **ticket** (*ticket medio*) | Monto promedio por transacción o consulta (ej. USD 50 por turno atendido). |
+| **no-show** | Paciente que no asiste al turno reservado. |
+| **lead time** | Tiempo de espera hasta la atención (desde reserva hasta consulta). |
+| **fee** | Tarifa fija por evento o transacción (ej. fee por receta enrutada). |
+| **handoff** | Traspaso del paciente de un actor a otro (ej. de la consulta a la farmacia de la red). |
+| **copago** | Copago: parte del costo que paga el paciente (copayment). |
+| **compliance** | Cumplimiento normativo y legal (receta, datos de salud, relación con OS/prepagas). |
+| **seats** | Licencias por usuario/profesional sentado en el sistema (*per seat*). |
+| **pathway fees** | Cobros por afiliado o paciente que completa un pathway definido. |
+| **performance marketing** | Marketing de performance: pago por resultado (clic, conversión), típico en D2C. |
+| **piloto** | Prueba acotada con un cliente real antes de escalar comercialmente. |
+| **puente clínico** | Rol de Bioenlace: conectar consulta y receta con fulfillment sin ser farmacia ni operador logístico. |
+
+---
+
 ## Resumen
 
 El patrón de mercado «consulta gratuita si hay receta → compra en plataforma → delivery gratis» monetiza **margen farmacéutico y escala D2C**, no licencias de software hospitalario.

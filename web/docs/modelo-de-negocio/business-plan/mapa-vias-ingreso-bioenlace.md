@@ -6,6 +6,67 @@
 
 ---
 
+## Glosario — abreviaturas y términos en inglés
+
+### Abreviaturas
+
+| Sigla | Significado | En castellano / contexto |
+|-------|-------------|--------------------------|
+| **HIS** | *Hospital Information System* | Sistema de información hospitalario (historia, turnos, internación, facturación). |
+| **OS** | *Obra Social* (Argentina) | Financiador prepago de salud; aquí no es *Operating System*. |
+| **EPS** | *Entidad Promotora de Salud* (Colombia) | Financiador / aseguradora que administra el régimen contributivo y subsidio. |
+| **IPS** | *Instituciones Prestadoras de Salud* (Colombia) | Prestador que atiende afiliados de una EPS (equivalente a clínica/sanatorio). |
+| **RCM** | *Revenue Cycle Management* | Gestión del ciclo de ingresos: acto clínico → factura/claim → cobro → conciliación. |
+| **B2G** | *Business to Government* | Venta o licitación al Estado (ministerio, hospital público, programa). |
+| **B2B2C** | *Business to Business to Consumer* | Cliente institucional; el usuario final es el paciente (efector compra, paciente usa app). |
+| **Rx** | *Prescription* | Receta médica / receta electrónica. |
+| **PMPM** | *Per Member Per Month* | Precio por afiliado por mes (típico en prepagas y analytics). |
+| **UPC** | *Unidad de Pago por Capitación* (Colombia) | Monto fijo que recibe la EPS por afiliado; modelo de capitación. |
+| **KPI** | *Key Performance Indicator* | Indicador clave (no-show, lead time, % adherencia, etc.). |
+| **SLA** | *Service Level Agreement* | Acuerdo de nivel de servicio (ej. tiempos máximos en guardia). |
+| **ROI** | *Return on Investment* | Retorno de la inversión para el comprador del software. |
+| **LIS** | *Laboratory Information System* | Sistema de laboratorio; integración de resultados con la historia clínica. |
+| **PMO** | *Programa Médico Obligatorio* (Argentina) | Nomenclador y prestaciones mínimas de las obras sociales. |
+| **COO** | *Chief Operating Officer* | Director de operaciones; comprador frecuente en sanatorios. |
+| **NHSA** | *National Healthcare Security Administration* (China) | Administración nacional de seguro médico; auditoría y control de claims. |
+| **RNOS** | *Registro Nacional de Obras Sociales* (Argentina) | Registro de obras sociales; contexto de auditoría y normativa. |
+| **ANS** | *Agência Nacional de Saúde Suplementar* (Brasil) | Regulador de operadoras de salud privadas. |
+| **CCSS** | *Caja Costarricense de Seguro Social* | Seguro social integrado de Costa Rica. |
+| **SUS** | *Sistema Único de Saúde* (Brasil) | Sistema público de salud brasileño. |
+| **IMSS** | *Instituto Mexicano del Seguro Social* | Seguro social mexicano. |
+| **FONASA** | *Fondo Nacional de Salud* (Chile) | Financiador público chileno. |
+| **MLE** | *Modalidad de Libre Elección* (Chile) | Régimen FONASA con elección de prestador y copagos. |
+| **MA** | *Medicare Advantage* (EE.UU.) | Plan de Medicare gestionado por aseguradora privada (modelo capitado). |
+| **GP** | *General Practitioner* (Reino Unido) | Médico de cabecera en atención primaria. |
+
+### Términos en inglés (negocio y producto)
+
+| Término | Significado |
+|---------|-------------|
+| **wedge** (*cuña*) | Punto de entrada comercial donde Bioenlace ya encaja fuerte (ambulatorio + Encounter + agenda + guardia). |
+| **Encounter** | Encuentro clínico atendido: unidad central del registro FHIR y del flujo Bioenlace. |
+| **claim** | Reclamo de cobro al financiador (EE.UU. y modelos similares): traducción del acto clínico en ítems facturables. |
+| **handoff** | Traspaso del paciente o del dato entre actores (consulta → autorización → farmacia → liquidación). |
+| **build** | Capacidad de producto que falta desarrollar o integrar («build faltante»). |
+| **retail** | Venta minorista al consumidor final; en vía 5, operar farmacia propia (Bioenlace no lo hace). |
+| **checkout** | Cierre de compra en app o web (modelo China super-app). |
+| **white-label** | Producto con marca del cliente (prepaga, OS) en lugar de Bioenlace. |
+| **pathway** | Camino clínico acotado y medible (crónico, renovación Rx, post-alta). |
+| **enterprise** | Segmento institucional grande (sanatorio, red, financiador) con integraciones pesadas. |
+| **end-to-end** | De punta a punta (ej. guardia facturable desde ingreso hasta cobro). |
+| **one-shot** | Pago único por implementación o integración, no recurrente. |
+| **rev share** (*revenue share*) | Reparto de ingresos con un socio comercial (ej. farmacia). |
+| **upsell** | Venta de módulos adicionales al cliente existente. |
+| **no-show** | Paciente que no asiste al turno reservado. |
+| **batch** | Procesamiento por lotes (archivos periódicos) en lugar de integración en tiempo real. |
+| **outcomes** | Resultados clínicos medibles vinculados a adherencia o pathways. |
+| **loop** | Ciclo cerrado (ej. receta → dispensación → confirmación de cumplimiento). |
+| **retailer** | Operador que vende al consumidor final; Bioenlace actúa como puente, no retailer. |
+| **prior authorization** | Autorización previa del financiador antes de una práctica o estudio de alto costo. |
+| **puente clínico** | Rol de Bioenlace: receta digital y derivación sin operar farmacia ni logística. |
+
+---
+
 ## Resumen
 
 Las vías de ingreso del sector privado documentadas por país (China, Argentina, Colombia, etc.) no son todas atacables por Bioenlace con el mismo esfuerzo. Este mapa clasifica cada vía según **encaje actual**, **quién paga**, **cómo monetizar** y **qué falta construir**.

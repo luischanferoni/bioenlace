@@ -206,7 +206,7 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 
 ## Resumen: costo real por API (por médico/mes)
 
-**Apartado 1:** Gemini Flash Lite o Together AI. **Apartado 2:** STT **Groq** + Vision **Google**. Cifras: Gemini **~$0.00035/llamada** ([tarifas Gemini](#gemini-flash-tarifas-actuales-y-context-caching)), STT **~$0.0007/min**.
+**Apartado 1:** IA generativa (Gemini / Together). **Apartado 2:** STT **Groq** + Vision **Google**. **Apartado 3:** videollamadas (§6). Cifras IA: **~$0.00035/llamada** sin caché ([tarifas Gemini](#gemini-flash-tarifas-actuales-y-context-caching)); STT **~$0.0007/min**.
 
 ### Apartado 1 – IA generativa (chat y consulta)
 
@@ -228,18 +228,31 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 | Análisis de fotos (Vision API, Google) | $0 (800 imágenes; 1.000 gratis/mes) |
 | **Total (Apartado 2)** | **~$0.28** |
 
-### Total general (IA + STT + Vision, sin videollamadas)
+### Apartado 3 – Videollamadas (§6)
+
+Supuesto: **30 %** de las 400 consultas/mes por video, **12 min** promedio, **2** participantes facturados (Twilio).
+
+| Concepto | Costo real (USD/médico/mes) |
+|----------|-----------------------------|
+| **Twilio Video** ($0.004/min por participante) | **~$11.52** |
+| **Plan por asiento** (ej. Daily.co / 10 médicos) | **~$10** (orden de magnitud) |
+
+### Total general (Apartados 1 + 2 + 3)
 
 **400 min STT/mes** es cupo **global** del escenario intensivo (§5): no sumar el STT del caso B de motivos **y** los 400 min completos del apartado 2.
 
 | Escenario | Google sin caché | Google con caché | Together AI |
 |-----------|------------------|------------------|-------------|
-| Motivos **solo texto** + pre + onboarding + consulta + §5 STT/Vision | **~$1.01** | **~$0.77** | **~$0.86** |
-| Motivos **con audio** (STT en caso B) + pre + onboarding + consulta + Vision §5 | **~$1.05** | **~$0.78** | **~$0.88** |
+| Apartados 1 + 2 (motivos **solo texto**) | **~$1.01** | **~$0.77** | **~$0.86** |
+| Apartados 1 + 2 (motivos **con audio**) | **~$1.05** | **~$0.78** | **~$0.88** |
+| + Apartado 3 (**Twilio Video**) | **+$11.52** | **+$11.52** | **+$11.52** |
+| **Total con videollamada (Twilio)** — motivos texto | **~$12.53** | **~$12.29** | **~$12.38** |
+| **Total con videollamada (Twilio)** — motivos audio | **~$12.57** | **~$12.30** | **~$12.40** |
+| **Total con videollamada (Daily ~$10)** — motivos audio | **~$11.05** | **~$10.78** | **~$10.88** |
 
-**Orden de magnitud uso intensivo:** **~USD 1,0–1,1/prof/mes** (Google sin caché; uno de los dos escenarios de motivos + §5).
+**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13/prof/mes**. Solo IA + STT + Vision (sin §6): **~USD 1,0–1,1/prof/mes**.
 
-**Nota**: Si la IA de pre-turno, pre-consulta, onboarding y consulta corre en **nuestra infra**, esos ítems figuran en [infra/costos.md](../infra/costos.md) y no se duplican aquí. Videollamadas (Twilio, Daily.co, etc.) no están incluidas en este resumen; ver sección correspondiente si aplica.
+**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 sigue siendo coste de proveedor de video salvo stack propio.
 
 ---
 

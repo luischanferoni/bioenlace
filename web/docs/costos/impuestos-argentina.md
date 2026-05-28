@@ -78,7 +78,7 @@ No se prorratea de forma exacta sin balance; las tablas siguientes usan **órden
 
 ## Tabla ejemplo: 5.000 profesionales (costo de servir)
 
-COGS IA+STT: [costos-api.md](./costos-api.md).
+COGS API: [costos-api.md](./costos-api.md) (apartados 1–2; apartado 3 videollamada aparte abajo).
 
 ### A) Costo operativo documentado (sin impuestos sobre ventas)
 
@@ -86,6 +86,9 @@ COGS IA+STT: [costos-api.md](./costos-api.md).
 |----------|------------------------|--------|
 | **IA + STT vía API** — sin caché (5.000 × ~USD 1,05/prof) | **~5.250** | [costos-api.md](./costos-api.md) |
 | **IA + STT vía API** — con caché Vertex (5.000 × ~USD 0,78/prof) | **~3.900** | [costos-api.md](./costos-api.md) |
+| **Videollamada** — Twilio Video (5.000 × ~USD 11,52/prof, §6) | **~57.600** | [costos-api.md](./costos-api.md) |
+| **IA + STT + videollamada (Twilio)** — sin caché | **~62.850** | 5.250 + 57.600 |
+| **IA + STT + videollamada (Twilio)** — con caché | **~61.500** | 3.900 + 57.600 |
 | **Aplicación + BD + hosting** (PHP, MySQL, backups, CDN, monitoreo) | *[pendiente presupuesto]* | **No hay cifra a escala 5.000 prof. en el repo** |
 
 **Única referencia interna de “infra” en chico:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500/mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); mezcla hosting y soporte operativo, **no escala lineal** a 5.000 usuarios.
@@ -96,6 +99,8 @@ COGS IA+STT: [costos-api.md](./costos-api.md).
 |------------------------|---------|
 | **Solo IA + STT (documentado)** — sin caché | **~5.250** |
 | **Solo IA + STT (documentado)** — con caché | **~3.900** |
+| **IA + STT + videollamada (Twilio)** — sin caché | **~62.850** |
+| **IA + STT + videollamada (Twilio)** — con caché | **~61.500** |
 | + aplicación/BD (cuando se presupueste) | a sumar |
 
 ### B) Carga fiscal sobre compras (estimación conservadora)
@@ -126,16 +131,26 @@ Precios de licencia de producto (pack ambulatorio, guardia, etc.): [matriz Argen
 | **Margen después IIBB + ganancias** | `(Precio − IIBB − costo IA − ganancias) / Precio` | **Sí.** IIBB **4 %** s/ facturación neta; ganancias **25 %** s/ utilidad antes de imp. a las ganancias (`utilidad = precio − IIBB − costo IA`). |
 | **IVA 21 %** | Sobre factura al cliente | **No entra** en ningún margen: se discrimina; el cliente lo usa como crédito fiscal (B2B). |
 
-#### Tabla
+#### Tabla — solo IA + STT (sin videollamada)
 
-\* Escenario de costo según [costos-api.md](./costos-api.md): uso intensivo con **motivos de consulta con audio** (§1 caso B) + pre-consulta, onboarding, consulta y §5 STT/Vision.
+\* [costos-api.md](./costos-api.md): motivos **con audio** + pre-consulta + onboarding + consulta + §5 STT/Vision (apartados 1–2).
 
 | Escenario | ~USD/prof sin caché | ~USD/prof con caché | Precio **neto**/mes sin caché | Precio **neto**/mes con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
 |-----------|---------------------|---------------------|-------------------------------|-------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
-| **Solo costo IA+STT (sin margen)** * | **~1,05** | **~0,78** | **~5.250** | **~3.900** | **~6.353** | **~4.719** | **0 %** / **0 %** | **Pérdida** |
+| **Solo costo (sin margen)** * | **~1,05** | **~0,78** | **~5.250** | **~3.900** | **~6.353** | **~4.719** | **0 %** / **0 %** | **Pérdida** |
 | **Variable IA, margen mínimo** | **1,8 – 2,0** | **1,8 – 2,0** | **9.000 – 10.000** | **9.000 – 10.000** | **10.890 – 12.100** | **10.890 – 12.100** | **~42 – 48 %** / **~56 – 61 %** * | **~28 – 33 %** / **~40 – 43 %** * |
 
-En «margen bruto» y «después IIBB + ganancias», la primera cifra del rango usa COGS **~5.250**; la segunda (tras **/**) usa COGS **~3.900** (con caché).
+En «margen bruto» y «después IIBB + ganancias», la primera cifra usa COGS **~5.250**; la segunda (tras **/**) **~3.900**.
+
+#### Tabla — IA + STT + videollamada (Twilio, §6)
+
+\* Misma base que la tabla anterior **+ apartado 3** ([costos-api.md](./costos-api.md): **~USD 11,52/prof** Twilio, 30 % consultas × 12 min × 2 participantes). COGS total sin caché **~62.850** / con caché **~61.500** a 5.000 prof.
+
+| Escenario | ~USD/prof sin caché | ~USD/prof con caché | Precio **neto**/mes sin caché | Precio **neto**/mes con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
+|-----------|---------------------|---------------------|-------------------------------|-------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
+| **Solo costo (sin margen)** * | **~12,57** | **~12,30** | **~62.850** | **~61.500** | **~76.049** | **~74.415** | **0 %** / **0 %** | **Pérdida** |
+
+**Orden de magnitud (Twilio, motivos con audio):** **~USD 12–13/prof/mes** neto al repasar costo documentado. La fila «margen mínimo» (1,8–2/prof) de la tabla anterior **no cubre** videollamada.
 
 #### Detalle aritmético — ejemplo USD 10.000/mes neto (2/prof)
 

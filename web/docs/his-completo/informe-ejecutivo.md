@@ -50,7 +50,7 @@ Cada área del hospital se califica de **0 a 4**:
 - **Gestión de demanda:** KPIs de agenda (no-show, días hasta la cita) y adherencia a planes de tratamiento para el equipo.
 - **Cumplimiento orientado a staff:** expediente amplio bajo demanda (generación en segundo plano, sin exposición al paciente).
 
-Eso define un **wedge** claro: instituciones que quieren **mejor operación ambulatoria, agenda y captura clínica**, no aún un HIS monolítico de facturación y logística. El [modelo de ingreso comercial](../modelo-de-negocio/business-plan/README.md) se apoya en licencia institucional y vías OS/receta — no en monetizar retención del paciente.
+Eso define un **wedge** claro: instituciones que quieren **mejor operación ambulatoria, agenda y captura clínica**, no aún un HIS monolítico de facturación y logística. El [modelo de ingreso comercial](../modelo-de-negocio/business-plan/README.md) se apoya en licencia institucional, vías OS/receta y pathway fees al financiador — no en cobrar al efector por fidelizar o captar pacientes.
 
 ### Dónde está el mayor gap de mercado (y de inversión)
 

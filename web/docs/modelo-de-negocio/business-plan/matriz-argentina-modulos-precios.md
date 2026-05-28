@@ -4,11 +4,11 @@
 **Última actualización:** 2026-05-27  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
-Precios **orientativos** en USD; no incluyen IVA ni implementación salvo donde se indica. Validar con tamaño de efector, cantidad de profesionales y integraciones.
+Precios **orientativos** en USD; no incluyen IVA. Validar con tamaño de efector y cantidad de profesionales.
 
 **Referencia de madurez:** [`../../his-completo/informe-ejecutivo.md`](../../his-completo/informe-ejecutivo.md) (niveles 0–4).
 
-**Alcance comercial:** precios por **licencia, add-ons e integraciones** al comprador institucional. No se cotiza por retención del paciente ni por hitos de uso del paciente (resumen abierto, adherencia, etc.). Ver [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md) y [mapa de vías](./mapa-vias-ingreso-bioenlace.md) (siete vías; sin ex vía copagos/bolsillo).
+**Alcance comercial:** precios por **licencia y add-ons** al comprador institucional. **Pathway fees** y PMPM se cotizan al **financiador** (vía 7), no al sanatorio por fidelizar o captar pacientes. No se cotiza al efector por resumen abierto, adherencia u otros hitos de «continuidad» post-consulta. Ver [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md) y [mapa de vías](./mapa-vias-ingreso-bioenlace.md).
 
 ---
 

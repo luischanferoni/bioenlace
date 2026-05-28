@@ -86,7 +86,7 @@ Las vías de ingreso del sector privado documentadas por país (China, Argentina
 
 **Wedge actual de Bioenlace:** atención ambulatoria + Encounter unificado, agenda con KPIs, paciente digital, guardia operativa, planes de tratamiento y asistente conversacional. **No** es aún un HIS enterprise de facturación completa, operador de farmacia con stock ni retail Rx propio.
 
-**En Argentina (lectura rápida):** el núcleo comercial hoy es **vía 1** (SaaS / HIS clínico). El escalón de ticket es **vía 2 + vía 5** (autorización OS + receta enrutada a farmacia). **Vías 3, 4 y 6** son enterprise o B2G (ciclos largos). **Vía 7** es referencia para prepagas con modelo de riesgo. No se modela ingreso por retención del paciente final (ex vía copagos/bolsillo). Detalle: [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
+**En Argentina (lectura rápida):** el núcleo comercial hoy es **vía 1** (SaaS / HIS clínico). El escalón de ticket es **vía 2 + vía 5** (autorización OS + receta enrutada a farmacia). **Vías 3, 4 y 6** son enterprise o B2G (ciclos largos). **Vía 7** (PMPM + pathway fees) es referencia para prepagas con modelo de riesgo. **Fuera de alcance:** cobrar al efector por fidelizar pacientes en el sanatorio o por sumar volumen a su cartera; ex vía copagos/bolsillo como ingreso indirecto al efector. Detalle: [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
 
 ---
 
@@ -111,18 +111,9 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 
 Ver [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).
 
-#### Soporte y evolutivos anuales (vías 1 y 6)
+#### Fuera de la fórmula de ingreso
 
-Dos rubros distintos, a menudo en contrato anual aparte del fee mensual de licencia:
-
-
-| Rubro          | Qué cubre                                                                                                                                               |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Soporte**    | Operación en producción: incidencias, actualizaciones de seguridad, mesa de ayuda, capacitación recurrente.                                             |
-| **Evolutivos** | Mejoras o integraciones acordadas (LIS, reporte regulatorio, regla de autorización por financiador). No es corrección de bugs; es desarrollo negociado. |
-
-
-La **implementación one-shot** (arranque, integración lab) es pago único al inicio; soporte + evolutivos es el **año en curso y siguientes**. En licitación pública suele ir como contrato marco + soporte anual obligatorio.
+**Implementación**, **integraciones** (LIS, lab), **soporte** y **evolutivos** no entran en la fórmula agregada de ingreso Bioenlace; el modelo comercial se expresa en licencia, add-ons y el resto de vías. Pueden existir en contratos reales como costo operativo o acuerdo aparte, pero no se modelan como líneas de revenue en [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
 
 #### Facturación RCM (vía 3)
 
@@ -157,15 +148,14 @@ Vista agregada; empaquetado comercial en [modelos-pricing-diferenciados.md](./mo
 ```
 Ingreso Bioenlace (AR) ≈
   licencia clínica + add-ons por módulo              [Vía 1]
-+ implementación + integraciones one-shot            [Vías 1, 6]
-+ soporte y evolutivos anuales                       [Vías 1, 6]
 + pack OS + autorizaciones digitales                 [Vía 2]
 + facturación RCM + % recupero opcional              [Vía 3]
 + analytics financiador + auditoría B2G              [Vía 4]
 + recetas enrutadas + rev share farmacia             [Vía 5]
 + licitación / contrato marco                        [Vía 6]
-+ pathways + PMPM afiliado                           [Vía 7]
-− (IA + infra + soporte entregado + ventas + implementación)
++ pathways + PMPM afiliado en programa               [Vía 7]
++ pathway fees completados                           [Vía 7]
+− (IA + infra + ventas)
 ```
 
 ---
@@ -175,13 +165,13 @@ Ingreso Bioenlace (AR) ≈
 
 | #   | Vía (casos país)                   | Encaje Bioenlace        | Comprador principal              | Modelo de ingreso                   | Horizonte               |
 | --- | ---------------------------------- | ----------------------- | -------------------------------- | ----------------------------------- | ----------------------- |
-| 1   | SaaS / HIS clínico                 | **Alto**                | Efector privado, red ambulatoria | Licencia + implementación + soporte | Corto                   |
+| 1   | SaaS / HIS clínico                 | **Alto**                | Efector privado, red ambulatoria | Licencia + add-ons                  | Corto                   |
 | 2   | Autorización + liquidación OS/EPS  | **Medio → alto**        | Prestador; prepaga/OS            | Módulo premium; fee por transacción | Mediano                 |
 | 3   | RCM / facturación al acto clínico  | **Bajo hoy**            | Prestador                        | SaaS + % recupero (opcional)        | Mediano–largo           |
 | 4   | Auditoría / antifraude / analytics | **Bajo → medio**        | Financiador; Estado              | B2G licitación; SaaS analytics      | Largo                   |
 | 5   | Retail Rx + delivery (China)       | **Puente, no retailer** | Farmacia / plataforma            | API por receta enrutada             | Mediano (partner)       |
 | 6   | Compra pública de prestación / IT  | **Indirecto**           | Estado / CCSS / SUS              | Licitación; módulo + reporting      | Largo                   |
-| 7   | Capitación / UPC (Colombia, MA)    | **Medio**               | EPS / aseguradora                | SaaS control de costo               | Mediano (fuera AR foco) |
+| 7   | Capitación / UPC (Colombia, MA)    | **Medio**               | EPS / aseguradora                | PMPM + pathway fees completados     | Mediano (fuera AR foco) |
 
 
 ---
@@ -204,11 +194,7 @@ Ingreso Bioenlace (AR) ≈
 
 **Quién paga:** director médico / COO / IT del **efector** (sanatorio, policlínica, red ambulatoria). En público: licitación provincial (ciclo largo).
 
-**Cómo generar ingresos:**
-
-- Fee mensual por efector, por profesional activo o por módulo.
-- Implementación e integraciones (lab, LIS) one-shot.
-- Soporte y evolutivos en contrato anual.
+**Cómo generar ingresos:** fee mensual por efector, por profesional activo o por módulo (licencia + add-ons).
 
 **Build faltante relevante:** historia clínica longitudinal médica sin exportar PDF; teleconsulta nativa en agenda; retiro completo de terminología legacy «consulta».
 
@@ -342,7 +328,7 @@ Ingreso Bioenlace (AR) ≈
 
 **Quién paga:** ministerio provincial, hospital público, programa (SUMAR, etc.).
 
-**Cómo generar ingresos:** licitación; contrato marco; implementación + soporte anual.
+**Cómo generar ingresos:** licitación; contrato marco; módulo licitado (ingreso en la fórmula, no impl./soporte como línea separada).
 
 **Build faltante:** requisitos soberanía de datos; export/reporting regulatorio; certificaciones que pida cada jurisdicción `[pendiente normativa]`.
 
@@ -366,9 +352,14 @@ Ingreso Bioenlace (AR) ≈
 
 **Quién paga:** EPS / aseguradora con modelo capitado.
 
-**Cómo generar ingresos:** SaaS por afiliado gestionado; módulo «pathways + SLA clínico».
+**Cómo generar ingresos:**
 
-**Build faltante:** adherencia vinculada a outcomes; reglas por pathway; integración automática lab/farmacia en planes.
+- **PMPM** por afiliado en programa del financiador (canal digital / control de costo).
+- **Pathway fees completados:** fee cuando el afiliado cumple el pathway definido en contrato (ej. crónico controlado, renovación Rx en red).
+
+**Distinción importante:** el pathway fee lo paga la **prepaga/OS** por gestión de riesgo y calidad en capitación. **No** es un cobro al sanatorio porque el paciente «sigue yendo ahí» ni porque el hospital «consiguió más pacientes».
+
+**Build faltante:** adherencia vinculada a outcomes; reglas por pathway medibles; integración automática lab/farmacia en planes.
 
 **Prioridad:** **Mediano plazo** para expansión Colombia/Brasil; referencia para prepagas AR con modelos de riesgo.
 

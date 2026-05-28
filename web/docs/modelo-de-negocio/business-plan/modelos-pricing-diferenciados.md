@@ -2,7 +2,16 @@
 
 **Tipo:** business plan · estrategia comercial  
 **Última actualización:** 2026-05-27  
-**Contexto:** diferenciación de **modelo de negocio** (no solo UI/UX) frente a HIS tradicionales y startups D2C «consulta gratis + farmacia». **Alcance:** ingreso institucional (efector, financiador, Estado, partners); no se modela retención del paciente final ni pricing variable por hitos de uso del paciente.
+**Contexto:** diferenciación de **modelo de negocio** (no solo UI/UX) frente a HIS tradicionales y startups D2C «consulta gratis + farmacia».
+
+**Alcance del modelo de ingreso:**
+
+| Sí modelamos | No modelamos |
+|--------------|--------------|
+| Licencia y add-ons al **efector** / **financiador** | Cobrar al sanatorio porque el paciente **sigue yendo a ese hospital** (fidelización del paciente al efector) |
+| Autorización OS, RCM, receta enrutada, B2G | Cobrar al sanatorio/OS porque **atrae o suma más pacientes** (captación / volumen institucional) |
+| **Pathway fees completados** (prepaga/OS): fee cuando un afiliado cierra un **pathway clínico definido** (control de costo en capitación) | Variables al efector por resumen abierto, adherencia o «continuidad» post-consulta |
+| PMPM al **financiador** por afiliado en programa digital (acceso a canal, no «retener en un sanatorio») | Ex vía copagos/bolsillo como línea de ingreso indirecta al efector |
 
 ---
 
@@ -39,6 +48,7 @@
 | **funnel** (*embudo*) | Recorrido desde el primer contacto hasta la conversión (ej. descarga app → consulta → receta → compra). |
 | **white-label** | Producto con marca del cliente (prepaga u OS) en lugar de la marca Bioenlace. |
 | **pathway** | Camino clínico acotado y medible (crónico, renovación Rx, post-alta). |
+| **pathway fee** | Cobro al **financiador** cuando un afiliado completa un pathway definido (distinto de retener paciente en un sanatorio). |
 | **split** | Reparto porcentual de un ingreso entre varias partes (prepaga, farmacia, Bioenlace). |
 | **build** | Desarrollo / capacidad de producto que falta construir o integrar (ej. «build crítico: receta nacional»). |
 | **freemium** | Modelo freemium: tier gratuito con límites + tier pago al superar umbral o por funciones avanzadas. |
@@ -63,7 +73,7 @@
 
 El patrón de mercado «consulta gratuita si hay receta → compra en plataforma → delivery gratis» monetiza **margen farmacéutico y escala D2C**, no licencias de software hospitalario.
 
-Bioenlace adopta el **mismo flujo de experiencia** (Encounter → receta → fulfillment) con economía **B2B**: licencia al efector o financiador, add-ons por módulo, autorización OS, RCM cuando exista el build, y **rev share** opcional con farmacia partner — sin subsidar consultas ni cobrar por comportamiento del paciente post-consulta.
+Bioenlace adopta el **mismo flujo de experiencia** (Encounter → receta → fulfillment) con economía **B2B**: licencia al efector o financiador, add-ons, autorización OS, RCM, **pathway fees** al financiador y **rev share** con farmacia — sin subsidar consultas ni cobrar al efector por «mantener» o «sumar» pacientes a su cartera.
 
 ---
 
@@ -108,31 +118,30 @@ La diferenciación por UI/UX **no se sostiene** solo bajando el precio del HIS: 
 
 ## Propuesta: tres modelos diferenciados
 
-Bioenlace en **Argentina** combina las [siete vías de ingreso](./mapa-vias-ingreso-bioenlace.md) del sector privado (sin línea de copagos/retención paciente). La fórmula agrupa **fuentes institucionales** y el horizonte típico en AR.
+Bioenlace en **Argentina** combina las [siete vías de ingreso](./mapa-vias-ingreso-bioenlace.md) del sector privado. La fórmula agrupa **fuentes institucionales** y el horizonte típico en AR.
 
 ```
 Ingreso Bioenlace (AR) ≈
   licencia clínica + add-ons por módulo                    [Vía 1 — SaaS / HIS]
-+ implementación + integraciones (LIS, lab) one-shot         [Vías 1, 6]
-+ soporte y evolutivos anuales                              [Vías 1, 6]
 + pack OS / prepaga + autorizaciones digitales              [Vía 2]
 + facturación RCM + % recupero opcional                     [Vía 3]
 + analytics financiador (PMPM) + proyectos auditoría B2G    [Vía 4]
 + recetas enrutadas + rev share farmacia                    [Vía 5 — puente, no retail]
 + licitación provincial / SUMAR + contrato marco            [Vía 6]
-+ pathways + PMPM afiliado gestionado                       [Vía 7 — prepaga/OS con riesgo]
-− (costo IA + infra + soporte entregado + ventas + implementación)
++ pathways + PMPM afiliado en programa                      [Vía 7 — financiador]
++ pathway fees completados                                  [Vía 7 — financiador]
+− (costo IA + infra + ventas)
 ```
 
 | Vía | Componente en la fórmula | Horizonte AR | Quién paga (AR) |
 |-----|--------------------------|--------------|-----------------|
-| **1** | Licencia base, add-ons guardia/internación/receta, soporte | **Corto** | Sanatorio, clínica, red ambulatoria |
-| **2** | Pack OS, autorización en agenda/Encounter, impl. financiador | **Mediano** | Sanatorio; prepaga/OS |
+| **1** | Licencia base, add-ons guardia/internación/receta | **Corto** | Sanatorio, clínica, red ambulatoria |
+| **2** | Pack OS, autorización en agenda/Encounter | **Mediano** | Sanatorio; prepaga/OS |
 | **3** | RCM, factura–cobro–conciliación, fee transaccional o % recupero | **Mediano–largo** | Sanatorio alto volumen OS |
 | **4** | Analytics PMPM, informes, licitación antifraude/glosas | **Largo** | OS grande, prepaga, PAMI, Estado |
 | **5** | Receta digital enrutada, rev share | **Mediano** | Cadena farmacia; grupo sanitario con farmacia |
-| **6** | Módulo licitado + impl. + soporte | **Largo** | Provincia, hospital público, SUMAR |
-| **7** | PMPM + módulo pathways/SLA clínico | **Mediano** (referencia AR) | Prepaga/OS con modelo de riesgo |
+| **6** | Módulo licitado / contrato marco | **Largo** | Provincia, hospital público, SUMAR |
+| **7** | PMPM programa + módulo pathways; **fee por pathway completado** | **Mediano** (referencia AR) | Prepaga/OS con modelo de riesgo / capitación |
 
 **Lectura rápida:** núcleo **vía 1** (SaaS clínico). Escalón de ticket **vías 2 + 5** (autorización OS + puente receta). **Vías 3, 4 y 6** son enterprise/B2G. **Vía 7** es referencia para prepagas, no el modelo dominante en AR.
 
@@ -146,7 +155,6 @@ Ingreso Bioenlace (AR) ≈
 |------------|-------------|
 | **Licencia** | USD 8–25/prof/mes o pack por efector (clínica / sanatorio) |
 | **Add-ons** | Módulos activados con fee mensual propio |
-| **Implementación** | One-shot + soporte/evolutivos anuales |
 | **Rev share Rx (opcional)** | USD 0,5–2 por receta enrutada a farmacia partner (vía 5) |
 
 **Quién paga:** director médico / COO / IT del efector.
@@ -167,9 +175,12 @@ Ingreso Bioenlace (AR) ≈
 
 **Ingreso Bioenlace:**
 
-- PMPM por afiliado activo en canal digital.
+- PMPM por afiliado incluido en el **programa** del financiador (canal digital / white-label), no por «retener paciente en un sanatorio».
 - Módulo pack OS + autorizaciones (vía 2).
+- **Pathway fees completados:** tarifa cuando el afiliado cumple el camino clínico acordado (ej. crónico: consulta + plan + control a 30 días; renovación Rx: teleconsulta + receta en red).
 - Comisión negociada con red farmacéutica (rev share).
+
+**Ejemplo pathway fee:** 8.000 pathways completados/mes × USD 3 = **USD 24k/mes** además de PMPM (orden de magnitud; contrato define qué cuenta como «completado»).
 
 **Comprador:** gerente de producto / digital de prepaga u OS mediana.
 
@@ -230,14 +241,14 @@ El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5),
 |-----------|-----------------|------------------------|-------------------|
 | Clínica 10 prof | D → A | 500–1.500 (matriz) | Receta nacional |
 | Sanatorio 80 camas | A + C | 5–12k + rev share Rx | Autorización OS; partner farmacia |
-| Prepaga piloto 50k afiliados | B | 25–75k PMPM + pack OS | White-label; API; autorización |
+| Prepaga piloto 50k afiliados | B | 25–75k PMPM + pack OS + pathway fees | White-label; API; autorización; reglas pathway |
 | Red ambulatoria 5 sedes | A | 3–8k por red | Autorización OS; receta nacional |
 
 ---
 
-## Diferenciación operativa (sin pricing por paciente)
+## Diferenciación operativa
 
-Argumentos de venta al **comprador institucional**:
+Argumentos de venta al **comprador institucional** (efector o financiador):
 
 1. **Captura asistida:** menos tiempo de documentación por encounter.
 2. **Agenda y guardia:** KPIs operativos (no-show, lead time, SLA guardia).
@@ -249,7 +260,7 @@ La competencia HIS vende **módulos por licencia**. Bioenlace compite en **efici
 
 ## Posicionamiento sugerido
 
-> **Bioenlace cobra al efector y al financiador por operar mejor el acto clínico y el circuito OS–receta; no monetiza la retención del paciente.**
+> **Bioenlace cobra licencia, add-ons, OS/receta y pathways al financiador; no cobra al sanatorio por fidelizar pacientes ni por sumar volumen a su cartera.**
 
 | Horizonte | Acción comercial |
 |-----------|------------------|
@@ -266,7 +277,8 @@ La competencia HIS vende **módulos por licencia**. Bioenlace compite en **efici
 | Consulta gratis universal D2C | Quema caja; CAC alto; regulación; GTM distinto |
 | Ser farmacia / operador delivery | Capital intensivo; margen AR bajo |
 | Solo bajar precio del HIS | Carrera al fondo vs incumbentes |
-| Pricing variable por hitos del paciente (resumen, adherencia) | Complejidad comercial; fuera de alcance del modelo actual |
+| Cobro al efector por «retener paciente» o «traer más pacientes» | Confunde producto clínico con marketing del hospital/OS |
+| Variables al efector (resumen abierto, adherencia post-consulta) | Fuera de alcance; distinto de pathway fee al financiador |
 | % del acto médico sin compliance | Complejidad legal con OS/prepagas |
 
 ---
@@ -276,7 +288,7 @@ La competencia HIS vende **módulos por licencia**. Bioenlace compite en **efici
 | Modelo Bioenlace | Vía del [mapa](./mapa-vias-ingreso-bioenlace.md) |
 |------------------|--------------------------------------------------|
 | A, D | 1 SaaS clínico |
-| B | 2 autorización OS + 7 pathways / control costo |
+| B | 2 autorización OS + 7 pathways (PMPM + pathway fees) |
 | C | 5 retail Rx (puente, no retailer) |
 | Rev share farmacia | 5 |
 

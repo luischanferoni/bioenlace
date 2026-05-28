@@ -43,4 +43,4 @@ Documentación de **referencia comparativa**: cómo distintos países organizan 
 
 Contrastar **quién paga el acto clínico** (Estado, seguro social, prepaga, bolsillo) vs. **quién paga la plataforma** (hospital, financiador, licitación, partners).
 
-El [business-plan](./business-plan/README.md) modela **ingreso institucional** (licencia, add-ons, autorización OS, RCM, receta enrutada, B2G). No incluye retención del paciente final ni pricing variable por comportamiento post-consulta.
+El [business-plan](./business-plan/README.md) modela **ingreso institucional** (licencia, add-ons, autorización OS, RCM, receta enrutada, pathway fees al financiador, B2G). No incluye cobro al efector por fidelizar pacientes en el sanatorio ni por sumar volumen a su cartera.

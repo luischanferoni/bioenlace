@@ -12,7 +12,7 @@ import 'ui_intent.dart';
 @immutable
 class BioTokens extends ThemeExtension<BioTokens> {
   const BioTokens({
-    this.paperBackground = PaperPalette.paper50,
+    this.paperBackground = PaperPalette.paper25,
     this.paperSurface = PaperPalette.paper50,
     this.paperSurfaceSunken = PaperPalette.paper100,
     this.paperBorderDefault = PaperPalette.paper300,

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 /// Escala monocroma cálida ("papel"): blanco hueso → negro suave.
 ///
 /// Roles principales:
-/// - `paper50`: fondo de pantalla.
+/// - `paper25`: fondo de pantalla (más cercano al blanco).
+/// - `paper50`: superficie principal (AppBar, bottom nav, cards).
 /// - `paper100`: surface secundaria (cards "hundidas", soft bg).
 /// - `paper150`: divider interno ultra suave.
 /// - `paper200`: divider default (líneas de lista, separadores).
@@ -17,6 +18,7 @@ import 'package:flutter/material.dart';
 class PaperPalette {
   const PaperPalette();
 
+  static const Color paper25 = Color(0xFFFDFCFB);
   static const Color paper50 = Color(0xFFFAF8F3);
   static const Color paper100 = Color(0xFFF2EFE8);
   static const Color paper150 = Color(0xFFECE8E0);

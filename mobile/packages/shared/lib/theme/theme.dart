@@ -7,7 +7,7 @@ import 'tokens/tokens.dart';
 /// Tema único de BioEnlace ("papel" monocromático con acentos de marca).
 ///
 /// Decisiones:
-/// - Fondo de pantalla `PaperPalette.paper50`.
+/// - Fondo de pantalla `PaperPalette.paper25` (superficies en `paper50`).
 /// - AppBar fondo papel, alineado a la izquierda, con borde inferior en widget propio.
 /// - Tipografía: Open Sans (única familia), escala [BioTypography].
 /// - Sin dark mode.
@@ -17,7 +17,7 @@ class AppTheme {
   AppTheme._();
 
   /// Acceso semántico a la paleta neutra (preferir `context.bio` cuando se pueda).
-  static const Color background = PaperPalette.paper50;
+  static const Color background = PaperPalette.paper25;
   static const Color surface = PaperPalette.paper50;
   static const Color surfaceSunken = PaperPalette.paper100;
   static const Color borderDefault = PaperPalette.paper300;

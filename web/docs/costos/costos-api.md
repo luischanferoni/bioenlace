@@ -217,9 +217,8 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 | Conversación pre-consulta | ~$0.35 | ~$0.23 | ~$0.27 |
 | Agente onboarding | ~$0.14 | ~$0.09 | ~$0.11 |
 | Consulta (400/mes) | ~$0.14 | ~$0.09 | ~$0.11 |
-| **Total sin motivos** (pre + onboarding + consulta) | **~$0.63** | **~$0.41** | **~$0.49** |
-| **Total con motivos texto** | **~$0.73** | **~$0.49** | **~$0.58** |
-| **Total con motivos + audio** | **~$1.05** | **~$0.78** | **~$0.88** |
+| **Total Apartado 1 — motivos solo texto** | **~$0.73** | **~$0.49** | **~$0.58** |
+| **Total Apartado 1 — motivos con audio** | **~$1.05** | **~$0.78** | **~$0.88** |
 
 ### Apartado 2 – Medios (transcripción y análisis de imágenes)
 
@@ -235,11 +234,10 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 
 | Escenario | Google sin caché | Google con caché | Together AI |
 |-----------|------------------|------------------|-------------|
-| Motivos **texto** + pre + onboarding + consulta + §5 STT/Vision | **~$1.01** | **~$0.77** | **~$0.86** |
-| Motivos **audio** (STT en caso B) + pre + onboarding + consulta + Vision §5 | **~$1.05** | **~$0.78** | **~$0.88** |
-| Sin motivos + pre + onboarding + consulta + §5 STT/Vision | **~$0.91** | **~$0.69** | **~$0.77** |
+| Motivos **solo texto** + pre + onboarding + consulta + §5 STT/Vision | **~$1.01** | **~$0.77** | **~$0.86** |
+| Motivos **con audio** (STT en caso B) + pre + onboarding + consulta + Vision §5 | **~$1.05** | **~$0.78** | **~$0.88** |
 
-**Orden de magnitud uso intensivo:** **~USD 1,0–1,1/prof/mes** (Google sin caché; motivos con audio o texto + §5).
+**Orden de magnitud uso intensivo:** **~USD 1,0–1,1/prof/mes** (Google sin caché; uno de los dos escenarios de motivos + §5).
 
 **Nota**: Si la IA de pre-turno, pre-consulta, onboarding y consulta corre en **nuestra infra**, esos ítems figuran en [infra/costos.md](../infra/costos.md) y no se duplican aquí. Videollamadas (Twilio, Daily.co, etc.) no están incluidas en este resumen; ver sección correspondiente si aplica.
 

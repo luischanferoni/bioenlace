@@ -130,6 +130,7 @@ El **margen bruto no descuenta ganancias** ni IIBB. La **ganancias** se modela a
 
 | Escenario | ~USD/prof/mes | Precio **neto**/mes | Factura **+ IVA 21 %** | Margen bruto (COGS 37,5k) | Margen bruto (COGS 40k) | Margen después IIBB + ganancias |
 |-----------|---------------|---------------------|-------------------------|---------------------------|-------------------------|--------------------------------|
+| **Solo costo IA+STT (sin margen)** | **7 – 8** | **35.000 – 40.000** | **42.350 – 48.400** | **0 %** | **0 %** | **Pérdida** * |
 | Licitación agresiva (bajo) | 9 | **45.000** | **54.450** | **17 %** | **11 %** | **~10 %** |
 | Licitación agresiva (alto) | 10 | **50.000** | **60.500** | **25 %** | **20 %** | **~16 %** |
 | Entre agresivo y estándar | 11 | **55.000** | **66.550** | **32 %** | **27 %** | **~21 %** |
@@ -139,8 +140,11 @@ El **margen bruto no descuenta ganancias** ni IIBB. La **ganancias** se modela a
 | Lista / margen alto | 20 | **100.000** | **121.000** | **63 %** | **60 %** | **~47 %** |
 | Techo matriz | 25 | **125.000** | **151.250** | **70 %** | **68 %** | **~55 %** |
 
+\* **Piso variable (solo IA documentada):** cobrar **USD 7–8/prof/mes** neto (= **USD 35k–40k/mes** a 5.000 prof.) solo cubre API/STT en uso intensivo; **margen bruto 0 %**. Con IIBB y ganancias, ese precio **no alcanza** (pérdida antes de sueldos y app/BD). No es precio comercial; es referencia de **costo transferido al cliente**.
+
 **Lectura rápida para el cliente**
 
+- **Solo al costo de IA (sin margen):** **USD 7–8/prof/mes** neto (**USD 35k–40k/mes** total; **~USD 42,4k–48,4k con IVA**). Piso teórico; por debajo no cubrís ni el variable documentado.
 - **Competir con «3 programadores + infra» del ministerio:** **~USD 45k–55k/mes neto** (**~USD 54,5k–66,5k con IVA**). Margen bruto **17–32 %**; margen después de impuestos sobre la venta **~10–21 %** (solo variables; sin equipo propio).
 - **Sano para Bioenlace (cubre IA y deja margen):** **~USD 60k–80k/mes neto** (**~USD 73k–97k con IVA**). Margen bruto **38–53 %**; después IIBB + ganancias **~25–37 %**.
 - **Precio de lista sin descuento provincial:** hasta **~USD 125k/mes neto** (**~USD 151k con IVA**). Margen bruto **~70 %** (alineado a meta del business plan sobre costo IA únicamente).

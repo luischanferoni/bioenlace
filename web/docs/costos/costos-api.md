@@ -121,13 +121,13 @@ Detalle y escalera operativa (HF, tiers gratis, bajo demanda): [estrategias-api.
 
 El paciente carga texto, audio e imágenes en el chat de **motivos** hasta **1 minuto antes del turno** (sin IA en cada mensaje). Al cerrar la ventana, **una sola llamada IA** resume todo el hilo en `encounter.reason_text` para el médico. Implementación: `AppointmentReasonBatchService`, cron `MOTIVOS_IA_BATCH` vía `turno-notificacion/run`.
 
-**Cuenta de llamadas a IA:** **400 consultas/mes = 400 llamadas IA/mes** (1 lote por paciente). Prompt más largo (~3.000–5.000 tokens con transcripciones e imágenes referenciadas) ⇒ ~**$0.0008–0.001**/llamada.
+**Cuenta de llamadas a IA:** **400 consultas/mes = 400 llamadas IA/mes** (1 lote por consulta). Misma tarifa que el resto del doc: **~$0,00025–0,00045/llamada** (referencia **1.500 tokens**; ver [tarifas Gemini](#gemini-flash-tarifas-actuales-y-context-caching)). Si el prompt del lote supera ese volumen, el coste unitario puede subir.
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
 | Llamadas IA (resumen motivos) | **400** (1 por consulta) | — |
-| **Google (Gemini Flash Lite)** 400 × ~$0.0009/llamada | — | **aprox. $0.36/médico/mes** |
-| **Together AI (Llama 3.1 8B)** 400 × ~$0.0005/llamada | — | **aprox. $0.20/médico/mes** |
+| **Google (Gemini Flash Lite)** 400 × ~$0.00035/llamada | — | **aprox. $0.14/médico/mes** |
+| **Together AI (Llama 3.1 8B)** 400 × ~$0.00027/llamada | — | **aprox. $0.11/médico/mes** |
 
 ---
 
@@ -192,11 +192,11 @@ El paciente carga texto, audio e imágenes en el chat de **motivos** hasta **1 m
 
 | Concepto | Google (Gemini Flash) | Together AI (Llama 3.1 8B) |
 |----------|------------------------|-----------------------------|
-| Motivos de consulta (lote pre-atención) | aprox. $0.36 | aprox. $0.20 |
+| Motivos de consulta (lote pre-atención) | aprox. $0.14 | aprox. $0.11 |
 | Conversación pre-consulta | aprox. $0.35 | aprox. $0.27 |
 | Agente onboarding | aprox. $0.14 | aprox. $0.11 |
 | Consulta (400 consultas/mes) | aprox. $0.14 | aprox. $0.11 |
-| **Total (Apartado 1)** | **aprox. $0.99** | **aprox. $0.69** |
+| **Total (Apartado 1)** | **aprox. $0.77** | **aprox. $0.60** |
 
 ### Apartado 2 – Medios (transcripción y análisis de imágenes)
 
@@ -210,10 +210,10 @@ El paciente carga texto, audio e imágenes en el chat de **motivos** hasta **1 m
 
 | Proveedor IA (Apartado 1) | Total Apartado 1 | Total Apartado 2 | **Total general** |
 |---------------------------|------------------|------------------|-------------------|
-| Google (Gemini Flash Lite) | aprox. $0.99 | aprox. $0.28 | **aprox. $1.27** |
-| Together AI (Llama 3.1 8B) | aprox. $0.69 | aprox. $0.28 | **aprox. $0.97** |
+| Google (Gemini Flash Lite) | aprox. $0.77 | aprox. $0.28 | **aprox. $1.05** |
+| Together AI (Llama 3.1 8B) | aprox. $0.60 | aprox. $0.28 | **aprox. $0.88** |
 
-**Orden de magnitud uso intensivo:** **~USD 1,0–1,3/prof/mes** (redondeo conservador sobre ~$1,27 con Gemini).
+**Orden de magnitud uso intensivo:** **~USD 1,0–1,1/prof/mes** (redondeo conservador sobre ~$1,05 con Gemini + Groq STT).
 
 **Nota**: Si la IA de pre-turno, pre-consulta, onboarding y consulta corre en **nuestra infra**, esos ítems figuran en [infra/costos.md](../infra/costos.md) y no se duplican aquí. Videollamadas (Twilio, Daily.co, etc.) no están incluidas en este resumen; ver sección correspondiente si aplica.
 

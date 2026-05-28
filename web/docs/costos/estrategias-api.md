@@ -11,7 +11,7 @@ Estas mismas tácticas, al reducir **llamadas a IA**, también reducen la carga 
 | Área | Costo ref. ([costos-api.md](./costos-api.md)) | Reducción estimada | Palancas principales |
 |------|---------------------------------------------|--------------------|-----------------------|
 | IA / modelos (chat, corrección, análisis) | ~$1,2/médico/mes (Gemini Flash Lite) | **40–70%** | Caché app, context caching Vertex, uso condicional, Together AI |
-| Motivos de consulta (lote) | ~$0,36/médico/mes | **Variable** | Ya es 1 IA/consulta; bajar con menos consultas con motivos o STT local |
+| Motivos de consulta (lote) | ~$0,14/médico/mes | **Variable** | Ya es 1 IA/consulta; bajar con menos consultas con motivos o STT local |
 | Pre-consulta | ~$0,35/médico/mes | **30–50%** | Idem |
 | Onboarding | ~$0,14/médico/mes | **Hasta 60%** | Flujos guiados, FAQ, caché |
 | **STT** | **~$0,28/médico/mes** (Groq) | **50–100%** | Tiers gratis, HF, bajo demanda, menos minutos facturables |

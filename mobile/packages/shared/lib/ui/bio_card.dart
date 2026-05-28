@@ -132,6 +132,8 @@ class BioCard extends StatelessWidget {
       child: InkWell(
         borderRadius: radius,
         onTap: onTap,
+        hoverColor: PaperPalette.paper200,
+        focusColor: PaperPalette.paper200,
         splashColor: PaperPalette.paper300.withValues(alpha: 0.35),
         highlightColor: PaperPalette.paper200,
         child: inner,

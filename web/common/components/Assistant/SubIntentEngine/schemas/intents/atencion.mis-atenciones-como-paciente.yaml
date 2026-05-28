@@ -2,7 +2,7 @@ intent_id: atencion.mis-atenciones-como-paciente
 version: 1
 
 action_name: "Ver mis atenciones"
-description: "Listado de consultas ambulatorias finalizadas con resumen para el paciente."
+description: "Ver tus atenciones y sus resúmenes."
 rbac_route: "/api/clinical/encounter/mis-atenciones-como-paciente"
 keywords:
   - mis atenciones

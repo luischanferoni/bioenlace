@@ -2,7 +2,7 @@ intent_id: laboratorio.ver-resultados-como-paciente
 version: 1
 
 action_name: "Ver resultados de laboratorio"
-description: "Listado y detalle de informes de laboratorio del paciente (copia en Bioenlace)."
+description: "Ver tus resultados de laboratorio."
 rbac_route: "/api/clinical/laboratory-result/mis-resultados-como-paciente"
 keywords:
   - mis resultados

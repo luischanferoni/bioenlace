@@ -2,7 +2,7 @@ intent_id: turnos.consultar-politica-autogestion-flow
 version: 1
 
 action_name: "Consultar política de autogestión"
-description: "Consulta si podés cancelar o reprogramar turnos por app en el centro de salud indicado."
+description: "Consultar si podés cancelar o reprogramar turnos desde la app."
 rbac_route: "/api/turnos/politica-como-paciente"
 keywords:
   - política turnos

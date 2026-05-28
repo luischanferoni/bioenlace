@@ -2,7 +2,7 @@ intent_id: turnos.crear-sobreturno-flow
 version: 1
 
 action_name: "Crear sobreturno"
-description: "Staff: alta de sobreturno urgente para un paciente."
+description: "Para agregar un sobreturno urgente para un paciente."
 rbac_route: "/api/turnos/crear-sobreturno"
 keywords:
   - sobreturno

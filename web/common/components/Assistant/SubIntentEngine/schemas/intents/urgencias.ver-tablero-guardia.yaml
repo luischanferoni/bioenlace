@@ -2,7 +2,7 @@ intent_id: urgencias.ver-tablero-guardia
 version: 1
 
 action_name: "Ver tablero de guardia"
-description: "Cola priorizada de pacientes en guardia del efector actual."
+description: "Ver la lista de pacientes en guardia."
 rbac_route: "/api/clinical/emergency-guardia/tablero"
 keywords:
   - tablero guardia

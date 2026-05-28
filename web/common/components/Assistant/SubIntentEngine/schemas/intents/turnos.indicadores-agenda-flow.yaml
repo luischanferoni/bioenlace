@@ -2,7 +2,7 @@ intent_id: turnos.indicadores-agenda-flow
 version: 1
 
 action_name: "Indicadores de agenda"
-description: "Staff: no-show y días desde reserva hasta la cita en un período."
+description: "Estadísticas de tu agenda para ayudarte a mejorarla."
 rbac_route: "/api/turnos/indicadores-agenda"
 keywords:
   - indicadores agenda

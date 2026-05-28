@@ -2,7 +2,7 @@ intent_id: turnos.consultar-ocupacion-dia-flow
 version: 1
 
 action_name: "Consultar ocupación del día"
-description: "Staff: ver slots y ocupación de un día (servicio o profesional PES)."
+description: "Ver horarios disponibles y ocupación del día."
 rbac_route: "/api/turnos/consultar-ocupacion-dia"
 keywords:
   - ocupación del día

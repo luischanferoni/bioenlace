@@ -2,7 +2,7 @@ intent_id: turnos.no-se-presento-flow
 version: 1
 
 action_name: "Marcar no se presentó"
-description: "Staff: registrar inasistencia del paciente a un turno."
+description: "Para marcar que un paciente no asistió a un turno."
 rbac_route: "/api/turnos/no-se-presento"
 keywords:
   - no se presentó

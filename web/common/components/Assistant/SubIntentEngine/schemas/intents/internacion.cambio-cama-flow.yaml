@@ -2,7 +2,7 @@ intent_id: internacion.cambio-cama-flow
 version: 1
 
 action_name: "Cambio de cama"
-description: "Traslado del paciente internado a otra cama del efector."
+description: "Cambiar a un paciente internado de cama."
 rbac_route: "/api/clinical/internacion/cambio-cama-formulario"
 keywords:
   - cambio de cama

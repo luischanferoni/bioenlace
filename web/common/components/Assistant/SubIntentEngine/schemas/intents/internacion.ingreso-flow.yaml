@@ -2,7 +2,7 @@ intent_id: internacion.ingreso-flow
 version: 1
 
 action_name: "Ingreso a internación"
-description: "Admisión de paciente a cama en el efector (episodio IMP)."
+description: "Registrar el ingreso a internación y asignar una cama."
 rbac_route: "/api/clinical/internacion/ingreso-formulario"
 keywords:
   - ingreso internación

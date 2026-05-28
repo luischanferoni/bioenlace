@@ -2,7 +2,7 @@ intent_id: turnos.reubicar-como-paciente-flow
 version: 1
 
 action_name: "Reubicar turno"
-description: "Autogestión: turno en resolución — elegís servicio, centro, profesional y nuevo horario (u otro profesional si aplica)."
+description: "Para elegir un nuevo horario cuando tu turno necesita reubicación."
 rbac_route: "/api/turnos/reubicar-como-paciente"
 keywords:
   - reubicar turno

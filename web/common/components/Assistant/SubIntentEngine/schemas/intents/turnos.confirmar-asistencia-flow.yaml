@@ -2,7 +2,7 @@ intent_id: turnos.confirmar-asistencia-flow
 version: 1
 
 action_name: "Confirmar asistencia al turno"
-description: "Autogestión: elegís un turno pendiente y confirmás que asistirás."
+description: "Para confirmar que vas a asistir a un turno."
 rbac_route: "/api/turnos/confirmar-asistencia-como-paciente"
 keywords:
   - confirmar turno

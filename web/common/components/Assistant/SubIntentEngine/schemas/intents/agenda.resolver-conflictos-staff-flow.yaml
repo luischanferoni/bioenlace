@@ -2,7 +2,7 @@ intent_id: agenda.resolver-conflictos-staff-flow
 version: 1
 
 action_name: "Resolver conflictos de agenda (staff)"
-description: "Gestión: elegir turnos con conflicto tras cambio de agenda y resolver en nombre del paciente (sin app móvil)."
+description: "Para resolver turnos con conflicto por cambios en la agenda."
 rbac_route: "/api/profesional-agenda/resolver-conflicto-agenda-para-paciente"
 keywords:
   - conflictos agenda

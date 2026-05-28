@@ -2,6 +2,7 @@ intent_id: agenda.crear-profesional-flow
 version: 1
 
 action_name: "Alta profesional en efector y agenda"
+description: "Agregar un profesional a un servicio y, si corresponde, crear su agenda."
 rbac_route: "/api/profesional-agenda/crear-agenda-flow"
 keywords:
   - agenda

@@ -2,7 +2,7 @@ intent_id: urgencias.triage-paciente-guardia
 version: 1
 
 action_name: "Triage en guardia"
-description: "Registrar triage Manchester de un paciente en guardia (lista + formulario UI)."
+description: "Registrar la prioridad de un paciente en guardia."
 rbac_route: "/api/clinical/emergency-guardia/elegir-paciente-triage"
 keywords:
   - triage

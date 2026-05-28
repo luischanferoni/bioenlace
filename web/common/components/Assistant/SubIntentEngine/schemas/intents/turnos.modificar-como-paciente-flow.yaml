@@ -2,7 +2,7 @@ intent_id: turnos.modificar-como-paciente-flow
 version: 1
 
 action_name: "Cambiar horario de turno"
-description: "Autogestión: elegís un turno pendiente, un nuevo horario libre y confirmás la reprogramación."
+description: "Para cambiar el horario de tus turnos pendientes."
 rbac_route: "/api/turnos/reprogramar-como-paciente"
 keywords:
   - modificar turno

@@ -2,7 +2,7 @@ intent_id: turnos.conflicto-agenda-flow
 version: 1
 
 action_name: "Resolver cambio de horario por agenda"
-description: "Autogestión: elegís un turno afectado por un cambio de agenda del profesional y confirmás la nueva opción (antes, después o cancelar)."
+description: "Para resolver un cambio de horario en tu turno."
 rbac_route: "/api/turnos/resolver-conflicto-agenda-como-paciente"
 keywords:
   - conflicto agenda

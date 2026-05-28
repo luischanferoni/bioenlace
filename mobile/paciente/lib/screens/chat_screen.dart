@@ -33,6 +33,7 @@ class ChatScreen extends StatefulWidget {
 class ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _welcomeShortcutsScrollController = ScrollController();
   late AsistenteService _asistenteService;
   List<Map<String, dynamic>> _chatHistory = [];
   bool _isSending = false;
@@ -1226,97 +1227,111 @@ class ChatScreenState extends State<ChatScreen> {
     final tokens = context.bio;
     final primary = IntentPalette.of(UiIntent.primary).base;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BioSpacing.lg,
-        BioSpacing.md,
-        BioSpacing.lg,
-        BioSpacing.md,
-      ),
+      padding: const EdgeInsets.fromLTRB(0, BioSpacing.md, 0, BioSpacing.md),
       child: Align(
         alignment: Alignment.topCenter,
-        child: FractionallySizedBox(
-          widthFactor: 0.8,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
+              child: Text(
                 'Podés elegir un atajo o escribir tu consulta abajo.',
                 textAlign: TextAlign.start,
                 style: BioTypography.h3.copyWith(color: tokens.textMuted),
               ),
-              BioSpacing.gapH(BioSpacing.md),
-              ...cats.map(
-                (cat) => Padding(
-                  padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        cat.titulo,
-                        style: BioTypography.title.copyWith(
-                          decoration: TextDecoration.underline,
-                          color: tokens.textMuted,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        textAlign: TextAlign.start,
-                      ),
-                      BioSpacing.gapH(BioSpacing.sm),
-                      Wrap(
-                        alignment: WrapAlignment.start,
-                        spacing: BioSpacing.sm,
-                        runSpacing: BioSpacing.sm,
-                        children: cat.items
-                            .map(
-                              (item) => ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 280),
-                                child: BioCard(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: BioSpacing.md,
-                                    vertical: BioSpacing.sm + 2,
+            ),
+            BioSpacing.gapH(BioSpacing.md),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 360),
+              child: Scrollbar(
+                controller: _welcomeShortcutsScrollController,
+                child: SingleChildScrollView(
+                  controller: _welcomeShortcutsScrollController,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ...cats.map(
+                          (cat) => Padding(
+                            padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  cat.titulo,
+                                  style: BioTypography.title.copyWith(
+                                    decoration: TextDecoration.underline,
+                                    color: tokens.textMuted,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  onTap: _isSending
-                                      ? null
-                                      : () => _startFlowFromShortcut(
-                                            item.intentId,
-                                            item.title,
-                                          ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        item.title,
-                                        style: BioTypography.title.copyWith(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: primary,
-                                        ),
-                                      ),
-                                      if (item.description.isNotEmpty) ...[
-                                        BioSpacing.gapH(BioSpacing.xs),
-                                        Text(
-                                          item.description,
-                                          style: BioTypography.bodySm.copyWith(
-                                            color: tokens.textMuted,
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
+                                  textAlign: TextAlign.start,
                                 ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ],
+                                BioSpacing.gapH(BioSpacing.sm),
+                                Wrap(
+                                  alignment: WrapAlignment.start,
+                                  spacing: BioSpacing.sm,
+                                  runSpacing: BioSpacing.sm,
+                                  children: cat.items
+                                      .map(
+                                        (item) => ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 280,
+                                          ),
+                                          child: BioCard(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: BioSpacing.md,
+                                              vertical: BioSpacing.sm + 2,
+                                            ),
+                                            onTap: _isSending
+                                                ? null
+                                                : () => _startFlowFromShortcut(
+                                                      item.intentId,
+                                                      item.title,
+                                                    ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  item.title,
+                                                  style: BioTypography.title.copyWith(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: primary,
+                                                  ),
+                                                ),
+                                                if (item.description.isNotEmpty) ...[
+                                                  BioSpacing.gapH(BioSpacing.xs),
+                                                  Text(
+                                                    item.description,
+                                                    style: BioTypography.bodySm.copyWith(
+                                                      color: tokens.textMuted,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -2800,6 +2815,7 @@ class ChatScreenState extends State<ChatScreen> {
     _messageController.removeListener(_onComposerTextChanged);
     _messageController.dispose();
     _scrollController.dispose();
+    _welcomeShortcutsScrollController.dispose();
     super.dispose();
   }
 }

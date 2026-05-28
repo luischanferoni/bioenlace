@@ -2,7 +2,7 @@ intent_id: turnos.ver-agenda-dia-profesional-flow
 version: 1
 
 action_name: "Ver agenda del día"
-description: "Profesional o staff: citas del día en el contexto operativo (misma data que agenda/dia)."
+description: "Ver las citas del día de un profesional."
 rbac_route: "/api/profesional-agenda/ver-agenda-dia"
 keywords:
   - agenda del día

@@ -2,7 +2,7 @@ intent_id: atencion.ver-ultima-como-paciente
 version: 1
 
 action_name: "Ver mi última atención"
-description: "Abre el resumen de la atención ambulatoria más reciente publicada."
+description: "Abrir el resumen de tu última atención."
 rbac_route: "/api/clinical/encounter/ultima-atencion-ui-como-paciente"
 keywords:
   - última atención

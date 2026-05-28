@@ -2,7 +2,7 @@ intent_id: turnos.cancelar-como-paciente-flow
 version: 1
 
 action_name: "Cancelar turno"
-description: "Autogestión: elegís un turno pendiente, el motivo de la cancelación y confirmás el envío final."
+description: "Para cancelar un turno pendiente."
 rbac_route: "/api/turnos/cancelar-como-paciente"
 keywords:
   - cancelar turno

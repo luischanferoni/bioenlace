@@ -209,8 +209,9 @@ class _AccionesScreenState extends State<AccionesScreen> {
         await NativeScreenRouter.open(
           context,
           screenId: screenId,
-          title: actionId,
-          args: {'draft': _asistente.draft, 'envelope': envelope},
+          userId: widget.userId,
+          userName: widget.userName,
+          authToken: widget.authToken,
         );
         return;
       }
@@ -335,27 +336,37 @@ class _AccionesScreenState extends State<AccionesScreen> {
                   textAlign: TextAlign.center,
                 ),
                 BioSpacing.gapH(BioSpacing.md),
-                for (final cat in _atajos) ...[
-                  if (cat.titulo.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-                      child: Text(
-                        cat.titulo,
-                        style: BioTypography.title.copyWith(color: tokens.textMuted),
-                      ),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 320),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final cat in _atajos) ...[
+                          if (cat.titulo.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+                              child: Text(
+                                cat.titulo,
+                                style: BioTypography.title.copyWith(color: tokens.textMuted),
+                              ),
+                            ),
+                          Wrap(
+                            spacing: BioSpacing.sm,
+                            runSpacing: BioSpacing.sm,
+                            children: cat.items.map((item) {
+                              return ActionChip(
+                                label: Text(item.title),
+                                onPressed: _isLoading ? null : () => _onAtajoTap(item),
+                              );
+                            }).toList(),
+                          ),
+                          BioSpacing.gapH(BioSpacing.md),
+                        ],
+                      ],
                     ),
-                  Wrap(
-                    spacing: BioSpacing.sm,
-                    runSpacing: BioSpacing.sm,
-                    children: cat.items.map((item) {
-                      return ActionChip(
-                        label: Text(item.title),
-                        onPressed: _isLoading ? null : () => _onAtajoTap(item),
-                      );
-                    }).toList(),
                   ),
-                  BioSpacing.gapH(BioSpacing.md),
-                ],
+                ),
               ],
             ],
           ),

@@ -2,7 +2,7 @@ intent_id: turnos.crear-como-paciente
 version: 1
 
 action_name: "Reservar turno"
-description: "Flujo conversacional para autogestión de turno: servicio, centro de salud, profesional, horario y tipo de atención."
+description: "Para reservar un turno en un centro de salud público."
 rbac_route: "/api/turnos/crear-como-paciente"
 keywords:
   - turno

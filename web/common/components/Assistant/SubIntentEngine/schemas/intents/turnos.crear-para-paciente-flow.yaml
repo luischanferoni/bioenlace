@@ -2,7 +2,7 @@ intent_id: turnos.crear-para-paciente-flow
 version: 1
 
 action_name: "Crear turno para paciente"
-description: "Gestión operativa: alta de turno indicando paciente, servicio, profesional y horario."
+description: "Para crear un turno para un paciente."
 rbac_route: "/api/turnos/crear-para-paciente"
 keywords:
   - crear turno paciente

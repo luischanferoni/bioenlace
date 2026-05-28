@@ -2,7 +2,7 @@ intent_id: receta.ver-recetas-como-paciente
 version: 1
 
 action_name: "Ver mis recetas electrónicas"
-description: "Listado y detalle de recetas electrónicas emitidas en Bioenlace."
+description: "Ver tus recetas electrónicas."
 rbac_route: "/api/clinical/electronic-prescription/mis-recetas-como-paciente"
 keywords:
   - mis recetas

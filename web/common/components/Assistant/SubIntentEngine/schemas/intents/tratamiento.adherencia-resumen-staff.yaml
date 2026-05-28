@@ -2,7 +2,7 @@ intent_id: tratamiento.adherencia-resumen-staff
 version: 1
 
 action_name: "Adherencia a tratamientos (staff)"
-description: "Dashboard de planes activos y cumplimiento de actividades en el efector actual."
+description: "Ver el avance de los planes de tratamiento y sus actividades."
 rbac_route: "/api/clinical/care-plans/adherencia-resumen-staff"
 keywords:
   - adherencia tratamiento

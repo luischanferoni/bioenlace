@@ -39,6 +39,58 @@ class AtajoCategoria {
   AtajoCategoria({required this.titulo, required this.items});
 }
 
+String normalizeAtajoDescription(String raw) {
+  var s = raw.trim();
+  if (s.isEmpty) return '';
+
+  // Quitar prefijos basura tipo ":" o "·" o "-" que llegan en algunos catálogos.
+  s = s.replaceAll(RegExp(r'^\s*[:\-–—•·]+\s*'), '');
+
+  // Evitar jerga interna en UI (usuario final).
+  s = s.replaceAll(
+    RegExp(r'\bAutogesti[oó]n\b', caseSensitive: false),
+    '',
+  );
+  s = s.replaceAll(
+    RegExp(r'\bstaff\b', caseSensitive: false),
+    '',
+  );
+
+  // Limpieza: espacios repetidos y signos sueltos.
+  s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
+  s = s.replaceAll(RegExp(r'\s+([,.;:])'), r'$1').trim();
+
+  // Reformulaciones a español neutro + conciso (UX).
+  // Nota: estas reglas intencionalmente pisan el texto original cuando detectan un patrón conocido.
+  final lower = s.toLowerCase();
+
+  // "no-show y dias desde reserva hasta la cita en un período."
+  if (lower.contains('no-show') ||
+      (lower.contains('días') || lower.contains('dias')) &&
+          lower.contains('reserva') &&
+          lower.contains('cita')) {
+    s = 'Estadísticas de tu agenda para ayudarte a mejorarla';
+  }
+
+  // Reprogramación de turnos.
+  if (lower.contains('reprogram') &&
+      (lower.contains('turno') || lower.contains('cita'))) {
+    s = 'Para cambiar el horario de tus turnos pendientes';
+  }
+
+  // "Flujo conversacional para ... turno: servicio, centro de salud, profesional..."
+  if (lower.contains('flujo conversacional') &&
+      lower.contains('turno')) {
+    s = 'Para reservar un turno en un centro de salud público';
+  }
+
+  // Dejarlo conciso (1 línea).
+  if (s.length > 120) {
+    s = '${s.substring(0, 117).trim()}...';
+  }
+  return s;
+}
+
 String? intentIdFromCommonActionMap(Map<String, dynamic> a) {
   final co = a['client_open'];
   if (co is Map) {
@@ -207,7 +259,9 @@ class AsistenteService {
               items.add(AtajoItem(
                 intentId: iid,
                 title: actionDisplayNameFromMap(am),
-                description: am['description']?.toString() ?? '',
+                description: normalizeAtajoDescription(
+                  am['description']?.toString() ?? '',
+                ),
               ));
             }
           }
@@ -229,7 +283,9 @@ class AsistenteService {
         flat.add(AtajoItem(
           intentId: iid,
           title: actionDisplayNameFromMap(am),
-          description: am['description']?.toString() ?? '',
+          description: normalizeAtajoDescription(
+            am['description']?.toString() ?? '',
+          ),
         ));
       }
       if (flat.isEmpty) return [];

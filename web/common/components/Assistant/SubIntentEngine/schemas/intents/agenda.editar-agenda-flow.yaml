@@ -2,7 +2,7 @@ intent_id: agenda.editar-agenda-flow
 version: 1
 
 action_name: "Editar agenda"
-description: "Guía conversacional para seleccionar profesional y servicio, y abrir la edición de agenda."
+description: "Editar la agenda de un profesional."
 rbac_route: "/api/profesional-agenda/editar-agenda-flow"
 keywords:
   - agenda

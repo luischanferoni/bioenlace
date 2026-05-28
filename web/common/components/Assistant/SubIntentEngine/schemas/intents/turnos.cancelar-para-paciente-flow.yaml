@@ -2,7 +2,7 @@ intent_id: turnos.cancelar-para-paciente-flow
 version: 1
 
 action_name: "Cancelar turno (gestión)"
-description: "Staff: cancelación operativa o paso a EN_RESOLUCION según motivo MED_*."
+description: "Para cancelar un turno para un paciente."
 rbac_route: "/api/turnos/cancelar-operativo"
 keywords:
   - cancelar turno paciente

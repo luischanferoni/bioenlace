@@ -2,7 +2,7 @@ intent_id: internacion.alta-estructurada-flow
 version: 1
 
 action_name: "Alta hospitalaria"
-description: "Registrar egreso con epicrisis y checklist de alta (staff)."
+description: "Para registrar el alta de internación."
 rbac_route: "/api/clinical/internacion/alta-formulario"
 keywords:
   - alta internación

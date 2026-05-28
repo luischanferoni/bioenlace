@@ -145,6 +145,7 @@ Solo Google (Speech-to-Text, Vision API).
 
 ## Referencias
 
+- [impuestos-argentina.md](./impuestos-argentina.md) – IVA, IIBB y ganancias (AR) sobre costo y facturación.
 - [api/estrategias.md](estrategias.md) – Cómo reducir coste vía API.
 - [infra/costos.md](../infra/costos.md) – Costes cuando la IA corre en nuestra GPU.
 - [Together AI – Serverless Models / Pricing](https://docs.together.ai/docs/serverless-models) – Llama 3.1 8B y otros modelos.

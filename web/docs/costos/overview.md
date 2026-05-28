@@ -14,5 +14,6 @@ Comparar escenarios **GPU propia** vs **API managed** y registrar estrategias pa
 |-----|----------|
 | Infra | ¿Cuánto cuesta correr modelos en nuestra GPU? |
 | API | ¿Cuánto cuesta Vertex/STT/Vision por consulta o por médico/mes? |
+| Fiscal (AR) | ¿Qué sumar de IVA, IIBB y ganancias al costo y al precio? → [impuestos-argentina.md](./impuestos-argentina.md) |
 
 Detalle en los archivos listados en [README.md](./README.md).

@@ -4,7 +4,7 @@
 **Última actualización:** 2026-05-27  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
-Precios **orientativos** en USD; no incluyen IVA. Validar con tamaño de efector y cantidad de profesionales.
+Precios **orientativos** en USD; no incluyen IVA. Validar con tamaño de efector y cantidad de profesionales. Impuestos (IVA, IIBB, ganancias): [impuestos-argentina.md](../../costos/impuestos-argentina.md).
 
 **Referencia de madurez:** [`../../his-completo/informe-ejecutivo.md`](../../his-completo/informe-ejecutivo.md) (niveles 0–4).
 

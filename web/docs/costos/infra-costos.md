@@ -125,16 +125,15 @@ Cuando la IA corre en nuestra GPU, estas capacidades suman **más llamadas de in
 
 ---
 
-### 1. Comunicación previa al turno (pre-turno)
+### 1. Motivos de consulta (lote IA pre-atención)
 
-El chat/bot guía al paciente **antes** de sacar el turno. Conversación que puede terminar en turno o no; no estaba contemplada antes en los costos.
+Una inferencia por consulta al cerrar la ventana de carga (ver [design.md](./design.md)).
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Contactos pre-turno estimados | 1.000/médico/mes (personas que inician para sacar turno) | — |
-| Mensajes con IA | 4 mensajes × 40% con IA ⇒ **1.600 llamadas IA** | — |
-| **RunPod RTX 3090** ($0.021/llamada) | 1.600 × $0.021 | **aprox. $33.60/médico/mes** |
-| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 1.600 × ($0.0035–0.0095) | **aprox. $5.60–15.20/médico/mes** |
+| Llamadas IA (resumen motivos) | **400** (1 por consulta) | — |
+| **RunPod RTX 3090** ($0.021/llamada) | 400 × $0.021 | **aprox. $8.40/médico/mes** |
+| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 400 × ($0.0035–0.0095) | **aprox. $1.40–3.80/médico/mes** |
 
 ---
 

@@ -35,10 +35,14 @@ class MotivosConsultaService {
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
+        final payload = data['data'] as Map<String, dynamic>? ?? {};
         return {
           'success': true,
-          'data': data['data'],
-          'messages': data['data']?['messages'] ?? [],
+          'data': payload,
+          'messages': payload['messages'] ?? [],
+          'input_abierto': payload['input_abierto'] ?? true,
+          'motivos_resumen': payload['motivos_resumen'],
+          'cierre_en': payload['cierre_en'],
         };
       }
       return {

@@ -6,9 +6,18 @@ Permite decidir **dónde corre el compute** sin mezclar precios de RunPod/GPU co
 
 **Alternativa descartada:** un solo Excel global sin separar capex/opex de infra y variable por token.
 
-## Comunicación pre-turno
+## Motivos de consulta (app paciente)
 
-Se modela aparte porque es conversación **antes** de confirmar turno y puede no terminar en reserva. Impacta ambos ejes; ver [infra-costos.md](./infra-costos.md) y [costos-api.md](./costos-api.md).
+Flujo de producto (mayo 2026):
+
+1. El paciente envía mensajes (texto, audio, imagen) **sin IA por mensaje** — solo persistencia (`motivos-consulta/enviar|subir`).
+2. **Hasta 1 minuto antes del turno** puede seguir cargando (`motivos_consulta_cierre_minutos` en `params.php`).
+3. Al cerrar la ventana, el cron `turno-notificacion/run` ejecuta **`MOTIVOS_IA_BATCH`**: una inferencia con todo el hilo (STT de audios + resumen) → `encounter.reason_text`.
+4. El médico ve el resumen en timeline / formulario de consulta.
+
+Coste modelado: **400 llamadas IA/mes** (1 por consulta), no 4× por mensaje. Código: `AppointmentReasonWindowService`, `AppointmentReasonBatchService`.
+
+Impacta [costos-api.md](./costos-api.md) (Apartado 1) e [infra-costos.md](./infra-costos.md) si el lote corre en GPU propia.
 
 ## Pruebas
 

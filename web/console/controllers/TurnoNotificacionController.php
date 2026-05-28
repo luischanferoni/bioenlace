@@ -9,6 +9,7 @@ use common\models\Turno;
 use common\components\Core\Service\Push\PushNotificationSender;
 use common\components\Core\Service\Push\FcmPushConfig;
 use common\components\Scheduling\Service\TurnoReminderContentBuilder;
+use common\components\Clinical\Service\AppointmentReasonBatchService;
 
 /**
  * Procesa turno_notificacion_programada (cron cada N minutos).
@@ -56,6 +57,12 @@ class TurnoNotificacionController extends Controller
                         'Confirmá tu turno',
                         'Confirmá asistencia al turno del ' . $turno->fecha . ' ' . $turno->hora
                     );
+                } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_MOTIVOS_IA_BATCH) {
+                    $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
+                    $encounterId = is_array($meta) ? (int) ($meta['encounter_id'] ?? 0) : 0;
+                    if ($encounterId > 0) {
+                        AppointmentReasonBatchService::process($encounterId);
+                    }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RETRASO_SOBRETURNO) {
                     $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
                     $min = isset($meta['minutos_retraso_estimado']) ? (int) $meta['minutos_retraso_estimado'] : 30;

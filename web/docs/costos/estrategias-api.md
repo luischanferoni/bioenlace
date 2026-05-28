@@ -11,7 +11,7 @@ Estas mismas tácticas, al reducir **llamadas a IA**, también reducen la carga 
 | Área | Costo ref. ([costos-api.md](./costos-api.md)) | Reducción estimada | Palancas principales |
 |------|---------------------------------------------|--------------------|-----------------------|
 | IA / modelos (chat, corrección, análisis) | ~$1,2/médico/mes (Gemini Flash Lite) | **40–70%** | Caché app, context caching Vertex, uso condicional, Together AI |
-| Comunicación pre-turno | ~$0,56/médico/mes | **30–50%** | Menos % que llama IA, respuestas predefinidas, caché |
+| Motivos de consulta (lote) | ~$0,36/médico/mes | **Variable** | Ya es 1 IA/consulta; bajar con menos consultas con motivos o STT local |
 | Pre-consulta | ~$0,35/médico/mes | **30–50%** | Idem |
 | Onboarding | ~$0,14/médico/mes | **Hasta 60%** | Flujos guiados, FAQ, caché |
 | **STT** | **~$0,28/médico/mes** (Groq) | **50–100%** | Tiers gratis, HF, bajo demanda, menos minutos facturables |
@@ -65,25 +65,22 @@ Estas mismas tácticas, al reducir **llamadas a IA**, también reducen la carga 
 
 ---
 
-## 2. Comunicación previa al turno (pre-turno)
+## 2. Motivos de consulta (app paciente, lote pre-atención)
 
-El chat que guía al paciente **antes** de sacar el turno (puede terminar en turno o no). Coste de referencia en [costos-api.md](./costos-api.md).
+Una **sola IA por consulta** al cerrar la ventana (~1 min antes del turno). Coste de referencia en [costos-api.md](./costos-api.md).
 
-### 2.1 Reducir la fracción de mensajes que llaman a IA
+### 2.1 No reprocesar
 
-- **Qué hace**: Responder con respuestas predefinidas o flujos guiados (cómo sacar turno, horarios, requisitos); usar IA solo para preguntas abiertas o no catalogadas.
-- **Cómo**: Keywords/patrones e intents para “pre-turno”; respuestas tipo plantilla para los más comunes; clasificador por reglas primero.
-- **Reducción estimada**: **30–40%** del costo real de pre-turno (ej. bajar de 40% a 25% de mensajes con IA).
+- Idempotencia con `encounter.motivos_ia_processed_at`; no volver a llamar IA si el resumen ya existe (salvo `--force` en consola).
 
-### 2.2 Caché por pregunta o intención
+### 2.2 STT / visión solo en el lote
 
-- **Qué hace**: Cachear respuestas de IA por hash de pregunta (o intent + parámetros) para que preguntas repetidas no vuelvan a llamar al modelo.
-- **Reducción estimada**: **20–40%** adicional si hay muchas preguntas repetidas entre usuarios.
+- Audios: `SpeechToTextManager` (HF/Groq) **solo** en `AppointmentReasonBatchService`, no en cada mensaje.
+- Imágenes: por ahora referencia en el prompt; ampliar a visión multimodal solo si aporta calidad.
 
-### 2.3 Límite de mensajes o ventana
+### 2.3 Menos consultas con motivos cargados
 
-- **Qué hace**: Acotar cuántos mensajes o en qué ventana se ofrece el chat pre-turno; derivar a FAQ o contacto humano después.
-- **Reducción estimada**: **Variable**; reduce el costo de forma directa al bajar el número de mensajes.
+- Si el paciente no usa el chat, **0** llamadas IA de este ítem.
 
 ---
 
@@ -116,20 +113,15 @@ Priorizar **coste cero o créditos** hasta agotarlos; luego el más barato que c
 | 1 | **Hugging Face** (wav2vec2 / Whisper en router HF) | Ya integrado; español; volumen bajo–medio | Plan/créditos HF; a menudo **muy bajo** | Límites del plan; modelo `economico` en código |
 | 2 | **Groq Whisper** | Batch, respuesta rápida, archivos &lt; 25 MB | **~$0,0007/min** | Créditos iniciales de cuenta |
 | 3 | **Together / Fireworks** Whisper | Similar a Groq si Groq limita tasa | **~$0,001/min** | Créditos de prueba |
-| 4 | **Google STT V1** | Si ya facturás GCP y &lt; 60 min/mes global | 60 min/mes **gratis**, luego $0,016/min | **60 min/mes** permanentes |
-| 5 | **Deepgram** | Streaming en consulta; Nova-3 Medical (validar ES) | Nova-3 batch ~$0,004/min; streaming más caro | **~$200** crédito nuevo |
-| 6 | **AssemblyAI** | Streaming barato o extras (diarización, PII) | Slim ~$0,002/min; Universal-Streaming ~$0,0025/min | **~$50** créditos |
-| 7 | **OpenAI** gpt-4o-mini-transcribe | Calidad estable, streaming | $0,003/min | Sin tier permanente |
-| 8 | **Google Chirp 3 Dynamic Batch** | No tiempo real; SLA async | $0,004/min | 60 min/mes (Chirp) |
-| 9 | **Whisper en GPU propia** | Alto volumen estable | Coste fijo [infra-costos.md](./infra-costos.md) | N/A |
-| — | **Google STT V2 estándar** | Evitar como default | **$0,016/min** | Solo si otro requisito lo exige |
+| 4 | **Deepgram** | Streaming en consulta; Nova-3 Medical (validar ES) | Nova-3 batch ~$0,004/min; streaming más caro | **~$200** crédito nuevo |
+| 5 | **AssemblyAI** | Streaming o extras (diarización, PII) | Slim ~$0,002/min; Universal-Streaming ~$0,0025/min | **~$50** créditos |
+| 6 | **Whisper en GPU propia** | Alto volumen estable | Coste fijo [infra-costos.md](./infra-costos.md) | N/A |
 
-**Regla operativa:** un **router STT** (config en `params.php`) que intente: HF → Groq → fallback OpenAI/Google según cuota, error o necesidad de streaming.
+**Regla operativa:** **router STT** en `params.php`: HF → Groq → Together/Fireworks → Deepgram/AssemblyAI según cuota, error o necesidad de streaming.
 
 ### 5.2 Tiers gratuitos y créditos (hasta que se acaben)
 
-- **Google:** 60 min/mes en V1/Chirp (repartir entre efectores o usar solo pilotos).
-- **Groq / Deepgram / AssemblyAI:** consumir **créditos de alta** en entornos de prueba y primeros meses de producción.
+- **Groq / Deepgram / AssemblyAI / Together:** consumir **créditos de alta** en entornos de prueba y primeros meses de producción.
 - **Hugging Face:** mantener modelo **económico** por defecto; reservar Whisper `premium` en `SpeechToTextManager` solo si falla calidad.
 - **Vision (relacionado):** 1.000 análisis/mes gratis — no mezclar con STT pero misma lógica de “gratis primero”.
 
@@ -142,12 +134,12 @@ Ya en código: eliminar silencios, comprimir audio, chunking con voz (`SpeechToT
 - **Transcribir solo bajo demanda** (botón “Transcribir” / al guardar nota clínica): **50–100%** del coste STT del escenario “400 min automáticos”.
 - **No transcribir** audios &lt; 1 s o sin voz detectada (ya parcialmente implementado).
 - **Caché 30 días** por hash de audio (`CACHE_TTL` en manager): misma grabación no vuelve a API.
-- **Batch / async** cuando el usuario no espera el texto en vivo (Chirp Dynamic Batch, cola nocturna).
+- **Batch / async** cuando el usuario no espera el texto en vivo (cola nocturna con Groq o GPU propia).
 
 ### 5.4 Calidad vs coste (español clínico)
 
 - Probar con audios reales del efector antes de fijar proveedor único.
-- Si wav2vec2 falla en jerga o ruido: subir a **Groq/OpenAI Whisper** solo en ese flujo (captura clínica), mantener HF en notas cortas.
+- Si wav2vec2 falla en jerga o ruido: subir a **Groq Whisper** (u otro Whisper hosted) solo en ese flujo (captura clínica), mantener HF en notas cortas.
 - **Streaming en vivo** (dictado en consulta): Deepgram o AssemblyAI Universal-Streaming; suele costar más que Groq batch.
 
 ### 5.5 Reducción estimada (sobre baseline Groq ~$0,28/mes)
@@ -157,7 +149,7 @@ Ya en código: eliminar silencios, comprimir audio, chunking con voz (`SpeechToT
 | Solo bajo demanda (50% de consultas con audio) | **~50%** |
 | HF dentro de tier / créditos | **hasta 100%** del tramo cubierto |
 | Caché + menos silencio (menos minutos) | **20–40%** |
-| Mezcla tier gratis Google 60 min + Groq | **Variable** por escala |
+| Mezcla HF gratis + créditos Groq/Deepgram | **Variable** por escala |
 
 ---
 

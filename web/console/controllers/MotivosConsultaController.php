@@ -2,6 +2,8 @@
 
 namespace console\controllers;
 
+use common\components\Clinical\Service\AppointmentReasonBatchService;
+use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
 use Yii;
@@ -9,19 +11,17 @@ use yii\console\Controller;
 use yii\helpers\Console;
 
 /**
- * Proceso separado: agregar mensajes de motivos de consulta y actualizar Encounter.reason_text.
- * Luego se puede extender con codificación SNOMED, corrección ortográfica y estructuración.
- * Al insertar en consultas_motivos desde este proceso, usar ConsultaMotivos::ORIGEN_PACIENTE
- * para diferenciar de los motivos cargados por el médico (ORIGEN_MEDICO).
+ * Motivos de consulta (app paciente): procesamiento en lote con IA.
  *
  * Uso:
- *   php yii motivos-consulta/procesar              # Todos los encounters con mensajes pendientes
+ *   php yii motivos-consulta/procesar              # Encounters con mensajes sin procesar
  *   php yii motivos-consulta/procesar --consultaId=123
+ *   php yii motivos-consulta/procesar-vencidos     # Turnos que ya pasaron ventana de cierre (cron respaldo)
  */
 class MotivosConsultaController extends Controller
 {
     /**
-     * @var int|null Si se indica, solo se procesa este encounter (alias legacy: consultaId).
+     * @var int|null encounter_id (alias legacy consultaId).
      */
     public $consultaId;
 
@@ -36,14 +36,67 @@ class MotivosConsultaController extends Controller
     }
 
     /**
-     * Agrega los mensajes de motivos en texto y actualiza reason_text del encounter.
-     * Por ahora solo concatena texto; audio/imagen se marcan como [audio]/[imagen].
-     * En el futuro: transcribir audio, describir imágenes, codificar SNOMED, corregir ortografía.
+     * Procesa motivos con una sola llamada IA por encounter (texto + audios + referencia a imágenes).
      */
     public function actionProcesar()
     {
-        $this->stdout("Procesando motivos de consulta...\n", Console::FG_CYAN);
+        $this->stdout("Procesando motivos de consulta (lote IA)...\n", Console::FG_CYAN);
 
+        $encounterIds = $this->encounterIdsPendientes();
+        if ($encounterIds === []) {
+            $this->stdout("No hay encounters pendientes.\n", Console::FG_YELLOW);
+
+            return;
+        }
+
+        $ok = 0;
+        $fail = 0;
+        foreach ($encounterIds as $encounterId) {
+            $result = AppointmentReasonBatchService::process((int) $encounterId);
+            if ($result['ok']) {
+                $ok++;
+                $this->stdout("  Encounter {$encounterId}: OK\n", Console::FG_GREEN);
+            } else {
+                $fail++;
+                $this->stdout("  Encounter {$encounterId}: {$result['message']}\n", Console::FG_RED);
+            }
+        }
+
+        $this->stdout("Listo. OK={$ok} fallos={$fail}\n", Console::FG_CYAN);
+    }
+
+    /**
+     * Respaldo si falló turno-notificacion/run: encounters cuya ventana de carga ya cerró y aún no tienen resumen IA.
+     */
+    public function actionProcesarVencidos($limit = 50)
+    {
+        $limit = max(1, (int) $limit);
+        $this->stdout("Procesando motivos vencidos (ventana cerrada)...\n", Console::FG_CYAN);
+
+        $n = 0;
+        foreach ($this->encounterIdsPendientes() as $encounterId) {
+            if ($n >= $limit) {
+                break;
+            }
+            $encounter = Encounter::findOne((int) $encounterId);
+            if (!$encounter || AppointmentReasonWindowService::isInputOpenForEncounter($encounter)) {
+                continue;
+            }
+            $result = AppointmentReasonBatchService::process((int) $encounterId);
+            if ($result['ok']) {
+                $n++;
+                $this->stdout("  Encounter {$encounterId}: OK\n", Console::FG_GREEN);
+            }
+        }
+
+        $this->stdout("Procesados: {$n}\n", Console::FG_CYAN);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function encounterIdsPendientes(): array
+    {
         $query = ConsultaMotivosMessage::find()
             ->select('encounter_id')
             ->groupBy('encounter_id');
@@ -52,52 +105,15 @@ class MotivosConsultaController extends Controller
             $query->andWhere(['encounter_id' => (int) $this->consultaId]);
         }
 
-        $encounterIds = $query->column();
-        if (empty($encounterIds)) {
-            $this->stdout("No hay mensajes de motivos para procesar.\n", Console::FG_YELLOW);
-            return;
+        $ids = array_map('intval', $query->column());
+        if ($ids === []) {
+            return [];
         }
 
-        $count = 0;
-        foreach ($encounterIds as $encounterId) {
-            $messages = ConsultaMotivosMessage::find()
-                ->where(['encounter_id' => $encounterId])
-                ->orderBy(['created_at' => SORT_ASC])
-                ->all();
-
-            $parts = [];
-            foreach ($messages as $msg) {
-                if ($msg->message_type === 'texto') {
-                    $parts[] = trim($msg->texto);
-                } elseif ($msg->message_type === 'audio') {
-                    $parts[] = '[Audio]'; // TODO: transcribir con API de speech-to-text
-                } elseif ($msg->message_type === 'imagen') {
-                    $parts[] = '[Imagen]'; // TODO: describir con IA si se desea
-                }
-            }
-
-            $texto = implode("\n", array_filter($parts));
-            if ($texto === '') {
-                continue;
-            }
-
-            $encounter = Encounter::findOne((int) $encounterId);
-            if (!$encounter) {
-                $this->stdout("  Encounter $encounterId no encontrado, omitiendo.\n", Console::FG_RED);
-                continue;
-            }
-
-            $encounter->reason_text = $texto;
-            // Si más adelante se codifica a SNOMED y se inserta ConsultaMotivos, usar origen = ConsultaMotivos::ORIGEN_PACIENTE
-            if ($encounter->save(false)) {
-                $count++;
-                $this->stdout("  Encounter $encounterId: reason_text actualizado.\n", Console::FG_GREEN);
-            } else {
-                $this->stdout("  Encounter $encounterId: error al guardar.\n", Console::FG_RED);
-            }
-        }
-
-        $this->stdout("Listo. Actualizados $count encounter(s).\n", Console::FG_CYAN);
-        $this->stdout("Próximo paso: añadir codificación SNOMED, corrección ortográfica y estructuración según necesidad.\n", Console::FG_YELLOW);
+        return Encounter::find()
+            ->select('id')
+            ->where(['id' => $ids])
+            ->andWhere(['motivos_ia_processed_at' => null])
+            ->column();
     }
 }

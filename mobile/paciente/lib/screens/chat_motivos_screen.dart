@@ -41,7 +41,9 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   bool _isRecording = false;
 
   static const String _welcomeMessage =
-      'Contanos en pocas palabras por qué pediste este turno (por ejemplo: dolor de cabeza, control, resultado de análisis). Podés escribir, enviar audios o fotos. El médico lo verá antes de la consulta.';
+      'Contanos en pocas palabras por qué pediste este turno. Podés escribir, enviar audios o fotos hasta 1 minuto antes del horario del turno; después armamos un resumen para el médico.';
+  bool _inputAbierto = true;
+  String? _motivosResumen;
 
   @override
   void initState() {
@@ -71,6 +73,8 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     setState(() {
       _loading = false;
       _messages = result['messages'] ?? [];
+      _inputAbierto = result['input_abierto'] != false;
+      _motivosResumen = result['motivos_resumen']?.toString();
       if (result['success'] != true) _error = result['message'] as String?;
     });
     _scrollToBottom();
@@ -94,6 +98,10 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Future<void> _sendText() async {
+    if (!_inputAbierto) {
+      _showError('El plazo para cargar motivos ya finalizó.');
+      return;
+    }
     final text = _textController.text.trim();
     if (text.isEmpty || _sending) return;
     _textController.clear();
@@ -111,6 +119,10 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Future<void> _pickImage() async {
+    if (!_inputAbierto) {
+      _showError('El plazo para cargar motivos ya finalizó.');
+      return;
+    }
     final picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
     if (file == null || !mounted) return;
@@ -118,6 +130,10 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Future<void> _recordAndSendAudio() async {
+    if (!_inputAbierto && !_isRecording) {
+      _showError('El plazo para cargar motivos ya finalizó.');
+      return;
+    }
     if (_isRecording) {
       final path = await _recorder.stop();
       setState(() => _isRecording = false);
@@ -224,9 +240,30 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
               BioSpacing.xs,
               BioSpacing.lg,
             ),
-            child: BioAlert.info(
-              message: _welcomeMessage,
-              icon: Icons.info_outline,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                BioAlert.info(
+                  message: _welcomeMessage,
+                  icon: Icons.info_outline,
+                ),
+                if (!_inputAbierto) ...[
+                  BioSpacing.gapH(BioSpacing.sm),
+                  BioAlert.warning(
+                    message:
+                        'Ya no podés enviar más mensajes. El médico verá un resumen al iniciar la consulta.',
+                    icon: Icons.lock_clock_outlined,
+                  ),
+                ],
+                if (_motivosResumen != null &&
+                    _motivosResumen!.trim().isNotEmpty) ...[
+                  BioSpacing.gapH(BioSpacing.sm),
+                  BioAlert.success(
+                    message: 'Resumen para el médico:\n${_motivosResumen!.trim()}',
+                    icon: Icons.summarize_outlined,
+                  ),
+                ],
+              ],
             ),
           );
         }
@@ -321,6 +358,9 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Widget _buildInputBar(BuildContext context) {
+    if (!_inputAbierto) {
+      return const SizedBox.shrink();
+    }
     final tokens = context.bio;
     return Container(
       decoration: BoxDecoration(

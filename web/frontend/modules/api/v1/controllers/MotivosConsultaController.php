@@ -6,6 +6,7 @@ use Yii;
 use yii\web\Response;
 use yii\web\UploadedFile;
 use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
+use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterAccessService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
@@ -42,11 +43,14 @@ class MotivosConsultaController extends BaseController
         return [
             'success' => true,
             'message' => 'Mensajes obtenidos exitosamente',
-            'data' => [
-                'messages' => $formattedMessages,
-                'encounter_id' => $encounterId,
-                'consulta_id' => $encounterId,
-            ],
+            'data' => array_merge(
+                [
+                    'messages' => $formattedMessages,
+                    'encounter_id' => $encounterId,
+                    'consulta_id' => $encounterId,
+                ],
+                AppointmentReasonWindowService::apiState($encounterId)
+            ),
         ];
     }
 
@@ -87,6 +91,18 @@ class MotivosConsultaController extends BaseController
             return $err;
         }
         unset($encounter);
+
+        if (!AppointmentReasonWindowService::isInputOpen($encounterId)) {
+            Yii::$app->response->statusCode = 403;
+
+            return [
+                'success' => false,
+                'message' => 'El plazo para cargar motivos finalizó '
+                    . AppointmentReasonWindowService::minutesBeforeClose()
+                    . ' minuto(s) antes del turno.',
+                'data' => AppointmentReasonWindowService::apiState($encounterId),
+            ];
+        }
 
         $messageType = Yii::$app->request->post('message_type', 'imagen');
         if (!in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {

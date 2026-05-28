@@ -27,6 +27,7 @@ use yii\db\ActiveRecord;
  * @property int|null $parent_id
  * @property int|null $workflow_step
  * @property string|null $reason_text
+ * @property string|null $motivos_ia_processed_at
  * @property string|null $note
  */
 class Encounter extends ActiveRecord
@@ -89,7 +90,7 @@ class Encounter extends ActiveRecord
             [['encounter_class'], 'string', 'max' => 10],
             [['status'], 'string', 'max' => 32],
             [['parent_type'], 'string', 'max' => 128],
-            [['period_start', 'period_end', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
+            [['period_start', 'period_end', 'created_at', 'updated_at', 'deleted_at', 'motivos_ia_processed_at'], 'safe'],
             [['reason_text', 'note'], 'string'],
         ];
     }

@@ -2,10 +2,12 @@
 
 namespace common\components\Scheduling\Service;
 
+use common\models\Clinical\Encounter;
 use common\models\Turno;
 use common\models\TurnoNotificacionProgramada;
 use common\models\EfectorTurnosConfig;
 use common\models\TurnoEventoAudit;
+use common\components\Clinical\Service\AppointmentReasonWindowService;
 
 class TurnoConfirmationService
 {
@@ -41,15 +43,47 @@ class TurnoConfirmationService
                 $this->insertProgramada($turno, TurnoNotificacionProgramada::TIPO_TRANSPORT_HINT, date('Y-m-d H:i:s', $runTransport));
             }
         }
+
+        $this->programarMotivosIaBatch($turno, $dt);
     }
 
-    protected function insertProgramada(Turno $turno, $tipo, $runAt)
+    /**
+     * Una sola inferencia de motivos ~N min antes del turno (ver AppointmentReasonWindowService).
+     */
+    protected function programarMotivosIaBatch(Turno $turno, int $turnoTimestamp): void
+    {
+        $encounter = Encounter::findOne(['appointment_id' => (int) $turno->id_turnos]);
+        if (!$encounter) {
+            return;
+        }
+
+        $minutes = AppointmentReasonWindowService::minutesBeforeClose();
+        $runAt = $turnoTimestamp - $minutes * 60;
+        if ($runAt <= time()) {
+            return;
+        }
+
+        $this->insertProgramada(
+            $turno,
+            TurnoNotificacionProgramada::TIPO_MOTIVOS_IA_BATCH,
+            date('Y-m-d H:i:s', $runAt),
+            ['encounter_id' => (int) $encounter->id]
+        );
+    }
+
+    /**
+     * @param array<string, mixed>|null $payload
+     */
+    protected function insertProgramada(Turno $turno, $tipo, $runAt, ?array $payload = null)
     {
         $n = new TurnoNotificacionProgramada();
         $n->id_turno = (int) $turno->id_turnos;
         $n->tipo = $tipo;
         $n->run_at = $runAt;
         $n->estado = TurnoNotificacionProgramada::ESTADO_PENDIENTE;
+        if ($payload !== null) {
+            $n->payload_json = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        }
         $n->save(false);
     }
 

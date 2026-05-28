@@ -19,12 +19,7 @@ Este documento refleja el **costo real** cuando se usan **APIs externas** (IA ge
 | Servicio | Precio (USD) | Uso en este doc | Fuente |
 |----------|--------------|-----------------|--------|
 | **Groq** — Whisper large-v3-turbo | **~$0.0007/min** ($0.04/h) | **STT de referencia** | [groq.com/pricing](https://groq.com/pricing) |
-| **OpenAI** — gpt-4o-mini-transcribe | $0.003/min | Alternativa batch/streaming | [openai.com/api/pricing](https://openai.com/api/pricing) |
-| **Google** — Chirp 3 Dynamic Batch | $0.004/min (async) | Si ya usás GCP y no urge tiempo real | [Speech-to-Text pricing](https://cloud.google.com/speech-to-text/pricing) |
-| **Google** — Speech-to-Text V2 estándar | $0.016/min | **No** es referencia (muy caro vs mercado) | Misma fuente |
 | **Vision API** (Label, Text, Face, etc.) | 1.000 unidades/mes gratis; luego $1.50/1.000 | Referencia Vision | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
-| **Cloud Storage Standard** (almacenamiento) | ~$0.020/GB/mes (us-central1) | [cloud.google.com/storage/pricing](https://cloud.google.com/storage/pricing) |
-| **Cloud Storage** (egress a internet) | $0.12/GB (primer tramo, destinos mundial) | Misma fuente |
 
 Para **Vertex AI / Gemini** y **videollamadas** (Twilio, Daily.co) conviene revisar el [Calculador de precios de Google Cloud](https://cloud.google.com/products/calculator) y la [tabla de precios de Gemini en Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/pricing) (revisar cada 6–12 meses).
 
@@ -107,34 +102,32 @@ Para cifras exactas y **cómo bajar aún más** (tiers gratis, Hugging Face, sol
 
 **Implementación actual en código:** `SpeechToTextManager` usa **Hugging Face** (wav2vec2 español por defecto en `params.php`). El coste HF depende del plan/créditos, no de USD/min fijo; Groq es la referencia **API managed** comparable cuando se externaliza STT.
 
-### Otras APIs (orden de precio aproximado)
+### Otras APIs STT (sin Google / OpenAI)
+
+Detalle y escalera operativa (HF, tiers gratis, bajo demanda): [estrategias-api.md §5](./estrategias-api.md#5-stt-transcripción-de-audio).
 
 | Proveedor | ~USD/min | 400 min/mes | Notas |
 |-----------|----------|-------------|--------|
-| **Groq Whisper** | 0,0007 | **~0,28** | Batch; muy rápido; límite ~25 MB/archivo |
+| **Groq Whisper** | 0,0007 | **~0,28** | Referencia de este doc; batch; ~25 MB/archivo |
 | Together / Fireworks Whisper | ~0,001 | ~0,40 | Similar a Groq |
 | AssemblyAI Slim | ~0,002 | ~0,80 | Solo transcripción |
-| OpenAI gpt-4o-mini-transcribe | 0,003 | ~1,20 | Buen equilibrio calidad/precio |
-| Google Chirp 3 Dynamic Batch | 0,004 | ~1,60 | Async (~24 h SLA) |
-| Deepgram Nova-3 batch | ~0,004 | ~1,60 | Streaming aparte |
-| OpenAI Whisper-1 | 0,006 | ~2,40 | Referencia clásica |
-| **Google STT V2** | 0,016 | **~6,40** | Evitar como default; ver estrategias si hay créditos GCP |
-
-Cómo **reducir por debajo** de ~$0,28/mes: [estrategias-api.md §5](./estrategias-api.md#5-stt-transcripción-de-audio) (HF gratis, créditos Groq/Deepgram, transcribir solo bajo demanda, Whisper en GPU propia).
+| Deepgram Nova-3 batch | ~0,004 | ~1,60 | Streaming aparte; créditos de prueba |
 
 ---
 
 ## Capacidades que consumen API
 
-### 1. Comunicación previa al turno (pre-turno)
+### 1. Motivos de consulta (app paciente, antes de la atención)
 
-El chat/bot guía al paciente **antes** de sacar el turno. Conversación que puede terminar en turno o no.
+El paciente carga texto, audio e imágenes en el chat de **motivos** hasta **1 minuto antes del turno** (sin IA en cada mensaje). Al cerrar la ventana, **una sola llamada IA** resume todo el hilo en `encounter.reason_text` para el médico. Implementación: `AppointmentReasonBatchService`, cron `MOTIVOS_IA_BATCH` vía `turno-notificacion/run`.
+
+**Cuenta de llamadas a IA:** **400 consultas/mes = 400 llamadas IA/mes** (1 lote por paciente). Prompt más largo (~3.000–5.000 tokens con transcripciones e imágenes referenciadas) ⇒ ~**$0.0008–0.001**/llamada.
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Contactos pre-turno | 1.000/médico/mes; 4 mensajes × 40% con IA ⇒ **1.600 llamadas IA** | — |
-| **Google (Gemini Flash)** 1.600 × ~$0.00035/llamada | — | **aprox. $0.56/médico/mes** |
-| **Together AI (Llama 3.1 8B)** 1.600 × $0.00027/llamada | — | **aprox. $0.43/médico/mes** |
+| Llamadas IA (resumen motivos) | **400** (1 por consulta) | — |
+| **Google (Gemini Flash Lite)** 400 × ~$0.0009/llamada | — | **aprox. $0.36/médico/mes** |
+| **Together AI (Llama 3.1 8B)** 400 × ~$0.0005/llamada | — | **aprox. $0.20/médico/mes** |
 
 ---
 
@@ -173,7 +166,6 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
-| Almacenamiento / egress | No se usa cloud storage | **$0** |
 | **STT** (transcribir todo el audio) | 400 min; **Groq** ~$0.0007/min | **~$0.28** |
 | **Vision** (analizar todas las fotos) | 400 × 2 = 800 imágenes; 1.000 gratis | **$0** |
 | **Total medios (STT + Vision)** | — | **~$0.28/médico/mes** |
@@ -200,11 +192,11 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 | Concepto | Google (Gemini Flash) | Together AI (Llama 3.1 8B) |
 |----------|------------------------|-----------------------------|
-| Comunicación previa al turno | aprox. $0.56 | aprox. $0.43 |
+| Motivos de consulta (lote pre-atención) | aprox. $0.36 | aprox. $0.20 |
 | Conversación pre-consulta | aprox. $0.35 | aprox. $0.27 |
 | Agente onboarding | aprox. $0.14 | aprox. $0.11 |
 | Consulta (400 consultas/mes) | aprox. $0.14 | aprox. $0.11 |
-| **Total (Apartado 1)** | **aprox. $1.19** | **aprox. $0.92** |
+| **Total (Apartado 1)** | **aprox. $0.99** | **aprox. $0.69** |
 
 ### Apartado 2 – Medios (transcripción y análisis de imágenes)
 
@@ -218,10 +210,10 @@ El chat/bot guía al paciente **antes** de sacar el turno. Conversación que pue
 
 | Proveedor IA (Apartado 1) | Total Apartado 1 | Total Apartado 2 | **Total general** |
 |---------------------------|------------------|------------------|-------------------|
-| Google (Gemini Flash Lite) | aprox. $1.19 | aprox. $0.28 | **aprox. $1.47** |
-| Together AI (Llama 3.1 8B) | aprox. $0.92 | aprox. $0.28 | **aprox. $1.20** |
+| Google (Gemini Flash Lite) | aprox. $0.99 | aprox. $0.28 | **aprox. $1.27** |
+| Together AI (Llama 3.1 8B) | aprox. $0.69 | aprox. $0.28 | **aprox. $0.97** |
 
-**Orden de magnitud uso intensivo:** **~USD 1,5–2/prof/mes** (redondeo conservador sobre ~$1,47). Histórico con Google STT a $0,016/min: **~USD 6,5–8/prof** — ya no aplica como baseline.
+**Orden de magnitud uso intensivo:** **~USD 1,0–1,3/prof/mes** (redondeo conservador sobre ~$1,27 con Gemini).
 
 **Nota**: Si la IA de pre-turno, pre-consulta, onboarding y consulta corre en **nuestra infra**, esos ítems figuran en [infra/costos.md](../infra/costos.md) y no se duplican aquí. Videollamadas (Twilio, Daily.co, etc.) no están incluidas en este resumen; ver sección correspondiente si aplica.
 

@@ -18,7 +18,7 @@ Los precios de la [matriz Argentina](../modelo-de-negocio/business-plan/matriz-a
 | Ingresos brutos (IIBB) | **3%–5%** sobre facturación bruta (promedio ilustrativo; varía por jurisdicción y convenio multilateral) |
 | Ganancias (imp. cédulo) | **25%** sobre utilidad impositiva anual (equivalente mensual en ejemplos) |
 | IVA | **21%** (alícuota general servicios) |
-| Uso de IA (escala 5.000 prof.) | **Intensivo** únicamente: ~USD **1,5–2/prof/mes** (IA ~$1,2 + STT Groq ~$0,28 — ver [costos-api.md](./costos-api.md); más bajo con [estrategias-api.md](./estrategias-api.md)) |
+| Uso de IA (escala 5.000 prof.) | **Intensivo** únicamente: ~USD **1,0–1,3/prof/mes** (IA ~$1 + STT Groq ~$0,28 — ver [costos-api.md](./costos-api.md)) |
 
 **No cubre:** monotributo, exportación de servicios con tratamiento especial, retenciones en licitación pública, percepciones aduaneras en detalle, impuesto PAIS en cada operación, ni convenios impositivos provincia por provincia.
 
@@ -78,13 +78,13 @@ No se prorratea de forma exacta sin balance; las tablas siguientes usan **órden
 
 ## Tabla ejemplo: 5.000 profesionales (costo de servir)
 
-Referencia: [costos-api.md](./costos-api.md) — **uso intensivo** = pre-turno, pre-consulta, onboarding, consultas con IA y **400 min STT/mes** (Groq ~$0,0007/min). Total **~USD 1,5/prof/mes** (~$1,47 con Gemini Flash Lite + Groq).
+Referencia: [costos-api.md](./costos-api.md) — **uso intensivo** = motivos (1 IA/consulta), pre-consulta, onboarding, consultas con IA y **400 min STT/mes**. Total **~USD 1,0–1,3/prof/mes** (~$1,27 con Gemini Flash Lite + Groq).
 
 ### A) Costo operativo documentado (sin impuestos sobre ventas)
 
 | Concepto | USD/mes (orientativo) | Fuente |
 |----------|------------------------|--------|
-| **IA + STT vía API** (5.000 × USD 1,5–2, uso intensivo) | **7.500 – 10.000** | [costos-api.md](./costos-api.md), [modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md) |
+| **IA + STT vía API** (5.000 × USD 1,0–1,3, uso intensivo) | **5.000 – 6.500** | [costos-api.md](./costos-api.md), [modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md) |
 | **Aplicación + BD + hosting** (PHP, MySQL, backups, CDN, monitoreo) | *[pendiente presupuesto]* | **No hay cifra a escala 5.000 prof. en el repo** |
 
 **Única referencia interna de “infra” en chico:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500/mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); mezcla hosting y soporte operativo, **no escala lineal** a 5.000 usuarios.
@@ -93,7 +93,7 @@ Referencia: [costos-api.md](./costos-api.md) — **uso intensivo** = pre-turno, 
 
 | Subtotal en esta tabla | USD/mes |
 |------------------------|---------|
-| **Solo IA + STT (documentado)** | **7.500 – 10.000** |
+| **Solo IA + STT (documentado)** | **5.000 – 6.500** |
 | + aplicación/BD (cuando se presupueste) | a sumar |
 
 ### B) Carga fiscal sobre compras (estimación conservadora)

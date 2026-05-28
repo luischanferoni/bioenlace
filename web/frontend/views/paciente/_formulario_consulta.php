@@ -6,10 +6,12 @@
  * @var $idConsulta int|string|null
  * @var $parent string|null
  * @var $parentId int|string|null
+ * @var $motivoPacientePrefill string Resumen IA de motivos cargados por el paciente (pre-atención)
  */
 $idConsulta = $idConsulta ?? null;
 $parent = $parent ?? null;
 $parentId = $parentId ?? null;
+$motivoPacientePrefill = trim((string) ($motivoPacientePrefill ?? ''));
 ?>
 
 <?php
@@ -30,6 +32,13 @@ use yii\helpers\Html;
     <?php if ($parentId !== null && $parentId !== ''): ?>
         <?= Html::hiddenInput('parent_id', (int) $parentId) ?>
     <?php endif; ?>
+    <?php if ($motivoPacientePrefill !== ''): ?>
+    <div class="alert alert-info mb-3" id="motivos-paciente-resumen" role="status">
+        <strong>Motivos informados por el paciente</strong>
+        <p class="mb-0 mt-2 small"><?= nl2br(Html::encode($motivoPacientePrefill)) ?></p>
+    </div>
+    <?php endif; ?>
+
     <!-- Formulario de entrada -->
     <div class="form-group mb-3" id="chat-form">
         <label for="chat-input" class="form-label">
@@ -41,7 +50,7 @@ use yii\helpers\Html;
             name="consulta_texto"
             rows="4" 
             placeholder="Escriba aquí los detalles de la consulta. El asistente verificará que tenga todos los datos necesarios: motivos de consulta, evolución, diagnóstico, prácticas, etc."
-            style="border-width: 2px; resize: vertical;"></textarea>
+            style="border-width: 2px; resize: vertical;"><?= $motivoPacientePrefill !== '' ? Html::encode($motivoPacientePrefill) : '' ?></textarea>
     </div>
 
     <!-- Boton analysis de consulta -->

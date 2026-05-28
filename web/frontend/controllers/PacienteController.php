@@ -133,12 +133,21 @@ class PacienteController extends Controller
             $formularioHtml = '';
             if ($mostrarFormulario) {
                 $idConfiguracion = $resultadoConfiguracion['idConfiguracion'] ?? null;
+                $motivoPacientePrefill = '';
+                if ($idConsulta !== null && $idConsulta !== '' && (int) $idConsulta > 0) {
+                    $encMotivos = Encounter::findOne((int) $idConsulta);
+                    if ($encMotivos && trim((string) $encMotivos->reason_text) !== '') {
+                        $motivoPacientePrefill = trim((string) $encMotivos->reason_text);
+                    }
+                }
+
                 $formularioHtml = $this->renderPartial('_formulario_consulta', [
                     'paciente' => $paciente,
                     'idConfiguracion' => $idConfiguracion,
                     'idConsulta' => $idConsulta,
                     'parent' => $parent,
                     'parentId' => $parentId,
+                    'motivoPacientePrefill' => $motivoPacientePrefill,
                 ]);
             }
 

@@ -22,6 +22,8 @@ class TurnoNotificacionProgramada extends ActiveRecord
     const TIPO_CONFIRM_REQUEST = 'CONFIRM_REQUEST';
     const TIPO_TRANSPORT_HINT = 'TRANSPORT_HINT';
     const TIPO_RETRASO_SOBRETURNO = 'RETRASO_SOBRETURNO';
+    /** Procesar motivos de consulta (IA en lote) ~1 min antes del turno. */
+    const TIPO_MOTIVOS_IA_BATCH = 'MOTIVOS_IA_BATCH';
 
     const ESTADO_PENDIENTE = 'PENDIENTE';
     const ESTADO_ENVIADA = 'ENVIADA';

@@ -2,14 +2,15 @@
 
 namespace common\components\Assistant\EntryPoints\AppointmentReason;
 
+use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterAccessService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
 use Yii;
 
 /**
- * Motivo de consulta del paciente (pre-turno / app paciente).
- * Sin preprocess del chat asistente: persistencia y, a futuro, extracción estructurada propia.
+ * Motivo de consulta del paciente (app paciente, antes de la atención).
+ * Solo persistencia en el chat; la IA corre en lote ~1 min antes del turno ({@see AppointmentReasonBatchService}).
  */
 final class AppointmentReasonEntry
 {
@@ -34,6 +35,11 @@ final class AppointmentReasonEntry
             return $err;
         }
         unset($encounter);
+
+        $windowErr = self::windowClosedResponse($encounterId);
+        if ($windowErr !== null) {
+            return $windowErr;
+        }
 
         $msg = new ConsultaMotivosMessage();
         $msg->encounter_id = $encounterId;
@@ -84,5 +90,25 @@ final class AppointmentReasonEntry
         }
 
         return [$encounter, null];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function windowClosedResponse(int $encounterId): ?array
+    {
+        if (AppointmentReasonWindowService::isInputOpen($encounterId)) {
+            return null;
+        }
+
+        Yii::$app->response->statusCode = 403;
+
+        return [
+            'success' => false,
+            'message' => 'El plazo para cargar motivos finalizó '
+                . AppointmentReasonWindowService::minutesBeforeClose()
+                . ' minuto(s) antes del turno. El médico verá el resumen al iniciar la consulta.',
+            'data' => AppointmentReasonWindowService::apiState($encounterId),
+        ];
     }
 }

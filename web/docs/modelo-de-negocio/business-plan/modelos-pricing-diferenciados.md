@@ -108,7 +108,7 @@ En Argentina es más difícil que en EE.UU. o China: márgenes farmacéuticos m�
 | Build faltante | Farmacia, delivery, escala marketing | Farmacia (~38%); sin red comercial propia |
 | Ciclo de venta | Marketing / CAC | 1–12 meses institucional |
 
-**Costos de IA** (referencia [`../../costos/costos-api.md`](../../costos/costos-api.md)): del orden de **USD 1,5–2/profesional/mes** en uso intensivo (Gemini Flash Lite + Groq STT; puede bajar con [`estrategias-api.md`](../../costos/estrategias-api.md)). No es el cuello de botella; lo son sueldos, ventas e implementación.
+**Costos de IA** (referencia [`../../costos/costos-api.md`](../../costos/costos-api.md)): del orden de **USD 1,0–1,3/profesional/mes** en uso intensivo (motivos en 1 lote/consulta, Gemini Flash Lite, Groq STT). No es el cuello de botella; lo son sueldos, ventas e implementación.
 
 Subsidiar consultas gratis compite en un juego de **capital de riesgo + margen retail**, no en el GTM B2B de Bioenlace.
 

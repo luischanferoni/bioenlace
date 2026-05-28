@@ -46,7 +46,7 @@ stateDiagram-v2
 ## Servicios (ubicación)
 
 ```
-web/common/components/Emergency/
+web/common/components/Clinical/Emergency/Service/
   GuardiaCircuitoService.php      # transiciones de estado, validación
   GuardiaTriageService.php        # alta/actualización triage
   GuardiaQueueService.php         # listado tablero, orden, filtros

@@ -2,8 +2,8 @@
 
 namespace frontend\controllers;
 
-use common\components\Inpatient\InternacionEpicrisisPlantillaAdminService;
-use common\components\Inpatient\InternacionEfectorAccess;
+use common\components\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaAdminService;
+use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
 use common\models\ServiciosEfector;
 use frontend\filters\SisseActionFilter;
 use Yii;

@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Specialty\Inpatient\InpatientClinicalContext;
-use common\components\Inpatient\InternacionEfectorAccess;
+use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\SegNivelInternacion;

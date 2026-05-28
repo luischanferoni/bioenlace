@@ -2,13 +2,13 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Inpatient\InternacionAltaEstructuradaService;
-use common\components\Inpatient\InternacionCambioCamaService;
-use common\components\Inpatient\InternacionIngresoService;
-use common\components\Inpatient\InternacionCamaEstadoService;
-use common\components\Inpatient\InternacionEfectorAccess;
-use common\components\Inpatient\InternacionIndicadoresService;
-use common\components\Inpatient\InternacionMapaCamasService;
+use common\components\Clinical\Inpatient\Service\InternacionAltaEstructuradaService;
+use common\components\Clinical\Inpatient\Service\InternacionCambioCamaService;
+use common\components\Clinical\Inpatient\Service\InternacionIngresoService;
+use common\components\Clinical\Inpatient\Service\InternacionCamaEstadoService;
+use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
+use common\components\Clinical\Inpatient\Service\InternacionIndicadoresService;
+use common\components\Clinical\Inpatient\Service\InternacionMapaCamasService;
 use common\components\Ui\UiScreenService;
 use common\models\Persona;
 use common\models\SegNivelInternacion;
@@ -426,7 +426,7 @@ class InternacionController extends BaseController
                 (int) ($req->get('id_efector') ?? 0) ?: null
             );
             InternacionEfectorAccess::assertCanAccessEfector($idEfector);
-            $plantillas = (new \common\components\Inpatient\InternacionEpicrisisPlantillaService())
+            $plantillas = (new \common\components\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaService())
                 ->listar($idEfector, (int) ($req->get('id_servicio') ?? 0) ?: null);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);

@@ -20,7 +20,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 
 ## Otros mapas
 
-- [Catálogo QA (casos de prueba)](../qa/README.md)
+- [Flujos paso a paso (usuario y sistema)](../qa/README.md)
 - [Arquitectura del asistente](../arquitectura/asistente-motores.md)
 - [Madurez HIS](../his-completo/README.md)
 - [Costos IA/infra](../costos/README.md)

@@ -29,7 +29,7 @@ use frontend\components\CPacienteHistorial;
 use frontend\components\PacienteHistorial;
 use common\models\ProfesionalEfectorServicio;
 use common\components\Clinical\PatientHistoriaUrl;
-use common\components\Inpatient\InternacionMapaWebContext;
+use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
 use webvimark\modules\UserManagement\models\User;
 
@@ -153,7 +153,7 @@ class InternacionController extends Controller
             try {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
-                    $altaCtx = (new \common\components\Inpatient\InternacionAltaEstructuradaService())
+                    $altaCtx = (new \common\components\Clinical\Inpatient\Service\InternacionAltaEstructuradaService())
                         ->contextoAlta($model, $idEfector);
                 }
             } catch (\Throwable $e) {
@@ -166,7 +166,7 @@ class InternacionController extends Controller
             try {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
-                    $cambioCtx = (new \common\components\Inpatient\InternacionCambioCamaService())
+                    $cambioCtx = (new \common\components\Clinical\Inpatient\Service\InternacionCambioCamaService())
                         ->contextoCambioCama($model, $idEfector);
                 }
             } catch (\Throwable $e) {
@@ -221,7 +221,7 @@ class InternacionController extends Controller
         $idGuardia = isset($get['id_guardia']) ? (int) $get['id_guardia'] : null;
 
         try {
-            $ctx = (new \common\components\Inpatient\InternacionIngresoService())->contextoIngreso(
+            $ctx = (new \common\components\Clinical\Inpatient\Service\InternacionIngresoService())->contextoIngreso(
                 (int) $persona->id_persona,
                 $idEfector,
                 $idCama > 0 ? $idCama : null,

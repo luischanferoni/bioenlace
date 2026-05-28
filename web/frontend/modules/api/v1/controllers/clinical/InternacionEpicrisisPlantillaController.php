@@ -2,8 +2,8 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Inpatient\InternacionEpicrisisPlantillaAdminService;
-use common\components\Inpatient\InternacionEfectorAccess;
+use common\components\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaAdminService;
+use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 

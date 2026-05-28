@@ -1,235 +1,86 @@
-# QA — Internación (IMP)
+# Internación
 
-[← Índice](./README.md) · Producto: [internacion.md](../producto/internacion.md)
+[← Índice](./README.md) · Más detalle: [internacion.md](../producto/internacion.md)
 
-**Precondición:** sesión `encounter_class = IMP` (CU-TR-002).
-
----
-
-## CU-IMP-001 — Mapa de camas
-
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-001 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. `/internacion/index` o intent `internacion.mapa-camas-flow`.
-2. Verificar pisos/salas/camas con colores libre/ocupada/bloqueada/aislamiento.
-3. `GET /api/v1/clinical/internacion` (mapa).
-
-### Resultado esperado
-
-- Indicadores de ocupación coherentes.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+Elegí el efector en modo **internación** ([00-transversal](./00-transversal.md)).
 
 ---
 
-## CU-IMP-002 — Marcar estado cama
+## Ver el mapa de camas
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-002 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. Acciones B/A/L en mapa o `POST .../cama/{id}/marcar-estado`.
-
-### Resultado esperado
-
-- Estado persiste; visible al refrescar.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** abrís Internación / mapa de camas (menú o asistente: “mapa de camas”).
+2. **El sistema** muestra pisos, salas y camas con colores: libre, ocupada, bloqueada, aislamiento, etc.
+3. **Vos** tocás una cama.
+4. **El sistema** te muestra quién está ahí o te deja iniciar ingreso si está libre.
 
 ---
 
-## CU-IMP-003 — Ingreso internación
+## Marcar una cama (bloqueada, aislamiento, libre)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-003 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. Ingreso manual o desde guardia (CU-EMER-008).
-2. Flow `internacion.ingreso-flow` o formulario web.
-3. Asignar cama libre.
-
-### Resultado esperado
-
-- `seg_nivel_internacion` activa; cama ocupada; episodio FHIR si aplica.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** elegís la acción sobre la cama (bloquear, aislamiento, liberar…).
+2. **El sistema** cambia el estado y al refrescar el mapa **se ve** el color nuevo.
 
 ---
 
-## CU-IMP-004 — Atender desde mapa
+## Ingresar un paciente
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-004 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. Desde mapa/ronda, **Atender** → timeline con `parent=INTERNACION`.
-2. CU-CAP-006.
-
-### Resultado esperado
-
-- No abre MVC `internacion-diagnostico/*`.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** iniciás ingreso (desde mapa, ficha o llegada desde guardia).
+2. **El sistema** te pide datos de internación y una **cama libre**.
+3. **Vos** confirmás.
+4. **El sistema** ocupa la cama, crea o activa el episodio de internación y **abre** el circuito clínico (episodio FHIR si aplica).
 
 ---
 
-## CU-IMP-005 — Cambio de cama
+## Atender al internado desde el mapa
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-005 |
-| **Prioridad** | P1 |
-
-### Intent
-
-- `internacion.cambio-cama-flow`
-
-### Resultado esperado
-
-- Cama anterior liberada; nueva ocupada; historial `seg_nivel_internacion_hcama`.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** entrás a “atender” o a la historia desde la cama ocupada.
+2. **El sistema** abre la línea de tiempo / captura del episodio de internación.
+3. **Vos** cargás evolución, medicación, estudios (captura clínica).
 
 ---
 
-## CU-IMP-006 — Alta estructurada
+## Cambiar de cama
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-006 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. Intent `internacion.alta-estructurada-flow` o API alta formulario.
-2. Elegir plantilla; completar epicrisis; confirmar.
-3. Verificar `fecha_fin` internación y cama libre.
-
-### Resultado esperado
-
-- Externación OK; care plan completado si aplica.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (asistente o pantalla de internación) pedís cambio de cama.
+2. **El sistema** te muestra camas libres.
+3. **Vos** elegís una y confirmás.
+4. **El sistema** libera la cama vieja, ocupa la nueva y **mantiene** el mismo episodio de internación.
 
 ---
 
-## CU-IMP-007 — ABM plantillas epicrisis
+## Alta con epicrisis
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-007 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. `/internacion-epicrisis-plantilla/index` — listar.
-2. Crear plantilla con placeholders `{paciente}`, `{fecha_ingreso}`, etc.
-3. Activar/desactivar; usar en CU-IMP-006.
-
-### API
-
-- `GET/POST .../internacion-epicrisis-plantilla/*`
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** iniciás el alta estructurada.
+2. **El sistema** te guía por los pasos (resumen, epicrisis, motivo de egreso…).
+3. **Vos** completás y confirmás.
+4. **El sistema** da de alta la internación, libera la cama y cierra el episodio clínico según reglas del efector.
 
 ---
 
-## CU-IMP-008 — Ficha administrativa view
+## Plantillas de epicrisis (administración)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-008 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. `/internacion/view?id=<id>` — datos cama, fechas, enlace a historia.
-
-### Resultado esperado
-
-- Sin pestañas clínicas MVC; enlace a timeline funciona.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (con permiso) entrás a administrar plantillas de epicrisis.
+2. **El sistema** lista las plantillas del efector.
+3. **Vos** creás, editás o desactivás una.
+4. Al dar un alta, **podés** elegir una plantilla y el sistema **rellena** parte del texto.
 
 ---
 
-## CU-IMP-009 — Bundle clínico API
+## Ficha administrativa de la internación
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-009 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. `InpatientClinicalQuery::bundleForInternacion(id)` vía API episodio si expuesto.
-2. Verificar `medicationRequests`, `serviceRequests`, `conditions`, `fluidBalances`, `nutritionOrders`.
-
-### Resultado esperado
-
-- Datos desde FHIR; no desde `seg_nivel_internacion_medicamento` eliminada.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** abrís la vista de internación (datos de ingreso, obra social, cama, fechas).
+2. **El sistema** muestra lo administrativo sin mezclar con la captura clínica pesada en otra pantalla.
 
 ---
 
-## CU-IMP-010 — MVC clínico retirado (410)
+## Ver medicación, prácticas y balance del internado
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-IMP-010 |
-| **Prioridad** | P1 |
+1. **Vos** abrís el resumen clínico del episodio (desde API interna o pantallas que consumen el bundle).
+2. **El sistema** muestra lo cargado en captura: medicación, pedidos, balance hídrico, régimen — **no** desde pantallas viejas sueltas de “cargar medicación internación”.
 
-### Pasos
+---
 
-1. GET create en medicamento/practica/diagnostico internación controllers.
+## Si te quedó un bookmark viejo
 
-### Resultado esperado
-
-- 410 con mensaje de migración a timeline.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** intentás abrir URLs antiguas de medicación/práctica/diagnóstico de internación por separado.
+2. **El sistema** te dice que uses la captura desde el mapa o la historia del internado.

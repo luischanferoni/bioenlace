@@ -10,7 +10,7 @@ use yii\helpers\ArrayHelper;
 //use webvimark\modules\UserManagement\UserManagementModule;
 use webvimark\modules\UserManagement\models\User;
 
-use common\components\Inpatient\InternacionMapaWebContext;
+use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
 use common\models\Efector;
 use common\models\Persona;

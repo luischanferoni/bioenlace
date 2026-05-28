@@ -4,6 +4,7 @@ Explica piezas que atraviesan varios módulos del producto. Hoy el foco principa
 
 | Documento | Contenido |
 |-----------|-----------|
+| [common-components.md](./common-components.md) | Organización de `web/common/components/` (leer antes de mover código) |
 | [asistente-motores.md](./asistente-motores.md) | IntentEngine y SubIntentEngine: qué hace cada uno y cómo encadenan |
 
 ## Relacionado

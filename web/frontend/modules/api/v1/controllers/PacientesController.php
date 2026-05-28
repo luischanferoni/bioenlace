@@ -6,7 +6,7 @@ use Yii;
 use common\models\Cirugia;
 use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
-use common\components\Emergency\GuardiaQueueService;
+use common\components\Clinical\Emergency\Service\GuardiaQueueService;
 use common\models\Clinical\Encounter;
 use common\models\Guardia;
 use common\models\InfraestructuraPiso;

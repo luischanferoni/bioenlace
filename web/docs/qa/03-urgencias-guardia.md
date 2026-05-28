@@ -1,226 +1,75 @@
-# QA — Urgencias / guardia (EMER)
+# Guardia y urgencias
 
-[← Índice](./README.md) · Producto: [urgencias-guardia.md](../producto/urgencias-guardia.md)
+[← Índice](./README.md) · Más detalle: [urgencias-guardia.md](../producto/urgencias-guardia.md)
 
-**Precondición común:** sesión con `encounter_class = EMER` (CU-TR-002).
-
----
-
-## CU-EMER-001 — Tablero guardia
-
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-001 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. `set-session` EMER en efector con guardia habilitada.
-2. Abrir inicio pacientes / tablero (`site/pacientes` o intent `urgencias.ver-tablero-guardia`).
-3. Verificar columnas/estados: ingresado, espera triage, espera médico, en atención.
-
-### API
-
-- `GET /api/v1/clinical/emergency-guardia/tablero`
-
-### Resultado esperado
-
-- Cola del efector; sin referencias a `GuardiaController` MVC.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+Trabajá con el efector en modo **guardia** ([00-transversal](./00-transversal.md)).
 
 ---
 
-## CU-EMER-002 — Registrar triage
+## Ver el tablero de guardia
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-002 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. Seleccionar paciente en tablero sin triage o intent `urgencias.triage-paciente-guardia`.
-2. Completar Manchester 1–5, motivo, vitales opcionales.
-3. `POST .../emergency-guardia/{id}/registrar-triage`
-
-### Resultado esperado
-
-- Estado → espera médico; evento en `guardia_circuito_event`.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** entrás al inicio de pacientes / tablero de guardia.
+2. **El sistema** muestra la cola: quién ingresó, quién espera triage, quién espera médico, quién está siendo atendido.
+3. Al refrescar, **se actualiza** sin tener que recargar toda la web a mano.
 
 ---
 
-## CU-EMER-003 — Tomar caso / asignar médico
+## Registrar triage
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-003 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. `POST .../{id}/asignar` con PES de sesión.
-
-### Resultado esperado
-
-- Médico asignado; push `EMERGENCY_ASSIGNED_TO_YOU` si configurado.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** elegís un paciente que aún no tiene triage (o re-triage si corresponde).
+2. **Completás** nivel (Manchester 1–5), motivo y signos si los cargás.
+3. **El sistema** lo pasa a “espera médico” y registra el evento en el circuito.
+4. Si el caso es crítico, **puede** avisar por notificación al equipo según configuración.
 
 ---
 
-## CU-EMER-004 — Iniciar atención → captura
+## Tomar un caso (asignarte)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-004 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. `POST .../{id}/iniciar-atencion`
-2. Abrir `captura_url` devuelta.
-3. Guardar encounter mínimo (CU-CAP-007).
-
-### Resultado esperado
-
-- `encounter_id` válido; circuito `en_atencion`.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (médico) te asignás el caso desde el tablero o el asistente.
+2. **El sistema** muestra tu nombre en el caso y **te puede** notificar en el celular.
 
 ---
 
-## CU-EMER-005 — Derivar a otro efector
+## Empezar a atender
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-005 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. `GET .../listar-efectores-derivacion`
-2. `POST .../{id}/derivar` con `id_efector_derivacion` y condiciones.
-
-### Resultado esperado
-
-- Estado derivado; trazabilidad en tablero origen/destino según diseño.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** iniciás la atención desde el tablero.
+2. **El sistema** abre la captura clínica de ese ingreso de guardia.
+3. **Vos** documentás y guardás (ver [01-captura-clinica.md](./01-captura-clinica.md)).
+4. **El sistema** deja el caso en “en atención” mientras corresponda.
 
 ---
 
-## CU-EMER-006 — Finalizar / egreso
+## Derivar a otro efector
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-006 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. `POST .../{id}/finalizar` con datos de libro de guardia requeridos.
-
-### Resultado esperado
-
-- Episodio finalizado; no aparece en cola activa.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** indicás derivación a otro hospital o servicio.
+2. **El sistema** cierra o marca el circuito como derivado y registra el destino.
+3. El paciente **sale** de tu cola activa.
 
 ---
 
-## CU-EMER-007 — Indicadores resumen
+## Dar de alta / egreso de guardia
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-007 |
-| **Prioridad** | P1 |
-
-### API
-
-- `GET .../indicadores-resumen`
-- Export CSV si habilitado: `indicadores-export-csv`
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** finalizás el episodio de guardia cuando el paciente se va (alta, internación en otro lado, etc.).
+2. **El sistema** marca el caso como finalizado y ya no aparece en la cola activa.
 
 ---
 
-## CU-EMER-008 — Solicitar internación
+## Ver cómo va el día (indicadores)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-008 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. `POST .../{id}/solicitar-internacion`
-2. Completar ingreso web `internacion/create?id_guardia=` o flow `internacion.ingreso-flow`.
-
-### Resultado esperado
-
-- `seg_nivel_internacion.id_guardia` poblado; paciente en mapa IMP.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** abrís resumen o indicadores de guardia.
+2. **El sistema** muestra tiempos de espera, cantidad por estado, etc., según lo implementado.
 
 ---
 
-## CU-EMER-009 — Push crítico / asignación
+## Internar desde guardia
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-009 |
-| **Prioridad** | P2 |
-
-### Pasos
-
-1. Triage nivel 1–2 → verificar push `EMERGENCY_PATIENT_CRITICAL` en app médico.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** pedís internación para un paciente que está en guardia.
+2. **El sistema** te lleva al flujo de ingreso de internación con datos ya cargados.
+3. Al confirmar ingreso, **el caso de guardia** se enlaza con la internación (ver [04-internacion.md](./04-internacion.md)).
 
 ---
 
-## CU-EMER-010 — Re-triage
+## Emergencia de verdad
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-EMER-010 |
-| **Prioridad** | P2 |
-
-### Resultado esperado
-
-- Evento `re_triage` auditable; cola actualizada.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. Si el paciente tiene riesgo de vida (dolor de pecho, no respira, etc.), **no** uses solo esta pantalla: **llamá al 107** o la guardia física.
+2. **El sistema** en la app/web también **avisa** que no reemplaza emergencias presenciales.

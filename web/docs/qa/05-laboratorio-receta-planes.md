@@ -1,199 +1,73 @@
-# QA — Laboratorio, receta, planes, atención paciente
+# Laboratorio, recetas, tratamientos y resumen al paciente
 
 [← Índice](./README.md)
 
 ---
 
-## CU-LAB-001 — Paciente ve resultados
+## Ver resultados de laboratorio (paciente)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-LAB-001 |
-| **Prioridad** | P0 |
-| **Actor** | Paciente |
-
-### Pasos
-
-1. Login paciente (CU-TR-004).
-2. Pantalla laboratorio o intent `laboratorio.ver-resultados-como-paciente`.
-3. Paciente con `observation` / reportes vinculados en BD de prueba.
-
-### Resultado esperado
-
-- Listado de estudios; sin error; datos legibles.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (paciente) entrás a Laboratorio en la app o le decís al asistente “ver mis análisis”.
+2. **El sistema** lista estudios con fecha y valores legibles.
+3. Si no hay nada cargado, **te muestra** vacío o un mensaje claro, no un error.
 
 ---
 
-## CU-LAB-002 — Ingesta / actualización resultados (LIS)
+## Llegan resultados nuevos del laboratorio
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-LAB-002 |
-| **Prioridad** | P1 |
-
-### Nota
-
-No hay intent YAML `laboratorio.sincronizar-*` en el repo; validar el **pipeline de ingesta** (cron, integración o API staff) según [laboratorio.md](../producto/laboratorio.md).
-
-### Pasos
-
-1. Disparar ingesta de prueba (fixture o mensaje LIS).
-2. Paciente abre CU-LAB-001 / CU-AST-010 y ve el estudio nuevo.
-
-### Resultado esperado
-
-- `observation` / reportes vinculados al paciente; sin tablas legacy.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. En el efector, el laboratorio o la integración **carga** resultados (proceso de fondo o carga manual según el despliegue).
+2. **Vos** (paciente) volvés a abrir Laboratorio.
+3. **El sistema** muestra el estudio nuevo vinculado a tu persona.
 
 ---
 
-## CU-REC-001 — Emitir receta electrónica
+## Emitir receta electrónica (médico)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-REC-001 |
-| **Prioridad** | P0 |
-| **Actor** | Staff |
-
-### Pasos
-
-1. Tras captura con medicación o flujo receta dedicado.
-2. API `clinical/electronic-prescription/*` emitir.
-3. Descargar PDF; verificar QR si aplica.
-
-### Referencias
-
-- [receta-electronica.md](../producto/receta-electronica.md)
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** terminás la consulta con medicación indicada o entrás al flujo de receta.
+2. **El sistema** arma la receta digital válida.
+3. **Vos** la revisás y confirmás emisión.
+4. **El sistema** te deja descargar PDF (y QR si está homologado).
 
 ---
 
-## CU-REC-002 — Paciente ve recetas
+## Ver mis recetas (paciente)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-REC-002 |
-| **Prioridad** | P1 |
-
-### Intent
-
-- `receta.ver-recetas-como-paciente`
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** entrás a Recetas en la app o preguntás al asistente.
+2. **El sistema** lista recetas emitidas con fecha y medicación resumida.
 
 ---
 
-## CU-PLAN-001 — Care plan en captura
+## Plan de tratamiento en la consulta
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-PLAN-001 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. Guardar medicación en encounter ambulatorio.
-2. Verificar `care_plan` + `medication_request` vinculados.
-
-### Referencias
-
-- [planes-de-tratamiento.md](../producto/planes-de-tratamiento.md)
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (médico) en la captura indicás plan de seguimiento / tratamiento agudo.
+2. **El sistema** crea el plan vinculado al encuentro.
+3. **El paciente** puede ver recordatorios o tareas según lo configurado.
 
 ---
 
-## CU-PLAN-002 — Recordatorios paciente
+## Recordatorios de medicación (paciente)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-PLAN-002 |
-| **Prioridad** | P1 |
-
-### Intent
-
-- `tratamiento.recordatorios-como-paciente`
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (paciente) abrís tratamientos / recordatorios o lo pedís en el chat.
+2. **El sistema** muestra qué tenés que tomar o hacer según el plan.
+3. **Vos** podés marcar que lo hiciste (si el flujo lo permite).
 
 ---
 
-## CU-PLAN-003 — Adherencia staff
+## Adherencia al tratamiento (personal)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-PLAN-003 |
-| **Prioridad** | P1 |
-
-### Intent
-
-- `tratamiento.adherencia-resumen-staff`
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (médico o enfermería) pedís resumen de adherencia de un paciente o plan.
+2. **El sistema** responde con el resumen configurado (por asistente o pantalla staff).
 
 ---
 
-## CU-ATN-001 — Resumen post-atención
+## Resumen después de la consulta (paciente)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-ATN-001 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. Cerrar encounter ambulatorio con publicación de resumen si el flujo lo exige.
-2. Paciente ve resumen en app (no dictado crudo).
-
-### Referencias
-
-- [resumen-atencion-paciente.md](../producto/resumen-atencion-paciente.md)
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (paciente) abrís “mi última atención” o el resumen post-consulta.
+2. **El sistema** muestra qué pasó en la visita: diagnóstico en lenguaje claro, indicaciones, recetas, pedidos.
+3. Si la atención aún no está cerrada, **te dice** que todavía no hay resumen.
 
 ---
 
-## CU-ATN-002 — Mis atenciones / última atención
+## Historial de mis atenciones (paciente)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-ATN-002 |
-| **Prioridad** | P1 |
-
-### Intents
-
-- `atencion.mis-atenciones-como-paciente`
-- `atencion.ver-ultima-como-paciente`
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** pedís ver atenciones anteriores.
+2. **El sistema** lista visitas con fecha y te deja entrar al detalle de cada una.

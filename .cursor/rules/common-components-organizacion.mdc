@@ -1,17 +1,29 @@
 ---
-description: Organización y responsabilidades de `web/common/components`
-alwaysApply: true
+description: Organización de web/common/components — leer doc antes de cambiar
+globs:
+  - web/common/components/**
+alwaysApply: false
 ---
 
 # common/components: organización
 
-- **Agrupar por responsabilidad**. Evitar carpetas top-level “sueltas” sin dominio claro.
-- **Dominios** (`Clinical/`, `Scheduling/`, `Person/`, `Organization/`, `Core/`, `Ui/`): lógica de negocio en `*/Service/`. **No** usar `Services/` (eliminado).
-- **`Assistant/`**: todo el stack del asistente (intents UI + flows + RBAC + discovery). No dispersar piezas del asistente fuera de este feature.
-- **`Integrations/`**: integraciones con sistemas externos (clientes/adaptadores).
-- **`Ai/`**, **`Infra/`**, **`Text/`**, **`Terminology/`**, **`Logging/`**: utilidades transversales por área técnica.
+**Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/`, leer:
+
+- [web/docs/arquitectura/common-components.md](web/docs/arquitectura/common-components.md)
+- [web/common/components/README.md](web/common/components/README.md)
+
+## Reglas
+
+- **Agrupar por dominio**. Evitar carpetas top-level sueltas sin dominio claro.
+- **Dominios** (`Clinical/`, `Scheduling/`, `Person/`, `Organization/`, `Core/`, `Ui/`): lógica de negocio en `*/Service/` (o `{Subdominio}/Service/`). **No** usar `Services/` (eliminado).
+- **Clinical**: guardia/urgencias → `Clinical/Emergency/`; internación operativa (mapa, ingreso, alta) → `Clinical/Inpatient/`; FHIR clínico de internación → `Clinical/Specialty/Inpatient/` (no mezclar).
+- **Quirófano** → `Scheduling/Service/Quirofano/`.
+- **`Assistant/`**: todo el stack del asistente. Documentar en `Assistant/README.md`.
+- **`Integrations/`**: sistemas externos. **`Ai/`**, **`Infra/`**, **`Text/`**, **`Terminology/`**, **`Logging/`**: transversal.
+- **Services sin HTTP**: no `*HttpException`, HTML ni flash en `*/Service/`.
 
 ## Regla práctica
 
-- Si un cambio toca el asistente, preferir ubicarlo bajo `web/common/components/Assistant/` (o referenciarlo desde ahí) y documentarlo en `web/common/components/Assistant/README.md`.
-
+- Cambio en asistente → `web/common/components/Assistant/` + [Assistant/README.md](web/common/components/Assistant/README.md).
+- Cambio en guardia/triage → `Clinical/Emergency/`.
+- Cambio en mapa camas / ingreso internación → `Clinical/Inpatient/`.

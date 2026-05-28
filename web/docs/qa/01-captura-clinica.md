@@ -1,306 +1,94 @@
-# QA — Captura clínica (encounter + IA)
+# Captura clínica — historia y consulta
 
-[← Índice](./README.md) · Producto: [captura-clinica.md](../producto/captura-clinica.md)
-
----
-
-## CU-CAP-001 — Timeline paciente carga historial
-
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-001 |
-| **Prioridad** | P0 |
-| **Actor** | Staff |
-| **Superficie** | Web `paciente/historia` |
-
-### Precondiciones
-
-- CU-TR-002; paciente con al menos un `encounter` previo.
-
-### Pasos
-
-1. Abrir timeline: `PacienteController::actionHistoria` o URL con `id_persona`.
-2. Verificar listado de encuentros / eventos.
-3. Expandir un encounter cerrado y uno en curso si existe.
-
-### Resultado esperado
-
-- Sin error PHP/SQL por tablas `consultas` inexistentes.
-- Encounters muestran fecha, servicio, resumen según implementación.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+[← Índice](./README.md) · Más detalle: [captura-clinica.md](../producto/captura-clinica.md)
 
 ---
 
-## CU-CAP-002 — Analizar texto libre → borrador FHIR
+## Ver la historia de un paciente
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-002 |
-| **Prioridad** | P0 |
-| **Actor** | Staff |
-| **Superficie** | API |
-
-### Pasos
-
-1. Abrir formulario captura con `id_configuracion` válido y encounter en curso o nuevo.
-2. Ingresar texto de prueba: motivo, un diagnóstico CIE/SNOMED, una medicación, una práctica.
-3. `POST /api/v1/clinical/encounter/analizar` (o ruta equivalente).
-
-### Resultado esperado
-
-- JSON con categorías extraídas alineadas a `workflow_json` del servicio.
-- Sin persistencia aún; estructura revisable en UI.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** (personal) abrís la historia / línea de tiempo del paciente.
+2. **El sistema** lista consultas y episodios anteriores con fecha y tipo.
+3. **Vos** abrís uno cerrado o uno en curso.
+4. **El sistema** muestra el detalle sin romperse (todo sale del registro clínico nuevo, no de tablas viejas de “consultas”).
 
 ---
 
-## CU-CAP-003 — Guardar encounter (dx + meds + prácticas)
+## Escribir la atención y que la IA te ayude a ordenar
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-003 |
-| **Prioridad** | P0 |
-| **Actor** | Staff |
-| **Superficie** | API + Web |
-
-### Pasos
-
-1. Tras analizar, confirmar guardado en UI.
-2. `POST /api/v1/clinical/encounter/guardar`.
-3. Consultar BD o timeline: `clinical_condition`, `medication_request`, `service_request`.
-
-### Resultado esperado
-
-- `encounter` actualizado; recursos FHIR creados.
-- **No** filas nuevas en `consultas` (tabla no debe existir).
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** entrás a la captura (desde un turno, guardia o internación) y escribís en texto libre: motivo, diagnóstico, medicación, estudios, etc.
+2. **El sistema** (con IA) te propone un borrador ordenado: qué va en diagnóstico, qué en recetas, qué en pedidos.
+3. **Vos** revisás, corregís si hace falta y confirmás.
+4. **El sistema** todavía **no** guarda definitivo hasta que vos digas guardar.
 
 ---
 
-## CU-CAP-004 — Captura con audio / transcripción
+## Guardar la consulta
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-004 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. En formulario, grabar audio corto o subir archivo según UI.
-2. Transcribir → analizar → guardar.
-
-### Resultado esperado
-
-- Texto transcrito visible; mismo pipeline que CU-CAP-002/003.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** confirmás el guardado.
+2. **El sistema** persiste la atención y te muestra que quedó registrada.
+3. En la historia del paciente **aparece** el encuentro nuevo con diagnósticos, medicación y prácticas que cargaste.
 
 ---
 
-## CU-CAP-005 — Permiso atención con turno (parent TURNO)
+## Dictar o grabar audio en lugar de tipear
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-005 |
-| **Prioridad** | P0 |
-
-### Precondiciones
-
-- Turno del día para paciente en servicio del profesional.
-
-### Pasos
-
-1. Desde agenda turnos, abrir captura del turno (`parent=TURNO`, `parent_id=id_turno`).
-2. Si turno de otro profesional sin permiso, intentar mismo flujo.
-
-### Resultado esperado
-
-- Propietario del turno: captura permitida.
-- Otro profesional: mensaje de `validarPermisoAtencion` claro (403/flash).
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** grabás o subís audio en la captura.
+2. **El sistema** lo transcribe a texto y sigue el mismo flujo de “analizar → revisar → guardar”.
+3. Si el audio no se entiende, **el sistema** te pide que repitas o escribas.
 
 ---
 
-## CU-CAP-006 — Captura parent INTERNACION
+## Atender un turno del día
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-006 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. Desde mapa internación, **Atender** paciente internado.
-2. URL con `parent=INTERNACION`, `parent_id=<id_internacion>`.
-3. Guardar evolución breve.
-
-### Resultado esperado
-
-- `encounter` con `parent_type` internación y `encounter_class` IMP.
-- Visible en timeline del paciente.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** abrís el turno desde agenda o lista de espera.
+2. **El sistema** verifica que seas el profesional (o tengas permiso) para ese turno.
+3. Si no corresponde, **el sistema** no te deja entrar a la captura.
+4. Si sí, **te lleva** a la pantalla de atención.
 
 ---
 
-## CU-CAP-007 — Captura parent GUARDIA / EMER
+## Atender en internación (piso)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-007 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. Desde tablero guardia, iniciar atención (CU-EMER-004).
-2. Completar captura mínima y guardar.
-
-### Resultado esperado
-
-- Encounter vinculado al episodio de guardia; circuito pasa a `en_atencion` / coherente con API.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** entrás a la captura desde el mapa de camas o la ficha del internado.
+2. **El sistema** sabe que es un episodio de **internación** y muestra lo que corresponde (incluido balance hídrico, régimen, medicación de piso si está habilitado).
+3. **Vos** guardás igual que en ambulatorio.
+4. **El sistema** actualiza el episodio de internación, no pantallas sueltas viejas.
 
 ---
 
-## CU-CAP-008 — Workflow odontología
+## Atender en guardia
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-008 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. Servicio odontológico con `EncounterDefinition` que incluya `ConsultaOdontologiaPracticas`, `ConsultaOdontologiaEstados`.
-2. Analizar/guardar práctica con pieza + código.
-3. Guardar estado pieza (C/P/O) si workflow lo incluye.
-
-### Resultado esperado
-
-- `procedure` + `procedure_odontology_ext`.
-- Estados CPO en `clinical_condition` con nota `odontology_state:`.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** iniciás la atención desde el tablero de guardia (ver [03-urgencias-guardia.md](./03-urgencias-guardia.md)).
+2. **El sistema** abre la captura ligada a ese ingreso de guardia.
+3. Al guardar, **queda** vinculado al circuito de urgencias.
 
 ---
 
-## CU-CAP-009 — Workflow oftalmología + lentes
+## Odontología u oftalmología (si el servicio lo tiene)
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-009 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. Captura con categorías oftalmología y `ConsultasRecetaLentes` si aplica.
-2. Guardar y verificar `procedure` / `vision_prescription` según implementación.
-
-### Resultado esperado
-
-- Recursos FHIR oftalmológicos sin error.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** cargás prácticas de odontología (piezas, CPO) u oftalmología (estudios, lentes) según el formulario del servicio.
+2. **El sistema** guarda en el modelo clínico de esa especialidad.
+3. Las planillas ministeriales de odontología **pueden** tomar esos datos si el efector las usa.
 
 ---
 
-## CU-CAP-010 — Derivación en captura → referral
+## Derivar a otro servicio o efector
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-010 |
-| **Prioridad** | P0 |
-
-### Pasos
-
-1. En captura, incluir interconsulta/derivación a otro servicio/efector (texto IA o manual).
-2. Guardar.
-3. Verificar `service_request`: `category=referral`, `target_efector_id`, `target_service_id`, `referral_status=EN_ESPERA`.
-
-### Resultado esperado
-
-- Listado referencias muestra la derivación (CU-TUR-007).
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** en la captura indicás derivación (a qué servicio/efector va el paciente).
+2. **El sistema** registra la derivación como pedido de referencia.
+3. En **referencias** o en agenda, el personal ve la derivación pendiente y puede programar turno.
 
 ---
 
-## CU-CAP-011 — Balance / régimen / suministro (IMP)
+## Balance hídrico, régimen y medicación en piso
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-011 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. Captura IMP con categorías `ConsultaBalanceHidrico`, `ConsultaRegimen`, `ConsultaSuministroMedicamento` si el workflow las define.
-2. Guardar filas de ejemplo.
-3. `GET` bundle internación o repositorio: balance/régimen listados.
-
-### Resultado esperado
-
-- `observation` (fluid-balance), `nutrition_order`, `medication_administration` según fila.
-- Sin lectura a `consultas_balancehidrico` / `consultas_regimen`.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** cargás balance, régimen alimentario o administración de medicación en la captura de internación.
+2. **El sistema** lo guarda como parte del episodio (no en tablas viejas de “consulta internación”).
+3. Al volver a abrir el internado, **ves** lo cargado en el resumen clínico.
 
 ---
 
-## CU-CAP-012 — API encounter 401 sin token
+## Sin permiso o sesión vencida
 
-| Campo | Valor |
-|-------|-------|
-| **ID** | CU-CAP-012 |
-| **Prioridad** | P1 |
-
-### Pasos
-
-1. Llamar `guardar` sin header Authorization.
-
-### Resultado esperado
-
-- HTTP 401 JSON; sin escritura en BD.
-
-### Registro de ejecución
-
-| Entorno | Fecha | Resultado | Notas |
-|---------|-------|-----------|-------|
+1. **Vos** intentás guardar o ver una historia sin estar logueado o sin permiso.
+2. **El sistema** no muestra datos ajenos y te pide iniciar sesión o te dice que no tenés acceso.

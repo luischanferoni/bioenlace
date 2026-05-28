@@ -18,7 +18,7 @@ Los precios de la [matriz Argentina](../modelo-de-negocio/business-plan/matriz-a
 | Ingresos brutos (IIBB) | **3%–5%** sobre facturación bruta (promedio ilustrativo; varía por jurisdicción y convenio multilateral) |
 | Ganancias (imp. cédulo) | **25%** sobre utilidad impositiva anual (equivalente mensual en ejemplos) |
 | IVA | **21%** (alícuota general servicios) |
-| Uso de IA (escala 5.000 prof.) | **Intensivo** — ver [costos-api.md](./costos-api.md) |
+| Uso de IA (escala 5.000 prof.) | **Intensivo**, motivos **con audio** — ver [costos-api.md](./costos-api.md) |
 
 **No cubre:** monotributo, exportación de servicios con tratamiento especial, retenciones en licitación pública, percepciones aduaneras en detalle, impuesto PAIS en cada operación, ni convenios impositivos provincia por provincia.
 
@@ -84,7 +84,8 @@ COGS IA+STT: [costos-api.md](./costos-api.md).
 
 | Concepto | USD/mes (orientativo) | Fuente |
 |----------|------------------------|--------|
-| **IA + STT vía API** (5.000 × USD 1,0–1,1, uso intensivo) | **5.000 – 5.500** | [costos-api.md](./costos-api.md), [modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md) |
+| **IA + STT vía API** — sin caché (5.000 × ~USD 1,05/prof) | **~5.250** | [costos-api.md](./costos-api.md) |
+| **IA + STT vía API** — con caché Vertex (5.000 × ~USD 0,78/prof) | **~3.900** | [costos-api.md](./costos-api.md) |
 | **Aplicación + BD + hosting** (PHP, MySQL, backups, CDN, monitoreo) | *[pendiente presupuesto]* | **No hay cifra a escala 5.000 prof. en el repo** |
 
 **Única referencia interna de “infra” en chico:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500/mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); mezcla hosting y soporte operativo, **no escala lineal** a 5.000 usuarios.
@@ -93,28 +94,29 @@ COGS IA+STT: [costos-api.md](./costos-api.md).
 
 | Subtotal en esta tabla | USD/mes |
 |------------------------|---------|
-| **Solo IA + STT (documentado)** | **5.000 – 5.500** |
+| **Solo IA + STT (documentado)** — sin caché | **~5.250** |
+| **Solo IA + STT (documentado)** — con caché | **~3.900** |
 | + aplicación/BD (cuando se presupueste) | a sumar |
 
 ### B) Carga fiscal sobre compras (estimación conservadora)
 
-Base: **USD 5.000 – 5.500/mes** (solo IA+STT de tabla A; punto medio Gemini ~**USD 5.250**).
+Base sin caché: **~USD 5.250/mes** (tabla A). Base con caché: **~USD 3.900/mes**.
 
-| Concepto | USD/mes (orientativo) | Notas |
-|----------|------------------------|--------|
-| Subtotal IA + STT (tabla A) | 5.000 – 5.500 | |
-| IVA 21% sobre compras **con crédito pleno** | +1.050 – 1.155 | Si RI: **caja ≈ 0** a neto (crédito fiscal) |
-| IVA / percepciones **no recuperables** (servicios exterior) | 0 – 850 | Depende facturación del proveedor y tratamiento |
-| **Costo IA efectivo (peor caso)** | **5.000 – 6.350** | Sin crédito fiscal o con percepciones |
-| **Costo IA efectivo (RI, crédito normal)** | **5.000 – 5.500** | |
+| Concepto | Sin caché | Con caché | Notas |
+|----------|-----------|-----------|--------|
+| Subtotal IA + STT (tabla A) | ~5.250 | ~3.900 | Motivos con audio |
+| IVA 21 % compras (crédito pleno) | +1.103 | +819 | RI: **caja ≈ 0** a neto |
+| IVA / percepciones no recuperables | 0 – 850 | 0 – 630 | Peor caso sobre subtotal |
+| **Costo IA efectivo (peor caso)** | **~5.250 – 6.100** | **~3.900 – 4.530** | Sin crédito o con percepciones |
+| **Costo IA efectivo (RI, normal)** | **~5.250** | **~3.900** | |
 
-**Resumen fiscal (compras):** con IVA/percepciones no recuperables sobre el subtotal de tabla A, hasta **~USD 6,4k/mes**. App/BD: *[pendiente]*.
+**Resumen fiscal (compras):** App/BD *[pendiente]*.
 
 ### C) Cotización orientativa — solo variable IA (5.000 prof., uso intensivo)
 
 Precios de licencia de producto (pack ambulatorio, guardia, etc.): [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — **fuera de esta tabla**.
 
-**Costo directo usado en márgenes:** **USD 5.250/mes** (punto medio IA+STT, tabla A). Si el costo real es **USD 5.500** (tope tabla A), el margen bruto baja ~0,5 punto porcentual (columna «peor COGS»).
+**COGS en márgenes:** sin caché **~USD 5.250/mes**; con caché **~USD 3.900/mes** (tabla A; motivos con audio).
 
 #### Qué es cada margen (importante)
 
@@ -126,10 +128,14 @@ Precios de licencia de producto (pack ambulatorio, guardia, etc.): [matriz Argen
 
 #### Tabla
 
-| Escenario | ~USD/prof/mes | Precio **neto**/mes | Factura **+ IVA 21 %** | Margen bruto (COGS 5,25k) | Margen bruto (COGS 5,5k) | Margen después IIBB + ganancias |
-|-----------|---------------|---------------------|-------------------------|---------------------------|-------------------------|--------------------------------|
-| **Solo costo IA+STT (sin margen)** | **1,0 – 1,1** | **5.000 – 5.500** | **6.050 – 6.655** | **0 %** | **0 %** | **Pérdida** |
-| **Variable IA, margen mínimo** | **1,8 – 2,0** | **9.000 – 10.000** | **10.890 – 12.100** | **~42 – 48 %** | **~39 – 45 %** | **~28 – 33 %** |
+\* Escenario de costo según [costos-api.md](./costos-api.md): uso intensivo con **motivos de consulta con audio** (§1 caso B) + pre-consulta, onboarding, consulta y §5 STT/Vision.
+
+| Escenario | ~USD/prof sin caché | ~USD/prof con caché | Precio **neto**/mes sin caché | Precio **neto**/mes con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
+|-----------|---------------------|---------------------|-------------------------------|-------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
+| **Solo costo IA+STT (sin margen)** * | **~1,05** | **~0,78** | **~5.250** | **~3.900** | **~6.353** | **~4.719** | **0 %** / **0 %** | **Pérdida** |
+| **Variable IA, margen mínimo** | **1,8 – 2,0** | **1,8 – 2,0** | **9.000 – 10.000** | **9.000 – 10.000** | **10.890 – 12.100** | **10.890 – 12.100** | **~42 – 48 %** / **~56 – 61 %** * | **~28 – 33 %** / **~40 – 43 %** * |
+
+En «margen bruto» y «después IIBB + ganancias», la primera cifra del rango usa COGS **~5.250**; la segunda (tras **/**) usa COGS **~3.900** (con caché).
 
 #### Detalle aritmético — ejemplo USD 10.000/mes neto (2/prof)
 

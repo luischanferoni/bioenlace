@@ -8,8 +8,8 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 | [design.md](./design.md) | Por qué se separan ejes infra vs API |
 | [infra-costos.md](./infra-costos.md) | Costos infra (GPU) |
 | [infra-estrategias.md](./infra-estrategias.md) | Estrategias infra |
-| [costos-api.md](./costos-api.md) | Costos APIs externas |
-| [estrategias-api.md](./estrategias-api.md) | Estrategias APIs |
+| [costos-api.md](./costos-api.md) | Costos APIs (Gemini Flash Lite, Groq STT, Vision) |
+| [estrategias-api.md](./estrategias-api.md) | Estrategias APIs (tiers gratis, mezcla STT, bajo demanda) |
 | [impuestos-argentina.md](./impuestos-argentina.md) | IVA, IIBB, ganancias — referencia AR (pricing y costo efectivo) |
 | [pruebas-costos-ia.md](./pruebas-costos-ia.md) | Pruebas simuladas |
 

@@ -18,7 +18,7 @@ Los precios de la [matriz Argentina](../modelo-de-negocio/business-plan/matriz-a
 | Ingresos brutos (IIBB) | **3%–5%** sobre facturación bruta (promedio ilustrativo; varía por jurisdicción y convenio multilateral) |
 | Ganancias (imp. cédulo) | **25%** sobre utilidad impositiva anual (equivalente mensual en ejemplos) |
 | IVA | **21%** (alícuota general servicios) |
-| Uso de IA (escala 5.000 prof.) | **Intensivo** únicamente: ~USD **7–8/prof/mes** (IA generativa + STT; ver [costos-api.md](./costos-api.md)) |
+| Uso de IA (escala 5.000 prof.) | **Intensivo** únicamente: ~USD **1,5–2/prof/mes** (IA ~$1,2 + STT Groq ~$0,28 — ver [costos-api.md](./costos-api.md); más bajo con [estrategias-api.md](./estrategias-api.md)) |
 
 **No cubre:** monotributo, exportación de servicios con tratamiento especial, retenciones en licitación pública, percepciones aduaneras en detalle, impuesto PAIS en cada operación, ni convenios impositivos provincia por provincia.
 
@@ -78,13 +78,13 @@ No se prorratea de forma exacta sin balance; las tablas siguientes usan **órden
 
 ## Tabla ejemplo: 5.000 profesionales (costo de servir)
 
-Referencia: [costos-api.md](./costos-api.md) — **uso intensivo** = pre-turno, pre-consulta, onboarding, consultas con IA y STT en el volumen documentado (~USD 7,50–8,44/prof/mes según proveedor).
+Referencia: [costos-api.md](./costos-api.md) — **uso intensivo** = pre-turno, pre-consulta, onboarding, consultas con IA y **400 min STT/mes** (Groq ~$0,0007/min). Total **~USD 1,5/prof/mes** (~$1,47 con Gemini Flash Lite + Groq).
 
 ### A) Costo operativo documentado (sin impuestos sobre ventas)
 
 | Concepto | USD/mes (orientativo) | Fuente |
 |----------|------------------------|--------|
-| **IA + STT vía API** (5.000 × USD 7–8, uso intensivo) | **35.000 – 40.000** | [costos-api.md](./costos-api.md), [modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md) |
+| **IA + STT vía API** (5.000 × USD 1,5–2, uso intensivo) | **7.500 – 10.000** | [costos-api.md](./costos-api.md), [modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md) |
 | **Aplicación + BD + hosting** (PHP, MySQL, backups, CDN, monitoreo) | *[pendiente presupuesto]* | **No hay cifra a escala 5.000 prof. en el repo** |
 
 **Única referencia interna de “infra” en chico:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500/mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); mezcla hosting y soporte operativo, **no escala lineal** a 5.000 usuarios.
@@ -93,28 +93,28 @@ Referencia: [costos-api.md](./costos-api.md) — **uso intensivo** = pre-turno, 
 
 | Subtotal en esta tabla | USD/mes |
 |------------------------|---------|
-| **Solo IA + STT (documentado)** | **35.000 – 40.000** |
+| **Solo IA + STT (documentado)** | **7.500 – 10.000** |
 | + aplicación/BD (cuando se presupueste) | a sumar |
 
 ### B) Carga fiscal sobre compras (estimación conservadora)
 
-Base: **USD 35.000 – 40.000/mes** (solo IA+STT de tabla A).
+Base: **USD 7.500 – 10.000/mes** (solo IA+STT de tabla A).
 
 | Concepto | USD/mes (orientativo) | Notas |
 |----------|------------------------|--------|
-| Subtotal IA + STT (tabla A) | 35.000 – 40.000 | |
-| IVA 21% sobre compras **con crédito pleno** | +7.350 – 8.400 | Si RI: **caja ≈ 0** a neto (crédito fiscal) |
-| IVA / percepciones **no recuperables** (servicios exterior) | 0 – 8.000 | Depende facturación del proveedor y tratamiento |
-| **Costo IA efectivo (peor caso)** | **35.000 – 48.000** | Sin crédito fiscal o con percepciones |
-| **Costo IA efectivo (RI, crédito normal)** | **35.000 – 40.000** | |
+| Subtotal IA + STT (tabla A) | 7.500 – 10.000 | |
+| IVA 21% sobre compras **con crédito pleno** | +1.575 – 2.100 | Si RI: **caja ≈ 0** a neto (crédito fiscal) |
+| IVA / percepciones **no recuperables** (servicios exterior) | 0 – 2.000 | Depende facturación del proveedor y tratamiento |
+| **Costo IA efectivo (peor caso)** | **7.500 – 12.000** | Sin crédito fiscal o con percepciones |
+| **Costo IA efectivo (RI, crédito normal)** | **7.500 – 10.000** | |
 
-**Resumen 5.000 prof. (solo uso intensivo, IA documentada):** **USD 35k–40k/mes**; con impuestos en compras no recuperables, hasta **~USD 48k/mes**. **Sumar aparte** presupuesto de aplicación/BD cuando exista.
+**Resumen 5.000 prof. (solo uso intensivo, IA documentada):** **USD 7,5k–10k/mes**; con impuestos en compras no recuperables, hasta **~USD 12k/mes**. **Sumar aparte** presupuesto de aplicación/BD cuando exista. Con [estrategias STT](./estrategias-api.md#5-stt-transcripción-de-audio) el variable puede ser **menor** (HF, bajo demanda, tiers gratis).
 
 ### C) Cuánto cobrar al cliente (5.000 prof., pack operativo completo)
 
 Referencia de precio por asiento: [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) (**USD 8–25/prof/mes**). Supuesto: ambulatorio, agenda, guardia, internación, receta y captura/asistente con **uso intensivo** de IA.
 
-**Costo directo usado en márgenes:** **USD 37.500/mes** (punto medio IA+STT, tabla A). Si el costo real es **USD 40.000**, el margen bruto baja ~2–4 puntos porcentuales (columna «peor COGS»).
+**Costo directo usado en márgenes:** **USD 8.750/mes** (punto medio IA+STT, tabla A). Si el costo real es **USD 10.000**, el margen bruto baja ~1–2 puntos porcentuales (columna «peor COGS»).
 
 #### Qué es cada margen (importante)
 
@@ -128,26 +128,26 @@ El **margen bruto no descuenta ganancias** ni IIBB. La **ganancias** se modela a
 
 #### Tabla de cotización orientativa
 
-| Escenario | ~USD/prof/mes | Precio **neto**/mes | Factura **+ IVA 21 %** | Margen bruto (COGS 37,5k) | Margen bruto (COGS 40k) | Margen después IIBB + ganancias |
+| Escenario | ~USD/prof/mes | Precio **neto**/mes | Factura **+ IVA 21 %** | Margen bruto (COGS 8,75k) | Margen bruto (COGS 10k) | Margen después IIBB + ganancias |
 |-----------|---------------|---------------------|-------------------------|---------------------------|-------------------------|--------------------------------|
-| **Solo costo IA+STT (sin margen)** | **7 – 8** | **35.000 – 40.000** | **42.350 – 48.400** | **0 %** | **0 %** | **Pérdida** * |
-| Licitación agresiva (bajo) | 9 | **45.000** | **54.450** | **17 %** | **11 %** | **~10 %** |
-| Licitación agresiva (alto) | 10 | **50.000** | **60.500** | **25 %** | **20 %** | **~16 %** |
-| Entre agresivo y estándar | 11 | **55.000** | **66.550** | **32 %** | **27 %** | **~21 %** |
-| Comercial razonable (bajo) | 12 | **60.000** | **72.600** | **38 %** | **33 %** | **~25 %** |
-| Comercial razonable (medio) | 14 | **70.000** | **84.700** | **46 %** | **43 %** | **~32 %** |
-| Comercial razonable (alto) | 16 | **80.000** | **96.800** | **53 %** | **50 %** | **~37 %** |
-| Lista / margen alto | 20 | **100.000** | **121.000** | **63 %** | **60 %** | **~47 %** |
-| Techo matriz | 25 | **125.000** | **151.250** | **70 %** | **68 %** | **~55 %** |
+| **Solo costo IA+STT (sin margen)** | **1,5 – 2** | **7.500 – 10.000** | **9.075 – 12.100** | **0 %** | **0 %** | **Pérdida** * |
+| Licitación agresiva (bajo) | 9 | **45.000** | **54.450** | **~81 %** | **~78 %** | **~57 %** |
+| Licitación agresiva (alto) | 10 | **50.000** | **60.500** | **~83 %** | **~80 %** | **~59 %** |
+| Entre agresivo y estándar | 11 | **55.000** | **66.550** | **~84 %** | **~82 %** | **~60 %** |
+| Comercial razonable (bajo) | 12 | **60.000** | **72.600** | **~85 %** | **~83 %** | **~62 %** |
+| Comercial razonable (medio) | 14 | **70.000** | **84.700** | **~88 %** | **~86 %** | **~65 %** |
+| Comercial razonable (alto) | 16 | **80.000** | **96.800** | **~89 %** | **~88 %** | **~67 %** |
+| Lista / margen alto | 20 | **100.000** | **121.000** | **~91 %** | **~90 %** | **~71 %** |
+| Techo matriz | 25 | **125.000** | **151.250** | **~93 %** | **~92 %** | **~74 %** |
 
-\* **Piso variable (solo IA documentada):** cobrar **USD 7–8/prof/mes** neto (= **USD 35k–40k/mes** a 5.000 prof.) solo cubre API/STT en uso intensivo; **margen bruto 0 %**. Con IIBB y ganancias, ese precio **no alcanza** (pérdida antes de sueldos y app/BD). No es precio comercial; es referencia de **costo transferido al cliente**.
+\* **Piso variable (solo IA documentada):** cobrar **USD 1,5–2/prof/mes** neto (= **USD 7,5k–10k/mes** a 5.000 prof.) cubre API/STT en uso intensivo con **Groq + Gemini Flash Lite**; **margen bruto 0 %**. Con IIBB y ganancias, ese precio **no alcanza** (pérdida antes de sueldos y app/BD). No es precio comercial.
 
 **Lectura rápida para el cliente**
 
-- **Solo al costo de IA (sin margen):** **USD 7–8/prof/mes** neto (**USD 35k–40k/mes** total; **~USD 42,4k–48,4k con IVA**). Piso teórico; por debajo no cubrís ni el variable documentado.
-- **Competir con «3 programadores + infra» del ministerio:** **~USD 45k–55k/mes neto** (**~USD 54,5k–66,5k con IVA**). Margen bruto **17–32 %**; margen después de impuestos sobre la venta **~10–21 %** (solo variables; sin equipo propio).
-- **Sano para Bioenlace (cubre IA y deja margen):** **~USD 60k–80k/mes neto** (**~USD 73k–97k con IVA**). Margen bruto **38–53 %**; después IIBB + ganancias **~25–37 %**.
-- **Precio de lista sin descuento provincial:** hasta **~USD 125k/mes neto** (**~USD 151k con IVA**). Margen bruto **~70 %** (alineado a meta del business plan sobre costo IA únicamente).
+- **Solo al costo de IA (sin margen):** **USD 1,5–2/prof/mes** neto (**USD 7,5k–10k/mes** total; **~USD 9k–12k con IVA**). Piso teórico del variable documentado (puede bajar más con estrategias).
+- **Competir con «3 programadores + infra» del ministerio:** **~USD 45k–55k/mes neto** (**~USD 54,5k–66,5k con IVA**). El costo IA deja **margen bruto alto**; el precio compite por **valor de producto**, no porque la API consuma el presupuesto.
+- **Sano para Bioenlace (cubre IA y deja margen):** **~USD 60k–80k/mes neto** (**~USD 73k–97k con IVA**). Margen bruto **~85–89 %** sobre solo variable IA; después IIBB + ganancias **~62–67 %** (sin fijos).
+- **Precio de lista sin descuento provincial:** hasta **~USD 125k/mes neto** (**~USD 151k con IVA**). Margen bruto **~93 %** sobre costo IA documentado (el **~70 %** del business plan sigue siendo meta sobre **costo total** incluyendo fijos, no solo APIs).
 
 #### Detalle aritmético — ejemplo USD 50.000/mes neto
 
@@ -156,12 +156,12 @@ El **margen bruto no descuenta ganancias** ni IIBB. La **ganancias** se modela a
 | Facturación neta | 50.000 |
 | IVA 21 % (discriminado en factura) | +10.500 (no es ingreso) |
 | Ingresos brutos (4 %) | −2.000 |
-| Costo IA + STT | −37.500 |
-| Utilidad antes ganancias | 10.500 |
-| Ganancias (25 %) | −2.625 |
-| **Resultado variable** (antes de fijos) | **7.875** |
-| **Margen bruto** | **25 %** (= 12.500 / 50.000) |
-| **Margen después IIBB + ganancias** | **~16 %** (= 7.875 / 50.000) |
+| Costo IA + STT | −8.750 |
+| Utilidad antes ganancias | 39.250 |
+| Ganancias (25 %) | −9.812 |
+| **Resultado variable** (antes de fijos) | **29.438** |
+| **Margen bruto** | **~83 %** (= 41.250 / 50.000) |
+| **Margen después IIBB + ganancias** | **~59 %** (= 29.438 / 50.000) |
 
 Implementación provincial, integraciones LIS o add-ons por efector (guardia/internación en matriz **por efector**, no por prof.) van **aparte** del mensual recurrente.
 

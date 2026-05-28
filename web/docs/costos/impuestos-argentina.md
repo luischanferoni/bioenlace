@@ -128,26 +128,36 @@ El **margen bruto no descuenta ganancias** ni IIBB. La **ganancias** se modela a
 
 #### Tabla de cotización orientativa
 
+Dos bloques **no comparables** entre sí:
+
+1. **Variable API** (filas 1–2): precio ≈ costo documentado de IA+STT (~**USD 1/prof** hoy). Antes, con inferencia en GPU propia (~**USD 8/prof** en [infra-costos.md](./infra-costos.md)), el escalón «agresivo» sobre variable rondaba **USD 9/prof** — misma lógica, otro costo base.
+2. **Pack comercial** (filas 3+): licencia producto ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) **USD 8–25/prof**). El ticket **no** es múltiplo del variable API; los márgenes de la tabla solo restan el COGS IA (~USD 5,25k/mes) para ver cuánto «pesa» la API dentro del precio.
+
 | Escenario | ~USD/prof/mes | Precio **neto**/mes | Factura **+ IVA 21 %** | Margen bruto (COGS 5,25k) | Margen bruto (COGS 5,5k) | Margen después IIBB + ganancias |
 |-----------|---------------|---------------------|-------------------------|---------------------------|-------------------------|--------------------------------|
 | **Solo costo IA+STT (sin margen)** | **1,0 – 1,1** | **5.000 – 5.500** | **6.050 – 6.655** | **0 %** | **0 %** | **Pérdida** * |
-| Licitación agresiva (bajo) | 9 | **45.000** | **54.450** | **~87 %** | **~86 %** | **~62 %** |
-| Licitación agresiva (alto) | 10 | **50.000** | **60.500** | **~88 %** | **~87 %** | **~63 %** |
-| Entre agresivo y estándar | 11 | **55.000** | **66.550** | **~90 %** | **~88 %** | **~64 %** |
-| Comercial razonable (bajo) | 12 | **60.000** | **72.600** | **~90 %** | **~89 %** | **~65 %** |
-| Comercial razonable (medio) | 14 | **70.000** | **84.700** | **~92 %** | **~91 %** | **~67 %** |
-| Comercial razonable (alto) | 16 | **80.000** | **96.800** | **~93 %** | **~92 %** | **~69 %** |
-| Lista / margen alto | 20 | **100.000** | **121.000** | **~94 %** | **~94 %** | **~71 %** |
-| Techo matriz | 25 | **125.000** | **151.250** | **~95 %** | **~95 %** | **~74 %** |
+| **Variable IA, margen mínimo** | **1,8 – 2,0** | **9.000 – 10.000** | **10.890 – 12.100** | **~42 – 48 %** | **~39 – 45 %** | **~28 – 33 %** ** |
+| *Pack comercial (matriz; no es escalón del variable API)* | | | | | | |
+| Licitación agresiva (bajo) | 9 | **45.000** | **54.450** | **~88 %** | **~88 %** | **~63 %** |
+| Licitación agresiva (alto) | 10 | **50.000** | **60.500** | **~90 %** | **~89 %** | **~64 %** |
+| Entre agresivo y estándar | 11 | **55.000** | **66.550** | **~90 %** | **~90 %** | **~65 %** |
+| Comercial razonable (bajo) | 12 | **60.000** | **72.600** | **~91 %** | **~91 %** | **~65 %** |
+| Comercial razonable (medio) | 14 | **70.000** | **84.700** | **~93 %** | **~92 %** | **~66 %** |
+| Comercial razonable (alto) | 16 | **80.000** | **96.800** | **~93 %** | **~93 %** | **~67 %** |
+| Lista / margen alto | 20 | **100.000** | **121.000** | **~95 %** | **~95 %** | **~68 %** |
+| Techo matriz | 25 | **125.000** | **151.250** | **~96 %** | **~96 %** | **~69 %** |
 
 \* **Piso variable (solo IA documentada):** cobrar **USD 1,0–1,1/prof/mes** neto (= **USD 5k–5,5k/mes** a 5.000 prof.) cubre API/STT en uso intensivo ([costos-api.md](./costos-api.md): motivos en lote + Groq STT); **margen bruto 0 %**. Con IIBB y ganancias, ese precio **no alcanza** (pérdida antes de sueldos y app/BD). No es precio comercial.
+
+\*\* **Variable IA con margen mínimo (~1,8–2/prof):** repasa el costo API con un colchón estrecho (análogo a **~9/prof** cuando el variable era **~8/prof** en GPU). Sigue **sin** cubrir app/BD, sueldos ni implementación; no es pack licenciado.
 
 **Lectura rápida para el cliente**
 
 - **Solo al costo de IA (sin margen):** **USD 1,0–1,1/prof/mes** neto (**USD 5k–5,5k/mes** total; **~USD 6k–6,7k con IVA**). Piso teórico del variable documentado (puede bajar más con estrategias).
-- **Competir con «3 programadores + infra» del ministerio:** **~USD 45k–55k/mes neto** (**~USD 54,5k–66,5k con IVA**). El costo IA deja **margen bruto alto**; el precio compite por **valor de producto**, no porque la API consuma el presupuesto.
-- **Sano para Bioenlace (cubre IA y deja margen):** **~USD 60k–80k/mes neto** (**~USD 73k–97k con IVA**). Margen bruto **~90–93 %** sobre solo variable IA; después IIBB + ganancias **~65–69 %** (sin fijos).
-- **Precio de lista sin descuento provincial:** hasta **~USD 125k/mes neto** (**~USD 151k con IVA**). Margen bruto **~95 %** sobre costo IA documentado (el **~70 %** del business plan sigue siendo meta sobre **costo total** incluyendo fijos, no solo APIs).
+- **Variable IA, margen mínimo:** **~USD 1,8–2/prof/mes** neto (**USD 9k–10k/mes** a 5.000 prof.; **~USD 11k–12k con IVA**). Solo tiene sentido como **repaso del costo API**, no como precio de producto.
+- **Competir con «3 programadores + infra» del ministerio (pack):** **~USD 45k–55k/mes neto** (**~USD 9–11/prof**; **~USD 54,5k–66,5k con IVA**). El costo IA deja **margen bruto alto**; el precio compite por **valor de producto**, no porque la API consuma el presupuesto.
+- **Sano para Bioenlace (cubre IA y deja margen):** **~USD 60k–80k/mes neto** (**~USD 73k–97k con IVA**). Margen bruto **~91–93 %** sobre solo variable IA; después IIBB + ganancias **~65–67 %** (sin fijos).
+- **Precio de lista sin descuento provincial:** hasta **~USD 125k/mes neto** (**~USD 151k con IVA**). Margen bruto **~96 %** sobre costo IA documentado (el **~70 %** del business plan sigue siendo meta sobre **costo total** incluyendo fijos, no solo APIs).
 
 #### Detalle aritmético — ejemplo USD 50.000/mes neto
 

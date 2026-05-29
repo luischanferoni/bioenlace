@@ -12,7 +12,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - `Catalog/ClinicalUiActionCatalog.php`: acciones API clínicas en `UiActionCatalog` (RBAC `/api/clinical/...`).
 - `Service/AssistantDraftNormalizer.php`: `encounter_id`, `care_plan_id` en draft de flows.
 - Documentación: [web/docs/arquitectura/asistente-motores.md](../../docs/arquitectura/asistente-motores.md), [web/docs/producto/asistente-y-chat.md](../../docs/producto/asistente-y-chat.md)
-- `SubIntentEngine/`: motor conversacional *dentro* de un intent (YAML); incluye evaluación de **`business_rules`** (`pre_flow`) vía `IntentBusinessRules` antes de entrar al flow cuando el entrypoint es `IntentEngine`.
+- `SubIntentEngine/`: motor conversacional *dentro* de un intent (YAML); evaluación de **`business_rules`** (`pre_flow`) vía `IntentBusinessRules`; **`draft_hydrator`** vía `FlowDraftHydratorService` (sin listar intents en `ChatOrchestrator`).
 - `FlowManifest/`: construye `flow_manifest` **en runtime** a partir del YAML (sin artefactos `ui_type=flow` en `views/json`).
 - `UiActions/`: discovery + RBAC + enriquecedores para construir `client_open` y resolver rutas permitidas.
 

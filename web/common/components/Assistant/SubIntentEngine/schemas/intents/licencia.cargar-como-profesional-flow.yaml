@@ -36,6 +36,10 @@ intent_semantics:
 draft_keys_extra:
   - condicion_laboral_ui_completed
 
+draft_hydrator:
+  handler: organization.pes_from_servicio
+  require_own_pes: true
+
 business_rules:
   - id: licencia_propia_vs_staff
     when: pre_flow

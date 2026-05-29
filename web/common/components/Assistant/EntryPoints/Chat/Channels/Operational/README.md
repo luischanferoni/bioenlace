@@ -1,5 +1,5 @@
 # Canal operativo (fase 2)
 
-Reglas, retrieval, fuzzy intents, `FlowDraftHydrator`, `SubIntentEngine`. Sin segunda IA.
+Reglas, retrieval, fuzzy intents, `FlowDraftHydratorService`, `SubIntentEngine`. Sin segunda IA.
 
-No implementado en Fase 1; hoy `IntentEngine` + `SubIntentEngine` vía `ChatOrchestrator`.
+**Fase 1 (actual):** `IntentEngine` + `SubIntentEngine` vía `ChatOrchestrator`. Enriquecimiento de draft declarado en YAML (`draft_hydrator`) — ver `SUBINTENT_CONTRACT.md`.

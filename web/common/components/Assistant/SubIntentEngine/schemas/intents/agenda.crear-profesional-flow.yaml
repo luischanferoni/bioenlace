@@ -40,6 +40,9 @@ draft_keys_extra:
   - id_persona
   - agenda_ui_completed
 
+draft_hydrator:
+  handler: organization.pes_crear_alta
+
 business_rules:
   - id: agenda_alta_vs_solo_horarios
     when: pre_flow

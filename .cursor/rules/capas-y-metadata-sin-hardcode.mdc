@@ -1,0 +1,44 @@
+---
+description: Capas del proyecto y regla transversal de metadata vs hardcode
+alwaysApply: true
+---
+
+# Capas y regla «0 hardcode» (todo el proyecto)
+
+## Principio
+
+**No hardcodear comportamiento particular** (por pantalla, rol, intent, entidad, efector, servicio clínico, etc.) en capas altas u orquestadores. Lo específico vive en **metadata declarativa** y en **capas inferiores** (servicios de dominio, modelos, BD).
+
+Aplica a **web, API, asistente, móvil y jobs** — no solo al asistente SPA.
+
+## Capas (de arriba abajo)
+
+| Capa | Ejemplos | Responsabilidad |
+|------|----------|-----------------|
+| **Orquestación / entrypoints** | `ChatOrchestrator`, controllers API delgados, `spa-home.js` genérico | Enrutar, permisos HTTP, ensamblar request/response. **Sin** `if (intentId === '…')` ni reglas de negocio. |
+| **Motores genéricos** | `SubIntentEngine`, `IntentEngine`, `UiScreenService`, renderers UI JSON | Interpretar **manifiestos** (YAML, JSON). Agnósticos de dominio clínico/organizacional. |
+| **Metadata / descubrimiento** | Intents YAML, `ui_json`, catálogos RBAC, `UiCatalogOptionDefinitions`, params Yii | **Qué** hacer y **con qué parámetros** — no **cómo** persiste el dominio. |
+| **Servicios de dominio** | `Organization/Service/…`, `Scheduling/Service/…`, `Clinical/…/Service/…` | Reglas de negocio, autorización de recurso, composición de modelos. |
+| **Persistencia (última capa)** | Modelos AR, migraciones, triggers, catálogos en BD (`condiciones_laborales`, etc.) | Datos maestros y vínculos; validaciones de integridad. |
+
+## Qué va en cada sitio
+
+- **YAML / JSON / BD**: pasos de flow, rutas RBAC, handlers registrables (`draft_hydrator.handler`), opciones de catálogo, reglas `business_rules`, presentación UI.
+- **Registry pequeño y estable**: mapa `handler_id → callable` de dominio (p. ej. `FlowDraftHydratorRegistry`); solo IDs, no listas de intents.
+- **Servicios de dominio**: resolver PES, alta idempotente, validar propiedad, persistir condición laboral.
+- **Prohibido en orquestadores**: enumerar `intent_id`, switches por pantalla, duplicar reglas que ya están en YAML o en un service.
+
+## Asistente (casos frecuentes)
+
+- **Flujo conversacional**: `schemas/intents/*.yaml` + `SubIntentEngine`.
+- **Enriquecer draft antes del motor**: clave raíz `draft_hydrator` en el YAML → `FlowDraftHydratorService` (no en `ChatOrchestrator`).
+- **Pantallas embebibles**: `views/json/…` + API; clientes consumen JSON genéricamente.
+- **Atajos visibles**: curación de producto permitida en `CommonActionsService`, pero preferir descubrimiento por catálogo + RBAC cuando escale.
+
+## Excepciones razonables
+
+- Constantes técnicas (timeouts, límites de paginación, nombres de columnas).
+- Tests y fixtures.
+- Migraciones de datos puntuales.
+
+Cuando dudes: **¿puede declararse en metadata o moverse un nivel abajo?** Si sí, no lo dejes en el orquestador.

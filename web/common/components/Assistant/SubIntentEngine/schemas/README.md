@@ -7,7 +7,9 @@ Esta carpeta contiene la **fuente de verdad conversacional** del asistente **den
 
 **Contrato de claves por paso (`subintents`) y raíz (`flow_submit`):** [`SUBINTENT_CONTRACT.md`](SUBINTENT_CONTRACT.md) — incluye `open_ui`, `chooser`, `next_routing` y **`flow_submit`** a nivel intent (cierre GET+POST vía `action_id` del catálogo). No añadir propiedades nuevas en YAML sin actualizar ese contrato y `SubIntentEngine.php`.
 
-Regla: el YAML no debe contener vocabulario clínico hardcodeado (ej. “oftalmólogo”) como reglas de keywords.  
+Regla: el YAML no debe contener vocabulario clínico hardcodeado (ej. “oftalmólogo”) como reglas de keywords.
+
+**`draft_hydrator`:** opcional en la raíz del intent; ver `SUBINTENT_CONTRACT.md`. Handlers registrados en `FlowDraftHydratorRegistry.php` (dominio en `Organization/Service/…`, etc.).  
 La conversación se guía por:
 
 - `requires` / `provides` (dependencias del draft)

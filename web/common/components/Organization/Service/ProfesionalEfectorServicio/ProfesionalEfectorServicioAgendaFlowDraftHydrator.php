@@ -8,13 +8,25 @@ use Yii;
 use yii\web\ForbiddenHttpException;
 
 /**
- * Completa el draft de flows de agenda (`agenda.editar-agenda-flow`, `agenda.editar-mi-agenda-flow`)
- * antes de {@see \common\components\Assistant\SubIntentEngine\SubIntentEngine::process}:
+ * Completa el draft cuando el intent declara `draft_hydrator.handler: organization.pes_from_servicio`:
  * - `servicio_acepta_turnos` desde catálogo si hay `id_servicio`
  * - `id_profesional_efector_servicio` desde persona + efector + servicio cuando falta
+ * - opcionalmente valida que el PES sea del usuario (`require_own_pes`)
  */
 final class ProfesionalEfectorServicioAgendaFlowDraftHydrator
 {
+    /**
+     * @param array<string, mixed> $body
+     * @param array<string, mixed> $options
+     */
+    public static function hydrateWithOptions(array &$body, array $options = []): void
+    {
+        self::hydrate($body, (bool) ($options['require_own_pes'] ?? false));
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
     public static function hydrate(array &$body, bool $requireOwnPes = false): void
     {
         if (!isset($body['draft']) || !is_array($body['draft'])) {
@@ -53,7 +65,7 @@ final class ProfesionalEfectorServicioAgendaFlowDraftHydrator
 
         $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
         if ($pes === null || (int) $pes->id_persona !== $idPersona) {
-            throw new ForbiddenHttpException('Solo podés editar tu propia agenda.');
+            throw new ForbiddenHttpException('Solo podés operar sobre tus propias asignaciones.');
         }
         if ($idEfector > 0 && (int) $pes->id_efector !== $idEfector) {
             throw new ForbiddenHttpException('La asignación no corresponde al efector de sesión.');

@@ -14,8 +14,27 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `intent_semantics` | Opcional: señal para IA (`goal`, `how`, `preconditions`, etc.). |
 | `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
+| `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
 | `subintents` | **Obligatorio**: lista ordenada de pasos. |
 | `flow_submit` | **Opcional.** Cierre del flujo. El motor detecta automáticamente el **paso terminal** (subintent sin `next` ni `next_routing`) y, cuando ese paso emite `open_ui`, adjunta el descriptor `flow_submit` al envelope (ver más abajo). Si el último paso no tiene `open_ui`, el envelope se emite **solo** con `flow_submit` (texto + botón "Confirmar y enviar"). **No** declarar cierre por subintent: usar solo `flow_submit` en la raíz. |
+
+### `draft_hydrator` (raíz del intent)
+
+Completa el `draft` del request con lógica de dominio **antes** de entrar al motor. El orquestador del chat (`ChatOrchestrator`) **no** lista intents: lee esta clave vía `FlowDraftHydratorService`.
+
+```yaml
+draft_hydrator:
+  handler: organization.pes_from_servicio   # ID registrado en FlowDraftHydratorRegistry
+  require_own_pes: true                     # opciones libres → capa de dominio del handler
+```
+
+| Clave | Descripción |
+|--------|-------------|
+| `handler` | **Obligatorio** si hay bloque. Identificador estable en `FlowDraftHydratorRegistry` (p. ej. `organization.pes_crear_alta`, `organization.pes_from_servicio`). |
+| `options` | Opcional: mapa anidado de opciones para el handler. |
+| *(otras claves al mismo nivel)* | Se fusionan en `options` (p. ej. `require_own_pes: true`). |
+
+Handlers viven en **servicios de dominio** (`common/components/{Domain}/Service/…`); el registry del asistente solo mapea ID → callable. **No** agregar un handler nuevo sin documentarlo aquí y registrarlo en `FlowDraftHydratorRegistry.php`.
 
 ## Nodo `subintents[]` — claves soportadas
 
@@ -129,6 +148,7 @@ Para esos flujos el motor emite el envelope con `flow_submit` (y eventualmente `
 
 ## Referencia de código
 
+- Enriquecimiento de draft: `SubIntentEngine/FlowDraftHydratorService.php`, `FlowDraftHydratorRegistry.php`, manifiestos YAML `draft_hydrator`.
 - Implementación motor: `SubIntentEngine/SubIntentEngine.php`
   - `process()`, `buildOpenUiResponse()`, `buildTerminalSubmitOnlyResponse()`.
   - `isTerminalSubintent()`, `buildFlowSubmitTemplate()`, `extractDraftKeys()`.

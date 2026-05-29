@@ -6,9 +6,8 @@ use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\EntryPoints\Chat\Routing\ChatRouter;
+use common\components\Assistant\SubIntentEngine\FlowDraftHydratorService;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
 
 /**
  * Punto de entrada único del chat (`POST /api/v1/asistente/enviar`).
@@ -29,32 +28,14 @@ final class ChatOrchestrator
                 ChatPreprocessContext::set(ChatPreprocessService::run($content, $userId));
             }
 
-            if ($intentId === 'agenda.crear-profesional-flow') {
-                try {
-                    ProfesionalEfectorServicioCrearFlowDraftHydrator::hydrate($body);
-                } catch (\InvalidArgumentException $e) {
-                    return ['success' => false, 'error' => $e->getMessage()];
-                } catch (\RuntimeException $e) {
-                    return ['success' => false, 'error' => $e->getMessage()];
-                }
-            } elseif ($intentId === 'agenda.editar-agenda-flow' || $intentId === 'agenda.editar-mi-agenda-flow') {
-                try {
-                    ProfesionalEfectorServicioAgendaFlowDraftHydrator::hydrate(
-                        $body,
-                        $intentId === 'agenda.editar-mi-agenda-flow'
-                    );
-                } catch (\yii\web\ForbiddenHttpException $e) {
-                    return ['success' => false, 'error' => $e->getMessage()];
-                }
-            } elseif ($intentId === 'licencia.cargar-como-profesional-flow' || $intentId === 'licencia.cargar-para-profesional-flow') {
-                try {
-                    ProfesionalEfectorServicioAgendaFlowDraftHydrator::hydrate(
-                        $body,
-                        $intentId === 'licencia.cargar-como-profesional-flow'
-                    );
-                } catch (\yii\web\ForbiddenHttpException $e) {
-                    return ['success' => false, 'error' => $e->getMessage()];
-                }
+            try {
+                FlowDraftHydratorService::hydrateFromIntentManifest($intentId, $body);
+            } catch (\yii\web\ForbiddenHttpException $e) {
+                return ['success' => false, 'error' => $e->getMessage()];
+            } catch (\InvalidArgumentException $e) {
+                return ['success' => false, 'error' => $e->getMessage()];
+            } catch (\RuntimeException $e) {
+                return ['success' => false, 'error' => $e->getMessage()];
             }
 
             $motor = SubIntentEngine::process($body, $userId);

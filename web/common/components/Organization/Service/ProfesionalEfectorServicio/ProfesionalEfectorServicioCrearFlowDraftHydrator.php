@@ -13,6 +13,15 @@ use Yii;
  */
 final class ProfesionalEfectorServicioCrearFlowDraftHydrator
 {
+    /**
+     * @param array<string, mixed> $body
+     * @param array<string, mixed> $options
+     */
+    public static function hydrateWithOptions(array &$body, array $options = []): void
+    {
+        self::hydrate($body);
+    }
+
     public static function hydrate(array &$body): void
     {
         if (!isset($body['draft']) || !is_array($body['draft'])) {

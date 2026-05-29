@@ -787,6 +787,49 @@
     }
 
     /**
+     * @param {object} st
+     * @param {number} idx
+     * @param {number} activeIdx
+     * @returns {HTMLLIElement}
+     */
+    function createFlowStepListItem(st, idx, activeIdx) {
+        const li = document.createElement('li');
+        li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
+        if (st && st.id != null) {
+            li.setAttribute('data-step-id', String(st.id));
+        }
+
+        const row = document.createElement('div');
+        row.className = 'spa-flow-step-row';
+
+        const timeline = document.createElement('div');
+        timeline.className = 'spa-flow-step-timeline';
+        timeline.setAttribute('aria-hidden', 'true');
+
+        const marker = document.createElement('span');
+        marker.className = 'spa-flow-step-marker';
+        marker.textContent = String(idx + 1);
+        timeline.appendChild(marker);
+
+        const body = document.createElement('div');
+        body.className = 'spa-flow-step-body';
+
+        const textEl = document.createElement('div');
+        textEl.className = 'spa-flow-step-text';
+        textEl.textContent = flowStepDisplayText(st, idx);
+
+        const uiMount = document.createElement('div');
+        uiMount.className = 'spa-flow-step-ui';
+
+        body.appendChild(textEl);
+        body.appendChild(uiMount);
+        row.appendChild(timeline);
+        row.appendChild(body);
+        li.appendChild(row);
+        return li;
+    }
+
+    /**
      * @param {string} flowIntentId
      * @returns {HTMLElement|null}
      */
@@ -855,19 +898,7 @@
             list = document.createElement('ol');
             list.className = 'spa-flow-steps-list list-unstyled mb-0';
             steps.forEach(function (st, idx) {
-                const li = document.createElement('li');
-                li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
-                if (st && st.id != null) {
-                    li.setAttribute('data-step-id', String(st.id));
-                }
-                const textEl = document.createElement('div');
-                textEl.className = 'spa-flow-step-text';
-                textEl.textContent = flowStepDisplayText(st, idx);
-                const uiMount = document.createElement('div');
-                uiMount.className = 'spa-flow-step-ui';
-                li.appendChild(textEl);
-                li.appendChild(uiMount);
-                list.appendChild(li);
+                list.appendChild(createFlowStepListItem(st, idx, activeIdx));
             });
             inner.appendChild(list);
             row.appendChild(inner);
@@ -882,19 +913,7 @@
             if (items.length !== steps.length) {
                 list.innerHTML = '';
                 steps.forEach(function (st, idx) {
-                    const li = document.createElement('li');
-                    li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
-                    if (st && st.id != null) {
-                        li.setAttribute('data-step-id', String(st.id));
-                    }
-                    const textEl = document.createElement('div');
-                    textEl.className = 'spa-flow-step-text';
-                    textEl.textContent = flowStepDisplayText(st, idx);
-                    const uiMount = document.createElement('div');
-                    uiMount.className = 'spa-flow-step-ui';
-                    li.appendChild(textEl);
-                    li.appendChild(uiMount);
-                    list.appendChild(li);
+                    list.appendChild(createFlowStepListItem(st, idx, activeIdx));
                 });
             } else {
                 items.forEach(function (li, idx) {
@@ -934,7 +953,12 @@
                 if (!activeMount) {
                     activeMount = document.createElement('div');
                     activeMount.className = 'spa-flow-step-ui';
-                    activeLi.appendChild(activeMount);
+                    const body = activeLi.querySelector('.spa-flow-step-body');
+                    if (body) {
+                        body.appendChild(activeMount);
+                    } else {
+                        activeLi.appendChild(activeMount);
+                    }
                 }
             }
         }

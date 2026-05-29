@@ -60,6 +60,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
             </div>
 
             <div id="spa-chat-composer" class="spa-chat-composer" aria-label="Escribir mensaje al asistente">
+                <div id="spa-flow-progress" class="spa-flow-progress d-none" aria-live="polite" aria-label="Progreso del flujo"></div>
                 <div class="spa-chat-input-wrap">
                     <textarea
                         id="spa-query-input"

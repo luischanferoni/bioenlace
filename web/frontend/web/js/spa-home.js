@@ -75,13 +75,6 @@
         return tab && Array.isArray(tab.requires_client) && tab.requires_client.indexOf('geolocation') !== -1;
     }
 
-    /**
-     * Solo si la mini-UI respondió bien mostramos la tira de pasos (evita “siguientes pasos” tras HTTP≠200, JSON inválido o success:false).
-     */
-    function flowUiDefinitionReadyForProgress(json) {
-        return !!(json && json.kind === 'ui_definition' && json.success !== false);
-    }
-
     /** Deshabilita inputs/botones de un bloque de flow ya descartado o de un paso anterior. */
     function disableFlowRowInteractions(row) {
         if (!row) {
@@ -568,29 +561,16 @@
                 url: fullUrl,
                 enableFlowChainAutoAdvance: enableFlowChainAutoAdvance === true
             });
-            if (flowUiDefinitionReadyForProgress(json)) {
-                try {
-                    if (bioFlowPlanPendingContext && bioFlowPlanPendingContext.fm) {
-                        attachFlowPlanBelowMount(mountEl, bioFlowPlanPendingContext.fm, bioFlowPlanPendingContext.actionTitle);
-                    }
-                } catch (e) {
-                    // ignore
-                }
-            } else {
-                removeFlowPlanStrip();
-            }
             if (flowSubmitRequestOpt && flowSubmitRequestOpt.route && flowSubmitRequestOpt.body &&
                 typeof flowSubmitRequestOpt.body === 'object') {
                 appendFlowInlineSubmit(mountEl, flowSubmitRequestOpt, function () {
                     clearFlowState();
                     removeFlowPlanStrip();
-                    bioFlowPlanPendingContext = null;
                 }, { deferReveal: true });
                 scheduleRevealFlowInlineSubmit(mountEl);
             }
         } else {
             mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
-            removeFlowPlanStrip();
         }
     }
 
@@ -646,7 +626,6 @@
                 console.error('Error cargando UI JSON (flow):', err);
                 const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
                 mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
-                removeFlowPlanStrip();
             })
             .finally(function () {
                 setTimeout(scrollChatToBottom, 10);
@@ -657,6 +636,7 @@
     // Referencias a elementos DOM
     const chatRoot = document.getElementById('spa-chat-root');
     const chatComposer = document.getElementById('spa-chat-composer');
+    const chatFlowProgress = document.getElementById('spa-flow-progress');
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
@@ -705,101 +685,146 @@
         if (!s) return false;
         return /\b(cerca|cercanos|cercano|cercanas|cercana|cercanía|cercania)\b/i.test(s);
     }
-    /** Una sola tira de plan en el DOM; se mueve al montaje activo del paso. */
-    let bioFlowPlanStripEl = null;
-    /** Contexto del último paso `flow` para pintar la tira tras cargar la UI (`manifest` + título). */
-    let bioFlowPlanPendingContext = null;
     /** Una activación = un inicio de flow (atajo, cambio de intent o vuelta tras otro flow). */
     let bioFlowActivationSeq = 0;
-    let flowPlanStickySyncRaf = null;
-    let flowPlanStickyListenersBound = false;
 
-    function updateFlowPlanStickyBottomVar() {
-        try {
-            document.documentElement.style.setProperty('--spa-flow-plan-sticky-bottom', '99px');
-        } catch (e) { /* ignore */ }
-    }
-
-    function scheduleFlowPlanStickySync() {
-        if (flowPlanStickySyncRaf != null) return;
-        flowPlanStickySyncRaf = requestAnimationFrame(function () {
-            flowPlanStickySyncRaf = null;
-            syncFlowPlanStickyUi();
-        });
-    }
-
-    function bindFlowPlanStickyListeners() {
-        if (flowPlanStickyListenersBound) {
-            scheduleFlowPlanStickySync();
-            return;
+    /**
+     * Índice del paso activo en `manifest.steps` (por `active_subintent_id`).
+     *
+     * @param {object} fm
+     * @returns {number}
+     */
+    function resolveFlowActiveStepIndex(fm) {
+        if (!fm || typeof fm !== 'object') {
+            return -1;
         }
-        flowPlanStickyListenersBound = true;
-        window.addEventListener('scroll', scheduleFlowPlanStickySync, { passive: true });
-        window.addEventListener('resize', scheduleFlowPlanStickySync);
-    }
-
-    function unbindFlowPlanStickyListeners() {
-        if (flowPlanStickySyncRaf != null) {
-            cancelAnimationFrame(flowPlanStickySyncRaf);
-            flowPlanStickySyncRaf = null;
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        if (!steps.length) {
+            return -1;
         }
-        if (!flowPlanStickyListenersBound) return;
-        window.removeEventListener('scroll', scheduleFlowPlanStickySync);
-        window.removeEventListener('resize', scheduleFlowPlanStickySync);
-        flowPlanStickyListenersBound = false;
+        const activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id) : '';
+        if (activeId === '') {
+            return 0;
+        }
+        for (let i = 0; i < steps.length; i++) {
+            const sid = steps[i] && steps[i].id != null ? String(steps[i].id) : '';
+            if (sid !== '' && sid === activeId) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
-     * Sticky del plan acotado al `.spa-chat-flow-row`: oculta si el bloque quedó arriba del viewport;
-     * `border-2` en el `<li>` del paso según la posición de lectura (línea sobre el composer).
+     * Construye el contenido del progreso (todos los títulos del YAML al iniciar el flow).
+     *
+     * @param {object|null} fm
+     * @param {string} [actionTitle]
+     * @returns {DocumentFragment|null}
      */
-    function syncFlowPlanStickyUi() {
-        const strip = bioFlowPlanStripEl;
-        if (!strip || !strip.isConnected) return;
-        if (!strip.classList.contains('spa-flow-plan-wrap--sticky-enabled')) return;
-
-        updateFlowPlanStickyBottomVar();
-        const flowRow = strip.closest('.spa-chat-flow-row');
-        if (!flowRow) return;
-
-        const ul = strip.querySelector('ul.spa-flow-plan');
-        if (!ul) return;
-        const lis = [];
-        for (let c = ul.firstElementChild; c; c = c.nextElementSibling) {
-            if (c.tagName === 'LI') lis.push(c);
+    function buildComposerFlowProgressContent(fm, actionTitle) {
+        if (!fm || typeof fm !== 'object') {
+            return null;
         }
-        if (!lis.length) return;
-
-        const fr = flowRow.getBoundingClientRect();
-        if (fr.bottom <= 0) {
-            strip.classList.add('spa-flow-plan-wrap--hidden-above');
-        } else {
-            strip.classList.remove('spa-flow-plan-wrap--hidden-above');
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        if (steps.length < 1) {
+            return null;
         }
 
-        const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-        let lineY = 0;
-        try {
-            if (chatComposer) {
-                lineY = Math.max(0, Math.floor(chatComposer.getBoundingClientRect().top) - 1);
+        const activeIdx = resolveFlowActiveStepIndex(fm);
+        const frag = document.createDocumentFragment();
+
+        const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
+        const flowLabel = titleStr !== '' ? titleStr : 'Flujo';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'spa-flow-progress__title';
+        titleEl.textContent = flowLabel;
+        titleEl.setAttribute('title', flowLabel);
+        frag.appendChild(titleEl);
+
+        const barWrap = document.createElement('div');
+        barWrap.className = 'spa-flow-progress__bar';
+        barWrap.setAttribute('role', 'progressbar');
+        const completedRatio = activeIdx >= 0
+            ? Math.min(100, Math.round(((activeIdx + 1) / steps.length) * 100))
+            : 0;
+        barWrap.setAttribute('aria-valuenow', String(completedRatio));
+        barWrap.setAttribute('aria-valuemin', '0');
+        barWrap.setAttribute('aria-valuemax', '100');
+        const barFill = document.createElement('div');
+        barFill.className = 'spa-flow-progress__bar-fill';
+        barFill.style.width = completedRatio + '%';
+        barWrap.appendChild(barFill);
+        frag.appendChild(barWrap);
+
+        const ul = document.createElement('ul');
+        ul.className = 'spa-flow-plan list-inline mb-0';
+        ul.setAttribute('aria-label', flowLabel);
+
+        steps.forEach(function (st, idx) {
+            const stepTitle = st && st.assistant_text ? String(st.assistant_text).trim() : '';
+            const sid = st && st.id != null ? String(st.id) : '';
+            const display = stepTitle !== '' ? stepTitle : (sid !== '' ? sid : ('Paso ' + (idx + 1)));
+
+            const li = document.createElement('li');
+            li.className = 'list-inline-item mb-0';
+            const badge = document.createElement('span');
+            let cls = 'badge rounded-pill spa-flow-plan-badge ';
+            if (activeIdx >= 0) {
+                if (idx < activeIdx) {
+                    cls += 'text-bg-success';
+                } else if (idx === activeIdx) {
+                    cls += 'text-bg-primary';
+                } else {
+                    cls += 'text-bg-light text-dark border';
+                }
+            } else if (idx === 0) {
+                cls += 'text-bg-primary';
             } else {
-                lineY = Math.max(0, vh - 120);
+                cls += 'text-bg-light text-dark border';
             }
-        } catch (e) {
-            lineY = Math.max(0, vh - 120);
-        }
-        let ratio = (lineY - fr.top) / Math.max(1, fr.height);
-        if (ratio < 0) ratio = 0;
-        if (ratio > 1) ratio = 1;
-        const idx = Math.round(ratio * (lis.length - 1));
+            badge.className = cls;
+            badge.textContent = display;
+            badge.setAttribute('title', display);
+            li.appendChild(badge);
+            ul.appendChild(li);
+        });
 
-        for (let i = 0; i < lis.length; i++) {
-            const li = lis[i];
-            li.classList.remove('spa-flow-plan-li--scroll-focus', 'border', 'border-2', 'border-primary', 'rounded');
-            if (i === idx) {
-                li.classList.add('spa-flow-plan-li--scroll-focus', 'border', 'border-2', 'border-primary', 'rounded');
-            }
+        frag.appendChild(ul);
+        return frag;
+    }
+
+    /**
+     * Muestra/actualiza la barra de progreso en el composer (encima del textarea).
+     *
+     * @param {object|null} fm
+     * @param {string} [actionTitle]
+     */
+    function renderComposerFlowProgress(fm, actionTitle) {
+        if (!chatFlowProgress) {
+            return;
         }
+        const content = buildComposerFlowProgressContent(fm, actionTitle);
+        if (!content) {
+            hideComposerFlowProgress();
+            return;
+        }
+        chatFlowProgress.innerHTML = '';
+        chatFlowProgress.appendChild(content);
+        chatFlowProgress.classList.remove('d-none');
+    }
+
+    function hideComposerFlowProgress() {
+        if (!chatFlowProgress) {
+            return;
+        }
+        chatFlowProgress.classList.add('d-none');
+        chatFlowProgress.innerHTML = '';
+    }
+
+    /** @deprecated alias interno */
+    function removeFlowPlanStrip() {
+        hideComposerFlowProgress();
     }
 
     // Persistencia simple en memoria global para evitar perder estado en re-renders complejos.
@@ -854,16 +879,11 @@
             } catch (e) { /* ignore */ }
         }
         applyChatHeight();
-        updateFlowPlanStickyBottomVar();
         requestAnimationFrame(function () {
             applyChatHeight();
-            updateFlowPlanStickyBottomVar();
-            scheduleFlowPlanStickySync();
         });
         window.addEventListener('resize', function () {
             applyChatHeight();
-            updateFlowPlanStickyBottomVar();
-            scheduleFlowPlanStickySync();
         });
 
         // Capturar el estado "idle" del botón enviar desde el DOM (evitar hardcode en JS).
@@ -1083,94 +1103,6 @@
         return { row: row, panel: panel, explanationEl: explanationEl, actionsEl: actionsEl };
     }
 
-    /**
-     * Referencia visual del plan: `flow_manifest.steps` + paso activo (`active_subintent_id`).
-     *
-     * @param {object|null} fm
-     * @param {string} [actionTitle] — `flow_manifest.action_name` (YAML); si falta, un texto corto genérico.
-     * @returns {HTMLDivElement|null}
-     */
-    function buildFlowPlanStripElement(fm, actionTitle) {
-        if (!fm || typeof fm !== 'object') return null;
-        const steps = Array.isArray(fm.steps) ? fm.steps : [];
-        if (steps.length < 1) return null;
-
-        const activeId = fm.active_subintent_id != null ? String(fm.active_subintent_id) : '';
-        let activeIdx = -1;
-        for (let i = 0; i < steps.length; i++) {
-            const sid = steps[i] && steps[i].id != null ? String(steps[i].id) : '';
-            if (sid !== '' && sid === activeId) {
-                activeIdx = i;
-                break;
-            }
-        }
-
-        const wrap = document.createElement('div');
-        wrap.className = 'spa-flow-plan-wrap text-center mt-3 pt-2 border-top border-light-subtle';
-        const label = document.createElement('div');
-        label.className = 'text-muted small mb-1';
-        const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
-        const labelText = titleStr !== '' ? titleStr : 'Flujo';
-        label.textContent = labelText;
-        const ul = document.createElement('ul');
-        ul.className = 'spa-flow-plan list-inline mb-0';
-        ul.setAttribute('aria-label', labelText);
-
-        steps.forEach(function (st, idx) {
-            const title = st && st.assistant_text ? String(st.assistant_text).trim() : '';
-            const sid = st && st.id != null ? String(st.id) : '';
-            const display = title !== '' ? title : (sid !== '' ? sid : ('Paso ' + (idx + 1)));
-
-            const li = document.createElement('li');
-            li.className = 'list-inline-item mb-1';
-            const badge = document.createElement('span');
-            let cls = 'badge rounded-pill spa-flow-plan-badge ';
-            if (activeIdx >= 0) {
-                if (idx < activeIdx) cls += 'text-bg-success';
-                else if (idx === activeIdx) cls += 'text-bg-primary';
-                else cls += 'text-bg-light text-dark border';
-            } else if (activeId === '') {
-                cls += idx === 0 ? 'text-bg-primary' : 'text-bg-light text-dark border';
-            } else {
-                cls += 'text-bg-light text-dark border';
-            }
-            badge.className = cls;
-            badge.textContent = display;
-            li.appendChild(badge);
-            ul.appendChild(li);
-        });
-
-        wrap.appendChild(label);
-        wrap.appendChild(ul);
-        return wrap;
-    }
-
-    function removeFlowPlanStrip() {
-        unbindFlowPlanStickyListeners();
-        if (bioFlowPlanStripEl && bioFlowPlanStripEl.parentNode) {
-            bioFlowPlanStripEl.parentNode.removeChild(bioFlowPlanStripEl);
-        }
-        bioFlowPlanStripEl = null;
-    }
-
-    /**
-     * Una sola tira: quita la anterior y la inserta justo debajo del montaje de UI del paso activo.
-     */
-    function attachFlowPlanBelowMount(mountEl, fm, actionTitle) {
-        if (!mountEl || !fm || typeof fm !== 'object') return;
-        removeFlowPlanStrip();
-        const strip = buildFlowPlanStripElement(fm, actionTitle);
-        if (!strip) return;
-        mountEl.insertAdjacentElement('afterend', strip);
-        bioFlowPlanStripEl = strip;
-        if (chatMessagesDiv && strip.closest && chatMessagesDiv.contains(strip)) {
-            strip.classList.add('spa-flow-plan-wrap--sticky-enabled');
-            updateFlowPlanStickyBottomVar();
-            bindFlowPlanStickyListeners();
-        }
-        scheduleFlowPlanStickySync();
-    }
-
     /** @param {object|null|undefined} envelope */
     function assistantFlowSession(envelope) {
         const s = envelope && envelope.session;
@@ -1230,7 +1162,6 @@
             if (kind === 'message') {
                 setLoadingState(false);
                 removeFlowPlanStrip();
-                bioFlowPlanPendingContext = null;
                 appendChatBubble('bot', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + escapeHtml(primaryText || 'Ok.') + '</div>');
                 setTimeout(scrollChatToBottom, 20);
                 return;
@@ -1238,6 +1169,7 @@
 
             if (kind === 'interactive') {
                 setLoadingState(false);
+                removeFlowPlanStrip();
                 supersedeAllFlowRows();
                 const remText = primaryText || 'Elegí una opción';
                 const wrap = appendChatBubble('bot', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + escapeHtml(remText) + '</div>');
@@ -1314,7 +1246,7 @@
                 if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
                     flowActionTitle = String(fm.action_name).trim();
                 }
-                bioFlowPlanPendingContext = fm ? { fm: fm, actionTitle: flowActionTitle } : null;
+                renderComposerFlowProgress(fm, flowActionTitle);
 
                 const flowIntentId = fm && fm.intent_id != null ? String(fm.intent_id).trim()
                     : (session.intent_id ? String(session.intent_id).trim() : '');
@@ -1351,7 +1283,6 @@
                 function flowSubmitClearState() {
                     clearFlowState();
                     removeFlowPlanStrip();
-                    bioFlowPlanPendingContext = null;
                 }
 
                 // Resolver URL: primero `client_open` ui_json del payload; si hay `flow_submit` adjunto,
@@ -1390,20 +1321,17 @@
                         flowSnapshot = {};
                         writeFlowState();
                         removeFlowPlanStrip();
-                        bioFlowPlanPendingContext = null;
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }
                     if (fsr && fsr.route && fsr.body_template && typeof fsr.body_template === 'object') {
                         removeFlowPlanStrip();
-                        bioFlowPlanPendingContext = null;
                         appendFlowInlineSubmit(flowSectionInner, fsr, flowSubmitClearState);
                         setLoadingState(false);
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }
                     removeFlowPlanStrip();
-                    bioFlowPlanPendingContext = null;
                     const errHtml = openUi && openUi.action_id
                         ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
                         : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
@@ -1498,7 +1426,6 @@
             }
 
             removeFlowPlanStrip();
-            bioFlowPlanPendingContext = null;
 
             // Respuestas legacy (CRUD / motor antiguo sin sobre v3).
             const result = envelope;

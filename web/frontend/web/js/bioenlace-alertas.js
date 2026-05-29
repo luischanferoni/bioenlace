@@ -15,8 +15,16 @@
     }
 
     function apiUrl(path) {
-        var b = apiBase();
         var p = path.charAt(0) === '/' ? path : '/' + path;
+        if (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.normalizeApiV1Path === 'function') {
+            p = window.BioenlaceApiClient.normalizeApiV1Path(p);
+        } else if (p.indexOf('/api/v1/') !== 0) {
+            p = '/api/v1/' + p.replace(/^\//, '');
+        }
+        if (p.indexOf('/api/') === 0) {
+            return window.location.origin + p;
+        }
+        var b = apiBase();
         return b + p;
     }
 

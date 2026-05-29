@@ -2232,10 +2232,16 @@
 
         const form = container.querySelector('form[data-ui-json-form="1"]');
         const submitBtn = hideSubmit ? null : container.querySelector('button[data-ui-json-submit="1"]');
-        if (!form || (!hideSubmit && (!submitBtn || !submitUrl))) return;
+        if (!form) {
+            return;
+        }
 
         initCustomWidgetsInContainer(container, fields);
         attachAutocompleteHandlers(container);
+
+        if (hideSubmit || !submitBtn || !submitUrl) {
+            return;
+        }
 
         submitBtn.addEventListener('click', function () {
             if (submitBtn.disabled) return;

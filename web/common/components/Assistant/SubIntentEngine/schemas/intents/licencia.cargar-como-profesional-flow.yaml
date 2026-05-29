@@ -1,11 +1,12 @@
-intent_id: licencia.solicitar-como-profesional-flow
+intent_id: licencia.cargar-como-profesional-flow
 version: 1
 
-action_name: "Solicitar licencia"
+action_name: "Cargar licencia"
 description: "Para registrar una licencia o permiso sobre uno de tus servicios en el efector."
-rbac_route: "/api/profesional-efector-servicio/solicitar-licencia-flow"
+rbac_route: "/api/profesional-efector-servicio/cargar-licencia-como-profesional-flow"
 keywords:
   - licencia
+  - cargar licencia
   - solicitar licencia
   - pedir licencia
   - permiso
@@ -19,7 +20,7 @@ intent_semantics:
   goal: >-
     Registrar una condición laboral con vigencia (licencia, permiso o ausencia) sobre una asignación propia PES en el efector.
   how: >-
-    Elegís el servicio afectado, completás tipo de licencia y fechas; la solicitud se persiste al guardar el formulario y el flujo cierra con confirmación.
+    Elegís el servicio afectado, completás tipo de licencia y fechas; se persiste al guardar el formulario y el flujo cierra con confirmación.
   preconditions:
     - Profesional autenticado con asignación en el efector de sesión.
   constraints:
@@ -44,15 +45,15 @@ business_rules:
     forbid_any:
       - "otro|otra|del médico|del medico|del doctor|del profesional|para el|para la|secretaría|secretaria"
     user_message: >-
-      ¿Querés solicitar una licencia para vos o registrar la licencia de otro profesional?
+      ¿Querés cargar una licencia propia o la de otro profesional del efector?
     remediation:
       - id: mi_licencia
         label: "Mi licencia (mis servicios)"
-        intent_id: licencia.solicitar-como-profesional-flow
+        intent_id: licencia.cargar-como-profesional-flow
         reset_flow: true
       - id: otro_profesional
         label: "Licencia de otro profesional (staff)"
-        intent_id: licencia.registrar-staff-flow
+        intent_id: licencia.cargar-para-profesional-flow
         reset_flow: true
 
 subintents:
@@ -61,11 +62,11 @@ subintents:
     provides:
       - draft.id_servicio
       - draft.id_profesional_efector_servicio
-    next: registrar_licencia
+    next: cargar_licencia
     open_ui:
       action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
 
-  - id: registrar_licencia
+  - id: cargar_licencia
     assistant_text: "Licencia"
     provides:
       - draft.condicion_laboral_ui_completed
@@ -77,13 +78,13 @@ subintents:
       - draft.id_servicio
     next: ""
     open_ui:
-      action_id: profesional-efector-servicio.solicitar-licencia-como-profesional
+      action_id: profesional-efector-servicio.cargar-licencia-como-profesional
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
 
 flow_submit:
-  action_id: profesional-efector-servicio.solicitar-licencia-flow
+  action_id: profesional-efector-servicio.cargar-licencia-como-profesional-flow
   params:
     id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
     id_servicio: "draft.id_servicio"

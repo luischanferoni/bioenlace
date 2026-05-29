@@ -1,6 +1,6 @@
 {
   "ui_type": "ui_json",
-  "title": "Solicitar licencia",
+  "title": "Cargar licencia",
   "ui_meta": {
     "schema_version": "1",
     "clients": {

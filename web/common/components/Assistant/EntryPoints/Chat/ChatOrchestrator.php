@@ -46,11 +46,11 @@ final class ChatOrchestrator
                 } catch (\yii\web\ForbiddenHttpException $e) {
                     return ['success' => false, 'error' => $e->getMessage()];
                 }
-            } elseif ($intentId === 'licencia.solicitar-como-profesional-flow' || $intentId === 'licencia.registrar-staff-flow') {
+            } elseif ($intentId === 'licencia.cargar-como-profesional-flow' || $intentId === 'licencia.cargar-para-profesional-flow') {
                 try {
                     ProfesionalEfectorServicioAgendaFlowDraftHydrator::hydrate(
                         $body,
-                        $intentId === 'licencia.solicitar-como-profesional-flow'
+                        $intentId === 'licencia.cargar-como-profesional-flow'
                     );
                 } catch (\yii\web\ForbiddenHttpException $e) {
                     return ['success' => false, 'error' => $e->getMessage()];

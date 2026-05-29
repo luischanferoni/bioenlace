@@ -476,16 +476,16 @@ class ProfesionalEfectorServicioController extends BaseController
     }
 
     /**
-     * UI JSON: solicitar licencia / permiso sobre asignación propia (PES en sesión).
+     * UI JSON: cargar licencia / permiso sobre asignación propia (PES en sesión).
      *
-     * GET|POST /api/v1/profesional-efector-servicio/solicitar-licencia-como-profesional
+     * GET|POST /api/v1/profesional-efector-servicio/cargar-licencia-como-profesional
      *
-     * @action_name Solicitar licencia (profesional)
+     * @action_name Cargar licencia (profesional)
      * @entity Profesional
      * @tags licencia, permiso, vacaciones, profesional
-     * @keywords solicitar licencia, pedir permiso, ausencia, vacaciones
+     * @keywords cargar licencia, solicitar licencia, pedir permiso, ausencia, vacaciones
      */
-    public function actionSolicitarLicenciaComoProfesional(): array
+    public function actionCargarLicenciaComoProfesional(): array
     {
         $req = Yii::$app->request;
         $idEfector = (int) Yii::$app->user->getIdEfector();
@@ -496,7 +496,7 @@ class ProfesionalEfectorServicioController extends BaseController
 
         return UiScreenService::handleScreen(
             'profesional-efector-servicio',
-            'solicitar-licencia-como-profesional',
+            'cargar-licencia-como-profesional',
             $paramsForRender,
             $req->post(),
             static function (array $post) use ($idEfector): array {
@@ -506,38 +506,38 @@ class ProfesionalEfectorServicioController extends BaseController
     }
 
     /**
-     * Cierre declarativo del flujo asistente «solicitar licencia» (solo POST).
-     * Permiso RBAC: `/api/profesional-efector-servicio/solicitar-licencia-flow`
+     * Cierre declarativo del flujo asistente «cargar licencia como profesional» (solo POST).
+     * Permiso RBAC: `/api/profesional-efector-servicio/cargar-licencia-como-profesional-flow`
      *
-     * POST /api/v1/profesional-efector-servicio/solicitar-licencia-flow
+     * POST /api/v1/profesional-efector-servicio/cargar-licencia-como-profesional-flow
      *
-     * @action_name Cerrar flujo solicitar licencia (asistente)
+     * @action_name Cerrar flujo cargar licencia como profesional (asistente)
      * @entity Profesional
      * @tags licencia, asistente, flow, profesional
      */
-    public function actionSolicitarLicenciaFlow(): array
+    public function actionCargarLicenciaComoProfesionalFlow(): array
     {
         return $this->licenciaFlowClosureResponse(
-            'profesional-efector-servicio.solicitar-licencia-flow',
-            'Solicitud de licencia registrada.',
+            'profesional-efector-servicio.cargar-licencia-como-profesional-flow',
+            'Licencia registrada.',
             true
         );
     }
 
     /**
-     * Cierre declarativo del flujo asistente «registrar licencia staff» (solo POST).
-     * Permiso RBAC: `/api/profesional-efector-servicio/registrar-licencia-staff-flow`
+     * Cierre declarativo del flujo asistente «cargar licencia para profesional» (staff; solo POST).
+     * Permiso RBAC: `/api/profesional-efector-servicio/cargar-licencia-para-profesional-flow`
      *
-     * POST /api/v1/profesional-efector-servicio/registrar-licencia-staff-flow
+     * POST /api/v1/profesional-efector-servicio/cargar-licencia-para-profesional-flow
      *
-     * @action_name Cerrar flujo registrar licencia staff (asistente)
+     * @action_name Cerrar flujo cargar licencia para profesional (asistente)
      * @entity Profesional
      * @tags licencia, asistente, flow, staff
      */
-    public function actionRegistrarLicenciaStaffFlow(): array
+    public function actionCargarLicenciaParaProfesionalFlow(): array
     {
         return $this->licenciaFlowClosureResponse(
-            'profesional-efector-servicio.registrar-licencia-staff-flow',
+            'profesional-efector-servicio.cargar-licencia-para-profesional-flow',
             'Licencia del profesional registrada.',
             false
         );

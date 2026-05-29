@@ -1,11 +1,12 @@
-intent_id: licencia.registrar-staff-flow
+intent_id: licencia.cargar-para-profesional-flow
 version: 1
 
-action_name: "Registrar licencia (staff)"
-description: "Para cargar licencia o permiso de un profesional del efector."
-rbac_route: "/api/profesional-efector-servicio/registrar-licencia-staff-flow"
+action_name: "Cargar licencia (staff)"
+description: "Para registrar licencia o permiso de un profesional del efector."
+rbac_route: "/api/profesional-efector-servicio/cargar-licencia-para-profesional-flow"
 keywords:
   - licencia profesional
+  - cargar licencia
   - registrar licencia
   - licencia médico
   - permiso profesional
@@ -41,13 +42,13 @@ subintents:
       - draft.id_profesional_efector_servicio
     provides:
       - draft.id_servicio
-    next: registrar_licencia
+    next: cargar_licencia
     open_ui:
       action_id: profesional-efector-servicio.listar-servicios-en-efector
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
-  - id: registrar_licencia
+  - id: cargar_licencia
     assistant_text: "Licencia"
     provides:
       - draft.condicion_laboral_ui_completed
@@ -65,7 +66,7 @@ subintents:
         id_servicio: "draft.id_servicio"
 
 flow_submit:
-  action_id: profesional-efector-servicio.registrar-licencia-staff-flow
+  action_id: profesional-efector-servicio.cargar-licencia-para-profesional-flow
   params:
     id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
     id_servicio: "draft.id_servicio"

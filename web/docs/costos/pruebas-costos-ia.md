@@ -1,6 +1,8 @@
 # Pruebas de costos de IA
 
-Módulo para ejecutar conversaciones de prueba y medir cuántas llamadas a la IA se **evitaron** (cache, dedup, CPU, validación) y cuántas se **simularon** (en pruebas nunca se llama al proveedor real).
+Módulo para ejecutar conversaciones de prueba y medir cuántas llamadas a la IA se **evitaron** (caché de aplicación, dedup, CPU, validación) y cuántas se **simularon** (en pruebas nunca se llama al proveedor real).
+
+Para **tokens Gemini y context caching** en entornos reales, ver [estrategias-reduccion/monitoreo.md](./estrategias-reduccion/monitoreo.md) (`ia_usage_tracking_habilitado`).
 
 ## Carpeta de conversaciones
 
@@ -23,12 +25,6 @@ Módulo para ejecutar conversaciones de prueba y medir cuántas llamadas a la IA
 }
 ```
 
-- **tipo**: uno de `pre_turno`, `pre_consulta`, `consulta_medico`, `onboarding`, `sistema`
-- **nombre**: nombre legible
-- **descripcion**: opcional, para documentación o UI
-- **mensajes**: array de strings (mensajes del usuario en orden)
-- **userId**: opcional; si no se indica se usa `test-costos`
-
 ## Ejecutar por CLI
 
 Desde la raíz del proyecto (carpeta `web`):
@@ -37,40 +33,42 @@ Desde la raíz del proyecto (carpeta `web`):
 php yii costos/ejecutar-conversacion --conversacion=pre_turno/sacar_turno_completo
 ```
 
-O con alias:
+Si el comando no existe en el entorno, usar tests unitarios (abajo).
 
-```bash
-php yii costos/ejecutar-conversacion -c pre_turno/sacar_turno_completo
+## Componente `AICostTracker`
+
+`web/common/components/Ai/Cost/AICostTracker.php`
+
+| Modo | Activación | Qué mide |
+|------|------------|----------|
+| **Pruebas** | `iniciarEjecucionPrueba()` (runner/tests) | Evitadas + llamadas **simuladas** (sin HTTP) |
+| **Producción / staging** | `ia_usage_tracking_habilitado => true` en `params.php` | `llamada_real`, tokens, `cached_content_token_count`, desglose por `contexto` de `consultarIA` |
+
+### Parámetros (`web/frontend/config/params.php`)
+
+```php
+'vertex_ai_model' => 'gemini-2.5-flash-lite',
+'ia_usage_tracking_habilitado' => false, // true para calibrar context caching
 ```
 
-Si no se indica conversación, se listan las disponibles. La ejecución **siempre simula** la IA (no se hace ninguna llamada HTTP al proveedor).
+### Resumen (`getResumen()`)
 
-## Ejecutar por web (backend)
-
-- **Listar**: `GET /admin/costos/listar-conversaciones` (requiere usuario autenticado).
-- **Ejecutar**: `GET` o `POST` con parámetro `conversacion=pre_turno/sacar_turno_completo` en la URL ` /admin/costos/ejecutar-conversacion`.
-
-La respuesta incluye `respuestas` (por cada mensaje) y `resumen_costos` (evitadas por cache/dedup/CPU/validación, llamadas simuladas). Acceso restringido a usuarios autenticados.
+- **evitada_por_***: caché Yii, dedup, CPU, validación
+- **llamada_simulada** / **llamada_real**
+- **tokens**: `prompt_token_count`, `cached_content_token_count`, `billable_input_token_count`, `ratio_input_en_cache`
+- **por_contexto**: p. ej. `asistente-preprocess`, `intent-engine-classification`
 
 ## Tests unitarios
 
-En `web/common/tests/unit/costos/AICostTrackerTest.php` se comprueba el tracker (reset, iniciar/finalizar ejecución de prueba, registro de evitadas y simuladas). Un test opcional ejecuta un flujo que pasa por IAManager con simulación activa. Los tests **nunca** llaman a la IA real.
-
-Ejecutar (desde `web`):
+`web/common/tests/unit/costos/AICostTrackerTest.php`
 
 ```bash
-vendor/bin/codecept run unit common/tests/unit/costos/AICostTrackerTest
+cd web && vendor/bin/codecept run unit common/tests/unit/costos/AICostTrackerTest
 ```
 
-## Resumen de costos
+Los tests **nunca** llaman a la IA real salvo que se configure explícitamente fuera del modo simulación.
 
-Tras ejecutar una conversación (CLI o web), el resumen incluye:
+## Relacionado
 
-- **evitada_por_cache**: respuestas obtenidas desde cache
-- **evitada_por_dedup**: respuestas reutilizadas por deduplicación
-- **evitada_por_cpu**: tareas resueltas por CPU (ej. corrección básica)
-- **evitada_por_validacion**: solicitudes descartadas (ej. prompt vacío)
-- **llamada_simulada**: veces que se habría llamado a la IA pero se simuló (solo en pruebas)
-- **total_evitadas**: suma de las cuatro evitadas
-
-Producción no activa simulación; solo cuando se ejecuta explícitamente el runner de conversaciones o los tests de costos.
+- [costos-api.md](./costos-api.md) — columnas sin / con context caching
+- [estrategias-reduccion/context-caching-implicita.md](./estrategias-reduccion/context-caching-implicita.md)

@@ -1,8 +1,14 @@
 # Costos – Uso de APIs
 
-Este documento refleja el **costo real** cuando se usan **APIs externas** (IA generativa, STT, Vision, videollamadas), **sin aplicar** estrategias de reducción del producto (p. ej. transcribir solo bajo demanda). Las palancas adicionales (tiers gratuitos, mezcla de proveedores, caché) están en [estrategias-api.md](./estrategias-api.md).
+Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollamadas), alineados con **Bioenlace en producción**:
 
-- **IA generativa:** **Google (Vertex AI / Gemini 2.5 Flash Lite)** y **Together AI** (Llama 3.1 8B) como comparativa.
+- **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`).
+- **Columnas Google:** **sin context caching** vs **con context caching** (tokens de entrada repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
+- **Escenario intensivo:** sin optimizaciones de producto (p. ej. transcribir todo el audio automáticamente).
+
+Otras reducciones (caché Yii, STT bajo demanda, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas.
+
+- **IA generativa:** **Google (Gemini 2.5 Flash Lite)** y **Together AI** (Llama 3.1 8B) solo como comparativa de precio.
 - **STT (transcripción):** **Groq Whisper** (tarifa más baja documentada para API managed).
 - **Vision:** **Google Vision API** (tier gratuito cubre el volumen de referencia).
 
@@ -54,29 +60,28 @@ Sí: **~$0.0003 por llamada** encaja con **Gemini 2.5 Flash Lite** (o 2.0 Flash 
 
 A **400 consultas/mes** solo IA de consulta: **~$0.12–0.18/médico/mes** (Flash Lite / 2.0 Flash), frente a **~$0.20–0.24** si se mantiene **~$0.0006** como redondeo conservador en tablas siguientes.
 
-### Context caching (Vertex AI)
+### Context caching (Vertex AI) — base de las columnas «con caché»
 
-Google ofrece dos mecanismos ([overview](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview)):
+Bioenlace usa **`gemini-2.5-flash-lite`**. Las tablas comparan el mismo volumen de llamadas con tarifa **estándar de input** vs **input con tokens cacheados** según [pricing de Vertex](https://cloud.google.com/vertex-ai/generative-ai/pricing).
 
-| Tipo | Comportamiento | Coste extra |
-|------|----------------|-------------|
-| **Implícito** | Activado por defecto en el proyecto; descuento si hay *cache hit* en tokens de entrada repetidos | Sin coste de almacenamiento |
-| **Explícito** | Declarás en la API el bloque a cachear (system prompt, esquema FHIR, políticas del efector, etc.) | Almacenamiento **$/M tok·hora** (p. ej. 2.5 Flash: **$1/M tok/h**); input cacheado a tarifa reducida |
+| Tipo | En producción hoy | En las tablas de este doc |
+|------|-------------------|---------------------------|
+| **Implícito** | Sí (Google aplica hits si el prefijo del prompt se repite; medible con `usageMetadata.cachedContentTokenCount`) | Columna **«con caché»** |
+| **Explícito** (`cachedContents` en API) | **No implementado** | Mismo supuesto aritmético hasta integrarlo; ver [estrategias-reduccion/context-caching-explicita.md](./estrategias-reduccion/context-caching-explicita.md) |
 
-- En **Gemini 2.5+**, los tokens de entrada que referencian caché explícita suelen facturarse a **10 %** del precio de input estándar (**90 % de descuento**). En **2.0**, el descuento documentado es **75 %**.
-- Mínimo de tokens para cachear: **2.048** en modelos 2.0/2.5 (ver tabla en la doc de Google).
-- **Cuándo aplica en Bioenlace:** instrucciones del asistente, definiciones `ui_json`, contexto de consulta/efector que se repite en muchas llamadas del mismo turno o sesión. El output **no** se cachea; sigue facturándose íntegro.
+Detalle de cada tipo: [implícita](./estrategias-reduccion/context-caching-implicita.md) · [explícita](./estrategias-reduccion/context-caching-explicita.md).
 
-**Orden de magnitud con caché:** si ~**70–80 %** del input de cada llamada es contexto repetido (system + reglas), el coste de **input** puede bajar ~**60–75 %** respecto a la misma llamada sin hits; el ahorro total por llamada depende de cuánto pese el output en el mix de tokens.
-
-Esto es **complementario** a la caché de aplicación (respuestas por hash) descrita en [estrategias-api.md](./estrategias-api.md): Vertex reduce el coste del **prompt repetido**; la caché interna evita **llamadas** enteras.
+- Tarifa input cacheado 2.5 Flash Lite: **$0.01/M** vs **$0.10/M** estándar (**90 %** desc. en esa porción).
+- Supuesto de presupuesto: **~80 %** del input de cada llamada entra como cacheado (200 tokens nuevos + 800 cacheados + 500 output) → fila «2.5 Flash Lite + caché parcial».
+- Objetivo de diseño: instrucciones del asistente, reglas y contexto de efector **al inicio** del prompt, estable entre llamadas de la misma sesión. Calibrar con `ia_usage_tracking_habilitado` y `AICostTracker` ([monitoreo](./estrategias-reduccion/monitoreo.md)).
+- El **output** no se cachea.
 
 **Cifras en tablas siguientes (solo Google / Gemini):**
 
 | Columna | USD/llamada (1.500 tok.) | Notas |
 |---------|--------------------------|--------|
-| **Sin caché** | **~$0.00035** | Estimación central; no subestima el presupuesto |
-| **Con caché** | **~$0.00023** | ~80 % del input en caché (system + reglas repetidas); ver fila «2.5 Flash Lite + caché parcial» arriba |
+| **Sin context caching** | **~$0.00035** | 1.000 input + 500 output a tarifa estándar |
+| **Con context caching** | **~$0.00023** | Supuesto 80 % input cacheado; ver fila arriba |
 
 **Together AI** no usa context caching de Vertex → columna «con caché» = **—**.
 
@@ -92,7 +97,7 @@ Ver sección [Gemini Flash: tarifas actuales y context caching](#gemini-flash-ta
 
 Precio **$0.18 por millón de tokens** (input y output; referencia [Together AI](https://docs.together.ai/docs/serverless-models)). Para consulta de 1.500 tokens: 1.500 × $0.18/1.000.000 ≈ **$0.00027 por consulta**. A 400 consultas/mes: **aprox. $0.11/médico/mes** solo por IA de consultas. Más barato que Gemini Flash por consulta; útil como alternativa para reducir coste de IA generativa.
 
-Para cifras exactas y **cómo bajar aún más** (tiers gratis, Hugging Face, solo bajo demanda), usar [estrategias-api.md](./estrategias-api.md).
+Para bajar el costo con otras palancas (STT bajo demanda, caché de aplicación, etc.), ver [estrategias-reduccion/](./estrategias-reduccion/README.md).
 
 ---
 
@@ -111,7 +116,7 @@ Para cifras exactas y **cómo bajar aún más** (tiers gratis, Hugging Face, sol
 
 ### Otras APIs STT (sin Google / OpenAI)
 
-Detalle y escalera operativa (HF, tiers gratis, bajo demanda): [estrategias-api.md §5](./estrategias-api.md#5-stt-transcripción-de-audio).
+Detalle STT: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md).
 
 | Proveedor | ~USD/min | 400 min/mes | Notas |
 |-----------|----------|-------------|--------|
@@ -134,7 +139,7 @@ El paciente carga texto, audio e imágenes en el chat de **motivos** hasta **1 m
 
 Prompt más chico (~**1.000 input + 400 output** por lote; sin transcripciones).
 
-| Concepto | Supuesto | Google sin caché | Google con caché | Together AI |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | Llamadas IA | 400 | — | — | — |
 | IA (resumen lote) | 400 × ~$0.00024 / ~$0.00019 | **~$0.10** | **~$0.08** | **~$0.09** |
@@ -145,7 +150,7 @@ Prompt más chico (~**1.000 input + 400 output** por lote; sin transcripciones).
 
 Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del audio antes del lote.
 
-| Concepto | Supuesto | Google sin caché | Google con caché | Together AI |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | Llamadas IA | 400 | — | — | — |
 | IA (resumen lote) | 400 × ~$0.00035 / ~$0.00023 | **~$0.14** | **~$0.09** | **~$0.11** |
@@ -156,7 +161,7 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 
 ### 2. Conversación pre-consulta (chat para despejar dudas)
 
-| Concepto | Supuesto | Google sin caché | Google con caché | Together AI |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | Llamadas IA | 400 × 5 × 50% = **1.000** | — | — | — |
 | IA generativa | 1.000 × ~$0.00035 / ~$0.00023 | **~$0.35** | **~$0.23** | **~$0.27** |
@@ -165,7 +170,7 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 
 ### 3. Agente de IA para onboarding y tareas del día a día
 
-| Concepto | Supuesto | Google sin caché | Google con caché | Together AI |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | Llamadas IA/médico/mes | 400 | — | — | — |
 | IA generativa | 400 × ~$0.00035 / ~$0.00023 | **~$0.14** | **~$0.09** | **~$0.11** |
@@ -174,7 +179,7 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 
 ### 4. Consulta (IA de las 400 consultas/mes)
 
-| Concepto | Supuesto | Google sin caché | Google con caché | Together AI |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | IA generativa | 400 × ~$0.00035 / ~$0.00023 | **~$0.14** | **~$0.09** | **~$0.11** |
 
@@ -210,7 +215,7 @@ Mismo volumen de tokens IA que el resto del doc (**~1.500/llamada**) + STT del a
 
 ### Apartado 1 – IA generativa (chat y consulta)
 
-| Concepto | Google sin caché | Google con caché | Together AI |
+| Concepto | Google sin context caching | Google con context caching | Together AI |
 |----------|------------------|------------------|-------------|
 | Motivos — solo texto (§1 caso A) | ~$0.10 | ~$0.08 | ~$0.09 |
 | Motivos — siempre audio (§1 caso B, IA+STT) | ~$0.42 | ~$0.37 | ~$0.39 |
@@ -241,7 +246,7 @@ Supuesto: **30 %** de las 400 consultas/mes por video, **12 min** promedio, **2*
 
 **400 min STT/mes** es cupo **global** del escenario intensivo (§5): no sumar el STT del caso B de motivos **y** los 400 min completos del apartado 2.
 
-| Escenario | Google sin caché | Google con caché | Together AI |
+| Escenario | Google sin context caching | Google con context caching | Together AI |
 |-----------|------------------|------------------|-------------|
 | Apartados 1 + 2 (motivos **solo texto**) | **~$1.01** | **~$0.77** | **~$0.86** |
 | Apartados 1 + 2 (motivos **con audio**) | **~$1.05** | **~$0.78** | **~$0.88** |
@@ -259,7 +264,7 @@ Supuesto: **30 %** de las 400 consultas/mes por video, **12 min** promedio, **2*
 ## Referencias
 
 - [impuestos-argentina.md](./impuestos-argentina.md) – IVA, IIBB y ganancias (AR) sobre costo y facturación.
-- [estrategias-api.md](./estrategias-api.md) – Cómo reducir coste vía API (STT por proveedor/tier gratis, caché, bajo demanda, context caching Vertex).
+- [estrategias-reduccion/](./estrategias-reduccion/README.md) – Palancas adicionales (no incluidas en COGS base).
 - [Groq pricing](https://groq.com/pricing) – STT de referencia en tablas.
 - [Vertex AI – Context caching overview](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview)
 - [infra/costos.md](../infra/costos.md) – Costes cuando la IA corre en nuestra GPU.

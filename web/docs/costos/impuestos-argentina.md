@@ -84,11 +84,11 @@ COGS API: [costos-api.md](./costos-api.md) (apartados 1–2; apartado 3 videolla
 
 | Concepto | USD/mes (orientativo) | Fuente |
 |----------|------------------------|--------|
-| **IA + STT vía API** — sin caché (5.000 × ~USD 1,05/prof) | **~5.250** | [costos-api.md](./costos-api.md) |
-| **IA + STT vía API** — con caché Vertex (5.000 × ~USD 0,78/prof) | **~3.900** | [costos-api.md](./costos-api.md) |
+| **IA + STT vía API** — sin context caching (5.000 × ~USD 1,05/prof) | **~5.250** | [costos-api.md](./costos-api.md) |
+| **IA + STT vía API** — con context caching Vertex (5.000 × ~USD 0,78/prof) | **~3.900** | [costos-api.md](./costos-api.md) |
 | **Videollamada** — Twilio Video (5.000 × ~USD 11,52/prof, §6) | **~57.600** | [costos-api.md](./costos-api.md) |
-| **IA + STT + videollamada (Twilio)** — sin caché | **~62.850** | 5.250 + 57.600 |
-| **IA + STT + videollamada (Twilio)** — con caché | **~61.500** | 3.900 + 57.600 |
+| **IA + STT + videollamada (Twilio)** — sin context caching | **~62.850** | 5.250 + 57.600 |
+| **IA + STT + videollamada (Twilio)** — con context caching | **~61.500** | 3.900 + 57.600 |
 | **Aplicación + BD + hosting** (PHP, MySQL, backups, CDN, monitoreo) | *[pendiente presupuesto]* | **No hay cifra a escala 5.000 prof. en el repo** |
 
 **Única referencia interna de “infra” en chico:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500/mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); mezcla hosting y soporte operativo, **no escala lineal** a 5.000 usuarios.
@@ -97,15 +97,15 @@ COGS API: [costos-api.md](./costos-api.md) (apartados 1–2; apartado 3 videolla
 
 | Subtotal en esta tabla | USD/mes |
 |------------------------|---------|
-| **Solo IA + STT (documentado)** — sin caché | **~5.250** |
-| **Solo IA + STT (documentado)** — con caché | **~3.900** |
-| **IA + STT + videollamada (Twilio)** — sin caché | **~62.850** |
-| **IA + STT + videollamada (Twilio)** — con caché | **~61.500** |
+| **Solo IA + STT (documentado)** — sin context caching | **~5.250** |
+| **Solo IA + STT (documentado)** — con context caching | **~3.900** |
+| **IA + STT + videollamada (Twilio)** — sin context caching | **~62.850** |
+| **IA + STT + videollamada (Twilio)** — con context caching | **~61.500** |
 | + aplicación/BD (cuando se presupueste) | a sumar |
 
 ### B) Carga fiscal sobre compras (estimación conservadora)
 
-Base sin caché: **~USD 5.250/mes** (tabla A). Base con caché: **~USD 3.900/mes**.
+Base sin context caching: **~USD 5.250/mes** (tabla A). Base con context caching (Gemini 2.5 Flash Lite): **~USD 3.900/mes**. Otras palancas en [estrategias-reduccion/](./estrategias-reduccion/README.md) no están en estas cifras.
 
 | Concepto | Sin caché | Con caché | Notas |
 |----------|-----------|-----------|--------|
@@ -121,7 +121,7 @@ Base sin caché: **~USD 5.250/mes** (tabla A). Base con caché: **~USD 3.900/mes
 
 Precios de licencia de producto (pack ambulatorio, guardia, etc.): [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — **fuera de esta tabla**.
 
-**COGS en márgenes:** sin caché **~USD 5.250/mes**; con caché **~USD 3.900/mes** (tabla A; motivos con audio).
+**COGS en márgenes:** sin context caching **~USD 5.250/mes**; con context caching **~USD 3.900/mes** (tabla A; motivos con audio).
 
 #### Qué es cada margen (importante)
 

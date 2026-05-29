@@ -215,7 +215,7 @@ Para clínicas 5–15 profesionales:
 | **Gratis** | Hasta N encounters/mes: ambulatorio básico | USD 0 |
 | **Pago** | Superar umbral; guardia; pack OS; IA ilimitada | Según [matriz](./matriz-argentina-modulos-precios.md) |
 
-Compite con «HIS caro y complejo» sin regalar consultas al paciente final. Costo marginal bajo en clínicas chicas (IA ~USD 1–3/prof/mes en uso moderado; ver [estrategias API](../../costos/estrategias-api.md)).
+Compite con «HIS caro y complejo» sin regalar consultas al paciente final. Costo marginal bajo en clínicas chicas (IA ~USD 1–3/prof/mes en uso moderado; ver [estrategias de reducción](../../costos/estrategias-reduccion/README.md)).
 
 ---
 

@@ -125,7 +125,7 @@ final class ProviderConfigFactory
     {
         $projectId = Yii::$app->params['google_cloud_project_id'] ?? '';
         $location = Yii::$app->params['google_cloud_region'] ?? 'us-central1';
-        $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-1.5-pro';
+        $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-2.5-flash-lite';
 
         $apiKey = Yii::$app->params['google_cloud_api_key'] ?? '';
         $useGenerativeAi = !empty($apiKey);

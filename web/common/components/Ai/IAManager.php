@@ -224,7 +224,7 @@ class IAManager
     {
         $projectId = Yii::$app->params['google_cloud_project_id'] ?? '';
         $location = Yii::$app->params['google_cloud_region'] ?? 'us-central1';
-        $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-1.5-pro';
+        $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-2.5-flash-lite';
         
         // Alternativa: usar Generative AI API (más simple, requiere API key)
         $apiKey = Yii::$app->params['google_cloud_api_key'] ?? '';
@@ -798,6 +798,17 @@ class IAManager
                 ->send();
 
             if ($response->isOk) {
+                if (
+                    ($proveedorIA['tipo'] ?? '') === 'google'
+                    && class_exists(\common\components\Ai\Cost\AICostTracker::class)
+                ) {
+                    \common\components\Ai\Cost\AICostTracker::registrarUsoDesdeRespuestaGemini(
+                        (string) ($response->content ?? ''),
+                        $contexto
+                    );
+                    \common\components\Ai\Cost\AICostTracker::registrarLlamadaReal($contexto, $tipoModelo);
+                }
+
                 // Los logs detallados ya se manejan en ConsultaLogger
                 $responseData = self::procesarRespuestaProveedor($response, $proveedorIA['tipo']);
                 

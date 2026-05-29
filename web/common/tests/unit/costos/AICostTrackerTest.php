@@ -68,6 +68,30 @@ class AICostTrackerTest extends \Codeception\Test\Unit
         verify($r['llamada_simulada'])->equals(2);
     }
 
+    public function testRegistrarUsoGeminiConEjecucionPrueba()
+    {
+        AICostTracker::iniciarEjecucionPrueba();
+        $json = json_encode([
+            'candidates' => [['content' => ['parts' => [['text' => 'ok']]]]]],
+            'usageMetadata' => [
+                'promptTokenCount' => 1000,
+                'cachedContentTokenCount' => 800,
+                'candidatesTokenCount' => 500,
+                'totalTokenCount' => 1500,
+            ],
+        ]);
+        AICostTracker::registrarUsoDesdeRespuestaGemini($json, 'asistente-preprocess');
+        AICostTracker::registrarLlamadaReal('asistente-preprocess');
+        $r = AICostTracker::getResumen();
+        verify($r['llamada_real'])->equals(1);
+        verify($r['tokens']['prompt_token_count'])->equals(1000);
+        verify($r['tokens']['cached_content_token_count'])->equals(800);
+        verify($r['tokens']['billable_input_token_count'])->equals(200);
+        verify($r['tokens']['ratio_input_en_cache'])->equals(0.8);
+        verify($r['por_contexto']['asistente-preprocess']['cached_tokens'])->equals(800);
+        AICostTracker::finalizarEjecucionPrueba();
+    }
+
     /**
      * Con ejecución de prueba activa, una llamada a consultarIA debe quedar como simulada (no HTTP).
      * Requiere que Yii::$app->iamanager esté disponible (config de tests).

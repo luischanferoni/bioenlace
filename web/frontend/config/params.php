@@ -26,6 +26,15 @@ return [
     // Control de cache para pruebas (desactivar para forzar llamadas a IA)
     'ia_cache_desactivado' => true, // true = desactiva cache de estructuración/análisis (fuerza llamadas a IA)
     'correccion_cache_desactivado' => true, // true = desactiva cache de corrección (fuerza llamadas a IA)
+
+    /** Modelo Gemini en Vertex / Generative Language API (producción: gemini-2.5-flash-lite). */
+    'vertex_ai_model' => 'gemini-2.5-flash-lite',
+
+    /**
+     * Acumula usageMetadata de Gemini en AICostTracker (tokens, cachedContentTokenCount por contexto).
+     * Activar en staging para calibrar columnas de costos-api.md; ver web/docs/costos/pruebas-costos-ia.md.
+     */
+    'ia_usage_tracking_habilitado' => false,
     
     // Optimizaciones de procesamiento
     'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito

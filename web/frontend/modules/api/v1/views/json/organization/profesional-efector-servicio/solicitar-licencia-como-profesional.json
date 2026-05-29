@@ -1,0 +1,56 @@
+{
+  "ui_type": "ui_json",
+  "title": "Solicitar licencia",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "default",
+      "fields": [
+        {
+          "name": "id_efector",
+          "label": "",
+          "type": "hidden",
+          "required": false
+        },
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_condicion_laboral",
+          "label": "Tipo de licencia o permiso",
+          "type": "radio",
+          "required": true,
+          "options": "{{options}}",
+          "option_config": {
+            "source": "catalog",
+            "catalog": "condiciones_laborales"
+          }
+        },
+        {
+          "name": "fecha_inicio",
+          "label": "Fecha inicio",
+          "type": "date",
+          "required": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "fecha_fin",
+          "label": "Fecha fin (opcional)",
+          "type": "date",
+          "required": false,
+          "layout": { "col": 6, "breakpoint": "md" }
+        }
+      ]
+    }
+  ]
+}

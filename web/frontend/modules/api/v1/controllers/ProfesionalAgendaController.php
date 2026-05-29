@@ -29,7 +29,7 @@ use common\models\ProfesionalEfectorServicioAgenda;
  *
  * Permisos `/api/profesional-agenda/...` (sin `v1` en webvimark):
  * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso,
- * crear-agenda-flow, editar-agenda-flow
+ * crear-agenda-flow, editar-agenda-flow, editar-mi-agenda-flow
  */
 class ProfesionalAgendaController extends BaseController
 {
@@ -87,6 +87,34 @@ class ProfesionalAgendaController extends BaseController
      */
     public function actionEditarAgendaFlow(): array
     {
+        return $this->editarAgendaFlowResponse(
+            'profesional-agenda.editar-agenda-flow',
+            'Flujo de edición de agenda cerrado.',
+            false
+        );
+    }
+
+    /**
+     * Cierre declarativo del flujo asistente «editar mi agenda» (solo POST; sin descriptor UI).
+     * Permiso RBAC: `/api/profesional-agenda/editar-mi-agenda-flow` (alineado al YAML `agenda.editar-mi-agenda-flow`).
+     *
+     * POST /api/v1/profesional-agenda/editar-mi-agenda-flow
+     *
+     * @action_name Cerrar flujo editar mi agenda (asistente)
+     * @entity Agendas
+     * @tags agenda, asistente, flow, profesional
+     */
+    public function actionEditarMiAgendaFlow(): array
+    {
+        return $this->editarAgendaFlowResponse(
+            'profesional-agenda.editar-mi-agenda-flow',
+            'Flujo de edición de tu agenda cerrado.',
+            true
+        );
+    }
+
+    private function editarAgendaFlowResponse(string $actionId, string $message, bool $requireOwnPes): array
+    {
         $req = Yii::$app->request;
         if (!$req->isPost) {
             throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
@@ -109,14 +137,17 @@ class ProfesionalAgendaController extends BaseController
         if ((int) $pes->id_servicio !== $idServicio) {
             throw new BadRequestHttpException('id_servicio no coincide con la asignación profesional.');
         }
+        if ($requireOwnPes && (int) $pes->id_persona !== (int) Yii::$app->user->getIdPersona()) {
+            throw new ForbiddenHttpException('Solo podés cerrar el flujo sobre tu propia agenda.');
+        }
 
         return [
             'success' => true,
             'kind' => 'ui_submit_result',
-            'action_id' => 'profesional-agenda.editar-agenda-flow',
+            'action_id' => $actionId,
             'data' => [
                 'success' => true,
-                'message' => 'Flujo de edición de agenda cerrado.',
+                'message' => $message,
             ],
             'errors' => null,
         ];

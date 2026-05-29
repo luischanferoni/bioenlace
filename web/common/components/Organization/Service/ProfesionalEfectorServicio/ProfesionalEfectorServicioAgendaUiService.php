@@ -287,9 +287,9 @@ final class ProfesionalEfectorServicioAgendaUiService
      * Crear/editar condición laboral (upsert) de un RRHH (sin tocar agenda por servicio).
      *
      * @param array<string, mixed> $post
-     * @return array{message: string}
+     * @return array{message: string, condicion_laboral_ui_completed: string}
      */
-    public static function submitCondicionLaboral(int $idEfector, array $post): array
+    public static function submitCondicionLaboral(int $idEfector, array $post, bool $requireOwnPes = false): array
     {
         $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
@@ -322,6 +322,14 @@ final class ProfesionalEfectorServicioAgendaUiService
 
         if ($idPes <= 0) {
             throw new BadRequestHttpException('Indique id_profesional_efector_servicio con PES en este efector.');
+        }
+
+        if ($requireOwnPes) {
+            $idPersona = (int) Yii::$app->user->getIdPersona();
+            $pesOwn = ProfesionalEfectorServicioRecord::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if ($pesOwn === null || (int) $pesOwn->id_persona !== $idPersona) {
+                throw new ForbiddenHttpException('Solo podés registrar licencias sobre tus asignaciones.');
+            }
         }
 
         $idCondicion = isset($post['id_condicion_laboral']) ? (int) $post['id_condicion_laboral'] : 0;
@@ -358,7 +366,10 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new \RuntimeException('No se pudo guardar la condición laboral.');
         }
 
-        return ['message' => 'Condición laboral guardada.'];
+        return [
+            'message' => 'Condición laboral guardada.',
+            'condicion_laboral_ui_completed' => '1',
+        ];
     }
 
     private static function assertStaffContextPerteneceAEfector(int $idStaffContext, int $idEfector): void

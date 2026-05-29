@@ -93,5 +93,8 @@ final class AssistantClientOpenEnricher
         '/api/v1/turnos/reprogramar-como-paciente',
         '/api/v1/profesional-agenda/crear-agenda-flow',
         '/api/v1/profesional-agenda/editar-agenda-flow',
+        '/api/v1/profesional-agenda/editar-mi-agenda-flow',
+        '/api/v1/profesional-efector-servicio/solicitar-licencia-flow',
+        '/api/v1/profesional-efector-servicio/registrar-licencia-staff-flow',
     ];
 }

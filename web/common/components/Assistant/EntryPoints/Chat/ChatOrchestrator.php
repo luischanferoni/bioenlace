@@ -7,6 +7,7 @@ use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\EntryPoints\Chat\Routing\ChatRouter;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
 
 /**
@@ -34,6 +35,24 @@ final class ChatOrchestrator
                 } catch (\InvalidArgumentException $e) {
                     return ['success' => false, 'error' => $e->getMessage()];
                 } catch (\RuntimeException $e) {
+                    return ['success' => false, 'error' => $e->getMessage()];
+                }
+            } elseif ($intentId === 'agenda.editar-agenda-flow' || $intentId === 'agenda.editar-mi-agenda-flow') {
+                try {
+                    ProfesionalEfectorServicioAgendaFlowDraftHydrator::hydrate(
+                        $body,
+                        $intentId === 'agenda.editar-mi-agenda-flow'
+                    );
+                } catch (\yii\web\ForbiddenHttpException $e) {
+                    return ['success' => false, 'error' => $e->getMessage()];
+                }
+            } elseif ($intentId === 'licencia.solicitar-como-profesional-flow' || $intentId === 'licencia.registrar-staff-flow') {
+                try {
+                    ProfesionalEfectorServicioAgendaFlowDraftHydrator::hydrate(
+                        $body,
+                        $intentId === 'licencia.solicitar-como-profesional-flow'
+                    );
+                } catch (\yii\web\ForbiddenHttpException $e) {
                     return ['success' => false, 'error' => $e->getMessage()];
                 }
             }

@@ -49,6 +49,10 @@ business_rules:
         label: "Solo horarios (ya tiene servicio que acepta turnos)"
         intent_id: agenda.editar-agenda-flow
         reset_flow: true
+      - id: mi_agenda
+        label: "Mi agenda (mis servicios)"
+        intent_id: agenda.editar-mi-agenda-flow
+        reset_flow: true
       - id: flujo_completo
         label: "Flujo completo (profesional / servicio / agenda si aplica)"
         intent_id: agenda.crear-profesional-flow

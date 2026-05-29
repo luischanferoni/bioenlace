@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
+use yii\web\ForbiddenHttpException;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Ui\UiScreenService;
@@ -140,18 +141,51 @@ class ProfesionalEfectorServicioController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/profesional-efector-servicio/listar-mis-servicios-en-efector
+     * Vista embebible: servicios propios del profesional autenticado en el efector (`ui_json`).
      *
-     * Lista servicios asignados al profesional autenticado, filtrados como en el flujo web
-     * (servicio activo en el efector o servicio con item_name AdminEfector).
+     * GET|POST /api/v1/profesional-efector-servicio/listar-mis-servicios-en-efector
      *
      * Resolución del efector:
      * - Si viene `id_efector` o `idEfector`: se usa ese efector con la persona autenticada (asignaciones PES).
-     * - Si no: se intenta por contexto profesional en sesión (PES) → efector de esa asignación, o `getIdEfector()` de sesión.
+     * - Si no: contexto profesional en sesión (PES) o `getIdEfector()` de sesión.
      *
-     * @return array{servicios: list<array{id_servicio: int, nombre: string}>}
+     * @action_name Listar mis servicios en el efector
+     * @entity Profesional
+     * @tags views, ui, servicios, agenda, profesional
+     * @keywords mis servicios, elegir servicio propio, editar mi agenda
      */
-    public function actionListarMisServiciosEnEfector()
+    public function actionListarMisServiciosEnEfector(): array
+    {
+        $req = Yii::$app->request;
+        $ui = UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'listar-mis-servicios-en-efector',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
+            $idPersona = (int) Yii::$app->user->getIdPersona();
+            $idEfector = $this->resolveIdEfectorParaMisServicios();
+            $items = $this->serviciosAsignadosItemsForPersonaEfector($idPersona, $idEfector);
+            $uiItems = [];
+            foreach ($items as $it) {
+                $uiItems[] = [
+                    'id' => (string) (int) $it['id'],
+                    'name' => (string) $it['name'],
+                    'meta' => isset($it['meta']) && is_array($it['meta']) ? $it['meta'] : [],
+                ];
+            }
+            $ui = UiScreenService::withListBlockItems($ui, $uiItems);
+        }
+
+        return $ui;
+    }
+
+    private function resolveIdEfectorParaMisServicios(): int
     {
         $request = Yii::$app->request;
         $idPersona = (int) Yii::$app->user->getIdPersona();
@@ -189,49 +223,7 @@ class ProfesionalEfectorServicioController extends BaseController
             );
         }
 
-        $pesRows = ProfesionalEfectorServicio::find()
-            ->where([
-                'id_persona' => $idPersona,
-                'id_efector' => $idEfector,
-                'deleted_at' => null,
-            ])
-            ->with('servicio')
-            ->orderBy(['id_servicio' => SORT_ASC])
-            ->all();
-
-        $servicios = [];
-        $vistos = [];
-        foreach ($pesRows as $pes) {
-            $idServicio = (int) $pes->id_servicio;
-            if (isset($vistos[$idServicio])) {
-                continue;
-            }
-            $servicioEfector = ServiciosEfector::findActive()
-                ->where([
-                    'id_efector' => $idEfector,
-                    'id_servicio' => $idServicio,
-                ])
-                ->one();
-
-            $nombreServicio = $pes->servicio !== null
-                ? (string) $pes->servicio->nombre
-                : '';
-            $esAdminEfector = $pes->servicio !== null
-                && (string) $pes->servicio->item_name === 'AdminEfector';
-
-            if (
-                ($servicioEfector !== null && $servicioEfector->deleted_at === null)
-                || $esAdminEfector
-            ) {
-                $vistos[$idServicio] = true;
-                $servicios[] = [
-                    'id_servicio' => $idServicio,
-                    'nombre' => $nombreServicio,
-                ];
-            }
-        }
-
-        return ['servicios' => $servicios];
+        return $idEfector;
     }
 
     /**
@@ -481,6 +473,113 @@ class ProfesionalEfectorServicioController extends BaseController
         }
 
         return ['results' => $results];
+    }
+
+    /**
+     * UI JSON: solicitar licencia / permiso sobre asignación propia (PES en sesión).
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/solicitar-licencia-como-profesional
+     *
+     * @action_name Solicitar licencia (profesional)
+     * @entity Profesional
+     * @tags licencia, permiso, vacaciones, profesional
+     * @keywords solicitar licencia, pedir permiso, ausencia, vacaciones
+     */
+    public function actionSolicitarLicenciaComoProfesional(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $defaults = ProfesionalEfectorServicioAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
+        $paramsForRender = array_merge($defaults, $fromClient);
+
+        return UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'solicitar-licencia-como-profesional',
+            $paramsForRender,
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post, true);
+            }
+        );
+    }
+
+    /**
+     * Cierre declarativo del flujo asistente «solicitar licencia» (solo POST).
+     * Permiso RBAC: `/api/profesional-efector-servicio/solicitar-licencia-flow`
+     *
+     * POST /api/v1/profesional-efector-servicio/solicitar-licencia-flow
+     *
+     * @action_name Cerrar flujo solicitar licencia (asistente)
+     * @entity Profesional
+     * @tags licencia, asistente, flow, profesional
+     */
+    public function actionSolicitarLicenciaFlow(): array
+    {
+        return $this->licenciaFlowClosureResponse(
+            'profesional-efector-servicio.solicitar-licencia-flow',
+            'Solicitud de licencia registrada.',
+            true
+        );
+    }
+
+    /**
+     * Cierre declarativo del flujo asistente «registrar licencia staff» (solo POST).
+     * Permiso RBAC: `/api/profesional-efector-servicio/registrar-licencia-staff-flow`
+     *
+     * POST /api/v1/profesional-efector-servicio/registrar-licencia-staff-flow
+     *
+     * @action_name Cerrar flujo registrar licencia staff (asistente)
+     * @entity Profesional
+     * @tags licencia, asistente, flow, staff
+     */
+    public function actionRegistrarLicenciaStaffFlow(): array
+    {
+        return $this->licenciaFlowClosureResponse(
+            'profesional-efector-servicio.registrar-licencia-staff-flow',
+            'Licencia del profesional registrada.',
+            false
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function licenciaFlowClosureResponse(string $actionId, string $message, bool $requireOwnPes): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new BadRequestHttpException('Este endpoint solo acepta POST (cierre del flujo del asistente).');
+        }
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        $post = $req->post();
+        $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+        if ($idPes <= 0) {
+            throw new BadRequestHttpException('Indique id_profesional_efector_servicio.');
+        }
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+            throw new ForbiddenHttpException('Asignación inválida para este efector.');
+        }
+        if ($requireOwnPes && (int) $pes->id_persona !== (int) Yii::$app->user->getIdPersona()) {
+            throw new ForbiddenHttpException('Solo podés cerrar el flujo sobre tus propias asignaciones.');
+        }
+
+        return [
+            'success' => true,
+            'kind' => 'ui_submit_result',
+            'action_id' => $actionId,
+            'data' => [
+                'success' => true,
+                'message' => $message,
+            ],
+            'errors' => null,
+        ];
     }
 
     /**

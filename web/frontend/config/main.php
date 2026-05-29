@@ -327,6 +327,9 @@ return [
                 'GET api/<version:\w+>/profesional-agenda/editar-agenda-flow' => '<version>/profesional-agenda/editar-agenda-flow',
                 'POST api/<version:\w+>/profesional-agenda/editar-agenda-flow' => '<version>/profesional-agenda/editar-agenda-flow',
                 'OPTIONS api/<version:\w+>/profesional-agenda/editar-agenda-flow' => '<version>/profesional-agenda/editar-agenda-flow',
+                'GET api/<version:\w+>/profesional-agenda/editar-mi-agenda-flow' => '<version>/profesional-agenda/editar-mi-agenda-flow',
+                'POST api/<version:\w+>/profesional-agenda/editar-mi-agenda-flow' => '<version>/profesional-agenda/editar-mi-agenda-flow',
+                'OPTIONS api/<version:\w+>/profesional-agenda/editar-mi-agenda-flow' => '<version>/profesional-agenda/editar-mi-agenda-flow',
                 'GET api/<version:\w+>/profesional-agenda/elegir-conflicto-agenda' => '<version>/profesional-agenda/elegir-conflicto-agenda',
                 'POST api/<version:\w+>/profesional-agenda/elegir-conflicto-agenda' => '<version>/profesional-agenda/elegir-conflicto-agenda',
                 'OPTIONS api/<version:\w+>/profesional-agenda/elegir-conflicto-agenda' => '<version>/profesional-agenda/elegir-conflicto-agenda',
@@ -344,6 +347,15 @@ return [
                 'GET api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
                 'POST api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
                 'OPTIONS api/<version:\w+>/profesional-efector-servicio/crear-condicion-laboral' => '<version>/profesional-efector-servicio/crear-condicion-laboral',
+                'GET api/<version:\w+>/profesional-efector-servicio/solicitar-licencia-como-profesional' => '<version>/profesional-efector-servicio/solicitar-licencia-como-profesional',
+                'POST api/<version:\w+>/profesional-efector-servicio/solicitar-licencia-como-profesional' => '<version>/profesional-efector-servicio/solicitar-licencia-como-profesional',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/solicitar-licencia-como-profesional' => '<version>/profesional-efector-servicio/solicitar-licencia-como-profesional',
+                'GET api/<version:\w+>/profesional-efector-servicio/solicitar-licencia-flow' => '<version>/profesional-efector-servicio/solicitar-licencia-flow',
+                'POST api/<version:\w+>/profesional-efector-servicio/solicitar-licencia-flow' => '<version>/profesional-efector-servicio/solicitar-licencia-flow',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/solicitar-licencia-flow' => '<version>/profesional-efector-servicio/solicitar-licencia-flow',
+                'GET api/<version:\w+>/profesional-efector-servicio/registrar-licencia-staff-flow' => '<version>/profesional-efector-servicio/registrar-licencia-staff-flow',
+                'POST api/<version:\w+>/profesional-efector-servicio/registrar-licencia-staff-flow' => '<version>/profesional-efector-servicio/registrar-licencia-staff-flow',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/registrar-licencia-staff-flow' => '<version>/profesional-efector-servicio/registrar-licencia-staff-flow',
                 
                 // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
                 // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.

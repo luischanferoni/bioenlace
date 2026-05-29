@@ -258,7 +258,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
-    final primary = IntentPalette.of(UiIntent.primary);
 
     return Scaffold(
       backgroundColor: tokens.paperBackground,
@@ -270,23 +269,7 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: primary.softBg,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: primary.border,
-                      width: BorderWidth.thin,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.fingerprint,
-                    size: 60,
-                    color: primary.base,
-                  ),
-                ),
+                const BioLogo(height: 56),
                 BioSpacing.gapH(BioSpacing.xl),
                 Text(
                   widget.appTitle,

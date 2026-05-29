@@ -11,7 +11,7 @@ use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 
 /**
- * Canal operativo: top-K + reglas/IA acotada; sin catálogo completo en prompt de clasificación.
+ * Canal operativo: preprocess → match por reglas → listado, formulario o flujo guiado (SubIntentEngine).
  */
 final class OperationalChannel
 {

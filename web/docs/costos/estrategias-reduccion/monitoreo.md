@@ -11,7 +11,8 @@ Ubicación: `web/common/components/Ai/Cost/AICostTracker.php`
 | `evitada_por_cpu` / `validacion` | Corrección CPU o prompt inválido |
 | `llamada_simulada` | Runner de pruebas / tests (`iniciarEjecucionPrueba`) |
 | `llamada_real` | HTTP OK a Gemini con tracking activo |
-| `tokens.*` | `usageMetadata` de respuesta Google |
+| `tokens.*` | `usageMetadata` de respuesta Google (+ simulación si aplica) |
+| `tokens.cached_content_token_count_simulado` | Estimación local con `vertex_context_cache_simulado` |
 | `por_contexto` | Desglose por segundo argumento de `consultarIA` |
 
 ### Habilitar medición en staging/producción
@@ -20,6 +21,7 @@ En `web/frontend/config/params.php`:
 
 ```php
 'ia_usage_tracking_habilitado' => true,
+'vertex_context_cache_simulado' => true, // opcional: split estable/variable + estimación local
 ```
 
 Mientras esté en `false`, en producción **no** se acumulan tokens ni `llamada_real` (solo contadores de prueba cuando corre el runner).
@@ -59,4 +61,4 @@ cd web && vendor/bin/codecept run unit common/tests/unit/costos/AICostTrackerTes
 
 - Revisar precios Vertex cada 6–12 meses.
 - Cuotas por institución cuando exista facturación interna.
-- Comparar `ratio_input_en_cache` con el supuesto **80 %** de [costos-api.md](../costos-api.md).
+- Comparar `ratio_input_en_cache` con el supuesto **~25 %** (favorable) de [costos-api.md](../costos-api.md); COGS base usa columna **sin caché**.

@@ -6,6 +6,7 @@ Palancas para bajar el gasto **por debajo** del costo de referencia en [costos-a
 
 | Documento | Tema |
 |-----------|------|
+| [matriz-casos-uso.md](./matriz-casos-uso.md) | Casos de producto × implícito / explícito / caché app (alineado al código) |
 | [estrategias-api.md](./estrategias-api.md) | Resumen por área y enlaces |
 | [context-caching-implicita.md](./context-caching-implicita.md) | Context caching implícito (Vertex / Gemini) |
 | [context-caching-explicita.md](./context-caching-explicita.md) | Context caching explícito (API `cachedContent`) |
@@ -13,7 +14,7 @@ Palancas para bajar el gasto **por debajo** del costo de referencia en [costos-a
 | [uso-condicional-ia.md](./uso-condicional-ia.md) | Reglas / CPU antes de IA |
 | [proveedor-modelo-tokens.md](./proveedor-modelo-tokens.md) | Proveedor, modelo, límites de tokens |
 | [motivos-consulta.md](./motivos-consulta.md) | Lote pre-atención |
-| [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) | Chat pre-consulta y onboarding |
+| [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) | Conversación con el paciente (`user_goal`) y onboarding |
 | [stt.md](./stt.md) | Transcripción de audio |
 | [vision.md](./vision.md) | Análisis de imágenes |
 | [videollamadas.md](./videollamadas.md) | Video paciente–médico |

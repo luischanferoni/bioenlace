@@ -7,7 +7,7 @@ use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use Yii;
 
 /**
- * Canal conversacional: respuesta libre (2ª IA).
+ * Canal conversacional: una respuesta automática por mensaje del paciente (2.ª IA tras preprocess).
  */
 final class ConversationalChannel
 {

@@ -25,8 +25,10 @@ class AICostTracker
 
     /** @var int */
     private static $promptTokens = 0;
-    /** @var int Tokens facturados a tarifa cacheada (usageMetadata.cachedContentTokenCount) */
+    /** @var int Tokens facturados a tarifa cacheada (usageMetadata + simulación local) */
     private static $cachedContentTokens = 0;
+    /** @var int Tokens cacheados estimados localmente (vertex_context_cache_simulado) */
+    private static $cachedContentTokensSimulados = 0;
     /** @var int */
     private static $candidatesTokens = 0;
     /** @var int */
@@ -153,6 +155,23 @@ class AICostTracker
     }
 
     /**
+     * Suma tokens cacheados estimados cuando vertex_context_cache_simulado complementa usageMetadata.
+     */
+    public static function registrarCacheSimulada(int $cachedTokens, ?string $contexto = null): void
+    {
+        if (!self::trackingHabilitado() || $cachedTokens <= 0) {
+            return;
+        }
+
+        self::$cachedContentTokens += $cachedTokens;
+        self::$cachedContentTokensSimulados += $cachedTokens;
+
+        $ctx = (string) ($contexto ?? 'desconocido');
+        self::touchContexto($ctx);
+        self::$porContexto[$ctx]['cached_tokens'] += $cachedTokens;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public static function getResumen(): array
@@ -173,6 +192,7 @@ class AICostTracker
             'tokens' => [
                 'prompt_token_count' => self::$promptTokens,
                 'cached_content_token_count' => self::$cachedContentTokens,
+                'cached_content_token_count_simulado' => self::$cachedContentTokensSimulados,
                 'billable_input_token_count' => $billableInput,
                 'candidates_token_count' => self::$candidatesTokens,
                 'thoughts_token_count' => self::$thoughtsTokens,
@@ -193,6 +213,7 @@ class AICostTracker
         self::$llamadaReal = 0;
         self::$promptTokens = 0;
         self::$cachedContentTokens = 0;
+        self::$cachedContentTokensSimulados = 0;
         self::$candidatesTokens = 0;
         self::$thoughtsTokens = 0;
         self::$porContexto = [];

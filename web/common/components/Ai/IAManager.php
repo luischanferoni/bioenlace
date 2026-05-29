@@ -747,8 +747,21 @@ class IAManager
                 }
             }
             
-            // Asignar el prompt
-            self::asignarPromptAConfiguracion($proveedorIA, $prompt);
+            // Asignar el prompt (Google: opcional split estable/variable para context caching simulado)
+            $promptAsignado = false;
+            if (
+                ($proveedorIA['tipo'] ?? '') === 'google'
+                && class_exists(\common\components\Ai\Providers\Google\VertexContextCacheSimulator::class)
+            ) {
+                $promptAsignado = \common\components\Ai\Providers\Google\VertexContextCacheSimulator::assignPromptIfApplicable(
+                    $proveedorIA,
+                    (string) $contexto,
+                    $prompt
+                );
+            }
+            if (!$promptAsignado) {
+                self::asignarPromptAConfiguracion($proveedorIA, $prompt);
+            }
             
             // Registrar prompt enviado
             if ($logger) {
@@ -806,6 +819,13 @@ class IAManager
                         (string) ($response->content ?? ''),
                         $contexto
                     );
+                    if (class_exists(\common\components\Ai\Providers\Google\VertexContextCacheSimulator::class)) {
+                        \common\components\Ai\Providers\Google\VertexContextCacheSimulator::complementarTracking(
+                            (string) ($response->content ?? ''),
+                            $contexto,
+                            $proveedorIA['_vertex_cache_sim_key'] ?? null
+                        );
+                    }
                     \common\components\Ai\Cost\AICostTracker::registrarLlamadaReal($contexto, $tipoModelo);
                 }
 

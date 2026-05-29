@@ -75,22 +75,19 @@ final class ChatPreprocessService
     }
 
     /**
-     * @return array<string, mixed>|null
+     * Bloque estable al inicio del prompt (context caching: instrucciones + esquema JSON).
      */
-    private static function runAi(string $content): ?array
+    public static function stablePromptPrefix(): string
     {
         $categories = json_encode(self::allowedEntityCategories(), JSON_UNESCAPED_UNICODE);
         $goals = json_encode(self::GOALS, JSON_UNESCAPED_UNICODE);
 
-        $prompt = <<<PROMPT
+        return <<<PROMPT
 Analizá el mensaje del usuario para un asistente de salud.
-
-Mensaje:
-{$content}
 
 Respondé ÚNICAMENTE con JSON:
 {
-  "normalized_text": "mensaje limpio",
+  "normalized_text": "mensaje limpio, ortografía corregida y abreviaturas médicas abiertas cuando aplique",
   "user_goal": "uno de {$goals}",
   "action_text": "fragmento que expresa la acción pedida (turno, cancelar, etc.) o vacío",
   "extractions": [
@@ -107,9 +104,30 @@ Reglas:
 - conversational si es saludo, consulta de salud/síntomas, malestar o charla sin pedir una acción del sistema (no confundir con informational).
 - informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas ni quejas clínicas.
 - meta: preguntas sobre el asistente o la app (no operativas).
+- normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá el sentido del mensaje.
 - extractions: solo menciones de entidades del mundo (servicio, centro, persona), no verbos ni la acción.
 - synonyms: máximo 2 strings por extracción.
+
+Mensaje:
 PROMPT;
+    }
+
+    public static function userMessagePart(string $content): string
+    {
+        return trim($content);
+    }
+
+    public static function buildFullPrompt(string $content): string
+    {
+        return self::stablePromptPrefix() . self::userMessagePart($content);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function runAi(string $content): ?array
+    {
+        $prompt = self::buildFullPrompt($content);
 
         try {
             $raw = IAManager::consultarIA($prompt, 'asistente-preprocess', 'analysis');

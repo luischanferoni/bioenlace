@@ -4,9 +4,9 @@ Reglas, diccionarios y flujos guiados **antes** de llamar al modelo.
 
 ## Dónde está hoy
 
-- Corrección: SymSpell + diccionario; IA solo si hace falta (`SymSpellCorrector`, `IAManager::corregirPalabra`).
-- Asistente: preprocess heurístico + canal operativo (reglas/keywords) antes de IA conversacional o clasificación.
-- Clasificación de intents: reglas primero, IA como fallback (`IntentClassifier`).
+- **Captura clínica (médico):** SymSpell + abreviaturas en CPU (`ProcesadorTextoMedico`), luego IA de análisis. SymSpell **no cubre bien** jerga clínica compleja; el ahorro fuerte ahí no es confiar en SymSpell sino en cuándo llamar a `analizar`.
+- **Asistente chat:** preprocess con IA (`normalized_text`, goal); canal operativo con **top-K + reglas PHP** sobre `normalized_text` (**sin** 2.ª IA en el escenario central). Ver [matriz-casos-uso.md](./matriz-casos-uso.md).
+- **Onboarding / intents:** priorizar reglas + corpus de frases/keywords (consultas reales como fuente de sinónimos), no SymSpell de consulta completa.
 
 ## Reducción orientativa
 

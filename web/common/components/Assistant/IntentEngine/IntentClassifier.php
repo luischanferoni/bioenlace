@@ -6,7 +6,8 @@ use Yii;
 use common\components\Ai\IAManager;
 
 /**
- * Clasificación en dos fases: reglas sobre keywords del catálogo, luego IA solo entre ítems permitidos.
+ * Clasificación: reglas sobre keywords del catálogo; IA solo en {@see classify()} (catálogo completo).
+ * El canal operativo usa {@see classifyAmongItems()} sin segunda IA (match PHP sobre normalized_text).
  */
 final class IntentClassifier
 {
@@ -83,29 +84,19 @@ final class IntentClassifier
     }
 
     /**
-     * Clasificación sobre un subconjunto del catálogo (top-K); IA solo entre esos ítems.
+     * Clasificación sobre un subconjunto del catálogo (top-K): solo reglas PHP (keywords / semántica YAML).
      *
      * @param UiActionCatalogItem[] $items
      * @return array<string, mixed>|null
      */
     public static function classifyAmongItems(string $message, array $items, UiActionCatalog $catalog): ?array
     {
+        unset($catalog);
         if ($items === []) {
             return null;
         }
 
-        $rules = self::classifyByRules($message, $items);
-        if ($rules !== null && $rules['confidence'] >= self::RULES_HIGH_CONFIDENCE) {
-            return $rules;
-        }
-
-        $subset = self::catalogSubset($catalog, $items);
-        $ai = self::classifyByAi($message, $subset, $rules);
-        if ($ai !== null) {
-            return $ai;
-        }
-
-        return $rules;
+        return self::classifyByRules($message, $items);
     }
 
     /**

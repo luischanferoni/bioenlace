@@ -2,39 +2,40 @@
 
 ## Qué es
 
-Mecanismo de **Google** (sin llamada extra nuestra) que detecta **prefijos de entrada repetidos** entre solicitudes recientes al mismo modelo y factura esos tokens a **tarifa reducida** (`cachedContentTokenCount` en `usageMetadata`).
+Mecanismo del **servicio de IA de Google** (Vertex / Gemini): detecta **prefijos de entrada repetidos** entre solicitudes recientes y factura esa porción a **tarifa reducida** (`cachedContentTokenCount` en `usageMetadata`).
 
+- **Bioenlace no “activa” nada especial** salvo usar el mismo modelo y repetir el inicio del prompt.
 - **No evita** la llamada al modelo: solo abarata parte del **input**.
-- **No requiere** crear un recurso `cachedContent` en la API.
-- En la documentación de costos de Bioenlace, la columna **«con caché»** de [costos-api.md](../costos-api.md) se basa en este mecanismo (más el modelo **`gemini-2.5-flash-lite`** configurado en servidor).
+- **No creás** un recurso de caché en la API (eso es la [explícita](./context-caching-explicita.md)).
+- La columna **«con context caching»** de [costos-api.md](../costos-api.md) modela un escenario **favorable** (~**25 %** input cacheado en §2–4); **COGS base = columna sin caché**.
 
 ## Alineación con Bioenlace
 
 | Aspecto | Estado |
 |---------|--------|
 | Modelo en producción | `vertex_ai_model` → **`gemini-2.5-flash-lite`** (`params.php`) |
-| Integración explícita en código | **No** hace falta para el implícito; Google aplica hits cuando el prefijo coincide |
-| Medición | `AICostTracker` + `ia_usage_tracking_habilitado` lee `usageMetadata.cachedContentTokenCount` por contexto |
+| Estructura de prompt | Preprocess y conversacional: **instrucciones al inicio**, mensaje al final |
+| Medición | `AICostTracker` + `ia_usage_tracking_habilitado`; complemento con `vertex_context_cache_simulado` |
 
 ## Cuándo ayuda en nuestros flujos
 
-Funciona mejor si el **inicio del prompt es idéntico** entre llamadas y solo cambia el final (mensaje del usuario, TOON, etc.):
+Ver [matriz-casos-uso.md](./matriz-casos-uso.md). Resumen conservador:
 
-| Contexto (`IAManager`) | Prefijo estable | Comentario |
-|------------------------|-----------------|------------|
-| `asistente-preprocess` | Instrucciones + reglas JSON | Buen candidato |
-| `asistente-conversational` | Bloque fijo + «Usuario:» | Buen candidato entre mensajes |
-| `intent-engine-classification` | TOON variable **al inicio** tras pocas líneas | Candidato **débil** |
-| `motivos-consulta-batch` | Plantilla corta + transcript único | Poco % cacheable |
+| Contexto (`IAManager`) | % input cacheado (supuesto doc) |
+|------------------------|----------------------------------|
+| `asistente-preprocess` | ~**40 %** |
+| `asistente-conversational` | ~**50 %** |
+| `motivos-consulta-batch` | ~**25 %** |
+| `analisis-consulta` | ~**25 %** |
 
-El supuesto de presupuesto en costos-api (**~80 % del input en caché** en escenario intensivo) es un **objetivo de diseño** cuando el asistente lleve system + reglas + catálogo al inicio del prompt; hay que **calibrarlo** con `ratio_input_en_cache` del tracker.
+No usar ratios altos (p. ej. 80 %) sin telemetría. Calibrar con `ratio_input_en_cache` por `contexto`.
 
 ## Cómo validar
 
-1. En staging: `ia_usage_tracking_habilitado => true` en `web/frontend/config/params.php`.
-2. Tráfico real o conversaciones de prueba contra Gemini (no simuladas).
-3. Revisar `getResumen()['tokens']['ratio_input_en_cache']` y desglose `por_contexto`.
-4. Comparar con factura Vertex (línea de tokens cacheados).
+1. `ia_usage_tracking_habilitado => true` y opcional `vertex_context_cache_simulado => true` en `web/frontend/config/params.php`.
+2. Tráfico real o conversaciones de prueba contra Gemini.
+3. Revisar `getResumen()['tokens']` y desglose `por_contexto`.
+4. Comparar con factura Vertex.
 
 ## Referencias
 

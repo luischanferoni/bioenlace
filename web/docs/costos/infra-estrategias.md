@@ -49,7 +49,7 @@ Este documento detalla cómo **reducir el costo real** de la infra (GPU en RunPo
 
 ## Reducir carga de IA en nuestra infra
 
-Las estrategias que **reducen llamadas a IA** (caché, reglas antes de IA, menos % de mensajes que llaman al modelo) también reducen la carga sobre nuestra GPU. Esas tácticas se detallan en [api/estrategias.md](../api/estrategias.md) (pre-consulta, pre-turno, onboarding). Aplicarlas permite bajar el número de llamadas de las capacidades “comunicación previa al turno”, “pre-consulta” y “onboarding” y por tanto el costo adicional por médico en [infra/costos.md](costos.md).
+Las estrategias que **reducen llamadas a IA** (caché, reglas antes de IA, menos % de mensajes que llaman al modelo) también reducen la carga sobre nuestra GPU. Esas tácticas se detallan en [estrategias-reduccion/](./estrategias-reduccion/README.md) (conversación con el paciente, pre-turno, onboarding). Aplicarlas permite bajar el número de llamadas de esas capacidades y por tanto el costo adicional por médico en [infra/costos.md](costos.md).
 
 ---
 

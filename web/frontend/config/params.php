@@ -34,7 +34,13 @@ return [
      * Acumula usageMetadata de Gemini en AICostTracker (tokens, cachedContentTokenCount por contexto).
      * Activar en staging para calibrar columnas de costos-api.md; ver web/docs/costos/pruebas-costos-ia.md.
      */
-    'ia_usage_tracking_habilitado' => false,
+    'ia_usage_tracking_habilitado' => true,
+
+    /**
+     * Simula cachedContents en local: systemInstruction estable + user variable, registro en memoria
+     * y estimación de cachedContentTokenCount si la API no devuelve hits aún.
+     */
+    'vertex_context_cache_simulado' => true,
     
     // Optimizaciones de procesamiento
     'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito

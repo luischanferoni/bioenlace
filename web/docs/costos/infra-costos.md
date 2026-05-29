@@ -68,7 +68,7 @@ La opción de correr la IA en **nuestra GPU** se justifica por **privacidad de d
 
 ## Costo por consulta según tamaño del prompt (bandas de tokens)
 
-Las cifras del resumen anterior corresponden a una **consulta base** (600–1.500 tokens). Para prompts más cortos o más largos, el costo por consulta escala de forma aproximada con el total de tokens (input + output).
+Las cifras de la tabla de arriba corresponden a una **consulta base** (600–1.500 tokens). Para prompts más cortos o más largos, el costo por consulta escala de forma aproximada con el total de tokens (input + output).
 
 | Banda | Tokens totales (aprox.) | Factor sobre costo base | RunPod 3090 (USD/consulta) | GCP Preemptible (USD/consulta) |
 |-------|-------------------------|--------------------------|----------------------------|--------------------------------|
@@ -125,7 +125,19 @@ Cuando la IA corre en nuestra GPU, estas capacidades suman **más llamadas de in
 
 ---
 
-### 1. Motivos de consulta (lote IA pre-atención)
+### 1. Conversación con el paciente (chat asistente)
+
+Mismo supuesto que [costos-api §1](./costos-api.md#1-conversación-con-el-paciente): preprocess en cada mensaje + 2.ª IA solo conversacional; operativo con match PHP → **~2.660 llamadas/mes**.
+
+| Concepto | Supuesto | Costo real mensual (por médico) |
+|----------|----------|----------------------------------|
+| Llamadas IA (chat) | **~2.660** | — |
+| **RunPod RTX 3090** ($0.021/llamada) | 2.660 × $0.021 | **aprox. $55.90/médico/mes** |
+| **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 2.660 × ($0.0035–0.0095) | **aprox. $9.30–25.30/médico/mes** |
+
+---
+
+### 2. Motivos de consulta (lote IA pre-atención)
 
 Una inferencia por consulta al cerrar la ventana de carga (ver [design.md](./design.md)).
 
@@ -134,16 +146,6 @@ Una inferencia por consulta al cerrar la ventana de carga (ver [design.md](./des
 | Llamadas IA (resumen motivos) | **400** (1 por consulta) | — |
 | **RunPod RTX 3090** ($0.021/llamada) | 400 × $0.021 | **aprox. $8.40/médico/mes** |
 | **GCP T4 Preemptible** ($0.0035–0.0095/llamada) | 400 × ($0.0035–0.0095) | **aprox. $1.40–3.80/médico/mes** |
-
----
-
-### 2. Conversación pre-consulta (chat para despejar dudas y guiar al paciente)
-
-| Concepto | Supuesto | Costo real mensual (por médico) |
-|----------|----------|----------------------------------|
-| Mensajes pre-consulta | 400 consultas × 5 mensajes = 2.000; 50% con IA ⇒ **1.000 llamadas IA** | — |
-| **RunPod RTX 3090** | 1.000 × $0.021 | **aprox. $21/médico/mes** |
-| **GCP T4 Preemptible** | 1.000 × ($0.0035–0.0095) | **aprox. $3.50–9.50/médico/mes** |
 
 ---
 
@@ -162,7 +164,7 @@ Una inferencia por consulta al cerrar la ventana de carga (ver [design.md](./des
 | Capacidad | Costo real (USD/médico/mes) |
 |-----------|-----------------------------|
 | Comunicación previa al turno (pre-turno) | $5.60–33.60 (según plan) |
-| Conversación pre-consulta | $3.50–21 (según plan) |
+| Conversación con el paciente | $10.30–61.50 (según plan) |
 | Agente onboarding y día a día | $0.80–5.60 (según plan) |
 | **Subtotal IA en infra** | **aprox. $10–60/médico/mes** (RunPod a GCP) |
 

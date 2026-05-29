@@ -2,7 +2,7 @@
 
 ## Qué es
 
-Documentación de **costos estimados** de capacidades de IA (chat, pre-consulta, onboarding, comunicación pre-turno) y de la infraestructura que las ejecuta.
+Documentación de **costos estimados** de capacidades de IA (conversación con el paciente, motivos de consulta, onboarding, captura del médico) y de la infraestructura que las ejecuta.
 
 ## Objetivo
 

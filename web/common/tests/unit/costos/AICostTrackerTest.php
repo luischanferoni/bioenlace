@@ -115,4 +115,15 @@ class AICostTrackerTest extends \Codeception\Test\Unit
         verify(array_key_exists('evitada_por_dedup', $resumen))->true();
         verify(array_key_exists('llamada_simulada', $resumen))->true();
     }
+
+    public function testRegistrarCacheSimulada()
+    {
+        AICostTracker::iniciarEjecucionPrueba();
+        AICostTracker::registrarCacheSimulada(120, 'asistente-preprocess');
+        $r = AICostTracker::getResumen();
+        verify($r['tokens']['cached_content_token_count'])->equals(120);
+        verify($r['tokens']['cached_content_token_count_simulado'])->equals(120);
+        verify($r['por_contexto']['asistente-preprocess']['cached_tokens'])->equals(120);
+        AICostTracker::finalizarEjecucionPrueba();
+    }
 }

@@ -1,6 +1,6 @@
 # Motivos de consulta (lote)
 
-Una **sola IA por consulta** al cerrar la ventana (`AppointmentReasonBatchService`). Ver [costos-api.md §1](../costos-api.md).
+Una **sola IA por consulta** al cerrar la ventana (`AppointmentReasonBatchService`), tras el chat del asistente (§1). Ver [costos-api.md §2](../costos-api.md#2-motivos-de-consulta-chat-dedicado-antes-de-la-atención).
 
 ## Palancas
 

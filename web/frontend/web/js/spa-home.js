@@ -636,7 +636,6 @@
     // Referencias a elementos DOM
     const chatRoot = document.getElementById('spa-chat-root');
     const chatComposer = document.getElementById('spa-chat-composer');
-    const chatFlowProgress = document.getElementById('spa-flow-progress');
     const queryInput = document.getElementById('spa-query-input');
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
@@ -688,6 +687,23 @@
     /** Una activación = un inicio de flow (atajo, cambio de intent o vuelta tras otro flow). */
     let bioFlowActivationSeq = 0;
 
+    function purgeLegacyFlowPlanWraps() {
+        try {
+            document.querySelectorAll('.spa-flow-plan-wrap').forEach(function (el) {
+                el.parentNode && el.parentNode.removeChild(el);
+            });
+        } catch (e) { /* ignore */ }
+    }
+
+    function hideComposerFlowProgress() {
+        purgeLegacyFlowPlanWraps();
+    }
+
+    /** @deprecated alias */
+    function removeFlowPlanStrip() {
+        hideComposerFlowProgress();
+    }
+
     /**
      * Índice del paso activo en `manifest.steps` (por `active_subintent_id`).
      *
@@ -716,115 +732,184 @@
     }
 
     /**
-     * Construye el contenido del progreso (todos los títulos del YAML al iniciar el flow).
-     *
-     * @param {object|null} fm
-     * @param {string} [actionTitle]
-     * @returns {DocumentFragment|null}
+     * @param {object} st
+     * @param {number} idx
+     * @returns {string}
      */
-    function buildComposerFlowProgressContent(fm, actionTitle) {
-        if (!fm || typeof fm !== 'object') {
-            return null;
+    function flowStepDisplayText(st, idx) {
+        const stepTitle = st && st.assistant_text ? String(st.assistant_text).trim() : '';
+        const sid = st && st.id != null ? String(st.id) : '';
+        if (stepTitle !== '') {
+            return stepTitle;
         }
-        const steps = Array.isArray(fm.steps) ? fm.steps : [];
-        if (steps.length < 1) {
-            return null;
+        if (sid !== '') {
+            return sid;
         }
-
-        const activeIdx = resolveFlowActiveStepIndex(fm);
-        const frag = document.createDocumentFragment();
-
-        const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
-        const flowLabel = titleStr !== '' ? titleStr : 'Flujo';
-        const titleEl = document.createElement('div');
-        titleEl.className = 'spa-flow-progress__title';
-        titleEl.textContent = flowLabel;
-        titleEl.setAttribute('title', flowLabel);
-        frag.appendChild(titleEl);
-
-        const barWrap = document.createElement('div');
-        barWrap.className = 'spa-flow-progress__bar';
-        barWrap.setAttribute('role', 'progressbar');
-        const completedRatio = activeIdx >= 0
-            ? Math.min(100, Math.round(((activeIdx + 1) / steps.length) * 100))
-            : 0;
-        barWrap.setAttribute('aria-valuenow', String(completedRatio));
-        barWrap.setAttribute('aria-valuemin', '0');
-        barWrap.setAttribute('aria-valuemax', '100');
-        const barFill = document.createElement('div');
-        barFill.className = 'spa-flow-progress__bar-fill';
-        barFill.style.width = completedRatio + '%';
-        barWrap.appendChild(barFill);
-        frag.appendChild(barWrap);
-
-        const ul = document.createElement('ul');
-        ul.className = 'spa-flow-plan list-inline mb-0';
-        ul.setAttribute('aria-label', flowLabel);
-
-        steps.forEach(function (st, idx) {
-            const stepTitle = st && st.assistant_text ? String(st.assistant_text).trim() : '';
-            const sid = st && st.id != null ? String(st.id) : '';
-            const display = stepTitle !== '' ? stepTitle : (sid !== '' ? sid : ('Paso ' + (idx + 1)));
-
-            const li = document.createElement('li');
-            li.className = 'list-inline-item mb-0';
-            const badge = document.createElement('span');
-            let cls = 'badge rounded-pill spa-flow-plan-badge ';
-            if (activeIdx >= 0) {
-                if (idx < activeIdx) {
-                    cls += 'text-bg-success';
-                } else if (idx === activeIdx) {
-                    cls += 'text-bg-primary';
-                } else {
-                    cls += 'text-bg-light text-dark border';
-                }
-            } else if (idx === 0) {
-                cls += 'text-bg-primary';
-            } else {
-                cls += 'text-bg-light text-dark border';
-            }
-            badge.className = cls;
-            badge.textContent = display;
-            badge.setAttribute('title', display);
-            li.appendChild(badge);
-            ul.appendChild(li);
-        });
-
-        frag.appendChild(ul);
-        return frag;
+        return 'Paso ' + (idx + 1);
     }
 
     /**
-     * Muestra/actualiza la barra de progreso en el composer (encima del textarea).
+     * @param {number} idx
+     * @param {number} activeIdx
+     * @returns {string}
+     */
+    function flowStepItemStateClass(idx, activeIdx) {
+        if (activeIdx < 0) {
+            return idx === 0 ? 'spa-flow-step-item--active' : 'spa-flow-step-item--pending';
+        }
+        if (idx < activeIdx) {
+            return 'spa-flow-step-item--done';
+        }
+        if (idx === activeIdx) {
+            return 'spa-flow-step-item--active';
+        }
+        return 'spa-flow-step-item--pending';
+    }
+
+    /**
+     * @param {string} flowIntentId
+     * @returns {HTMLElement|null}
+     */
+    function findActiveFlowRow(flowIntentId) {
+        if (!chatMessagesDiv || !flowIntentId) {
+            return null;
+        }
+        const seq = String(bioFlowActivationSeq);
+        const row = chatMessagesDiv.querySelector(
+            '.spa-chat-flow-row[data-flow-intent-id="' + flowIntentId + '"][data-flow-activation-seq="' + seq + '"]'
+        );
+        if (!row || row.classList.contains('spa-chat-flow-row--superseded')
+            || row.classList.contains('spa-chat-flow-row--completed')) {
+            return null;
+        }
+        return row;
+    }
+
+    /**
+     * Crea o actualiza el panel del flow con todos los `assistant_text`; la UI va solo en el paso activo.
      *
      * @param {object|null} fm
-     * @param {string} [actionTitle]
+     * @param {string} flowIntentId
+     * @param {string} flowActionTitle
+     * @returns {{ row: HTMLElement, activeMount: HTMLElement|null }|null}
      */
-    function renderComposerFlowProgress(fm, actionTitle) {
-        if (!chatFlowProgress) {
-            return;
+    function syncFlowStepsPanel(fm, flowIntentId, flowActionTitle) {
+        if (!chatMessagesDiv || !fm || typeof fm !== 'object') {
+            return null;
         }
-        const content = buildComposerFlowProgressContent(fm, actionTitle);
-        if (!content) {
-            hideComposerFlowProgress();
-            return;
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        if (!steps.length || !flowIntentId) {
+            return null;
         }
-        chatFlowProgress.innerHTML = '';
-        chatFlowProgress.appendChild(content);
-        chatFlowProgress.classList.remove('d-none');
-    }
 
-    function hideComposerFlowProgress() {
-        if (!chatFlowProgress) {
-            return;
-        }
-        chatFlowProgress.classList.add('d-none');
-        chatFlowProgress.innerHTML = '';
-    }
+        purgeLegacyFlowPlanWraps();
+        const activeIdx = resolveFlowActiveStepIndex(fm);
+        let row = findActiveFlowRow(flowIntentId);
+        let list;
 
-    /** @deprecated alias interno */
-    function removeFlowPlanStrip() {
-        hideComposerFlowProgress();
+        if (!row) {
+            row = document.createElement('div');
+            row.className = 'w-100 mb-3 spa-chat-flow-row';
+            row.setAttribute('data-flow-intent-id', flowIntentId);
+            row.setAttribute('data-flow-activation-seq', String(bioFlowActivationSeq));
+
+            const inner = document.createElement('div');
+            inner.className = 'spa-chat-flow-turn w-100';
+
+            const titleStr = typeof flowActionTitle === 'string' ? flowActionTitle.trim() : '';
+            if (titleStr !== '' && shouldShowFlowChatHeader(fm)) {
+                const header = document.createElement('div');
+                header.className = 'spa-flow-chat-header';
+                const hFlow = document.createElement('h3');
+                hFlow.className = 'spa-flow-chat-title';
+                hFlow.textContent = titleStr;
+                header.appendChild(hFlow);
+                const rule = document.createElement('div');
+                rule.className = 'spa-flow-chat-rule';
+                rule.setAttribute('aria-hidden', 'true');
+                header.appendChild(rule);
+                inner.appendChild(header);
+            }
+
+            list = document.createElement('ol');
+            list.className = 'spa-flow-steps-list list-unstyled mb-0';
+            steps.forEach(function (st, idx) {
+                const li = document.createElement('li');
+                li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
+                if (st && st.id != null) {
+                    li.setAttribute('data-step-id', String(st.id));
+                }
+                const textEl = document.createElement('div');
+                textEl.className = 'spa-flow-step-text';
+                textEl.textContent = flowStepDisplayText(st, idx);
+                const uiMount = document.createElement('div');
+                uiMount.className = 'spa-flow-step-ui';
+                li.appendChild(textEl);
+                li.appendChild(uiMount);
+                list.appendChild(li);
+            });
+            inner.appendChild(list);
+            row.appendChild(inner);
+            chatMessagesDiv.appendChild(row);
+            setTimeout(scrollChatToBottom, 10);
+        } else {
+            list = row.querySelector('.spa-flow-steps-list');
+            if (!list) {
+                return null;
+            }
+            const items = list.querySelectorAll('.spa-flow-step-item');
+            if (items.length !== steps.length) {
+                list.innerHTML = '';
+                steps.forEach(function (st, idx) {
+                    const li = document.createElement('li');
+                    li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
+                    if (st && st.id != null) {
+                        li.setAttribute('data-step-id', String(st.id));
+                    }
+                    const textEl = document.createElement('div');
+                    textEl.className = 'spa-flow-step-text';
+                    textEl.textContent = flowStepDisplayText(st, idx);
+                    const uiMount = document.createElement('div');
+                    uiMount.className = 'spa-flow-step-ui';
+                    li.appendChild(textEl);
+                    li.appendChild(uiMount);
+                    list.appendChild(li);
+                });
+            } else {
+                items.forEach(function (li, idx) {
+                    li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
+                    const st = steps[idx];
+                    if (st) {
+                        const textEl = li.querySelector('.spa-flow-step-text');
+                        if (textEl) {
+                            textEl.textContent = flowStepDisplayText(st, idx);
+                        }
+                    }
+                    if (idx !== activeIdx) {
+                        const uiMount = li.querySelector('.spa-flow-step-ui');
+                        if (uiMount) {
+                            uiMount.innerHTML = '';
+                        }
+                    }
+                });
+            }
+        }
+
+        let activeMount = null;
+        if (activeIdx >= 0 && list) {
+            const items = list.querySelectorAll('.spa-flow-step-item');
+            const activeLi = items[activeIdx];
+            if (activeLi) {
+                activeMount = activeLi.querySelector('.spa-flow-step-ui');
+                if (!activeMount) {
+                    activeMount = document.createElement('div');
+                    activeMount.className = 'spa-flow-step-ui';
+                    activeLi.appendChild(activeMount);
+                }
+            }
+        }
+
+        return { row: row, activeMount: activeMount };
     }
 
     // Persistencia simple en memoria global para evitar perder estado en re-renders complejos.
@@ -879,8 +964,10 @@
             } catch (e) { /* ignore */ }
         }
         applyChatHeight();
+        purgeLegacyFlowPlanWraps();
         requestAnimationFrame(function () {
             applyChatHeight();
+            purgeLegacyFlowPlanWraps();
         });
         window.addEventListener('resize', function () {
             applyChatHeight();
@@ -983,12 +1070,10 @@
     }
 
     /**
-     * Bloque a ancho completo del panel de chat para respuestas `flow`: encabezado + zona para mini-UI.
-     * No usa burbuja angosta; el JSON embebido se monta debajo del título (mismo patrón en todo el asistente SPA).
+     * Encabezado del flow en el panel de chat (solo una vez por activación).
      *
-     * @param {string} stepText - Texto del paso (p. ej. `text` del motor).
-     * @param {string} [flowTitle] - `flow_manifest.action_name` del YAML (título del flujo, centrado).
-     * @returns {HTMLDivElement|null} Contenedor interno: aquí se añaden pestañas, `[data-spa-flow-ui-mount]`, etc.
+     * @param {object|null|undefined} fm
+     * @returns {boolean}
      */
     function shouldShowFlowChatHeader(fm) {
         if (!fm || typeof fm !== 'object') {
@@ -1012,50 +1097,6 @@
             }
         }
         return true;
-    }
-
-    function appendAssistantFlowSection(stepText, flowTitle, flowIntentId) {
-        if (!chatMessagesDiv) {
-            return null;
-        }
-        const row = document.createElement('div');
-        row.className = 'w-100 mb-3 spa-chat-flow-row';
-        if (flowIntentId != null && String(flowIntentId).trim() !== '') {
-            row.setAttribute('data-flow-intent-id', String(flowIntentId).trim());
-        }
-        row.setAttribute('data-flow-activation-seq', String(bioFlowActivationSeq));
-        const inner = document.createElement('div');
-        inner.className = 'spa-chat-flow-turn w-100';
-        const flowTitleStr = typeof flowTitle === 'string' ? flowTitle.trim() : '';
-        const stepStr = String(stepText || '').trim();
-        if (flowTitleStr !== '') {
-            const header = document.createElement('div');
-            header.className = 'spa-flow-chat-header';
-            const hFlow = document.createElement('h3');
-            hFlow.className = 'spa-flow-chat-title';
-            hFlow.textContent = flowTitleStr;
-            header.appendChild(hFlow);
-            const rule = document.createElement('div');
-            rule.className = 'spa-flow-chat-rule';
-            rule.setAttribute('aria-hidden', 'true');
-            header.appendChild(rule);
-            inner.appendChild(header);
-        }
-        if (stepStr !== '') {
-            const h = document.createElement('h4');
-            h.className = 'spa-flow-step-text';
-            h.textContent = stepStr;
-            inner.appendChild(h);
-        } else if (flowTitleStr === '') {
-            const h = document.createElement('h4');
-            h.className = 'spa-assistant-step-title';
-            h.textContent = 'Ok.';
-            inner.appendChild(h);
-        }
-        row.appendChild(inner);
-        chatMessagesDiv.appendChild(row);
-        setTimeout(scrollChatToBottom, 10);
-        return inner;
     }
 
     /**
@@ -1246,23 +1287,17 @@
                 if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
                     flowActionTitle = String(fm.action_name).trim();
                 }
-                renderComposerFlowProgress(fm, flowActionTitle);
 
                 const flowIntentId = fm && fm.intent_id != null ? String(fm.intent_id).trim()
                     : (session.intent_id ? String(session.intent_id).trim() : '');
-                if (flowIntentId) {
-                    supersedeOlderStepsOfActiveFlow(flowIntentId);
-                }
-                const flowHeaderTitle = shouldShowFlowChatHeader(fm) ? flowActionTitle : '';
-                const flowSectionInner = appendAssistantFlowSection(
-                    primaryText || 'Ok.',
-                    flowHeaderTitle,
-                    flowIntentId
-                );
-                if (!flowSectionInner) {
-                    showError('No se pudo mostrar el paso del flujo en el chat.');
+
+                const panel = syncFlowStepsPanel(fm, flowIntentId, flowActionTitle);
+                if (!panel || !panel.row) {
+                    showError('No se pudo mostrar el flujo en el chat.');
                     return;
                 }
+
+                const flowSectionInner = panel.activeMount;
 
                 const openUi = assistantFlowOpenUi(envelope);
                 const co = openUi && openUi.client_open && typeof openUi.client_open === 'object' ? openUi.client_open : null;
@@ -1324,14 +1359,19 @@
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }
+                    if (!flowSectionInner) {
+                        showError('No se pudo montar la UI del paso activo.');
+                        return;
+                    }
                     if (fsr && fsr.route && fsr.body_template && typeof fsr.body_template === 'object') {
                         removeFlowPlanStrip();
+                        flowSectionInner.innerHTML = '';
                         appendFlowInlineSubmit(flowSectionInner, fsr, flowSubmitClearState);
-                        setLoadingState(false);
                         setTimeout(scrollChatToBottom, 20);
                         return;
                     }
                     removeFlowPlanStrip();
+                    flowSectionInner.innerHTML = '';
                     const errHtml = openUi && openUi.action_id
                         ? ('<div class="alert alert-danger mb-0 mt-2">No puedo abrir la mini-UI requerida (' + escapeHtml(String(openUi.action_id)) + ').</div>')
                         : ('<div class="alert alert-danger mb-0 mt-2">No puedo determinar la UI a abrir para este paso.</div>');
@@ -1343,7 +1383,13 @@
                     return;
                 }
 
-                // Montaje: debajo del h4 del bloque a ancho completo.
+                if (!flowSectionInner) {
+                    showError('No se pudo montar la UI del paso activo.');
+                    return;
+                }
+
+                // Montaje: solo en el paso activo (`.spa-flow-step-ui`).
+                flowSectionInner.innerHTML = '';
                 const mountHost = flowSectionInner;
                 /** Nodo dedicado para `renderDynamicUi` (no sustituir el contenedor del título). */
                 let flowUiMount = null;
@@ -3341,6 +3387,26 @@
         }
     }
 
+    /** Inicia un flow si la URL trae ?spa_flow_intent=… (p. ej. desde alertas en otra pantalla). */
+    function tryStartFlowFromQuery() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const intentId = params.get('spa_flow_intent');
+            if (!intentId || !String(intentId).trim()) {
+                return;
+            }
+            const intentName = params.get('spa_flow_intent_name') || '';
+            startFlowFromShortcut(String(intentId).trim(), String(intentName));
+            params.delete('spa_flow_intent');
+            params.delete('spa_flow_intent_name');
+            const qs = params.toString();
+            const clean = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+            window.history.replaceState({}, '', clean);
+        } catch (e) {
+            console.warn('[SPA] spa_flow_intent', e);
+        }
+    }
+
     /**
      * Cargar contenido de página vía AJAX
      */
@@ -3724,7 +3790,7 @@
             }
             html += '<section class="spa-chat-welcome-category">';
             html += '<h3 class="h6 text-secondary text-decoration-underline mb-2">' + escapeHtml(title) + '</h3>';
-            html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-center">';
+            html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-start">';
             actions.forEach(function (a) {
                 const m = shortcutMetaFromAction(a);
                 if (!m) {
@@ -3751,7 +3817,7 @@
         }
         let html = '<div class="spa-chat-welcome-category">';
         html += '<h3 class="h6 text-secondary text-decoration-underline mb-2">Atajos</h3>';
-        html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-center">';
+        html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-start">';
         items.forEach(function (a) {
             const m = shortcutMetaFromAction(a);
             if (!m) {
@@ -4003,11 +4069,13 @@
             init();
             attachCardListeners();
             tryOpenUiJsonFromQuery();
+            tryStartFlowFromQuery();
         });
     } else {
         init();
         attachCardListeners();
         tryOpenUiJsonFromQuery();
+        tryStartFlowFromQuery();
     }
 
 })();

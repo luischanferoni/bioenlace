@@ -7,6 +7,7 @@ use yii\helpers\Html;
 use yii\bootstrap5\Nav;
 use yii\bootstrap5\NavBar;
 use frontend\assets\AppAsset;
+use frontend\assets\BioenlaceApiClientAsset;
 use yii\helpers\Url;
 use common\models\ConsultasConfiguracion;
 
@@ -17,6 +18,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
 
 // Registrar JavaScript para manejo de dropdowns del navbar
 $this->registerJsFile('@web/js/navbar-dropdowns.js', ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerJsFile('@web/js/bioenlace-alertas.js', ['depends' => [BioenlaceApiClientAsset::class]]);
 
 $home = Yii::$app->getHomeUrl();
 $apellidoUsuario = Yii::$app->user->getApellidoUsuario();
@@ -87,7 +89,8 @@ if (Yii::$app->user->username) {
     window.spaConfig = {
         baseUrl: '<?= rtrim(Yii::$app->urlManager->createAbsoluteUrl(['/']), '/') ?>',
         csrfToken: '<?= Yii::$app->request->csrfToken ?>',
-        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>
+        appVersion: <?= json_encode(Yii::$app->params['spaWebAppVersion'] ?? '1.0.0', JSON_UNESCAPED_UNICODE) ?>,
+        asistenteUrl: <?= json_encode(Url::to(['/site/asistente']), JSON_UNESCAPED_UNICODE) ?>
     };
     window.getBioenlaceApiClientHeaders = function (extra) {
         var ver = (window.spaConfig && window.spaConfig.appVersion) ? String(window.spaConfig.appVersion) : '1.0.0';
@@ -171,6 +174,8 @@ if (Yii::$app->user->username) {
                                 <span class="text-muted small">Tipo: <?= Html::encode($listaEncounters[$encounterClass]) ?></span>
                             <?php endif; ?>
 
+                            <?= $this->render('_alertas_topmenu') ?>
+
                             <div class="dropdown">
                                 <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
                                     <?= Html::encode($user) ?>
@@ -187,6 +192,8 @@ if (Yii::$app->user->username) {
                     </div>
                 </div>
             </nav>
+
+            <?= $this->render('_alertas_panel') ?>
 
             <div class="content-inner pb-0 d-flex" id="page_layout" style="min-height: calc(100vh - 60px); align-items: flex-start;">
                 <!-- Menú vertical izquierdo -->

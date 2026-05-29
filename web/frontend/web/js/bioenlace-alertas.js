@@ -187,9 +187,21 @@
                     NS.refreshBadge();
                 });
             }
-            if (intentId && typeof window.spaStartFlowFromShortcut === 'function') {
+            if (intentId) {
                 closePanel();
-                window.spaStartFlowFromShortcut(intentId, intentName);
+                if (typeof window.spaStartFlowFromShortcut === 'function') {
+                    window.spaStartFlowFromShortcut(intentId, intentName);
+                } else {
+                    var base = window.spaConfig && window.spaConfig.asistenteUrl
+                        ? String(window.spaConfig.asistenteUrl)
+                        : '/site/asistente';
+                    var sep = base.indexOf('?') >= 0 ? '&' : '?';
+                    var target = base + sep + 'spa_flow_intent=' + encodeURIComponent(intentId);
+                    if (intentName) {
+                        target += '&spa_flow_intent_name=' + encodeURIComponent(intentName);
+                    }
+                    window.location.href = target;
+                }
             }
         });
 

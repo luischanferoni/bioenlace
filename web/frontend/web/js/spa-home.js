@@ -644,7 +644,7 @@
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
     const welcomeActionsEl = document.getElementById('spa-chat-welcome-actions');
 
-    /** Alinea el composer fijo al ancho del chat y reserva espacio en mensajes para que no queden debajo. */
+    /** Alinea el composer fijo al ancho del chat y reserva espacio para que el scroll no quede debajo. */
     function syncChatComposerLayout() {
         if (!chatRoot) {
             return;
@@ -655,12 +655,38 @@
                 chatComposer.style.left = Math.max(0, Math.round(r.left)) + 'px';
                 chatComposer.style.width = Math.max(0, Math.round(r.width)) + 'px';
             }
-            if (chatComposer && chatMessagesDiv) {
-                const gapPx = 10;
-                const composerH = Math.ceil(chatComposer.getBoundingClientRect().height);
-                chatMessagesDiv.style.paddingBottom = Math.max(0, composerH + gapPx) + 'px';
+
+            const gapPx = 16;
+            let reservePx = 0;
+            if (chatComposer) {
+                const rect = chatComposer.getBoundingClientRect();
+                const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+                // Desde el borde superior del composer hasta el fondo del viewport (incluye bottom: 88px en móvil).
+                reservePx = Math.max(0, Math.ceil(vh - rect.top + gapPx));
             }
+
+            const reserve = reservePx + 'px';
+            document.documentElement.style.setProperty('--spa-chat-composer-reserve', reserve);
+            if (chatMessagesDiv) {
+                chatMessagesDiv.style.paddingBottom = reserve;
+            }
+
             chatRoot.style.height = '';
+        } catch (e) { /* ignore */ }
+    }
+
+    function bindChatComposerLayoutObserver() {
+        if (!chatComposer || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+        try {
+            const ro = new ResizeObserver(function () {
+                syncChatComposerLayout();
+            });
+            ro.observe(chatComposer);
+            if (queryInput) {
+                ro.observe(queryInput);
+            }
         } catch (e) { /* ignore */ }
     }
 
@@ -1008,6 +1034,7 @@
             syncChatComposerLayout();
         }
         applyChatHeight();
+        bindChatComposerLayoutObserver();
         purgeLegacyFlowPlanWraps();
         requestAnimationFrame(function () {
             applyChatHeight();
@@ -1069,6 +1096,7 @@
     }
 
     function scrollChatToBottom() {
+        syncChatComposerLayout();
         if (!chatMessagesDiv) return;
         try {
             const root = document.scrollingElement || document.documentElement;

@@ -201,10 +201,10 @@
     #page_layout:has(.spa-asistente-root) {
         padding-bottom: 0 !important;
     }
+}
 
-    .spa-asistente-root {
-        padding-bottom: 0;
-    }
+html:has(.spa-asistente-root) {
+    scroll-padding-bottom: var(--spa-chat-composer-reserve);
 }
 
 /* Asistente: sin card; mensajes con el fondo del layout; toolbar sticky; composer fijo abajo. */

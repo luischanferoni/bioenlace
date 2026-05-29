@@ -554,15 +554,51 @@
         });
     }
 
+    /**
+     * @param {{ route?: string, body_template?: object }|null|undefined} fs
+     * @returns {boolean}
+     */
+    function isActiveFlowSubmitRequest(fs) {
+        return !!(fs && fs.route && fs.body_template && typeof fs.body_template === 'object');
+    }
+
+    /** @param {HTMLElement|null|undefined} fromEl */
+    function flowSubmitHostFromEl(fromEl) {
+        if (!fromEl || !fromEl.closest) {
+            return fromEl || null;
+        }
+        return fromEl.closest('.spa-flow-step-ui') || fromEl.closest('.spa-chat-flow-ui') || fromEl;
+    }
+
+    /** @param {HTMLElement|null|undefined} fromEl */
+    function revealFlowSubmitInlineForContainer(fromEl) {
+        revealFlowInlineSubmit(flowSubmitHostFromEl(fromEl));
+    }
+
+    /** @param {HTMLElement|null|undefined} fromEl */
+    function clearFlowSubmitMissingHint(fromEl) {
+        const host = flowSubmitHostFromEl(fromEl);
+        if (!host) {
+            return;
+        }
+        try {
+            host.querySelectorAll('.spa-flow-submit-inline .text-danger').forEach(function (errBox) {
+                errBox.classList.add('d-none');
+                errBox.textContent = '';
+            });
+        } catch (e) { /* ignore */ }
+    }
+
     function mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance) {
         mountEl.innerHTML = '';
         if (json && json.kind === 'ui_definition') {
+            const isTerminalFlowStep = isActiveFlowSubmitRequest(flowSubmitRequestOpt);
             renderDynamicUi(json, mountEl, {
                 url: fullUrl,
-                enableFlowChainAutoAdvance: enableFlowChainAutoAdvance === true
+                enableFlowChainAutoAdvance: enableFlowChainAutoAdvance === true && !isTerminalFlowStep,
+                isTerminalFlowStep: isTerminalFlowStep
             });
-            if (flowSubmitRequestOpt && flowSubmitRequestOpt.route && flowSubmitRequestOpt.body &&
-                typeof flowSubmitRequestOpt.body === 'object') {
+            if (isTerminalFlowStep) {
                 appendFlowInlineSubmit(mountEl, flowSubmitRequestOpt, function () {
                     clearFlowState();
                     removeFlowPlanStrip();
@@ -2103,11 +2139,9 @@
             if (locked) return;
             if (!draftField) return;
             if (!selectedId) return;
-            locked = true;
-            try {
-                allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
-            } catch (e) { /* ignore */ }
-            if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
+
+            const isTerminalFlowStep = options.isTerminalFlowStep === true;
+
             try {
                 const delta = {};
                 delta[draftField] = selectedId;
@@ -2118,6 +2152,19 @@
                 applyDraftDelta(delta);
                 writeFlowState();
             } catch (e) { /* ignore */ }
+
+            // Último paso del flow (flow_submit activo): solo merge local; el POST lo dispara el botón inline.
+            if (isTerminalFlowStep) {
+                clearFlowSubmitMissingHint(container);
+                revealFlowSubmitInlineForContainer(container);
+                return;
+            }
+
+            locked = true;
+            try {
+                allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
+            } catch (e) { /* ignore */ }
+            if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
             setTimeout(function () {
                 if (queryInput) queryInput.value = '';
                 handleSendQuery('');
@@ -2205,7 +2252,11 @@
         }
 
         const pickButtons = allPickButtons();
-        if (options.enableFlowChainAutoAdvance === true && pickButtons.length === 1 && !requiresConfirmation && draftField) {
+        if (options.enableFlowChainAutoAdvance === true
+            && !options.isTerminalFlowStep
+            && pickButtons.length === 1
+            && !requiresConfirmation
+            && draftField) {
             singleAutoTimer = setTimeout(function () {
                 singleAutoTimer = null;
                 if (locked) return;
@@ -2327,8 +2378,11 @@
                                 writeFlowState();
                             } catch (e) { /* ignore */ }
                         }
-                        if (currentIntentId) {
+                        if (currentIntentId && !options.isTerminalFlowStep) {
                             setTimeout(() => { try { handleSendQuery(''); } catch (e) { /* ignore */ } }, 50);
+                        } else if (options.isTerminalFlowStep) {
+                            clearFlowSubmitMissingHint(container);
+                            revealFlowSubmitInlineForContainer(container);
                         }
                         return;
                     }

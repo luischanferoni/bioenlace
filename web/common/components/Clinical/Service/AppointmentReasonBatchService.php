@@ -2,6 +2,7 @@
 
 namespace common\components\Clinical\Service;
 
+use common\components\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Ai\IAManager;
 use common\components\Ai\SpeechToText\SpeechToTextManager;
 use common\models\Clinical\Encounter;
@@ -46,7 +47,7 @@ final class AppointmentReasonBatchService
         }
 
         $transcript = implode("\n", $lines);
-        $summary = self::summarizeWithIa($transcript);
+        $summary = self::summarizeWithIa($transcript, (int) $encounter->subject_persona_id);
         if ($summary === null || trim($summary) === '') {
             $summary = $transcript;
         }
@@ -128,10 +129,26 @@ final class AppointmentReasonBatchService
         return is_file($full) ? $full : null;
     }
 
-    private static function summarizeWithIa(string $transcript): ?string
+    private static function summarizeWithIa(string $transcript, int $subjectPersonaId): ?string
     {
+        $patientBlock = '';
+        if ($subjectPersonaId > 0) {
+            $patientBlock = (new PatientAiContextBuilder())->build(
+                $subjectPersonaId,
+                PatientAiContextBuilder::PROFILE_MOTIVOS
+            );
+        }
+
         $prompt = <<<PROMPT
 Sos un asistente clínico. El paciente cargó motivos de consulta antes del turno (texto, audios transcritos e imágenes referenciadas).
+PROMPT;
+
+        if ($patientBlock !== '') {
+            $prompt .= "\n\n" . $patientBlock;
+        }
+
+        $prompt .= <<<PROMPT
+
 
 Conversación cruda:
 ---

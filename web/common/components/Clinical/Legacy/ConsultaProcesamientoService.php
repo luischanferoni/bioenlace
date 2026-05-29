@@ -4,6 +4,7 @@ namespace common\components\Clinical\Legacy;
 
 use Yii;
 use yii\base\Component;
+use common\components\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Text\ProcesadorTextoMedico;
 use common\components\Logging\ConsultaLogger;
@@ -114,7 +115,12 @@ class ConsultaProcesamientoService extends Component
                 ['metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA']
             );
 
-            $resultadoIA = $this->analizarConsultaConIA($textoProcesado, $servicio->nombre, $categorias);
+            $resultadoIA = $this->analizarConsultaConIA(
+                $textoProcesado,
+                $servicio->nombre,
+                $categorias,
+                PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body)
+            );
 
             $logger->registrar(
                 'ANÃLISIS IA',
@@ -260,10 +266,10 @@ HTML;
         }
     }
 
-    public function analizarConsultaConIA($texto, $servicio, $categorias)
+    public function analizarConsultaConIA($texto, $servicio, $categorias, ?int $subjectPersonaId = null)
     {
         try {
-            $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias);
+            $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias, $subjectPersonaId);
 
             if ($promptData === null) {
                 Yii::error('No se pudo generar el prompt debido a errores en el JSON de ejemplo', 'consulta-ia');
@@ -390,7 +396,7 @@ HTML;
         return \common\models\ConsultasConfiguracion::getCategoriasParaPrompt($configuracion);
     }
 
-    private function generarPromptEspecializado($texto, $servicio, $categorias)
+    private function generarPromptEspecializado($texto, $servicio, $categorias, ?int $subjectPersonaId = null)
     {
         $categoriasTexto = $this->construirCategoriasTexto($categorias);
         $jsonEjemplo = $this->generarJsonEjemplo($categorias);
@@ -399,14 +405,26 @@ HTML;
             return null;
         }
 
+        $patientBlock = '';
+        if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
+            $patientBlock = (new PatientAiContextBuilder())->build(
+                $subjectPersonaId,
+                PatientAiContextBuilder::PROFILE_ENCOUNTER
+            );
+        }
+
         $prompt = "Extrae datos en JSON. CategorÃ­as: " . $categoriasTexto . ". Sin datos: [].
 
 IMPORTANTE: Genera un JSON completo y vÃ¡lido. AsegÃºrate de cerrar todas las llaves, corchetes y comillas.
 
 Formato:
-{\"datosExtraidos\":{\"categoria\":[\"valor\"]}}
+{\"datosExtraidos\":{\"categoria\":[\"valor\"]}}";
 
-Texto: \"" . $texto . "\"
+        if ($patientBlock !== '') {
+            $prompt .= "\n\n" . $patientBlock;
+        }
+
+        $prompt .= "\n\nTexto: \"" . $texto . "\"
 
 Responde SOLO con el JSON, sin texto adicional antes o despuÃ©s.";
 

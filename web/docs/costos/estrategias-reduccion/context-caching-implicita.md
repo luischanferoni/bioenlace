@@ -24,9 +24,9 @@ Ver [matriz-casos-uso.md](./matriz-casos-uso.md). Resumen conservador:
 | Contexto (`IAManager`) | % input cacheado (supuesto doc) |
 |------------------------|----------------------------------|
 | `asistente-preprocess` | ~**40 %** |
-| `asistente-conversational` | ~**50 %** |
-| `motivos-consulta-batch` | ~**25 %** |
-| `analisis-consulta` | ~**25 %** |
+| `asistente-conversational` | ~**40 %** (prefijo fijo; bloque clínico semi-estable por paciente; historial acotado variable) |
+| `motivos-consulta-batch` | ~**25 %** (+ contexto clínico variable) |
+| `analisis-consulta` | ~**25 %** (+ contexto clínico variable) |
 
 No usar ratios altos (p. ej. 80 %) sin telemetría. Calibrar con `ratio_input_en_cache` por `contexto`.
 

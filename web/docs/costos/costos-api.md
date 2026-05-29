@@ -4,6 +4,7 @@ Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollam
 
 - **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`).
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
+- **Contexto clínico del paciente:** bloque acotado (`PatientAiContextBuilder`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
 - **Escenario intensivo:** sin optimizaciones de producto (p. ej. transcribir todo el audio automáticamente).
 
 Otras reducciones (caché Yii, STT bajo demanda, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas. Precios unitarios de proveedores: [Precios de referencia](#precios-de-referencia-mayo-2026).
@@ -80,11 +81,26 @@ Detalle de cada tipo: [implícita](./estrategias-reduccion/context-caching-impli
 
 - Tarifa input cacheado 2.5 Flash Lite: **$0.01 por M** vs **$0.10 por M** estándar (**90 %** desc. en esa porción).
 - Supuesto **conservador** en tablas §2–4: **~25 %** del input cacheado (no usar ratios altos sin telemetría).
-- **Conversación con el paciente** (§1): preprocess ~**40 %** cacheado; conversacional ~**50 %**; operativo **sin 2.ª IA** — ver [§1](#1-conversación-con-el-paciente).
+- **Conversación con el paciente (§1):** preprocess ~**40 %** cacheado; conversacional ~**40 %** (prefijo fijo; historial acotado en parte variable) — [§1](#1-conversación-con-el-paciente)
 - Calibrar con `ia_usage_tracking_habilitado`, `vertex_context_cache_simulado` y `AICostTracker` por `contexto` ([monitoreo](./estrategias-reduccion/monitoreo.md)).
 - El **output** no se cachea.
 
 **Together AI** no usa context caching de Vertex → columna «con caché» = **—**. Comparativa: [Precios de referencia](#precios-de-referencia-mayo-2026) (~**$0.00027** por llamada de 1.500 tokens).
+
+### Contexto clínico en prompts IA
+
+Implementación: `common/components/Clinical/AiContext/PatientAiContextBuilder.php` (`patient_ai_context` en `params.php`).
+
+| Flujo | Perfil | Qué incluye | Tokens input extra (ref.) |
+|-------|--------|-------------|---------------------------|
+| §1 conversacional | `conversational` | Edad, sexo, alergias, condiciones y medicación (límites menores) | **~+280** |
+| §2 motivos batch | `motivos` | Igual, perfil medio | **~+350** |
+| §4 captura clínica | `encounter` | Igual, perfil completo | **~+350** |
+
+- Techo configurado: **2.400 caracteres** (~600 tokens); en la práctica **~200–450 tokens** según datos del paciente.
+- **No** va en preprocess operacional ni en clasificación por reglas.
+- Parte **variable por paciente** (no cacheable entre distintos pacientes); en §1 el bloque se repite entre turnos del **mismo** paciente → posible upside de caché implícita no modelado (se mantiene **~40 %** conversacional).
+- Calibrar con `AICostTracker` por `contexto` tras desplegar.
 
 Para bajar el costo con otras palancas (STT bajo demanda, caché de aplicación, etc.), ver [estrategias-reduccion/](./estrategias-reduccion/README.md).
 
@@ -123,6 +139,8 @@ Un solo chat para el paciente: turnos, síntomas, menú de ayuda o mensajes poco
 
 Los **pasos de un flujo operativo** (elegir profesional, completar formulario, etc.) continúan en el chat con `intent_id`; no consumen una 2.ª IA de clasificación. Si el paciente escribe texto en un paso, puede volver a correr preprocess.
 
+**Historial en charla clínica:** la 2.ª IA conversacional incluye una **ventana acotada** del hilo (implementación: `ConversationalHistoryWindow` — máx. **5 turnos**, **3.200 caracteres** de historial; corte si hubo un trámite operativo). El primer mensaje de un tema va casi solo con instrucciones; los siguientes arrastran contexto. Techo de input por llamada conversacional acotado en la tabla de tokens.
+
 Supuesto de actividad: **2.000 mensajes por mes** (5 por encounter x 400 encounters). Varios ida y vuelta conversacionales cuentan como **varios mensajes** dentro de esos 5.
 
 #### Tras el preprocess: reparto por intención (escenario central — ajustar con telemetría)
@@ -149,7 +167,7 @@ La 1.ª IA ya corrió; la tabla indica **si hace falta una 2.ª** y cuántas lla
 | Tipo de llamada | Input y output (ref.) | % input cacheado (implícito, conservador) |
 |-----------------|----------------------|-------------------------------------------|
 | Preprocess | ~700 y ~250 | **~40 %** |
-| 2.ª conversacional | ~450 y ~180 | **~50 %** |
+| 2.ª conversacional | ~930 y ~180 (instrucciones + **contexto clínico** + historial acotado + mensaje actual) | **~40 %** (prefijo fijo; bloque clínico semi-estable por paciente; historial variable) |
 
 Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-caching).
 
@@ -158,11 +176,11 @@ Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-c
 | Concepto | Sin context caching (COGS) | Con context caching (favorable) |
 |----------|----------------------------|----------------------------------|
 | 2.000 x preprocess | ~$0,34 | ~$0,29 |
-| 660 x conversacional | ~$0,08 | ~$0,06 |
-| **Total §1** | **~$0,42** | **~$0,35** |
-| Together AI (orden de magnitud) | **~$0,37** | **~$0,31** |
+| 660 x conversacional | ~$0,11 | ~$0,09 |
+| **Total §1** | **~$0,45** | **~$0,38** |
+| Together AI (orden de magnitud) | **~$0,39** | **~$0,33** |
 
-**Escenario alternativo (más conversacional, 45 % `conversational`):** sube a **~$0,46** sin caché · **~$0,38** con caché (~3.000 llamadas Vertex). **Escenario operativo fuerte (55 % operational):** baja a **~$0,38** · **~$0,32** (menos 2.ª IA conversacional).
+**Escenario alternativo (más conversacional, 45 % `conversational`):** sube a **~$0,49** sin caché · **~$0,41** con caché (~3.000 llamadas Vertex). **Escenario operativo fuerte (55 % operational):** baja a **~$0,41** · **~$0,35** (menos 2.ª IA conversacional).
 
 Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrategias-reduccion/matriz-casos-uso.md).
 
@@ -170,27 +188,27 @@ Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrat
 
 ### 2. Motivos de consulta (chat dedicado, antes de la atención)
 
-Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **1 minuto antes del turno** (sin IA en cada mensaje). Al cerrar la ventana, **1 llamada a la IA** resume el hilo en `encounter.reason_text` para el médico. Implementación: `AppointmentReasonBatchService`, cron `MOTIVOS_IA_BATCH` vía `turno-notificacion/run`.
+Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **1 minuto antes del turno** (sin IA en cada mensaje). Al cerrar la ventana, **1 llamada a la IA** resume el hilo en `encounter.reason_text` para el médico (incluye **contexto clínico acotado** del paciente). Implementación: `AppointmentReasonBatchService`, cron `MOTIVOS_IA_BATCH` vía `turno-notificacion/run`.
 
 #### Caso A — solo texto (sin audio en el hilo)
 
-Prompt más chico (~**1.000 input + 400 output** por lote; sin transcripciones).
+Prompt con contexto clínico (~**1.350 input + 400 output** por lote; sin transcripciones).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
-| IA (resumen lote) | 400 x tarifa IA (prompt corto) | **~$0.10** | **~$0.08** | **~$0.09** |
+| IA (resumen lote) | 400 x tarifa IA (prompt corto + contexto) | **~$0.12** | **~$0.11** | **~$0.10** |
 | STT | — | — | — | — |
-| **Total caso A** | | **~$0.10** | **~$0.08** | **~$0.09** |
+| **Total caso A** | | **~$0.12** | **~$0.11** | **~$0.10** |
 
 #### Caso B — con audio en el hilo
 
-STT antes del lote; volumen IA estándar del doc (~1.500 tokens por llamada).
+STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
-| IA (resumen lote) | 400 x tarifa IA | **~$0.14** | **~$0.12** | **~$0.11** |
+| IA (resumen lote) | 400 x tarifa IA | **~$0.15** | **~$0.13** | **~$0.12** |
 | STT (Groq, 1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
-| **Total caso B** | | **~$0.42** | **~$0.40** | **~$0.39** |
+| **Total caso B** | | **~$0.43** | **~$0.41** | **~$0.40** |
 
 ---
 
@@ -206,13 +224,13 @@ STT antes del lote; volumen IA estándar del doc (~1.500 tokens por llamada).
 
 Cada consulta incluye **dictado en audio** del médico: no hay variante de costo «solo texto» ni «solo IA» — STT e inferencia van **siempre** juntos.
 
-Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`ConsultaProcesamientoService::analizar`).
+Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`ConsultaProcesamientoService::analizar`, con **contexto clínico acotado** antes del dictado).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | STT (Groq, 1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
-| IA (análisis) | 400 x tarifa IA | **~$0.14** | **~$0.12** | **~$0.11** |
-| **Total §4 (IA + STT)** | | **~$0.42** | **~$0.40** | **~$0.39** |
+| IA (análisis) | 400 x tarifa IA (~1.350 in + 500 out ref.) | **~$0.15** | **~$0.13** | **~$0.12** |
+| **Total §4 (IA + STT)** | | **~$0.43** | **~$0.41** | **~$0.40** |
 
 ---
 
@@ -245,13 +263,13 @@ Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`Cons
 
 | Concepto | Google sin context caching | Google con context caching | Together AI |
 |----------|------------------|------------------|-------------|
-| Conversación con el paciente (§1, `user_goal`) | ~$0.42 | ~$0.35 | ~$0.37 |
-| Motivos — solo texto (§2 caso A) | ~$0.10 | ~$0.10 | ~$0.09 |
-| Motivos — siempre audio (§2 caso B, IA+STT) | ~$0.42 | ~$0.40 | ~$0.39 |
+| Conversación con el paciente (§1, `user_goal`) | ~$0.45 | ~$0.38 | ~$0.39 |
+| Motivos — solo texto (§2 caso A) | ~$0.12 | ~$0.11 | ~$0.10 |
+| Motivos — siempre audio (§2 caso B, IA+STT) | ~$0.43 | ~$0.41 | ~$0.40 |
 | Agente onboarding (§3) | ~$0.14 | ~$0.12 | ~$0.11 |
-| Captura clínica (§4, **IA + STT**) | ~$0.42 | ~$0.40 | ~$0.39 |
-| **Total Apartado 1 — motivos solo texto** | **~$1.08** | **~$0.97** | **~$1.06** |
-| **Total Apartado 1 — motivos con audio** | **~$1.40** | **~$1.27** | **~$1.36** |
+| Captura clínica (§4, **IA + STT**) | ~$0.43 | ~$0.41 | ~$0.40 |
+| **Total Apartado 1 — motivos solo texto** | **~$1.14** | **~$1.02** | **~$1.10** |
+| **Total Apartado 1 — motivos con audio** | **~$1.45** | **~$1.32** | **~$1.40** |
 
 ### Apartado 2 – Medios (Vision §5)
 
@@ -275,14 +293,14 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 | Escenario | Google sin context caching | Google con context caching | Together AI |
 |-----------|------------------|------------------|-------------|
-| Apartados 1 + 2 (motivos **solo texto**) | **~$1.08** | **~$0.97** | **~$1.06** |
-| Apartados 1 + 2 (motivos **con audio**) | **~$1.40** | **~$1.27** | **~$1.36** |
+| Apartados 1 + 2 (motivos **solo texto**) | **~$1.14** | **~$1.02** | **~$1.10** |
+| Apartados 1 + 2 (motivos **con audio**) | **~$1.45** | **~$1.32** | **~$1.40** |
 | + Apartado 3 (**Twilio Video**) | **+$11.52** | **+$11.52** | **+$11.52** |
-| **Total con videollamada (Twilio)** — motivos texto | **~$12.60** | **~$12.49** | **~$12.58** |
-| **Total con videollamada (Twilio)** — motivos audio | **~$12.92** | **~$12.79** | **~$12.88** |
-| **Total con videollamada (Daily ~$10)** — motivos audio | **~$11.40** | **~$11.27** | **~$11.36** |
+| **Total con videollamada (Twilio)** — motivos texto | **~$12.66** | **~$12.54** | **~$12.62** |
+| **Total con videollamada (Twilio)** — motivos audio | **~$12.97** | **~$12.84** | **~$12.92** |
+| **Total con videollamada (Daily ~$10)** — motivos audio | **~$11.45** | **~$11.32** | **~$11.40** |
 
-**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,3–1,4 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 + §3 + §4).
+**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,3–1,5 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 + §3 + §4).
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 sigue siendo coste de proveedor de video salvo stack propio.
 

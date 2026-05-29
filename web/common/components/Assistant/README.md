@@ -8,7 +8,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - `Catalog/`: catálogo de UIs sugeribles (hoy basado en YAML).
 - `EntryPoints/Chat/`: `asistente/enviar` — preprocess, routing, canales, sobre (`message` | `interactive` | `flow`).
 - `EntryPoints/AppointmentReason/`: motivos de consulta paciente (`motivos-consulta/*`), sin preprocess del chat.
-- `EntryPoints/ClinicalEncounter/`: captura clínica (`/api/v1/clinical/encounter/analizar|guardar`), sin preprocess del chat.
+- `EntryPoints/ClinicalEncounter/`: captura clínica (`/api/v1/clinical/encounter/analizar|guardar`), sin preprocess del chat. Contexto clínico acotado del paciente vía `Clinical/AiContext/PatientAiContextBuilder` (captura, motivos batch, chat conversacional).
 - `Catalog/ClinicalUiActionCatalog.php`: acciones API clínicas en `UiActionCatalog` (RBAC `/api/clinical/...`).
 - `Service/AssistantDraftNormalizer.php`: `encounter_id`, `care_plan_id` en draft de flows.
 - Documentación: [web/docs/arquitectura/asistente-motores.md](../../docs/arquitectura/asistente-motores.md), [web/docs/producto/asistente-y-chat.md](../../docs/producto/asistente-y-chat.md)

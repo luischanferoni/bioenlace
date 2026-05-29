@@ -84,11 +84,11 @@ Tarifas y supuestos por profesional: [costos-api.md](./costos-api.md). Aquí sol
 
 | Concepto | Cálculo | USD por mes |
 |----------|---------|-------------|
-| IA + STT — sin context caching (COGS) | 5.000 x ~1,40 por prof | **~7.000** |
-| IA + STT — con context caching (favorable) | 5.000 x ~1,27 por prof | **~6.350** |
+| IA + STT — sin context caching (COGS) | 5.000 x ~1,45 por prof | **~7.250** |
+| IA + STT — con context caching (favorable) | 5.000 x ~1,32 por prof | **~6.600** |
 | Videollamada Twilio (§6) | 5.000 x ~11,52 por prof | **~57.600** |
-| **IA + STT + videollamada** — sin caché | suma filas anteriores | **~64.600** |
-| **IA + STT + videollamada** — con caché | 6.350 + 57.600 | **~63.950** |
+| **IA + STT + videollamada** — sin caché | suma filas anteriores | **~64.850** |
+| **IA + STT + videollamada** — con caché | 6.600 + 57.600 | **~64.200** |
 | Aplicación + BD + hosting | *[pendiente presupuesto]* | — |
 
 **Infra app:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500 por mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); **no escala lineal** a 5.000 usuarios.
@@ -97,15 +97,15 @@ Tarifas y supuestos por profesional: [costos-api.md](./costos-api.md). Aquí sol
 
 ### B) Carga fiscal sobre compras (estimación conservadora)
 
-Base: filas **IA + STT** de la tabla A (~**7.000** sin caché · ~**6.350** con caché). Estrategias de [estrategias-reduccion/](./estrategias-reduccion/README.md) no están en estas cifras.
+Base: filas **IA + STT** de la tabla A (~**7.250** sin caché · ~**6.600** con caché). Estrategias de [estrategias-reduccion/](./estrategias-reduccion/README.md) no están en estas cifras.
 
 | Concepto | Sin caché (COGS) | Con caché (favorable) | Notas |
 |----------|------------------|----------------------|--------|
-| Subtotal IA + STT (tabla A) | ~7.000 | ~6.350 | Motivos con audio; §4 incluye STT |
-| IVA 21 % compras (crédito pleno) | +1.323 | +1.200 | RI: **caja ≈ 0** a neto |
-| IVA / percepciones no recuperables | 0 – 1.020 | 0 – 925 | Peor caso sobre subtotal |
-| **Costo IA efectivo (peor caso)** | **~7.000 – 8.020** | **~6.350 – 7.275** | Sin crédito o con percepciones |
-| **Costo IA efectivo (RI, normal)** | **~7.000** | **~6.350** | |
+| Subtotal IA + STT (tabla A) | ~7.250 | ~6.600 | Motivos con audio; §4 incluye STT; incluye contexto clínico en prompts |
+| IVA 21 % compras (crédito pleno) | +1.368 | +1.247 | RI: **caja ≈ 0** a neto |
+| IVA / percepciones no recuperables | 0 – 1.058 | 0 – 960 | Peor caso sobre subtotal |
+| **Costo IA efectivo (peor caso)** | **~7.250 – 8.308** | **~6.600 – 7.560** | Sin crédito o con percepciones |
+| **Costo IA efectivo (RI, normal)** | **~7.250** | **~6.600** | |
 
 **Resumen fiscal (compras):** App/BD *[pendiente]*.
 
@@ -125,16 +125,16 @@ Precios de licencia: [matriz Argentina](../modelo-de-negocio/business-plan/matri
 
 | Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** por mes sin caché | Precio **neto** por mes con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
 |-----------|-------------------------|-------------------------|-----------------------------------|-----------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
-| **Solo costo (sin margen)** * | **~1,40** | **~1,27** | **~7.000** | **~6.350** | **~8.470** | **~7.684** | **0 %** · **0 %** | **Pérdida** |
+| **Solo costo (sin margen)** * | **~1,45** | **~1,32** | **~7.250** | **~6.600** | **~8.773** | **~7.986** | **0 %** · **0 %** | **Pérdida** |
 | **Variable IA, margen mínimo** | **1,8 – 2,0** | **1,8 – 2,0** | **9.000 – 10.000** | **9.000 – 10.000** | **10.890 – 12.100** | **10.890 – 12.100** | **~42 – 48 %** · **~56 – 61 %** * | **~28 – 33 %** · **~40 – 43 %** * |
 
-\* COGS sin caché **~7.000** · favorable con caché **~6.350** (tabla A). Por prof: [costos-api resumen](./costos-api.md#resumen-costo-real-por-api-por-médico-por-mes), motivos con audio (§4 siempre IA+STT).
+\* COGS sin caché **~7.250** · favorable con caché **~6.600** (tabla A). Por prof: [costos-api resumen](./costos-api.md#resumen-costo-real-por-api-por-médico-por-mes), motivos con audio (§4 siempre IA+STT; contexto clínico en §1–§4).
 
 #### Tabla — IA + STT + videollamada (Twilio)
 
 | Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** por mes sin caché | Precio **neto** por mes con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
 |-----------|-------------------------|-------------------------|-----------------------------------|-----------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
-| **Solo costo (sin margen)** * | **~12,92** | **~12,79** | **~64.600** | **~63.950** | **~78.166** | **~77.380** | **0 %** · **0 %** | **Pérdida** |
+| **Solo costo (sin margen)** * | **~12,97** | **~12,84** | **~64.850** | **~64.200** | **~78.469** | **~77.682** | **0 %** · **0 %** | **Pérdida** |
 
 \* Tabla A + videollamada ([costos-api §6](./costos-api.md#6-videollamadas-pacientemédico)).
 
@@ -147,12 +147,12 @@ La fila «margen mínimo» (1,8–2 por prof) de la tabla **solo IA + STT** **no
 | Facturación neta | 10.000 |
 | IVA 21 % (discriminado en factura) | +2.100 (no es ingreso) |
 | Ingresos brutos (4 %) | −400 |
-| Costo IA + STT | −7.000 |
-| Utilidad antes ganancias | 3.600 |
-| Ganancias (25 %) | −900 |
-| **Resultado variable** (antes de fijos) | **2.700** |
-| **Margen bruto** | **~30 %** (= 3.000 / 10.000) |
-| **Margen después IIBB + ganancias** | **~27 %** (= 2.700 / 10.000) |
+| Costo IA + STT | −7.250 |
+| Utilidad antes ganancias | 3.350 |
+| Ganancias (25 %) | −838 |
+| **Resultado variable** (antes de fijos) | **2.512** |
+| **Margen bruto** | **~28 %** (= 2.750 / 10.000) |
+| **Margen después IIBB + ganancias** | **~25 %** (= 2.512 / 10.000) |
 
 ---
 

@@ -41,6 +41,23 @@ return [
      * y estimación de cachedContentTokenCount si la API no devuelve hits aún.
      */
     'vertex_context_cache_simulado' => true,
+
+    /** Ventana de historial para ConversationalChannel (coste y contexto acotados). */
+    'asistente_conversacional_historial_max_turnos' => 5,
+    'asistente_conversacional_historial_max_chars' => 3200,
+
+    /**
+     * Bloque clínico acotado en prompts IA (captura, motivos batch, chat conversacional).
+     * max_chars ≈ 600 tokens; perfiles limitan ítems por sección.
+     */
+    'patient_ai_context' => [
+        'max_chars' => 2400,
+        'profiles' => [
+            'encounter' => ['max_conditions' => 8, 'max_medications' => 8, 'max_allergies' => 12],
+            'motivos' => ['max_conditions' => 6, 'max_medications' => 6, 'max_allergies' => 12],
+            'conversational' => ['max_conditions' => 4, 'max_medications' => 4, 'max_allergies' => 8],
+        ],
+    ],
     
     // Optimizaciones de procesamiento
     'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito

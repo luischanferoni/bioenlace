@@ -29,7 +29,7 @@ El paciente escribe en el chat de la app: turnos, síntomas, dudas o saludos.
 
 1. **Cada mensaje** pasa por una lectura automática: se corrige la redacción y se entiende si pide una acción («quiero un turno»), si solo conversa («me duele la cabeza») o si busca información («¿qué puedo hacer acá?»).
 2. Si pide una **acción concreta**, el sistema reconoce la acción con reglas internas y responde con un **listado de opciones**, un **formulario** o un **flujo guiado** (varios pasos en el mismo chat: elegir profesional, fecha, confirmar, etc.) — **sin** una segunda lectura automática solo para elegir qué acción es.
-3. Si **conversa** (síntomas, malestar, charla clínica), **cada mensaje** del paciente recibe lectura + respuesta automática; puede haber **varios ida y vuelta** en la misma consulta.
+3. Si **conversa** (síntomas, malestar, charla clínica), **cada mensaje** del paciente recibe lectura + respuesta automática; puede haber **varios ida y vuelta** en la misma consulta (el sistema recuerda solo los **últimos turnos** del hilo, no todo el chat). La respuesta incluye un **resumen clínico acotado** del paciente (alergias, condiciones, medicación) para contextualizar sin inventar datos.
 4. Si pide **información general** sobre la app, suele ver un **menú de acciones** disponibles (sin charla clínica).
 
 **Ejemplo**
@@ -37,7 +37,7 @@ El paciente escribe en el chat de la app: turnos, síntomas, dudas o saludos.
 - *«Kiero un turno con la dra García»* → lectura automática → flujo guiado: elegir servicio, día y horario en el chat.
 - *«Me duele la garganta hace tres días»* → lectura + respuesta → *«¿Tenés fiebre?»* (paciente responde) → otra lectura + respuesta; no abre trámites de turnos.
 
-**Costo mensual (5.000 profesionales):** **USD 2.100**
+**Costo mensual (5.000 profesionales):** **USD 2.250**
 
 ---
 
@@ -48,7 +48,7 @@ Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, 
 **Paso a paso**
 
 1. El paciente escribe o graba en el chat de motivos (puede ser solo texto, o incluir audios).
-2. Llegada la hora límite, el sistema junta todo el hilo.
+2. Llegada la hora límite, el sistema junta todo el hilo y añade un **resumen clínico acotado** del paciente (alergias, condiciones, medicación).
 3. **Una sola** pasada automática redacta el motivo de consulta que verá el médico.
 
 **Ejemplo**
@@ -61,8 +61,8 @@ Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, 
 
 | Variante                                   | USD       |
 | ------------------------------------------ | --------- |
-| Motivos **solo texto**                     | **500**   |
-| Motivos **con audio** (1 min por consulta) | **2.100** |
+| Motivos **solo texto**                     | **600**   |
+| Motivos **con audio** (1 min por consulta) | **2.150** |
 
 
 ---
@@ -75,13 +75,13 @@ Durante o después de la consulta el médico **dicta en voz alta** lo que atendi
 
 1. El médico graba el dictado (supuesto: **1 minuto** por consulta).
 2. El audio se convierte en texto.
-3. **Una** pasada automática estructura signos, diagnósticos, indicaciones según el tipo de consulta.
+3. **Una** pasada automática estructura signos, diagnósticos, indicaciones según el tipo de consulta (con **contexto clínico acotado** del paciente: alergias, condiciones previas, medicación activa).
 
 **Ejemplo**
 
 - Dictado: *«Paciente con hipertensión controlada, ajusto enalapril, control en 30 días»* → texto transcrito → campos clínicos rellenados o sugeridos.
 
-**Costo mensual (5.000 profesionales):** **USD 2.100**
+**Costo mensual (5.000 profesionales):** **USD 2.150**
 
 ---
 
@@ -101,10 +101,10 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
-| Conversación con el paciente                   | 2.100     |
-| Motivos de consulta (sin audio)                | 500       |
-| Captura clínica del médico (siempre con audio) | 2.100     |
-| **Subtotal**                                   | **4.700** |
+| Conversación con el paciente                   | 2.250     |
+| Motivos de consulta (sin audio)                | 600       |
+| Captura clínica del médico (siempre con audio) | 2.150     |
+| **Subtotal**                                   | **5.000** |
 
 
 ### Escenario intensivo (motivos con audio + onboarding)
@@ -112,16 +112,16 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
-| Conversación con el paciente                   | 2.100     |
-| Motivos de consulta (con audio)                | 2.100     |
-| Captura clínica del médico (siempre con audio) | 2.100     |
-| **Total**                                      | **6.300** |
+| Conversación con el paciente                   | 2.250     |
+| Motivos de consulta (con audio)                | 2.150     |
+| Captura clínica del médico (siempre con audio) | 2.150     |
+| **Total**                                      | **6.550** |
 
 
 ---
 
 ## Notas
 
-- Por profesional y mes (escenario intensivo): **~USD 1,26**.
+- Por profesional y mes (escenario intensivo): **~USD 1,31** (incluye contexto clínico acotado en prompts IA).
 - No incluye videollamada ni impuestos.
 

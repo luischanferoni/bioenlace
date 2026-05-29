@@ -75,8 +75,8 @@ Código: [`ChatRouter.php`](../../common/components/Assistant/EntryPoints/Chat/R
 | Camino | Implícito / simulado | Notas |
 |--------|----------------------|--------|
 | **Preprocess** (todas las rutas) | Medio (~**40 %** input cacheado, conservador) | Instrucciones + JSON al inicio; mensaje al final (`ChatPreprocessService`) |
-| **Conversational** | Medio (~**50 %**) | Prefijo fijo de instrucciones; variable = mensaje usuario |
-| **Operativo (match PHP)** | Solo preprocess | **Sin** 2.ª IA → no hay `intent-engine-classification` en el escenario central |
+| **Conversational** | Medio (~**40 %**) | Prefijo fijo cacheable; **contexto clínico** semi-estable por paciente; historial acotado variable |
+| **Operativo (match PHP + flujo)** | Solo preprocess | Sin 2.ª IA de clasificación |
 | **Informational sin 2.ª IA** | Solo preprocess | Ahorro = no segunda llamada |
 
 **Clasificación operativa:** keywords del YAML alimentan reglas PHP; la IA de preprocess normaliza texto y fija `user_goal`. El flujo guiado no usa IA en cada paso.
@@ -85,11 +85,11 @@ Código: [`ChatRouter.php`](../../common/components/Assistant/EntryPoints/Chat/R
 
 ## Caso 2 — Motivos de consulta (lote)
 
-`AppointmentReasonBatchService`: 1× `motivos-consulta-batch` por encounter; transcript único.
+`AppointmentReasonBatchService`: 1× `motivos-consulta-batch` por encounter; transcript único + **contexto clínico acotado** (`PatientAiContextBuilder`, perfil `motivos`).
 
 | Estrategia | Aplica |
 |------------|--------|
-| Implícito | Poco (plantilla corta; ~**25 %** input cacheado en COGS favorable) |
+| Implícito | Poco (plantilla + contexto variable por paciente; ~**25 %** input cacheado en COGS favorable) |
 | Explícito / simulado | No rentable (1 uso por consulta) |
 | Caché app | Casi no |
 | Producto | **Idempotencia** (`motivos_ia_processed_at`) |
@@ -106,11 +106,11 @@ Código: [`ChatRouter.php`](../../common/components/Assistant/EntryPoints/Chat/R
 
 ### Análisis (`analisis-consulta`)
 
-Prompt: categorías del servicio + texto de consulta (`generarPromptEspecializado`).
+Prompt: categorías del servicio + **contexto clínico acotado** + texto de consulta (`PatientAiContextBuilder` + `generarPromptEspecializado`).
 
 | Estrategia | Aplica |
 |------------|--------|
-| Implícito | Medio si categorías + instrucciones van **al inicio** (~**25 %** en tablas) |
+| Implícito | Medio si categorías + instrucciones van **al inicio** (~**25 %** en tablas); bloque clínico variable por paciente |
 | Explícito | Bloque por **servicio/configuración** si ≥2k tokens |
 | Caché app | Baja (cada dictado distinto) |
 
@@ -130,7 +130,7 @@ Prompt: categorías del servicio + texto de consulta (`generarPromptEspecializad
 
 | Caso | Palanca principal hoy | Context caching (COGS) |
 |------|------------------------|-------------------------|
-| 1 Chat paciente | Preprocess + 2.ª IA solo conversacional | ~**40 %** preprocess · ~**50 %** conversacional — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
+| 1 Chat paciente | Preprocess + 2.ª IA conversacional con **historial acotado** | ~**40 %** preprocess · ~**40 %** conversacional — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
 | 2 Motivos | 1 llamada + idempotencia | ~**25 %** favorable |
 | 3 Médico | SymSpell + 1 analizar | ~**25 %** favorable |
 | 4 Onboarding | Reglas / FAQ | No priorizar |

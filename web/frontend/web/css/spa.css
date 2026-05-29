@@ -203,7 +203,7 @@
     }
 
     .spa-asistente-root {
-        padding-bottom: calc(6.25rem + 88px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: 0;
     }
 }
 
@@ -211,10 +211,18 @@
 :root {
     /* Separación del sticky “Atajos” respecto al borde superior del viewport (ajustar al gusto). */
     --spa-chat-toolbar-sticky-top: 4.75rem;
+    /* Reserva inferior de mensajes (fallback; spa-home.js la ajusta al alto real del composer). */
+    --spa-chat-composer-reserve: calc(6.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+    :root {
+        --spa-chat-composer-reserve: calc(6.25rem + 88px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 .spa-asistente-root {
-    padding-bottom: calc(6.25rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 0;
 }
 
 .spa-chat-root {
@@ -243,10 +251,15 @@
     border-radius: 999px;
 }
 
-/* Estado inicial del chat: atajos alineados a la izquierda */
+/* Estado inicial del chat: hint a ancho completo del panel de mensajes */
+#spa-chat-empty-hint {
+    width: 100%;
+}
+
 .spa-chat-empty-hint-inner {
-    margin-right: auto;
-    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .spa-chat-welcome-category-chips {
@@ -267,6 +280,7 @@
 .spa-chat-messages {
     overflow: visible;
     min-height: 0;
+    padding-bottom: var(--spa-chat-composer-reserve);
 }
 
 .spa-chat-composer {
@@ -274,8 +288,8 @@
     bottom: 0;
     z-index: 1020;
     padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
-    background-color: var(--bs-body-bg, #fff);
-    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+    background: transparent;
+    box-shadow: none;
 }
 
 @media (max-width: 768px) {
@@ -486,6 +500,10 @@
 .spa-flow-step-item--done .spa-flow-step-text {
     color: var(--bs-secondary-color, #6c757d);
     font-weight: 500;
+}
+
+.spa-flow-step-item--done .spa-flow-step-ui {
+    pointer-events: none;
 }
 
 .spa-flow-step-item--pending .spa-flow-step-text {

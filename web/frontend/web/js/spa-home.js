@@ -644,6 +644,26 @@
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
     const welcomeActionsEl = document.getElementById('spa-chat-welcome-actions');
 
+    /** Alinea el composer fijo al ancho del chat y reserva espacio en mensajes para que no queden debajo. */
+    function syncChatComposerLayout() {
+        if (!chatRoot) {
+            return;
+        }
+        try {
+            if (chatComposer) {
+                const r = chatRoot.getBoundingClientRect();
+                chatComposer.style.left = Math.max(0, Math.round(r.left)) + 'px';
+                chatComposer.style.width = Math.max(0, Math.round(r.width)) + 'px';
+            }
+            if (chatComposer && chatMessagesDiv) {
+                const gapPx = 10;
+                const composerH = Math.ceil(chatComposer.getBoundingClientRect().height);
+                chatMessagesDiv.style.paddingBottom = Math.max(0, composerH + gapPx) + 'px';
+            }
+            chatRoot.style.height = '';
+        } catch (e) { /* ignore */ }
+    }
+
     // Estado de cards expandidos
     const expandedCards = new Map();
 
@@ -786,7 +806,8 @@
     }
 
     /**
-     * Crea o actualiza el panel del flow con todos los `assistant_text`; la UI va solo en el paso activo.
+     * Crea o actualiza el panel del flow con todos los `assistant_text`; la UI vive en el paso activo
+     * y se conserva en pasos ya completados (p. ej. lista auto-seleccionada de un solo ítem).
      *
      * @param {object|null} fm
      * @param {string} flowIntentId
@@ -885,10 +906,19 @@
                             textEl.textContent = flowStepDisplayText(st, idx);
                         }
                     }
-                    if (idx !== activeIdx) {
+                    if (idx > activeIdx) {
                         const uiMount = li.querySelector('.spa-flow-step-ui');
                         if (uiMount) {
                             uiMount.innerHTML = '';
+                        }
+                    } else if (idx < activeIdx && activeIdx >= 0) {
+                        const uiMount = li.querySelector('.spa-flow-step-ui');
+                        if (uiMount) {
+                            try {
+                                uiMount.querySelectorAll('input, select, textarea, button').forEach(function (el) {
+                                    el.disabled = true;
+                                });
+                            } catch (e) { /* ignore */ }
                         }
                     }
                 });
@@ -951,17 +981,7 @@
         // Ajustar altura real del chat al viewport (considera navbar/layout Yii).
         // Evita hardcodear `100vh - X` en la vista.
         function applyChatHeight() {
-            if (!chatRoot) return;
-            try {
-                // Altura del chat: la define el flex (`.main-content:has(.spa-asistente-root)` + `.spa-chat-root`).
-                // Aquí solo alineamos el composer fijo al ancho de la columna.
-                if (chatComposer) {
-                    const r = chatRoot.getBoundingClientRect();
-                    chatComposer.style.left = Math.max(0, Math.round(r.left)) + 'px';
-                    chatComposer.style.width = Math.max(0, Math.round(r.width)) + 'px';
-                }
-                chatRoot.style.height = '';
-            } catch (e) { /* ignore */ }
+            syncChatComposerLayout();
         }
         applyChatHeight();
         purgeLegacyFlowPlanWraps();
@@ -2864,6 +2884,7 @@
         // Auto-resize textarea
         queryInput.style.height = 'auto';
         queryInput.style.height = queryInput.scrollHeight + 'px';
+        syncChatComposerLayout();
         toggleWelcomeActionsForComposer();
     }
 

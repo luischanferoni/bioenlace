@@ -69,22 +69,21 @@ class DevTestSessionResult {
   final String? errorMessage;
 }
 
-/// Token de prueba vía API (sin user_id hardcodeado en código fuente).
+/// Token de prueba vía API. [userId] = user_id Yii (cada app resuelve el suyo).
 Future<DevTestSessionResult> fetchDevTestSession({
+  required String userId,
   bool autoPes = false,
-  String? userIdOverride,
 }) async {
-  final userId = (userIdOverride ?? AppConfig.devTestUserId).trim();
-  if (userId.isEmpty) {
+  final id = userId.trim();
+  if (id.isEmpty) {
     return const DevTestSessionResult.failure(
-      'Usuario de prueba no configurado. Definí DEV_TEST_USER_ID al compilar '
-      '(p. ej. --dart-define=DEV_TEST_USER_ID=5749).',
+      'Usuario de prueba no configurado para esta build.',
     );
   }
 
   final uri = Uri.parse('${AppConfig.apiUrl}/auth/generar-token-prueba').replace(
     queryParameters: {
-      'user_id': userId,
+      'user_id': id,
       'auto_pes': autoPes ? '1' : '0',
     },
   );
@@ -125,20 +124,25 @@ Future<DevTestSessionResult> fetchDevTestSession({
   }
 }
 
+/// Muestra loading, ejecuta [action] y cierra el diálogo antes de devolver.
 Future<T?> withDevLoginLoading<T>(
   BuildContext context,
   Future<T> Function() action,
 ) async {
+  if (!context.mounted) return null;
+
   showDialog<void>(
     context: context,
     barrierDismissible: false,
+    useRootNavigator: true,
     builder: (context) => const Center(child: CircularProgressIndicator()),
   );
+
   try {
     return await action();
   } finally {
-    if (context.mounted && Navigator.canPop(context)) {
-      Navigator.pop(context);
+    if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
     }
   }
 }
@@ -151,5 +155,25 @@ void showDevLoginError(BuildContext context, String message) {
       backgroundColor: IntentPalette.of(UiIntent.danger).base,
       duration: const Duration(seconds: 5),
     ),
+  );
+}
+
+void showDevLoginSuccess(BuildContext context, String message) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: IntentPalette.of(UiIntent.success).base,
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
+
+/// Reemplaza la pila de navegación (login + overlays) por [screen].
+void replaceAppRoot(BuildContext context, Widget screen) {
+  if (!context.mounted) return;
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(builder: (_) => screen),
+    (route) => false,
   );
 }

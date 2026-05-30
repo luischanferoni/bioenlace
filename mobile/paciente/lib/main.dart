@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import 'config/paciente_dev_config.dart';
 import 'auth/paciente_dev_login.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'services/chat_service.dart';
@@ -82,7 +83,9 @@ class MyApp extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => SignupScreen()),
                 );
               },
-              onNavigateToHome: navigatePacienteDevHome,
+              onNavigateToHome: PacienteDevConfig.showDevHomeButton
+                  ? navigatePacienteDevHome
+                  : null,
             ),
     );
   }

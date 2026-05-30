@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../config/medico_dev_config.dart';
 import '../screens/medico_signup_screen.dart';
 import 'medico_dev_login.dart';
 
@@ -30,6 +31,7 @@ Widget buildMedicoLoginScreen({
         ),
       );
     },
-    onNavigateToHome: navigateMedicoDevHome,
+    onNavigateToHome:
+        MedicoDevConfig.showDevHomeButton ? navigateMedicoDevHome : null,
   );
 }

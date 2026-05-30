@@ -59,12 +59,5 @@ class AppConfig {
   static const String diditPacienteBiometricWorkflowId = 'DIDIT_WORKFLOW_PACIENTE_BIOMETRIC';
   static const String diditMedicoKycWorkflowId = 'DIDIT_WORKFLOW_MEDICO_KYC';
   static const String diditMedicoBiometricWorkflowId = 'DIDIT_WORKFLOW_MEDICO_BIOMETRIC';
-
-  /// user_id de Yii para «Ir al inicio» / token de prueba (solo desarrollo).
-  /// `--dart-define=DEV_TEST_USER_ID=5749` (paciente) o `5748` (médico).
-  static const String devTestUserId = String.fromEnvironment(
-    'DEV_TEST_USER_ID',
-    defaultValue: '',
-  );
 }
 

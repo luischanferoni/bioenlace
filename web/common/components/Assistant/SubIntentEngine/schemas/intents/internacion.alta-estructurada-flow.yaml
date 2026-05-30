@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Alta hospitalaria"
 description: "Para registrar el alta de internación."
-rbac_route: "/api/clinical/internacion/alta-formulario"
+rbac_route: "/api/clinical/episode-of-care/by-internacion"
 keywords:
   - alta internación
   - epicrisis

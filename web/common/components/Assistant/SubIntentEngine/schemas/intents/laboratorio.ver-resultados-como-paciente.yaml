@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Ver resultados de laboratorio"
 description: "Ver tus resultados de laboratorio."
-rbac_route: "/api/clinical/laboratory-result/mis-resultados-como-paciente"
+rbac_route: "/api/clinical/laboratory-results/mis-resultados"
 keywords:
   - mis resultados
   - laboratorio

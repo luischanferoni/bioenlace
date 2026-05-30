@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Cambio de cama"
 description: "Cambiar a un paciente internado de cama."
-rbac_route: "/api/clinical/internacion/cambio-cama-formulario"
+rbac_route: "/api/clinical/episode-of-care/by-internacion"
 keywords:
   - cambio de cama
   - traslado de cama

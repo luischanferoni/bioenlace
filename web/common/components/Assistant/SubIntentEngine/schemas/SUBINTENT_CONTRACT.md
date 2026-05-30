@@ -10,7 +10,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `intent_id` | Identificador estable (alineado con `action_id` del catálogo cuando aplica). |
 | `version` | Entero legible para humanos; el motor no lo valida hoy. |
 | `action_name`, `description`, `keywords` | Metadatos / descubrimiento. |
-| `rbac_route` | Ruta HTTP de permiso (sin `v1`), alineada a la acción API real que webvimark puede descubrir (p. ej. cierre POST del flujo o pantalla principal del intent). |
+| `rbac_route` | Ruta HTTP del **permiso API base** que se asigna al rol (sin `v1`), no una ruta UI/ghost heredada por migración. Ej.: `listar-atenciones-como-paciente`, no `mis-atenciones-como-paciente`. Las rutas hijas se heredan vía `auth_item_child` al migrate; si el rol recibe el padre después, ejecutar la migración de resync correspondiente. |
 | `intent_semantics` | Opcional: señal para IA (`goal`, `how`, `preconditions`, etc.). |
 | `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |

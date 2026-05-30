@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Recordatorios de tratamiento"
 description: "Activar recordatorios de tu plan de tratamiento."
-rbac_route: "/api/clinical/care-plan/preferencias-recordatorios-como-paciente"
+rbac_route: "/api/clinical/care-plans/preferencias-recordatorios-como-paciente"
 keywords:
   - recordatorios
   - alarmas

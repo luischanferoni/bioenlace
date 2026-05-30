@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Ver tablero de guardia"
 description: "Ver la lista de pacientes en guardia."
-rbac_route: "/api/clinical/emergency-guardia/tablero"
+rbac_route: "/api/pacientes/listar"
 keywords:
   - tablero guardia
   - urgencias

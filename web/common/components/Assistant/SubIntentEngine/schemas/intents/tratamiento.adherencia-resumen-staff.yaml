@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Adherencia a tratamientos (staff)"
 description: "Ver el avance de los planes de tratamiento y sus actividades."
-rbac_route: "/api/clinical/care-plans/adherencia-resumen-staff"
+rbac_route: "/api/clinical/care-plan/active"
 keywords:
   - adherencia tratamiento
   - planes de tratamiento

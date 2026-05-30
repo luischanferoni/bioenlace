@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../auth/paciente_dev_login.dart';
 import '../services/chat_service.dart';
 import 'main_screen.dart';
 import 'signup_screen.dart';
@@ -243,13 +244,7 @@ class ConfiguracionScreen extends StatelessWidget {
           MaterialPageRoute(builder: (_) => SignupScreen()),
         );
       },
-      onNavigateToHome: (loginContext) async {
-        ScaffoldMessenger.of(loginContext).showSnackBar(
-          const SnackBar(
-            content: Text('Usá el botón "Ir al inicio" desde la pantalla de login.'),
-          ),
-        );
-      },
+      onNavigateToHome: navigatePacienteDevHome,
     );
   }
 }

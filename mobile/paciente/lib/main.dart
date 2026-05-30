@@ -1,10 +1,9 @@
 // lib/main.dart
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared/shared.dart'; // Usar LoginScreen del paquete compartido
+import 'package:shared/shared.dart';
 
+import 'auth/paciente_dev_login.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'services/chat_service.dart';
 import 'screens/main_screen.dart';
@@ -83,146 +82,7 @@ class MyApp extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => SignupScreen()),
                 );
               },
-              onNavigateToHome: (loginContext) async {
-                // Mostrar indicador de carga
-                showDialog(
-                  context: loginContext,
-                  barrierDismissible: false,
-                  builder: (context) => Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-
-                try {
-                  // Simular sesión: obtener token para el usuario con id 5749 (paciente de prueba)
-                  final tokenResponse = await http.get(
-                    Uri.parse('${AppConfig.apiUrl}/auth/generar-token-prueba?user_id=5749'),
-                  ).timeout(Duration(seconds: 10));
-
-                  if (tokenResponse.statusCode == 200) {
-                    final responseData = json.decode(tokenResponse.body);
-                    
-                    if (responseData['success'] == true) {
-                      final data = responseData['data'];
-                      final token = data['token'] as String;
-                      final user = data['user'] as Map<String, dynamic>;
-                      final persona = data['persona'] as Map<String, dynamic>;
-                      
-                      // Guardar datos en SharedPreferences
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('is_logged_in', true);
-                      await prefs.setString('auth_token', token);
-                      await prefs.setString('user_id', user['id'].toString());
-                      await prefs.setString('user_name', '${persona['apellido']}, ${persona['nombre']}');
-                      await prefs.setString('dni_detected', persona['documento']);
-                      
-                      // Cerrar el diálogo de carga
-                      Navigator.pop(loginContext);
-                      
-                      // Crear servicio de chat con los datos del paciente real
-                      final chatService = ChatService(
-                        currentUserId: user['id'].toString(),
-                        currentUserName: '${persona['apellido']}, ${persona['nombre']}',
-                        authToken: token,
-                      );
-                      
-                      // Mostrar mensaje de éxito
-                      ScaffoldMessenger.of(loginContext).showSnackBar(
-                        SnackBar(
-                          content: Text('Sesión iniciada como ${persona['apellido']}, ${persona['nombre']}'),
-                          backgroundColor: IntentPalette.of(UiIntent.success).base,
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      
-                      // Navegar a MainScreen (Inicio con bottom nav)
-                      Navigator.pushReplacement(
-                        loginContext,
-                        MaterialPageRoute(
-                          builder: (_) => MainScreen(chatService: chatService, authToken: token),
-                        ),
-                      );
-                    } else {
-                      // Cerrar el diálogo de carga
-                      Navigator.pop(loginContext);
-                      
-                      // Mostrar error y usar modo visitante como fallback
-                      ScaffoldMessenger.of(loginContext).showSnackBar(
-                        SnackBar(
-                          content: Text('No se pudo obtener token. Usando modo visitante.'),
-                          backgroundColor: IntentPalette.of(UiIntent.warning).base,
-                          duration: Duration(seconds: 3),
-                        ),
-                      );
-                      
-                      final demoChatService = ChatService(
-                        currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
-                        currentUserName: 'Visitante',
-                        authToken: null,
-                      );
-
-                      Navigator.pushReplacement(
-                        loginContext,
-                        MaterialPageRoute(
-                          builder: (_) => MainScreen(chatService: demoChatService, authToken: null),
-                        ),
-                      );
-                    }
-                  } else {
-                    // Cerrar el diálogo de carga
-                    Navigator.pop(loginContext);
-
-                    // Mostrar error y usar modo visitante como fallback
-                    ScaffoldMessenger.of(loginContext).showSnackBar(
-                      SnackBar(
-                        content: Text('Error al conectar con el servidor. Usando modo visitante.'),
-                        backgroundColor: IntentPalette.of(UiIntent.warning).base,
-                        duration: Duration(seconds: 3),
-                      ),
-                    );
-
-                    final demoChatService = ChatService(
-                      currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
-                      currentUserName: 'Visitante',
-                      authToken: null,
-                    );
-
-                    Navigator.pushReplacement(
-                      loginContext,
-                      MaterialPageRoute(
-                        builder: (_) => MainScreen(chatService: demoChatService, authToken: null),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  // Cerrar el diálogo de carga si aún está abierto
-                  if (Navigator.canPop(loginContext)) {
-                    Navigator.pop(loginContext);
-                  }
-                  
-                  // Mostrar error y usar modo visitante como fallback
-                  ScaffoldMessenger.of(loginContext).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: ${e.toString()}. Usando modo visitante.'),
-                      backgroundColor: IntentPalette.of(UiIntent.warning).base,
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                  
-                  final demoChatService = ChatService(
-                    currentUserId: 'visitor_${DateTime.now().millisecondsSinceEpoch}',
-                    currentUserName: 'Visitante',
-                    authToken: null,
-                  );
-
-                  Navigator.pushReplacement(
-                    loginContext,
-                    MaterialPageRoute(
-                      builder: (_) => MainScreen(chatService: demoChatService, authToken: null),
-                    ),
-                  );
-                }
-              },
+              onNavigateToHome: navigatePacienteDevHome,
             ),
     );
   }

@@ -334,19 +334,23 @@ class AuthController extends BaseController
             || ($idEfector !== null && $idEfector > 0);
         if ($solicitaPes) {
             [$pes, $pesMeta] = $this->resolvePesForDevToken($persona, $idPes, $idEfector);
-            if ($pes === null) {
+            $pesExplicito = ($idPes !== null && $idPes > 0)
+                || ($idEfector !== null && $idEfector > 0);
+            if ($pes === null && $pesExplicito) {
                 $disponibles = $this->listPesIdsForDevToken((int) $persona->id_persona);
                 throw new \InvalidArgumentException(
                     'Sin asignación PES para id_persona ' . $persona->id_persona
                     . ($disponibles !== [] ? '. IDs PES en BD: ' . implode(', ', $disponibles) : '.')
                 );
             }
-            Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-            Yii::$app->user->setIdEfector((int) $pes->id_efector);
-            Yii::$app->user->setServicioActual((int) $pes->id_servicio);
-            $jwtClaims['id_profesional_efector_servicio'] = (int) $pes->id;
-            $jwtClaims['id_efector'] = (int) $pes->id_efector;
-            $jwtClaims['servicio_actual'] = (int) $pes->id_servicio;
+            if ($pes !== null) {
+                Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
+                Yii::$app->user->setIdEfector((int) $pes->id_efector);
+                Yii::$app->user->setServicioActual((int) $pes->id_servicio);
+                $jwtClaims['id_profesional_efector_servicio'] = (int) $pes->id;
+                $jwtClaims['id_efector'] = (int) $pes->id_efector;
+                $jwtClaims['servicio_actual'] = (int) $pes->id_servicio;
+            }
         }
 
         if ($encounterClass !== null && $encounterClass !== '') {
@@ -458,8 +462,9 @@ class AuthController extends BaseController
     /**
      * Endpoint de prueba: Generar token para paciente por DNI o por user_id.
      * Solo para desarrollo/pruebas. Identidad: user_id, id_persona o dni (uno alcanza).
-     * PES/efector/servicio: por defecto auto_pes=1 resuelve el primer PES de la persona en BD.
-     * Opcional: id_efector, id_profesional_efector_servicio (o id_pes), encounter_class, auto_pes=0.
+     * PES/efector/servicio: auto_pes=1 intenta resolver el primer PES; si no hay asignación,
+     * emite token solo con identidad (p. ej. paciente). Falla solo si se pidió id_pes/id_efector
+     * concretos y no existen. Opcional: encounter_class, auto_pes=0.
      */
     public function actionGenerarTokenPrueba()
     {

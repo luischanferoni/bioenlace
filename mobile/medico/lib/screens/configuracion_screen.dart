@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../auth/medico_login_screen.dart';
 import '../main.dart';
 import '../services/config_service.dart';
 import 'main_screen.dart';
@@ -332,16 +333,15 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       await prefs.remove('user_id');
       await prefs.remove('user_name');
 
-      navigatorKey.currentState?.pushReplacement(
+      navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => LoginScreen(
-            appTitle: 'Bienvenido a BioEnlace Médico',
-            appSubtitle: 'Tu plataforma de gestión médica',
+          builder: (_) => buildMedicoLoginScreen(
             onLoginSuccess: (userId, userName, loginContext) async {
               final p = await SharedPreferences.getInstance();
               await p.setBool('is_logged_in', true);
               await p.setString('user_id', userId);
               await p.setString('user_name', userName);
+              if (!loginContext.mounted) return;
               navigatorKey.currentState?.pushReplacement(
                 MaterialPageRoute(
                   builder: (_) => MainScreen(
@@ -356,6 +356,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             },
           ),
         ),
+        (route) => false,
       );
     }
   }

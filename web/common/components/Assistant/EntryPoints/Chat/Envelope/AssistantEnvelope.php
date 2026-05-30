@@ -76,17 +76,47 @@ final class AssistantEnvelope
             if (!is_array($b)) {
                 continue;
             }
+            $label = trim((string) ($b['label'] ?? ''));
+            $intentId = trim((string) ($b['intent_id'] ?? ''));
+            if ($label === '' || $intentId === '') {
+                continue;
+            }
             $normalized[] = [
-                'label' => trim((string) ($b['label'] ?? '')),
-                'intent_id' => trim((string) ($b['intent_id'] ?? '')),
+                'label' => $label,
+                'intent_id' => $intentId,
             ];
+        }
+
+        if ($normalized === []) {
+            return self::message($text);
         }
 
         return [
             'kind' => 'interactive',
-            'text' => $text,
+            'text' => self::appendInteractiveButtonsHint($text, count($normalized)),
             'buttons' => $normalized,
         ];
+    }
+
+    /**
+     * Sufijo fijo cuando hay botones accionables (no depende de la redacción de la IA).
+     */
+    private static function appendInteractiveButtonsHint(string $text, int $buttonCount): string
+    {
+        if ($buttonCount <= 0) {
+            return $text;
+        }
+
+        $text = rtrim($text);
+        if ($text !== '' && !preg_match('/[.!?…]"?\s*$/u', $text)) {
+            $text .= '.';
+        }
+
+        $suffix = $buttonCount === 1
+            ? ' O tocar el botón de abajo.'
+            : ' O tocar los botones de abajo.';
+
+        return $text . $suffix;
     }
 
     /**

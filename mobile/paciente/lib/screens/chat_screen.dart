@@ -2351,7 +2351,8 @@ class ChatScreenState extends State<ChatScreen> {
                                       });
                                     },
                               enableFlowChainAutoAdvance: !flowUiDisabled &&
-                                  inlineUi['ui_definition'] == null,
+                                  !_messageIsTerminalFlowStep(message),
+                              isTerminalFlowStep: _messageIsTerminalFlowStep(message),
                               apiAbsoluteUrl: (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty
                                   ? inlineUi['api_absolute_url']!.toString()
                                   : applyProvidedParamsToRoute(

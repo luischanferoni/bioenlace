@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
@@ -251,6 +252,9 @@ class UiJsonScreen extends StatefulWidget {
   /// Solo en encadenamiento de flow: lista de 1 ítem → auto-elegir y avanzar (primera carga del paso).
   final bool enableFlowChainAutoAdvance;
 
+  /// Paso terminal del flow (con `flow_submit`): no auto-POST; la web tampoco encadena en ese caso.
+  final bool isTerminalFlowStep;
+
   const UiJsonScreen({
     Key? key,
     required this.apiAbsoluteUrl,
@@ -265,6 +269,7 @@ class UiJsonScreen extends StatefulWidget {
     this.onDefinitionLoaded,
     this.onEmbeddedReady,
     this.enableFlowChainAutoAdvance = false,
+    this.isTerminalFlowStep = false,
   }) : super(key: key);
 
   @override
@@ -328,6 +333,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (oldWidget.apiAbsoluteUrl != widget.apiAbsoluteUrl) {
       _flowChainAutoScheduled = false;
       _load();
+      return;
+    }
+    if (!oldWidget.enableFlowChainAutoAdvance && widget.enableFlowChainAutoAdvance) {
+      _flowChainAutoScheduled = false;
+      _scheduleFlowChainSingleListPick();
     }
   }
 
@@ -404,57 +414,89 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     });
     if (fromNetwork) {
       widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
+    }
+    if (widget.enableFlowChainAutoAdvance && !widget.isTerminalFlowStep) {
       _scheduleFlowChainSingleListPick();
     }
     _scheduleEmbeddedReady();
   }
 
-  /// Encadenamiento de flow: un solo ítem en lista → elegir y avanzar (solo tras GET inicial del paso).
+  /// Encadenamiento de flow: un solo ítem en lista → elegir y avanzar (primera carga del paso).
   void _scheduleFlowChainSingleListPick() {
     if (_flowChainAutoScheduled ||
         !widget.enableFlowChainAutoAdvance ||
+        widget.isTerminalFlowStep ||
         !widget.embedded ||
         widget.onDraftDelta == null ||
-        _listEmbedLocked) {
+        _listEmbedLocked ||
+        _listEmbedSelectedId != null) {
       return;
     }
     _flowChainAutoScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted || _listEmbedLocked || _root == null) return;
-      for (final bRaw in _blocksOrderedForRender(_blocks)) {
-        if (bRaw is! Map) continue;
-        final b = Map<String, dynamic>.from(bRaw);
-        if (b['kind']?.toString() != 'list') continue;
-        final itemsRaw = b['items'];
-        final items = itemsRaw is List ? itemsRaw : const [];
-        if (items.length != 1) continue;
-        final selection =
-            b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
-        if (selection['requires_confirmation'] == true) continue;
-        final draftField = b['draft_field']?.toString() ?? '';
-        if (draftField.isEmpty) continue;
-        final it = items.first;
-        if (it is! Map) continue;
-        final m = Map<String, dynamic>.from(it);
-        final id = m['id']?.toString() ?? '';
-        if (id.isEmpty) continue;
-        // Re-entrada controlada por `_flowChainAutoScheduled`; el lock sólo durante el await.
-        setState(() {
-          _listEmbedSelectedId = id;
-          _listEmbedLocked = true;
-        });
-        try {
-          await Future<void>.delayed(const Duration(milliseconds: 480));
-          if (!mounted) return;
-          await _applyListEmbedDraft(draftField, id, item: m);
-        } finally {
-          if (mounted) {
-            setState(() => _listEmbedLocked = false);
-          }
-        }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        _flowChainAutoScheduled = false;
         return;
       }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(_runFlowChainSingleListPick());
+      });
     });
+  }
+
+  Future<void> _runFlowChainSingleListPick() async {
+    if (!mounted ||
+        !widget.enableFlowChainAutoAdvance ||
+        widget.isTerminalFlowStep ||
+        _listEmbedLocked ||
+        _listEmbedSelectedId != null ||
+        _root == null) {
+      _flowChainAutoScheduled = false;
+      return;
+    }
+
+    Map<String, dynamic>? pickedItem;
+    String draftField = '';
+    String pickedId = '';
+
+    for (final bRaw in _blocksOrderedForRender(_blocks)) {
+      if (bRaw is! Map) continue;
+      final b = Map<String, dynamic>.from(bRaw);
+      if (b['kind']?.toString() != 'list') continue;
+      final itemsRaw = b['items'];
+      final items = itemsRaw is List ? itemsRaw : const [];
+      if (items.length != 1) continue;
+      final selection =
+          b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
+      if (selection['requires_confirmation'] == true) continue;
+      draftField = b['draft_field']?.toString() ?? '';
+      if (draftField.isEmpty) continue;
+      final it = items.first;
+      if (it is! Map) continue;
+      pickedItem = Map<String, dynamic>.from(it);
+      pickedId = pickedItem['id']?.toString() ?? '';
+      if (pickedId.isEmpty) continue;
+      break;
+    }
+
+    if (pickedItem == null || pickedId.isEmpty || draftField.isEmpty) {
+      _flowChainAutoScheduled = false;
+      return;
+    }
+
+    setState(() {
+      _listEmbedSelectedId = pickedId;
+      _listEmbedLocked = true;
+    });
+    try {
+      await Future<void>.delayed(const Duration(milliseconds: 480));
+      if (!mounted) return;
+      await _applyListEmbedDraft(draftField, pickedId, item: pickedItem);
+    } finally {
+      if (mounted) {
+        setState(() => _listEmbedLocked = false);
+      }
+    }
   }
 
   void _seedAccum(Map<String, dynamic> def) {

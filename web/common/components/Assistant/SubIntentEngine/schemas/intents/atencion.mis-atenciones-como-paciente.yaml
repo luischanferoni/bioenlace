@@ -3,7 +3,8 @@ version: 1
 
 action_name: "Ver mis atenciones"
 description: "Ver tus atenciones y sus resúmenes."
-rbac_route: "/api/clinical/encounter/mis-atenciones-como-paciente"
+# Permiso base del paciente (API listar); las UIs hijas heredan vía migración RBAC.
+rbac_route: "/api/clinical/encounter-patient-summary/listar-atenciones-como-paciente"
 keywords:
   - mis atenciones
   - mis consultas

@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Ver mi última atención"
 description: "Abrir el resumen de tu última atención."
-rbac_route: "/api/clinical/encounter/ultima-atencion-ui-como-paciente"
+rbac_route: "/api/clinical/encounter-patient-summary/ultima-atencion-como-paciente"
 keywords:
   - última atención
   - última consulta

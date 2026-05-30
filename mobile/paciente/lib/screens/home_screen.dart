@@ -6,7 +6,6 @@ import '../utils/turno_resolucion_utils.dart';
 import 'care_plan_detail_screen.dart';
 import 'care_plans_list_screen.dart';
 import 'chat_motivos_screen.dart';
-import 'encounter_summary_list_screen.dart';
 
 /// Proximidad de un turno respecto al día actual (sólo fecha, sin hora).
 enum _ProximidadPendiente { hoy, manana, masAdelante }
@@ -579,17 +578,11 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapH(BioSpacing.lg),
           _buildTratamientoCard(context),
         ],
-        BioSpacing.gapH(BioSpacing.lg),
-        _buildAtencionesAcceso(context),
         BioSpacing.gapH(BioSpacing.xl),
         if (_error != null &&
             (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty)) ...[
           BioAlert.danger(message: _error!),
           BioSpacing.gapH(BioSpacing.md),
-        ],
-        if (_proximosVisibles.isEmpty && _tabTurnos == 0) ...[
-          _buildEmptyProximos(context),
-          BioSpacing.gapH(BioSpacing.lg),
         ],
         if (_refrescandoTabActivo)
           const Padding(
@@ -604,33 +597,37 @@ class HomeScreenState extends State<HomeScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: BioSpacing.xl),
               child: Center(child: CircularProgressIndicator()),
-            ),
-          ..._proximosVisibles.map((t) {
-            final enRes = TurnoResolucionUtils.esEnResolucion(t);
-            final prox = enRes ? null : _proximidadPendiente(t);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-              child: _buildTurnoCard(
-                context,
-                t,
-                futuro: true,
-                proximidad: prox,
-                enResolucion: enRes,
+            )
+          else if (_proximosVisibles.isEmpty)
+            _buildEmptyProximos(context)
+          else ...[
+            ..._proximosVisibles.map((t) {
+              final enRes = TurnoResolucionUtils.esEnResolucion(t);
+              final prox = enRes ? null : _proximidadPendiente(t);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+                child: _buildTurnoCard(
+                  context,
+                  t,
+                  futuro: true,
+                  proximidad: prox,
+                  enResolucion: enRes,
+                ),
+              );
+            }),
+            if (_loadingMasPendientes) _buildLoaderInline(),
+            if (_hayMasPendientes && !_loadingMasPendientes)
+              Padding(
+                padding: const EdgeInsets.only(top: BioSpacing.sm),
+                child: BioButton(
+                  label: 'Cargar más',
+                  intent: UiIntent.neutral,
+                  variant: BioButtonVariant.soft,
+                  size: BioButtonSize.sm,
+                  onPressed: _cargarMasPendientes,
+                ),
               ),
-            );
-          }),
-          if (_loadingMasPendientes) _buildLoaderInline(),
-          if (_hayMasPendientes && !_loadingMasPendientes)
-            Padding(
-              padding: const EdgeInsets.only(top: BioSpacing.sm),
-              child: BioButton(
-                label: 'Cargar más',
-                intent: UiIntent.neutral,
-                variant: BioButtonVariant.soft,
-                size: BioButtonSize.sm,
-                onPressed: _cargarMasPendientes,
-              ),
-            ),
+          ],
         ] else ...[
           BioSpacing.gapH(BioSpacing.md),
           if (_refrescandoTabActivo && _pasados.isEmpty)
@@ -687,42 +684,6 @@ class HomeScreenState extends State<HomeScreen> {
           plans: List<Map<String, dynamic>>.from(_carePlansActivos),
           authToken: widget.authToken,
         ),
-      ),
-    );
-  }
-
-  void _abrirMisAtenciones() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EncounterSummaryListScreen(authToken: widget.authToken),
-      ),
-    );
-  }
-
-  Widget _buildAtencionesAcceso(BuildContext context) {
-    return BioCard.intent(
-      intent: UiIntent.info,
-      onTap: _abrirMisAtenciones,
-      child: Row(
-        children: [
-          Icon(Icons.medical_information_outlined, color: IntentPalette.of(UiIntent.info).base),
-          BioSpacing.gapW(BioSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Mis atenciones', style: BioTypography.title),
-                BioSpacing.gapH(BioSpacing.xs),
-                Text(
-                  'Resúmenes de consultas finalizadas',
-                  style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: context.bio.textMuted),
-        ],
       ),
     );
   }

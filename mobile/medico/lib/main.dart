@@ -5,6 +5,7 @@ import 'package:shared/shared.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'auth/medico_login_screen.dart';
+import 'auth/medico_post_login.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
@@ -163,21 +164,7 @@ class MyApp extends StatelessWidget {
               },
             )
           : buildMedicoLoginScreen(
-              onLoginSuccess: (userId, userName, loginContext) async {
-                final prefs = await SharedPreferences.getInstance();
-                final token = prefs.getString('auth_token');
-                if (!loginContext.mounted) return;
-                Navigator.pushReplacement(
-                  loginContext,
-                  MaterialPageRoute(
-                    builder: (_) => ConfigWizardScreen(
-                      userId: userId,
-                      userName: userName,
-                      authToken: token,
-                    ),
-                  ),
-                );
-              },
+              onLoginSuccess: navigateMedicoAfterLogin,
             ),
     );
   }

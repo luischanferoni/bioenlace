@@ -6,6 +6,7 @@ import 'package:shared/shared.dart';
 
 import '../models/turno.dart';
 import '../models/cirugia_agenda_item.dart';
+import '../auth/medico_post_login.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/pacientes_service.dart';
@@ -98,11 +99,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final encounter = prefs.getString('encounter_class');
     if (encounter == null || encounter.isEmpty) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage =
-            'No hay área de atención configurada. Completá la configuración inicial.';
-        _isLoading = false;
-      });
+      await recoverMedicoOperationalSession(
+        userId: widget.userId,
+        userName: widget.userName,
+        authToken: _pacientesService.authToken ?? widget.authToken,
+      );
       return;
     }
     setState(() {
@@ -164,6 +165,14 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      if (isMedicoEncounterSessionError(e)) {
+        await recoverMedicoOperationalSession(
+          userId: widget.userId,
+          userName: widget.userName,
+          authToken: _pacientesService.authToken ?? widget.authToken,
+        );
+        return;
+      }
       setState(() {
         _errorMessage = 'Error al cargar pacientes: ${e.toString()}';
         _isLoading = false;

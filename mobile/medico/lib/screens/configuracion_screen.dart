@@ -4,9 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../auth/medico_login_screen.dart';
+import '../auth/medico_post_login.dart';
+import '../auth/medico_session_prefs.dart';
 import '../main.dart';
 import '../services/config_service.dart';
-import 'main_screen.dart';
 
 class ConfiguracionScreen extends StatefulWidget {
   final String userId;
@@ -96,16 +97,17 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         encounterClass: encounter.code,
         userId: widget.userId,
       );
+      final sessionToken = sessionConfig.contextToken;
+      if (sessionToken == null || sessionToken.isEmpty) {
+        throw Exception('El servidor no devolvió token de contexto operativo.');
+      }
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
           'encounter_class', sessionConfig.encounterClass.code);
       await prefs.setString(
           'encounter_class_label', sessionConfig.encounterClass.label);
-      final sessionToken = sessionConfig.contextToken;
-      if (sessionToken != null && sessionToken.isNotEmpty) {
-        await prefs.setString('auth_token', sessionToken);
-        _configService.authToken = sessionToken;
-      }
+      await prefs.setString('auth_token', sessionToken);
+      _configService.authToken = sessionToken;
       if (mounted) {
         setState(() {
           _currentEncounterCode = sessionConfig.encounterClass.code;
@@ -328,32 +330,12 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     );
 
     if (confirm == true) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('is_logged_in', false);
-      await prefs.remove('user_id');
-      await prefs.remove('user_name');
+      await MedicoSessionPrefs.clearOnLogout();
 
       navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => buildMedicoLoginScreen(
-            onLoginSuccess: (userId, userName, loginContext) async {
-              final p = await SharedPreferences.getInstance();
-              await p.setBool('is_logged_in', true);
-              await p.setString('user_id', userId);
-              await p.setString('user_name', userName);
-              if (!loginContext.mounted) return;
-              navigatorKey.currentState?.pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => MainScreen(
-                    userId: userId,
-                    userName: userName,
-                    authToken: p.getString('auth_token'),
-                    idProfesionalEfectorServicio:
-                        p.getInt('id_profesional_efector_servicio')?.toString(),
-                  ),
-                ),
-              );
-            },
+            onLoginSuccess: navigateMedicoAfterLogin,
           ),
         ),
         (route) => false,

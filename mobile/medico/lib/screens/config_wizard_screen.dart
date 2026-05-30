@@ -185,6 +185,14 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         userId: widget.userId,
       );
 
+      final sessionToken = sessionConfig.contextToken;
+      if (sessionToken == null || sessionToken.isEmpty) {
+        throw Exception(
+          'El servidor no devolvió token de contexto operativo. '
+          'No se puede usar la app sin completar efector, servicio y área.',
+        );
+      }
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('efector_id', sessionConfig.efector.id);
       await prefs.setString('efector_nombre', sessionConfig.efector.nombre);
@@ -197,14 +205,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setInt('id_profesional_efector_servicio',
           sessionConfig.idProfesionalEfectorServicio);
       await prefs.setBool('config_completed', true);
-      final sessionToken = sessionConfig.contextToken;
-      if (sessionToken != null && sessionToken.isNotEmpty) {
-        await prefs.setString('auth_token', sessionToken);
-      }
-      final authTokenForApp =
-          (sessionToken != null && sessionToken.isNotEmpty)
-              ? sessionToken
-              : widget.authToken;
+      await prefs.setString('auth_token', sessionToken);
 
       if (mounted) {
         navigatorKey.currentState?.pushReplacement(
@@ -212,7 +213,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
             builder: (_) => MainScreen(
               userId: widget.userId,
               userName: widget.userName,
-              authToken: authTokenForApp,
+              authToken: sessionToken,
               idProfesionalEfectorServicio:
                   sessionConfig.idProfesionalEfectorServicio.toString(),
             ),

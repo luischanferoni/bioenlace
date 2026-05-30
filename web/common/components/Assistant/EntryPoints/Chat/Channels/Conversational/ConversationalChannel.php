@@ -34,13 +34,17 @@ PROMPT;
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
         if ($idPersona > 0) {
-            $patientBlock = (new PatientAiContextBuilder())->build(
-                $idPersona,
-                PatientAiContextBuilder::PROFILE_CONVERSATIONAL
-            );
-            if ($patientBlock !== '') {
-                $parts[] = '';
-                $parts[] = $patientBlock;
+            try {
+                $patientBlock = (new PatientAiContextBuilder())->build(
+                    $idPersona,
+                    PatientAiContextBuilder::PROFILE_CONVERSATIONAL
+                );
+                if ($patientBlock !== '') {
+                    $parts[] = '';
+                    $parts[] = $patientBlock;
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('ConversationalChannel contexto paciente: ' . $e->getMessage(), 'asistente');
             }
         }
 
@@ -82,6 +86,9 @@ PROMPT;
             Yii::warning('ConversationalChannel: ' . $e->getMessage(), 'asistente');
         }
 
-        return AssistantEnvelope::message('Hola. ¿En qué puedo ayudarte con turnos o trámites en la app?');
+        return AssistantEnvelope::message(
+            'Entiendo tu consulta. Por ahora no puedo orientarte con detalle; te recomiendo consultar con un profesional de salud. '
+            . 'Si querés sacar un turno, decime el servicio o la especialidad que necesitás.'
+        );
     }
 }

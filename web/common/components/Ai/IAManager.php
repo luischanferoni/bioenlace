@@ -833,7 +833,15 @@ class IAManager
                 $responseData = self::procesarRespuestaProveedor($response, $proveedorIA['tipo']);
                 
                 if ($responseData) {
-                    $resultado = self::validarYLimpiarRespuestaJSON($responseData);
+                    // text-generation devuelve prosa (p. ej. asistente-conversational), no JSON estructurado
+                    if ($tipoModelo === 'text-generation') {
+                        $resultado = is_string($responseData) ? trim($responseData) : null;
+                        if ($resultado === '') {
+                            $resultado = null;
+                        }
+                    } else {
+                        $resultado = self::validarYLimpiarRespuestaJSON($responseData);
+                    }
                     
                     // Registrar éxito en rate limiter
                     if ($proveedorIA['tipo'] === 'huggingface' && !empty($endpoint)) {

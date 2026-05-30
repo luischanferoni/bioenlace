@@ -35,7 +35,7 @@ final class ChatPreprocessService
         }
 
         return (bool) preg_match(
-            '/\b(problema|dolor|duele|síntoma|sintoma|malestar|enfermo|fiebre|tos|náusea|nausea|vómito|vomito|mareo|hinchazón|hinchazon|presión|presion|diabetes|hipertensión|hipertension)\b/u',
+            '/\b(problema|dolor|duele|síntoma|sintoma|malestar|enfermo|fiebre|tos|náusea|nausea|vómito|vomito|mareo|hinchazón|hinchazon|presión|presion|diabetes|hipertensión|hipertension|chichón|chichon|golpe|hematoma|moretón|moreton|bulto|hinchado|inflamado|cabeza|manos|pies|brazo|pierna|herida|sangra|sangrado)\b/u',
             $lower
         );
     }
@@ -101,8 +101,9 @@ Respondé ÚNICAMENTE con JSON:
 
 Reglas:
 - user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar).
-- conversational si es saludo, consulta de salud/síntomas, malestar o charla sin pedir una acción del sistema (no confundir con informational).
+- conversational si es saludo, consulta de salud/síntomas, lesiones (golpe, chichón, bulto), malestar o charla sin pedir una acción del sistema (no confundir con informational).
 - informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas ni quejas clínicas.
+- No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.
 - meta: preguntas sobre el asistente o la app (no operativas).
 - normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá el sentido del mensaje.
 - extractions: solo menciones de entidades del mundo (servicio, centro, persona), no verbos ni la acción.
@@ -190,12 +191,31 @@ PROMPT;
             }
         }
 
+        $goal = self::applyClinicalGoalOverride($normalized, $goal);
+
         return [
             'normalized_text' => $normalized,
             'user_goal' => $goal,
             'action_text' => $actionText,
             'extractions' => $extractions,
         ];
+    }
+
+    private static function applyClinicalGoalOverride(string $normalized, string $goal): string
+    {
+        if (!self::isClinicalSymptomContent($normalized)) {
+            return $goal;
+        }
+
+        if ($goal === 'informational' || $goal === 'unclear') {
+            return 'conversational';
+        }
+
+        if ($goal === 'operational' && !preg_match('/\b(turno|turnos|reservar|sacar turno|cancelar|agenda|cita)\b/u', mb_strtolower($normalized, 'UTF-8'))) {
+            return 'conversational';
+        }
+
+        return $goal;
     }
 
     /**
@@ -211,7 +231,7 @@ PROMPT;
             $goal = 'informational';
         } elseif (preg_match('/\b(hola|buenos|gracias|qué tal|como estas)\b/u', $lower)) {
             $goal = 'conversational';
-        } elseif (preg_match('/\b(problema|dolor|duele|síntoma|sintoma|malestar|enfermo|manos|pies|cabeza|fiebre|tos)\b/u', $lower)) {
+        } elseif (self::isClinicalSymptomContent($content)) {
             $goal = 'conversational';
         }
 

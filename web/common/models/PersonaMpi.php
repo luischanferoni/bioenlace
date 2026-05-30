@@ -131,13 +131,13 @@ class PersonaMpi extends \yii\db\ActiveRecord
     }
 
     /**
-     * Gets query for [[Alergias]].
-     *
      * @return \yii\db\ActiveQuery
      */
     public function getAlergias()
     {
-        return $this->hasMany(Alergias::className(), ['id_persona' => 'id_persona']);
+        return $this->hasMany(\common\models\Clinical\AllergyIntolerance::class, [
+            'subject_persona_id' => 'id_persona',
+        ]);
     }
 
     /**

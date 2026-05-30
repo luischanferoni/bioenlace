@@ -4,7 +4,6 @@ namespace common\components\Clinical\AiContext;
 
 use common\components\Clinical\Enum\RequestStatus;
 use common\components\Clinical\Service\EncounterLifecycleService;
-use common\models\Alergias;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
@@ -236,27 +235,7 @@ final class PatientAiContextBuilder
         $seen = [];
         $out = [];
 
-        foreach (Alergias::findActive()->where(['id_persona' => $subjectPersonaId])->all() as $a) {
-            $term = isset($a->codigoSnomed) ? trim((string) $a->codigoSnomed->term) : '';
-            if ($term === '' || isset($seen[$term])) {
-                continue;
-            }
-            $seen[$term] = true;
-            $out[] = $this->formatAllergyLabel($term, $a->tipo ?? null, $a->criticidad ?? null);
-            if (count($out) >= $limit) {
-                return $out;
-            }
-        }
-
-        $fhirRows = AllergyIntolerance::find()
-            ->where(['subject_persona_id' => $subjectPersonaId])
-            ->andWhere(['deleted_at' => null])
-            ->andWhere(['clinical_status' => 'active'])
-            ->orderBy(['id' => SORT_DESC])
-            ->limit($limit)
-            ->all();
-
-        foreach ($fhirRows as $ai) {
+        foreach (AllergyIntolerance::findActiveBySubject($subjectPersonaId, $limit) as $ai) {
             $term = trim((string) ($ai->display ?? ''));
             if ($term === '' && !empty($ai->code)) {
                 $term = (string) $ai->code;

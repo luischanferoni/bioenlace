@@ -5,6 +5,8 @@ namespace common\models;
 use Yii;
 
 /**
+ * @deprecated Tabla legacy `consultas_alergias` eliminada. Usar {@see \common\models\Clinical\AllergyIntolerance}.
+ *
  * This is the model class for table "alergias".
  *
  * @property int $id

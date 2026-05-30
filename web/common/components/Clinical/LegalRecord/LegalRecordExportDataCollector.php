@@ -5,7 +5,7 @@ namespace common\components\Clinical\LegalRecord;
 use common\components\Clinical\Enum\EncounterStatus;
 use common\components\Clinical\PatientSummary\PatientEncounterSummaryBuilder;
 use common\components\Person\Service\PersonaSignosVitalesService;
-use common\models\Alergias;
+use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
@@ -85,10 +85,14 @@ final class LegalRecordExportDataCollector
         };
 
         $alergias = [];
-        foreach (Alergias::find()->where(['id_persona' => $idPersona])->all() as $a) {
+        foreach (AllergyIntolerance::findActiveBySubject($idPersona) as $ai) {
+            $term = trim((string) ($ai->display ?? ''));
+            if ($term === '' && !empty($ai->code)) {
+                $term = (string) $ai->code;
+            }
             $alergias[] = [
-                'codigo' => isset($a->codigoSnomed) ? (string) $a->codigoSnomed->conceptId : null,
-                'termino' => isset($a->codigoSnomed) ? (string) $a->codigoSnomed->term : null,
+                'codigo' => $ai->code !== null && $ai->code !== '' ? (string) $ai->code : null,
+                'termino' => $term !== '' ? $term : null,
             ];
         }
 

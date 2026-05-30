@@ -16,7 +16,7 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
 use common\models\Turno;
-use common\models\Alergias;
+use common\models\Clinical\AllergyIntolerance;
 use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\ConsultaMotivosMessage;
@@ -133,13 +133,18 @@ class PacientesController extends BaseController
             $condicionesCronicas[] = ['codigo' => $code, 'termino' => $term];
         }
 
-        // Alergias
+        // Alergias (FHIR allergy_intolerance)
         $hallazgos = [];
-        $alergias = Alergias::find()->where(['id_persona' => (int) $persona->id_persona])->all();
-        foreach ($alergias as $a) {
-            $term = isset($a->codigoSnomed) ? (string) $a->codigoSnomed->term : null;
-            $code = isset($a->codigoSnomed) ? (string) $a->codigoSnomed->conceptId : null;
-            $hallazgos[] = ['id' => (int) ($a->id ?? 0), 'codigo' => $code, 'termino' => $term];
+        foreach (AllergyIntolerance::findActiveBySubject((int) $persona->id_persona) as $ai) {
+            $term = trim((string) ($ai->display ?? ''));
+            if ($term === '' && !empty($ai->code)) {
+                $term = (string) $ai->code;
+            }
+            $hallazgos[] = [
+                'id' => (int) $ai->id,
+                'codigo' => $ai->code !== null && $ai->code !== '' ? (string) $ai->code : null,
+                'termino' => $term !== '' ? $term : null,
+            ];
         }
 
         // Antecedentes

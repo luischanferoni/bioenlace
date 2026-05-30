@@ -50,4 +50,23 @@ class AllergyIntolerance extends ActiveRecord
     {
         return $this->hasOne(Persona::class, ['id_persona' => 'subject_persona_id']);
     }
+
+    /**
+     * Alergias/intolerancias activas del paciente (FHIR).
+     *
+     * @return self[]
+     */
+    public static function findActiveBySubject(int $subjectPersonaId, ?int $limit = null): array
+    {
+        $query = self::find()
+            ->where(['subject_persona_id' => $subjectPersonaId])
+            ->andWhere(['deleted_at' => null])
+            ->andWhere(['clinical_status' => 'active'])
+            ->orderBy(['id' => SORT_DESC]);
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->all();
+    }
 }

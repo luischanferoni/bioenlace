@@ -307,6 +307,9 @@ html:has(.spa-asistente-root) {
 
 .spa-chat-input {
     resize: none;
+    overflow-y: hidden;
+    min-height: 2.75rem;
+    max-height: min(40vh, 12rem);
     padding-right: 3.25rem; /* espacio para el botón */
     padding-bottom: 0.85rem;
 }

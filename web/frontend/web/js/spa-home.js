@@ -1109,6 +1109,7 @@
 
             // Focus en textarea al cargar
             queryInput.focus();
+            handleInput();
         }
 
         // El menú Atajos se maneja como dropdown Bootstrap (no modal).
@@ -2166,7 +2167,10 @@
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
             setTimeout(function () {
-                if (queryInput) queryInput.value = '';
+                if (queryInput) {
+                    queryInput.value = '';
+                    handleInput();
+                }
                 handleSendQuery('');
             }, SPA_LIST_PICK_TO_SEND_MS);
         }
@@ -2993,9 +2997,18 @@
      * Manejar input en textarea
      */
     function handleInput() {
-        // Auto-resize textarea
+        if (!queryInput) {
+            return;
+        }
+        // Auto-resize textarea (1 línea inicial; crece hasta max-height en CSS)
         queryInput.style.height = 'auto';
-        queryInput.style.height = queryInput.scrollHeight + 'px';
+        const maxPx = Math.min(
+            (window.innerHeight || document.documentElement.clientHeight || 600) * 0.4,
+            192
+        );
+        const next = Math.min(queryInput.scrollHeight, maxPx);
+        queryInput.style.height = next + 'px';
+        queryInput.style.overflowY = queryInput.scrollHeight > maxPx ? 'auto' : 'hidden';
         syncChatComposerLayout();
         toggleWelcomeActionsForComposer();
     }

@@ -4,6 +4,8 @@ namespace common\components\Assistant\EntryPoints\Chat\Channels\Conversational;
 
 use common\components\Ai\IAManager;
 use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
+use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Clinical\AiContext\PatientAiContextBuilder;
 use Yii;
 
@@ -18,11 +20,20 @@ final class ConversationalChannel
     public static function stablePromptPrefix(): string
     {
         return <<<'PROMPT'
-Sos el asistente de una aplicación de salud. Respondé en español, breve y amable.
-No inventes datos clínicos ni confirmes turnos.
-Si el usuario describe síntomas o malestar sin pedir una acción del sistema, respondé con empatía y orientá a consultar con un profesional; no listes menús de turnos ni trámites.
-Si piden una acción operativa (turno, cancelar, agenda), sugerí que lo formulen como pedido concreto.
-Si hay historial reciente, continuá la charla sin repetir preguntas ya respondidas.
+Sos el asistente de Bioenlace, una aplicación de salud donde las personas reservan turnos con profesionales y centros de la red.
+
+Respondé en español, breve y amable (3–5 oraciones salvo que pidan más detalle).
+No inventes datos clínicos, diagnósticos ni confirmes turnos ya hechos.
+
+Cuando describan síntomas, lesiones o malestar:
+1) Mostrá empatía y orientación prudente (no reemplazás la consulta médica).
+2) Indicá qué tipo de profesional o servicio suele ser apropiado para evaluar ese cuadro (ej. clínica médica o medicina general, traumatología por golpe o chichón, pediatría si es un niño). No inventes nombres de médicos ni centros concretos salvo que aparezcan en el contexto clínico del paciente.
+3) Conectá con Bioenlace: explicá que pueden reservar un turno acá mismo escribiendo qué necesitan (ej. "Quiero turno con clínica médica" o "Sacar turno de traumatología") o tocando el botón de reserva si aparece debajo de tu mensaje.
+4) Si preguntan cómo contactar al profesional, aclaré que el contacto es agendando una consulta por la app; no des teléfonos, emails ni direcciones inventadas.
+
+Si piden una acción operativa concreta (turno, cancelar, ver agenda), invitalos a decirlo con sus palabras; no hace falta listar menús largos.
+
+Si hay historial reciente, continuá la charla sin repetir lo ya respondido.
 
 PROMPT;
     }
@@ -74,21 +85,70 @@ PROMPT;
 
         $prompt = self::buildPrompt($content, $userId);
 
+        $text = null;
         try {
             $raw = IAManager::consultarIA($prompt, 'asistente-conversational', 'text-generation');
             if (is_string($raw) && trim($raw) !== '') {
-                return AssistantEnvelope::message(trim($raw));
-            }
-            if (is_array($raw) && isset($raw['text'])) {
-                return AssistantEnvelope::message(trim((string) $raw['text']));
+                $text = trim($raw);
+            } elseif (is_array($raw) && isset($raw['text'])) {
+                $text = trim((string) $raw['text']);
             }
         } catch (\Throwable $e) {
             Yii::warning('ConversationalChannel: ' . $e->getMessage(), 'asistente');
         }
 
-        return AssistantEnvelope::message(
-            'Entiendo tu consulta. Por ahora no puedo orientarte con detalle; te recomiendo consultar con un profesional de salud. '
-            . 'Si querés sacar un turno, decime el servicio o la especialidad que necesitás.'
-        );
+        if ($text === null || $text === '') {
+            $text = 'Entiendo tu consulta. Te recomiendo que un profesional te evalúe en persona. '
+                . 'En Bioenlace podés reservar un turno escribiendo, por ejemplo, "Quiero turno con clínica médica".';
+        }
+
+        return self::finalizeResponse($content, $userId, $text);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function finalizeResponse(string $content, int $userId, string $text): array
+    {
+        if (!ChatPreprocessService::isClinicalSymptomContent($content)) {
+            return AssistantEnvelope::message($text);
+        }
+
+        $button = self::resolveBookingButton($userId);
+        if ($button === null) {
+            return AssistantEnvelope::message($text);
+        }
+
+        return AssistantEnvelope::interactive($text, [$button]);
+    }
+
+    /**
+     * @return array{label: string, intent_id: string}|null
+     */
+    private static function resolveBookingButton(int $userId): ?array
+    {
+        $catalog = UiActionCatalog::forUser($userId);
+        foreach (['turnos.crear-como-paciente', 'turnos.crear-para-paciente'] as $intentId) {
+            $item = $catalog->byActionId[$intentId] ?? null;
+            if ($item === null) {
+                continue;
+            }
+
+            return [
+                'label' => $item->display_name !== '' ? $item->display_name : 'Reservar turno',
+                'intent_id' => $intentId,
+            ];
+        }
+
+        foreach ($catalog->items as $item) {
+            if (strpos($item->action_id, 'turnos.crear') === 0) {
+                return [
+                    'label' => $item->display_name !== '' ? $item->display_name : $item->action_id,
+                    'intent_id' => $item->action_id,
+                ];
+            }
+        }
+
+        return null;
     }
 }

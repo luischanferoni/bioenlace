@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
@@ -18,6 +19,7 @@ Future<void> navigateMedicoAfterLogin(
   await prefs.setBool('is_logged_in', true);
   await prefs.setString('user_id', userId);
   await prefs.setString('user_name', userName);
+  await CrashlyticsBootstrap.setUserId(userId);
   if (loginToken != null && loginToken.isNotEmpty) {
     await prefs.setString('auth_token', loginToken);
   }

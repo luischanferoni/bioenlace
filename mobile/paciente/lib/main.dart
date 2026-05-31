@@ -1,4 +1,6 @@
 // lib/main.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
@@ -10,32 +12,40 @@ import 'services/chat_service.dart';
 import 'screens/main_screen.dart';
 import 'screens/signup_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await FirebaseBootstrap.ensureInitialized();
-  await bootstrapCarePlanReminders();
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await FirebaseBootstrap.ensureInitialized();
+    await bootstrapCarePlanReminders();
 
-  final prefs = await SharedPreferences.getInstance();
-  final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
-  final userId = prefs.getString('user_id') ?? '';
-  final userName = prefs.getString('user_name') ?? '';
-  final authToken = prefs.getString('auth_token');
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final userId = prefs.getString('user_id') ?? '';
+    final userName = prefs.getString('user_name') ?? '';
+    final authToken = prefs.getString('auth_token');
 
-  ChatService? chatService;
+    if (isLoggedIn && userId.isNotEmpty) {
+      await CrashlyticsBootstrap.setUserId(userId);
+    }
 
-  if (isLoggedIn) {
-    chatService = ChatService(
-      currentUserId: userId,
-      currentUserName: userName,
+    ChatService? chatService;
+
+    if (isLoggedIn) {
+      chatService = ChatService(
+        currentUserId: userId,
+        currentUserName: userName,
+        authToken: authToken,
+      );
+    }
+
+    runApp(MyApp(
+      isLoggedIn: isLoggedIn,
+      chatService: chatService,
       authToken: authToken,
-    );
-  }
-
-  runApp(MyApp(
-    isLoggedIn: isLoggedIn,
-    chatService: chatService,
-    authToken: authToken,
-  ));
+    ));
+  }, (error, stack) {
+    unawaited(CrashlyticsBootstrap.recordError(error, stack, fatal: true));
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -61,6 +71,7 @@ class MyApp extends StatelessWidget {
               goToHomeButtonText: 'Ir al inicio de la app',
               diditBiometricWorkflowId: AppConfig.diditPacienteBiometricWorkflowId,
               onLoginSuccess: (userId, userName, loginContext) async {
+                await CrashlyticsBootstrap.setUserId(userId);
                 // Token puede haber sido guardado por el flujo de login (ej. biometría)
                 final prefs = await SharedPreferences.getInstance();
                 final token = prefs.getString('auth_token');

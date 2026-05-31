@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared/diagnostics/crashlytics_bootstrap.dart';
 
 import '../firebase_options.dart';
 
@@ -28,6 +29,7 @@ class FirebaseBootstrap {
         await Firebase.initializeApp();
       }
       _initialized = true;
+      await CrashlyticsBootstrap.configure(appTag: 'paciente');
       return true;
     } catch (e, st) {
       debugPrint('Firebase.initializeApp falló: $e\n$st');

@@ -89,3 +89,38 @@ flutter run \
 | Token null en emulador | Usar dispositivo físico o emulador con Google Play |
 | Push no llega en iOS | APNs en Firebase, capability Push, perfil de provisioning |
 | Backend no envía | `fcmPush` en `params-local.php` (credentialsPath o fcmServerKey) |
+
+## 8. Firebase Crashlytics
+
+Crashlytics está integrado en **paciente** y **médico** (crashes + logs del asistente vía `AppDiagnosticLog`).
+
+### Consola
+
+1. Firebase Console → **Build → Crashlytics** → habilitar si lo pide.
+2. Los reportes aparecen tras instalar un build **release/profile** (en debug local la recolección está desactivada por defecto).
+
+### Probar en debug
+
+```bash
+flutter run --dart-define=CRASHLYTICS_DEBUG=true
+```
+
+Forzar un crash de prueba (solo desarrollo):
+
+```dart
+FirebaseCrashlytics.instance.crash();
+```
+
+### Android
+
+- Requiere `google-services.json` y plugins Gradle (`google-services` + `firebase-crashlytics`).
+- Tras el primer crash, la consola puede tardar unos minutos en mostrar datos.
+
+### iOS
+
+- Mismo `GoogleService-Info.plist` que FCM.
+- Para builds release, Xcode debe subir dSYM (FlutterFire / archive en Xcode lo gestiona en la mayoría de casos).
+
+### Identificación de usuario
+
+Tras login se llama `CrashlyticsBootstrap.setUserId(userId)` para correlacionar crashes con el usuario (sin datos clínicos en el log).

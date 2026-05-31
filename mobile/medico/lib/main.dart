@@ -1,4 +1,6 @@
 // lib/main.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
@@ -49,32 +51,39 @@ Future<Map<String, dynamic>> _getUserData() async {
   }
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await FirebaseBootstrap.ensureInitialized();
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await FirebaseBootstrap.ensureInitialized();
 
-  // Inicializar formato de fechas localizado para español
-  await initializeDateFormatting('es', null);
-  
-  bool isLoggedIn = false;
-  String userId = '';
-  String userName = 'Usuario Médico';
-  
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    isLoggedIn = prefs.getBool('is_logged_in') ?? false;
-    userId = prefs.getString('user_id') ?? '';
-    userName = prefs.getString('user_name') ?? 'Usuario Médico';
-  } catch (e) {
-    // En caso de error, continuar con valores por defecto
-    print('[ERROR] main() - Error al inicializar SharedPreferences: $e');
-  }
+    // Inicializar formato de fechas localizado para español
+    await initializeDateFormatting('es', null);
 
-  runApp(MyApp(
-    isLoggedIn: isLoggedIn,
-    userId: userId,
-    userName: userName,
-  ));
+    bool isLoggedIn = false;
+    String userId = '';
+    String userName = 'Usuario Médico';
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+      userId = prefs.getString('user_id') ?? '';
+      userName = prefs.getString('user_name') ?? 'Usuario Médico';
+    } catch (e, st) {
+      unawaited(CrashlyticsBootstrap.recordError(e, st, reason: 'main_prefs'));
+    }
+
+    if (isLoggedIn && userId.isNotEmpty) {
+      await CrashlyticsBootstrap.setUserId(userId);
+    }
+
+    runApp(MyApp(
+      isLoggedIn: isLoggedIn,
+      userId: userId,
+      userName: userName,
+    ));
+  }, (error, stack) {
+    unawaited(CrashlyticsBootstrap.recordError(error, stack, fatal: true));
+  });
 }
 
 class MyApp extends StatelessWidget {

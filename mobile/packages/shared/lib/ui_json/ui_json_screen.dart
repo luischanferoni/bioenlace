@@ -7,7 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../diagnostics/app_diagnostic_log.dart';
 import '../theme/tokens/tokens.dart';
+import 'ui_json_list_auto_advance.dart';
 import 'ui_json_list_presentation.dart';
 import 'laboratory_pdf_download_widget.dart';
 import 'prescription_pdf_download_widget.dart';
@@ -287,6 +289,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   bool _listEmbedLocked = false;
   bool _formSubmitted = false;
   bool _flowChainAutoScheduled = false;
+  bool _flowChainAutoApplied = false;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
@@ -332,11 +335,13 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.apiAbsoluteUrl != widget.apiAbsoluteUrl) {
       _flowChainAutoScheduled = false;
+      _flowChainAutoApplied = false;
       _load();
       return;
     }
     if (!oldWidget.enableFlowChainAutoAdvance && widget.enableFlowChainAutoAdvance) {
       _flowChainAutoScheduled = false;
+      _flowChainAutoApplied = false;
       _scheduleFlowChainSingleListPick();
     }
   }
@@ -397,6 +402,12 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       widget.onEmbeddedReady?.call();
+      if (!_flowChainAutoApplied &&
+          widget.enableFlowChainAutoAdvance &&
+          !widget.isTerminalFlowStep) {
+        _flowChainAutoScheduled = false;
+        _scheduleFlowChainSingleListPick();
+      }
     });
   }
 
@@ -424,6 +435,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   /// Encadenamiento de flow: un solo ítem en lista → elegir y avanzar (primera carga del paso).
   void _scheduleFlowChainSingleListPick() {
     if (_flowChainAutoScheduled ||
+        _flowChainAutoApplied ||
         !widget.enableFlowChainAutoAdvance ||
         widget.isTerminalFlowStep ||
         !widget.embedded ||
@@ -446,6 +458,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
 
   Future<void> _runFlowChainSingleListPick() async {
     if (!mounted ||
+        _flowChainAutoApplied ||
         !widget.enableFlowChainAutoAdvance ||
         widget.isTerminalFlowStep ||
         _listEmbedLocked ||
@@ -455,43 +468,52 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       return;
     }
 
-    Map<String, dynamic>? pickedItem;
-    String draftField = '';
-    String pickedId = '';
-
-    for (final bRaw in _blocksOrderedForRender(_blocks)) {
-      if (bRaw is! Map) continue;
-      final b = Map<String, dynamic>.from(bRaw);
-      if (b['kind']?.toString() != 'list') continue;
-      final itemsRaw = b['items'];
-      final items = itemsRaw is List ? itemsRaw : const [];
-      if (items.length != 1) continue;
-      final selection =
-          b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
-      if (selection['requires_confirmation'] == true) continue;
-      draftField = b['draft_field']?.toString() ?? '';
-      if (draftField.isEmpty) continue;
-      final it = items.first;
-      if (it is! Map) continue;
-      pickedItem = Map<String, dynamic>.from(it);
-      pickedId = pickedItem['id']?.toString() ?? '';
-      if (pickedId.isEmpty) continue;
-      break;
-    }
-
-    if (pickedItem == null || pickedId.isEmpty || draftField.isEmpty) {
+    final pick = UiJsonSingleListPick.fromDefinition(_root!);
+    if (pick == null) {
       _flowChainAutoScheduled = false;
+      unawaited(AppDiagnosticLog.log(
+        'flow_auto_pick',
+        'skip_no_single_list',
+        data: {
+          'url': widget.apiAbsoluteUrl,
+          'blocks': _blocks.length,
+        },
+      ));
       return;
     }
 
     setState(() {
-      _listEmbedSelectedId = pickedId;
+      _listEmbedSelectedId = pick.itemId;
       _listEmbedLocked = true;
     });
     try {
       await Future<void>.delayed(const Duration(milliseconds: 480));
       if (!mounted) return;
-      await _applyListEmbedDraft(draftField, pickedId, item: pickedItem);
+      await _applyListEmbedDraft(
+        pick.draftField,
+        pick.itemId,
+        item: pick.item,
+      );
+      _flowChainAutoApplied = true;
+      unawaited(AppDiagnosticLog.log(
+        'flow_auto_pick',
+        'applied',
+        data: {
+          'url': widget.apiAbsoluteUrl,
+          'draft_field': pick.draftField,
+          'item_id': pick.itemId,
+        },
+      ));
+    } catch (e, st) {
+      unawaited(AppDiagnosticLog.log(
+        'flow_auto_pick',
+        'error',
+        data: {
+          'url': widget.apiAbsoluteUrl,
+          'error': e.toString(),
+          'stack': st.toString().split('\n').take(3).join(' | '),
+        },
+      ));
     } finally {
       if (mounted) {
         setState(() => _listEmbedLocked = false);

@@ -5,9 +5,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Solo si descargaste google-services.json desde Firebase (ver FIREBASE_SETUP.md).
+// Firebase (google-services.json + Crashlytics). Ver FIREBASE_SETUP.md.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {

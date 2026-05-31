@@ -5,6 +5,12 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Firebase (google-services.json + Crashlytics). Ver FIREBASE_SETUP.md del paciente.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
+}
+
 android {
     namespace = "com.bioenlace.medico"
     compileSdk = flutter.compileSdkVersion

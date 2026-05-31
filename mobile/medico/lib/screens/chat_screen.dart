@@ -32,6 +32,9 @@ class ChatScreenState extends State<ChatScreen> {
   late AsistenteService _asistenteService;
   List<Map<String, dynamic>> _chatHistory = [];
   bool _isSending = false;
+  bool _flowAdvanceLocked = false;
+  static const int _flowAutoPickMaxAttempts = 3;
+  static const int _flowAdvanceMaxAttempts = 3;
   Map<String, dynamic> _draft = {};
   Map<String, dynamic> _flowSnapshot = {};
   String? _intentId;
@@ -117,6 +120,80 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Un solo POST de avance de flow a la vez (evita ráfagas que resetean la conexión).
+  Future<Map<String, dynamic>> _postFlowAdvance({String? actionId}) async {
+    var waitedMs = 0;
+    while (_flowAdvanceLocked && waitedMs < 8000) {
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      waitedMs += 250;
+    }
+    if (_flowAdvanceLocked) {
+      unawaited(AppDiagnosticLog.log('flow_advance', 'skip_locked'));
+      return {
+        'success': false,
+        'message': 'Avance en curso. Esperá un momento.',
+      };
+    }
+    _flowAdvanceLocked = true;
+    try {
+      if (actionId != null && actionId.isNotEmpty) {
+        return await _asistenteService.procesarInteraccion('', actionId: actionId);
+      }
+      return await _asistenteService.procesarInteraccion('');
+    } finally {
+      _flowAdvanceLocked = false;
+    }
+  }
+
+  Future<Map<String, dynamic>> _postFlowAdvanceWithRetry({String? actionId}) async {
+    Object? lastError;
+    for (var attempt = 1; attempt <= _flowAdvanceMaxAttempts; attempt++) {
+      if (attempt > 1) {
+        await Future<void>.delayed(Duration(milliseconds: 900 * attempt));
+      }
+      try {
+        final res = await _postFlowAdvance(actionId: actionId);
+        if (res['success'] == true) {
+          return res;
+        }
+        final msg = res['message']?.toString() ?? '';
+        lastError = Exception(msg);
+        final retryable = msg.contains('Avance en curso') ||
+            isRetryableNetworkError(lastError);
+        if (attempt < _flowAdvanceMaxAttempts && retryable) {
+          continue;
+        }
+        return {
+          'success': false,
+          'message': userFriendlyErrorMessage(
+            lastError,
+            serverMessage: msg,
+            fallback: 'No se pudo avanzar. Intentá de nuevo.',
+          ),
+        };
+      } catch (e) {
+        lastError = e;
+        if (attempt < _flowAdvanceMaxAttempts && isRetryableNetworkError(e)) {
+          continue;
+        }
+        return {
+          'success': false,
+          'message': userFriendlyErrorMessage(
+            e,
+            fallback: 'No se pudo avanzar. Intentá de nuevo.',
+          ),
+        };
+      }
+    }
+    return {
+      'success': false,
+      'message': userFriendlyErrorMessage(
+        lastError ?? Exception('Error'),
+        fallback: 'No se pudo avanzar. Intentá de nuevo.',
+      ),
+    };
+  }
+
   Future<void> _autoAdvanceFlowSingleListIfNeeded({
     required Map<String, dynamic> message,
     required int messageIndex,
@@ -126,6 +203,13 @@ class ChatScreenState extends State<ChatScreen> {
     if (message['flow_superseded'] == true ||
         message['_flow_single_pick_done'] == true ||
         message['_flow_single_pick_in_flight'] == true) {
+      return;
+    }
+
+    final attempts = message['_flow_single_pick_attempts'] is int
+        ? message['_flow_single_pick_attempts'] as int
+        : 0;
+    if (attempts >= _flowAutoPickMaxAttempts) {
       return;
     }
 
@@ -201,12 +285,13 @@ class ChatScreenState extends State<ChatScreen> {
 
     setState(() => _isSending = true);
     try {
-      final res = await _asistenteService.procesarInteraccion('');
+      final res = await _postFlowAdvanceWithRetry();
       if (!mounted) return;
       if (res['success'] == true) {
         final data = res['data'];
         if (data is Map) {
           message['_flow_single_pick_done'] = true;
+          message.remove('_flow_single_pick_attempts');
           await _handleFlowEnvelopeResponse(Map<String, dynamic>.from(data));
           unawaited(AppDiagnosticLog.log(
             'flow_auto_pick',
@@ -220,35 +305,76 @@ class ChatScreenState extends State<ChatScreen> {
           setState(() => _isSending = false);
         }
       } else {
+        final friendly = res['message']?.toString() ??
+            'No se pudo avanzar automáticamente. Tocá la opción en la lista.';
+        message['_flow_single_pick_attempts'] = attempts + 1;
         unawaited(AppDiagnosticLog.log(
           'flow_auto_pick',
           'chat_advance_failed',
           data: {
             'draft_field': pick.draftField,
             'item_id': pick.itemId,
-            'message': res['message']?.toString() ?? '',
+            'attempt': attempts + 1,
+            'message': friendly,
           },
         ));
+        if (attempts + 1 < _flowAutoPickMaxAttempts) {
+          message['_flow_single_pick_in_flight'] = false;
+          await Future<void>.delayed(Duration(milliseconds: 1000 * (attempts + 1)));
+          if (!mounted) return;
+          unawaited(_autoAdvanceFlowSingleListIfNeeded(
+            message: message,
+            messageIndex: messageIndex,
+            inlineUi: inlineUi,
+            definition: definition,
+          ));
+          return;
+        }
         setState(() {
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
-            'content': res['message']?.toString() ??
-                'No se pudo avanzar automáticamente. Tocá la opción en la lista.',
+            'content': friendly,
             'timestamp': DateTime.now(),
           });
         });
       }
     } catch (e, st) {
+      message['_flow_single_pick_attempts'] = attempts + 1;
       unawaited(AppDiagnosticLog.log(
         'flow_auto_pick',
         'chat_advance_error',
         data: {
+          'attempt': attempts + 1,
           'error': e.toString(),
           'stack': st.toString().split('\n').take(3).join(' | '),
         },
       ));
-      if (mounted) setState(() => _isSending = false);
+      if (attempts + 1 < _flowAutoPickMaxAttempts) {
+        message['_flow_single_pick_in_flight'] = false;
+        await Future<void>.delayed(Duration(milliseconds: 1000 * (attempts + 1)));
+        if (!mounted) return;
+        unawaited(_autoAdvanceFlowSingleListIfNeeded(
+          message: message,
+          messageIndex: messageIndex,
+          inlineUi: inlineUi,
+          definition: definition,
+        ));
+        return;
+      }
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': userFriendlyErrorMessage(
+              e,
+              fallback: 'No se pudo avanzar automáticamente. Tocá la opción en la lista.',
+            ),
+            'timestamp': DateTime.now(),
+          });
+        });
+      }
     } finally {
       message['_flow_single_pick_in_flight'] = false;
     }
@@ -545,6 +671,13 @@ class ChatScreenState extends State<ChatScreen> {
     // según el draft (que ahora refleja sólo lo que el usuario ya eligió).
     _subintentId = null;
     _asistenteService.currentSubintentId = null;
+    if (messageIndex >= 0 && messageIndex < _chatHistory.length) {
+      final m = _chatHistory[messageIndex];
+      m.remove('_flow_single_pick_attempts');
+      m.remove('_flow_single_pick_done');
+      m.remove('_flow_single_pick_in_flight');
+      m.remove('_flow_auto_selected_id');
+    }
   }
 
   void _beginNewFlowActivation() {
@@ -1162,7 +1295,7 @@ class ChatScreenState extends State<ChatScreen> {
       _intentId = intentId;
       _asistenteService.currentIntentId = intentId;
 
-      final result = await _asistenteService.procesarInteraccion('');
+      final result = await _postFlowAdvanceWithRetry();
       if (!mounted) return;
 
       if (result['success'] != true) {
@@ -1312,122 +1445,17 @@ class ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  /// Panel central con mismos atajos que el ícono «Atajos»; se oculta al escribir o al tener mensajes en el chat.
+  /// Panel central con mismos atajos que el ícono «Atajos»; ocupa el área de mensajes.
   Widget _buildWelcomeShortcutsPanel() {
     final cats = _welcomeAtajos;
     if (cats == null || cats.isEmpty) {
       return const SizedBox.shrink();
     }
-    final tokens = context.bio;
-    final primary = IntentPalette.of(UiIntent.primary).base;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(0, BioSpacing.md, 0, BioSpacing.md),
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
-              child: Text(
-                'Podés elegir un atajo o escribir tu consulta abajo.',
-                textAlign: TextAlign.start,
-                style: BioTypography.h3.copyWith(color: tokens.textMuted),
-              ),
-            ),
-            BioSpacing.gapH(BioSpacing.md),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 360),
-              child: Scrollbar(
-                controller: _welcomeShortcutsScrollController,
-                child: SingleChildScrollView(
-                  controller: _welcomeShortcutsScrollController,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ...cats.map(
-                          (cat) => Padding(
-                            padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  cat.titulo,
-                                  style: BioTypography.title.copyWith(
-                                    decoration: TextDecoration.underline,
-                                    color: tokens.textMuted,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  textAlign: TextAlign.start,
-                                ),
-                                BioSpacing.gapH(BioSpacing.sm),
-                                Wrap(
-                                  alignment: WrapAlignment.start,
-                                  spacing: BioSpacing.sm,
-                                  runSpacing: BioSpacing.sm,
-                                  children: cat.items
-                                      .map(
-                                        (item) => ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 280,
-                                          ),
-                                          child: BioCard(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: BioSpacing.md,
-                                              vertical: BioSpacing.sm + 2,
-                                            ),
-                                            onTap: _isSending
-                                                ? null
-                                                : () => _startFlowFromShortcut(
-                                                      item.intentId,
-                                                      item.title,
-                                                    ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Text(
-                                                  item.title,
-                                                  style: BioTypography.title.copyWith(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: primary,
-                                                  ),
-                                                ),
-                                                if (item.description.isNotEmpty) ...[
-                                                  BioSpacing.gapH(BioSpacing.xs),
-                                                  Text(
-                                                    item.description,
-                                                    style: BioTypography.bodySm.copyWith(
-                                                      color: tokens.textMuted,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return WelcomeShortcutsPanel(
+      categorias: cats,
+      scrollController: _welcomeShortcutsScrollController,
+      isSending: _isSending,
+      onShortcutTap: (intentId, title) => _startFlowFromShortcut(intentId, title),
     );
   }
 
@@ -1504,7 +1532,7 @@ class ChatScreenState extends State<ChatScreen> {
           'timestamp': DateTime.now(),
         });
       });
-      _showErrorSnackbar('Error: ${e.toString()}');
+      _showErrorSnackbar(e);
       _scrollToBottom();
     }
   }
@@ -1749,7 +1777,7 @@ class ChatScreenState extends State<ChatScreen> {
       });
       _scrollToBottom();
       try {
-        final result = await _asistenteService.procesarInteraccion('', actionId: intentId);
+        final result = await _postFlowAdvanceWithRetry(actionId: intentId);
         if (!mounted) return true;
         if (result['success'] != true) {
           setState(() {
@@ -1997,16 +2025,30 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   String _messageFromHttpResponse(http.Response res) {
+    String? bodyMsg;
     try {
       final decoded = json.decode(utf8.decode(res.bodyBytes));
       if (decoded is Map && decoded['message'] != null) {
-        final m = decoded['message'].toString().trim();
-        if (m.isNotEmpty) return m;
+        bodyMsg = decoded['message'].toString().trim();
       }
     } catch (_) {
       // ignore
     }
-    return 'HTTP ${res.statusCode}';
+    return userFriendlyHttpStatusMessage(res.statusCode, bodyMessage: bodyMsg);
+  }
+
+  void _showErrorSnackbar(Object error, {String? serverMessage}) {
+    final palette = IntentPalette.of(UiIntent.danger);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          userFriendlyErrorMessage(error, serverMessage: serverMessage),
+          style: TextStyle(color: palette.onBase),
+        ),
+        backgroundColor: palette.base,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _postFlowSubmitFromMessage(int index) async {
@@ -2113,17 +2155,6 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _showErrorSnackbar(String message) {
-    final palette = IntentPalette.of(UiIntent.danger);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: TextStyle(color: palette.onBase)),
-        backgroundColor: palette.base,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -2147,9 +2178,10 @@ class ChatScreenState extends State<ChatScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_showWelcomeShortcutGrid) _buildWelcomeShortcutsPanel(),
           Expanded(
-            child: ListView.builder(
+            child: _showWelcomeShortcutGrid
+                ? _buildWelcomeShortcutsPanel()
+                : ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               itemCount: _chatHistory.length,
@@ -2511,7 +2543,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 // Avanzar el flow automáticamente (snapshot) sin texto.
                                 setState(() => _isSending = true);
                                 try {
-                                  final res = await _asistenteService.procesarInteraccion('');
+                                  final res = await _postFlowAdvanceWithRetry();
                                   if (!mounted) return;
                                   if (res['success'] == true) {
                                     final data = res['data'];
@@ -2540,7 +2572,17 @@ class ChatScreenState extends State<ChatScreen> {
                                   }
                                 } catch (e) {
                                   if (mounted) {
-                                    setState(() => _isSending = false);
+                                    setState(() {
+                                      _isSending = false;
+                                      _chatHistory.add({
+                                        'type': 'bot',
+                                        'content': userFriendlyErrorMessage(
+                                          e,
+                                          fallback: 'No se pudo avanzar. Intentá de nuevo.',
+                                        ),
+                                        'timestamp': DateTime.now(),
+                                      });
+                                    });
                                   }
                                 }
                               },
@@ -2559,7 +2601,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 }
                                 // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
                                 _asistenteService.draft = Map<String, dynamic>.from(_draft);
-                                final res = await _asistenteService.procesarInteraccion('');
+                                final res = await _postFlowAdvanceWithRetry();
                                 if (!mounted) return;
                                 if (res['success'] == true) {
                                   final data = res['data'];
@@ -2568,6 +2610,15 @@ class ChatScreenState extends State<ChatScreen> {
                                       Map<String, dynamic>.from(data),
                                     );
                                   }
+                                } else if (mounted) {
+                                  setState(() {
+                                    _chatHistory.add({
+                                      'type': 'bot',
+                                      'content': res['message']?.toString() ??
+                                          'No se pudo avanzar. Intentá de nuevo.',
+                                      'timestamp': DateTime.now(),
+                                    });
+                                  });
                                 }
                               },
                             ),

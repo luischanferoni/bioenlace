@@ -32,6 +32,7 @@ Future<void> navigatePacienteDevHome(BuildContext loginContext) async {
   await prefs.setString('auth_token', payload.token);
   await prefs.setString('user_id', payload.userId);
   await prefs.setString('user_name', payload.userName);
+  await CrashlyticsBootstrap.setUserId(payload.userId);
   if (payload.documento != null && payload.documento!.isNotEmpty) {
     await prefs.setString('dni_detected', payload.documento!);
   }

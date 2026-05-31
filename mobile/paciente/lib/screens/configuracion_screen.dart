@@ -223,6 +223,7 @@ class ConfiguracionScreen extends StatelessWidget {
         await prefs.setBool('is_logged_in', true);
         await prefs.setString('user_id', userId);
         await prefs.setString('user_name', userName);
+        await CrashlyticsBootstrap.setUserId(userId);
         if (!loginContext.mounted) return;
         final newChatService = ChatService(
           currentUserId: userId,

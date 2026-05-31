@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import '../diagnostics/app_diagnostic_log.dart';
+import '../text/user_friendly_error.dart';
 import '../theme/tokens/tokens.dart';
 import 'ui_json_list_auto_advance.dart';
 import 'ui_json_list_presentation.dart';
@@ -16,25 +17,24 @@ import 'prescription_pdf_download_widget.dart';
 import 'weekly_scheduler_widget.dart';
 
 String _messageFromErrorBody(http.Response res) {
+  String? bodyMsg;
   try {
     final json = jsonDecode(utf8.decode(res.bodyBytes));
     if (json is Map) {
       final msg = json['message']?.toString();
       if (msg != null && msg.trim().isNotEmpty) {
-        return msg.trim();
+        bodyMsg = msg.trim();
+        return userFriendlyHttpStatusMessage(res.statusCode, bodyMessage: bodyMsg);
       }
     }
   } catch (_) {
     // ignore
   }
-  return 'HTTP ${res.statusCode}';
+  return userFriendlyHttpStatusMessage(res.statusCode, bodyMessage: bodyMsg);
 }
 
 String _humanizeExceptionMessage(Object e) {
-  var s = e.toString().trim();
-  // Dart suele formatear Exception como "Exception: <msg>" (o a veces "Exception. <msg>").
-  s = s.replaceFirst(RegExp(r'^Exception\s*[:.]\s*', caseSensitive: false), '');
-  return s.trim();
+  return userFriendlyErrorMessage(e);
 }
 
 /// Web/desktop: arrastre con ratón y rueda/trackpad en listas horizontales anidadas (p. ej. chat).
@@ -294,7 +294,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   bool _formSubmitted = false;
   bool _flowChainAutoScheduled = false;
   bool _flowChainAutoApplied = false;
-  bool _flowChainAutoRetried = false;
+  int _loadGeneration = 0;
+  static const int _maxLoadAttempts = 3;
+  static const Duration _loadRetryBaseDelay = Duration(milliseconds: 1200);
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
@@ -345,7 +347,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (oldWidget.apiAbsoluteUrl != widget.apiAbsoluteUrl) {
       _flowChainAutoScheduled = false;
       _flowChainAutoApplied = false;
-      _flowChainAutoRetried = false;
       _load();
       return;
     }
@@ -386,34 +387,54 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   }
 
   Future<void> _load() async {
+    final loadGen = ++_loadGeneration;
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
     });
-    try {
-      final uri = Uri.parse(widget.apiAbsoluteUrl);
-      final res = await http
-          .get(uri, headers: _headers())
-          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw Exception(_messageFromErrorBody(res));
+
+    Object? lastError;
+    for (var attempt = 1; attempt <= _maxLoadAttempts; attempt++) {
+      if (!mounted || loadGen != _loadGeneration) return;
+      try {
+        final uri = Uri.parse(widget.apiAbsoluteUrl);
+        final res = await http
+            .get(uri, headers: _headers())
+            .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+        if (!mounted || loadGen != _loadGeneration) return;
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          throw Exception(_messageFromErrorBody(res));
+        }
+        final json = jsonDecode(utf8.decode(res.bodyBytes));
+        if (json is! Map) {
+          throw Exception('Respuesta inválida');
+        }
+        final m = Map<String, dynamic>.from(json);
+        if (m['kind'] != 'ui_definition') {
+          throw Exception('No es ui_definition');
+        }
+        _hydrateFromDefinition(m, fromNetwork: true);
+        return;
+      } catch (e) {
+        lastError = e;
+        if (!mounted || loadGen != _loadGeneration) return;
+        final canRetry = attempt < _maxLoadAttempts && isRetryableNetworkError(e);
+        if (canRetry) {
+          await Future<void>.delayed(_loadRetryBaseDelay * attempt);
+          continue;
+        }
+        break;
       }
-      final json = jsonDecode(utf8.decode(res.bodyBytes));
-      if (json is! Map) {
-        throw Exception('Respuesta inválida');
-      }
-      final m = Map<String, dynamic>.from(json);
-      if (m['kind'] != 'ui_definition') {
-        throw Exception('No es ui_definition');
-      }
-      _hydrateFromDefinition(m, fromNetwork: true);
-    } catch (e) {
-      setState(() {
-        _error = _humanizeExceptionMessage(e);
-        _loading = false;
-      });
-      _scheduleEmbeddedReady();
     }
+
+    if (!mounted || loadGen != _loadGeneration) return;
+    setState(() {
+      _error = userFriendlyErrorMessage(
+        lastError ?? Exception('Error desconocido'),
+      );
+      _loading = false;
+    });
   }
 
   void _scheduleEmbeddedReady() {
@@ -421,28 +442,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       widget.onEmbeddedReady?.call();
-      if (!_flowChainAutoApplied && widget.enableFlowChainAutoAdvance) {
-        _flowChainAutoScheduled = false;
-        _scheduleFlowChainSingleListPick();
-        _scheduleFlowChainAutoPickRetry();
-      }
-    });
-  }
-
-  /// Reintento único si el primer auto-pick no corrió (p. ej. timing con flow_submit en el host).
-  void _scheduleFlowChainAutoPickRetry() {
-    if (_flowChainAutoRetried || _flowChainAutoApplied || !widget.enableFlowChainAutoAdvance) {
-      return;
-    }
-    _flowChainAutoRetried = true;
-    Future<void>.delayed(const Duration(milliseconds: 650), () {
-      if (!mounted || _flowChainAutoApplied) return;
-      _flowChainAutoScheduled = false;
-      _scheduleFlowChainSingleListPick();
     });
   }
 
   void _hydrateFromDefinition(Map<String, dynamic> m, {required bool fromNetwork}) {
+    if (!mounted) return;
     _seedAccum(m);
     setState(() {
       _root = m;
@@ -454,9 +458,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       _loading = false;
       _error = null;
     });
-    if (fromNetwork) {
-      widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
-    }
+    widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
     if (widget.enableFlowChainAutoAdvance) {
       _scheduleFlowChainSingleListPick();
     }
@@ -677,7 +679,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       firstDate: DateTime(1990),
       lastDate: DateTime(now.year + 5),
     );
-    if (d != null) {
+    if (d != null && mounted) {
       final y = d.year.toString().padLeft(4, '0');
       final m = d.month.toString().padLeft(2, '0');
       final day = d.day.toString().padLeft(2, '0');
@@ -1104,6 +1106,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         return;
       }
       if (m['kind'] == 'ui_definition') {
+        if (!mounted) return;
         _seedAccum(m);
         setState(() {
           _root = m;
@@ -1179,9 +1182,40 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         body: widget.embedded
             ? Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text(_error!, style: Theme.of(context).textTheme.bodySmall),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _error!,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _loading ? null : _load,
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
               )
-            : Center(child: Text(_error!)),
+            : Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(_error!, textAlign: TextAlign.center),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton.icon(
+                      onPressed: _loading ? null : _load,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
+              ),
       );
     }
 

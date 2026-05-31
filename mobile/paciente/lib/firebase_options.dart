@@ -10,7 +10,16 @@ class DefaultFirebaseOptions {
   /// true cuando hay valores reales (flutterfire configure o dart-define).
   static bool get isConfigured {
     if (kIsWeb) return false;
-    return !_isPlaceholder(android.apiKey) && !_isPlaceholder(ios.apiKey);
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return !_isPlaceholder(android.apiKey) && !_isPlaceholder(android.appId);
+      case TargetPlatform.iOS:
+        return !_isPlaceholder(ios.apiKey) && !_isPlaceholder(ios.appId);
+      case TargetPlatform.macOS:
+        return !_isPlaceholder(ios.apiKey) && !_isPlaceholder(ios.appId);
+      default:
+        return false;
+    }
   }
 
   static bool _isPlaceholder(String value) {
@@ -39,23 +48,23 @@ class DefaultFirebaseOptions {
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: String.fromEnvironment(
       'FIREBASE_ANDROID_API_KEY',
-      defaultValue: _unset,
+      defaultValue: 'AIzaSyAVQmQ1KiRtDKQiLUcwgWQGMHwbogC7u94',
     ),
     appId: String.fromEnvironment(
       'FIREBASE_ANDROID_APP_ID',
-      defaultValue: _unset,
+      defaultValue: '1:684325222184:android:8d9f090b95eec51976421d',
     ),
     messagingSenderId: String.fromEnvironment(
       'FIREBASE_MESSAGING_SENDER_ID',
-      defaultValue: _unset,
+      defaultValue: '684325222184',
     ),
     projectId: String.fromEnvironment(
       'FIREBASE_PROJECT_ID',
-      defaultValue: _unset,
+      defaultValue: 'august-cirrus-482714-f4',
     ),
     storageBucket: String.fromEnvironment(
       'FIREBASE_STORAGE_BUCKET',
-      defaultValue: '',
+      defaultValue: 'august-cirrus-482714-f4.firebasestorage.app',
     ),
   );
 

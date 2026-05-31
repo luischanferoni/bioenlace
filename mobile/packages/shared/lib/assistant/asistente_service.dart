@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import 'assistant_envelope.dart';
+import '../text/user_friendly_error.dart';
 
 const String asistenteTimeoutErrorMessage =
     'Hubo un error, por favor intente enviar el mensaje de nuevo en unos minutos.';
@@ -189,9 +190,12 @@ class AsistenteService {
 
       final decoded = json.decode(response.body);
       if (response.statusCode != 200) {
-        final msg = decoded is Map
-            ? (decoded['message']?.toString() ?? 'Error en la consulta')
-            : 'Error en la consulta';
+        final rawMsg = decoded is Map ? decoded['message']?.toString() : null;
+        final msg = userFriendlyErrorMessage(
+          Exception('HTTP ${response.statusCode}'),
+          serverMessage: rawMsg,
+          fallback: 'Error en la consulta',
+        );
         return {
           'success': false,
           'message': msg,
@@ -217,9 +221,10 @@ class AsistenteService {
     } catch (e) {
       return {
         'success': false,
-        'message': e is TimeoutException
-            ? asistenteTimeoutErrorMessage
-            : 'Error de conexión: ${e.toString()}',
+        'message': userFriendlyErrorMessage(
+          e,
+          fallback: asistenteTimeoutErrorMessage,
+        ),
       };
     }
   }

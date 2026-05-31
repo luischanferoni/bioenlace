@@ -1,7 +1,5 @@
 # Firebase (credenciales por entorno; ver FIREBASE_SETUP.md)
-**/google-services.json
 **/GoogleService-Info.plist
-!**/google-services.json.example
 !**/GoogleService-Info.plist.example
 
 # Miscellaneous

@@ -105,116 +105,6 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   /// Respaldo en el chat: auto-avance si la UI JSON trae una sola opción en list.
-  Future<void> _maybeAutoAdvanceFlowListFromDefinition({
-    required Map<String, dynamic> message,
-    required int messageIndex,
-    required Map<String, dynamic> inlineUi,
-    required Map<String, dynamic> definition,
-    required bool flowUiDisabled,
-  }) async {
-    if (flowUiDisabled ||
-        _messageIsTerminalFlowStep(message) ||
-        message['_flow_auto_advanced'] == true) {
-      return;
-    }
-
-    final pick = UiJsonSingleListPick.fromDefinition(definition);
-    if (pick == null) return;
-
-    message['_flow_auto_advanced'] = true;
-    await Future<void>.delayed(const Duration(milliseconds: 520));
-    if (!mounted) return;
-
-    setState(() => _isSending = true);
-
-    try {
-      final activeIid = _intentId;
-      if (activeIid != null && activeIid.isNotEmpty) {
-        final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
-        if (lastIdx != null && messageIndex < lastIdx) {
-          setState(() => _truncateFlowAfter(messageIndex));
-        }
-      }
-
-      _applyDraftDelta(pick.toDraftDelta());
-
-      final absRaw = inlineUi['api_absolute_url']?.toString() ?? '';
-      final routeRaw = inlineUi['route']?.toString() ?? '';
-      final providedMap = inlineUi['provided'] is Map
-          ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
-          : null;
-      final resolved = absRaw.trim().isNotEmpty
-          ? absRaw
-          : (routeRaw.isNotEmpty ? applyProvidedParamsToRoute(routeRaw, providedMap) : '');
-      if (resolved.isNotEmpty) {
-        final u = Uri.tryParse(resolved);
-        if (u != null) {
-          final idServicio = u.queryParameters['id_servicio_asignado'] ??
-              u.queryParameters['id_servicio'];
-          if (idServicio != null && idServicio.isNotEmpty) {
-            _draft.putIfAbsent('id_servicio_asignado', () => idServicio);
-          }
-        }
-      }
-      _asistenteService.draft = Map<String, dynamic>.from(_draft);
-
-      if (_messageIsTerminalFlowStep(message)) {
-        setState(() => _isSending = false);
-        return;
-      }
-
-      final res = await _asistenteService.procesarInteraccion('');
-      if (!mounted) return;
-
-      if (res['success'] == true) {
-        final data = res['data'];
-        if (data is Map) {
-          await _handleFlowEnvelopeResponse(Map<String, dynamic>.from(data));
-        }
-        unawaited(AppDiagnosticLog.log(
-          'flow_auto_pick',
-          'chat_advance_ok',
-          data: {
-            'draft_field': pick.draftField,
-            'item_id': pick.itemId,
-          },
-        ));
-      } else {
-        unawaited(AppDiagnosticLog.log(
-          'flow_auto_pick',
-          'chat_advance_failed',
-          data: {
-            'draft_field': pick.draftField,
-            'item_id': pick.itemId,
-            'message': res['message']?.toString() ?? '',
-          },
-        ));
-        setState(() {
-          _isSending = false;
-          _chatHistory.add({
-            'type': 'bot',
-            'content': res['message']?.toString() ??
-                'No se pudo avanzar automáticamente. Tocá la opción en la lista.',
-            'timestamp': DateTime.now(),
-          });
-        });
-      }
-    } catch (e, st) {
-      unawaited(AppDiagnosticLog.log(
-        'flow_auto_pick',
-        'chat_advance_error',
-        data: {
-          'error': e.toString(),
-          'stack': st.toString().split('\n').take(3).join(' | '),
-        },
-      ));
-      if (mounted) {
-        setState(() => _isSending = false);
-      }
-    }
-    _scrollToBottom();
-  }
-
   /// `flow_submit` visible: sin `inline_ui` (submit-only) o tras `onEmbeddedReady` del paso.
   bool _showFlowSubmitButton(Map<String, dynamic> message) {
     if (message['flow_submit'] is! Map) return false;
@@ -258,6 +148,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   /// Tras un POST al asistente en modo flow: sincroniza sesión, agrega burbuja y abre mini-UI si aplica.
   Future<void> _handleFlowEnvelopeResponse(Map<String, dynamic> envelope) async {
+    try {
     final nextFlow = AssistantFlowView.fromEnvelope(envelope);
     if (nextFlow == null) {
       final t = envelope['text']?.toString() ?? 'Ok.';
@@ -361,6 +252,11 @@ class ChatScreenState extends State<ChatScreen> {
         _chatHistory.last['flow_submit'] = fsPayload;
         _chatHistory.last['_flow_submit_ready'] = false;
       });
+    }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
     }
   }
 
@@ -2449,13 +2345,6 @@ class ChatScreenState extends State<ChatScreen> {
                                   ? null
                                   : (def) {
                                       inlineUi['ui_definition'] = def;
-                                      unawaited(_maybeAutoAdvanceFlowListFromDefinition(
-                                        message: message,
-                                        messageIndex: index,
-                                        inlineUi: inlineUi,
-                                        definition: def,
-                                        flowUiDisabled: flowUiDisabled,
-                                      ));
                                     },
                               onEmbeddedReady: flowUiDisabled
                                   ? null
@@ -2538,30 +2427,38 @@ class ChatScreenState extends State<ChatScreen> {
 
                                 // Avanzar el flow automáticamente (snapshot) sin texto.
                                 setState(() => _isSending = true);
-                                final res = await _asistenteService.procesarInteraccion('');
-                                if (!mounted) return;
-                                if (res['success'] == true) {
-                                  final data = res['data'];
-                                  if (data is Map) {
-                                    await _handleFlowEnvelopeResponse(
-                                      Map<String, dynamic>.from(data),
-                                    );
-                                  }
-                                } else {
-                                  unawaited(AppDiagnosticLog.log(
-                                    'flow_list_pick',
-                                    'advance_failed',
-                                    data: {'message': res['message']?.toString() ?? ''},
-                                  ));
-                                  setState(() {
-                                    _isSending = false;
-                                    _chatHistory.add({
-                                      'type': 'bot',
-                                      'content': res['message']?.toString() ??
-                                          'No se pudo avanzar. Intentá de nuevo.',
-                                      'timestamp': DateTime.now(),
+                                try {
+                                  final res = await _asistenteService.procesarInteraccion('');
+                                  if (!mounted) return;
+                                  if (res['success'] == true) {
+                                    final data = res['data'];
+                                    if (data is Map) {
+                                      await _handleFlowEnvelopeResponse(
+                                        Map<String, dynamic>.from(data),
+                                      );
+                                    } else {
+                                      setState(() => _isSending = false);
+                                    }
+                                  } else {
+                                    unawaited(AppDiagnosticLog.log(
+                                      'flow_list_pick',
+                                      'advance_failed',
+                                      data: {'message': res['message']?.toString() ?? ''},
+                                    ));
+                                    setState(() {
+                                      _isSending = false;
+                                      _chatHistory.add({
+                                        'type': 'bot',
+                                        'content': res['message']?.toString() ??
+                                            'No se pudo avanzar. Intentá de nuevo.',
+                                        'timestamp': DateTime.now(),
+                                      });
                                     });
-                                  });
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    setState(() => _isSending = false);
+                                  }
                                 }
                               },
                               onSubmitSuccess: flowUiDisabled ? null : (data) async {

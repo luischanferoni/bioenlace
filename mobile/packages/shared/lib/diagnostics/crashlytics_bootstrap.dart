@@ -104,7 +104,7 @@ class CrashlyticsBootstrap {
     final id = userId?.trim() ?? '';
     if (id.isEmpty) return;
     try {
-      await FirebaseCrashlytics.instance.setUserId(id);
+      await FirebaseCrashlytics.instance.setUserIdentifier(id);
     } catch (_) {
       // ignore
     }

@@ -5,8 +5,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Firebase (google-services.json + Crashlytics). Ver FIREBASE_SETUP.md del paciente.
-if (file("google-services.json").exists()) {
+// Firebase: solo si google-services.json incluye este applicationId (ver FIREBASE_SETUP.md).
+val firebaseAppId = "com.bioenlace.medico"
+val googleServicesJson = file("google-services.json")
+if (googleServicesJson.exists() && googleServicesJson.readText().contains(firebaseAppId)) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
 }

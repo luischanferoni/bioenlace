@@ -290,6 +290,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   bool _formSubmitted = false;
   bool _flowChainAutoScheduled = false;
   bool _flowChainAutoApplied = false;
+  bool _flowChainAutoRetried = false;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
@@ -336,12 +337,15 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (oldWidget.apiAbsoluteUrl != widget.apiAbsoluteUrl) {
       _flowChainAutoScheduled = false;
       _flowChainAutoApplied = false;
+      _flowChainAutoRetried = false;
       _load();
       return;
     }
-    if (!oldWidget.enableFlowChainAutoAdvance && widget.enableFlowChainAutoAdvance) {
+    if ((!oldWidget.enableFlowChainAutoAdvance && widget.enableFlowChainAutoAdvance) ||
+        (widget.enableFlowChainAutoAdvance &&
+            !_flowChainAutoApplied &&
+            oldWidget.isTerminalFlowStep != widget.isTerminalFlowStep)) {
       _flowChainAutoScheduled = false;
-      _flowChainAutoApplied = false;
       _scheduleFlowChainSingleListPick();
     }
   }
@@ -402,12 +406,24 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       widget.onEmbeddedReady?.call();
-      if (!_flowChainAutoApplied &&
-          widget.enableFlowChainAutoAdvance &&
-          !widget.isTerminalFlowStep) {
+      if (!_flowChainAutoApplied && widget.enableFlowChainAutoAdvance) {
         _flowChainAutoScheduled = false;
         _scheduleFlowChainSingleListPick();
+        _scheduleFlowChainAutoPickRetry();
       }
+    });
+  }
+
+  /// Reintento único si el primer auto-pick no corrió (p. ej. timing con flow_submit en el host).
+  void _scheduleFlowChainAutoPickRetry() {
+    if (_flowChainAutoRetried || _flowChainAutoApplied || !widget.enableFlowChainAutoAdvance) {
+      return;
+    }
+    _flowChainAutoRetried = true;
+    Future<void>.delayed(const Duration(milliseconds: 650), () {
+      if (!mounted || _flowChainAutoApplied) return;
+      _flowChainAutoScheduled = false;
+      _scheduleFlowChainSingleListPick();
     });
   }
 
@@ -426,7 +442,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (fromNetwork) {
       widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
     }
-    if (widget.enableFlowChainAutoAdvance && !widget.isTerminalFlowStep) {
+    if (widget.enableFlowChainAutoAdvance) {
       _scheduleFlowChainSingleListPick();
     }
     _scheduleEmbeddedReady();
@@ -437,11 +453,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (_flowChainAutoScheduled ||
         _flowChainAutoApplied ||
         !widget.enableFlowChainAutoAdvance ||
-        widget.isTerminalFlowStep ||
         !widget.embedded ||
         widget.onDraftDelta == null ||
-        _listEmbedLocked ||
-        _listEmbedSelectedId != null) {
+        _listEmbedLocked) {
       return;
     }
     _flowChainAutoScheduled = true;
@@ -460,9 +474,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (!mounted ||
         _flowChainAutoApplied ||
         !widget.enableFlowChainAutoAdvance ||
-        widget.isTerminalFlowStep ||
         _listEmbedLocked ||
-        _listEmbedSelectedId != null ||
         _root == null) {
       _flowChainAutoScheduled = false;
       return;
@@ -514,9 +526,15 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           'stack': st.toString().split('\n').take(3).join(' | '),
         },
       ));
+      if (mounted) {
+        setState(() => _listEmbedSelectedId = null);
+      }
     } finally {
       if (mounted) {
         setState(() => _listEmbedLocked = false);
+        if (!_flowChainAutoApplied) {
+          _flowChainAutoScheduled = false;
+        }
       }
     }
   }
@@ -1214,7 +1232,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 final it = items[idx];
                 if (it is! Map) return const SizedBox.shrink();
                 final m = Map<String, dynamic>.from(it);
-                final id = m['id']?.toString() ?? '';
+                final id = UiJsonSingleListPick.itemIdFromBlock(b, m) ?? '';
                 final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
                 if (id.isEmpty) return const SizedBox.shrink();
                 final selected = _listEmbedSelectedId == id;

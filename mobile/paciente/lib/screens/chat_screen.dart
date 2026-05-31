@@ -104,7 +104,6 @@ class ChatScreenState extends State<ChatScreen> {
     return message['flow_submit'] is Map;
   }
 
-  /// Respaldo en el chat: auto-avance si la UI JSON trae una sola opción en list.
   /// `flow_submit` visible: sin `inline_ui` (submit-only) o tras `onEmbeddedReady` del paso.
   bool _showFlowSubmitButton(Map<String, dynamic> message) {
     if (message['flow_submit'] is! Map) return false;
@@ -246,13 +245,11 @@ class ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
-    if (fsPayload != null && mounted && _chatHistory.isNotEmpty) {
-      setState(() {
-        _chatHistory.last['flow_submit'] = fsPayload;
-        _chatHistory.last['_flow_submit_ready'] = false;
-      });
-    }
+    await _tryOpenClientNative(
+      pseudoAction,
+      messageIndex: _chatHistory.length - 1,
+      pendingFlowSubmit: fsPayload,
+    );
     } finally {
       if (mounted) {
         setState(() => _isSending = false);
@@ -1624,7 +1621,11 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   /// Si la acción trae `client_open` (pantalla Yii / web nativa), abre el navegador y no pasa por CRUD/wizard.
-  Future<bool> _tryOpenClientNative(Map<String, dynamic> action, {int? messageIndex}) async {
+  Future<bool> _tryOpenClientNative(
+    Map<String, dynamic> action, {
+    int? messageIndex,
+    Map<String, dynamic>? pendingFlowSubmit,
+  }) async {
     final co = action['client_open'];
     if (co is! Map) {
       return false;
@@ -1742,6 +1743,10 @@ class ChatScreenState extends State<ChatScreen> {
           if ((m['content']?.toString() ?? '').trim().isEmpty) {
             m['content'] = title;
           }
+          if (pendingFlowSubmit != null) {
+            m['flow_submit'] = pendingFlowSubmit;
+            m['_flow_submit_ready'] = false;
+          }
           _stampFlowActivationOnMessage(m);
         } else {
           _chatHistory.add({
@@ -1753,6 +1758,8 @@ class ChatScreenState extends State<ChatScreen> {
               'provided': effectiveProvided.isNotEmpty ? effectiveProvided : providedRaw,
               if (apiAbs.isNotEmpty) 'api_absolute_url': apiAbs,
             },
+            if (pendingFlowSubmit != null) 'flow_submit': pendingFlowSubmit,
+            if (pendingFlowSubmit != null) '_flow_submit_ready': false,
             'timestamp': DateTime.now(),
           });
           _stampLastBotMessageFlowActivation();
@@ -2358,8 +2365,7 @@ class ChatScreenState extends State<ChatScreen> {
                                         _chatHistory[index]['_flow_submit_ready'] = true;
                                       });
                                     },
-                              enableFlowChainAutoAdvance: !flowUiDisabled &&
-                                  !_messageIsTerminalFlowStep(message),
+                              enableFlowChainAutoAdvance: !flowUiDisabled,
                               isTerminalFlowStep: _messageIsTerminalFlowStep(message),
                               apiAbsoluteUrl: (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty
                                   ? inlineUi['api_absolute_url']!.toString()

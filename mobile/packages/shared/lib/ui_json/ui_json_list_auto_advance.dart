@@ -37,25 +37,7 @@ class UiJsonSingleListPick {
       if (it is! Map) continue;
       final item = Map<String, dynamic>.from(it);
 
-      final itemConfig = b['item'] is Map
-          ? Map<String, dynamic>.from(b['item'] as Map)
-          : const <String, dynamic>{};
-      final idField = itemConfig['id_field']?.toString().trim();
-      final idKeys = <String>[
-        if (idField != null && idField.isNotEmpty) idField,
-        'id',
-        'value',
-      ];
-      String? itemId;
-      for (final key in idKeys) {
-        final raw = item[key];
-        if (raw == null) continue;
-        final s = raw.toString().trim();
-        if (s.isNotEmpty) {
-          itemId = s;
-          break;
-        }
-      }
+      final itemId = itemIdFromBlock(b, item);
       if (itemId == null || itemId.isEmpty) continue;
 
       return UiJsonSingleListPick(
@@ -73,6 +55,28 @@ class UiJsonSingleListPick {
       draftField: itemId,
       '_flow_item_$draftField': item,
     };
+  }
+
+  /// Id estable del ítem de un bloque `kind: list` (respeta `item.id_field`).
+  static String? itemIdFromBlock(Map<String, dynamic> block, Map<String, dynamic> item) {
+    final itemConfig = block['item'] is Map
+        ? Map<String, dynamic>.from(block['item'] as Map)
+        : const <String, dynamic>{};
+    final idField = itemConfig['id_field']?.toString().trim();
+    final idKeys = <String>[
+      if (idField != null && idField.isNotEmpty) idField,
+      'id',
+      'value',
+    ];
+    for (final key in idKeys) {
+      final raw = item[key];
+      if (raw == null) continue;
+      final s = raw.toString().trim();
+      if (s.isNotEmpty) {
+        return s;
+      }
+    }
+    return null;
   }
 
   static List<dynamic> _blocksOrderedForRender(List<dynamic> raw) {

@@ -98,6 +98,163 @@ class ChatScreenState extends State<ChatScreen> {
     return message['flow_submit'] is Map;
   }
 
+  void _applyInlineUiQueryToDraft(Map<String, dynamic> inlineUi) {
+    final absRaw = inlineUi['api_absolute_url']?.toString() ?? '';
+    final routeRaw = inlineUi['route']?.toString() ?? '';
+    final providedMap = inlineUi['provided'] is Map
+        ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
+        : null;
+    final resolved = absRaw.trim().isNotEmpty
+        ? absRaw
+        : (routeRaw.isNotEmpty ? applyProvidedParamsToRoute(routeRaw, providedMap) : '');
+    if (resolved.isEmpty) return;
+    final u = Uri.tryParse(resolved);
+    if (u == null) return;
+    final idServicio =
+        u.queryParameters['id_servicio_asignado'] ?? u.queryParameters['id_servicio'];
+    if (idServicio != null && idServicio.isNotEmpty) {
+      _draft.putIfAbsent('id_servicio_asignado', () => idServicio);
+    }
+  }
+
+  Future<void> _autoAdvanceFlowSingleListIfNeeded({
+    required Map<String, dynamic> message,
+    required int messageIndex,
+    required Map<String, dynamic> inlineUi,
+    required Map<String, dynamic> definition,
+  }) async {
+    if (message['flow_superseded'] == true ||
+        message['_flow_single_pick_done'] == true ||
+        message['_flow_single_pick_in_flight'] == true) {
+      return;
+    }
+
+    final activeIid = _intentId;
+    if (activeIid != null && activeIid.isNotEmpty) {
+      final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
+      if (lastIdx != null && messageIndex != lastIdx) {
+        return;
+      }
+    }
+
+    final pick = UiJsonSingleListPick.fromDefinition(definition);
+    if (pick == null) {
+      unawaited(AppDiagnosticLog.log(
+        'flow_auto_pick',
+        'skip_no_single_list',
+        data: {
+          'message_index': messageIndex,
+          'blocks': definition['blocks'] is List ? (definition['blocks'] as List).length : 0,
+          'route': inlineUi['route']?.toString() ?? '',
+        },
+      ));
+      return;
+    }
+
+    message['_flow_single_pick_in_flight'] = true;
+    message['_flow_auto_selected_id'] = pick.itemId;
+    if (mounted) setState(() {});
+
+    await Future<void>.delayed(const Duration(milliseconds: 480));
+    if (!mounted) {
+      message['_flow_single_pick_in_flight'] = false;
+      unawaited(AppDiagnosticLog.log(
+        'flow_auto_pick',
+        'aborted_unmounted',
+        data: {'message_index': messageIndex},
+      ));
+      return;
+    }
+
+    if (activeIid != null && activeIid.isNotEmpty) {
+      final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
+      if (lastIdx != null && messageIndex < lastIdx) {
+        message['_flow_single_pick_in_flight'] = false;
+        return;
+      }
+    }
+
+    _applyDraftDelta(pick.toDraftDelta());
+    _applyInlineUiQueryToDraft(inlineUi);
+    _asistenteService.draft = Map<String, dynamic>.from(_draft);
+
+    if (_messageIsTerminalFlowStep(message)) {
+      message['_flow_single_pick_done'] = true;
+      message['_flow_single_pick_in_flight'] = false;
+      if (mounted) {
+        setState(() {
+          if (message['_flow_submit_missing'] is List) {
+            message.remove('_flow_submit_missing');
+          }
+        });
+      }
+      unawaited(AppDiagnosticLog.log(
+        'flow_auto_pick',
+        'terminal_merge_only',
+        data: {
+          'draft_field': pick.draftField,
+          'item_id': pick.itemId,
+        },
+      ));
+      return;
+    }
+
+    setState(() => _isSending = true);
+    try {
+      final res = await _asistenteService.procesarInteraccion('');
+      if (!mounted) return;
+      if (res['success'] == true) {
+        final data = res['data'];
+        if (data is Map) {
+          message['_flow_single_pick_done'] = true;
+          await _handleFlowEnvelopeResponse(Map<String, dynamic>.from(data));
+          unawaited(AppDiagnosticLog.log(
+            'flow_auto_pick',
+            'chat_advance_ok',
+            data: {
+              'draft_field': pick.draftField,
+              'item_id': pick.itemId,
+            },
+          ));
+        } else {
+          setState(() => _isSending = false);
+        }
+      } else {
+        unawaited(AppDiagnosticLog.log(
+          'flow_auto_pick',
+          'chat_advance_failed',
+          data: {
+            'draft_field': pick.draftField,
+            'item_id': pick.itemId,
+            'message': res['message']?.toString() ?? '',
+          },
+        ));
+        setState(() {
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': res['message']?.toString() ??
+                'No se pudo avanzar automáticamente. Tocá la opción en la lista.',
+            'timestamp': DateTime.now(),
+          });
+        });
+      }
+    } catch (e, st) {
+      unawaited(AppDiagnosticLog.log(
+        'flow_auto_pick',
+        'chat_advance_error',
+        data: {
+          'error': e.toString(),
+          'stack': st.toString().split('\n').take(3).join(' | '),
+        },
+      ));
+      if (mounted) setState(() => _isSending = false);
+    } finally {
+      message['_flow_single_pick_in_flight'] = false;
+    }
+    _scrollToBottom();
+  }
+
   /// `flow_submit` visible: sin `inline_ui` (submit-only) o tras `onEmbeddedReady` del paso.
   bool _showFlowSubmitButton(Map<String, dynamic> message) {
     if (message['flow_submit'] is! Map) return false;
@@ -2284,6 +2441,12 @@ class ChatScreenState extends State<ChatScreen> {
                                   ? null
                                   : (def) {
                                       inlineUi['ui_definition'] = def;
+                                      unawaited(_autoAdvanceFlowSingleListIfNeeded(
+                                        message: message,
+                                        messageIndex: index,
+                                        inlineUi: Map<String, dynamic>.from(inlineUi),
+                                        definition: def,
+                                      ));
                                     },
                               onEmbeddedReady: flowUiDisabled
                                   ? null
@@ -2297,8 +2460,10 @@ class ChatScreenState extends State<ChatScreen> {
                                         _chatHistory[index]['_flow_submit_ready'] = true;
                                       });
                                     },
-                              enableFlowChainAutoAdvance: !flowUiDisabled,
+                              enableFlowChainAutoAdvance: false,
                               isTerminalFlowStep: _messageIsTerminalFlowStep(message),
+                              initialListEmbedSelectedId:
+                                  message['_flow_auto_selected_id']?.toString(),
                               apiAbsoluteUrl: (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty
                                   ? inlineUi['api_absolute_url']!.toString()
                                   : applyProvidedParamsToRoute(
@@ -2328,27 +2493,7 @@ class ChatScreenState extends State<ChatScreen> {
                                   }
                                 }
                                 _applyDraftDelta(Map<String, dynamic>.from(dd));
-                                // El descriptor GET puede llevar filtros en query (`id_servicio`, …) vía `provided`;
-                                // si el draft local no tiene aún `id_servicio_asignado`, lo tomamos de la URL resuelta
-                                // para que SubIntentEngine no vuelva a abrir la misma UI por draft incompleto.
-                                final absRaw = inlineUi['api_absolute_url']?.toString() ?? '';
-                                final routeRaw = inlineUi['route']?.toString() ?? '';
-                                final providedMap = inlineUi['provided'] is Map
-                                    ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
-                                    : null;
-                                final resolved = absRaw.trim().isNotEmpty
-                                    ? absRaw
-                                    : (routeRaw.isNotEmpty ? applyProvidedParamsToRoute(routeRaw, providedMap) : '');
-                                if (resolved.isNotEmpty) {
-                                  final u = Uri.tryParse(resolved);
-                                  if (u != null) {
-                                    final idServicio = u.queryParameters['id_servicio_asignado'] ??
-                                        u.queryParameters['id_servicio'];
-                                    if (idServicio != null && idServicio.isNotEmpty) {
-                                      _draft.putIfAbsent('id_servicio_asignado', () => idServicio);
-                                    }
-                                  }
-                                }
+                                _applyInlineUiQueryToDraft(Map<String, dynamic>.from(inlineUi));
                                 _asistenteService.draft = Map<String, dynamic>.from(_draft);
 
                                 // Step terminal (último del flow): el tap mergeó local; NO postear al motor.

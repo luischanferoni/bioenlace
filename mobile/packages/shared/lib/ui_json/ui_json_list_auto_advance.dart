@@ -22,8 +22,8 @@ class UiJsonSingleListPick {
       if (b['kind']?.toString() != 'list') continue;
 
       final itemsRaw = b['items'];
-      final items = itemsRaw is List ? itemsRaw : const [];
-      if (items.length != 1) continue;
+      final pickable = _pickableItems(b, itemsRaw is List ? itemsRaw : const []);
+      if (pickable.length != 1) continue;
 
       final selection = b['selection'] is Map
           ? Map<String, dynamic>.from(b['selection'] as Map)
@@ -33,8 +33,7 @@ class UiJsonSingleListPick {
       final draftField = b['draft_field']?.toString() ?? '';
       if (draftField.isEmpty) continue;
 
-      final it = items.first;
-      if (it is! Map) continue;
+      final it = pickable.first;
       final item = Map<String, dynamic>.from(it);
 
       final itemId = itemIdFromBlock(b, item);
@@ -48,6 +47,22 @@ class UiJsonSingleListPick {
     }
 
     return null;
+  }
+
+  static List<Map<String, dynamic>> _pickableItems(
+    Map<String, dynamic> block,
+    List<dynamic> itemsRaw,
+  ) {
+    final out = <Map<String, dynamic>>[];
+    for (final it in itemsRaw) {
+      if (it is! Map) continue;
+      final item = Map<String, dynamic>.from(it);
+      final id = itemIdFromBlock(block, item);
+      if (id != null && id.isNotEmpty) {
+        out.add(item);
+      }
+    }
+    return out;
   }
 
   Map<String, dynamic> toDraftDelta() {

@@ -34,9 +34,14 @@ class AppDiagnosticLog {
         ? '[$category] $message ${jsonEncode(data)}'
         : '[$category] $message';
     unawaited(CrashlyticsBootstrap.log(crashLine));
-    if (message == 'error' ||
+    final reportAsNonFatal = message == 'error' ||
         message == 'chat_advance_error' ||
-        message == 'chat_advance_failed') {
+        message == 'chat_advance_failed' ||
+        message == 'advance_failed' ||
+        message == 'skip_no_single_list' ||
+        category == 'flow_auto_pick' ||
+        category == 'flow_list_pick';
+    if (reportAsNonFatal) {
       unawaited(CrashlyticsBootstrap.recordError(
         Exception(crashLine),
         StackTrace.current,

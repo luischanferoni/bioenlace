@@ -257,6 +257,9 @@ class UiJsonScreen extends StatefulWidget {
   /// Paso terminal del flow (con `flow_submit`): no auto-POST; la web tampoco encadena en ese caso.
   final bool isTerminalFlowStep;
 
+  /// Selección ya aplicada por el host (p. ej. auto-pick del chat) antes del primer frame.
+  final String? initialListEmbedSelectedId;
+
   const UiJsonScreen({
     Key? key,
     required this.apiAbsoluteUrl,
@@ -272,6 +275,7 @@ class UiJsonScreen extends StatefulWidget {
     this.onEmbeddedReady,
     this.enableFlowChainAutoAdvance = false,
     this.isTerminalFlowStep = false,
+    this.initialListEmbedSelectedId,
   }) : super(key: key);
 
   @override
@@ -323,6 +327,10 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   @override
   void initState() {
     super.initState();
+    final presetId = widget.initialListEmbedSelectedId?.trim();
+    if (presetId != null && presetId.isNotEmpty) {
+      _listEmbedSelectedId = presetId;
+    }
     final cached = widget.initialDefinition;
     if (cached != null && cached['kind']?.toString() == 'ui_definition') {
       _hydrateFromDefinition(Map<String, dynamic>.from(cached), fromNetwork: false);
@@ -347,6 +355,13 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
             oldWidget.isTerminalFlowStep != widget.isTerminalFlowStep)) {
       _flowChainAutoScheduled = false;
       _scheduleFlowChainSingleListPick();
+    }
+    final presetId = widget.initialListEmbedSelectedId?.trim();
+    if (presetId != null &&
+        presetId.isNotEmpty &&
+        presetId != oldWidget.initialListEmbedSelectedId &&
+        _listEmbedSelectedId != presetId) {
+      setState(() => _listEmbedSelectedId = presetId);
     }
   }
 
@@ -500,7 +515,14 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     });
     try {
       await Future<void>.delayed(const Duration(milliseconds: 480));
-      if (!mounted) return;
+      if (!mounted) {
+        unawaited(AppDiagnosticLog.log(
+          'flow_auto_pick',
+          'aborted_unmounted',
+          data: {'url': widget.apiAbsoluteUrl},
+        ));
+        return;
+      }
       await _applyListEmbedDraft(
         pick.draftField,
         pick.itemId,

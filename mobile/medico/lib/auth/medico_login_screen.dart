@@ -16,7 +16,7 @@ Widget buildMedicoLoginScreen({
   required MedicoLoginSuccess onLoginSuccess,
 }) {
   return LoginScreen(
-    appTitle: 'BioEnlace Médico',
+    appTitle: 'Médico',
     appSubtitle: 'Acceso para profesionales de la salud',
     welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
     goToHomeButtonText: 'Ir al inicio de la app',

@@ -101,7 +101,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BioEnlace Médico',
+      title: 'Médico',
       theme: AppTheme.lightTheme,
       navigatorKey: navigatorKey,
       home: isLoggedIn

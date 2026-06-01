@@ -243,21 +243,37 @@ Modal::end();
         var el = document.getElementById('tl_motivos_consulta');
         if (!el) return;
         mp = mp || {};
-        var resumen = (mp.resumen_ia && String(mp.resumen_ia).trim() !== '')
-            ? String(mp.resumen_ia).trim()
-            : (texto && String(texto).trim() !== '' ? String(texto).trim() : '');
+        var resumen = (mp.resumen && String(mp.resumen).trim() !== '')
+            ? String(mp.resumen).trim()
+            : ((mp.resumen_ia && String(mp.resumen_ia).trim() !== '')
+                ? String(mp.resumen_ia).trim()
+                : (texto && String(texto).trim() !== '' ? String(texto).trim() : ''));
+        var imgsByRef = {};
+        (mp.imagenes_adjuntas || []).forEach(function (img) {
+            if (img && img.ref) imgsByRef[img.ref] = img.url || '';
+        });
         var html = '';
         if (resumen !== '') {
-            html += '<div class="mb-2"><span class="small text-uppercase text-muted">Resumen (IA)</span></div>';
-            html += '<div class="text-body" style="white-space:pre-wrap">' + escMotivosHtml(resumen) + '</div>';
-        } else if (mp.resumen_ia_pendiente) {
-            html += '<p class="text-muted mb-0">Generando resumen de motivos…</p>';
-        } else if (!(mp.messages && mp.messages.length)) {
+            html += '<div class="mb-2"><span class="small text-uppercase text-muted">Resumen</span></div>';
+            html += '<div class="text-body tl-motivos-resumen" style="white-space:pre-wrap">';
+            var parts = resumen.split(/(\[imagen\d+\])/g);
+            parts.forEach(function (part) {
+                var m = part.match(/^\[(imagen\d+)\]$/);
+                if (m && imgsByRef[m[1]]) {
+                    html += '<div class="my-2"><img class="tl-motivos-secure-media" data-secure-src="' + escMotivosHtml(imgsByRef[m[1]]) + '" alt="' + escMotivosHtml(m[1]) + '" style="max-width:100%;max-height:220px;border-radius:6px" /></div>';
+                } else if (part) {
+                    html += escMotivosHtml(part);
+                }
+            });
+            html += '</div>';
+        } else if (mp.resumen_pendiente || mp.resumen_ia_pendiente) {
+            html += '<p class="text-muted mb-0">Generando resumen…</p>';
+        } else {
             html += '<p class="text-muted mb-0">Sin motivos registrados para esta consulta.</p>';
         }
         var sug = mp.sugerencias_clinicas;
         if (sug && (sug.diagnosticos_sugeridos || sug.practicas_sugeridas)) {
-            html += '<div class="mt-3 small text-muted">Orientación preliminar (IA; no reemplaza criterio profesional)</div>';
+            html += '<div class="mt-3 small text-uppercase text-muted">Orientación preliminar</div>';
             if (sug.diagnosticos_sugeridos && sug.diagnosticos_sugeridos.length) {
                 html += '<div class="fw-semibold mt-2">Diagnósticos a considerar</div><ul class="mb-1">';
                 sug.diagnosticos_sugeridos.forEach(function (d) {
@@ -274,6 +290,7 @@ Modal::end();
             }
         }
         el.innerHTML = html;
+        hydrateSecureTimelineMedia(el);
     }
 
     function escMotivosHtml(s) {
@@ -365,7 +382,8 @@ Modal::end();
             var mp = payload.data.motivos_consulta_paciente || {};
             var msgPac = (mp.messages && mp.messages.length) ? mp.messages.length : 0;
             renderMotivos(info.motivos_consulta || null, mp);
-            renderMotivosPacienteApp(mp);
+            var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
+            if (boxMsgs) boxMsgs.innerHTML = '';
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
             }
@@ -375,7 +393,8 @@ Modal::end();
             renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
             renderMotivos(null, null);
-            renderMotivosPacienteApp(null);
+            var boxMsgsErr = document.getElementById('tl_motivos_consulta_mensajes');
+            if (boxMsgsErr) boxMsgsErr.innerHTML = '';
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(null);
             }

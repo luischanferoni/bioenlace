@@ -313,13 +313,29 @@ class SugerenciasClinicasMotivos {
   bool get tieneContenido => diagnosticos.isNotEmpty || practicas.isNotEmpty;
 }
 
+class MotivoImagenAdjunta {
+  final String ref;
+  final String url;
+
+  MotivoImagenAdjunta({required this.ref, required this.url});
+
+  factory MotivoImagenAdjunta.fromJson(Map<String, dynamic> json) {
+    return MotivoImagenAdjunta(
+      ref: json['ref']?.toString() ?? '',
+      url: json['url']?.toString() ?? '',
+    );
+  }
+}
+
 class MotivosConsultaPaciente {
   final int? consultaId;
   final int? turnoId;
   final MotivoConsultaTurnoContext? turno;
   final bool contextoExplicito;
+  final String? resumen;
   final String? resumenIa;
-  final bool resumenIaPendiente;
+  final bool resumenPendiente;
+  final List<MotivoImagenAdjunta> imagenesAdjuntas;
   final SugerenciasClinicasMotivos? sugerenciasClinicas;
   final List<MotivoConsultaMensajeApi> messages;
 
@@ -328,11 +344,15 @@ class MotivosConsultaPaciente {
     this.turnoId,
     this.turno,
     this.contextoExplicito = false,
+    this.resumen,
     this.resumenIa,
-    this.resumenIaPendiente = false,
+    this.resumenPendiente = false,
+    this.imagenesAdjuntas = const [],
     this.sugerenciasClinicas,
     required this.messages,
   });
+
+  bool get resumenIaPendiente => resumenPendiente;
 
   factory MotivosConsultaPaciente.fromJson(Map<String, dynamic>? json) {
     if (json == null) {
@@ -355,6 +375,15 @@ class MotivosConsultaPaciente {
     }
     final turnoMap = json['turno'];
     final sugMap = json['sugerencias_clinicas'];
+    final imgsRaw = json['imagenes_adjuntas'];
+    final imgs = imgsRaw is List
+        ? imgsRaw
+            .whereType<Map>()
+            .map((e) => MotivoImagenAdjunta.fromJson(Map<String, dynamic>.from(e)))
+            .where((e) => e.ref.isNotEmpty)
+            .toList()
+        : <MotivoImagenAdjunta>[];
+    final resumenTxt = json['resumen']?.toString() ?? json['resumen_ia']?.toString();
     return MotivosConsultaPaciente(
       consultaId: cid,
       turnoId: tid,
@@ -364,8 +393,11 @@ class MotivosConsultaPaciente {
             )
           : null,
       contextoExplicito: json['contexto_explicito'] == true,
-      resumenIa: json['resumen_ia']?.toString(),
-      resumenIaPendiente: json['resumen_ia_pendiente'] == true,
+      resumen: resumenTxt,
+      resumenIa: resumenTxt,
+      resumenPendiente: json['resumen_pendiente'] == true ||
+          json['resumen_ia_pendiente'] == true,
+      imagenesAdjuntas: imgs,
       sugerenciasClinicas: sugMap is Map
           ? SugerenciasClinicasMotivos.fromJson(
               Map<String, dynamic>.from(sugMap),

@@ -329,10 +329,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Widget _buildMotivosConsulta(HistoriaClinicaResponse hc) {
     final mp = hc.motivosConsultaPaciente;
-    final resumenIa = (mp.resumenIa ?? hc.informacionMedica.motivosConsulta ?? '')
+    final resumen = (mp.resumen ?? mp.resumenIa ?? hc.informacionMedica.motivosConsulta ?? '')
         .trim();
-    final hayResumen = resumenIa.isNotEmpty;
-    final msgs = mp.messages;
+    final hayResumen = resumen.isNotEmpty;
     final sugerencias = mp.sugerenciasClinicas;
     final turnoCtx = mp.turno;
     final subtituloTurno = turnoCtx != null && turnoCtx.etiquetaCorta.isNotEmpty
@@ -356,32 +355,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ],
           BioSpacing.gapH(BioSpacing.md),
           if (hayResumen) ...[
-            Text('Resumen (IA)', style: BioTypography.overline),
+            Text('Resumen', style: BioTypography.overline),
             BioSpacing.gapH(BioSpacing.xs),
-            Text(resumenIa, style: BioTypography.body),
-          ] else if (mp.resumenIaPendiente)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _buildResumenConImagenes(resumen, mp.imagenesAdjuntas),
+            ),
+          ] else if (mp.resumenPendiente)
             Text(
-              'Generando resumen de motivos… Actualizá en unos segundos.',
+              'Generando resumen… Actualizá en unos segundos.',
               style: BioTypography.bodySm,
             )
-          else if (msgs.isEmpty)
+          else
             Text(
               'Sin motivos registrados para esta consulta.',
               style: BioTypography.bodySm,
             ),
           if (sugerencias != null && sugerencias.tieneContenido) ...[
             BioSpacing.gapH(BioSpacing.lg),
-            Text(
-              'Orientación preliminar (IA)',
-              style: BioTypography.overline,
-            ),
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              'Sugerencias de apoyo; no reemplazan el criterio profesional.',
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-              ),
-            ),
+            Text('Orientación preliminar', style: BioTypography.overline),
             if (sugerencias.diagnosticos.isNotEmpty) ...[
               BioSpacing.gapH(BioSpacing.sm),
               Text('Diagnósticos a considerar', style: BioTypography.bodySm),
@@ -411,63 +403,53 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               ),
             ],
           ],
-          if (msgs.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.lg),
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: Text(
-                'Detalle enviado por el paciente (${msgs.length})',
-                style: BioTypography.overline,
-              ),
-              children: msgs.map(_buildMotivoMensajeTile).toList(),
-            ),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildMotivoMensajeTile(MotivoConsultaMensajeApi m) {
-    final tokens = context.bio;
-    final tipo = m.messageType.toLowerCase();
-    final uri = Uri.tryParse(resolveMediaContentUrl(m.content));
-    final esHttp = uri != null &&
-        (uri.isScheme('http') || uri.isScheme('https'));
+  List<Widget> _buildResumenConImagenes(
+    String resumen,
+    List<MotivoImagenAdjunta> imagenes,
+  ) {
+    final byRef = {for (final i in imagenes) i.ref: i.url};
+    final pattern = RegExp(r'\[(imagen\d+)\]');
+    final widgets = <Widget>[];
+    var last = 0;
 
-    Widget cuerpo;
-    if (tipo == 'texto') {
-      cuerpo = Text(m.content, style: BioTypography.body);
-    } else if (isImageMessageType(tipo) && m.content.trim().isNotEmpty) {
-      cuerpo = ChatMediaImage(
-        source: m.content,
-        bearerToken: widget.authToken,
-        width: double.infinity,
-        height: 200,
-        fit: BoxFit.contain,
-      );
-    } else if (tipo == 'audio' && esHttp) {
-      cuerpo = SelectableText(
-        'Audio: ${m.content}',
-        style: BioTypography.bodySm,
-      );
-    } else {
-      cuerpo = SelectableText(m.content, style: BioTypography.bodySm);
+    for (final match in pattern.allMatches(resumen)) {
+      if (match.start > last) {
+        widgets.add(Text(
+          resumen.substring(last, match.start),
+          style: BioTypography.body,
+        ));
+      }
+      final ref = match.group(1)!;
+      final url = byRef[ref];
+      if (url != null && url.isNotEmpty) {
+        widgets.add(Padding(
+          padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
+          child: ChatMediaImage(
+            source: url,
+            bearerToken: widget.authToken,
+            width: double.infinity,
+            height: 160,
+            fit: BoxFit.contain,
+          ),
+        ));
+      } else {
+        widgets.add(Text('[$ref]', style: BioTypography.body));
+      }
+      last = match.end;
+    }
+    if (last < resumen.length) {
+      widgets.add(Text(resumen.substring(last), style: BioTypography.body));
+    }
+    if (widgets.isEmpty) {
+      widgets.add(Text(resumen, style: BioTypography.body));
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: BioSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (m.createdAt.isNotEmpty)
-            Text(
-              m.createdAt,
-              style: BioTypography.caption.copyWith(color: tokens.textMuted),
-            ),
-          cuerpo,
-        ],
-      ),
-    );
+    return widgets;
   }
 
   Future<void> _enviarConsulta() async {

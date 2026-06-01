@@ -612,6 +612,11 @@ class PacientesController extends BaseController
         $insights = AppointmentReasonClinicalInsightsService::decodeInsights(
             $encounter->motivos_ia_insights_json ?? null
         );
+        $imagenesAdjuntas = AppointmentReasonBatchService::imagenesAdjuntasFromMessages(
+            $mensajes,
+            $encounterId
+        );
+        $resumen = $reason !== '' ? $reason : null;
 
         $motivosPaciente = [
             'encounter_id' => $encounterId,
@@ -620,10 +625,13 @@ class PacientesController extends BaseController
             'turno' => $this->formatTurnoMotivosContext($turno),
             'contexto_explicito' => $contextoExplicito,
             'ventana_medico' => AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter),
-            'resumen_ia' => $reason !== '' ? $reason : null,
-            'resumen_ia_pendiente' => $mensajes !== [] && $reason === '',
+            'resumen' => $resumen,
+            'resumen_ia' => $resumen,
+            'resumen_pendiente' => $mensajes !== [] && $resumen === null,
+            'resumen_ia_pendiente' => $mensajes !== [] && $resumen === null,
+            'imagenes_adjuntas' => $imagenesAdjuntas,
             'sugerencias_clinicas' => $insights,
-            'messages' => ConsultaMotivosMessage::serializeForApi($mensajes),
+            'messages' => [],
         ];
 
         return [

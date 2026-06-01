@@ -70,6 +70,8 @@ return [
 
     /** Minutos antes del turno en que se cierra el chat de motivos y corre el lote IA (cron turno-notificacion). */
     'motivos_consulta_cierre_minutos' => 2,
+    /** Minutos antes del turno en que el médico puede abrir historia clínica (motivos resumidos por IA). */
+    'historia_clinica_apertura_medico_minutos' => 1,
     
     // Configuración de reconocimiento facial
     'face_verification_provider' => 'azure', // 'azure', 'google', 'simple'

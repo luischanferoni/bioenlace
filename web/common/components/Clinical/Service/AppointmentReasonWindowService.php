@@ -12,10 +12,22 @@ use Yii;
 final class AppointmentReasonWindowService
 {
     public const DEFAULT_CLOSE_MINUTES_BEFORE = 2;
+    public const DEFAULT_MEDICO_HC_OPEN_MINUTES_BEFORE = 1;
 
     public static function minutesBeforeClose(): int
     {
         $v = (int) (Yii::$app->params['motivos_consulta_cierre_minutos'] ?? self::DEFAULT_CLOSE_MINUTES_BEFORE);
+
+        return max(0, $v);
+    }
+
+    /** Minutos antes del turno en que el médico puede abrir historia clínica / motivos. */
+    public static function minutesBeforeMedicoHistoriaClinica(): int
+    {
+        $v = (int) (
+            Yii::$app->params['historia_clinica_apertura_medico_minutos']
+            ?? self::DEFAULT_MEDICO_HC_OPEN_MINUTES_BEFORE
+        );
 
         return max(0, $v);
     }
@@ -69,6 +81,55 @@ final class AppointmentReasonWindowService
         $closeAt = $turnoAt - self::minutesBeforeClose() * 60;
 
         return self::nowTimestamp() < $closeAt;
+    }
+
+    /**
+     * Historia clínica / motivos para el médico: desde N minutos antes del turno (turno ambulatorio).
+     * Sin turno vinculado (guardia, etc.) → visible.
+     */
+    public static function isHistoriaClinicaVisibleForEncounter(Encounter $encounter): bool
+    {
+        $turnoAt = self::turnoStartsAt($encounter);
+        if ($turnoAt === null) {
+            return true;
+        }
+
+        $openAt = $turnoAt - self::minutesBeforeMedicoHistoriaClinica() * 60;
+
+        return self::nowTimestamp() >= $openAt;
+    }
+
+    public static function medicoHistoriaClinicaOpensAt(Encounter $encounter): ?int
+    {
+        $turnoAt = self::turnoStartsAt($encounter);
+        if ($turnoAt === null) {
+            return null;
+        }
+
+        return $turnoAt - self::minutesBeforeMedicoHistoriaClinica() * 60;
+    }
+
+    /**
+     * @return array{
+     *   visible: bool,
+     *   disponible_desde: string|null,
+     *   turno_en: string|null,
+     *   minutos_antes_apertura: int,
+     *   minutos_antes_cierre_paciente: int
+     * }
+     */
+    public static function apiHistoriaClinicaGateState(Encounter $encounter): array
+    {
+        $turnoAt = self::turnoStartsAt($encounter);
+        $openAt = self::medicoHistoriaClinicaOpensAt($encounter);
+
+        return [
+            'visible' => self::isHistoriaClinicaVisibleForEncounter($encounter),
+            'disponible_desde' => $openAt !== null ? date('c', $openAt) : null,
+            'turno_en' => $turnoAt !== null ? date('c', $turnoAt) : null,
+            'minutos_antes_apertura' => self::minutesBeforeMedicoHistoriaClinica(),
+            'minutos_antes_cierre_paciente' => self::minutesBeforeClose(),
+        ];
     }
 
     /**

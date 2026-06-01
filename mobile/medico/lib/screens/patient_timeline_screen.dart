@@ -84,6 +84,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _historiaClinicaData = data;
         _isLoading = false;
       });
+    } on HistoriaClinicaVentanaException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -322,10 +328,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildMotivosConsulta(HistoriaClinicaResponse hc) {
-    final resumen = hc.informacionMedica.motivosConsulta;
     final mp = hc.motivosConsultaPaciente;
+    final resumenIa = (mp.resumenIa ?? hc.informacionMedica.motivosConsulta ?? '')
+        .trim();
+    final hayResumen = resumenIa.isNotEmpty;
     final msgs = mp.messages;
-    final hayResumen = resumen != null && resumen.trim().isNotEmpty;
+    final sugerencias = mp.sugerenciasClinicas;
     final turnoCtx = mp.turno;
     final subtituloTurno = turnoCtx != null && turnoCtx.etiquetaCorta.isNotEmpty
         ? 'Turno ${turnoCtx.etiquetaCorta}'
@@ -347,23 +355,72 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
           ],
           BioSpacing.gapH(BioSpacing.md),
-          if (hayResumen)
-            Text(resumen, style: BioTypography.body)
-          else if (msgs.isNotEmpty)
+          if (hayResumen) ...[
+            Text('Resumen (IA)', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(resumenIa, style: BioTypography.body),
+          ] else if (mp.resumenIaPendiente)
             Text(
-              'Aún no hay texto de motivo consolidado; revisá los mensajes enviados por el paciente desde la app.',
+              'Generando resumen de motivos… Actualizá en unos segundos.',
               style: BioTypography.bodySm,
             )
-          else
+          else if (msgs.isEmpty)
             Text(
               'Sin motivos registrados para esta consulta.',
               style: BioTypography.bodySm,
             ),
+          if (sugerencias != null && sugerencias.tieneContenido) ...[
+            BioSpacing.gapH(BioSpacing.lg),
+            Text(
+              'Orientación preliminar (IA)',
+              style: BioTypography.overline,
+            ),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              'Sugerencias de apoyo; no reemplazan el criterio profesional.',
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
+            ),
+            if (sugerencias.diagnosticos.isNotEmpty) ...[
+              BioSpacing.gapH(BioSpacing.sm),
+              Text('Diagnósticos a considerar', style: BioTypography.bodySm),
+              BioSpacing.gapH(BioSpacing.xs),
+              ...sugerencias.diagnosticos.map(
+                (d) => Padding(
+                  padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                  child: Text(
+                    '• ${d.termino}${d.justificacion != null && d.justificacion!.isNotEmpty ? ' — ${d.justificacion}' : ''}',
+                    style: BioTypography.bodySm,
+                  ),
+                ),
+              ),
+            ],
+            if (sugerencias.practicas.isNotEmpty) ...[
+              BioSpacing.gapH(BioSpacing.sm),
+              Text('Prácticas / estudios', style: BioTypography.bodySm),
+              BioSpacing.gapH(BioSpacing.xs),
+              ...sugerencias.practicas.map(
+                (p) => Padding(
+                  padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                  child: Text(
+                    '• ${p.termino}${p.justificacion != null && p.justificacion!.isNotEmpty ? ' — ${p.justificacion}' : ''}',
+                    style: BioTypography.bodySm,
+                  ),
+                ),
+              ),
+            ],
+          ],
           if (msgs.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.lg),
-            Text('Mensajes del paciente (app)', style: BioTypography.overline),
-            BioSpacing.gapH(BioSpacing.sm),
-            ...msgs.map(_buildMotivoMensajeTile),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: Text(
+                'Detalle enviado por el paciente (${msgs.length})',
+                style: BioTypography.overline,
+              ),
+              children: msgs.map(_buildMotivoMensajeTile).toList(),
+            ),
           ],
         ],
       ),

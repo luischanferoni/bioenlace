@@ -58,6 +58,8 @@ final class AppointmentReasonBatchService
             return ['ok' => false, 'message' => 'No se pudo guardar el resumen en el encounter'];
         }
 
+        AppointmentReasonClinicalInsightsService::generateAndPersist($encounterId, $encounter->reason_text);
+
         Yii::info("Motivos IA batch OK encounter={$encounterId}", 'motivos-consulta');
 
         return [
@@ -65,6 +67,37 @@ final class AppointmentReasonBatchService
             'message' => 'Resumen generado',
             'reason_text' => $encounter->reason_text,
         ];
+    }
+
+    /**
+     * Resumen + sugerencias si la ventana del paciente ya cerró y hay mensajes sin procesar.
+     */
+    public static function ensureProcessedForMedico(Encounter $encounter): void
+    {
+        if (AppointmentReasonWindowService::isInputOpenForEncounter($encounter)) {
+            return;
+        }
+
+        $hasMessages = ConsultaMotivosMessage::find()
+            ->where(['encounter_id' => (int) $encounter->id])
+            ->exists();
+        if (!$hasMessages) {
+            return;
+        }
+
+        if (empty($encounter->motivos_ia_processed_at)) {
+            self::process((int) $encounter->id);
+            $encounter->refresh();
+        } elseif (
+            trim((string) $encounter->reason_text) !== ''
+            && empty($encounter->motivos_ia_insights_json)
+        ) {
+            AppointmentReasonClinicalInsightsService::generateAndPersist(
+                (int) $encounter->id,
+                (string) $encounter->reason_text
+            );
+            $encounter->refresh();
+        }
     }
 
     /**

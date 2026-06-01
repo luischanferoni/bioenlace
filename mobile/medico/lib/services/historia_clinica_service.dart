@@ -42,20 +42,30 @@ class HistoriaClinicaService {
 
       final response = await http.get(uri, headers: _headers);
 
+      final data = json.decode(response.body) as Map<String, dynamic>;
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
         if (data['success'] == true && data['data'] != null) {
           return HistoriaClinicaResponse.fromJson(
               data['data'] as Map<String, dynamic>);
-        } else {
-          throw Exception(
-              data['message'] ?? 'Error al obtener historia clínica');
         }
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception(
-            errorData['message'] ?? 'Error al obtener historia clínica');
+        throw Exception(data['message'] ?? 'Error al obtener historia clínica');
       }
+      if (response.statusCode == 403) {
+        final extra = data['errors'];
+        final codigo = extra is Map ? extra['codigo']?.toString() : null;
+        if (codigo == 'HC_ANTES_DE_VENTANA') {
+          throw HistoriaClinicaVentanaException(
+            data['message']?.toString() ??
+                'La historia clínica aún no está disponible.',
+            ventanaMedico: extra is Map
+                ? Map<String, dynamic>.from(
+                    extra['ventana_medico'] as Map? ?? {},
+                  )
+                : const {},
+          );
+        }
+      }
+      throw Exception(data['message'] ?? 'Error al obtener historia clínica');
     } catch (e) {
       print('Error fetching historia clínica: $e');
       rethrow;
@@ -241,11 +251,76 @@ class MotivoConsultaTurnoContext {
   }
 }
 
+class HistoriaClinicaVentanaException implements Exception {
+  final String message;
+  final Map<String, dynamic> ventanaMedico;
+
+  HistoriaClinicaVentanaException(this.message, {this.ventanaMedico = const {}});
+
+  @override
+  String toString() => message;
+}
+
+class SugerenciaClinicaItem {
+  final String termino;
+  final String? justificacion;
+  final String? tipo;
+
+  SugerenciaClinicaItem({
+    required this.termino,
+    this.justificacion,
+    this.tipo,
+  });
+
+  factory SugerenciaClinicaItem.fromJson(Map<String, dynamic> json) {
+    return SugerenciaClinicaItem(
+      termino: json['termino']?.toString() ?? '',
+      justificacion: json['justificacion']?.toString(),
+      tipo: json['tipo']?.toString(),
+    );
+  }
+}
+
+class SugerenciasClinicasMotivos {
+  final List<SugerenciaClinicaItem> diagnosticos;
+  final List<SugerenciaClinicaItem> practicas;
+
+  SugerenciasClinicasMotivos({
+    this.diagnosticos = const [],
+    this.practicas = const [],
+  });
+
+  factory SugerenciasClinicasMotivos.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return SugerenciasClinicasMotivos();
+    }
+    List<SugerenciaClinicaItem> mapList(String key) {
+      final raw = json[key];
+      if (raw is! List) return [];
+      return raw
+          .whereType<Map>()
+          .map((e) => SugerenciaClinicaItem.fromJson(Map<String, dynamic>.from(e)))
+          .where((e) => e.termino.isNotEmpty)
+          .toList();
+    }
+
+    return SugerenciasClinicasMotivos(
+      diagnosticos: mapList('diagnosticos_sugeridos'),
+      practicas: mapList('practicas_sugeridas'),
+    );
+  }
+
+  bool get tieneContenido => diagnosticos.isNotEmpty || practicas.isNotEmpty;
+}
+
 class MotivosConsultaPaciente {
   final int? consultaId;
   final int? turnoId;
   final MotivoConsultaTurnoContext? turno;
   final bool contextoExplicito;
+  final String? resumenIa;
+  final bool resumenIaPendiente;
+  final SugerenciasClinicasMotivos? sugerenciasClinicas;
   final List<MotivoConsultaMensajeApi> messages;
 
   MotivosConsultaPaciente({
@@ -253,6 +328,9 @@ class MotivosConsultaPaciente {
     this.turnoId,
     this.turno,
     this.contextoExplicito = false,
+    this.resumenIa,
+    this.resumenIaPendiente = false,
+    this.sugerenciasClinicas,
     required this.messages,
   });
 
@@ -276,6 +354,7 @@ class MotivosConsultaPaciente {
       tid = int.tryParse(t.toString());
     }
     final turnoMap = json['turno'];
+    final sugMap = json['sugerencias_clinicas'];
     return MotivosConsultaPaciente(
       consultaId: cid,
       turnoId: tid,
@@ -285,6 +364,13 @@ class MotivosConsultaPaciente {
             )
           : null,
       contextoExplicito: json['contexto_explicito'] == true,
+      resumenIa: json['resumen_ia']?.toString(),
+      resumenIaPendiente: json['resumen_ia_pendiente'] == true,
+      sugerenciasClinicas: sugMap is Map
+          ? SugerenciasClinicasMotivos.fromJson(
+              Map<String, dynamic>.from(sugMap),
+            )
+          : null,
       messages: raw
           .map(
             (e) => MotivoConsultaMensajeApi.fromJson(

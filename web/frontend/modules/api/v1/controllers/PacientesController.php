@@ -4,6 +4,9 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\Cirugia;
+use common\components\Clinical\Service\AppointmentReasonBatchService;
+use common\components\Clinical\Service\AppointmentReasonClinicalInsightsService;
+use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
 use common\components\Clinical\Emergency\Service\GuardiaQueueService;
@@ -120,6 +123,20 @@ class PacientesController extends BaseController
             return $this->error('Persona no encontrada', null, 404);
         }
 
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $motivosLookup = new EncounterAppointmentReasonLookupService();
+        $motivosCtx = $this->buildMotivosHistoriaClinicaContext(
+            $persona,
+            $motivosLookup,
+            $idEfector
+        );
+        if ($motivosCtx['http_error'] !== null) {
+            return $motivosCtx['http_error'];
+        }
+
+        $motivosConsulta = $motivosCtx['motivos_consulta'];
+        $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
+
         // Diagnósticos recientes/crónicos
         [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
         $condicionesActivas = [];
@@ -164,21 +181,6 @@ class PacientesController extends BaseController
                 $antecedentesPersonales[] = $row;
             }
         }
-
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        $motivosLookup = new EncounterAppointmentReasonLookupService();
-
-        $motivosCtx = $this->buildMotivosHistoriaClinicaContext(
-            $persona,
-            $motivosLookup,
-            $idEfector
-        );
-        if ($motivosCtx['http_error'] !== null) {
-            return $motivosCtx['http_error'];
-        }
-
-        $motivosConsulta = $motivosCtx['motivos_consulta'];
-        $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
 
         $simularSignos = false;
         if (defined('YII_DEBUG') && YII_DEBUG) {
@@ -578,6 +580,28 @@ class PacientesController extends BaseController
             ];
         }
 
+        if (!AppointmentReasonWindowService::isHistoriaClinicaVisibleForEncounter($encounter)) {
+            $gate = AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter);
+            $min = (int) $gate['minutos_antes_apertura'];
+
+            return [
+                'motivos_consulta' => null,
+                'motivos_consulta_paciente' => $emptyPaciente,
+                'turnos_con_encounter' => $turnosConEncounter,
+                'http_error' => $this->error(
+                    "La historia clínica estará disponible {$min} minuto(s) antes del turno.",
+                    [
+                        'codigo' => 'HC_ANTES_DE_VENTANA',
+                        'ventana_medico' => $gate,
+                    ],
+                    403
+                ),
+            ];
+        }
+
+        AppointmentReasonBatchService::ensureProcessedForMedico($encounter);
+        $encounter->refresh();
+
         $encounterId = (int) $encounter->id;
         $reason = trim((string) $encounter->reason_text);
         $mensajes = ConsultaMotivosMessage::find()
@@ -585,12 +609,20 @@ class PacientesController extends BaseController
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
+        $insights = AppointmentReasonClinicalInsightsService::decodeInsights(
+            $encounter->motivos_ia_insights_json ?? null
+        );
+
         $motivosPaciente = [
             'encounter_id' => $encounterId,
             'consulta_id' => $encounterId,
             'turno_id' => $turno !== null ? (int) $turno->id_turnos : null,
             'turno' => $this->formatTurnoMotivosContext($turno),
             'contexto_explicito' => $contextoExplicito,
+            'ventana_medico' => AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter),
+            'resumen_ia' => $reason !== '' ? $reason : null,
+            'resumen_ia_pendiente' => $mensajes !== [] && $reason === '',
+            'sugerencias_clinicas' => $insights,
             'messages' => ConsultaMotivosMessage::serializeForApi($mensajes),
         ];
 

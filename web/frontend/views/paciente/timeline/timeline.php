@@ -239,25 +239,41 @@ Modal::end();
             .join('');
     }
 
-    function renderMotivos(texto, hayMensajesPacienteApp) {
+    function renderMotivos(texto, mp) {
         var el = document.getElementById('tl_motivos_consulta');
         if (!el) return;
-        hayMensajesPacienteApp = !!hayMensajesPacienteApp;
-        if (texto && String(texto).trim() !== '') {
-            el.classList.remove('text-muted');
-            el.classList.add('text-body');
-            el.style.whiteSpace = 'pre-wrap';
-            el.textContent = String(texto);
-        } else if (hayMensajesPacienteApp) {
-            el.classList.remove('text-body');
-            el.classList.add('text-muted');
-            el.style.whiteSpace = 'normal';
-            el.textContent = 'Aún no hay texto de motivo consolidado; revise los mensajes enviados por el paciente desde la app.';
-        } else {
-            el.classList.add('text-muted');
-            el.style.whiteSpace = 'normal';
-            el.textContent = 'Sin motivos registrados para esta consulta.';
+        mp = mp || {};
+        var resumen = (mp.resumen_ia && String(mp.resumen_ia).trim() !== '')
+            ? String(mp.resumen_ia).trim()
+            : (texto && String(texto).trim() !== '' ? String(texto).trim() : '');
+        var html = '';
+        if (resumen !== '') {
+            html += '<div class="mb-2"><span class="small text-uppercase text-muted">Resumen (IA)</span></div>';
+            html += '<div class="text-body" style="white-space:pre-wrap">' + escMotivosHtml(resumen) + '</div>';
+        } else if (mp.resumen_ia_pendiente) {
+            html += '<p class="text-muted mb-0">Generando resumen de motivos…</p>';
+        } else if (!(mp.messages && mp.messages.length)) {
+            html += '<p class="text-muted mb-0">Sin motivos registrados para esta consulta.</p>';
         }
+        var sug = mp.sugerencias_clinicas;
+        if (sug && (sug.diagnosticos_sugeridos || sug.practicas_sugeridas)) {
+            html += '<div class="mt-3 small text-muted">Orientación preliminar (IA; no reemplaza criterio profesional)</div>';
+            if (sug.diagnosticos_sugeridos && sug.diagnosticos_sugeridos.length) {
+                html += '<div class="fw-semibold mt-2">Diagnósticos a considerar</div><ul class="mb-1">';
+                sug.diagnosticos_sugeridos.forEach(function (d) {
+                    html += '<li>' + escMotivosHtml(d.termino || '') + '</li>';
+                });
+                html += '</ul>';
+            }
+            if (sug.practicas_sugeridas && sug.practicas_sugeridas.length) {
+                html += '<div class="fw-semibold mt-2">Prácticas / estudios</div><ul class="mb-0">';
+                sug.practicas_sugeridas.forEach(function (p) {
+                    html += '<li>' + escMotivosHtml(p.termino || '') + '</li>';
+                });
+                html += '</ul>';
+            }
+        }
+        el.innerHTML = html;
     }
 
     function escMotivosHtml(s) {
@@ -335,6 +351,9 @@ Modal::end();
             if (!endpoints.historiaClinica) return;
             var resp = await fetch(endpoints.historiaClinica, { headers: bioHeaders() });
             var payload = await resp.json();
+            if (resp.status === 403 && payload && payload.errors && payload.errors.codigo === 'HC_ANTES_DE_VENTANA') {
+                throw new Error(payload.message || 'Historia clínica no disponible aún.');
+            }
             if (!payload || payload.success !== true || !payload.data) {
                 throw new Error((payload && payload.message) ? payload.message : 'Error al cargar historia clínica');
             }
@@ -345,7 +364,7 @@ Modal::end();
             renderBadges('tl_antecedentes', [].concat(info.antecedentes_personales || [], info.antecedentes_familiares || []), 'border border-gray text-gray');
             var mp = payload.data.motivos_consulta_paciente || {};
             var msgPac = (mp.messages && mp.messages.length) ? mp.messages.length : 0;
-            renderMotivos(info.motivos_consulta || null, msgPac > 0);
+            renderMotivos(info.motivos_consulta || null, mp);
             renderMotivosPacienteApp(mp);
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
@@ -355,7 +374,7 @@ Modal::end();
             renderBadges('tl_condiciones_cronicas', [], 'border border-warning text-warning');
             renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
-            renderMotivos(null, false);
+            renderMotivos(null, null);
             renderMotivosPacienteApp(null);
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(null);

@@ -93,7 +93,7 @@ class TurnosController extends BaseController
      * Turnos donde el usuario es paciente. GET|POST /api/v1/turnos/listar-como-paciente.
      *
      * Sin `alcance`: compatibilidad (pendientes por rango de fecha, como antes) con `fecha_desde` / `fecha_hasta`.
-     * Con `alcance=pendientes`: solo activos, estado PENDIENTE, inicio &gt;= ahora; opcional `limit` (def. 20, máx. 100), `offset`.
+     * Con `alcance=pendientes`: activos, estado PENDIENTE, fecha del turno &gt;= hoy (zona producto); incluye el resto del día aunque la hora ya pasó (alineado a agenda del profesional). Paginación: `limit`, `offset`.
      * Con `alcance=pasados`: historial con inicio &lt; ahora (cualquier estado); misma paginación.
      *
      * @action_name Mis turnos y citas (paciente)
@@ -1296,29 +1296,36 @@ class TurnosController extends BaseController
             $offset = max(0, $offset);
 
             $ahoraLocal = $this->ahoraLocalParaComparacionTurno();
+            $hoyProducto = $this->hoyProductoParaTurnos();
 
             if ($alcance === 'en_resolucion') {
                 $turnosQ = Turno::findActive()->alias('t')
                     ->where(['t.id_persona' => $idPersona])
                     ->andWhere(['t.estado' => Turno::ESTADO_EN_RESOLUCION])
-                    ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal])
+                    ->andWhere(['>=', 't.fecha', $hoyProducto])
                     ->orderBy(['t.fecha' => SORT_ASC, 't.hora' => SORT_ASC]);
             } elseif ($alcance === 'pendientes') {
                 $turnosQ = Turno::findActive()->alias('t')
                     ->where(['t.id_persona' => $idPersona])
                     ->andWhere(['t.estado' => Turno::ESTADO_PENDIENTE])
-                    ->andWhere(['>=', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal]);
+                    ->andWhere(['>=', 't.fecha', $hoyProducto]);
 
                 if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
                     $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);
                 } else {
-                    $turnosQ->andWhere(['<=', 't.fecha', date('Y-m-d', strtotime('+3 months'))]);
+                    $turnosQ->andWhere(['<=', 't.fecha', date('Y-m-d', strtotime($hoyProducto . ' +3 months'))]);
                 }
                 $turnosQ->orderBy(['t.fecha' => SORT_ASC, 't.hora' => SORT_ASC]);
             } else {
-                $turnosQ = Turno::find()->alias('t')
+                $turnosQ = Turno::findActive()->alias('t')
                     ->where(['t.id_persona' => $idPersona])
-                    ->andWhere(['<', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal]);
+                    ->andWhere(['<', new Expression('TIMESTAMP(t.fecha, t.hora)'), $ahoraLocal])
+                    ->andWhere([
+                        'or',
+                        ['<', 't.fecha', $hoyProducto],
+                        ['not', ['t.estado' => Turno::ESTADO_PENDIENTE]],
+                        ['not', ['t.estado' => Turno::ESTADO_EN_RESOLUCION]],
+                    ]);
 
                 if (isset($params['fecha_hasta']) && $params['fecha_hasta'] !== '') {
                     $turnosQ->andWhere(['<=', 't.fecha', $params['fecha_hasta']]);
@@ -1411,6 +1418,20 @@ class TurnosController extends BaseController
         }
 
         return (new \DateTimeImmutable('now', $tz))->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * Fecha calendario de hoy en zona producto (`Y-m-d`), para listados paciente por día de turno.
+     */
+    protected function hoyProductoParaTurnos(): string
+    {
+        try {
+            $tz = new \DateTimeZone(Yii::$app->timeZone);
+        } catch (\Exception $e) {
+            $tz = new \DateTimeZone('UTC');
+        }
+
+        return (new \DateTimeImmutable('now', $tz))->format('Y-m-d');
     }
 
     /**

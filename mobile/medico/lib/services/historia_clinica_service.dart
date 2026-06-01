@@ -22,12 +22,25 @@ class HistoriaClinicaService {
   }
 
   /// GET /api/v1/personas/{id}/historia-clinica
-  Future<HistoriaClinicaResponse> getHistoriaClinica(int personaId) async {
+  ///
+  /// [turnoId] o [encounterId]: motivos del encounter de ese turno/consulta (no el turno más reciente).
+  Future<HistoriaClinicaResponse> getHistoriaClinica(
+    int personaId, {
+    int? turnoId,
+    int? encounterId,
+  }) async {
     try {
-      final response = await http.get(
-        Uri.parse('${AppConfig.apiUrl}/personas/$personaId/historia-clinica'),
-        headers: _headers,
-      );
+      final q = <String, String>{};
+      if (encounterId != null && encounterId > 0) {
+        q['encounter_id'] = '$encounterId';
+      } else if (turnoId != null && turnoId > 0) {
+        q['turno_id'] = '$turnoId';
+      }
+      final uri = Uri.parse(
+        '${AppConfig.apiUrl}/personas/$personaId/historia-clinica',
+      ).replace(queryParameters: q.isEmpty ? null : q);
+
+      final response = await http.get(uri, headers: _headers);
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

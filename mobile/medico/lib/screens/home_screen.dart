@@ -220,16 +220,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Turno? _obtenerSiguienteTurno() {
     if (_turnos.isEmpty) return null;
-    final ahora = DateTime.now();
+    final ahora = nowProducto();
     final turnosReales = _turnos.where((turno) => turno.id != 999999).toList();
     if (turnosReales.isEmpty) return null;
-    return turnosReales.firstWhere(
-      (turno) {
-        final fechaHora = turno.fechaHora;
-        return fechaHora != null && fechaHora.isAfter(ahora);
-      },
-      orElse: () => turnosReales.first,
-    );
+    for (final turno in turnosReales) {
+      final inicio = parseTurnoInicioProducto({
+        'fecha': turno.fecha,
+        'hora': turno.hora,
+      });
+      if (inicio != null && inicio.isAfter(ahora)) {
+        return turno;
+      }
+    }
+    return null;
   }
 
   List<Turno> _getPendientes(Turno? siguienteTurno) {

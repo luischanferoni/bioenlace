@@ -6,6 +6,7 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
+use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use common\models\Turno;
@@ -1486,6 +1487,9 @@ class TurnosController extends BaseController
             'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
             'encounter_id' => $encounterId,
             'id_consulta' => $encounterId,
+            'motivos_input_abierto' => $encounterId !== null
+                && AppointmentReasonWindowService::isInputOpen($encounterId),
+            'motivos_cierre_minutos' => AppointmentReasonWindowService::minutesBeforeClose(),
             'profesional' => $profesional,
             'created_at' => $turno->created_at,
             'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION,

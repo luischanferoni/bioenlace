@@ -89,14 +89,19 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
 
   Turno? _obtenerSiguienteTurno() {
     if (_turnos.isEmpty) return null;
-    final ahora = DateTime.now();
-    return _turnos.firstWhere(
-      (turno) {
-        final fechaHora = turno.fechaHora;
-        return fechaHora != null && fechaHora.isAfter(ahora);
-      },
-      orElse: () => _turnos.first,
-    );
+    final ahora = nowProducto();
+    Turno? candidato;
+    for (final turno in _turnos) {
+      final inicio = parseTurnoInicioProducto({
+        'fecha': turno.fecha,
+        'hora': turno.hora,
+      });
+      if (inicio != null && inicio.isAfter(ahora)) {
+        candidato = turno;
+        break;
+      }
+    }
+    return candidato;
   }
 
   UiIntent _intentEstado(String estado) {

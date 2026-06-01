@@ -244,7 +244,8 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     final tipoAtencion = t['tipo_atencion'] as String? ?? 'presencial';
     final idConsulta = t['id_consulta'];
     final puedeChat = tipoAtencion == 'teleconsulta' && idConsulta != null;
-    final puedeMotivos = idConsulta != null;
+    final puedeMotivos =
+        idConsulta != null && turnoMotivosInputAbiertoEnProducto(t);
     final tituloMotivos = 'Motivos · ${t['fecha']} ${t['hora']}';
     final estado = t['estado_label']?.toString() ?? '';
 

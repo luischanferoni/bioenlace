@@ -782,7 +782,11 @@ class HomeScreenState extends State<HomeScreen> {
   }) {
     final tokens = context.bio;
     final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
-    final idConsulta = futuro ? _encounterIdDesdeTurno(t) : null;
+    final puedeMotivos = futuro &&
+        !enResolucion &&
+        turnoTieneEncounterParaMotivos(t) &&
+        turnoMotivosInputAbiertoEnProducto(t);
+    final idConsulta = puedeMotivos ? _encounterIdDesdeTurno(t) : null;
 
     final cabecera = Text(
       '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',

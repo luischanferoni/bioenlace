@@ -73,7 +73,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     setState(() {
       _loading = false;
       _messages = result['messages'] ?? [];
-      _inputAbierto = result['input_abierto'] != false;
+      _inputAbierto = result['input_abierto'] == true;
       _motivosResumen = result['motivos_resumen']?.toString();
       if (result['success'] != true) _error = result['message'] as String?;
     });

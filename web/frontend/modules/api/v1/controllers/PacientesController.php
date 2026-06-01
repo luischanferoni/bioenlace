@@ -165,34 +165,44 @@ class PacientesController extends BaseController
 
         $idEfector = Yii::$app->user->getIdEfector();
         $motivosLookup = new EncounterAppointmentReasonLookupService();
-        $motivosConsulta = $idEfector
-            ? $motivosLookup->ultimoMotivoTextoDesdeTurno((int) $persona->id_persona, (int) $idEfector)
-            : null;
 
+        $encounterIdMotivos = $this->resolveEncounterIdMotivosHistoriaClinica(
+            (int) $persona->id_persona,
+            $motivosLookup
+        );
+
+        $motivosConsulta = null;
         $motivosConsultaPaciente = [
             'encounter_id' => null,
             'consulta_id' => null,
             'messages' => [],
         ];
-        if ($idEfector) {
-            $encounterIdMotivos = $motivosLookup->ultimoEncounterIdDesdeTurno(
+
+        if ($encounterIdMotivos !== null) {
+            $encounterMotivos = Encounter::findOne($encounterIdMotivos);
+            if (
+                $encounterMotivos !== null
+                && (int) $encounterMotivos->subject_persona_id === (int) $persona->id_persona
+                && EncounterAccessService::userCanAccessEncounterApi($encounterMotivos)
+            ) {
+                $reason = trim((string) $encounterMotivos->reason_text);
+                $motivosConsulta = $reason !== '' ? $reason : null;
+
+                $mensajes = ConsultaMotivosMessage::find()
+                    ->where(['encounter_id' => $encounterIdMotivos])
+                    ->orderBy(['created_at' => SORT_ASC])
+                    ->all();
+                $motivosConsultaPaciente = [
+                    'encounter_id' => $encounterIdMotivos,
+                    'consulta_id' => $encounterIdMotivos,
+                    'messages' => ConsultaMotivosMessage::serializeForApi($mensajes),
+                ];
+            }
+        } elseif ($idEfector) {
+            $motivosConsulta = $motivosLookup->ultimoMotivoTextoDesdeTurno(
                 (int) $persona->id_persona,
                 (int) $idEfector
             );
-            if ($encounterIdMotivos !== null) {
-                $encounterMotivos = Encounter::findOne($encounterIdMotivos);
-                if ($encounterMotivos !== null && EncounterAccessService::userCanAccessEncounterApi($encounterMotivos)) {
-                    $mensajes = ConsultaMotivosMessage::find()
-                        ->where(['encounter_id' => $encounterIdMotivos])
-                        ->orderBy(['created_at' => SORT_ASC])
-                        ->all();
-                    $motivosConsultaPaciente = [
-                        'encounter_id' => $encounterIdMotivos,
-                        'consulta_id' => $encounterIdMotivos,
-                        'messages' => ConsultaMotivosMessage::serializeForApi($mensajes),
-                    ];
-                }
-            }
         }
 
         $simularSignos = false;
@@ -455,5 +465,36 @@ class PacientesController extends BaseController
         }
 
         return (new GuardiaQueueService())->listadoCompacto($idEfector);
+    }
+
+    /**
+     * Encounter cuyos motivos pre-consulta debe ver el médico en historia clínica.
+     *
+     * Query: `encounter_id` o `turno_id` (turnos.id_turnos). Sin ellos, último turno del paciente en el efector.
+     */
+    private function resolveEncounterIdMotivosHistoriaClinica(
+        int $personaId,
+        EncounterAppointmentReasonLookupService $motivosLookup
+    ): ?int {
+        $req = Yii::$app->request;
+        $encounterIdParam = (int) $req->get('encounter_id', 0);
+        if ($encounterIdParam > 0) {
+            return $encounterIdParam;
+        }
+
+        $turnoId = (int) $req->get('turno_id', 0);
+        if ($turnoId > 0) {
+            $fromTurno = $motivosLookup->encounterIdParaTurno($turnoId);
+            if ($fromTurno !== null) {
+                return $fromTurno;
+            }
+        }
+
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            return null;
+        }
+
+        return $motivosLookup->ultimoEncounterIdDesdeTurno($personaId, $idEfector);
     }
 }

@@ -72,8 +72,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
 
     try {
-      final data =
-          await _historiaClinicaService.getHistoriaClinica(widget.personaId);
+      final int? turnoId = widget.consultParent == 'TURNO'
+          ? widget.consultParentId
+          : null;
+      final data = await _historiaClinicaService.getHistoriaClinica(
+        widget.personaId,
+        turnoId: turnoId,
+      );
       if (!mounted) return;
       setState(() {
         _historiaClinicaData = data;

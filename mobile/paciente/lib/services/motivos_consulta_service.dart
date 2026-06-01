@@ -45,7 +45,7 @@ class MotivosConsultaService {
             mediaScope: 'motivos-consulta',
             encounterId: consultaId,
           ),
-          'input_abierto': payload['input_abierto'] ?? true,
+          'input_abierto': payload['input_abierto'] == true,
           'motivos_resumen': payload['motivos_resumen'],
           'cierre_en': payload['cierre_en'],
         };

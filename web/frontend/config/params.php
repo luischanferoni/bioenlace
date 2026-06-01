@@ -69,7 +69,7 @@ return [
     'ffmpeg_path' => 'ffmpeg', // Ruta al ejecutable de FFmpeg
 
     /** Minutos antes del turno en que se cierra el chat de motivos y corre el lote IA (cron turno-notificacion). */
-    'motivos_consulta_cierre_minutos' => 1,
+    'motivos_consulta_cierre_minutos' => 2,
     
     // Configuración de reconocimiento facial
     'face_verification_provider' => 'azure', // 'azure', 'google', 'simple'

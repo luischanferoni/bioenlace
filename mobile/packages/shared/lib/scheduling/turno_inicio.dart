@@ -77,3 +77,32 @@ bool turnoInicioEsPasadoEnProducto(Map<String, dynamic> turno) {
   if (inicio == null) return false;
   return inicio.isBefore(nowProducto());
 }
+
+/// Ventana de motivos de consulta: abierta hasta [minutosAntesCierre] antes del inicio del turno.
+bool turnoMotivosInputAbiertoEnProducto(
+  Map<String, dynamic> turno, {
+  int minutosAntesCierre = 2,
+}) {
+  final flag = turno['motivos_input_abierto'];
+  if (flag is bool) return flag;
+
+  final inicio = parseTurnoInicioProducto(turno);
+  if (inicio == null) return false;
+
+  final minsRaw = turno['motivos_cierre_minutos'];
+  final mins = minsRaw is int
+      ? minsRaw
+      : (minsRaw != null ? int.tryParse(minsRaw.toString()) : null) ??
+          minutosAntesCierre;
+
+  final cierre = inicio.subtract(Duration(minutes: mins));
+  return nowProducto().isBefore(cierre);
+}
+
+bool turnoTieneEncounterParaMotivos(Map<String, dynamic> turno) {
+  final raw = turno['encounter_id'] ?? turno['id_consulta'];
+  if (raw is int) return raw > 0;
+  if (raw == null) return false;
+  final id = int.tryParse(raw.toString());
+  return id != null && id > 0;
+}

@@ -11,7 +11,7 @@ use Yii;
  */
 final class AppointmentReasonWindowService
 {
-    public const DEFAULT_CLOSE_MINUTES_BEFORE = 1;
+    public const DEFAULT_CLOSE_MINUTES_BEFORE = 2;
 
     public static function minutesBeforeClose(): int
     {
@@ -26,18 +26,27 @@ final class AppointmentReasonWindowService
     }
 
     /**
-     * Timestamp Unix del inicio del turno vinculado, o null si no hay turno/fecha.
+     * Timestamp Unix del inicio del turno vinculado (zona producto), o null si no hay turno/fecha/hora válida.
      */
     public static function turnoStartsAt(Encounter $encounter): ?int
     {
         $turno = self::resolveTurno($encounter);
-        if ($turno === null || empty($turno->fecha) || empty($turno->hora)) {
+        if ($turno === null || empty($turno->fecha)) {
             return null;
         }
 
-        $ts = strtotime($turno->fecha . ' ' . trim((string) $turno->hora) . ':00');
+        $horaNorm = self::normalizeHoraParaInicio($turno->hora);
+        if ($horaNorm === null) {
+            return null;
+        }
 
-        return $ts !== false ? $ts : null;
+        $dt = \DateTimeImmutable::createFromFormat(
+            'Y-m-d H:i:s',
+            $turno->fecha . ' ' . $horaNorm,
+            self::productTimezone()
+        );
+
+        return $dt !== false ? $dt->getTimestamp() : null;
     }
 
     public static function isInputOpen(int $encounterId): bool
@@ -54,12 +63,12 @@ final class AppointmentReasonWindowService
     {
         $turnoAt = self::turnoStartsAt($encounter);
         if ($turnoAt === null) {
-            return true;
+            return false;
         }
 
         $closeAt = $turnoAt - self::minutesBeforeClose() * 60;
 
-        return time() < $closeAt;
+        return self::nowTimestamp() < $closeAt;
     }
 
     /**
@@ -116,6 +125,37 @@ final class AppointmentReasonWindowService
                 . ' minuto(s) antes del turno; el médico verá el resumen al iniciar la atención.'
             );
         }
+    }
+
+    private static function nowTimestamp(): int
+    {
+        return (new \DateTimeImmutable('now', self::productTimezone()))->getTimestamp();
+    }
+
+    private static function productTimezone(): \DateTimeZone
+    {
+        try {
+            return new \DateTimeZone(Yii::$app->timeZone ?: 'America/Argentina/Tucuman');
+        } catch (\Exception $e) {
+            return new \DateTimeZone('America/Argentina/Tucuman');
+        }
+    }
+
+    /**
+     * HH:mm:ss para combinar con fecha (acepta HH:mm o HH:mm:ss en BD).
+     */
+    private static function normalizeHoraParaInicio(?string $hora): ?string
+    {
+        if ($hora === null || trim($hora) === '') {
+            return null;
+        }
+        $t = trim($hora);
+        if (preg_match('/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/', $t, $m) !== 1) {
+            return null;
+        }
+        $ss = isset($m[3]) ? (int) $m[3] : 0;
+
+        return sprintf('%02d:%02d:%02d', (int) $m[1], (int) $m[2], $ss);
     }
 
     private static function resolveTurno(Encounter $encounter): ?Turno

@@ -8,6 +8,7 @@ use yii\web\UploadedFile;
 use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
 
@@ -37,8 +38,7 @@ class MotivosConsultaController extends BaseController
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
-        $baseUrl = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
-        $formattedMessages = ConsultaMotivosMessage::serializeForApi($messages, $baseUrl);
+        $formattedMessages = ConsultaMotivosMessage::serializeForApi($messages);
 
         return [
             'success' => true,
@@ -154,8 +154,11 @@ class MotivosConsultaController extends BaseController
             ];
         }
 
-        $baseUrl = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
-        $contentUrl = rtrim($baseUrl, '/') . '/' . ltrim($relativePath, '/');
+        $contentUrl = SecureMediaService::absoluteApiUrl(
+            SecureMediaService::SCOPE_MOTIVOS_CONSULTA,
+            $encounterId,
+            $relativePath
+        );
 
         return [
             'success' => true,

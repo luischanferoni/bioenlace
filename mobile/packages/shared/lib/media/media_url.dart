@@ -6,20 +6,58 @@ String mediaSiteOrigin() {
   return Uri.parse('$base/').origin;
 }
 
-/// Convierte `content` de mensajes (ruta relativa o URL del host del request) en URL
-/// cargable por la app móvil contra el mismo origen que la API.
+/// Base API (`https://host/api/v1`).
+String mediaApiBase() {
+  final base = AppConfig.apiUrl.replaceAll(RegExp(r'/$'), '');
+  return base;
+}
+
+/// Convierte rutas legacy `/uploads/...` a URL protegida `/api/v1/media/...`.
+String? _legacyUploadsToSecureApiPath(String path) {
+  final p = path.startsWith('/') ? path : '/$path';
+  final motivos = RegExp(
+    r'^/uploads/motivos_consulta/(\d+)/([^/]+)$',
+  ).firstMatch(p);
+  if (motivos != null) {
+    final id = motivos.group(1)!;
+    final file = Uri.encodeComponent(motivos.group(2)!);
+    return '/api/v1/media/motivos-consulta/$id/$file';
+  }
+  final chat = RegExp(
+    r'^/uploads/consulta_chat/(\d+)/([^/]+)$',
+  ).firstMatch(p);
+  if (chat != null) {
+    final id = chat.group(1)!;
+    final file = Uri.encodeComponent(chat.group(2)!);
+    return '/api/v1/media/consulta-chat/$id/$file';
+  }
+  return null;
+}
+
+/// Convierte `content` de mensajes en URL cargable con Bearer (API media o legacy uploads).
 String resolveMediaContentUrl(String content) {
   final trimmed = content.trim();
   if (trimmed.isEmpty) return trimmed;
 
   final origin = mediaSiteOrigin();
+  final apiBase = mediaApiBase();
 
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     try {
       final uri = Uri.parse(trimmed);
       final path = uri.path;
+      final secure = _legacyUploadsToSecureApiPath(path);
+      if (secure != null) {
+        return '$origin$secure';
+      }
+      if (path.contains('/api/v1/media/') || path.contains('/api/v')) {
+        return trimmed;
+      }
       if (path.contains('/uploads/')) {
-        return '$origin$path${uri.hasQuery ? '?${uri.query}' : ''}';
+        final mapped = _legacyUploadsToSecureApiPath(path);
+        if (mapped != null) {
+          return '$origin$mapped';
+        }
       }
     } catch (_) {
       return trimmed;
@@ -27,11 +65,30 @@ String resolveMediaContentUrl(String content) {
     return trimmed;
   }
 
+  if (trimmed.startsWith('/api/')) {
+    return '$origin$trimmed';
+  }
+
   var path = trimmed;
   if (!path.startsWith('/')) {
     path = '/$path';
   }
-  return '$origin$path';
+
+  final secure = _legacyUploadsToSecureApiPath(path);
+  if (secure != null) {
+    return '$origin$secure';
+  }
+
+  if (path.startsWith('/api/v1/media/')) {
+    return '$origin$path';
+  }
+
+  // Fallback: path bajo el host (no debería usarse para uploads clínicos).
+  if (path.startsWith('/uploads/')) {
+    return '$origin$path';
+  }
+
+  return '$apiBase$path';
 }
 
 /// Ruta local del dispositivo (vista previa antes de subir).
@@ -44,6 +101,9 @@ bool isLocalMediaFilePath(String value) {
     return t.startsWith('blob:');
   }
   if (t.startsWith('uploads/') || t.startsWith('/uploads/')) {
+    return false;
+  }
+  if (t.contains('/api/v1/media/') || t.contains('/api/v')) {
     return false;
   }
   return t.contains(':\\') ||

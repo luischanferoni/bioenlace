@@ -287,6 +287,10 @@ return [
                 'GET api/<version:\w+>/consulta-chat/estado/<id:\d+>' => '<version>/consulta-chat/estado',
                 'OPTIONS api/<version:\w+>/consulta-chat/estado/<id:\d+>' => '<version>/consulta-chat/estado',
 
+                // Media protegida (motivos, chat clínico): Bearer + participantes del encounter
+                'GET api/<version:\w+>/media/<scope:[\w\-]+>/<encounterId:\d+>/<filename:[\w\.\-]+>' => '<version>/media/ver',
+                'OPTIONS api/<version:\w+>/media/<scope:[\w\-]+>/<encounterId:\d+>/<filename:[\w\.\-]+>' => '<version>/media/options',
+
                 // Motivos de consulta (conversación paciente: texto, audio, fotos)
                 'GET api/<version:\w+>/motivos-consulta/mensajes/<id:\d+>' => '<version>/motivos-consulta/listar-mensajes',
                 'OPTIONS api/<version:\w+>/motivos-consulta/mensajes/<id:\d+>' => '<version>/motivos-consulta/listar-mensajes',

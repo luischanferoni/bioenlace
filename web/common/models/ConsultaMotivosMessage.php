@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\components\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use Yii;
 use yii\db\ActiveRecord;
@@ -71,16 +72,19 @@ class ConsultaMotivosMessage extends ActiveRecord
      * @param self[] $messages
      * @return list<array<string, mixed>>
      */
-    public static function serializeForApi(array $messages, string $hostWithWebAlias): array
+    public static function serializeForApi(array $messages, ?string $hostWithWebAlias = null): array
     {
-        $baseUrl = rtrim($hostWithWebAlias, '/');
+        unset($hostWithWebAlias);
         $out = [];
         foreach ($messages as $message) {
             $content = (string) $message->texto;
             if (in_array($message->message_type, [self::TYPE_IMAGEN, self::TYPE_AUDIO], true)
-                && $content !== ''
-                && strpos($content, 'http') !== 0) {
-                $content = $baseUrl . '/' . ltrim($content, '/');
+                && $content !== '') {
+                $content = SecureMediaService::contentForApi(
+                    SecureMediaService::SCOPE_MOTIVOS_CONSULTA,
+                    (int) $message->encounter_id,
+                    $content
+                );
             }
             $out[] = [
                 'id' => (int) $message->id,

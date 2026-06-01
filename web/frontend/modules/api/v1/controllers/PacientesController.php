@@ -186,11 +186,10 @@ class PacientesController extends BaseController
                         ->where(['encounter_id' => $encounterIdMotivos])
                         ->orderBy(['created_at' => SORT_ASC])
                         ->all();
-                    $hostBase = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
                     $motivosConsultaPaciente = [
                         'encounter_id' => $encounterIdMotivos,
                         'consulta_id' => $encounterIdMotivos,
-                        'messages' => ConsultaMotivosMessage::serializeForApi($mensajes, $hostBase),
+                        'messages' => ConsultaMotivosMessage::serializeForApi($mensajes),
                     ];
                 }
             }

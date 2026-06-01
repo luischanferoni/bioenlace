@@ -29,6 +29,7 @@ class ApiGhostAccessControl extends ActionFilter
         '/api/sesion-operativa/establecer',
         '/api/acciones/comunes',
         '/api/client-diagnostic/registrar',
+        '/api/media/ver',
     ];
 
     /**

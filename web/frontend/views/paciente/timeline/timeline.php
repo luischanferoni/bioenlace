@@ -285,10 +285,10 @@ Modal::end();
                 body = '<span style="white-space:pre-wrap">' + escMotivosHtml(m.content || '') + '</span>';
             } else if (t === 'imagen') {
                 var u = m.content || '';
-                body = '<a href="' + escMotivosHtml(u) + '" target="_blank" rel="noopener">Ver imagen</a>';
+                body = '<img class="tl-motivos-secure-media" data-secure-src="' + escMotivosHtml(u) + '" alt="Imagen adjunta" style="max-width:100%;max-height:220px;border-radius:6px" />';
             } else if (t === 'audio') {
                 var au = m.content || '';
-                body = '<audio controls preload="none" src="' + escMotivosHtml(au) + '" style="max-width:100%"></audio>';
+                body = '<audio class="tl-motivos-secure-media" controls preload="none" data-secure-src="' + escMotivosHtml(au) + '" style="max-width:100%"></audio>';
             } else {
                 body = escMotivosHtml(m.content || '');
             }
@@ -296,6 +296,37 @@ Modal::end();
         }
         html += '</ul></div>';
         box.innerHTML = html;
+        hydrateSecureTimelineMedia(box);
+    }
+
+    function hydrateSecureTimelineMedia(root) {
+        if (!root || typeof fetch !== 'function') return;
+        var nodes = root.querySelectorAll('.tl-motivos-secure-media[data-secure-src]');
+        for (var i = 0; i < nodes.length; i++) {
+            (function (el) {
+                var url = el.getAttribute('data-secure-src');
+                if (!url) return;
+                fetch(url, { headers: bioHeaders(), credentials: 'same-origin' })
+                    .then(function (r) {
+                        if (!r.ok) throw new Error('media');
+                        return r.blob();
+                    })
+                    .then(function (blob) {
+                        el.src = URL.createObjectURL(blob);
+                        if (el.tagName === 'IMG') {
+                            el.style.cursor = 'pointer';
+                            el.addEventListener('click', function () {
+                                window.open(el.src, '_blank', 'noopener');
+                            });
+                        }
+                    })
+                    .catch(function () {
+                        if (el.tagName === 'IMG') {
+                            el.alt = 'No se pudo cargar la imagen';
+                        }
+                    });
+            })(nodes[i]);
+        }
     }
 
     async function loadTimelineSummary() {

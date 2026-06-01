@@ -6,6 +6,7 @@ use Yii;
 use yii\web\UploadedFile;
 use common\models\ConsultaChatMessage;
 use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 
 /**
@@ -33,12 +34,15 @@ class ConsultaChatController extends BaseController
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
 
-        $baseUrl = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
         $formattedMessages = [];
         foreach ($messages as $message) {
             $content = $message->content;
-            if (in_array($message->message_type, ['imagen', 'audio', 'video', 'documento'], true) && $content !== '' && strpos($content, 'http') !== 0) {
-                $content = rtrim($baseUrl, '/') . '/' . ltrim($content, '/');
+            if (in_array($message->message_type, ['imagen', 'audio', 'video', 'documento'], true) && $content !== '') {
+                $content = SecureMediaService::contentForApi(
+                    SecureMediaService::SCOPE_CONSULTA_CHAT,
+                    $encounterId,
+                    (string) $content
+                );
             }
             $formattedMessages[] = [
                 'id' => $message->id,
@@ -198,8 +202,11 @@ class ConsultaChatController extends BaseController
             ];
         }
 
-        $baseUrl = Yii::$app->request->hostInfo . (Yii::getAlias('@web') ?: '');
-        $contentUrl = rtrim($baseUrl, '/') . '/' . ltrim($relativePath, '/');
+        $contentUrl = SecureMediaService::absoluteApiUrl(
+            SecureMediaService::SCOPE_CONSULTA_CHAT,
+            $encounterId,
+            $relativePath
+        );
 
         return [
             'success' => true,

@@ -3,8 +3,10 @@
 namespace common\components\Clinical\Service;
 
 use common\models\Clinical\Encounter;
+use common\models\ConsultaMotivosMessage;
 use common\models\Turno;
 use yii\db\Expression;
+use yii\db\Query;
 
 /**
  * Motivos pre-consulta y último encounter ambulatorio ligado a turno (sin tabla `consultas`).
@@ -64,6 +66,78 @@ final class EncounterAppointmentReasonLookupService
             ->one();
 
         return $encounter !== null ? (int) $encounter->id : null;
+    }
+
+    /**
+     * Encounter del turno más reciente (fecha/hora) que tenga mensajes en `interaccion_motivos_consulta`.
+     */
+    public function encounterIdConMensajesMotivosRecientes(int $personaId, ?int $idEfector = null): ?int
+    {
+        if ($personaId <= 0) {
+            return null;
+        }
+
+        $id = $this->baseTurnoEncounterQuery($personaId, $idEfector)
+            ->innerJoin(
+                ['m' => ConsultaMotivosMessage::tableName()],
+                'm.encounter_id = enc.id'
+            )
+            ->select(['enc.id'])
+            ->limit(1)
+            ->scalar();
+
+        return $id !== false && $id !== null ? (int) $id : null;
+    }
+
+    /**
+     * Turnos ambulatorios del paciente con encounter (para elegir contexto de motivos en HC).
+     *
+     * @return list<array{
+     *   turno_id: int,
+     *   encounter_id: int,
+     *   fecha: string,
+     *   hora: string,
+     *   estado: string,
+     *   mensajes_count: int
+     * }>
+     */
+    public function listarTurnosConEncounterParaMotivos(int $personaId, ?int $idEfector = null): array
+    {
+        if ($personaId <= 0) {
+            return [];
+        }
+
+        $subMensajes = (new Query())
+            ->select(['encounter_id', 'cnt' => 'COUNT(*)'])
+            ->from(ConsultaMotivosMessage::tableName())
+            ->groupBy('encounter_id');
+
+        $rows = $this->baseTurnoEncounterQuery($personaId, $idEfector)
+            ->select([
+                'turno_id' => 't.id_turnos',
+                'encounter_id' => 'enc.id',
+                'fecha' => 't.fecha',
+                'hora' => 't.hora',
+                'estado' => 't.estado',
+                'mensajes_count' => 'COALESCE(m.cnt, 0)',
+            ])
+            ->leftJoin(['m' => $subMensajes], 'm.encounter_id = enc.id')
+            ->asArray()
+            ->all();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'turno_id' => (int) $row['turno_id'],
+                'encounter_id' => (int) $row['encounter_id'],
+                'fecha' => (string) $row['fecha'],
+                'hora' => (string) $row['hora'],
+                'estado' => (string) $row['estado'],
+                'mensajes_count' => (int) $row['mensajes_count'],
+            ];
+        }
+
+        return $out;
     }
 
     /**

@@ -108,6 +108,8 @@ class PacientesController extends BaseController
      * Resumen de historia clínica (persona + información médica + signos vitales + mensajes de motivos de la app del paciente). No arma lista de eventos aquí.
      *
      * GET /api/v1/personas/{id}/historia-clinica
+     * Query: `turno_id` o `encounter_id` — motivos del turno/consulta indicado (recomendado en app médico).
+     * Sin query: motivos del turno con mensajes más reciente en el efector (no el turno futuro vacío).
      * Query (solo YII_DEBUG): simular_signos=1 — misma semántica que GET .../signos-vitales.
      * RBAC: /api/pacientes/historia-clinica
      */
@@ -163,47 +165,20 @@ class PacientesController extends BaseController
             }
         }
 
-        $idEfector = Yii::$app->user->getIdEfector();
+        $idEfector = (int) Yii::$app->user->getIdEfector();
         $motivosLookup = new EncounterAppointmentReasonLookupService();
 
-        $encounterIdMotivos = $this->resolveEncounterIdMotivosHistoriaClinica(
-            (int) $persona->id_persona,
-            $motivosLookup
+        $motivosCtx = $this->buildMotivosHistoriaClinicaContext(
+            $persona,
+            $motivosLookup,
+            $idEfector
         );
-
-        $motivosConsulta = null;
-        $motivosConsultaPaciente = [
-            'encounter_id' => null,
-            'consulta_id' => null,
-            'messages' => [],
-        ];
-
-        if ($encounterIdMotivos !== null) {
-            $encounterMotivos = Encounter::findOne($encounterIdMotivos);
-            if (
-                $encounterMotivos !== null
-                && (int) $encounterMotivos->subject_persona_id === (int) $persona->id_persona
-                && EncounterAccessService::userCanAccessEncounterApi($encounterMotivos)
-            ) {
-                $reason = trim((string) $encounterMotivos->reason_text);
-                $motivosConsulta = $reason !== '' ? $reason : null;
-
-                $mensajes = ConsultaMotivosMessage::find()
-                    ->where(['encounter_id' => $encounterIdMotivos])
-                    ->orderBy(['created_at' => SORT_ASC])
-                    ->all();
-                $motivosConsultaPaciente = [
-                    'encounter_id' => $encounterIdMotivos,
-                    'consulta_id' => $encounterIdMotivos,
-                    'messages' => ConsultaMotivosMessage::serializeForApi($mensajes),
-                ];
-            }
-        } elseif ($idEfector) {
-            $motivosConsulta = $motivosLookup->ultimoMotivoTextoDesdeTurno(
-                (int) $persona->id_persona,
-                (int) $idEfector
-            );
+        if ($motivosCtx['http_error'] !== null) {
+            return $motivosCtx['http_error'];
         }
+
+        $motivosConsulta = $motivosCtx['motivos_consulta'];
+        $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
 
         $simularSignos = false;
         if (defined('YII_DEBUG') && YII_DEBUG) {
@@ -231,6 +206,7 @@ class PacientesController extends BaseController
             ],
             'signos_vitales' => $signosVitales,
             'motivos_consulta_paciente' => $motivosConsultaPaciente,
+            'turnos_con_encounter' => $motivosCtx['turnos_con_encounter'],
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
         ], 'OK');
@@ -468,33 +444,217 @@ class PacientesController extends BaseController
     }
 
     /**
-     * Encounter cuyos motivos pre-consulta debe ver el médico en historia clínica.
+     * Motivos pre-consulta + contexto de turno/encounter para historia clínica del médico.
      *
-     * Query: `encounter_id` o `turno_id` (turnos.id_turnos). Sin ellos, último turno del paciente en el efector.
+     * Query:
+     * - `turno_id` o `encounter_id`: contexto explícito (obligatorio en flujo móvil desde agenda).
+     * - Sin query: encounter con mensajes del paciente más reciente; si no hay, último turno con encounter.
+     *
+     * @return array{
+     *   motivos_consulta: string|null,
+     *   motivos_consulta_paciente: array<string, mixed>,
+     *   turnos_con_encounter: list<array<string, mixed>>,
+     *   http_error: array<string, mixed>|null
+     * }
      */
-    private function resolveEncounterIdMotivosHistoriaClinica(
-        int $personaId,
-        EncounterAppointmentReasonLookupService $motivosLookup
-    ): ?int {
+    private function buildMotivosHistoriaClinicaContext(
+        Persona $persona,
+        EncounterAppointmentReasonLookupService $motivosLookup,
+        int $idEfector
+    ): array {
+        $personaId = (int) $persona->id_persona;
         $req = Yii::$app->request;
+        $turnoIdParam = (int) $req->get('turno_id', 0);
         $encounterIdParam = (int) $req->get('encounter_id', 0);
-        if ($encounterIdParam > 0) {
-            return $encounterIdParam;
+        $contextoExplicito = $turnoIdParam > 0 || $encounterIdParam > 0;
+
+        $emptyPaciente = [
+            'encounter_id' => null,
+            'consulta_id' => null,
+            'turno_id' => null,
+            'turno' => null,
+            'contexto_explicito' => $contextoExplicito,
+            'messages' => [],
+        ];
+
+        $turnosConEncounter = $idEfector > 0
+            ? $this->filtrarTurnosConEncounterAccesibles(
+                $motivosLookup->listarTurnosConEncounterParaMotivos($personaId, $idEfector)
+            )
+            : [];
+
+        if ($idEfector > 0 && $turnosConEncounter === [] && $contextoExplicito) {
+            return [
+                'motivos_consulta' => null,
+                'motivos_consulta_paciente' => $emptyPaciente,
+                'turnos_con_encounter' => [],
+                'http_error' => $this->error(
+                    'No hay turnos con consulta asociada para este paciente en su efector.',
+                    null,
+                    403
+                ),
+            ];
         }
 
-        $turnoId = (int) $req->get('turno_id', 0);
-        if ($turnoId > 0) {
-            $fromTurno = $motivosLookup->encounterIdParaTurno($turnoId);
-            if ($fromTurno !== null) {
-                return $fromTurno;
+        $encounter = null;
+        $turno = null;
+
+        if ($turnoIdParam > 0) {
+            $turno = Turno::findActive()
+                ->andWhere(['id_turnos' => $turnoIdParam, 'id_persona' => $personaId])
+                ->one();
+            if ($turno === null) {
+                return [
+                    'motivos_consulta' => null,
+                    'motivos_consulta_paciente' => $emptyPaciente,
+                    'turnos_con_encounter' => $turnosConEncounter,
+                    'http_error' => $this->error('Turno no encontrado para este paciente.', null, 404),
+                ];
+            }
+            $encounterId = $motivosLookup->encounterIdParaTurno($turnoIdParam);
+            if ($encounterId === null) {
+                return [
+                    'motivos_consulta' => null,
+                    'motivos_consulta_paciente' => $emptyPaciente,
+                    'turnos_con_encounter' => $turnosConEncounter,
+                    'http_error' => $this->error(
+                        'El turno no tiene encounter clínico asociado.',
+                        null,
+                        404
+                    ),
+                ];
+            }
+            $encounter = Encounter::findOne($encounterId);
+        } elseif ($encounterIdParam > 0) {
+            $encounter = Encounter::findOne($encounterIdParam);
+            if (
+                $encounter === null
+                || (int) $encounter->subject_persona_id !== $personaId
+            ) {
+                return [
+                    'motivos_consulta' => null,
+                    'motivos_consulta_paciente' => $emptyPaciente,
+                    'turnos_con_encounter' => $turnosConEncounter,
+                    'http_error' => $this->error('Encounter no encontrado para este paciente.', null, 404),
+                ];
+            }
+            if ($encounter->appointment_id) {
+                $turno = Turno::findActive()
+                    ->andWhere(['id_turnos' => (int) $encounter->appointment_id])
+                    ->one();
+            }
+        } elseif ($idEfector > 0) {
+            $encounterIdAuto = $motivosLookup->encounterIdConMensajesMotivosRecientes($personaId, $idEfector)
+                ?? $motivosLookup->ultimoEncounterIdDesdeTurno($personaId, $idEfector);
+            if ($encounterIdAuto !== null) {
+                $encounter = Encounter::findOne($encounterIdAuto);
+                if ($encounter !== null && $encounter->appointment_id) {
+                    $turno = Turno::findActive()
+                        ->andWhere(['id_turnos' => (int) $encounter->appointment_id])
+                        ->one();
+                }
             }
         }
 
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        if ($idEfector <= 0) {
+        if ($encounter === null) {
+            return [
+                'motivos_consulta' => null,
+                'motivos_consulta_paciente' => $emptyPaciente,
+                'turnos_con_encounter' => $turnosConEncounter,
+                'http_error' => null,
+            ];
+        }
+
+        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+            return [
+                'motivos_consulta' => null,
+                'motivos_consulta_paciente' => $emptyPaciente,
+                'turnos_con_encounter' => $turnosConEncounter,
+                'http_error' => $this->error(
+                    'No tiene permiso para ver los motivos de consulta de este encounter.',
+                    null,
+                    403
+                ),
+            ];
+        }
+
+        $encounterId = (int) $encounter->id;
+        $reason = trim((string) $encounter->reason_text);
+        $mensajes = ConsultaMotivosMessage::find()
+            ->where(['encounter_id' => $encounterId])
+            ->orderBy(['created_at' => SORT_ASC])
+            ->all();
+
+        $motivosPaciente = [
+            'encounter_id' => $encounterId,
+            'consulta_id' => $encounterId,
+            'turno_id' => $turno !== null ? (int) $turno->id_turnos : null,
+            'turno' => $this->formatTurnoMotivosContext($turno),
+            'contexto_explicito' => $contextoExplicito,
+            'messages' => ConsultaMotivosMessage::serializeForApi($mensajes),
+        ];
+
+        return [
+            'motivos_consulta' => $reason !== '' ? $reason : null,
+            'motivos_consulta_paciente' => $motivosPaciente,
+            'turnos_con_encounter' => $turnosConEncounter,
+            'http_error' => null,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function formatTurnoMotivosContext(?Turno $turno): ?array
+    {
+        if ($turno === null) {
             return null;
         }
 
-        return $motivosLookup->ultimoEncounterIdDesdeTurno($personaId, $idEfector);
+        return [
+            'id' => (int) $turno->id_turnos,
+            'fecha' => (string) $turno->fecha,
+            'hora' => self::formatHoraTurnoCorta($turno->hora),
+            'estado' => (string) $turno->estado,
+            'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+        ];
+    }
+
+    /**
+     * @param list<array{
+     *   turno_id: int,
+     *   encounter_id: int,
+     *   fecha: string,
+     *   hora: string,
+     *   estado: string,
+     *   mensajes_count: int
+     * }> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function filtrarTurnosConEncounterAccesibles(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $encounter = Encounter::findOne((int) $row['encounter_id']);
+            if ($encounter === null || !EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+                continue;
+            }
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    private static function formatHoraTurnoCorta(?string $hora): string
+    {
+        if ($hora === null || trim($hora) === '') {
+            return '';
+        }
+        $t = trim($hora);
+        if (preg_match('/^(\d{1,2}):(\d{2})/', $t, $m) === 1) {
+            return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
+        }
+
+        return strlen($t) >= 5 ? substr($t, 0, 5) : $t;
     }
 }

@@ -207,12 +207,52 @@ class MotivoConsultaMensajeApi {
   }
 }
 
+class MotivoConsultaTurnoContext {
+  final int? turnoId;
+  final String? fecha;
+  final String? hora;
+  final String? estadoLabel;
+
+  MotivoConsultaTurnoContext({
+    this.turnoId,
+    this.fecha,
+    this.hora,
+    this.estadoLabel,
+  });
+
+  factory MotivoConsultaTurnoContext.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return MotivoConsultaTurnoContext();
+    }
+    final idRaw = json['id'];
+    final turnoId = idRaw is int ? idRaw : int.tryParse('$idRaw');
+    return MotivoConsultaTurnoContext(
+      turnoId: turnoId,
+      fecha: json['fecha']?.toString(),
+      hora: json['hora']?.toString(),
+      estadoLabel: json['estado_label']?.toString(),
+    );
+  }
+
+  String get etiquetaCorta {
+    if (fecha == null || fecha!.isEmpty) return '';
+    final h = hora != null && hora!.isNotEmpty ? ' $hora' : '';
+    return '$fecha$h';
+  }
+}
+
 class MotivosConsultaPaciente {
   final int? consultaId;
+  final int? turnoId;
+  final MotivoConsultaTurnoContext? turno;
+  final bool contextoExplicito;
   final List<MotivoConsultaMensajeApi> messages;
 
   MotivosConsultaPaciente({
     required this.consultaId,
+    this.turnoId,
+    this.turno,
+    this.contextoExplicito = false,
     required this.messages,
   });
 
@@ -228,8 +268,23 @@ class MotivosConsultaPaciente {
     } else if (c != null) {
       cid = int.tryParse(c.toString());
     }
+    int? tid;
+    final t = json['turno_id'];
+    if (t is int) {
+      tid = t;
+    } else if (t != null) {
+      tid = int.tryParse(t.toString());
+    }
+    final turnoMap = json['turno'];
     return MotivosConsultaPaciente(
       consultaId: cid,
+      turnoId: tid,
+      turno: turnoMap is Map
+          ? MotivoConsultaTurnoContext.fromJson(
+              Map<String, dynamic>.from(turnoMap),
+            )
+          : null,
+      contextoExplicito: json['contexto_explicito'] == true,
       messages: raw
           .map(
             (e) => MotivoConsultaMensajeApi.fromJson(

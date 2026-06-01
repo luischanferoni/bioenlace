@@ -323,8 +323,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Widget _buildMotivosConsulta(HistoriaClinicaResponse hc) {
     final resumen = hc.informacionMedica.motivosConsulta;
-    final msgs = hc.motivosConsultaPaciente.messages;
+    final mp = hc.motivosConsultaPaciente;
+    final msgs = mp.messages;
     final hayResumen = resumen != null && resumen.trim().isNotEmpty;
+    final turnoCtx = mp.turno;
+    final subtituloTurno = turnoCtx != null && turnoCtx.etiquetaCorta.isNotEmpty
+        ? 'Turno ${turnoCtx.etiquetaCorta}'
+        : (mp.turnoId != null ? 'Turno #${mp.turnoId}' : null);
 
     return BioCard.intent(
       intent: UiIntent.success,
@@ -332,6 +337,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Motivos de esta consulta', style: BioTypography.title),
+          if (subtituloTurno != null) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              subtituloTurno,
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
+            ),
+          ],
           BioSpacing.gapH(BioSpacing.md),
           if (hayResumen)
             Text(resumen, style: BioTypography.body)
@@ -444,58 +458,26 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildChatInputBar(BuildContext context) {
-    final tokens = context.bio;
-    return Container(
-      decoration: BoxDecoration(
-        color: tokens.paperSurface,
-        border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BioSpacing.md,
-            vertical: BioSpacing.sm,
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _chatController,
-                  focusNode: _chatFocusNode,
-                  minLines: 2,
-                  maxLines: 6,
-                  decoration: const InputDecoration(
-                    hintText: 'Escribir consulta',
-                    isDense: true,
+    final cs = Theme.of(context).colorScheme;
+    return AssistantChatComposerBar(
+      controller: _chatController,
+      focusNode: _chatFocusNode,
+      onSend: _enviarConsulta,
+      isSending: _guardandoConsulta,
+      hintText: 'Escribir consulta…',
+      maxLines: 6,
+      leading: [
+        IconButton(
+          icon: const Icon(Icons.mic_none),
+          color: cs.onSurfaceVariant,
+          onPressed: _guardandoConsulta
+              ? null
+              : () => _snack(
+                    'Envío de audios en desarrollo',
+                    UiIntent.info,
                   ),
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.sm),
-              IconButton(
-                icon: const Icon(Icons.mic),
-                color: IntentPalette.of(UiIntent.primary).base,
-                onPressed: () => _snack(
-                  'Envío de audios en desarrollo',
-                  UiIntent.info,
-                ),
-              ),
-              IconButton(
-                icon: _guardandoConsulta
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-                color: IntentPalette.of(UiIntent.primary).base,
-                onPressed: _guardandoConsulta ? null : _enviarConsulta,
-              ),
-            ],
-          ),
         ),
-      ),
+      ],
     );
   }
 }

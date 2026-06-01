@@ -11,6 +11,7 @@ class AssistantChatComposerBar extends StatelessWidget {
         'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"',
     this.maxLines = 6,
     this.leading,
+    this.focusNode,
   });
 
   final TextEditingController controller;
@@ -20,6 +21,7 @@ class AssistantChatComposerBar extends StatelessWidget {
   final int maxLines;
   /// Acciones opcionales a la izquierda del campo (p. ej. imagen / audio en motivos).
   final List<Widget>? leading;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,7 @@ class AssistantChatComposerBar extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              focusNode: focusNode,
               minLines: 1,
               maxLines: maxLines,
               keyboardType: TextInputType.multiline,

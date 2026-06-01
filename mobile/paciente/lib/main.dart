@@ -27,6 +27,10 @@ void main() {
     if (isLoggedIn && userId.isNotEmpty) {
       await CrashlyticsBootstrap.setUserId(userId);
     }
+    ClientDiagnosticApi.bindSession(
+      authToken: authToken,
+      appClient: 'paciente-flutter',
+    );
 
     ChatService? chatService;
 
@@ -72,9 +76,12 @@ class MyApp extends StatelessWidget {
               diditBiometricWorkflowId: AppConfig.diditPacienteBiometricWorkflowId,
               onLoginSuccess: (userId, userName, loginContext) async {
                 await CrashlyticsBootstrap.setUserId(userId);
-                // Token puede haber sido guardado por el flujo de login (ej. biometría)
                 final prefs = await SharedPreferences.getInstance();
                 final token = prefs.getString('auth_token');
+                ClientDiagnosticApi.bindSession(
+                  authToken: token,
+                  appClient: 'paciente-flutter',
+                );
                 final newChatService = ChatService(
                   currentUserId: userId,
                   currentUserName: userName,

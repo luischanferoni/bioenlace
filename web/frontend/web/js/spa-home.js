@@ -2104,7 +2104,8 @@
         html += '<div class="bio-ui-json-list-items" data-bio-list-items="1">';
         html += buildPickButtonsHtml(items);
         html += '</div>';
-        if (requiresConfirmation) {
+        const effectiveRequiresConfirmation = requiresConfirmation && options.isTerminalFlowStep !== true;
+        if (effectiveRequiresConfirmation) {
             html += '<div class="d-flex justify-content-end pt-2">';
             html += '<button type="button" class="btn btn-primary btn-sm" data-embed-confirm="1" disabled>Confirmar</button>';
             html += '</div>';
@@ -2193,7 +2194,7 @@
             const id = btn.getAttribute('data-embed-id') || '';
             if (!id) return;
             setSelected(btn, id);
-            if (!requiresConfirmation) confirmSelection();
+            if (!effectiveRequiresConfirmation) confirmSelection();
         }
         container.__bioenlaceListPickHandler = onListPickClick;
         container.addEventListener('click', onListPickClick);
@@ -2304,7 +2305,8 @@
         if (grid) {
             html += '</div>';
         }
-        const hideSubmit = block.hide_submit === true || block.hide_submit === 1 || block.hide_submit === '1';
+        const hideSubmit = block.hide_submit === true || block.hide_submit === 1 || block.hide_submit === '1'
+            || options.isTerminalFlowStep === true;
         if (!hideSubmit) {
             html += '<div class="d-flex justify-content-end pt-2">';
             html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
@@ -2321,6 +2323,53 @@
 
         initCustomWidgetsInContainer(container, fields);
         attachAutocompleteHandlers(container);
+
+        function syncTerminalFormDraftFromForm() {
+            if (options.isTerminalFlowStep !== true) {
+                return;
+            }
+            try {
+                const delta = {};
+                const fd = new FormData(form);
+                fd.forEach(function (v, k) {
+                    if (v == null || String(v).trim() === '') {
+                        return;
+                    }
+                    const ff = fields.find(function (f) {
+                        return f && String(f.name) === String(k);
+                    });
+                    if (ff && ff.include_in_submit === false) {
+                        return;
+                    }
+                    delta[k] = String(v).trim();
+                    if (ff && String(ff.type) === 'select') {
+                        const sel = form.querySelector('[name="' + String(k).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+                        let lbl = '';
+                        if (sel && sel.selectedOptions && sel.selectedOptions[0]) {
+                            lbl = String(sel.selectedOptions[0].textContent || '').trim();
+                        }
+                        if (!lbl && k === 'razon_cancelacion' && typeof etiquetaRazonCancelacionPaciente === 'function') {
+                            lbl = etiquetaRazonCancelacionPaciente(delta[k]);
+                        }
+                        if (lbl) {
+                            delta['_flow_item_' + k] = { code: delta[k], label: lbl };
+                        }
+                    }
+                });
+                if (Object.keys(delta).length < 1) {
+                    return;
+                }
+                applyDraftDelta(delta);
+                writeFlowState();
+                clearFlowSubmitMissingHint(container);
+                revealFlowSubmitInlineForContainer(container);
+            } catch (eSync) { /* ignore */ }
+        }
+
+        if (options.isTerminalFlowStep === true) {
+            form.addEventListener('change', syncTerminalFormDraftFromForm);
+            syncTerminalFormDraftFromForm();
+        }
 
         if (hideSubmit || !submitBtn || !submitUrl) {
             return;

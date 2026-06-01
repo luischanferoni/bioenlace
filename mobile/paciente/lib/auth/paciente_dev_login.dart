@@ -33,6 +33,10 @@ Future<void> navigatePacienteDevHome(BuildContext loginContext) async {
   await prefs.setString('user_id', payload.userId);
   await prefs.setString('user_name', payload.userName);
   await CrashlyticsBootstrap.setUserId(payload.userId);
+  ClientDiagnosticApi.bindSession(
+    authToken: payload.token,
+    appClient: 'paciente-flutter',
+  );
   if (payload.documento != null && payload.documento!.isNotEmpty) {
     await prefs.setString('dni_detected', payload.documento!);
   }

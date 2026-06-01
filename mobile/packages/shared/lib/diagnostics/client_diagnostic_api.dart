@@ -11,6 +11,18 @@ class ClientDiagnosticApi {
   static String? authToken;
   static String appClient = 'flutter';
 
+  /// Vincula token y cliente para subir logs de diagnóstico al backend.
+  static void bindSession({String? authToken, String? appClient}) {
+    final token = authToken?.trim();
+    if (token != null && token.isNotEmpty) {
+      ClientDiagnosticApi.authToken = token;
+    }
+    final client = appClient?.trim();
+    if (client != null && client.isNotEmpty) {
+      ClientDiagnosticApi.appClient = client;
+    }
+  }
+
   static Future<bool> upload(List<Map<String, dynamic>> entries) async {
     final token = authToken?.trim() ?? '';
     if (token.isEmpty || entries.isEmpty) {

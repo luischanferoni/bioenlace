@@ -2628,6 +2628,14 @@ class ChatScreenState extends State<ChatScreen> {
                                     });
                                   });
                                 }
+                                if (_messageIsTerminalFlowStep(message)) {
+                                  if (message['_flow_submit_missing'] is List) {
+                                    setState(() {
+                                      message.remove('_flow_submit_missing');
+                                    });
+                                  }
+                                  return;
+                                }
                                 // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
                                 _asistenteService.draft = Map<String, dynamic>.from(_draft);
                                 final res = await _postFlowAdvanceWithRetry();

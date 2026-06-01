@@ -172,14 +172,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               ),
             ],
           ),
-          BioSpacing.gapH(BioSpacing.xs),
-          Row(
-            children: [
-              Icon(Icons.badge_outlined, color: primary, size: 20),
-              BioSpacing.gapW(BioSpacing.sm),
-              Text('ID: ${widget.userId}', style: BioTypography.bodySm),
-            ],
-          ),
         ],
       ),
     );
@@ -212,14 +204,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                     color: primary, size: 20),
                 BioSpacing.gapW(BioSpacing.sm),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(_currentEncounterLabel, style: BioTypography.title),
-                      Text('Código: $_currentEncounterCode',
-                          style: BioTypography.caption),
-                    ],
-                  ),
+                  child: Text(_currentEncounterLabel, style: BioTypography.title),
                 ),
               ],
             ),
@@ -270,14 +255,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 // TODO: Implementar gestión de notificaciones
               },
             ),
-          ),
-          const BioDivider(),
-          _ConfigTile(
-            icon: Icons.language_outlined,
-            title: 'Idioma',
-            subtitle: 'Español',
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showDevSnack(),
           ),
           const BioDivider(),
           _ConfigTile(

@@ -45,7 +45,6 @@ class ConfiguracionScreen extends StatelessWidget {
   }
 
   Widget _buildCuentaCard(BuildContext context) {
-    final tokens = context.bio;
     final primary = IntentPalette.of(UiIntent.primary).base;
     return BioCard(
       child: Column(
@@ -62,17 +61,6 @@ class ConfiguracionScreen extends StatelessWidget {
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
                 child: Text('Usuario: $userName', style: BioTypography.body),
-              ),
-            ],
-          ),
-          BioSpacing.gapH(BioSpacing.sm),
-          Row(
-            children: [
-              Icon(Icons.badge_outlined, color: primary, size: 20),
-              BioSpacing.gapW(BioSpacing.sm),
-              Text(
-                'ID: $userId',
-                style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
               ),
             ],
           ),
@@ -108,13 +96,6 @@ class ConfiguracionScreen extends StatelessWidget {
           ),
           BioDivider.subtle(),
           CarePlanReminderGlobalSwitch(authToken: authToken),
-          BioDivider.subtle(),
-          _ConfigTile(
-            icon: Icons.language_outlined,
-            title: 'Idioma',
-            subtitle: 'Español',
-            onTap: () => _proximamente(context),
-          ),
           BioDivider.subtle(),
           _ConfigTile(
             icon: Icons.dark_mode_outlined,
@@ -224,6 +205,10 @@ class ConfiguracionScreen extends StatelessWidget {
         await prefs.setString('user_id', userId);
         await prefs.setString('user_name', userName);
         await CrashlyticsBootstrap.setUserId(userId);
+        ClientDiagnosticApi.bindSession(
+          authToken: prefs.getString('auth_token'),
+          appClient: 'paciente-flutter',
+        );
         if (!loginContext.mounted) return;
         final newChatService = ChatService(
           currentUserId: userId,

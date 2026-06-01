@@ -299,6 +299,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   static const Duration _loadRetryBaseDelay = Duration(milliseconds: 1200);
   static const Duration _loadStuckWatchdog = Duration(seconds: 75);
   Timer? _loadWatchdog;
+  Timer? _terminalDraftSyncTimer;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
@@ -371,6 +372,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   @override
   void dispose() {
     _loadWatchdog?.cancel();
+    _terminalDraftSyncTimer?.cancel();
     for (final n in _fieldValueNotifiers.values) {
       n.dispose();
     }
@@ -509,6 +511,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
     if (widget.enableFlowChainAutoAdvance) {
       _scheduleFlowChainSingleListPick();
+    }
+    if (widget.isTerminalFlowStep) {
+      _scheduleTerminalFieldsDraftSync();
     }
     _scheduleEmbeddedReady();
   }
@@ -715,7 +720,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final m = d.month.toString().padLeft(2, '0');
       final day = d.day.toString().padLeft(2, '0');
       setState(() {
-        _accum[name] = '$y-$m-$day';
+        _setAccumField(name, '$y-$m-$day');
       });
     }
   }
@@ -773,7 +778,10 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               WeeklySchedulerWidget(
                 fieldNames: vf,
                 values: Map<String, String>.from(_accum),
-                onChanged: (m) => setState(() => _accum.addAll(m)),
+                onChanged: (m) => setState(() {
+                  _accum.addAll(m);
+                  _scheduleTerminalFieldsDraftSync();
+                }),
               ),
             ],
           );
@@ -864,7 +872,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           iconEnabledColor: Theme.of(context).colorScheme.primary,
           dropdownColor: Theme.of(context).colorScheme.surface,
           onChanged: (v) => setState(() {
-            if (v != null) _accum[name] = v;
+            if (v != null) _setAccumField(name, v);
           }),
           validator: required ? (v) => v == null || v.isEmpty ? 'Requerido' : null : null,
         );
@@ -907,7 +915,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 value: e.key,
                 groupValue: effectiveRadio,
                 onChanged: (val) => setState(() {
-                  if (val != null) _accum[name] = val;
+                  if (val != null) _setAccumField(name, val);
                 }),
               ),
             ),
@@ -920,7 +928,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           keyboardType: TextInputType.number,
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           cursorColor: Theme.of(context).colorScheme.primary,
-          onChanged: (v) => _accum[name] = v,
+          onChanged: (v) => _setAccumField(name, v),
           validator: required ? (v) => (v == null || v.isEmpty) ? 'Requerido' : null : null,
         );
       case 'date':
@@ -955,7 +963,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           onChanged: readonly
               ? null
               : (v) => setState(() {
-                    _accum[name] = v;
+                    _setAccumField(name, v);
                   }),
         );
       case 'autocomplete':
@@ -1027,7 +1035,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                                 onTap: () {
                                   if (tid.isEmpty) return;
                                   if (tid == id) return;
-                                  _accum[name] = tid;
+                                  _setAccumField(name, tid);
                                   n.value = tid;
                                 },
                                 child: Padding(
@@ -1066,7 +1074,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           decoration: InputDecoration(labelText: required ? '$label *' : label),
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           cursorColor: Theme.of(context).colorScheme.primary,
-          onChanged: (v) => _accum[name] = v,
+          onChanged: (v) => _setAccumField(name, v),
           validator: required ? (v) => (v == null || v.isEmpty) ? 'Requerido' : null : null,
         );
     }
@@ -1180,6 +1188,58 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
   }
 
+  void _setAccumField(String name, String value) {
+    _accum[name] = value;
+    _scheduleTerminalFieldsDraftSync();
+  }
+
+  void _scheduleTerminalFieldsDraftSync() {
+    if (!widget.isTerminalFlowStep || widget.onDraftDelta == null) return;
+    _terminalDraftSyncTimer?.cancel();
+    _terminalDraftSyncTimer = Timer(const Duration(milliseconds: 220), () {
+      if (mounted) {
+        unawaited(_syncTerminalFieldsDraft());
+      }
+    });
+  }
+
+  String? _labelForFieldOption(Map<String, dynamic> field, String value) {
+    final opts = field['options'];
+    if (opts is! List) return null;
+    for (final o in opts) {
+      final om = o is Map ? Map<String, dynamic>.from(o) : <String, dynamic>{'value': o, 'label': o};
+      final v = (om['value']?.toString() ?? om['id']?.toString() ?? '').trim();
+      if (v == value) {
+        return (om['label']?.toString() ?? om['name']?.toString() ?? v).trim();
+      }
+    }
+    return null;
+  }
+
+  Future<void> _syncTerminalFieldsDraft() async {
+    final cb = widget.onDraftDelta;
+    if (cb == null || !widget.isTerminalFlowStep) return;
+    final delta = <String, dynamic>{};
+    for (final f in _allFieldDefs()) {
+      if (!_depsOk(f)) continue;
+      final name = f['name']?.toString() ?? '';
+      if (name.isEmpty) continue;
+      if (f['include_in_submit'] == false) continue;
+      final v = _accum[name]?.trim() ?? '';
+      if (v.isEmpty) continue;
+      delta[name] = v;
+      final type = f['type']?.toString();
+      if (type == 'select' || type == 'radio') {
+        final label = _labelForFieldOption(f, v);
+        if (label != null && label.isNotEmpty) {
+          delta['_flow_item_$name'] = {'code': v, 'label': label};
+        }
+      }
+    }
+    if (delta.isEmpty) return;
+    await cb(delta);
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget wrap({required Widget body, required String title}) {
@@ -1270,7 +1330,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final itemsRaw = b['items'];
       final items = itemsRaw is List ? itemsRaw : const [];
       final selection = b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
-      final requiresConfirmation = selection['requires_confirmation'] == true;
+      final requiresConfirmation = selection['requires_confirmation'] == true &&
+          !widget.isTerminalFlowStep;
       final draftField = b['draft_field']?.toString() ?? '';
       final title = b['title']?.toString();
       final emptyMessage = (b['empty_message'] ?? b['list_empty_message'])?.toString().trim();
@@ -1520,7 +1581,10 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               },
             ),
           const SizedBox(height: 4),
-          if (b['hide_submit'] != true && b['hide_submit'] != 1 && b['hide_submit'] != '1')
+          if (b['hide_submit'] != true &&
+              b['hide_submit'] != 1 &&
+              b['hide_submit'] != '1' &&
+              !widget.isTerminalFlowStep)
             Row(
               children: [
                 if (widget.embedded && widget.onCancel != null)

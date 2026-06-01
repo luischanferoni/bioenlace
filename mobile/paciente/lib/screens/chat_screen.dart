@@ -998,8 +998,10 @@ class ChatScreenState extends State<ChatScreen> {
       authToken: authToken,
       appClient: 'paciente-flutter',
     );
-    ClientDiagnosticApi.authToken = authToken;
-    ClientDiagnosticApi.appClient = 'paciente-flutter';
+    ClientDiagnosticApi.bindSession(
+      authToken: authToken,
+      appClient: 'paciente-flutter',
+    );
     try {
       final atajos = await _asistenteService.cargarAtajos();
       if (!mounted) return;
@@ -2645,7 +2647,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 }
 
                                 // Avanzar el flow automáticamente (snapshot) sin texto.
-                                setState(() => _isSending = true);
+                                setState(() => _flowAdvancing = true);
                                 try {
                                   final res = await _postFlowAdvanceWithRetry();
                                   if (!mounted) return;
@@ -2655,8 +2657,8 @@ class ChatScreenState extends State<ChatScreen> {
                                       await _handleFlowEnvelopeResponse(
                                         Map<String, dynamic>.from(data),
                                       );
-                                    } else {
-                                      setState(() => _isSending = false);
+                                    } else if (mounted) {
+                                      setState(() => _flowAdvancing = false);
                                     }
                                   } else {
                                     unawaited(AppDiagnosticLog.reportIssue(
@@ -2665,7 +2667,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       data: {'message': res['message']?.toString() ?? ''},
                                     ));
                                     setState(() {
-                                      _isSending = false;
+                                      _flowAdvancing = false;
                                       _chatHistory.add({
                                         'type': 'bot',
                                         'content': res['message']?.toString() ??
@@ -2675,9 +2677,14 @@ class ChatScreenState extends State<ChatScreen> {
                                     });
                                   }
                                 } catch (e) {
+                                  unawaited(AppDiagnosticLog.reportIssue(
+                                    'flow_list_pick',
+                                    'advance_error',
+                                    data: {'error': e.toString()},
+                                  ));
                                   if (mounted) {
                                     setState(() {
-                                      _isSending = false;
+                                      _flowAdvancing = false;
                                       _chatHistory.add({
                                         'type': 'bot',
                                         'content': userFriendlyErrorMessage(
@@ -2687,6 +2694,10 @@ class ChatScreenState extends State<ChatScreen> {
                                         'timestamp': DateTime.now(),
                                       });
                                     });
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _flowAdvancing = false);
                                   }
                                 }
                               },
@@ -2703,26 +2714,58 @@ class ChatScreenState extends State<ChatScreen> {
                                     });
                                   });
                                 }
+                                if (_messageIsTerminalFlowStep(message)) {
+                                  if (message['_flow_submit_missing'] is List) {
+                                    setState(() {
+                                      message.remove('_flow_submit_missing');
+                                    });
+                                  }
+                                  return;
+                                }
                                 // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.
                                 _asistenteService.draft = Map<String, dynamic>.from(_draft);
-                                final res = await _postFlowAdvanceWithRetry();
-                                if (!mounted) return;
-                                if (res['success'] == true) {
-                                  final data = res['data'];
-                                  if (data is Map) {
-                                    await _handleFlowEnvelopeResponse(
-                                      Map<String, dynamic>.from(data),
-                                    );
+                                setState(() => _flowAdvancing = true);
+                                try {
+                                  final res = await _postFlowAdvanceWithRetry();
+                                  if (!mounted) return;
+                                  if (res['success'] == true) {
+                                    final data = res['data'];
+                                    if (data is Map) {
+                                      await _handleFlowEnvelopeResponse(
+                                        Map<String, dynamic>.from(data),
+                                      );
+                                    }
+                                  } else {
+                                    unawaited(AppDiagnosticLog.reportIssue(
+                                      'flow_submit',
+                                      'advance_failed',
+                                      data: {'message': res['message']?.toString() ?? ''},
+                                    ));
+                                    if (mounted) {
+                                      setState(() {
+                                        _flowAdvancing = false;
+                                        _chatHistory.add({
+                                          'type': 'bot',
+                                          'content': res['message']?.toString() ??
+                                              'No se pudo avanzar. Intentá de nuevo.',
+                                          'timestamp': DateTime.now(),
+                                        });
+                                      });
+                                    }
                                   }
-                                } else if (mounted) {
-                                  setState(() {
-                                    _chatHistory.add({
-                                      'type': 'bot',
-                                      'content': res['message']?.toString() ??
-                                          'No se pudo avanzar. Intentá de nuevo.',
-                                      'timestamp': DateTime.now(),
-                                    });
-                                  });
+                                } catch (e) {
+                                  unawaited(AppDiagnosticLog.reportIssue(
+                                    'flow_submit',
+                                    'advance_error',
+                                    data: {'error': e.toString()},
+                                  ));
+                                  if (mounted) {
+                                    setState(() => _flowAdvancing = false);
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _flowAdvancing = false);
+                                  }
                                 }
                               },
                             ),

@@ -28,6 +28,7 @@ class ApiGhostAccessControl extends ActionFilter
     protected static array $authenticatedOnlyRoutes = [
         '/api/sesion-operativa/establecer',
         '/api/acciones/comunes',
+        '/api/client-diagnostic/registrar',
     ];
 
     /**

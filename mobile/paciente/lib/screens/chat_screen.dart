@@ -38,6 +38,7 @@ class ChatScreenState extends State<ChatScreen> {
   late AsistenteService _asistenteService;
   List<Map<String, dynamic>> _chatHistory = [];
   bool _isSending = false;
+  bool _flowAdvancing = false;
   bool _flowAdvanceLocked = false;
   static const int _flowAutoPickMaxAttempts = 3;
   static const int _flowAdvanceMaxAttempts = 3;
@@ -291,7 +292,7 @@ class ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    setState(() => _isSending = true);
+    setState(() => _flowAdvancing = true);
     try {
       final res = await _postFlowAdvanceWithRetry();
       if (!mounted) return;
@@ -300,6 +301,9 @@ class ChatScreenState extends State<ChatScreen> {
         if (data is Map) {
           message['_flow_single_pick_done'] = true;
           message.remove('_flow_single_pick_attempts');
+          if (mounted) {
+            setState(() => _flowAdvancing = false);
+          }
           await _handleFlowEnvelopeResponse(Map<String, dynamic>.from(data));
           unawaited(AppDiagnosticLog.log(
             'flow_auto_pick',
@@ -310,7 +314,10 @@ class ChatScreenState extends State<ChatScreen> {
             },
           ));
         } else {
-          setState(() => _isSending = false);
+          setState(() {
+            _flowAdvancing = false;
+            _isSending = false;
+          });
         }
       } else {
         final friendly = res['message']?.toString() ??
@@ -328,6 +335,9 @@ class ChatScreenState extends State<ChatScreen> {
         ));
         if (attempts + 1 < _flowAutoPickMaxAttempts) {
           message['_flow_single_pick_in_flight'] = false;
+          if (mounted) {
+            setState(() => _flowAdvancing = false);
+          }
           await Future<void>.delayed(Duration(milliseconds: 1000 * (attempts + 1)));
           if (!mounted) return;
           unawaited(_autoAdvanceFlowSingleListIfNeeded(
@@ -339,6 +349,7 @@ class ChatScreenState extends State<ChatScreen> {
           return;
         }
         setState(() {
+          _flowAdvancing = false;
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
@@ -360,6 +371,9 @@ class ChatScreenState extends State<ChatScreen> {
       ));
       if (attempts + 1 < _flowAutoPickMaxAttempts) {
         message['_flow_single_pick_in_flight'] = false;
+        if (mounted) {
+          setState(() => _flowAdvancing = false);
+        }
         await Future<void>.delayed(Duration(milliseconds: 1000 * (attempts + 1)));
         if (!mounted) return;
         unawaited(_autoAdvanceFlowSingleListIfNeeded(
@@ -372,6 +386,7 @@ class ChatScreenState extends State<ChatScreen> {
       }
       if (mounted) {
         setState(() {
+          _flowAdvancing = false;
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
@@ -384,6 +399,9 @@ class ChatScreenState extends State<ChatScreen> {
         });
       }
     } finally {
+      if (mounted) {
+        setState(() => _flowAdvancing = false);
+      }
       message['_flow_single_pick_in_flight'] = false;
     }
     _scrollToBottom();
@@ -537,7 +555,10 @@ class ChatScreenState extends State<ChatScreen> {
     );
     } finally {
       if (mounted) {
-        setState(() => _isSending = false);
+        setState(() {
+          _isSending = false;
+          _flowAdvancing = false;
+        });
       }
     }
   }
@@ -986,6 +1007,8 @@ class ChatScreenState extends State<ChatScreen> {
       authToken: authToken,
       appClient: 'paciente-flutter',
     );
+    ClientDiagnosticApi.authToken = authToken;
+    ClientDiagnosticApi.appClient = 'paciente-flutter';
     try {
       final atajos = await _asistenteService.cargarAtajos();
       if (!mounted) return;
@@ -1166,6 +1189,7 @@ class ChatScreenState extends State<ChatScreen> {
       // Mensaje sólo con `flow_submit` → render del botón "Confirmar y enviar" sin `inline_ui`.
       if (flowSubmit != null && !(co is Map && actionId != null && actionId.isNotEmpty)) {
         setState(() {
+          _flowAdvancing = false;
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
@@ -1213,6 +1237,7 @@ class ChatScreenState extends State<ChatScreen> {
           'parameters': {'provided': _draft},
         };
         setState(() {
+          _flowAdvancing = false;
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
@@ -1294,6 +1319,7 @@ class ChatScreenState extends State<ChatScreen> {
         }
 
         setState(() {
+          _flowAdvancing = false;
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
@@ -1370,6 +1396,7 @@ class ChatScreenState extends State<ChatScreen> {
 
       if (result['success'] != true) {
         setState(() {
+          _flowAdvancing = false;
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
@@ -1581,6 +1608,7 @@ class ChatScreenState extends State<ChatScreen> {
         final textFromEnvelope = data is Map ? data['text']?.toString() : null;
 
         setState(() {
+          _flowAdvancing = false;
           _isSending = false;
           _chatHistory.add({
             'type': 'bot',
@@ -2535,7 +2563,11 @@ class ChatScreenState extends State<ChatScreen> {
                                   child: _KeepAliveChatChild(
                                 keepAlive: hasEmbeddedUi,
                                 child: UiJsonScreen(
-                              key: ObjectKey('inline-ui-$index'),
+                              key: ValueKey(
+                                'inline-ui-$index-'
+                                '${inlineUi['route'] ?? ''}-'
+                                '${inlineUi['api_absolute_url'] ?? ''}',
+                              ),
                               initialDefinition: inlineUi['ui_definition'] is Map
                                   ? Map<String, dynamic>.from(inlineUi['ui_definition'] as Map)
                                   : null,
@@ -2543,12 +2575,32 @@ class ChatScreenState extends State<ChatScreen> {
                                   ? null
                                   : (def) {
                                       inlineUi['ui_definition'] = def;
-                                      unawaited(_autoAdvanceFlowSingleListIfNeeded(
-                                        message: message,
-                                        messageIndex: index,
-                                        inlineUi: Map<String, dynamic>.from(inlineUi),
-                                        definition: def,
-                                      ));
+                                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                                        if (!mounted) return;
+                                        final activeIid = _intentId;
+                                        if (activeIid != null && activeIid.isNotEmpty) {
+                                          final lastIdx =
+                                              _lastFlowInteractiveMessageIndex(activeIid);
+                                          if (lastIdx != null && index != lastIdx) {
+                                            return;
+                                          }
+                                        }
+                                        unawaited(AppDiagnosticLog.log(
+                                          'flow_auto_pick',
+                                          'definition_ready',
+                                          data: {
+                                            'message_index': index,
+                                            'intent_id': _intentId ?? '',
+                                            'subintent_id': _subintentId ?? '',
+                                          },
+                                        ));
+                                        unawaited(_autoAdvanceFlowSingleListIfNeeded(
+                                          message: message,
+                                          messageIndex: index,
+                                          inlineUi: Map<String, dynamic>.from(inlineUi),
+                                          definition: def,
+                                        ));
+                                      });
                                     },
                               onEmbeddedReady: flowUiDisabled
                                   ? null
@@ -2974,7 +3026,7 @@ class ChatScreenState extends State<ChatScreen> {
           AssistantChatComposerBar(
             controller: _messageController,
             onSend: _sendMessage,
-            isSending: _isSending,
+            isSending: _isSending || _flowAdvancing,
           ),
         ],
       ),

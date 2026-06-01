@@ -297,6 +297,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   int _loadGeneration = 0;
   static const int _maxLoadAttempts = 3;
   static const Duration _loadRetryBaseDelay = Duration(milliseconds: 1200);
+  static const Duration _loadStuckWatchdog = Duration(seconds: 75);
+  Timer? _loadWatchdog;
   final Map<String, String> _accum = {};
   final Map<String, List<Map<String, dynamic>>> _autoCache = {};
   final Map<String, Future<List<Map<String, dynamic>>>> _autoFutureCache = {};
@@ -368,6 +370,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
 
   @override
   void dispose() {
+    _loadWatchdog?.cancel();
     for (final n in _fieldValueNotifiers.values) {
       n.dispose();
     }
@@ -388,21 +391,60 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
 
   Future<void> _load() async {
     final loadGen = ++_loadGeneration;
+    _loadWatchdog?.cancel();
     if (!mounted) return;
+
+    final url = widget.apiAbsoluteUrl.trim();
+    if (url.isEmpty) {
+      setState(() {
+        _error = 'No se pudo cargar la pantalla (falta la ruta del servidor).';
+        _loading = false;
+      });
+      unawaited(AppDiagnosticLog.log('ui_json_load', 'empty_url', data: {
+        'embedded': widget.embedded,
+        'title': widget.title ?? '',
+      }));
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
 
+    unawaited(AppDiagnosticLog.log('ui_json_load', 'start', data: {
+      'url': url.length > 200 ? '${url.substring(0, 200)}…' : url,
+      'embedded': widget.embedded,
+      'load_gen': loadGen,
+    }));
+
+    _loadWatchdog = Timer(_loadStuckWatchdog, () {
+      if (!mounted || loadGen != _loadGeneration || !_loading || _root != null) {
+        return;
+      }
+      unawaited(AppDiagnosticLog.log('ui_json_load', 'load_stuck', data: {
+        'url': url.length > 200 ? '${url.substring(0, 200)}…' : url,
+        'load_gen': loadGen,
+      }));
+      setState(() {
+        _error = 'La carga tardó demasiado. Tocá Reintentar.';
+        _loading = false;
+      });
+    });
+
     Object? lastError;
     for (var attempt = 1; attempt <= _maxLoadAttempts; attempt++) {
-      if (!mounted || loadGen != _loadGeneration) return;
+      if (!mounted || loadGen != _loadGeneration) {
+        return;
+      }
       try {
-        final uri = Uri.parse(widget.apiAbsoluteUrl);
+        final uri = Uri.parse(url);
         final res = await http
             .get(uri, headers: _headers())
-            .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
-        if (!mounted || loadGen != _loadGeneration) return;
+            .timeout(Duration(seconds: AppConfig.uiJsonHttpTimeoutSeconds));
+        if (!mounted || loadGen != _loadGeneration) {
+          return;
+        }
         if (res.statusCode < 200 || res.statusCode >= 300) {
           throw Exception(_messageFromErrorBody(res));
         }
@@ -414,13 +456,24 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         if (m['kind'] != 'ui_definition') {
           throw Exception('No es ui_definition');
         }
+        _loadWatchdog?.cancel();
+        unawaited(AppDiagnosticLog.log('ui_json_load', 'ok', data: {
+          'attempt': attempt,
+          'load_gen': loadGen,
+        }));
         _hydrateFromDefinition(m, fromNetwork: true);
         return;
       } catch (e) {
         lastError = e;
-        if (!mounted || loadGen != _loadGeneration) return;
+        if (!mounted || loadGen != _loadGeneration) {
+          return;
+        }
         final canRetry = attempt < _maxLoadAttempts && isRetryableNetworkError(e);
         if (canRetry) {
+          unawaited(AppDiagnosticLog.log('ui_json_load', 'retry', data: {
+            'attempt': attempt,
+            'error': e.toString(),
+          }));
           await Future<void>.delayed(_loadRetryBaseDelay * attempt);
           continue;
         }
@@ -428,11 +481,19 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       }
     }
 
-    if (!mounted || loadGen != _loadGeneration) return;
+    _loadWatchdog?.cancel();
+    if (!mounted || loadGen != _loadGeneration) {
+      return;
+    }
+    final friendly = userFriendlyErrorMessage(
+      lastError ?? Exception('Error desconocido'),
+    );
+    unawaited(AppDiagnosticLog.log('ui_json_load', 'load_fail', data: {
+      'error': lastError?.toString() ?? '',
+      'load_gen': loadGen,
+    }));
     setState(() {
-      _error = userFriendlyErrorMessage(
-        lastError ?? Exception('Error desconocido'),
-      );
+      _error = friendly;
       _loading = false;
     });
   }

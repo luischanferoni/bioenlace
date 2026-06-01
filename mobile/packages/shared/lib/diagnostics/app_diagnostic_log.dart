@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'client_diagnostic_api.dart';
 import 'crashlytics_bootstrap.dart';
 
 /// Log local en dispositivo (debug + release). Pensado para diagnosticar flujos
@@ -13,6 +14,9 @@ class AppDiagnosticLog {
 
   static const _prefsKey = 'bio_app_diagnostic_log_v1';
   static const _maxEntries = 200;
+
+  static bool _uploadScheduled = false;
+  static DateTime? _lastUploadAt;
 
   static Future<void> log(
     String category,
@@ -37,7 +41,9 @@ class AppDiagnosticLog {
     final reportAsNonFatal = message == 'error' ||
         message == 'chat_advance_error' ||
         message == 'chat_advance_failed' ||
-        message == 'advance_failed';
+        message == 'advance_failed' ||
+        message == 'load_fail' ||
+        message == 'load_stuck';
     if (reportAsNonFatal) {
       unawaited(CrashlyticsBootstrap.recordError(
         Exception(crashLine),
@@ -70,6 +76,40 @@ class AppDiagnosticLog {
     } catch (_) {
       // No bloquear la app si falla el log local.
     }
+
+    _scheduleServerUpload();
+  }
+
+  static void _scheduleServerUpload() {
+    final token = ClientDiagnosticApi.authToken?.trim() ?? '';
+    if (token.isEmpty) {
+      return;
+    }
+    final now = DateTime.now();
+    if (_lastUploadAt != null &&
+        now.difference(_lastUploadAt!) < const Duration(seconds: 4)) {
+      if (!_uploadScheduled) {
+        _uploadScheduled = true;
+        Future<void>.delayed(const Duration(seconds: 4), () {
+          _uploadScheduled = false;
+          unawaited(_flushToServer());
+        });
+      }
+      return;
+    }
+    if (_uploadScheduled) {
+      return;
+    }
+    _uploadScheduled = true;
+    Future<void>.delayed(const Duration(seconds: 2), () {
+      _uploadScheduled = false;
+      unawaited(_flushToServer());
+    });
+  }
+
+  static Future<void> _flushToServer() async {
+    _lastUploadAt = DateTime.now();
+    await flush(ClientDiagnosticApi.upload);
   }
 
   static Future<List<Map<String, dynamic>>> readAll() async {

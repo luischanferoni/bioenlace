@@ -124,3 +124,11 @@ FirebaseCrashlytics.instance.crash();
 ### Identificación de usuario
 
 Tras login se llama `CrashlyticsBootstrap.setUserId(userId)` para correlacionar crashes con el usuario (sin datos clínicos en el log).
+
+### Logs de diagnóstico en servidor
+
+La app envía eventos de flow/UI a `POST /api/v1/client-diagnostic/registrar` (cualquier usuario autenticado).
+
+Archivos en el servidor: `web/runtime/logs/client-diagnostic/client-diagnostic-YYYY-MM-DD.log` (JSON por línea).
+
+Categorías útiles: `ui_json_load` (`start`, `ok`, `retry`, `load_fail`, `load_stuck`), `flow_auto_pick` (`definition_ready`, `chat_advance_ok`, `chat_advance_failed`).

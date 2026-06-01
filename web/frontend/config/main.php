@@ -404,6 +404,8 @@ return [
                 'OPTIONS api/<version:\w+>/turnos/proximo-disponible' => '<version>/turnos/consultar-proximo-disponible',
                 'POST api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
                 'OPTIONS api/<version:\w+>/devices/push-token' => '<version>/device/push-token',
+                'POST api/<version:\w+>/client-diagnostic/registrar' => '<version>/client-diagnostic/registrar',
+                'OPTIONS api/<version:\w+>/client-diagnostic/registrar' => '<version>/client-diagnostic/registrar',
                 'GET api/<version:\w+>/notificaciones/listar-como-paciente' => '<version>/notificaciones/listar-como-paciente',
                 'POST api/<version:\w+>/notificaciones/listar-como-paciente' => '<version>/notificaciones/listar-como-paciente',
                 'OPTIONS api/<version:\w+>/notificaciones/listar-como-paciente' => '<version>/notificaciones/listar-como-paciente',

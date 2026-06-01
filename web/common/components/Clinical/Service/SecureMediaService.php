@@ -112,8 +112,14 @@ final class SecureMediaService
             return basename($normalized);
         }
 
-        if (preg_match('#/([^/]+)$#', trim($stored), $m)) {
+        $stored = trim($stored);
+        if (preg_match('#/([^/]+)$#', $stored, $m)) {
             return $m[1];
+        }
+
+        // Solo nombre de archivo en BD (sin uploads/…/encounter_id/)
+        if (preg_match('/^[a-zA-Z0-9._-]+$/', $stored)) {
+            return $stored;
         }
 
         return '';

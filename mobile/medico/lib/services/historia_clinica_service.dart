@@ -153,7 +153,11 @@ class MotivoConsultaMensajeApi {
     required this.createdAt,
   });
 
-  factory MotivoConsultaMensajeApi.fromJson(Map<String, dynamic> json) {
+  factory MotivoConsultaMensajeApi.fromJson(
+    Map<String, dynamic> json, {
+    int? encounterId,
+    String mediaScope = 'motivos-consulta',
+  }) {
     int asInt(dynamic v) {
       if (v is int) return v;
       if (v is String) return int.tryParse(v) ?? 0;
@@ -167,7 +171,15 @@ class MotivoConsultaMensajeApi {
         type == 'video' ||
         type == 'documento') {
       if (content.isNotEmpty && !isLocalMediaFilePath(content)) {
-        content = resolveMediaContentUrl(content);
+        final id = encounterId ??
+            int.tryParse(
+              '${json['encounter_id'] ?? json['consulta_id'] ?? ''}',
+            );
+        content = resolveMediaContentUrl(
+          content,
+          mediaScope: mediaScope,
+          encounterId: id,
+        );
       }
     }
 
@@ -197,7 +209,7 @@ class MotivosConsultaPaciente {
     }
     final raw = json['messages'] as List<dynamic>? ?? [];
     int? cid;
-    final c = json['consulta_id'];
+    final c = json['encounter_id'] ?? json['consulta_id'];
     if (c is int) {
       cid = c;
     } else if (c != null) {
@@ -206,8 +218,12 @@ class MotivosConsultaPaciente {
     return MotivosConsultaPaciente(
       consultaId: cid,
       messages: raw
-          .map((e) =>
-              MotivoConsultaMensajeApi.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => MotivoConsultaMensajeApi.fromJson(
+              e as Map<String, dynamic>,
+              encounterId: cid,
+            ),
+          )
           .toList(),
     );
   }

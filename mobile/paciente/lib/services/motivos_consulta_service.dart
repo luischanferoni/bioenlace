@@ -40,7 +40,11 @@ class MotivosConsultaService {
         return {
           'success': true,
           'data': payload,
-          'messages': normalizeChatMediaMessages(rawMsgs),
+          'messages': normalizeChatMediaMessages(
+            rawMsgs,
+            mediaScope: 'motivos-consulta',
+            encounterId: consultaId,
+          ),
           'input_abierto': payload['input_abierto'] ?? true,
           'motivos_resumen': payload['motivos_resumen'],
           'cierre_en': payload['cierre_en'],
@@ -103,10 +107,18 @@ class MotivosConsultaService {
       if (response.statusCode == 200 && data['success'] == true) {
         final payload = data['data'];
         if (payload is Map<String, dynamic>) {
-          normalizeChatMediaMessage(payload);
+          normalizeChatMediaMessage(
+            payload,
+            mediaScope: 'motivos-consulta',
+            encounterId: consultaId,
+          );
         } else if (payload is Map) {
           final copy = Map<String, dynamic>.from(payload);
-          normalizeChatMediaMessage(copy);
+          normalizeChatMediaMessage(
+            copy,
+            mediaScope: 'motivos-consulta',
+            encounterId: consultaId,
+          );
           data['data'] = copy;
         }
         return {'success': true, 'data': data['data']};

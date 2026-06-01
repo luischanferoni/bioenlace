@@ -31,7 +31,11 @@ class ConsultaChatService {
         return {
           'success': true,
           'data': data['data'],
-          'messages': normalizeChatMediaMessages(raw),
+          'messages': normalizeChatMediaMessages(
+            raw,
+            mediaScope: 'consulta-chat',
+            encounterId: consultaId,
+          ),
         };
       }
       return {'success': false, 'message': data['message'] ?? 'Error al cargar mensajes', 'messages': []};
@@ -85,10 +89,18 @@ class ConsultaChatService {
       if (response.statusCode == 200 && data['success'] == true) {
         final payload = data['data'];
         if (payload is Map<String, dynamic>) {
-          normalizeChatMediaMessage(payload);
+          normalizeChatMediaMessage(
+            payload,
+            mediaScope: 'consulta-chat',
+            encounterId: consultaId,
+          );
         } else if (payload is Map) {
           final copy = Map<String, dynamic>.from(payload);
-          normalizeChatMediaMessage(copy);
+          normalizeChatMediaMessage(
+            copy,
+            mediaScope: 'consulta-chat',
+            encounterId: consultaId,
+          );
           data['data'] = copy;
         }
         return {'success': true, 'data': data['data']};

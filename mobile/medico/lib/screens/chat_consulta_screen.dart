@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:image_picker/image_picker.dart';
@@ -92,11 +92,22 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     final picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
     if (file == null || !mounted) return;
-    await _uploadFile(File(file.path), 'imagen');
+    await _uploadFile(file, 'imagen');
   }
 
-  Future<void> _uploadFile(File file, String messageType) async {
-    if (!file.existsSync() || _sending) return;
+  Future<void> _uploadFile(XFile file, String messageType) async {
+    if (_sending) return;
+    if (!kIsWeb) {
+      try {
+        if (await file.length() <= 0) {
+          _showError('No se pudo leer el archivo');
+          return;
+        }
+      } catch (_) {
+        _showError('No se pudo leer el archivo');
+        return;
+      }
+    }
     final showLocalPreview = messageType == 'imagen';
     if (showLocalPreview) {
       setState(() {

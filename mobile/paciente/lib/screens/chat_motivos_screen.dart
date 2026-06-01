@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -126,7 +126,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     final picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
     if (file == null || !mounted) return;
-    await _uploadFile(File(file.path), 'imagen');
+    await _uploadFile(file, 'imagen');
   }
 
   Future<void> _recordAndSendAudio() async {
@@ -138,7 +138,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       final path = await _recorder.stop();
       setState(() => _isRecording = false);
       if (path != null && path.isNotEmpty) {
-        await _uploadFile(File(path), 'audio');
+        await _uploadFile(XFile(path), 'audio');
       }
       return;
     }
@@ -158,8 +158,19 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     setState(() => _isRecording = true);
   }
 
-  Future<void> _uploadFile(File file, String messageType) async {
-    if (!file.existsSync() || _sending) return;
+  Future<void> _uploadFile(XFile file, String messageType) async {
+    if (_sending) return;
+    if (!kIsWeb) {
+      try {
+        if (await file.length() <= 0) {
+          _showError('No se pudo leer el archivo');
+          return;
+        }
+      } catch (_) {
+        _showError('No se pudo leer el archivo');
+        return;
+      }
+    }
     final showLocalPreview = messageType == 'imagen';
     if (showLocalPreview) {
       setState(() {
@@ -380,60 +391,24 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     if (!_inputAbierto) {
       return const SizedBox.shrink();
     }
-    final tokens = context.bio;
-    return Container(
-      decoration: BoxDecoration(
-        color: tokens.paperSurface,
-        border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BioSpacing.sm,
-            vertical: BioSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.image_outlined),
-                color: tokens.textBody,
-                onPressed: _sending ? null : _pickImage,
-              ),
-              IconButton(
-                icon: Icon(_isRecording ? Icons.stop_circle : Icons.mic_none),
-                color: _isRecording
-                    ? IntentPalette.of(UiIntent.danger).base
-                    : tokens.textBody,
-                onPressed: _sending ? null : _recordAndSendAudio,
-              ),
-              Expanded(
-                child: TextField(
-                  controller: _textController,
-                  enabled: !_sending,
-                  decoration: const InputDecoration(
-                    hintText: 'Escribí el motivo o enviá audio/foto…',
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => _sendText(),
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.xs),
-              IconButton(
-                icon: _sending
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-                color: IntentPalette.of(UiIntent.primary).base,
-                onPressed: _sending ? null : _sendText,
-              ),
-            ],
-          ),
+    final cs = Theme.of(context).colorScheme;
+    return AssistantChatComposerBar(
+      controller: _textController,
+      onSend: _sendText,
+      isSending: _sending,
+      hintText: 'Escribí el motivo o enviá audio/foto…',
+      leading: [
+        IconButton(
+          icon: const Icon(Icons.image_outlined),
+          color: cs.onSurfaceVariant,
+          onPressed: _sending ? null : _pickImage,
         ),
-      ),
+        IconButton(
+          icon: Icon(_isRecording ? Icons.stop_circle : Icons.mic_none),
+          color: _isRecording ? cs.error : cs.onSurfaceVariant,
+          onPressed: _sending ? null : _recordAndSendAudio,
+        ),
+      ],
     );
   }
 }

@@ -37,8 +37,11 @@ String resolveMediaContentUrl(String content) {
 /// Ruta local del dispositivo (vista previa antes de subir).
 bool isLocalMediaFilePath(String value) {
   final t = value.trim();
-  if (t.isEmpty || t.startsWith('http://') || t.startsWith('https://')) {
-    return false;
+  if (t.isEmpty ||
+      t.startsWith('http://') ||
+      t.startsWith('https://') ||
+      t.startsWith('blob:')) {
+    return t.startsWith('blob:');
   }
   if (t.startsWith('uploads/') || t.startsWith('/uploads/')) {
     return false;

@@ -10,6 +10,7 @@ class AssistantChatComposerBar extends StatelessWidget {
     this.hintText =
         'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"',
     this.maxLines = 6,
+    this.leading,
   });
 
   final TextEditingController controller;
@@ -17,6 +18,8 @@ class AssistantChatComposerBar extends StatelessWidget {
   final bool isSending;
   final String hintText;
   final int maxLines;
+  /// Acciones opcionales a la izquierda del campo (p. ej. imagen / audio en motivos).
+  final List<Widget>? leading;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +41,7 @@ class AssistantChatComposerBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          if (leading != null) ...leading!,
           Expanded(
             child: TextField(
               controller: controller,

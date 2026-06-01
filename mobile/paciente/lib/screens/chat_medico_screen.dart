@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -105,14 +105,14 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     final picker = ImagePicker();
     final XFile? file = await picker.pickImage(source: ImageSource.gallery);
     if (file == null || !mounted) return;
-    await _uploadFile(File(file.path), 'imagen');
+    await _uploadFile(file, 'imagen');
   }
 
   Future<void> _pickVideo() async {
     final picker = ImagePicker();
     final XFile? file = await picker.pickVideo(source: ImageSource.gallery);
     if (file == null || !mounted) return;
-    await _uploadFile(File(file.path), 'video');
+    await _uploadFile(file, 'video');
   }
 
   Future<void> _recordAndSendAudio() async {
@@ -120,7 +120,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       final path = await _recorder.stop();
       setState(() => _isRecording = false);
       if (path != null && path.isNotEmpty) {
-        await _uploadFile(File(path), 'audio');
+        await _uploadFile(XFile(path), 'audio');
       }
       return;
     }
@@ -135,8 +135,19 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     setState(() => _isRecording = true);
   }
 
-  Future<void> _uploadFile(File file, String messageType) async {
-    if (!file.existsSync() || _sending) return;
+  Future<void> _uploadFile(XFile file, String messageType) async {
+    if (_sending) return;
+    if (!kIsWeb) {
+      try {
+        if (await file.length() <= 0) {
+          _showError('No se pudo leer el archivo');
+          return;
+        }
+      } catch (_) {
+        _showError('No se pudo leer el archivo');
+        return;
+      }
+    }
     final showLocalPreview = messageType == 'imagen';
     if (showLocalPreview) {
       setState(() {

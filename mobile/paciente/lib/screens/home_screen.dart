@@ -35,7 +35,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  static const int _pageLimit = 12;
+  /// Tamaño de página API (máx. 100) para traer todos los próximos en una o pocas requests.
+  static const int _proximosPageSize = 100;
+  /// Historial: páginas pequeñas cargadas al hacer scroll.
+  static const int _pasadosPageLimit = 12;
 
   late TurnosService _turnosService;
   late CarePlanService _carePlanService;
@@ -48,10 +51,8 @@ class HomeScreenState extends State<HomeScreen> {
   final List<Map<String, dynamic>> _enResolucion = [];
   final List<Map<String, dynamic>> _pasados = [];
 
-  int _totalPendientes = 0;
   int _totalPasados = 0;
   bool _loadingInicial = true;
-  bool _loadingMasPendientes = false;
   bool _loadingMasPasados = false;
   bool _refrescandoTabActivo = false;
   String? _error;
@@ -78,17 +79,41 @@ class HomeScreenState extends State<HomeScreen> {
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final pos = _scrollController.position;
+    if (_tabTurnos != 1) return;
     if (pos.maxScrollExtent - pos.pixels < 400) {
-      if (_tabTurnos == 0) {
-        _cargarMasPendientes();
-      } else {
-        _cargarMasPasados();
-      }
+      _cargarMasPasados();
     }
   }
 
-  bool get _hayMasPendientes => _pendientes.length < _totalPendientes;
   bool get _hayMasPasados => _pasados.length < _totalPasados;
+
+  /// Trae el listado completo de un alcance (paginando en el servidor si hace falta).
+  Future<({List<Map<String, dynamic>> turnos, String? error})> _fetchAllPorAlcance(
+    String alcance,
+  ) async {
+    var offset = 0;
+    var total = 1;
+    final all = <Map<String, dynamic>>[];
+    String? error;
+    while (offset < total) {
+      final r = await _turnosService.getMisTurnos(
+        alcance: alcance,
+        limit: _proximosPageSize,
+        offset: offset,
+      );
+      if (r['success'] != true) {
+        error = r['message'] as String? ?? 'Error al cargar turnos';
+        break;
+      }
+      final batch = _asMapList(r['turnos']);
+      all.addAll(batch);
+      total = r['total'] as int? ?? all.length;
+      if (batch.isEmpty) break;
+      offset += batch.length;
+      if (batch.length < _proximosPageSize) break;
+    }
+    return (turnos: all, error: error);
+  }
 
   /// Próximos unificados: primero EN_RESOLUCION, luego pendientes por fecha/hora.
   List<Map<String, dynamic>> get _proximosVisibles {
@@ -110,19 +135,13 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _cargarEnResolucion() async {
-    final r = await _turnosService.getMisTurnos(
-      alcance: 'en_resolucion',
-      limit: 50,
-      offset: 0,
-    );
+    final r = await _fetchAllPorAlcance('en_resolucion');
     if (!mounted) return;
-    if (r['success'] == true) {
-      setState(() {
-        _enResolucion
-          ..clear()
-          ..addAll(_asMapList(r['turnos']));
-      });
-    }
+    setState(() {
+      _enResolucion
+        ..clear()
+        ..addAll(r.turnos);
+    });
   }
 
   /// Recarga próximos (incluye EN_RESOLUCION) tras resolver un turno en el asistente.
@@ -151,26 +170,18 @@ class HomeScreenState extends State<HomeScreen> {
       _pasados.clear();
       _totalPasados = 0;
     });
-    final r1 = await _turnosService.getMisTurnos(
-      alcance: 'pendientes',
-      limit: _pageLimit,
-      offset: 0,
-    );
+    final pendientesFuture = _fetchAllPorAlcance('pendientes');
     await Future.wait([_cargarEnResolucion(), _cargarCarePlans()]);
+    final pendientesR = await pendientesFuture;
     if (!mounted) return;
-    if (r1['success'] != true) {
-      setState(() {
-        _loadingInicial = false;
-        _error = r1['message'] as String? ?? 'Error al cargar turnos';
-      });
-      return;
-    }
     setState(() {
       _loadingInicial = false;
       _pendientes
         ..clear()
-        ..addAll(_asMapList(r1['turnos']));
-      _totalPendientes = r1['total'] as int? ?? _pendientes.length;
+        ..addAll(pendientesR.turnos);
+      if (pendientesR.error != null && pendientesR.turnos.isEmpty) {
+        _error = pendientesR.error;
+      }
     });
   }
 
@@ -181,41 +192,31 @@ class HomeScreenState extends State<HomeScreen> {
       _enResolucion.clear();
       _pasados.clear();
     });
-    final r1 = await _turnosService.getMisTurnos(
-      alcance: 'pendientes',
-      limit: _pageLimit,
-      offset: 0,
-    );
+    final pendientesFuture = _fetchAllPorAlcance('pendientes');
     await Future.wait([_cargarEnResolucion(), _cargarCarePlans()]);
+    final pendientesR = await pendientesFuture;
     final r2 = await _turnosService.getMisTurnos(
       alcance: 'pasados',
-      limit: _pageLimit,
+      limit: _pasadosPageLimit,
       offset: 0,
     );
     if (!mounted) return;
-    if (r1['success'] != true && r2['success'] != true) {
-      setState(() {
-        _error =
-            (r1['message'] ?? r2['message']) as String? ?? 'Error al cargar turnos';
-      });
-      return;
-    }
     setState(() {
-      if (r1['success'] == true) {
-        _pendientes
-          ..clear()
-          ..addAll(_asMapList(r1['turnos']));
-        _totalPendientes = r1['total'] as int? ?? _pendientes.length;
+      _pendientes
+        ..clear()
+        ..addAll(pendientesR.turnos);
+      if (pendientesR.error != null &&
+          pendientesR.turnos.isEmpty &&
+          _enResolucion.isEmpty) {
+        _error = pendientesR.error;
       }
       if (r2['success'] == true) {
         _pasados
           ..clear()
           ..addAll(_asMapList(r2['turnos']));
         _totalPasados = r2['total'] as int? ?? _pasados.length;
-      }
-      if (r1['success'] != true) {
-        _error = r1['message'] as String?;
-      } else if (r2['success'] != true) {
+        _error = null;
+      } else {
         _error = r2['message'] as String?;
       }
     });
@@ -226,30 +227,12 @@ class HomeScreenState extends State<HomeScreen> {
     return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
-  Future<void> _cargarMasPendientes() async {
-    if (_loadingMasPendientes || !_hayMasPendientes) return;
-    setState(() => _loadingMasPendientes = true);
-    final r = await _turnosService.getMisTurnos(
-      alcance: 'pendientes',
-      limit: _pageLimit,
-      offset: _pendientes.length,
-    );
-    if (!mounted) return;
-    setState(() {
-      _loadingMasPendientes = false;
-      if (r['success'] == true) {
-        _pendientes.addAll(_asMapList(r['turnos']));
-        _totalPendientes = r['total'] as int? ?? _pendientes.length;
-      }
-    });
-  }
-
   Future<void> _cargarMasPasados() async {
     if (_loadingMasPasados || !_hayMasPasados) return;
     setState(() => _loadingMasPasados = true);
     final r = await _turnosService.getMisTurnos(
       alcance: 'pasados',
-      limit: _pageLimit,
+      limit: _pasadosPageLimit,
       offset: _pasados.length,
     );
     if (!mounted) return;
@@ -266,26 +249,20 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {
       _pendientes.clear();
       _enResolucion.clear();
-      _totalPendientes = 0;
     });
-    final r = await _turnosService.getMisTurnos(
-      alcance: 'pendientes',
-      limit: _pageLimit,
-      offset: 0,
-    );
+    final pendientesR = await _fetchAllPorAlcance('pendientes');
     await _cargarEnResolucion();
     if (!mounted) return;
-    if (r['success'] == true) {
-      setState(() {
-        _pendientes
-          ..clear()
-          ..addAll(_asMapList(r['turnos']));
-        _totalPendientes = r['total'] as int? ?? _pendientes.length;
+    setState(() {
+      _pendientes
+        ..clear()
+        ..addAll(pendientesR.turnos);
+      if (pendientesR.error != null && pendientesR.turnos.isEmpty) {
+        _error = pendientesR.error;
+      } else if (pendientesR.error == null) {
         _error = null;
-      });
-    } else {
-      setState(() => _error = r['message'] as String?);
-    }
+      }
+    });
   }
 
   Future<void> _recargarPasadosDesdeCero() async {
@@ -295,7 +272,7 @@ class HomeScreenState extends State<HomeScreen> {
     });
     final r = await _turnosService.getMisTurnos(
       alcance: 'pasados',
-      limit: _pageLimit,
+      limit: _pasadosPageLimit,
       offset: 0,
     );
     if (!mounted) return;
@@ -563,18 +540,6 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
               );
             }),
-            if (_loadingMasPendientes) _buildLoaderInline(),
-            if (_hayMasPendientes && !_loadingMasPendientes)
-              Padding(
-                padding: const EdgeInsets.only(top: BioSpacing.sm),
-                child: BioButton(
-                  label: 'Cargar más',
-                  intent: UiIntent.neutral,
-                  variant: BioButtonVariant.soft,
-                  size: BioButtonSize.sm,
-                  onPressed: _cargarMasPendientes,
-                ),
-              ),
           ],
         ] else ...[
           BioSpacing.gapH(BioSpacing.md),
@@ -591,18 +556,7 @@ class HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.only(bottom: BioSpacing.sm),
                 child: _buildTurnoCard(context, t, futuro: false),
               )),
-          if (_loadingMasPasados) _buildLoaderInline(),
-          if (_hayMasPasados && !_loadingMasPasados)
-            Padding(
-              padding: const EdgeInsets.only(top: BioSpacing.sm),
-              child: BioButton(
-                label: 'Cargar más',
-                intent: UiIntent.neutral,
-                variant: BioButtonVariant.soft,
-                size: BioButtonSize.sm,
-                onPressed: _cargarMasPasados,
-              ),
-            ),
+          if (_loadingMasPasados && _hayMasPasados) _buildLoaderInline(),
         ],
         BioSpacing.gapH(BioSpacing.xl),
       ],

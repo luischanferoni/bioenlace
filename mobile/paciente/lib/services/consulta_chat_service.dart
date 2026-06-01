@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
@@ -68,7 +68,7 @@ class ConsultaChatService {
   /// [messageType] debe ser: imagen, audio, video, documento.
   Future<Map<String, dynamic>> uploadFile(
     int consultaId,
-    File file, {
+    XFile file, {
     required String messageType,
   }) async {
     try {
@@ -78,7 +78,7 @@ class ConsultaChatService {
       request.fields['consulta_id'] = consultaId.toString();
       request.fields['user_id'] = userId;
       request.fields['message_type'] = messageType;
-      request.files.add(await http.MultipartFile.fromPath('file', file.path, filename: file.path.split(RegExp(r'[/\\]')).last));
+      request.files.add(await multipartFileFromXFile(file));
 
       final streamed = await request.send().timeout(Duration(seconds: 60));
       final response = await http.Response.fromStream(streamed);

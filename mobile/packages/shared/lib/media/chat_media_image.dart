@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../config/api_config.dart';
 import '../theme/tokens/tokens.dart';
+import 'local_chat_image.dart';
 import 'media_url.dart';
 
 /// Imagen de chat (motivos / consulta): URL remota, ruta local o preview tras subir.
@@ -92,17 +91,17 @@ class ChatMediaImage extends StatelessWidget {
     late final ImageProvider fullscreenProvider;
 
     if (isLocalMediaFilePath(source)) {
-      final file = File(source);
-      if (!file.existsSync()) {
+      try {
+        fullscreenProvider = localChatImageProvider(source);
+      } catch (_) {
         return _errorPlaceholder(context);
       }
-      fullscreenProvider = FileImage(file);
-      imageWidget = Image.file(
-        file,
+      imageWidget = buildLocalChatImage(
+        source: source,
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (_, __, ___) => _errorPlaceholder(context),
+        onError: () => _errorPlaceholder(context),
       );
     } else {
       final url = _resolvedRemote;

@@ -27,7 +27,12 @@ class ConsultaChatService {
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
       final data = json.decode(response.body);
       if (response.statusCode == 200 && data['success'] == true) {
-        return {'success': true, 'data': data['data'], 'messages': data['data']?['messages'] ?? []};
+        final raw = data['data']?['messages'] as List<dynamic>? ?? [];
+        return {
+          'success': true,
+          'data': data['data'],
+          'messages': normalizeChatMediaMessages(raw),
+        };
       }
       return {'success': false, 'message': data['message'] ?? 'Error al cargar mensajes', 'messages': []};
     } catch (e) {
@@ -78,6 +83,14 @@ class ConsultaChatService {
       final data = json.decode(response.body);
 
       if (response.statusCode == 200 && data['success'] == true) {
+        final payload = data['data'];
+        if (payload is Map<String, dynamic>) {
+          normalizeChatMediaMessage(payload);
+        } else if (payload is Map) {
+          final copy = Map<String, dynamic>.from(payload);
+          normalizeChatMediaMessage(copy);
+          data['data'] = copy;
+        }
         return {'success': true, 'data': data['data']};
       }
       return {'success': false, 'message': data['message'] ?? 'Error al subir archivo'};

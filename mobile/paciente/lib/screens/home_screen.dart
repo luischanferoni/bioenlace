@@ -99,8 +99,8 @@ class HomeScreenState extends State<HomeScreen> {
       if (ar != br) {
         return ar ? -1 : 1;
       }
-      final da = _inicioTurnoLocal(a);
-      final db = _inicioTurnoLocal(b);
+      final da = parseTurnoInicioProducto(a);
+      final db = parseTurnoInicioProducto(b);
       if (da == null && db == null) return 0;
       if (da == null) return 1;
       if (db == null) return -1;
@@ -120,7 +120,7 @@ class HomeScreenState extends State<HomeScreen> {
       setState(() {
         _enResolucion
           ..clear()
-          ..addAll(_filtrarProximosLocales(_asMapList(r['turnos'])));
+          ..addAll(_asMapList(r['turnos']));
       });
     }
   }
@@ -169,7 +169,7 @@ class HomeScreenState extends State<HomeScreen> {
       _loadingInicial = false;
       _pendientes
         ..clear()
-        ..addAll(_filtrarProximosLocales(_asMapList(r1['turnos'])));
+        ..addAll(_asMapList(r1['turnos']));
       _totalPendientes = r1['total'] as int? ?? _pendientes.length;
     });
   }
@@ -204,13 +204,13 @@ class HomeScreenState extends State<HomeScreen> {
       if (r1['success'] == true) {
         _pendientes
           ..clear()
-          ..addAll(_filtrarProximosLocales(_asMapList(r1['turnos'])));
+          ..addAll(_asMapList(r1['turnos']));
         _totalPendientes = r1['total'] as int? ?? _pendientes.length;
       }
       if (r2['success'] == true) {
         _pasados
           ..clear()
-          ..addAll(_filtrarPasadosLocales(_asMapList(r2['turnos'])));
+          ..addAll(_asMapList(r2['turnos']));
         _totalPasados = r2['total'] as int? ?? _pasados.length;
       }
       if (r1['success'] != true) {
@@ -238,7 +238,7 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {
       _loadingMasPendientes = false;
       if (r['success'] == true) {
-        _pendientes.addAll(_filtrarProximosLocales(_asMapList(r['turnos'])));
+        _pendientes.addAll(_asMapList(r['turnos']));
         _totalPendientes = r['total'] as int? ?? _pendientes.length;
       }
     });
@@ -256,62 +256,10 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {
       _loadingMasPasados = false;
       if (r['success'] == true) {
-        _pasados.addAll(_filtrarPasadosLocales(_asMapList(r['turnos'])));
+        _pasados.addAll(_asMapList(r['turnos']));
         _totalPasados = r['total'] as int? ?? _pasados.length;
       }
     });
-  }
-
-  DateTime? _inicioTurnoLocal(Map<String, dynamic> t) {
-    final fechaRaw = t['fecha'];
-    String fechaStr;
-    if (fechaRaw is String) {
-      fechaStr = fechaRaw.trim().split('T').first;
-    } else if (fechaRaw is DateTime) {
-      fechaStr =
-          '${fechaRaw.year.toString().padLeft(4, '0')}-${fechaRaw.month.toString().padLeft(2, '0')}-${fechaRaw.day.toString().padLeft(2, '0')}';
-    } else {
-      return null;
-    }
-    if (fechaStr.length < 10) return null;
-
-    final horaRaw = t['hora'];
-    String horaNorm;
-    if (horaRaw is String && horaRaw.trim().isNotEmpty) {
-      horaNorm = horaRaw.trim();
-    } else {
-      horaNorm = '00:00:00';
-    }
-    if (horaNorm.length == 5 && horaNorm.contains(':')) {
-      horaNorm = '$horaNorm:00';
-    }
-    try {
-      return DateTime.parse('${fechaStr}T$horaNorm');
-    } catch (_) {
-      return null;
-    }
-  }
-
-  bool _inicioEsEstrictamentePasadoLocal(Map<String, dynamic> t) {
-    final d = _inicioTurnoLocal(t);
-    if (d == null) return false;
-    return d.isBefore(DateTime.now());
-  }
-
-  bool _inicioEsProximoOLocal(Map<String, dynamic> t) {
-    final d = _inicioTurnoLocal(t);
-    if (d == null) return true;
-    return !d.isBefore(DateTime.now());
-  }
-
-  List<Map<String, dynamic>> _filtrarPasadosLocales(
-      List<Map<String, dynamic>> raw) {
-    return raw.where(_inicioEsEstrictamentePasadoLocal).toList();
-  }
-
-  List<Map<String, dynamic>> _filtrarProximosLocales(
-      List<Map<String, dynamic>> raw) {
-    return raw.where(_inicioEsProximoOLocal).toList();
   }
 
   Future<void> _recargarPendientesDesdeCero() async {
@@ -331,7 +279,7 @@ class HomeScreenState extends State<HomeScreen> {
       setState(() {
         _pendientes
           ..clear()
-          ..addAll(_filtrarProximosLocales(_asMapList(r['turnos'])));
+          ..addAll(_asMapList(r['turnos']));
         _totalPendientes = r['total'] as int? ?? _pendientes.length;
         _error = null;
       });
@@ -355,7 +303,7 @@ class HomeScreenState extends State<HomeScreen> {
       setState(() {
         _pasados
           ..clear()
-          ..addAll(_filtrarPasadosLocales(_asMapList(r['turnos'])));
+          ..addAll(_asMapList(r['turnos']));
         _totalPasados = r['total'] as int? ?? _pasados.length;
         _error = null;
       });

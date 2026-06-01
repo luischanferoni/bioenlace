@@ -72,14 +72,33 @@ class TurnosService {
 
       if (response.statusCode == 200 && data['success'] == true) {
         final block = data['data'];
-        final turnos = block is Map<String, dynamic> ? block['turnos'] : null;
-        final totalRaw = block is Map<String, dynamic> ? block['total'] : null;
+        if (block is! Map<String, dynamic>) {
+          return {
+            'success': false,
+            'message': 'Respuesta de turnos sin datos (formato inesperado).',
+            'turnos': <dynamic>[],
+            'total': 0,
+          };
+        }
+        final turnos = block['turnos'];
+        final totalRaw = block['total'];
         final total = totalRaw is int ? totalRaw : int.tryParse('$totalRaw') ?? 0;
         return {
           'success': true,
           'data': block,
           'turnos': turnos is List<dynamic> ? turnos : [],
           'total': total,
+        };
+      }
+      if (response.statusCode == 200 &&
+          data['kind'] == 'ui_definition' &&
+          data['success'] == true) {
+        return {
+          'success': false,
+          'message':
+              'La API devolvió un formulario en lugar del listado. Enviá POST con alcance (pendientes/pasados).',
+          'turnos': <dynamic>[],
+          'total': 0,
         };
       }
       final message = _extractErrorMessage(data, response.statusCode);

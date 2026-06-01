@@ -137,6 +137,23 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
 
   Future<void> _uploadFile(File file, String messageType) async {
     if (!file.existsSync() || _sending) return;
+    final showLocalPreview = messageType == 'imagen';
+    if (showLocalPreview) {
+      setState(() {
+        _messages = [
+          ..._messages,
+          <String, dynamic>{
+            'message_type': 'imagen',
+            'content': file.path,
+            '_local_preview': true,
+            'user_id': widget.userId,
+            'user_role': 'paciente',
+            'created_at': DateTime.now().toIso8601String(),
+          },
+        ];
+      });
+      _scrollToBottom();
+    }
     setState(() => _sending = true);
     final result = await _chatService.uploadFile(
       widget.consultaId,
@@ -146,9 +163,23 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
-      setState(() => _messages = [..._messages, result['data']]);
+      setState(() {
+        final withoutPreview = showLocalPreview
+            ? _messages
+                .where((m) => (m as Map)['_local_preview'] != true)
+                .toList()
+            : _messages;
+        _messages = [...withoutPreview, result['data']];
+      });
       _scrollToBottom();
     } else {
+      if (showLocalPreview) {
+        setState(() {
+          _messages = _messages
+              .where((m) => (m as Map)['_local_preview'] != true)
+              .toList();
+        });
+      }
       _showError(result['message']?.toString() ?? 'Error');
     }
   }
@@ -228,24 +259,13 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     Widget contenido;
     if (type == 'texto') {
       contenido = Text(content, style: BioTypography.body.copyWith(color: fg));
-    } else if (type == 'imagen' && content.isNotEmpty) {
-      contenido = ClipRRect(
-        borderRadius: BorderRadius.circular(BioRadius.sm),
-        child: Image.network(
-          content,
-          fit: BoxFit.cover,
-          loadingBuilder: (_, child, progress) => progress == null
-              ? child
-              : SizedBox(
-                  height: 80,
-                  width: 80,
-                  child: Center(
-                    child: CircularProgressIndicator(color: fgMuted),
-                  ),
-                ),
-          errorBuilder: (_, __, ___) =>
-              Icon(Icons.broken_image, color: fgMuted, size: 48),
-        ),
+    } else if (isImageMessageType(type) && content.isNotEmpty) {
+      contenido = ChatMediaImage(
+        source: content,
+        bearerToken: widget.authToken,
+        width: 220,
+        fit: BoxFit.cover,
+        placeholderColor: fgMuted,
       );
     } else if (type == 'audio') {
       contenido = Row(

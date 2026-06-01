@@ -1454,7 +1454,7 @@ class TurnosController extends BaseController
             'id' => $turno->id_turnos,
             'id_persona' => $turno->id_persona,
             'fecha' => $turno->fecha,
-            'hora' => $turno->hora,
+            'hora' => $this->formatHoraTurnoPacienteCorta($turno->hora),
             'servicio' => $servicioNombre,
             'servicio_detalle' => $servicioObj,
             'id_servicio_asignado' => $turno->id_servicio_asignado,

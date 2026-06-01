@@ -160,9 +160,20 @@ class MotivoConsultaMensajeApi {
       return 0;
     }
 
+    var content = json['content'] as String? ?? '';
+    final type = json['message_type'] as String? ?? 'texto';
+    if (isImageMessageType(type) ||
+        type == 'audio' ||
+        type == 'video' ||
+        type == 'documento') {
+      if (content.isNotEmpty && !isLocalMediaFilePath(content)) {
+        content = resolveMediaContentUrl(content);
+      }
+    }
+
     return MotivoConsultaMensajeApi(
       id: asInt(json['id']),
-      content: json['content'] as String? ?? '',
+      content: content,
       userId: asInt(json['user_id']),
       userName: json['user_name'] as String? ?? '',
       messageType: json['message_type'] as String? ?? 'texto',

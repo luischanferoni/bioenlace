@@ -354,22 +354,20 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Widget _buildMotivoMensajeTile(MotivoConsultaMensajeApi m) {
     final tokens = context.bio;
     final tipo = m.messageType.toLowerCase();
-    final uri = Uri.tryParse(m.content);
+    final uri = Uri.tryParse(resolveMediaContentUrl(m.content));
     final esHttp = uri != null &&
         (uri.isScheme('http') || uri.isScheme('https'));
 
     Widget cuerpo;
     if (tipo == 'texto') {
       cuerpo = Text(m.content, style: BioTypography.body);
-    } else if (tipo == 'imagen' && esHttp) {
-      cuerpo = ClipRRect(
-        borderRadius: BorderRadius.circular(BioRadius.sm),
-        child: Image.network(
-          m.content,
-          height: 140,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => SelectableText(m.content),
-        ),
+    } else if (isImageMessageType(tipo) && m.content.trim().isNotEmpty) {
+      cuerpo = ChatMediaImage(
+        source: m.content,
+        bearerToken: widget.authToken,
+        width: double.infinity,
+        height: 200,
+        fit: BoxFit.contain,
       );
     } else if (tipo == 'audio' && esHttp) {
       cuerpo = SelectableText(

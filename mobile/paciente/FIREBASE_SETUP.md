@@ -125,10 +125,21 @@ FirebaseCrashlytics.instance.crash();
 
 Tras login se llama `CrashlyticsBootstrap.setUserId(userId)` para correlacionar crashes con el usuario (sin datos clínicos en el log).
 
-### Logs de diagnóstico en servidor
+### Logs de diagnóstico en servidor (solo problemas)
 
-La app envía eventos de flow/UI a `POST /api/v1/client-diagnostic/registrar` (cualquier usuario autenticado).
+La app **no** registra cada paso exitoso del flow. Solo sube eventos cuando algo falla o el usuario queda bloqueado:
 
-Archivos en el servidor: `web/runtime/logs/client-diagnostic/client-diagnostic-YYYY-MM-DD.log` (JSON por línea).
+| Categoría | Mensajes típicos |
+|-----------|------------------|
+| `ui_json_load` | `empty_url`, `load_fail`, `load_stuck` |
+| `flow_auto_pick` | `chat_advance_failed`, `chat_advance_error` |
+| `flow_list_pick` | `advance_failed` |
+| `flow_advance` | `skip_locked` (carrera de avances) |
 
-Categorías útiles: `ui_json_load` (`start`, `ok`, `retry`, `load_fail`, `load_stuck`), `flow_auto_pick` (`definition_ready`, `chat_advance_ok`, `chat_advance_failed`).
+Endpoint: `POST /api/v1/client-diagnostic/registrar` (usuario autenticado).
+
+Archivos: `web/runtime/logs/client-diagnostic/client-diagnostic-YYYY-MM-DD.log` (JSON por línea).
+
+En **debug** podés ver trazas extra en consola (`AppDiagnosticLog.trace`); no se suben.
+
+Crashlytics: los issues también generan un **no fatal** con prefijo `logic_*` para ver fallos de lógica sin crash (complementa, no sustituye, el endpoint).

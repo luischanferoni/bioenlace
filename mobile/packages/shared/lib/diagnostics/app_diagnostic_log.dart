@@ -7,52 +7,55 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'client_diagnostic_api.dart';
 import 'crashlytics_bootstrap.dart';
 
-/// Log local en dispositivo (debug + release). Pensado para diagnosticar flujos
-/// en APK/IPA instalados y subir luego a un endpoint propio.
+/// Diagnóstico orientado a **problemas del usuario**, no trazas de cada paso OK.
+///
+/// - [reportIssue]: persiste, sube al servidor y (en release) breadcrumb/no fatal en Crashlytics.
+/// - [trace]: solo `debugPrint` en modo debug; no inunda servidor ni Crashlytics.
 class AppDiagnosticLog {
   AppDiagnosticLog._();
 
   static const _prefsKey = 'bio_app_diagnostic_log_v1';
-  static const _maxEntries = 200;
+  static const _maxEntries = 80;
 
   static bool _uploadScheduled = false;
   static DateTime? _lastUploadAt;
+  static String? _lastDedupeKey;
+  static DateTime? _lastDedupeAt;
 
-  static Future<void> log(
+  /// Fallo o bloqueo que el usuario puede notar (flow, UI JSON, red).
+  static Future<void> reportIssue(
     String category,
     String message, {
     Map<String, dynamic>? data,
   }) async {
+    final dedupeKey = '$category::$message';
+    if (_isDuplicate(dedupeKey)) {
+      return;
+    }
+
     final entry = <String, dynamic>{
       'ts': DateTime.now().toUtc().toIso8601String(),
+      'level': 'issue',
       'category': category,
       'message': message,
       if (data != null && data.isNotEmpty) 'data': data,
     };
 
     if (kDebugMode) {
-      debugPrint('[diag:$category] $message ${data ?? ''}');
+      debugPrint('[issue:$category] $message ${data ?? ''}');
     }
 
     final crashLine = data != null && data.isNotEmpty
         ? '[$category] $message ${jsonEncode(data)}'
         : '[$category] $message';
     unawaited(CrashlyticsBootstrap.log(crashLine));
-    final reportAsNonFatal = message == 'error' ||
-        message == 'chat_advance_error' ||
-        message == 'chat_advance_failed' ||
-        message == 'advance_failed' ||
-        message == 'load_fail' ||
-        message == 'load_stuck';
-    if (reportAsNonFatal) {
-      unawaited(CrashlyticsBootstrap.recordError(
-        Exception(crashLine),
-        StackTrace.current,
-        reason: category,
-        fatal: false,
-        customKeys: data?.map((k, v) => MapEntry(k, v?.toString())),
-      ));
-    }
+    unawaited(CrashlyticsBootstrap.recordError(
+      Exception(crashLine),
+      StackTrace.current,
+      reason: 'logic_$category',
+      fatal: false,
+      customKeys: data?.map((k, v) => MapEntry(k, v?.toString())),
+    ));
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -80,6 +83,30 @@ class AppDiagnosticLog {
     _scheduleServerUpload();
   }
 
+  /// Trazas de desarrollo (pasos OK, skips esperados). No se suben al servidor.
+  static void trace(
+    String category,
+    String message, {
+    Map<String, dynamic>? data,
+  }) {
+    if (!kDebugMode) {
+      return;
+    }
+    debugPrint('[trace:$category] $message ${data ?? ''}');
+  }
+
+  static bool _isDuplicate(String dedupeKey) {
+    final now = DateTime.now();
+    if (_lastDedupeKey == dedupeKey &&
+        _lastDedupeAt != null &&
+        now.difference(_lastDedupeAt!) < const Duration(seconds: 60)) {
+      return true;
+    }
+    _lastDedupeKey = dedupeKey;
+    _lastDedupeAt = now;
+    return false;
+  }
+
   static void _scheduleServerUpload() {
     final token = ClientDiagnosticApi.authToken?.trim() ?? '';
     if (token.isEmpty) {
@@ -87,10 +114,10 @@ class AppDiagnosticLog {
     }
     final now = DateTime.now();
     if (_lastUploadAt != null &&
-        now.difference(_lastUploadAt!) < const Duration(seconds: 4)) {
+        now.difference(_lastUploadAt!) < const Duration(seconds: 8)) {
       if (!_uploadScheduled) {
         _uploadScheduled = true;
-        Future<void>.delayed(const Duration(seconds: 4), () {
+        Future<void>.delayed(const Duration(seconds: 8), () {
           _uploadScheduled = false;
           unawaited(_flushToServer());
         });
@@ -101,7 +128,7 @@ class AppDiagnosticLog {
       return;
     }
     _uploadScheduled = true;
-    Future<void>.delayed(const Duration(seconds: 2), () {
+    Future<void>.delayed(const Duration(seconds: 3), () {
       _uploadScheduled = false;
       unawaited(_flushToServer());
     });

@@ -136,7 +136,7 @@ class ChatScreenState extends State<ChatScreen> {
       waitedMs += 250;
     }
     if (_flowAdvanceLocked) {
-      unawaited(AppDiagnosticLog.log('flow_advance', 'skip_locked'));
+      unawaited(AppDiagnosticLog.reportIssue('flow_advance', 'skip_locked'));
       return {
         'success': false,
         'message': 'Avance en curso. Esperá un momento.',
@@ -232,15 +232,6 @@ class ChatScreenState extends State<ChatScreen> {
 
     final pick = UiJsonSingleListPick.fromDefinition(definition);
     if (pick == null) {
-      unawaited(AppDiagnosticLog.log(
-        'flow_auto_pick',
-        'skip_no_single_list',
-        data: {
-          'message_index': messageIndex,
-          'blocks': definition['blocks'] is List ? (definition['blocks'] as List).length : 0,
-          'route': inlineUi['route']?.toString() ?? '',
-        },
-      ));
       return;
     }
 
@@ -251,11 +242,11 @@ class ChatScreenState extends State<ChatScreen> {
     await Future<void>.delayed(const Duration(milliseconds: 480));
     if (!mounted) {
       message['_flow_single_pick_in_flight'] = false;
-      unawaited(AppDiagnosticLog.log(
+      AppDiagnosticLog.trace(
         'flow_auto_pick',
         'aborted_unmounted',
         data: {'message_index': messageIndex},
-      ));
+      );
       return;
     }
 
@@ -281,14 +272,14 @@ class ChatScreenState extends State<ChatScreen> {
           }
         });
       }
-      unawaited(AppDiagnosticLog.log(
+      AppDiagnosticLog.trace(
         'flow_auto_pick',
         'terminal_merge_only',
         data: {
           'draft_field': pick.draftField,
           'item_id': pick.itemId,
         },
-      ));
+      );
       return;
     }
 
@@ -305,14 +296,14 @@ class ChatScreenState extends State<ChatScreen> {
             setState(() => _flowAdvancing = false);
           }
           await _handleFlowEnvelopeResponse(Map<String, dynamic>.from(data));
-          unawaited(AppDiagnosticLog.log(
+          AppDiagnosticLog.trace(
             'flow_auto_pick',
             'chat_advance_ok',
             data: {
               'draft_field': pick.draftField,
               'item_id': pick.itemId,
             },
-          ));
+          );
         } else {
           setState(() {
             _flowAdvancing = false;
@@ -323,7 +314,7 @@ class ChatScreenState extends State<ChatScreen> {
         final friendly = res['message']?.toString() ??
             'No se pudo avanzar automáticamente. Tocá la opción en la lista.';
         message['_flow_single_pick_attempts'] = attempts + 1;
-        unawaited(AppDiagnosticLog.log(
+        unawaited(AppDiagnosticLog.reportIssue(
           'flow_auto_pick',
           'chat_advance_failed',
           data: {
@@ -360,7 +351,7 @@ class ChatScreenState extends State<ChatScreen> {
       }
     } catch (e, st) {
       message['_flow_single_pick_attempts'] = attempts + 1;
-      unawaited(AppDiagnosticLog.log(
+      unawaited(AppDiagnosticLog.reportIssue(
         'flow_auto_pick',
         'chat_advance_error',
         data: {
@@ -2585,15 +2576,6 @@ class ChatScreenState extends State<ChatScreen> {
                                             return;
                                           }
                                         }
-                                        unawaited(AppDiagnosticLog.log(
-                                          'flow_auto_pick',
-                                          'definition_ready',
-                                          data: {
-                                            'message_index': index,
-                                            'intent_id': _intentId ?? '',
-                                            'subintent_id': _subintentId ?? '',
-                                          },
-                                        ));
                                         unawaited(_autoAdvanceFlowSingleListIfNeeded(
                                           message: message,
                                           messageIndex: index,
@@ -2677,7 +2659,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       setState(() => _isSending = false);
                                     }
                                   } else {
-                                    unawaited(AppDiagnosticLog.log(
+                                    unawaited(AppDiagnosticLog.reportIssue(
                                       'flow_list_pick',
                                       'advance_failed',
                                       data: {'message': res['message']?.toString() ?? ''},

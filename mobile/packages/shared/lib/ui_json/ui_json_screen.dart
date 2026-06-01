@@ -400,7 +400,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         _error = 'No se pudo cargar la pantalla (falta la ruta del servidor).';
         _loading = false;
       });
-      unawaited(AppDiagnosticLog.log('ui_json_load', 'empty_url', data: {
+      unawaited(AppDiagnosticLog.reportIssue('ui_json_load', 'empty_url', data: {
         'embedded': widget.embedded,
         'title': widget.title ?? '',
       }));
@@ -412,17 +412,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       _error = null;
     });
 
-    unawaited(AppDiagnosticLog.log('ui_json_load', 'start', data: {
-      'url': url.length > 200 ? '${url.substring(0, 200)}…' : url,
-      'embedded': widget.embedded,
-      'load_gen': loadGen,
-    }));
-
     _loadWatchdog = Timer(_loadStuckWatchdog, () {
       if (!mounted || loadGen != _loadGeneration || !_loading || _root != null) {
         return;
       }
-      unawaited(AppDiagnosticLog.log('ui_json_load', 'load_stuck', data: {
+      unawaited(AppDiagnosticLog.reportIssue('ui_json_load', 'load_stuck', data: {
         'url': url.length > 200 ? '${url.substring(0, 200)}…' : url,
         'load_gen': loadGen,
       }));
@@ -457,10 +451,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           throw Exception('No es ui_definition');
         }
         _loadWatchdog?.cancel();
-        unawaited(AppDiagnosticLog.log('ui_json_load', 'ok', data: {
-          'attempt': attempt,
-          'load_gen': loadGen,
-        }));
         _hydrateFromDefinition(m, fromNetwork: true);
         return;
       } catch (e) {
@@ -470,10 +460,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         }
         final canRetry = attempt < _maxLoadAttempts && isRetryableNetworkError(e);
         if (canRetry) {
-          unawaited(AppDiagnosticLog.log('ui_json_load', 'retry', data: {
-            'attempt': attempt,
-            'error': e.toString(),
-          }));
           await Future<void>.delayed(_loadRetryBaseDelay * attempt);
           continue;
         }
@@ -488,8 +474,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     final friendly = userFriendlyErrorMessage(
       lastError ?? Exception('Error desconocido'),
     );
-    unawaited(AppDiagnosticLog.log('ui_json_load', 'load_fail', data: {
+    unawaited(AppDiagnosticLog.reportIssue('ui_json_load', 'load_fail', data: {
       'error': lastError?.toString() ?? '',
+      'url': url.length > 200 ? '${url.substring(0, 200)}…' : url,
       'load_gen': loadGen,
     }));
     setState(() {
@@ -561,14 +548,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     final pick = UiJsonSingleListPick.fromDefinition(_root!);
     if (pick == null) {
       _flowChainAutoScheduled = false;
-      unawaited(AppDiagnosticLog.log(
-        'flow_auto_pick',
-        'skip_no_single_list',
-        data: {
-          'url': widget.apiAbsoluteUrl,
-          'blocks': _blocks.length,
-        },
-      ));
       return;
     }
 
@@ -579,11 +558,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     try {
       await Future<void>.delayed(const Duration(milliseconds: 480));
       if (!mounted) {
-        unawaited(AppDiagnosticLog.log(
+        AppDiagnosticLog.trace(
           'flow_auto_pick',
           'aborted_unmounted',
           data: {'url': widget.apiAbsoluteUrl},
-        ));
+        );
         return;
       }
       await _applyListEmbedDraft(
@@ -592,17 +571,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         item: pick.item,
       );
       _flowChainAutoApplied = true;
-      unawaited(AppDiagnosticLog.log(
-        'flow_auto_pick',
-        'applied',
-        data: {
-          'url': widget.apiAbsoluteUrl,
-          'draft_field': pick.draftField,
-          'item_id': pick.itemId,
-        },
-      ));
     } catch (e, st) {
-      unawaited(AppDiagnosticLog.log(
+      unawaited(AppDiagnosticLog.reportIssue(
         'flow_auto_pick',
         'error',
         data: {

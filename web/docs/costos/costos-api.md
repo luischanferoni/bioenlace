@@ -5,9 +5,9 @@ Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollam
 - **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`).
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
 - **Contexto clínico del paciente:** bloque acotado (`PatientAiContextBuilder`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
-- **Escenario intensivo:** sin optimizaciones de producto (p. ej. transcribir todo el audio automáticamente).
+- **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (p. ej. 1 min de audio por encounter en §4); **no** asume topes de minutos ni transcripción diferida como palanca de ahorro.
 
-Otras reducciones (caché Yii, STT bajo demanda, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas. Precios unitarios de proveedores: [Precios de referencia](#precios-de-referencia-mayo-2026).
+Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas. Precios unitarios de proveedores: [Precios de referencia](#precios-de-referencia-mayo-2026).
 
 ## Supuestos base
 
@@ -102,7 +102,7 @@ Implementación: `common/components/Clinical/AiContext/PatientAiContextBuilder.p
 - Parte **variable por paciente** (no cacheable entre distintos pacientes); en §1 el bloque se repite entre turnos del **mismo** paciente → posible upside de caché implícita no modelado (se mantiene **~40 %** conversacional).
 - Calibrar con `AICostTracker` por `contexto` tras desplegar.
 
-Para bajar el costo con otras palancas (STT bajo demanda, caché de aplicación, etc.), ver [estrategias-reduccion/](./estrategias-reduccion/README.md).
+Para otras palancas (STT en dispositivo, caché de aplicación, context caching, etc.), ver [estrategias-reduccion/](./estrategias-reduccion/README.md).
 
 ---
 

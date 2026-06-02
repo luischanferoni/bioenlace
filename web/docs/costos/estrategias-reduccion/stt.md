@@ -16,17 +16,9 @@ Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v
 | 5 | AssemblyAI | Streaming, extras | ~$0,002/min Slim |
 | 6 | Whisper GPU propia | Alto volumen solo servidor | [infra-costos.md](../infra-costos.md) |
 
-A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$1.400/mes** (400 min/prof × 5.000). La API sigue siendo razonable frente a una GPU dedicada, pero **no es el piso**: el mínimo es **no transcribir en servidor** cuando el dispositivo entrega texto usable.
+A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$1.400/mes** (400 min/prof × 5.000 en el COGS de referencia). La API sigue siendo razonable frente a una GPU dedicada, pero **no es el piso**: el mínimo es **no transcribir en servidor** cuando el dispositivo entrega texto usable.
 
-## Reducir minutos facturables (servidor)
-
-- Transcribir **solo bajo demanda** (**50–100 %** del escenario 400 min automáticos).
-- FFmpeg: silencios, compresión (ya en `SpeechToTextManager`).
-- Caché por hash de audio.
-- Batch async (motivos, lotes nocturnos).
-- **STT en dispositivo** + fallback servidor solo si falla calidad (§ siguiente).
-
----
+**Fuera de alcance (no son estrategias de este doc):** topes de minutos de audio, transcripción «solo bajo demanda», recortar silencios o duración solo para bajar minutos facturables, ni diferir STT para reducir volumen. El [COGS](../costos-api.md) modela el volumen clínico esperado; el ahorro documentado acá es **STT en dispositivo + fallback por calidad**.
 
 ## STT en dispositivo (estrategia de reducción)
 
@@ -38,10 +30,8 @@ El micrófono produce **texto en el cliente**; el backend recibe `texto` (y meta
 
 | Flujo | § costos-api | Prioridad dispositivo | Notas |
 |-------|--------------|----------------------|--------|
-| Captura clínica (dictado médico) | §4 | Alta | Máximo volumen y calidad; fallback servidor para términos médicos |
-| Motivos de consulta (audio paciente) | §2 caso B | Alta | Transcribir al **cerrar grabación** y guardar mensaje tipo texto; el lote no llama STT |
-| Chat asistente / motivos | §1 / §2 | Media | Preferir dictado en el input frente a nota de voz |
-| Onboarding | §3 | Baja | Mayormente texto |
+| Captura clínica (dictado médico) | §4 | Alta | Implementado: dictado local + fallback servidor; ver § Implementación |
+| Motivos de consulta (audio paciente) | §2 caso B | Alta (futuro) | Mismo patrón: texto en dispositivo al grabar; el lote no llama STT si el mensaje ya es texto |
 
 ### Contrato API (orientativo, sin implementar aquí)
 
@@ -95,7 +85,7 @@ Estas reglas son **baratas** y deben vivir en un componente reutilizable (web + 
 | Toca **«Transcribir de nuevo»** / **«Mejorar transcripción»** | Forzar STT servidor (Groq/Whisper) sobre el audio guardado |
 | **Edita mucho** el texto antes de enviar | `client_edit_ratio = (levenshtein inicial vs final) / len` alto → opcional re-transcribir en servidor si ratio &gt; 0,35 |
 | Elige **«Enviar solo audio»** sin aceptar preview de texto | Siempre servidor |
-| Rechaza preview y vuelve a grabar | No facturar servidor hasta envío definitivo |
+| Rechaza preview y vuelve a grabar | Descartar transcript previo; nueva captura |
 
 ### 4. Señales en servidor (sin STT completo)
 

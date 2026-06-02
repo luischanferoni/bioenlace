@@ -4,6 +4,7 @@ namespace common\components\Clinical\Legacy;
 
 use Yii;
 use yii\base\Component;
+use common\components\Ai\SpeechToText\EncounterSpeechInputResolver;
 use common\components\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Text\ProcesadorTextoMedico;
@@ -24,10 +25,20 @@ class ConsultaProcesamientoService extends Component
                 ?? $userPerTabConfig['idProfesionalEfectorServicio'] ?? null;
             $idProfesionalEfectorServicio = (int) ($idPesTab ?: 0);
             $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
-            $textoConsulta = $body['consulta'] ?? null;
             $idConfiguracion = $body['id_configuracion'] ?? null;
 
-            if ($idProfesionalEfectorServicio <= 0 || !$textoConsulta) {
+            $speech = EncounterSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
+            if (empty($speech['ok'])) {
+                return [
+                    '__statusCode' => 400,
+                    'success' => false,
+                    'message' => $speech['message'] ?? 'No se pudo obtener texto para analizar la consulta.',
+                    'errors' => isset($speech['quality']) ? ['stt_quality' => $speech['quality']] : null,
+                ];
+            }
+            $textoConsulta = (string) $speech['text'];
+
+            if ($idProfesionalEfectorServicio <= 0 || $textoConsulta === '') {
                 return [
                     '__statusCode' => 400,
                     'success' => false,
@@ -203,6 +214,8 @@ HTML;
                 'success' => true,
                 'datos' => $datos,
                 'html' => $html,
+                'stt_provenance' => $speech['provenance'] ?? EncounterSpeechInputResolver::PROVENANCE_TEXT_ONLY,
+                'stt_used_server' => !empty($speech['used_server_stt']),
                 'texto_original' => $textoConsulta,
                 'texto_procesado' => $textoProcesado,
                 'texto_formateado' => $textoFormateado ?? null,

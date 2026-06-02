@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
+use common\components\Ai\SpeechToText\EncounterSpeechInputResolver;
 use common\components\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Text\ProcesadorTextoMedico;
 use common\components\Clinical\Legacy\ConsultaProcesamientoService;
@@ -17,29 +18,45 @@ class AudioController extends BaseController
     {
         try {
             $request = Yii::$app->request;
-            $audioData = $request->post('audio') ?? $request->post('audio_data');
-            $modelo = $request->post('modelo', 'economico');
-            $procesarInmediatamente = $request->post('procesar', false);
+            $body = array_merge(
+                $request->post(),
+                is_array($request->getBodyParams()) ? $request->getBodyParams() : []
+            );
+            $audioData = $body['audio'] ?? $body['audio_data'] ?? null;
+            $modelo = $body['modelo'] ?? 'economico';
+            $procesarInmediatamente = !empty($body['procesar']);
 
-            if (empty($audioData)) {
-                return [
-                    'success' => false,
-                    'error' => 'No se proporcionó audio'
+            $speech = EncounterSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
+            if (!empty($speech['ok'])) {
+                $textoTranscrito = (string) $speech['text'];
+                $resultado = [
+                    'texto' => $textoTranscrito,
+                    'confidence' => 0.9,
+                    'modelo_usado' => !empty($speech['used_server_stt']) ? $modelo : 'device',
+                ];
+            } else {
+                if (empty($audioData)) {
+                    return [
+                        'success' => false,
+                        'error' => $speech['message'] ?? 'No se proporcionó audio',
+                    ];
+                }
+
+                $resultado = SpeechToTextManager::transcribir($audioData, $modelo);
+                if (empty($resultado['texto'])) {
+                    return [
+                        'success' => false,
+                        'error' => $resultado['error'] ?? 'No se pudo transcribir el audio',
+                        'detalles' => $resultado,
+                    ];
+                }
+                $textoTranscrito = $resultado['texto'];
+                $speech = [
+                    'ok' => true,
+                    'provenance' => EncounterSpeechInputResolver::PROVENANCE_SERVER,
+                    'used_server_stt' => true,
                 ];
             }
-
-            // Transcribir audio a texto
-            $resultado = SpeechToTextManager::transcribir($audioData, $modelo);
-
-            if (empty($resultado['texto'])) {
-                return [
-                    'success' => false,
-                    'error' => $resultado['error'] ?? 'No se pudo transcribir el audio',
-                    'detalles' => $resultado
-                ];
-            }
-
-            $textoTranscrito = $resultado['texto'];
 
             // Si se solicita procesamiento inmediato, pasar por el pipeline de análisis
             if ($procesarInmediatamente) {
@@ -88,9 +105,11 @@ class AudioController extends BaseController
             return [
                 'success' => true,
                 'texto_transcrito' => $textoTranscrito,
+                'stt_provenance' => $speech['provenance'] ?? EncounterSpeechInputResolver::PROVENANCE_SERVER,
+                'stt_used_server' => !empty($speech['used_server_stt']) || empty($speech['ok']),
                 'confidence' => $resultado['confidence'] ?? 0.8,
                 'modelo_usado' => $resultado['modelo_usado'] ?? $modelo,
-                'tiempo_transcripcion' => $resultado['tiempo_procesamiento'] ?? 0
+                'tiempo_transcripcion' => $resultado['tiempo_procesamiento'] ?? 0,
             ];
 
         } catch (\Exception $e) {

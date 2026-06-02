@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   cross_file: ^0.3.4+2
   http: ^1.2.1
+  speech_to_text: ^7.0.0
+  record: ^5.2.0
   local_auth: ^2.1.7
   shared_preferences: ^2.2.2
   google_fonts: ^6.2.1

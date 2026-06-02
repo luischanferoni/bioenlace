@@ -1,5 +1,9 @@
 // lib/screens/patient_timeline_screen.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
 import '../models/timeline_event.dart';
@@ -34,10 +38,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final HistoriaClinicaService _historiaClinicaService =
       HistoriaClinicaService();
   final ConsultaGuardarService _consultaGuardar = ConsultaGuardarService();
+  final EncounterCaptureApi _encounterApi = EncounterCaptureApi();
+  final DeviceSpeechDictation _dictation = DeviceSpeechDictation();
+  final AudioRecorder _audioRecorder = AudioRecorder();
   HistoriaClinicaResponse? _historiaClinicaData;
   bool _isLoading = true;
   String _errorMessage = '';
   bool _guardandoConsulta = false;
+  bool _dictating = false;
+  String? _pendingAudioPath;
+  DeviceDictationResult? _lastDictation;
+  Map<String, dynamic>? _lastAnalysis;
+  String _sttStatus = '';
 
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
@@ -54,7 +66,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (widget.authToken != null) {
       _historiaClinicaService.authToken = widget.authToken;
       _consultaGuardar.authToken = widget.authToken;
+      _encounterApi.authToken = widget.authToken;
     }
+    _dictation.initialize();
     _cargarHistoriaClinica();
   }
 
@@ -452,40 +466,209 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return widgets;
   }
 
-  Future<void> _enviarConsulta() async {
-    final text = _chatController.text.trim();
-    if (text.isEmpty) return;
+  bool get _tieneContextoCaptura =>
+      widget.consultParent != null &&
+      widget.consultParent!.isNotEmpty &&
+      widget.consultParentId != null;
 
-    if (widget.consultParent != null &&
-        widget.consultParent!.isNotEmpty &&
-        widget.consultParentId != null) {
-      setState(() => _guardandoConsulta = true);
-      try {
-        await _consultaGuardar.guardar(
-          idPersona: widget.personaId,
-          parent: widget.consultParent!,
-          parentId: widget.consultParentId!,
-          texto: text,
+  Future<void> _toggleDictation() async {
+    if (_guardandoConsulta) return;
+    if (_dictating) {
+      final result = await _dictation.stop();
+      await _stopBackupRecording();
+      if (!mounted) return;
+      setState(() {
+        _dictating = false;
+        _lastDictation = result;
+        if (result.text.trim().isNotEmpty) {
+          _chatController.text = result.text.trim();
+        }
+        final ok = DeviceSttLocalQuality.isAcceptable(
+          _chatController.text,
+          result,
         );
+        _sttStatus = ok
+            ? 'Dictado listo. Revise y analice.'
+            : 'Calidad baja: use «Servidor» o corrija el texto.';
+      });
+      return;
+    }
+    try {
+      await _startBackupRecording();
+      await _dictation.start(onPartial: (text, _) {
         if (!mounted) return;
-        _snack('Consulta guardada', UiIntent.success);
+        setState(() {
+          _chatController.text = text;
+          _sttStatus = 'Escuchando…';
+        });
+      });
+      if (!mounted) return;
+      setState(() {
+        _dictating = true;
+        _sttStatus = 'Escuchando… pulse micrófono para detener.';
+      });
+    } catch (e) {
+      _snack('No se pudo iniciar dictado: $e', UiIntent.danger);
+    }
+  }
+
+  Future<void> _startBackupRecording() async {
+    if (!await _audioRecorder.hasPermission()) return;
+    final dir = await getTemporaryDirectory();
+    _pendingAudioPath =
+        '${dir.path}/encounter_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _audioRecorder.start(
+      const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
+      path: _pendingAudioPath!,
+    );
+  }
+
+  Future<void> _stopBackupRecording() async {
+    if (await _audioRecorder.isRecording()) {
+      await _audioRecorder.stop();
+    }
+  }
+
+  Future<String?> _audioPathToBase64(String path) async {
+    try {
+      final bytes = await XFile(path).readAsBytes();
+      return 'data:audio/m4a;base64,${base64Encode(bytes)}';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _transcribirEnServidor() async {
+    if (_pendingAudioPath == null) {
+      _snack('Grabe con el micrófono antes de usar servidor.', UiIntent.warning);
+      return;
+    }
+    setState(() => _guardandoConsulta = true);
+    try {
+      final b64 = await _audioPathToBase64(_pendingAudioPath!);
+      if (b64 == null) throw Exception('No se pudo leer el audio');
+      final text = await _encounterApi.transcribirServidor(audioBase64: b64);
+      if (!mounted) return;
+      setState(() {
+        _chatController.text = text;
+        _lastDictation = DeviceDictationResult(
+          text: text,
+          confidence: 0.9,
+          durationMs: 0,
+          engine: 'server',
+          locale: 'es_AR',
+        );
+        _sttStatus = 'Transcripción de servidor aplicada.';
+      });
+    } catch (e) {
+      _snack('Error STT servidor: $e', UiIntent.danger);
+    } finally {
+      if (mounted) setState(() => _guardandoConsulta = false);
+    }
+  }
+
+  Future<void> _analizarConsulta() async {
+    final text = _chatController.text.trim();
+    if (text.isEmpty) {
+      _snack('Escriba o dicte la consulta.', UiIntent.warning);
+      return;
+    }
+    if (!_tieneContextoCaptura) {
+      _snack('Falta contexto de atención (parent).', UiIntent.warning);
+      return;
+    }
+    setState(() {
+      _guardandoConsulta = true;
+      _sttStatus = 'Analizando…';
+    });
+    try {
+      Map<String, dynamic>? stt;
+      String? audioB64;
+      if (_lastDictation != null) {
+        stt = _lastDictation!.toSttPayload();
+        if (!DeviceSttLocalQuality.isAcceptable(text, _lastDictation!) &&
+            _pendingAudioPath != null) {
+          audioB64 = await _audioPathToBase64(_pendingAudioPath!);
+        }
+      }
+      final res = await _encounterApi.analizar(
+        consulta: text,
+        idPersona: widget.personaId,
+        parent: widget.consultParent,
+        parentId: widget.consultParentId,
+        stt: stt,
+        audioBase64: audioB64,
+      );
+      if (!mounted) return;
+      setState(() {
+        _lastAnalysis = res;
+        _sttStatus =
+            'Análisis listo (${res['stt_provenance'] ?? 'texto'}). Confirme para guardar.';
+      });
+    } catch (e) {
+      _snack('Error al analizar: $e', UiIntent.danger);
+      if (mounted) setState(() => _sttStatus = '');
+    } finally {
+      if (mounted) setState(() => _guardandoConsulta = false);
+    }
+  }
+
+  Future<void> _confirmarGuardado() async {
+    if (_lastAnalysis == null) {
+      await _analizarConsulta();
+      return;
+    }
+    final text = _chatController.text.trim();
+    final datos = _lastAnalysis!['datos'];
+    Map<String, dynamic> extraidos = {};
+    if (datos is Map<String, dynamic>) {
+      final inner = datos['datosExtraidos'];
+      if (inner is Map<String, dynamic>) {
+        extraidos = inner;
+      } else {
+        extraidos = datos;
+      }
+    }
+    setState(() => _guardandoConsulta = true);
+    try {
+      await _encounterApi.guardar(
+        idPersona: widget.personaId,
+        parent: widget.consultParent,
+        parentId: widget.consultParentId,
+        datosExtraidos: extraidos,
+        textoOriginal: (_lastAnalysis!['texto_original'] ?? text).toString(),
+        textoProcesado: (_lastAnalysis!['texto_procesado'] ?? text).toString(),
+      );
+      if (!mounted) return;
+      _snack('Consulta guardada', UiIntent.success);
+      setState(() {
         _chatController.clear();
-        _chatFocusNode.unfocus();
-      } catch (e) {
-        if (!mounted) return;
-        _snack('Error: $e', UiIntent.danger);
-      } finally {
-        if (mounted) setState(() => _guardandoConsulta = false);
+        _lastAnalysis = null;
+        _lastDictation = null;
+        _sttStatus = '';
+      });
+      _chatFocusNode.unfocus();
+    } catch (e) {
+      _snack('Error al guardar: $e', UiIntent.danger);
+    } finally {
+      if (mounted) setState(() => _guardandoConsulta = false);
+    }
+  }
+
+  Future<void> _enviarConsulta() async {
+    if (_tieneContextoCaptura) {
+      if (_lastAnalysis != null) {
+        await _confirmarGuardado();
+      } else {
+        await _analizarConsulta();
       }
       return;
     }
-
     if (!widget.soloVer) {
       _snack(
-        'Defina contexto de consulta (parent) o usá el flujo web para analizar con IA.',
+        'Defina contexto de consulta (parent) para captura con IA.',
         UiIntent.warning,
       );
-      return;
     }
   }
 
@@ -498,23 +681,65 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Widget _buildChatInputBar(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return AssistantChatComposerBar(
-      controller: _chatController,
-      focusNode: _chatFocusNode,
-      onSend: _enviarConsulta,
-      isSending: _guardandoConsulta,
-      hintText: 'Escribir consulta…',
-      maxLines: 6,
-      leading: [
-        IconButton(
-          icon: const Icon(Icons.mic_none),
-          color: cs.onSurfaceVariant,
-          onPressed: _guardandoConsulta
-              ? null
-              : () => _snack(
-                    'Envío de audios en desarrollo',
-                    UiIntent.info,
+    final canCapture = _tieneContextoCaptura;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_sttStatus.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+              left: BioSpacing.sm,
+              right: BioSpacing.sm,
+              bottom: BioSpacing.xs,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _sttStatus,
+                style: BioTypography.caption.copyWith(color: cs.primary),
+              ),
+            ),
+          ),
+        AssistantChatComposerBar(
+          controller: _chatController,
+          focusNode: _chatFocusNode,
+          onSend: _enviarConsulta,
+          isSending: _guardandoConsulta,
+          hintText: canCapture
+              ? (_lastAnalysis != null
+                  ? 'Confirmar consulta…'
+                  : 'Dictar o escribir y analizar…')
+              : 'Escribir consulta…',
+          maxLines: 6,
+          leading: canCapture
+              ? [
+                  IconButton(
+                    icon: Icon(_dictating ? Icons.stop_circle : Icons.mic_none),
+                    color: _dictating
+                        ? IntentPalette.of(UiIntent.danger).base
+                        : cs.onSurfaceVariant,
+                    onPressed: _guardandoConsulta ? null : _toggleDictation,
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.cloud_upload_outlined),
+                    color: cs.onSurfaceVariant,
+                    onPressed:
+                        _guardandoConsulta ? null : _transcribirEnServidor,
+                    tooltip: 'Transcribir en servidor',
+                  ),
+                ]
+              : [
+                  IconButton(
+                    icon: const Icon(Icons.mic_none),
+                    color: cs.onSurfaceVariant,
+                    onPressed: _guardandoConsulta
+                        ? null
+                        : () => _snack(
+                              'Defina contexto de atención para captura con IA.',
+                              UiIntent.info,
+                            ),
+                  ),
+                ],
         ),
       ],
     );

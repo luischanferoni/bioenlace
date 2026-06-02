@@ -110,6 +110,8 @@ Para bajar el costo con otras palancas (STT bajo demanda, caché de aplicación,
 
 Tarifa unitaria: [Precios de referencia](#precios-de-referencia-mayo-2026) (Groq). **Implementación en código:** `SpeechToTextManager` usa **Hugging Face** (wav2vec2 español por defecto en `params.php`); el coste HF depende del plan o créditos. Groq aplica cuando se externaliza STT.
 
+Las tablas de §2 y §4 asumen **todo el audio se transcribe en servidor** (escenario intensivo). Estrategia de reducción **STT en dispositivo** + fallback servidor por calidad: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md) (no incluida en COGS base hasta telemetría). A escala **5.000+** profesionales, ese enfoque puede reducir el STT facturable en servidor mucho más que negociar centavos por minuto en Groq.
+
 Detalle y alternativas: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md).
 
 | Proveedor | ~USD por min | 400 min por mes | Notas |
@@ -222,7 +224,7 @@ STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llam
 
 ### 4. Captura clínica (encounter)
 
-Cada consulta incluye **dictado en audio** del médico: no hay variante de costo «solo texto» ni «solo IA» — STT e inferencia van **siempre** juntos.
+Cada consulta incluye **dictado en audio** del médico: no hay variante de costo «solo texto» ni «solo IA» — 1 e inferencia van **siempre** juntos.
 
 Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`ConsultaProcesamientoService::analizar`, con **contexto clínico acotado** antes del dictado).
 

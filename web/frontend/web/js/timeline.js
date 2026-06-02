@@ -548,19 +548,10 @@ async function cargarFormularioConsulta() {
 // Función para inicializar eventos del formulario
 function inicializarEventosFormulario() {
     console.log('Formulario cargado, inicializando eventos...');
-    
-    // Verificar si el chat inteligente está disponible y inicializarlo
-    if (window.chatInteligente) {
-        console.log('Chat inteligente ya inicializado');
-    } else {
-        // Si no está disponible, esperar un poco y verificar nuevamente
-        setTimeout(() => {
-            if (window.chatInteligente) {
-                console.log('Chat inteligente inicializado después del timeout');
-            } else {
-                console.warn('Chat inteligente no está disponible');
-            }
-        }, 100);
+
+    var form = document.getElementById('form-consulta-chat');
+    if (form && window.EncounterCaptureForm) {
+        window.encounterCaptureForm = window.EncounterCaptureForm.init(form);
     }
 }
 

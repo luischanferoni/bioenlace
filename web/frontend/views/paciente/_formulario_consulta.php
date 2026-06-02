@@ -45,12 +45,22 @@ use yii\helpers\Html;
             <strong>Formulario de consulta</strong>
         </label>
         <textarea 
-            class="form-control" 
+            class="form-control speech-input" 
             id="chat-input" 
             name="consulta_texto"
+            lang="es-AR"
             rows="4" 
-            placeholder="Escriba aquí los detalles de la consulta. El asistente verificará que tenga todos los datos necesarios: motivos de consulta, evolución, diagnóstico, prácticas, etc."
+            placeholder="Escriba o dicte los detalles de la consulta. El asistente verificará motivos, evolución, diagnóstico, prácticas, etc."
             style="border-width: 2px; resize: vertical;"><?= $motivoPacientePrefill !== '' ? Html::encode($motivoPacientePrefill) : '' ?></textarea>
+        <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="encounter-dictate-btn" title="Dictado por voz">
+                <i class="bi bi-mic"></i> Dictar
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning" id="encounter-stt-server-btn" title="Transcribir audio con servidor">
+                <i class="bi bi-cloud-arrow-up"></i> Transcribir en servidor
+            </button>
+        </div>
+        <div id="encounter-stt-status" class="small mt-1 text-muted" role="status" aria-live="polite"></div>
     </div>
 
     <!-- Boton analysis de consulta -->

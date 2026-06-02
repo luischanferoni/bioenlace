@@ -56,6 +56,7 @@ cd web && vendor/bin/codecept run unit common/tests/unit/costos/AICostTrackerTes
 | Persistencia de métricas (BD, Prometheus) | No implementado; hoy solo memoria del request o resumen en respuesta de prueba |
 | Dashboard por efector | Pendiente |
 | Alertas de umbral | Pendiente (ver § gobernanza en [estrategias-api.md](./estrategias-api.md)) |
+| Métricas STT (minutos servidor, fallback, calidad device vs server) | Pendiente; definición en [stt.md § Monitoreo](./stt.md#monitoreo-pendiente-de-implementación) |
 
 ## Gobernanza
 

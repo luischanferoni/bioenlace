@@ -42,7 +42,8 @@ class AppAsset extends AssetBundle
             // Bridge reutilizable para páginas nativas (tipo 1)
             'native-page-bridge.js',
             'turnos.js',
-            'timeline.js'
+            'timeline.js',
+            'encounter-capture-form.js',
         ];
         
         foreach ($jsFiles as $file) {

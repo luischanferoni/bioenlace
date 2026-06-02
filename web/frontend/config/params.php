@@ -68,6 +68,24 @@ return [
     'optimizar_audio' => true, // Activar optimizaciones de audio (compresión, eliminación de silencios)
     'ffmpeg_path' => 'ffmpeg', // Ruta al ejecutable de FFmpeg
 
+    /**
+     * STT en dispositivo (captura clínica): umbrales de calidad y fallback a servidor.
+     * Ver web/docs/costos/estrategias-reduccion/stt.md
+     */
+    'stt_device' => [
+        'min_confidence' => 0.75,
+        'min_chars' => 3,
+        'min_words_per_minute' => 20,
+        'max_filler_ratio' => 0.7,
+        'max_non_alpha_ratio' => 0.5,
+        'max_client_edit_ratio' => 0.35,
+        'profiles' => [
+            'captura_clinica' => [
+                'min_confidence' => 0.85,
+            ],
+        ],
+    ],
+
     /** Minutos antes del turno en que se cierra el chat de motivos y corre el lote IA (cron turno-notificacion). */
     'motivos_consulta_cierre_minutos' => 2,
     /** Minutos antes del turno en que el médico puede abrir historia clínica (motivos resumidos por IA). */

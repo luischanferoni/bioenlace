@@ -18,7 +18,28 @@ Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v
 
 A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$1.400/mes** (400 min/prof × 5.000 en el COGS de referencia). La API sigue siendo razonable frente a una GPU dedicada, pero **no es el piso**: el mínimo es **no transcribir en servidor** cuando el dispositivo entrega texto usable.
 
-**Fuera de alcance (no son estrategias de este doc):** topes de minutos de audio, transcripción «solo bajo demanda», recortar silencios o duración solo para bajar minutos facturables, ni diferir STT para reducir volumen. El [COGS](../costos-api.md) modela el volumen clínico esperado; el ahorro documentado acá es **STT en dispositivo + fallback por calidad**.
+**Fuera de alcance como palanca de costos en este doc:** **límites de tiempo de grabación en el producto** (p. ej. «máximo 30 s por nota de voz», «cortar el micrófono a 1 min»). No las evaluamos ni las sumamos al COGS. El [COGS](../costos-api.md) modela el volumen clínico esperado sin asumir esos topes.
+
+**Sí documentado acá:** **STT en dispositivo** + fallback en servidor (Groq) por calidad. El preprocesado técnico en servidor (FFmpeg en `SpeechToTextManager`) es optimización de pipeline, no sustituto de límites de UI.
+
+## Facturación Groq (proveedor de referencia en COGS)
+
+Fuente: [groq.com/pricing](https://groq.com/pricing), [Speech to Text – GroqDocs](https://console.groq.com/docs/speech-to-text) (revisar cada 6–12 meses).
+
+| Regla | Detalle | Impacto en Bioenlace |
+|-------|---------|----------------------|
+| Modelo COGS | **Whisper Large v3 Turbo** (`whisper-large-v3-turbo`) | Alineado a [costos-api § Precios](../costos-api.md#precios-de-referencia-mayo-2026) |
+| Tarifa | **USD 0,04 por hora** de audio transcrito (~**USD 0,00067/min**; redondeo doc **~0,0007**) | §2 y §4: 400 min/médico/mes → ~**USD 0,28** |
+| Unidad de cobro | Duración del audio **enviado en cada request** (no tokens) | Un archivo de 45 s factura ~45 s (salvo mínimo) |
+| **Mínimo por request** | **10 s** facturados aunque el clip sea más corto | Varios audios cortos en motivos = **una llamada STT por mensaje** → cada uno cuenta ≥10 s si va a Groq |
+| Tamaño máx. | Hasta **25 MB** por archivo (~30 min de audio según Groq) | Por encima del uso clínico típico (dictados cortos) |
+| Otros modelos ASR | Whisper Large v3: **USD 0,111/h**; Distil-Whisper (inglés): **USD 0,02/h** | No usados en el COGS actual |
+
+**Implicaciones de modelado:**
+
+- **§4 captura (1 dictado ≈ 1 min, 1 request):** coherente con «400 min/médico/mes» si el fallback Groq transcribe ~1 min por encounter.
+- **§2 motivos (varios audios por chat):** el COGS de «1 min por encounter» puede **subestimar** el costo Groq real si cada nota de voz dispara un request aparte y muchas duran &lt;10 s (se facturan como 10 s cada una). Con **STT en dispositivo** al grabar, esas notas no llegan a Groq.
+- **FFmpeg** (silencios, compresión): puede acortar el archivo enviado; Groq cobra por **duración transcrita del audio recibido**, no por «minutos de grabación en UI». No reemplaza el mínimo de 10 s por request.
 
 ## STT en dispositivo (estrategia de reducción)
 

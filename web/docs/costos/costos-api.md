@@ -5,7 +5,7 @@ Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollam
 - **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`).
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
 - **Contexto clínico del paciente:** bloque acotado (`PatientAiContextBuilder`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
-- **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (p. ej. 1 min de audio por encounter en §4); **no** asume topes de minutos ni transcripción diferida como palanca de ahorro.
+- **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (p. ej. 1 min de audio por encounter en §4); **no** asume **límites de tiempo de grabación en UI** como palanca de ahorro.
 
 Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas. Precios unitarios de proveedores: [Precios de referencia](#precios-de-referencia-mayo-2026).
 
@@ -26,7 +26,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 
 | Servicio | Precio (USD) | Uso en este doc | Fuente |
 |----------|--------------|-----------------|--------|
-| **Groq** — Whisper large-v3-turbo | **~$0.0007 por min** ($0.04 por h) | STT (§2 caso B, §4) | [groq.com/pricing](https://groq.com/pricing) |
+| **Groq** — Whisper Large v3 Turbo | **~$0.0007 por min** ($0.04 por h); **mín. 10 s por request** | STT (§2 caso B, §4) | [groq.com/pricing](https://groq.com/pricing), [GroqDocs STT](https://console.groq.com/docs/speech-to-text) |
 | **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | Fotos §5 | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
 | **Together AI** — Llama 3.1 8B | **$0.18 por 1M tokens** (input y output) | Comparativa IA | [Together AI](https://docs.together.ai/docs/serverless-models) |
 
@@ -108,11 +108,24 @@ Para otras palancas (STT en dispositivo, caché de aplicación, context caching,
 
 ## STT
 
-Tarifa unitaria: [Precios de referencia](#precios-de-referencia-mayo-2026) (Groq). **Implementación en código:** `SpeechToTextManager` usa **Hugging Face** (wav2vec2 español por defecto en `params.php`); el coste HF depende del plan o créditos. Groq aplica cuando se externaliza STT.
+Tarifa unitaria: [Precios de referencia](#precios-de-referencia-mayo-2026) (**Groq** `whisper-large-v3-turbo`). **Implementación en código:** `SpeechToTextManager` usa **Hugging Face** por defecto (`hf_stt_model`); Groq aplica en fallback servidor según configuración.
 
-Las tablas de §2 y §4 asumen **todo el audio se transcribe en servidor** (escenario intensivo). Estrategia de reducción **STT en dispositivo** + fallback servidor por calidad: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md) (no incluida en COGS base hasta telemetría). A escala **5.000+** profesionales, ese enfoque puede reducir el STT facturable en servidor mucho más que negociar centavos por minuto en Groq.
+### Reglas Groq ASR (referencia COGS)
 
-Detalle y alternativas: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md).
+| Concepto | Valor |
+|----------|--------|
+| Precio | **USD 0,04 / hora** transcrita |
+| Por minuto (orientativo) | **~USD 0,0007** (0,04 ÷ 60) |
+| **Mínimo facturado** | **10 segundos por request**, aunque el audio sea más corto |
+| Cobro por | Duración del audio en **cada** llamada a la API (no por sesión de grabación en UI) |
+
+Ejemplo: tres notas de voz de 4 s transcritas en **tres** requests Groq → se facturan **30 s** (3 × 10 s mínimo), no 12 s. Detalle e implicaciones §2 vs §4: [estrategias-reduccion/stt.md § Facturación Groq](./estrategias-reduccion/stt.md#facturación-groq-proveedor-de-referencia-en-cogs).
+
+**Palancas de costo:** no se modelan **topes de tiempo de grabación en el producto** (límites al usuario). Sí: [STT en dispositivo](./estrategias-reduccion/stt.md) + fallback Groq por calidad (fuera del COGS base hasta telemetría).
+
+Las tablas de §2 y §4 asumen **~400 min/médico/mes** en servidor (escenario intensivo, 1 min por encounter agregado). Escala **5.000+** profesionales → orden de magnitud **~USD 1.400/mes** solo STT Groq si todo pasara por servidor.
+
+Detalle: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md).
 
 | Proveedor | ~USD por min | 400 min por mes | Notas |
 |-----------|----------|-------------|--------|

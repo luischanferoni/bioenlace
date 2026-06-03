@@ -13,7 +13,7 @@ Resumen de palancas para quedar **por debajo** de [costos-api.md](../costos-api.
 | IA – proveedor / tokens | Comparativa Together en costos-api | 20–50 % | [proveedor-modelo-tokens.md](./proveedor-modelo-tokens.md) |
 | Motivos consulta | ~$0,42/prof (audio) | Variable | [motivos-consulta.md](./motivos-consulta.md) |
 | Conversación paciente / onboarding | ~$0,47 + ~$0,14 (§1–3 costos-api) | 30–60 % | [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) |
-| STT | ~$0,28 (Groq ref., COGS servidor) | Variable con STT en dispositivo + fallback por calidad (no topes de minutos) | [stt.md](./stt.md) |
+| STT | ~$0,28 (Groq ref., COGS servidor) | Variable con STT en dispositivo + fallback por calidad; evolución: modelo fit (base + LoRA provincia + speaker) | [stt.md](./stt.md) |
 | Vision | $0 en ref. | 50–100 % | [vision.md](./vision.md) |
 | Videollamadas | ~$11,52 Twilio | 20–50 % | [videollamadas.md](./videollamadas.md) |
 | Monitoreo | — | — | [monitoreo.md](./monitoreo.md) |

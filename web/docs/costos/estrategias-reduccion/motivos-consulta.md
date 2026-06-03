@@ -5,7 +5,7 @@ Una **sola IA por consulta** al cerrar la ventana (`AppointmentReasonBatchServic
 ## Palancas
 
 - **Idempotencia**: `motivos_ia_processed_at`; no reprocesar salvo `--force` en consola.
-- **STT solo en el lote**, no por mensaje (hoy en servidor) — decisión de arquitectura, no ahorro por limitar minutos.
+- **STT solo en el lote**, no por mensaje (hoy en servidor) — decisión de arquitectura.
 - **STT en dispositivo** al grabar (futuro en motivos): mensaje tipo texto → el lote no invoca STT; ver [stt.md](./stt.md).
 - **Menos pacientes usando el chat** → 0 llamadas de este ítem.
 

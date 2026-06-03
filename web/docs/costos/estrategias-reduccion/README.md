@@ -1,6 +1,6 @@
 # Estrategias de reducción de costo (API e infra)
 
-Palancas para bajar el gasto **por debajo** del costo de referencia en [costos-api.md](../costos-api.md). Esas cifras base incluyen solo lo que modelamos con confianza (p. ej. **context caching de Vertex** en la columna «con caché»). El resto vive acá y **no** se suma automáticamente al COGS de [impuestos-argentina.md](../impuestos-argentina.md) hasta validarlo en producción.
+Palancas para bajar el gasto **por debajo** del costo de referencia en [costos-api.md](../costos-api.md) ([COGS](../costos-api.md#cogs-abreviatura): costo variable directo de APIs por uso). Esas cifras base incluyen solo lo que modelamos con confianza (p. ej. **context caching de Vertex** en la columna «con caché»). El resto vive acá y **no** se suma automáticamente al COGS de [impuestos-argentina.md](../impuestos-argentina.md) hasta validarlo en producción.
 
 ## Índice
 

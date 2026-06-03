@@ -8,6 +8,8 @@ Documentación de **costos estimados** de capacidades de IA (conversación con e
 
 Comparar escenarios **GPU propia** vs **API managed** y registrar estrategias para reducir gasto sin perder capacidades de producto.
 
+**COGS** (*Cost of Goods Sold*): costo variable directo de APIs por uso (IA, STT, videollamada); definición completa en [costos-api.md § COGS](./costos-api.md#cogs-abreviatura).
+
 ## Ejes
 
 | Eje | Pregunta |

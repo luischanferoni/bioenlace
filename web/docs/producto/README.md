@@ -8,6 +8,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 |-----------|------|
 | [apps-paciente-medico.md](./apps-paciente-medico.md) | Experiencia paciente y médico, registro, medios |
 | [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |
+| [catalogo-usos-ia.md](./catalogo-usos-ia.md) | Catálogo de contextos y usos de IA (referencia rápida) |
 | [asistente-y-chat.md](./asistente-y-chat.md) | Conversación y acciones en lenguaje natural |
 | [captura-clinica.md](./captura-clinica.md) | Audio/texto, corrección, resumen con IA |
 | [laboratorio.md](./laboratorio.md) | Resultados externos, ingestas, consulta paciente |

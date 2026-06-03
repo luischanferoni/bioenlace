@@ -8,19 +8,13 @@ Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v
 
 | Orden | Proveedor | Cuándo | Coste orientativo |
 |-------|-----------|--------|-------------------|
-| 0 | **Dispositivo** (SO / Web Speech / futuro on-device) | Camino feliz; ver § STT en dispositivo | **$0** minutos facturables en Bioenlace |
+| 0 | **Dispositivo** (SO / Web Speech / [modelo fit on-device](./stt.md#modelo-fit-on-device-base-clínica-nacional--lora-provincia--lora-speaker)) | Camino feliz; ver § STT en dispositivo | **$0** minutos facturables en Bioenlace |
 | 1 | Hugging Face | Fallback servidor; volumen bajo–medio | Plan HF |
 | 2 | Groq Whisper | Fallback batch, &lt; 25 MB/archivo | ~$0,0007/min |
-| 3 | Together / Fireworks | Si Groq limita | ~$0,001/min |
-| 4 | Deepgram | Streaming / Nova-3 | ~$0,004/min batch |
-| 5 | AssemblyAI | Streaming, extras | ~$0,002/min Slim |
-| 6 | Whisper GPU propia | Alto volumen solo servidor | [infra-costos.md](../infra-costos.md) |
 
-A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$1.400/mes** (400 min/prof × 5.000 en el COGS de referencia). La API sigue siendo razonable frente a una GPU dedicada, pero **no es el piso**: el mínimo es **no transcribir en servidor** cuando el dispositivo entrega texto usable.
+A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$1.400/mes** (400 min/prof × 5.000 en el COGS de referencia). El piso de costo es **no transcribir en servidor** cuando el dispositivo entrega texto usable (§ STT en dispositivo).
 
-**Fuera de alcance como palanca de costos en este doc:** **límites de tiempo de grabación en el producto** (p. ej. «máximo 30 s por nota de voz», «cortar el micrófono a 1 min»). No las evaluamos ni las sumamos al COGS. El [COGS](../costos-api.md) modela el volumen clínico esperado sin asumir esos topes.
-
-**Sí documentado acá:** **STT en dispositivo** + fallback en servidor (Groq) por calidad. El preprocesado técnico en servidor (FFmpeg en `SpeechToTextManager`) es optimización de pipeline, no sustituto de límites de UI.
+Estrategia documentada: **STT en dispositivo** + fallback en servidor (Groq) por calidad. El preprocesado técnico en servidor (FFmpeg en `SpeechToTextManager`) es optimización de pipeline.
 
 ## Facturación Groq (proveedor de referencia en COGS)
 
@@ -37,9 +31,14 @@ Fuente: [groq.com/pricing](https://groq.com/pricing), [Speech to Text – GroqDo
 
 **Implicaciones de modelado:**
 
-- **§4 captura (1 dictado ≈ 1 min, 1 request):** coherente con «400 min/médico/mes» si el fallback Groq transcribe ~1 min por encounter.
-- **§2 motivos (varios audios por chat):** el COGS de «1 min por encounter» puede **subestimar** el costo Groq real si cada nota de voz dispara un request aparte y muchas duran &lt;10 s (se facturan como 10 s cada una). Con **STT en dispositivo** al grabar, esas notas no llegan a Groq.
-- **FFmpeg** (silencios, compresión): puede acortar el archivo enviado; Groq cobra por **duración transcrita del audio recibido**, no por «minutos de grabación en UI». No reemplaza el mínimo de 10 s por request.
+El [COGS](../costos-api.md#cogs-abreviatura) supone **400 consultas/médico/mes** y, cuando el audio va a Groq, **~1 minuto de STT por consulta** (400 min/mes → ~USD 0,28). Eso encaja distinto según el flujo (misma tabla en [costos-api § STT](../costos-api.md#supuesto-del-cogs-por-flujo)):
+
+| Flujo | Qué pasa en producto | ¿Cuadra con «1 min/consulta»? |
+|-------|----------------------|-------------------------------|
+| **§4 Captura clínica** | El médico dicta **una vez** por consulta; si falla el STT local, **un** audio va a Groq (~1 min). | **Sí.** 400 consultas ≈ 400 requests ≈ ~400 min facturables. |
+| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz en el chat; hoy cada una puede ir a Groq en **un request aparte** (mínimo **10 s** por request aunque el audio dure 3 s). | **Puede quedar corto.** Ejemplo: 3 audios de 4 s → Groq factura **30 s** (3 × 10 s), no 12 s; y si hay muchas notas por chat, el total supera fácil el minuto modelado. **STT en dispositivo** al grabar evita esas llamadas: el mensaje llega como texto y el lote no transcribe en servidor. |
+
+- **FFmpeg** (silencios, compresión): puede acortar el archivo enviado; Groq cobra por **duración transcrita del audio recibido**. No reemplaza el mínimo de 10 s por request.
 
 ## STT en dispositivo (estrategia de reducción)
 
@@ -63,6 +62,89 @@ El micrófono produce **texto en el cliente**; el backend recibe `texto` (y meta
 ### Escenario de costo (no en COGS base hasta validar)
 
 Si **≥80 %** de los minutos de §2 y §4 llegan ya como texto desde dispositivo, el STT servidor del escenario intensivo (**~$0,28/prof/mes** en [costos-api](../costos-api.md)) puede bajar a **~20 %** de ese valor (solo fallbacks y audios sin transcripción). Calibrar con telemetría (§ Monitoreo).
+
+La implementación actual usa motores del **SO / Web Speech** (ver § Implementación). La evolución prevista para maximizar calidad y minimizar fallback Groq es un **modelo fit on-device** entrenado para Bioenlace (§ siguiente).
+
+---
+
+## Modelo fit on-device (base clínica nacional + LoRA provincia + LoRA speaker)
+
+**Estado:** estrategia de producto / ML — **no implementada**; **fuera del COGS** hasta piloto y telemetría. Complementa (no reemplaza) Groq como red de seguridad.
+
+### Objetivo
+
+Que cada profesional transcriba en el **dispositivo** con un motor **ajustado a clínica argentina, tonada regional y su voz**, de modo que la mayoría de dictados §4 (y futuro §2) **no requieran** `SpeechToTextManager` / Groq. Groq sigue disponible con **español neutro** cuando el texto local no pasa calidad o el usuario pide «Transcribir de nuevo».
+
+### Principio de producto
+
+| Regla | Detalle |
+|-------|---------|
+| **Un solo artefacto por profesional** | Descarga **únicamente** el pack que le corresponde (`fit_<prof>` o provincial equivalente). **Nunca** varios modelos en paralelo ni packs con regiones ajenas. |
+| **No es feature premium** | Transcripción rápida y exacta es el comportamiento por defecto esperado por el médico. |
+| **Curación de datos** | Corpus clínico curado + servicio continuo de re-entrenamiento cuando el volumen y el ahorro lo justifiquen. |
+
+### Arquitectura en capas
+
+```mermaid
+flowchart LR
+  B[Base clínica nacional\nWhisper / distilled cuantizado] --> P[+ LoRA provincia / tonada]
+  P --> S[+ LoRA speaker\nenrollment]
+  S --> F[Pack fit único\nempaquetado para descarga]
+  F --> D[Dispositivo]
+  D -->|calidad insuficiente| G[Groq español neutro]
+```
+
+| Capa | Qué aporta | Datos típicos |
+|------|------------|---------------|
+| **Base clínica nacional** | Vocabulario médico, siglas, plantillas de consulta, español argentino general | Corpus curado multi-provincia |
+| **LoRA provincia / tonada** | Acento, seseo/yeísmo, ritmo, nombres propios regionales | Dictados de la jurisdicción o cluster lingüístico |
+| **LoRA speaker** | Errores sistemáticos de **ese** médico (velocidad, micrófono, términos propios) | Muestra de voz en onboarding + opt-in de audios productivos |
+
+El **empaquetado** fusiona base + adaptadores en **un blob** listo para el cliente (o base compartida en app + patch speaker; en ambos casos el usuario vive **una** actualización de dictado, no un catálogo de regiones).
+
+**LoRA vs fine-tuning completo:** para provincia, calidad similar si hay datos suficientes; el full fine-tune puede rascar algo más en acento fuerte. Para **hablante**, LoRA/enrollment suele ser más eficiente con pocos minutos de audio. En **MB al dispositivo**, la diferencia es pequeña si el entregable es un **monolito cuantizado** (~150–320 MB); LoRA aporta ~5–30 MB antes de fusionar.
+
+### Asignación de tonada (secundaria)
+
+La provincia del efector puede ser **prior** para elegir el LoRA provincial, pero la **detección de tonada es secundaria**: muestra de voz en onboarding (y señales posteriores) confirman o corrigen el `pack_id` antes de la descarga. Objetivo: un solo download correcto, no heurística solo administrativa.
+
+Escala **24 provincias** (o clusters tonales) es viable en **catálogo servidor/CDN**; no multiplica almacenamiento en el teléfono del médico.
+
+### Tamaño: dispositivo vs catálogo
+
+| Inventario | Quién paga | Orden de magnitud |
+|------------|------------|-------------------|
+| **Dispositivo del profesional** | Usuario (una descarga activa) | **~80–350 MB** según arquitectura y cuantización (independiente de «global» vs «provincial» vs «fit personal» empaquetado) |
+| **Catálogo en servidor** | Bioenlace | N variantes provinciales + builds `fit_<prof>`; costo de almacenamiento, CI de entrenamiento y versionado — **no** × N en el móvil |
+
+### Calidad esperada por capa (orientativo, sin cifras Bioenlace hasta piloto)
+
+| Escalera | Tipo de mejora | Nota |
+|----------|---------------|------|
+| Base clínica nacional vs Whisper genérico / Web Speech | **Grande** en términos médicos | Suele ser el salto más visible |
+| + LoRA provincia | **Moderada** si el acento era problema; **pequeña** si el hablante ya es «estándar» y el base vio mucho de esa región | Depende del acento real, no solo del DNI provincial |
+| + LoRA speaker | **Moderada a grande** para **ese** profesional | Segunda mejora más frecuente tras la base bien entrenada |
+
+Las mejoras se miden en producto con **`stt_fallback_rate`**, **tasa de edición manual** y muestreo device vs Groq — no solo WER en laboratorio.
+
+### Operación y mantenimiento
+
+- **Groq:** sin mantenimiento de modelo; siempre fallback neutro.
+- **Global clínico único:** mínimo pipelines (1 eval por ciclo).
+- **Provincial + speaker:** ~N pipelines provinciales + generación de fits personales; automatizable; datos **desbalanceados** entre jurisdicciones al inicio — lanzar provincias cuando el volumen curado lo permita (en un despliegue regional acotado, provincial encaja desde el día 1).
+
+Objetivo operativo alineado a § Monitoreo: **`stt_fallback_rate` &lt; 5–15 %** en §4 con modelo fit maduro (vs 15–25 % con solo Web Speech / nativo).
+
+### Encaje técnico (cuando se implemente)
+
+| Capa | Responsabilidad |
+|------|-----------------|
+| **Metadata / params** | `stt_device_pack_id`, umbrales de calidad, URL de descarga, versión del pack — sin `if` por pantalla |
+| **API** | Endpoint de asignación/descarga del pack; telemetría `stt_provenance`, `stt_engine` (p. ej. `bioenlace_whisper_fit`) |
+| **Cliente Flutter / web** | Runtime on-device (Whisper.cpp / equivalente), enrollment de voz, misma política de fallback que § Calidad |
+| **Servicio ML** | Entrenamiento LoRA, fusión, publicación a CDN; **no** en orquestadores PHP |
+
+La política de § [Cuándo usar la API de STT en servidor](#cuándo-usar-la-api-de-stt-en-servidor) **no cambia**: Groq entra cuando el texto local falla calidad o el usuario lo pide.
 
 ---
 
@@ -190,7 +272,8 @@ Extender [monitoreo.md](./monitoreo.md) con métricas STT (memoria, log `stt-cos
 | `stt_minutes_server` | Minutos facturables reales |
 | `stt_fallback_rate` | % que pasó por servidor |
 | `stt_by_provenance` | device vs server |
-| `stt_by_engine` | web_speech / android / ios |
+| `stt_by_engine` | web_speech / android / ios / `bioenlace_whisper_fit` |
+| `stt_pack_id` / `stt_pack_version` | Pack fit descargado (provincia + speaker); útil con modelo on-device |
 | `stt_heuristic_reject_count` | Cuántas veces el cliente pidió fallback |
 | `stt_sample_wer_proxy` | En muestreo, distancia texto device vs servidor |
 

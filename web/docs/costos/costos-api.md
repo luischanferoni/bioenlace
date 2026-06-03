@@ -2,10 +2,24 @@
 
 Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollamadas), alineados con **Bioenlace en producción**:
 
+## COGS (abreviatura)
+
+**COGS** = *Cost of Goods Sold* (costo de bienes vendidos). En esta documentación: **costo variable directo** de prestar el servicio — lo que Bioenlace paga a terceros **por uso** (tokens Gemini, minutos Groq, minutos Twilio, etc.) atribuible a cada profesional/mes.
+
+| Incluye | No incluye |
+|---------|------------|
+| APIs de IA, STT, Vision, videollamada según supuestos §1–§6 | Precio de licencia al cliente, soporte, ventas, marketing |
+| Escenario **intensivo** modelado (p. ej. 400 consultas/médico/mes) | Infra fija (servidores, salarios) — ver [infra-costos.md](./infra-costos.md) |
+| Columna **«sin context caching»** = **COGS base** (conservador, costo esperado) | Palancas de [estrategias-reduccion/](./estrategias-reduccion/README.md) hasta validarlas en producción |
+| Columna **«con context caching»** = escenario **favorable**, no presupuesto garantizado | Impuestos — ver [impuestos-argentina.md](./impuestos-argentina.md) |
+
+Cuando un doc dice «fuera del COGS» o «no en COGS base», significa que **aún no sumamos esa cifra** a las tablas fiscales hasta tener telemetría o piloto.
+
+---
 - **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`).
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
 - **Contexto clínico del paciente:** bloque acotado (`PatientAiContextBuilder`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
-- **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (p. ej. 1 min de audio por encounter en §4); **no** asume **límites de tiempo de grabación en UI** como palanca de ahorro.
+- **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (p. ej. 1 min de audio por encounter en §4).
 
 Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas. Precios unitarios de proveedores: [Precios de referencia](#precios-de-referencia-mayo-2026).
 
@@ -14,9 +28,9 @@ Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, e
 Por médico por mes, en orden del recorrido del paciente (detalle y costes en §1–6). Escala común **400 encounters por mes** (20 por día x 20 días) donde aplica §1, §2, §4, §5 y §6 — [infra-costos.md](./infra-costos.md).
 
 - **§1 Conversación con el paciente:** 5 mensajes por encounter (~2.660 llamadas Vertex por mes)
-- **§2 Motivos de consulta:** 1 llamada a la IA por encounter; con audio: 1 transcripción por encounter + 1 llamada a la IA por encounter
+- **§2 Motivos de consulta:** 1 llamada a la IA por encounter; caso B (audio): COGS modela **~1 min de STT Groq por encounter** (400 min/mes) — ver [§ STT](#stt) si hay varios audios por chat.
 - **§3 Onboarding y día a día:** 400 llamadas a la IA por mes
-- **§4 Captura clínica (encounter):** **siempre** audio dictado por consulta — 400 min STT (1 min por encounter) + 400 llamadas a la IA (transcripción → análisis). Sin variante solo texto en el modelo de costos.
+- **§4 Captura clínica (encounter):** **siempre** audio dictado por consulta — 400 min STT (1 dictado ≈ 1 min por encounter) + 400 llamadas a la IA (transcripción → análisis). Sin variante solo texto en el modelo de costos.
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
 - **§6 Videollamada:** 30 % de encounters; 12 min; 2 participantes
 
@@ -117,21 +131,24 @@ Tarifa unitaria: [Precios de referencia](#precios-de-referencia-mayo-2026) (**Gr
 | Precio | **USD 0,04 / hora** transcrita |
 | Por minuto (orientativo) | **~USD 0,0007** (0,04 ÷ 60) |
 | **Mínimo facturado** | **10 segundos por request**, aunque el audio sea más corto |
-| Cobro por | Duración del audio en **cada** llamada a la API (no por sesión de grabación en UI) |
+| Cobro por | Duración del audio en **cada** llamada a la API |
 
-Ejemplo: tres notas de voz de 4 s transcritas en **tres** requests Groq → se facturan **30 s** (3 × 10 s mínimo), no 12 s. Detalle e implicaciones §2 vs §4: [estrategias-reduccion/stt.md § Facturación Groq](./estrategias-reduccion/stt.md#facturación-groq-proveedor-de-referencia-en-cogs).
+Ejemplo del mínimo por request: tres notas de voz de 4 s transcritas en **tres** llamadas Groq → se facturan **30 s** (3 × 10 s), no 12 s.
 
-**Palancas de costo:** no se modelan **topes de tiempo de grabación en el producto** (límites al usuario). Sí: [STT en dispositivo](./estrategias-reduccion/stt.md) + fallback Groq por calidad (fuera del COGS base hasta telemetría).
+### Supuesto del COGS por flujo
 
-Las tablas de §2 y §4 asumen **~400 min/médico/mes** en servidor (escenario intensivo, 1 min por encounter agregado). Escala **5.000+** profesionales → orden de magnitud **~USD 1.400/mes** solo STT Groq si todo pasara por servidor.
+Las tablas §2 (caso B) y §4 asumen **400 consultas/médico/mes** y, cuando el audio va a Groq, **~1 minuto de STT por consulta** (400 min/mes → ~**USD 0,28** por médico). Eso encaja distinto según el flujo:
 
-Detalle: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md).
+| Flujo | Qué pasa en producto | ¿Cuadra con «1 min/consulta»? |
+|-------|----------------------|-------------------------------|
+| **§4 Captura clínica** | El médico dicta **una vez** por consulta; si falla el STT local, **un** audio va a Groq (~1 min). | **Sí.** 400 consultas ≈ 400 requests ≈ ~400 min facturables. |
+| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz en el chat; hoy cada una puede ir a Groq en **un request aparte** (mínimo **10 s** por request aunque el audio dure 3 s). | **Puede quedar corto.** Ejemplo: 3 audios de 4 s → Groq factura **30 s** (3 × 10 s), no 12 s; y si hay muchas notas por chat, el total supera fácil el minuto modelado. **STT en dispositivo** al grabar evita esas llamadas: el mensaje llega como texto y el lote no transcribe en servidor. |
 
-| Proveedor | ~USD por min | 400 min por mes | Notas |
-|-----------|----------|-------------|--------|
-| Together · Fireworks Whisper | ~0,001 | ~0,40 | Similar a Groq |
-| AssemblyAI Slim | ~0,002 | ~0,80 | Solo transcripción |
-| Deepgram Nova-3 batch | ~0,004 | ~1,60 | Streaming aparte; créditos de prueba |
+Escala **5.000+** profesionales con todo el STT en servidor → orden de magnitud **~USD 1.400/mes** solo Groq (400 min/prof × 5.000).
+
+**Palancas de costo:** [STT en dispositivo](./estrategias-reduccion/stt.md) + fallback Groq por calidad (fuera del COGS base hasta telemetría). Evolución prevista: [modelo fit on-device](./estrategias-reduccion/stt.md#modelo-fit-on-device-base-clínica-nacional--lora-provincia--lora-speaker) (base clínica + LoRA provincia + LoRA speaker).
+
+Detalle de estrategia, calidad y fallback: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md).
 
 ---
 
@@ -217,12 +234,12 @@ Prompt con contexto clínico (~**1.350 input + 400 output** por lote; sin transc
 
 #### Caso B — con audio en el hilo
 
-STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.).
+STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.). El COGS modela **~1 min de STT Groq por encounter** (fila siguiente); si cada nota de voz va a Groq por separado, el costo real puede ser **mayor** — ver [§ STT](#stt).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | IA (resumen lote) | 400 x tarifa IA | **~$0.15** | **~$0.13** | **~$0.12** |
-| STT (Groq, 1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
+| STT (Groq, ~1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
 | **Total caso B** | | **~$0.43** | **~$0.41** | **~$0.40** |
 
 ---
@@ -239,11 +256,11 @@ STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llam
 
 Cada consulta incluye **dictado en audio** del médico: no hay variante de costo «solo texto» ni «solo IA» — 1 e inferencia van **siempre** juntos.
 
-Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`ConsultaProcesamientoService::analizar`, con **contexto clínico acotado** antes del dictado).
+Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`ConsultaProcesamientoService::analizar`, con **contexto clínico acotado** antes del dictado). Supuesto STT: **un dictado (~1 min) por consulta** si va a Groq — alineado con [§ STT](#stt).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
-| STT (Groq, 1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
+| STT (Groq, ~1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
 | IA (análisis) | 400 x tarifa IA (~1.350 in + 500 out ref.) | **~$0.15** | **~$0.13** | **~$0.12** |
 | **Total §4 (IA + STT)** | | **~$0.43** | **~$0.41** | **~$0.40** |
 

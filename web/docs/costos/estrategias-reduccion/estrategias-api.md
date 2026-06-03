@@ -10,7 +10,7 @@ Resumen de palancas para quedar **por debajo** de [costos-api.md](../costos-api.
 | IA – context caching explícito | No en COGS base | Variable; requiere implementación | [context-caching-explicita.md](./context-caching-explicita.md) |
 | IA – caché aplicación | No en COGS base | 40–60 % si hay repeats | [cache-aplicacion.md](./cache-aplicacion.md) |
 | IA – uso condicional | No en COGS base | 30–50 % | [uso-condicional-ia.md](./uso-condicional-ia.md) |
-| IA – proveedor / tokens | Comparativa Together en costos-api | 20–50 % | [proveedor-modelo-tokens.md](./proveedor-modelo-tokens.md) |
+| IA – proveedor / tokens | Comparativa Together en costos-api; **modelo por contexto** (subir solo `motivos-consulta-insights`) | 20–50 % / variable | [proveedor-modelo-tokens.md](./proveedor-modelo-tokens.md) |
 | Motivos consulta | ~$0,42/prof (audio) | Variable | [motivos-consulta.md](./motivos-consulta.md) |
 | Conversación paciente / onboarding | ~$0,47 + ~$0,14 (§1–3 costos-api) | 30–60 % | [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) |
 | STT | ~$0,28 (Groq ref., COGS servidor) | Variable con STT en dispositivo + fallback por calidad; evolución: modelo fit (base + LoRA provincia + speaker) | [stt.md](./stt.md) |
@@ -25,3 +25,5 @@ Si la IA corre en GPU propia: [infra-estrategias.md](../infra-estrategias.md) (m
 ## Parámetros
 
 `web/frontend/config/params.php` — proveedor, modelo (`vertex_ai_model`), cachés, `ia_usage_tracking_habilitado`.
+
+Índice de contextos IA: [producto/catalogo-usos-ia.md](../../producto/catalogo-usos-ia.md).

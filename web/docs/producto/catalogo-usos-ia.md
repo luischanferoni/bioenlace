@@ -133,3 +133,4 @@ Matriz ahorro / caché: [matriz-casos-uso.md](../costos/estrategias-reduccion/ma
 - [asistente-y-chat.md](./asistente-y-chat.md) — conversación
 - [captura-clinica.md](./captura-clinica.md) — dictado médico
 - [costos-api.md § COGS](../costos/costos-api.md#cogs-abreviatura) — definición de costo variable
+- Palancas por contexto (modelo, caché, STT): [proveedor-modelo-tokens.md](../costos/estrategias-reduccion/proveedor-modelo-tokens.md) y [estrategias-reduccion/README.md](../costos/estrategias-reduccion/README.md)

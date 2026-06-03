@@ -1,6 +1,6 @@
 # Conversación con el paciente y onboarding
 
-Costes de referencia en [costos-api.md](../costos-api.md) (§1 conversación, §3 onboarding).
+Costes de referencia en [costos-api.md](../costos-api.md) (§1 conversación, §3 onboarding). Contextos: [catálogo de IA](../../producto/catalogo-usos-ia.md) (`asistente-preprocess`, `asistente-conversational`, `intent-engine-classification`; onboarding reutiliza el asistente).
 
 ## Conversación con el paciente (chat asistente)
 

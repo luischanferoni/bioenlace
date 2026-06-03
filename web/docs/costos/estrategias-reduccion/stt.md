@@ -1,5 +1,7 @@
 # STT (transcripción de audio)
 
+No usa `IAManager`; en el [catálogo de IA](../../producto/catalogo-usos-ia.md) figura como capacidad aparte (captura §4, motivos §2, `audio/transcribir`).
+
 Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ **~$0,28/médico/mes** (400 min intensivas). El código usa **Hugging Face** por defecto (`SpeechToTextManager`, `hf_stt_model`); Groq aplica cuando se externaliza STT.
 
 Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v1/audio/transcribir`, lote de motivos en `AppointmentReasonBatchService`). En web existe dictado parcial vía `frontend/web/js/speech-input.js` (`webkitSpeechRecognition`), aún no unificado con captura clínica ni motivos móviles.

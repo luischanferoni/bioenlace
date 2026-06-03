@@ -1,12 +1,12 @@
 # Uso condicional de IA
 
-Reglas, diccionarios y flujos guiados **antes** de llamar al modelo.
+Reglas, diccionarios y flujos guiados **antes** de llamar al modelo. Contextos: [catálogo de IA](../../producto/catalogo-usos-ia.md).
 
 ## Dónde está hoy
 
-- **Captura clínica (médico):** SymSpell + abreviaturas en CPU (`ProcesadorTextoMedico`), luego IA de análisis. SymSpell **no cubre bien** jerga clínica compleja; el ahorro fuerte ahí no es confiar en SymSpell sino en cuándo llamar a `analizar`.
-- **Asistente chat:** preprocess con IA (`normalized_text`, goal); canal operativo con **top-K + reglas PHP** sobre `normalized_text` (**sin** 2.ª IA en el escenario central). Ver [matriz-casos-uso.md](./matriz-casos-uso.md).
-- **Onboarding / intents:** priorizar reglas + corpus de frases/keywords (consultas reales como fuente de sinónimos), no SymSpell de consulta completa.
+- **`analisis-consulta` (captura clínica):** SymSpell + abreviaturas en CPU (`ProcesadorTextoMedico`), luego IA de análisis. SymSpell **no cubre bien** jerga clínica compleja; el ahorro fuerte ahí no es confiar en SymSpell sino en cuándo llamar a `analizar`.
+- **Asistente chat (`asistente-preprocess`, `asistente-conversational`):** preprocess con IA; canal operativo con **top-K + reglas PHP** sobre `normalized_text` (**sin** 2.ª IA en el escenario central). Ver [matriz-casos-uso.md](./matriz-casos-uso.md).
+- **Onboarding / `intent-engine-classification`:** priorizar reglas + corpus de frases/keywords (consultas reales como fuente de sinónimos), no SymSpell de consulta completa.
 
 ## Reducción orientativa
 

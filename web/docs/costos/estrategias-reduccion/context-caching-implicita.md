@@ -1,5 +1,7 @@
 # Context caching implícito (Vertex / Gemini)
 
+Contextos: [catálogo de IA](../../producto/catalogo-usos-ia.md).
+
 ## Qué es
 
 Mecanismo del **servicio de IA de Google** (Vertex / Gemini): detecta **prefijos de entrada repetidos** entre solicitudes recientes y factura esa porción a **tarifa reducida** (`cachedContentTokenCount` en `usageMetadata`).
@@ -26,7 +28,9 @@ Ver [matriz-casos-uso.md](./matriz-casos-uso.md). Resumen conservador:
 | `asistente-preprocess` | ~**40 %** |
 | `asistente-conversational` | ~**40 %** (prefijo fijo; bloque clínico semi-estable por paciente; historial acotado variable) |
 | `motivos-consulta-batch` | ~**25 %** (+ contexto clínico variable) |
+| `motivos-consulta-insights` | ~**25 %** (1×/consulta; poco peso en COGS total) |
 | `analisis-consulta` | ~**25 %** (+ contexto clínico variable) |
+| `intent-engine-classification` | Bajo volumen; ~**25 %** si aplica |
 
 No usar ratios altos (p. ej. 80 %) sin telemetría. Calibrar con `ratio_input_en_cache` por `contexto`.
 

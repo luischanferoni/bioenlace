@@ -1,5 +1,7 @@
 # Caché de aplicación (Yii)
 
+Contextos medibles en [catálogo de IA](../../producto/catalogo-usos-ia.md) (`AICostTracker::por_contexto`).
+
 ## Qué hace
 
 Evita **llamadas enteras** al proveedor si el mismo `prompt + contexto + tipoModelo` ya se resolvió dentro del TTL (`ia_cache_ttl`, `correccion_cache_ttl`, etc. en `params.php`). Clave: `ia_response_` + `md5(...)`.

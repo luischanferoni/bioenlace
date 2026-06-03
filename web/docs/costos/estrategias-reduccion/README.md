@@ -12,7 +12,7 @@ Palancas para bajar el gasto **por debajo** del costo de referencia en [costos-a
 | [context-caching-explicita.md](./context-caching-explicita.md) | Context caching explícito (API `cachedContent`) |
 | [cache-aplicacion.md](./cache-aplicacion.md) | Caché Yii por hash (evita llamadas) |
 | [uso-condicional-ia.md](./uso-condicional-ia.md) | Reglas / CPU antes de IA |
-| [proveedor-modelo-tokens.md](./proveedor-modelo-tokens.md) | Proveedor, modelo, límites de tokens |
+| [proveedor-modelo-tokens.md](./proveedor-modelo-tokens.md) | Proveedor, modelo por contexto (subir `motivos-consulta-insights`), tokens |
 | [motivos-consulta.md](./motivos-consulta.md) | Lote pre-atención |
 | [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) | Conversación con el paciente (`user_goal`) y onboarding |
 | [stt.md](./stt.md) | Transcripción de audio |

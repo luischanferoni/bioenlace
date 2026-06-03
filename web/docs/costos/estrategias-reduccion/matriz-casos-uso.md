@@ -1,6 +1,6 @@
 # Matriz de casos de uso × estrategias de ahorro
 
-Documento alineado con **cómo está el código hoy** y con el diseño que describe el producto. Para COGS base usar la columna **sin context caching** de [costos-api.md](../costos-api.md); la columna **con caché** es escenario favorable.
+Documento alineado con **cómo está el código hoy** y con el diseño que describe el producto. Identificadores `IAManager`: [catálogo de IA](../../producto/catalogo-usos-ia.md). Para COGS base usar la columna **sin context caching** de [costos-api.md](../costos-api.md); la columna **con caché** es escenario favorable.
 
 ## Implícito vs explícito (Vertex / Gemini)
 
@@ -128,11 +128,11 @@ Prompt: categorías del servicio + **contexto clínico acotado** + texto de cons
 
 ## Resumen ejecutivo
 
-| Caso | Palanca principal hoy | Context caching (COGS) |
-|------|------------------------|-------------------------|
-| 1 Chat paciente | Preprocess + 2.ª IA conversacional con **historial acotado** | ~**40 %** preprocess · ~**40 %** conversacional — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
-| 2 Motivos | 1 llamada + idempotencia | ~**25 %** favorable |
-| 3 Médico | SymSpell + 1 analizar | ~**25 %** favorable |
-| 4 Onboarding | Reglas / FAQ | No priorizar |
+| Caso | Contextos (`IAManager`) | Palanca principal hoy | Context caching (COGS) |
+|------|-------------------------|------------------------|-------------------------|
+| 1 Chat paciente | `asistente-preprocess`, `asistente-conversational` | Preprocess + 2.ª IA conversacional con **historial acotado** | ~**40 %** preprocess · ~**40 %** conversacional — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
+| 2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights` (+ STT) | 1 lote + idempotencia; **subir modelo** solo en insights — [proveedor-modelo-tokens](./proveedor-modelo-tokens.md) | ~**25 %** favorable |
+| 3 Médico | `analisis-consulta` (+ STT) | SymSpell + 1 analizar | ~**25 %** favorable |
+| 4 Onboarding | mismo asistente | Reglas / FAQ | No priorizar |
 
 **Calibración:** `ia_usage_tracking_habilitado`, `vertex_context_cache_simulado` y `por_contexto` en `AICostTracker` — ver [monitoreo.md](./monitoreo.md).

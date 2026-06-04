@@ -619,34 +619,38 @@ final class SubIntentEngine
         $actionId = (string) ($openUiDef['action_id'] ?? '');
         $open = self::resolveClientOpen($actionId, $userId);
 
-        // Parametrización declarativa: mapear draft -> query params del open_ui.
-        // YAML: open_ui.params: { campo: "draft.campo" }
+        // Parametrización declarativa: query del mini-UI desde open_ui.params.
+        // YAML: { query_key: "draft.campo" } o literal { step: raiz }.
         $paramsMap = isset($openUiDef['params']) && is_array($openUiDef['params']) ? $openUiDef['params'] : null;
         if ($paramsMap && isset($open['client_open']) && is_array($open['client_open'])) {
             $co = $open['client_open'];
             if (isset($co['api']) && is_array($co['api'])) {
                 $draft = isset($openUiDef['__draft']) && is_array($openUiDef['__draft']) ? $openUiDef['__draft'] : [];
-                $query = [];
+                $api = $co['api'];
+                $query = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
                 foreach ($paramsMap as $k => $v) {
                     $key = is_string($k) ? trim($k) : '';
                     if ($key === '') {
                         continue;
                     }
                     $vv = is_string($v) ? trim($v) : '';
-                    if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+                    if ($vv === '') {
                         continue;
                     }
-                    $field = substr($vv, 6);
-                    if ($field === '') {
-                        continue;
+                    if (strncmp($vv, 'draft.', 6) === 0) {
+                        $field = substr($vv, 6);
+                        if ($field === '') {
+                            continue;
+                        }
+                        if (!isset($draft[$field]) || $draft[$field] === null || $draft[$field] === '') {
+                            continue;
+                        }
+                        $query[$key] = (string) $draft[$field];
+                    } elseif (strncmp($vv, 'client.', 7) !== 0) {
+                        $query[$key] = $vv;
                     }
-                    if (!isset($draft[$field]) || $draft[$field] === null || $draft[$field] === '') {
-                        continue;
-                    }
-                    $query[$key] = (string) $draft[$field];
                 }
                 if ($query !== []) {
-                    $api = $co['api'];
                     $api['query'] = $query;
                     $co['api'] = $api;
                     $open['client_open'] = $co;

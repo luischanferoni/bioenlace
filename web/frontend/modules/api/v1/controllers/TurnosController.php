@@ -131,7 +131,10 @@ class TurnosController extends BaseController
         $params = array_merge($req->get(), $req->post());
         $step = isset($params['step']) ? trim((string) $params['step']) : '';
         if ($step === '') {
-            throw new BadRequestHttpException('step es obligatorio');
+            throw new BadRequestHttpException(
+                'step es obligatorio (raiz, alarmas, zona, detalle, evolucion). '
+                . 'En flujos del asistente debe venir en query desde open_ui.params del subintent.'
+            );
         }
 
         $catalog = new ReservaTurnoTriageCatalogService();

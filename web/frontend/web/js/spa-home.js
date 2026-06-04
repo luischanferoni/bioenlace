@@ -63,6 +63,8 @@
                     if (dv != null && String(dv) !== '') {
                         u.searchParams.set(k, String(dv));
                     }
+                } else if (spec.indexOf('client.') !== 0 && spec !== '') {
+                    u.searchParams.set(k, spec);
                 }
             });
             return u.toString();

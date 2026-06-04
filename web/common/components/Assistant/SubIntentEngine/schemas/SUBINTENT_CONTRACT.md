@@ -62,6 +62,8 @@ open_ui:
   pass_content_as_query: q   # opcional; ver YAML que lo usan
 ```
 
+**Query del mini-UI:** valores `draft.<campo>` se resuelven desde el borrador; cualquier otro string no vacío (p. ej. `step: raiz`) se envía **literal** en la URL. Los clientes (`spa-home.js`, `chat_screen.dart` paciente/médico) deben implementar ambas ramas.
+
 ### Forma de `flow_submit` (raíz del intent)
 
 ```yaml

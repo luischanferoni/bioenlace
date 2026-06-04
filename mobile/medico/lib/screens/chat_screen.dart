@@ -1637,6 +1637,8 @@ class ChatScreenState extends State<ChatScreen> {
           if (v != null && v.toString().isNotEmpty) {
             qp[e.key.toString()] = v.toString();
           }
+        } else if (!spec.startsWith('client.') && spec.isNotEmpty) {
+          qp[e.key.toString()] = spec;
         }
       }
     }

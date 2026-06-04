@@ -1,0 +1,206 @@
+# Catálogo de triage al reservar turno (paciente). Códigos internos; etiquetas en lenguaje simple.
+version: 1
+
+halt_message_band_a: >-
+  Por lo que indicaste, conviene atención urgente ahora (guardia o emergencias).
+  No sigas con la reserva en la app. Si empeorás, llamá al 107.
+
+steps:
+  raiz:
+    title: "¿Por qué necesitás el turno?"
+    draft_field: triage_raiz
+  alarmas:
+    title: "¿Te pasa algo de esto ahora?"
+    draft_field: triage_alarmas
+  zona:
+    title: "¿Dónde te molesta?"
+    draft_field: triage_zona
+  detalle:
+    title: "¿Qué te pasa?"
+    draft_field: triage_detalle
+  evolucion:
+    title: "¿Desde cuándo o cómo viene?"
+    draft_field: triage_evolucion
+
+nodes:
+  # --- Raíz ---
+  - code: sintoma_nuevo
+    step: raiz
+    label: "Tengo un síntoma o malestar nuevo"
+    urgency_band: C
+  - code: control_cronico
+    step: raiz
+    label: "Es un control de algo que ya tengo (crónico)"
+    urgency_band: C
+    suggests_tipo_atencion: teleconsulta
+  - code: tramite_admin
+    step: raiz
+    label: "Es un trámite o certificado (sin síntomas nuevos)"
+    urgency_band: D
+
+  # --- Alarmas (banda A detiene reserva) ---
+  - code: alarma_ninguna
+    step: alarmas
+    label: "No, ninguna de estas / puedo seguir"
+    urgency_band: C
+  - code: alarma_dolor_pecho
+    step: alarmas
+    label: "Dolor fuerte o presión en el pecho"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_falta_aire
+    step: alarmas
+    label: "Me cuesta mucho respirar"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_desmayo
+    step: alarmas
+    label: "Me desmayé o casi me desmayo"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_sangrado_abundante
+    step: alarmas
+    label: "Sangrado abundante que no para"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_confusion
+    step: alarmas
+    label: "Confusión repentina o no reconozco a familiares"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_debilidad_cara
+    step: alarmas
+    label: "Cara caída, brazo débil o habla trabada (ahora)"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_fiebre_alta
+    step: alarmas
+    label: "Fiebre muy alta con mucho malestar general"
+    urgency_band: B
+
+  # --- Zona corporal (solo síntoma nuevo) ---
+  - code: zona_cabeza_cuello
+    step: zona
+    parent: sintoma_nuevo
+    label: "Cabeza o cuello"
+  - code: zona_pecho
+    step: zona
+    parent: sintoma_nuevo
+    label: "Pecho"
+  - code: zona_abdomen
+    step: zona
+    parent: sintoma_nuevo
+    label: "Panza (abdomen)"
+  - code: zona_espalda
+    step: zona
+    parent: sintoma_nuevo
+    label: "Espalda"
+  - code: zona_brazo_mano
+    step: zona
+    parent: sintoma_nuevo
+    label: "Brazo o mano"
+  - code: zona_pierna_pie
+    step: zona
+    parent: sintoma_nuevo
+    label: "Pierna o pie"
+  - code: zona_piel
+    step: zona
+    parent: sintoma_nuevo
+    label: "Piel (sarpullido, herida, etc.)"
+  - code: zona_general
+    step: zona
+    parent: sintoma_nuevo
+    label: "Todo el cuerpo / no sé dónde"
+
+  # --- Detalle por zona ---
+  - code: det_cabeza_dolor
+    step: detalle
+    parent: zona_cabeza_cuello
+    label: "Dolor de cabeza"
+    urgency_band: C
+  - code: det_cabeza_mareo
+    step: detalle
+    parent: zona_cabeza_cuello
+    label: "Mareos o vértigo"
+    urgency_band: C
+  - code: det_pecho_dolor
+    step: detalle
+    parent: zona_pecho
+    label: "Dolor en el pecho"
+    urgency_band: B
+  - code: det_pecho_tos
+    step: detalle
+    parent: zona_pecho
+    label: "Tos o resfrío con malestar"
+    urgency_band: C
+  - code: det_abd_dolor
+    step: detalle
+    parent: zona_abdomen
+    label: "Dolor de panza"
+    urgency_band: C
+  - code: det_abd_nauseas
+    step: detalle
+    parent: zona_abdomen
+    label: "Náuseas, vómitos o diarrea"
+    urgency_band: C
+  - code: det_espalda_dolor
+    step: detalle
+    parent: zona_espalda
+    label: "Dolor de espalda"
+    urgency_band: C
+  - code: det_musculo_esfuerzo
+    step: detalle
+    parent: zona_espalda
+    label: "Dolor muscular por esfuerzo"
+    urgency_band: C
+    suggests_tipo_atencion: teleconsulta
+  - code: det_musculo_esfuerzo_brazo
+    step: detalle
+    parent: zona_brazo_mano
+    label: "Dolor muscular por esfuerzo"
+    urgency_band: C
+    suggests_tipo_atencion: teleconsulta
+  - code: det_musculo_esfuerzo_pierna
+    step: detalle
+    parent: zona_pierna_pie
+    label: "Dolor muscular por esfuerzo"
+    urgency_band: C
+    suggests_tipo_atencion: teleconsulta
+  - code: det_extremidad_hinchazon
+    step: detalle
+    parent: zona_pierna_pie
+    label: "Hinchazón o dolor al caminar"
+    urgency_band: C
+  - code: det_piel_erupcion
+    step: detalle
+    parent: zona_piel
+    label: "Sarpullido, picazón o erupción"
+    urgency_band: C
+  - code: det_general_fiebre
+    step: detalle
+    parent: zona_general
+    label: "Fiebre o malestar general"
+    urgency_band: C
+  - code: det_general_otro
+    step: detalle
+    parent: zona_general
+    label: "Otro malestar"
+    urgency_band: C
+
+  # --- Evolución ---
+  - code: evo_hoy
+    step: evolucion
+    label: "Empezó hoy"
+    urgency_band: C
+  - code: evo_dias
+    step: evolucion
+    label: "Hace algunos días"
+    urgency_band: C
+  - code: evo_semanas
+    step: evolucion
+    label: "Hace semanas o más"
+    urgency_band: C
+  - code: evo_cronico_estable
+    step: evolucion
+    label: "Es algo crónico, viene parecido"
+    urgency_band: D

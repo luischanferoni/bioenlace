@@ -18,6 +18,19 @@ A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$1.400
 
 Estrategia documentada: **STT en dispositivo** + fallback en servidor (Groq) por calidad. El preprocesado técnico en servidor (FFmpeg en `SpeechToTextManager`) es optimización de pipeline.
 
+## Edge-Cloud Routing (STT)
+
+Patrón de enrutado **edge → cloud** para voz clínica: el **edge** (teléfono, navegador) intenta producir texto localmente; la **nube** (Bioenlace API + `SpeechToTextManager` / Groq) solo entra si hace falta calidad, no hay texto, o el usuario pide re-transcribir.
+
+| Capa | Rol |
+|------|-----|
+| **Edge** | Micrófono → motor local (SO, Web Speech, futuro modelo fit) → `texto` + `stt_provenance=device` |
+| **Cloud** | `EncounterSpeechInputResolver` + `DeviceSttQualityAssessor` deciden si transcribir en servidor; IA (Gemini) siempre en cloud sobre el texto final |
+
+No es un producto aparte: es la política de costo y UX de STT. El diagrama y reglas están en [§ Cuándo usar la API de STT en servidor](#cuándo-usar-la-api-de-stt-en-servidor); la escalera [§ Escalera de proveedores](#escalera-de-proveedores-servidor) pone al dispositivo en el **orden 0**.
+
+Índice general de palancas: [estrategias-api.md](./estrategias-api.md).
+
 ## Facturación Groq (proveedor de referencia en COGS)
 
 Fuente: [groq.com/pricing](https://groq.com/pricing), [Speech to Text – GroqDocs](https://console.groq.com/docs/speech-to-text) (revisar cada 6–12 meses).

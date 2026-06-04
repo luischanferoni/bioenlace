@@ -34,6 +34,7 @@ use common\components\Scheduling\Service\SobreturnoService;
 use common\components\Scheduling\Service\TurnoReservaSlotService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Scheduling\Service\TurnoAgendaMetricsService;
+use common\components\Scheduling\Service\ReservaTurnoTriageCatalogService;
 use common\components\Scheduling\Service\TurnoResolucionService;
 use common\components\Scheduling\Service\TurnoResolucionElecciones;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
@@ -88,6 +89,152 @@ class TurnosController extends BaseController
                 return $this->ejecutarCreacionTurno($model);
             }
         );
+    }
+
+    /**
+     * Catálogo declarativo de triage al reservar (JSON para clientes nativos).
+     *
+     * GET /api/v1/turnos/reserva-triage-catalogo
+     *
+     * @action_name Catálogo triage reserva turno
+     * @entity Turnos
+     * @tags turnos, paciente, triage, reserva
+     */
+    public function actionReservaTriageCatalogo(): array
+    {
+        $catalog = new ReservaTurnoTriageCatalogService();
+        $manifest = $catalog->getManifest();
+        unset($manifest['nodes']);
+
+        return [
+            'success' => true,
+            'version' => $catalog->getVersion(),
+            'halt_message_band_a' => $catalog->getHaltMessageBandA(),
+            'steps' => $manifest['steps'] ?? [],
+        ];
+    }
+
+    /**
+     * Paso embebible del triage de reserva (lista de opciones del catálogo).
+     *
+     * GET|POST /api/v1/turnos/reserva-triage-paso
+     * Query/body: `step` (raiz|alarmas|zona|detalle|evolucion); para zona/detalle también los códigos previos
+     * (`triage_raiz`, `triage_zona`) o `parent_code`.
+     *
+     * @action_name Paso triage reserva turno
+     * @entity Turnos
+     * @tags views, ui, turnos, paciente, triage
+     */
+    public function actionReservaTriagePaso(): array
+    {
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $step = isset($params['step']) ? trim((string) $params['step']) : '';
+        if ($step === '') {
+            throw new BadRequestHttpException('step es obligatorio');
+        }
+
+        $catalog = new ReservaTurnoTriageCatalogService();
+        $stepDef = $catalog->getStep($step);
+        if ($stepDef === null) {
+            throw new BadRequestHttpException('step no válido');
+        }
+
+        $parentCode = $this->reservaTriageParentForStep($step, $params);
+        $options = $catalog->getOptionsForStep($step, $parentCode !== '' ? $parentCode : null);
+
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'reserva-triage-paso',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($out['kind'], $out['ui_type']) && $out['kind'] === 'ui_definition' && $out['ui_type'] === 'ui_json') {
+            $out['title'] = $stepDef['title'];
+            $items = [];
+            foreach ($options as $opt) {
+                $items[] = [
+                    'id' => $opt['code'],
+                    'label' => $opt['label'],
+                    'meta' => [
+                        'urgency_band' => $opt['urgency_band'],
+                        'halts_booking' => $opt['halts_booking'],
+                        'suggests_tipo_atencion' => $opt['suggests_tipo_atencion'],
+                    ],
+                ];
+            }
+            $out = UiScreenService::withListBlockItems($out, $items, 'triage-opciones');
+            if (isset($out['blocks']) && is_array($out['blocks'])) {
+                foreach ($out['blocks'] as $i => $block) {
+                    if (!is_array($block) || ($block['id'] ?? '') !== 'triage-opciones') {
+                        continue;
+                    }
+                    $block['draft_field'] = $stepDef['draft_field'];
+                    $out['blocks'][$i] = $block;
+                    break;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Pantalla terminal: derivación a urgencia (banda A).
+     *
+     * GET|POST /api/v1/turnos/reserva-triage-urgencia
+     *
+     * @action_name Alerta urgencia triage reserva
+     * @entity Turnos
+     * @tags views, ui, turnos, paciente, triage, urgencia
+     */
+    public function actionReservaTriageUrgencia(): array
+    {
+        $req = Yii::$app->request;
+        $catalog = new ReservaTurnoTriageCatalogService();
+        $msg = $catalog->getHaltMessageBandA();
+
+        $out = UiScreenService::handleScreen(
+            'turnos',
+            'reserva-triage-urgencia',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($out['blocks']) && is_array($out['blocks'])) {
+            foreach ($out['blocks'] as $i => $block) {
+                if (!is_array($block) || ($block['id'] ?? '') !== 'urgencia') {
+                    continue;
+                }
+                $block['body'] = $msg;
+                $out['blocks'][$i] = $block;
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function reservaTriageParentForStep(string $step, array $params): string
+    {
+        if ($step === 'zona') {
+            return trim((string) ($params['triage_raiz'] ?? $params['parent_code'] ?? ''));
+        }
+        if ($step === 'detalle') {
+            return trim((string) ($params['triage_zona'] ?? $params['parent_code'] ?? ''));
+        }
+
+        return trim((string) ($params['parent_code'] ?? ''));
     }
 
     /**

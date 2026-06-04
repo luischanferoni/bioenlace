@@ -1,8 +1,8 @@
 intent_id: turnos.crear-como-paciente
-version: 1
+version: 3
 
 action_name: "Reservar turno"
-description: "Para reservar un turno en un centro de salud público."
+description: "Elegir servicio, centro de salud, profesional y horario (sin repreguntar motivo clínico)."
 rbac_route: "/api/turnos/crear-como-paciente"
 keywords:
   - turno
@@ -10,12 +10,13 @@ keywords:
   - reservar turno
   - pedir turno
   - autogestión
+  - agendar cita
 
 intent_semantics:
   goal: >-
     Reservar un turno de atención seleccionando servicio, centro de salud, profesional y un horario disponible.
   how: >-
-    El flujo guía servicio → centro de salud (lista o cercano) → profesional → día con cupos → horario de ese día; al tener slot, se abre la creación del turno (`flow_submit`).
+    Servicio → centro → profesional → día con cupos → horario; al tener slot, confirmación.
   preconditions:
     - El usuario puede autogestionar turnos.
     - Existe disponibilidad (slots) para el servicio/centro/profesional elegidos.
@@ -43,7 +44,6 @@ subintents:
       entity: servicio
       match_property: nombre
     open_ui:
-      # Lista vía GET /api/v1/servicios/elegir-acepta-turnos: servicios_efector + servicios.acepta_turnos=SI (distinct id_servicio).
       action_id: servicios.elegir-acepta-turnos
 
   - id: select_efector
@@ -121,3 +121,4 @@ flow_submit:
     slot_id: "draft.slot_id"
     id_servicio_asignado: "draft.id_servicio_asignado"
     id_efector: "draft.id_efector"
+    tipo_atencion: "draft.tipo_atencion"

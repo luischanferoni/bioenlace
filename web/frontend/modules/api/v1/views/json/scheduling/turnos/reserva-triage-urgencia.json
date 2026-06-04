@@ -1,0 +1,18 @@
+{
+  "ui_type": "ui_json",
+  "title": "Atención urgente",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "urgencia",
+      "severity": "warning",
+      "body": ""
+    }
+  ]
+}

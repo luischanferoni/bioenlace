@@ -51,6 +51,7 @@ Ejemplos de flujos conversacionales con UI JSON (YAML en `SubIntentEngine/schema
 
 | Dominio | Intent | Uso |
 |---------|--------|-----|
+| Atención (paciente) | `atencion.necesito-atencion` | Triage + turno ambulatorio (primer atajo en chat) |
 | Urgencias | `urgencias.ver-tablero-guardia` | Navegar al tablero EMER |
 | Urgencias | `urgencias.triage-paciente-guardia` | Lista sin triage → formulario Manchester |
 | Internación | `internacion.mapa-camas-flow` | Mapa de camas del efector |

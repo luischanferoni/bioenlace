@@ -16,22 +16,26 @@ Un **turno** es la cita entre una persona y un profesional en un efector y servi
 flowchart TB
   P[Paciente en Bioenlace]
   A[Interfaz: conversación o pantalla directa]
+  T[Triage motivo y alarmas]
   API[API turnos / agenda]
   AG[Grilla PES y cupos]
   DB[(Turno en base)]
   PUSH[Notificación push]
   P --> A
-  A --> API
+  A --> T
+  T --> API
   API --> AG
   AG --> DB
   DB --> PUSH
   PUSH --> P
 ```
 
-1. El paciente elige **efector y servicio** (sesión operativa o flujo guiado).
-2. La API consulta **disponibilidad** alineada a la agenda del profesional (PES: profesional–efector–servicio).
-3. Al confirmar, se **persiste** el turno y puede dispararse confirmación o recordatorio según política del efector.
-4. Si el efector **cambia la agenda** (cancelación masiva, bloqueo), los turnos afectados pueden pasar a **en resolución** y el paciente recibe **push** para reubicar o cancelar.
+1. **Triage breve** (motivo, alarmas, zona/evolución según el caso): catálogo fijo + UI JSON; si hay **banda A** no se sigue con la reserva en la app. Detalle: [triage-reserva-turno.md](./triage-reserva-turno.md).
+2. El paciente elige **servicio, centro, profesional y horario** (flujo asistente `atencion.necesito-atencion`; `turnos.crear-como-paciente` solo agenda si ya sabe que quiere turno).
+3. La API consulta **disponibilidad** alineada a la agenda del profesional (PES).
+4. Al confirmar, se **persiste** el turno (incluye `reserva_triage_*` y `urgency_band`) y puede dispararse confirmación o recordatorio.
+5. Tras la reserva, los **motivos pre-consulta** (chat/IA) enriquecen el encuentro hasta el turno — no sustituyen el triage de reserva.
+6. Si el efector **cambia la agenda**, los turnos afectados pueden pasar a **en resolución** y el paciente recibe **push** para reubicar o cancelar.
 
 ## Cancelación y reprogramación
 

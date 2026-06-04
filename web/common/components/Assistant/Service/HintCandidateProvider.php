@@ -143,7 +143,7 @@ final class HintCandidateProvider
 
     private static function intentUsesServiciosAceptaTurnos(string $intentId): bool
     {
-        if ($intentId === 'turnos.crear-como-paciente') {
+        if ($intentId === 'turnos.crear-como-paciente' || $intentId === 'atencion.necesito-atencion') {
             return true;
         }
 

@@ -60,6 +60,10 @@ class TurnoPersistService
             }
         }
 
+        if ($ctx->esReservaParaSiMismo($model) && trim((string) ($model->triage_raiz ?? '')) !== '') {
+            $this->applyReservaTriageToModel($model);
+        }
+
         if ($model->id_servicio_asignado && $model->id_persona && $model->id_efector) {
             $cps = ConsultaDerivaciones::getDerivacionesPorPersona(
                 $model->id_persona,
@@ -186,6 +190,33 @@ class TurnoPersistService
             throw new \InvalidArgumentException(
                 'El profesional no acepta teleconsulta para esta agenda.'
             );
+        }
+    }
+
+    /**
+     * Persiste triage declarativo de reserva (catálogo YAML) en columnas del turno.
+     */
+    private function applyReservaTriageToModel(Turno $model): void
+    {
+        $selections = [
+            'triage_raiz' => $model->triage_raiz,
+            'triage_alarmas' => $model->triage_alarmas,
+            'triage_zona' => $model->triage_zona,
+            'triage_detalle' => $model->triage_detalle,
+            'triage_evolucion' => $model->triage_evolucion,
+            'triage_nota' => $model->triage_nota,
+        ];
+        $catalog = new ReservaTurnoTriageCatalogService();
+        $catalog->assertCanPersistBooking($selections);
+        $compiled = $catalog->compileSelections($selections);
+        $model->reserva_triage_code = $compiled['reserva_triage_code'];
+        $model->urgency_band = $compiled['urgency_band'];
+        $model->reserva_triage_meta_json = json_encode(
+            $compiled['reserva_triage_meta_json'],
+            JSON_UNESCAPED_UNICODE
+        );
+        if (empty($model->tipo_atencion) && $compiled['suggests_tipo_atencion'] !== null) {
+            $model->tipo_atencion = $compiled['suggests_tipo_atencion'];
         }
     }
 }

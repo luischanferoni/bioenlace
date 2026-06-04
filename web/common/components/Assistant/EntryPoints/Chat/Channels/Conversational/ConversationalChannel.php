@@ -128,14 +128,14 @@ PROMPT;
     private static function resolveBookingButton(int $userId): ?array
     {
         $catalog = UiActionCatalog::forUser($userId);
-        foreach (['turnos.crear-como-paciente', 'turnos.crear-para-paciente'] as $intentId) {
+        foreach (['atencion.necesito-atencion', 'turnos.crear-como-paciente', 'turnos.crear-para-paciente'] as $intentId) {
             $item = $catalog->byActionId[$intentId] ?? null;
             if ($item === null) {
                 continue;
             }
 
             return [
-                'label' => $item->display_name !== '' ? $item->display_name : 'Reservar turno',
+                'label' => $item->display_name !== '' ? $item->display_name : ($intentId === 'atencion.necesito-atencion' ? 'Necesito atención' : 'Reservar turno'),
                 'intent_id' => $intentId,
             ];
         }

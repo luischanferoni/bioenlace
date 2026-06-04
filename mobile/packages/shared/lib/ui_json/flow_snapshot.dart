@@ -173,6 +173,7 @@ String formatFlowSubmitSummary({
       return _summaryConflictoAgenda(snap, data);
     case 'turnos.reubicar-como-paciente-flow':
       return _summaryReubicar(snap, data);
+    case 'atencion.necesito-atencion':
     case 'turnos.crear-como-paciente':
       return _summaryCrear(snap, data);
     default:

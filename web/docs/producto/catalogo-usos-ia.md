@@ -90,7 +90,7 @@ Detalle: [captura-clinica.md](./captura-clinica.md) · API: `clinical/encounter/
 
 | Uso | Dónde | Camino feliz |
 |-----|-------|--------------|
-| Dictado médico §4 | `EncounterSpeechInputResolver` | Texto en dispositivo; fallback `SpeechToTextManager` / Groq |
+| Dictado médico §4 | `EncounterSpeechInputResolver` | **Edge-Cloud Routing** STT: texto en dispositivo; fallback `SpeechToTextManager` / Groq — ver [stt.md § Edge-Cloud](../costos/estrategias-reduccion/stt.md#edge-cloud-routing-stt) |
 | Notas de voz en motivos | `AppointmentReasonBatchService` | Hoy STT en servidor al procesar lote |
 | Transcribir audio suelto | `POST /api/v1/audio/transcribir` | Igual política dispositivo → servidor |
 

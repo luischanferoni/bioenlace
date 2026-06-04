@@ -1,0 +1,21 @@
+{
+  "ui_type": "ui_json",
+  "title": "Motivo del turno",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "triage-opciones",
+      "selection": { "mode": "single" },
+      "draft_field": "triage_selection",
+      "item": { "kind": "option", "id_field": "id", "label_field": "label" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "items": []
+    }
+  ]
+}

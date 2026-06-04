@@ -112,6 +112,14 @@ class Turno extends \yii\db\ActiveRecord
 
     public $cant_turnos;
 
+    /** @var string|null Campos de triage de reserva (POST asistente / UI); no todos se persisten como columna suelta */
+    public $triage_raiz;
+    public $triage_alarmas;
+    public $triage_zona;
+    public $triage_detalle;
+    public $triage_evolucion;
+    public $triage_nota;
+
     const ESTADO_PENDIENTE = 'PENDIENTE';
     const ESTADO_EN_RESOLUCION = 'EN_RESOLUCION';
     const ESTADO_CANCELADO = 'CANCELADO';
@@ -267,6 +275,18 @@ class Turno extends \yii\db\ActiveRecord
             [['orden_atencion', 'minutos_desplazamiento_estimado'], 'integer'],
             [['confirmado_en'], 'safe'],
             [['confirmacion_token'], 'string', 'max' => 64],
+            [['reserva_triage_code'], 'string', 'max' => 64],
+            [['urgency_band'], 'string', 'max' => 1],
+            [['urgency_band'], 'in', 'range' => ['A', 'B', 'C', 'D'], 'skipOnEmpty' => true],
+            [['reserva_triage_meta_json'], 'safe'],
+            [[
+                'triage_raiz',
+                'triage_alarmas',
+                'triage_zona',
+                'triage_detalle',
+                'triage_evolucion',
+                'triage_nota',
+            ], 'safe'],
         ];
     }
 

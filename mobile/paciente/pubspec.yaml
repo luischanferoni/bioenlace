@@ -39,7 +39,7 @@ dependencies:
   provider: ^6.1.2            # Manejo de estado
   image: ^4.1.7               # Para procesar y corregir orientación de imágenes
   url_launcher: ^6.3.1        # Para abrir URLs en el navegador
-  record: ^6.2.0             # Grabar audio para mensajes de voz
+  record: ^5.2.1             # Grabar audio para mensajes de voz (alineado con shared/médico)
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8

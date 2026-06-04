@@ -4,6 +4,7 @@ namespace common\components\Assistant\SubIntentEngine;
 
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
+use common\components\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 
 /**
  * Registro de handlers de enriquecimiento de draft (lógica de dominio en capas inferiores).
@@ -18,6 +19,7 @@ final class FlowDraftHydratorRegistry
     private const HANDLERS = [
         'organization.pes_crear_alta' => [ProfesionalEfectorServicioCrearFlowDraftHydrator::class, 'hydrateWithOptions'],
         'organization.pes_from_servicio' => [ProfesionalEfectorServicioAgendaFlowDraftHydrator::class, 'hydrateWithOptions'],
+        'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
     ];
 
     /**

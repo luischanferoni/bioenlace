@@ -44,6 +44,43 @@
           "include_in_submit": true
         },
         {
+          "name": "triage_raiz",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "triage_alarmas",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "triage_zona",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "triage_detalle",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "triage_evolucion",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "triage_nota",
+          "label": "Algo más que quieras contar (opcional)",
+          "type": "textarea",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
           "name": "tipo_atencion",
           "label": "Tipo de atención",
           "type": "select",

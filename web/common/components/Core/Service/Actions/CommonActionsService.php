@@ -89,6 +89,13 @@ final class CommonActionsService
     {
         return [
             [
+                'id' => 'atencion_solicitud',
+                'titulo' => 'Atención',
+                'models' => [
+                    'atencion.necesito-atencion',
+                ],
+            ],
+            [
                 'id' => 'profesional_agenda',
                 'titulo' => 'Profesional, agenda y condición laboral',
                 'models' => [
@@ -104,7 +111,6 @@ final class CommonActionsService
                 'id' => 'turnos',
                 'titulo' => 'Turnos',
                 'models' => [
-                    'turnos.crear-como-paciente',
                     'turnos.cancelar-como-paciente-flow',
                     'turnos.modificar-como-paciente-flow',
                 ],

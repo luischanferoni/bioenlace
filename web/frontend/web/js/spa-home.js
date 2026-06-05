@@ -457,6 +457,41 @@
         });
     }
 
+    function appendFlowDismissFooter(hostEl, dismiss, onFlowCleared) {
+        if (!hostEl || !dismiss) {
+            return;
+        }
+        var wrap = document.createElement('div');
+        wrap.className = 'mt-3 pt-2 border-top spa-flow-dismiss-inline d-flex flex-wrap gap-2';
+        (dismiss.actions || []).forEach(function (a) {
+            if (!a || !a.href) {
+                return;
+            }
+            var link = document.createElement('a');
+            link.className = 'btn btn-sm ' + (a.variant === 'danger' ? 'btn-danger' : 'btn-outline-primary');
+            link.href = String(a.href);
+            link.textContent = a.label ? String(a.label) : String(a.href);
+            wrap.appendChild(link);
+        });
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-secondary';
+        btn.textContent = dismiss.label ? String(dismiss.label) : 'Entendido';
+        btn.addEventListener('click', function () {
+            if (typeof onFlowCleared === 'function') {
+                onFlowCleared();
+            }
+            try {
+                var row = hostEl.closest ? hostEl.closest('.spa-chat-flow-row') : null;
+                if (row) {
+                    disableFlowRowInteractions(row);
+                }
+            } catch (e) { /* ignore */ }
+        });
+        wrap.appendChild(btn);
+        hostEl.appendChild(wrap);
+    }
+
     /**
      * @param {{ deferReveal?: boolean }} opts si true, el botón queda oculto hasta `scheduleRevealFlowInlineSubmit`.
      */
@@ -591,7 +626,7 @@
         } catch (e) { /* ignore */ }
     }
 
-    function mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance) {
+    function mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance, flowDismissOpt) {
         mountEl.innerHTML = '';
         if (json && json.kind === 'ui_definition') {
             const isTerminalFlowStep = isActiveFlowSubmitRequest(flowSubmitRequestOpt);
@@ -606,6 +641,11 @@
                     removeFlowPlanStrip();
                 }, { deferReveal: true });
                 scheduleRevealFlowInlineSubmit(mountEl);
+            } else if (flowDismissOpt) {
+                appendFlowDismissFooter(mountEl, flowDismissOpt, function () {
+                    clearFlowState();
+                    removeFlowPlanStrip();
+                });
             }
         } else {
             mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
@@ -615,6 +655,7 @@
     function fetchFlowUiDefinition(fullUrl, mountEl, flowSubmitRequestOpt, fetchOpts) {
         fetchOpts = fetchOpts && typeof fetchOpts === 'object' ? fetchOpts : {};
         const enableFlowChainAutoAdvance = fetchOpts.enableFlowChainAutoAdvance === true;
+        const flowDismissOpt = fetchOpts.flowDismissOpt || null;
         const flowRow = mountEl.closest ? mountEl.closest('.spa-chat-flow-row') : null;
         if (flowRow && flowRow.__bioFlowUiCache && flowRow.__bioFlowUiCache[fullUrl]) {
             mountFlowUiDefinition(
@@ -622,7 +663,8 @@
                 mountEl,
                 fullUrl,
                 flowSubmitRequestOpt,
-                false
+                false,
+                flowDismissOpt
             );
             setTimeout(scrollChatToBottom, 10);
             return Promise.resolve();
@@ -658,7 +700,7 @@
                     }
                     flowRow.__bioFlowUiCache[fullUrl] = json;
                 }
-                mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance);
+                mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance, flowDismissOpt);
             })
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
@@ -1286,6 +1328,18 @@
     }
 
     /** @param {object|null|undefined} envelope */
+    function assistantFlowDismiss(envelope) {
+        const d = envelope && envelope.dismiss;
+        if (!d || typeof d !== 'object' || d.active !== true) {
+            return null;
+        }
+        return {
+            label: d.label != null ? String(d.label) : 'Entendido',
+            actions: Array.isArray(d.actions) ? d.actions : []
+        };
+    }
+
+    /** @param {object|null|undefined} envelope */
     function assistantFlowSubmit(envelope) {
         const sub = envelope && envelope.submit;
         if (!sub || typeof sub !== 'object' || !sub.active) {
@@ -1419,6 +1473,8 @@
                 const defaultTabId = uiMeta && uiMeta.default_tab != null ? String(uiMeta.default_tab) : '';
 
                 const fsr = assistantFlowSubmit(envelope);
+                const fdr = assistantFlowDismiss(envelope);
+                const flowFetchOpts = { enableFlowChainAutoAdvance: true, flowDismissOpt: fdr };
 
                 // `open_ui` en esta respuesta: lo que el servidor pide montar ahora. El manifiesto describe el paso
                 // (puede incluir tabs del paso anterior); no implica que siempre haya que abrir URL en este turno.
@@ -1537,7 +1593,7 @@
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
                                 u.searchParams.set('longitud', String(pos.coords.longitude));
-                                fetchFlowUiDefinition(u.toString(), mountEl, fsr, { enableFlowChainAutoAdvance: true });
+                                fetchFlowUiDefinition(u.toString(), mountEl, fsr, flowFetchOpts);
                             }, function () {
                                 mountEl.innerHTML = '<div class="alert alert-warning mb-0">No se pudo obtener la ubicación.</div>';
                             });
@@ -1549,7 +1605,7 @@
                             mountEl.innerHTML = '<div class="alert alert-warning mb-0">URL inválida para esta pestaña.</div>';
                             return;
                         }
-                        fetchFlowUiDefinition(url, mountEl, fsr, { enableFlowChainAutoAdvance: true });
+                        fetchFlowUiDefinition(url, mountEl, fsr, flowFetchOpts);
                     }
 
                     tabs.forEach(function (tab, idx) {
@@ -1578,7 +1634,7 @@
                 flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
                 flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
                 mountHost.appendChild(flowUiMount);
-                fetchFlowUiDefinition(fullUrl, flowUiMount, fsr, { enableFlowChainAutoAdvance: true });
+                fetchFlowUiDefinition(fullUrl, flowUiMount, fsr, flowFetchOpts);
                 return;
             }
 
@@ -2036,8 +2092,10 @@
 
     function renderUiJsonMessageBlock(block, container) {
         const title = block.title ? String(block.title) : '';
-        const text = block.text != null ? String(block.text) : '';
-        let html = '<div class="bio-ui-json-message">';
+        const text = block.text != null ? String(block.text) : (block.body != null ? String(block.body) : '');
+        const severity = block.severity ? String(block.severity) : '';
+        const alertClass = severity === 'warning' ? ' alert alert-warning' : (severity === 'danger' ? ' alert alert-danger' : '');
+        let html = '<div class="bio-ui-json-message' + alertClass + '">';
         if (title) {
             html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
         }

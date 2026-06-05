@@ -217,6 +217,7 @@ class TurnosController extends BaseController
                     continue;
                 }
                 $block['body'] = $msg;
+                $block['text'] = $msg;
                 $out['blocks'][$i] = $block;
                 break;
             }

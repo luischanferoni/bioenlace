@@ -339,6 +339,9 @@ final class SubIntentEngine
         if ($flowSubmitBlock === null || !self::flowSubmitHasActionId($flowSubmitBlock)) {
             return false;
         }
+        if (!empty($subintent['terminal_without_submit'])) {
+            return false;
+        }
         $hasNext = isset($subintent['next']) && trim((string) $subintent['next']) !== '';
         $hasRouting = isset($subintent['next_routing'])
             && is_array($subintent['next_routing'])
@@ -692,7 +695,56 @@ final class SubIntentEngine
             }
         }
 
+        $dismiss = self::buildFlowDismissDescriptor($subintent);
+        if ($dismiss !== null) {
+            $payload['flow_dismiss'] = $dismiss;
+        }
+
         return self::withFlowManifest($payload, $intentId, $subintentId);
+    }
+
+    /**
+     * Cierre informativo (sin POST): p. ej. derivación a urgencia con banda A.
+     *
+     * @param array<string, mixed> $subintent
+     * @return array{label: string, actions: list<array{label: string, href: string, variant: string}>}|null
+     */
+    private static function buildFlowDismissDescriptor(array $subintent): ?array
+    {
+        if (empty($subintent['terminal_without_submit'])) {
+            return null;
+        }
+        $cfg = isset($subintent['flow_dismiss']) && is_array($subintent['flow_dismiss'])
+            ? $subintent['flow_dismiss']
+            : [];
+        $label = trim((string) ($cfg['label'] ?? 'Entendido'));
+        if ($label === '') {
+            $label = 'Entendido';
+        }
+        $actions = [];
+        $rawActions = isset($subintent['flow_actions']) && is_array($subintent['flow_actions'])
+            ? $subintent['flow_actions']
+            : [];
+        foreach ($rawActions as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $actionLabel = trim((string) ($row['label'] ?? ''));
+            $href = trim((string) ($row['href'] ?? ''));
+            if ($actionLabel === '' || $href === '') {
+                continue;
+            }
+            $actions[] = [
+                'label' => $actionLabel,
+                'href' => $href,
+                'variant' => trim((string) ($row['variant'] ?? 'secondary')),
+            ];
+        }
+
+        return [
+            'label' => $label,
+            'actions' => $actions,
+        ];
     }
 
     /**

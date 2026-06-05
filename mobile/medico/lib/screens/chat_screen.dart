@@ -92,7 +92,9 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   bool _messageHasFlowInteractiveUi(Map<String, dynamic> message) {
-    return message['inline_ui'] is Map || message['flow_submit'] is Map;
+    return message['inline_ui'] is Map ||
+        message['flow_submit'] is Map ||
+        message['flow_dismiss'] is Map;
   }
 
   /// Mensaje del bot cuyo step es **terminal** (último paso del flow): trae `flow_submit`
@@ -393,8 +395,26 @@ class ChatScreenState extends State<ChatScreen> {
   /// `flow_submit` visible: sin `inline_ui` (submit-only) o tras `onEmbeddedReady` del paso.
   bool _showFlowSubmitButton(Map<String, dynamic> message) {
     if (message['flow_submit'] is! Map) return false;
+    if (message['flow_dismiss'] is Map) return false;
     if (message['inline_ui'] is! Map) return true;
     return message['_flow_submit_ready'] == true;
+  }
+
+  /// Cierre informativo del flow (p. ej. urgencia banda A): acciones + «Entendido», sin POST.
+  bool _showFlowDismissFooter(Map<String, dynamic> message) {
+    if (message['flow_dismiss'] is! Map) return false;
+    if (message['inline_ui'] is! Map) return true;
+    return message['_flow_dismiss_ready'] == true;
+  }
+
+  /// Normaliza el envelope `flow_dismiss` del motor (`label`/`actions`).
+  Map<String, dynamic>? _normalizeFlowDismiss(dynamic raw) {
+    if (raw is! Map) return null;
+    final label = raw['label']?.toString().trim() ?? '';
+    return <String, dynamic>{
+      'label': label.isNotEmpty ? label : 'Entendido',
+      if (raw['actions'] is List) 'actions': raw['actions'],
+    };
   }
 
   /// Normaliza el envelope `flow_submit` del motor (`route`/`method`/`action_id`/`body_template`).
@@ -452,6 +472,7 @@ class ChatScreenState extends State<ChatScreen> {
     _syncFlowSessionFromView(nextFlow);
     final msgText = nextFlow.text.trim().isNotEmpty ? nextFlow.text.trim() : 'Ok.';
     final fsPayload = _normalizeFlowSubmit(nextFlow.flowSubmit);
+    final fdPayload = _normalizeFlowDismiss(nextFlow.flowDismiss);
     final providesPayload = nextFlow.provides;
     final openUi = nextFlow.openUi;
     final co = openUi != null ? openUi['client_open'] : null;
@@ -459,6 +480,7 @@ class ChatScreenState extends State<ChatScreen> {
     final hasInlineUi =
         co is Map && (actionId != null && actionId.isNotEmpty);
     final isSubmitOnly = fsPayload != null && !hasInlineUi;
+    final isDismissOnly = fdPayload != null && !hasInlineUi && fsPayload == null;
 
     setState(() {
       _chatHistory.add({
@@ -468,6 +490,7 @@ class ChatScreenState extends State<ChatScreen> {
         if (nextFlow.manifest != null) 'flow_manifest': nextFlow.manifest,
         if (nextFlow.hints.isNotEmpty) 'hints': nextFlow.hints,
         if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
+        if (isDismissOnly) 'flow_dismiss': fdPayload,
         if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
         'timestamp': DateTime.now(),
       });
@@ -476,7 +499,7 @@ class ChatScreenState extends State<ChatScreen> {
     });
     _scrollToBottom();
 
-    if (openUi == null || isSubmitOnly) {
+    if (openUi == null || isSubmitOnly || isDismissOnly) {
       return;
     }
     if (actionId == null || actionId.isEmpty) {
@@ -535,6 +558,7 @@ class ChatScreenState extends State<ChatScreen> {
       pseudoAction,
       messageIndex: _chatHistory.length - 1,
       pendingFlowSubmit: fsPayload,
+      pendingFlowDismiss: fdPayload,
     );
     } finally {
       if (mounted) {
@@ -544,6 +568,92 @@ class ChatScreenState extends State<ChatScreen> {
         });
       }
     }
+  }
+
+  Future<void> _launchFlowDismissHref(String href) async {
+    final uri = Uri.tryParse(href.trim());
+    if (uri == null) return;
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      }
+    } catch (_) {
+      if (mounted) {
+        _showErrorSnackbar('No se pudo abrir el enlace.');
+      }
+    }
+  }
+
+  void _onFlowDismissAcknowledged(int messageIndex) {
+    setState(() {
+      if (messageIndex >= 0 && messageIndex < _chatHistory.length) {
+        _chatHistory[messageIndex]['flow_superseded'] = true;
+      }
+      _clearFlowState();
+    });
+  }
+
+  Widget _buildFlowDismissFooter(
+    BuildContext context,
+    int messageIndex,
+    Map<String, dynamic> message,
+  ) {
+    final dismiss = Map<String, dynamic>.from(message['flow_dismiss'] as Map);
+    final label = dismiss['label']?.toString() ?? 'Entendido';
+    final actions = dismiss['actions'] is List ? dismiss['actions'] as List : const [];
+    final flowUiDisabled = message['flow_superseded'] == true;
+    final flowCollapsing = message['flow_collapsing'] == true;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final raw in actions)
+                if (raw is Map)
+                  Builder(
+                    builder: (ctx) {
+                      final a = Map<String, dynamic>.from(raw);
+                      final actionLabel = a['label']?.toString() ?? a['href']?.toString() ?? 'Acción';
+                      final href = a['href']?.toString() ?? '';
+                      final isDanger = a['variant']?.toString() == 'danger';
+                      if (isDanger) {
+                        return BioButton.danger(
+                          label: actionLabel,
+                          icon: Icons.phone,
+                          size: BioButtonSize.lg,
+                          onPressed: (flowUiDisabled || flowCollapsing || href.isEmpty)
+                              ? null
+                              : () => _launchFlowDismissHref(href),
+                        );
+                      }
+                      return BioButton.outlinePrimary(
+                        label: actionLabel,
+                        size: BioButtonSize.lg,
+                        onPressed: (flowUiDisabled || flowCollapsing || href.isEmpty)
+                            ? null
+                            : () => _launchFlowDismissHref(href),
+                      );
+                    },
+                  ),
+            ],
+          ),
+          if (actions.isNotEmpty) const SizedBox(height: 8),
+          BioButton.neutral(
+            label: label,
+            size: BioButtonSize.lg,
+            fullWidth: true,
+            onPressed: (flowUiDisabled || flowCollapsing)
+                ? null
+                : () => _onFlowDismissAcknowledged(messageIndex),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Texto del aviso "faltan datos" del botón "Confirmar y enviar". Usa el `flow_snapshot`
@@ -1101,11 +1211,36 @@ class ChatScreenState extends State<ChatScreen> {
     _syncFlowSessionFromView(flow);
 
     final flowSubmit = _normalizeFlowSubmit(flow.flowSubmit);
+    final flowDismiss = _normalizeFlowDismiss(flow.flowDismiss);
     final providesList = flow.provides;
     final openUi = flow.openUi;
-    if (openUi != null || flowSubmit != null) {
+    if (openUi != null || flowSubmit != null || flowDismiss != null) {
       final co = openUi != null ? openUi['client_open'] : null;
       final actionId = openUi != null ? openUi['action_id']?.toString() : null;
+      final hasInlineUiOpen = co is Map && actionId != null && actionId.isNotEmpty;
+      if (flowDismiss != null && flowSubmit == null && !hasInlineUiOpen) {
+        setState(() {
+          _flowAdvancing = false;
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': explanation,
+            'actions': null,
+            if (flow.manifest != null) 'flow_manifest': flow.manifest,
+            if (flow.hints.isNotEmpty) 'hints': flow.hints,
+            'flow_dismiss': flowDismiss,
+            if (providesList.isNotEmpty) 'flow_provides': providesList,
+            'timestamp': DateTime.now(),
+          });
+          _stampLastBotMessageFlowActivation();
+          _applyFlowSupersession(
+            previousIntentId: previousIntentId,
+            activeIntentId: _intentId,
+          );
+        });
+        _scrollToBottom();
+        return true;
+      }
       // Caso "submit-only": el motor cerró el flow sin UI previa (ver `buildTerminalSubmitOnlyResponse`).
       // Mensaje sólo con `flow_submit` → render del botón "Confirmar y enviar" sin `inline_ui`.
       if (flowSubmit != null && !(co is Map && actionId != null && actionId.isNotEmpty)) {
@@ -1166,6 +1301,8 @@ class ChatScreenState extends State<ChatScreen> {
             if (flow.hints.isNotEmpty) 'hints': flow.hints,
             if (flowSubmit != null) 'flow_submit': flowSubmit,
             if (flowSubmit != null && hasUiJsonRoute) '_flow_submit_ready': false,
+            if (flowDismiss != null) 'flow_dismiss': flowDismiss,
+            if (flowDismiss != null && hasUiJsonRoute) '_flow_dismiss_ready': false,
             if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
           });
@@ -1176,7 +1313,12 @@ class ChatScreenState extends State<ChatScreen> {
           );
         });
         _scrollToBottom();
-        await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+        await _tryOpenClientNative(
+          pseudoAction,
+          messageIndex: _chatHistory.length - 1,
+          pendingFlowSubmit: flowSubmit,
+          pendingFlowDismiss: flowDismiss,
+        );
         return true;
       }
 
@@ -1223,6 +1365,8 @@ class ChatScreenState extends State<ChatScreen> {
               if (flow.manifest != null) 'flow_manifest': flow.manifest,
               if (flowSubmit != null) 'flow_submit': flowSubmit,
               if (flowSubmit != null) '_flow_submit_ready': false,
+              if (flowDismiss != null) 'flow_dismiss': flowDismiss,
+              if (flowDismiss != null) '_flow_dismiss_ready': false,
               if (providesList.isNotEmpty) 'flow_provides': providesList,
               'timestamp': DateTime.now(),
             });
@@ -1233,7 +1377,12 @@ class ChatScreenState extends State<ChatScreen> {
             );
           });
           _scrollToBottom();
-          await _tryOpenClientNative(pseudoAction, messageIndex: _chatHistory.length - 1);
+          await _tryOpenClientNative(
+            pseudoAction,
+            messageIndex: _chatHistory.length - 1,
+            pendingFlowSubmit: flowSubmit,
+            pendingFlowDismiss: flowDismiss,
+          );
           return true;
         }
 
@@ -1251,7 +1400,7 @@ class ChatScreenState extends State<ChatScreen> {
       }
     }
 
-    if (openUi == null && flowSubmit == null) {
+    if (openUi == null && flowSubmit == null && flowDismiss == null) {
       setState(() {
         _isSending = false;
         _chatHistory.add({
@@ -1758,6 +1907,7 @@ class ChatScreenState extends State<ChatScreen> {
     Map<String, dynamic> action, {
     int? messageIndex,
     Map<String, dynamic>? pendingFlowSubmit,
+    Map<String, dynamic>? pendingFlowDismiss,
   }) async {
     final co = action['client_open'];
     if (co is! Map) {
@@ -1880,6 +2030,10 @@ class ChatScreenState extends State<ChatScreen> {
             m['flow_submit'] = pendingFlowSubmit;
             m['_flow_submit_ready'] = false;
           }
+          if (pendingFlowDismiss != null) {
+            m['flow_dismiss'] = pendingFlowDismiss;
+            m['_flow_dismiss_ready'] = false;
+          }
           _stampFlowActivationOnMessage(m);
         } else {
           _chatHistory.add({
@@ -1893,6 +2047,8 @@ class ChatScreenState extends State<ChatScreen> {
             },
             if (pendingFlowSubmit != null) 'flow_submit': pendingFlowSubmit,
             if (pendingFlowSubmit != null) '_flow_submit_ready': false,
+            if (pendingFlowDismiss != null) 'flow_dismiss': pendingFlowDismiss,
+            if (pendingFlowDismiss != null) '_flow_dismiss_ready': false,
             'timestamp': DateTime.now(),
           });
           _stampLastBotMessageFlowActivation();
@@ -2213,8 +2369,9 @@ class ChatScreenState extends State<ChatScreen> {
                 final hasEmbeddedUi = !isUser && inlineUi is Map;
                 final flowActionTitle = !isUser ? _flowActionTitleFromMessage(message) : null;
                 final hasFlowSubmit = !isUser && message['flow_submit'] is Map;
+                final hasFlowDismiss = !isUser && message['flow_dismiss'] is Map;
                 final hasFlowContext =
-                    flowActionTitle != null && (hasEmbeddedUi || hasFlowSubmit);
+                    flowActionTitle != null && (hasEmbeddedUi || hasFlowSubmit || hasFlowDismiss);
                 final showFlowHeader = hasFlowContext &&
                     _shouldShowFlowChatHeader(index, message);
                 final showFlowStepText = hasFlowContext && content.isNotEmpty;
@@ -2521,6 +2678,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       }
                                       setState(() {
                                         _chatHistory[index]['_flow_submit_ready'] = true;
+                                        _chatHistory[index]['_flow_dismiss_ready'] = true;
                                       });
                                     },
                               enableFlowChainAutoAdvance: false,
@@ -2670,6 +2828,11 @@ class ChatScreenState extends State<ChatScreen> {
                       ),
                           ],
                         ),
+                      ),
+                    if (!isUser && _showFlowDismissFooter(message))
+                      _wrapFlowInteractiveCollapse(
+                        collapsing: flowCollapsing,
+                        child: _buildFlowDismissFooter(context, index, message),
                       ),
                     if (!isUser && _showFlowSubmitButton(message))
                       _wrapFlowInteractiveCollapse(

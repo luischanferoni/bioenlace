@@ -219,6 +219,8 @@ final class AssistantEnvelope
 
         $flowSubmit = isset($motor['flow_submit']) && is_array($motor['flow_submit']) ? $motor['flow_submit'] : null;
         $submit = self::buildSubmit($flowSubmit);
+        $flowDismiss = isset($motor['flow_dismiss']) && is_array($motor['flow_dismiss']) ? $motor['flow_dismiss'] : null;
+        $dismiss = self::buildDismiss($flowDismiss);
 
         $hints = self::normalizeHintsList($motor['hints'] ?? []);
 
@@ -233,6 +235,7 @@ final class AssistantEnvelope
             'manifest' => $manifest,
             'step' => $step,
             'submit' => $submit,
+            'dismiss' => $dismiss,
             'hints' => $hints,
         ];
     }
@@ -331,6 +334,49 @@ final class AssistantEnvelope
             'route' => $route,
             'method' => $method,
             'body_template' => $template === [] ? (object) [] : $template,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $flowDismiss
+     * @return array{active: bool, label: string, actions: list<array{label: string, href: string, variant: string}>}
+     */
+    private static function buildDismiss(?array $flowDismiss): array
+    {
+        if ($flowDismiss === null) {
+            return [
+                'active' => false,
+                'label' => '',
+                'actions' => [],
+            ];
+        }
+        $label = trim((string) ($flowDismiss['label'] ?? 'Entendido'));
+        if ($label === '') {
+            $label = 'Entendido';
+        }
+        $actions = [];
+        if (isset($flowDismiss['actions']) && is_array($flowDismiss['actions'])) {
+            foreach ($flowDismiss['actions'] as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $actionLabel = trim((string) ($row['label'] ?? ''));
+                $href = trim((string) ($row['href'] ?? ''));
+                if ($actionLabel === '' || $href === '') {
+                    continue;
+                }
+                $actions[] = [
+                    'label' => $actionLabel,
+                    'href' => $href,
+                    'variant' => trim((string) ($row['variant'] ?? 'secondary')),
+                ];
+            }
+        }
+
+        return [
+            'active' => true,
+            'label' => $label,
+            'actions' => $actions,
         ];
     }
 

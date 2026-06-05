@@ -103,6 +103,13 @@ subintents:
       - draft.reserva_triage_halt
     provides: []
     next: ""
+    terminal_without_submit: true
+    flow_dismiss:
+      label: "Entendido"
+    flow_actions:
+      - label: "Llamar al 107"
+        href: "tel:107"
+        variant: danger
     open_ui:
       action_id: turnos.reserva-triage-urgencia
 

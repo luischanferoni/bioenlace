@@ -1492,7 +1492,12 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
 
     Widget renderMessageBlock(Map<String, dynamic> b) {
       final title = b['title']?.toString();
-      final text = b['text']?.toString() ?? '';
+      final text = b['text']?.toString() ?? b['body']?.toString() ?? '';
+      final severity = b['severity']?.toString() ?? '';
+      Color? bg;
+      if (severity == 'warning') {
+        bg = theme.colorScheme.errorContainer.withValues(alpha: 0.35);
+      }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1500,9 +1505,18 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
             Text(title, style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
           ],
-          SelectableText(
-            text,
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+          Container(
+            padding: bg != null ? const EdgeInsets.all(12) : EdgeInsets.zero,
+            decoration: bg != null
+                ? BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(8),
+                  )
+                : null,
+            child: SelectableText(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+            ),
           ),
         ],
       );

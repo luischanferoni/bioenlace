@@ -10,6 +10,7 @@ class AssistantFlowView {
   final List<Map<String, dynamic>> hints;
   final Map<String, dynamic>? openUi;
   final Map<String, dynamic>? flowSubmit;
+  final Map<String, dynamic>? flowDismiss;
   final List<String> provides;
   final List<String> pendingFields;
 
@@ -22,6 +23,7 @@ class AssistantFlowView {
     this.hints = const [],
     this.openUi,
     this.flowSubmit,
+    this.flowDismiss,
     this.provides = const [],
     this.pendingFields = const [],
   });
@@ -34,9 +36,11 @@ class AssistantFlowView {
     final session = envelope['session'];
     final step = envelope['step'];
     final submit = envelope['submit'];
+    final dismissRaw = envelope['dismiss'];
     final sess = session is Map ? Map<String, dynamic>.from(session) : <String, dynamic>{};
     final st = step is Map ? Map<String, dynamic>.from(step) : <String, dynamic>{};
     final sub = submit is Map ? Map<String, dynamic>.from(submit) : <String, dynamic>{};
+    final dis = dismissRaw is Map ? Map<String, dynamic>.from(dismissRaw) : <String, dynamic>{};
 
     Map<String, dynamic>? openUi;
     if (st['active'] == true) {
@@ -54,6 +58,14 @@ class AssistantFlowView {
         'method': sub['method']?.toString() ?? 'POST',
         if (sub['body_template'] is Map)
           'body_template': Map<String, dynamic>.from(sub['body_template'] as Map),
+      };
+    }
+
+    Map<String, dynamic>? flowDismiss;
+    if (dis['active'] == true) {
+      flowDismiss = <String, dynamic>{
+        'label': dis['label']?.toString() ?? 'Entendido',
+        if (dis['actions'] is List) 'actions': dis['actions'],
       };
     }
 
@@ -78,6 +90,7 @@ class AssistantFlowView {
       hints: hints,
       openUi: openUi,
       flowSubmit: flowSubmit,
+      flowDismiss: flowDismiss,
       provides: st['provides'] is List
           ? List<String>.from((st['provides'] as List).map((e) => e.toString()))
           : <String>[],

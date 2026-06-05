@@ -21,7 +21,7 @@ intent_semantics:
     Entender por qué el paciente busca ayuda (triage breve) y conducirlo a la vía adecuada;
     hoy la rama principal es reserva de turno ambulatorio con datos de triage persistidos.
   how: >-
-    Motivo y alarmas → zona/detalle/evolución si aplica → servicio → centro → profesional → día → horario → confirmación.
+    Motivo y alarmas → zona/detalle/evolución si aplica → modalidad (presencial o remoto) → servicio → centro → profesional → día → horario → confirmación.
   preconditions:
     - El usuario puede autogestionar turnos cuando la rama es ambulatorio programable.
   constraints:
@@ -64,7 +64,7 @@ subintents:
         next: triage_alarmas
       - when:
           default: true
-        next: select_servicio
+        next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
@@ -91,7 +91,7 @@ subintents:
         next: triage_evolucion
       - when:
           default: true
-        next: select_servicio
+        next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
@@ -144,14 +144,26 @@ subintents:
     assistant_text: "Evolución"
     provides:
       - draft.triage_evolucion
-    next: select_servicio
+    next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
         step: evolucion
 
+  - id: select_tipo_atencion
+    assistant_text: "Modalidad"
+    provides:
+      - draft.tipo_atencion
+    next: select_servicio
+    open_ui:
+      action_id: turnos.reserva-triage-paso
+      params:
+        step: modalidad
+
   - id: select_servicio
     assistant_text: "Servicio"
+    requires:
+      - draft.tipo_atencion
     provides:
       - draft.id_servicio_asignado
     next: select_efector

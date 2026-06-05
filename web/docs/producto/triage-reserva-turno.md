@@ -26,6 +26,7 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 | Zona corporal | `triage_zona` | `?step=zona&triage_raiz=…` |
 | Detalle | `triage_detalle` | `?step=detalle&triage_zona=…` |
 | Evolución | `triage_evolucion` | `?step=evolucion` |
+| Modalidad (presencial / remoto) | `select_tipo_atencion` | `?step=modalidad` |
 | Servicio → … → confirmar | (sin cambios) | flujo turnos existente |
 
 **Atajos por motivo raíz:**

@@ -21,6 +21,9 @@ steps:
   evolucion:
     title: "¿Desde cuándo o cómo viene?"
     draft_field: triage_evolucion
+  modalidad:
+    title: "¿Cómo preferís la atención?"
+    draft_field: tipo_atencion
 
 nodes:
   # --- Raíz ---
@@ -204,3 +207,11 @@ nodes:
     step: evolucion
     label: "Es algo crónico, viene parecido"
     urgency_band: D
+
+  # --- Modalidad (presencial / remoto) — solo ramas ambulatorias ---
+  - code: presencial
+    step: modalidad
+    label: "Presencial (voy al centro de salud)"
+  - code: teleconsulta
+    step: modalidad
+    label: "Remoto (videollamada desde casa)"

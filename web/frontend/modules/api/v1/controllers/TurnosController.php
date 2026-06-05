@@ -118,7 +118,7 @@ class TurnosController extends BaseController
      * Paso embebible del triage de reserva (lista de opciones del catálogo).
      *
      * GET|POST /api/v1/turnos/reserva-triage-paso
-     * Query/body: `step` (raiz|alarmas|zona|detalle|evolucion); para zona/detalle también los códigos previos
+     * Query/body: `step` (raiz|alarmas|zona|detalle|evolucion|modalidad); para zona/detalle también los códigos previos
      * (`triage_raiz`, `triage_zona`) o `parent_code`.
      *
      * @action_name Paso triage reserva turno
@@ -132,7 +132,7 @@ class TurnosController extends BaseController
         $step = isset($params['step']) ? trim((string) $params['step']) : '';
         if ($step === '') {
             throw new BadRequestHttpException(
-                'step es obligatorio (raiz, alarmas, zona, detalle, evolucion). '
+                'step es obligatorio (raiz, alarmas, zona, detalle, evolucion, modalidad). '
                 . 'En flujos del asistente debe venir en query desde open_ui.params del subintent.'
             );
         }

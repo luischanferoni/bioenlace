@@ -3,6 +3,47 @@
  * El resto usa clases de Bootstrap
  */
 
+:root {
+    /* Paleta "papel" (alineada a mobile/packages/shared/lib/theme/tokens/paper_palette.dart) */
+    --bio-paper-25: #fdfcfb;
+    --bio-paper-50: #faf8f3;
+    --bio-paper-100: #f2efe8;
+    --bio-paper-150: #ece8e0;
+    --bio-paper-200: #e7e3da;
+    --bio-paper-300: #d5d0c6;
+    --bio-paper-400: #a8a29a;
+    --bio-paper-500: #6e6a63;
+    --bio-paper-600: #4a4742;
+    --bio-paper-700: #2e2c28;
+    --bio-paper-900: #1a1916;
+
+    /* Asistente: sticky toolbar y composer fijo */
+    --spa-chat-toolbar-sticky-top: 4.75rem;
+    --spa-chat-composer-reserve: calc(6.25rem + env(safe-area-inset-bottom, 0px));
+    --spa-chat-input-min-height: 2.75rem;
+}
+
+@media (max-width: 768px) {
+    :root {
+        --spa-chat-composer-reserve: calc(6.25rem + 88px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* Shell: navbar y menú en paper surface; área de contenido más clara */
+.main-content {
+    background-color: var(--bio-paper-25);
+}
+
+.iq-navbar.navbar {
+    background-color: var(--bio-paper-50) !important;
+    border-bottom-color: var(--bio-paper-200) !important;
+}
+
+.sidebar-menu {
+    background-color: var(--bio-paper-50) !important;
+    border-color: var(--bio-paper-300) !important;
+}
+
 /* Navegación Stack - Transiciones de páginas */
 .spa-page {
     position: fixed;
@@ -10,7 +51,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: #ffffff;
+    background: var(--bio-paper-25);
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
     z-index: 1;
     overflow-y: auto;
@@ -208,33 +249,6 @@ html:has(.spa-asistente-root) {
 }
 
 /* Asistente: sin card; mensajes con el fondo del layout; toolbar sticky; composer fijo abajo. */
-:root {
-    /* Paleta "papel" (alineada a mobile/packages/shared/lib/theme/tokens/paper_palette.dart) */
-    --bio-paper-25: #fdfcfb;
-    --bio-paper-50: #faf8f3;
-    --bio-paper-100: #f2efe8;
-    --bio-paper-150: #ece8e0;
-    --bio-paper-200: #e7e3da;
-    --bio-paper-300: #d5d0c6;
-    --bio-paper-400: #a8a29a;
-    --bio-paper-500: #6e6a63;
-    --bio-paper-600: #4a4742;
-    --bio-paper-700: #2e2c28;
-    --bio-paper-900: #1a1916;
-
-    /* Separación del sticky “Atajos” respecto al borde superior del viewport (ajustar al gusto). */
-    --spa-chat-toolbar-sticky-top: 4.75rem;
-    /* Reserva inferior de mensajes (fallback; spa-home.js la ajusta al alto real del composer). */
-    --spa-chat-composer-reserve: calc(6.25rem + env(safe-area-inset-bottom, 0px));
-    --spa-chat-input-min-height: 2.75rem;
-}
-
-@media (max-width: 768px) {
-    :root {
-        --spa-chat-composer-reserve: calc(6.25rem + 88px + env(safe-area-inset-bottom, 0px));
-    }
-}
-
 .spa-asistente-root {
     padding-bottom: 0;
     background-color: var(--bio-paper-25);

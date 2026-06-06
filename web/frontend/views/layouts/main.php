@@ -14,7 +14,7 @@ use common\models\ConsultasConfiguracion;
 AppAsset::register($this);
 
 // Registrar CSS para el menú lateral responsive
-$this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerCssFile('@web/css/spa.css', ['depends' => [AppAsset::class]]);
 
 // Registrar JavaScript para manejo de dropdowns del navbar
 $this->registerJsFile('@web/js/navbar-dropdowns.js', ['depends' => [\yii\web\JqueryAsset::class]]);

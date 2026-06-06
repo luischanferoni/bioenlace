@@ -358,6 +358,10 @@ final class FlowManifest
     private static function routeForActionId(string $actionId): string
     {
         $actionId = strtolower(trim($actionId));
+        $dataAccessRoute = \common\components\Assistant\Catalog\DataAccessUiActionCatalog::httpRouteForActionId($actionId);
+        if ($dataAccessRoute !== '') {
+            return $dataAccessRoute;
+        }
         if (preg_match('#^clinical\.([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
             return '/api/v1/clinical/'
                 . rawurlencode((string) $m[1]) . '/'

@@ -415,6 +415,16 @@ final class AssistantEnvelope
             $enriched = AssistantClientOpenEnricher::enrich($action);
             $co = $enriched['client_open'] ?? null;
             if (is_array($co) && trim((string) ($co['kind'] ?? '')) !== '') {
+                if (($co['kind'] ?? '') === 'intent' && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
+                    return [
+                        'kind' => 'ui_json',
+                        'api' => [
+                            'route' => $route,
+                            'method' => 'GET|POST',
+                        ],
+                    ];
+                }
+
                 return $co;
             }
             if (UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {

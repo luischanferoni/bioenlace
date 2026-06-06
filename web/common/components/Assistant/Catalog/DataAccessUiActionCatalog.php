@@ -52,6 +52,45 @@ final class DataAccessUiActionCatalog
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public static function definitionByActionId(string $actionId): ?array
+    {
+        $actionId = trim($actionId);
+        if ($actionId === '') {
+            return null;
+        }
+        foreach (self::discoverAll() as $def) {
+            if (trim((string) ($def['action_id'] ?? '')) === $actionId) {
+                return $def;
+            }
+        }
+
+        return null;
+    }
+
+    public static function httpRouteForActionId(string $actionId): string
+    {
+        $def = self::definitionByActionId($actionId);
+
+        return $def !== null ? trim((string) ($def['route'] ?? '')) : '';
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function clientOpenForActionId(string $actionId): ?array
+    {
+        $def = self::definitionByActionId($actionId);
+        if ($def === null) {
+            return null;
+        }
+        $co = $def['client_open'] ?? null;
+
+        return is_array($co) ? $co : null;
+    }
+
+    /**
      * @param list<string> $keywords
      * @return array<string, mixed>
      */

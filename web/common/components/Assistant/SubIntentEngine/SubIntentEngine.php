@@ -828,6 +828,15 @@ final class SubIntentEngine
      */
     private static function resolveClientOpen(string $actionId, int $userId): array
     {
+        // Intents YAML con open_ui al mismo action_id (p. ej. data-access.info): mini-UI HTTP, no re-iniciar flow.
+        $dataAccessOpen = \common\components\Assistant\Catalog\DataAccessUiActionCatalog::clientOpenForActionId($actionId);
+        if ($dataAccessOpen !== null) {
+            return [
+                'action_id' => $actionId,
+                'client_open' => $dataAccessOpen,
+            ];
+        }
+
         $catalog = UiActionCatalog::forUser($userId);
         $item = $catalog->byActionId[$actionId] ?? null;
         if ($item === null) {

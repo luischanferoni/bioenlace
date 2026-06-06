@@ -209,10 +209,24 @@ html:has(.spa-asistente-root) {
 
 /* Asistente: sin card; mensajes con el fondo del layout; toolbar sticky; composer fijo abajo. */
 :root {
+    /* Paleta "papel" (alineada a mobile/packages/shared/lib/theme/tokens/paper_palette.dart) */
+    --bio-paper-25: #fdfcfb;
+    --bio-paper-50: #faf8f3;
+    --bio-paper-100: #f2efe8;
+    --bio-paper-150: #ece8e0;
+    --bio-paper-200: #e7e3da;
+    --bio-paper-300: #d5d0c6;
+    --bio-paper-400: #a8a29a;
+    --bio-paper-500: #6e6a63;
+    --bio-paper-600: #4a4742;
+    --bio-paper-700: #2e2c28;
+    --bio-paper-900: #1a1916;
+
     /* Separación del sticky “Atajos” respecto al borde superior del viewport (ajustar al gusto). */
     --spa-chat-toolbar-sticky-top: 4.75rem;
     /* Reserva inferior de mensajes (fallback; spa-home.js la ajusta al alto real del composer). */
     --spa-chat-composer-reserve: calc(6.25rem + env(safe-area-inset-bottom, 0px));
+    --spa-chat-input-min-height: 2.75rem;
 }
 
 @media (max-width: 768px) {
@@ -223,6 +237,7 @@ html:has(.spa-asistente-root) {
 
 .spa-asistente-root {
     padding-bottom: 0;
+    background-color: var(--bio-paper-25);
 }
 
 .spa-chat-root {
@@ -277,6 +292,10 @@ html:has(.spa-asistente-root) {
     flex: 0 1 auto;
 }
 
+.spa-chat-empty-intro {
+    color: var(--bio-paper-500) !important;
+}
+
 .spa-chat-messages {
     overflow: visible;
     min-height: 0;
@@ -288,8 +307,9 @@ html:has(.spa-asistente-root) {
     bottom: 0;
     z-index: 1020;
     padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
-    background: transparent;
-    box-shadow: none;
+    background: var(--bio-paper-25);
+    border-top: 1px solid var(--bio-paper-200);
+    box-shadow: 0 -2px 8px rgba(26, 25, 22, 0.06);
 }
 
 @media (max-width: 768px) {
@@ -299,46 +319,111 @@ html:has(.spa-asistente-root) {
     }
 }
 
-/* Chat input: botón overlay dentro del textarea (estilo libre, no dependiente de Bootstrap). */
+/* Composer: fila textarea + botón (alineados al borde inferior cuando crece el texto). */
 .spa-chat-input-wrap {
-    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
     width: 100%;
 }
 
 .spa-chat-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    margin: 0;
     resize: none;
     overflow-y: hidden;
-    min-height: 2.75rem;
+    min-height: var(--spa-chat-input-min-height);
     max-height: min(40vh, 12rem);
-    padding-right: 3.25rem; /* espacio para el botón */
-    padding-bottom: 0.85rem;
+    padding: 0.625rem 1rem;
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--bio-paper-600);
+    background-color: var(--bio-paper-50);
+    border: 1px solid var(--bio-paper-300);
+    border-radius: var(--bs-border-radius, 1.1rem);
+    box-shadow: 0 1px 3px rgba(26, 25, 22, 0.05);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Textarea “sin caja”: sin borde; sombra en el campo (no en .spa-chat-composer). */
-.spa-chat-composer .spa-chat-input--bare {    
-    border-radius: 1.1rem;
-    box-shadow: 0 0 11px rgba(0, 0, 0, 0.07);
+.spa-chat-input::placeholder {
+    color: var(--bio-paper-500);
+    opacity: 1;
 }
 
-.spa-chat-composer .spa-chat-input--bare::placeholder {
-    color: var(--bs-secondary-color, #6c757d);
-    opacity: 0.85;
+.spa-chat-input:focus {
+    outline: none;
+    border-color: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
+    box-shadow: 0 0 0 0.2rem rgba(84, 160, 255, 0.2);
+}
+
+.spa-chat-input:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    background-color: var(--bio-paper-100);
 }
 
 .spa-chat-send-btn {
-    position: absolute;
-    right: 0.6rem;
-    bottom: 0.55rem;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 999px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--spa-chat-input-min-height);
+    height: var(--spa-chat-input-min-height);
+    min-width: var(--spa-chat-input-min-height);
+    min-height: var(--spa-chat-input-min-height);
     padding: 0;
+    border: none;
+    border-radius: var(--bs-border-radius-pill, 50%);
     line-height: 1;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+    color: #fff;
+    background-color: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
+    box-shadow: 0 2px 6px rgba(84, 160, 255, 0.28);
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+
+.spa-chat-send-btn:hover:not(:disabled) {
+    background-color: var(--bioenlace-primary-hover, #0876ff);
+    box-shadow: 0 3px 8px rgba(84, 160, 255, 0.34);
+}
+
+.spa-chat-send-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.spa-chat-send-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.spa-chat-send-btn .spa-send-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1;
 }
 
 .spa-chat-send-btn .spa-spinner {
     line-height: 0;
+}
+
+.spa-chat-send-btn .spinner-border {
+    --bs-spinner-width: 1rem;
+    --bs-spinner-height: 1rem;
+    border-color: currentColor;
+    border-right-color: transparent;
+}
+
+.spa-chat-composer-hint {
+    margin-top: 0.5rem;
+    padding-left: 0.25rem;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    color: var(--bio-paper-500);
 }
 
 /*

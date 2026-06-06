@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Triage de reserva → filas concretas de {@see servicios} (global, N:M por triage_codigo).
  *
- * Reemplaza la resolución vía `servicio_rol` + YAML ({@see ReservaTriageServicioMapService})
+ * Reemplaza la resolución legacy vía `servicio_rol` + patrones YAML.
  * para el flujo presencial/autogestión. La tabla {@see reserva_triage_codigo_servicio_rol}
  * permanece por compatibilidad; el seed se genera desde sus filas si existe.
  */
@@ -249,7 +249,7 @@ class m260609_100000_reserva_triage_codigo_servicio extends Migration
     }
 
     /**
-     * Patrones alineados con reserva_triage_servicio_map_v1.yaml (solo para seed inicial).
+     * Patrones para seed inicial desde filas legacy de servicio_rol.
      *
      * @return array<string, list<string>>
      */

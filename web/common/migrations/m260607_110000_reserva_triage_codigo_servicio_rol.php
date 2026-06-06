@@ -17,7 +17,7 @@ class m260607_110000_reserva_triage_codigo_servicio_rol extends Migration
         $this->createTable(self::TABLE, [
             'id' => $this->primaryKey()->unsigned(),
             'triage_codigo' => $this->string(64)->notNull()->comment('Código interno del catálogo triage (p. ej. det_piel_erupcion)'),
-            'servicio_rol' => $this->string(64)->notNull()->comment('Rol lógico; ver ReservaTriageServicioRol / reserva_triage_servicio_map_v1.yaml'),
+            'servicio_rol' => $this->string(64)->notNull()->comment('Legacy; ver reserva_triage_codigo_servicio'),
             'prioridad' => $this->smallInteger()->notNull()->defaultValue(100),
             'notas' => $this->text()->null(),
         ]);

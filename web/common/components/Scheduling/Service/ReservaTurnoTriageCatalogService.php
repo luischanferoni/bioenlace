@@ -2,15 +2,26 @@
 
 namespace common\components\Scheduling\Service;
 
+use common\models\ReservaTriageTeleconsultaElegibilidad;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
- * Catálogo declarativo de triage al reservar turno ({@see metadata/reserva_triage_catalog_v1.yaml}).
+ * Catálogo declarativo de triage clínico al reservar turno ({@see metadata/reserva_triage_catalog_v1.yaml}).
+ *
+ * Pasos de flow-only (p. ej. modalidad) viven en servicios dedicados ({@see ReservaTriageModalidadStepService}).
  */
 final class ReservaTurnoTriageCatalogService
 {
     private const CATALOG_FILE = 'reserva_triage_catalog_v1.yaml';
+
+    /** @var array<string, array{title: string, draft_field: string}> */
+    private const FLOW_ONLY_STEPS = [
+        ReservaTriageModalidadStepService::STEP_ID => [
+            'title' => ReservaTriageModalidadStepService::TITLE,
+            'draft_field' => ReservaTriageModalidadStepService::DRAFT_FIELD,
+        ],
+    ];
 
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
@@ -48,7 +59,9 @@ final class ReservaTurnoTriageCatalogService
         }
         $steps = self::load()['steps'] ?? [];
         if (!is_array($steps) || !isset($steps[$stepId]) || !is_array($steps[$stepId])) {
-            return null;
+            $flowOnly = self::FLOW_ONLY_STEPS[$stepId] ?? null;
+
+            return $flowOnly;
         }
         $s = $steps[$stepId];
         $title = trim((string) ($s['title'] ?? ''));
@@ -70,7 +83,10 @@ final class ReservaTurnoTriageCatalogService
             return [];
         }
 
-        return array_values(array_map('strval', array_keys($steps)));
+        return array_values(array_unique(array_merge(
+            array_map('strval', array_keys($steps)),
+            array_keys(self::FLOW_ONLY_STEPS)
+        )));
     }
 
     public function findNode(string $code): ?array
@@ -96,7 +112,7 @@ final class ReservaTurnoTriageCatalogService
     }
 
     /**
-     * @return list<array{code: string, label: string, urgency_band: string|null, halts_booking: bool, suggests_tipo_atencion: string|null}>
+     * @return list<array{code: string, label: string, urgency_band: string|null, halts_booking: bool}>
      */
     public function getOptionsForStep(string $stepId, ?string $parentCode = null): array
     {
@@ -125,9 +141,6 @@ final class ReservaTurnoTriageCatalogService
                 'label' => $label,
                 'urgency_band' => isset($node['urgency_band']) ? trim((string) $node['urgency_band']) : null,
                 'halts_booking' => !empty($node['halts_booking']),
-                'suggests_tipo_atencion' => isset($node['suggests_tipo_atencion'])
-                    ? trim((string) $node['suggests_tipo_atencion'])
-                    : null,
             ];
         }
 
@@ -143,8 +156,7 @@ final class ReservaTurnoTriageCatalogService
      *   urgency_band: string,
      *   reserva_triage_halt: bool,
      *   reserva_triage_meta_json: array<string, mixed>,
-     *   suggests_tipo_atencion: string|null,
-     *   suggests_servicio_rol: string|null
+     *   suggests_tipo_atencion: string|null
      * }
      */
     public function compileSelections(array $selections): array
@@ -155,7 +167,6 @@ final class ReservaTurnoTriageCatalogService
         $halt = false;
         $leafCode = '';
         $suggestTipo = null;
-        $suggestServicioRol = null;
 
         $orderedKeys = ['triage_raiz', 'triage_alarmas', 'triage_zona', 'triage_detalle', 'triage_evolucion'];
         foreach ($orderedKeys as $key) {
@@ -181,14 +192,20 @@ final class ReservaTurnoTriageCatalogService
                 if ($b !== '' && ($bandOrder[$b] ?? 0) > ($bandOrder[$maxBand] ?? 0)) {
                     $maxBand = $b;
                 }
-                if (!empty($node['suggests_tipo_atencion']) && $suggestTipo === null) {
-                    $suggestTipo = trim((string) $node['suggests_tipo_atencion']);
-                }
-                if (!empty($node['suggests_servicio_rol'])) {
-                    $suggestServicioRol = trim((string) $node['suggests_servicio_rol']);
-                }
             }
         }
+
+        $codigos = [];
+        foreach ($orderedKeys as $key) {
+            if (!isset($selections[$key])) {
+                continue;
+            }
+            $code = trim((string) $selections[$key]);
+            if ($code !== '') {
+                $codigos[] = $code;
+            }
+        }
+        $suggestTipo = ReservaTriageTeleconsultaElegibilidad::suggestTipoAtencionParaCodigos($codigos);
 
         $nota = isset($selections['triage_nota']) ? trim((string) $selections['triage_nota']) : '';
         if ($nota !== '') {
@@ -209,7 +226,6 @@ final class ReservaTurnoTriageCatalogService
                 'compiled_at' => gmdate('c'),
             ],
             'suggests_tipo_atencion' => $suggestTipo,
-            'suggests_servicio_rol' => $suggestServicioRol,
         ];
     }
 

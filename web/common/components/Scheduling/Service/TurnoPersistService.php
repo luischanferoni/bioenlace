@@ -234,8 +234,7 @@ class TurnoPersistService
             return;
         }
 
-        $map = new ReservaTriageServicioMapService();
-        if (!$map->especialistaSoloTeleconsultaConDerivacion()) {
+        if (!ReservaTriageAccesoConfig::especialistaSoloTeleconsultaConDerivacion()) {
             return;
         }
 
@@ -244,9 +243,7 @@ class TurnoPersistService
             return;
         }
 
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
-        if ($rol === null || !$map->teleconsultaSoloConDerivacion($rol)) {
+        if ($servicio->permiteReservaAutogestionPaciente()) {
             return;
         }
 

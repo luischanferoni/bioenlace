@@ -2,19 +2,19 @@
 
 namespace common\components\Core\DataAccess\Filter;
 
-use common\components\Scheduling\Service\ReservaTriageServicioMapService;
+use common\components\Organization\Service\Servicios\ServicioMencionLookupService;
 
 /**
- * Mención NL → servicio_rol (normaliza; no aplica SQL directamente).
+ * Mención NL → token de filtro de servicio (normaliza; no aplica SQL directamente).
  */
 final class ServicioRolFromMentionFilterResolver implements FilterValueResolverInterface
 {
-    /** @var ReservaTriageServicioMapService */
-    private $servicioMap;
+    /** @var ServicioMencionLookupService */
+    private $lookup;
 
-    public function __construct(?ReservaTriageServicioMapService $servicioMap = null)
+    public function __construct(?ServicioMencionLookupService $lookup = null)
     {
-        $this->servicioMap = $servicioMap ?? new ReservaTriageServicioMapService();
+        $this->lookup = $lookup ?? new ServicioMencionLookupService();
     }
 
     public function resolve(FilterValueResolverContext $ctx, array $filterDef): FilterResolvedValue
@@ -24,8 +24,7 @@ final class ServicioRolFromMentionFilterResolver implements FilterValueResolverI
             return new FilterResolvedValue(false);
         }
 
-        $rol = $this->servicioMap->resolveRolFromText($mention);
-        if ($rol === null || $rol === '') {
+        if ($this->lookup->idsDesdeMencion($mention) === []) {
             return new FilterResolvedValue(false, '', 'eq', null, false, ['mention' => $mention]);
         }
 
@@ -35,9 +34,9 @@ final class ServicioRolFromMentionFilterResolver implements FilterValueResolverI
             false,
             '',
             'eq',
-            $rol,
+            $mention,
             false,
-            ['normalize_to' => $normalizeTo, 'servicio_rol' => $rol, 'mention' => $mention]
+            ['normalize_to' => $normalizeTo, 'servicio_rol' => $mention, 'mention' => $mention]
         );
     }
 }

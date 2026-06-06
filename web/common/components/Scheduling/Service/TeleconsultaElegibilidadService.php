@@ -6,6 +6,7 @@ use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestion
 use common\models\ConsultaDerivaciones;
 use common\models\Scheduling\Turno;
 use common\models\Servicio;
+use common\models\ReservaTriageTeleconsultaElegibilidad;
 use common\models\ServicioTeleconsultaCaso;
 
 /**
@@ -175,35 +176,16 @@ final class TeleconsultaElegibilidadService
             return self::ELEG_PRESENCIAL_PREFERIDO;
         }
 
-        $catalog = new ReservaTurnoTriageCatalogService();
-        foreach ($this->codigosCasoDesdeDraft($draft) as $code) {
-            $node = $catalog->findNode($code);
-            if ($node === null) {
-                continue;
-            }
-            $eleg = isset($node['teleconsulta_elegibilidad'])
-                ? trim((string) $node['teleconsulta_elegibilidad'])
-                : '';
-            if ($eleg !== '' && in_array($eleg, [
-                self::ELEG_EXCLUIDO,
-                self::ELEG_PRESENCIAL_PREFERIDO,
-                self::ELEG_PERMITIDO,
-                self::ELEG_SUGERIDO,
-            ], true)) {
-                return $eleg;
-            }
-            if (!empty($node['suggests_tipo_atencion'])
-                && trim((string) $node['suggests_tipo_atencion']) === Turno::TIPO_ATENCION_TELECONSULTA) {
-                return self::ELEG_SUGERIDO;
-            }
-        }
-
-        $raiz = trim((string) ($draft['triage_raiz'] ?? ''));
-        if ($raiz === 'tramite_admin') {
-            return self::ELEG_PERMITIDO;
-        }
-        if ($raiz === 'control_cronico') {
-            return self::ELEG_SUGERIDO;
+        $eleg = ReservaTriageTeleconsultaElegibilidad::elegibilidadParaCodigos(
+            $this->codigosCasoDesdeDraft($draft)
+        );
+        if ($eleg !== null && in_array($eleg, [
+            self::ELEG_EXCLUIDO,
+            self::ELEG_PRESENCIAL_PREFERIDO,
+            self::ELEG_PERMITIDO,
+            self::ELEG_SUGERIDO,
+        ], true)) {
+            return $eleg;
         }
 
         return self::ELEG_PERMITIDO;
@@ -263,7 +245,7 @@ final class TeleconsultaElegibilidadService
     }
 
     /**
-     * Hub paciente vs especialista con derivación: metadata {@see ReservaTriageServicioMapService}.
+     * Hub paciente vs especialista con derivación ({@see Servicio::permiteReservaAutogestionPaciente()}).
      *
      * @param array<string, mixed> $draft
      * @return array{
@@ -276,8 +258,7 @@ final class TeleconsultaElegibilidadService
      */
     private function resolverAccesoHubEspecialista(int $idServicio, array $draft, string $elegClinica): ?array
     {
-        $map = new ReservaTriageServicioMapService();
-        if (!$map->especialistaSoloTeleconsultaConDerivacion()) {
+        if (!ReservaTriageAccesoConfig::especialistaSoloTeleconsultaConDerivacion()) {
             return null;
         }
 
@@ -286,13 +267,7 @@ final class TeleconsultaElegibilidadService
             return null;
         }
 
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
-        if ($rol === null || $map->permiteAutogestionPaciente($rol)) {
-            return null;
-        }
-
-        if (!$map->teleconsultaSoloConDerivacion($rol)) {
+        if ($servicio->permiteReservaAutogestionPaciente()) {
             return null;
         }
 

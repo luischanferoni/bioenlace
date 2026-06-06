@@ -181,6 +181,7 @@ subintents:
       action_id: turnos.reserva-triage-paso
       params:
         step: modalidad
+        step_title: "¿Cómo preferís la atención?"
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas"
         triage_zona: "draft.triage_zona"

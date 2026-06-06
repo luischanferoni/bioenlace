@@ -2,42 +2,49 @@
 
 namespace common\components\Core\DataAccess\Filter;
 
-use common\components\Scheduling\Service\ReservaTriageServicioMapService;
+use common\components\Organization\Service\Servicios\ServicioMencionLookupService;
 use common\models\ServiciosEfector;
 
 /**
- * servicio_rol → ids de servicio habilitados en el efector para ese rol lógico.
+ * Mención o token de servicio → ids de servicio habilitados en el efector.
  */
 final class ServicioRolEfectorIdsFilterResolver implements FilterValueResolverInterface
 {
-    /** @var ReservaTriageServicioMapService */
-    private $servicioMap;
+    /** @var ServicioMencionLookupService */
+    private $lookup;
 
-    public function __construct(?ReservaTriageServicioMapService $servicioMap = null)
+    public function __construct(?ServicioMencionLookupService $lookup = null)
     {
-        $this->servicioMap = $servicioMap ?? new ReservaTriageServicioMapService();
+        $this->lookup = $lookup ?? new ServicioMencionLookupService();
     }
 
     public function resolve(FilterValueResolverContext $ctx, array $filterDef): FilterResolvedValue
     {
-        $rol = trim((string) $ctx->rawValue);
+        $token = trim((string) $ctx->rawValue);
         $column = trim((string) ($filterDef['apply_column'] ?? ''));
         $op = trim((string) ($filterDef['apply_op'] ?? 'in'));
-        if ($rol === '') {
+        if ($token === '') {
             return new FilterResolvedValue(false);
         }
 
         $idEfector = $ctx->idEfector();
         if ($idEfector <= 0) {
-            throw new \InvalidArgumentException('id_efector requerido para filtrar por servicio_rol.');
+            throw new \InvalidArgumentException('id_efector requerido para filtrar por servicio.');
         }
 
         $idsEfector = ServiciosEfector::find()
             ->select('id_servicio')
             ->where(['id_efector' => $idEfector])
             ->column();
-        $ids = $this->servicioMap->idsServicioParaRol($rol, array_map('intval', $idsEfector));
-        $label = $this->servicioMap->getLabelForRol($rol);
+        $idsGlobales = $this->lookup->idsDesdeMencion($token);
+        $allow = array_flip(array_map('intval', $idsEfector));
+        $ids = [];
+        foreach ($idsGlobales as $id) {
+            if (isset($allow[$id])) {
+                $ids[] = $id;
+            }
+        }
+        $label = $this->lookup->labelParaIds($idsGlobales);
 
         if ($ids === []) {
             return new FilterResolvedValue(
@@ -46,7 +53,7 @@ final class ServicioRolEfectorIdsFilterResolver implements FilterValueResolverIn
                 $op,
                 [],
                 true,
-                ['servicio_rol' => $rol, 'servicio_rol_label' => $label, 'sin_servicio_en_efector' => true]
+                ['servicio_rol' => $token, 'servicio_rol_label' => $label, 'sin_servicio_en_efector' => true]
             );
         }
 
@@ -56,7 +63,7 @@ final class ServicioRolEfectorIdsFilterResolver implements FilterValueResolverIn
             $op,
             $ids,
             false,
-            ['servicio_rol' => $rol, 'servicio_rol_label' => $label]
+            ['servicio_rol' => $token, 'servicio_rol_label' => $label]
         );
     }
 }

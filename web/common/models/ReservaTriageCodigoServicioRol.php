@@ -5,7 +5,7 @@ namespace common\models;
 use yii\db\ActiveRecord;
 
 /**
- * Regla declarativa: código de triage de reserva → rol lógico de servicio.
+ * Regla declarativa legacy: código de triage → servicio_rol (superseded por {@see ReservaTriageCodigoServicio}).
  *
  * @property int $id
  * @property string $triage_codigo

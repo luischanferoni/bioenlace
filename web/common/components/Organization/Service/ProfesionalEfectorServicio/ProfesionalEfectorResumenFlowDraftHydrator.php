@@ -4,7 +4,7 @@ namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Scheduling\Service\ReservaTriageServicioMapService;
+use common\components\Organization\Service\Servicios\ServicioMencionLookupService;
 
 /**
  * Enriquece draft del intent organization.resumen-profesionales-efector desde preprocess / contenido.
@@ -25,9 +25,9 @@ final class ProfesionalEfectorResumenFlowDraftHydrator
                 $mention = $content;
             }
             if ($mention !== null && $mention !== '') {
-                $rol = (new ReservaTriageServicioMapService())->resolveRolFromText($mention);
-                if ($rol !== null && $rol !== '') {
-                    $draft['servicio_rol'] = $rol;
+                $ids = (new ServicioMencionLookupService())->idsDesdeMencion($mention);
+                if ($ids !== []) {
+                    $draft['servicio_rol'] = $mention;
                     $draft['servicio_rol_mention'] = $mention;
                 }
             }

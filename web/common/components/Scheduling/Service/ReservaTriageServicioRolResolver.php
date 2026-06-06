@@ -4,7 +4,6 @@ namespace common\components\Scheduling\Service;
 
 use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
 use common\models\ReservaTriageCodigoServicio;
-use common\models\ReservaTriageCodigoServicioRol;
 use common\models\Servicio;
 
 /**
@@ -21,7 +20,7 @@ final class ReservaTriageServicioRolResolver
     {
         $codigos = $this->codigosTriageEnDraft($draft);
         $codigoResolutor = $this->codigoResolutorDesdeDraft($draft, $codigos);
-        $idsSugeridos = $this->resolverIdsSugeridos($codigos, $draft);
+        $idsSugeridos = ReservaTriageCodigoServicio::idsParaCodigos($codigos);
         $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
         $idsElegibles = $this->intersectarElegibles($idsSugeridos, $eligibleIds);
         $idsReservables = $this->filtrarAutogestionPaciente($idsElegibles);
@@ -97,61 +96,6 @@ final class ReservaTriageServicioRolResolver
     }
 
     /**
-     * @param list<string> $codigos
-     * @param array<string, mixed> $draft
-     * @return list<int>
-     */
-    private function resolverIdsSugeridos(array $codigos, array $draft): array
-    {
-        $ids = ReservaTriageCodigoServicio::idsParaCodigos($codigos);
-        if ($ids !== []) {
-            return $ids;
-        }
-
-        return $this->fallbackIdsDesdeRolLegacy($codigos, $draft);
-    }
-
-    /**
-     * Respaldo mientras la migración no corrió: triage_codigo → servicio_rol → patrones YAML.
-     *
-     * @param list<string> $codigos
-     * @param array<string, mixed> $draft
-     * @return list<int>
-     */
-    private function fallbackIdsDesdeRolLegacy(array $codigos, array $draft): array
-    {
-        $map = new ReservaTriageServicioMapService();
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $out = [];
-
-        foreach ($codigos as $code) {
-            $rol = ReservaTriageCodigoServicioRol::rolParaCodigo($code)
-                ?? ReservaTriageServicioRol::rolBuiltinParaCodigo($code);
-            if ($rol === null || trim($rol) === '') {
-                continue;
-            }
-            foreach ($map->idsServicioParaRol(trim($rol), $eligibleIds) as $id) {
-                $out[] = $id;
-            }
-        }
-
-        if ($out === []) {
-            $catalog = new ReservaTurnoTriageCatalogService();
-            $compiled = $catalog->compileSelections($draft);
-            $fromCatalog = trim((string) ($compiled['suggests_servicio_rol'] ?? ''));
-            $rol = $fromCatalog !== '' ? $fromCatalog : $map->getDefaultRol();
-            foreach ($map->idsServicioParaRol($rol, $eligibleIds) as $id) {
-                $out[] = $id;
-            }
-        }
-
-        sort($out);
-
-        return array_values(array_unique($out));
-    }
-
-    /**
-     * @param list<string> $codigos
      * @param list<string> $codigosEnDraft
      */
     private function codigoResolutorDesdeDraft(array $draft, array $codigosEnDraft): string
@@ -161,11 +105,6 @@ final class ReservaTriageServicioRolResolver
                 continue;
             }
             if (ReservaTriageCodigoServicio::idsParaCodigo($code) !== []) {
-                return $code;
-            }
-            $rol = ReservaTriageCodigoServicioRol::rolParaCodigo($code)
-                ?? ReservaTriageServicioRol::rolBuiltinParaCodigo($code);
-            if ($rol !== null && trim($rol) !== '') {
                 return $code;
             }
         }
@@ -231,21 +170,9 @@ final class ReservaTriageServicioRolResolver
             return [];
         }
 
-        $schema = Servicio::getTableSchema();
-        $tieneColumna = $schema !== null && isset($schema->columns['reserva_autogestion_paciente']);
-
         $out = [];
         foreach (Servicio::find()->where(['id_servicio' => $ids])->all() as $servicio) {
             if (!$servicio instanceof Servicio) {
-                continue;
-            }
-            if (!$tieneColumna) {
-                $map = new ReservaTriageServicioMapService();
-                $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-                $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
-                if ($rol !== null && $map->permiteAutogestionPaciente($rol)) {
-                    $out[] = (int) $servicio->id_servicio;
-                }
                 continue;
             }
             if ($servicio->permiteReservaAutogestionPaciente()) {

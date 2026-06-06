@@ -34,6 +34,7 @@ use common\components\Scheduling\Service\SobreturnoService;
 use common\components\Scheduling\Service\TurnoReservaSlotService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Scheduling\Service\TurnoAgendaMetricsService;
+use common\components\Scheduling\Service\ReservaTriageModalidadStepService;
 use common\components\Scheduling\Service\ReservaTurnoTriageCatalogService;
 use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
 use common\components\Scheduling\Service\TeleconsultaElegibilidadService;
@@ -108,11 +109,18 @@ class TurnosController extends BaseController
         $manifest = $catalog->getManifest();
         unset($manifest['nodes']);
 
+        $steps = is_array($manifest['steps'] ?? null) ? $manifest['steps'] : [];
+        $steps[ReservaTriageModalidadStepService::STEP_ID] = [
+            'title' => ReservaTriageModalidadStepService::TITLE,
+            'draft_field' => ReservaTriageModalidadStepService::DRAFT_FIELD,
+            'source' => 'flow',
+        ];
+
         return [
             'success' => true,
             'version' => $catalog->getVersion(),
             'halt_message_band_a' => $catalog->getHaltMessageBandA(),
-            'steps' => $manifest['steps'] ?? [],
+            'steps' => $steps,
         ];
     }
 
@@ -148,7 +156,7 @@ class TurnosController extends BaseController
         $parentCode = $this->reservaTriageParentForStep($step, $params);
         $options = $catalog->getOptionsForStep($step, $parentCode !== '' ? $parentCode : null);
 
-        if ($step === 'modalidad') {
+        if (ReservaTriageModalidadStepService::isModalidadStep($step)) {
             $draft = $this->draftDesdeParamsReservaTriage($params);
             (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
             $eleg = new TeleconsultaElegibilidadService();
@@ -160,7 +168,6 @@ class TurnosController extends BaseController
                     'label' => $row['label'],
                     'urgency_band' => null,
                     'halts_booking' => false,
-                    'suggests_tipo_atencion' => null,
                 ];
             }
         }
@@ -176,7 +183,8 @@ class TurnosController extends BaseController
         );
 
         if (isset($out['kind'], $out['ui_type']) && $out['kind'] === 'ui_definition' && $out['ui_type'] === 'ui_json') {
-            $out['title'] = $stepDef['title'];
+            $titleOverride = trim((string) ($params['step_title'] ?? ''));
+            $out['title'] = $titleOverride !== '' ? $titleOverride : $stepDef['title'];
             $items = [];
             foreach ($options as $opt) {
                 $items[] = [
@@ -185,7 +193,6 @@ class TurnosController extends BaseController
                     'meta' => [
                         'urgency_band' => $opt['urgency_band'],
                         'halts_booking' => $opt['halts_booking'],
-                        'suggests_tipo_atencion' => $opt['suggests_tipo_atencion'],
                     ],
                 ];
             }

@@ -2,6 +2,7 @@
 
 namespace common\components\Scheduling\Service;
 
+use common\components\Organization\Service\Servicios\ServicioMencionLookupService;
 use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
 use common\models\ConsultaDerivaciones;
 use common\models\Servicio;
@@ -64,7 +65,7 @@ final class ReservaTriageServicioSugeridoService
      */
     public function filtrarItemsHubPaciente(array $items): array
     {
-        return $this->filtrarItemsPorRol($items, (new ReservaTriageServicioMapService())->getHubRol());
+        return $this->filtrarItemsPorIds($items, (new ReservaTriageServicioRolResolver())->idsServiciosHub());
     }
 
     /**
@@ -156,19 +157,8 @@ final class ReservaTriageServicioSugeridoService
             return;
         }
 
-        $schema = Servicio::getTableSchema();
-        $usaColumnaAutogestion = $schema !== null && isset($schema->columns['reserva_autogestion_paciente']);
-        if ($usaColumnaAutogestion) {
-            if ($servicio->permiteReservaAutogestionPaciente()) {
-                return;
-            }
-        } else {
-            $map = new ReservaTriageServicioMapService();
-            $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-            $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
-            if ($rol === null || $map->permiteAutogestionPaciente($rol)) {
-                return;
-            }
+        if ($servicio->permiteReservaAutogestionPaciente()) {
+            return;
         }
 
         if ($idEfector <= 0) {
@@ -252,7 +242,7 @@ final class ReservaTriageServicioSugeridoService
     {
         $resolver = new ReservaTriageServicioRolResolver();
         $ids = $resolver->idsServiciosHub();
-        $label = $this->labelServicios($ids);
+        $label = (new ServicioMencionLookupService())->labelParaIds($ids);
 
         return [
             'rol' => $ids !== [] ? (string) $ids[0] : '',
@@ -282,7 +272,7 @@ final class ReservaTriageServicioSugeridoService
     {
         $resolver = new ReservaTriageServicioRolResolver();
         $ids = $resolver->idsServiciosHub();
-        $label = $this->labelServicios($ids);
+        $label = (new ServicioMencionLookupService())->labelParaIds($ids);
 
         return [
             'rol' => $ids !== [] ? (string) $ids[0] : '',
@@ -316,43 +306,6 @@ final class ReservaTriageServicioSugeridoService
         }
 
         return $filtered;
-    }
-
-    /**
-     * @param list<array{id: string, name: string}> $items
-     * @return list<array{id: string, name: string}>
-     */
-    private function filtrarItemsPorRol(array $items, string $rol): array
-    {
-        $resolver = new ReservaTriageServicioRolResolver();
-        $ids = $resolver->idsServiciosHub();
-        if ($ids === []) {
-            return [];
-        }
-
-        return $this->filtrarItemsPorIds($items, $ids);
-    }
-
-    /**
-     * @param list<int> $ids
-     */
-    private function labelServicios(array $ids): string
-    {
-        if ($ids === []) {
-            return '';
-        }
-        $nombres = [];
-        foreach (Servicio::find()->where(['id_servicio' => $ids])->orderBy(['nombre' => SORT_ASC])->all() as $servicio) {
-            if (!$servicio instanceof Servicio) {
-                continue;
-            }
-            $nombre = trim((string) $servicio->nombre);
-            if ($nombre !== '') {
-                $nombres[] = $nombre;
-            }
-        }
-
-        return implode(', ', array_values(array_unique($nombres)));
     }
 
     /**

@@ -3,8 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Scheduling\Service\ReservaTriageServicioMapService;
-use common\components\Scheduling\Service\ReservaTriageServicioRol;
+use common\components\Scheduling\Service\ReservaTriageAccesoConfig;
 use common\components\Scheduling\Service\ReservaTriageServicioRolResolver;
 use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
 
@@ -103,29 +102,8 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         $this->assertArrayHasKey('triage_servicio_rol_ideal', $draft);
     }
 
-    public function testMapHubRolYamlRespaldo(): void
+    public function testAccesoConfigEspecialistaConDerivacion(): void
     {
-        $map = new ReservaTriageServicioMapService();
-        $this->assertSame('medicina_clinica', $map->getHubRol());
-        $this->assertTrue($map->isHubRol('medicina_clinica'));
-        $this->assertFalse($map->permiteAutogestionPaciente('oftalmologia'));
-        $this->assertTrue($map->teleconsultaSoloConDerivacion('oftalmologia'));
-    }
-
-    public function testMapTramiteAdminHeredaMedicinaClinica(): void
-    {
-        $map = new ReservaTriageServicioMapService();
-        $criteria = $map->getMatchCriteriaForRol('tramite_admin');
-        $this->assertNotNull($criteria);
-        $this->assertContains('med clinica', $criteria['nombre_patterns']);
-        $this->assertContains('Medico', $criteria['item_names']);
-    }
-
-    public function testBuiltinCodigoRolPiel(): void
-    {
-        $this->assertSame(
-            ReservaTriageServicioRol::DERMATOLOGIA,
-            ReservaTriageServicioRol::rolBuiltinParaCodigo('det_piel_erupcion')
-        );
+        $this->assertTrue(ReservaTriageAccesoConfig::especialistaSoloTeleconsultaConDerivacion());
     }
 }

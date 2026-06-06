@@ -36,7 +36,7 @@
 
 .iq-navbar.navbar {
     background-color: var(--bio-paper-50) !important;
-    border-bottom-color: var(--bio-paper-200) !important;
+    border-bottom-color: var(--bio-paper-500) !important;
 }
 
 .sidebar-menu {
@@ -322,8 +322,7 @@ html:has(.spa-asistente-root) {
     z-index: 1020;
     padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
     background: var(--bio-paper-25);
-    border-top: 1px solid var(--bio-paper-200);
-    box-shadow: 0 -2px 8px rgba(26, 25, 22, 0.06);
+    border: 2px solid var(--bio-paper-600);
 }
 
 @media (max-width: 768px) {

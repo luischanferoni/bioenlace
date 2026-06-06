@@ -25,7 +25,7 @@ final class ServiciosEfectorAutogestionListadoService
             return (new ReservaTriageServicioSugeridoService())->filtrarItemsUiJson(
                 $items,
                 $triageDraft ?? [],
-                $soloHubPaciente || ($triageDraft !== null && $triageDraft !== [])
+                $soloHubPaciente && ($triageDraft === null || $triageDraft === [])
             );
         }
 

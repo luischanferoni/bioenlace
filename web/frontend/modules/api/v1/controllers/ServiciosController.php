@@ -89,10 +89,15 @@ class ServiciosController extends BaseController
             $sugerido = new ReservaTriageServicioSugeridoService();
             $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos();
             if ($modoHub || $triageDraft !== []) {
-                $items = $sugerido->filtrarItemsUiJson($items, $triageDraft, true);
+                $items = $sugerido->filtrarItemsUiJson($items, $triageDraft, false);
             }
             if ($items === [] && ($modoHub || $triageDraft !== [])) {
-                $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($triageDraft, true));
+                $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($triageDraft, false));
+            } else {
+                $intro = $sugerido->mensajeIntroListaParaDraft($triageDraft, false);
+                if ($intro !== null) {
+                    $ui = self::withListIntroMessage($ui, $intro);
+                }
             }
             $ui = UiScreenService::withListBlockItems($ui, $items);
         }
@@ -114,6 +119,27 @@ class ServiciosController extends BaseController
                 continue;
             }
             $block['empty_message'] = $message;
+            $ui['blocks'][$i] = $block;
+            break;
+        }
+
+        return $ui;
+    }
+
+    /**
+     * @param array<string, mixed> $ui
+     * @return array<string, mixed>
+     */
+    private static function withListIntroMessage(array $ui, string $message): array
+    {
+        if (!isset($ui['blocks']) || !is_array($ui['blocks'])) {
+            return $ui;
+        }
+        foreach ($ui['blocks'] as $i => $block) {
+            if (!is_array($block) || ($block['kind'] ?? '') !== 'list') {
+                continue;
+            }
+            $block['intro'] = $message;
             $ui['blocks'][$i] = $block;
             break;
         }

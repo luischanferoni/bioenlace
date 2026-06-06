@@ -10,37 +10,55 @@ use common\models\Turno;
 /**
  * Resuelve rol/servicios sugeridos a partir del draft de triage y filtra listados de autogestión.
  *
- * Modelo hub: autogestión paciente → solo Medicina clínica; especialistas vía derivación clínica.
+ * Modelo hub: especialistas no autogestionables → lista vacía con orientación a Medicina clínica.
  */
 final class ReservaTriageServicioSugeridoService
 {
+    private ReservaTriageServicioRolResolver $rolResolver;
+
+    public function __construct(?ReservaTriageServicioRolResolver $rolResolver = null)
+    {
+        $this->rolResolver = $rolResolver ?? new ReservaTriageServicioRolResolver();
+    }
+
     /**
      * @param array<string, mixed> $draft
      * @return array{
      *   rol: string,
      *   rol_label: string,
      *   id_servicios: list<int>,
-     *   filtrado_aplicado: bool
+     *   filtrado_aplicado: bool,
+     *   autogestion_disponible: bool,
+     *   triage_codigo_resolutor: string,
+     *   mensaje_orientacion: string|null,
+     *   mensaje_lista: string|null
      * }
      */
     public function resolverParaDraft(array $draft, bool $soloHubPaciente = false): array
     {
-        $map = new ReservaTriageServicioMapService();
-        $rol = $this->resolverRolDesdeDraft($draft, $soloHubPaciente);
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $matchedIds = $map->idsServicioParaRol($rol, $eligibleIds);
+        if ($soloHubPaciente) {
+            return $this->resolverSoloHub($draft);
+        }
+
+        if (!$this->draftTieneTriageRelevante($draft)) {
+            return $this->resolverSinTriage();
+        }
+
+        $res = $this->rolResolver->resolveDesdeDraft($draft);
 
         return [
-            'rol' => $rol,
-            'rol_label' => $map->getLabelForRol($rol),
-            'id_servicios' => $matchedIds,
-            'filtrado_aplicado' => $matchedIds !== [],
+            'rol' => $res->rol_ideal,
+            'rol_label' => $res->rol_ideal_label,
+            'id_servicios' => $res->id_servicios_reservables,
+            'filtrado_aplicado' => true,
+            'autogestion_disponible' => $res->autogestion_disponible,
+            'triage_codigo_resolutor' => $res->triage_codigo_resolutor,
+            'mensaje_orientacion' => $res->mensaje_orientacion,
+            'mensaje_lista' => $res->mensaje_lista,
         ];
     }
 
     /**
-     * Lista ui_json solo con servicios del hub (Medicina clínica).
-     *
      * @param list<array{id: string, name: string}> $items
      * @return list<array{id: string, name: string}>
      */
@@ -50,8 +68,6 @@ final class ReservaTriageServicioSugeridoService
     }
 
     /**
-     * Filtra items ui_json según rol (estricto: sin fallback a todos los servicios).
-     *
      * @param list<array{id: string, name: string}> $items
      * @param array<string, mixed> $draft
      * @return list<array{id: string, name: string}>
@@ -79,11 +95,28 @@ final class ReservaTriageServicioSugeridoService
     public function mensajeListaVaciaParaDraft(array $draft, bool $soloHubPaciente = true): string
     {
         $res = $this->resolverParaDraft($draft, $soloHubPaciente);
+        if ($res['mensaje_orientacion'] !== null && trim($res['mensaje_orientacion']) !== '') {
+            return trim($res['mensaje_orientacion']);
+        }
+
         $label = $res['rol_label'] !== '' ? $res['rol_label'] : 'Medicina clínica';
 
         return 'No hay turnos de ' . $label
-            . ' habilitados en este momento. Los especialistas atienden por derivación del médico clínico;'
-            . ' consultá con tu centro de salud si necesitás ayuda.';
+            . ' habilitados en este momento. Consultá con tu centro de salud si necesitás ayuda.';
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    public function mensajeIntroListaParaDraft(array $draft, bool $soloHubPaciente = true): ?string
+    {
+        $res = $this->resolverParaDraft($draft, $soloHubPaciente);
+        if ($res['id_servicios'] === []) {
+            return null;
+        }
+        $msg = trim((string) ($res['mensaje_lista'] ?? ''));
+
+        return $msg !== '' ? $msg : null;
     }
 
     /**
@@ -95,12 +128,15 @@ final class ReservaTriageServicioSugeridoService
             return;
         }
 
-        $res = $this->resolverParaDraft($draft, true);
+        $res = $this->resolverParaDraft($draft, false);
         $draft['servicio_reserva_rol'] = $res['rol'];
-        $draft['reserva_modo_hub_paciente'] = '1';
-        if (count($res['id_servicios']) === 1) {
-            $draft['id_servicio_sugerido'] = (string) $res['id_servicios'][0];
+        $draft['triage_servicio_rol_ideal'] = $res['rol'];
+        $draft['triage_codigo_servicio_resolutor'] = $res['triage_codigo_resolutor'];
+        $draft['reserva_servicio_autogestion'] = $res['autogestion_disponible'] ? '1' : '0';
+        if ($res['mensaje_orientacion'] !== null && trim($res['mensaje_orientacion']) !== '') {
+            $draft['reserva_servicio_mensaje'] = trim($res['mensaje_orientacion']);
         }
+        $draft['reserva_modo_hub_paciente'] = '1';
     }
 
     /**
@@ -152,13 +188,7 @@ final class ReservaTriageServicioSugeridoService
      */
     public function resolverRolDesdeDraft(array $draft, bool $soloHubPaciente = false): string
     {
-        $map = new ReservaTriageServicioMapService();
-
-        if ($soloHubPaciente || $this->draftTieneTriageRelevante($draft)) {
-            return $map->getHubRol();
-        }
-
-        return $map->getDefaultRol();
+        return $this->resolverParaDraft($draft, $soloHubPaciente)['rol'];
     }
 
     /**
@@ -196,6 +226,68 @@ final class ReservaTriageServicioSugeridoService
     public static function esModoTeleconsultaHub(array $params): bool
     {
         return trim((string) ($params['reserva_modo'] ?? '')) === 'teleconsulta_hub';
+    }
+
+    /**
+     * @return array{
+     *   rol: string,
+     *   rol_label: string,
+     *   id_servicios: list<int>,
+     *   filtrado_aplicado: bool,
+     *   autogestion_disponible: bool,
+     *   triage_codigo_resolutor: string,
+     *   mensaje_orientacion: string|null,
+     *   mensaje_lista: string|null
+     * }
+     */
+    private function resolverSoloHub(array $draft): array
+    {
+        $map = new ReservaTriageServicioMapService();
+        $hubRol = $map->getHubRol();
+        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+        $ids = $map->idsServicioParaRol($hubRol, $eligibleIds);
+
+        return [
+            'rol' => $hubRol,
+            'rol_label' => $map->getLabelForRol($hubRol),
+            'id_servicios' => $ids,
+            'filtrado_aplicado' => $ids !== [],
+            'autogestion_disponible' => $ids !== [],
+            'triage_codigo_resolutor' => '',
+            'mensaje_orientacion' => null,
+            'mensaje_lista' => null,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   rol: string,
+     *   rol_label: string,
+     *   id_servicios: list<int>,
+     *   filtrado_aplicado: bool,
+     *   autogestion_disponible: bool,
+     *   triage_codigo_resolutor: string,
+     *   mensaje_orientacion: string|null,
+     *   mensaje_lista: string|null
+     * }
+     */
+    private function resolverSinTriage(): array
+    {
+        $map = new ReservaTriageServicioMapService();
+        $rol = $map->getDefaultRol();
+        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+        $ids = $map->idsServicioParaRol($rol, $eligibleIds);
+
+        return [
+            'rol' => $rol,
+            'rol_label' => $map->getLabelForRol($rol),
+            'id_servicios' => $ids,
+            'filtrado_aplicado' => false,
+            'autogestion_disponible' => $ids !== [],
+            'triage_codigo_resolutor' => '',
+            'mensaje_orientacion' => null,
+            'mensaje_lista' => null,
+        ];
     }
 
     /**

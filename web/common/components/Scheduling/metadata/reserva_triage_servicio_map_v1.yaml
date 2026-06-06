@@ -15,6 +15,10 @@ roles:
     hub: true
     autogestion_paciente: true
     nombre_patterns:
+      - med clinica
+      - med clínica
+      - med general
+      - med familiar
       - medicina clínica
       - medicina clinica
       - medicina general
@@ -22,7 +26,6 @@ roles:
       - medicina de familia
       - clínica
       - clinica
-      - general
     item_names:
       - Medico
 
@@ -90,3 +93,28 @@ roles:
     teleconsulta_solo_con_derivacion: true
     nombre_patterns:
       - cardiolog
+
+  neumonologia:
+    label: Neumonología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
+    nombre_patterns:
+      - neumonolog
+
+  neurologia:
+    label: Neurología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
+    nombre_patterns:
+      - neurolog
+
+  gastroenterologia:
+    label: Gastroenterología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
+    nombre_patterns:
+      - gastroenterolog
+      - gastro

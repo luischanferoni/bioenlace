@@ -52,7 +52,10 @@ final class TeleconsultaElegibilidadService
 
         $idServicio = (int) ($draft['id_servicio_asignado'] ?? 0);
         if ($idServicio <= 0) {
-            $idServicio = (int) ($draft['id_servicio_sugerido'] ?? 0);
+            $hubIds = (new ReservaTriageServicioRolResolver())->idsServiciosHubParaDraft($draft);
+            if ($hubIds !== []) {
+                $idServicio = (int) $hubIds[0];
+            }
         }
         if ($idServicio <= 0) {
             return [

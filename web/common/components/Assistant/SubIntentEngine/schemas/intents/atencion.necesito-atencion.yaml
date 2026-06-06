@@ -46,7 +46,10 @@ draft_keys_extra:
   - tipo_atencion
   - teleconsulta_ofrecible
   - servicio_reserva_rol
-  - id_servicio_sugerido
+  - triage_servicio_rol_ideal
+  - triage_codigo_servicio_resolutor
+  - reserva_servicio_autogestion
+  - reserva_servicio_mensaje
   - reserva_modo_hub_paciente
   - fecha_turno
   - triage_raiz

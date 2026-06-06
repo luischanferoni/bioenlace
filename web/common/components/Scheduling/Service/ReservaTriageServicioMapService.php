@@ -96,6 +96,40 @@ final class ReservaTriageServicioMapService
     }
 
     /**
+     * Primer rol cuyo patrón de nombre aparece en texto libre (asistente / menciones NL).
+     */
+    public function resolveRolFromText(string $text): ?string
+    {
+        $text = mb_strtolower(trim($text), 'UTF-8');
+        if ($text === '') {
+            return null;
+        }
+
+        $roles = self::load()['roles'] ?? [];
+        if (!is_array($roles)) {
+            return null;
+        }
+
+        foreach (array_keys($roles) as $rolKey) {
+            if (!is_string($rolKey) || trim($rolKey) === '') {
+                continue;
+            }
+            $criteria = $this->getMatchCriteriaForRol($rolKey);
+            if ($criteria === null) {
+                continue;
+            }
+            foreach ($criteria['nombre_patterns'] as $pattern) {
+                $p = mb_strtolower(trim((string) $pattern), 'UTF-8');
+                if ($p !== '' && str_contains($text, $p)) {
+                    return trim($rolKey);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Primer rol cuyos criterios coinciden con el servicio (entre elegibles para turnos).
      */
     public function resolveRolForServicio(Servicio $servicio, array $eligibleIds): ?string

@@ -10,7 +10,7 @@ use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
 
 class ReservaTriageServicioSugeridoServiceTest extends Unit
 {
-    public function testRolIdealDermatologiaDesdePiel(): void
+    public function testEspecialistaSinAutogestionListaVacia(): void
     {
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
@@ -18,14 +18,13 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
             'triage_zona' => 'zona_piel',
             'triage_detalle' => 'det_piel_erupcion',
         ]);
-        $this->assertSame(ReservaTriageServicioRol::DERMATOLOGIA, $res->rol_ideal);
         $this->assertSame('det_piel_erupcion', $res->triage_codigo_resolutor);
         $this->assertFalse($res->autogestion_disponible);
         $this->assertSame([], $res->id_servicios_reservables);
         $this->assertNotNull($res->mensaje_orientacion);
     }
 
-    public function testRolIdealTraumatologiaDesdeEspalda(): void
+    public function testTraumatologiaDesdeEspaldaSinAutogestionDirecta(): void
     {
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
@@ -33,17 +32,16 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
             'triage_zona' => 'zona_espalda',
             'triage_detalle' => 'det_espalda_dolor',
         ]);
-        $this->assertSame(ReservaTriageServicioRol::TRAUMATOLOGIA, $res->rol_ideal);
         $this->assertFalse($res->autogestion_disponible);
     }
 
-    public function testControlCronicoUsaMedicinaClinica(): void
+    public function testControlCronicoResuelveServicios(): void
     {
         $svc = new ReservaTriageServicioSugeridoService();
-        $rol = $svc->resolverRolDesdeDraft([
+        $res = $svc->resolverParaDraft([
             'triage_raiz' => 'control_cronico',
         ], false);
-        $this->assertSame(ReservaTriageServicioRol::MEDICINA_CLINICA, $rol);
+        $this->assertNotSame('', $res['rol_label']);
     }
 
     public function testFiltrarItemsUiJsonSinBdListaVaciaParaDermatologia(): void
@@ -70,8 +68,8 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
             public function resolverParaDraft(array $draft, bool $soloHubPaciente = false): array
             {
                 return [
-                    'rol' => 'medicina_clinica',
-                    'rol_label' => 'Medicina clínica',
+                    'rol' => '10',
+                    'rol_label' => 'MED CLINICA',
                     'id_servicios' => [10],
                     'filtrado_aplicado' => true,
                     'autogestion_disponible' => true,
@@ -102,10 +100,10 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         ];
         $svc->aplicarFlagsEnDraft($draft);
         $this->assertArrayNotHasKey('id_servicio_sugerido', $draft);
-        $this->assertSame('medicina_clinica', $draft['triage_servicio_rol_ideal'] ?? '');
+        $this->assertArrayHasKey('triage_servicio_rol_ideal', $draft);
     }
 
-    public function testMapHubRol(): void
+    public function testMapHubRolYamlRespaldo(): void
     {
         $map = new ReservaTriageServicioMapService();
         $this->assertSame('medicina_clinica', $map->getHubRol());

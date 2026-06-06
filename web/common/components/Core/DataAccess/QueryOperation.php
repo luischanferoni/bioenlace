@@ -1,0 +1,24 @@
+<?php
+
+namespace common\components\Core\DataAccess;
+
+/**
+ * Operaciones permitidas sobre grupos de atributos.
+ */
+final class QueryOperation
+{
+    public const FILTER = 'filter';
+    public const READ = 'read';
+    public const AGGREGATE = 'aggregate';
+
+    /** @return list<string> */
+    public static function all(): array
+    {
+        return [self::FILTER, self::READ, self::AGGREGATE];
+    }
+
+    public static function isValid(string $operation): bool
+    {
+        return in_array($operation, self::all(), true);
+    }
+}

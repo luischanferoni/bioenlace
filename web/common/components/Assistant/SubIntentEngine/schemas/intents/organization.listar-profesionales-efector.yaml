@@ -1,0 +1,39 @@
+intent_id: organization.listar-profesionales-efector
+version: 1
+
+action_name: "Listar profesionales del centro"
+description: "Ver la plantilla profesional del efector (solo campos autorizados)."
+rbac_route: "/api/listar"
+keywords:
+  - listar profesionales
+  - mostrar medicos del centro
+  - plantilla profesional
+  - quienes trabajan en el centro
+  - nombres de profesionales
+
+intent_semantics:
+  goal: >-
+    Ver profesionales asignados al efector con nombre y datos permitidos por rol.
+  how: >-
+    Abre listado staff filtrable; no expone columnas sin permiso read.
+  outcome:
+    - El responsable identifica la plantilla sin acceder a datos sensibles no autorizados.
+
+draft_hydrator:
+  handler: organization.profesionales_resumen_efector
+
+subintents:
+  - id: ver_listado
+    assistant_text: "Profesionales del efector"
+    provides:
+      - draft.servicio_rol
+      - draft.sexo_biologico
+    next: ""
+    open_ui:
+      action_id: data-access.listar
+      params:
+        metric_id: profesionales_listado_efector
+        id_efector: "draft.id_efector"
+        servicio_rol: "draft.servicio_rol"
+        servicio_rol_mention: "draft.servicio_rol_mention"
+        sexo_biologico: "draft.sexo_biologico"

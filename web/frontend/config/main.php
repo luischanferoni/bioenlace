@@ -454,6 +454,12 @@ return [
                 'GET api/<version:\w+>/profesional-efector-servicio/listar-por-efector' => '<version>/profesional-efector-servicio/listar-por-efector',
                 'POST api/<version:\w+>/profesional-efector-servicio/listar-por-efector' => '<version>/profesional-efector-servicio/listar-por-efector',
                 'OPTIONS api/<version:\w+>/profesional-efector-servicio/listar-por-efector' => '<version>/profesional-efector-servicio/listar-por-efector',
+                'GET api/<version:\w+>/info' => '<version>/info/index',
+                'POST api/<version:\w+>/info' => '<version>/info/index',
+                'OPTIONS api/<version:\w+>/info' => '<version>/info/index',
+                'GET api/<version:\w+>/listar' => '<version>/listar/index',
+                'POST api/<version:\w+>/listar' => '<version>/listar/index',
+                'OPTIONS api/<version:\w+>/listar' => '<version>/listar/index',
                 'GET api/<version:\w+>/profesional-efector-servicio/condiciones-laborales-catalogo' => '<version>/profesional-efector-servicio/condiciones-laborales-catalogo',
                 'OPTIONS api/<version:\w+>/profesional-efector-servicio/condiciones-laborales-catalogo' => '<version>/profesional-efector-servicio/condiciones-laborales-catalogo',
 

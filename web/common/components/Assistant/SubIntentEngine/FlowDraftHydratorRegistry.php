@@ -4,6 +4,7 @@ namespace common\components\Assistant\SubIntentEngine;
 
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorResumenFlowDraftHydrator;
 use common\components\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 
 /**
@@ -19,6 +20,7 @@ final class FlowDraftHydratorRegistry
     private const HANDLERS = [
         'organization.pes_crear_alta' => [ProfesionalEfectorServicioCrearFlowDraftHydrator::class, 'hydrateWithOptions'],
         'organization.pes_from_servicio' => [ProfesionalEfectorServicioAgendaFlowDraftHydrator::class, 'hydrateWithOptions'],
+        'organization.profesionales_resumen_efector' => [ProfesionalEfectorResumenFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
     ];
 

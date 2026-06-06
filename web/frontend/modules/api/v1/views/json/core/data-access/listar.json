@@ -1,0 +1,30 @@
+{
+  "ui_type": "ui_json",
+  "title": "Listado",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "intro_listado",
+      "title_field": "list_title",
+      "title": "Listado",
+      "text_field": "intro_texto",
+      "text": ""
+    },
+    {
+      "kind": "list",
+      "id": "rows",
+      "title": "Resultados",
+      "empty_message": "No hay registros que coincidan con los filtros.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "none", "requires_confirmation": false },
+      "items": []
+    }
+  ]
+}

@@ -104,6 +104,13 @@ $home = Yii::$app->getHomeUrl();
                             'url' => ['/consultas-configuracion/index'],
                         ],
                         [
+                            'label' => 'Consultas staff',
+                            'items' => [
+                                ['label' => 'Permisos por atributo (grants BD)', 'url' => ['/data-access-grant/index']],
+                                ['label' => 'Catálogo DataAccess (YAML)', 'url' => ['/data-access-catalog/index']],
+                            ]
+                        ],
+                        [
                             'label' => 'Resumen IA',
                             'items' => [
                                 ['label' => 'Categorías de sensibilidad', 'url' => ['/sensibilidad-categoria/index']],

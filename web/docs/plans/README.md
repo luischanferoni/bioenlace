@@ -13,8 +13,14 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Plan | Carpeta | Notas |
 |------|---------|--------|
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
-| Urgencias — triage + tablero | `urgencias-triage-tablero/` | En ejecución — Fase 1 (API dominio) |
-| Limpieza legacy Yii / modelos / BD | `clean-legacy/` | En ejecución — Fase 01 (seguro + fuerte) |
+| Urgencias — triage + tablero | `urgencias-triage-tablero/` | Fase 1 (API dominio) en curso; fases 2–5 pendientes |
+| Limpieza legacy Yii / modelos / BD | `clean-legacy/` | Código fases 01–04 cerrado; migrate BD + smoke opcional |
+
+## Planes archivados (carpeta eliminada)
+
+| Plan | Documentación estable |
+|------|------------------------|
+| Permisos DataAccess staff | `common/components/Core/DataAccess/README.md` + backend «Consultas staff» |
 
 ## Convenciones (solo dentro de `plans/`)
 

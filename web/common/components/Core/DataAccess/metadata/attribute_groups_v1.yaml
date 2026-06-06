@@ -1,0 +1,223 @@
+version: 1
+
+# Grupos de atributos por entidad (permiso fino). Wildcards sobre grupos, no sobre entidades enteras.
+
+entities:
+  Persona:
+    identidad_basica:
+      attributes: [nombre, apellido, otro_nombre, otro_apellido]
+    sexo_genero:
+      attributes: [sexo_biologico, genero]
+    edad_exacta:
+      attributes: [fecha_nacimiento]
+    identificadores:
+      attributes: [documento, id_tipodoc]
+
+  ProfesionalEfectorServicio:
+    asignacion:
+      attributes: [id_efector, id_servicio, id_persona]
+
+# Métricas registradas (consultas staff). Fase 1: una vertical slice.
+metrics:
+  profesionales_conteo_efector:
+    label: Conteo de profesionales por efector
+    presentation_handler: organization.profesionales_conteo_info
+    scope_checker: efector_sesion
+    required_groups:
+      - ProfesionalEfectorServicio.asignacion
+    optional_filter_groups:
+      - Persona.sexo_genero
+    filter_scope_checkers:
+      Persona.sexo_genero: efector_sesion_via_pes
+    query:
+      root:
+        model: common\models\ProfesionalEfectorServicio
+        alias: pes
+      joins:
+        persona:
+          table: personas
+          alias: p
+          on: 'p.id_persona = pes.id_persona'
+          type: inner
+          activate_when_filters: [sexo_biologico]
+          entity_group: Persona.sexo_genero
+      scope_columns:
+        id_efector: pes.id_efector
+        id_persona: pes.id_persona
+      base_where:
+        pes.deleted_at: null
+      filters:
+        servicio_rol:
+          resolver: servicio_rol_efector_ids
+          apply_column: pes.id_servicio
+          apply_op: in
+        servicio_rol_mention:
+          resolver: servicio_rol_from_mention
+          normalize_to: servicio_rol
+        sexo_biologico:
+          entity_group: Persona.sexo_genero
+          resolver: sexo_biologico
+          apply_column: p.sexo_biologico
+          apply_op: eq
+          requires_join: persona
+      aggregation:
+        default: count_distinct_persona
+        definitions:
+          count_distinct_persona:
+            type: count_distinct
+            column: pes.id_persona
+      output:
+        modes: [aggregate]
+        default: aggregate
+
+  profesionales_listado_efector:
+    label: Listado de profesionales por efector
+    presentation_handler: organization.profesionales_listado_rows
+    scope_checker: efector_sesion
+    required_groups:
+      - ProfesionalEfectorServicio.asignacion
+    read_groups:
+      - Persona.identidad_basica
+    optional_filter_groups:
+      - Persona.sexo_genero
+    filter_scope_checkers:
+      Persona.sexo_genero: efector_sesion_via_pes
+    query:
+      root:
+        model: common\models\ProfesionalEfectorServicio
+        alias: pes
+      joins:
+        persona:
+          table: personas
+          alias: p
+          on: 'p.id_persona = pes.id_persona'
+          type: inner
+          entity_group: Persona.identidad_basica
+      scope_columns:
+        id_efector: pes.id_efector
+        id_persona: pes.id_persona
+      base_where:
+        pes.deleted_at: null
+      filters:
+        servicio_rol:
+          resolver: servicio_rol_efector_ids
+          apply_column: pes.id_servicio
+          apply_op: in
+        servicio_rol_mention:
+          resolver: servicio_rol_from_mention
+          normalize_to: servicio_rol
+        sexo_biologico:
+          entity_group: Persona.sexo_genero
+          resolver: sexo_biologico
+          apply_column: p.sexo_biologico
+          apply_op: eq
+          requires_join: persona
+      output:
+        modes: [rows]
+        default: rows
+        rows:
+          max_limit: 200
+          distinct_column: pes.id_persona
+          order_by: [p.apellido ASC, p.nombre ASC]
+          static_joins: [persona]
+          fields:
+            id_persona:
+              column: pes.id_persona
+              group: ProfesionalEfectorServicio.asignacion
+            id_servicio:
+              column: pes.id_servicio
+              group: ProfesionalEfectorServicio.asignacion
+            nombre:
+              column: p.nombre
+              group: Persona.identidad_basica
+            apellido:
+              column: p.apellido
+              group: Persona.identidad_basica
+            sexo_biologico:
+              column: p.sexo_biologico
+              group: Persona.sexo_genero
+
+  profesionales_conteo_por_servicio_efector:
+    label: Distribución de profesionales por servicio
+    scope_checker: efector_sesion
+    required_groups:
+      - ProfesionalEfectorServicio.asignacion
+    query:
+      root:
+        model: common\models\ProfesionalEfectorServicio
+        alias: pes
+      joins:
+        servicio:
+          table: servicios
+          alias: s
+          on: 's.id_servicio = pes.id_servicio'
+          type: inner
+      scope_columns:
+        id_efector: pes.id_efector
+      base_where:
+        pes.deleted_at: null
+      filters:
+        servicio_rol:
+          resolver: servicio_rol_efector_ids
+          apply_column: pes.id_servicio
+          apply_op: in
+        servicio_rol_mention:
+          resolver: servicio_rol_from_mention
+          normalize_to: servicio_rol
+      aggregation:
+        default: count_by_servicio
+        definitions:
+          count_by_servicio:
+            type: count_distinct
+            column: pes.id_persona
+            group_by: [pes.id_servicio, s.nombre]
+            result_keys:
+              id_servicio: pes.id_servicio
+              servicio_nombre: s.nombre
+              total: count
+      output:
+        modes: [grouped, aggregate]
+        default: grouped
+
+# Permisos por rol sobre grupo + operación (+ scope checker opcional por grant).
+role_grants:
+  AdminEfector:
+    ProfesionalEfectorServicio.asignacion:
+      operations: [aggregate, filter, read]
+      scope_checker: efector_sesion
+    Persona.sexo_genero:
+      operations: [filter, aggregate, read]
+      scope_checker: efector_sesion_via_pes
+    Persona.identidad_basica:
+      operations: [read]
+      scope_checker: efector_sesion_via_pes
+
+  Medico:
+    ProfesionalEfectorServicio.asignacion:
+      operations: [aggregate, filter]
+      scope_checker: efector_sesion
+
+  Administrativo:
+    ProfesionalEfectorServicio.asignacion:
+      operations: [aggregate, filter]
+      scope_checker: efector_sesion
+    Persona.sexo_genero:
+      operations: [filter, aggregate, read]
+      scope_checker: efector_sesion_via_pes
+    Persona.identidad_basica:
+      operations: [read]
+      scope_checker: efector_sesion_via_pes
+
+  paciente:
+    Persona.edad_exacta:
+      operations: [read, filter]
+      scope_checker: permitir_para_si_mismo
+    Persona.sexo_genero:
+      operations: [read, filter]
+      scope_checker: permitir_para_si_mismo
+
+# Sinónimos NL → filtros (asistente / preprocess).
+filter_synonyms:
+  sexo_biologico:
+    M: [2, varon, varones, hombre, hombres, masculino]
+    F: [1, mujer, mujeres, femenino, femenina]

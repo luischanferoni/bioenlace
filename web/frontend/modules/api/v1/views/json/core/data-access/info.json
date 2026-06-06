@@ -1,0 +1,20 @@
+{
+  "ui_type": "ui_json",
+  "title": "Consulta",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "info_result",
+      "title_field": "info_title",
+      "title": "Resultado",
+      "text_field": "info_texto",
+      "text": ""
+    }
+  ]
+}

@@ -5,8 +5,8 @@ use yii\db\Migration;
 /**
  * Reglas triage_codigo → servicio_rol para reserva de turno (paciente).
  *
- * Los roles lógicos se resuelven a filas de {@see servicios} vía patrones en metadata YAML
- * ({@see ReservaTriageServicioMapService}) y pueden ampliarse por instalación.
+ * @deprecated Superseded by {@see reserva_triage_codigo_servicio} (FK directa a servicios).
+ *             Se conserva por compatibilidad; el seed de la nueva tabla se genera desde aquí.
  */
 class m260607_110000_reserva_triage_codigo_servicio_rol extends Migration
 {

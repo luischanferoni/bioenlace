@@ -12,6 +12,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $id_servicio
  * @property string $nombre
  * @property string|null $teleconsulta_politica ninguna|todas|algunas
+ * @property string $reserva_autogestion_paciente SI|NO
  *
  * @property Referencia[] $referencias
  * @property ServiciosEfector[] $serviciosEfectors
@@ -41,7 +42,9 @@ class Servicio extends \yii\db\ActiveRecord
         return [
             [['nombre'], 'required'],
             [['nombre'], 'string', 'max' => 40],
-            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica'], 'string'],
+            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica', 'reserva_autogestion_paciente'], 'string'],
+            [['reserva_autogestion_paciente'], 'in', 'range' => ['SI', 'NO']],
+            [['reserva_autogestion_paciente'], 'default', 'value' => 'NO'],
             [['teleconsulta_politica'], 'in', 'range' => [
                 self::TELECONSULTA_POLITICA_NINGUNA,
                 self::TELECONSULTA_POLITICA_TODAS,
@@ -62,8 +65,14 @@ class Servicio extends \yii\db\ActiveRecord
             'acepta_turnos' => 'Acepta Agenda',
             'acepta_practicas' => 'Acepta Practicas',
             'teleconsulta_politica' => 'Política de teleconsulta',
+            'reserva_autogestion_paciente' => 'Reserva directa paciente (hub)',
             'item_name' => 'Rol'
         ];
+    }
+
+    public function permiteReservaAutogestionPaciente(): bool
+    {
+        return strtoupper(trim((string) ($this->reserva_autogestion_paciente ?? 'NO'))) === 'SI';
     }
     
     /**

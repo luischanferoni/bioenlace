@@ -7,6 +7,7 @@ use webvimark\modules\UserManagement\models\User;
 use common\components\Assistant\UiActions\ActionDiscoveryService;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\Assistant\Catalog\ClinicalUiActionCatalog;
+use common\components\Assistant\Catalog\DataAccessUiActionCatalog;
 use common\components\Assistant\Catalog\IntentCatalogService;
 
 /**
@@ -128,6 +129,30 @@ final class UiActionCatalog
                 is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
                 $clientOpen,
                 $clientInteraction,
+                null
+            );
+            $items[] = $item;
+            $byId[$actionId] = $item;
+        }
+
+        foreach (DataAccessUiActionCatalog::forUser($userId) as $a) {
+            $actionId = isset($a['action_id']) ? (string) $a['action_id'] : '';
+            if ($actionId === '' || isset($byId[$actionId])) {
+                continue;
+            }
+            $display = (string) ($a['action_name'] ?? $a['display_name'] ?? $actionId);
+            $clientOpen = isset($a['client_open']) && is_array($a['client_open']) ? $a['client_open'] : null;
+            $item = new UiActionCatalogItem(
+                $actionId,
+                $display,
+                (string) ($a['description'] ?? ''),
+                isset($a['entity']) ? (string) $a['entity'] : 'DataAccess',
+                (string) ($a['route'] ?? ''),
+                is_array($a['keywords'] ?? null) ? array_values($a['keywords']) : [],
+                is_array($a['parameters'] ?? null) ? $a['parameters'] : ['expected' => [], 'provided' => []],
+                is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
+                $clientOpen,
+                null,
                 null
             );
             $items[] = $item;

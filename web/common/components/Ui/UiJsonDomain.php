@@ -29,6 +29,7 @@ final class UiJsonDomain
         'condition' => self::CLINICAL,
         'persona' => self::PERSONA,
         'profesional-efector-servicio' => self::ORGANIZATION,
+        'data-access' => 'core',
     ];
 
     public static function forEntity(string $entity): ?string
@@ -80,6 +81,10 @@ final class UiJsonDomain
 
         if (preg_match('#^/api/v\d+/([\\w-]+)/([\\w-]+)$#', $path, $m) === 1) {
             return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
+        }
+
+        if (preg_match('#^/api/v\d+/(info|listar)$#', $path, $m) === 1) {
+            return ['entity' => 'data-access', 'action' => (string) $m[1]];
         }
 
         return null;

@@ -151,16 +151,24 @@ final class ReservaTriageServicioSugeridoService
             return;
         }
 
-        $map = new ReservaTriageServicioMapService();
         $servicio = Servicio::findOne($idServicio);
         if ($servicio === null) {
             return;
         }
 
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
-        if ($rol === null || $map->permiteAutogestionPaciente($rol)) {
-            return;
+        $schema = Servicio::getTableSchema();
+        $usaColumnaAutogestion = $schema !== null && isset($schema->columns['reserva_autogestion_paciente']);
+        if ($usaColumnaAutogestion) {
+            if ($servicio->permiteReservaAutogestionPaciente()) {
+                return;
+            }
+        } else {
+            $map = new ReservaTriageServicioMapService();
+            $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+            $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
+            if ($rol === null || $map->permiteAutogestionPaciente($rol)) {
+                return;
+            }
         }
 
         if ($idEfector <= 0) {
@@ -242,14 +250,13 @@ final class ReservaTriageServicioSugeridoService
      */
     private function resolverSoloHub(array $draft): array
     {
-        $map = new ReservaTriageServicioMapService();
-        $hubRol = $map->getHubRol();
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $ids = $map->idsServicioParaRol($hubRol, $eligibleIds);
+        $resolver = new ReservaTriageServicioRolResolver();
+        $ids = $resolver->idsServiciosHub();
+        $label = $this->labelServicios($ids);
 
         return [
-            'rol' => $hubRol,
-            'rol_label' => $map->getLabelForRol($hubRol),
+            'rol' => $ids !== [] ? (string) $ids[0] : '',
+            'rol_label' => $label !== '' ? $label : 'Medicina clínica',
             'id_servicios' => $ids,
             'filtrado_aplicado' => $ids !== [],
             'autogestion_disponible' => $ids !== [],
@@ -273,14 +280,13 @@ final class ReservaTriageServicioSugeridoService
      */
     private function resolverSinTriage(): array
     {
-        $map = new ReservaTriageServicioMapService();
-        $rol = $map->getDefaultRol();
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $ids = $map->idsServicioParaRol($rol, $eligibleIds);
+        $resolver = new ReservaTriageServicioRolResolver();
+        $ids = $resolver->idsServiciosHub();
+        $label = $this->labelServicios($ids);
 
         return [
-            'rol' => $rol,
-            'rol_label' => $map->getLabelForRol($rol),
+            'rol' => $ids !== [] ? (string) $ids[0] : '',
+            'rol_label' => $label !== '' ? $label : 'Medicina clínica',
             'id_servicios' => $ids,
             'filtrado_aplicado' => false,
             'autogestion_disponible' => $ids !== [],
@@ -318,14 +324,35 @@ final class ReservaTriageServicioSugeridoService
      */
     private function filtrarItemsPorRol(array $items, string $rol): array
     {
-        $map = new ReservaTriageServicioMapService();
-        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $ids = $map->idsServicioParaRol($rol, $eligibleIds);
+        $resolver = new ReservaTriageServicioRolResolver();
+        $ids = $resolver->idsServiciosHub();
         if ($ids === []) {
             return [];
         }
 
         return $this->filtrarItemsPorIds($items, $ids);
+    }
+
+    /**
+     * @param list<int> $ids
+     */
+    private function labelServicios(array $ids): string
+    {
+        if ($ids === []) {
+            return '';
+        }
+        $nombres = [];
+        foreach (Servicio::find()->where(['id_servicio' => $ids])->orderBy(['nombre' => SORT_ASC])->all() as $servicio) {
+            if (!$servicio instanceof Servicio) {
+                continue;
+            }
+            $nombre = trim((string) $servicio->nombre);
+            if ($nombre !== '') {
+                $nombres[] = $nombre;
+            }
+        }
+
+        return implode(', ', array_values(array_unique($nombres)));
     }
 
     /**

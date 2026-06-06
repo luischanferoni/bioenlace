@@ -28,6 +28,12 @@ class TurnoSlotOfferService
         $maxDias = max(1, $maxDias);
         $criteria['max_dias'] = $maxDias;
 
+        if (!empty($criteria['hub_teleconsulta'])) {
+            $plano = TurnoSlotFinder::findAvailableSlotsHubTeleconsulta($criteria, $limite);
+
+            return self::buildOfferFromPlano($plano, $franjaTardeDesde, $limite, $maxDias);
+        }
+
         $plano = TurnoSlotFinder::findAvailableSlots($criteria, $limite);
 
         return self::buildOfferFromPlano($plano, $franjaTardeDesde, $limite, $maxDias);

@@ -35,6 +35,7 @@ use common\components\Scheduling\Service\TurnoReservaSlotService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Scheduling\Service\TurnoAgendaMetricsService;
 use common\components\Scheduling\Service\ReservaTurnoTriageCatalogService;
+use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
 use common\components\Scheduling\Service\TeleconsultaElegibilidadService;
 use common\components\Scheduling\Service\TurnoResolucionService;
 use common\components\Scheduling\Service\TurnoResolucionElecciones;
@@ -266,6 +267,7 @@ class TurnosController extends BaseController
     {
         $keys = [
             'id_servicio_asignado',
+            'id_servicio_sugerido',
             'triage_raiz',
             'triage_alarmas',
             'triage_zona',
@@ -1239,7 +1241,11 @@ class TurnosController extends BaseController
 
             $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($ctx['grouped'], $ctx['id_servicio']);
             if ($blocks !== []) {
-                $out['blocks'] = $this->appendPoliticaAutogestionDespuesDeBloques($blocks, $ctx['id_efector']);
+                if ($ctx['id_efector'] > 0) {
+                    $out['blocks'] = $this->appendPoliticaAutogestionDespuesDeBloques($blocks, $ctx['id_efector']);
+                } else {
+                    $out['blocks'] = $blocks;
+                }
             } else {
                 $out = UiScreenService::withListBlockItems($out, []);
             }
@@ -1301,6 +1307,11 @@ class TurnosController extends BaseController
      */
     private function groupedSlotsDisponiblesPacienteFromRequest(\yii\web\Request $req, bool $ampliarLimiteParaDias): array
     {
+        $params = array_merge($req->get(), $req->post());
+        if (ReservaTriageServicioSugeridoService::esModoTeleconsultaHub($params)) {
+            return $this->groupedSlotsTeleconsultaHubFromRequest($req, $ampliarLimiteParaDias);
+        }
+
         $idServicio = $req->get('id_servicio') ?: $req->post('id_servicio');
         if (!$idServicio) {
             throw new BadRequestHttpException('id_servicio es obligatorio');
@@ -1376,6 +1387,100 @@ class TurnosController extends BaseController
             'grouped' => $grouped,
             'id_servicio' => (int) $idServicio,
             'id_efector' => (int) $idEfector,
+        ];
+    }
+
+    /**
+     * Slots hub teleconsulta: Medicina clínica cross-efector, sin id_servicio/id_efector en request.
+     *
+     * @return array{
+     *   grouped: array<string, mixed>,
+     *   id_servicio: int,
+     *   id_efector: int
+     * }
+     */
+    private function groupedSlotsTeleconsultaHubFromRequest(\yii\web\Request $req, bool $ampliarLimiteParaDias): array
+    {
+        $params = array_merge($req->get(), $req->post());
+        $draft = array_merge(
+            ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($params),
+            $this->draftDesdeParamsReservaTriage($params)
+        );
+        $draft['tipo_atencion'] = Turno::TIPO_ATENCION_TELECONSULTA;
+
+        $eleg = new TeleconsultaElegibilidadService();
+        $elegRes = $eleg->resolverParaDraft($draft);
+        if (!$elegRes['ofrecible']) {
+            throw new BadRequestHttpException(
+                'Teleconsulta no disponible para este caso. Elegí atención presencial.'
+            );
+        }
+
+        $hub = (new ReservaTriageServicioSugeridoService())->resolverParaDraft($draft, true);
+        if ($hub['id_servicios'] === []) {
+            throw new BadRequestHttpException(
+                'No hay servicios de Medicina clínica habilitados para teleconsulta en este momento.'
+            );
+        }
+
+        $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
+        $criteria = [
+            'hub_teleconsulta' => true,
+            'id_servicios' => $hub['id_servicios'],
+            'fecha_desde' => date('Y-m-d'),
+            'min_minutos_desde_ahora' => $defaults['min_minutos_desde_ahora'],
+        ];
+
+        $fechaFiltro = trim((string) ($req->get('fecha') ?: $req->post('fecha') ?: ''));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaFiltro) === 1) {
+            $criteria['fecha_desde'] = $fechaFiltro;
+        }
+
+        $restr = $req->get('restricciones') ?: $req->post('restricciones');
+        if (is_string($restr) && $restr !== '') {
+            $decoded = json_decode($restr, true);
+            if (is_array($decoded)) {
+                $criteria['restricciones'] = $decoded;
+            }
+        } elseif (is_array($restr)) {
+            $criteria['restricciones'] = $restr;
+        }
+
+        $p = Yii::$app->params['turnosPaciente'] ?? [];
+        $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
+
+        $limiteRaw = $req->get('limite') ?: $req->post('limite');
+        $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
+        $limite = max(1, min($maxCliente, $limite));
+
+        $maxDias = (int) $defaults['max_dias'];
+        $maxDias = max(1, min(90, $maxDias));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaFiltro) === 1) {
+            $maxDias = 1;
+        }
+
+        if ($ampliarLimiteParaDias) {
+            $limite = min($maxCliente, max($limite, $maxDias * 24));
+        }
+
+        $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
+        $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
+        if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
+            $franja = $defaults['franja_tarde_desde'];
+        }
+
+        try {
+            $grouped = TurnoSlotOfferService::buildGrouped($criteria, $limite, $maxDias, $franja);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        $idServicioCriterio = count($hub['id_servicios']) === 1 ? (int) $hub['id_servicios'][0] : 0;
+
+        return [
+            'grouped' => $grouped,
+            'id_servicio' => $idServicioCriterio,
+            'id_efector' => 0,
         ];
     }
 

@@ -52,6 +52,9 @@ final class TeleconsultaElegibilidadService
 
         $idServicio = (int) ($draft['id_servicio_asignado'] ?? 0);
         if ($idServicio <= 0) {
+            $idServicio = (int) ($draft['id_servicio_sugerido'] ?? 0);
+        }
+        if ($idServicio <= 0) {
             return [
                 'ofrecible' => false,
                 'tipo_atencion_forzado' => Turno::TIPO_ATENCION_PRESENCIAL,

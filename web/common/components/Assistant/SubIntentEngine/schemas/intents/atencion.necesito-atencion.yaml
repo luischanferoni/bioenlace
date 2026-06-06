@@ -21,8 +21,9 @@ intent_semantics:
     Entender por qué el paciente busca ayuda (triage breve) y conducirlo a turno con Medicina clínica
     (médico generalista/clínico), salvo urgencia. Los especialistas se reservan solo con derivación del clínico.
   how: >-
-    Motivo y alarmas → zona/detalle/evolución si aplica → Medicina clínica → modalidad (si aplica) → centro →
-    profesional generalista → día → horario → confirmación.
+    Motivo y alarmas → zona/detalle/evolución si aplica → modalidad (presencial o videollamada) →
+    presencial: Medicina clínica → centro → profesional → día → horario;
+    videollamada: día → horario (sin elegir servicio, centro ni profesional) → confirmación.
   preconditions:
     - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
@@ -72,7 +73,7 @@ subintents:
         next: triage_alarmas
       - when:
           default: true
-        next: select_servicio
+        next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
@@ -99,7 +100,7 @@ subintents:
         next: triage_evolucion
       - when:
           default: true
-        next: select_servicio
+        next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
@@ -152,24 +153,41 @@ subintents:
     assistant_text: "Evolución"
     provides:
       - draft.triage_evolucion
-    next: select_servicio
+    next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
         step: evolucion
 
-  - id: select_servicio
-    assistant_text: "Servicio"
+  - id: select_tipo_atencion
+    assistant_text: "Modalidad"
     provides:
-      - draft.id_servicio_asignado
+      - draft.tipo_atencion
     next_routing:
       - when:
           draft_equals:
-            teleconsulta_ofrecible: "0"
-        next: select_efector
+            tipo_atencion: teleconsulta
+        next: select_dia_teleconsulta
       - when:
           default: true
-        next: select_tipo_atencion
+        next: select_servicio
+    open_ui:
+      action_id: turnos.reserva-triage-paso
+      params:
+        step: modalidad
+        triage_raiz: "draft.triage_raiz"
+        triage_alarmas: "draft.triage_alarmas"
+        triage_zona: "draft.triage_zona"
+        triage_detalle: "draft.triage_detalle"
+        triage_evolucion: "draft.triage_evolucion"
+
+  - id: select_servicio
+    assistant_text: "Servicio"
+    requires:
+      - draft.tipo_atencion
+    provides:
+      - draft.id_servicio_asignado
+    next: select_efector
     hint:
       entity: servicio
       match_property: nombre
@@ -177,24 +195,6 @@ subintents:
       action_id: servicios.elegir-acepta-turnos
       params:
         reserva_modo: hub_paciente
-        triage_raiz: "draft.triage_raiz"
-        triage_alarmas: "draft.triage_alarmas"
-        triage_zona: "draft.triage_zona"
-        triage_detalle: "draft.triage_detalle"
-        triage_evolucion: "draft.triage_evolucion"
-
-  - id: select_tipo_atencion
-    assistant_text: "Modalidad"
-    requires:
-      - draft.id_servicio_asignado
-    provides:
-      - draft.tipo_atencion
-    next: select_efector
-    open_ui:
-      action_id: turnos.reserva-triage-paso
-      params:
-        step: modalidad
-        id_servicio_asignado: "draft.id_servicio_asignado"
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas"
         triage_zona: "draft.triage_zona"
@@ -270,6 +270,42 @@ subintents:
         id_servicio: "draft.id_servicio_asignado"
         id_efector: "draft.id_efector"
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        fecha: "draft.fecha_turno"
+
+  - id: select_dia_teleconsulta
+    assistant_text: "Día"
+    requires:
+      - draft.tipo_atencion
+    provides:
+      - draft.fecha_turno
+    next: select_slot_teleconsulta
+    open_ui:
+      action_id: turnos.slots-dias-disponibles-como-paciente
+      params:
+        reserva_modo: teleconsulta_hub
+        triage_raiz: "draft.triage_raiz"
+        triage_alarmas: "draft.triage_alarmas"
+        triage_zona: "draft.triage_zona"
+        triage_detalle: "draft.triage_detalle"
+        triage_evolucion: "draft.triage_evolucion"
+
+  - id: select_slot_teleconsulta
+    assistant_text: "Horario"
+    requires:
+      - draft.tipo_atencion
+      - draft.fecha_turno
+    provides:
+      - draft.slot_id
+    next: ""
+    open_ui:
+      action_id: turnos.slots-disponibles-como-paciente
+      params:
+        reserva_modo: teleconsulta_hub
+        triage_raiz: "draft.triage_raiz"
+        triage_alarmas: "draft.triage_alarmas"
+        triage_zona: "draft.triage_zona"
+        triage_detalle: "draft.triage_detalle"
+        triage_evolucion: "draft.triage_evolucion"
         fecha: "draft.fecha_turno"
 
 flow_submit:

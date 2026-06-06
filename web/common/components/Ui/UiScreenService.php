@@ -182,6 +182,24 @@ final class UiScreenService
             $params['intervalo_minutos_reserva'] = (int) $parsed['intervalo_minutos'];
         }
 
+        if ($pesId > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $pesId, 'deleted_at' => null]);
+            if ($pes !== null) {
+                if (
+                    (!isset($params['id_servicio_asignado']) || $params['id_servicio_asignado'] === '' || $params['id_servicio_asignado'] === null)
+                    && (int) $pes->id_servicio > 0
+                ) {
+                    $params['id_servicio_asignado'] = (int) $pes->id_servicio;
+                }
+                if (
+                    (!isset($params['id_efector']) || $params['id_efector'] === '' || $params['id_efector'] === null)
+                    && (int) $pes->id_efector > 0
+                ) {
+                    $params['id_efector'] = (int) $pes->id_efector;
+                }
+            }
+        }
+
         return $params;
     }
 }

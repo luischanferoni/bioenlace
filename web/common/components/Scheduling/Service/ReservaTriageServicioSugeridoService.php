@@ -193,6 +193,11 @@ final class ReservaTriageServicioSugeridoService
         return trim((string) ($params['reserva_modo'] ?? '')) === 'hub_paciente';
     }
 
+    public static function esModoTeleconsultaHub(array $params): bool
+    {
+        return trim((string) ($params['reserva_modo'] ?? '')) === 'teleconsulta_hub';
+    }
+
     /**
      * @param list<array{id: string, name: string}> $items
      * @param list<int> $ids

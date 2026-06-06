@@ -156,6 +156,39 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
+     * PES activos en servicios hub con agenda que acepta teleconsulta (cross-efector).
+     *
+     * @param list<int> $idServicios
+     * @return self[]
+     */
+    public static function findAllActivosTeleconsultaPorServicios(array $idServicios): array
+    {
+        $idServicios = array_values(array_filter(
+            array_map(static fn ($id): int => (int) $id, $idServicios),
+            static fn (int $id): bool => $id > 0
+        ));
+        if ($idServicios === []) {
+            return [];
+        }
+
+        return static::find()
+            ->alias('pes')
+            ->innerJoin(
+                ['s' => 'servicios'],
+                's.id_servicio = pes.id_servicio AND s.acepta_turnos = "SI"'
+            )
+            ->innerJoin(
+                ['pes_agenda' => 'profesional_efector_servicio_agenda'],
+                'pes_agenda.id_profesional_efector_servicio = pes.id'
+                . ' AND pes_agenda.deleted_at IS NULL'
+                . ' AND pes_agenda.acepta_consultas_online = 1'
+            )
+            ->where(['pes.deleted_at' => null])
+            ->andWhere(['pes.id_servicio' => $idServicios])
+            ->all();
+    }
+
+    /**
      * Resuelve id PES cuando el valor es la PK de `profesional_efector_servicio` en ese efector.
      */
     public static function resolvePesIdFromPkEnEfector(int $idCandidate, int $idEfector): ?int

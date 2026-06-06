@@ -225,6 +225,125 @@ class TurnoSlotFinder
     }
 
     /**
+     * Slots libres de teleconsulta hub: todos los PES de Medicina clínica (u otros servicios hub)
+     * con `acepta_consultas_online`, sin elegir efector ni profesional.
+     *
+     * Criterio: `id_servicios` (list<int>), `fecha_desde`, `max_dias`, `restricciones`, `min_minutos_desde_ahora`.
+     *
+     * @param array<string, mixed> $criteria
+     * @return array<int, array<string, mixed>>
+     */
+    public static function findAvailableSlotsHubTeleconsulta(array $criteria, $limit = 10): array
+    {
+        $idServicios = $criteria['id_servicios'] ?? [];
+        if (!is_array($idServicios) || $idServicios === []) {
+            throw new \InvalidArgumentException('TurnoSlotFinder hub teleconsulta requiere id_servicios');
+        }
+
+        $fechaDesde = $criteria['fecha_desde'] ?? date('Y-m-d');
+        $maxDias = (int) ($criteria['max_dias'] ?? 30);
+        if ($maxDias <= 0) {
+            $maxDias = 30;
+        }
+
+        $restricciones = $criteria['restricciones'] ?? [];
+        $diasSemanaExcluidos = self::buildDiasSemanaExcluidos($restricciones);
+        $franjasExcluidas = self::buildFranjasExcluidas($restricciones);
+
+        $pesList = ProfesionalEfectorServicio::findAllActivosTeleconsultaPorServicios($idServicios);
+        if ($pesList === []) {
+            return [];
+        }
+
+        $idsPes = array_map(static function (ProfesionalEfectorServicio $p) {
+            return (int) $p->id;
+        }, $pesList);
+        $agendasPorPes = ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes);
+        if ($agendasPorPes === []) {
+            return [];
+        }
+
+        $pesPorId = [];
+        foreach ($pesList as $p) {
+            $pesPorId[(int) $p->id] = $p;
+        }
+
+        $limit = max(1, (int) $limit);
+        $minMinutosDesdeAhora = self::resolveMinMinutosDesdeAhora($criteria);
+        $hoyYmd = self::hoyEnZonaApp();
+        $out = [];
+
+        for ($offset = 0; $offset < $maxDias && count($out) < $limit; $offset++) {
+            $dia = date('Y-m-d', strtotime($fechaDesde . " +{$offset} days"));
+            if ($dia < $hoyYmd) {
+                continue;
+            }
+            $nroDiaSemana = (int) date('N', strtotime($dia));
+
+            if (in_array($nroDiaSemana, $diasSemanaExcluidos, true)) {
+                continue;
+            }
+
+            foreach ($agendasPorPes as $agenda) {
+                if (count($out) >= $limit) {
+                    break 2;
+                }
+                $idPesAgenda = (int) $agenda->id_profesional_efector_servicio;
+                $pes = $pesPorId[$idPesAgenda] ?? null;
+                if ($pes === null) {
+                    continue;
+                }
+                $version = ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha($idPesAgenda, $dia);
+                if ($version !== null && !(bool) $version->acepta_consultas_online) {
+                    continue;
+                }
+                $agendaLike = $version ?? $agenda;
+                $intervalo = $version !== null
+                    ? $version->getIntervaloMinutosEfectivo()
+                    : $agenda->resolveIntervaloMinutosParaSlots();
+                $slots = AgendaSlotEngine::slotsParaDia($agendaLike, $dia, $intervalo);
+                if ($slots === []) {
+                    continue;
+                }
+
+                $idEfector = (int) $pes->id_efector;
+                $idServicio = (int) $pes->id_servicio;
+
+                foreach ($slots as $hora) {
+                    if (count($out) >= $limit) {
+                        break 3;
+                    }
+                    if (self::isHoraExcluida($hora, $franjasExcluidas)) {
+                        continue;
+                    }
+                    if (self::slotAntesDelMinimoPermitido($dia, $hora, $minMinutosDesdeAhora)) {
+                        continue;
+                    }
+                    if (Turno::estaOcupadoSlotPorProfesionalEfectorServicio($idPesAgenda, $dia, $hora)) {
+                        continue;
+                    }
+
+                    $srv = $pes->servicio;
+                    $servicioEmb = $srv !== null
+                        ? ['id_servicio' => (int) $srv->id_servicio, 'nombre' => (string) $srv->nombre]
+                        : ['id_servicio' => $idServicio, 'nombre' => ''];
+
+                    $out[] = [
+                        'fecha' => $dia,
+                        'hora' => $hora,
+                        'id_profesional_efector_servicio' => $idPesAgenda,
+                        'id_efector' => $idEfector,
+                        'id_servicio' => $idServicio,
+                        'servicio' => $servicioEmb,
+                    ];
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Construye lista de días de la semana (1..7) excluidos a partir de restricciones.
      *
      * @param array $restricciones

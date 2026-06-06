@@ -36,10 +36,12 @@ nodes:
     label: "Es un control de algo que ya tengo (crónico)"
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
+    teleconsulta_elegibilidad: sugerido
   - code: tramite_admin
     step: raiz
     label: "Es un trámite o certificado (sin síntomas nuevos)"
     urgency_band: D
+    teleconsulta_elegibilidad: permitido
 
   # --- Alarmas (banda A detiene reserva) ---
   - code: alarma_ninguna
@@ -80,6 +82,7 @@ nodes:
     step: alarmas
     label: "Fiebre muy alta con mucho malestar general"
     urgency_band: B
+    teleconsulta_elegibilidad: presencial_preferido
 
   # --- Zona corporal (solo síntoma nuevo) ---
   - code: zona_cabeza_cuello
@@ -131,6 +134,7 @@ nodes:
     parent: zona_pecho
     label: "Dolor en el pecho"
     urgency_band: B
+    teleconsulta_elegibilidad: presencial_preferido
   - code: det_pecho_tos
     step: detalle
     parent: zona_pecho
@@ -157,18 +161,21 @@ nodes:
     label: "Dolor muscular por esfuerzo"
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
+    teleconsulta_elegibilidad: sugerido
   - code: det_musculo_esfuerzo_brazo
     step: detalle
     parent: zona_brazo_mano
     label: "Dolor muscular por esfuerzo"
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
+    teleconsulta_elegibilidad: sugerido
   - code: det_musculo_esfuerzo_pierna
     step: detalle
     parent: zona_pierna_pie
     label: "Dolor muscular por esfuerzo"
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
+    teleconsulta_elegibilidad: sugerido
   - code: det_extremidad_hinchazon
     step: detalle
     parent: zona_pierna_pie

@@ -23,6 +23,8 @@ final class ReservaTurnoTriageFlowDraftHydrator
             $draft['tipo_atencion_sugerido'] = $compiled['suggests_tipo_atencion'];
         }
 
+        (new TeleconsultaElegibilidadService())->aplicarFlagsEnDraft($draft);
+
         $body['draft'] = $draft;
     }
 }

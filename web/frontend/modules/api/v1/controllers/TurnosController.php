@@ -35,6 +35,7 @@ use common\components\Scheduling\Service\TurnoReservaSlotService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Scheduling\Service\TurnoAgendaMetricsService;
 use common\components\Scheduling\Service\ReservaTurnoTriageCatalogService;
+use common\components\Scheduling\Service\TeleconsultaElegibilidadService;
 use common\components\Scheduling\Service\TurnoResolucionService;
 use common\components\Scheduling\Service\TurnoResolucionElecciones;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
@@ -146,6 +147,22 @@ class TurnosController extends BaseController
         $parentCode = $this->reservaTriageParentForStep($step, $params);
         $options = $catalog->getOptionsForStep($step, $parentCode !== '' ? $parentCode : null);
 
+        if ($step === 'modalidad') {
+            $draft = $this->draftDesdeParamsReservaTriage($params);
+            $eleg = new TeleconsultaElegibilidadService();
+            $modalOpts = $eleg->opcionesModalidadParaDraft($draft);
+            $options = [];
+            foreach ($modalOpts as $row) {
+                $options[] = [
+                    'code' => $row['code'],
+                    'label' => $row['label'],
+                    'urgency_band' => null,
+                    'halts_booking' => false,
+                    'suggests_tipo_atencion' => null,
+                ];
+            }
+        }
+
         $out = UiScreenService::handleScreen(
             'turnos',
             'reserva-triage-paso',
@@ -239,6 +256,33 @@ class TurnosController extends BaseController
         }
 
         return trim((string) ($params['parent_code'] ?? ''));
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private function draftDesdeParamsReservaTriage(array $params): array
+    {
+        $keys = [
+            'id_servicio_asignado',
+            'triage_raiz',
+            'triage_alarmas',
+            'triage_zona',
+            'triage_detalle',
+            'triage_evolucion',
+            'reserva_triage_halt',
+            'urgency_band',
+            'tipo_atencion',
+        ];
+        $draft = [];
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $params) && $params[$key] !== null && $params[$key] !== '') {
+                $draft[$key] = $params[$key];
+            }
+        }
+
+        return $draft;
     }
 
     /**

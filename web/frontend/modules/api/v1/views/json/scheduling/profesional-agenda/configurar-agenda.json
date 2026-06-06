@@ -83,6 +83,18 @@
           "layout": { "col": 6, "breakpoint": "md" }
         },
         {
+          "name": "acepta_consultas_online",
+          "label": "Acepto teleconsulta (videollamada) en esta agenda",
+          "type": "select",
+          "required": false,
+          "include_in_submit": true,
+          "options": [
+            { "value": "0", "label": "No" },
+            { "value": "1", "label": "Sí" }
+          ],
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
           "name": "confirmar_cambios",
           "label": "Confirmo el cambio tras revisar el impacto en turnos futuros",
           "type": "select",

@@ -119,6 +119,21 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
   }
 
+  String? _labelTipoAtencion(String? tipo) {
+    switch (tipo) {
+      case 'teleconsulta':
+        return 'Teleconsulta';
+      case 'presencial':
+        return 'Presencial';
+      default:
+        return null;
+    }
+  }
+
+  UiIntent _intentTipoAtencion(String? tipo) {
+    return tipo == 'teleconsulta' ? UiIntent.info : UiIntent.neutral;
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -316,6 +331,13 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                   style: BioTypography.h3,
                 ),
               ),
+              if (_labelTipoAtencion(turno.tipoAtencion) != null) ...[
+                BioBadge(
+                  label: _labelTipoAtencion(turno.tipoAtencion)!,
+                  intent: _intentTipoAtencion(turno.tipoAtencion),
+                ),
+                BioSpacing.gapW(BioSpacing.xs),
+              ],
               BioBadge(label: turno.estadoLabel, intent: estadoIntent),
             ],
           ),

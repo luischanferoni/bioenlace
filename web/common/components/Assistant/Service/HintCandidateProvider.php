@@ -103,6 +103,10 @@ final class HintCandidateProvider
             'acepta_turnos' => 'SI',
             'limit' => 200,
         ];
+        $tipoAtencion = trim((string) ($ctx->draft['tipo_atencion'] ?? ''));
+        if ($tipoAtencion !== '') {
+            $filters['tipo_atencion'] = $tipoAtencion;
+        }
         $rows = ProfesionalEnEfectorListadoUiService::autocompletePorEfectorServicio(
             $searchQuery !== null ? trim($searchQuery) : '',
             $filters

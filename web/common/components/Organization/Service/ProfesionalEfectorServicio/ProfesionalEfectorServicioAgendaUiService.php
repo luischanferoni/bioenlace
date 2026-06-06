@@ -116,6 +116,7 @@ final class ProfesionalEfectorServicioAgendaUiService
             $out['cupo_pacientes'] = (string) $agenda->cupo_pacientes;
             $out['intervalo_minutos'] = (string) ($agenda->intervalo_minutos ?? AgendaIntervaloMinutos::DEFAULT);
             $out['formas_atencion'] = (string) $agenda->formas_atencion;
+            $out['acepta_consultas_online'] = $agenda->acepta_consultas_online ? '1' : '0';
             foreach (['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'] as $col) {
                 $out[$col] = (string) ($agenda->$col ?? '');
             }

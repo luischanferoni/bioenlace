@@ -11,6 +11,7 @@ use common\traits\ParameterQuestionsTrait;
  *
  * @property string $id_servicio
  * @property string $nombre
+ * @property string|null $teleconsulta_politica ninguna|todas|algunas
  *
  * @property Referencia[] $referencias
  * @property ServiciosEfector[] $serviciosEfectors
@@ -20,6 +21,10 @@ use common\traits\ParameterQuestionsTrait;
 class Servicio extends \yii\db\ActiveRecord
 {
     use ParameterQuestionsTrait;
+
+    public const TELECONSULTA_POLITICA_NINGUNA = 'ninguna';
+    public const TELECONSULTA_POLITICA_TODAS = 'todas';
+    public const TELECONSULTA_POLITICA_ALGUNAS = 'algunas';
     /**
      * @inheritdoc
      */
@@ -36,7 +41,13 @@ class Servicio extends \yii\db\ActiveRecord
         return [
             [['nombre'], 'required'],
             [['nombre'], 'string', 'max' => 40],
-            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name'], 'string']
+            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica'], 'string'],
+            [['teleconsulta_politica'], 'in', 'range' => [
+                self::TELECONSULTA_POLITICA_NINGUNA,
+                self::TELECONSULTA_POLITICA_TODAS,
+                self::TELECONSULTA_POLITICA_ALGUNAS,
+            ]],
+            [['teleconsulta_politica'], 'default', 'value' => self::TELECONSULTA_POLITICA_NINGUNA],
         ];
     }
 
@@ -50,6 +61,7 @@ class Servicio extends \yii\db\ActiveRecord
             'nombre' => 'Nombre del serivicio',
             'acepta_turnos' => 'Acepta Agenda',
             'acepta_practicas' => 'Acepta Practicas',
+            'teleconsulta_politica' => 'Política de teleconsulta',
             'item_name' => 'Rol'
         ];
     }

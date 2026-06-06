@@ -5,6 +5,7 @@ namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
+use common\models\Turno;
 use yii\db\Expression;
 use yii\db\Query;
 
@@ -182,6 +183,15 @@ final class ProfesionalEnEfectorListadoUiService
         }
         if (!empty($filters['acepta_turnos'])) {
             $query->andWhere(['s.acepta_turnos' => (string) $filters['acepta_turnos']]);
+        }
+        if (!empty($filters['tipo_atencion'])
+            && trim((string) $filters['tipo_atencion']) === Turno::TIPO_ATENCION_TELECONSULTA) {
+            $query->innerJoin(
+                ['pes_agenda' => 'profesional_efector_servicio_agenda'],
+                'pes_agenda.id_profesional_efector_servicio = pes.id'
+                . ' AND pes_agenda.deleted_at IS NULL'
+                . ' AND pes_agenda.acepta_consultas_online = 1'
+            );
         }
         if (!empty($filters['efector_nombre'])) {
             $query->andWhere(['like', 'e.nombre', '%' . $filters['efector_nombre'] . '%', false]);

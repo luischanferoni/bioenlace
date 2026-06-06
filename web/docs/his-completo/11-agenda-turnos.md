@@ -15,9 +15,10 @@
 
 ## Lo que falta
 
+- [x] **Teleconsulta en reserva:** política por servicio, elegibilidad por triage, modalidad condicional en `atencion.necesito-atencion`, `acepta_consultas_online` en agenda PES, badge en app médico. Ver [teleconsulta-elegibilidad.md](../producto/teleconsulta-elegibilidad.md).
 - [ ] Lista de espera nacional entre efectores con priorización clínica.
 - [ ] Integración con obras sociales / autorizaciones en el mismo flujo de reserva.
-- [ ] Teleconsulta como modalidad first-class en agenda (donde no esté ya configurado).
+- [ ] Slots diferenciados presencial/remoto (hoy comparten grilla).
 - [ ] Panel histórico exportable (CSV/PDF) y benchmarks entre servicios del efector.
 
 ## En producto hoy

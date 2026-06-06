@@ -57,6 +57,10 @@ class ProfesionalEfectorServicioController extends BaseController
         if ($req->get('sort_order') || $req->post('sort_order')) {
             $filters['sort_order'] = $req->get('sort_order') ?: $req->post('sort_order');
         }
+        $tipoAtencion = $req->get('tipo_atencion') ?: $req->post('tipo_atencion');
+        if ($tipoAtencion !== null && trim((string) $tipoAtencion) !== '') {
+            $filters['tipo_atencion'] = trim((string) $tipoAtencion);
+        }
 
         return $filters;
     }

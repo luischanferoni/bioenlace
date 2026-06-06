@@ -8,7 +8,7 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 
 1. **Seguridad primero:** preguntas de alarma con **banda A** → no se completa la reserva; pantalla de derivación a urgencia / 107.
 2. **Catálogo declarativo:** nodos en `web/common/components/Scheduling/metadata/reserva_triage_catalog_v1.yaml` (códigos internos, etiquetas para el usuario).
-3. **Sin hardcode en orquestadores:** el flujo conversacional está en `turnos.crear-como-paciente.yaml`; la lógica de compilación en `ReservaTurnoTriageCatalogService` y `scheduling.reserva_triage` (`FlowDraftHydratorRegistry`).
+3. **Sin hardcode en orquestadores:** el flujo conversacional está en `atencion.necesito-atencion.yaml`; la lógica de compilación en `ReservaTurnoTriageCatalogService`, elegibilidad remota en `TeleconsultaElegibilidadService` y enriquecimiento vía `scheduling.reserva_triage` (`FlowDraftHydratorRegistry`).
 4. **IA opcional después:** texto libre en confirmación (`triage_nota`); el lote de motivos pre-consulta sigue siendo el canal rico de IA.
 
 ## Intent del asistente
@@ -26,14 +26,21 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 | Zona corporal | `triage_zona` | `?step=zona&triage_raiz=…` |
 | Detalle | `triage_detalle` | `?step=detalle&triage_zona=…` |
 | Evolución | `triage_evolucion` | `?step=evolucion` |
-| Modalidad (presencial / remoto) | `select_tipo_atencion` | `?step=modalidad` |
-| Servicio → … → confirmar | (sin cambios) | flujo turnos existente |
+| Servicio | `select_servicio` | `servicios.elegir-acepta-turnos` |
+| Modalidad (si aplica) | `select_tipo_atencion` | `?step=modalidad&id_servicio_asignado=…` + campos triage |
+| Centro → profesional → día → horario | (sin cambios) | flujo turnos existente |
 
 **Atajos por motivo raíz:**
 
 - `tramite_admin` → salta triage clínico y va directo a servicio.
 - `control_cronico` → alarmas + evolución (sin zona/detalle).
 - `sintoma_nuevo` → recorrido completo.
+
+**Modalidad (presencial / remoto):**
+
+- El paso aparece **después del servicio**, solo si `teleconsulta_ofercible = 1` en el draft (hydrator).
+- Si el servicio o el triage no permiten remoto, se fija `tipo_atencion = presencial` y se salta la pantalla.
+- Detalle de reglas: [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md).
 
 ## Persistencia
 
@@ -63,7 +70,10 @@ Validación al crear: `TurnoPersistService` + `assertCanPersistBooking` (rechaza
 
 ## Relación con teleconsulta
 
-Algunos nodos sugieren `tipo_atencion: teleconsulta` (p. ej. control crónico, dolor muscular por esfuerzo). El paciente **confirma** modalidad en la pantalla final; la agenda debe aceptar teleconsulta en el PES elegido.
+- Política por servicio: `servicios.teleconsulta_politica` (`ninguna` | `todas` | `algunas`) y allowlist `servicio_teleconsulta_caso`.
+- Nodos del catálogo pueden marcar `teleconsulta_elegibilidad` o sugerir `tipo_atencion: teleconsulta`.
+- El profesional habilita teleconsulta en su PES con `acepta_consultas_online` al configurar agenda.
+- Al reservar remoto, el listado de profesionales filtra solo quienes aceptan consultas online.
 
 ## Evolución prevista
 
@@ -71,4 +81,4 @@ Algunos nodos sugieren `tipo_atencion: teleconsulta` (p. ej. control crónico, d
 - Repreguntas IA solo sobre `triage_nota` o texto libre.
 - Reutilizar el mismo catálogo en app móvil paciente sin duplicar árbol en Dart.
 
-Ver también: [turnos.md](./turnos.md), [motivos-consulta.md](./motivos-consulta.md).
+Ver también: [turnos.md](./turnos.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [motivos-consulta.md](./motivos-consulta.md).

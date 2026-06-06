@@ -2,8 +2,6 @@
 
 namespace common\components\Core\DataAccess;
 
-use common\components\Core\DataAccess\Grant\CompositeRoleGrantSource;
-
 /**
  * Resuelve columnas proyectables según grants READ del usuario.
  */
@@ -20,7 +18,7 @@ final class QueryProjectionBuilder
         ?AttributePermissionEvaluator $permissions = null
     ) {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
-        $this->permissions = $permissions ?? new AttributePermissionEvaluator($this->catalog);
+        $this->permissions = $permissions ?? new AttributePermissionEvaluator();
     }
 
     /**

@@ -91,6 +91,9 @@ final class TeleconsultaElegibilidadService
     /**
      * Opciones de modalidad para UI (step=modalidad).
      *
+     * Hub paciente: presencial + videollamada siempre que el triage no sea excluido (urgencia).
+     * La elegibilidad fina (política servicio, agenda PES) se valida al ofrecer slots y al persistir.
+     *
      * @param array<string, mixed> $draft
      * @return list<array{code: string, label: string}>
      */
@@ -107,15 +110,32 @@ final class TeleconsultaElegibilidadService
             'code' => Turno::TIPO_ATENCION_PRESENCIAL,
             'label' => 'Presencial (voy al centro de salud)',
         ];
-        if (!$res['ofrecible']) {
+        if (!$this->modalidadTeleconsultaVisibleParaDraft($draft)) {
             return [$presencial];
         }
         $tele = [
             'code' => Turno::TIPO_ATENCION_TELECONSULTA,
-            'label' => 'Remoto (videollamada desde casa)',
+            'label' => 'Remoto (videollamada / virtual desde casa)',
         ];
 
         return [$presencial, $tele];
+    }
+
+    /**
+     * ¿Mostrar videollamada en el paso modalidad? false solo con triage excluido (urgencia/halt).
+     *
+     * @param array<string, mixed> $draft
+     */
+    public function modalidadTeleconsultaVisibleParaDraft(array $draft): bool
+    {
+        $catalog = new ReservaTurnoTriageCatalogService();
+        $compiled = $catalog->compileSelections($draft);
+        if (!empty($compiled['reserva_triage_halt'])) {
+            return false;
+        }
+        $elegClinica = $this->resolverElegibilidadClinica($draft, $compiled);
+
+        return $elegClinica !== self::ELEG_EXCLUIDO;
     }
 
     /**
@@ -128,8 +148,8 @@ final class TeleconsultaElegibilidadService
      */
     public function aplicarFlagsEnDraft(array &$draft): void
     {
+        $draft['teleconsulta_ofrecible'] = $this->modalidadTeleconsultaVisibleParaDraft($draft) ? '1' : '0';
         $res = $this->resolverParaDraft($draft);
-        $draft['teleconsulta_ofrecible'] = $res['ofrecible'] ? '1' : '0';
         if ($res['sugerencia'] !== null && trim((string) ($draft['tipo_atencion'] ?? '')) === '') {
             $draft['tipo_atencion_sugerido'] = $res['sugerencia'];
         }

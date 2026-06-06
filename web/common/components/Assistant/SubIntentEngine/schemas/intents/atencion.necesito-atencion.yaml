@@ -170,7 +170,6 @@ subintents:
       - when:
           draft_equals:
             tipo_atencion: teleconsulta
-            teleconsulta_ofrecible: "1"
         next: select_dia_teleconsulta
       - when:
           default: true

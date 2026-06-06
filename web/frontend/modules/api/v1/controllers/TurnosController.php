@@ -150,6 +150,7 @@ class TurnosController extends BaseController
 
         if ($step === 'modalidad') {
             $draft = $this->draftDesdeParamsReservaTriage($params);
+            (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
             $eleg = new TeleconsultaElegibilidadService();
             $modalOpts = $eleg->opcionesModalidadParaDraft($draft);
             $options = [];
@@ -1409,8 +1410,7 @@ class TurnosController extends BaseController
         $draft['tipo_atencion'] = Turno::TIPO_ATENCION_TELECONSULTA;
 
         $eleg = new TeleconsultaElegibilidadService();
-        $elegRes = $eleg->resolverParaDraft($draft);
-        if (!$elegRes['ofrecible']) {
+        if (!$eleg->modalidadTeleconsultaVisibleParaDraft($draft)) {
             throw new BadRequestHttpException(
                 'Teleconsulta no disponible para este caso. Elegí atención presencial.'
             );

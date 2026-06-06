@@ -2,6 +2,7 @@
 
 namespace common\components\Core\DataAccess\Presentation;
 
+use common\components\Core\DataAccess\MetricExecutionResult;
 use common\components\Organization\Presentation\ProfesionalesConteoInfoPresentation;
 use common\components\Organization\Presentation\ProfesionalesListadoRowsPresentation;
 

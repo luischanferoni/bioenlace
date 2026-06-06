@@ -2,6 +2,8 @@
 
 namespace common\components\Scheduling\Service;
 
+use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
+use common\models\ConsultaDerivaciones;
 use common\models\Scheduling\Turno;
 use common\models\Servicio;
 use common\models\ServicioTeleconsultaCaso;
@@ -59,6 +61,11 @@ final class TeleconsultaElegibilidadService
             ];
         }
 
+        $accesoHub = $this->resolverAccesoHubEspecialista($idServicio, $draft, $elegClinica);
+        if ($accesoHub !== null) {
+            return $accesoHub;
+        }
+
         if (!$this->servicioPermiteTeleconsulta($idServicio, $draft)) {
             return [
                 'ofrecible' => false,
@@ -87,6 +94,12 @@ final class TeleconsultaElegibilidadService
     public function opcionesModalidadParaDraft(array $draft): array
     {
         $res = $this->resolverParaDraft($draft);
+        if ($res['motivo'] === 'derivacion_especialista' && $res['ofrecible']) {
+            return [[
+                'code' => Turno::TIPO_ATENCION_TELECONSULTA,
+                'label' => 'Remoto (videollamada — derivación del clínico)',
+            ]];
+        }
         $presencial = [
             'code' => Turno::TIPO_ATENCION_PRESENCIAL,
             'label' => 'Presencial (voy al centro de salud)',
@@ -221,6 +234,94 @@ final class TeleconsultaElegibilidadService
         }
 
         return false;
+    }
+
+    /**
+     * Hub paciente vs especialista con derivación: metadata {@see ReservaTriageServicioMapService}.
+     *
+     * @param array<string, mixed> $draft
+     * @return array{
+     *   ofrecible: bool,
+     *   tipo_atencion_forzado: string|null,
+     *   sugerencia: string|null,
+     *   motivo: string,
+     *   elegibilidad_clinica: string
+     * }|null null = seguir reglas estándar (servicio hub / política servicio)
+     */
+    private function resolverAccesoHubEspecialista(int $idServicio, array $draft, string $elegClinica): ?array
+    {
+        $map = new ReservaTriageServicioMapService();
+        if (!$map->especialistaSoloTeleconsultaConDerivacion()) {
+            return null;
+        }
+
+        $servicio = Servicio::findOne($idServicio);
+        if ($servicio === null) {
+            return null;
+        }
+
+        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+        $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
+        if ($rol === null || $map->permiteAutogestionPaciente($rol)) {
+            return null;
+        }
+
+        if (!$map->teleconsultaSoloConDerivacion($rol)) {
+            return null;
+        }
+
+        if (!$this->draftIndicaDerivacionVigente($draft, $idServicio)) {
+            return [
+                'ofrecible' => false,
+                'tipo_atencion_forzado' => Turno::TIPO_ATENCION_PRESENCIAL,
+                'sugerencia' => null,
+                'motivo' => 'especialista_requiere_derivacion',
+                'elegibilidad_clinica' => $elegClinica,
+            ];
+        }
+
+        if (!$this->servicioPermiteTeleconsulta($idServicio, $draft)) {
+            return [
+                'ofrecible' => false,
+                'tipo_atencion_forzado' => Turno::TIPO_ATENCION_PRESENCIAL,
+                'sugerencia' => null,
+                'motivo' => 'servicio_no_permite',
+                'elegibilidad_clinica' => $elegClinica,
+            ];
+        }
+
+        return [
+            'ofrecible' => true,
+            'tipo_atencion_forzado' => Turno::TIPO_ATENCION_TELECONSULTA,
+            'sugerencia' => Turno::TIPO_ATENCION_TELECONSULTA,
+            'motivo' => 'derivacion_especialista',
+            'elegibilidad_clinica' => $elegClinica,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function draftIndicaDerivacionVigente(array $draft, int $idServicio): bool
+    {
+        if ((int) ($draft['id_derivacion_clinica'] ?? 0) > 0) {
+            return true;
+        }
+
+        $idPersona = (int) ($draft['id_persona'] ?? 0);
+        $idEfector = (int) ($draft['id_efector'] ?? 0);
+        if ($idPersona <= 0 || $idEfector <= 0 || $idServicio <= 0) {
+            return false;
+        }
+
+        $pendientes = ConsultaDerivaciones::getDerivacionesPorPersona(
+            $idPersona,
+            $idEfector,
+            $idServicio,
+            ConsultaDerivaciones::ESTADO_EN_ESPERA
+        );
+
+        return $pendientes !== [];
     }
 
     private static function normalizarPolitica(string $raw): string

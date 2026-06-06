@@ -18,14 +18,18 @@ final class ServiciosEfectorAutogestionListadoService
      * @param array<string, mixed>|null $triageDraft campos triage para filtrar por rol sugerido (opcional)
      * @return list<array{id: string, name: string}>
      */
-    public static function uiJsonItemsServiciosDistintosAceptaTurnos(?array $triageDraft = null): array
+    public static function uiJsonItemsServiciosDistintosAceptaTurnos(?array $triageDraft = null, bool $soloHubPaciente = false): array
     {
         $items = self::buildBaseItems();
-        if ($triageDraft === null || $triageDraft === []) {
-            return $items;
+        if ($soloHubPaciente || ($triageDraft !== null && $triageDraft !== [])) {
+            return (new ReservaTriageServicioSugeridoService())->filtrarItemsUiJson(
+                $items,
+                $triageDraft ?? [],
+                $soloHubPaciente || ($triageDraft !== null && $triageDraft !== [])
+            );
         }
 
-        return (new ReservaTriageServicioSugeridoService())->filtrarItemsUiJson($items, $triageDraft);
+        return $items;
     }
 
     /**

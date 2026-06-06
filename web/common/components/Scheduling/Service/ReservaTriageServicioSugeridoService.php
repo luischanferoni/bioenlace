@@ -3,10 +3,14 @@
 namespace common\components\Scheduling\Service;
 
 use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
+use common\models\ConsultaDerivaciones;
 use common\models\Servicio;
+use common\models\Turno;
 
 /**
  * Resuelve rol/servicios sugeridos a partir del draft de triage y filtra listados de autogestión.
+ *
+ * Modelo hub: autogestión paciente → solo Medicina clínica; especialistas vía derivación clínica.
  */
 final class ReservaTriageServicioSugeridoService
 {
@@ -19,12 +23,12 @@ final class ReservaTriageServicioSugeridoService
      *   filtrado_aplicado: bool
      * }
      */
-    public function resolverParaDraft(array $draft): array
+    public function resolverParaDraft(array $draft, bool $soloHubPaciente = false): array
     {
         $map = new ReservaTriageServicioMapService();
-        $rol = $this->resolverRolDesdeDraft($draft);
+        $rol = $this->resolverRolDesdeDraft($draft, $soloHubPaciente);
         $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
-        $matchedIds = $this->idsServicioParaRol($rol, $eligibleIds);
+        $matchedIds = $map->idsServicioParaRol($rol, $eligibleIds);
 
         return [
             'rol' => $rol,
@@ -35,50 +39,51 @@ final class ReservaTriageServicioSugeridoService
     }
 
     /**
-     * Filtra items ui_json según rol sugerido por triage (estricto: sin fallback a todos los servicios).
+     * Lista ui_json solo con servicios del hub (Medicina clínica).
+     *
+     * @param list<array{id: string, name: string}> $items
+     * @return list<array{id: string, name: string}>
+     */
+    public function filtrarItemsHubPaciente(array $items): array
+    {
+        return $this->filtrarItemsPorRol($items, (new ReservaTriageServicioMapService())->getHubRol());
+    }
+
+    /**
+     * Filtra items ui_json según rol (estricto: sin fallback a todos los servicios).
      *
      * @param list<array{id: string, name: string}> $items
      * @param array<string, mixed> $draft
      * @return list<array{id: string, name: string}>
      */
-    public function filtrarItemsUiJson(array $items, array $draft): array
+    public function filtrarItemsUiJson(array $items, array $draft, bool $soloHubPaciente = false): array
     {
-        if ($items === [] || !$this->draftTieneTriageRelevante($draft)) {
+        if ($items === []) {
+            return $items;
+        }
+        if (!$soloHubPaciente && !$this->draftTieneTriageRelevante($draft)) {
             return $items;
         }
 
-        $res = $this->resolverParaDraft($draft);
+        $res = $this->resolverParaDraft($draft, $soloHubPaciente);
         if ($res['id_servicios'] === []) {
             return [];
         }
 
-        $allow = array_flip($res['id_servicios']);
-        $filtered = [];
-        foreach ($items as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $id = (int) ($row['id'] ?? 0);
-            if ($id > 0 && isset($allow[$id])) {
-                $filtered[] = $row;
-            }
-        }
-
-        return $filtered;
+        return $this->filtrarItemsPorIds($items, $res['id_servicios']);
     }
 
     /**
-     * Mensaje cuando el filtro por triage no encontró servicios con turnos habilitados.
-     *
      * @param array<string, mixed> $draft
      */
-    public function mensajeListaVaciaParaDraft(array $draft): string
+    public function mensajeListaVaciaParaDraft(array $draft, bool $soloHubPaciente = true): string
     {
-        $res = $this->resolverParaDraft($draft);
-        $label = $res['rol_label'] !== '' ? $res['rol_label'] : 'este tipo de atención';
+        $res = $this->resolverParaDraft($draft, $soloHubPaciente);
+        $label = $res['rol_label'] !== '' ? $res['rol_label'] : 'Medicina clínica';
 
-        return 'No hay servicios de ' . $label
-            . ' con turnos habilitados en este momento. Consultá con tu centro de salud o administración.';
+        return 'No hay turnos de ' . $label
+            . ' habilitados en este momento. Los especialistas atienden por derivación del médico clínico;'
+            . ' consultá con tu centro de salud si necesitás ayuda.';
     }
 
     /**
@@ -90,77 +95,70 @@ final class ReservaTriageServicioSugeridoService
             return;
         }
 
-        $res = $this->resolverParaDraft($draft);
+        $res = $this->resolverParaDraft($draft, true);
         $draft['servicio_reserva_rol'] = $res['rol'];
+        $draft['reserva_modo_hub_paciente'] = '1';
         if (count($res['id_servicios']) === 1) {
             $draft['id_servicio_sugerido'] = (string) $res['id_servicios'][0];
         }
     }
 
     /**
-     * @param array<string, mixed> $draft
+     * Paciente autogestionando: solo hub o especialista con derivación vigente al servicio.
      */
-    public function resolverRolDesdeDraft(array $draft): string
+    public function assertPacientePuedeReservarServicio(Turno $model): void
     {
-        $map = new ReservaTriageServicioMapService();
-        $catalog = new ReservaTurnoTriageCatalogService();
-
-        foreach ($this->codigosCasoDesdeDraft($draft) as $code) {
-            $node = $catalog->findNode($code);
-            if ($node === null) {
-                continue;
-            }
-            $rol = isset($node['suggests_servicio_rol'])
-                ? trim((string) $node['suggests_servicio_rol'])
-                : '';
-            if ($rol !== '') {
-                return $rol;
-            }
+        $idServicio = (int) ($model->id_servicio_asignado ?? 0);
+        $idPersona = (int) ($model->id_persona ?? 0);
+        $idEfector = (int) ($model->id_efector ?? 0);
+        if ($idServicio <= 0 || $idPersona <= 0) {
+            return;
         }
 
-        return $map->getDefaultRol();
+        $map = new ReservaTriageServicioMapService();
+        $servicio = Servicio::findOne($idServicio);
+        if ($servicio === null) {
+            return;
+        }
+
+        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+        $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
+        if ($rol === null || $map->permiteAutogestionPaciente($rol)) {
+            return;
+        }
+
+        if ($idEfector <= 0) {
+            throw new \InvalidArgumentException(
+                'Este servicio requiere derivación de Medicina clínica antes de reservar turno.'
+            );
+        }
+
+        $pendientes = ConsultaDerivaciones::getDerivacionesPorPersona(
+            $idPersona,
+            $idEfector,
+            $idServicio,
+            ConsultaDerivaciones::ESTADO_EN_ESPERA
+        );
+        if ($pendientes === []) {
+            throw new \InvalidArgumentException(
+                'Los turnos con especialistas requieren derivación de un médico de Medicina clínica.'
+                . ' Pedí turno con clínica primero o usá la derivación que te indicaron.'
+            );
+        }
     }
 
     /**
-     * @param list<int> $eligibleIds servicios con turnos habilitados
-     * @return list<int>
+     * @param array<string, mixed> $draft
      */
-    public function idsServicioParaRol(string $rol, array $eligibleIds): array
+    public function resolverRolDesdeDraft(array $draft, bool $soloHubPaciente = false): string
     {
-        $rol = trim($rol);
-        if ($rol === '' || $eligibleIds === []) {
-            return [];
-        }
-
         $map = new ReservaTriageServicioMapService();
-        $criteria = $map->getMatchCriteriaForRol($rol);
-        if ($criteria === null) {
-            return [];
+
+        if ($soloHubPaciente || $this->draftTieneTriageRelevante($draft)) {
+            return $map->getHubRol();
         }
 
-        $patterns = $criteria['nombre_patterns'];
-        $itemNames = $criteria['item_names'];
-        if ($patterns === [] && $itemNames === []) {
-            return [];
-        }
-
-        $rows = Servicio::find()
-            ->where(['id_servicio' => $eligibleIds])
-            ->all();
-
-        $out = [];
-        foreach ($rows as $servicio) {
-            if (!$servicio instanceof Servicio) {
-                continue;
-            }
-            if ($this->servicioCoincide($servicio, $patterns, $itemNames)) {
-                $out[] = (int) $servicio->id_servicio;
-            }
-        }
-
-        sort($out);
-
-        return array_values(array_unique($out));
+        return $map->getDefaultRol();
     }
 
     /**
@@ -190,6 +188,49 @@ final class ReservaTriageServicioSugeridoService
         return $draft;
     }
 
+    public static function esModoHubPaciente(array $params): bool
+    {
+        return trim((string) ($params['reserva_modo'] ?? '')) === 'hub_paciente';
+    }
+
+    /**
+     * @param list<array{id: string, name: string}> $items
+     * @param list<int> $ids
+     * @return list<array{id: string, name: string}>
+     */
+    private function filtrarItemsPorIds(array $items, array $ids): array
+    {
+        $allow = array_flip($ids);
+        $filtered = [];
+        foreach ($items as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = (int) ($row['id'] ?? 0);
+            if ($id > 0 && isset($allow[$id])) {
+                $filtered[] = $row;
+            }
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * @param list<array{id: string, name: string}> $items
+     * @return list<array{id: string, name: string}>
+     */
+    private function filtrarItemsPorRol(array $items, string $rol): array
+    {
+        $map = new ReservaTriageServicioMapService();
+        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+        $ids = $map->idsServicioParaRol($rol, $eligibleIds);
+        if ($ids === []) {
+            return [];
+        }
+
+        return $this->filtrarItemsPorIds($items, $ids);
+    }
+
     /**
      * @param array<string, mixed> $draft
      */
@@ -199,48 +240,6 @@ final class ReservaTriageServicioSugeridoService
             if (trim((string) ($draft[$key] ?? '')) !== '') {
                 return true;
             }
-        }
-
-        return false;
-    }
-
-    /**
-     * Más específico primero (detalle > zona > raíz).
-     *
-     * @param array<string, mixed> $draft
-     * @return list<string>
-     */
-    private function codigosCasoDesdeDraft(array $draft): array
-    {
-        $ordered = ['triage_detalle', 'triage_zona', 'triage_raiz', 'triage_evolucion', 'triage_alarmas'];
-        $out = [];
-        foreach ($ordered as $key) {
-            $v = trim((string) ($draft[$key] ?? ''));
-            if ($v !== '') {
-                $out[] = $v;
-            }
-        }
-
-        return array_values(array_unique($out));
-    }
-
-    /**
-     * @param list<string> $patterns
-     * @param list<string> $itemNames
-     */
-    private function servicioCoincide(Servicio $servicio, array $patterns, array $itemNames): bool
-    {
-        $nombre = mb_strtolower(trim((string) $servicio->nombre));
-        foreach ($patterns as $pattern) {
-            $p = mb_strtolower(trim($pattern));
-            if ($p !== '' && str_contains($nombre, $p)) {
-                return true;
-            }
-        }
-
-        $item = trim((string) ($servicio->item_name ?? ''));
-        if ($item !== '' && in_array($item, $itemNames, true)) {
-            return true;
         }
 
         return false;

@@ -85,12 +85,14 @@ class ServiciosController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $params = array_merge($req->get(), $req->post());
             $triageDraft = ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($params);
+            $modoHub = ReservaTriageServicioSugeridoService::esModoHubPaciente($params);
             $sugerido = new ReservaTriageServicioSugeridoService();
-            $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos(
-                $triageDraft !== [] ? $triageDraft : null
-            );
-            if ($items === [] && $triageDraft !== []) {
-                $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($triageDraft));
+            $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos();
+            if ($modoHub || $triageDraft !== []) {
+                $items = $sugerido->filtrarItemsUiJson($items, $triageDraft, true);
+            }
+            if ($items === [] && ($modoHub || $triageDraft !== [])) {
+                $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($triageDraft, true));
             }
             $ui = UiScreenService::withListBlockItems($ui, $items);
         }

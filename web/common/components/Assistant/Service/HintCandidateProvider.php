@@ -49,16 +49,18 @@ final class HintCandidateProvider
     private static function servicioCandidates(HintResolutionContext $ctx): array
     {
         $triageDraft = null;
-        if (self::intentUsesServiciosAceptaTurnos($ctx->intentId) && $ctx->intentId === 'atencion.necesito-atencion') {
+        $soloHub = false;
+        if ($ctx->intentId === 'atencion.necesito-atencion') {
             $triageDraft = ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($ctx->draft);
-            if ($triageDraft === []) {
-                $triageDraft = null;
-            }
+            $soloHub = true;
         }
 
         if (self::intentUsesServiciosAceptaTurnos($ctx->intentId)) {
             return self::mapUiJsonItems(
-                ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos($triageDraft)
+                ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos(
+                    $triageDraft !== [] ? $triageDraft : null,
+                    $soloHub
+                )
             );
         }
 

@@ -18,17 +18,20 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Entender por qué el paciente busca ayuda (triage breve) y conducirlo a la vía adecuada;
-    hoy la rama principal es reserva de turno ambulatorio con datos de triage persistidos.
+    Entender por qué el paciente busca ayuda (triage breve) y conducirlo a turno con Medicina clínica
+    (médico generalista/clínico), salvo urgencia. Los especialistas se reservan solo con derivación del clínico.
   how: >-
-    Motivo y alarmas → zona/detalle/evolución si aplica → servicio → modalidad (si el servicio y el caso lo permiten) → centro → profesional → día → horario → confirmación.
+    Motivo y alarmas → zona/detalle/evolución si aplica → Medicina clínica → modalidad (si aplica) → centro →
+    profesional generalista → día → horario → confirmación.
   preconditions:
-    - El usuario puede autogestionar turnos cuando la rama es ambulatorio programable.
+    - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
     - Signos de alarma (banda A): no se completa reserva; pantalla de urgencia.
-    - Teleconsulta solo si el servicio y el triage lo permiten; si no, presencial fijo sin elección.
+    - Autogestión paciente: solo servicio Medicina clínica / generalistas.
+    - Especialistas: turno solo con derivación vigente del clínico; modalidad remota en ese caso.
+    - Teleconsulta con clínica según triage, servicio y agenda del profesional.
   outcome:
-    - Turno creado con triage de reserva, u otra derivación cuando se agreguen ramas al catálogo.
+    - Turno con clínico y triage persistido; derivación a especialista en otro flujo cuando el clínico la indique.
   keyphrases:
     - necesito ayuda con un síntoma
     - quiero atención médica
@@ -42,6 +45,7 @@ draft_keys_extra:
   - teleconsulta_ofrecible
   - servicio_reserva_rol
   - id_servicio_sugerido
+  - reserva_modo_hub_paciente
   - fecha_turno
   - triage_raiz
   - triage_alarmas
@@ -172,6 +176,7 @@ subintents:
     open_ui:
       action_id: servicios.elegir-acepta-turnos
       params:
+        reserva_modo: hub_paciente
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas"
         triage_zona: "draft.triage_zona"

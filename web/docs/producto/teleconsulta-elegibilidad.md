@@ -27,9 +27,10 @@ No es diagnóstico: combina triage de reserva, política del servicio y configur
 
 ## Reglas de servicio
 
-- **`ninguna`** (default tras migración): siempre presencial en reserva; se salta modalidad.
-- **`todas`**: cualquier caso elegible clínicamente puede ofrecer teleconsulta.
-- **`algunas`**: solo si algún código del recorrido de triage está en `servicio_teleconsulta_caso`.
+- **Hub paciente (`medicina_clinica`):** autogestión directa; teleconsulta según política del servicio y triage.
+- **Especialistas:** no autogestión; teleconsulta solo con derivación del clínico (`derivacion_especialista`).
+- **`ninguna`** (default tras migración): presencial en reserva hub; se salta modalidad remota.
+- **`todas` / `algunas`:** ver allowlist `servicio_teleconsulta_caso` para hub; especialistas con derivación requieren política que permita remoto.
 
 Configuración operativa: actualizar `servicios.teleconsulta_politica` y filas en allowlist (sin UI admin dedicada en fase 1).
 
@@ -64,4 +65,4 @@ La agenda del día expone `tipo_atencion` en cada turno; la lista muestra badge 
 - Códigos SNOMED / terminología clínica en lugar de solo códigos internos de triage.
 - Slots diferenciados presencial/remoto (hoy comparten grilla).
 
-Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [turnos.md](./turnos.md).
+Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [turnos.md](./turnos.md), [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md).

@@ -1,58 +1,92 @@
-# Mapeo declarativo: rol lógico de servicio (desde triage) → criterios sobre fila `servicios`.
-# Los IDs concretos se resuelven en runtime contra servicios con turnos habilitados (servicios_efector).
+# Mapeo declarativo: rol lógico de servicio → criterios sobre fila `servicios`.
+# Modelo hub: el paciente autogestiona turnos solo en Medicina clínica (generalistas).
+# Especialistas: reserva solo con derivación del clínico; modalidad remota en ese caso.
 version: 1
 
-default_rol: clinica_general
+acceso:
+  hub_rol: medicina_clinica
+  especialista_solo_teleconsulta_con_derivacion: true
+
+default_rol: medicina_clinica
 
 roles:
-  clinica_general:
-    label: Medicina clínica / general
+  medicina_clinica:
+    label: Medicina clínica
+    hub: true
+    autogestion_paciente: true
     nombre_patterns:
-      - clinica
-      - clínica
+      - medicina clínica
+      - medicina clinica
       - medicina general
       - medicina cl
       - medicina de familia
+      - clínica
+      - clinica
       - general
     item_names:
       - Medico
 
+  # Alias histórico (catálogo triage / migraciones)
+  clinica_general:
+    inherit_from: medicina_clinica
+    hub: true
+    autogestion_paciente: true
+
+  tramite_admin:
+    label: Trámites / certificados
+    hub: true
+    autogestion_paciente: true
+    inherit_from: medicina_clinica
+    nombre_patterns:
+      - tramite
+      - trámite
+
   oftalmologia:
     label: Oftalmología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
     nombre_patterns:
       - oftalmolog
 
   dermatologia:
     label: Dermatología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
     nombre_patterns:
       - dermatolog
 
   traumatologia:
     label: Traumatología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
     nombre_patterns:
       - traumatolog
       - ortoped
 
   ginecologia:
     label: Ginecología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
     nombre_patterns:
       - ginecolog
       - obstetr
 
   pediatria:
     label: Pediatría
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
     nombre_patterns:
       - pediatr
 
   cardiologia:
     label: Cardiología
+    hub: false
+    autogestion_paciente: false
+    teleconsulta_solo_con_derivacion: true
     nombre_patterns:
       - cardiolog
-
-  tramite_admin:
-    label: Trámites / certificados
-    inherit_from: clinica_general
-    nombre_patterns:
-      - tramite
-      - trámite
-      - admin

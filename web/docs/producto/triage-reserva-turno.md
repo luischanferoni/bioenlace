@@ -36,15 +36,13 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 - `control_cronico` → alarmas + evolución (sin zona/detalle).
 - `sintoma_nuevo` → recorrido completo.
 
-**Servicio (especialidad):**
+**Servicio (Medicina clínica hub):**
 
-- Tras el triage, cada nodo del catálogo puede declarar `suggests_servicio_rol` (p. ej. `clinica_general`, `dermatologia`).
-- El mapa `reserva_triage_servicio_map_v1.yaml` traduce el rol a patrones sobre `servicios.nombre` / `item_name`.
-- `ReservaTriageServicioSugeridoService` filtra la lista de `elegir-acepta-turnos` contra servicios con turnos habilitados.
-- Si el filtro no encuentra servicios habilitados para el rol sugerido, la lista queda **vacía** con mensaje orientativo (no se muestran otras especialidades).
-- El hydrator escribe `servicio_reserva_rol` e `id_servicio_sugerido` (si hay un único match) en el draft.
+- Tras el triage ambulatorio, el paciente solo ve **Medicina clínica / generalistas** (`reserva_modo=hub_paciente`).
+- Especialistas: turno solo con **derivación vigente** del clínico; modalidad **solo teleconsulta**.
+- Detalle: [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md).
 
-**Modalidad (presencial / remoto):**
+**Modalidad (presencial / remoto) con clínica:**
 
 - El paso aparece **después del servicio**, solo si `teleconsulta_ofercible = 1` en el draft (hydrator).
 - Si el servicio o el triage no permiten remoto, se fija `tipo_atencion = presencial` y se salta la pantalla.

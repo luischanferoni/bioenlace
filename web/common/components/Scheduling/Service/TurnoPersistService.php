@@ -11,6 +11,8 @@ use common\models\ServiciosEfector;
 use common\components\Clinical\Service\ReferralRequestService;
 use common\models\ConsultaDerivaciones;
 use common\models\EfectorTurnosConfig;
+use common\models\Servicio;
+use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
 
 /**
  * Persistencia y reglas comunes de turnos (API y otros callers). Sin HTTP.
@@ -62,6 +64,11 @@ class TurnoPersistService
 
         if ($ctx->esReservaParaSiMismo($model) && trim((string) ($model->triage_raiz ?? '')) !== '') {
             $this->applyReservaTriageToModel($model);
+        }
+
+        if ($ctx->esReservaParaSiMismo($model) && (int) ($model->id_servicio_asignado ?? 0) > 0) {
+            (new ReservaTriageServicioSugeridoService())->assertPacientePuedeReservarServicio($model);
+            $this->assertModalidadEspecialistaDerivacion($model);
         }
 
         if ($model->id_servicio_asignado && $model->id_persona && $model->id_efector) {
@@ -217,6 +224,36 @@ class TurnoPersistService
         );
         if (empty($model->tipo_atencion) && $compiled['suggests_tipo_atencion'] !== null) {
             $model->tipo_atencion = $compiled['suggests_tipo_atencion'];
+        }
+    }
+
+    private function assertModalidadEspecialistaDerivacion(Turno $model): void
+    {
+        $idServicio = (int) ($model->id_servicio_asignado ?? 0);
+        if ($idServicio <= 0) {
+            return;
+        }
+
+        $map = new ReservaTriageServicioMapService();
+        if (!$map->especialistaSoloTeleconsultaConDerivacion()) {
+            return;
+        }
+
+        $servicio = Servicio::findOne($idServicio);
+        if ($servicio === null) {
+            return;
+        }
+
+        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+        $rol = $map->resolveRolForServicio($servicio, $eligibleIds);
+        if ($rol === null || !$map->teleconsultaSoloConDerivacion($rol)) {
+            return;
+        }
+
+        if ((string) $model->tipo_atencion !== Turno::TIPO_ATENCION_TELECONSULTA) {
+            throw new \InvalidArgumentException(
+                'Los turnos con especialista por derivación del clínico son solo por videollamada (teleconsulta).'
+            );
         }
     }
 }

@@ -26,7 +26,7 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 | Zona corporal | `triage_zona` | `?step=zona&triage_raiz=…` |
 | Detalle | `triage_detalle` | `?step=detalle&triage_zona=…` |
 | Evolución | `triage_evolucion` | `?step=evolucion` |
-| Servicio | `select_servicio` | `servicios.elegir-acepta-turnos` |
+| Servicio | `select_servicio` | `servicios.elegir-acepta-turnos` (+ query triage para filtrar por rol sugerido) |
 | Modalidad (si aplica) | `select_tipo_atencion` | `?step=modalidad&id_servicio_asignado=…` + campos triage |
 | Centro → profesional → día → horario | (sin cambios) | flujo turnos existente |
 
@@ -35,6 +35,14 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 - `tramite_admin` → salta triage clínico y va directo a servicio.
 - `control_cronico` → alarmas + evolución (sin zona/detalle).
 - `sintoma_nuevo` → recorrido completo.
+
+**Servicio (especialidad):**
+
+- Tras el triage, cada nodo del catálogo puede declarar `suggests_servicio_rol` (p. ej. `clinica_general`, `dermatologia`).
+- El mapa `reserva_triage_servicio_map_v1.yaml` traduce el rol a patrones sobre `servicios.nombre` / `item_name`.
+- `ReservaTriageServicioSugeridoService` filtra la lista de `elegir-acepta-turnos` contra servicios con turnos habilitados.
+- Si el filtro no encuentra servicios habilitados para el rol sugerido, la lista queda **vacía** con mensaje orientativo (no se muestran otras especialidades).
+- El hydrator escribe `servicio_reserva_rol` e `id_servicio_sugerido` (si hay un único match) en el draft.
 
 **Modalidad (presencial / remoto):**
 
@@ -77,8 +85,8 @@ Validación al crear: `TurnoPersistService` + `assertCanPersistBooking` (rechaza
 
 ## Evolución prevista
 
-- Filtrar servicios ofrecidos según `urgency_band` / código (metadata, no `if` en controller).
 - Repreguntas IA solo sobre `triage_nota` o texto libre.
 - Reutilizar el mismo catálogo en app móvil paciente sin duplicar árbol en Dart.
+- Rol `oftalmologia` en nodos oculares del catálogo cuando se agreguen ramas de triage oftalmológico.
 
 Ver también: [turnos.md](./turnos.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [motivos-consulta.md](./motivos-consulta.md).

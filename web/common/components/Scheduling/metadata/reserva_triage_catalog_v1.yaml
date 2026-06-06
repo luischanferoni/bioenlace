@@ -37,11 +37,13 @@ nodes:
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
     teleconsulta_elegibilidad: sugerido
+    suggests_servicio_rol: clinica_general
   - code: tramite_admin
     step: raiz
     label: "Es un trámite o certificado (sin síntomas nuevos)"
     urgency_band: D
     teleconsulta_elegibilidad: permitido
+    suggests_servicio_rol: tramite_admin
 
   # --- Alarmas (banda A detiene reserva) ---
   - code: alarma_ninguna
@@ -89,34 +91,42 @@ nodes:
     step: zona
     parent: sintoma_nuevo
     label: "Cabeza o cuello"
+    suggests_servicio_rol: clinica_general
   - code: zona_pecho
     step: zona
     parent: sintoma_nuevo
     label: "Pecho"
+    suggests_servicio_rol: clinica_general
   - code: zona_abdomen
     step: zona
     parent: sintoma_nuevo
     label: "Panza (abdomen)"
+    suggests_servicio_rol: clinica_general
   - code: zona_espalda
     step: zona
     parent: sintoma_nuevo
     label: "Espalda"
+    suggests_servicio_rol: traumatologia
   - code: zona_brazo_mano
     step: zona
     parent: sintoma_nuevo
     label: "Brazo o mano"
+    suggests_servicio_rol: traumatologia
   - code: zona_pierna_pie
     step: zona
     parent: sintoma_nuevo
     label: "Pierna o pie"
+    suggests_servicio_rol: traumatologia
   - code: zona_piel
     step: zona
     parent: sintoma_nuevo
     label: "Piel (sarpullido, herida, etc.)"
+    suggests_servicio_rol: dermatologia
   - code: zona_general
     step: zona
     parent: sintoma_nuevo
     label: "Todo el cuerpo / no sé dónde"
+    suggests_servicio_rol: clinica_general
 
   # --- Detalle por zona ---
   - code: det_cabeza_dolor
@@ -124,37 +134,44 @@ nodes:
     parent: zona_cabeza_cuello
     label: "Dolor de cabeza"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
   - code: det_cabeza_mareo
     step: detalle
     parent: zona_cabeza_cuello
     label: "Mareos o vértigo"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
   - code: det_pecho_dolor
     step: detalle
     parent: zona_pecho
     label: "Dolor en el pecho"
     urgency_band: B
     teleconsulta_elegibilidad: presencial_preferido
+    suggests_servicio_rol: clinica_general
   - code: det_pecho_tos
     step: detalle
     parent: zona_pecho
     label: "Tos o resfrío con malestar"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
   - code: det_abd_dolor
     step: detalle
     parent: zona_abdomen
     label: "Dolor de panza"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
   - code: det_abd_nauseas
     step: detalle
     parent: zona_abdomen
     label: "Náuseas, vómitos o diarrea"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
   - code: det_espalda_dolor
     step: detalle
     parent: zona_espalda
     label: "Dolor de espalda"
     urgency_band: C
+    suggests_servicio_rol: traumatologia
   - code: det_musculo_esfuerzo
     step: detalle
     parent: zona_espalda
@@ -162,6 +179,7 @@ nodes:
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
     teleconsulta_elegibilidad: sugerido
+    suggests_servicio_rol: traumatologia
   - code: det_musculo_esfuerzo_brazo
     step: detalle
     parent: zona_brazo_mano
@@ -169,6 +187,7 @@ nodes:
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
     teleconsulta_elegibilidad: sugerido
+    suggests_servicio_rol: traumatologia
   - code: det_musculo_esfuerzo_pierna
     step: detalle
     parent: zona_pierna_pie
@@ -176,26 +195,31 @@ nodes:
     urgency_band: C
     suggests_tipo_atencion: teleconsulta
     teleconsulta_elegibilidad: sugerido
+    suggests_servicio_rol: traumatologia
   - code: det_extremidad_hinchazon
     step: detalle
     parent: zona_pierna_pie
     label: "Hinchazón o dolor al caminar"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
   - code: det_piel_erupcion
     step: detalle
     parent: zona_piel
     label: "Sarpullido, picazón o erupción"
     urgency_band: C
+    suggests_servicio_rol: dermatologia
   - code: det_general_fiebre
     step: detalle
     parent: zona_general
     label: "Fiebre o malestar general"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
   - code: det_general_otro
     step: detalle
     parent: zona_general
     label: "Otro malestar"
     urgency_band: C
+    suggests_servicio_rol: clinica_general
 
   # --- Evolución ---
   - code: evo_hoy

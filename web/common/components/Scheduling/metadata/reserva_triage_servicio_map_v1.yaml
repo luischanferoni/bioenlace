@@ -1,0 +1,58 @@
+# Mapeo declarativo: rol lógico de servicio (desde triage) → criterios sobre fila `servicios`.
+# Los IDs concretos se resuelven en runtime contra servicios con turnos habilitados (servicios_efector).
+version: 1
+
+default_rol: clinica_general
+
+roles:
+  clinica_general:
+    label: Medicina clínica / general
+    nombre_patterns:
+      - clinica
+      - clínica
+      - medicina general
+      - medicina cl
+      - medicina de familia
+      - general
+    item_names:
+      - Medico
+
+  oftalmologia:
+    label: Oftalmología
+    nombre_patterns:
+      - oftalmolog
+
+  dermatologia:
+    label: Dermatología
+    nombre_patterns:
+      - dermatolog
+
+  traumatologia:
+    label: Traumatología
+    nombre_patterns:
+      - traumatolog
+      - ortoped
+
+  ginecologia:
+    label: Ginecología
+    nombre_patterns:
+      - ginecolog
+      - obstetr
+
+  pediatria:
+    label: Pediatría
+    nombre_patterns:
+      - pediatr
+
+  cardiologia:
+    label: Cardiología
+    nombre_patterns:
+      - cardiolog
+
+  tramite_admin:
+    label: Trámites / certificados
+    inherit_from: clinica_general
+    nombre_patterns:
+      - tramite
+      - trámite
+      - admin

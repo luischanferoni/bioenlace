@@ -6,6 +6,7 @@ use common\components\Organization\Service\Efectores\EfectoresListadosService;
 use common\components\Person\Service\PersonaBusquedaAsistenteUiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
+use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
 use common\models\Servicio;
 
 /**
@@ -47,9 +48,17 @@ final class HintCandidateProvider
      */
     private static function servicioCandidates(HintResolutionContext $ctx): array
     {
+        $triageDraft = null;
+        if (self::intentUsesServiciosAceptaTurnos($ctx->intentId) && $ctx->intentId === 'atencion.necesito-atencion') {
+            $triageDraft = ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($ctx->draft);
+            if ($triageDraft === []) {
+                $triageDraft = null;
+            }
+        }
+
         if (self::intentUsesServiciosAceptaTurnos($ctx->intentId)) {
             return self::mapUiJsonItems(
-                ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos()
+                ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos($triageDraft)
             );
         }
 

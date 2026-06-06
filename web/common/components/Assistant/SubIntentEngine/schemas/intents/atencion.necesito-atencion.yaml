@@ -40,6 +40,8 @@ draft_hydrator:
 draft_keys_extra:
   - tipo_atencion
   - teleconsulta_ofrecible
+  - servicio_reserva_rol
+  - id_servicio_sugerido
   - fecha_turno
   - triage_raiz
   - triage_alarmas
@@ -169,6 +171,12 @@ subintents:
       match_property: nombre
     open_ui:
       action_id: servicios.elegir-acepta-turnos
+      params:
+        triage_raiz: "draft.triage_raiz"
+        triage_alarmas: "draft.triage_alarmas"
+        triage_zona: "draft.triage_zona"
+        triage_detalle: "draft.triage_detalle"
+        triage_evolucion: "draft.triage_evolucion"
 
   - id: select_tipo_atencion
     assistant_text: "Modalidad"

@@ -24,6 +24,7 @@ final class ReservaTurnoTriageFlowDraftHydrator
         }
 
         (new TeleconsultaElegibilidadService())->aplicarFlagsEnDraft($draft);
+        (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
 
         $body['draft'] = $draft;
     }

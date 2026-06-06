@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\components\Ui\UiScreenService;
 use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
+use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
 use common\models\Servicio;
 
 /**
@@ -82,8 +83,37 @@ class ServiciosController extends BaseController
             }
         );
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
-            $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos();
+            $params = array_merge($req->get(), $req->post());
+            $triageDraft = ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($params);
+            $sugerido = new ReservaTriageServicioSugeridoService();
+            $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos(
+                $triageDraft !== [] ? $triageDraft : null
+            );
+            if ($items === [] && $triageDraft !== []) {
+                $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($triageDraft));
+            }
             $ui = UiScreenService::withListBlockItems($ui, $items);
+        }
+
+        return $ui;
+    }
+
+    /**
+     * @param array<string, mixed> $ui
+     * @return array<string, mixed>
+     */
+    private static function withListEmptyMessage(array $ui, string $message): array
+    {
+        if (!isset($ui['blocks']) || !is_array($ui['blocks'])) {
+            return $ui;
+        }
+        foreach ($ui['blocks'] as $i => $block) {
+            if (!is_array($block) || ($block['kind'] ?? '') !== 'list') {
+                continue;
+            }
+            $block['empty_message'] = $message;
+            $ui['blocks'][$i] = $block;
+            break;
         }
 
         return $ui;

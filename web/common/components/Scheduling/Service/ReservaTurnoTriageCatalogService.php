@@ -143,7 +143,8 @@ final class ReservaTurnoTriageCatalogService
      *   urgency_band: string,
      *   reserva_triage_halt: bool,
      *   reserva_triage_meta_json: array<string, mixed>,
-     *   suggests_tipo_atencion: string|null
+     *   suggests_tipo_atencion: string|null,
+     *   suggests_servicio_rol: string|null
      * }
      */
     public function compileSelections(array $selections): array
@@ -154,6 +155,7 @@ final class ReservaTurnoTriageCatalogService
         $halt = false;
         $leafCode = '';
         $suggestTipo = null;
+        $suggestServicioRol = null;
 
         $orderedKeys = ['triage_raiz', 'triage_alarmas', 'triage_zona', 'triage_detalle', 'triage_evolucion'];
         foreach ($orderedKeys as $key) {
@@ -182,6 +184,9 @@ final class ReservaTurnoTriageCatalogService
                 if (!empty($node['suggests_tipo_atencion']) && $suggestTipo === null) {
                     $suggestTipo = trim((string) $node['suggests_tipo_atencion']);
                 }
+                if (!empty($node['suggests_servicio_rol'])) {
+                    $suggestServicioRol = trim((string) $node['suggests_servicio_rol']);
+                }
             }
         }
 
@@ -204,6 +209,7 @@ final class ReservaTurnoTriageCatalogService
                 'compiled_at' => gmdate('c'),
             ],
             'suggests_tipo_atencion' => $suggestTipo,
+            'suggests_servicio_rol' => $suggestServicioRol,
         ];
     }
 

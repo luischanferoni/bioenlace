@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\Catalog;
 
+use common\components\Core\Service\ClientContextService;
 use Yii;
 
 /**
@@ -29,7 +30,9 @@ final class IntentCatalogService
         // Intents YAML filtrados por `rbac_route` (permiso webvimark alineado al manifiesto).
         $all = YamlIntentCatalogService::discoverAll($useCache);
 
-        return YamlIntentCatalogService::filterByRbac($all, $userId);
+        $filtered = YamlIntentCatalogService::filterByRbac($all, $userId);
+
+        return ClientContextService::filterPacienteFlows($filtered);
     }
 }
 

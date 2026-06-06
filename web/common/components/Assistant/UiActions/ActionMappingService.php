@@ -3,6 +3,7 @@
 namespace common\components\Assistant\UiActions;
 
 use Yii;
+use common\components\Core\Service\ClientContextService;
 use webvimark\modules\UserManagement\models\User;
 use webvimark\modules\UserManagement\models\rbacDB\Route;
 
@@ -42,7 +43,7 @@ class ActionMappingService
         $roles = self::getUserRoles($user);
 
         // Cache key basado en userId y roles (para evitar conflictos entre usuarios)
-        $cacheKey = self::CACHE_KEY_PREFIX . $userId . '_' . md5(implode(',', $roles));
+        $cacheKey = self::CACHE_KEY_PREFIX . $userId . '_' . md5(implode(',', $roles)) . ClientContextService::rbacCacheSuffix();
 
         $cache = Yii::$app->cache;
         if ($useCache && $cache) {

@@ -1,6 +1,7 @@
 <?php
 namespace common\models;
 
+use common\components\Core\Service\ClientContextService;
 use Yii;
 use yii\db\Query;
 use yii\rbac\Item;
@@ -46,9 +47,17 @@ class BioenlaceDbManager extends DbManager
      */
     protected function shouldLoadEfectorPermissionsForCurrentUser(): bool
     {
-        return $this->isProfesionalEfectorServicioAssignmentTable()
-            && (int) Yii::$app->user->getIdPersona() > 0
-            && (int) Yii::$app->user->getIdEfector() > 0;
+        if (!$this->isProfesionalEfectorServicioAssignmentTable()) {
+            return false;
+        }
+        if ((int) Yii::$app->user->getIdPersona() <= 0) {
+            return false;
+        }
+        if ((int) Yii::$app->user->getIdEfector() > 0) {
+            return true;
+        }
+
+        return ClientContextService::shouldMergeAllPesRolesForPerson();
     }
 
     /**
@@ -181,7 +190,7 @@ class BioenlaceDbManager extends DbManager
         
         // También obtener permisos del rol "paciente" si el usuario lo tiene
         // (aunque no esté en auth_assignment con el patrón especial)
-        if (isset($userRoles['paciente'])) {
+        if (!ClientContextService::shouldOmitPacienteRole() && isset($userRoles['paciente'])) {
             $this->getChildrenRecursive('paciente', $childrenList, $result);
         }
 
@@ -251,8 +260,9 @@ class BioenlaceDbManager extends DbManager
 
         // TODO: desde esta linea hasta el final en un futuro debería de quedar parent::getRolesByUser()        
         if (!isset(Yii::$app->authManager->rolesEspeciales) || count(Yii::$app->authManager->rolesEspeciales) == 0) {
-            // Agregar rol "paciente" a todos los usuarios logueados
-            $this->agregarRolPaciente($roles);
+            if (!ClientContextService::shouldOmitPacienteRole()) {
+                $this->agregarRolPaciente($roles);
+            }
             return $roles;
         }
         foreach (Yii::$app->authManager->rolesEspeciales as $rolEspecial) {
@@ -270,8 +280,10 @@ class BioenlaceDbManager extends DbManager
             $roles[$row['name']] = $this->populateItem($row);
         }
 
-        // Agregar rol "paciente" a todos los usuarios logueados
-        $this->agregarRolPaciente($roles);
+        // Agregar rol "paciente" a todos los usuarios logueados (móvil / API paciente)
+        if (!ClientContextService::shouldOmitPacienteRole()) {
+            $this->agregarRolPaciente($roles);
+        }
 
         return $roles;
     }
@@ -284,6 +296,9 @@ class BioenlaceDbManager extends DbManager
      */
     protected function agregarRolPaciente(&$roles)
     {
+        if (ClientContextService::shouldOmitPacienteRole()) {
+            return;
+        }
         // Verificar si el rol "paciente" ya existe en los roles
         if (isset($roles['paciente'])) {
             return;

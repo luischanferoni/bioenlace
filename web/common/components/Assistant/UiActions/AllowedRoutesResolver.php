@@ -3,6 +3,7 @@
 namespace common\components\Assistant\UiActions;
 
 use Yii;
+use common\components\Core\Service\ClientContextService;
 use webvimark\modules\UserManagement\components\AuthHelper;
 use webvimark\modules\UserManagement\models\rbacDB\Route as RbacRoute;
 use webvimark\modules\UserManagement\models\User;
@@ -147,7 +148,7 @@ final class AllowedRoutesResolver
         }
 
         $cache = Yii::$app->cache;
-        $cacheKey = self::CACHE_KEY_PREFIX . $userId;
+        $cacheKey = self::CACHE_KEY_PREFIX . $userId . ClientContextService::rbacCacheSuffix();
         if ($useAppCache && $cache) {
             $cached = $cache->get($cacheKey);
             if ($cached !== false) {

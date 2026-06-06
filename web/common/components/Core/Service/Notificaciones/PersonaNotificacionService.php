@@ -2,6 +2,7 @@
 
 namespace common\components\Core\Service\Notificaciones;
 
+use common\components\Core\Service\ClientContextService;
 use common\models\PersonaNotificacion;
 use yii\db\Expression;
 
@@ -34,6 +35,11 @@ final class PersonaNotificacionService
             $q->andWhere(['leida_at' => null]);
         }
 
+        $omitPaciente = ClientContextService::shouldOmitPacienteRole();
+        if ($omitPaciente) {
+            $q->andWhere(['not in', 'tipo', ClientContextService::pacienteNotificacionTipos()]);
+        }
+
         $total = (int) (clone $q)->count('*');
         $rows = $q->limit($limit)->offset($offset)->all();
 
@@ -42,9 +48,12 @@ final class PersonaNotificacionService
             $items[] = $row->toApiArray();
         }
 
-        $noLeidas = (int) PersonaNotificacion::find()
-            ->where(['id_persona' => $idPersona, 'leida_at' => null])
-            ->count('*');
+        $noLeidasQ = PersonaNotificacion::find()
+            ->where(['id_persona' => $idPersona, 'leida_at' => null]);
+        if ($omitPaciente) {
+            $noLeidasQ->andWhere(['not in', 'tipo', ClientContextService::pacienteNotificacionTipos()]);
+        }
+        $noLeidas = (int) $noLeidasQ->count('*');
 
         return [
             'items' => $items,

@@ -322,7 +322,6 @@ html:has(.spa-asistente-root) {
     z-index: 1020;
     padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
     background: var(--bio-paper-25);
-    border: 2px solid var(--bio-paper-600);
 }
 
 @media (max-width: 768px) {
@@ -357,7 +356,7 @@ html:has(.spa-asistente-root) {
     line-height: 1.45;
     color: var(--bio-paper-600);
     background-color: var(--bio-paper-50);
-    border: 1px solid var(--bio-paper-300);
+    border: 2px solid var(--bio-paper-600);
     border-radius: var(--bs-border-radius, 1.1rem);
     box-shadow: 0 1px 3px rgba(26, 25, 22, 0.05);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;

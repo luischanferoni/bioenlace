@@ -142,6 +142,11 @@ class ApiGhostAccessControl extends ActionFilter
             $out[] = preg_replace('#^/api/v\d+/#', '/api/', $route, 1);
         }
 
+        // Controllers con actionIndex: uniqueId → /api/<controller>/index; permisos RBAC suelen ser /api/<controller>.
+        if (preg_match('#/index$#', $route) === 1) {
+            $out[] = preg_replace('#/index$#', '', $route);
+        }
+
         return array_values(array_unique($out));
     }
 

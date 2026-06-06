@@ -21,6 +21,12 @@ entities:
 metrics:
   profesionales_conteo_efector:
     label: Conteo de profesionales por efector
+    assistant:
+      keywords:
+        - cuantos profesionales
+        - profesionales del centro
+        - planta profesional
+        - personal del centro
     presentation_handler: organization.profesionales_conteo_info
     scope_checker: efector_sesion
     required_groups:
@@ -72,6 +78,12 @@ metrics:
 
   profesionales_listado_efector:
     label: Listado de profesionales por efector
+    assistant:
+      keywords:
+        - listar profesionales
+        - mostrar medicos del centro
+        - quienes trabajan en el centro
+        - nombres de profesionales
     presentation_handler: organization.profesionales_listado_rows
     scope_checker: efector_sesion
     required_groups:
@@ -139,6 +151,10 @@ metrics:
 
   profesionales_conteo_por_servicio_efector:
     label: Distribución de profesionales por servicio
+    assistant:
+      keywords:
+        - profesionales por servicio
+        - distribucion por especialidad
     scope_checker: efector_sesion
     required_groups:
       - ProfesionalEfectorServicio.asignacion

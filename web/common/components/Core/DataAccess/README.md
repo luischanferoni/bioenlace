@@ -18,16 +18,22 @@ Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff p
 
 Parámetros comunes: `metric_id` (requerido), filtros allowlisted por métrica.
 
-## Intents (ejemplo profesionales)
+## Intents (asistente)
 
-- Resumen: `metric_id=profesionales_conteo_efector` → `/api/info`
-- Listado: `metric_id=profesionales_listado_efector` → `/api/listar`
+Dos intents YAML genéricos (no uno por métrica):
+
+| Intent | HTTP | Uso |
+|--------|------|-----|
+| `data-access.info` | `/api/info` | Métricas aggregate/grouped |
+| `data-access.listar` | `/api/listar` | Métricas rows |
+
+El `metric_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessFlowDraftHydrator`) desde `metrics.*.assistant.keywords` en este YAML — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
 
 ## Extender
 
-1. Métrica + bloques `query`, `output` y `presentation_handler` en YAML.
-2. Handler en `MetricPresentationRegistry` + clase en `Organization/Presentation/` (o dominio correspondiente).
-3. Intent con `rbac_route` `/api/info` o `/api/listar` y `metric_id` en `open_ui.params`.
+1. Métrica + bloques `query`, `output`, `presentation_handler` y `assistant.keywords` en YAML.
+2. Handler en `MetricPresentationRegistry` + clase en dominio correspondiente.
+3. No crear intents YAML por métrica: reutilizar `data-access.info` o `data-access.listar`.
 
 ## Admin backend
 

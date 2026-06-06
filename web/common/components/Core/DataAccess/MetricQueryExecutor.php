@@ -30,7 +30,7 @@ final class MetricQueryExecutor
         $ctx = $ctx ?? PermissionContext::fromCurrentUser();
         $metricId = trim((string) ($params['metric_id'] ?? $params['metricId'] ?? ''));
         if ($metricId === '') {
-            $metricId = 'profesionales_conteo_efector';
+            throw new \InvalidArgumentException('metric_id es requerido.');
         }
 
         $spec = QuerySpec::fromParams($metricId, $params);

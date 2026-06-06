@@ -1,0 +1,39 @@
+intent_id: data-access.listar
+version: 1
+
+action_name: "Listado staff por métrica"
+description: "Listados autorizados con columnas permitidas por rol."
+rbac_route: "/api/listar"
+keywords:
+  - listar
+  - mostrar
+  - ver listado
+  - nombres de
+  - quienes son
+  - plantilla
+  - listado staff
+
+intent_semantics:
+  goal: >-
+    Ver filas autorizadas de una entidad (nombres y columnas permitidas por rol).
+  how: >-
+    Resuelve la métrica según el pedido del usuario y abre /api/listar con los filtros inferidos.
+  outcome:
+    - El staff identifica registros sin acceder a columnas no autorizadas.
+
+draft_hydrator:
+  handler: data_access.metric_flow
+  channel: listar
+
+subintents:
+  - id: ejecutar_listado
+    assistant_text: "Listado autorizado"
+    next: ""
+    open_ui:
+      action_id: data-access.listar
+      params:
+        metric_id: "draft.metric_id"
+        id_efector: "draft.id_efector"
+        servicio_rol: "draft.servicio_rol"
+        servicio_rol_mention: "draft.servicio_rol_mention"
+        sexo_biologico: "draft.sexo_biologico"

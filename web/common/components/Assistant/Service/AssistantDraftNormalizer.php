@@ -39,6 +39,28 @@ final class AssistantDraftNormalizer
     }
 
     /**
+     * @param mixed $value
+     */
+    public static function asOptionalString($value): ?string
+    {
+        if ($value === null || is_array($value) || is_object($value)) {
+            return null;
+        }
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+        if (is_int($value) || is_float($value)) {
+            $value = (string) $value;
+        }
+        if (!is_string($value)) {
+            return null;
+        }
+        $s = trim($value);
+
+        return $s === '' ? null : $s;
+    }
+
+    /**
      * @param array<string, mixed> $arr
      */
     private static function isEmpty(array $arr, string $key): bool
@@ -47,6 +69,6 @@ final class AssistantDraftNormalizer
             return true;
         }
 
-        return trim((string) $arr[$key]) === '';
+        return self::asOptionalString($arr[$key]) === null;
     }
 }

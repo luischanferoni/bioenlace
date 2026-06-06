@@ -7,6 +7,7 @@ use common\components\Assistant\Catalog\IntentCatalogService;
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Assistant\SubIntentEngine\FlowDraftHydratorService;
 use common\components\Assistant\SubIntentEngine\IntentBusinessRules;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
@@ -200,17 +201,34 @@ final class IntentEngine
                 $draft
             );
 
-            $flow = SubIntentEngine::process(
-                [
-                    'intent_id' => $item->action_id,
-                    'subintent_id' => '',
-                    'draft' => $draft,
-                    'content' => $content,
-                    'interaction' => null,
-                    'hints' => $hints,
-                ],
-                $userId
-            );
+            $flowBody = [
+                'intent_id' => $item->action_id,
+                'subintent_id' => '',
+                'draft' => $draft,
+                'content' => $content,
+                'interaction' => null,
+                'hints' => $hints,
+            ];
+            try {
+                FlowDraftHydratorService::hydrateFromIntentManifest($item->action_id, $flowBody);
+            } catch (\yii\web\ForbiddenHttpException $e) {
+                return [
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ];
+            } catch (\InvalidArgumentException $e) {
+                return [
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ];
+            } catch (\RuntimeException $e) {
+                return [
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                ];
+            }
+
+            $flow = SubIntentEngine::process($flowBody, $userId);
 
             if (!empty($flow['success']) && is_array($flow)) {
                 unset($flow['success']);
@@ -276,8 +294,8 @@ final class IntentEngine
             if ($val === null) {
                 continue;
             }
-            $s = trim((string) $val);
-            if ($s === '') {
+            $s = AssistantDraftNormalizer::asOptionalString($val);
+            if ($s === null) {
                 continue;
             }
             $draft[$key] = $s;

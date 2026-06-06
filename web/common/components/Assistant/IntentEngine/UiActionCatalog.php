@@ -167,7 +167,55 @@ final class UiActionCatalog
             }
         }
 
+        self::enrichDataAccessIntentKeywords($items, $byId, $userId);
+
         return new self($items, $byId);
+    }
+
+    /**
+     * Keywords NL de métricas autorizadas (catálogo DataAccess), sin valores de atributos.
+     *
+     * @param UiActionCatalogItem[] $items
+     * @param array<string, UiActionCatalogItem> $byId
+     */
+    private static function enrichDataAccessIntentKeywords(array &$items, array &$byId, int $userId): void
+    {
+        $discovery = new \common\components\Core\DataAccess\DataAccessMetricDiscoveryService();
+        $map = [
+            'data-access.info' => \common\components\Core\DataAccess\DataAccessMetricDiscoveryService::CHANNEL_INFO,
+            'data-access.listar' => \common\components\Core\DataAccess\DataAccessMetricDiscoveryService::CHANNEL_LISTAR,
+        ];
+        foreach ($map as $actionId => $channel) {
+            if (!isset($byId[$actionId])) {
+                continue;
+            }
+            $item = $byId[$actionId];
+            $extra = $discovery->assistantKeywordsForUser($userId, $channel);
+            if ($extra === []) {
+                continue;
+            }
+            $merged = array_values(array_unique(array_merge($item->keywords, $extra)));
+            $updated = new UiActionCatalogItem(
+                $item->action_id,
+                $item->display_name,
+                $item->description,
+                $item->entity,
+                $item->route,
+                $merged,
+                $item->parameters,
+                $item->intent_semantics,
+                $item->client_open,
+                $item->client_interaction,
+                $item->spa_presentation
+            );
+            $byId[$actionId] = $updated;
+            foreach ($items as $i => $it) {
+                if ($it->action_id === $actionId) {
+                    $items[$i] = $updated;
+                    break;
+                }
+            }
+        }
     }
 
     /**

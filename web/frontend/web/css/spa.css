@@ -19,13 +19,13 @@
 
     /* Asistente: sticky toolbar y composer fijo */
     --spa-chat-toolbar-sticky-top: 4.75rem;
-    --spa-chat-composer-reserve: calc(6.25rem + env(safe-area-inset-bottom, 0px));
-    --spa-chat-input-min-height: 2.75rem;
+    --spa-chat-composer-reserve: calc(7.25rem + env(safe-area-inset-bottom, 0px));
+    --spa-chat-input-min-height: 3.75rem;
 }
 
 @media (max-width: 768px) {
     :root {
-        --spa-chat-composer-reserve: calc(6.25rem + 88px + env(safe-area-inset-bottom, 0px));
+        --spa-chat-composer-reserve: calc(7.25rem + 88px + env(safe-area-inset-bottom, 0px));
     }
 }
 

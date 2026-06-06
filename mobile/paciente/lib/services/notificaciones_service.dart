@@ -15,7 +15,7 @@ class NotificacionesService {
     int offset = 0,
   }) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/notificaciones/listar-como-paciente');
+      final uri = Uri.parse('${AppConfig.apiUrl}/notificaciones/listar');
       final headers = AppConfig.jsonHeaders(
         bearerToken: authToken,
         appClient: 'paciente-flutter',
@@ -51,7 +51,7 @@ class NotificacionesService {
 
   Future<bool> marcarLeida({int? id}) async {
     try {
-      final uri = Uri.parse('${AppConfig.apiUrl}/notificaciones/marcar-leida-como-paciente');
+      final uri = Uri.parse('${AppConfig.apiUrl}/notificaciones/marcar-leida');
       final headers = AppConfig.jsonHeaders(
         bearerToken: authToken,
         appClient: 'paciente-flutter',

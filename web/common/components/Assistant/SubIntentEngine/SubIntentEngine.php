@@ -201,6 +201,8 @@ final class SubIntentEngine
             'draft' => true,
             'content' => true,
             'interaction' => true,
+            'hints' => true,
+            'action_id' => true,
         ];
         foreach ($snapshot as $k => $v) {
             if (!is_string($k)) {
@@ -210,13 +212,14 @@ final class SubIntentEngine
             if ($key === '' || isset($reserved[$key])) {
                 continue;
             }
-            if (isset($draft[$key]) && $draft[$key] !== null && trim((string) $draft[$key]) !== '') {
+            if (AssistantDraftNormalizer::asOptionalString($draft[$key] ?? null) !== null) {
                 continue;
             }
-            if (!self::scalarNonEmpty($v)) {
+            $scalar = AssistantDraftNormalizer::asOptionalString($v);
+            if ($scalar === null) {
                 continue;
             }
-            $draft[$key] = trim((string) $v);
+            $draft[$key] = $scalar;
         }
 
         return $draft;
@@ -310,11 +313,7 @@ final class SubIntentEngine
 
     private static function scalarNonEmpty($v): bool
     {
-        if ($v === null) {
-            return false;
-        }
-
-        return trim((string) $v) !== '';
+        return AssistantDraftNormalizer::asOptionalString($v) !== null;
     }
 
     private static function flowSubmitHasActionId(array $flowSubmitBlock): bool
@@ -651,7 +650,11 @@ final class SubIntentEngine
                         if (!isset($draft[$field]) || $draft[$field] === null || $draft[$field] === '') {
                             continue;
                         }
-                        $query[$key] = (string) $draft[$field];
+                        $scalar = AssistantDraftNormalizer::asOptionalString($draft[$field]);
+                        if ($scalar === null) {
+                            continue;
+                        }
+                        $query[$key] = $scalar;
                     } elseif (strncmp($vv, 'client.', 7) !== 0) {
                         $query[$key] = $vv;
                     }

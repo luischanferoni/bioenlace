@@ -62,7 +62,7 @@
         opts = opts || {};
         var solo = opts.soloNoLeidas ? '1' : '0';
         var limit = opts.limit != null ? opts.limit : 30;
-        var url = apiUrl('/notificaciones/listar-como-paciente')
+        var url = apiUrl('/notificaciones/listar')
             + '?solo_no_leidas=' + encodeURIComponent(solo)
             + '&limit=' + encodeURIComponent(String(limit));
         return fetch(url, { method: 'GET', headers: headers(), credentials: 'same-origin' })
@@ -77,7 +77,7 @@
         if (window.spaConfig && window.spaConfig.csrfToken) {
             body.set('_csrf', String(window.spaConfig.csrfToken));
         }
-        return fetch(apiUrl('/notificaciones/marcar-leida-como-paciente'), {
+        return fetch(apiUrl('/notificaciones/marcar-leida'), {
             method: 'POST',
             headers: headers(),
             credentials: 'same-origin',

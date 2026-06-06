@@ -54,7 +54,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::
                     <textarea
                         id="spa-query-input"
                         class="spa-chat-input"
-                        rows="1"
+                        rows="2"
                         placeholder="Escribe tu mensaje…"
                     ></textarea>
                     <button type="button" id="spa-send-btn" class="spa-chat-send-btn" aria-label="Enviar mensaje">

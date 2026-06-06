@@ -41,7 +41,7 @@ final class ChatPreprocessService
     }
 
     /**
-     * Consultas staff sobre plantilla/conteo/listado de profesionales (DataAccess / intents organization.*).
+     * Consultas staff vía DataAccess (/api/info, /api/listar): conteos, listados, resúmenes.
      */
     public static function isStaffDataAccessQuery(string $content): bool
     {
@@ -51,23 +51,20 @@ final class ChatPreprocessService
         }
 
         if (preg_match(
-            '/\b(cuantos|numero de|total de|conteo de|cantidad de)\s+(profesional|medico|medicos|especialista|especialistas)\b/u',
+            '/\b(cuantos|numero de|total de|conteo de|cantidad de|resumen de|resumen)\b/u',
             $lower
         )) {
             return true;
         }
 
         if (preg_match(
-            '/\b(listar|mostrar|ver|nombres de|quienes son)\s+(los\s+)?(profesional|medico|medicos|especialista|especialistas)\b/u',
+            '/\b(listar|mostrar|ver listado|nombres de|quienes son|listado)\b/u',
             $lower
         )) {
             return true;
         }
 
-        return (bool) preg_match(
-            '/\b(planta profesional|personal del centro|profesionales del efector|profesionales en el efector|profesionales del centro)\b/u',
-            $lower
-        );
+        return false;
     }
 
     private static function foldAccents(string $text): string

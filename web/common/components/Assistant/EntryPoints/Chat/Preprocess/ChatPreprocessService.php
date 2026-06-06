@@ -40,6 +40,44 @@ final class ChatPreprocessService
         );
     }
 
+    /**
+     * Consultas staff sobre plantilla/conteo/listado de profesionales (DataAccess / intents organization.*).
+     */
+    public static function isStaffDataAccessQuery(string $content): bool
+    {
+        $lower = self::foldAccents(mb_strtolower(trim($content), 'UTF-8'));
+        if ($lower === '') {
+            return false;
+        }
+
+        if (preg_match(
+            '/\b(cuantos|numero de|total de|conteo de|cantidad de)\s+(profesional|medico|medicos|especialista|especialistas)\b/u',
+            $lower
+        )) {
+            return true;
+        }
+
+        if (preg_match(
+            '/\b(listar|mostrar|ver|nombres de|quienes son)\s+(los\s+)?(profesional|medico|medicos|especialista|especialistas)\b/u',
+            $lower
+        )) {
+            return true;
+        }
+
+        return (bool) preg_match(
+            '/\b(planta profesional|personal del centro|profesionales del efector|profesionales en el efector|profesionales del centro)\b/u',
+            $lower
+        );
+    }
+
+    private static function foldAccents(string $text): string
+    {
+        return strtr($text, [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
+            'ñ' => 'n',
+        ]);
+    }
+
     public static function allowedEntityCategories(): array
     {
         return [
@@ -100,9 +138,9 @@ Respondé ÚNICAMENTE con JSON:
 }
 
 Reglas:
-- user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar).
+- user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar) o consulta datos operativos del centro (cuántos profesionales hay, planta profesional, listar médicos del efector).
 - conversational si es saludo, consulta de salud/síntomas, lesiones (golpe, chichón, bulto), malestar o charla sin pedir una acción del sistema (no confundir con informational).
-- informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas ni quejas clínicas.
+- informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.
 - No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.
 - meta: preguntas sobre el asistente o la app (no operativas).
 - normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá el sentido del mensaje.
@@ -192,6 +230,7 @@ PROMPT;
         }
 
         $goal = self::applyClinicalGoalOverride($normalized, $goal);
+        $goal = self::applyStaffOperationalGoalOverride($normalized, $goal);
 
         return [
             'normalized_text' => $normalized,
@@ -218,6 +257,15 @@ PROMPT;
         return $goal;
     }
 
+    private static function applyStaffOperationalGoalOverride(string $normalized, string $goal): string
+    {
+        if (!self::isStaffDataAccessQuery($normalized)) {
+            return $goal;
+        }
+
+        return 'operational';
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -226,6 +274,8 @@ PROMPT;
         $lower = mb_strtolower($content, 'UTF-8');
         $goal = 'unclear';
         if (preg_match('/\b(turno|turnos|reservar|sacar turno|cancelar turno|agenda|cita)\b/u', $lower)) {
+            $goal = 'operational';
+        } elseif (self::isStaffDataAccessQuery($content)) {
             $goal = 'operational';
         } elseif (preg_match('/\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace)\b/u', $lower)) {
             $goal = 'informational';

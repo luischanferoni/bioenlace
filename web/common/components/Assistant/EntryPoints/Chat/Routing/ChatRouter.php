@@ -36,6 +36,14 @@ final class ChatRouter
         \common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext::set($preprocess);
 
         $goal = isset($preprocess['user_goal']) ? trim((string) $preprocess['user_goal']) : 'unclear';
+        $queryText = isset($preprocess['normalized_text']) ? trim((string) $preprocess['normalized_text']) : $content;
+        if ($queryText === '') {
+            $queryText = $content;
+        }
+
+        if (ChatPreprocessService::isStaffDataAccessQuery($queryText)) {
+            return OperationalChannel::handle($content, null, $userId);
+        }
 
         switch ($goal) {
             case 'operational':

@@ -124,14 +124,28 @@ final class IntentClassifier
             }
         }
 
+        $messageFolded = self::foldAccents($messageLower);
         foreach ($item->keywords as $keyword) {
             $keywordLower = mb_strtolower(trim($keyword), 'UTF-8');
-            if ($keywordLower !== '' && mb_stripos($messageLower, $keywordLower) !== false) {
+            if ($keywordLower === '') {
+                continue;
+            }
+            $keywordFolded = self::foldAccents($keywordLower);
+            if (mb_stripos($messageLower, $keywordLower) !== false
+                || mb_stripos($messageFolded, $keywordFolded) !== false) {
                 $score += 20;
             }
         }
 
         return $score;
+    }
+
+    private static function foldAccents(string $text): string
+    {
+        return strtr($text, [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
+            'ñ' => 'n',
+        ]);
     }
 
     /**

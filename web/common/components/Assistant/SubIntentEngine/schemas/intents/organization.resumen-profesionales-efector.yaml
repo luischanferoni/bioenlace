@@ -6,6 +6,10 @@ description: "Conteo de profesionales del efector, con filtro opcional por espec
 rbac_route: "/api/info"
 keywords:
   - cuantos profesionales
+  - cuántos profesionales
+  - cuantos profesionales hay
+  - profesionales en el efector
+  - profesionales del efector
   - cuantos medicos
   - cuantos especialistas
   - planta profesional

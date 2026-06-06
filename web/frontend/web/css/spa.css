@@ -535,7 +535,7 @@ html:has(.spa-asistente-root) {
     transform: translateY(0);
 }
 
-/* Flow descartado o paso anterior: no interactivo (mini-UIs atenuadas, no el título del paso) */
+/* Flow descartado o paso anterior: no interactivo (mini-UIs atenuadas) */
 .spa-chat-flow-row--superseded {
     pointer-events: none;
 }
@@ -558,8 +558,37 @@ html:has(.spa-asistente-root) {
 /* `assistant_text` de pasos cancelados / de otro flow */
 .spa-chat-flow-row--superseded .spa-flow-step-text,
 .spa-chat-flow-row--superseded .spa-assistant-step-title {
-    color: var(--bs-secondary-color, #6c757d);
+    color: var(--bio-paper-500, var(--bs-secondary-color, #6c757d));
     opacity: 0.85;
+}
+
+/* Encabezado del intent cancelado (título + línea) */
+.spa-chat-flow-row--superseded .spa-flow-chat-title {
+    color: var(--bio-paper-500, var(--bs-secondary-color, #6c757d));
+    opacity: 0.85;
+}
+
+.spa-chat-flow-row--superseded .spa-flow-chat-rule {
+    border-bottom-color: var(--bio-paper-300, var(--bs-border-color, #dee2e6));
+    opacity: 0.7;
+}
+
+/* Numeración y conectores del timeline en flow cancelado */
+.spa-chat-flow-row--superseded .spa-flow-step-marker,
+.spa-chat-flow-row--superseded .spa-flow-step-item--done .spa-flow-step-marker,
+.spa-chat-flow-row--superseded .spa-flow-step-item--active .spa-flow-step-marker,
+.spa-chat-flow-row--superseded .spa-flow-step-item--pending .spa-flow-step-marker {
+    border-color: var(--bio-paper-300, var(--bs-border-color, #dee2e6));
+    background: var(--bio-paper-100, var(--bs-body-bg, #fff));
+    color: var(--bio-paper-500, var(--bs-secondary-color, #6c757d));
+    box-shadow: none;
+    opacity: 0.85;
+}
+
+.spa-chat-flow-row--superseded .spa-flow-step-item:not(:last-child) .spa-flow-step-timeline::after,
+.spa-chat-flow-row--superseded .spa-flow-step-item--done:not(:last-child) .spa-flow-step-timeline::after {
+    background: var(--bio-paper-300, var(--bs-border-color, #dee2e6));
+    opacity: 0.65;
 }
 
 /* Legacy: tira de plan / barra de progreso del composer (ya no se usa). */

@@ -319,34 +319,45 @@ class BioenlaceDbManager extends DbManager
     }
 
     /**
-     * Asignar rol "paciente" al usuario si no lo tiene
+     * Asignar rol "paciente" al usuario si no lo tiene (solo clientes no-web: app móvil / autogestión).
+     *
+     * En web ({@see ClientContextService::shouldOmitPacienteRole}) no se persiste ni inyecta paciente;
+     * el staff opera con roles PES / especiales.
+     *
      * @param int $userId ID del usuario
      * @return bool true si se asignó el rol, false si ya lo tenía o hubo error
      */
     public static function asignarRolPacienteSiNoExiste($userId)
     {
+        if (ClientContextService::shouldOmitPacienteRole()) {
+            return false;
+        }
+
         try {
             $authManager = Yii::$app->authManager;
-            
-            // Verificar si el usuario ya tiene el rol "paciente"
-            $roles = $authManager->getRolesByUser($userId);
-            if (isset($roles['paciente'])) {
-                return false; // Ya tiene el rol
+
+            // Consultar auth_assignment directamente: getRolesByUser puede ocultar paciente según cliente.
+            $exists = (new Query())
+                ->from($authManager->assignmentTable)
+                ->where(['user_id' => (string) $userId, 'item_name' => 'paciente'])
+                ->exists($authManager->db);
+            if ($exists) {
+                return false;
             }
-            
-            // Buscar el rol "paciente" en la base de datos
+
             $pacienteRole = $authManager->getRole('paciente');
             if (!$pacienteRole) {
                 Yii::warning("El rol 'paciente' no existe en la base de datos", 'rbac');
+
                 return false;
             }
-            
-            // Asignar el rol al usuario
+
             $authManager->assign($pacienteRole, $userId);
-            
+
             return true;
         } catch (\Exception $e) {
             Yii::error("Error asignando rol paciente al usuario {$userId}: " . $e->getMessage(), 'rbac');
+
             return false;
         }
     }

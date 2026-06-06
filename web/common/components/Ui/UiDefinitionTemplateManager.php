@@ -2,6 +2,7 @@
 
 namespace common\components\Ui;
 
+use common\components\UiSelectOptionSourceResolver;
 use Yii;
 use yii\helpers\Json;
 

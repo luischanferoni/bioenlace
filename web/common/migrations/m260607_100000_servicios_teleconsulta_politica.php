@@ -28,12 +28,12 @@ class m260607_100000_servicios_teleconsulta_politica extends Migration
             $this->createTable($casos, [
                 'id' => $this->primaryKey(),
                 // Debe coincidir con servicios.id_servicio (INT UNSIGNED); integer() firmado falla el FK (errno 150).
-                'id_servicio' => $this->unsignedInteger()->notNull(),
+                'id_servicio' => $this->integer()->unsigned()->notNull(),
                 'caso_codigo' => $this->string(64)->notNull()->comment('Código del catálogo reserva_triage (ej. control_cronico)'),
                 'created_at' => $this->dateTime()->notNull()->defaultExpression('CURRENT_TIMESTAMP'),
             ]);
         } elseif (!$casosSchema->columns['id_servicio']->unsigned) {
-            $this->alterColumn($casos, 'id_servicio', $this->unsignedInteger()->notNull());
+            $this->alterColumn($casos, 'id_servicio', $this->integer()->unsigned()->notNull());
         }
 
         if (!$this->indexExists($casos, self::UX_CASO_SERVICIO)) {

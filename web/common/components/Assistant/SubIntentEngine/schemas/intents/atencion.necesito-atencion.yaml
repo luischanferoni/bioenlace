@@ -27,7 +27,8 @@ intent_semantics:
   preconditions:
     - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
-    - Signos de alarma (banda A): no se completa reserva; pantalla de urgencia.
+    - Signos de alarma (banda A): no se completa reserva; pantalla de urgencia (sin paso de modalidad).
+    - Tras triage no urgente, modalidad (presencial / videollamada) es obligatoria siempre.
     - Autogestión paciente: solo servicio Medicina clínica / generalistas.
     - Especialistas: turno solo con derivación vigente del clínico; modalidad remota en ese caso.
     - Teleconsulta con clínica según triage, servicio y agenda del profesional.
@@ -161,12 +162,15 @@ subintents:
 
   - id: select_tipo_atencion
     assistant_text: "Modalidad"
+    requires:
+      - draft.triage_raiz
     provides:
       - draft.tipo_atencion
     next_routing:
       - when:
           draft_equals:
             tipo_atencion: teleconsulta
+            teleconsulta_ofrecible: "1"
         next: select_dia_teleconsulta
       - when:
           default: true

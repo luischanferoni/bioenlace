@@ -119,7 +119,10 @@ final class TeleconsultaElegibilidadService
     }
 
     /**
-     * Aplica flags de draft usados por el motor de flows (`teleconsulta_ofrecible`, `tipo_atencion`).
+     * Aplica flags de draft usados por el motor de flows (`teleconsulta_ofrecible`).
+     *
+     * No escribe `tipo_atencion`: el paso `select_tipo_atencion` es obligatorio tras triage
+     * (salvo urgencia); la UI modalidad filtra opciones vía {@see opcionesModalidadParaDraft}.
      *
      * @param array<string, mixed> $draft mutado in-place
      */
@@ -127,9 +130,6 @@ final class TeleconsultaElegibilidadService
     {
         $res = $this->resolverParaDraft($draft);
         $draft['teleconsulta_ofrecible'] = $res['ofrecible'] ? '1' : '0';
-        if ($res['tipo_atencion_forzado'] !== null) {
-            $draft['tipo_atencion'] = $res['tipo_atencion_forzado'];
-        }
         if ($res['sugerencia'] !== null && trim((string) ($draft['tipo_atencion'] ?? '')) === '') {
             $draft['tipo_atencion_sugerido'] = $res['sugerencia'];
         }

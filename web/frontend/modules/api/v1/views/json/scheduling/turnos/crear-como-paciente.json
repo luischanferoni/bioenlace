@@ -50,19 +50,7 @@
           "include_in_submit": true
         },
         {
-          "name": "triage_alarma_gate",
-          "type": "hidden",
-          "required": false,
-          "include_in_submit": true
-        },
-        {
           "name": "triage_alarmas",
-          "type": "hidden",
-          "required": false,
-          "include_in_submit": true
-        },
-        {
-          "name": "triage_zona",
           "type": "hidden",
           "required": false,
           "include_in_submit": true

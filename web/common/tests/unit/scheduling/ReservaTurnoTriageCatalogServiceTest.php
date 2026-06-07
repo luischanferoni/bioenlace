@@ -19,24 +19,27 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         $svc = new ReservaTurnoTriageCatalogService();
         $compiled = $svc->compileSelections([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_alarma_gate' => 'alarma_gate_si',
             'triage_alarmas' => 'alarma_grupo_pecho_respiracion',
         ]);
         $this->assertTrue($compiled['reserva_triage_halt']);
         $this->assertSame('A', $compiled['urgency_band']);
     }
 
-    public function testGateNoSynthesizesAlarmaNinguna(): void
+    public function testFlujoCortoSintomaNuevo(): void
     {
         $svc = new ReservaTurnoTriageCatalogService();
         $compiled = $svc->compileSelections([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_alarma_gate' => 'alarma_gate_no',
-            'triage_zona' => 'zona_cabeza',
+            'triage_alarmas' => 'alarma_ninguna',
             'triage_detalle' => 'det_cabeza_dolor',
         ]);
         $this->assertFalse($compiled['reserva_triage_halt']);
         $this->assertSame('det_cabeza_dolor', $compiled['reserva_triage_code']);
+        $svc->assertCanPersistBooking([
+            'triage_raiz' => 'sintoma_nuevo',
+            'triage_alarmas' => 'alarma_ninguna',
+            'triage_detalle' => 'det_cabeza_dolor',
+        ]);
     }
 
     public function testAssertCanPersistRejectsHalt(): void
@@ -45,7 +48,6 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         $this->expectException(\InvalidArgumentException::class);
         $svc->assertCanPersistBooking([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_alarma_gate' => 'alarma_gate_si',
             'triage_alarmas' => 'alarma_grupo_sangrado_neuro',
         ]);
     }

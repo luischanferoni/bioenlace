@@ -33,11 +33,8 @@ class ReservaTriageModalidadCatalogTest extends Unit
         $svc = new TeleconsultaElegibilidadService();
         $res = $svc->resolverParaDraft([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_alarma_gate' => 'alarma_gate_no',
             'triage_alarmas' => 'alarma_ninguna',
-            'triage_zona' => 'zona_sistemas',
             'triage_detalle' => 'det_general_otro',
-            'triage_evolucion' => 'evo_hoy',
         ]);
         $this->assertSame(TeleconsultaElegibilidadService::ELEG_PERMITIDO, $res['elegibilidad_clinica']);
     }

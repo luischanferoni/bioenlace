@@ -261,9 +261,7 @@ final class ReservaTriageServicioSugeridoService
     {
         $keys = [
             'triage_raiz',
-            'triage_alarma_gate',
             'triage_alarmas',
-            'triage_zona',
             'triage_detalle',
             'triage_evolucion',
         ];
@@ -378,7 +376,7 @@ final class ReservaTriageServicioSugeridoService
      */
     private function draftTieneTriageRelevante(array $draft): bool
     {
-        foreach (['triage_raiz', 'triage_zona', 'triage_detalle'] as $key) {
+        foreach (['triage_raiz', 'triage_detalle'] as $key) {
             if (trim((string) ($draft[$key] ?? '')) !== '') {
                 return true;
             }

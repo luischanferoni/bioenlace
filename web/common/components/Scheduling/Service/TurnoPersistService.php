@@ -207,9 +207,7 @@ class TurnoPersistService
     {
         $selections = [
             'triage_raiz' => $model->triage_raiz,
-            'triage_alarma_gate' => $model->triage_alarma_gate,
             'triage_alarmas' => $model->triage_alarmas,
-            'triage_zona' => $model->triage_zona,
             'triage_detalle' => $model->triage_detalle,
             'triage_evolucion' => $model->triage_evolucion,
             'triage_nota' => $model->triage_nota,

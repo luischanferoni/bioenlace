@@ -261,6 +261,7 @@ final class ReservaTriageServicioSugeridoService
     {
         $keys = [
             'triage_raiz',
+            'triage_alarma_gate',
             'triage_alarmas',
             'triage_zona',
             'triage_detalle',

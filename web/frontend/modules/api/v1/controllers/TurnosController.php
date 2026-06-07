@@ -128,8 +128,8 @@ class TurnosController extends BaseController
      * Paso embebible del triage de reserva (lista de opciones del catálogo).
      *
      * GET|POST /api/v1/turnos/reserva-triage-paso
-     * Query/body: `step` (raiz|alarmas|zona|detalle|evolucion|modalidad); para zona/detalle también los códigos previos
-     * (`triage_raiz`, `triage_zona`) o `parent_code`.
+     * Query/body: `step` (raiz|alarma_gate|alarma_grave|zona|detalle|evolucion|modalidad); para pasos hijos
+     * también los códigos previos (`triage_raiz`, `triage_alarma_gate`, `triage_zona`) o `parent_code`.
      *
      * @action_name Paso triage reserva turno
      * @entity Turnos
@@ -142,7 +142,7 @@ class TurnosController extends BaseController
         $step = isset($params['step']) ? trim((string) $params['step']) : '';
         if ($step === '') {
             throw new BadRequestHttpException(
-                'step es obligatorio (raiz, alarmas, zona, detalle, evolucion, modalidad). '
+                'step es obligatorio (raiz, alarma_gate, alarma_grave, zona, detalle, evolucion, modalidad). '
                 . 'En flujos del asistente debe venir en query desde open_ui.params del subintent.'
             );
         }
@@ -257,8 +257,11 @@ class TurnosController extends BaseController
      */
     private function reservaTriageParentForStep(string $step, array $params): string
     {
-        if ($step === 'motivo' || $step === 'zona') {
+        if ($step === 'zona') {
             return trim((string) ($params['triage_raiz'] ?? $params['parent_code'] ?? ''));
+        }
+        if ($step === 'alarma_grave') {
+            return trim((string) ($params['triage_alarma_gate'] ?? $params['parent_code'] ?? ''));
         }
         if ($step === 'detalle') {
             return trim((string) ($params['triage_zona'] ?? $params['parent_code'] ?? ''));
@@ -277,6 +280,7 @@ class TurnosController extends BaseController
             'id_servicio_asignado',
             'id_servicio_sugerido',
             'triage_raiz',
+            'triage_alarma_gate',
             'triage_alarmas',
             'triage_zona',
             'triage_detalle',

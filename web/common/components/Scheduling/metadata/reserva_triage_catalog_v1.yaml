@@ -1,155 +1,179 @@
-# Catálogo de triage al reservar turno (paciente). Códigos internos; etiquetas en lenguaje simple.
-version: 1
-
-halt_message_band_a: >-
-  Por lo que indicaste, conviene atención urgente ahora (guardia o emergencias).
-  No sigas con la reserva en la app. Si empeorás, llamá al 107.
-
-steps:
-  raiz:
-    title: "¿Por qué necesitás el turno?"
-    draft_field: triage_raiz
-  alarmas:
-    title: "¿Te pasa algo de esto ahora?"
-    draft_field: triage_alarmas
-  motivo:
-    title: "¿Qué te pasa?"
-    draft_field: triage_detalle
-  evolucion:
-    title: "¿Desde cuándo o cómo viene?"
-    draft_field: triage_evolucion
-
-nodes:
-  # --- Raíz ---
-  - code: sintoma_nuevo
-    step: raiz
-    label: "Tengo un síntoma o malestar nuevo"
-    urgency_band: C
-  - code: control_cronico
-    step: raiz
-    label: "Es un control de algo que ya tengo (crónico)"
-    urgency_band: C
-  - code: tramite_admin
-    step: raiz
-    label: "Es un trámite o certificado (sin síntomas nuevos)"
-    urgency_band: D
-
-  # --- Alarmas (banda A detiene reserva) ---
-  - code: alarma_ninguna
-    step: alarmas
-    label: "No, ninguna de estas / puedo seguir"
-    urgency_band: C
-  - code: alarma_dolor_pecho
-    step: alarmas
-    label: "Dolor fuerte o presión en el pecho"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_falta_aire
-    step: alarmas
-    label: "Me cuesta mucho respirar"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_desmayo
-    step: alarmas
-    label: "Me desmayé o casi me desmayo"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_sangrado_abundante
-    step: alarmas
-    label: "Sangrado abundante que no para"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_confusion
-    step: alarmas
-    label: "Confusión repentina o no reconozco a familiares"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_debilidad_cara
-    step: alarmas
-    label: "Cara caída, brazo débil o habla trabada (ahora)"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_fiebre_alta
-    step: alarmas
-    label: "Fiebre muy alta con mucho malestar general"
-    urgency_band: B
-
-  # --- Motivo (síntoma nuevo: lista acotada, sin zona intermedia) ---
-  - code: det_cabeza_dolor
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Dolor de cabeza"
-    urgency_band: C
-  - code: det_cabeza_mareo
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Mareos o vértigo"
-    urgency_band: C
-  - code: det_pecho_dolor
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Dolor en el pecho"
-    urgency_band: B
-  - code: det_pecho_tos
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Tos o resfrío con malestar"
-    urgency_band: C
-  - code: det_abd_dolor
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Dolor de panza"
-    urgency_band: C
-  - code: det_abd_nauseas
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Náuseas, vómitos o diarrea"
-    urgency_band: C
-  - code: det_espalda_dolor
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Dolor de espalda o muscular"
-    urgency_band: C
-  - code: det_piel_erupcion
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Sarpullido, picazón o erupción en la piel"
-    urgency_band: C
-  - code: det_boca_muela
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Dolor de muela o problema dental"
-    urgency_band: C
-  - code: det_vision
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Problema de vista u ojos"
-    urgency_band: C
-  - code: det_general_fiebre
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Fiebre o malestar general"
-    urgency_band: C
-  - code: det_general_otro
-    step: motivo
-    parent: sintoma_nuevo
-    label: "Otro malestar"
-    urgency_band: C
-
-  # --- Evolución (control crónico / opcional) ---
-  - code: evo_hoy
-    step: evolucion
-    label: "Empezó hoy"
-    urgency_band: C
-  - code: evo_dias
-    step: evolucion
-    label: "Hace algunos días"
-    urgency_band: C
-  - code: evo_semanas
-    step: evolucion
-    label: "Hace semanas o más"
-    urgency_band: C
-  - code: evo_cronico_estable
-    step: evolucion
-    label: "Es algo crónico, viene parecido"
-    urgency_band: D
+# Catálogo de triage al reservar turno (paciente). Códigos internos; etiquetas en lenguaje simple.
+version: 1
+
+halt_message_band_a: >-
+  Por lo que indicaste, conviene atención urgente ahora (guardia o emergencias).
+  No sigas con la reserva en la app. Si empeorás, llamá al 107.
+
+steps:
+  raiz:
+    title: "¿Por qué necesitás el turno?"
+    draft_field: triage_raiz
+  alarma_gate:
+    title: "¿Sentís que esto es una urgencia ahora?"
+    draft_field: triage_alarma_gate
+  alarma_grave:
+    title: "¿Qué te preocupa?"
+    draft_field: triage_alarmas
+  zona:
+    title: "¿Dónde o qué área te molesta?"
+    draft_field: triage_zona
+  detalle:
+    title: "¿Qué te pasa?"
+    draft_field: triage_detalle
+  evolucion:
+    title: "¿Desde cuándo o cómo viene?"
+    draft_field: triage_evolucion
+
+nodes:
+  # --- Raíz ---
+  - code: sintoma_nuevo
+    step: raiz
+    label: "Tengo un síntoma o malestar nuevo"
+    urgency_band: C
+  - code: control_cronico
+    step: raiz
+    label: "Es un control de algo que ya tengo (crónico)"
+    urgency_band: C
+  - code: tramite_admin
+    step: raiz
+    label: "Es un trámite o certificado (sin síntomas nuevos)"
+    urgency_band: D
+
+  # --- Puerta de urgencia (opción A) ---
+  - code: alarma_gate_no
+    step: alarma_gate
+    label: "No, puedo esperar un turno ambulatorio"
+    urgency_band: C
+  - code: alarma_gate_si
+    step: alarma_gate
+    label: "Sí, me preocupa que sea urgente"
+    urgency_band: C
+
+  # --- Grupos de alarma (solo si gate_si); sintético si gate_no ---
+  - code: alarma_ninguna
+    label: "Sin alarmas"
+    urgency_band: C
+  - code: alarma_grupo_pecho_respiracion
+    step: alarma_grave
+    parent: alarma_gate_si
+    label: "Dolor fuerte en el pecho, falta de aire o desmayo"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_grupo_sangrado_neuro
+    step: alarma_grave
+    parent: alarma_gate_si
+    label: "Sangrado abundante, confusión o debilidad en cara, brazo o habla"
+    urgency_band: A
+    halts_booking: true
+  - code: alarma_grupo_fiebre_grave
+    step: alarma_grave
+    parent: alarma_gate_si
+    label: "Fiebre muy alta con mucho malestar general"
+    urgency_band: B
+
+  # --- Zona (6 áreas, opción 1) ---
+  - code: zona_cabeza
+    step: zona
+    parent: sintoma_nuevo
+    label: "Cabeza o mareos"
+  - code: zona_pecho
+    step: zona
+    parent: sintoma_nuevo
+    label: "Pecho o respiración"
+  - code: zona_abdomen
+    step: zona
+    parent: sintoma_nuevo
+    label: "Panza (abdomen)"
+  - code: zona_cuerpo
+    step: zona
+    parent: sintoma_nuevo
+    label: "Espalda, cuerpo o fiebre general"
+  - code: zona_piel
+    step: zona
+    parent: sintoma_nuevo
+    label: "Piel (sarpullido, herida, etc.)"
+  - code: zona_sistemas
+    step: zona
+    parent: sintoma_nuevo
+    label: "Ojos, boca/dientes u otro"
+
+  # --- Detalle por zona (2–3 ítems) ---
+  - code: det_cabeza_dolor
+    step: detalle
+    parent: zona_cabeza
+    label: "Dolor de cabeza"
+    urgency_band: C
+  - code: det_cabeza_mareo
+    step: detalle
+    parent: zona_cabeza
+    label: "Mareos o vértigo"
+    urgency_band: C
+  - code: det_pecho_dolor
+    step: detalle
+    parent: zona_pecho
+    label: "Dolor en el pecho"
+    urgency_band: B
+  - code: det_pecho_tos
+    step: detalle
+    parent: zona_pecho
+    label: "Tos o resfrío con malestar"
+    urgency_band: C
+  - code: det_abd_dolor
+    step: detalle
+    parent: zona_abdomen
+    label: "Dolor de panza"
+    urgency_band: C
+  - code: det_abd_nauseas
+    step: detalle
+    parent: zona_abdomen
+    label: "Náuseas, vómitos o diarrea"
+    urgency_band: C
+  - code: det_espalda_dolor
+    step: detalle
+    parent: zona_cuerpo
+    label: "Dolor de espalda o muscular"
+    urgency_band: C
+  - code: det_general_fiebre
+    step: detalle
+    parent: zona_cuerpo
+    label: "Fiebre o malestar general"
+    urgency_band: C
+  - code: det_piel_erupcion
+    step: detalle
+    parent: zona_piel
+    label: "Sarpullido, picazón o erupción"
+    urgency_band: C
+  - code: det_vision
+    step: detalle
+    parent: zona_sistemas
+    label: "Problema de vista u ojos"
+    urgency_band: C
+  - code: det_boca_muela
+    step: detalle
+    parent: zona_sistemas
+    label: "Dolor de muela o problema dental"
+    urgency_band: C
+  - code: det_general_otro
+    step: detalle
+    parent: zona_sistemas
+    label: "Otro malestar"
+    urgency_band: C
+
+  # --- Evolución (control crónico) ---
+  - code: evo_hoy
+    step: evolucion
+    label: "Empezó hoy"
+    urgency_band: C
+  - code: evo_dias
+    step: evolucion
+    label: "Hace algunos días"
+    urgency_band: C
+  - code: evo_semanas
+    step: evolucion
+    label: "Hace semanas o más"
+    urgency_band: C
+  - code: evo_cronico_estable
+    step: evolucion
+    label: "Es algo crónico, viene parecido"
+    urgency_band: D

@@ -114,6 +114,7 @@ class Turno extends \yii\db\ActiveRecord
 
     /** @var string|null Campos de triage de reserva (POST asistente / UI); no todos se persisten como columna suelta */
     public $triage_raiz;
+    public $triage_alarma_gate;
     public $triage_alarmas;
     public $triage_zona;
     public $triage_detalle;
@@ -281,6 +282,7 @@ class Turno extends \yii\db\ActiveRecord
             [['reserva_triage_meta_json'], 'safe'],
             [[
                 'triage_raiz',
+                'triage_alarma_gate',
                 'triage_alarmas',
                 'triage_zona',
                 'triage_detalle',

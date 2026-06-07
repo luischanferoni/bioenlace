@@ -161,6 +161,7 @@ final class ReservaTurnoTriageCatalogService
      */
     public function compileSelections(array $selections): array
     {
+        $selections = $this->normalizeSelections($selections);
         $path = [];
         $bandOrder = ['A' => 4, 'B' => 3, 'C' => 2, 'D' => 1];
         $maxBand = 'D';
@@ -168,7 +169,14 @@ final class ReservaTurnoTriageCatalogService
         $leafCode = '';
         $suggestTipo = null;
 
-        $orderedKeys = ['triage_raiz', 'triage_alarmas', 'triage_zona', 'triage_detalle', 'triage_evolucion'];
+        $orderedKeys = [
+            'triage_raiz',
+            'triage_alarma_gate',
+            'triage_alarmas',
+            'triage_zona',
+            'triage_detalle',
+            'triage_evolucion',
+        ];
         foreach ($orderedKeys as $key) {
             if (!isset($selections[$key])) {
                 continue;
@@ -196,12 +204,13 @@ final class ReservaTurnoTriageCatalogService
         }
 
         $codigos = [];
+        $skipElegibilidad = ['alarma_gate_no', 'alarma_gate_si', 'alarma_ninguna'];
         foreach ($orderedKeys as $key) {
             if (!isset($selections[$key])) {
                 continue;
             }
             $code = trim((string) $selections[$key]);
-            if ($code !== '') {
+            if ($code !== '' && !in_array($code, $skipElegibilidad, true)) {
                 $codigos[] = $code;
             }
         }
@@ -234,6 +243,7 @@ final class ReservaTurnoTriageCatalogService
      */
     public function assertCanPersistBooking(array $selections): void
     {
+        $selections = $this->normalizeSelections($selections);
         $compiled = $this->compileSelections($selections);
         if ($compiled['reserva_triage_halt']) {
             throw new \InvalidArgumentException($this->getHaltMessageBandA());
@@ -246,21 +256,46 @@ final class ReservaTurnoTriageCatalogService
             throw new \InvalidArgumentException('Motivo de solicitud no válido.');
         }
         if ($raiz === 'sintoma_nuevo') {
-            foreach (['triage_alarmas', 'triage_zona', 'triage_detalle', 'triage_evolucion'] as $req) {
+            foreach (['triage_alarma_gate', 'triage_zona', 'triage_detalle'] as $req) {
                 if (trim((string) ($selections[$req] ?? '')) === '') {
                     throw new \InvalidArgumentException('Completá las preguntas sobre tu malestar antes de confirmar el turno.');
                 }
+            }
+            if (trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
+                throw new \InvalidArgumentException('Completá las preguntas sobre tu malestar antes de confirmar el turno.');
             }
 
             return;
         }
         if ($raiz === 'control_cronico') {
-            foreach (['triage_alarmas', 'triage_evolucion'] as $req) {
+            foreach (['triage_alarma_gate', 'triage_evolucion'] as $req) {
                 if (trim((string) ($selections[$req] ?? '')) === '') {
                     throw new \InvalidArgumentException('Completá las preguntas de seguridad y evolución antes de confirmar el turno.');
                 }
             }
+            if (trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
+                throw new \InvalidArgumentException('Completá las preguntas de seguridad antes de confirmar el turno.');
+            }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $selections
+     * @return array<string, mixed>
+     */
+    public function normalizeSelections(array $selections): array
+    {
+        $gate = trim((string) ($selections['triage_alarma_gate'] ?? ''));
+        if ($gate === 'alarma_gate_no' && trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
+            $selections['triage_alarmas'] = 'alarma_ninguna';
+        }
+
+        return $selections;
+    }
+
+    public static function resetCacheForTests(): void
+    {
+        self::$cache = null;
     }
 
     /**

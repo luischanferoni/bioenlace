@@ -85,18 +85,27 @@ class ServiciosController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $params = array_merge($req->get(), $req->post());
             $triageDraft = ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($params);
-            $modoHub = ReservaTriageServicioSugeridoService::esModoHubPaciente($params);
             $sugerido = new ReservaTriageServicioSugeridoService();
             $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos();
-            if ($modoHub || $triageDraft !== []) {
-                $items = $sugerido->filtrarItemsUiJson($items, $triageDraft, false);
-            }
-            if ($items === [] && ($modoHub || $triageDraft !== [])) {
-                $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($triageDraft, false));
-            } else {
-                $intro = $sugerido->mensajeIntroListaParaDraft($triageDraft, false);
+
+            if (ReservaTriageServicioSugeridoService::esListadoPresencial($params)) {
+                $items = $sugerido->priorizarItemsSegunTriage($items, $triageDraft);
+                $intro = $sugerido->mensajeIntroPresencialParaDraft($triageDraft);
                 if ($intro !== null) {
                     $ui = self::withListIntroMessage($ui, $intro);
+                }
+            } else {
+                $modoHub = ReservaTriageServicioSugeridoService::esModoHubPaciente($params);
+                if ($modoHub || $triageDraft !== []) {
+                    $items = $sugerido->filtrarItemsUiJson($items, $triageDraft, false);
+                }
+                if ($items === [] && ($modoHub || $triageDraft !== [])) {
+                    $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($triageDraft, false));
+                } else {
+                    $intro = $sugerido->mensajeIntroListaParaDraft($triageDraft, false);
+                    if ($intro !== null) {
+                        $ui = self::withListIntroMessage($ui, $intro);
+                    }
                 }
             }
             $ui = UiScreenService::withListBlockItems($ui, $items);

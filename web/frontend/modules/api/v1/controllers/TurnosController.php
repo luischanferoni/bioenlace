@@ -257,7 +257,7 @@ class TurnosController extends BaseController
      */
     private function reservaTriageParentForStep(string $step, array $params): string
     {
-        if ($step === 'zona') {
+        if ($step === 'motivo' || $step === 'zona') {
             return trim((string) ($params['triage_raiz'] ?? $params['parent_code'] ?? ''));
         }
         if ($step === 'detalle') {

@@ -125,6 +125,15 @@ final class ReservaTriageServicioRolResolver
      * @param array<string, mixed> $draft
      * @return list<string>
      */
+    public function codigosTriagePublicosDesdeDraft(array $draft): array
+    {
+        return $this->codigosPorEspecificidad($draft);
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @return list<string>
+     */
     private function codigosPorEspecificidad(array $draft): array
     {
         $ordered = ['triage_detalle', 'triage_evolucion', 'triage_zona', 'triage_alarmas', 'triage_raiz'];

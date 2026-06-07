@@ -51,8 +51,14 @@ final class HintCandidateProvider
         $triageDraft = null;
         $soloHub = false;
         if ($ctx->intentId === 'atencion.necesito-atencion') {
-            $triageDraft = ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($ctx->draft);
-            $soloHub = true;
+            $tipo = trim((string) ($ctx->draft['tipo_atencion'] ?? ''));
+            if ($tipo === \common\models\Scheduling\Turno::TIPO_ATENCION_PRESENCIAL) {
+                $triageDraft = null;
+                $soloHub = false;
+            } else {
+                $triageDraft = ReservaTriageServicioSugeridoService::draftDesdeParamsTriage($ctx->draft);
+                $soloHub = $tipo !== '';
+            }
         }
 
         if (self::intentUsesServiciosAceptaTurnos($ctx->intentId)) {

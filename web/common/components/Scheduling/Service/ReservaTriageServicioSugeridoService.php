@@ -5,13 +5,14 @@ namespace common\components\Scheduling\Service;
 use common\components\Organization\Service\Servicios\ServicioMencionLookupService;
 use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
 use common\models\ConsultaDerivaciones;
+use common\models\Scheduling\Turno;
 use common\models\Servicio;
-use common\models\Turno;
 
 /**
  * Resuelve rol/servicios sugeridos a partir del draft de triage y filtra listados de autogestión.
  *
- * Modelo hub: especialistas no autogestionables → lista vacía con orientación a Medicina clínica.
+ * Presencial: todos los servicios con agenda; triage prioriza sugeridos.
+ * Teleconsulta / hub: clínico generalista; especialista remoto con derivación.
  */
 final class ReservaTriageServicioSugeridoService
 {
@@ -91,6 +92,64 @@ final class ReservaTriageServicioSugeridoService
     }
 
     /**
+     * Presencial: muestra todos los servicios; los sugeridos por triage van primero.
+     *
+     * @param list<array{id: string, name: string}> $items
+     * @param array<string, mixed> $draft
+     * @return list<array{id: string, name: string}>
+     */
+    public function priorizarItemsSegunTriage(array $items, array $draft): array
+    {
+        if ($items === [] || !$this->draftTieneTriageRelevante($draft)) {
+            return $items;
+        }
+
+        $codigos = (new ReservaTriageServicioRolResolver())->codigosTriagePublicosDesdeDraft($draft);
+        $prioridad = \common\models\ReservaTriageCodigoServicio::idsParaCodigos($codigos);
+        if ($prioridad === []) {
+            return $items;
+        }
+        $prioFlip = array_flip($prioridad);
+
+        usort($items, static function (array $a, array $b) use ($prioFlip): int {
+            $ia = (int) ($a['id'] ?? 0);
+            $ib = (int) ($b['id'] ?? 0);
+            $pa = isset($prioFlip[$ia]) ? 0 : 1;
+            $pb = isset($prioFlip[$ib]) ? 0 : 1;
+            if ($pa !== $pb) {
+                return $pa <=> $pb;
+            }
+
+            return strcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+        });
+
+        return $items;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    public function mensajeIntroPresencialParaDraft(array $draft): ?string
+    {
+        if (!$this->draftTieneTriageRelevante($draft)) {
+            return 'Elegí el servicio con el que querés atenderte.';
+        }
+        $res = $this->resolverParaDraft($draft, false);
+        $label = trim((string) ($res['rol_label'] ?? ''));
+        if ($label === '') {
+            return 'Elegí el servicio con el que querés atenderte.';
+        }
+
+        return 'Según lo que indicaste, podría corresponderte ' . $label
+            . '. Podés elegir cualquier servicio con turnos disponibles.';
+    }
+
+    public static function esListadoPresencial(array $params): bool
+    {
+        return trim((string) ($params['tipo_atencion'] ?? '')) === Turno::TIPO_ATENCION_PRESENCIAL;
+    }
+
+    /**
      * @param array<string, mixed> $draft
      */
     public function mensajeListaVaciaParaDraft(array $draft, bool $soloHubPaciente = true): string
@@ -141,7 +200,7 @@ final class ReservaTriageServicioSugeridoService
     }
 
     /**
-     * Paciente autogestionando: solo hub o especialista con derivación vigente al servicio.
+     * Paciente autogestionando: presencial → cualquier servicio con agenda; teleconsulta especialista → derivación.
      */
     public function assertPacientePuedeReservarServicio(Turno $model): void
     {
@@ -158,6 +217,11 @@ final class ReservaTriageServicioSugeridoService
         }
 
         if ($servicio->permiteReservaAutogestionPaciente()) {
+            return;
+        }
+
+        $tipo = trim((string) ($model->tipo_atencion ?? Turno::TIPO_ATENCION_PRESENCIAL));
+        if ($tipo === Turno::TIPO_ATENCION_PRESENCIAL) {
             return;
         }
 

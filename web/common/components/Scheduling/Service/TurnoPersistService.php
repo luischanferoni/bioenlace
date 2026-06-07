@@ -247,10 +247,8 @@ class TurnoPersistService
             return;
         }
 
-        if ((string) $model->tipo_atencion !== Turno::TIPO_ATENCION_TELECONSULTA) {
-            throw new \InvalidArgumentException(
-                'Los turnos con especialista por derivación del clínico son solo por videollamada (teleconsulta).'
-            );
+        if ((string) ($model->tipo_atencion ?? Turno::TIPO_ATENCION_PRESENCIAL) === Turno::TIPO_ATENCION_PRESENCIAL) {
+            return;
         }
     }
 }

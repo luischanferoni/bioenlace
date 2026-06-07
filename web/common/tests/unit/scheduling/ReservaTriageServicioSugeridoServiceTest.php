@@ -14,7 +14,6 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_zona' => 'zona_piel',
             'triage_detalle' => 'det_piel_erupcion',
         ]);
         $this->assertSame('det_piel_erupcion', $res->triage_codigo_resolutor);
@@ -28,7 +27,6 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_zona' => 'zona_espalda',
             'triage_detalle' => 'det_espalda_dolor',
         ]);
         $this->assertFalse($res->autogestion_disponible);
@@ -54,11 +52,35 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
 
         $filtered = $svc->filtrarItemsUiJson($items, [
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_zona' => 'zona_piel',
             'triage_detalle' => 'det_piel_erupcion',
         ], false);
 
         $this->assertSame([], $filtered);
+    }
+
+    public function testPriorizarItemsPresencialMantieneTodos(): void
+    {
+        $svc = new class extends ReservaTriageServicioSugeridoService {
+            public function resolverParaDraft(array $draft, bool $soloHubPaciente = false): array
+            {
+                return parent::resolverParaDraft($draft, $soloHubPaciente);
+            }
+        };
+        $items = [
+            ['id' => '8', 'name' => 'MED CLINICA'],
+            ['id' => '66', 'name' => 'DERMATOLOGÍA'],
+        ];
+        $out = $svc->priorizarItemsSegunTriage($items, [
+            'triage_raiz' => 'sintoma_nuevo',
+            'triage_detalle' => 'det_piel_erupcion',
+        ]);
+        $this->assertCount(2, $out);
+    }
+
+    public function testEsListadoPresencial(): void
+    {
+        $this->assertTrue(ReservaTriageServicioSugeridoService::esListadoPresencial(['tipo_atencion' => 'presencial']));
+        $this->assertFalse(ReservaTriageServicioSugeridoService::esListadoPresencial(['tipo_atencion' => 'teleconsulta']));
     }
 
     public function testFiltrarItemsConIdsResueltos(): void

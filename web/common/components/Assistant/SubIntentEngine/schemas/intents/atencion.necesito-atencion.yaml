@@ -18,22 +18,22 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Entender por qué el paciente busca ayuda (triage breve) y conducirlo a turno con Medicina clínica
-    (médico generalista/clínico), salvo urgencia. Los especialistas se reservan solo con derivación del clínico.
+    Entender por qué el paciente busca ayuda (triage breve) y conducirlo a turno presencial o teleconsulta.
+    Presencial: puede elegir cualquier servicio con turnos. Videollamada: atención con clínico/generalista.
   how: >-
-    Motivo y alarmas → zona/detalle/evolución si aplica → modalidad (presencial o videollamada) →
-    presencial: Medicina clínica → centro → profesional → día → horario;
-    videollamada: día → horario (sin elegir servicio, centro ni profesional) → confirmación.
+    Motivo y alarmas → detalle acotado si aplica → modalidad (presencial o videollamada) →
+    presencial: servicio → centro → profesional → día → horario;
+    videollamada: día → horario con clínico (sin elegir servicio ni centro).
   preconditions:
     - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
     - Signos de alarma (banda A): no se completa reserva; pantalla de urgencia (sin paso de modalidad).
     - Tras triage no urgente, modalidad (presencial / videollamada) es obligatoria siempre.
-    - Autogestión paciente: solo servicio Medicina clínica / generalistas.
-    - Especialistas: turno solo con derivación vigente del clínico; modalidad remota en ese caso.
+    - Presencial: listado de todos los servicios con turnos; el triage solo sugiere orden/mensaje.
+    - Videollamada: solo clínico/generalista; especialista remoto requiere derivación vigente.
     - Teleconsulta con clínica según triage, servicio y agenda del profesional.
   outcome:
-    - Turno con clínico y triage persistido; derivación a especialista en otro flujo cuando el clínico la indique.
+    - Turno con servicio elegido (presencial) o clínico remoto; triage persistido.
   keyphrases:
     - necesito ayuda con un síntoma
     - quiero atención médica
@@ -97,7 +97,7 @@ subintents:
       - when:
           draft_equals:
             triage_raiz: sintoma_nuevo
-        next: triage_zona
+        next: triage_motivo
       - when:
           draft_equals:
             triage_raiz: control_cronico
@@ -126,32 +126,19 @@ subintents:
     open_ui:
       action_id: turnos.reserva-triage-urgencia
 
-  - id: triage_zona
-    assistant_text: "Zona"
+  - id: triage_motivo
+    assistant_text: "Qué te pasa"
     requires:
       - draft.triage_raiz
       - draft.triage_alarmas
     provides:
-      - draft.triage_zona
-    next: triage_detalle
-    open_ui:
-      action_id: turnos.reserva-triage-paso
-      params:
-        step: zona
-        triage_raiz: "draft.triage_raiz"
-
-  - id: triage_detalle
-    assistant_text: "Qué te pasa"
-    requires:
-      - draft.triage_zona
-    provides:
       - draft.triage_detalle
-    next: triage_evolucion
+    next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
-        step: detalle
-        triage_zona: "draft.triage_zona"
+        step: motivo
+        triage_raiz: "draft.triage_raiz"
 
   - id: triage_evolucion
     assistant_text: "Evolución"
@@ -184,7 +171,6 @@ subintents:
         step_title: "¿Cómo preferís la atención?"
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas"
-        triage_zona: "draft.triage_zona"
         triage_detalle: "draft.triage_detalle"
         triage_evolucion: "draft.triage_evolucion"
 
@@ -201,10 +187,9 @@ subintents:
     open_ui:
       action_id: servicios.elegir-acepta-turnos
       params:
-        reserva_modo: hub_paciente
+        tipo_atencion: "draft.tipo_atencion"
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas"
-        triage_zona: "draft.triage_zona"
         triage_detalle: "draft.triage_detalle"
         triage_evolucion: "draft.triage_evolucion"
 
@@ -292,7 +277,6 @@ subintents:
         reserva_modo: teleconsulta_hub
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas"
-        triage_zona: "draft.triage_zona"
         triage_detalle: "draft.triage_detalle"
         triage_evolucion: "draft.triage_evolucion"
 
@@ -310,7 +294,6 @@ subintents:
         reserva_modo: teleconsulta_hub
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas"
-        triage_zona: "draft.triage_zona"
         triage_detalle: "draft.triage_detalle"
         triage_evolucion: "draft.triage_evolucion"
         fecha: "draft.fecha_turno"

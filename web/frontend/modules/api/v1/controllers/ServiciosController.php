@@ -89,8 +89,14 @@ class ServiciosController extends BaseController
             $items = ServiciosEfectorAutogestionListadoService::uiJsonItemsServiciosDistintosAceptaTurnos();
 
             if (ReservaTriageServicioSugeridoService::esListadoPresencial($params)) {
-                $items = $sugerido->priorizarItemsSegunTriage($items, $triageDraft);
-                $intro = $sugerido->mensajeIntroPresencialParaDraft($triageDraft);
+                $draftCompleto = array_merge($triageDraft, ReservaTriageServicioSugeridoService::draftCarePlanDesdeParams($params));
+                if ($sugerido->esSeguimientoConCarePlan($draftCompleto)) {
+                    $items = $sugerido->filtrarItemsUiJson($items, $draftCompleto, false);
+                    $intro = $sugerido->mensajeIntroCarePlanParaDraft($draftCompleto);
+                } else {
+                    $items = $sugerido->priorizarItemsSegunTriage($items, $triageDraft);
+                    $intro = $sugerido->mensajeIntroPresencialParaDraft($triageDraft);
+                }
                 if ($intro !== null) {
                     $ui = self::withListIntroMessage($ui, $intro);
                 }

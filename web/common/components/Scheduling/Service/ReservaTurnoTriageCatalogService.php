@@ -171,8 +171,9 @@ final class ReservaTurnoTriageCatalogService
 
         $orderedKeys = [
             'triage_raiz',
+            'triage_urgente',
             'triage_alarmas',
-            'triage_detalle',
+            'triage_zona',
             'triage_evolucion',
         ];
         foreach ($orderedKeys as $key) {
@@ -202,7 +203,7 @@ final class ReservaTurnoTriageCatalogService
         }
 
         $codigos = [];
-        $skipElegibilidad = ['alarma_ninguna'];
+        $skipElegibilidad = ['urgente_si', 'urgente_no', 'alarma_ninguna'];
         foreach ($orderedKeys as $key) {
             if (!isset($selections[$key])) {
                 continue;
@@ -254,16 +255,25 @@ final class ReservaTurnoTriageCatalogService
             throw new \InvalidArgumentException('Motivo de solicitud no válido.');
         }
         if ($raiz === 'sintoma_nuevo') {
-            foreach (['triage_alarmas', 'triage_detalle'] as $req) {
-                if (trim((string) ($selections[$req] ?? '')) === '') {
-                    throw new \InvalidArgumentException('Completá las preguntas sobre tu malestar antes de confirmar el turno.');
-                }
+            if (trim((string) ($selections['triage_urgente'] ?? '')) === '') {
+                throw new \InvalidArgumentException('Completá las preguntas sobre tu malestar antes de confirmar el turno.');
+            }
+            $urgente = trim((string) $selections['triage_urgente']);
+            if ($urgente === 'urgente_si' && trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
+                throw new \InvalidArgumentException('Completá las preguntas sobre tu malestar antes de confirmar el turno.');
+            }
+            if ($urgente === 'urgente_no' && trim((string) ($selections['triage_zona'] ?? '')) === '') {
+                throw new \InvalidArgumentException('Completá las preguntas sobre tu malestar antes de confirmar el turno.');
             }
 
             return;
         }
-        if ($raiz === 'control_cronico') {
-            if (trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
+        if ($raiz === 'seguimiento_cronico') {
+            if (trim((string) ($selections['triage_urgente'] ?? '')) === '') {
+                throw new \InvalidArgumentException('Completá las preguntas de seguridad antes de confirmar el turno.');
+            }
+            if (trim((string) ($selections['triage_urgente'] ?? '')) === 'urgente_si'
+                && trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
                 throw new \InvalidArgumentException('Completá las preguntas de seguridad antes de confirmar el turno.');
             }
         }
@@ -275,6 +285,11 @@ final class ReservaTurnoTriageCatalogService
      */
     public function normalizeSelections(array $selections): array
     {
+        $urgente = trim((string) ($selections['triage_urgente'] ?? ''));
+        if ($urgente === 'urgente_no' && trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
+            $selections['triage_alarmas'] = 'alarma_ninguna';
+        }
+
         return $selections;
     }
 

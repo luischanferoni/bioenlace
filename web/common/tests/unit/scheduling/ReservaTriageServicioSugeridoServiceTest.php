@@ -14,9 +14,9 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_detalle' => 'det_piel_erupcion',
+            'triage_zona' => 'zona_piel',
         ]);
-        $this->assertSame('det_piel_erupcion', $res->triage_codigo_resolutor);
+        $this->assertSame('zona_piel', $res->triage_codigo_resolutor);
         $this->assertFalse($res->autogestion_disponible);
         $this->assertSame([], $res->id_servicios_reservables);
         $this->assertNotNull($res->mensaje_orientacion);
@@ -27,7 +27,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_detalle' => 'det_espalda_dolor',
+            'triage_zona' => 'zona_espalda',
         ]);
         $this->assertFalse($res->autogestion_disponible);
     }
@@ -36,7 +36,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
     {
         $svc = new ReservaTriageServicioSugeridoService();
         $res = $svc->resolverParaDraft([
-            'triage_raiz' => 'control_cronico',
+            'triage_raiz' => 'seguimiento_cronico',
         ], false);
         $this->assertNotSame('', $res['rol_label']);
     }
@@ -52,7 +52,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
 
         $filtered = $svc->filtrarItemsUiJson($items, [
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_detalle' => 'det_piel_erupcion',
+            'triage_zona' => 'zona_piel',
         ], false);
 
         $this->assertSame([], $filtered);
@@ -72,7 +72,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         ];
         $out = $svc->priorizarItemsSegunTriage($items, [
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_detalle' => 'det_piel_erupcion',
+            'triage_zona' => 'zona_piel',
         ]);
         $this->assertCount(2, $out);
     }
@@ -116,7 +116,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
     {
         $svc = new ReservaTriageServicioSugeridoService();
         $draft = [
-            'triage_raiz' => 'control_cronico',
+            'triage_raiz' => 'seguimiento_cronico',
             'triage_alarmas' => 'alarma_ninguna',
         ];
         $svc->aplicarFlagsEnDraft($draft);

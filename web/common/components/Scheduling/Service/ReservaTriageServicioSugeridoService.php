@@ -7,6 +7,7 @@ use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestion
 use common\models\ConsultaDerivaciones;
 use common\models\Scheduling\Turno;
 use common\models\Servicio;
+use Yii;
 
 /**
  * Resuelve rol/servicios sugeridos a partir del draft de triage y filtra listados de autogestión.
@@ -40,6 +41,10 @@ final class ReservaTriageServicioSugeridoService
     {
         if ($soloHubPaciente) {
             return $this->resolverSoloHub($draft);
+        }
+
+        if ($this->esSeguimientoConCarePlan($draft)) {
+            return $this->resolverDesdeCarePlan($draft);
         }
 
         if (!$this->draftTieneTriageRelevante($draft)) {
@@ -261,8 +266,9 @@ final class ReservaTriageServicioSugeridoService
     {
         $keys = [
             'triage_raiz',
+            'triage_urgente',
             'triage_alarmas',
-            'triage_detalle',
+            'triage_zona',
             'triage_evolucion',
         ];
         $draft = [];
@@ -277,6 +283,48 @@ final class ReservaTriageServicioSugeridoService
         }
 
         return $draft;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    public static function draftCarePlanDesdeParams(array $params): array
+    {
+        $draft = [];
+        if (array_key_exists('care_plan_id', $params)) {
+            $v = trim((string) $params['care_plan_id']);
+            if ($v !== '') {
+                $draft['care_plan_id'] = $v;
+            }
+        }
+
+        return $draft;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    public function esSeguimientoConCarePlan(array $draft): bool
+    {
+        return trim((string) ($draft['triage_raiz'] ?? '')) === 'seguimiento_cronico'
+            && (int) ($draft['care_plan_id'] ?? 0) > 0;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    public function mensajeIntroCarePlanParaDraft(array $draft): ?string
+    {
+        $res = $this->resolverDesdeCarePlan($draft);
+        if ($res['id_servicios'] === []) {
+            return 'Según tu plan de tratamiento no hay un servicio con turnos directos. '
+                . 'Elegí Medicina clínica o consultá con tu centro de salud.';
+        }
+
+        return trim((string) ($res['mensaje_lista'] ?? '')) !== ''
+            ? trim((string) $res['mensaje_lista'])
+            : 'Estos servicios están vinculados a tu plan de tratamiento.';
     }
 
     public static function esModoHubPaciente(array $params): bool
@@ -376,12 +424,122 @@ final class ReservaTriageServicioSugeridoService
      */
     private function draftTieneTriageRelevante(array $draft): bool
     {
-        foreach (['triage_raiz', 'triage_detalle'] as $key) {
+        if ($this->esSeguimientoConCarePlan($draft)) {
+            return true;
+        }
+        foreach (['triage_raiz', 'triage_zona'] as $key) {
             if (trim((string) ($draft[$key] ?? '')) !== '') {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @return array{
+     *   rol: string,
+     *   rol_label: string,
+     *   id_servicios: list<int>,
+     *   filtrado_aplicado: bool,
+     *   autogestion_disponible: bool,
+     *   triage_codigo_resolutor: string,
+     *   mensaje_orientacion: string|null,
+     *   mensaje_lista: string|null
+     * }
+     */
+    private function resolverDesdeCarePlan(array $draft): array
+    {
+        $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
+        $carePlanId = (int) ($draft['care_plan_id'] ?? 0);
+        $carePlanSvc = new ReservaTriageCarePlanServicioService();
+        $plan = $carePlanSvc->findPlanForPersona($carePlanId, $idPersona);
+
+        if ($plan === null) {
+            return $this->resolverSinTriage();
+        }
+
+        $idsSugeridos = $carePlanSvc->idsServicioReservaDesdePlan($plan);
+        $eligibleIds = ServiciosEfectorAutogestionListadoService::idsServiciosDistintosAceptaTurnos();
+        $idsElegibles = $this->intersectarElegiblesCarePlan($idsSugeridos, $eligibleIds);
+        $idsReservables = $this->filtrarAutogestionCarePlan($idsElegibles);
+
+        if ($idsReservables === [] && $idsSugeridos !== []) {
+            $label = (new ServicioMencionLookupService())->labelParaIds($idsSugeridos);
+
+            return [
+                'rol' => (string) ($idsSugeridos[0] ?? ''),
+                'rol_label' => $label,
+                'id_servicios' => [],
+                'filtrado_aplicado' => true,
+                'autogestion_disponible' => false,
+                'triage_codigo_resolutor' => 'seguimiento_cronico',
+                'mensaje_orientacion' => 'Tu plan sugiere ' . ($label !== '' ? $label : 'una especialidad')
+                    . ', pero no podés reservar turno directo desde la app. Pedí turno con Medicina clínica primero.',
+                'mensaje_lista' => null,
+            ];
+        }
+
+        if ($idsReservables === []) {
+            return $this->resolverSinTriage();
+        }
+
+        $label = (new ServicioMencionLookupService())->labelParaIds($idsReservables);
+
+        return [
+            'rol' => (string) $idsReservables[0],
+            'rol_label' => $label,
+            'id_servicios' => $idsReservables,
+            'filtrado_aplicado' => true,
+            'autogestion_disponible' => true,
+            'triage_codigo_resolutor' => 'seguimiento_cronico',
+            'mensaje_orientacion' => null,
+            'mensaje_lista' => 'Servicios vinculados a tu plan: ' . ($label !== '' ? $label : 'elegí uno'),
+        ];
+    }
+
+    /**
+     * @param list<int> $ids
+     * @param list<int> $eligibleIds
+     * @return list<int>
+     */
+    private function intersectarElegiblesCarePlan(array $ids, array $eligibleIds): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+        $allow = array_flip($eligibleIds);
+        $out = [];
+        foreach ($ids as $id) {
+            if (isset($allow[$id])) {
+                $out[] = $id;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<int> $ids
+     * @return list<int>
+     */
+    private function filtrarAutogestionCarePlan(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+        $out = [];
+        foreach (Servicio::find()->where(['id_servicio' => $ids])->all() as $servicio) {
+            if (!$servicio instanceof Servicio) {
+                continue;
+            }
+            if ($servicio->permiteReservaAutogestionPaciente()) {
+                $out[] = (int) $servicio->id_servicio;
+            }
+        }
+        sort($out);
+
+        return array_values(array_unique($out));
     }
 }

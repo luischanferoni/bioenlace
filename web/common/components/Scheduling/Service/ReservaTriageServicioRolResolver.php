@@ -136,7 +136,7 @@ final class ReservaTriageServicioRolResolver
      */
     private function codigosPorEspecificidad(array $draft): array
     {
-        $ordered = ['triage_detalle', 'triage_evolucion', 'triage_zona', 'triage_alarmas', 'triage_raiz'];
+        $ordered = ['triage_zona', 'triage_detalle', 'triage_evolucion', 'triage_alarmas', 'triage_raiz'];
         $out = [];
         foreach ($ordered as $key) {
             $v = trim((string) ($draft[$key] ?? ''));

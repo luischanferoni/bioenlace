@@ -14,31 +14,32 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         $this->assertFalse($svc->nodeHaltsBooking('alarma_ninguna'));
     }
 
-    public function testCompileSelectionsDetectsHalt(): void
+    public function testUrgenteSiDetectsHalt(): void
     {
         $svc = new ReservaTurnoTriageCatalogService();
         $compiled = $svc->compileSelections([
             'triage_raiz' => 'sintoma_nuevo',
+            'triage_urgente' => 'urgente_si',
             'triage_alarmas' => 'alarma_grupo_pecho_respiracion',
         ]);
         $this->assertTrue($compiled['reserva_triage_halt']);
         $this->assertSame('A', $compiled['urgency_band']);
     }
 
-    public function testFlujoCortoSintomaNuevo(): void
+    public function testUrgenteNoRequiereZona(): void
     {
         $svc = new ReservaTurnoTriageCatalogService();
         $compiled = $svc->compileSelections([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_alarmas' => 'alarma_ninguna',
-            'triage_detalle' => 'det_cabeza_dolor',
+            'triage_urgente' => 'urgente_no',
+            'triage_zona' => 'zona_cabeza_cuello',
         ]);
         $this->assertFalse($compiled['reserva_triage_halt']);
-        $this->assertSame('det_cabeza_dolor', $compiled['reserva_triage_code']);
+        $this->assertSame('zona_cabeza_cuello', $compiled['reserva_triage_code']);
         $svc->assertCanPersistBooking([
             'triage_raiz' => 'sintoma_nuevo',
-            'triage_alarmas' => 'alarma_ninguna',
-            'triage_detalle' => 'det_cabeza_dolor',
+            'triage_urgente' => 'urgente_no',
+            'triage_zona' => 'zona_abdomen',
         ]);
     }
 
@@ -48,6 +49,7 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         $this->expectException(\InvalidArgumentException::class);
         $svc->assertCanPersistBooking([
             'triage_raiz' => 'sintoma_nuevo',
+            'triage_urgente' => 'urgente_si',
             'triage_alarmas' => 'alarma_grupo_sangrado_neuro',
         ]);
     }

@@ -21,15 +21,15 @@ intent_semantics:
     Entender por qué el paciente busca ayuda (triage breve) y conducirlo a turno presencial o teleconsulta.
     Presencial: puede elegir cualquier servicio con turnos. Videollamada: atención con clínico/generalista.
   how: >-
-    Motivo → signos de alarma (una pantalla) → qué te pasa si hay síntoma nuevo → modalidad →
-    presencial: servicio → centro → profesional → día → horario;
-    videollamada: día → horario con clínico (sin elegir servicio ni centro).
+    Síntoma nuevo: motivo → ¿urgente? → categoría o zona → modalidad → servicio.
+    Seguimiento crónico: motivo → ¿urgente? → plan de tratamiento (care plan) → modalidad → servicio filtrado.
   preconditions:
     - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
     - Signos de alarma (banda A): no se completa reserva; pantalla de urgencia (sin paso de modalidad).
     - Tras triage no urgente, modalidad (presencial / videollamada) es obligatoria siempre.
-    - Presencial: listado de todos los servicios con turnos; el triage solo sugiere orden/mensaje.
+    - Seguimiento crónico: tras descartar urgencia, el paciente elige plan activo; servicios filtrados desde care plan.
+    - Presencial síntoma nuevo: listado completo; triage por zona solo prioriza.
     - Videollamada: solo clínico/generalista; especialista remoto requiere derivación vigente.
     - Teleconsulta con clínica según triage, servicio y agenda del profesional.
   outcome:
@@ -52,9 +52,11 @@ draft_keys_extra:
   - reserva_servicio_mensaje
   - reserva_modo_hub_paciente
   - fecha_turno
+  - care_plan_id
   - triage_raiz
+  - triage_urgente
   - triage_alarmas
-  - triage_detalle
+  - triage_zona
   - triage_evolucion
   - triage_nota
   - reserva_triage_halt
@@ -67,25 +69,44 @@ subintents:
       - draft.triage_raiz
     next_routing:
       - when:
-          draft_equals:
-            triage_raiz: sintoma_nuevo
-        next: triage_alarmas
+          default: true
+        next: triage_urgente
+    open_ui:
+      action_id: turnos.reserva-triage-paso
+      params:
+        step: raiz
+
+  - id: triage_urgente
+    assistant_text: "Urgencia"
+    requires:
+      - draft.triage_raiz
+    provides:
+      - draft.triage_urgente
+    next_routing:
       - when:
           draft_equals:
-            triage_raiz: control_cronico
-        next: triage_alarmas
+            triage_urgente: urgente_si
+        next: triage_urgencia_tipo
+      - when:
+          draft_equals:
+            triage_raiz: sintoma_nuevo
+        next: triage_zona
+      - when:
+          draft_equals:
+            triage_raiz: seguimiento_cronico
+        next: select_care_plan
       - when:
           default: true
         next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
-        step: raiz
+        step: urgente
 
-  - id: triage_alarmas
-    assistant_text: "Seguridad"
+  - id: triage_urgencia_tipo
+    assistant_text: "Qué te preocupa"
     requires:
-      - draft.triage_raiz
+      - draft.triage_urgente
     provides:
       - draft.triage_alarmas
     next_routing:
@@ -94,30 +115,38 @@ subintents:
             reserva_triage_halt: "1"
         next: triage_urgencia
       - when:
-          draft_equals:
-            triage_raiz: sintoma_nuevo
-        next: triage_motivo
-      - when:
           default: true
         next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
-        step: alarmas
+        step: urgencia_tipo
+        triage_urgente: "draft.triage_urgente"
 
-  - id: triage_motivo
-    assistant_text: "Qué te pasa"
+  - id: triage_zona
+    assistant_text: "Zona"
     requires:
       - draft.triage_raiz
-      - draft.triage_alarmas
+      - draft.triage_urgente
     provides:
-      - draft.triage_detalle
+      - draft.triage_zona
     next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
-        step: motivo
+        step: zona
         triage_raiz: "draft.triage_raiz"
+
+  - id: select_care_plan
+    assistant_text: "Tu tratamiento"
+    requires:
+      - draft.triage_raiz
+      - draft.triage_urgente
+    provides:
+      - draft.care_plan_id
+    next: select_tipo_atencion
+    open_ui:
+      action_id: clinical.care-plan.ver-tratamiento-paciente
 
   - id: triage_urgencia
     assistant_text: "Urgencia"
@@ -155,8 +184,10 @@ subintents:
         step: modalidad
         step_title: "¿Cómo preferís la atención?"
         triage_raiz: "draft.triage_raiz"
+        triage_urgente: "draft.triage_urgente"
         triage_alarmas: "draft.triage_alarmas"
-        triage_detalle: "draft.triage_detalle"
+        triage_zona: "draft.triage_zona"
+        care_plan_id: "draft.care_plan_id"
 
   - id: select_servicio
     assistant_text: "Servicio"
@@ -173,8 +204,10 @@ subintents:
       params:
         tipo_atencion: "draft.tipo_atencion"
         triage_raiz: "draft.triage_raiz"
+        triage_urgente: "draft.triage_urgente"
         triage_alarmas: "draft.triage_alarmas"
-        triage_detalle: "draft.triage_detalle"
+        triage_zona: "draft.triage_zona"
+        care_plan_id: "draft.care_plan_id"
 
   - id: select_efector
     assistant_text: "Centro de salud"
@@ -259,8 +292,10 @@ subintents:
       params:
         reserva_modo: teleconsulta_hub
         triage_raiz: "draft.triage_raiz"
+        triage_urgente: "draft.triage_urgente"
         triage_alarmas: "draft.triage_alarmas"
-        triage_detalle: "draft.triage_detalle"
+        triage_zona: "draft.triage_zona"
+        care_plan_id: "draft.care_plan_id"
 
   - id: select_slot_teleconsulta
     assistant_text: "Horario"
@@ -275,8 +310,10 @@ subintents:
       params:
         reserva_modo: teleconsulta_hub
         triage_raiz: "draft.triage_raiz"
+        triage_urgente: "draft.triage_urgente"
         triage_alarmas: "draft.triage_alarmas"
-        triage_detalle: "draft.triage_detalle"
+        triage_zona: "draft.triage_zona"
+        care_plan_id: "draft.care_plan_id"
         fecha: "draft.fecha_turno"
 
 flow_submit:
@@ -286,7 +323,9 @@ flow_submit:
     id_servicio_asignado: "draft.id_servicio_asignado"
     id_efector: "draft.id_efector"
     triage_raiz: "draft.triage_raiz"
+    triage_urgente: "draft.triage_urgente"
     triage_alarmas: "draft.triage_alarmas"
-    triage_detalle: "draft.triage_detalle"
+    triage_zona: "draft.triage_zona"
+    care_plan_id: "draft.care_plan_id"
     triage_nota: "draft.triage_nota"
     tipo_atencion: "draft.tipo_atencion"

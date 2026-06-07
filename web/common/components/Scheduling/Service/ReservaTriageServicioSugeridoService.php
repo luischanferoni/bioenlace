@@ -47,6 +47,10 @@ final class ReservaTriageServicioSugeridoService
             return $this->resolverDesdeCarePlan($draft);
         }
 
+        if ($this->esMalestarNuevoConZona($draft)) {
+            return $this->resolverDesdeZona($draft);
+        }
+
         if (!$this->draftTieneTriageRelevante($draft)) {
             return $this->resolverSinTriage();
         }
@@ -266,10 +270,8 @@ final class ReservaTriageServicioSugeridoService
     {
         $keys = [
             'triage_raiz',
-            'triage_urgente',
             'triage_alarmas',
             'triage_zona',
-            'triage_evolucion',
         ];
         $draft = [];
         foreach ($keys as $key) {
@@ -309,6 +311,33 @@ final class ReservaTriageServicioSugeridoService
     {
         return trim((string) ($draft['triage_raiz'] ?? '')) === 'seguimiento_cronico'
             && (int) ($draft['care_plan_id'] ?? 0) > 0;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    public function esMalestarNuevoConZona(array $draft): bool
+    {
+        return trim((string) ($draft['triage_raiz'] ?? '')) === 'malestar_nuevo'
+            && trim((string) ($draft['triage_zona'] ?? '')) !== '';
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    public function mensajeIntroZonaParaDraft(array $draft): ?string
+    {
+        if (!$this->esMalestarNuevoConZona($draft)) {
+            return null;
+        }
+        $res = $this->resolverParaDraft($draft, false);
+        if ($res['id_servicios'] === []) {
+            return null;
+        }
+
+        return trim((string) ($res['mensaje_lista'] ?? '')) !== ''
+            ? trim((string) $res['mensaje_lista'])
+            : 'Estos servicios corresponden a la zona que indicaste.';
     }
 
     /**
@@ -427,6 +456,9 @@ final class ReservaTriageServicioSugeridoService
         if ($this->esSeguimientoConCarePlan($draft)) {
             return true;
         }
+        if ($this->esMalestarNuevoConZona($draft)) {
+            return true;
+        }
         foreach (['triage_raiz', 'triage_zona'] as $key) {
             if (trim((string) ($draft[$key] ?? '')) !== '') {
                 return true;
@@ -434,6 +466,56 @@ final class ReservaTriageServicioSugeridoService
         }
 
         return false;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @return array{
+     *   rol: string,
+     *   rol_label: string,
+     *   id_servicios: list<int>,
+     *   filtrado_aplicado: bool,
+     *   autogestion_disponible: bool,
+     *   triage_codigo_resolutor: string,
+     *   mensaje_orientacion: string|null,
+     *   mensaje_lista: string|null
+     * }
+     */
+    private function resolverDesdeZona(array $draft): array
+    {
+        $res = $this->rolResolver->resolveDesdeDraft($draft);
+        $ids = $res->id_servicios_reservables;
+
+        if ($ids === [] && $res->mensaje_orientacion !== null) {
+            return [
+                'rol' => $res->rol_ideal,
+                'rol_label' => $res->rol_ideal_label,
+                'id_servicios' => [],
+                'filtrado_aplicado' => true,
+                'autogestion_disponible' => false,
+                'triage_codigo_resolutor' => $res->triage_codigo_resolutor,
+                'mensaje_orientacion' => $res->mensaje_orientacion,
+                'mensaje_lista' => null,
+            ];
+        }
+
+        if ($ids === []) {
+            return $this->resolverSinTriage();
+        }
+
+        $label = $res->rol_ideal_label;
+
+        return [
+            'rol' => $res->rol_ideal,
+            'rol_label' => $label,
+            'id_servicios' => $ids,
+            'filtrado_aplicado' => true,
+            'autogestion_disponible' => $res->autogestion_disponible,
+            'triage_codigo_resolutor' => $res->triage_codigo_resolutor,
+            'mensaje_orientacion' => $res->mensaje_orientacion,
+            'mensaje_lista' => $res->mensaje_lista ?? ('Servicios para la zona elegida'
+                . ($label !== '' ? ': ' . $label : '')),
+        ];
     }
 
     /**

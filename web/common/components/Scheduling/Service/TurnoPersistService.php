@@ -207,10 +207,8 @@ class TurnoPersistService
     {
         $selections = [
             'triage_raiz' => $model->triage_raiz,
-            'triage_urgente' => $model->triage_urgente,
             'triage_alarmas' => $model->triage_alarmas,
             'triage_zona' => $model->triage_zona,
-            'triage_evolucion' => $model->triage_evolucion,
             'triage_nota' => $model->triage_nota,
         ];
         $catalog = new ReservaTurnoTriageCatalogService();

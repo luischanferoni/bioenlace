@@ -1,89 +1,102 @@
-# Catálogo de triage al reservar turno (paciente). Códigos internos; etiquetas en lenguaje simple.
-version: 1
-
-halt_message_band_a: >-
-  Por lo que indicaste, conviene atención urgente ahora (guardia o emergencias).
-  No sigas con la reserva en la app. Si empeorás, llamá al 107.
-
-steps:
-  raiz:
-    title: "¿Por qué necesitás el turno?"
-    draft_field: triage_raiz
-  urgente:
-    title: "¿Sentís que esto es una urgencia ahora?"
-    draft_field: triage_urgente
-  urgencia_tipo:
-    title: "¿Qué te preocupa?"
-    draft_field: triage_alarmas
-  zona:
-    title: "¿Dónde o qué área te molesta?"
-    draft_field: triage_zona
-
-nodes:
-  # --- Raíz ---
-  - code: sintoma_nuevo
-    step: raiz
-    label: "Tengo un síntoma o malestar nuevo"
-    urgency_band: C
-  - code: seguimiento_cronico
-    step: raiz
-    label: "Seguimiento (algo crónico que ya tengo)"
-    urgency_band: C
-
-  # --- Binario urgencia ---
-  - code: urgente_no
-    step: urgente
-    label: "No, puedo esperar un turno ambulatorio"
-    urgency_band: C
-  - code: urgente_si
-    step: urgente
-    label: "Sí, me preocupa que sea urgente"
-    urgency_band: C
-
-  # --- Categorías de urgencia (solo si urgente_si) ---
-  - code: alarma_ninguna
-    label: "Sin signos de urgencia"
-    urgency_band: C
-  - code: alarma_grupo_pecho_respiracion
-    step: urgencia_tipo
-    parent: urgente_si
-    label: "Dolor fuerte en el pecho, falta de aire o desmayo"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_grupo_sangrado_neuro
-    step: urgencia_tipo
-    parent: urgente_si
-    label: "Sangrado abundante, confusión o debilidad en cara, brazo o habla"
-    urgency_band: A
-    halts_booking: true
-  - code: alarma_grupo_fiebre_grave
-    step: urgencia_tipo
-    parent: urgente_si
-    label: "Fiebre muy alta con mucho malestar general"
-    urgency_band: B
-
-  # --- Zona (síntoma nuevo, no urgente; filtra/prioriza servicios) ---
-  - code: zona_cabeza_cuello
-    step: zona
-    parent: sintoma_nuevo
-    label: "Cabeza o cuello"
-  - code: zona_pecho
-    step: zona
-    parent: sintoma_nuevo
-    label: "Pecho o respiración"
-  - code: zona_abdomen
-    step: zona
-    parent: sintoma_nuevo
-    label: "Panza (abdomen)"
-  - code: zona_espalda
-    step: zona
-    parent: sintoma_nuevo
-    label: "Espalda o musculatura"
-  - code: zona_piel
-    step: zona
-    parent: sintoma_nuevo
-    label: "Piel (sarpullido, herida, etc.)"
-  - code: zona_sistemas
-    step: zona
-    parent: sintoma_nuevo
-    label: "Ojos, boca/dientes u otro"
+# Catálogo de triage al reservar turno (paciente). Códigos internos; etiquetas en lenguaje simple.
+version: 1
+
+halt_message_band_a: >-
+  Por lo que indicaste, conviene atención urgente ahora (guardia o emergencias).
+  No sigas con la reserva en la app. Si empeorás, llamá al 107.
+
+steps:
+  raiz:
+    title: "¿Por qué necesitás el turno?"
+    draft_field: triage_raiz
+  urgencia_categoria:
+    title: "¿Qué tipo de urgencia es?"
+    draft_field: triage_alarmas
+  zona:
+    title: "¿Dónde o qué área te molesta?"
+    draft_field: triage_zona
+
+nodes:
+  # --- Raíz (3 caminos) ---
+  - code: malestar_nuevo
+    step: raiz
+    label: "Malestar nuevo"
+    urgency_band: C
+  - code: seguimiento_cronico
+    step: raiz
+    label: "Seguimiento"
+    urgency_band: C
+  - code: urgencia
+    step: raiz
+    label: "Urgencia"
+    urgency_band: A
+
+  # --- Categorías de urgencia (camino urgencia) ---
+  - code: urg_cat_neurologico
+    step: urgencia_categoria
+    parent: urgencia
+    label: "Neurológico (confusión, convulsión, debilidad cara/brazo/habla)"
+    urgency_band: A
+    halts_booking: true
+  - code: urg_cat_cardiaco
+    step: urgencia_categoria
+    parent: urgencia
+    label: "Cardíaco (dolor fuerte en el pecho o desmayo)"
+    urgency_band: A
+    halts_booking: true
+  - code: urg_cat_respiratorio
+    step: urgencia_categoria
+    parent: urgencia
+    label: "Respiratorio (falta de aire importante)"
+    urgency_band: A
+    halts_booking: true
+  - code: urg_cat_trauma_sangrado
+    step: urgencia_categoria
+    parent: urgencia
+    label: "Trauma y/o sangrado abundante"
+    urgency_band: A
+    halts_booking: true
+  - code: urg_cat_abdominal
+    step: urgencia_categoria
+    parent: urgencia
+    label: "Abdominal agudo (dolor de panza muy fuerte)"
+    urgency_band: A
+    halts_booking: true
+  - code: urg_cat_fiebre
+    step: urgencia_categoria
+    parent: urgencia
+    label: "Fiebre muy alta con mucho malestar"
+    urgency_band: B
+    halts_booking: true
+  - code: urg_cat_otro
+    step: urgencia_categoria
+    parent: urgencia
+    label: "Otro cuadro urgente"
+    urgency_band: A
+    halts_booking: true
+
+  # --- Zona (malestar nuevo → filtra servicios) ---
+  - code: zona_cabeza_cuello
+    step: zona
+    parent: malestar_nuevo
+    label: "Cabeza o cuello"
+  - code: zona_pecho
+    step: zona
+    parent: malestar_nuevo
+    label: "Pecho o respiración"
+  - code: zona_abdomen
+    step: zona
+    parent: malestar_nuevo
+    label: "Panza (abdomen)"
+  - code: zona_espalda
+    step: zona
+    parent: malestar_nuevo
+    label: "Espalda o musculatura"
+  - code: zona_piel
+    step: zona
+    parent: malestar_nuevo
+    label: "Piel (sarpullido, herida, etc.)"
+  - code: zona_sistemas
+    step: zona
+    parent: malestar_nuevo
+    label: "Ojos, boca/dientes u otro"

@@ -93,11 +93,17 @@ class ServiciosController extends BaseController
                 if ($sugerido->esSeguimientoConCarePlan($draftCompleto)) {
                     $items = $sugerido->filtrarItemsUiJson($items, $draftCompleto, false);
                     $intro = $sugerido->mensajeIntroCarePlanParaDraft($draftCompleto);
+                } elseif ($sugerido->esMalestarNuevoConZona($draftCompleto)) {
+                    $items = $sugerido->filtrarItemsUiJson($items, $draftCompleto, false);
+                    $intro = $sugerido->mensajeIntroZonaParaDraft($draftCompleto);
+                    if ($items === []) {
+                        $ui = self::withListEmptyMessage($ui, $sugerido->mensajeListaVaciaParaDraft($draftCompleto, false));
+                    }
                 } else {
                     $items = $sugerido->priorizarItemsSegunTriage($items, $triageDraft);
                     $intro = $sugerido->mensajeIntroPresencialParaDraft($triageDraft);
                 }
-                if ($intro !== null) {
+                if ($intro !== null && $items !== []) {
                     $ui = self::withListIntroMessage($ui, $intro);
                 }
             } else {

@@ -13,7 +13,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
     {
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
-            'triage_raiz' => 'sintoma_nuevo',
+            'triage_raiz' => 'malestar_nuevo',
             'triage_zona' => 'zona_piel',
         ]);
         $this->assertSame('zona_piel', $res->triage_codigo_resolutor);
@@ -26,7 +26,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
     {
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
-            'triage_raiz' => 'sintoma_nuevo',
+            'triage_raiz' => 'malestar_nuevo',
             'triage_zona' => 'zona_espalda',
         ]);
         $this->assertFalse($res->autogestion_disponible);
@@ -51,7 +51,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         ];
 
         $filtered = $svc->filtrarItemsUiJson($items, [
-            'triage_raiz' => 'sintoma_nuevo',
+            'triage_raiz' => 'malestar_nuevo',
             'triage_zona' => 'zona_piel',
         ], false);
 
@@ -71,7 +71,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
             ['id' => '66', 'name' => 'DERMATOLOGÍA'],
         ];
         $out = $svc->priorizarItemsSegunTriage($items, [
-            'triage_raiz' => 'sintoma_nuevo',
+            'triage_raiz' => 'malestar_nuevo',
             'triage_zona' => 'zona_piel',
         ]);
         $this->assertCount(2, $out);
@@ -106,7 +106,7 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
             ['id' => '20', 'name' => 'OFTALMOLOGIA'],
         ];
         $filtered = $svc->filtrarItemsUiJson($items, [
-            'triage_raiz' => 'sintoma_nuevo',
+            'triage_raiz' => 'malestar_nuevo',
         ], false);
         $this->assertCount(1, $filtered);
         $this->assertSame('10', $filtered[0]['id']);
@@ -122,6 +122,19 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         $svc->aplicarFlagsEnDraft($draft);
         $this->assertArrayNotHasKey('id_servicio_sugerido', $draft);
         $this->assertArrayHasKey('triage_servicio_rol_ideal', $draft);
+    }
+
+    public function testEsMalestarNuevoConZona(): void
+    {
+        $svc = new ReservaTriageServicioSugeridoService();
+        $this->assertTrue($svc->esMalestarNuevoConZona([
+            'triage_raiz' => 'malestar_nuevo',
+            'triage_zona' => 'zona_pecho',
+        ]));
+        $this->assertFalse($svc->esMalestarNuevoConZona([
+            'triage_raiz' => 'seguimiento_cronico',
+            'triage_zona' => 'zona_pecho',
+        ]));
     }
 
     public function testAccesoConfigEspecialistaConDerivacion(): void

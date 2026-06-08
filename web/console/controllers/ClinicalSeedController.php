@@ -2,18 +2,22 @@
 
 namespace console\controllers;
 
+use common\components\CrearUsuarioDePruebaHelper;
 use common\components\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
 use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\components\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
 use common\components\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
 use common\components\Clinical\Prescription\Support\PrescriptionDocumentSupport;
+use common\components\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\db\Query;
 use yii\helpers\Console;
 
 /**
- * Utilidades de seed clínico (desarrollo / pruebas móvil paciente).
+ * Seeds de desarrollo: clínico, organización (PES/médicos) y usuarios de prueba.
+ *
+ * Uso: php yii clinical-seed/<acción>  (ver acciones en este controller)
  */
 class ClinicalSeedController extends Controller
 {
@@ -23,6 +27,15 @@ class ClinicalSeedController extends Controller
 
     /** @var int id_persona destino (opción --persona) */
     public $persona = 0;
+
+    /** @var int id_efector (seeds de médico MED GENERAL) */
+    public $efector = 863;
+
+    /** @var int 1 = crear agenda laboral básica en seed médico */
+    public $agenda = 1;
+
+    /** @var string contraseña del usuario médico seed (vacío = default) */
+    public $password = '';
 
     public function options($actionID): array
     {
@@ -39,13 +52,139 @@ class ClinicalSeedController extends Controller
         ], true)) {
             $opts[] = 'persona';
         }
+        if (in_array($actionID, [
+            'medico-med-general',
+            'medico-med-general-remove',
+            'medico-med-general-info',
+        ], true)) {
+            $opts[] = 'efector';
+            $opts[] = 'agenda';
+            $opts[] = 'password';
+        }
 
         return $opts;
     }
 
     public function optionAliases(): array
     {
-        return array_merge(parent::optionAliases(), ['p' => 'persona']);
+        return array_merge(parent::optionAliases(), [
+            'p' => 'persona',
+            'e' => 'efector',
+            'a' => 'agenda',
+        ]);
+    }
+
+    /**
+     * Crea persona + usuario de prueba genérico (documento {@see CrearUsuarioDePruebaHelper::DOCUMENTO}).
+     */
+    public function actionUsuarioDePrueba(): int
+    {
+        $this->stdout(
+            'Creando usuario de prueba (documento ' . CrearUsuarioDePruebaHelper::DOCUMENTO . ")...\n",
+            Console::FG_YELLOW
+        );
+
+        $result = CrearUsuarioDePruebaHelper::crear();
+
+        if (!$result['ok']) {
+            $this->stderr($result['message'] . "\n", Console::FG_RED);
+            if (!empty($result['errors'])) {
+                $this->stderr(print_r($result['errors'], true) . "\n", Console::FG_RED);
+            }
+
+            return ExitCode::UNSPECIFIED_ERROR;
+        }
+
+        $this->stdout($result['message'] . "\n", Console::FG_GREEN);
+        $this->stdout('Persona: ' . json_encode($result['persona'], JSON_UNESCAPED_UNICODE) . "\n");
+        $this->stdout('Usuario: ' . json_encode($result['user'], JSON_UNESCAPED_UNICODE) . "\n");
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Crea médico de prueba en MED GENERAL para el efector indicado (default 863).
+     *
+     * php yii clinical-seed/medico-med-general
+     * php yii clinical-seed/medico-med-general --efector=863 --agenda=1
+     */
+    public function actionMedicoMedGeneral(): int
+    {
+        $service = new MedicoMedGeneralEfectorSeedService();
+        $idEfector = (int) $this->efector;
+        $withAgenda = (int) $this->agenda !== 0;
+        $plainPassword = trim((string) $this->password) !== '' ? (string) $this->password : null;
+
+        try {
+            $result = $service->upsert($idEfector, $withAgenda, $plainPassword);
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        $this->stdout($result['message'] . "\n", Console::FG_GREEN);
+        $this->stdout("Efector id={$result['id_efector']} | servicio MED GENERAL id={$result['id_servicio']}\n");
+        $this->stdout("PES id={$result['id_pes']} | persona id={$result['id_persona']} | user id={$result['id_user']}\n");
+        $this->stdout(
+            "Login: {$result['username']} | documento {$result['documento']} | password: {$result['password']}\n",
+            Console::FG_CYAN
+        );
+        if ($result['created_servicio_efector']) {
+            $this->stdout("  + servicios_efector habilitado para MED GENERAL en el efector.\n");
+        }
+        if ($result['created_agenda']) {
+            $this->stdout("  + agenda laboral Lun–Vie 08–17 creada.\n");
+        }
+        $this->stdout(
+            "\nTras login, fijar sesión operativa con set-session / efector {$idEfector} y servicio MED GENERAL.\n"
+        );
+
+        return ExitCode::OK;
+    }
+
+    public function actionMedicoMedGeneralInfo(): int
+    {
+        $service = new MedicoMedGeneralEfectorSeedService();
+        $idEfector = (int) $this->efector;
+        $row = $service->findSeedRow($idEfector);
+
+        if ($row === null || !isset($row['persona'])) {
+            $expected = MedicoMedGeneralEfectorSeedService::expectedIdentity($idEfector);
+            $this->stderr(
+                "No hay médico seed (doc {$expected['documento']}, user {$expected['username']}) para efector {$idEfector}.\n",
+                Console::FG_RED
+            );
+            $this->stdout("Ejecutá: php yii clinical-seed/medico-med-general --efector={$idEfector}\n");
+
+            return ExitCode::DATAERR;
+        }
+
+        $p = $row['persona'];
+        $this->stdout("Persona id={$p['id_persona']} | {$p['apellido']}, {$p['nombre']} | doc={$p['documento']} | id_user={$p['id_user']}\n");
+        if ($row['pes']) {
+            $pes = $row['pes'];
+            $this->stdout("PES id={$pes['id']} | efector={$pes['id_efector']} | servicio={$pes['id_servicio']}\n", Console::FG_CYAN);
+        } else {
+            $this->stdout("Sin PES MED GENERAL en efector {$idEfector}. Ejecutá medico-med-general para completar.\n", Console::FG_YELLOW);
+        }
+
+        return ExitCode::OK;
+    }
+
+    public function actionMedicoMedGeneralRemove(): int
+    {
+        $service = new MedicoMedGeneralEfectorSeedService();
+        $removed = $service->remove((int) $this->efector);
+        if (!$removed) {
+            $this->stderr("No se encontró médico seed para efector {$this->efector}.\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        $this->stdout("PES y agenda del médico seed eliminados (persona/usuario conservados).\n", Console::FG_GREEN);
+
+        return ExitCode::OK;
     }
 
     /**

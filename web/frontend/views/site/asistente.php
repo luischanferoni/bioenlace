@@ -7,7 +7,6 @@ use frontend\assets\BioenlaceApiClientAsset;
 $this->title = 'Asistente';
 $this->registerJsFile('@web/js/spa-navigation.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAsset::class, \yii\web\JqueryAsset::class]]);
-$this->registerCssFile('@web/css/spa.css', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 
 <div class="container-fluid px-0 spa-asistente-root">

@@ -3,382 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Bioenlace - Plataforma de salud digital para pacientes y salud pública: chat con IA, turnos presenciales y por videollamada, gestión de consultas, estadísticas y alertas">
-    <meta name="keywords" content="bioenlace, salud pública, salud digital, pacientes, médicos, IA médica, turnos, videollamada, gestión médica, campañas de salud">
-    <title>Bioenlace - Plataforma de Salud Digital para Pacientes y Salud Pública</title>
+    <meta name="description" content="Bioenlace — Plataforma de salud digital con asistente e IA: el staff gestiona el establecimiento en lenguaje natural; pacientes acceden a turnos y atención.">
+    <meta name="keywords" content="bioenlace, salud digital, salud pública, asistente IA, gestión hospitalaria, turnos, teleconsulta">
+    <title>Bioenlace — Salud digital con asistente e inteligencia artificial</title>
+    <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=MuseoModerno:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Navegación -->
     <nav class="navbar" id="navbar">
         <div class="container">
             <div class="nav-wrapper">
-                <a href="#inicio" class="logo">
-                    <img src="images/logo_small.png" alt="Bioenlace" class="logo-img">
+                <a href="#inicio" class="logo" aria-label="Bioenlace — Inicio">
+                    <img src="images/logo.svg" alt="Bioenlace" class="logo-img" width="180" height="38">
                 </a>
                 <ul class="nav-menu" id="navMenu">
                     <li><a href="#inicio" class="nav-link">Inicio</a></li>
-                    <li><a href="#nosotros" class="nav-link">Nosotros</a></li>
-                    <li><a href="#servicios" class="nav-link">Servicios</a></li>
-                    <li><a href="#caso-de-uso" class="nav-link">Caso de uso</a></li>
-                    <li><a href="#caracteristicas" class="nav-link">Características</a></li>
-                    <li><a href="#contacto" class="nav-link">Contacto</a></li>
+                    <li><a href="#plataforma" class="nav-link">Plataforma</a></li>
+                    <li><a href="#staff" class="nav-link">Para el staff</a></li>
+                    <li><a href="#ia" class="nav-link">IA integrada</a></li>
+                    <li><a href="#pacientes" class="nav-link">Pacientes</a></li>
+                    <li><a href="#contacto" class="nav-link nav-link--cta">Contacto</a></li>
                 </ul>
-                <div class="hamburger" id="hamburger">
+                <button type="button" class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
                     <span></span>
                     <span></span>
                     <span></span>
-                </div>
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section id="inicio" class="hero">
-        <div class="hero-background"></div>
+        <div class="hero-background" aria-hidden="true"></div>
         <div class="container">
             <div class="hero-content">
-                <h1 class="hero-title">Conectando la Salud del Futuro</h1>
-                <p class="hero-subtitle">Plataforma de salud digital que une a pacientes y sistemas de salud: consultas con IA, turnos presenciales o por videollamada, y herramientas para gobiernos e instituciones de salud pública.</p>
+                <p class="hero-eyebrow">Plataforma de salud digital</p>
+                <h1 class="hero-title">Gestioná el hospital <span class="text-accent">hablando con el sistema</span></h1>
+                <p class="hero-subtitle">Bioenlace une asistente conversacional e inteligencia artificial para que el staff resuelva altas, consultas y modificaciones sin perderse en menús — y los pacientes accedan a turnos y atención desde el mismo ecosistema.</p>
                 <div class="hero-buttons">
-                    <a href="#contacto" class="btn btn-primary">Contáctanos</a>
-                    <a href="#servicios" class="btn btn-secondary">Conocer más</a>
+                    <a href="#contacto" class="btn btn-primary">Solicitar demo</a>
+                    <a href="#plataforma" class="btn btn-secondary">Conocer la plataforma</a>
+                </div>
+            </div>
+            <div class="hero-visual" aria-hidden="true">
+                <div class="hero-card hero-card--chat">
+                    <span class="hero-card__label">Asistente</span>
+                    <p>«Mostrame los profesionales de clínica médica»</p>
+                </div>
+                <div class="hero-card hero-card--ui">
+                    <span class="hero-card__label">Pantalla</span>
+                    <div class="hero-card__rows">
+                        <span></span><span></span><span></span>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="scroll-indicator">
-            <i class="fas fa-chevron-down"></i>
-        </div>
     </section>
 
-    <!-- Sobre Nosotros -->
-    <section id="nosotros" class="about">
+    <section id="plataforma" class="platform">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Sobre Bioenlace</h2>
-                <p class="section-subtitle">Innovación en salud digital, pensada para la salud pública</p>
+            <div class="platform-intro reveal">
+                <h2 class="section-title">Un solo sistema para operar y atender</h2>
+                <p class="lead">Bioenlace es el sistema de gestión del establecimiento de salud donde el personal <strong>pide lo que necesita en palabras simples</strong> y el sistema lo lleva al listado, formulario o acción correcta — sin recorrer menús ni recordar dónde está cada cosa.</p>
+                <blockquote class="pull-quote">
+                    <p>El staff gestiona el hospital <em>hablando con el sistema</em>; la IA lo guía, Bioenlace lo hace simple, y el control sigue en manos del equipo.</p>
+                </blockquote>
             </div>
-            <div class="about-content">
-                <div class="about-text">
-                    <h3>Nuestra Misión</h3>
-                    <p>Bioenlace es una plataforma de salud digital que conecta pacientes, médicos e instituciones. Está orientada principalmente a la <strong>salud pública</strong>, sin descartar el sector privado, y permite integrar múltiples aspectos: desde consultas con inteligencia artificial hasta turnos presenciales o por videollamada, pasando por alertas, notificaciones y campañas en territorios extensos, incluso con limitaciones de conectividad.</p>
-                    <p>El objetivo es mejorar el acceso a la salud: que los pacientes resuelvan dudas y obtengan atención cuando la necesiten, y que los sistemas de salud liberen tiempo de médicos y administrativos, gestionen turnos y tengan visibilidad mediante estadísticas y alertas.</p>
-                    <div class="stats">
-                        <div class="stat-item">
-                            <div class="stat-number" data-target="1000">0</div>
-                            <div class="stat-label">Usuarios Activos</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" data-target="500">0</div>
-                            <div class="stat-label">Profesionales</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number" data-target="50">0</div>
-                            <div class="stat-label">Instituciones</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="about-image">
-                    <div class="image-placeholder">
-                        <i class="fas fa-users-medical"></i>
-                    </div>
-                </div>
+            <div class="platform-pillars reveal">
+                <article class="pillar-card">
+                    <div class="pillar-icon"><i class="fas fa-comments"></i></div>
+                    <h3>Asistente conversacional</h3>
+                    <p>Altas, listados, modificaciones y cancelaciones desde un único espacio de trabajo.</p>
+                </article>
+                <article class="pillar-card">
+                    <div class="pillar-icon"><i class="fas fa-shield-halved"></i></div>
+                    <h3>Permisos por rol</h3>
+                    <p>Cada perfil ve solo sus acciones y sus datos. La seguridad no depende de la IA.</p>
+                </article>
+                <article class="pillar-card">
+                    <div class="pillar-icon"><i class="fas fa-hospital"></i></div>
+                    <h3>Salud pública y privada</h3>
+                    <p>Pensado para instituciones, territorios extensos y múltiples puntos de atención.</p>
+                </article>
             </div>
         </div>
     </section>
 
-    <!-- Servicios -->
-    <section id="servicios" class="services">
+    <section id="staff" class="benefits benefits--staff">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Qué ofrece el sistema</h2>
-                <p class="section-subtitle">Para pacientes, para gobiernos y para la salud pública</p>
+            <div class="section-header reveal">
+                <h2 class="section-title">Por qué es distinto para el staff</h2>
+                <p class="section-subtitle">Menos menús, más fluidez, mismos controles de siempre</p>
             </div>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-user-injured"></i>
+            <ul class="benefit-list reveal">
+                <li class="benefit-item">
+                    <span class="benefit-icon" aria-hidden="true"><i class="fas fa-layer-group"></i></span>
+                    <div>
+                        <h3>Un solo lugar para todo</h3>
+                        <p>Altas, consultas, modificaciones y cancelaciones desde el asistente, no desde diez pantallas distintas.</p>
                     </div>
-                    <h3>Para el paciente</h3>
-                    <p>Consulta primero con un <strong>chat con IA</strong> sobre temas médicos. Si la IA no resuelve tus dudas, podés obtener <strong>turnos</strong> para atención presencial, por <strong>videollamada</strong> o por <strong>chat</strong> con el médico, enviando textos, fotos, videos y audios. También podés resolver <strong>consultas institucionales</strong> (trámites, información del sistema de salud).</p>
-                    <ul class="service-features">
-                        <li><i class="fas fa-check"></i> Chat con IA para consultas médicas</li>
-                        <li><i class="fas fa-check"></i> Turnos presenciales, videollamada o chat con el médico</li>
-                        <li><i class="fas fa-check"></i> Envío de textos, fotos, videos y audios al médico</li>
-                        <li><i class="fas fa-check"></i> Consultas institucionales</li>
-                    </ul>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-university"></i>
+                </li>
+                <li class="benefit-item">
+                    <span class="benefit-icon" aria-hidden="true"><i class="fas fa-route"></i></span>
+                    <div>
+                        <h3>Interfaz clara y guiada</h3>
+                        <p>Formularios y tablas simples, paso a paso, sin perderse.</p>
                     </div>
-                    <h3>Para gobiernos y salud pública</h3>
-                    <p>Para las áreas de salud pública donde trabajan los médicos: <strong>resolver consultas médicas de los pacientes</strong> con IA y flujos guiados, liberando tiempo de médicos y administrativos; <strong>gestionar turnos</strong>, <strong>conectar médicos con pacientes</strong>, y contar con <strong>estadísticas y alertas</strong> para la toma de decisiones.</p>
-                    <ul class="service-features">
-                        <li><i class="fas fa-check"></i> Resolución de consultas liberando tiempo del equipo</li>
-                        <li><i class="fas fa-check"></i> Gestión centralizada de turnos</li>
-                        <li><i class="fas fa-check"></i> Conexión médicos–pacientes</li>
-                        <li><i class="fas fa-check"></i> Estadísticas, alertas y notificaciones</li>
-                    </ul>
-                </div>
-                <div class="service-card">
-                    <div class="service-icon">
-                        <i class="fas fa-globe-americas"></i>
+                </li>
+                <li class="benefit-item">
+                    <span class="benefit-icon" aria-hidden="true"><i class="fas fa-bolt"></i></span>
+                    <div>
+                        <h3>Menos clics, menos estrés</h3>
+                        <p>Lo que antes era «¿dónde estaba esto?» ahora es escribir o elegir un atajo.</p>
                     </div>
-                    <h3>Conectando todo el sistema</h3>
-                    <p>Bioenlace apunta sobre todo a la <strong>salud pública</strong> (sin descartar lo privado) y permite <strong>conectar muchos puntos</strong>: grandes áreas geográficas, considerando problemas de <strong>conectividad</strong>, y herramientas como <strong>alertas</strong>, <strong>notificaciones</strong> y <strong>campañas</strong> de salud para llegar a más personas.</p>
-                    <ul class="service-features">
-                        <li><i class="fas fa-check"></i> Enfoque en salud pública y territorios extensos</li>
-                        <li><i class="fas fa-check"></i> Diseño adaptable a problemas de conectividad</li>
-                        <li><i class="fas fa-check"></i> Alertas, notificaciones y campañas</li>
-                        <li><i class="fas fa-check"></i> Un solo sistema para múltiples aspectos de la salud</li>
-                    </ul>
-                </div>
+                </li>
+                <li class="benefit-item">
+                    <span class="benefit-icon" aria-hidden="true"><i class="fas fa-user-shield"></i></span>
+                    <div>
+                        <h3>Solo lo que te corresponde</h3>
+                        <p>Cada rol ve sus acciones y sus datos, sin ruido ni opciones de más.</p>
+                    </div>
+                </li>
+                <li class="benefit-item">
+                    <span class="benefit-icon" aria-hidden="true"><i class="fas fa-table-list"></i></span>
+                    <div>
+                        <h3>Consultas al instante</h3>
+                        <p>Listados y totales («¿cuántos hay?», «mostrame…») sin armar reportes.</p>
+                    </div>
+                </li>
+            </ul>
+            <div class="flow-strip reveal">
+                <h3 class="flow-strip__title">Así opera el staff</h3>
+                <ol class="flow-strip__steps">
+                    <li><span>1</span> Escribís o elegís un atajo</li>
+                    <li><span>2</span> El sistema abre el listado o formulario</li>
+                    <li><span>3</span> Revisás y confirmás</li>
+                </ol>
             </div>
         </div>
     </section>
 
-    <!-- Caso de uso - Scrollytelling: 3 flujos -->
-    <section id="caso-de-uso" class="caso-de-uso">
+    <section id="ia" class="benefits benefits--ia">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Así funciona Bioenlace</h2>
-                <p class="section-subtitle">Flujos para el paciente, el médico y la institución</p>
+            <div class="section-header reveal">
+                <h2 class="section-title">Cómo funciona la IA</h2>
+                <p class="section-subtitle">Entiende, guía y vos confirmás — en lenguaje simple</p>
             </div>
-
-            <!-- Flujo Paciente -->
-            <div class="flow-block flow-block--paciente">
-                <h3 class="flow-block__title">Flujo del paciente</h3>
-                <div class="flow-timeline">
-                    <article class="flow-step scroll-step" data-flow="paciente">
-                        <div class="flow-step__content">
-                            <div class="flow-node">
-                                <div class="flow-node__image-placeholder">Imagen: Paciente abre la app y escribe su consulta</div>
-                                <p class="flow-node__label">Paciente inicia consulta</p>
-                            </div>
-                            <p class="flow-step__text">El paciente abre la app, escribe su duda o síntoma y envía el mensaje.</p>
-                            <div class="flow-connector" aria-hidden="true">
-                                <svg class="flow-arrow" viewBox="0 0 40 60" preserveAspectRatio="none">
-                                    <line class="flow-arrow__line" x1="20" y1="0" x2="20" y2="55"/>
-                                    <polygon class="flow-arrow__head" points="20,60 12,48 28,48"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="flow-step scroll-step" data-flow="paciente">
-                        <div class="flow-step__content">
-                            <div class="flow-node">
-                                <div class="flow-node__image-placeholder">Imagen: Chat con IA respondiendo o derivando</div>
-                                <p class="flow-node__label">IA responde o deriva</p>
-                            </div>
-                            <p class="flow-step__text">La IA responde en el chat. Si no puede resolver, sugiere sacar turno con un médico.</p>
-                            <div class="flow-connector" aria-hidden="true">
-                                <svg class="flow-arrow" viewBox="0 0 40 60" preserveAspectRatio="none">
-                                    <line class="flow-arrow__line" x1="20" y1="0" x2="20" y2="55"/>
-                                    <polygon class="flow-arrow__head" points="20,60 12,48 28,48"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="flow-step scroll-step" data-flow="paciente">
-                        <div class="flow-step__content">
-                            <div class="flow-node">
-                                <div class="flow-node__image-placeholder">Imagen: Paciente elige turno (presencial, videollamada, chat)</div>
-                                <p class="flow-node__label">Paciente pide turno</p>
-                            </div>
-                            <p class="flow-step__text">El paciente elige tipo de atención: presencial, videollamada o chat, y confirma el turno.</p>
-                        </div>
-                    </article>
+            <div class="ia-layout reveal">
+                <div class="ia-diagram" aria-hidden="true">
+                    <div class="ia-step ia-step--user"><i class="fas fa-user"></i><span>Vos hablás</span></div>
+                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="ia-step ia-step--ai"><i class="fas fa-wand-magic-sparkles"></i><span>IA interpreta</span></div>
+                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="ia-step ia-step--screen"><i class="fas fa-display"></i><span>Pantalla correcta</span></div>
+                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
+                    <div class="ia-step ia-step--confirm"><i class="fas fa-circle-check"></i><span>Vos confirmás</span></div>
                 </div>
-            </div>
-
-            <!-- Flujo Médico -->
-            <div class="flow-block flow-block--medico">
-                <h3 class="flow-block__title">Flujo del médico</h3>
-                <div class="flow-timeline">
-                    <article class="flow-step scroll-step" data-flow="medico">
-                        <div class="flow-step__content">
-                            <div class="flow-node">
-                                <div class="flow-node__image-placeholder">Imagen: Médico recibe notificación de turno</div>
-                                <p class="flow-node__label">Médico recibe el turno</p>
-                            </div>
-                            <p class="flow-step__text">El médico ve el turno asignado y el motivo de consulta.</p>
-                            <div class="flow-connector" aria-hidden="true">
-                                <svg class="flow-arrow" viewBox="0 0 40 60" preserveAspectRatio="none">
-                                    <line class="flow-arrow__line" x1="20" y1="0" x2="20" y2="55"/>
-                                    <polygon class="flow-arrow__head" points="20,60 12,48 28,48"/>
-                                </svg>
-                            </div>
+                <ul class="benefit-list benefit-list--compact">
+                    <li class="benefit-item">
+                        <span class="benefit-icon benefit-icon--ia" aria-hidden="true"><i class="fas fa-language"></i></span>
+                        <div>
+                            <h3>Entiende lenguaje cotidiano</h3>
+                            <p>No hace falta memorizar nombres de menús ni códigos.</p>
                         </div>
-                    </article>
-                    <article class="flow-step scroll-step" data-flow="medico">
-                        <div class="flow-step__content">
-                            <div class="flow-node">
-                                <div class="flow-node__image-placeholder">Imagen: Médico atiende por videollamada o chat</div>
-                                <p class="flow-node__label">Médico atiende</p>
-                            </div>
-                            <p class="flow-step__text">Atiende por videollamada, chat (texto, fotos, audios) o presencial.</p>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon benefit-icon--ia" aria-hidden="true"><i class="fas fa-door-open"></i></span>
+                        <div>
+                            <h3>Abre la pantalla correcta</h3>
+                            <p>La IA interpreta el pedido y te lleva al formulario o listado que necesitás.</p>
                         </div>
-                    </article>
-                </div>
-            </div>
-
-            <!-- Flujo Institución (en blanco por el momento) -->
-            <div class="flow-block flow-block--institucion">
-                <h3 class="flow-block__title">Flujo de la institución</h3>
-                <div class="flow-timeline flow-timeline--empty">
-                    <p class="flow-empty-message">Próximamente: flujo de la institución.</p>
-                </div>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon benefit-icon--ia" aria-hidden="true"><i class="fas fa-circle-question"></i></span>
+                        <div>
+                            <h3>Pregunta si hay dudas</h3>
+                            <p>Si tu mensaje puede significar dos cosas, te ofrece opciones claras.</p>
+                        </div>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon benefit-icon--ia" aria-hidden="true"><i class="fas fa-hand-pointer"></i></span>
+                        <div>
+                            <h3>Vos confirmás, no la máquina</h3>
+                            <p>Guardar, modificar o cancelar siempre pasa por tu revisión.</p>
+                        </div>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon benefit-icon--ia" aria-hidden="true"><i class="fas fa-lock"></i></span>
+                        <div>
+                            <h3>Seguridad intacta</h3>
+                            <p>La IA facilita el camino; los permisos y reglas del establecimiento siguen mandando.</p>
+                        </div>
+                    </li>
+                </ul>
             </div>
         </div>
     </section>
 
-    <!-- Características -->
-    <section id="caracteristicas" class="features">
+    <section id="pacientes" class="audience">
         <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Características Principales</h2>
-                <p class="section-subtitle">Tecnología al servicio de la salud pública y de los pacientes</p>
+            <div class="section-header reveal">
+                <h2 class="section-title">También para pacientes</h2>
+                <p class="section-subtitle">El mismo ecosistema, otro recorrido</p>
             </div>
-            <div class="features-grid">
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3>Chat con IA</h3>
-                    <p>Consultas médicas primero con inteligencia artificial; si no alcanza, derivación a turno con un médico.</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-video"></i>
-                    </div>
-                    <h3>Presencial, videollamada o chat</h3>
-                    <p>Turnos para atención presencial, por videollamada o por chat (texto, fotos, videos, audios) con el médico.</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-bell"></i>
-                    </div>
-                    <h3>Alertas y notificaciones</h3>
-                    <p>Alertas para instituciones y notificaciones para pacientes y equipos de salud.</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <h3>Estadísticas</h3>
-                    <p>Estadísticas y reportes para gobiernos e instituciones para tomar mejores decisiones.</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-broadcast-tower"></i>
-                    </div>
-                    <h3>Áreas extensas y conectividad</h3>
-                    <p>Pensado para territorios amplios y contextos con limitaciones de conectividad.</p>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-bullhorn"></i>
-                    </div>
-                    <h3>Campañas de salud</h3>
-                    <p>Herramientas para lanzar y gestionar campañas de salud hacia la población.</p>
-                </div>
+            <div class="audience-grid reveal">
+                <article class="audience-card">
+                    <div class="audience-icon"><i class="fas fa-robot"></i></div>
+                    <h3>Consulta con IA</h3>
+                    <p>El paciente puede resolver dudas iniciales en un chat con inteligencia artificial.</p>
+                </article>
+                <article class="audience-card">
+                    <div class="audience-icon"><i class="fas fa-calendar-check"></i></div>
+                    <h3>Turnos flexibles</h3>
+                    <p>Presencial, videollamada o chat con el médico — texto, fotos, audios y videos.</p>
+                </article>
+                <article class="audience-card">
+                    <div class="audience-icon"><i class="fas fa-bell"></i></div>
+                    <h3>Alertas y campañas</h3>
+                    <p>Notificaciones, estadísticas y campañas de salud para instituciones y territorios.</p>
+                </article>
             </div>
         </div>
     </section>
 
-    <!-- Contacto -->
     <section id="contacto" class="contact">
         <div class="container">
-            <div class="section-header">
+            <div class="section-header reveal">
                 <h2 class="section-title">Contacto</h2>
-                <p class="section-subtitle">Estamos aquí para ayudarte</p>
+                <p class="section-subtitle">Conversemos sobre cómo implementar Bioenlace en tu institución</p>
             </div>
-            <div class="contact-content">
+            <div class="contact-content reveal">
                 <div class="contact-info">
                     <div class="contact-item">
-                        <div class="contact-icon">
-                            <i class="fas fa-envelope"></i>
-                        </div>
+                        <div class="contact-icon"><i class="fas fa-envelope"></i></div>
                         <div class="contact-details">
                             <h3>Email</h3>
-                            <p>info@bioenlace.com</p>
+                            <p><a href="mailto:info@bioenlace.com">info@bioenlace.com</a></p>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <div class="contact-icon">
-                            <i class="fas fa-phone"></i>
-                        </div>
+                        <div class="contact-icon"><i class="fas fa-phone"></i></div>
                         <div class="contact-details">
                             <h3>Teléfono</h3>
-                            <p>+54 (385) 433-6246</p>
+                            <p><a href="tel:+543854336246">+54 (385) 433-6246</a></p>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <div class="contact-icon">
-                            <i class="fas fa-map-marker-alt"></i>
-                        </div>
+                        <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
                         <div class="contact-details">
-                            <h3>Dirección</h3>
+                            <h3>Ubicación</h3>
                             <p>Santiago del Estero, Argentina</p>
                         </div>
                     </div>
                 </div>
-                <form class="contact-form" id="contactForm">
+                <form class="contact-form" id="contactForm" novalidate>
                     <div class="form-group">
-                        <input type="text" id="name" name="name" placeholder="Nombre completo" required>
+                        <label for="name" class="visually-hidden">Nombre</label>
+                        <input type="text" id="name" name="name" placeholder="Nombre completo" required autocomplete="name">
                     </div>
                     <div class="form-group">
-                        <input type="email" id="email" name="email" placeholder="Email" required>
+                        <label for="email" class="visually-hidden">Email</label>
+                        <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email">
                     </div>
                     <div class="form-group">
-                        <input type="tel" id="phone" name="phone" placeholder="Teléfono">
+                        <label for="phone" class="visually-hidden">Teléfono</label>
+                        <input type="tel" id="phone" name="phone" placeholder="Teléfono" autocomplete="tel">
                     </div>
                     <div class="form-group">
-                        <textarea id="message" name="message" rows="5" placeholder="Mensaje" required></textarea>
+                        <label for="message" class="visually-hidden">Mensaje</label>
+                        <textarea id="message" name="message" rows="5" placeholder="Contanos sobre tu institución o consulta" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Enviar Mensaje</button>
+                    <button type="submit" class="btn btn-primary btn-block">Enviar mensaje</button>
                 </form>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-section">
-                    <div class="footer-logo">
-                        <img src="images/logo_small.png" alt="Bioenlace" class="footer-logo-img">
-                    </div>
-                    <p>Plataforma de salud digital para pacientes y salud pública: chat con IA, turnos presenciales y por videollamada, gestión de consultas, estadísticas, alertas y campañas.</p>
-                    <div class="social-links">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    </div>
+                <div class="footer-section footer-section--brand">
+                    <a href="#inicio" class="footer-logo">
+                        <img src="images/logo.svg" alt="Bioenlace" class="footer-logo-img" width="160" height="34">
+                    </a>
+                    <p>Salud digital con asistente e IA: el staff gestiona en lenguaje natural; los pacientes acceden a turnos y atención. Simple, seguro, sin perderse en menús.</p>
                 </div>
                 <div class="footer-section">
-                    <h4>Enlaces Rápidos</h4>
+                    <h4>Secciones</h4>
                     <ul>
-                        <li><a href="#inicio">Inicio</a></li>
-                        <li><a href="#nosotros">Nosotros</a></li>
-                        <li><a href="#servicios">Servicios</a></li>
-                        <li><a href="#caso-de-uso">Caso de uso</a></li>
-                        <li><a href="#caracteristicas">Características</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Servicios</h4>
-                    <ul>
-                        <li><a href="#servicios">Para el paciente</a></li>
-                        <li><a href="#servicios">Para gobiernos y salud pública</a></li>
-                        <li><a href="#servicios">Conectando el sistema</a></li>
+                        <li><a href="#plataforma">Plataforma</a></li>
+                        <li><a href="#staff">Para el staff</a></li>
+                        <li><a href="#ia">IA integrada</a></li>
+                        <li><a href="#pacientes">Pacientes</a></li>
+                        <li><a href="#contacto">Contacto</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
@@ -386,6 +307,7 @@
                     <ul>
                         <li><i class="fas fa-envelope"></i> info@bioenlace.com</li>
                         <li><i class="fas fa-phone"></i> +54 (385) 433-6246</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Santiago del Estero, Argentina</li>
                     </ul>
                 </div>
             </div>
@@ -398,4 +320,3 @@
     <script src="js/main.js"></script>
 </body>
 </html>
-

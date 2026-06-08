@@ -197,7 +197,7 @@ if (Yii::$app->user->username) {
 
             <div class="content-inner pb-0 d-flex" id="page_layout" style="min-height: calc(100vh - 60px); align-items: flex-start;">
                 <!-- Menú vertical izquierdo -->
-                <aside class="sidebar-menu bg-white rounded-4 border-1 border-dark border-end border-start border-top border-bottom m-4 mt-2 p-0 d-flex">
+                <aside class="sidebar-menu bg-white rounded-4 border-2 border-dark border-end border-start border-top border-bottom m-4 mt-2 p-0 d-flex">
                     <nav class="navbar bg- flex-column w-100 justify-content-center">
                         <div class="container-fluid">
                             <ul class="navbar-nav">

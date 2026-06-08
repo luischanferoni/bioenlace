@@ -294,6 +294,7 @@ final class MedicoMedGeneralEfectorSeedService
         $row = new ServiciosEfector();
         $row->id_servicio = $idServicio;
         $row->id_efector = $idEfector;
+        $row->formas_atencion = ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL;
         $row->pase_previo = 0;
         if (!$row->save()) {
             throw new \RuntimeException('servicios_efector: ' . json_encode($row->getErrors()));

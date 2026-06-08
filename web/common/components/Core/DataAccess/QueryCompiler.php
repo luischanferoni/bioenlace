@@ -175,8 +175,9 @@ final class QueryCompiler
         $query->select($select)->limit($fetchLimit);
 
         $orderBy = isset($rowsDef['order_by']) && is_array($rowsDef['order_by']) ? $rowsDef['order_by'] : [];
-        if ($orderBy !== []) {
-            $query->orderBy($orderBy);
+        $normalizedOrder = $this->normalizeOrderBy($orderBy);
+        if ($normalizedOrder !== []) {
+            $query->orderBy($normalizedOrder);
         }
 
         $rawRows = $query->asArray()->all();
@@ -266,7 +267,7 @@ final class QueryCompiler
         }
         $select['count'] = new Expression('COUNT(DISTINCT ' . $countColumn . ')');
 
-        $rows = $query->select($select)->groupBy($groupBy)->orderBy($groupBy)->asArray()->all();
+        $rows = $query->select($select)->groupBy($groupBy)->orderBy($this->normalizeOrderBy($groupBy))->asArray()->all();
         $resultKeys = isset($aggDef['result_keys']) && is_array($aggDef['result_keys']) ? $aggDef['result_keys'] : [];
         $groups = [];
 
@@ -571,5 +572,61 @@ final class QueryCompiler
         }
 
         throw new \InvalidArgumentException('Tipo de agregación no soportado: ' . $type);
+    }
+
+    /**
+     * Convierte `order_by` del YAML a formato Yii: `['col' => SORT_ASC]`.
+     *
+     * Acepta lista (`p.apellido ASC`) o mapa (`p.apellido: ASC`). Evita pasar arrays
+     * indexados crudos a {@see ActiveQuery::orderBy()}, que en algunos casos generan `ORDER BY 0, 1`.
+     *
+     * @param array<mixed> $orderBy
+     * @return array<string, int>
+     */
+    private function normalizeOrderBy(array $orderBy): array
+    {
+        $out = [];
+        foreach ($orderBy as $key => $value) {
+            if (is_string($key) && !is_numeric($key)) {
+                $column = trim($key);
+                if ($column === '') {
+                    continue;
+                }
+                $out[$column] = $this->sortDirection($value);
+
+                continue;
+            }
+
+            if (!is_string($value)) {
+                continue;
+            }
+
+            $token = trim($value);
+            if ($token === '') {
+                continue;
+            }
+
+            if (preg_match('/^(.+?)\s+(ASC|DESC)$/i', $token, $matches) === 1) {
+                $out[trim($matches[1])] = $this->sortDirection($matches[2]);
+
+                continue;
+            }
+
+            $out[$token] = SORT_ASC;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function sortDirection($value): int
+    {
+        if ($value === SORT_ASC || $value === SORT_DESC) {
+            return (int) $value;
+        }
+
+        return strcasecmp(trim((string) $value), 'DESC') === 0 ? SORT_DESC : SORT_ASC;
     }
 }

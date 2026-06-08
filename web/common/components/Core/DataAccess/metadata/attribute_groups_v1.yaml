@@ -135,7 +135,9 @@ metrics:
         rows:
           max_limit: 200
           distinct_column: pes.id_persona
-          order_by: [p.apellido ASC, p.nombre ASC]
+          order_by:
+            p.apellido: ASC
+            p.nombre: ASC
           static_joins: [persona]
           fields:
             id_persona:

@@ -39,6 +39,12 @@ class DataAccessCatalogTest extends Unit
         $this->assertIsArray($plan);
         $this->assertSame('rows', $plan['default'] ?? null);
         $this->assertArrayHasKey('rows', $plan);
+        $rows = $plan['rows'] ?? null;
+        $this->assertIsArray($rows);
+        $orderBy = $rows['order_by'] ?? null;
+        $this->assertIsArray($orderBy);
+        $this->assertArrayHasKey('p.apellido', $orderBy);
+        $this->assertSame('ASC', $orderBy['p.apellido']);
     }
 
     public function testMetricOutputPlanGrouped(): void

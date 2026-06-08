@@ -3,6 +3,7 @@
 namespace common\components\Assistant\EntryPoints\Chat\Channels\Operational;
 
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
+use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\IntentClassifier;
 use common\components\Assistant\IntentEngine\IntentEngine;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
@@ -50,6 +51,10 @@ final class OperationalChannel
 
         $top = IntentRetrievalIndex::topK($queryText, $catalog, 8);
         $classification = IntentClassifier::classifyAmongItems($queryText, $top, $catalog);
+
+        if ($classification === null && ChatPreprocessService::isStaffDataAccessQuery($queryText)) {
+            $classification = IntentClassifier::classify($queryText, $catalog);
+        }
 
         if ($classification === null) {
             return self::finalize(IntentEngine::processQueryNoMatch($queryText, $catalog));

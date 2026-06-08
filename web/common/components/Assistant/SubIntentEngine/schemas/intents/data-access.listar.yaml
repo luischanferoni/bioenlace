@@ -7,9 +7,12 @@ rbac_route: "/api/listar"
 keywords:
   - listar
   - mostrar
+  - mostrame
   - ver listado
   - nombres de
   - quienes son
+  - quienes trabajan
+  - profesionales del centro
   - plantilla
   - listado staff
 

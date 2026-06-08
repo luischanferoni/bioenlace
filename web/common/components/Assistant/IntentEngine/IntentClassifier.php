@@ -137,7 +137,65 @@ final class IntentClassifier
             }
         }
 
+        $score += self::scoreDataAccessListVsInfo($messageLower, $item->action_id);
+
         return $score;
+    }
+
+    /**
+     * Desambiguación staff: pedidos de listado nominado → data-access.listar; conteos → info.
+     */
+    private static function scoreDataAccessListVsInfo(string $messageLower, string $actionId): int
+    {
+        if ($actionId !== 'data-access.listar' && $actionId !== 'data-access.info') {
+            return 0;
+        }
+
+        $wantsList = self::messageSuggestsStaffList($messageLower);
+        $wantsCount = self::messageSuggestsStaffCount($messageLower);
+
+        if ($actionId === 'data-access.listar') {
+            if ($wantsList && !$wantsCount) {
+                return 25;
+            }
+            if ($wantsList && $wantsCount) {
+                return 10;
+            }
+
+            return 0;
+        }
+
+        // data-access.info
+        if ($wantsCount) {
+            return 15;
+        }
+        if ($wantsList && !$wantsCount) {
+            return -20;
+        }
+
+        return 0;
+    }
+
+    private static function messageSuggestsStaffList(string $messageLower): bool
+    {
+        $folded = self::foldAccents($messageLower);
+
+        return preg_match(
+            '/\b(listar|mostrar|mostrame|ver listado|nombres de|quienes|quien es|quién es|plantilla)\b/u',
+            $folded
+        ) === 1
+            || str_contains($folded, 'profesionales del centro')
+            || str_contains($folded, 'medicos del centro');
+    }
+
+    private static function messageSuggestsStaffCount(string $messageLower): bool
+    {
+        $folded = self::foldAccents($messageLower);
+
+        return preg_match(
+            '/\b(cuantos|cuantos hay|total de|conteo|cantidad de|numero de|cuenta)\b/u',
+            $folded
+        ) === 1;
     }
 
     private static function foldAccents(string $text): string

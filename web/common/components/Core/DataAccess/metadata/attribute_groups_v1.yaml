@@ -24,7 +24,9 @@ metrics:
     assistant:
       keywords:
         - cuantos profesionales
-        - profesionales del centro
+        - cuantos medicos hay
+        - cantidad de profesionales
+        - total de profesionales
         - planta profesional
         - personal del centro
     presentation_handler: organization.profesionales_conteo_info
@@ -81,9 +83,12 @@ metrics:
     assistant:
       keywords:
         - listar profesionales
+        - mostrar profesionales del centro
         - mostrar medicos del centro
+        - profesionales del centro
         - quienes trabajan en el centro
         - nombres de profesionales
+        - plantilla del centro
     presentation_handler: organization.profesionales_listado_rows
     scope_checker: efector_sesion
     required_groups:
@@ -210,8 +215,11 @@ role_grants:
 
   Medico:
     ProfesionalEfectorServicio.asignacion:
-      operations: [aggregate, filter]
+      operations: [aggregate, filter, read]
       scope_checker: efector_sesion
+    Persona.identidad_basica:
+      operations: [read]
+      scope_checker: efector_sesion_via_pes
 
   Administrativo:
     ProfesionalEfectorServicio.asignacion:

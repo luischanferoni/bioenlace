@@ -58,9 +58,14 @@ final class ChatPreprocessService
         }
 
         if (preg_match(
-            '/\b(listar|mostrar|ver listado|nombres de|quienes son|listado)\b/u',
+            '/\b(listar|mostrar|mostrame|ver listado|nombres de|quienes|listado)\b/u',
             $lower
         )) {
+            return true;
+        }
+
+        if (str_contains($lower, 'profesionales del centro')
+            || str_contains($lower, 'medicos del centro')) {
             return true;
         }
 

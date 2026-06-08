@@ -7,7 +7,7 @@ use yii\web\BadRequestHttpException;
 use common\components\Core\DataAccess\DataAccessUiService;
 
 /**
- * Listados staff autorizados por métrica DataAccess.
+ * Listados por métrica DataAccess.
  */
 class ListarController extends BaseController
 {
@@ -19,7 +19,7 @@ class ListarController extends BaseController
      * Parámetros: metric_id (requerido), filtros allowlisted, limit.
      *
      * @no_intent_catalog
-     * @action_name Listado staff por métrica
+     * @action_name Listado
      * @entity DataAccess
      * @tags staff, metrics, list
      */

@@ -33,10 +33,10 @@ final class DataAccessUiActionCatalog
             ),
             self::def(
                 'data-access.listar',
-                'Listado staff por métrica',
-                'Ejecuta una métrica en modo rows con columnas autorizadas.',
+                'Listado',
+                'Ejecuta una métrica en modo filas y devuelve una tabla.',
                 '/api/listar',
-                ['listar staff', 'listado métrica', 'filas autorizadas']
+                ['listar', 'listado', 'mostrar listado', 'ver listado']
             ),
         ];
 

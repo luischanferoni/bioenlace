@@ -95,6 +95,8 @@ final class MedicoMedGeneralEfectorSeedService
             throw new \RuntimeException('No se pudo resolver usuario para el médico seed.');
         }
 
+        $this->loginSeedUserForBlame($user);
+
         $createdServicioEfector = $this->ensureServicioEnEfector($idServicio, $idEfector);
 
         $pesBefore = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
@@ -280,6 +282,17 @@ final class MedicoMedGeneralEfectorSeedService
         }
 
         return [$persona, $user, false, $createdUser];
+    }
+
+    /**
+     * Consola sin sesión: los behaviors AR rellenan created_by desde user; sin login queda NULL y falla NOT NULL.
+     */
+    private function loginSeedUserForBlame(User $user): void
+    {
+        if (!Yii::$app->has('user', true)) {
+            return;
+        }
+        Yii::$app->user->login($user, 0);
     }
 
     private function ensureServicioEnEfector(int $idServicio, int $idEfector): bool

@@ -293,11 +293,11 @@ flow_submit:
   action_id: turnos.crear-como-paciente
   params:
     slot_id: "draft.slot_id"
-    id_servicio_asignado: "draft.id_servicio_asignado"
-    id_efector: "draft.id_efector"
     triage_raiz: "draft.triage_raiz"
-    triage_alarmas: "draft.triage_alarmas"
-    triage_zona: "draft.triage_zona"
-    care_plan_id: "draft.care_plan_id"
-    triage_nota: "draft.triage_nota"
     tipo_atencion: "draft.tipo_atencion"
+    id_servicio_asignado: "draft.id_servicio_asignado?"
+    id_efector: "draft.id_efector?"
+    triage_alarmas: "draft.triage_alarmas?"
+    triage_zona: "draft.triage_zona?"
+    care_plan_id: "draft.care_plan_id?"
+    triage_nota: "draft.triage_nota?"

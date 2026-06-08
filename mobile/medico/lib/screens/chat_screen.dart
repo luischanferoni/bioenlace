@@ -676,31 +676,11 @@ class ChatScreenState extends State<ChatScreen> {
     return 'Faltan datos: ${labels.join(', ')}.';
   }
 
-  /// Resuelve el `body_template` con el `_draft` actual. Devuelve `(body, missingFields)`.
-  /// Las claves del template con valor `draft.<campo>` se reemplazan por `_draft[campo]`;
-  /// si el campo está vacío, se acumula en `missingFields`. Valores no-`draft.*` se copian
-  /// literales (raro, pero soportado).
   ({Map<String, dynamic> body, List<String> missing}) _resolveFlowSubmitBody(
     Map<String, dynamic> bodyTemplate,
   ) {
-    final body = <String, dynamic>{};
-    final missing = <String>[];
-    bodyTemplate.forEach((k, v) {
-      final s = v?.toString().trim() ?? '';
-      if (s.startsWith('draft.')) {
-        final field = s.substring(6);
-        final raw = _draft[field];
-        final str = raw?.toString().trim() ?? '';
-        if (field.isEmpty || str.isEmpty) {
-          missing.add(field.isEmpty ? k : field);
-        } else {
-          body[k] = str;
-        }
-      } else if (s.isNotEmpty) {
-        body[k] = s;
-      }
-    });
-    return (body: body, missing: missing);
+    final r = resolveFlowSubmitBody(bodyTemplate, _draft);
+    return (body: r.body, missing: r.missing);
   }
 
   String? _flowIntentIdFromMessage(Map<String, dynamic> message) {

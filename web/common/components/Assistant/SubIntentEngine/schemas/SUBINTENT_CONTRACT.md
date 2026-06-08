@@ -69,12 +69,15 @@ open_ui:
 ```yaml
 flow_submit:
   action_id: <action_id del catálogo>      # ej. "turnos.crear-como-paciente"
-  params:                                  # mapa apiKey -> "draft.<campo>"
+  params:                                  # mapa apiKey -> "draft.<campo>" o "draft.<campo>?"
     id_efector: "draft.id_efector"
     id_servicio: "draft.id_servicio"
     id_profesional_efector_servicio: "draft.id_pes"
     id_slot: "draft.id_slot"
+    triage_nota: "draft.triage_nota?"       # opcional: omitir del POST si el draft está vacío
 ```
+
+Sufijo `?` en `params`: el cliente **no** bloquea el submit si el campo falta; el API puede derivar datos (p. ej. `id_efector` desde `slot_id` en `turnos.crear-como-paciente`).
 
 ## Envelope de respuesta del motor
 

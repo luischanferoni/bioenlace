@@ -416,13 +416,16 @@
             var raw = bodyTemplate[k];
             var s = (raw == null ? '' : String(raw)).trim();
             if (s.indexOf('draft.') === 0) {
-                var field = s.substring(6);
+                var optional = s.length > 7 && s.charAt(s.length - 1) === '?';
+                var field = optional ? s.substring(6, s.length - 1).trim() : s.substring(6).trim();
                 var val = (field && draft && Object.prototype.hasOwnProperty.call(draft, field))
                     ? draft[field]
                     : '';
                 var sv = (val == null ? '' : String(val)).trim();
                 if (!field || sv === '') {
-                    missing.push(field || k);
+                    if (!optional) {
+                        missing.push(field || k);
+                    }
                 } else {
                     body[k] = sv;
                 }

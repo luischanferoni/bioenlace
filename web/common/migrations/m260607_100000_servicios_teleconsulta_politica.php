@@ -1,5 +1,7 @@
 <?php
 
+use common\components\Infra\Migration\MigrationEnumColumn;
+use common\models\Servicio;
 use yii\db\Migration;
 
 /**
@@ -18,7 +20,12 @@ class m260607_100000_servicios_teleconsulta_politica extends Migration
             $this->addColumn(
                 $servicios,
                 'teleconsulta_politica',
-                $this->string(16)->notNull()->defaultValue('ninguna')->comment('ninguna|todas|algunas')
+                MigrationEnumColumn::mysqlEnum(
+                    Servicio::teleconsultaPoliticaValues(),
+                    Servicio::TELECONSULTA_POLITICA_NINGUNA,
+                    true,
+                    'NINGUNA|TODAS|ALGUNAS'
+                )
             );
         }
 

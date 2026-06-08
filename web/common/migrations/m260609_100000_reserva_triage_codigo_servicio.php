@@ -1,5 +1,7 @@
 <?php
 
+use common\components\Infra\Migration\MigrationEnumColumn;
+use common\models\Servicio;
 use yii\db\Migration;
 
 /**
@@ -51,7 +53,12 @@ class m260609_100000_reserva_triage_codigo_servicio extends Migration
         $this->addColumn(
             $servicios,
             'reserva_autogestion_paciente',
-            $this->string(2)->notNull()->defaultValue('NO')->comment('SI = paciente puede reservar turno directo (hub clínica)')
+            MigrationEnumColumn::mysqlEnum(
+                Servicio::reservaAutogestionPacienteValues(),
+                Servicio::RESERVA_AUTOGESTION_PACIENTE_NO,
+                true,
+                'SI = paciente puede reservar turno directo (hub clínica); NO = solo con derivación/staff'
+            )
         );
     }
 
@@ -99,7 +106,7 @@ class m260609_100000_reserva_triage_codigo_servicio extends Migration
                 if ($p !== '' && str_contains($nombre, $p)) {
                     $this->db->createCommand()->update(
                         '{{%servicios}}',
-                        ['reserva_autogestion_paciente' => 'SI'],
+                        ['reserva_autogestion_paciente' => Servicio::RESERVA_AUTOGESTION_PACIENTE_SI],
                         ['id_servicio' => (int) $row['id_servicio']]
                     )->execute();
                     break;

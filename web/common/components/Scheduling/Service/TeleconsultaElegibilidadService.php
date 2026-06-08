@@ -16,10 +16,6 @@ use common\models\ServicioTeleconsultaCaso;
  */
 final class TeleconsultaElegibilidadService
 {
-    public const POLITICA_NINGUNA = 'ninguna';
-    public const POLITICA_TODAS = 'todas';
-    public const POLITICA_ALGUNAS = 'algunas';
-
     public const ELEG_EXCLUIDO = 'excluido';
     public const ELEG_PRESENCIAL_PREFERIDO = 'presencial_preferido';
     public const ELEG_PERMITIDO = 'permitido';
@@ -221,13 +217,13 @@ final class TeleconsultaElegibilidadService
         $politica = self::normalizarPolitica(
             $servicio->hasAttribute('teleconsulta_politica')
                 ? (string) $servicio->teleconsulta_politica
-                : self::POLITICA_NINGUNA
+                : Servicio::TELECONSULTA_POLITICA_NINGUNA
         );
 
-        if ($politica === self::POLITICA_NINGUNA) {
+        if ($politica === Servicio::TELECONSULTA_POLITICA_NINGUNA) {
             return false;
         }
-        if ($politica === self::POLITICA_TODAS) {
+        if ($politica === Servicio::TELECONSULTA_POLITICA_TODAS) {
             return true;
         }
 
@@ -327,12 +323,20 @@ final class TeleconsultaElegibilidadService
 
     private static function normalizarPolitica(string $raw): string
     {
-        $p = strtolower(trim($raw));
-        if (in_array($p, [self::POLITICA_NINGUNA, self::POLITICA_TODAS, self::POLITICA_ALGUNAS], true)) {
-            return $p;
+        $trimmed = trim($raw);
+        $upper = strtoupper($trimmed);
+        if (in_array($upper, Servicio::teleconsultaPoliticaValues(), true)) {
+            return $upper;
         }
 
-        return self::POLITICA_NINGUNA;
+        $lower = strtolower($trimmed);
+        foreach (Servicio::teleconsultaPoliticaValues() as $allowed) {
+            if (strtolower($allowed) === $lower) {
+                return $allowed;
+            }
+        }
+
+        return Servicio::TELECONSULTA_POLITICA_NINGUNA;
     }
 
     /**

@@ -1,0 +1,39 @@
+---
+description: Columnas ENUM en migraciones Yii2 (MAYÚSCULAS + constantes en AR)
+globs: web/common/migrations/**/*.php
+alwaysApply: false
+---
+
+# Migraciones: columnas ENUM
+
+Para dominios cerrados (pocas opciones fijas), usar **ENUM MySQL** con literales en **MAYÚSCULAS**, no `string(n)` con minúsculas.
+
+## Migración
+
+- Usar `common\components\Infra\Migration\MigrationEnumColumn::mysqlEnum()`.
+- Los valores y el default deben coincidir con **constantes del modelo AR** (una sola fuente de verdad en PHP).
+- Incluir `comment` con la lista de valores si ayuda a operación.
+
+```php
+use common\components\Infra\Migration\MigrationEnumColumn;
+use common\models\Servicio;
+
+$this->addColumn($table, 'teleconsulta_politica', MigrationEnumColumn::mysqlEnum(
+    Servicio::teleconsultaPoliticaValues(),
+    Servicio::TELECONSULTA_POLITICA_NINGUNA,
+    true,
+    'NINGUNA|TODAS|ALGUNAS'
+));
+```
+
+## Modelo AR
+
+- Constantes `public const` con el mismo literal en MAYÚSCULAS.
+- Método estático `*Values(): array` con todos los valores permitidos (para migración y `rules()`).
+- `rules()`: `[['campo'], 'in', 'range' => self::...Values()]`.
+
+## No hacer
+
+- `string(16)` + comentario `ninguna|todas` para catálogos cerrados nuevos.
+- Literales en minúsculas en BD si el dominio ya adoptó MAYÚSCULAS.
+- Duplicar listas de valores en migración y modelo sin referenciar las constantes del AR.

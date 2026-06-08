@@ -11,7 +11,7 @@ use common\traits\ParameterQuestionsTrait;
  *
  * @property string $id_servicio
  * @property string $nombre
- * @property string|null $teleconsulta_politica ninguna|todas|algunas
+ * @property string|null $teleconsulta_politica NINGUNA|TODAS|ALGUNAS
  * @property string $reserva_autogestion_paciente SI|NO
  *
  * @property Referencia[] $referencias
@@ -23,9 +23,35 @@ class Servicio extends \yii\db\ActiveRecord
 {
     use ParameterQuestionsTrait;
 
-    public const TELECONSULTA_POLITICA_NINGUNA = 'ninguna';
-    public const TELECONSULTA_POLITICA_TODAS = 'todas';
-    public const TELECONSULTA_POLITICA_ALGUNAS = 'algunas';
+    public const TELECONSULTA_POLITICA_NINGUNA = 'NINGUNA';
+    public const TELECONSULTA_POLITICA_TODAS = 'TODAS';
+    public const TELECONSULTA_POLITICA_ALGUNAS = 'ALGUNAS';
+
+    public const RESERVA_AUTOGESTION_PACIENTE_SI = 'SI';
+    public const RESERVA_AUTOGESTION_PACIENTE_NO = 'NO';
+
+    /**
+     * @return list<string>
+     */
+    public static function teleconsultaPoliticaValues(): array
+    {
+        return [
+            self::TELECONSULTA_POLITICA_NINGUNA,
+            self::TELECONSULTA_POLITICA_TODAS,
+            self::TELECONSULTA_POLITICA_ALGUNAS,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function reservaAutogestionPacienteValues(): array
+    {
+        return [
+            self::RESERVA_AUTOGESTION_PACIENTE_SI,
+            self::RESERVA_AUTOGESTION_PACIENTE_NO,
+        ];
+    }
     /**
      * @inheritdoc
      */
@@ -43,13 +69,9 @@ class Servicio extends \yii\db\ActiveRecord
             [['nombre'], 'required'],
             [['nombre'], 'string', 'max' => 40],
             [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica', 'reserva_autogestion_paciente'], 'string'],
-            [['reserva_autogestion_paciente'], 'in', 'range' => ['SI', 'NO']],
-            [['reserva_autogestion_paciente'], 'default', 'value' => 'NO'],
-            [['teleconsulta_politica'], 'in', 'range' => [
-                self::TELECONSULTA_POLITICA_NINGUNA,
-                self::TELECONSULTA_POLITICA_TODAS,
-                self::TELECONSULTA_POLITICA_ALGUNAS,
-            ]],
+            [['reserva_autogestion_paciente'], 'in', 'range' => self::reservaAutogestionPacienteValues()],
+            [['reserva_autogestion_paciente'], 'default', 'value' => self::RESERVA_AUTOGESTION_PACIENTE_NO],
+            [['teleconsulta_politica'], 'in', 'range' => self::teleconsultaPoliticaValues()],
             [['teleconsulta_politica'], 'default', 'value' => self::TELECONSULTA_POLITICA_NINGUNA],
         ];
     }
@@ -72,7 +94,8 @@ class Servicio extends \yii\db\ActiveRecord
 
     public function permiteReservaAutogestionPaciente(): bool
     {
-        return strtoupper(trim((string) ($this->reserva_autogestion_paciente ?? 'NO'))) === 'SI';
+        return strtoupper(trim((string) ($this->reserva_autogestion_paciente ?? self::RESERVA_AUTOGESTION_PACIENTE_NO)))
+            === self::RESERVA_AUTOGESTION_PACIENTE_SI;
     }
     
     /**

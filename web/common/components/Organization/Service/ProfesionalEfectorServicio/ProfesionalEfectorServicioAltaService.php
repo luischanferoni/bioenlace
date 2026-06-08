@@ -2,6 +2,7 @@
 
 namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Organization\Service\Seed\ActiveRecordConsoleBlame;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
@@ -17,8 +18,12 @@ final class ProfesionalEfectorServicioAltaService
     /**
      * @return array{id_profesional_efector_servicio: int, id_servicio: int, servicio_acepta_turnos: string}
      */
-    public static function ensurePersonaServicioEnEfector(int $idPersona, int $idEfector, int $idServicio): array
-    {
+    public static function ensurePersonaServicioEnEfector(
+        int $idPersona,
+        int $idEfector,
+        int $idServicio,
+        ?int $actingUserId = null
+    ): array {
         if ($idPersona <= 0 || $idEfector <= 0 || $idServicio <= 0) {
             throw new \InvalidArgumentException('Datos inválidos para la asignación (persona, efector o servicio).');
         }
@@ -54,7 +59,13 @@ final class ProfesionalEfectorServicioAltaService
                 $pes->id_efector = $idEfector;
                 $pes->id_servicio = $idServicio;
             }
-            if (!$pes->save()) {
+            if ($actingUserId !== null && $actingUserId > 0) {
+                ActiveRecordConsoleBlame::save(
+                    $pes,
+                    $actingUserId,
+                    'No se pudo registrar la asignación profesional–efector–servicio'
+                );
+            } elseif (!$pes->save()) {
                 throw new \RuntimeException('No se pudo registrar la asignación profesional–efector–servicio: ' . json_encode($pes->getErrors()));
             }
 

@@ -95,9 +95,9 @@ final class MedicoMedGeneralEfectorSeedService
             throw new \RuntimeException('No se pudo resolver usuario para el médico seed.');
         }
 
-        $this->loginSeedUserForBlame($user);
+        $actingUserId = $this->resolveActingUserId($user, $username);
 
-        $createdServicioEfector = $this->ensureServicioEnEfector($idServicio, $idEfector);
+        $createdServicioEfector = $this->ensureServicioEnEfector($idServicio, $idEfector, $actingUserId);
 
         $pesBefore = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
             (int) $persona->id_persona,
@@ -107,14 +107,15 @@ final class MedicoMedGeneralEfectorSeedService
         $pesResult = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
             (int) $persona->id_persona,
             $idEfector,
-            $idServicio
+            $idServicio,
+            $actingUserId
         );
         $idPes = (int) $pesResult['id_profesional_efector_servicio'];
         $createdPes = $pesBefore === null;
 
         $createdAgenda = false;
         if ($withAgenda) {
-            $createdAgenda = $this->ensureAgenda($idPes, $idEfector);
+            $createdAgenda = $this->ensureAgenda($idPes, $idEfector, $actingUserId);
         }
 
         return [
@@ -284,18 +285,25 @@ final class MedicoMedGeneralEfectorSeedService
         return [$persona, $user, false, $createdUser];
     }
 
-    /**
-     * Consola sin sesión: los behaviors AR rellenan created_by desde user; sin login queda NULL y falla NOT NULL.
-     */
-    private function loginSeedUserForBlame(User $user): void
+    private function resolveActingUserId(User $user, string $username): int
     {
-        if (!Yii::$app->has('user', true)) {
-            return;
+        $id = (int) $user->getPrimaryKey();
+        if ($id <= 0) {
+            $id = (int) $user->getAttribute('id');
         }
-        Yii::$app->user->login($user, 0);
+        if ($id <= 0) {
+            $id = (int) User::find()->select('id')->where(['username' => $username])->scalar();
+        }
+        if ($id <= 0) {
+            throw new \RuntimeException(
+                'No se pudo resolver id del usuario seed (' . $username . ') para created_by.'
+            );
+        }
+
+        return $id;
     }
 
-    private function ensureServicioEnEfector(int $idServicio, int $idEfector): bool
+    private function ensureServicioEnEfector(int $idServicio, int $idEfector, int $actingUserId): bool
     {
         $exists = ServiciosEfector::findActive()
             ->where(['id_servicio' => $idServicio, 'id_efector' => $idEfector])
@@ -304,19 +312,22 @@ final class MedicoMedGeneralEfectorSeedService
             return false;
         }
 
-        $row = new ServiciosEfector();
-        $row->id_servicio = $idServicio;
-        $row->id_efector = $idEfector;
-        $row->formas_atencion = ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL;
-        $row->pase_previo = 0;
-        if (!$row->save()) {
-            throw new \RuntimeException('servicios_efector: ' . json_encode($row->getErrors()));
-        }
+        $now = date('Y-m-d H:i:s');
+        Yii::$app->db->createCommand()->insert('{{%servicios_efector}}', [
+            'id_servicio' => $idServicio,
+            'id_efector' => $idEfector,
+            'formas_atencion' => ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL,
+            'pase_previo' => 0,
+            'created_by' => $actingUserId,
+            'updated_by' => $actingUserId,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ])->execute();
 
         return true;
     }
 
-    private function ensureAgenda(int $idPes, int $idEfector): bool
+    private function ensureAgenda(int $idPes, int $idEfector, int $actingUserId): bool
     {
         $existing = ProfesionalEfectorServicioAgenda::find()
             ->where(['id_profesional_efector_servicio' => $idPes, 'deleted_at' => null])
@@ -341,9 +352,7 @@ final class MedicoMedGeneralEfectorSeedService
         $agenda->sabado_2 = '';
         $agenda->domingo_2 = '';
 
-        if (!$agenda->save()) {
-            throw new \RuntimeException('Agenda seed: ' . json_encode($agenda->getErrors()));
-        }
+        ActiveRecordConsoleBlame::save($agenda, $actingUserId, 'Agenda seed');
 
         return true;
     }

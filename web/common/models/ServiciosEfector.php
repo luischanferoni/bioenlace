@@ -47,7 +47,11 @@ class ServiciosEfector extends \yii\db\ActiveRecord
                     \yii\db\ActiveRecord::EVENT_BEFORE_INSERT => ['created_by'],
                     \yii\db\ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_by'],
                 ],
-                'value' => Yii::$app->user->id,
+                'value' => static function () {
+                    return Yii::$app->has('user', true) && Yii::$app->user->id
+                        ? (int) Yii::$app->user->id
+                        : null;
+                },
             ],
         ];
     }

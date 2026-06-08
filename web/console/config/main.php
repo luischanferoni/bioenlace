@@ -15,6 +15,13 @@ return [
         ],
     ],
     'components' => [
+        // AR con blames (created_by) y servicios que leen Yii::$app->user en consola.
+        'user' => [
+            'class' => \yii\web\User::class,
+            'identityClass' => \common\models\User::class,
+            'enableSession' => false,
+            'enableAutoLogin' => false,
+        ],
         'log' => [
             'targets' => [
                 [

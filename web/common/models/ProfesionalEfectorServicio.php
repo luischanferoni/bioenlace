@@ -43,7 +43,9 @@ class ProfesionalEfectorServicio extends ActiveRecord
                     ActiveRecord::EVENT_BEFORE_UPDATE => ['updated_by'],
                 ],
                 'value' => static function () {
-                    return Yii::$app->user && Yii::$app->user->id ? (int) Yii::$app->user->id : null;
+                    return Yii::$app->has('user', true) && Yii::$app->user->id
+                        ? (int) Yii::$app->user->id
+                        : null;
                 },
             ],
         ];

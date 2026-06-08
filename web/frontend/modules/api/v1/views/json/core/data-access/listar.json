@@ -9,20 +9,17 @@
   },
   "blocks": [
     {
-      "kind": "message",
-      "id": "intro_listado",
-      "title_field": "list_title",
-      "title": "Listado",
-      "text_field": "intro_texto",
-      "text": ""
-    },
-    {
       "kind": "list",
       "id": "rows",
-      "title": "Resultados",
+      "title": "Profesionales",
       "empty_message": "No hay registros que coincidan con los filtros.",
       "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
-      "presentation": { "tile": "large", "shape": "wide" },
+      "presentation": { "layout": "table" },
+      "columns": [
+        { "field": "name", "label": "Profesional" },
+        { "field": "servicio_nombre", "label": "Servicio" },
+        { "field": "sexo_label", "label": "Sexo" }
+      ],
       "selection": { "mode": "none", "requires_confirmation": false },
       "items": []
     }

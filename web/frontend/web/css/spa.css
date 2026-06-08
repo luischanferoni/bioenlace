@@ -605,24 +605,6 @@ html:has(.spa-asistente-root) {
     opacity: 0.7;
 }
 
-/* Numeración y conectores del timeline en flow cancelado */
-.spa-chat-flow-row--superseded .spa-flow-step-marker,
-.spa-chat-flow-row--superseded .spa-flow-step-item--done .spa-flow-step-marker,
-.spa-chat-flow-row--superseded .spa-flow-step-item--active .spa-flow-step-marker,
-.spa-chat-flow-row--superseded .spa-flow-step-item--pending .spa-flow-step-marker {
-    border-color: var(--bio-paper-300, var(--bs-border-color, #dee2e6));
-    background: var(--bio-paper-100, var(--bs-body-bg, #fff));
-    color: var(--bio-paper-500, var(--bs-secondary-color, #6c757d));
-    box-shadow: none;
-    opacity: 0.85;
-}
-
-.spa-chat-flow-row--superseded .spa-flow-step-item:not(:last-child) .spa-flow-step-timeline::after,
-.spa-chat-flow-row--superseded .spa-flow-step-item--done:not(:last-child) .spa-flow-step-timeline::after {
-    background: var(--bio-paper-300, var(--bs-border-color, #dee2e6));
-    opacity: 0.65;
-}
-
 /* Legacy: tira de plan / barra de progreso del composer (ya no se usa). */
 .spa-flow-plan-wrap,
 .spa-flow-progress,
@@ -644,71 +626,6 @@ html:has(.spa-asistente-root) {
 
 .spa-flow-step-item:not(:last-child) {
     margin-bottom: 0;
-}
-
-.spa-flow-step-row {
-    display: flex;
-    align-items: stretch;
-    gap: 0.75rem;
-}
-
-.spa-flow-step-timeline {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-shrink: 0;
-    width: 2rem;
-}
-
-.spa-flow-step-marker {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 50%;
-    font-size: 0.8125rem;
-    font-weight: 700;
-    line-height: 1;
-    border: 2px solid var(--bs-border-color, #dee2e6);
-    background: var(--bs-body-bg, #fff);
-    color: var(--bs-secondary-color, #6c757d);
-    flex-shrink: 0;
-}
-
-.spa-flow-step-item:not(:last-child) .spa-flow-step-timeline::after {
-    content: '';
-    width: 2px;
-    flex: 1 1 auto;
-    min-height: 0.75rem;
-    margin-top: 0.35rem;
-    background: var(--bs-border-color, #dee2e6);
-    border-radius: 1px;
-}
-
-.spa-flow-step-item--done:not(:last-child) .spa-flow-step-timeline::after {
-    background: var(--bs-primary, #0d6efd);
-    opacity: 0.45;
-}
-
-.spa-flow-step-item--done .spa-flow-step-marker {
-    border-color: var(--bs-primary, #0d6efd);
-    background: var(--bs-primary, #0d6efd);
-    color: #fff;
-}
-
-.spa-flow-step-item--active .spa-flow-step-marker {
-    border-color: var(--bs-primary, #0d6efd);
-    background: var(--bs-primary, #0d6efd);
-    color: #fff;
-    box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb, 13, 110, 253), 0.2);
-}
-
-.spa-flow-step-item--pending .spa-flow-step-marker {
-    border-color: var(--bs-border-color, #dee2e6);
-    background: var(--bs-body-bg, #fff);
-    color: var(--bs-secondary-color, #6c757d);
-    opacity: 0.85;
 }
 
 .spa-flow-step-body {
@@ -776,6 +693,16 @@ html:has(.spa-asistente-root) {
 }
 
 /* Lista embebida UI JSON: transición suave al seleccionar ítem. */
+.bio-ui-json-list--layout-table .bio-ui-json-list-table th {
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+
+.bio-ui-json-list--layout-table .bio-ui-json-list-table td {
+    font-size: 0.875rem;
+    vertical-align: middle;
+}
+
 .bio-ui-json-list button[data-embed-pick="1"] {
     transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.22s ease, opacity 0.22s ease;
 }

@@ -908,18 +908,6 @@
             li.setAttribute('data-step-id', String(st.id));
         }
 
-        const row = document.createElement('div');
-        row.className = 'spa-flow-step-row';
-
-        const timeline = document.createElement('div');
-        timeline.className = 'spa-flow-step-timeline';
-        timeline.setAttribute('aria-hidden', 'true');
-
-        const marker = document.createElement('span');
-        marker.className = 'spa-flow-step-marker';
-        marker.textContent = String(idx + 1);
-        timeline.appendChild(marker);
-
         const body = document.createElement('div');
         body.className = 'spa-flow-step-body';
 
@@ -932,9 +920,7 @@
 
         body.appendChild(textEl);
         body.appendChild(uiMount);
-        row.appendChild(timeline);
-        row.appendChild(body);
-        li.appendChild(row);
+        li.appendChild(body);
         return li;
     }
 
@@ -2108,7 +2094,90 @@
         container.innerHTML = html;
     }
 
+    function uiJsonListIsReadOnly(block) {
+        const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
+        const mode = selection.mode != null ? String(selection.mode).trim().toLowerCase() : '';
+        if (mode === 'none') {
+            return true;
+        }
+        const p = block.presentation && typeof block.presentation === 'object' ? block.presentation : {};
+        if (String(p.layout || '').trim().toLowerCase() === 'table') {
+            return true;
+        }
+        return !(block.draft_field && String(block.draft_field).trim() !== '');
+    }
+
+    function uiJsonListColumnsFromBlock(block) {
+        const cols = Array.isArray(block.columns) ? block.columns : [];
+        const out = [];
+        cols.forEach(function (col) {
+            if (!col || typeof col !== 'object') return;
+            const field = col.field != null ? String(col.field).trim() : '';
+            if (!field) return;
+            const label = col.label != null ? String(col.label).trim() : field;
+            out.push({ field: field, label: label });
+        });
+        if (out.length === 0) {
+            out.push({ field: 'name', label: 'Nombre' });
+        }
+        return out;
+    }
+
+    function uiJsonListCellValue(item, field) {
+        if (!item || typeof item !== 'object' || !field) return '';
+        if (Object.prototype.hasOwnProperty.call(item, field)) {
+            const v = item[field];
+            return v == null ? '' : String(v).trim();
+        }
+        if (field.indexOf('meta.') === 0) {
+            const meta = item.meta;
+            const key = field.substring(5);
+            if (meta && typeof meta === 'object' && Object.prototype.hasOwnProperty.call(meta, key)) {
+                const v = meta[key];
+                return v == null ? '' : String(v).trim();
+            }
+        }
+        return '';
+    }
+
+    function renderUiJsonListTableBlock(block, container) {
+        const title = block.title ? String(block.title) : '';
+        const items = Array.isArray(block.items) ? block.items : [];
+        const emptyMsg = block.empty_message ? String(block.empty_message) : 'No hay registros que coincidan con los filtros.';
+        const columns = uiJsonListColumnsFromBlock(block);
+
+        let html = '<div class="bio-ui-json-list bio-ui-json-list--layout-table">';
+        if (title) {
+            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+        }
+        if (items.length === 0) {
+            html += '<div class="small text-muted mb-0">' + escapeHtml(emptyMsg) + '</div>';
+        } else {
+            html += '<div class="table-responsive"><table class="table table-sm table-striped bio-ui-json-list-table mb-0">';
+            html += '<thead><tr>';
+            columns.forEach(function (col) {
+                html += '<th scope="col">' + escapeHtml(col.label) + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+            items.forEach(function (it) {
+                if (!it || typeof it !== 'object') return;
+                html += '<tr>';
+                columns.forEach(function (col) {
+                    html += '<td>' + escapeHtml(uiJsonListCellValue(it, col.field)) + '</td>';
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
     function renderUiJsonListBlock(block, container, options = {}) {
+        if (uiJsonListIsReadOnly(block)) {
+            renderUiJsonListTableBlock(block, container);
+            return;
+        }
         const title = block.title ? String(block.title) : '';
         const items = Array.isArray(block.items) ? block.items : [];
         const draftField = block.draft_field ? String(block.draft_field) : '';

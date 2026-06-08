@@ -12,6 +12,7 @@ import '../text/user_friendly_error.dart';
 import '../theme/tokens/tokens.dart';
 import 'ui_json_list_auto_advance.dart';
 import 'ui_json_list_presentation.dart';
+import 'ui_json_list_readonly.dart';
 import 'laboratory_pdf_download_widget.dart';
 import 'prescription_pdf_download_widget.dart';
 import 'weekly_scheduler_widget.dart';
@@ -1329,6 +1330,13 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     Widget renderListBlock(Map<String, dynamic> b) {
       final itemsRaw = b['items'];
       final items = itemsRaw is List ? itemsRaw : const [];
+      if (uiJsonListIsReadOnly(b)) {
+        return uiJsonReadOnlyListTable(
+          block: b,
+          items: items,
+          textTheme: theme.textTheme,
+        );
+      }
       final selection = b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
       final requiresConfirmation = selection['requires_confirmation'] == true &&
           !widget.isTerminalFlowStep;

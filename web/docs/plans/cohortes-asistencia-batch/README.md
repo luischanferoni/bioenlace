@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `cohortes-asistencia-batch` |
-| Estado | En ejecución — Fase 1 |
+| Estado | En ejecución — Fase 2 |
 | Origen | [producto/ideas-a-futuro/](../../producto/ideas-a-futuro/README.md) |
 | Objetivo | Packs reutilizables por cohorte (~90 % similitud), generación en cola/batch Vertex, runtime sin IA salvo delta |
 
@@ -11,8 +11,8 @@
 
 - [overview.md](./overview.md)
 - [design.md](./design.md)
-- [phases/01-infra-dominio-batch.md](./phases/01-infra-dominio-batch.md) — **en curso**
-- [phases/02-asistencia-pre-consulta.md](./phases/02-asistencia-pre-consulta.md)
+- [phases/01-infra-dominio-batch.md](./phases/01-infra-dominio-batch.md) — cerrada
+- [phases/02-asistencia-pre-consulta.md](./phases/02-asistencia-pre-consulta.md) — **implementada** (falta UI asistente/móvil → Fase 4)
 - [phases/03-seguimiento-post-educacion.md](./phases/03-seguimiento-post-educacion.md)
 - [phases/04-api-clientes-asistente.md](./phases/04-api-clientes-asistente.md)
 - [phases/05-vertex-batch-produccion.md](./phases/05-vertex-batch-produccion.md)

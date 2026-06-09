@@ -20,6 +20,10 @@ php yii care-pack/poll-vertex   # si vertex_batch.enabled
 - `EncounterLifecycleService::ensureFromTurno` → asistencia pre-consulta
 - `EncounterLifecycleService::finalize` → seguimiento + educación
 
+## API paciente (Fase 2)
+
+- `GET|POST /api/v1/care-packs/assistance?encounter_id=` o `turno_id=`
+
 ## Plan
 
 `web/docs/plans/cohortes-asistencia-batch/`

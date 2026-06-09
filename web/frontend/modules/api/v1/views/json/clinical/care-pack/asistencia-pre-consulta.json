@@ -1,0 +1,21 @@
+{
+  "ui_type": "ui_json",
+  "title": "Asistencia pre-consulta",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    },
+    "care_pack": {
+      "type": "assistance_questions"
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "asistencia-preguntas",
+      "title": "Antes de tu consulta",
+      "fields": []
+    }
+  ]
+}

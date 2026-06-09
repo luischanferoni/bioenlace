@@ -32,6 +32,13 @@ final class CarePackPromptBuilder
                 . "\nMotivo/resumen: " . trim((string) $encounter->reason_text);
         }
 
+        $deltaHint = '';
+        if (!empty($profile['delta_context']) && is_array($profile['delta_context'])) {
+            $deltaHint = "\nAdaptación delta — respuestas del paciente que no encajan en el pack base:\n"
+                . json_encode($profile['delta_context'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)
+                . "\nGenerá preguntas de seguimiento adicionales o reformuladas para ESTE caso (máx. 5).";
+        }
+
         $schema = $this->schemaHint($packType);
 
         return <<<PROMPT
@@ -40,6 +47,7 @@ Sos un asistente clínico de Bioenlace. Generá un pack reutilizable para pacien
 Perfil de cohorte (JSON):
 {$profileJson}
 {$encounterHint}
+{$deltaHint}
 
 {$contextBlock}
 

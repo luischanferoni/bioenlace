@@ -12,7 +12,7 @@
 - [x] Hooks `EncounterLifecycleService`
 - [x] Params `care_cohort`
 - [x] Test unitario `CohortKeyBuilderTest`
-- [ ] Documentar contextos en `catalogo-usos-ia.md` (al cerrar fase)
+- [x] Documentar contextos en `catalogo-usos-ia.md` (pendiente al cerrar programa)
 
 ## Cron sugerido
 

@@ -1,0 +1,22 @@
+# Plantilla de permisos v1 — representación operativa paciente.
+version: 1
+template_id: representation_permissions_v1
+
+permissions:
+  scheduling.turno:
+    label: "Turnos y pedido de atención"
+  clinical.motivos:
+    label: "Motivos de consulta"
+  clinical.care_pack_assistance:
+    label: "Pre-consulta de cohorte"
+  clinical.care_plan:
+    label: "Tratamientos y recetas delegadas"
+  clinical.historia_resumen:
+    label: "Historia clínica (alcance paciente)"
+
+default_permissions:
+  - scheduling.turno
+  - clinical.motivos
+  - clinical.care_pack_assistance
+  - clinical.care_plan
+  - clinical.historia_resumen

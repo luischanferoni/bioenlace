@@ -47,6 +47,9 @@ use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\models\Person\PersonRelatedAuditLog;
 
 /**
  * Turnos API v1.
@@ -86,11 +89,19 @@ class TurnosController extends BaseController
             $req->get(),
             $req->post(),
             function (array $post): array {
+                $params = array_merge(Yii::$app->request->get(), $post);
+                $subjectSvc = new PersonRepresentationSubjectService();
                 $model = new Turno();
                 $model->load($post, '');
-                $model->id_persona = (int) Yii::$app->user->getIdPersona();
+                $model->id_persona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::SCHEDULING_TURNO);
+                $result = $this->ejecutarCreacionTurno($model);
+                $subjectSvc->auditDelegatedAction(
+                    PersonRelatedAuditLog::ACTION_TURNO_CREATED,
+                    (int) $model->id_persona,
+                    ['flow' => 'crear-como-paciente']
+                );
 
-                return $this->ejecutarCreacionTurno($model);
+                return $result;
             }
         );
     }
@@ -419,7 +430,8 @@ class TurnosController extends BaseController
             }
         );
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
-            $idPersona = (int) Yii::$app->user->getIdPersona();
+            $params = array_merge($req->get(), $req->post());
+            $idPersona = $this->resolveSubjectTurnos($params);
             $rows = TurnoResolucionService::listarEnResolucionParaPaciente(
                 $idPersona,
                 TurnoResolucion::ORIGEN_CAMBIO_AGENDA
@@ -453,9 +465,14 @@ class TurnosController extends BaseController
             if (!$tid) {
                 throw new BadRequestHttpException('id del turno requerido');
             }
+            $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+            if (!$turno) {
+                throw new NotFoundHttpException('Turno no encontrado');
+            }
+            $this->assertTurnoSchedulingAccess($turno);
             $res = TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
                 (int) $tid,
-                (int) Yii::$app->user->getIdPersona()
+                (int) $turno->id_persona
             );
             $def = UiScreenService::renderUiDefinition(
                 'turnos',
@@ -481,9 +498,14 @@ class TurnosController extends BaseController
                 if ($eleccion === '' || !TurnoResolucionElecciones::esEleccionValida($eleccion)) {
                     throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
                 }
+                $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+                if (!$turno) {
+                    throw new NotFoundHttpException('Turno no encontrado');
+                }
+                $this->assertTurnoSchedulingAccess($turno);
                 TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
                     (int) $tid,
-                    (int) Yii::$app->user->getIdPersona()
+                    (int) $turno->id_persona
                 );
 
                 return ['data' => ['ok' => true, 'id' => (int) $tid, 'eleccion' => strtolower($eleccion)]];
@@ -509,7 +531,8 @@ class TurnosController extends BaseController
             }
         );
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
-            $idPersona = (int) Yii::$app->user->getIdPersona();
+            $params = array_merge($req->get(), $req->post());
+            $idPersona = $this->resolveSubjectTurnos($params);
             $rows = TurnoResolucionService::listarEnResolucionParaPaciente($idPersona);
             $items = [];
             foreach ($rows as $row) {
@@ -555,10 +578,7 @@ class TurnosController extends BaseController
                 if (!$turno) {
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
-                $idPersona = Yii::$app->user->getIdPersona();
-                if ((int) $turno->id_persona !== (int) $idPersona) {
-                    throw new ForbiddenHttpException('No autorizado');
-                }
+                $this->assertTurnoSchedulingAccess($turno);
                 $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
                 if ($razon === '' || !TurnoCancelacionRazones::esCodigoPacienteAppValido($razon)) {
                     throw new BadRequestHttpException('Indicá un motivo de cancelación válido (razon_cancelacion).');
@@ -812,7 +832,8 @@ class TurnosController extends BaseController
                         'Indicá id_efector en el formulario o establecé sesión operativa (sesion-operativa/establecer).'
                     );
                 }
-                $idPersona = (int) Yii::$app->user->getIdPersona();
+                $params = array_merge($req->get(), $post);
+                $idPersona = $this->resolveSubjectTurnos($params);
                 $svc = new \common\components\Scheduling\Service\TurnoCancellationPolicyService();
 
                 return ['data' => array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, (int) $idEfector))];
@@ -953,10 +974,7 @@ class TurnosController extends BaseController
                 if (!$turno) {
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
-                $idPersona = Yii::$app->user->getIdPersona();
-                if ((int) $turno->id_persona !== (int) $idPersona) {
-                    throw new ForbiddenHttpException('No autorizado');
-                }
+                $this->assertTurnoSchedulingAccess($turno);
                 $token = $post['token'] ?? null;
                 if ($token && $turno->confirmacion_token && !hash_equals((string) $turno->confirmacion_token, (string) $token)) {
                     throw new BadRequestHttpException('Token inválido');
@@ -996,11 +1014,17 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException('eleccion requerida (antes, despues o cancelar).');
         }
 
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+        if (!$turno) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $this->assertTurnoSchedulingAccess($turno);
+
         return [
             'success' => true,
             'data' => TurnoResolucionService::resolverEleccionVecina(
                 (int) $tid,
-                (int) Yii::$app->user->getIdPersona(),
+                (int) $turno->id_persona,
                 $eleccion
             ),
         ];
@@ -1111,10 +1135,16 @@ class TurnosController extends BaseController
                     throw new BadRequestHttpException('id del turno requerido');
                 }
 
+                $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+                if (!$turno) {
+                    throw new NotFoundHttpException('Turno no encontrado');
+                }
+                $this->assertTurnoSchedulingAccess($turno);
+
                 return [
                     'data' => TurnoResolucionService::reubicarComoPaciente(
                         (int) $tid,
-                        (int) Yii::$app->user->getIdPersona(),
+                        (int) $turno->id_persona,
                         $post
                     ),
                 ];
@@ -1592,7 +1622,7 @@ class TurnosController extends BaseController
      */
     protected function listarComoPacienteData(array $params): array
     {
-        $idPersona = (int) Yii::$app->user->getIdPersona();
+        $idPersona = $this->resolveSubjectTurnos($params);
         $alcance = isset($params['alcance']) ? (string) $params['alcance'] : '';
 
         if ($alcance === 'pendientes' || $alcance === 'pasados' || $alcance === 'en_resolucion') {
@@ -1858,10 +1888,7 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $idPersona = Yii::$app->user->getIdPersona();
-        if ((int) $turno->id_persona !== (int) $idPersona) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
+        $this->assertTurnoSchedulingAccess($turno);
         if (
             $turno->estado !== Turno::ESTADO_PENDIENTE
             && $turno->estado !== Turno::ESTADO_EN_RESOLUCION
@@ -1916,10 +1943,8 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $idPersona = Yii::$app->user->getIdPersona();
-        if ((int) $turno->id_persona !== (int) $idPersona) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
+        $this->assertTurnoSchedulingAccess($turno);
+        $subjectSvc = new PersonRepresentationSubjectService();
         $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
         if ($razon === '' && (($post['estado_motivo'] ?? '') === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE)) {
             $razon = TurnoCancelacionRazones::COD_PAC_OTRO;
@@ -1949,6 +1974,12 @@ class TurnosController extends BaseController
         } catch (AutogestionAnticipacionException $e) {
             throw new ConflictHttpException($e->getMessage());
         }
+        $subjectSvc->auditDelegatedAction(
+            PersonRelatedAuditLog::ACTION_TURNO_CANCELLED,
+            (int) $turno->id_persona,
+            ['flow' => 'cancelar-como-paciente', 'turno_id' => (int) $turno->id_turnos]
+        );
+
         return ['success' => true, 'message' => 'Turno cancelado'];
     }
 
@@ -1962,10 +1993,8 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $idPersona = Yii::$app->user->getIdPersona();
-        if ((int) $turno->id_persona !== (int) $idPersona) {
-            throw new ForbiddenHttpException('No autorizado');
-        }
+        $this->assertTurnoSchedulingAccess($turno);
+        $idPersona = (int) $turno->id_persona;
         if ($turno->estado === Turno::ESTADO_EN_RESOLUCION) {
             throw new BadRequestHttpException('Este turno está en resolución: usá el flujo de reubicación.');
         }
@@ -2269,5 +2298,26 @@ class TurnosController extends BaseController
         }
 
         return UiScreenService::renderUiDefinition('turnos', 'indicadores-agenda', $params, null);
+    }
+
+    protected function representationSubjects(): PersonRepresentationSubjectService
+    {
+        return new PersonRepresentationSubjectService();
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    protected function resolveSubjectTurnos(array $params): int
+    {
+        return $this->representationSubjects()->resolveAndAuthorize(
+            $params,
+            RepresentationPermission::SCHEDULING_TURNO
+        );
+    }
+
+    protected function assertTurnoSchedulingAccess(Turno $turno): void
+    {
+        $this->representationSubjects()->assertTurnoAccess($turno, RepresentationPermission::SCHEDULING_TURNO);
     }
 }

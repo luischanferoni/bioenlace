@@ -25,7 +25,11 @@ class PersonRelatedAuditLog extends ActiveRecord
     public const ACTION_LINK_BLOCKED = 'link_blocked';
     public const ACTION_LINK_REVOKED = 'link_revoked';
     public const ACTION_TURNO_CREATED = 'turno_created';
+    public const ACTION_TURNO_CANCELLED = 'turno_cancelled';
     public const ACTION_MOTIVOS_SENT = 'motivos_sent';
+    public const ACTION_CARE_PACK_ASSISTANCE = 'care_pack_assistance';
+    public const ACTION_HISTORIA_ACCESSED = 'historia_accesed';
+    public const ACTION_CARE_PLAN_ACCESSED = 'care_plan_accessed';
 
     public static function tableName(): string
     {

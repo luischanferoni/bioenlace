@@ -2,6 +2,7 @@
 
 namespace common\components\Clinical\Service;
 
+use common\components\Person\Representation\Service\PersonRepresentationAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -12,10 +13,19 @@ use Yii;
  */
 final class EncounterAccessService
 {
-    public static function userCanAccessEncounterApi(Encounter $encounter): bool
+    public static function userCanAccessEncounterApi(Encounter $encounter, ?string $representationPermission = null): bool
     {
-        if ((int) $encounter->subject_persona_id === (int) Yii::$app->user->getIdPersona()) {
+        $actorId = (int) Yii::$app->user->getIdPersona();
+        $subjectId = (int) $encounter->subject_persona_id;
+
+        if ($actorId > 0 && $subjectId === $actorId) {
             return true;
+        }
+
+        if ($representationPermission !== null && $actorId > 0 && $subjectId > 0) {
+            if ((new PersonRepresentationAccessService())->canAct($actorId, $subjectId, $representationPermission)) {
+                return true;
+            }
         }
 
         $idPesEncounter = (int) ($encounter->id_profesional_efector_servicio ?? 0);

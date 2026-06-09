@@ -8,6 +8,9 @@ use common\components\Clinical\Prescription\Service\ElectronicPrescriptionPdfSer
 use common\components\Clinical\Prescription\Service\ElectronicPrescriptionPresentationService;
 use common\components\Clinical\Prescription\Service\ElectronicPrescriptionService;
 use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\models\Person\PersonRelatedAuditLog;
 use common\components\Ui\UiScreenService;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
@@ -160,9 +163,15 @@ class ElectronicPrescriptionController extends BaseController
     public function actionMisRecetasComoPaciente(): array
     {
         $req = Yii::$app->request;
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona <= 0) {
-            return $this->clinicalError('Solo pacientes autenticados.', null, 400);
+        $params = array_merge($req->get(), $req->post());
+        try {
+            $subjectSvc = new PersonRepresentationSubjectService();
+            $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
+            $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, ['scope' => 'recetas']);
+        } catch (\InvalidArgumentException $e) {
+            return $this->clinicalError($e->getMessage(), null, 400);
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            return $this->clinicalError($e->getMessage(), null, 403);
         }
 
         $out = UiScreenService::handleScreen(

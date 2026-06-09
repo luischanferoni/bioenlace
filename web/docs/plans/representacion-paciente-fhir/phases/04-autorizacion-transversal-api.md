@@ -1,6 +1,6 @@
 # Fase 4 — Autorización transversal en API
 
-**Estado:** pendiente
+**Estado:** implementada
 
 ## Objetivo
 
@@ -33,10 +33,14 @@ API `POST /api/v1/sesion-operativa/establecer-sujeto-paciente` o reutilizar patr
 
 ## Checklist
 
-- [ ] Refactor `EncounterAccessService` — delegación acotada por permiso
-- [ ] `CarePackAssistanceService` — actor delegado
-- [ ] Tests integración API turno por hijo (A) y por paciente delegado (B)
-- [ ] Sin hardcode de régimen en controllers
+- [x] `PersonRepresentationSubjectService` — resolve + `assertCanAct` + sesión + auditoría
+- [x] `EncounterAccessService::userCanAccessEncounterApi($encounter, $permission?)`
+- [x] Turnos paciente (`crear/listar/cancelar/reprogramar/…`) con `scheduling.turno`
+- [x] Motivos + `AppointmentReasonEntry` con `clinical.motivos`
+- [x] `CarePackAssistanceService` con `clinical.care_pack_assistance`
+- [x] HC resumen + care plan + recetas con permisos v1
+- [x] `POST person-representation/establecer-sujeto-paciente`
+- [ ] Tests integración E2E API (manual o CI con BD)
 
 ## Criterios de aceptación
 

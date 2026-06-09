@@ -248,6 +248,55 @@ class PersonRepresentationController extends BaseController
      * @entity PersonRepresentation
      * @tags paciente, delegación, notificaciones
      */
+    /**
+     * POST /api/v1/person-representation/establecer-sujeto-paciente
+     *
+     * Body: subject_persona_id (0 o omitir para limpiar contexto "a cargo de").
+     *
+     * @action_name Establecer sujeto paciente en sesión
+     * @entity PersonRepresentation
+     * @tags paciente, contexto, delegación
+     */
+    public function actionEstablecerSujetoPaciente(): array
+    {
+        $this->assertPost();
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona.');
+        }
+
+        $params = $this->mergedParams();
+        $subjectRaw = $params['subject_persona_id'] ?? $params['id_persona_sujeto'] ?? null;
+        $svc = new \common\components\Person\Representation\Service\PersonRepresentationSubjectService();
+
+        if ($subjectRaw === null || $subjectRaw === '' || (int) $subjectRaw <= 0) {
+            $svc->establecerSujetoEnSesion(null);
+
+            return [
+                'success' => true,
+                'data' => [
+                    'subject_persona_id' => $idPersona,
+                    'mensaje' => 'Contexto restablecido a tu persona.',
+                ],
+            ];
+        }
+
+        $subjectId = (int) $subjectRaw;
+        try {
+            $svc->establecerSujetoEnSesion($subjectId);
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'subject_persona_id' => $subjectId,
+                'mensaje' => 'Sujeto de atención fijado en sesión.',
+            ],
+        ];
+    }
+
     public function actionPreferenciasComoPaciente(): array
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();

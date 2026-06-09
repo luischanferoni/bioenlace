@@ -4,9 +4,13 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
 use common\components\Clinical\PatientSummary\PatientEncounterSummaryUiFormatter;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\components\Ui\UiScreenService;
+use common\models\Person\PersonRelatedAuditLog;
 use Yii;
 use frontend\modules\api\v1\controllers\BaseController;
+use yii\web\ForbiddenHttpException;
 
 /**
  * Resumen de atención ambulatoria para el paciente autenticado.
@@ -33,26 +37,28 @@ class EncounterPatientSummaryController extends BaseController
         $this->uiFormatter = new PatientEncounterSummaryUiFormatter();
     }
 
-    private function requirePatientPersona(): ?array
+    /**
+     * @return array{0: array|null, 1: int}
+     */
+    private function requirePatientSubject(?array $params = null): array
     {
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona <= 0) {
-            return [
-                $this->clinicalError(
-                    'Solo pacientes autenticados pueden acceder a resúmenes de atención.',
-                    null,
-                    400
-                ),
-                0,
-            ];
-        }
+        $params = $params ?? array_merge(Yii::$app->request->get(), Yii::$app->request->post());
+        $svc = new PersonRepresentationSubjectService();
+        try {
+            $idPersona = $svc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_HISTORIA_RESUMEN);
+            $svc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_HISTORIA_ACCESSED, $idPersona, []);
 
-        return [null, $idPersona];
+            return [null, $idPersona];
+        } catch (\InvalidArgumentException $e) {
+            return [$this->clinicalError($e->getMessage(), null, 400), 0];
+        } catch (ForbiddenHttpException $e) {
+            return [$this->clinicalError($e->getMessage(), null, 403), 0];
+        }
     }
 
     public function actionListarAtencionesComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientPersona();
+        [$err, $idPersona] = $this->requirePatientSubject();
         if ($err !== null) {
             return $err;
         }
@@ -69,7 +75,7 @@ class EncounterPatientSummaryController extends BaseController
 
     public function actionVerResumenComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientPersona();
+        [$err, $idPersona] = $this->requirePatientSubject();
         if ($err !== null) {
             return $err;
         }
@@ -93,7 +99,7 @@ class EncounterPatientSummaryController extends BaseController
 
     public function actionUltimaAtencionComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientPersona();
+        [$err, $idPersona] = $this->requirePatientSubject();
         if ($err !== null) {
             return $err;
         }
@@ -115,7 +121,7 @@ class EncounterPatientSummaryController extends BaseController
      */
     public function actionMisAtencionesComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientPersona();
+        [$err, $idPersona] = $this->requirePatientSubject();
         if ($err !== null) {
             return $err;
         }
@@ -159,7 +165,7 @@ class EncounterPatientSummaryController extends BaseController
      */
     public function actionVerResumenAtencionComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientPersona();
+        [$err, $idPersona] = $this->requirePatientSubject();
         if ($err !== null) {
             return $err;
         }
@@ -204,7 +210,7 @@ class EncounterPatientSummaryController extends BaseController
      */
     public function actionUltimaAtencionUiComoPaciente(): array
     {
-        [$err, $idPersona] = $this->requirePatientPersona();
+        [$err, $idPersona] = $this->requirePatientSubject();
         if ($err !== null) {
             return $err;
         }

@@ -3,6 +3,9 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\models\Person\PersonRelatedAuditLog;
 use common\components\Clinical\CarePlan\Reminder\CarePlanReminderPreferenceService;
 use common\components\Clinical\CarePlan\Reminder\CarePlanReminderScheduleBuilder;
 use common\components\Clinical\Dto\CarePlanDto;
@@ -68,13 +71,15 @@ class CarePlanController extends BaseController
     public function actionVerTratamientoPaciente(): array
     {
         $req = Yii::$app->request;
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona <= 0) {
-            return $this->clinicalError(
-                'Solo pacientes autenticados pueden ver tratamientos activos.',
-                null,
-                400
-            );
+        $params = array_merge($req->get(), $req->post());
+        try {
+            $subjectSvc = new PersonRepresentationSubjectService();
+            $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
+            $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, []);
+        } catch (\InvalidArgumentException $e) {
+            return $this->clinicalError($e->getMessage(), null, 400);
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            return $this->clinicalError($e->getMessage(), null, 403);
         }
 
         $out = UiScreenService::handleScreen(

@@ -7,6 +7,9 @@ use common\components\Clinical\CareCohort\Enum\CarePackType;
 use common\components\Clinical\CareCohort\Presentation\CarePackAssistancePresenter;
 use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\models\Person\PersonRelatedAuditLog;
 use common\models\Clinical\CareAssistanceResponse;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CareEncounterPack;
@@ -46,7 +49,7 @@ final class CarePackAssistanceService
         }
 
         $encounter = $this->resolveEncounter($params);
-        $this->assertPatientAccess($encounter);
+        $this->assertPatientAccess($encounter, $params);
 
         $existing = CareAssistanceResponse::findOne(['encounter_id' => (int) $encounter->id]);
         if ($existing !== null) {
@@ -81,7 +84,7 @@ final class CarePackAssistanceService
         }
 
         $encounter = $this->resolveEncounter($body);
-        $this->assertPatientAccess($encounter);
+        $this->assertPatientAccess($encounter, $body);
 
         if (CareAssistanceResponse::find()->where(['encounter_id' => (int) $encounter->id])->exists()) {
             return [
@@ -183,15 +186,26 @@ final class CarePackAssistanceService
         return $encounter;
     }
 
-    private function assertPatientAccess(Encounter $encounter): void
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function assertPatientAccess(Encounter $encounter, array $params = []): void
     {
-        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+        unset($params);
+        $subjectSvc = new PersonRepresentationSubjectService();
+        $subjectId = (int) $encounter->subject_persona_id;
+        $subjectSvc->assertCanAct($subjectId, RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE);
+        if (!EncounterAccessService::userCanAccessEncounterApi(
+            $encounter,
+            RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE
+        )) {
             throw new ForbiddenHttpException('No tiene permiso para este encounter.');
         }
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona > 0 && (int) $encounter->subject_persona_id !== $idPersona) {
-            throw new ForbiddenHttpException('Solo el paciente puede completar la asistencia pre-consulta.');
-        }
+        $subjectSvc->auditDelegatedAction(
+            PersonRelatedAuditLog::ACTION_CARE_PACK_ASSISTANCE,
+            $subjectId,
+            ['encounter_id' => (int) $encounter->id]
+        );
     }
 
     private function resolveAssistancePack(Encounter $encounter): ?CareCohortPack

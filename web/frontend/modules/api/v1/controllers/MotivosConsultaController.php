@@ -8,6 +8,9 @@ use yii\web\UploadedFile;
 use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\models\Person\PersonRelatedAuditLog;
 use common\components\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
@@ -73,7 +76,19 @@ class MotivosConsultaController extends BaseController
         $userId = (int) Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
 
-        return AppointmentReasonEntry::enviarTexto($encounterId, (string) $message, $userId, $userName);
+        $result = AppointmentReasonEntry::enviarTexto($encounterId, (string) $message, $userId, $userName);
+        if (($result['success'] ?? false) === true) {
+            $encounter = Encounter::findOne($encounterId);
+            if ($encounter !== null) {
+                (new PersonRepresentationSubjectService())->auditDelegatedAction(
+                    PersonRelatedAuditLog::ACTION_MOTIVOS_SENT,
+                    (int) $encounter->subject_persona_id,
+                    ['encounter_id' => $encounterId]
+                );
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -90,7 +105,7 @@ class MotivosConsultaController extends BaseController
         if ($err !== null) {
             return $err;
         }
-        unset($encounter);
+        $subjectPersonaId = (int) $encounter->subject_persona_id;
 
         if (!AppointmentReasonWindowService::isInputOpen($encounterId)) {
             Yii::$app->response->statusCode = 403;
@@ -160,6 +175,12 @@ class MotivosConsultaController extends BaseController
             $relativePath
         );
 
+        (new PersonRepresentationSubjectService())->auditDelegatedAction(
+            PersonRelatedAuditLog::ACTION_MOTIVOS_SENT,
+            $subjectPersonaId,
+            ['encounter_id' => $encounterId, 'message_type' => $messageType]
+        );
+
         return [
             'success' => true,
             'message' => 'Archivo enviado exitosamente',
@@ -195,7 +216,10 @@ class MotivosConsultaController extends BaseController
      */
     protected function canAccessEncounter(Encounter $encounter): bool
     {
-        return EncounterAccessService::userCanAccessEncounterApi($encounter);
+        return EncounterAccessService::userCanAccessEncounterApi(
+            $encounter,
+            RepresentationPermission::CLINICAL_MOTIVOS
+        );
     }
 
     /**

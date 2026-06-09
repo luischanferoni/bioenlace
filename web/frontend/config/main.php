@@ -337,6 +337,8 @@ return [
                 'GET api/<version:\w+>/person-representation/preferencias-como-paciente' => '<version>/person-representation/preferencias-como-paciente',
                 'POST api/<version:\w+>/person-representation/preferencias-como-paciente' => '<version>/person-representation/preferencias-como-paciente',
                 'OPTIONS api/<version:\w+>/person-representation/preferencias-como-paciente' => '<version>/person-representation/preferencias-como-paciente',
+                'POST api/<version:\w+>/person-representation/establecer-sujeto-paciente' => '<version>/person-representation/establecer-sujeto-paciente',
+                'OPTIONS api/<version:\w+>/person-representation/establecer-sujeto-paciente' => '<version>/person-representation/establecer-sujeto-paciente',
                 
                 // Turnos / agenda profesional API: día operativo; ABM profesional_efector_servicio_agenda = listar|crear|actualizar|eliminar (propio) vs *-para-recurso (staff; query id_efector + id_profesional_efector_servicio)
                 'GET api/<version:\w+>/profesional-agenda/dia' => '<version>/profesional-agenda/dia',

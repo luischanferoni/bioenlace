@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `representacion-paciente-fhir` |
-| Estado | Fases 1–2 implementadas — Fase 3 pendiente |
+| Estado | Fases 1–3 implementadas — Fase 4 pendiente |
 | Objetivo | Vínculos padre/madre/tutor ↔ menor sin cuenta (A) y delegación paciente → representante (B), con actuación en turnos y trayectoria clínica |
 
 ## Decisiones de producto (cerradas)

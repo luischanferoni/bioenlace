@@ -2,6 +2,7 @@
 
 namespace common\components\Person\Representation\Service;
 
+use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 use common\models\Persona;
 
@@ -41,6 +42,27 @@ final class PersonRepresentationPresenter
         if ($includeActor) {
             $out['actor'] = $this->personaSummary((int) $link->actor_persona_id);
         }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function delegationLinkToArray(
+        PersonRelated $link,
+        ?PersonDelegationConsent $consent = null,
+        bool $includeSubject = true,
+        bool $includeActor = false
+    ): array {
+        $out = $this->linkToArray($link, $includeSubject, $includeActor);
+        $out['consent'] = $consent !== null ? [
+            'id' => (int) $consent->id,
+            'status' => (string) $consent->status,
+            'granted_at' => $consent->granted_at,
+            'revoked_at' => $consent->revoked_at,
+            'permissions' => $consent->getProvisionPermissionsList(),
+        ] : null;
 
         return $out;
     }

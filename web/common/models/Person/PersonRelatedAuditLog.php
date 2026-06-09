@@ -19,6 +19,8 @@ use yii\db\ActiveRecord;
 class PersonRelatedAuditLog extends ActiveRecord
 {
     public const ACTION_LINK_REQUESTED = 'link_requested';
+    public const ACTION_DELEGATION_DESIGNATED = 'delegation_designated';
+    public const ACTION_DELEGATION_REVOKED = 'delegation_revoked';
     public const ACTION_LINK_VERIFIED = 'link_verified';
     public const ACTION_LINK_BLOCKED = 'link_blocked';
     public const ACTION_LINK_REVOKED = 'link_revoked';

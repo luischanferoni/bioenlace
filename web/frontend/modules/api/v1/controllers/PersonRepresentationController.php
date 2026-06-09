@@ -5,10 +5,11 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
+use common\components\Person\Representation\Service\PatientDelegationService;
 use common\components\Person\Representation\Service\VerifiedGuardianshipService;
 
 /**
- * Representación operativa paciente — régimen A (tutela verificada) y transiciones staff compartidas.
+ * Representación operativa paciente — régimen A (tutela), régimen B (delegación) y staff.
  *
  * RBAC ApiGhost: /api/person-representation/&lt;action&gt;
  */
@@ -154,6 +155,116 @@ class PersonRepresentationController extends BaseController
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
+    }
+
+    /**
+     * POST /api/v1/person-representation/designar-representante
+     *
+     * Body: representative_id_persona | representative_documento, relationship_type_code (opcional), permissions (opcional).
+     *
+     * @action_name Designar representante
+     * @entity PersonRepresentation
+     * @tags paciente, delegación, representante
+     */
+    public function actionDesignarRepresentante(): array
+    {
+        $this->assertPost();
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona.');
+        }
+
+        try {
+            return (new PatientDelegationService())->designarRepresentante($idPersona, $this->mergedParams());
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+    }
+
+    /**
+     * POST /api/v1/person-representation/revocar-representante
+     *
+     * Body: person_related_id | representative_id_persona.
+     *
+     * @action_name Revocar representante
+     * @entity PersonRepresentation
+     * @tags paciente, delegación, revocación
+     */
+    public function actionRevocarRepresentante(): array
+    {
+        $this->assertPost();
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona.');
+        }
+
+        try {
+            return (new PatientDelegationService())->revocarRepresentante($idPersona, $this->mergedParams());
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+    }
+
+    /**
+     * GET|POST /api/v1/person-representation/mis-representantes
+     *
+     * @action_name Mis representantes designados
+     * @entity PersonRepresentation
+     * @tags paciente, delegación
+     */
+    public function actionMisRepresentantes(): array
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona.');
+        }
+
+        return (new PatientDelegationService())->listarMisRepresentantes($idPersona);
+    }
+
+    /**
+     * GET|POST /api/v1/person-representation/pacientes-a-cargo
+     *
+     * @action_name Pacientes a mi cargo (representante)
+     * @entity PersonRepresentation
+     * @tags representante, delegación
+     */
+    public function actionPacientesACargo(): array
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona.');
+        }
+
+        return (new PatientDelegationService())->listarPacientesACargo($idPersona);
+    }
+
+    /**
+     * GET|POST /api/v1/person-representation/preferencias-como-paciente
+     *
+     * GET: lee preferencias. POST: body notify_on_representative_action.
+     *
+     * @action_name Preferencias de representación (paciente)
+     * @entity PersonRepresentation
+     * @tags paciente, delegación, notificaciones
+     */
+    public function actionPreferenciasComoPaciente(): array
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona.');
+        }
+
+        $service = new PatientDelegationService();
+        if (Yii::$app->request->isPost) {
+            try {
+                return $service->guardarPreferencias($idPersona, $this->mergedParams());
+            } catch (\InvalidArgumentException $e) {
+                throw new BadRequestHttpException($e->getMessage());
+            }
+        }
+
+        return $service->obtenerPreferencias($idPersona);
     }
 
     private function assertPost(): void

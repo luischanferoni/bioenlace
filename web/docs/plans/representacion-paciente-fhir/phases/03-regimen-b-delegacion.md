@@ -1,6 +1,6 @@
 # Fase 3 — Régimen B (delegación paciente)
 
-**Estado:** pendiente
+**Estado:** implementada
 
 ## Objetivo
 
@@ -24,11 +24,12 @@ Paciente designa uno o más representantes (cualquier cuenta); revocación inmed
 
 ## Preferencia notificaciones (decisión N9)
 
-- [ ] Campo prefs: `notify_on_representative_action` (default false)
+- [x] Tabla `person_representation_pref` + `PersonRepresentationPreferenceService`
 - [ ] Hook al actuar representante (Fase 5) — solo si pref true
 
 ## Checklist
 
-- [ ] RBAC paciente vs representante (lectura distinta)
-- [ ] Tests: revocación corta `canAct` en caliente
-- [ ] Staff revoca vínculo creado por paciente
+- [x] RBAC `m260616_130000_api_person_representation_delegation_rbac.php`
+- [x] `PatientDelegationService` + acciones en `PersonRepresentationController`
+- [x] Tests `PatientDelegationAccessTest` (revocación → `canAct` false)
+- [x] Staff revoca vía `revocar-para-staff` (Fase 2, régimen B incluido)

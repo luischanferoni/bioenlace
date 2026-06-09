@@ -58,6 +58,22 @@ return [
             'conversational' => ['max_conditions' => 4, 'max_medications' => 4, 'max_allergies' => 8],
         ],
     ],
+
+    /**
+     * Packs de cohorte (asistencia, seguimiento, educación) — ver docs/plans/cohortes-asistencia-batch/
+     */
+    'care_cohort' => [
+        'enabled' => false,
+        'pack_ttl_days' => 30,
+        'generation_delay_minutes' => 0,
+        'vertex_batch' => [
+            'enabled' => false,
+            'gcs_bucket' => '',
+            'gcs_input_prefix' => 'care-batch/input/',
+            'gcs_output_prefix' => 'care-batch/output/',
+            'min_jobs_for_vertex' => 10,
+        ],
+    ],
     
     // Optimizaciones de procesamiento
     'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito

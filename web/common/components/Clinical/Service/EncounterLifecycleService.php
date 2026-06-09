@@ -3,6 +3,7 @@
 namespace common\components\Clinical\Service;
 
 use common\components\Clinical\Enum\EncounterStatus;
+use common\components\Clinical\CareCohort\Service\CareEncounterOrchestrator;
 use common\components\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
 use common\models\Clinical\Encounter;
 use common\models\Persona;
@@ -54,6 +55,7 @@ final class EncounterLifecycleService
 
         if ($encounter->encounter_class === Encounter::ENCOUNTER_CLASS_AMB) {
             (new PatientEncounterSummaryPublishService())->schedulePublication($encounter);
+            (new CareEncounterOrchestrator())->onEncounterFinalized($encounter);
         }
 
         return $encounter;
@@ -127,7 +129,7 @@ final class EncounterLifecycleService
             return null;
         }
 
-        return $this->start([
+        $encounter = $this->start([
             'subject_persona_id' => (int) $turno->id_persona,
             'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
             'service_id' => $serviceId,
@@ -137,5 +139,9 @@ final class EncounterLifecycleService
             'parent_id' => $turnoId,
             'id_profesional_efector_servicio' => (int) $turno->id_profesional_efector_servicio ?: null,
         ]);
+
+        (new CareEncounterOrchestrator())->onEncounterEnsured($encounter);
+
+        return $encounter;
     }
 }

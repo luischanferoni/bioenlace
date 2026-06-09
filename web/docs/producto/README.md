@@ -20,6 +20,10 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [internacion.md](./internacion.md) | Mapa de camas, alta estructurada, plantillas de epicrisis (ABM) |
 | [superficies-ui.md](./superficies-ui.md) | Inicio vs captura encounter vs flows (web = móvil) |
 
+## Ideas a futuro
+
+Visión y extensiones **no comprometidas** en el roadmap actual: [ideas-a-futuro/](./ideas-a-futuro/README.md).
+
 ## Otros mapas
 
 - [Flujos paso a paso (usuario y sistema)](../qa/README.md)

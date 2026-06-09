@@ -14,6 +14,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 |------|---------|--------|
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Urgencias — triage + tablero | `urgencias-triage-tablero/` | Fase 1 (API dominio) en curso; fases 2–5 pendientes |
+| Cohortes — asistencia + batch IA | `cohortes-asistencia-batch/` | Fase 1 infra en curso |
 | Limpieza legacy Yii / modelos / BD | `clean-legacy/` | Código fases 01–04 cerrado; migrate BD + smoke opcional |
 
 ## Planes archivados (carpeta eliminada)

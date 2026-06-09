@@ -171,6 +171,16 @@ class PushNotificationService {
     return id != null && id > 0 ? id : null;
   }
 
+  /// Touchpoint de seguimiento post-consulta (`CARE_FOLLOWUP_TOUCHPOINT`).
+  static int? followupTouchpointIdDesdePush(Map<String, dynamic> data) {
+    if (data['type']?.toString() != 'CARE_FOLLOWUP_TOUCHPOINT') {
+      return null;
+    }
+    final raw = data['touchpoint_id']?.toString() ?? '';
+    final id = int.tryParse(raw);
+    return id != null && id > 0 ? id : null;
+  }
+
   /// Abre el flow adecuado según payload push (desde MainScreen).
   static Map<String, dynamic>? turnoStubDesdePush(Map<String, dynamic> data) {
     final type = data['type']?.toString() ?? '';

@@ -12,6 +12,7 @@ use yii\db\ActiveRecord;
  * @property int|null $assistance_pack_id
  * @property int|null $followup_pack_id
  * @property int|null $education_pack_id
+ * @property string|null $followup_scheduled_at
  * @property string $created_at
  * @property string $updated_at
  */

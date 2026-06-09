@@ -99,6 +99,15 @@ final class CarePackGenerationService
         if ((int) $job->encounter_id > 0) {
             $this->repository->attachPackToEncounter((int) $job->encounter_id, $job->pack_type, (int) $pack->id);
         }
+
+        if ($job->pack_type === CarePackType::FOLLOWUP_PROGRAM) {
+            $scheduler = new CareFollowupSchedulerService($this->repository);
+            if ((int) $job->encounter_id > 0) {
+                $scheduler->tryScheduleForEncounter((int) $job->encounter_id);
+            } else {
+                $scheduler->trySchedulePendingForPack((int) $pack->id);
+            }
+        }
     }
 
     private function failJob(CarePackJob $job, string $message): void

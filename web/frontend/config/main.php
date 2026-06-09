@@ -303,6 +303,9 @@ return [
                 'GET api/<version:\w+>/care-packs/assistance' => '<version>/care-packs/assistance',
                 'POST api/<version:\w+>/care-packs/assistance' => '<version>/care-packs/assistance',
                 'OPTIONS api/<version:\w+>/care-packs/assistance' => '<version>/care-packs/assistance',
+                'GET api/<version:\w+>/care-packs/followup' => '<version>/care-packs/followup',
+                'POST api/<version:\w+>/care-packs/followup' => '<version>/care-packs/followup',
+                'OPTIONS api/<version:\w+>/care-packs/followup' => '<version>/care-packs/followup',
                 
                 // Turnos / agenda profesional API: día operativo; ABM profesional_efector_servicio_agenda = listar|crear|actualizar|eliminar (propio) vs *-para-recurso (staff; query id_efector + id_profesional_efector_servicio)
                 'GET api/<version:\w+>/profesional-agenda/dia' => '<version>/profesional-agenda/dia',

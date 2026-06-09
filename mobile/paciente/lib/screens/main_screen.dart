@@ -64,6 +64,12 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _initPush() async {
     await PushNotificationService.instance.init(
       onOpen: (data) {
+        final touchpointId =
+            PushNotificationService.followupTouchpointIdDesdePush(data);
+        if (touchpointId != null) {
+          _abrirFollowupTouchpoint(touchpointId);
+          return;
+        }
         final encounterId = PushNotificationService.encounterIdDesdePush(data);
         if (encounterId != null) {
           _abrirResumenAtencion(encounterId);
@@ -102,6 +108,23 @@ class _MainScreenState extends State<MainScreen> {
         builder: (_) => EncounterSummaryDetailScreen(
           encounterId: encounterId,
           authToken: widget.authToken,
+        ),
+      ),
+    );
+  }
+
+  void _abrirFollowupTouchpoint(int touchpointId) {
+    final path =
+        AppConfig.normalizeApiV1Path('/api/v1/care-packs/followup?touchpoint_id=$touchpointId');
+    final uri = path.startsWith('http')
+        ? Uri.parse(path)
+        : Uri.parse('${AppConfig.apiUrl}$path');
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UiJsonScreen(
+          apiAbsoluteUrl: uri.toString(),
+          authToken: widget.authToken,
+          appClient: 'paciente-flutter',
         ),
       ),
     );

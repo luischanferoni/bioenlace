@@ -2,6 +2,7 @@
 
 namespace common\components\Clinical\PatientSummary;
 
+use common\components\Clinical\CareCohort\Service\CareFollowupSchedulerService;
 use common\components\Clinical\Enum\EncounterStatus;
 use common\components\Core\Service\Push\PushNotificationSender;
 use common\components\Core\Service\Push\PushNotificationTypes;
@@ -98,6 +99,8 @@ final class PatientEncounterSummaryPublishService
         if ($sendPush) {
             $this->sendPush((int) $encounter->subject_persona_id, $encounterId);
         }
+
+        (new CareFollowupSchedulerService())->tryScheduleForEncounter($encounterId, $now);
 
         return true;
     }

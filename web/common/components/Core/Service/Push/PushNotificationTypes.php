@@ -18,6 +18,9 @@ final class PushNotificationTypes
     /** Resumen de atención ambulatoria publicado al paciente. */
     public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
 
+    /** Touchpoint de seguimiento post-consulta (pack cohorte). */
+    public const CARE_FOLLOWUP_TOUCHPOINT = 'CARE_FOLLOWUP_TOUCHPOINT';
+
     /** Expediente legal PDF listo para descarga (staff solicitante). */
     public const LEGAL_RECORD_EXPORT_READY = 'LEGAL_RECORD_EXPORT_READY';
 

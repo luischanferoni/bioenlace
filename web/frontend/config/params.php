@@ -60,25 +60,16 @@ return [
     ],
 
     /**
-     * Packs de cohorte (asistencia, seguimiento, educación) — ver docs/plans/cohortes-asistencia-batch/
+     * Cohortes: activo en API / asistente / móvil (extiende common/config/params-care-cohort.php).
+     * @see web/docs/producto/asistencia-cohortes.md
      */
-    'care_cohort' => [
-        'enabled' => false,
-        'pack_ttl_days' => 30,
-        'generation_delay_minutes' => 0,
-        'vertex_batch' => [
-            'enabled' => false,
-            /** Bucket GCS dedicado (ej. bioenlace-care-batch-prod). Ver docs/plans/cohortes-asistencia-batch/phases/05-vertex-batch-produccion.md */
-            'gcs_bucket' => '',
-            'gcs_input_prefix' => 'care-batch/input/',
-            'gcs_output_prefix' => 'care-batch/output/',
-            /** Mínimo de jobs pending para armar un batchPredictionJob */
-            'min_jobs_for_vertex' => 10,
-            /** Enviar lote antes si el job más antiguo supera este tiempo (minutos). 0 = solo por umbral. */
-            'max_wait_minutes' => 120,
-        ],
-    ],
-    
+    'care_cohort' => array_replace_recursive(
+        require __DIR__ . '/../../common/config/params-care-cohort.php',
+        [
+            'enabled' => true,
+        ]
+    ),
+
     // Optimizaciones de procesamiento
     'comprimir_datos_transito' => true, // Comprimir datos con gzip en tránsito
     'usar_cpu_tareas_simples' => true, // Usar CPU para tareas simples (sin GPU)

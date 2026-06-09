@@ -2,46 +2,24 @@
 
 Generación en cola de packs reutilizables (`assistance_questions`, `followup_program`, `education_bundle`) keyed por `cohort_key` (SHA-256 de perfil estable).
 
-## Activación
+## Configuración
 
-`frontend/config/params.php` → `care_cohort.enabled = true`
+| App | Archivo | Notas |
+|-----|---------|--------|
+| Definición web | `common/config/params-care-cohort.php` | Frontend/admin vía common |
+| Frontend / API | `frontend/config/params.php` | `care_cohort.enabled = true` |
+| **Consola / cron** | `console/config/params.php` + `params-local.php` | **No** usa `common/params.php` |
+| Prod GCP / GCS | `console/config/params-local.php` | Obligatorio para generación IA en cron |
 
-### Vertex batch (producción)
-
-`care_cohort.vertex_batch.enabled = true` + bucket GCS dedicado.
-
-Guía completa: `web/docs/plans/cohortes-asistencia-batch/phases/05-vertex-batch-produccion.md`
-
-Diagnóstico:
-
-```bash
-php yii care-pack/vertex-status
-```
+Documentación: `web/docs/producto/asistencia-cohortes.md`
 
 ## Cron
 
 ```bash
-php yii care-pack/run-jobs          # sync + submit + poll Vertex
-php yii care-pack/poll-vertex       # refuerzo poll
-php yii care-pack/vertex-status     # readiness + contadores cola
+php yii care-pack/run-jobs          # cada 5 min
+php yii care-pack/poll-vertex       # cada 15 min — Vertex batch
+php yii care-pack/vertex-status
 ```
-
-## Hooks
-
-- `EncounterLifecycleService::ensureFromTurno` → asistencia pre-consulta
-- `EncounterLifecycleService::finalize` → seguimiento + educación
-
-## API paciente
-
-- `GET|POST /api/v1/care-packs/assistance?encounter_id=` o `turno_id=`
-- `GET|POST /api/v1/care-packs/followup?touchpoint_id=`
-
-## Telemetría IA
-
-| Modo | Contexto `AICostTracker` |
-|------|--------------------------|
-| Sync | `care-pack-assistance-batch`, `care-pack-followup-batch`, `care-pack-education-batch` |
-| Vertex batch | `care-pack-vertex-batch` |
 
 ## Plan
 

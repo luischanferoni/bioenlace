@@ -1,9 +1,11 @@
 <?php
-$params = array_merge(
+$paramsLocal = __DIR__ . '/params-local.php';
+
+$params = \yii\helpers\ArrayHelper::merge(
     require __DIR__ . '/../../common/config/params.php',
     require __DIR__ . '/../../common/config/params-local.php',
     require __DIR__ . '/params.php',
-    require __DIR__ . '/params-local.php'
+    is_file($paramsLocal) ? require $paramsLocal : []
 );
 
 use \yii\web\Request;

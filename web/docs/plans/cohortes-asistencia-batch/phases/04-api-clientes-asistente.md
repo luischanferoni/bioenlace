@@ -35,7 +35,9 @@ Sin endpoint staff dedicado: reutiliza permiso `historia-clinica` y `EncounterAc
 
 ## Prueba local
 
-1. `care_cohort.enabled = true` en `params.php`
+1. Cohortes activos en `frontend/config/params.php` y `console/config/params.php` (`enabled => true`)
 2. Cron: `php yii care-pack/run-jobs`
-3. Paciente: turno con encounter → botón pre-consulta o asistente «cuestionario pre consulta»
-4. Médico: historia clínica del turno → bloque cohorte con respuestas
+3. Paciente: turno con encounter → botón pre-consulta o asistente
+4. Médico: historia clínica del turno → bloque cohorte
+
+Config y crons: [asistencia-cohortes.md](../../../producto/asistencia-cohortes.md)

@@ -19,7 +19,7 @@
 
 Ejemplo: `bioenlace-care-batch-prod` (región coherente con Vertex, p. ej. `us-central1`).
 
-Prefijos sugeridos (ya en `params.php`):
+Prefijos sugeridos (en `common/config/params-care-cohort.php`):
 
 - `care-batch/input/` — JSONL de entrada
 - `care-batch/output/` — salida Vertex
@@ -37,21 +37,24 @@ La misma cuenta que usa `GoogleAuth` / Vertex en la app necesita:
 
 Principio de mínimo privilegio: limitar `objectAdmin` al bucket de care-batch, no al proyecto entero.
 
-### 3. Params producción (`params-local.php`)
+### 3. Params producción
+
+Merge en **`console/config/params-local.php`** (consola no lee `common/params-local`):
 
 ```php
 'care_cohort' => [
-    'enabled' => true,
     'vertex_batch' => [
         'enabled' => true,
         'gcs_bucket' => 'bioenlace-care-batch-prod',
-        'min_jobs_for_vertex' => 10,   // calibrar con volumen
-        'max_wait_minutes' => 120,     // no dejar jobs colgados de noche
     ],
 ],
 ```
 
-Verificar antes de activar:
+`enabled` de cohortes en cron: `console/config/params.php`. API: `frontend/config/params.php`.
+
+Capas de config: [asistencia-cohortes.md](../../producto/asistencia-cohortes.md)
+
+Verificar:
 
 ```bash
 php yii care-pack/vertex-status
@@ -59,13 +62,7 @@ php yii care-pack/vertex-status
 
 ## Cron producción
 
-```bash
-# Cada 5 min: submit batch + poll + jobs sync residual
-php yii care-pack/run-jobs
-
-# Cada 15 min (refuerzo poll si run-jobs no alcanza)
-php yii care-pack/poll-vertex
-```
+Ver [asistencia-cohortes.md](../../producto/asistencia-cohortes.md): `run-jobs` cada **5 min**; `poll-vertex` cada **15 min** si Vertex batch.
 
 Con `vertex_batch.enabled = true`, los jobs nuevos se encolan en modo `vertex_batch`. Si Vertex falla 5 veces, el job vuelve a `sync`.
 

@@ -44,6 +44,14 @@ Pacientes con el mismo `cohort_key` comparten `care_cohort_pack` por `pack_type`
 - `care-pack-followup-batch`
 - `care-pack-education-batch`
 
-## Config (`params.php` → `care_cohort`)
+## Config
 
-Ver `frontend/config/params.php`. Flag `enabled` permite apagar en dev.
+Definición compartida: `common/config/params-care-cohort.php` (incluida en `common/config/params.php`).
+
+Activación por aplicación:
+
+- Frontend / API: `frontend/config/params.php` (merge con common)
+- Cron: `console/config/params.php` — **independiente** de common
+- Vertex batch prod: `console/config/params-local.php`
+
+Operación y crons: `web/docs/producto/asistencia-cohortes.md`

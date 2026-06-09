@@ -29,4 +29,4 @@
 
 ## Al cerrar el programa
 
-Volcar narrativa estable a `producto/asistencia-cohortes.md` y borrar esta carpeta (`plans/README.md`).
+Volcar narrativa estable a [producto/asistencia-cohortes.md](../../producto/asistencia-cohortes.md) y borrar esta carpeta (`plans/README.md`).

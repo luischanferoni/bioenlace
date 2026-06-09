@@ -1,5 +1,14 @@
 <?php
 
+use yii\helpers\ArrayHelper;
+
+$paramsLocal = __DIR__ . '/params-local.php';
+
+$params = ArrayHelper::merge(
+    require __DIR__ . '/params.php',
+    is_file($paramsLocal) ? require $paramsLocal : []
+);
+
 return [
     'id' => 'app-console',
     'basePath' => dirname(__DIR__),
@@ -31,7 +40,7 @@ return [
             ],
         ],
     ],
-    'params' => require __DIR__ . '/../../common/config/params.php',
+    'params' => $params,
     'controllerMap' => [
         'migrate' => [
             'class' => 'yii\console\controllers\MigrateController',

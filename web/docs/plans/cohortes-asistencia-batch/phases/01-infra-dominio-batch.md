@@ -16,9 +16,11 @@
 
 ## Cron sugerido
 
+Ver **`web/docs/producto/asistencia-cohortes.md`** (frecuencias, crontab, relación con otros jobs).
+
 ```bash
-# Cola sync + submit Vertex cada 5 min
+# Cada 5 min — obligatorio
 php yii care-pack/run-jobs
-# Poll jobs Vertex cada 15 min
+# Cada 15 min — refuerzo poll Vertex (opcional)
 php yii care-pack/poll-vertex
 ```

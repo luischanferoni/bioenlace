@@ -100,4 +100,10 @@ return [
             ],
         ],
     ],
+
+    /**
+     * Cohortes — defaults compartidos (estructura). Activación por app en frontend/console params.
+     * @see common/config/params-care-cohort.php
+     */
+    'care_cohort' => require __DIR__ . '/params-care-cohort.php',
 ];

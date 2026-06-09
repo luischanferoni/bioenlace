@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `cohortes-asistencia-batch` |
-| Estado | En ejecución — Fase 4 |
+| Estado | En ejecución — Fase 5 |
 | Origen | [producto/ideas-a-futuro/](../../producto/ideas-a-futuro/README.md) |
 | Objetivo | Packs reutilizables por cohorte (~90 % similitud), generación en cola/batch Vertex, runtime sin IA salvo delta |
 
@@ -15,7 +15,7 @@
 - [phases/02-asistencia-pre-consulta.md](./phases/02-asistencia-pre-consulta.md) — **implementada** (falta UI asistente/móvil → Fase 4)
 - [phases/03-seguimiento-post-educacion.md](./phases/03-seguimiento-post-educacion.md) — **implementada**
 - [phases/04-api-clientes-asistente.md](./phases/04-api-clientes-asistente.md) — **implementada**
-- [phases/05-vertex-batch-produccion.md](./phases/05-vertex-batch-produccion.md)
+- [phases/05-vertex-batch-produccion.md](./phases/05-vertex-batch-produccion.md) — **implementada** (activación GCP manual)
 
 ## Código Fase 1 (punto de partida)
 

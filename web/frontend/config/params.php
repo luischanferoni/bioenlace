@@ -68,10 +68,14 @@ return [
         'generation_delay_minutes' => 0,
         'vertex_batch' => [
             'enabled' => false,
+            /** Bucket GCS dedicado (ej. bioenlace-care-batch-prod). Ver docs/plans/cohortes-asistencia-batch/phases/05-vertex-batch-produccion.md */
             'gcs_bucket' => '',
             'gcs_input_prefix' => 'care-batch/input/',
             'gcs_output_prefix' => 'care-batch/output/',
+            /** Mínimo de jobs pending para armar un batchPredictionJob */
             'min_jobs_for_vertex' => 10,
+            /** Enviar lote antes si el job más antiguo supera este tiempo (minutos). 0 = solo por umbral. */
+            'max_wait_minutes' => 120,
         ],
     ],
     

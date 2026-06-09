@@ -3,7 +3,9 @@
 namespace console\controllers;
 
 use common\components\Clinical\CareCohort\Service\CareFollowupTouchpointProcessor;
+use common\components\Clinical\CareCohort\Service\CarePackConfig;
 use common\components\Clinical\CareCohort\Service\CarePackJobProcessor;
+use common\models\Clinical\CarePackJob;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -52,6 +54,46 @@ class CarePackController extends Controller
     {
         $n = (new \common\components\Clinical\CareCohort\Batch\CarePackVertexBatchPoller())->poll((int) $limit);
         $this->stdout("care-pack poll-vertex: completed={$n}\n");
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Diagnóstico de configuración Vertex batch + contadores de cola.
+     */
+    public function actionVertexStatus(): int
+    {
+        $readiness = CarePackConfig::vertexBatchReadiness();
+        $this->stdout("Vertex batch readiness: " . ($readiness['ok'] ? 'OK' : 'INCOMPLETO') . "\n");
+        foreach ($readiness['config'] as $key => $value) {
+            $this->stdout("  {$key}: " . (is_bool($value) ? ($value ? 'true' : 'false') : (string) $value) . "\n");
+        }
+        foreach ($readiness['warnings'] as $warning) {
+            $this->stdout("WARN: {$warning}\n");
+        }
+        foreach ($readiness['errors'] as $error) {
+            $this->stdout("ERROR: {$error}\n");
+        }
+
+        if (!CarePackConfig::isEnabled()) {
+            return ExitCode::OK;
+        }
+
+        $pendingVertex = (int) CarePackJob::find()
+            ->where(['status' => CarePackJob::STATUS_PENDING, 'mode' => CarePackJob::MODE_VERTEX_BATCH])
+            ->count();
+        $submitted = (int) CarePackJob::find()
+            ->where(['status' => CarePackJob::STATUS_VERTEX_SUBMITTED])
+            ->count();
+        $pendingSync = (int) CarePackJob::find()
+            ->where(['status' => CarePackJob::STATUS_PENDING, 'mode' => CarePackJob::MODE_SYNC])
+            ->count();
+
+        $this->stdout("Cola: pending_vertex={$pendingVertex} vertex_submitted={$submitted} pending_sync={$pendingSync}\n");
+        $this->stdout(
+            'Umbral batch: min_jobs=' . CarePackConfig::minJobsForVertex()
+            . ' max_wait_min=' . CarePackConfig::maxWaitMinutesForVertex() . "\n"
+        );
 
         return ExitCode::OK;
     }

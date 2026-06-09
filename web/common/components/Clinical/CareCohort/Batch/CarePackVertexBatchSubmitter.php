@@ -51,7 +51,7 @@ final class CarePackVertexBatchSubmitter
             ->limit($limit)
             ->all();
 
-        if (count($jobs) < CarePackConfig::minJobsForVertex()) {
+        if (!$this->shouldSubmitBatch($jobs)) {
             return 0;
         }
 
@@ -141,5 +141,37 @@ final class CarePackVertexBatchSubmitter
         Yii::info("Vertex batch care-pack enviado: {$jobName} jobs=" . count($customMap), 'care-cohort');
 
         return count($customMap);
+    }
+
+    /**
+     * @param list<CarePackJob> $jobs
+     */
+    private function shouldSubmitBatch(array $jobs): bool
+    {
+        $count = count($jobs);
+        if ($count === 0) {
+            return false;
+        }
+        if ($count >= CarePackConfig::minJobsForVertex()) {
+            return true;
+        }
+
+        $maxWait = CarePackConfig::maxWaitMinutesForVertex();
+        if ($maxWait <= 0) {
+            return false;
+        }
+
+        $oldest = null;
+        foreach ($jobs as $job) {
+            $ts = strtotime((string) $job->run_at);
+            if ($ts !== false && ($oldest === null || $ts < $oldest)) {
+                $oldest = $ts;
+            }
+        }
+        if ($oldest === null) {
+            return false;
+        }
+
+        return (time() - $oldest) >= ($maxWait * 60);
     }
 }

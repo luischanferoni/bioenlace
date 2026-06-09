@@ -132,6 +132,7 @@ final class CarePackVertexBatchPoller
             if ((int) $job->encounter_id > 0) {
                 $this->repository->attachPackToEncounter((int) $job->encounter_id, $job->pack_type, (int) $pack->id);
             }
+            CarePackVertexBatchTelemetry::registrarLineaCompletada($decoded);
             $done++;
         }
 
@@ -157,9 +158,13 @@ final class CarePackVertexBatchPoller
         $bucket = substr($path, 0, $slash);
         $objectPrefix = substr($path, $slash + 1);
 
-        $cfg = CarePackConfig::vertexBatch();
-        $fallbackObject = rtrim($objectPrefix, '/') . '/predictions.jsonl';
         $uploader = new GcsSimpleUploader();
+        $lines = $uploader->downloadJsonlLinesUnderPrefix($bucket, $objectPrefix);
+        if ($lines !== []) {
+            return $lines;
+        }
+
+        $fallbackObject = rtrim($objectPrefix, '/') . '/predictions.jsonl';
         $raw = $uploader->downloadString($bucket, $fallbackObject);
         if ($raw === null || trim($raw) === '') {
             return [];

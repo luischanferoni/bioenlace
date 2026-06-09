@@ -27,6 +27,10 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 | `intent-engine-classification` | Paciente o staff | Elegir intent del catálogo cuando las reglas no alcanzan confianza | Ocasional (fallback del motor de intents) | `IntentClassifier` → `IntentEngine` |
 | `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos en `encounter.reason_text` | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
 | `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas: hipótesis diagnósticas y prácticas (máx. 5 c/u) | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |
+| `care-pack-assistance-batch` | Sistema (cola sync) | Pack JSON de preguntas pre-consulta por cohorte | **1× por cohort_key** cuando falta pack vigente | `CarePackGenerationService` |
+| `care-pack-followup-batch` | Sistema (cola sync) | Calendario touchpoints + formularios post-consulta | **1× por cohort_key** | `CarePackGenerationService` |
+| `care-pack-education-batch` | Sistema (cola sync) | Módulos educativos reutilizables | **1× por cohort_key** | `CarePackGenerationService` |
+| `care-pack-vertex-batch` | Sistema (Vertex batch) | Misma generación que arriba, vía `batchPredictionJobs` | **1 inferencia / job** en lote GCS | `CarePackVertexBatchPoller` + `AICostTracker` |
 | `analisis-consulta` | Médico (captura) | Extraer JSON estructurado del dictado según categorías del servicio | **1× por análisis** de encounter | `ConsultaProcesamientoService` |
 | `terminos-contextuales` | — | Reservado en `IAManager`; sin llamadas activas en el repo | — | `IAManager::obtenerTerminosContextuales` |
 
@@ -86,7 +90,19 @@ Detalle: [captura-clinica.md](./captura-clinica.md) · API: `clinical/encounter/
 
 ---
 
-### 4. Transcripción (STT) — no es Gemini
+### 4. Packs de cohorte (asistencia / seguimiento / educación)
+
+| Paso | Modo | Contexto telemetría |
+|------|------|------------------------|
+| Generación sync (cron) | `IAManager` | `care-pack-*-batch` según `pack_type` |
+| Generación Vertex batch | GCS + `batchPredictionJobs` | `care-pack-vertex-batch` |
+| Runtime paciente (formularios) | Sin IA | Lee JSON del pack ya generado |
+
+Plan: [cohortes-asistencia-batch](../plans/cohortes-asistencia-batch/README.md).
+
+---
+
+### 5. Transcripción (STT) — no es Gemini
 
 | Uso | Dónde | Camino feliz |
 |-----|-------|--------------|
@@ -96,7 +112,7 @@ Detalle: [captura-clinica.md](./captura-clinica.md) · API: `clinical/encounter/
 
 ---
 
-### 5. Otros (fuera de `IAManager`)
+### 6. Otros (fuera de `IAManager`)
 
 | Uso | Tecnología | Notas |
 |-----|------------|-------|

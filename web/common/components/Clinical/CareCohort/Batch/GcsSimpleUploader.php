@@ -85,4 +85,88 @@ final class GcsSimpleUploader
 
         return null;
     }
+
+    /**
+     * Lista nombres de objetos bajo un prefijo (paginación simple, hasta $limit).
+     *
+     * @return list<string>
+     */
+    public function listObjectNames(string $bucket, string $prefix, int $limit = 50): array
+    {
+        $token = GoogleAuth::getAccessToken();
+        if ($token === '') {
+            return [];
+        }
+
+        $url = 'https://storage.googleapis.com/storage/v1/b/'
+            . rawurlencode($bucket)
+            . '/o?prefix=' . rawurlencode($prefix)
+            . '&maxResults=' . max(1, min(1000, $limit));
+
+        try {
+            $client = new Client();
+            $response = $client->createRequest()
+                ->setMethod('GET')
+                ->setUrl($url)
+                ->addHeaders(['Authorization' => 'Bearer ' . $token])
+                ->send();
+
+            if (!$response->isOk) {
+                return [];
+            }
+
+            $data = json_decode($response->content ?? '', true);
+            if (!is_array($data) || !isset($data['items']) || !is_array($data['items'])) {
+                return [];
+            }
+
+            $names = [];
+            foreach ($data['items'] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $name = trim((string) ($item['name'] ?? ''));
+                if ($name !== '') {
+                    $names[] = $name;
+                }
+            }
+
+            return $names;
+        } catch (\Throwable $e) {
+            Yii::error('GcsSimpleUploader list: ' . $e->getMessage(), 'care-cohort');
+        }
+
+        return [];
+    }
+
+    /**
+     * Descarga y concatena todas las líneas JSONL bajo un prefijo GCS.
+     *
+     * @return list<string>
+     */
+    public function downloadJsonlLinesUnderPrefix(string $bucket, string $objectPrefix, int $maxObjects = 20): array
+    {
+        $prefix = rtrim($objectPrefix, '/') . '/';
+        $objects = $this->listObjectNames($bucket, $prefix, $maxObjects);
+        $lines = [];
+
+        foreach ($objects as $objectName) {
+            $lower = strtolower($objectName);
+            if (substr($lower, -6) !== '.jsonl') {
+                continue;
+            }
+            $raw = $this->downloadString($bucket, $objectName);
+            if ($raw === null || trim($raw) === '') {
+                continue;
+            }
+            foreach (explode("\n", $raw) as $line) {
+                $line = trim($line);
+                if ($line !== '') {
+                    $lines[] = $line;
+                }
+            }
+        }
+
+        return $lines;
+    }
 }

@@ -1,6 +1,6 @@
 # Fase 2 — Régimen A (tutela verificada por staff)
 
-**Estado:** pendiente
+**Estado:** implementada
 
 ## Objetivo
 
@@ -26,10 +26,12 @@ Padre/madre/tutor opera por menor **sin cuenta**; staff verifica y puede bloquea
 
 ## Checklist
 
-- [ ] RBAC migración rutas staff + tutor
-- [ ] Integración RENAPER reutilizando patrón MPI/admin
-- [ ] UI admin mínima o JSON staff (Fase 2b web opcional)
-- [ ] Auditoría en cada transición de estado
+- [x] RBAC `m260616_110000_api_person_representation_rbac.php`
+- [x] `PersonRepresentationMpiService` (RENAPER/MPI vía `Yii::$app->mpi`)
+- [x] `VerifiedGuardianshipService` + `PersonRepresentationController`
+- [x] Rutas en `frontend/config/main.php`
+- [x] Auditoría (`link_requested`, `link_verified`, `link_blocked`, `link_revoked`)
+- [ ] UI admin web (Fase 2b opcional; staff consume JSON API)
 
 ## Fuera de fase
 

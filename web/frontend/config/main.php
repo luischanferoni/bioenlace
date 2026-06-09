@@ -308,6 +308,22 @@ return [
                 'GET api/<version:\w+>/care-packs/followup' => '<version>/care-packs/followup',
                 'POST api/<version:\w+>/care-packs/followup' => '<version>/care-packs/followup',
                 'OPTIONS api/<version:\w+>/care-packs/followup' => '<version>/care-packs/followup',
+
+                // Representación paciente (tutela verificada + staff)
+                'POST api/<version:\w+>/person-representation/solicitar-menor-como-tutor' => '<version>/person-representation/solicitar-menor-como-tutor',
+                'OPTIONS api/<version:\w+>/person-representation/solicitar-menor-como-tutor' => '<version>/person-representation/solicitar-menor-como-tutor',
+                'GET api/<version:\w+>/person-representation/mis-vinculos-como-tutor' => '<version>/person-representation/mis-vinculos-como-tutor',
+                'POST api/<version:\w+>/person-representation/mis-vinculos-como-tutor' => '<version>/person-representation/mis-vinculos-como-tutor',
+                'OPTIONS api/<version:\w+>/person-representation/mis-vinculos-como-tutor' => '<version>/person-representation/mis-vinculos-como-tutor',
+                'POST api/<version:\w+>/person-representation/verificar-vinculo-para-staff' => '<version>/person-representation/verificar-vinculo-para-staff',
+                'OPTIONS api/<version:\w+>/person-representation/verificar-vinculo-para-staff' => '<version>/person-representation/verificar-vinculo-para-staff',
+                'POST api/<version:\w+>/person-representation/bloquear-para-staff' => '<version>/person-representation/bloquear-para-staff',
+                'OPTIONS api/<version:\w+>/person-representation/bloquear-para-staff' => '<version>/person-representation/bloquear-para-staff',
+                'POST api/<version:\w+>/person-representation/revocar-para-staff' => '<version>/person-representation/revocar-para-staff',
+                'OPTIONS api/<version:\w+>/person-representation/revocar-para-staff' => '<version>/person-representation/revocar-para-staff',
+                'GET api/<version:\w+>/person-representation/vinculos-paciente-para-staff' => '<version>/person-representation/vinculos-paciente-para-staff',
+                'POST api/<version:\w+>/person-representation/vinculos-paciente-para-staff' => '<version>/person-representation/vinculos-paciente-para-staff',
+                'OPTIONS api/<version:\w+>/person-representation/vinculos-paciente-para-staff' => '<version>/person-representation/vinculos-paciente-para-staff',
                 
                 // Turnos / agenda profesional API: día operativo; ABM profesional_efector_servicio_agenda = listar|crear|actualizar|eliminar (propio) vs *-para-recurso (staff; query id_efector + id_profesional_efector_servicio)
                 'GET api/<version:\w+>/profesional-agenda/dia' => '<version>/profesional-agenda/dia',

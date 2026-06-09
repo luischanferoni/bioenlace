@@ -133,5 +133,12 @@ final class PersonRepresentationSubjectService
             Yii::$app->user->id !== null ? (int) Yii::$app->user->id : null,
             $payload
         );
+
+        (new PersonRepresentationDelegatedActionNotifier())->notifyIfEnabled(
+            $action,
+            $actor,
+            $subjectPersonaId,
+            $payload
+        );
     }
 }

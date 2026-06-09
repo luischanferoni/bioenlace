@@ -18,11 +18,19 @@ class CarePlanService {
   }
 
   /// Devuelve `{ success, data: List<Map>, message? }`.
-  Future<Map<String, dynamic>> fetchActivePlans({bool includeActivities = true}) async {
+  Future<Map<String, dynamic>> fetchActivePlans({
+    bool includeActivities = true,
+    int? subjectPersonaId,
+  }) async {
     try {
       final token = await _effectiveToken();
-      final q = includeActivities ? '?includeActivities=1' : '?includeActivities=0';
-      final uri = Uri.parse('${AppConfig.apiUrl}/clinical/care-plans/active$q');
+      final params = <String, String>{
+        'includeActivities': includeActivities ? '1' : '0',
+        if (subjectPersonaId != null && subjectPersonaId > 0)
+          'subject_persona_id': '$subjectPersonaId',
+      };
+      final uri = Uri.parse('${AppConfig.apiUrl}/clinical/care-plans/active')
+          .replace(queryParameters: params);
       final response = await http
           .get(
             uri,

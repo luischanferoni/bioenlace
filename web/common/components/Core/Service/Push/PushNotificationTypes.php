@@ -30,5 +30,8 @@ final class PushNotificationTypes
     /** Guardia: triage nivel 1–2 (Manchester). */
     public const EMERGENCY_PATIENT_CRITICAL = 'EMERGENCY_PATIENT_CRITICAL';
 
+    /** Representante actuó por el paciente (N9, si el paciente activó la preferencia). */
+    public const REPRESENTATIVE_ACTION = 'REPRESENTATIVE_ACTION';
+
     public const GENERICO = 'GENERICO';
 }

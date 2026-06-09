@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `representacion-paciente-fhir` |
-| Estado | Fases 1–4 implementadas — Fase 5 pendiente |
+| Estado | Fases 1–5 implementadas (E2E móvil pendiente de validación manual) |
 | Objetivo | Vínculos padre/madre/tutor ↔ menor sin cuenta (A) y delegación paciente → representante (B), con actuación en turnos y trayectoria clínica |
 
 ## Decisiones de producto (cerradas)

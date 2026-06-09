@@ -19,11 +19,21 @@ class EncounterPatientSummaryApi {
     return prefs.getString('auth_token');
   }
 
-  Future<Map<String, dynamic>> list({int limit = 20, int offset = 0}) async {
+  Future<Map<String, dynamic>> list({
+    int limit = 20,
+    int offset = 0,
+    int? subjectPersonaId,
+  }) async {
     final token = await _effectiveToken();
+    final params = <String, String>{
+      'limit': '$limit',
+      'offset': '$offset',
+      if (subjectPersonaId != null && subjectPersonaId > 0)
+        'subject_persona_id': '$subjectPersonaId',
+    };
     final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/encounter/listar-atenciones-como-paciente?limit=$limit&offset=$offset',
-    );
+      '${AppConfig.apiUrl}/clinical/encounter/listar-atenciones-como-paciente',
+    ).replace(queryParameters: params);
     final response = await http
         .get(
           uri,

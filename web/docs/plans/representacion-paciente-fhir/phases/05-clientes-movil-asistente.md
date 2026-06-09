@@ -1,6 +1,6 @@
 # Fase 5 — Móvil, asistente y notificaciones
 
-**Estado:** pendiente
+**Estado:** implementada
 
 ## Objetivo
 
@@ -10,32 +10,34 @@ UX paciente/tutor: elegir sujeto, gestionar vínculos y delegaciones; asistente 
 
 | Pantalla / flujo | Descripción |
 |------------------|-------------|
-| Selector “A cargo de” | Header o chip: Yo \| Hijo Juan \| … |
-| Mis hijos (A) | Lista vínculos tutor; CTA solicitar alta menor |
-| Mis representantes (B) | Paciente designa / revoca |
-| Pacientes a mi cargo (B) | Representante ve lista y entra en contexto |
-| Preferencias | Toggle notificación acciones representante (N9) |
+| Selector “A cargo de” | Chip en inicio (`PersonRepresentationSubjectChip`) |
+| Mis hijos (A) | Hub: lista vínculos tutor + solicitar alta menor |
+| Mis representantes (B) | Hub: designar / revocar |
+| Pacientes a mi cargo (B) | Hub: lista + «Operar» fija contexto |
+| Preferencias | Toggle `notify_on_representative_action` (N9) |
 
-Al cambiar sujeto: propagar `subject_persona_id` a home turnos, motivos, pre-consulta.
+Al cambiar sujeto: `subject_persona_id` en turnos, care plans, pre-consulta y sesión API.
 
 ## Asistente
 
 | Artefacto | Contenido |
 |-----------|-----------|
-| `personas.vincular-menor-flow.yaml` | Tutor → datos hijo → pending staff (o mensaje espera verificación) |
-| `personas.designar-representante-flow.yaml` | Paciente → buscar persona → confirmar |
-| Catálogo acciones | `PersonRepresentationUiActionCatalog` si aplica |
+| `personas.vincular-menor-flow.yaml` | Abre hub nativo / submit solicitud tutela |
+| `personas.designar-representante-flow.yaml` | Abre hub nativo / submit designación |
+| `PersonRepresentationUiActionCatalog` | Registrado en `UiActionCatalog` |
 
-## Staff móvil / web
+## Notificaciones N9
 
-- Verificación vínculo pendiente (Fase 2) en flujo admisión o módulo paciente.
+- `PersonRepresentationDelegatedActionNotifier` — push + inbox si el paciente activó la preferencia.
+- Hook en `PersonRepresentationSubjectService::auditDelegatedAction`.
+- Tipo FCM: `REPRESENTATIVE_ACTION`.
 
 ## Checklist
 
-- [ ] `shared` helper contexto sujeto (como care_pack_navigation)
-- [ ] Push opcional al paciente si `notify_on_representative_action`
-- [ ] Intents + RBAC
-- [ ] E2E: padre saca turno hijo desde móvil
+- [x] `shared` helper contexto sujeto (`person_representation_context.dart`)
+- [x] Push opcional al paciente si `notify_on_representative_action`
+- [x] Intents YAML + catálogo acciones
+- [ ] E2E manual: padre saca turno hijo desde móvil (validar en dispositivo)
 
 ## Fuera de fase
 

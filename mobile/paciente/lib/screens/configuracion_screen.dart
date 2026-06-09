@@ -6,6 +6,7 @@ import '../config/paciente_dev_config.dart';
 import '../auth/paciente_dev_login.dart';
 import '../services/chat_service.dart';
 import 'main_screen.dart';
+import 'person_representation_hub_screen.dart';
 import 'signup_screen.dart';
 
 /// Pantalla de configuración del paciente (perfil, preferencias, cerrar sesión).
@@ -98,6 +99,25 @@ class ConfiguracionScreen extends StatelessWidget {
           CarePlanReminderGlobalSwitch(authToken: authToken),
           BioDivider.subtle(),
           _ConfigTile(
+            icon: Icons.family_restroom_outlined,
+            title: 'Representación',
+            subtitle: 'Tutela, representantes y notificaciones',
+            onTap: () {
+              final actorId = int.tryParse(userId) ?? 0;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PersonRepresentationHubScreen(
+                    authToken: authToken,
+                    actorPersonaId: actorId,
+                    actorLabel: userName,
+                  ),
+                ),
+              );
+            },
+          ),
+          BioDivider.subtle(),
+          _ConfigTile(
             icon: Icons.dark_mode_outlined,
             title: 'Tema',
             subtitle: 'Claro',
@@ -181,6 +201,7 @@ class ConfiguracionScreen extends StatelessWidget {
     await prefs.remove('user_id');
     await prefs.remove('user_name');
     await prefs.remove('auth_token');
+    await PersonRepresentationContext.instance.clearOnLogout();
 
     if (!context.mounted) return;
 

@@ -66,7 +66,22 @@ class HomeScreenState extends State<HomeScreen> {
     _turnosService = TurnosService(authToken: widget.authToken);
     _carePlanService = CarePlanService(authToken: widget.authToken);
     _scrollController.addListener(_onScroll);
+    _initRepresentationContext();
     _cargarInicial();
+  }
+
+  Future<void> _initRepresentationContext() async {
+    final actorId = int.tryParse(widget.userId) ?? 0;
+    await PersonRepresentationContext.instance.bindActor(
+      actorPersonaId: actorId,
+      actorLabel: widget.userName.split(',').first.trim(),
+      authToken: widget.authToken,
+    );
+  }
+
+  int? get _subjectPersonaId {
+    final ctx = PersonRepresentationContext.instance;
+    return ctx.actingForOther ? ctx.subjectPersonaId : null;
   }
 
   @override
@@ -100,6 +115,7 @@ class HomeScreenState extends State<HomeScreen> {
         alcance: alcance,
         limit: _proximosPageSize,
         offset: offset,
+        subjectPersonaId: _subjectPersonaId,
       );
       if (r['success'] != true) {
         error = r['message'] as String? ?? 'Error al cargar turnos';
@@ -151,7 +167,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _cargarCarePlans() async {
     setState(() => _loadingCarePlans = true);
-    final r = await _carePlanService.fetchActivePlans();
+    final r = await _carePlanService.fetchActivePlans(
+      subjectPersonaId: _subjectPersonaId,
+    );
     if (!mounted) return;
     setState(() {
       _loadingCarePlans = false;
@@ -199,6 +217,7 @@ class HomeScreenState extends State<HomeScreen> {
       alcance: 'pasados',
       limit: _pasadosPageLimit,
       offset: 0,
+      subjectPersonaId: _subjectPersonaId,
     );
     if (!mounted) return;
     setState(() {
@@ -234,6 +253,7 @@ class HomeScreenState extends State<HomeScreen> {
       alcance: 'pasados',
       limit: _pasadosPageLimit,
       offset: _pasados.length,
+      subjectPersonaId: _subjectPersonaId,
     );
     if (!mounted) return;
     setState(() {
@@ -274,6 +294,7 @@ class HomeScreenState extends State<HomeScreen> {
       alcance: 'pasados',
       limit: _pasadosPageLimit,
       offset: 0,
+      subjectPersonaId: _subjectPersonaId,
     );
     if (!mounted) return;
     if (r['success'] == true) {
@@ -710,28 +731,37 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeaderSaludo(BuildContext context) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Text(
-            '${_saludo()}, ${widget.userName.split(',').first.trim()}',
-            style: BioTypography.h2,
-          ),
-        ),
-        if (widget.onOpenAlertas != null)
-          IconButton(
-            tooltip: 'Alertas',
-            onPressed: widget.onOpenAlertas,
-            icon: Badge(
-              isLabelVisible: widget.alertasNoLeidas > 0,
-              backgroundColor: IntentPalette.of(UiIntent.danger).base,
-              label: Text(
-                widget.alertasNoLeidas > 99 ? '99+' : '${widget.alertasNoLeidas}',
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                '${_saludo()}, ${widget.userName.split(',').first.trim()}',
+                style: BioTypography.h2,
               ),
-              child: const Icon(Icons.notifications_outlined),
             ),
-          ),
+            if (widget.onOpenAlertas != null)
+              IconButton(
+                tooltip: 'Alertas',
+                onPressed: widget.onOpenAlertas,
+                icon: Badge(
+                  isLabelVisible: widget.alertasNoLeidas > 0,
+                  backgroundColor: IntentPalette.of(UiIntent.danger).base,
+                  label: Text(
+                    widget.alertasNoLeidas > 99 ? '99+' : '${widget.alertasNoLeidas}',
+                  ),
+                  child: const Icon(Icons.notifications_outlined),
+                ),
+              ),
+          ],
+        ),
+        PersonRepresentationSubjectChip(
+          authToken: widget.authToken,
+          onSubjectChanged: _cargarInicial,
+        ),
       ],
     );
   }
@@ -864,6 +894,7 @@ class HomeScreenState extends State<HomeScreen> {
             context: context,
             turnoId: turnoId,
             authToken: widget.authToken,
+            subjectPersonaId: _subjectPersonaId,
           );
         },
       ));

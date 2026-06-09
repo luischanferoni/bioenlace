@@ -1,0 +1,34 @@
+intent_id: personas.designar-representante-flow
+version: 1
+
+action_name: "Designar representante"
+description: "Delegar gestión de turnos y trayectoria a otra persona con cuenta."
+rbac_route: "/api/person-representation/designar-representante"
+keywords:
+  - designar representante
+  - delegar cuenta
+  - autorizar familiar
+  - quien opera por mí
+  - representante
+  - paciente a cargo
+
+intent_semantics:
+  goal: >-
+    El paciente designa a otra persona con cuenta para operar en su nombre (régimen B).
+  how: >-
+    Buscar persona por documento → confirmar parentesco → representante activo de inmediato.
+  preconditions:
+    - Paciente autenticado con cuenta propia.
+  outcome:
+    - Representante activo con permisos v1 (turnos, motivos, pre-consulta, tratamiento, HC).
+
+subintents:
+  - id: gestionar_delegacion
+    assistant_text: "Representantes"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: person-representation.hub
+
+flow_submit:
+  action_id: person-representation.designar-representante

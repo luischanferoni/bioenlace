@@ -27,9 +27,14 @@ void abrirAsistenciaPreConsulta({
   required int turnoId,
   String? authToken,
   String appClient = 'paciente-flutter',
+  int? subjectPersonaId,
 }) {
+  var query = 'turno_id=$turnoId';
+  if (subjectPersonaId != null && subjectPersonaId > 0) {
+    query += '&subject_persona_id=$subjectPersonaId';
+  }
   final path = AppConfig.normalizeApiV1Path(
-    '/api/v1/care-packs/assistance?turno_id=$turnoId',
+    '/api/v1/care-packs/assistance?$query',
   );
   final uri = path.startsWith('http')
       ? Uri.parse(path)

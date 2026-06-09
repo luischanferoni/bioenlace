@@ -42,6 +42,7 @@ class TurnosService {
     String? alcance,
     int? limit,
     int? offset,
+    int? subjectPersonaId,
   }) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/turnos/listar-como-paciente');
@@ -58,6 +59,8 @@ class TurnosService {
         if (alcance != null) 'alcance': alcance,
         if (limit != null) 'limit': limit,
         if (offset != null) 'offset': offset,
+        if (subjectPersonaId != null && subjectPersonaId > 0)
+          'subject_persona_id': subjectPersonaId,
       };
 
       final response = await http

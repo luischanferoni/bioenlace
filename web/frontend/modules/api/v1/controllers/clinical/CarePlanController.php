@@ -283,16 +283,19 @@ class CarePlanController extends BaseController
 
     public function actionActive()
     {
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona <= 0) {
-            return $this->clinicalError(
-                'Solo pacientes autenticados pueden listar care plans activos (idPersona en sesión).',
-                null,
-                400
-            );
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        try {
+            $subjectSvc = new PersonRepresentationSubjectService();
+            $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
+            $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, []);
+        } catch (\InvalidArgumentException $e) {
+            return $this->clinicalError($e->getMessage(), null, 400);
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            return $this->clinicalError($e->getMessage(), null, 403);
         }
 
-        $includeActivities = Yii::$app->request->get('includeActivities', '1') !== '0';
+        $includeActivities = $req->get('includeActivities', '1') !== '0';
         $plans = $this->activeQuery->listActive($idPersona);
         $data = [];
         foreach ($plans as $plan) {

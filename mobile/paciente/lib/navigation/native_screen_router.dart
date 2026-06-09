@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../screens/configuracion_screen.dart';
 import '../screens/encounter_summary_list_screen.dart';
+import '../screens/person_representation_hub_screen.dart';
 
 /// Traduce `client_open.mobile.screen_id` del asistente a pantallas Flutter.
 class NativeScreenRouter {
@@ -53,6 +54,15 @@ class NativeScreenRouter {
       case 'encounter_summary_list':
         return MaterialPageRoute(
           builder: (_) => EncounterSummaryListScreen(authToken: authToken),
+        );
+      case 'person_representation_hub':
+        final actorId = int.tryParse(userId) ?? 0;
+        return MaterialPageRoute(
+          builder: (_) => PersonRepresentationHubScreen(
+            authToken: authToken,
+            actorPersonaId: actorId,
+            actorLabel: userName,
+          ),
         );
       default:
         return null;

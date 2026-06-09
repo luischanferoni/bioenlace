@@ -39,6 +39,11 @@ Al cambiar sujeto: `subject_persona_id` en turnos, care plans, pre-consulta y se
 - [x] Intents YAML + catálogo acciones
 - [ ] E2E manual: padre saca turno hijo desde móvil (validar en dispositivo)
 
+## Documentación estable
+
+- [producto/representacion-paciente.md](../../../producto/representacion-paciente.md)
+- Técnica: `common/components/Person/Representation/README.md`
+
 ## Fuera de fase
 
 - FHIR REST público RelatedPerson/Consent

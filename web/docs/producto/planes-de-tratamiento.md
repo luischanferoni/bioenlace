@@ -4,6 +4,8 @@
 
 Un plan de tratamiento agrupa **actividades** (medicación, controles, hábitos) para un paciente, a menudo vinculado a un encounter. El paciente ve planes activos y **recordatorios** en su dispositivo cuando el producto lo soporta.
 
+Un **representante** con permiso `clinical.care_plan` puede listar y abrir tratamientos del sujeto pasando `subject_persona_id` (mismo patrón que turnos). Ver [representacion-paciente.md](./representacion-paciente.md).
+
 ## Cómo funciona
 
 ```mermaid

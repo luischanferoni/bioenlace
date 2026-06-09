@@ -4,6 +4,7 @@
 |-------|--------|
 | Slug | `representacion-paciente-fhir` |
 | Estado | Fases 1–5 implementadas (E2E móvil pendiente de validación manual) |
+| Doc estable | [producto/representacion-paciente.md](../../producto/representacion-paciente.md) |
 | Objetivo | Vínculos padre/madre/tutor ↔ menor sin cuenta (A) y delegación paciente → representante (B), con actuación en turnos y trayectoria clínica |
 
 ## Decisiones de producto (cerradas)

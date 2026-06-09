@@ -59,8 +59,12 @@ Ejemplos de flujos conversacionales con UI JSON (YAML en `SubIntentEngine/schema
 | Internación | `internacion.cambio-cama-flow` | Traslado de cama en internación activa |
 | Agenda | `turnos.indicadores-agenda-flow` | KPIs no-show y lead time (staff) |
 | Planes | `tratamiento.adherencia-resumen-staff` | Dashboard adherencia por efector |
+| Personas | `personas.vincular-menor-flow` | Tutela verificada (hub nativo / solicitud menor) |
+| Personas | `personas.designar-representante-flow` | Delegación paciente → representante |
 
-Detalle operativo por área: [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md), [turnos.md](./turnos.md), [planes-de-tratamiento.md](./planes-de-tratamiento.md).
+Catálogo API: `PersonRepresentationUiActionCatalog` (acción hub `person-representation.hub` → pantalla nativa `person_representation_hub` en móvil).
+
+Detalle operativo por área: [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md), [turnos.md](./turnos.md), [planes-de-tratamiento.md](./planes-de-tratamiento.md), [representacion-paciente.md](./representacion-paciente.md).
 
 ## Costos
 

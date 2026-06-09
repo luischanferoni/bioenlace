@@ -32,8 +32,9 @@ flowchart LR
 ## Paciente en el día a día
 
 - Inicio: próximos turnos, tratamientos activos, mis atenciones.
+- **Representación:** chip «A cargo de» en inicio (yo u otro paciente con tutela o delegación activa); gestión en Configuración → Representación. Detalle: [representacion-paciente.md](./representacion-paciente.md).
 - Resolver turnos en conflicto o pedir acciones desde la conversación o desde accesos directos en inicio.
-- Configuración: alertas, recordatorios de planes de tratamiento.
+- Configuración: alertas, recordatorios de planes de tratamiento, preferencia de aviso cuando un representante actúa (N9).
 
 ## Médico en el día a día
 
@@ -45,5 +46,6 @@ flowchart LR
 
 ## Relación con otros documentos
 
+- [representacion-paciente.md](./representacion-paciente.md) — tutela de menor y delegación
 - [superficies-ui.md](./superficies-ui.md) — inicio vs captura vs flows (web = móvil)
 - [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md)

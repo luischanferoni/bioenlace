@@ -7,6 +7,7 @@ Un **turno** es la cita entre una persona y un profesional en un efector y servi
 ## Actores
 
 - **Paciente:** reserva y gestiona citas desde Bioenlace.
+- **Tutor o representante:** puede reservar y gestionar turnos **de otro paciente** (menor sin cuenta o adulto que delegó), fijando `subject_persona_id` o el contexto «A cargo de» en móvil. Ver [representacion-paciente.md](./representacion-paciente.md).
 - **Profesional y administración del efector:** calendario, alta para terceros, sobreturnos, cancelación masiva de un día.
 - **Sistema:** recordatorios y avisos cuando cambia la agenda o el turno entra en conflicto.
 
@@ -55,6 +56,7 @@ Superficies: API `GET /api/v1/turnos/indicadores-agenda` (filtros por período y
 
 ## Relación con el resto del producto
 
+- Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).
 - Un turno puede originar un **encounter** ambulatorio al atenderse (captura clínica).
 - Los turnos también se pueden iniciar por conversación; el detalle técnico del motor está en [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).
 - Madurez HIS del módulo: [his-completo/11-agenda-turnos.md](../his-completo/11-agenda-turnos.md).

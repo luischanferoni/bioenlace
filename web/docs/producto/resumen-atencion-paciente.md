@@ -4,6 +4,8 @@
 
 Tras una consulta **ambulatoria finalizada**, el paciente recibe un **resumen legible** (texto trabajado con IA al guardar) y enlaces a recetas, pedidos y laboratorio. El **expediente legal amplio** es solo para staff autorizado, en PDF generado en cola.
 
+Un representante con permiso `clinical.historia_resumen` puede consultar resúmenes del sujeto delegado (`subject_persona_id`); la acción queda auditada y puede notificar al paciente si tiene activa la preferencia N9. Ver [representacion-paciente.md](./representacion-paciente.md).
+
 ## Resumen para el paciente
 
 ```mermaid

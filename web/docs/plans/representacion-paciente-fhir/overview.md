@@ -35,8 +35,10 @@ Existe parentesco **ad hoc** en programas (p. ej. diabetes) y antecedentes famil
 | 1 | Tablas FHIR-aligned, catálogo parentesco, servicios dominio, auditoría |
 | 2 | API staff régimen A + alta menor + listado “mis familiares” |
 | 3 | API régimen B: designar, revocar, listar representantes |
-| 4 | `PersonRelationshipAccessService` en turnos, motivos, cohortes, recetas, HC |
+| 4 | `PersonRepresentationSubjectService` + `PersonRepresentationAccessService` en turnos, motivos, cohortes, recetas, HC |
 | 5 | Flutter selector “a cargo de”, prefs notificación, intents asistente |
+
+**Estado (jun 2026):** fases 1–5 implementadas. Narrativa estable: [producto/representacion-paciente.md](../../producto/representacion-paciente.md).
 
 ## Fuera de alcance inicial
 

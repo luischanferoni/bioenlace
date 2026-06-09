@@ -10,6 +10,8 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - `EntryPoints/AppointmentReason/`: motivos de consulta paciente (`motivos-consulta/*`), sin preprocess del chat.
 - `EntryPoints/ClinicalEncounter/`: captura clínica (`/api/v1/clinical/encounter/analizar|guardar`), sin preprocess del chat. Contexto clínico acotado del paciente vía `Clinical/AiContext/PatientAiContextBuilder` (captura, motivos batch, chat conversacional).
 - `Catalog/ClinicalUiActionCatalog.php`: acciones API clínicas en `UiActionCatalog` (RBAC `/api/clinical/...`).
+- `Catalog/CarePackUiActionCatalog.php`: care-packs (asistencia, seguimiento).
+- `Catalog/PersonRepresentationUiActionCatalog.php`: representación paciente (tutela, delegación, hub nativo).
 - `Service/AssistantDraftNormalizer.php`: `encounter_id`, `care_plan_id` en draft de flows.
 - Documentación: [web/docs/arquitectura/asistente-motores.md](../../docs/arquitectura/asistente-motores.md), [web/docs/producto/asistente-y-chat.md](../../docs/producto/asistente-y-chat.md)
 - `SubIntentEngine/`: motor conversacional *dentro* de un intent (YAML); evaluación de **`business_rules`** (`pre_flow`) vía `IntentBusinessRules`; **`draft_hydrator`** vía `FlowDraftHydratorService` (sin listar intents en `ChatOrchestrator`).
@@ -50,6 +52,8 @@ No hay comando de compilación de `ui_type=flow` hacia `views/json`. El servidor
 | `internacion.alta-estructurada-flow` | Alta estructurada |
 | `turnos.indicadores-agenda-flow` | KPIs agenda staff |
 | `tratamiento.adherencia-resumen-staff` | Adherencia care plans |
+| `personas.vincular-menor-flow` | Tutela verificada (menor sin cuenta) |
+| `personas.designar-representante-flow` | Delegación paciente → representante |
 
-Documentación de producto: [internacion.md](../../docs/producto/internacion.md), [urgencias-guardia.md](../../docs/producto/urgencias-guardia.md).
+Documentación de producto: [internacion.md](../../docs/producto/internacion.md), [urgencias-guardia.md](../../docs/producto/urgencias-guardia.md), [representacion-paciente.md](../../docs/producto/representacion-paciente.md).
 

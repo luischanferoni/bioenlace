@@ -7,6 +7,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | Documento | Tema |
 |-----------|------|
 | [apps-paciente-medico.md](./apps-paciente-medico.md) | Experiencia paciente y médico, registro, medios |
+| [representacion-paciente.md](./representacion-paciente.md) | Tutela de menor y delegación (operar por otro paciente) |
 | [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |
 | [triage-reserva-turno.md](./triage-reserva-turno.md) | Motivo y alarmas antes de reservar (catálogo + bandas A–D) |
 | [catalogo-usos-ia.md](./catalogo-usos-ia.md) | Catálogo de contextos y usos de IA (referencia rápida) |

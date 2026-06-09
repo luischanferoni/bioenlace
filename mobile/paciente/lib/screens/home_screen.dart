@@ -786,7 +786,11 @@ class HomeScreenState extends State<HomeScreen> {
         !enResolucion &&
         turnoTieneEncounterParaMotivos(t) &&
         turnoMotivosInputAbiertoEnProducto(t);
+    final puedeAsistenciaCohorte = futuro &&
+        !enResolucion &&
+        turnoAsistenciaCohorteDisponibleEnProducto(t);
     final idConsulta = puedeMotivos ? _encounterIdDesdeTurno(t) : null;
+    final turnoId = turnoIdDesdePayloadProducto(t);
 
     final cabecera = Text(
       '${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
@@ -846,6 +850,20 @@ class HomeScreenState extends State<HomeScreen> {
                     'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
               ),
             ),
+          );
+        },
+      ));
+    }
+    if (!enResolucion && puedeAsistenciaCohorte && turnoId != null) {
+      acciones.add(BioButton.outlinePrimary(
+        label: 'Cuestionario pre-consulta',
+        size: BioButtonSize.sm,
+        icon: Icons.fact_check_outlined,
+        onPressed: () {
+          abrirAsistenciaPreConsulta(
+            context: context,
+            turnoId: turnoId,
+            authToken: widget.authToken,
           );
         },
       ));

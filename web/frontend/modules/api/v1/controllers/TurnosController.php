@@ -6,6 +6,7 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
+use common\components\Clinical\CareCohort\Service\CarePackConfig;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
@@ -1794,6 +1795,9 @@ class TurnosController extends BaseController
             'motivos_input_abierto' => $encounterId !== null
                 && AppointmentReasonWindowService::isInputOpen($encounterId),
             'motivos_cierre_minutos' => AppointmentReasonWindowService::minutesBeforeClose(),
+            'asistencia_cohorte_disponible' => CarePackConfig::isEnabled()
+                && $encounterId !== null
+                && AppointmentReasonWindowService::isInputOpen($encounterId),
             'profesional' => $profesional,
             'created_at' => $turno->created_at,
             'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION,

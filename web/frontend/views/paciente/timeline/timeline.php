@@ -95,6 +95,11 @@ $this->registerJsFile(
                             <div id="tl_motivos_consulta_mensajes" class="mt-2"></div>
                         </div>
 
+                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_care_pack_section" style="display:none;">
+                            <h6 class="mb-2 text-primary"><b>ASISTENCIA PRE-CONSULTA (COHORTE)</b></h6>
+                            <div id="tl_care_pack_cohorte" class="text-body"></div>
+                        </div>
+
                         <!-- Signos Vitales Actuales -->
                         <div class="mb-2">
                             <div class="d-flex align-items-center justify-content-between mb-1">
@@ -300,6 +305,57 @@ Modal::end();
         return d.innerHTML;
     }
 
+    function renderCarePackCohorte(cohorte) {
+        var section = document.getElementById('tl_care_pack_section');
+        var el = document.getElementById('tl_care_pack_cohorte');
+        if (!section || !el) return;
+        if (!cohorte || typeof cohorte !== 'object') {
+            section.style.display = 'none';
+            el.innerHTML = '';
+            return;
+        }
+        var assistance = cohorte.assistance || {};
+        var answers = assistance.answers || [];
+        var notes = assistance.notes_for_staff ? String(assistance.notes_for_staff).trim() : '';
+        if (!notes && (!answers || !answers.length)) {
+            section.style.display = 'none';
+            el.innerHTML = '';
+            return;
+        }
+        section.style.display = '';
+        var html = '';
+        if (cohorte.cohort_key_short) {
+            html += '<div class="small text-muted mb-2">Cohorte ' + escMotivosHtml(cohorte.cohort_key_short) + '</div>';
+        }
+        var profile = cohorte.cohort_profile || {};
+        var profileParts = ['life_stage', 'sexo', 'motive_cluster', 'jurisdiction']
+            .map(function (k) { return profile[k] ? String(profile[k]) : ''; })
+            .filter(function (v) { return v !== ''; });
+        if (profileParts.length) {
+            html += '<div class="mb-2">' + escMotivosHtml(profileParts.join(' · ')) + '</div>';
+        }
+        if (notes !== '') {
+            html += '<div class="small text-uppercase text-muted">Orientación</div>';
+            html += '<p class="mb-2" style="white-space:pre-wrap">' + escMotivosHtml(notes) + '</p>';
+        }
+        if (answers.length) {
+            html += '<div class="small text-uppercase text-muted">Respuestas del paciente</div><ul class="mb-0">';
+            answers.forEach(function (a) {
+                html += '<li class="mb-2"><strong>' + escMotivosHtml(a.question || a.id || '') + '</strong><br />'
+                    + escMotivosHtml(a.answer || '') + '</li>';
+            });
+            html += '</ul>';
+        } else if (assistance.status === 'submitted') {
+            html += '<p class="text-muted mb-0">Respuestas registradas.</p>';
+        } else {
+            html += '<p class="text-muted mb-0">El paciente aún no completó el cuestionario.</p>';
+        }
+        if (assistance.delta_requested) {
+            html += '<p class="mt-2 mb-0"><span class="badge bg-warning text-dark">Requiere adaptación del pack</span></p>';
+        }
+        el.innerHTML = html;
+    }
+
     function renderMotivosPacienteApp(mp) {
         var box = document.getElementById('tl_motivos_consulta_mensajes');
         if (!box) return;
@@ -382,6 +438,7 @@ Modal::end();
             var mp = payload.data.motivos_consulta_paciente || {};
             var msgPac = (mp.messages && mp.messages.length) ? mp.messages.length : 0;
             renderMotivos(info.motivos_consulta || null, mp);
+            renderCarePackCohorte(payload.data.care_pack_cohorte || null);
             var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgs) boxMsgs.innerHTML = '';
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
@@ -393,6 +450,7 @@ Modal::end();
             renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
             renderMotivos(null, null);
+            renderCarePackCohorte(null);
             var boxMsgsErr = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgsErr) boxMsgsErr.innerHTML = '';
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {

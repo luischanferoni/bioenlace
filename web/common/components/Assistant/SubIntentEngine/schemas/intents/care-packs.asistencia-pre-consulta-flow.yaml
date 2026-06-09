@@ -1,0 +1,45 @@
+intent_id: care-packs.asistencia-pre-consulta-flow
+version: 1
+
+action_name: "Cuestionario pre-consulta"
+description: "Completar preguntas de asistencia antes de la consulta."
+rbac_route: "/api/care-packs/assistance"
+keywords:
+  - pre consulta
+  - cuestionario antes de la consulta
+  - asistencia preconsulta
+  - preguntas antes del turno
+  - cuestionario pre consulta
+
+intent_semantics:
+  goal: >-
+    Completar el cuestionario de asistencia pre-consulta para un turno propio.
+  how: >-
+    Lista de turnos pendientes → formulario dinámico del pack de cohorte → guardar respuestas.
+  outcome:
+    - Respuestas registradas para el equipo de salud antes de la consulta.
+
+subintents:
+  - id: select_turno
+    assistant_text: "Turno"
+    provides:
+      - draft.id
+    next: completar
+    open_ui:
+      action_id: turnos.elegir-pendiente-como-paciente
+
+  - id: completar
+    assistant_text: "Cuestionario"
+    requires:
+      - draft.id
+    provides: []
+    next: ""
+    open_ui:
+      action_id: care-packs.assistance
+      params:
+        turno_id: "draft.id"
+
+flow_submit:
+  action_id: care-packs.assistance
+  params:
+    turno_id: "draft.id"

@@ -166,6 +166,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                     _historiaClinicaData!.signosVitales),
                                 BioSpacing.gapH(BioSpacing.md),
                                 _buildMotivosConsulta(_historiaClinicaData!),
+                                if (_historiaClinicaData!.carePackCohorte
+                                        ?.tieneContenido ==
+                                    true) ...[
+                                  BioSpacing.gapH(BioSpacing.md),
+                                  _buildCarePackCohorte(
+                                    _historiaClinicaData!.carePackCohorte!,
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -416,6 +424,83 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 ),
               ),
             ],
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCarePackCohorte(CarePackCohorteStaff cohorte) {
+    final assistance = cohorte.assistance;
+    final profile = cohorte.cohortProfile;
+    final profileParts = <String>[];
+    if (profile != null) {
+      for (final key in ['life_stage', 'sexo', 'motive_cluster', 'jurisdiction']) {
+        final val = profile[key]?.toString().trim();
+        if (val != null && val.isNotEmpty) {
+          profileParts.add(val);
+        }
+      }
+    }
+
+    return BioCard.intent(
+      intent: UiIntent.info,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Asistencia pre-consulta (cohorte)', style: BioTypography.title),
+          if (cohorte.cohortKeyShort != null &&
+              cohorte.cohortKeyShort!.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              'Cohorte ${cohorte.cohortKeyShort}',
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
+            ),
+          ],
+          if (profileParts.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              profileParts.join(' · '),
+              style: BioTypography.bodySm,
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.md),
+          if (assistance.notesForStaff != null &&
+              assistance.notesForStaff!.trim().isNotEmpty) ...[
+            Text('Orientación', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(assistance.notesForStaff!.trim(), style: BioTypography.bodySm),
+            BioSpacing.gapH(BioSpacing.md),
+          ],
+          if (assistance.answers.isEmpty)
+            Text(
+              assistance.status == 'submitted'
+                  ? 'Respuestas registradas sin detalle disponible.'
+                  : 'El paciente aún no completó el cuestionario.',
+              style: BioTypography.bodySm,
+            )
+          else ...[
+            Text('Respuestas del paciente', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.sm),
+            ...assistance.answers.map(
+              (a) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(a.question, style: BioTypography.bodySm),
+                    BioSpacing.gapH(BioSpacing.xs),
+                    Text(a.answer, style: BioTypography.body),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (assistance.deltaRequested) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            BioBadge.warning('Requiere adaptación del pack'),
           ],
         ],
       ),

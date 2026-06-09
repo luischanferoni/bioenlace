@@ -28,6 +28,7 @@ export 'diagnostics/crashlytics_bootstrap.dart';
 export 'diagnostics/client_diagnostic_api.dart';
 export 'text/user_friendly_error.dart';
 export 'assistant/welcome_shortcuts_panel.dart';
+export 'clinical/care_pack_navigation.dart';
 export 'clinical/care_plan_service.dart';
 export 'clinical/care_plan_ui.dart';
 export 'clinical/care_plan_reminder_api.dart';

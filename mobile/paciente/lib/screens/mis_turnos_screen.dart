@@ -246,6 +246,8 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     final puedeChat = tipoAtencion == 'teleconsulta' && idConsulta != null;
     final puedeMotivos =
         idConsulta != null && turnoMotivosInputAbiertoEnProducto(t);
+    final turnoId = turnoIdDesdePayloadProducto(t);
+    final puedeAsistenciaCohorte = turnoAsistenciaCohorteDisponibleEnProducto(t);
     final tituloMotivos = 'Motivos · ${t['fecha']} ${t['hora']}';
     final estado = t['estado_label']?.toString() ?? '';
 
@@ -267,6 +269,19 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                   titulo: tituloMotivos,
                 ),
               ),
+            );
+          },
+        ),
+      if (puedeAsistenciaCohorte && turnoId != null)
+        BioButton.outlinePrimary(
+          label: 'Cuestionario pre-consulta',
+          size: BioButtonSize.sm,
+          icon: Icons.fact_check_outlined,
+          onPressed: () {
+            abrirAsistenciaPreConsulta(
+              context: context,
+              turnoId: turnoId,
+              authToken: widget.authToken,
             );
           },
         ),

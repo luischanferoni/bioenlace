@@ -4,6 +4,8 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\Cirugia;
+use common\components\Clinical\CareCohort\Service\CarePackConfig;
+use common\components\Clinical\CareCohort\Service\CarePackEncounterStaffService;
 use common\components\Clinical\Service\AppointmentReasonBatchService;
 use common\components\Clinical\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
@@ -137,6 +139,14 @@ class PacientesController extends BaseController
         $motivosConsulta = $motivosCtx['motivos_consulta'];
         $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
 
+        $carePackCohorte = null;
+        if (CarePackConfig::isEnabled()) {
+            $encounterIdCare = (int) ($motivosConsultaPaciente['encounter_id'] ?? 0);
+            if ($encounterIdCare > 0) {
+                $carePackCohorte = (new CarePackEncounterStaffService())->buildForEncounter($encounterIdCare);
+            }
+        }
+
         // Diagnósticos recientes/crónicos
         [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
         $condicionesActivas = [];
@@ -208,6 +218,8 @@ class PacientesController extends BaseController
             ],
             'signos_vitales' => $signosVitales,
             'motivos_consulta_paciente' => $motivosConsultaPaciente,
+            'care_pack_cohorte' => $carePackCohorte,
+            'care_cohort_habilitado' => CarePackConfig::isEnabled(),
             'turnos_con_encounter' => $motivosCtx['turnos_con_encounter'],
             'historia_clinica' => [],
             'total_historia_clinica' => 0,

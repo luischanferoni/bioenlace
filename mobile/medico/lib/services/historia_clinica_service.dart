@@ -415,11 +415,109 @@ class MotivosConsultaPaciente {
   }
 }
 
+class CarePackAssistanceAnswer {
+  final String id;
+  final String question;
+  final String answer;
+
+  CarePackAssistanceAnswer({
+    required this.id,
+    required this.question,
+    required this.answer,
+  });
+
+  factory CarePackAssistanceAnswer.fromJson(Map<String, dynamic> json) {
+    return CarePackAssistanceAnswer(
+      id: json['id']?.toString() ?? '',
+      question: json['question']?.toString() ?? '',
+      answer: json['answer']?.toString() ?? '',
+    );
+  }
+}
+
+class CarePackAssistanceStaff {
+  final String status;
+  final String? notesForStaff;
+  final String? submittedAt;
+  final bool deltaRequested;
+  final List<CarePackAssistanceAnswer> answers;
+
+  CarePackAssistanceStaff({
+    required this.status,
+    this.notesForStaff,
+    this.submittedAt,
+    this.deltaRequested = false,
+    this.answers = const [],
+  });
+
+  bool get tieneContenido =>
+      answers.isNotEmpty ||
+      (notesForStaff != null && notesForStaff!.trim().isNotEmpty);
+
+  factory CarePackAssistanceStaff.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return CarePackAssistanceStaff(status: 'pending');
+    }
+    final rawAnswers = json['answers'] as List<dynamic>? ?? [];
+    return CarePackAssistanceStaff(
+      status: json['status']?.toString() ?? 'pending',
+      notesForStaff: json['notes_for_staff']?.toString(),
+      submittedAt: json['submitted_at']?.toString(),
+      deltaRequested: json['delta_requested'] == true,
+      answers: rawAnswers
+          .whereType<Map>()
+          .map((e) => CarePackAssistanceAnswer.fromJson(
+                Map<String, dynamic>.from(e),
+              ))
+          .where((e) => e.question.isNotEmpty || e.answer.isNotEmpty)
+          .toList(),
+    );
+  }
+}
+
+class CarePackCohorteStaff {
+  final int encounterId;
+  final String? cohortKeyShort;
+  final Map<String, dynamic>? cohortProfile;
+  final CarePackAssistanceStaff assistance;
+
+  CarePackCohorteStaff({
+    required this.encounterId,
+    this.cohortKeyShort,
+    this.cohortProfile,
+    required this.assistance,
+  });
+
+  bool get tieneContenido => assistance.tieneContenido;
+
+  factory CarePackCohorteStaff.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return CarePackCohorteStaff(
+        encounterId: 0,
+        assistance: CarePackAssistanceStaff(status: 'pending'),
+      );
+    }
+    final profile = json['cohort_profile'];
+    return CarePackCohorteStaff(
+      encounterId: int.tryParse(json['encounter_id']?.toString() ?? '') ?? 0,
+      cohortKeyShort: json['cohort_key_short']?.toString(),
+      cohortProfile: profile is Map
+          ? Map<String, dynamic>.from(profile)
+          : null,
+      assistance: CarePackAssistanceStaff.fromJson(
+        json['assistance'] as Map<String, dynamic>?,
+      ),
+    );
+  }
+}
+
 class HistoriaClinicaResponse {
   final PersonaData persona;
   final InformacionMedica informacionMedica;
   final SignosVitalesClinica signosVitales;
   final MotivosConsultaPaciente motivosConsultaPaciente;
+  final CarePackCohorteStaff? carePackCohorte;
+  final bool careCohortHabilitado;
   final List<TimelineEvent> historiaClinica;
   final int totalHistoriaClinica;
 
@@ -428,6 +526,8 @@ class HistoriaClinicaResponse {
     required this.informacionMedica,
     required this.signosVitales,
     required this.motivosConsultaPaciente,
+    this.carePackCohorte,
+    this.careCohortHabilitado = false,
     required this.historiaClinica,
     required this.totalHistoriaClinica,
   });
@@ -456,6 +556,12 @@ class HistoriaClinicaResponse {
           SignosVitalesClinica.fromJson(json['signos_vitales'] as Map<String, dynamic>?),
       motivosConsultaPaciente: MotivosConsultaPaciente.fromJson(
           json['motivos_consulta_paciente'] as Map<String, dynamic>?),
+      carePackCohorte: json['care_pack_cohorte'] is Map
+          ? CarePackCohorteStaff.fromJson(
+              Map<String, dynamic>.from(json['care_pack_cohorte'] as Map),
+            )
+          : null,
+      careCohortHabilitado: json['care_cohort_habilitado'] == true,
       historiaClinica: rawList
               ?.map((e) => TimelineEvent.fromJson(e as Map<String, dynamic>))
               .toList() ??

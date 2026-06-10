@@ -4,6 +4,7 @@ namespace common\components\Assistant\SubIntentEngine;
 
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
+use common\components\Core\DataAccess\DataAccessEditFlowDraftHydrator;
 use common\components\Core\DataAccess\DataAccessFlowDraftHydrator;
 use common\components\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 
@@ -21,6 +22,7 @@ final class FlowDraftHydratorRegistry
         'organization.pes_crear_alta' => [ProfesionalEfectorServicioCrearFlowDraftHydrator::class, 'hydrateWithOptions'],
         'organization.pes_from_servicio' => [ProfesionalEfectorServicioAgendaFlowDraftHydrator::class, 'hydrateWithOptions'],
         'data_access.metric_flow' => [DataAccessFlowDraftHydrator::class, 'hydrateWithOptions'],
+        'data_access.edit_flow' => [DataAccessEditFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
     ];
 

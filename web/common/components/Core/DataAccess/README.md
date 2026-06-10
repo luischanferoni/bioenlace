@@ -15,6 +15,7 @@ Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff p
 |-----------|------|-----|
 | `/api/info` | `GET|POST /api/v1/info` | Métricas aggregate/grouped + ui_json mensaje |
 | `/api/listar` | `GET|POST /api/v1/listar` | Métricas rows + ui_json listado |
+| `/api/editar` | `GET|POST /api/v1/editar` | Superficies/aspectos editables + enlace a listar (Fase 1) |
 
 Parámetros comunes: `metric_id` (requerido), filtros allowlisted por métrica.
 
@@ -26,8 +27,11 @@ Dos intents YAML genéricos (no uno por métrica):
 |--------|------|-----|
 | `data-access.info` | `/api/info` | Métricas aggregate/grouped |
 | `data-access.listar` | `/api/listar` | Métricas rows |
+| `data-access.editar` | `/api/editar` | Edición dispersa (superficie → aspectos → sujeto) |
 
-El `metric_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessFlowDraftHydrator`) desde `metrics.*.assistant.keywords` en este YAML — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
+El `metric_id` / `surface_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessEditDiscoveryService`, hydrators) desde keywords en este YAML — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
+
+Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSurfaceAuthorizationService`).
 
 ## Extender
 

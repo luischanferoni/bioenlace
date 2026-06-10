@@ -506,6 +506,9 @@ return [
                 'GET api/<version:\w+>/listar' => '<version>/listar/index',
                 'POST api/<version:\w+>/listar' => '<version>/listar/index',
                 'OPTIONS api/<version:\w+>/listar' => '<version>/listar/index',
+                'GET api/<version:\w+>/editar' => '<version>/editar/index',
+                'POST api/<version:\w+>/editar' => '<version>/editar/index',
+                'OPTIONS api/<version:\w+>/editar' => '<version>/editar/index',
                 'GET api/<version:\w+>/profesional-efector-servicio/condiciones-laborales-catalogo' => '<version>/profesional-efector-servicio/condiciones-laborales-catalogo',
                 'OPTIONS api/<version:\w+>/profesional-efector-servicio/condiciones-laborales-catalogo' => '<version>/profesional-efector-servicio/condiciones-laborales-catalogo',
 

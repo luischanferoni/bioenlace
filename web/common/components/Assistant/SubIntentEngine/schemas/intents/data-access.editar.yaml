@@ -1,0 +1,36 @@
+intent_id: data-access.editar
+version: 1
+
+action_name: "Edición dispersa"
+description: "Modificar datos autorizados: elegir sujeto, aspectos y confirmar cambios."
+rbac_route: "/api/editar"
+keywords:
+  - editar
+  - modificar
+  - actualizar
+  - cambiar
+  - corregir dato
+
+intent_semantics:
+  goal: >-
+    Modificar solo los aspectos permitidos sobre un registro (sin wizard de alta completa).
+  how: >-
+    Resuelve la superficie de edición, permite elegir sujeto vía listado si hace falta,
+    luego aspectos editables según permisos write por grupo de atributos.
+  outcome:
+    - El staff edita únicamente lo autorizado, con confirmación antes de persistir.
+
+draft_hydrator:
+  handler: data_access.edit_flow
+  channel: editar
+
+subintents:
+  - id: ejecutar_edicion
+    assistant_text: "Edición"
+    next: ""
+    open_ui:
+      action_id: data-access.editar
+      params:
+        surface_id: "draft.surface_id"
+        id_efector: "draft.id_efector"
+        step: "draft.edit_step"

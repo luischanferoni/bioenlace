@@ -266,6 +266,35 @@ final class UiActionCatalog
                 }
             }
         }
+
+        if (isset($byId['data-access.editar'])) {
+            $editDiscovery = new \common\components\Core\DataAccess\DataAccessEditDiscoveryService();
+            $extraEdit = $editDiscovery->assistantKeywordsForUser($userId);
+            if ($extraEdit !== []) {
+                $item = $byId['data-access.editar'];
+                $merged = array_values(array_unique(array_merge($item->keywords, $extraEdit)));
+                $updated = new UiActionCatalogItem(
+                    $item->action_id,
+                    $item->display_name,
+                    $item->description,
+                    $item->entity,
+                    $item->route,
+                    $merged,
+                    $item->parameters,
+                    $item->intent_semantics,
+                    $item->client_open,
+                    $item->client_interaction,
+                    $item->spa_presentation
+                );
+                $byId['data-access.editar'] = $updated;
+                foreach ($items as $i => $it) {
+                    if ($it->action_id === 'data-access.editar') {
+                        $items[$i] = $updated;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     /**

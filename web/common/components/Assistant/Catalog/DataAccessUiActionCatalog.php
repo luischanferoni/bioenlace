@@ -38,6 +38,13 @@ final class DataAccessUiActionCatalog
                 '/api/listar',
                 ['listar', 'listado', 'mostrar listado', 'ver listado']
             ),
+            self::def(
+                'data-access.editar',
+                'Edición dispersa',
+                'Modificar datos por superficie y aspectos autorizados (permiso write por grupo).',
+                '/api/editar',
+                ['editar', 'modificar', 'actualizar', 'cambiar']
+            ),
         ];
 
         return self::$definitions;

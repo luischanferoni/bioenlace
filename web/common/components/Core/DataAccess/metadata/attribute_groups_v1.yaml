@@ -202,17 +202,46 @@ metrics:
         modes: [grouped, aggregate]
         default: grouped
 
+# Superficies de edición dispersa (intent data-access.editar).
+edit_surfaces:
+  profesional_en_efector:
+    label: Personal del centro
+    assistant:
+      keywords:
+        - editar personal
+        - modificar profesional
+        - editar agenda del personal
+        - cambiar datos del medico
+        - editar medico del centro
+    scope_checker: efector_sesion
+    subject_resolver:
+      metric_id: profesionales_listado_efector
+      selection_param: id_persona
+      pes_param: id_profesional_efector_servicio
+    aspects:
+      identidad:
+        label: Identidad (nombre y apellido)
+        kind: scalar_group
+        attribute_group: Persona.identidad_basica
+        fields: [nombre, apellido, otro_nombre, otro_apellido]
+      agenda_horarios:
+        label: Agenda y horarios
+        kind: open_ui
+        attribute_group: ProfesionalEfectorServicio.asignacion
+        ui_action: profesional-agenda.configurar-agenda
+        requires_params: [id_profesional_efector_servicio, id_servicio]
+
 # Permisos por rol sobre grupo + operación (+ scope checker opcional por grant).
 role_grants:
   AdminEfector:
     ProfesionalEfectorServicio.asignacion:
-      operations: [aggregate, filter, read]
+      operations: [aggregate, filter, read, write]
       scope_checker: efector_sesion
     Persona.sexo_genero:
       operations: [filter, aggregate, read]
       scope_checker: efector_sesion_via_pes
     Persona.identidad_basica:
-      operations: [read]
+      operations: [read, write]
       scope_checker: efector_sesion_via_pes
 
   Medico:

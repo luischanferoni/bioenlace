@@ -233,6 +233,35 @@ final class AttributeGroupCatalog
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public function getEditSurface(string $surfaceId): ?array
+    {
+        $surfaceId = trim($surfaceId);
+        $surfaces = self::load()['edit_surfaces'] ?? [];
+        if (!is_array($surfaces) || !isset($surfaces[$surfaceId]) || !is_array($surfaces[$surfaceId])) {
+            return null;
+        }
+
+        return $surfaces[$surfaceId];
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    public function listEditSurfacesForDisplay(): array
+    {
+        $surfaces = self::load()['edit_surfaces'] ?? [];
+
+        return is_array($surfaces) ? $surfaces : [];
+    }
+
+    public static function resetCacheForTests(): void
+    {
+        self::$cache = null;
+    }
+
+    /**
      * Grants de referencia en YAML (BD puede override).
      *
      * @return array<string, array<string, mixed>>

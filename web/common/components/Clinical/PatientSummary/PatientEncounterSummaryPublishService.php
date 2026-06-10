@@ -6,6 +6,8 @@ use common\components\Clinical\CareCohort\Service\CareFollowupSchedulerService;
 use common\components\Clinical\Enum\EncounterStatus;
 use common\components\Core\Service\Push\PushNotificationSender;
 use common\components\Core\Service\Push\PushNotificationTypes;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationNotifyRecipientService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;
 use common\models\Clinical\EncounterPatientSummaryPublishQueue;
@@ -134,21 +136,41 @@ final class PatientEncounterSummaryPublishService
         return $n;
     }
 
-    private function sendPush(int $idPersona, int $encounterId): void
+    private function sendPush(int $subjectPersonaId, int $encounterId): void
     {
-        if ($idPersona <= 0) {
+        if ($subjectPersonaId <= 0) {
             return;
         }
-        (new PushNotificationSender())->sendToPersona(
-            $idPersona,
-            [
-                'type' => PushNotificationTypes::ENCOUNTER_SUMMARY_READY,
-                'encounter_id' => (string) $encounterId,
-            ],
-            'Tu resumen de atención está listo',
-            'Consultá qué indicó el profesional y tus próximos pasos.',
-            true
+
+        $recipientSvc = new PersonRepresentationNotifyRecipientService();
+        $recipients = $recipientSvc->resolvePushRecipientPersonaIds(
+            $subjectPersonaId,
+            RepresentationPermission::CLINICAL_HISTORIA_RESUMEN
         );
+        if ($recipients === []) {
+            return;
+        }
+
+        $subjectLabel = $recipientSvc->subjectDisplayLabel($subjectPersonaId);
+        $sender = new PushNotificationSender();
+
+        foreach ($recipients as $recipientId) {
+            $body = $recipientId === $subjectPersonaId
+                ? 'Consultá qué indicó el profesional y tus próximos pasos.'
+                : 'El resumen de atención de ' . $subjectLabel . ' está listo.';
+
+            $sender->sendToPersona(
+                $recipientId,
+                [
+                    'type' => PushNotificationTypes::ENCOUNTER_SUMMARY_READY,
+                    'encounter_id' => (string) $encounterId,
+                    'subject_persona_id' => (string) $subjectPersonaId,
+                ],
+                'Resumen de atención disponible',
+                $body,
+                true
+            );
+        }
     }
 
     private function cancelQueueRow(int $encounterId): void

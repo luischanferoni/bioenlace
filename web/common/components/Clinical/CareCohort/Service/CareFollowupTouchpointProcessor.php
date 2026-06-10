@@ -4,6 +4,8 @@ namespace common\components\Clinical\CareCohort\Service;
 
 use common\components\Core\Service\Push\PushNotificationSender;
 use common\components\Core\Service\Push\PushNotificationTypes;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationNotifyRecipientService;
 use common\models\Clinical\CareFollowupTouchpointQueue;
 use Yii;
 
@@ -48,28 +50,56 @@ final class CareFollowupTouchpointProcessor
 
     private function notifyTouchpoint(CareFollowupTouchpointQueue $row): bool
     {
-        $idPersona = (int) $row->subject_persona_id;
-        if ($idPersona <= 0) {
+        $subjectId = (int) $row->subject_persona_id;
+        if ($subjectId <= 0) {
             $this->markFailed($row, 'subject_persona_id inválido');
 
             return false;
         }
 
-        $title = trim((string) $row->title) ?: 'Seguimiento de tu atención';
-        $body = 'Contanos cómo te sentís y revisá las recomendaciones de tu consulta.';
-
-        (new PushNotificationSender())->sendToPersona(
-            $idPersona,
-            [
-                'type' => PushNotificationTypes::CARE_FOLLOWUP_TOUCHPOINT,
-                'encounter_id' => (string) (int) $row->encounter_id,
-                'touchpoint_id' => (string) (int) $row->id,
-                'touchpoint_key' => (string) $row->touchpoint_key,
-            ],
-            $title,
-            $body,
-            true
+        $recipientSvc = new PersonRepresentationNotifyRecipientService();
+        $recipients = $recipientSvc->resolvePushRecipientPersonaIds(
+            $subjectId,
+            RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE
         );
+        if ($recipients === []) {
+            $this->markFailed($row, 'sin destinatarios con cuenta para notificar');
+
+            return false;
+        }
+
+        $title = trim((string) $row->title) ?: 'Seguimiento de tu atención';
+        $subjectLabel = $recipientSvc->subjectDisplayLabel($subjectId);
+        $sender = new PushNotificationSender();
+        $sent = 0;
+
+        foreach ($recipients as $recipientId) {
+            $body = $recipientId === $subjectId
+                ? 'Contanos cómo te sentís y revisá las recomendaciones de tu consulta.'
+                : 'Seguimiento de la atención de ' . $subjectLabel
+                    . ': completá el formulario de evolución.';
+
+            $sender->sendToPersona(
+                $recipientId,
+                [
+                    'type' => PushNotificationTypes::CARE_FOLLOWUP_TOUCHPOINT,
+                    'encounter_id' => (string) (int) $row->encounter_id,
+                    'touchpoint_id' => (string) (int) $row->id,
+                    'touchpoint_key' => (string) $row->touchpoint_key,
+                    'subject_persona_id' => (string) $subjectId,
+                ],
+                $title,
+                $body,
+                true
+            );
+            $sent++;
+        }
+
+        if ($sent === 0) {
+            $this->markFailed($row, 'no se pudo enviar push a destinatarios');
+
+            return false;
+        }
 
         $now = date('Y-m-d H:i:s');
         $row->estado = CareFollowupTouchpointQueue::ESTADO_NOTIFICADA;

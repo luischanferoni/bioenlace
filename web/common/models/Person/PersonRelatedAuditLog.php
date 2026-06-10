@@ -28,6 +28,7 @@ class PersonRelatedAuditLog extends ActiveRecord
     public const ACTION_TURNO_CANCELLED = 'turno_cancelled';
     public const ACTION_MOTIVOS_SENT = 'motivos_sent';
     public const ACTION_CARE_PACK_ASSISTANCE = 'care_pack_assistance';
+    public const ACTION_CARE_PACK_FOLLOWUP = 'care_pack_followup';
     public const ACTION_HISTORIA_ACCESSED = 'historia_accesed';
     public const ACTION_CARE_PLAN_ACCESSED = 'care_plan_accessed';
 

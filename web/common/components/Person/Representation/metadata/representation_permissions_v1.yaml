@@ -8,7 +8,7 @@ permissions:
   clinical.motivos:
     label: "Motivos de consulta"
   clinical.care_pack_assistance:
-    label: "Pre-consulta de cohorte"
+    label: "Pre y post consulta de cohorte (asistencia y seguimiento)"
   clinical.care_plan:
     label: "Tratamientos y recetas delegadas"
   clinical.historia_resumen:

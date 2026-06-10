@@ -5,7 +5,10 @@ namespace common\components\Clinical\CareCohort\Service;
 use common\components\Clinical\CareCohort\Presentation\CareEducationModuleResolver;
 use common\components\Clinical\CareCohort\Presentation\CarePackFollowupPresenter;
 use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\CareCohortPack;
+use common\models\Person\PersonRelatedAuditLog;
 use common\models\Clinical\CareFollowupResponse;
 use common\models\Clinical\CareFollowupTouchpointQueue;
 use common\models\Clinical\Encounter;
@@ -121,6 +124,18 @@ final class CarePackFollowupService
         $queue->updated_at = $now;
         $queue->save(false);
 
+        $encounter = Encounter::findOne(['id' => (int) $queue->encounter_id, 'deleted_at' => null]);
+        if ($encounter !== null) {
+            (new PersonRepresentationSubjectService())->auditDelegatedAction(
+                PersonRelatedAuditLog::ACTION_CARE_PACK_FOLLOWUP,
+                (int) $encounter->subject_persona_id,
+                [
+                    'encounter_id' => (int) $queue->encounter_id,
+                    'touchpoint_id' => (int) $queue->id,
+                ]
+            );
+        }
+
         $this->evaluateWorseningSignal($queue, $answers);
 
         return [
@@ -171,12 +186,17 @@ final class CarePackFollowupService
         if ($encounter === null) {
             throw new NotFoundHttpException('Encounter no encontrado.');
         }
-        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+
+        $subjectId = (int) $encounter->subject_persona_id;
+        (new PersonRepresentationSubjectService())->assertCanAct(
+            $subjectId,
+            RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE
+        );
+        if (!EncounterAccessService::userCanAccessEncounterApi(
+            $encounter,
+            RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE
+        )) {
             throw new ForbiddenHttpException('No tiene permiso para este encounter.');
-        }
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona > 0 && (int) $encounter->subject_persona_id !== $idPersona) {
-            throw new ForbiddenHttpException('Solo el paciente puede completar el seguimiento.');
         }
     }
 

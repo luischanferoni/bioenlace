@@ -14,6 +14,7 @@ Documentación de producto: [web/docs/producto/representacion-paciente.md](../..
 | `PatientDelegationService` | Régimen B: designar, revocar, listar representantes / pacientes a cargo |
 | `PersonRepresentationPreferenceService` | Preferencia N9 `notify_on_representative_action` |
 | `PersonRepresentationDelegatedActionNotifier` | Push + inbox tras acción delegada (si N9 activo) |
+| `PersonRepresentationNotifyRecipientService` | Destinatarios push (sujeto con cuenta + tutores/representantes) |
 | `PersonRepresentationMpiService` | Alta/resolución de menor vía MPI |
 | `PersonRepresentationPresenter` | Serialización API de vínculos |
 
@@ -55,7 +56,9 @@ Controllers de turnos, motivos, care-packs, care plans y HC paciente llaman a `r
 
 ## Auditoría
 
-Tabla `person_related_audit_log`. Acciones delegadas: `turno_created`, `turno_cancelled`, `motivos_sent`, `care_pack_assistance`, `historia_accesed`, `care_plan_accessed`.
+Tabla `person_related_audit_log`. Acciones delegadas: `turno_created`, `turno_cancelled`, `motivos_sent`, `care_pack_assistance`, `care_pack_followup`, `historia_accesed`, `care_plan_accessed`.
+
+Push de resumen de atención y touchpoints de cohorte se envían al sujeto (si tiene cuenta) y a **todos** los actores con permiso (`clinical.historia_resumen` o `clinical.care_pack_assistance` respectivamente).
 
 ## Asistente
 

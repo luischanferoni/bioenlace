@@ -119,7 +119,7 @@ Endpoints bajo `/api/v1/person-representation/` (RBAC ApiGhost):
 |--------|----------|
 | `scheduling.turno` | Reservar y gestionar turnos |
 | `clinical.motivos` | Motivos de consulta |
-| `clinical.care_pack_assistance` | Pre-consulta por cohorte |
+| `clinical.care_pack_assistance` | Pre y post consulta por cohorte (asistencia + seguimiento) |
 | `clinical.care_plan` | Tratamientos y recetas (vista paciente) |
 | `clinical.historia_resumen` | Resúmenes de atención / HC resumida |
 
@@ -129,7 +129,16 @@ Plantilla: `representation_permissions_v1.yaml` (metadata, no hardcode en orques
 
 Preferencia `notify_on_representative_action` (default **false**) en `person_representation_pref`.
 
-Si está activa, cada acción delegada auditada puede disparar push + bandeja in-app con tipo `REPRESENTATIVE_ACTION` (turno creado/cancelado, motivos, pre-consulta, HC, tratamiento).
+Si está activa, cada acción delegada auditada puede disparar push + bandeja in-app con tipo `REPRESENTATIVE_ACTION` (turno creado/cancelado, motivos, pre-consulta, seguimiento cohorte, HC, tratamiento).
+
+## Notificaciones proactivas al sujeto
+
+Resumen de atención y touchpoints de seguimiento cohorte **no** se envían solo al `subject_persona_id` del encounter: el menor sin cuenta no recibe push. Destinatarios:
+
+- el paciente sujeto, si tiene cuenta;
+- **todos** los tutores verificados (régimen A) o representantes activos (régimen B) con el permiso v1 correspondiente (`clinical.historia_resumen` o `clinical.care_pack_assistance`).
+
+Implementación: `PersonRepresentationNotifyRecipientService`.
 
 ## Relación con otros documentos
 

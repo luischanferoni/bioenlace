@@ -86,6 +86,10 @@ final class PersonRepresentationDelegatedActionNotifier
                 'Acción de tu representante',
                 "$actorLabel completó el cuestionario pre-consulta a tu nombre.",
             ],
+            PersonRelatedAuditLog::ACTION_CARE_PACK_FOLLOWUP => [
+                'Acción de tu representante',
+                "$actorLabel registró el seguimiento post-consulta a tu nombre.",
+            ],
             PersonRelatedAuditLog::ACTION_HISTORIA_ACCESSED => [
                 'Acción de tu representante',
                 "$actorLabel consultó tu historia clínica.",

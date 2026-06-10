@@ -17,7 +17,8 @@ class EditarController extends BaseController
      *
      * GET|POST /api/v1/editar
      *
-     * Parámetros: step (surfaces|aspects|subjects), surface_id, filtros de listar en step=subjects.
+     * Parámetros: step (surfaces|aspects|subjects|form|confirm|apply), surface_id, aspect_ids,
+     * sujeto (id_profesional_efector_servicio / id_persona+id_servicio), filtros en step=subjects.
      *
      * @no_intent_catalog
      * @action_name Edición dispersa staff

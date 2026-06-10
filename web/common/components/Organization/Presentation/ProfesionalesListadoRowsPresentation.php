@@ -45,6 +45,7 @@ final class ProfesionalesListadoRowsPresentation implements MetricListPresentati
             if (!is_array($row)) {
                 continue;
             }
+            $idPes = (int) ($row['id_profesional_efector_servicio'] ?? 0);
             $idPersona = (int) ($row['id_persona'] ?? 0);
             $idServicio = (int) ($row['id_servicio'] ?? 0);
             $nombre = trim((string) ($row['nombre'] ?? ''));
@@ -55,11 +56,12 @@ final class ProfesionalesListadoRowsPresentation implements MetricListPresentati
             }
 
             $items[] = [
-                'id' => (string) ($idPersona > 0 ? $idPersona : count($items) + 1),
+                'id' => (string) ($idPes > 0 ? $idPes : ($idPersona > 0 ? $idPersona : count($items) + 1)),
                 'name' => $label,
                 'servicio_nombre' => $nombresServicio[$idServicio] ?? ($idServicio > 0 ? ('Servicio #' . $idServicio) : '—'),
                 'sexo_label' => $this->sexoLabel($row['sexo_biologico'] ?? null),
                 'meta' => [
+                    'id_profesional_efector_servicio' => $idPes,
                     'id_persona' => $idPersona,
                     'id_servicio' => $idServicio,
                     'sexo_biologico' => $row['sexo_biologico'] ?? null,

@@ -15,7 +15,7 @@ Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff p
 |-----------|------|-----|
 | `/api/info` | `GET|POST /api/v1/info` | Métricas aggregate/grouped + ui_json mensaje |
 | `/api/listar` | `GET|POST /api/v1/listar` | Métricas rows + ui_json listado |
-| `/api/editar` | `GET|POST /api/v1/editar` | Superficies/aspectos editables + enlace a listar (Fase 1) |
+| `/api/editar` | `GET|POST /api/v1/editar` | Superficie → sujeto → aspectos → formulario → confirmación (Fase 2: dry-run) |
 
 Parámetros comunes: `metric_id` (requerido), filtros allowlisted por métrica.
 

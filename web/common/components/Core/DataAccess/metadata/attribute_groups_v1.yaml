@@ -134,12 +134,15 @@ metrics:
         default: rows
         rows:
           max_limit: 200
-          distinct_column: pes.id_persona
+          distinct_column: pes.id
           order_by:
             p.apellido: ASC
             p.nombre: ASC
           static_joins: [persona]
           fields:
+            id_profesional_efector_servicio:
+              column: pes.id
+              group: ProfesionalEfectorServicio.asignacion
             id_persona:
               column: pes.id_persona
               group: ProfesionalEfectorServicio.asignacion

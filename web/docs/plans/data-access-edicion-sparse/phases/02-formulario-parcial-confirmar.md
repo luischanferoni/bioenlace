@@ -1,6 +1,6 @@
 # Fase 2 — Formulario parcial + confirmación
 
-**Estado:** pendiente
+**Estado:** implementada
 
 - Prefill valores actuales (read groups)
 - ui_json `fields` dinámico por aspectos elegidos

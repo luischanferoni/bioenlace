@@ -37,7 +37,9 @@ edit_surfaces:
 | (vacío) | ui_json picker de superficies autorizadas |
 | `surface_id` | ui_json picker de aspectos |
 | `surface_id` + `step=subjects` | delega a listar (`subject_resolver.metric_id`) |
-| Fase 2+ | `step=form`, `step=confirm`, `POST` mutar |
+| `step=form` + `aspect_ids` + sujeto | ui_json formulario parcial con prefill |
+| `step=confirm` | preview diff (dry-run) |
+| `step=apply` | respuesta `ui_submit_result` sin persistir (Fase 3 mutará) |
 
 ## Asistente
 

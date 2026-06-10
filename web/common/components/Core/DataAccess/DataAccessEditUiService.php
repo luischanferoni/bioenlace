@@ -2,6 +2,10 @@
 
 namespace common\components\Core\DataAccess;
 
+use common\components\Core\DataAccess\Edit\EditSparseAspectIds;
+use common\components\Core\DataAccess\Edit\EditSparseConfirmPresenter;
+use common\components\Core\DataAccess\Edit\EditSparseFieldBuilder;
+use common\components\Core\DataAccess\Edit\EditSparseSubjectLoader;
 use common\components\Ui\UiScreenService;
 use yii\web\ForbiddenHttpException;
 
@@ -13,15 +17,24 @@ final class DataAccessEditUiService
     private AttributeGroupCatalog $catalog;
     private EditSurfaceAuthorizationService $authorization;
     private DataAccessUiService $dataAccessUi;
+    private EditSparseSubjectLoader $subjectLoader;
+    private EditSparseFieldBuilder $fieldBuilder;
+    private EditSparseConfirmPresenter $confirmPresenter;
 
     public function __construct(
         ?AttributeGroupCatalog $catalog = null,
         ?EditSurfaceAuthorizationService $authorization = null,
-        ?DataAccessUiService $dataAccessUi = null
+        ?DataAccessUiService $dataAccessUi = null,
+        ?EditSparseSubjectLoader $subjectLoader = null,
+        ?EditSparseFieldBuilder $fieldBuilder = null,
+        ?EditSparseConfirmPresenter $confirmPresenter = null
     ) {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
         $this->authorization = $authorization ?? new EditSurfaceAuthorizationService($this->catalog);
         $this->dataAccessUi = $dataAccessUi ?? new DataAccessUiService();
+        $this->subjectLoader = $subjectLoader ?? new EditSparseSubjectLoader($this->catalog, $this->authorization);
+        $this->fieldBuilder = $fieldBuilder ?? new EditSparseFieldBuilder($this->catalog, $this->authorization);
+        $this->confirmPresenter = $confirmPresenter ?? new EditSparseConfirmPresenter();
     }
 
     /**
@@ -40,6 +53,18 @@ final class DataAccessEditUiService
 
         if ($step === 'subjects' || $step === 'subject') {
             return $this->renderSubjectList($params, $ctx, $surfaceId);
+        }
+
+        if ($step === 'apply') {
+            return $this->renderApplyDryRun($params, $ctx, $surfaceId);
+        }
+
+        if ($step === 'confirm') {
+            return $this->renderConfirm($params, $ctx, $surfaceId);
+        }
+
+        if ($step === 'form') {
+            return $this->renderForm($params, $ctx, $surfaceId);
         }
 
         if ($surfaceId !== '') {
@@ -119,7 +144,7 @@ final class DataAccessEditUiService
             'title' => 'Editar: ' . $label,
             'message' => $needsSubject
                 ? 'Primero elegí el registro; después marcá qué aspectos querés modificar.'
-                : 'Marcá los aspectos que querés modificar.',
+                : 'Elegí qué aspectos querés modificar y continuá al formulario.',
             'step' => 'aspects',
             'surface_id' => $surfaceId,
             'aspect_options' => $aspects,
@@ -127,6 +152,40 @@ final class DataAccessEditUiService
                 ? '/api/v1/editar?step=subjects&surface_id=' . rawurlencode($surfaceId)
                 : null,
         ], null);
+
+        if (!$needsSubject) {
+            $hidden = $this->contextHiddenFields(
+                [
+                    'surface_id' => $surfaceId,
+                    'id_persona' => (string) ($params['id_persona'] ?? ''),
+                    'id_profesional_efector_servicio' => (string) ($params['id_profesional_efector_servicio'] ?? ''),
+                    'id_servicio' => (string) ($params['id_servicio'] ?? ''),
+                    'id_efector' => (string) ($params['id_efector'] ?? ''),
+                ],
+                'form'
+            );
+            $aspectOptions = [];
+            foreach ($aspects as $aspect) {
+                $aspectOptions[] = [
+                    'value' => (string) ($aspect['id'] ?? ''),
+                    'label' => (string) ($aspect['label'] ?? ''),
+                ];
+            }
+            $hidden[] = [
+                'name' => 'aspect_ids',
+                'type' => 'select',
+                'label' => 'Aspecto a modificar',
+                'required' => true,
+                'include_in_submit' => true,
+                'options' => $aspectOptions,
+            ];
+            $out = $this->appendBlocks($out, [[
+                'kind' => 'fields',
+                'id' => 'editar_elegir_aspectos',
+                'title' => 'Aspectos',
+                'fields' => $hidden,
+            ]]);
+        }
 
         $out['kind'] = 'ui_definition';
         $out['success'] = true;
@@ -141,6 +200,207 @@ final class DataAccessEditUiService
         ];
 
         return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private function renderForm(array $params, PermissionContext $ctx, string $surfaceId): array
+    {
+        if ($surfaceId === '') {
+            throw new \InvalidArgumentException('surface_id es requerido.');
+        }
+
+        $aspectIds = EditSparseAspectIds::fromParams($params);
+        if ($aspectIds === []) {
+            throw new \InvalidArgumentException('aspect_ids es requerido (elegí al menos un aspecto).');
+        }
+
+        $subject = $this->subjectLoader->load($surfaceId, $params, $ctx);
+        $built = $this->fieldBuilder->build(
+            $surfaceId,
+            $aspectIds,
+            $subject['baseline'],
+            $params,
+            $ctx
+        );
+
+        $fields = $built['fields'];
+        $fields = array_merge(
+            $fields,
+            $this->contextHiddenFields($subject['context'], 'confirm', [
+                'aspect_ids' => implode(',', $built['aspect_ids']),
+            ])
+        );
+
+        $blocks = [];
+        foreach ($built['open_ui'] as $openUi) {
+            if (!is_array($openUi)) {
+                continue;
+            }
+            $uiAction = trim((string) ($openUi['ui_action'] ?? ''));
+            $aspectLabel = trim((string) ($openUi['label'] ?? ''));
+            $blocks[] = [
+                'kind' => 'message',
+                'id' => 'editar_open_ui_' . ($openUi['aspect_id'] ?? 'aspect'),
+                'title' => $aspectLabel !== '' ? $aspectLabel : 'Pantalla dedicada',
+                'text' => $uiAction !== ''
+                    ? 'Este aspecto se configura en una pantalla dedicada (' . $uiAction . '). Podés continuar con los demás campos o volver más adelante.'
+                    : 'Este aspecto se configura en una pantalla dedicada.',
+                'severity' => 'warning',
+            ];
+        }
+
+        if ($fields !== []) {
+            $blocks[] = [
+                'kind' => 'fields',
+                'id' => 'editar_formulario',
+                'title' => 'Datos a modificar — ' . $subject['label'],
+                'fields' => $fields,
+            ];
+        }
+
+        $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
+            'title' => 'Editar: ' . $subject['label'],
+            'message' => 'Revisá los valores actuales y modificá solo lo necesario.',
+            'step' => 'form',
+            'surface_id' => $surfaceId,
+        ], null);
+        $out = $this->appendBlocks($out, $blocks);
+
+        $out['kind'] = 'ui_definition';
+        $out['success'] = true;
+        $out['data'] = [
+            'step' => 'form',
+            'surface_id' => $surfaceId,
+            'aspect_ids' => $built['aspect_ids'],
+            'subject' => $subject['context'],
+            'baseline' => $subject['baseline'],
+            'dry_run' => true,
+        ];
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private function renderConfirm(array $params, PermissionContext $ctx, string $surfaceId): array
+    {
+        if ($surfaceId === '') {
+            throw new \InvalidArgumentException('surface_id es requerido.');
+        }
+
+        $aspectIds = EditSparseAspectIds::fromParams($params);
+        if ($aspectIds === []) {
+            throw new \InvalidArgumentException('aspect_ids es requerido.');
+        }
+
+        $subject = $this->subjectLoader->load($surfaceId, $params, $ctx);
+        $built = $this->fieldBuilder->build(
+            $surfaceId,
+            $aspectIds,
+            $subject['baseline'],
+            $params,
+            $ctx
+        );
+
+        $proposed = $this->extractProposedValues($params, $subject['baseline'], $built['aspect_ids']);
+        $diff = $this->confirmPresenter->buildDiff($subject['baseline'], $proposed, $built['aspect_ids']);
+        $previewText = $this->confirmPresenter->formatPreviewText(
+            $subject['label'],
+            $diff,
+            $built['open_ui']
+        );
+
+        $hidden = $this->contextHiddenFields($subject['context'], 'apply', [
+            'aspect_ids' => implode(',', $built['aspect_ids']),
+        ]);
+        foreach ($proposed as $field => $value) {
+            $hidden[] = [
+                'name' => $field,
+                'type' => 'hidden',
+                'value' => $value,
+                'include_in_submit' => true,
+            ];
+        }
+
+        $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
+            'title' => 'Confirmar cambios',
+            'message' => $previewText,
+            'step' => 'confirm',
+            'surface_id' => $surfaceId,
+        ], null);
+        $out = $this->appendBlocks($out, [[
+            'kind' => 'fields',
+            'id' => 'editar_confirmar',
+            'title' => 'Confirmación',
+            'fields' => $hidden,
+        ]]);
+
+        $out['kind'] = 'ui_definition';
+        $out['success'] = true;
+        $out['data'] = [
+            'step' => 'confirm',
+            'surface_id' => $surfaceId,
+            'aspect_ids' => $built['aspect_ids'],
+            'subject' => $subject['context'],
+            'changes' => $diff['changes'],
+            'has_changes' => $diff['has_changes'],
+            'dry_run' => true,
+        ];
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private function renderApplyDryRun(array $params, PermissionContext $ctx, string $surfaceId): array
+    {
+        if ($surfaceId === '') {
+            throw new \InvalidArgumentException('surface_id es requerido.');
+        }
+
+        $aspectIds = EditSparseAspectIds::fromParams($params);
+        if ($aspectIds === []) {
+            throw new \InvalidArgumentException('aspect_ids es requerido.');
+        }
+
+        $subject = $this->subjectLoader->load($surfaceId, $params, $ctx);
+        $built = $this->fieldBuilder->build(
+            $surfaceId,
+            $aspectIds,
+            $subject['baseline'],
+            $params,
+            $ctx
+        );
+        $proposed = $this->extractProposedValues($params, $subject['baseline'], $built['aspect_ids']);
+        $diff = $this->confirmPresenter->buildDiff($subject['baseline'], $proposed, $built['aspect_ids']);
+
+        if (!$diff['has_changes'] && $built['open_ui'] === []) {
+            throw new \InvalidArgumentException('No hay cambios para aplicar.');
+        }
+
+        return [
+            'kind' => 'ui_submit_result',
+            'success' => true,
+            'action_id' => 'data-access.editar',
+            'data' => [
+                'dry_run' => true,
+                'surface_id' => $surfaceId,
+                'aspect_ids' => $built['aspect_ids'],
+                'subject' => $subject['context'],
+                'changes' => $diff['changes'],
+                'message' => $diff['has_changes']
+                    ? 'Vista previa completada. La persistencia se habilitará en la siguiente fase.'
+                    : 'Sin cambios escalares; los aspectos con pantalla dedicada se gestionan por separado.',
+            ],
+            'errors' => null,
+        ];
     }
 
     /**
@@ -187,5 +447,82 @@ final class DataAccessEditUiService
         }
 
         return $listOut;
+    }
+
+    /**
+     * @param array<string, int|string> $context
+     * @param array<string, string> $extra
+     * @return list<array<string, mixed>>
+     */
+    private function contextHiddenFields(array $context, string $nextStep, array $extra = []): array
+    {
+        $merged = array_merge($context, $extra);
+        $fields = [
+            [
+                'name' => 'step',
+                'type' => 'hidden',
+                'value' => $nextStep,
+                'include_in_submit' => true,
+            ],
+        ];
+        foreach ($merged as $name => $value) {
+            if ($name === 'step') {
+                continue;
+            }
+            $text = trim((string) $value);
+            if ($text === '') {
+                continue;
+            }
+            $fields[] = [
+                'name' => (string) $name,
+                'type' => 'hidden',
+                'value' => $text,
+                'include_in_submit' => true,
+            ];
+        }
+
+        return $fields;
+    }
+
+    /**
+     * @param array<string, array<string, string>> $baseline
+     * @param list<string> $aspectIds
+     * @return array<string, string>
+     */
+    private function extractProposedValues(array $params, array $baseline, array $aspectIds): array
+    {
+        $out = [];
+        foreach ($aspectIds as $aspectId) {
+            $aspectBaseline = $baseline[$aspectId] ?? [];
+            if (!is_array($aspectBaseline)) {
+                continue;
+            }
+            foreach (array_keys($aspectBaseline) as $field) {
+                if (!is_string($field)) {
+                    continue;
+                }
+                if (array_key_exists($field, $params)) {
+                    $out[$field] = trim((string) $params[$field]);
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $newBlocks
+     * @param array<string, mixed> $out
+     * @return array<string, mixed>
+     */
+    private function appendBlocks(array $out, array $newBlocks): array
+    {
+        $blocks = isset($out['blocks']) && is_array($out['blocks']) ? $out['blocks'] : [];
+        foreach ($newBlocks as $block) {
+            $blocks[] = $block;
+        }
+        $out['blocks'] = $blocks;
+
+        return $out;
     }
 }

@@ -197,9 +197,6 @@ body {
 }
 
 .hero .container {
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 3rem;
     align-items: center;
 }
 
@@ -237,10 +234,9 @@ body {
     color: var(--text-light);
     margin-bottom: 2rem;
     line-height: 1.75;
-    max-width: 36rem;
 }
 
-.hero-buttons {
+.hero-buttons {    
     display: flex;
     gap: 0.875rem;
     flex-wrap: wrap;
@@ -854,7 +850,6 @@ section {
 /* Responsive */
 @media (max-width: 992px) {
     .hero .container {
-        grid-template-columns: 1fr;
         text-align: center;
     }
 

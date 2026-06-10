@@ -2,7 +2,10 @@
 
 namespace common\components\Assistant\Catalog;
 
+use common\components\Core\DataAccess\EditSurfaceAuthorizationService;
+use common\components\Core\DataAccess\PermissionContext;
 use common\components\Ui\ApiV1HttpRoute;
+use Yii;
 
 /**
  * Acciones API staff DataAccess ({@see /api/info}, {@see /api/listar}).
@@ -55,7 +58,34 @@ final class DataAccessUiActionCatalog
      */
     public static function forUser(int $userId): array
     {
-        return YamlIntentCatalogService::filterByRbac(self::discoverAll(), $userId);
+        $items = YamlIntentCatalogService::filterByRbac(self::discoverAll(), $userId);
+        if (!self::userHasEditableSurfaces($userId)) {
+            $items = array_values(array_filter(
+                $items,
+                static fn (array $def): bool => trim((string) ($def['action_id'] ?? '')) !== 'data-access.editar'
+            ));
+        }
+
+        return $items;
+    }
+
+    private static function userHasEditableSurfaces(int $userId): bool
+    {
+        if ($userId <= 0) {
+            return false;
+        }
+
+        $roles = [];
+        if (Yii::$app->has('authManager')) {
+            $assigned = Yii::$app->authManager->getRolesByUser($userId);
+            if (is_array($assigned)) {
+                $roles = array_keys($assigned);
+            }
+        }
+
+        $ctx = new PermissionContext($userId, $roles);
+
+        return (new EditSurfaceAuthorizationService())->userHasAnyEditableSurface($ctx);
     }
 
     /**

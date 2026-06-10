@@ -39,6 +39,20 @@ final class DataAccessEditFlowDraftHydrator
             }
         }
 
+        $surfaceId = trim((string) ($draft['surface_id'] ?? $draft['edit_surface_id'] ?? ''));
+        if ($surfaceId !== '' && trim((string) ($draft['aspect_ids'] ?? '')) === '') {
+            $discovery = new DataAccessEditDiscoveryService();
+            $aspectIds = $discovery->resolveAspectIds($content, $surfaceId, ChatPreprocessContext::extractions(), $ctx);
+            if ($aspectIds !== []) {
+                $draft['aspect_ids'] = implode(',', $aspectIds);
+                $draft['edit_step'] = 'form';
+            }
+        }
+
+        if (trim((string) ($draft['edit_step'] ?? '')) === '') {
+            $draft['edit_step'] = trim((string) ($draft['surface_id'] ?? '')) !== '' ? 'aspects' : 'surfaces';
+        }
+
         $body['draft'] = $draft;
     }
 }

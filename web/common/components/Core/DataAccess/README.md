@@ -31,7 +31,7 @@ Dos intents YAML genéricos (no uno por métrica):
 
 El `metric_id` / `surface_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessEditDiscoveryService`, hydrators) desde keywords en este YAML — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
 
-Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSurfaceAuthorizationService`). Mutación vía `MutationExecutor` + handlers por grupo (`EditMutationRegistry`); aspectos `open_ui` devuelven `open_ui` en la respuesta.
+Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSurfaceAuthorizationService`). El intent `data-access.editar` se oculta del catálogo si no hay superficies editables. Preprocess: `ChatPreprocessService::isStaffDataAccessEditQuery`. Mutación vía `MutationExecutor` + handlers por grupo (`EditMutationRegistry`); aspectos `open_ui` devuelven `open_ui` en la respuesta.
 
 Auditoría mutaciones: canal `data-access`, evento `data_access_edit_applied` (`EditMutationAuditLogger`).
 

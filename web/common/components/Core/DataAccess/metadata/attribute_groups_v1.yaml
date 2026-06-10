@@ -227,12 +227,26 @@ edit_surfaces:
         kind: scalar_group
         attribute_group: Persona.identidad_basica
         fields: [nombre, apellido, otro_nombre, otro_apellido]
+        assistant:
+          keywords:
+            - identidad
+            - nombre
+            - apellido
+            - datos personales
+            - cambiar nombre
       agenda_horarios:
         label: Agenda y horarios
         kind: open_ui
         attribute_group: ProfesionalEfectorServicio.asignacion
         ui_action: profesional-agenda.configurar-agenda
         requires_params: [id_profesional_efector_servicio, id_servicio]
+        assistant:
+          keywords:
+            - agenda
+            - horarios
+            - horario
+            - cupo
+            - editar agenda
 
 # Permisos por rol sobre grupo + operación (+ scope checker opcional por grant).
 role_grants:

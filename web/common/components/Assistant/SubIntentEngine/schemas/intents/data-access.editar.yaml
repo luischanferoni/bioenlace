@@ -34,3 +34,4 @@ subintents:
         surface_id: "draft.surface_id"
         id_efector: "draft.id_efector"
         step: "draft.edit_step"
+        aspect_ids: "draft.aspect_ids"

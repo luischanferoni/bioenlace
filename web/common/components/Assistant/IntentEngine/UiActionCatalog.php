@@ -270,7 +270,13 @@ final class UiActionCatalog
         if (isset($byId['data-access.editar'])) {
             $editDiscovery = new \common\components\Core\DataAccess\DataAccessEditDiscoveryService();
             $extraEdit = $editDiscovery->assistantKeywordsForUser($userId);
-            if ($extraEdit !== []) {
+            if ($extraEdit === []) {
+                unset($byId['data-access.editar']);
+                $items = array_values(array_filter(
+                    $items,
+                    static fn (UiActionCatalogItem $it): bool => $it->action_id !== 'data-access.editar'
+                ));
+            } else {
                 $item = $byId['data-access.editar'];
                 $merged = array_values(array_unique(array_merge($item->keywords, $extraEdit)));
                 $updated = new UiActionCatalogItem(

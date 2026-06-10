@@ -53,6 +53,70 @@ final class DataAccessEditDiscoveryService
     }
 
     /**
+     * Resuelve aspectos editables mencionados en NL (solo si el match es inequívoco).
+     *
+     * @param list<array<string, mixed>> $extractions
+     * @return list<string>
+     */
+    public function resolveAspectIds(
+        string $content,
+        string $surfaceId,
+        array $extractions,
+        ?PermissionContext $ctx = null
+    ): array {
+        $surfaceId = trim($surfaceId);
+        if ($surfaceId === '') {
+            return [];
+        }
+
+        $ctx = $ctx ?? PermissionContext::fromCurrentUser();
+        $surface = $this->catalog->getEditSurface($surfaceId);
+        if ($surface === null) {
+            return [];
+        }
+
+        $contentLower = mb_strtolower(trim($content), 'UTF-8');
+        $scores = [];
+
+        $aspects = $surface['aspects'] ?? [];
+        if (!is_array($aspects)) {
+            return [];
+        }
+
+        foreach ($aspects as $aspectId => $def) {
+            if (!is_string($aspectId) || !is_array($def)) {
+                continue;
+            }
+            if (!$this->authorization->userCanAccessAspect($ctx, $surfaceId, $aspectId)) {
+                continue;
+            }
+            $score = $this->scoreAspect($aspectId, $def, $contentLower, $extractions);
+            if ($score > 0) {
+                $scores[$aspectId] = $score;
+            }
+        }
+
+        if ($scores === []) {
+            return [];
+        }
+
+        arsort($scores);
+        $topScore = (int) reset($scores);
+        if ($topScore <= 0) {
+            return [];
+        }
+
+        $topIds = [];
+        foreach ($scores as $aspectId => $score) {
+            if ((int) $score === $topScore) {
+                $topIds[] = $aspectId;
+            }
+        }
+
+        return count($topIds) === 1 ? $topIds : [];
+    }
+
+    /**
      * @return list<string>
      */
     public function assistantKeywordsForUser(int $userId): array
@@ -76,6 +140,9 @@ final class DataAccessEditDiscoveryService
                 continue;
             }
             foreach ($this->assistantKeywords($def) as $kw) {
+                $out[] = $kw;
+            }
+            foreach ($this->assistantAspectKeywords($surfaceId, $def, $ctx) as $kw) {
                 $out[] = $kw;
             }
         }
@@ -130,6 +197,97 @@ final class DataAccessEditDiscoveryService
         }
 
         return $score;
+    }
+
+    /**
+     * @param array<string, mixed> $surfaceDef
+     * @param list<array<string, mixed>> $extractions
+     */
+    private function scoreAspect(
+        string $aspectId,
+        array $aspectDef,
+        string $contentLower,
+        array $extractions
+    ): int {
+        $score = 0;
+        $aspectIdLower = mb_strtolower($aspectId, 'UTF-8');
+        if ($contentLower !== '' && mb_stripos($contentLower, $aspectIdLower) !== false) {
+            $score += 12;
+        }
+
+        $label = mb_strtolower(trim((string) ($aspectDef['label'] ?? '')), 'UTF-8');
+        if ($label !== '' && $contentLower !== '' && mb_stripos($contentLower, $label) !== false) {
+            $score += 14;
+        }
+
+        foreach ($this->aspectAssistantKeywords($aspectDef) as $kw) {
+            $kwLower = mb_strtolower(trim($kw), 'UTF-8');
+            if ($kwLower === '' || $contentLower === '') {
+                continue;
+            }
+            if (mb_stripos($contentLower, $kwLower) !== false) {
+                $score += 10 + min(6, (int) (mb_strlen($kwLower) / 3));
+            }
+        }
+
+        foreach ($extractions as $ex) {
+            if (!is_array($ex)) {
+                continue;
+            }
+            $span = mb_strtolower(trim((string) ($ex['span'] ?? '')), 'UTF-8');
+            if ($span === '') {
+                continue;
+            }
+            foreach ($this->aspectAssistantKeywords($aspectDef) as $kw) {
+                if (mb_stripos($span, mb_strtolower($kw, 'UTF-8')) !== false) {
+                    $score += 7;
+                }
+            }
+        }
+
+        return $score;
+    }
+
+    /**
+     * @param array<string, mixed> $surfaceDef
+     * @return list<string>
+     */
+    private function assistantAspectKeywords(string $surfaceId, array $surfaceDef, PermissionContext $ctx): array
+    {
+        $aspects = $surfaceDef['aspects'] ?? [];
+        if (!is_array($aspects)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($aspects as $aspectId => $def) {
+            if (!is_string($aspectId) || !is_array($def)) {
+                continue;
+            }
+            if (!$this->authorization->userCanAccessAspect($ctx, $surfaceId, $aspectId)) {
+                continue;
+            }
+            foreach ($this->aspectAssistantKeywords($def) as $kw) {
+                $out[] = $kw;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $aspectDef
+     * @return list<string>
+     */
+    private function aspectAssistantKeywords(array $aspectDef): array
+    {
+        $assistant = $aspectDef['assistant'] ?? [];
+        if (!is_array($assistant)) {
+            return [];
+        }
+        $keywords = $assistant['keywords'] ?? [];
+
+        return is_array($keywords) ? array_values(array_filter(array_map('strval', $keywords))) : [];
     }
 
     /**

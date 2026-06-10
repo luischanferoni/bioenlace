@@ -52,7 +52,7 @@ final class OperationalChannel
         $top = IntentRetrievalIndex::topK($queryText, $catalog, 8);
         $classification = IntentClassifier::classifyAmongItems($queryText, $top, $catalog);
 
-        if ($classification === null && ChatPreprocessService::isStaffDataAccessQuery($queryText)) {
+        if ($classification === null && ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
             $classification = IntentClassifier::classify($queryText, $catalog);
         }
 

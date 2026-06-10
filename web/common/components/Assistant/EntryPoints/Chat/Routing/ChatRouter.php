@@ -41,7 +41,7 @@ final class ChatRouter
             $queryText = $content;
         }
 
-        if (ChatPreprocessService::isStaffDataAccessQuery($queryText)) {
+        if (ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
             return OperationalChannel::handle($content, null, $userId);
         }
 

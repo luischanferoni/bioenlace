@@ -1,7 +1,7 @@
 intent_id: data-access.editar
 version: 1
 
-action_name: "Edición dispersa"
+action_name: "Edición"
 description: "Modificar datos autorizados: elegir sujeto, aspectos y confirmar cambios."
 rbac_route: "/api/editar"
 keywords:
@@ -34,7 +34,7 @@ draft_hydrator:
 
 subintents:
   - id: ejecutar_edicion
-    assistant_text: "Edición"
+    assistant_text: ""
     next: ""
     open_ui:
       action_id: data-access.editar

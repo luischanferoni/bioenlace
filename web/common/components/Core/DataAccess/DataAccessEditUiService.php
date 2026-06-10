@@ -8,6 +8,7 @@ use common\components\Core\DataAccess\Edit\EditSparseFieldBuilder;
 use common\components\Core\DataAccess\Edit\EditSparseSubjectLoader;
 use common\components\Core\DataAccess\Edit\EditMutationResult;
 use common\components\Core\DataAccess\Edit\MutationExecutor;
+use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\components\Ui\UiScreenService;
 use yii\web\ForbiddenHttpException;
 
@@ -144,6 +145,10 @@ final class DataAccessEditUiService
         $metricId = is_array($resolver) ? trim((string) ($resolver['metric_id'] ?? '')) : '';
         $needsSubject = trim((string) ($params['id_persona'] ?? '')) === ''
             && trim((string) ($params['id_profesional_efector_servicio'] ?? '')) === '';
+
+        if ($needsSubject && $metricId !== '') {
+            return $this->renderSubjectList($params, $ctx, $surfaceId);
+        }
 
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
             'title' => 'Editar: ' . $label,
@@ -455,14 +460,71 @@ final class DataAccessEditUiService
         $listParams['metric_id'] = $metricId;
 
         $listOut = $this->dataAccessUi->renderListar($listParams, $ctx);
+
+        $surfaceLabel = is_array($surface)
+            ? (trim((string) ($surface['label'] ?? $surfaceId)) ?: $surfaceId)
+            : $surfaceId;
+        $pesParam = trim((string) ($resolver['pes_param'] ?? 'id_profesional_efector_servicio'))
+            ?: 'id_profesional_efector_servicio';
+        $items = isset($listOut['data']['items']) && is_array($listOut['data']['items'])
+            ? $listOut['data']['items']
+            : [];
+        $subjectOptions = $this->buildSubjectSelectOptions($items, $pesParam);
+
+        $idEfector = OrganizationEfectorAccess::resolveIdEfector(
+            isset($params['id_efector']) ? (int) $params['id_efector'] : null
+        );
+
+        $intro = UiScreenService::renderUiDefinition('data-access', 'editar', [
+            'title' => 'Editar: ' . $surfaceLabel,
+            'message' => $subjectOptions === []
+                ? 'No hay registros para editar en este efector.'
+                : 'Elegí el registro que querés modificar.',
+            'step' => 'subjects',
+            'surface_id' => $surfaceId,
+        ], null);
+
+        $blocks = isset($intro['blocks']) && is_array($intro['blocks']) ? $intro['blocks'] : [];
+        foreach ($listOut['blocks'] ?? [] as $block) {
+            if (is_array($block)) {
+                $blocks[] = $block;
+            }
+        }
+
+        if ($subjectOptions !== []) {
+            $fields = $this->contextHiddenFields([
+                'surface_id' => $surfaceId,
+                'id_efector' => (string) $idEfector,
+            ], 'aspects');
+            $fields[] = [
+                'name' => $pesParam,
+                'type' => 'select',
+                'label' => 'Profesional',
+                'required' => true,
+                'include_in_submit' => true,
+                'options' => $subjectOptions,
+            ];
+            $blocks[] = [
+                'kind' => 'fields',
+                'id' => 'editar_elegir_sujeto',
+                'title' => 'Registro',
+                'fields' => $fields,
+            ];
+        }
+
+        $listOut['blocks'] = $blocks;
+        $listOut['title'] = 'Editar: ' . $surfaceLabel;
+        $listOut['action_id'] = 'data-access.editar';
+        $listOut['kind'] = 'ui_definition';
         $listOut['data']['edit_context'] = [
             'step' => 'subjects',
             'surface_id' => $surfaceId,
             'selection_param' => trim((string) ($resolver['selection_param'] ?? 'id_persona')) ?: 'id_persona',
-            'pes_param' => trim((string) ($resolver['pes_param'] ?? 'id_profesional_efector_servicio'))
-                ?: 'id_profesional_efector_servicio',
+            'pes_param' => $pesParam,
             'next_step' => 'aspects',
         ];
+        $listOut['data']['step'] = 'subjects';
+        $listOut['data']['surface_id'] = $surfaceId;
 
         if (isset($listOut['ui_meta']) && is_array($listOut['ui_meta'])) {
             $listOut['ui_meta']['edit_sparse'] = $listOut['data']['edit_context'];
@@ -471,6 +533,40 @@ final class DataAccessEditUiService
         }
 
         return $listOut;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $items
+     * @return list<array{value: string, label: string}>
+     */
+    private function buildSubjectSelectOptions(array $items, string $pesParam): array
+    {
+        $options = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $meta = $item['meta'] ?? [];
+            if (!is_array($meta)) {
+                continue;
+            }
+            $pesId = (int) ($meta[$pesParam] ?? $meta['id_profesional_efector_servicio'] ?? 0);
+            if ($pesId <= 0) {
+                continue;
+            }
+            $name = trim((string) ($item['name'] ?? ''));
+            $servicio = trim((string) ($item['servicio_nombre'] ?? ''));
+            $label = $name;
+            if ($servicio !== '') {
+                $label = $label !== '' ? ($label . ' — ' . $servicio) : $servicio;
+            }
+            $options[] = [
+                'value' => (string) $pesId,
+                'label' => $label !== '' ? $label : ('Profesional #' . $pesId),
+            ];
+        }
+
+        return $options;
     }
 
     /**

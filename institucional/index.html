@@ -8,6 +8,7 @@
     <title>Bioenlace — Salud digital con asistente e inteligencia artificial</title>
     <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/assistant-demo.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=MuseoModerno:wght@500;700&display=swap" rel="stylesheet">
@@ -58,16 +59,27 @@
                 <p class="section-subtitle">Te asiste, guía y vos confirmás — en lenguaje simple. Sin perderse en menús</p>
             </div>
             <div class="ia-layout reveal">
-                <div class="ia-diagram" aria-hidden="true">
-                    <div class="ia-step ia-step--user"><i class="fas fa-user"></i><span>Vos escribes</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--ai"><i class="fas fa-wand-magic-sparkles"></i><span>IA interpreta</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--security"><i class="fas fa-shield-halved"></i><span>Permisos verificados</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--screen"><i class="fas fa-display"></i><span>Pantalla correcta</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--confirm"><i class="fas fa-circle-check"></i><span>Vos confirmás</span></div>
+                <div class="assistant-demo" id="assistant-demo" aria-label="Demostración animada del asistente web">
+
+                    <div class="assistant-demo__tabs" role="tablist" aria-label="Ejemplos de flujo">
+                        <button type="button" class="assistant-demo__tab is-active" role="tab" aria-selected="true" data-flow="listar">Listar</button>
+                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="editar">Editar</button>
+                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="crear">Crear</button>
+                    </div>
+                    <div class="assistant-demo__body">
+                        <div class="assistant-demo__messages spa-chat-messages" aria-live="polite" aria-relevant="additions"></div>
+                        <div class="assistant-demo__composer spa-chat-composer">
+                            <div class="spa-chat-input-wrap">
+                                <div class="spa-query-input">
+                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="1" readonly placeholder="Escribe tu mensaje…" aria-hidden="true"></textarea>
+                                    <button type="button" class="spa-chat-send-btn" tabindex="-1" aria-hidden="true">
+                                        <span class="spa-send-text" aria-hidden="true">→</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="spa-chat-composer-hint">Ejemplo ilustrado — datos ficticios</p>
+                        </div>
+                    </div>
                 </div>
                 <ul class="benefit-list benefit-list--compact">
                     <li class="benefit-item">
@@ -477,6 +489,7 @@
         </div>
     </footer>
 
+    <script src="js/assistant-demo.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

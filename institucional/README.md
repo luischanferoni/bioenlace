@@ -18,11 +18,13 @@ institucional/
 ## Secciones
 
 1. **Hero** — Propuesta de valor principal
-2. **Plataforma** — Introducción y pilares
-3. **Para el staff** — Beneficios operativos (CRUD / asistente)
-4. **IA integrada** — Cómo funciona la inteligencia artificial
-5. **Pacientes** — Turnos, chat IA y alertas (resumen)
-6. **Contacto** — Formulario e información
+2. **Cómo funciona para el personal** — Bullets + **demo animada del asistente** (listar / editar / crear)
+3. **Médicos / Pacientes / Funcionalidades** — Por audiencia
+4. **Contacto** — Formulario e información
+
+## Demo del asistente (`js/assistant-demo.js`)
+
+Mock animado alineado a `spa.css` (burbujas, flow header, tabla, formulario, composer). Tres pestañas con datos ficticios (lorem). Arranca al hacer scroll a la sección; rota automáticamente salvo hover o foco en la demo.
 
 ## Desarrollo local
 

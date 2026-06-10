@@ -505,6 +505,14 @@ section {
     display: inline-block;
 }
 
+.funcionalidades-intro {
+    font-size: 0.9375rem;
+    color: var(--text-light);
+    line-height: 1.65;
+    margin: 0 0 1.25rem;
+    max-width: none;
+}
+
 .funcionalidades-trust {
     margin-top: 1.25rem;
     font-size: 0.875rem;

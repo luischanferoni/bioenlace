@@ -6,6 +6,8 @@ use common\components\Core\DataAccess\Edit\EditSparseAspectIds;
 use common\components\Core\DataAccess\Edit\EditSparseConfirmPresenter;
 use common\components\Core\DataAccess\Edit\EditSparseFieldBuilder;
 use common\components\Core\DataAccess\Edit\EditSparseSubjectLoader;
+use common\components\Core\DataAccess\Edit\EditMutationResult;
+use common\components\Core\DataAccess\Edit\MutationExecutor;
 use common\components\Ui\UiScreenService;
 use yii\web\ForbiddenHttpException;
 
@@ -20,6 +22,7 @@ final class DataAccessEditUiService
     private EditSparseSubjectLoader $subjectLoader;
     private EditSparseFieldBuilder $fieldBuilder;
     private EditSparseConfirmPresenter $confirmPresenter;
+    private MutationExecutor $mutationExecutor;
 
     public function __construct(
         ?AttributeGroupCatalog $catalog = null,
@@ -27,7 +30,8 @@ final class DataAccessEditUiService
         ?DataAccessUiService $dataAccessUi = null,
         ?EditSparseSubjectLoader $subjectLoader = null,
         ?EditSparseFieldBuilder $fieldBuilder = null,
-        ?EditSparseConfirmPresenter $confirmPresenter = null
+        ?EditSparseConfirmPresenter $confirmPresenter = null,
+        ?MutationExecutor $mutationExecutor = null
     ) {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
         $this->authorization = $authorization ?? new EditSurfaceAuthorizationService($this->catalog);
@@ -35,6 +39,7 @@ final class DataAccessEditUiService
         $this->subjectLoader = $subjectLoader ?? new EditSparseSubjectLoader($this->catalog, $this->authorization);
         $this->fieldBuilder = $fieldBuilder ?? new EditSparseFieldBuilder($this->catalog, $this->authorization);
         $this->confirmPresenter = $confirmPresenter ?? new EditSparseConfirmPresenter();
+        $this->mutationExecutor = $mutationExecutor ?? new MutationExecutor($this->catalog, $this->authorization);
     }
 
     /**
@@ -56,7 +61,7 @@ final class DataAccessEditUiService
         }
 
         if ($step === 'apply') {
-            return $this->renderApplyDryRun($params, $ctx, $surfaceId);
+            return $this->renderApply($params, $ctx, $surfaceId);
         }
 
         if ($step === 'confirm') {
@@ -277,7 +282,6 @@ final class DataAccessEditUiService
             'aspect_ids' => $built['aspect_ids'],
             'subject' => $subject['context'],
             'baseline' => $subject['baseline'],
-            'dry_run' => true,
         ];
 
         return $out;
@@ -349,7 +353,6 @@ final class DataAccessEditUiService
             'subject' => $subject['context'],
             'changes' => $diff['changes'],
             'has_changes' => $diff['has_changes'],
-            'dry_run' => true,
         ];
 
         return $out;
@@ -359,7 +362,7 @@ final class DataAccessEditUiService
      * @param array<string, mixed> $params
      * @return array<string, mixed>
      */
-    private function renderApplyDryRun(array $params, PermissionContext $ctx, string $surfaceId): array
+    private function renderApply(array $params, PermissionContext $ctx, string $surfaceId): array
     {
         if ($surfaceId === '') {
             throw new \InvalidArgumentException('surface_id es requerido.');
@@ -379,28 +382,49 @@ final class DataAccessEditUiService
             $ctx
         );
         $proposed = $this->extractProposedValues($params, $subject['baseline'], $built['aspect_ids']);
-        $diff = $this->confirmPresenter->buildDiff($subject['baseline'], $proposed, $built['aspect_ids']);
 
-        if (!$diff['has_changes'] && $built['open_ui'] === []) {
-            throw new \InvalidArgumentException('No hay cambios para aplicar.');
+        $result = $this->mutationExecutor->apply(
+            $surfaceId,
+            $built['aspect_ids'],
+            $subject['baseline'],
+            $proposed,
+            $subject['context'],
+            $params,
+            $ctx
+        );
+
+        $message = $this->buildApplySuccessMessage($result);
+
+        $data = [
+            'surface_id' => $surfaceId,
+            'aspect_ids' => $built['aspect_ids'],
+            'subject' => $result->subjectContext,
+            'changes' => $result->appliedChanges,
+            'message' => $message,
+        ];
+        if ($result->hasOpenUiActions()) {
+            $data['open_ui'] = $result->openUiActions;
         }
 
         return [
             'kind' => 'ui_submit_result',
             'success' => true,
             'action_id' => 'data-access.editar',
-            'data' => [
-                'dry_run' => true,
-                'surface_id' => $surfaceId,
-                'aspect_ids' => $built['aspect_ids'],
-                'subject' => $subject['context'],
-                'changes' => $diff['changes'],
-                'message' => $diff['has_changes']
-                    ? 'Vista previa completada. La persistencia se habilitará en la siguiente fase.'
-                    : 'Sin cambios escalares; los aspectos con pantalla dedicada se gestionan por separado.',
-            ],
+            'data' => $data,
             'errors' => null,
         ];
+    }
+
+    private function buildApplySuccessMessage(EditMutationResult $result): string
+    {
+        if ($result->hasScalarChanges() && $result->hasOpenUiActions()) {
+            return 'Cambios guardados. Abrí la pantalla dedicada para completar los demás aspectos.';
+        }
+        if ($result->hasScalarChanges()) {
+            return 'Los cambios se guardaron correctamente.';
+        }
+
+        return 'Abrí la pantalla dedicada para continuar con la edición.';
     }
 
     /**

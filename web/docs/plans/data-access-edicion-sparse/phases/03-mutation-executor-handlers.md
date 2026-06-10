@@ -1,6 +1,6 @@
 # Fase 3 — MutationExecutor + handlers dominio
 
-**Estado:** pendiente
+**Estado:** implementada
 
 - `MutationExecutor` + `EditMutationAuthorizationService`
 - Handlers `scalar_group` (Services existentes)

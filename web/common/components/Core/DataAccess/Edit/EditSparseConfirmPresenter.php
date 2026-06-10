@@ -84,7 +84,7 @@ final class EditSparseConfirmPresenter
 
         if ($openUiAspects !== []) {
             $parts[] = '';
-            $parts[] = 'Aspectos con pantalla dedicada (sin cambios en este paso):';
+            $parts[] = 'Aspectos con pantalla dedicada (se abren al confirmar):';
             foreach ($openUiAspects as $aspect) {
                 if (!is_array($aspect)) {
                     continue;
@@ -96,8 +96,10 @@ final class EditSparseConfirmPresenter
             }
         }
 
-        $parts[] = '';
-        $parts[] = 'Vista previa (sin guardar aún). En la próxima fase se aplicarán los cambios al confirmar.';
+        if ($diff['has_changes'] ?? false) {
+            $parts[] = '';
+            $parts[] = 'Al confirmar se guardarán los cambios indicados.';
+        }
 
         return implode("\n", $parts);
     }

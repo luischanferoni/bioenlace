@@ -222,7 +222,7 @@ body {
 
 .hero-title {
     font-family: 'MuseoModerno', 'Inter', sans-serif;
-    font-size: clamp(2.25rem, 5vw, 3.25rem);
+    font-size: clamp(2.25rem, 5vw, 3.12rem);
     font-weight: 700;
     margin-bottom: 1.25rem;
     color: var(--brand-dark);
@@ -230,7 +230,7 @@ body {
 }
 
 .hero-subtitle {
-    font-size: 1.125rem;
+    font-size: 1.325rem;
     color: var(--text-light);
     margin-bottom: 2rem;
     line-height: 1.75;

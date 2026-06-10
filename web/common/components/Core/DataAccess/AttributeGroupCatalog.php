@@ -213,6 +213,40 @@ final class AttributeGroupCatalog
     }
 
     /**
+     * @return list<string>
+     */
+    public function getEntityGroupAttributes(string $entityGroupKey): array
+    {
+        $entityGroupKey = trim($entityGroupKey);
+        $dot = strpos($entityGroupKey, '.');
+        if ($dot === false) {
+            return [];
+        }
+
+        $entityName = substr($entityGroupKey, 0, $dot);
+        $groupKey = substr($entityGroupKey, $dot + 1);
+        $entities = self::load()['entities'] ?? [];
+        if (!is_array($entities) || !isset($entities[$entityName]) || !is_array($entities[$entityName])) {
+            return [];
+        }
+
+        $group = $entities[$entityName][$groupKey] ?? null;
+        if (!is_array($group)) {
+            return [];
+        }
+
+        $attrs = $group['attributes'] ?? [];
+        if (!is_array($attrs)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn ($a): string => trim((string) $a),
+            $attrs
+        ), static fn (string $a): bool => $a !== ''));
+    }
+
+    /**
      * @return array<string, array<string, mixed>>
      */
     public function listEntitiesForDisplay(): array

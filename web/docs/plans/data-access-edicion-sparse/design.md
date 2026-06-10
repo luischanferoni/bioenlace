@@ -39,7 +39,7 @@ edit_surfaces:
 | `surface_id` + `step=subjects` | delega a listar (`subject_resolver.metric_id`) |
 | `step=form` + `aspect_ids` + sujeto | ui_json formulario parcial con prefill |
 | `step=confirm` | preview diff (dry-run) |
-| `step=apply` | respuesta `ui_submit_result` sin persistir (Fase 3 mutará) |
+| `step=apply` | `ui_submit_result` con cambios persistidos + `open_ui` si aplica |
 
 ## Asistente
 

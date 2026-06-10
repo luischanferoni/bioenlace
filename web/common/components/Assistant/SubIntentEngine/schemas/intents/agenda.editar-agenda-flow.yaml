@@ -1,14 +1,14 @@
+# Deprecado: usar intent `data-access.editar` (aspecto agenda_horarios → configurar-agenda).
+# Se conserva para cierres POST en vuelo y SubIntentEngine; no aparece en el catálogo del asistente.
 intent_id: agenda.editar-agenda-flow
 version: 1
+catalog_exclude: true
+deprecated_successor: data-access.editar
 
-action_name: "Editar agenda"
-description: "Editar la agenda de un profesional."
+action_name: "Editar agenda (legacy)"
+description: "Deprecado — reemplazado por edición dispersa data-access.editar."
 rbac_route: "/api/profesional-agenda/editar-agenda-flow"
-keywords:
-  - agenda
-  - editar agenda
-  - modificar agenda
-  - horarios
+keywords: []
 
 intent_semantics:
   goal: >-
@@ -23,10 +23,7 @@ intent_semantics:
     - Para configurar agenda, el servicio asociado debe habilitar turnos.
   outcome:
     - Horarios/agenda actualizados cuando el servicio admite turnos; acuse de cierre del flujo en todos los casos.
-  keyphrases:
-    - editar horarios existentes
-    - ajustar disponibilidad en agenda
-    - configurar agenda de profesional ya asociado
+  keyphrases: []
 
 draft_keys_extra:
   - servicio_acepta_turnos
@@ -49,8 +46,8 @@ business_rules:
       ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?
     remediation:
       - id: solo_agenda
-        label: "Solo horarios (ya tiene servicio que acepta turnos)"
-        intent_id: agenda.editar-agenda-flow
+        label: "Solo horarios (edición dispersa)"
+        intent_id: data-access.editar
         reset_flow: true
       - id: mi_agenda
         label: "Mi agenda (mis servicios)"

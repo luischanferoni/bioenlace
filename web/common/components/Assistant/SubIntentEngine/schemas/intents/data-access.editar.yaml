@@ -13,12 +13,20 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Modificar solo los aspectos permitidos sobre un registro (sin wizard de alta completa).
+    Modificar solo los aspectos permitidos sobre un registro (sin wizard de alta completa),
+    incluida la agenda/horarios de un profesional del efector.
   how: >-
     Resuelve la superficie de edición, permite elegir sujeto vía listado si hace falta,
     luego aspectos editables según permisos write por grupo de atributos.
+    El aspecto agenda_horarios abre la pantalla profesional-agenda.configurar-agenda.
   outcome:
     - El staff edita únicamente lo autorizado, con confirmación antes de persistir.
+  keyphrases:
+    - editar horarios existentes
+    - ajustar disponibilidad en agenda
+    - configurar agenda de profesional ya asociado
+    - modificar agenda del personal
+    - editar agenda del medico del centro
 
 draft_hydrator:
   handler: data_access.edit_flow

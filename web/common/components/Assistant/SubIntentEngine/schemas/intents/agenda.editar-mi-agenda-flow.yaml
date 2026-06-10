@@ -55,8 +55,8 @@ business_rules:
         intent_id: agenda.editar-mi-agenda-flow
         reset_flow: true
       - id: otro_profesional
-        label: "Agenda de otro profesional (staff)"
-        intent_id: agenda.editar-agenda-flow
+        label: "Agenda de otro profesional (edición dispersa)"
+        intent_id: data-access.editar
         reset_flow: true
 
 subintents:

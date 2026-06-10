@@ -101,7 +101,7 @@ final class CommonActionsService
                 'models' => [
                     'agenda.crear-profesional-flow',
                     'agenda.editar-mi-agenda-flow',
-                    'agenda.editar-agenda-flow',
+                    'data-access.editar',
                     'licencia.cargar-como-profesional-flow',
                     'licencia.cargar-para-profesional-flow',
                     'turnos.indicadores-agenda-flow',

@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `data-access-edicion-sparse` |
-| Estado | En ejecución — Fase 5 (migrar flows agenda) |
+| Estado | Cerrado (fases 1–5) |
 | Origen | Conversación producto (extensión de `info` / `listar`) |
 | Objetivo | Un intent `data-access.editar` + metadata `edit_surfaces` con permisos por grupo (`write`), picker de superficie/aspecto/sujeto, confirmación obligatoria |
 
@@ -15,7 +15,7 @@
 - [phases/02-formulario-parcial-confirmar.md](./phases/02-formulario-parcial-confirmar.md) — **cerrada**
 - [phases/03-mutation-executor-handlers.md](./phases/03-mutation-executor-handlers.md) — **cerrada**
 - [phases/04-asistente-preprocess.md](./phases/04-asistente-preprocess.md) — **cerrada**
-- [phases/05-migrar-flows-agenda.md](./phases/05-migrar-flows-agenda.md)
+- [phases/05-migrar-flows-agenda.md](./phases/05-migrar-flows-agenda.md) — **cerrada**
 
 ## Código
 

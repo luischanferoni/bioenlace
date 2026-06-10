@@ -17,7 +17,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Cohortes — asistencia + batch IA | `cohortes-asistencia-batch/` | Fases 1–5 implementadas; activación Vertex manual |
 | Representación paciente (FHIR) | `representacion-paciente-fhir/` | Fases 1–5 implementadas; doc estable en [producto/representacion-paciente.md](../producto/representacion-paciente.md); E2E móvil manual pendiente |
 | Limpieza legacy Yii / modelos / BD | `clean-legacy/` | Código fases 01–04 cerrado; migrate BD + smoke opcional |
-| DataAccess — edición dispersa | `data-access-edicion-sparse/` | Fase 1 en curso (`/api/editar`, `data-access.editar`) |
+| DataAccess — edición dispersa | `data-access-edicion-sparse/` | Cerrado (`/api/editar`, `data-access.editar`; agenda legacy deprecada) |
 
 ## Planes archivados (carpeta eliminada)
 

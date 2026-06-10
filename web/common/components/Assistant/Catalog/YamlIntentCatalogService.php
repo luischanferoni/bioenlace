@@ -91,6 +91,10 @@ final class YamlIntentCatalogService
                 continue;
             }
 
+            if (!empty($data['catalog_exclude'])) {
+                continue;
+            }
+
             $actionName = isset($data['action_name']) ? trim((string) $data['action_name']) : '';
             if ($actionName === '') {
                 $actionName = $intentId;

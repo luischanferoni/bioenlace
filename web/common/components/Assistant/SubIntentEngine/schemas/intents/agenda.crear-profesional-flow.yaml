@@ -61,8 +61,8 @@ business_rules:
         intent_id: agenda.crear-profesional-flow
         reset_flow: true
       - id: solo_agenda
-        label: "Solo horarios (ya tiene servicio que acepta turnos)"
-        intent_id: agenda.editar-agenda-flow
+        label: "Solo horarios (edición dispersa)"
+        intent_id: data-access.editar
         reset_flow: true
       - id: mi_agenda
         label: "Mi agenda (mis servicios)"

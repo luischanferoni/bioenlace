@@ -35,6 +35,8 @@ Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSu
 
 Auditoría mutaciones: canal `data-access`, evento `data_access_edit_applied` (`EditMutationAuditLogger`).
 
+Migración agenda staff: `agenda.editar-agenda-flow` deprecado (`catalog_exclude`); usar `data-access.editar` → aspecto `agenda_horarios` → `profesional-agenda.configurar-agenda`.
+
 ## Extender
 
 1. Métrica + bloques `query`, `output`, `presentation_handler` y `assistant.keywords` en YAML.

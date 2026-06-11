@@ -29,6 +29,8 @@ return [
         ],
         'view' => [
             'theme' => [
+                // Login webvimark (frontend y backend auth): vistas en frontend/views/login.
+                // RBAC post-login: SisseGhostAccessControl (EnforceGhostAccessBootstrap en frontend).
                 'pathMap' => [
                     '@vendor/webvimark/module-user-management/views' => '@frontend/views/login',
                     '@vendor/webvimark/module-user-management/views/auth' => '@frontend/views/login',

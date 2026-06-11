@@ -1876,17 +1876,95 @@
      * @param {HTMLElement} container - Contenedor donde se debe renderizar la UI
      * @param {Object} options - Opciones adicionales (por ejemplo, url original)
      */
+    function editSparseContextFromJson(json, options) {
+        if (options && options.editSparse && typeof options.editSparse === 'object') {
+            return options.editSparse;
+        }
+        if (json && json.ui_meta && json.ui_meta.edit_sparse && typeof json.ui_meta.edit_sparse === 'object') {
+            return json.ui_meta.edit_sparse;
+        }
+        return null;
+    }
+
+    function buildEditSparseAdvanceUrl(baseUrl, editSparse, selectedId, item) {
+        const url = new URL(resolveSpaFetchUrl(String(baseUrl || '')), window.location.origin);
+        const nextStep = editSparse.next_step != null ? String(editSparse.next_step).trim() : 'aspects';
+        if (nextStep !== '') {
+            url.searchParams.set('step', nextStep);
+        }
+        if (editSparse.surface_id != null && String(editSparse.surface_id).trim() !== '') {
+            url.searchParams.set('surface_id', String(editSparse.surface_id).trim());
+        }
+        const pesParam = editSparse.pes_param != null
+            ? String(editSparse.pes_param).trim()
+            : 'id_profesional_efector_servicio';
+        const selParam = editSparse.selection_param != null
+            ? String(editSparse.selection_param).trim()
+            : 'id_persona';
+        if (selectedId) {
+            url.searchParams.set(pesParam, String(selectedId));
+        }
+        const meta = item && item.meta && typeof item.meta === 'object' ? item.meta : null;
+        if (meta) {
+            if (meta[selParam] != null && String(meta[selParam]).trim() !== '') {
+                url.searchParams.set(selParam, String(meta[selParam]).trim());
+            }
+            if (meta.id_servicio != null && String(meta.id_servicio).trim() !== '') {
+                url.searchParams.set('id_servicio', String(meta.id_servicio).trim());
+            }
+        }
+        return url.toString();
+    }
+
+    function fetchEditSparseUiDefinition(nextUrl, rootContainer, options) {
+        const mountEl = rootContainer;
+        if (!mountEl) {
+            return Promise.resolve();
+        }
+        mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+        return fetch(nextUrl, {
+            method: 'GET',
+            headers: window.BioenlaceApiClient.mergeHeaders({
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            })
+        })
+            .then(function (r) {
+                if (!r.ok) {
+                    throw new Error('HTTP ' + r.status);
+                }
+                return r.json();
+            })
+            .then(function (json) {
+                if (json && json.kind === 'ui_definition') {
+                    renderDynamicUi(json, mountEl, Object.assign({}, options || {}, {
+                        url: nextUrl,
+                        rootContainer: mountEl
+                    }));
+                } else {
+                    mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+                }
+            })
+            .catch(function () {
+                mountEl.innerHTML = '<div class="alert alert-danger mb-0">Error al cargar el siguiente paso.</div>';
+            });
+    }
+
     function renderDynamicUi(json, container, options = {}) {
         if (!json || !container) {
             return;
         }
 
         const uiType = json.ui_type || 'ui_json';
+        const renderOptions = Object.assign({}, options, {
+            rootContainer: options.rootContainer || container,
+            editSparse: editSparseContextFromJson(json, options)
+        });
 
         switch (uiType) {
             case 'ui_json':
                 if (Array.isArray(json.blocks)) {
-                    renderUiJsonBlocks(json, container, options);
+                    renderUiJsonBlocks(json, container, renderOptions);
                     break;
                 }
                 container.innerHTML = '<div class="alert alert-warning mb-0">UI JSON inválida: falta blocks.</div>';
@@ -2275,11 +2353,27 @@
             if (!selectedId) return;
 
             const isTerminalFlowStep = options.isTerminalFlowStep === true;
+            const editSparse = options.editSparse && typeof options.editSparse === 'object'
+                ? options.editSparse
+                : null;
+            const item = itemsById[selectedId];
+
+            if (editSparse && options.rootContainer && options.url) {
+                locked = true;
+                try {
+                    allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
+                } catch (e) { /* ignore */ }
+                const nextUrl = buildEditSparseAdvanceUrl(options.url, editSparse, selectedId, item);
+                fetchEditSparseUiDefinition(nextUrl, options.rootContainer, {
+                    url: nextUrl,
+                    rootContainer: options.rootContainer
+                });
+                return;
+            }
 
             try {
                 const delta = {};
                 delta[draftField] = selectedId;
-                const item = itemsById[selectedId];
                 if (item) {
                     delta['_flow_item_' + draftField] = item;
                 }
@@ -2572,8 +2666,12 @@
                         return;
                     }
                     if (json && json.kind === 'ui_definition') {
-                        // Error de validación: re-render y mostrar banner con `errors`.
-                        renderDynamicUi(json, container, { url: submitUrl });
+                        // Error de validación o siguiente paso: re-render en el contenedor raíz.
+                        const rerenderTarget = options.rootContainer || container;
+                        renderDynamicUi(json, rerenderTarget, {
+                            url: submitUrl,
+                            rootContainer: rerenderTarget
+                        });
                         return;
                     }
                     container.innerHTML = '<div class="alert alert-danger mb-0">Error al guardar.</div>';

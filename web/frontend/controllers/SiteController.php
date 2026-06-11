@@ -43,6 +43,10 @@ class SiteController extends Controller
      */
     public function actionIndex()
     {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
         return $this->redirect(['site/inicio']);
     }
 
@@ -56,6 +60,10 @@ class SiteController extends Controller
     */
     public function actionInicio()
     {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
         $idEfector = Yii::$app->user->getIdEfector();
         $servicioActual = Yii::$app->user->getServicioActual();
         $encounterClass = Yii::$app->user->getEncounterClass();

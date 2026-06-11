@@ -76,7 +76,7 @@ if(Yii::$app->user->idEfector){
         'activateParents' => true,
         'items' => [
             //Yii::$app->user->idEfector ?[
-            ['label' => 'Inicio', 'url' => ['/site/index']],
+            ['label' => 'Inicio', 'url' => ['/site/inicio']],
             ['label' => 'Localidades', 'url' => ['/localidades']],
             //['label' => 'Mensajes', 'url' => ['/mensajes']],
             ['label' => 'Personas', 'url' => ['/personas']],

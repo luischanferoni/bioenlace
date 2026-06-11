@@ -14,6 +14,8 @@ $baseUrl = str_replace('/frontend/web', '', (new Request)->getBaseUrl());
 return [
     'id' => 'bioenlace-frontend',
     'language' => 'es',
+    'homeUrl' => ['/site/inicio'],
+    'defaultRoute' => 'site/inicio',
     'basePath' => dirname(__DIR__),
     'bootstrap' => [
         'log',
@@ -88,6 +90,7 @@ return [
                 // Canónico: /user-management/auth/login (UserConfig::$loginUrl).
                 'site/login' => 'user-management/auth/login',
                 'login' => 'user-management/auth/login',
+                'site/index' => 'site/inicio',
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
@@ -576,6 +579,9 @@ return [
     'modules' => [
         'user-management' => [
             'class' => 'webvimark\modules\UserManagement\UserManagementModule',
+            'controllerMap' => [
+                'auth' => 'frontend\controllers\userManagement\AuthController',
+            ],
             //'registrationFormClass' => 'common\models\User',
             // 'enableRegistration' => true,
             // Here you can set your handler to change layout for any controller or action

@@ -37,6 +37,16 @@ class SiteController extends Controller
     }
 
     /**
+     * Alias legacy site/index y ruta raíz → flujo post-login (wizard o pacientes).
+     *
+     * @no_intent_catalog
+     */
+    public function actionIndex()
+    {
+        return $this->redirect(['site/inicio']);
+    }
+
+    /**
      * Post-login: si falta efector, servicio o encounter class en sesión, muestra el asistente de selección
      * (vistas despuesdelogin/*). El listado de efectores, encounter classes y `efectores_con_problemas` los
      * obtiene el cliente con POST `/api/v1/sesion-operativa/establecer` (cuerpo vacío), no desde PHP.
@@ -493,6 +503,8 @@ class SiteController extends Controller
 
         if ($exception instanceof yii\web\TooManyRequestsHttpException) {
             $this->layout = 'publico/error';
+        } elseif (Yii::$app->user->isGuest) {
+            $this->layout = '@frontend/views/layouts/loginLayout.php';
         }
         return $this->render('error', ['exception' => $exception]);
     }

@@ -1499,7 +1499,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
 
     Widget renderMessageBlock(Map<String, dynamic> b) {
-      final title = b['title']?.toString();
       final text = b['text']?.toString() ?? b['body']?.toString() ?? '';
       final severity = b['severity']?.toString() ?? '';
       Color? bg;
@@ -1509,10 +1508,6 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (title != null && title.trim().isNotEmpty) ...[
-            Text(title, style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-          ],
           Container(
             padding: bg != null ? const EdgeInsets.all(12) : EdgeInsets.zero,
             decoration: bg != null

@@ -834,6 +834,21 @@
     }
 
     /**
+     * Intent con un único subintent (p. ej. data-access.editar): el paso es la acción entera,
+     * no un subpaso — no duplicar título de flow ni etiqueta de paso.
+     *
+     * @param {object|null} fm
+     * @returns {boolean}
+     */
+    function isPassthroughSingleStepFlow(fm) {
+        if (!fm || typeof fm !== 'object') {
+            return false;
+        }
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        return steps.length === 1;
+    }
+
+    /**
      * Índice del paso activo en `manifest.steps` (por `active_subintent_id`).
      *
      * @param {object} fm
@@ -901,9 +916,12 @@
      * @param {number} activeIdx
      * @returns {HTMLLIElement}
      */
-    function createFlowStepListItem(st, idx, activeIdx) {
+    function createFlowStepListItem(st, idx, activeIdx, hideStepLabel) {
         const li = document.createElement('li');
         li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
+        if (hideStepLabel === true) {
+            li.classList.add('spa-flow-step-item--passthrough');
+        }
         if (st && st.id != null) {
             li.setAttribute('data-step-id', String(st.id));
         }
@@ -911,14 +929,16 @@
         const body = document.createElement('div');
         body.className = 'spa-flow-step-body';
 
-        const textEl = document.createElement('div');
-        textEl.className = 'spa-flow-step-text';
-        textEl.textContent = flowStepDisplayText(st, idx);
+        if (hideStepLabel !== true) {
+            const textEl = document.createElement('div');
+            textEl.className = 'spa-flow-step-text';
+            textEl.textContent = flowStepDisplayText(st, idx);
+            body.appendChild(textEl);
+        }
 
         const uiMount = document.createElement('div');
         uiMount.className = 'spa-flow-step-ui';
 
-        body.appendChild(textEl);
         body.appendChild(uiMount);
         li.appendChild(body);
         return li;
@@ -963,12 +983,16 @@
 
         purgeLegacyFlowPlanWraps();
         const activeIdx = resolveFlowActiveStepIndex(fm);
+        const passthroughFlow = isPassthroughSingleStepFlow(fm);
         let row = findActiveFlowRow(flowIntentId);
         let list;
 
         if (!row) {
             row = document.createElement('div');
             row.className = 'w-100 mb-3 spa-chat-flow-row';
+            if (passthroughFlow) {
+                row.classList.add('spa-chat-flow-row--passthrough');
+            }
             row.setAttribute('data-flow-intent-id', flowIntentId);
             row.setAttribute('data-flow-activation-seq', String(bioFlowActivationSeq));
 
@@ -976,7 +1000,7 @@
             inner.className = 'spa-chat-flow-turn w-100';
 
             const titleStr = typeof flowActionTitle === 'string' ? flowActionTitle.trim() : '';
-            if (titleStr !== '' && shouldShowFlowChatHeader(fm)) {
+            if (titleStr !== '' && shouldShowFlowChatHeader(fm) && !passthroughFlow) {
                 const header = document.createElement('div');
                 header.className = 'spa-flow-chat-header';
                 const hFlow = document.createElement('h3');
@@ -993,7 +1017,7 @@
             list = document.createElement('ol');
             list.className = 'spa-flow-steps-list list-unstyled mb-0';
             steps.forEach(function (st, idx) {
-                list.appendChild(createFlowStepListItem(st, idx, activeIdx));
+                list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow));
             });
             inner.appendChild(list);
             row.appendChild(inner);
@@ -1008,13 +1032,14 @@
             if (items.length !== steps.length) {
                 list.innerHTML = '';
                 steps.forEach(function (st, idx) {
-                    list.appendChild(createFlowStepListItem(st, idx, activeIdx));
+                    list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow));
                 });
             } else {
                 items.forEach(function (li, idx) {
-                    li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
+                    li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx)
+                        + (passthroughFlow ? ' spa-flow-step-item--passthrough' : '');
                     const st = steps[idx];
-                    if (st) {
+                    if (st && !passthroughFlow) {
                         const textEl = li.querySelector('.spa-flow-step-text');
                         if (textEl) {
                             textEl.textContent = flowStepDisplayText(st, idx);
@@ -2158,14 +2183,10 @@
     }
 
     function renderUiJsonMessageBlock(block, container) {
-        const title = block.title ? String(block.title) : '';
         const text = block.text != null ? String(block.text) : (block.body != null ? String(block.body) : '');
         const severity = block.severity ? String(block.severity) : '';
         const alertClass = severity === 'warning' ? ' alert alert-warning' : (severity === 'danger' ? ' alert alert-danger' : '');
         let html = '<div class="bio-ui-json-message' + alertClass + '">';
-        if (title) {
-            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
-        }
         html += '<div class="bio-ui-json-message-body small mb-0" style="white-space:pre-wrap;">'
             + escapeHtml(text)
             + '</div></div>';

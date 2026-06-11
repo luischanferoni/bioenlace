@@ -834,8 +834,8 @@
     }
 
     /**
-     * Intent con un único subintent (p. ej. data-access.editar): el paso es la acción entera,
-     * no un subpaso — no duplicar título de flow ni etiqueta de paso.
+     * Intent con un único subintent (p. ej. data-access.editar): el paso es la acción entera;
+     * se oculta solo la etiqueta del subpaso, no el `action_name` del encabezado del flow.
      *
      * @param {object|null} fm
      * @returns {boolean}
@@ -1000,7 +1000,7 @@
             inner.className = 'spa-chat-flow-turn w-100';
 
             const titleStr = typeof flowActionTitle === 'string' ? flowActionTitle.trim() : '';
-            if (titleStr !== '' && shouldShowFlowChatHeader(fm) && !passthroughFlow) {
+            if (titleStr !== '' && shouldShowFlowChatHeader(fm)) {
                 const header = document.createElement('div');
                 header.className = 'spa-flow-chat-header';
                 const hFlow = document.createElement('h3');

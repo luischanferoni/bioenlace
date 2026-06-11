@@ -693,6 +693,12 @@ html:has(.spa-asistente-root) {
 }
 
 /* Lista embebida UI JSON: transición suave al seleccionar ítem. */
+/* Bloques `kind: message` en mini-UI embebida (texto guía del asistente) */
+.bio-ui-json-message-body {
+    font-size: 1.125rem;
+    line-height: 1.45;
+}
+
 .bio-ui-json-list--layout-table .bio-ui-json-list-table th {
     font-size: 0.8125rem;
     white-space: nowrap;

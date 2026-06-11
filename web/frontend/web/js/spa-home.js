@@ -2187,7 +2187,7 @@
         const severity = block.severity ? String(block.severity) : '';
         const alertClass = severity === 'warning' ? ' alert alert-warning' : (severity === 'danger' ? ' alert alert-danger' : '');
         let html = '<div class="bio-ui-json-message' + alertClass + '">';
-        html += '<div class="bio-ui-json-message-body small mb-0" style="white-space:pre-wrap;">'
+        html += '<div class="bio-ui-json-message-body mb-0" style="white-space:pre-wrap;">'
             + escapeHtml(text)
             + '</div></div>';
         container.innerHTML = html;

@@ -125,6 +125,9 @@ return [
             ],
         'user-management' => [
             'class' => 'webvimark\modules\UserManagement\UserManagementModule',
+            'controllerMap' => [
+                'auth' => 'frontend\controllers\userManagement\AuthController',
+            ],
             //'registrationFormClass' => 'app\models\User',
             // 'enableRegistration' => true,
             // Here you can set your handler to change layout for any controller or action

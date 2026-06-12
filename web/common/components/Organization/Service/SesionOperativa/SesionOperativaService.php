@@ -23,6 +23,36 @@ use Firebase\JWT\JWT;
  */
 class SesionOperativaService extends Component
 {
+    private const ITEM_NAME_SERVICIO_ADMIN_EFECTOR = 'AdminEfector';
+
+    public static function isServicioAdminEfector(int $idServicio): bool
+    {
+        if ($idServicio <= 0) {
+            return false;
+        }
+        $servicio = Servicio::findOne($idServicio);
+        if ($servicio === null) {
+            return false;
+        }
+
+        return (string) $servicio->item_name === self::ITEM_NAME_SERVICIO_ADMIN_EFECTOR;
+    }
+
+    public static function isSesionOperativaCompleta(): bool
+    {
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idServicio = (int) Yii::$app->user->getServicioActual();
+        if ($idEfector <= 0 || $idServicio <= 0) {
+            return false;
+        }
+        $encounterClass = Yii::$app->user->getEncounterClass();
+        if ($encounterClass !== null && $encounterClass !== '') {
+            return true;
+        }
+
+        return self::isServicioAdminEfector($idServicio);
+    }
+
     /**
      * Hidrata `servicioYhorarioDeTurno` y datos de agenda desde PES + agendas en el efector actual.
      */
@@ -49,18 +79,25 @@ class SesionOperativaService extends Component
     {
         $efectorId = $body['efector_id'] ?? null;
         $servicioId = $body['servicio_id'] ?? null;
-        $encounterClass = $body['encounter_class'] ?? null;
+        $encounterClassRaw = $body['encounter_class'] ?? null;
 
-        if (!$efectorId || !$servicioId || !$encounterClass) {
-            throw new \InvalidArgumentException('Todos los par?metros son requeridos: efector_id, servicio_id, encounter_class');
+        if (!$efectorId || !$servicioId) {
+            throw new \InvalidArgumentException('efector_id y servicio_id son requeridos.');
         }
 
         $efectorId = (int) $efectorId;
         $servicioId = (int) $servicioId;
-        $encounterClass = (string) $encounterClass;
+        $omiteEncounter = self::isServicioAdminEfector($servicioId);
+        $encounterClass = $encounterClassRaw !== null && $encounterClassRaw !== ''
+            ? (string) $encounterClassRaw
+            : '';
+
+        if (!$omiteEncounter && $encounterClass === '') {
+            throw new \InvalidArgumentException('encounter_class es requerido para este servicio.');
+        }
 
         $validEncounterClasses = array_keys(ConsultasConfiguracion::ENCOUNTER_CLASS);
-        if (!in_array($encounterClass, $validEncounterClasses, true)) {
+        if ($encounterClass !== '' && !in_array($encounterClass, $validEncounterClasses, true)) {
             throw new \InvalidArgumentException('Encounter class inv?lido');
         }
 
@@ -84,7 +121,7 @@ class SesionOperativaService extends Component
 
         $idContextoStaff = (int) $pes->id;
 
-        Yii::$app->user->setEncounterClass($encounterClass);
+        Yii::$app->user->setEncounterClass($encounterClass !== '' ? $encounterClass : null);
         Yii::$app->user->setServicioActual($servicioId);
 
         Yii::$app->user->setIdEfector($pes->id_efector);
@@ -122,7 +159,7 @@ class SesionOperativaService extends Component
             'id_efector' => (int) $pes->id_efector,
             'id_profesional_efector_servicio' => (int) $pes->id,
             'servicio_actual' => (int) $servicioId,
-            'encounter_class' => (string) $encounterClass,
+            'encounter_class' => $encounterClass !== '' ? $encounterClass : null,
             'iat' => time(),
             'exp' => time() + (24 * 60 * 60),
         ];
@@ -138,10 +175,12 @@ class SesionOperativaService extends Component
                 'nombre' => (string) ($pes->servicio->nombre ?? ''),
                 'id_profesional_efector_servicio' => (int) $pes->id,
             ],
-            'encounter_class' => [
-                'code' => (string) $encounterClass,
-                'label' => (string) ConsultasConfiguracion::ENCOUNTER_CLASS[$encounterClass],
-            ],
+            'encounter_class' => $encounterClass !== ''
+                ? [
+                    'code' => $encounterClass,
+                    'label' => (string) ConsultasConfiguracion::ENCOUNTER_CLASS[$encounterClass],
+                ]
+                : null,
             'id_contexto_profesional' => $idContextoStaff,
             'redirect_url' => (string) $redirectUrl,
             'context_token' => (string) $contextToken,

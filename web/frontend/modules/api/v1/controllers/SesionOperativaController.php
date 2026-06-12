@@ -116,11 +116,15 @@ class SesionOperativaController extends BaseController
         $sv = $body['servicio_id'] ?? null;
         $ec = $body['encounter_class'] ?? null;
 
-        if ($ef !== null && $ef !== '' && $sv !== null && $sv !== '' && $ec !== null && $ec !== '') {
+        if ($ef === null || $ef === '' || $sv === null || $sv === '') {
+            return true;
+        }
+
+        if ($ec !== null && $ec !== '') {
             return false;
         }
 
-        return true;
+        return !SesionOperativaService::isServicioAdminEfector((int) $sv);
     }
 
     /**

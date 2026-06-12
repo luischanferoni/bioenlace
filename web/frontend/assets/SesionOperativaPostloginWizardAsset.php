@@ -17,6 +17,6 @@ class SesionOperativaPostloginWizardAsset extends AssetBundle
 
     public $depends = [
         BioenlaceApiClientAsset::class,
-        FormWizardAsset::class,
+        '\yii\web\JqueryAsset',
     ];
 }

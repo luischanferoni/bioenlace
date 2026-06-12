@@ -160,10 +160,12 @@ class SesionOperativaProfesionalHabilitacionService extends Component
 
             $serviciosPayload = [];
             foreach ($validPes as $pes) {
+                $esAdmin = $pes->servicio !== null && $this->isServicioAdministracionEfector($pes->servicio);
                 $serviciosPayload[] = [
                     'id_servicio' => (int) $pes->id_servicio,
                     'nombre' => (string) $pes->servicio->nombre,
                     'id_profesional_efector_servicio' => (int) $pes->id,
+                    'requires_encounter_class' => !$esAdmin,
                 ];
             }
 

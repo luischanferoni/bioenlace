@@ -104,9 +104,7 @@ class SiteController extends Controller
 
     private function sesionOperativaCompleta(): bool
     {
-        return (bool) Yii::$app->user->getIdEfector()
-            && (bool) Yii::$app->user->getServicioActual()
-            && (bool) Yii::$app->user->getEncounterClass();
+        return SesionOperativaService::isSesionOperativaCompleta();
     }
 
     private function ensureApiJwtTokenEnSesion(): void

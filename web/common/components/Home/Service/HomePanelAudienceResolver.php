@@ -2,6 +2,7 @@
 
 namespace common\components\Home\Service;
 
+use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
 use Yii;
 
 /**
@@ -17,6 +18,12 @@ final class HomePanelAudienceResolver
     {
         $encounterClass = Yii::$app->user->getEncounterClass();
         if ($encounterClass !== null && $encounterClass !== '') {
+            return self::STAFF;
+        }
+
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $idServicio = (int) Yii::$app->user->getServicioActual();
+        if ($idEfector > 0 && $idServicio > 0 && SesionOperativaService::isServicioAdminEfector($idServicio)) {
             return self::STAFF;
         }
 

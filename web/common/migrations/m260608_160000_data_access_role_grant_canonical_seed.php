@@ -9,7 +9,7 @@ class m260608_160000_data_access_role_grant_canonical_seed extends Migration
 {
     private const TABLE = '{{%data_access_role_grant}}';
 
-    public function safeUp(): void
+    public function safeUp()
     {
         foreach ($this->canonicalGrants() as $grant) {
             $this->upsert(
@@ -31,7 +31,7 @@ class m260608_160000_data_access_role_grant_canonical_seed extends Migration
         }
     }
 
-    public function safeDown(): void
+    public function safeDown()
     {
         echo "m260608_160000_data_access_role_grant_canonical_seed cannot be reverted safely.\n";
 

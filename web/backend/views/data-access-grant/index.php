@@ -18,7 +18,8 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="card-title mt-1 mb-0"><?= Html::encode($this->title) ?></h2>
                 <div>
-                    <?= Html::a('Catálogo YAML', ['data-access-catalog/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+                    <?= Html::a('Campos BD', ['data-access-attribute-field/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+                    <?= Html::a('Catálogo', ['data-access-catalog/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
                     <?= Html::a('Nuevo grant', ['create'], ['class' => 'btn btn-success btn-sm']) ?>
                 </div>
             </div>

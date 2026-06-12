@@ -3,7 +3,7 @@ entity: ProfesionalEfectorServicio
 groups:
   asignacion:
     attributes: [id_efector, id_servicio, id_persona]
-  # Campos del formulario: tabla data_access_attribute_field (seed desde configurar-agenda.json).
+  # Solo registro del grupo (clave para grants y aspectos). Campos → admin «Campos por grupo (BD)» o tabla data_access_attribute_field.
   agenda_horarios: {}
 
 metrics:

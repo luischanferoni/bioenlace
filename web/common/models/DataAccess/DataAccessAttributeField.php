@@ -3,6 +3,7 @@
 namespace common\models\DataAccess;
 
 use common\components\Core\DataAccess\Attribute\DatabaseAttributeDefinitionSource;
+use common\components\Core\DataAccess\AttributeGroupCatalog;
 use yii\db\ActiveRecord;
 
 /**
@@ -41,7 +42,71 @@ class DataAccessAttributeField extends ActiveRecord
                 'unique',
                 'targetAttribute' => ['entity_group_key', 'field_name'],
             ],
+            [['entity_group_key'], 'validateEntityGroupKey'],
+            [['field_type'], 'validateFieldType'],
+            [['config_json'], 'validateConfigJson'],
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function fieldTypeOptions(): array
+    {
+        return [
+            'text' => 'Texto',
+            'date' => 'Fecha',
+            'enum' => 'Selección (enum → select en UI)',
+            'hidden' => 'Oculto',
+            'custom_widget' => 'Widget personalizado',
+        ];
+    }
+
+    public function validateEntityGroupKey(string $attribute): void
+    {
+        $key = trim((string) $this->$attribute);
+        if ($key === '') {
+            return;
+        }
+        $catalog = new AttributeGroupCatalog();
+        if (!$catalog->entityGroupExists($key)) {
+            $this->addError($attribute, 'Grupo no registrado en data-access-config.');
+        }
+    }
+
+    public function validateFieldType(string $attribute): void
+    {
+        $type = trim((string) $this->$attribute);
+        if ($type === '') {
+            return;
+        }
+        if (!isset(self::fieldTypeOptions()[$type])) {
+            $this->addError($attribute, 'Tipo de campo no soportado.');
+        }
+    }
+
+    public function validateConfigJson(string $attribute): void
+    {
+        $raw = trim((string) $this->$attribute);
+        if ($raw === '') {
+            $this->$attribute = null;
+
+            return;
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            $this->addError($attribute, 'JSON inválido (objeto esperado).');
+
+            return;
+        }
+        $this->$attribute = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    }
+
+    public function configJsonForForm(): string
+    {
+        $config = $this->decodedConfig();
+
+        return $config === [] ? '' : json_encode($config, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
     public function attributeLabels(): array

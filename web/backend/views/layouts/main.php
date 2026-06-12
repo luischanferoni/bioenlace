@@ -103,7 +103,8 @@ $home = Yii::$app->getHomeUrl();
                                     'label' => 'Acceso a datos',
                                     'items' => [
                                         ['label' => 'Permisos por atributo (grants BD)', 'url' => ['/data-access-grant/index']],
-                                        ['label' => 'Catálogo DataAccess (YAML)', 'url' => ['/data-access-catalog/index']],
+                                        ['label' => 'Campos por grupo (BD)', 'url' => ['/data-access-attribute-field/index']],
+                                        ['label' => 'Catálogo DataAccess', 'url' => ['/data-access-catalog/index']],
                                     ]
                                 ],
                                 [

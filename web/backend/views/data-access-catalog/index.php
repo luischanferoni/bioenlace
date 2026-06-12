@@ -18,6 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
         <?= Html::a('Grants en BD', ['data-access-grant/index'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
+        <?= Html::a('Campos en BD', ['data-access-attribute-field/index'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
     </div>
 
     <p class="text-muted">

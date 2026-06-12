@@ -95,7 +95,7 @@ final class DataAccessUiActionCatalog
 
         $ctx = new PermissionContext($userId, $roles);
 
-        return (new EditSurfaceAuthorizationService())->userHasAnyEditableSurface($ctx);
+        return (new EditSurfaceAuthorizationService())->userHasAnyWriteGrantForEdit($ctx);
     }
 
     /**

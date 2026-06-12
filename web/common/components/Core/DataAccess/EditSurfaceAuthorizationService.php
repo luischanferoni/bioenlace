@@ -32,6 +32,57 @@ final class EditSurfaceAuthorizationService
         return false;
     }
 
+    /**
+     * Grants write en algún aspecto editable (sin validar scope de sesión).
+     * Usado para descubrimiento del asistente: el scope se aplica al ejecutar /api/editar.
+     */
+    public function userHasAnyWriteGrantForEdit(PermissionContext $ctx): bool
+    {
+        foreach ($this->catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
+            if (!is_string($surfaceId) || !is_array($def)) {
+                continue;
+            }
+            if ($this->listAspectIdsWithWriteGrant($ctx, $surfaceId) !== []) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function listAspectIdsWithWriteGrant(PermissionContext $ctx, string $surfaceId): array
+    {
+        $surface = $this->catalog->getEditSurface($surfaceId);
+        if ($surface === null) {
+            return [];
+        }
+
+        $aspects = $surface['aspects'] ?? [];
+        if (!is_array($aspects)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($aspects as $aspectId => $def) {
+            if (!is_string($aspectId) || !is_array($def)) {
+                continue;
+            }
+            $group = trim((string) ($def['attribute_group'] ?? ''));
+            if ($group === '') {
+                continue;
+            }
+            if (!$this->permissions->can($ctx, $group, QueryOperation::WRITE)) {
+                continue;
+            }
+            $out[] = $aspectId;
+        }
+
+        return $out;
+    }
+
     public function userCanAccessEditSurface(PermissionContext $ctx, string $surfaceId, array $params = []): bool
     {
         $surface = $this->catalog->getEditSurface($surfaceId);

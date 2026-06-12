@@ -122,7 +122,7 @@ final class DataAccessEditDiscoveryService
     public function assistantKeywordsForUser(int $userId): array
     {
         $ctx = new PermissionContext($userId, $this->roleNamesForUser($userId));
-        if (!$this->authorization->userHasAnyEditableSurface($ctx)) {
+        if (!$this->authorization->userHasAnyWriteGrantForEdit($ctx)) {
             return [];
         }
 
@@ -136,13 +136,13 @@ final class DataAccessEditDiscoveryService
             if (!is_string($surfaceId) || !is_array($def)) {
                 continue;
             }
-            if (!$this->authorization->userCanAccessEditSurface($ctx, $surfaceId)) {
+            if ($this->authorization->listAspectIdsWithWriteGrant($ctx, $surfaceId) === []) {
                 continue;
             }
             foreach ($this->assistantKeywords($def) as $kw) {
                 $out[] = $kw;
             }
-            foreach ($this->assistantAspectKeywords($surfaceId, $def, $ctx) as $kw) {
+            foreach ($this->assistantAspectKeywordsByGrant($surfaceId, $def, $ctx) as $kw) {
                 $out[] = $kw;
             }
         }
@@ -254,10 +254,12 @@ final class DataAccessEditDiscoveryService
     }
 
     /**
+     * Keywords de aspectos con grant write (sin scope de sesión; solo descubrimiento NL).
+     *
      * @param array<string, mixed> $surfaceDef
      * @return list<string>
      */
-    private function assistantAspectKeywords(string $surfaceId, array $surfaceDef, PermissionContext $ctx): array
+    private function assistantAspectKeywordsByGrant(string $surfaceId, array $surfaceDef, PermissionContext $ctx): array
     {
         $aspects = $surfaceDef['aspects'] ?? [];
         if (!is_array($aspects)) {
@@ -265,11 +267,9 @@ final class DataAccessEditDiscoveryService
         }
 
         $out = [];
-        foreach ($aspects as $aspectId => $def) {
-            if (!is_string($aspectId) || !is_array($def)) {
-                continue;
-            }
-            if (!$this->authorization->userCanAccessAspect($ctx, $surfaceId, $aspectId)) {
+        foreach ($this->authorization->listAspectIdsWithWriteGrant($ctx, $surfaceId) as $aspectId) {
+            $def = $aspects[$aspectId] ?? null;
+            if (!is_array($def)) {
                 continue;
             }
             foreach ($this->aspectAssistantKeywords($def) as $kw) {

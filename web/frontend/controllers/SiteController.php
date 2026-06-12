@@ -79,16 +79,6 @@ class SiteController extends Controller
     }
 
     /**
-     * Alias legacy.
-     *
-     * @no_intent_catalog
-     */
-    public function actionInicio()
-    {
-        return $this->actionSesionOperativa();
-    }
-
-    /**
      * @no_intent_catalog
     */
     public function actionAsistente()

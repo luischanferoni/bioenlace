@@ -491,3 +491,38 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Variante soft (antes en customizer / qompac); usa tokens Bootstrap del tema */
+.btn.btn-soft-primary {
+    color: var(--bioenlace-primary);
+    background-color: var(--bs-primary-bg-subtle);
+    border-color: transparent;
+}
+.btn.btn-soft-primary:hover,
+.btn.btn-soft-primary:focus,
+.btn.btn-soft-primary:active {
+    color: var(--bioenlace-primary-hover);
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+    border-color: transparent;
+}
+
+/* Wizard post-login (site/inicio): pasos sobre nav-pills */
+#top-tab-list {
+    margin-bottom: 1.5rem;
+}
+#top-tab-list .wizard_tab_link {
+    display: block;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+    color: var(--bioenlace-primary);
+    background-color: var(--bs-primary-bg-subtle);
+    border-radius: var(--bs-border-radius);
+}
+#top-tab-list li.active > .wizard_tab_link {
+    background-color: var(--bioenlace-primary);
+    color: #fff;
+}
+#top-tab-list li.done > .wizard_tab_link {
+    background-color: var(--bioenlace-success);
+    color: #fff;
+}

@@ -7,6 +7,7 @@ use yii\helpers\Html;
 use frontend\assets\AppAsset;
 
 AppAsset::register($this);
+$this->registerCssFile('@web/css/spa.css', ['depends' => [AppAsset::class]]);
 
 ?>
 

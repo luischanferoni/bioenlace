@@ -7,71 +7,62 @@ use frontend\assets\SesionOperativaPostloginWizardAsset;
 
 SesionOperativaPostloginWizardAsset::register($this);
 
+$this->title = 'Configurar sesión';
+
 $urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'], true);
 ?>
 
-<style>
-/* Misma idea que #form-wizard1 en plantilla anterior: solo el primer paso hasta avanzar. */
-.form-wizard#dynamic-form .formwizard_fieldset:not(:first-of-type) {
-    display: none;
-}
-</style>
+<div class="py-3 py-md-4">
+    <header class="mb-4">
+        <h1 class="h3 mb-2"><?= Html::encode($this->title) ?></h1>
+        <p class="text-body-secondary mb-0">Elegí efector, área y servicio para continuar.</p>
+    </header>
 
     <div id="dynamic-form" class="form-wizard">
 
-    <ul id="top-tab-list" class="p-0 row list-inline mb-0">
-        <li id="paso1" class="mb-2 col text-start active">
-            <a href="#" class="wizard_tab_link text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-1-square" viewBox="0 0 16 16">
-                    <path d="M9.283 4.002V12H7.971V5.338h-.065L6.072 6.656V5.385l1.899-1.383h1.312Z"/>
-                    <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2Zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2Z"/>
-                </svg>
-            </a>
-        </li>
-        <li id="paso2" class="mb-2 col ps-0 pe-0 text-start">
-            <a href="#" class="wizard_tab_link text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-2-square" viewBox="0 0 16 16">
-                    <path d="M6.646 6.24v.07H5.375v-.064c0-1.213.879-2.402 2.637-2.402 1.582 0 2.613.949 2.613 2.215 0 1.002-.6 1.667-1.287 2.43l-.096.107-1.974 2.22v.077h3.498V12H5.422v-.832l2.97-3.293c.434-.475.903-1.008.903-1.705 0-.744-.557-1.236-1.313-1.236-.843 0-1.336.615-1.336 1.306Z"/>
-                    <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2Zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2Z"/>
-                </svg>
-            </a>
-        </li>
-        <li id="paso3" class="mb-2 col pe-0 text-start">
-            <a href="#" class="wizard_tab_link text-center">                
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-3-square" viewBox="0 0 16 16">
-                    <path d="M7.918 8.414h-.879V7.342h.838c.78 0 1.348-.522 1.342-1.237 0-.709-.563-1.195-1.348-1.195-.79 0-1.312.498-1.348 1.055H5.275c.036-1.137.95-2.115 2.625-2.121 1.594-.012 2.608.885 2.637 2.062.023 1.137-.885 1.776-1.482 1.875v.07c.703.07 1.71.64 1.734 1.917.024 1.459-1.277 2.396-2.93 2.396-1.705 0-2.707-.967-2.754-2.144H6.33c.059.597.68 1.06 1.541 1.066.973.006 1.6-.563 1.588-1.354-.006-.779-.621-1.318-1.541-1.318Z"/>
-                    <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2Zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2Z"/>
-                </svg>
-            </a>
-        </li>
-    </ul>
+        <ul id="top-tab-list" class="nav nav-pills nav-fill gap-2 p-0 list-unstyled mb-0" role="tablist">
+            <li id="paso1" class="nav-item active" role="presentation">
+                <a href="#" class="wizard_tab_link text-center" tabindex="-1" aria-disabled="true">
+                    <span class="visually-hidden">Paso 1:</span> Efector
+                </a>
+            </li>
+            <li id="paso2" class="nav-item" role="presentation">
+                <a href="#" class="wizard_tab_link text-center" tabindex="-1" aria-disabled="true">
+                    <span class="visually-hidden">Paso 2:</span> Área
+                </a>
+            </li>
+            <li id="paso3" class="nav-item" role="presentation">
+                <a href="#" class="wizard_tab_link text-center" tabindex="-1" aria-disabled="true">
+                    <span class="visually-hidden">Paso 3:</span> Servicio
+                </a>
+            </li>
+        </ul>
 
-    <fieldset class="formwizard_fieldset" id="formwizard_efectores">
-        
-        <?= $this->render('indexuserefector'); ?>
-                           
-        <button type="button" name="next" class="btn btn-primary next action-button float-end" value="Siguiente" disabled>Siguiente</button>
-    </fieldset>
-    
-    <fieldset class="formwizard_fieldset" id="formwizard_encounter">
+        <fieldset class="formwizard_fieldset border-0 p-0 m-0" id="formwizard_efectores">
+            <?= $this->render('indexuserefector'); ?>
+            <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                <button type="button" name="next" class="btn btn-primary next action-button" value="Siguiente" disabled>Siguiente</button>
+            </div>
+        </fieldset>
 
-        <?= $this->render('inicio_encounter_class'); ?>
+        <fieldset class="formwizard_fieldset border-0 p-0 m-0" id="formwizard_encounter">
+            <?= $this->render('inicio_encounter_class'); ?>
+            <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                <button type="button" name="previous" class="btn btn-outline-secondary previous action-button-previous" value="Anterior">Anterior</button>
+                <button type="button" name="next" class="btn btn-primary next a-servicio action-button" value="Siguiente" disabled>Siguiente</button>
+            </div>
+        </fieldset>
 
-        <button type="button" name="next" class="btn btn-primary next a-servicio action-button float-end" value="Siguiente" disabled>Siguiente</button>
-        <button type="button" name="previous" class="btn btn-dark previous action-button-previous float-end me-1" value="Anterior">Anterior</button>         
-    </fieldset>
-
-    <fieldset class="formwizard_fieldset" id="formwizard_servicios">
-
-        <?= $this->render('inicio_servicio'); ?>
-
-        <div class="form-group">            
-            <button type="button" name="next" class="btn btn-primary next action-button float-end" value="Siguiente" disabled>Finalizar</button>
-            <button type="button" name="previous" class="btn btn-dark previous action-button-previous float-end me-1" value="Previous">Anterior</button>            
-        </div>        
-    </fieldset>
+        <fieldset class="formwizard_fieldset border-0 p-0 m-0" id="formwizard_servicios">
+            <?= $this->render('inicio_servicio'); ?>
+            <div class="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+                <button type="button" name="previous" class="btn btn-outline-secondary previous action-button-previous" value="Previous">Anterior</button>
+                <button type="button" name="next" class="btn btn-primary next action-button" value="Siguiente" disabled>Finalizar</button>
+            </div>
+        </fieldset>
 
     </div>
+</div>
 
 <?= Html::tag('div', '', [
     'id' => 'sesion-operativa-wizard-config',

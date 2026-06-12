@@ -48,6 +48,7 @@ business_rules:
       - "licencia|permiso|vacacion|vacaciones|ausencia|franco|darme de baja"
     forbid_any:
       - "otro|otra|del médico|del medico|del doctor|del profesional|para el|para la|secretaría|secretaria"
+      - "formas?\\s+de\\s+atencion|forma\\s+de\\s+atencion|agenda|horario|teleconsulta|intervalo|cupo"
     user_message: >-
       ¿Querés cargar una licencia propia o la de otro profesional del efector?
     remediation:

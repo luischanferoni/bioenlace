@@ -20,15 +20,16 @@ class YamlIntentCatalogExcludeTest extends Unit
         $this->assertNotContains('data-access.editar', $ids);
     }
 
-    public function testDataAccessActionsNotInYamlCatalog(): void
+    public function testDeprecatedAgendaEditFlowsRemoved(): void
+    {
+        $this->assertFalse(YamlIntentCatalogService::intentExists('profesional-agenda.editar-flow'));
+        $this->assertFalse(YamlIntentCatalogService::intentExists('profesional-agenda.editar-mi-flow'));
+    }
+
+    public function testCatalogOnlyDataAccessIntentsNotInYamlCatalog(): void
     {
         $this->assertFalse(YamlIntentCatalogService::intentExists('data-access.info'));
         $this->assertFalse(YamlIntentCatalogService::intentExists('data-access.listar'));
         $this->assertFalse(YamlIntentCatalogService::intentExists('data-access.editar'));
-    }
-
-    public function testDeprecatedYamlStillExistsForSubIntentEngine(): void
-    {
-        $this->assertTrue(YamlIntentCatalogService::intentExists('profesional-agenda.editar-flow'));
     }
 }

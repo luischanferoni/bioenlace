@@ -5,6 +5,7 @@ namespace common\components\Assistant\EntryPoints\Chat\Channels\Operational;
 use common\components\Assistant\Catalog\IntentIdAliasResolver;
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Assistant\IntentEngine\IntentClassifier;
 use common\components\Assistant\IntentEngine\IntentEngine;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
@@ -56,15 +57,9 @@ final class OperationalChannel
         $classification = IntentClassifier::classifyAmongItems($queryText, $top, $catalog);
 
         if ($classification === null && ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
-            if (IntentClassifier::messageSuggestsStaffAgendaEdit($queryText)) {
-                $editItem = $catalog->byActionId['data-access.editar'] ?? null;
-                if ($editItem !== null) {
-                    $classification = [
-                        'item' => $editItem,
-                        'confidence' => 0.9,
-                        'method' => 'rules_agenda_edit',
-                    ];
-                }
+            $fallback = IntentClassificationRulesService::resolveOperationalFallback($queryText, $catalog);
+            if ($fallback !== null) {
+                $classification = $fallback;
             }
             if ($classification === null) {
                 $classification = IntentClassifier::classify($queryText, $catalog);

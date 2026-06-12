@@ -6,7 +6,11 @@ use common\components\Assistant\SubIntentEngine\FlowDraftHydratorRegistry;
 use common\components\Core\DataAccess\DataAccessMetricDiscoveryService;
 
 /**
- * Intents DataAccess expuestos vía {@see DataAccessUiActionCatalog} (sin YAML flow).
+ * Intents DataAccess (`info`, `listar`, `editar`) sin YAML de flujo.
+ *
+ * Registro y keywords: {@see DataAccessUiActionCatalog}.
+ * Qué consultar/editar: {@see AttributeGroupCatalog} + `schemas/data-access-config/*.yaml`.
+ * Manifiesto/pasos sintéticos: {@see FlowManifest::buildCatalogOnlySlice()} y {@see SubIntentEngine::processCatalogOnlyIntent()}.
  */
 final class DataAccessCatalogIntentSupport
 {

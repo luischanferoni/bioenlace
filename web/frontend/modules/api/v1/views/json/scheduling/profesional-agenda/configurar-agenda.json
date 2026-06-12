@@ -2,28 +2,62 @@
   "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
+    "turno_policy": {
+      "grid_fields_trigger_preview": true,
+      "modality_fields_direct_save": true,
+      "conflict_outcome": "EN_RESOLUCION",
+      "conflict_resolution": "El paciente recibe aviso y puede reubicar en otro horario con el mismo profesional o cancelar.",
+      "intervalo_max_cambios_anio": 2,
+      "intervalo_valores_minutos": [15, 20, 30, 45, 60]
+    },
     "field_meta": {
       "vigente_desde": {
         "impact_profile": "grid",
-        "hint": "Los turnos anteriores a esta fecha no se modifican. Desde esta fecha se evalúa el impacto si cambiás horarios o intervalo."
+        "turno_impact": "context",
+        "hint": "Define desde qué fecha rige la nueva grilla. Los turnos anteriores no se modifican; solo se evalúan los pendientes con fecha igual o posterior."
       },
-      "intervalo_minutos": { "impact_profile": "grid" },
-      "lunes_2": { "impact_profile": "grid", "form": false },
-      "martes_2": { "impact_profile": "grid", "form": false },
-      "miercoles_2": { "impact_profile": "grid", "form": false },
-      "jueves_2": { "impact_profile": "grid", "form": false },
-      "viernes_2": { "impact_profile": "grid", "form": false },
-      "sabado_2": { "impact_profile": "grid", "form": false },
-      "domingo_2": { "impact_profile": "grid", "form": false },
-      "cupo_pacientes": { "impact_profile": "capacity" },
-      "formas_atencion": { "impact_profile": "capacity" },
-      "acepta_consultas_online": { "impact_profile": "none" }
+      "intervalo_minutos": {
+        "impact_profile": "grid",
+        "turno_impact": "grid",
+        "hint": "Espaciado entre cupos reservables (15–60 min). Cambiarlo puede desalinear turnos futuros y cuenta para el límite de 2 cambios de intervalo por año."
+      },
+      "lunes_2": { "impact_profile": "grid", "turno_impact": "grid", "form": false },
+      "martes_2": { "impact_profile": "grid", "turno_impact": "grid", "form": false },
+      "miercoles_2": { "impact_profile": "grid", "turno_impact": "grid", "form": false },
+      "jueves_2": { "impact_profile": "grid", "turno_impact": "grid", "form": false },
+      "viernes_2": { "impact_profile": "grid", "turno_impact": "grid", "form": false },
+      "sabado_2": { "impact_profile": "grid", "turno_impact": "grid", "form": false },
+      "domingo_2": { "impact_profile": "grid", "turno_impact": "grid", "form": false },
+      "weekly_scheduler_widget": {
+        "impact_profile": "grid",
+        "turno_impact": "grid"
+      },
+      "cupo_pacientes": {
+        "impact_profile": "capacity",
+        "turno_impact": "none",
+        "hint": "Tope diario para nuevas reservas. No reprograma ni cancela turnos ya agendados."
+      },
+      "formas_atencion": {
+        "impact_profile": "capacity",
+        "turno_impact": "none",
+        "hint": "Modalidad operativa del servicio (programado, orden de llegada, etc.). No mueve turnos existentes."
+      },
+      "acepta_consultas_online": {
+        "impact_profile": "none",
+        "turno_impact": "none",
+        "hint": "Habilita teleconsulta en nuevas reservas elegibles. No altera turnos ya confirmados."
+      }
     },
     "clients": {
       "*": { "min_app_version": "1.0.0" }
     }
   },
   "blocks": [
+    {
+      "kind": "message",
+      "id": "policy_turnos",
+      "text": "Si modificás horarios semanales o el intervalo entre turnos, el sistema revisa los turnos pendientes desde la fecha de vigencia. Los que ya no encajan en la grilla pasan a «en resolución»: el paciente recibe aviso para elegir otro horario con el mismo profesional o cancelar. Cupo diario, forma de atención y teleconsulta se guardan sin ese recorrido porque no desplazan turnos reservados."
+    },
     {
       "kind": "fields",
       "id": "datos",
@@ -61,11 +95,11 @@
           "label": "¿Desde qué fecha aplica este cambio?",
           "type": "date",
           "required": true,
-          "layout": { "col": 4, "breakpoint": "md" }
+          "layout": { "col": 6, "breakpoint": "md" }
         },
         {
           "name": "intervalo_minutos",
-          "label": "Minutos por turno",
+          "label": "Intervalo entre turnos",
           "type": "select",
           "required": true,
           "options": [
@@ -75,51 +109,11 @@
             { "value": "45", "label": "45 minutos" },
             { "value": "60", "label": "60 minutos" }
           ],
-          "layout": { "col": 4, "breakpoint": "md" }
-        },
-        {
-          "name": "cupo_pacientes",
-          "label": "Cupo de pacientes (límite diario)",
-          "type": "select",
-          "required": false,
-          "options": [
-            { "value": "0", "label": "Sin cupo" },
-            { "value": "5", "label": "5" },
-            { "value": "10", "label": "10" },
-            { "value": "15", "label": "15" },
-            { "value": "20", "label": "20" },
-            { "value": "25", "label": "25" },
-            { "value": "30", "label": "30" }
-          ],
-          "layout": { "col": 4, "breakpoint": "md" }
-        },
-        {
-          "name": "formas_atencion",
-          "label": "Forma de atención de turnos",
-          "type": "select",
-          "required": true,
-          "options": [
-            { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
-            { "value": "TURNO", "label": "Programado" },
-            { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
-          ],
-          "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "acepta_consultas_online",
-          "label": "Acepto teleconsulta (videollamada) en esta agenda",
-          "type": "select",
-          "required": false,
-          "include_in_submit": true,
-          "options": [
-            { "value": "0", "label": "No" },
-            { "value": "1", "label": "Sí" }
-          ],
           "layout": { "col": 6, "breakpoint": "md" }
         },
         {
           "name": "weekly_scheduler_widget",
-          "label": "Horarios por día",
+          "label": "Horarios por día (grilla de turnos)",
           "type": "custom_widget",
           "widget_id": "weekly_scheduler",
           "required": false,
@@ -135,7 +129,48 @@
           "assets": {
             "css": ["/css/scheduler.css"],
             "js": ["/js/scheduler.js", "/js/widgets/ui-widget-weekly-scheduler.js"]
-          }
+          },
+          "layout": { "col": 12, "breakpoint": "md" }
+        },
+        {
+          "name": "cupo_pacientes",
+          "label": "Cupo diario (nuevas reservas)",
+          "type": "select",
+          "required": false,
+          "options": [
+            { "value": "0", "label": "Sin cupo" },
+            { "value": "5", "label": "5" },
+            { "value": "10", "label": "10" },
+            { "value": "15", "label": "15" },
+            { "value": "20", "label": "20" },
+            { "value": "25", "label": "25" },
+            { "value": "30", "label": "30" }
+          ],
+          "layout": { "col": 4, "breakpoint": "md" }
+        },
+        {
+          "name": "formas_atencion",
+          "label": "Forma de atención",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
+            { "value": "TURNO", "label": "Programado" },
+            { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
+          ],
+          "layout": { "col": 4, "breakpoint": "md" }
+        },
+        {
+          "name": "acepta_consultas_online",
+          "label": "Teleconsulta en esta agenda",
+          "type": "select",
+          "required": false,
+          "include_in_submit": true,
+          "options": [
+            { "value": "0", "label": "No" },
+            { "value": "1", "label": "Sí" }
+          ],
+          "layout": { "col": 4, "breakpoint": "md" }
         }
       ]
     }

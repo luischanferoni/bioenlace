@@ -4,6 +4,7 @@ namespace common\components\Assistant\IntentEngine;
 
 use Yii;
 use common\components\Assistant\Catalog\IntentCatalogService;
+use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
@@ -267,7 +268,10 @@ final class IntentEngine
 
     private static function isFlowUiTemplateForCatalogItem(UiActionCatalogItem $item): bool
     {
-        // Fuente de verdad: el flow es YAML. No existe `ui_type=flow` en `views/json`.
+        if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($item->action_id)) {
+            return true;
+        }
+
         return YamlIntentCatalogService::intentExists($item->action_id);
     }
 

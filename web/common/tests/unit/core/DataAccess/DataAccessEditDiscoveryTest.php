@@ -35,6 +35,19 @@ class DataAccessEditDiscoveryTest extends Unit
         $this->assertSame(['agenda_horarios'], $aspects);
     }
 
+    public function testResolveAspectFormasAtencion(): void
+    {
+        $svc = new DataAccessEditDiscoveryService();
+        $ctx = new PermissionContext(1, ['AdminEfector']);
+        $aspects = $svc->resolveAspectIds(
+            'necesito modificar las formas de atencion de un profesional',
+            'profesional_en_efector',
+            [],
+            $ctx
+        );
+        $this->assertSame(['agenda_horarios'], $aspects);
+    }
+
     public function testAmbiguousAspectsReturnEmpty(): void
     {
         $svc = new DataAccessEditDiscoveryService();

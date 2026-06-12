@@ -48,10 +48,11 @@ business_rules:
     when: pre_flow
     checker: content_regex
     require_any:
-      - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario)"
-      - "m[eé]dico|profesional|doctor"
+      - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario|formas?\\s+de\\s+atencion|cupo|teleconsulta|intervalo)"
+      - "(agenda|horario|formas?\\s+de\\s+atencion).*(profesional|m[eé]dico|doctor)"
     forbid_any:
       - "crear|agregar|nuevo|alta|asociar|recurso humano"
+      - "formas?\\s+de\\s+atencion|forma\\s+de\\s+atencion|teleconsulta|intervalo"
     user_message: >-
       Parece que querés trabajar con agenda u horarios de un profesional.
       ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?
@@ -66,7 +67,7 @@ business_rules:
         reset_flow: true
       - id: mi_agenda
         label: "Mi agenda (mis servicios)"
-        intent_id: profesional-agenda.editar-mi-flow
+        intent_id: data-access.editar
         reset_flow: true
 
 subintents:

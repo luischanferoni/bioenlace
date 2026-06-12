@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\UiActions;
 
+use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Ui\ApiV1HttpRoute;
 use common\components\Ui\UiDefinitionTemplateManager;
@@ -30,8 +31,10 @@ final class AssistantClientOpenEnricher
             return $action;
         }
 
-        // Flujos conversacionales (YAML en SubIntentEngine): el cliente arranca con POST action_id al asistente.
-        if ($actionId !== '' && YamlIntentCatalogService::intentExists($actionId)) {
+        // Flujos conversacionales (YAML o intents DataAccess genéricos).
+        if ($actionId !== ''
+            && (YamlIntentCatalogService::intentExists($actionId)
+                || DataAccessCatalogIntentSupport::isCatalogOnlyIntent($actionId))) {
             $action['client_open'] = [
                 'kind' => 'intent',
                 'intent_id' => $actionId,
@@ -82,19 +85,19 @@ final class AssistantClientOpenEnricher
             $path = $route;
         }
 
-        return in_array($path, self::POST_ONLY_FLOW_CLOSURE_ROUTES, true);
+        return in_array($path, self::postOnlyFlowClosureRoutes(), true);
     }
 
     /**
-     * Alineado a `rbac_route` / `flow_submit.action_id` en intents YAML (sin segmento `v1` en permiso webvimark).
+     * @return list<string>
      */
-    private const POST_ONLY_FLOW_CLOSURE_ROUTES = [
-        '/api/v1/turnos/cancelar-como-paciente',
-        '/api/v1/turnos/reprogramar-como-paciente',
-        '/api/v1/profesional-efector-servicio/crear-flow',
-        '/api/v1/profesional-agenda/editar-flow',
-        '/api/v1/profesional-agenda/editar-mi-flow',
-        '/api/v1/profesional-efector-servicio/cargar-licencia-como-profesional-flow',
-        '/api/v1/profesional-efector-servicio/cargar-licencia-para-profesional-flow',
-    ];
+    private static function postOnlyFlowClosureRoutes(): array
+    {
+        static $routes = null;
+        if ($routes === null) {
+            $routes = YamlIntentCatalogService::postOnlyFlowClosureRoutes();
+        }
+
+        return $routes;
+    }
 }

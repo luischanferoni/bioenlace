@@ -36,11 +36,58 @@ class IntentClassifierStaffAgendaEditTest extends Unit
         $this->assertFalse(IntentClassifier::messageSuggestsStaffAgendaEdit('crear agenda para un profesional nuevo'));
     }
 
+    public function testModificarFormasAtencionPrefersEditar(): void
+    {
+        $editar = $this->catalogItem(
+            'data-access.editar',
+            ['modificar', 'formas de atencion', 'editar', 'modificar agenda']
+        );
+        $licencia = $this->catalogItem(
+            'licencia.cargar-para-profesional-flow',
+            ['licencia profesional', 'cargar licencia', 'permiso profesional']
+        );
+        $crear = $this->catalogItem(
+            'profesional-efector-servicio.crear-flow',
+            ['agenda', 'cargar agenda']
+        );
+
+        foreach ([
+            'necesito modificar las formas de atencion',
+            'necesito modificar las formas de atencion de un profesional',
+        ] as $msg) {
+            $messageLower = mb_strtolower($msg, 'UTF-8');
+            $this->assertTrue(
+                IntentClassifier::messageSuggestsStaffAgendaEdit($msg),
+                'Debe detectar edición staff de formas de atención: ' . $msg
+            );
+            $editarScore = IntentClassifier::scoreItemPublic($messageLower, $editar);
+            $this->assertGreaterThan(
+                IntentClassifier::scoreItemPublic($messageLower, $licencia),
+                $editarScore,
+                'Licencia no debe ganar a editar: ' . $msg
+            );
+            $this->assertGreaterThan(
+                IntentClassifier::scoreItemPublic($messageLower, $crear),
+                $editarScore,
+                'Crear-flow no debe ganar a editar: ' . $msg
+            );
+            $this->assertGreaterThanOrEqual(30, $editarScore, 'Editar debe superar umbral: ' . $msg);
+        }
+    }
+
     public function testModificarProfesionalFlowAliasResolvesToEditar(): void
     {
         $this->assertSame(
             'data-access.editar',
             IntentIdAliasResolver::resolve('agenda.modificar-profesional-flow')
+        );
+        $this->assertSame(
+            'data-access.editar',
+            IntentIdAliasResolver::resolve('profesional-agenda.editar-mi-flow')
+        );
+        $this->assertSame(
+            'data-access.editar',
+            IntentIdAliasResolver::resolve('agenda.editar-mi-agenda-flow')
         );
     }
 

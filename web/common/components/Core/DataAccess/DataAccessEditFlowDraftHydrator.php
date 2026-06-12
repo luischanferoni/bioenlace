@@ -3,6 +3,7 @@
 namespace common\components\Core\DataAccess;
 
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
+use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Core\DataAccess\Edit\EditSparseAspectIds;
 use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 
@@ -46,6 +47,8 @@ final class DataAccessEditFlowDraftHydrator
         }
 
         $surfaceId = trim((string) ($draft['surface_id'] ?? $draft['edit_surface_id'] ?? ''));
+        self::applySubjectPrefillFromSurface($draft, $catalog->getEditSurface($surfaceId), $content);
+
         $aspectIds = [];
         if ($surfaceId !== '' && trim((string) ($draft['aspect_ids'] ?? '')) === '') {
             $aspectIds = $discovery->resolveAspectIds($content, $surfaceId, ChatPreprocessContext::extractions(), $ctx);
@@ -122,5 +125,28 @@ final class DataAccessEditFlowDraftHydrator
 
         return trim((string) ($draft['id_persona'] ?? '')) === ''
             && trim((string) ($draft['id_profesional_efector_servicio'] ?? '')) === '';
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @param array<string, mixed>|null $surface
+     */
+    private static function applySubjectPrefillFromSurface(array &$draft, ?array $surface, string $content): void
+    {
+        if ($surface === null || trim((string) ($draft['id_persona'] ?? '')) !== '') {
+            return;
+        }
+        $resolver = $surface['subject_resolver'] ?? [];
+        if (!is_array($resolver)) {
+            return;
+        }
+        $ruleId = trim((string) ($resolver['prefill_session_id_persona_when_rule'] ?? ''));
+        if ($ruleId === '' || !IntentClassificationRulesService::ruleMatches($ruleId, $content)) {
+            return;
+        }
+        $idPersona = (int) \Yii::$app->user->getIdPersona();
+        if ($idPersona > 0) {
+            $draft['id_persona'] = (string) $idPersona;
+        }
     }
 }

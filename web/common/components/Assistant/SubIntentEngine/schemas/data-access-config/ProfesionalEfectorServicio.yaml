@@ -200,11 +200,16 @@ edit_surfaces:
       - modificar agenda de un profesional
       - cambiar datos del medico
       - editar medico del centro
+      - mi agenda
+      - modificar mi agenda
+      - editar mi agenda
+      - mis horarios
     scope_checker: efector_sesion
     subject_resolver:
       metric_id: profesionales_listado_efector
       selection_param: id_persona
       pes_param: id_profesional_efector_servicio
+      prefill_session_id_persona_when_rule: own_agenda_config_edit
     aspects:
       identidad:
         label: Identidad (nombre y apellido)
@@ -229,3 +234,8 @@ edit_surfaces:
           - horario
           - cupo
           - editar agenda
+          - formas de atencion
+          - forma de atencion
+          - teleconsulta
+          - intervalo entre turnos
+          - modalidad de atencion

@@ -37,8 +37,9 @@ class ProfesionalAgendaController extends BaseController
     /**
      * Cierre declarativo del flujo asistente «editar agenda» (solo POST; sin descriptor UI).
      *
-     * @deprecated Flujo legacy `profesional-agenda.editar-flow`; nuevos casos vía `data-access.editar` (aspecto agenda_horarios).
-     * Permiso RBAC: `/api/profesional-agenda/editar-flow` (alineado al YAML `profesional-agenda.editar-flow`).
+    /**
+     * @deprecated Solo compatibilidad API; el asistente usa `data-access.editar`.
+     * Permiso RBAC: `/api/profesional-agenda/editar-flow`.
      *
      * POST /api/v1/profesional-agenda/editar-flow
      *
@@ -57,7 +58,9 @@ class ProfesionalAgendaController extends BaseController
 
     /**
      * Cierre declarativo del flujo asistente «editar mi agenda» (solo POST; sin descriptor UI).
-     * Permiso RBAC: `/api/profesional-agenda/editar-mi-flow` (alineado al YAML `profesional-agenda.editar-mi-flow`).
+    /**
+     * @deprecated Solo compatibilidad API; el asistente usa `data-access.editar`.
+     * Permiso RBAC: `/api/profesional-agenda/editar-mi-flow`.
      *
      * POST /api/v1/profesional-agenda/editar-mi-flow
      *

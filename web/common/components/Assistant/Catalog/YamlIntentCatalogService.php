@@ -3,6 +3,7 @@
 namespace common\components\Assistant\Catalog;
 
 use common\components\Assistant\UiActions\ActionMappingService;
+use common\components\Ui\ApiV1HttpRoute;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -229,6 +230,42 @@ final class YamlIntentCatalogService
         $path = $base . '/' . $intentId . '.yaml';
 
         return is_file($path);
+    }
+
+    /**
+     * Rutas HTTP POST de cierre declarativo (`flow_submit` en intents YAML).
+     *
+     * @return list<string> paths normalizados `/api/v1/...`
+     */
+    public static function postOnlyFlowClosureRoutes(): array
+    {
+        $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
+        $files = glob($base . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
+        $routes = [];
+        foreach ($files as $path) {
+            if (!is_string($path) || !is_file($path)) {
+                continue;
+            }
+            try {
+                $data = Yaml::parseFile($path);
+            } catch (\Throwable $e) {
+                continue;
+            }
+            if (!is_array($data)) {
+                continue;
+            }
+            $flowSubmit = $data['flow_submit'] ?? null;
+            if (!is_array($flowSubmit)) {
+                continue;
+            }
+            $rbac = trim((string) ($data['rbac_route'] ?? ''));
+            if ($rbac === '') {
+                continue;
+            }
+            $routes[] = ApiV1HttpRoute::normalize($rbac);
+        }
+
+        return array_values(array_unique(array_filter($routes)));
     }
 }
 

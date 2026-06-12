@@ -1,0 +1,58 @@
+# Atajos visibles del asistente (curación de producto). Solo intent_id que existan en catálogo + RBAC.
+version: 1
+categories:
+  - id: atencion_solicitud
+    titulo: Atención
+    intent_ids:
+      - atencion.necesito-atencion
+
+  - id: profesional_agenda
+    titulo: Profesional, agenda y condición laboral
+    intent_ids:
+      - profesional-efector-servicio.crear-flow
+      - data-access.editar
+      - licencia.cargar-como-profesional-flow
+      - licencia.cargar-para-profesional-flow
+      - turnos.indicadores-agenda-flow
+
+  - id: turnos
+    titulo: Turnos
+    intent_ids:
+      - turnos.cancelar-como-paciente-flow
+      - turnos.modificar-como-paciente-flow
+
+  - id: laboratorio
+    titulo: Laboratorio
+    intent_ids:
+      - laboratorio.ver-resultados-como-paciente
+
+  - id: recetas
+    titulo: Recetas
+    intent_ids:
+      - receta.ver-recetas-como-paciente
+
+  - id: tratamiento
+    titulo: Tratamiento
+    intent_ids:
+      - tratamiento.recordatorios-como-paciente
+      - tratamiento.adherencia-resumen-staff
+
+  - id: atenciones
+    titulo: Mis atenciones
+    intent_ids:
+      - atencion.ver-ultima-como-paciente
+      - atencion.mis-atenciones-como-paciente
+
+  - id: urgencias
+    titulo: Urgencias / guardia
+    intent_ids:
+      - urgencias.ver-tablero-guardia
+      - urgencias.triage-paciente-guardia
+
+  - id: internacion
+    titulo: Internación
+    intent_ids:
+      - internacion.mapa-camas-flow
+      - internacion.ingreso-flow
+      - internacion.cambio-cama-flow
+      - internacion.alta-estructurada-flow

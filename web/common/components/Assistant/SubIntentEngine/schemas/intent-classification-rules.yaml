@@ -1,0 +1,88 @@
+# Reglas declarativas de clasificación NL → ajustes de score y fallbacks operativos.
+# El motor {@see IntentClassificationRulesService} interpreta este archivo; no duplicar en PHP.
+version: 1
+
+vocab:
+  edit_verbs: '\b(editar|modificar|actualizar|cambiar|ajustar|configurar)\b'
+  alta_verbs: '\b(crear|agregar|nuevo|nueva|alta|asociar|dar de alta)\b'
+  agenda_targets: '\b(agenda|horario|horarios|disponibilidad|cupo|formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo|modalidad)\b'
+  own_scope: '\b(mi|mis)\s+(agenda|horario|horarios|formas?\s+de\s+atencion)\b'
+  staff_third_party: '\b(profesional|medico|doctor|personal)\b'
+  agenda_de_uno: '\b(agenda|horario|horarios)\s+de\s+(un|el|la|los|las)\b'
+  config_topics: '\b(formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo|cupo)\b'
+  list_verbs: '\b(listar|mostrar|mostrame|ver listado|nombres de|quienes|quien es|quién es|plantilla)\b'
+  count_verbs: '\b(cuantos|cuantos hay|total de|conteo|cantidad de|numero de|cuenta)\b'
+  list_phrases:
+    - profesionales del centro
+    - medicos del centro
+
+match_rules:
+  staff_agenda_config_edit:
+    require_all: [edit_verbs, agenda_targets]
+    forbid_any: [alta_verbs, own_scope]
+    require_any: [staff_third_party, agenda_de_uno, config_topics]
+    ai_hint: >-
+      Si el mensaje pide modificar/editar agenda, horarios, formas de atención, teleconsulta,
+      intervalo o cupo de un profesional (sin crear/alta), priorizá el intent de edición dispersa
+      staff cuyo goal/how describa modificar datos por superficie o aspectos autorizados.
+
+  own_agenda_config_edit:
+    require_all: [edit_verbs, own_scope, agenda_targets]
+    forbid_any: [alta_verbs]
+    ai_hint: >-
+      Si el mensaje pide modificar la agenda u horarios propios (mi/mis), priorizá el intent
+      de edición dispersa cuyo catálogo cubra edición de agenda del profesional autenticado.
+
+  staff_list_not_count:
+    require_any: [list_verbs]
+    forbid_any: [count_verbs]
+    require_phrase_any: list_phrases
+
+  staff_count:
+    require_any: [count_verbs]
+
+score_adjustments:
+  - when_rule: staff_agenda_config_edit
+    apply:
+      - intent_id: data-access.editar
+        delta: 45
+      - intent_id: profesional-efector-servicio.crear-flow
+        delta: -30
+      - intent_id_prefix: licencia.cargar
+        delta: -35
+
+  - when_rule: own_agenda_config_edit
+    apply:
+      - intent_id: data-access.editar
+        delta: 45
+      - intent_id: profesional-efector-servicio.crear-flow
+        delta: -30
+      - intent_id_prefix: licencia.cargar
+        delta: -35
+
+  - when_rule: staff_list_not_count
+    when_not_rule: staff_count
+    apply:
+      - intent_id: data-access.listar
+        delta: 25
+      - intent_id: data-access.info
+        delta: -20
+
+  - when_rule: staff_list_not_count
+    when_also: staff_count
+    apply:
+      - intent_id: data-access.listar
+        delta: 10
+
+  - when_rule: staff_count
+    apply:
+      - intent_id: data-access.info
+        delta: 15
+
+operational_fallbacks:
+  - id: data_access_edit_nl
+    requires_staff_data_access: true
+    when_any_rule: [staff_agenda_config_edit, own_agenda_config_edit]
+    intent_id: data-access.editar
+    confidence: 0.9
+    method: rules_declarative_fallback

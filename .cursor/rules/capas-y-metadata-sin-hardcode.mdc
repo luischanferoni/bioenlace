@@ -9,6 +9,8 @@ alwaysApply: true
 
 **No hardcodear comportamiento particular** (por pantalla, rol, intent, entidad, efector, servicio clínico, etc.) en capas altas u orquestadores. Lo específico vive en **metadata declarativa** y en **capas inferiores** (servicios de dominio, modelos, BD).
 
+**No fixes rápidos.** Ante un bug de routing, clasificación, permisos o UX del asistente: no parches locales (`if intent`, regex suelta en PHP, línea en prompt IA, lista hardcodeada). Primero ubicar la capa correcta (YAML, catálogo, servicio de dominio), declarar ahí, cablear con motor genérico existente o extenderlo una sola vez, y test. Un fix rápido que “cierra el ticket” pero duplica reglas se considera deuda inaceptable.
+
 Aplica a **web, API, asistente, móvil y jobs** — no solo al asistente SPA.
 
 ## Capas (de arriba abajo)
@@ -33,7 +35,8 @@ Aplica a **web, API, asistente, móvil y jobs** — no solo al asistente SPA.
 - **Flujo conversacional**: `schemas/intents/*.yaml` + `SubIntentEngine`.
 - **Enriquecer draft antes del motor**: clave raíz `draft_hydrator` en el YAML → `FlowDraftHydratorService` (no en `ChatOrchestrator`).
 - **Pantallas embebibles**: `views/json/…` + API; clientes consumen JSON genéricamente.
-- **Atajos visibles**: curación de producto permitida en `CommonActionsService`, pero preferir descubrimiento por catálogo + RBAC cuando escale.
+- **Atajos visibles**: `schemas/assistant-shortcuts.yaml` (ver también [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc)).
+- **Routing NL / alias / score / prompts IA**: `intent-classification-rules.yaml`, `intent-aliases.yaml` + motores genéricos; **nunca** `intent_id` fijos en `IntentClassifier`, `OperationalChannel` ni prompts.
 
 ## Excepciones razonables
 

@@ -137,110 +137,19 @@ final class IntentClassifier
             }
         }
 
-        $score += self::scoreDataAccessListVsInfo($messageLower, $item->action_id);
-        $score += self::scoreStaffAgendaEditDispersa($messageLower, $item->action_id);
+        $score += IntentClassificationRulesService::scoreAdjustment($messageLower, $item->action_id);
 
         return $score;
     }
 
-    /**
-     * Modificar agenda/horarios de un profesional ya asociado → edición dispersa, no alta PES.
-     */
-    private static function scoreStaffAgendaEditDispersa(string $messageLower, string $actionId): int
-    {
-        if ($actionId === 'data-access.editar' && self::messageSuggestsStaffAgendaEdit($messageLower)) {
-            return 45;
-        }
-
-        if ($actionId === 'profesional-efector-servicio.crear-flow' && self::messageSuggestsStaffAgendaEdit($messageLower)) {
-            return -30;
-        }
-
-        return 0;
-    }
-
     public static function messageSuggestsStaffAgendaEdit(string $message): bool
     {
-        $folded = self::foldAccents(mb_strtolower(trim($message), 'UTF-8'));
-        if ($folded === '') {
-            return false;
-        }
-
-        if (!preg_match('/\b(editar|modificar|actualizar|cambiar|ajustar|configurar)\b/u', $folded)) {
-            return false;
-        }
-
-        if (!preg_match('/\b(agenda|horario|horarios|disponibilidad|cupo)\b/u', $folded)) {
-            return false;
-        }
-
-        if (preg_match('/\b(crear|agregar|nuevo|nueva|alta|asociar|dar de alta)\b/u', $folded)) {
-            return false;
-        }
-
-        if (preg_match('/\b(mi|mis)\s+(agenda|horario|horarios)\b/u', $folded)) {
-            return false;
-        }
-
-        return preg_match('/\b(profesional|medico|doctor|personal)\b/u', $folded) === 1
-            || preg_match('/\b(agenda|horario|horarios)\s+de\s+un\b/u', $folded) === 1
-            || preg_match('/\b(agenda|horario|horarios)\s+del\b/u', $folded) === 1;
+        return IntentClassificationRulesService::ruleMatches('staff_agenda_config_edit', $message);
     }
 
-    /**
-     * Desambiguación staff: pedidos de listado nominado → data-access.listar; conteos → info.
-     */
-    private static function scoreDataAccessListVsInfo(string $messageLower, string $actionId): int
+    public static function messageSuggestsOwnAgendaEdit(string $message): bool
     {
-        if ($actionId !== 'data-access.listar' && $actionId !== 'data-access.info') {
-            return 0;
-        }
-
-        $wantsList = self::messageSuggestsStaffList($messageLower);
-        $wantsCount = self::messageSuggestsStaffCount($messageLower);
-
-        if ($actionId === 'data-access.listar') {
-            if ($wantsList && !$wantsCount) {
-                return 25;
-            }
-            if ($wantsList && $wantsCount) {
-                return 10;
-            }
-
-            return 0;
-        }
-
-        // data-access.info
-        if ($wantsCount) {
-            return 15;
-        }
-        if ($wantsList && !$wantsCount) {
-            return -20;
-        }
-
-        return 0;
-    }
-
-    private static function messageSuggestsStaffList(string $messageLower): bool
-    {
-        $folded = self::foldAccents($messageLower);
-
-        return preg_match(
-            '/\b(listar|mostrar|mostrame|ver listado|nombres de|quienes|quien es|quién es|plantilla)\b/u',
-            $folded
-        ) === 1
-            || str_contains($folded, 'profesionales del centro')
-            || str_contains($folded, 'medicos del centro');
-    }
-
-    private static function messageSuggestsStaffCount(string $messageLower): bool
-    {
-        $folded = self::foldAccents($messageLower);
-
-        return preg_match(
-            '/\b(cuantos|cuantos hay|total de|conteo|cantidad de|numero de|cuenta)\b/u',
-            $folded
-        ) === 1;
+        return IntentClassificationRulesService::ruleMatches('own_agenda_config_edit', $message);
     }
 
     private static function foldAccents(string $text): string
@@ -308,6 +217,15 @@ final class IntentClassifier
                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
             );
 
+            $aiHints = IntentClassificationRulesService::aiPromptHintLines();
+            $aiHintsBlock = '';
+            if ($aiHints !== []) {
+                $aiHintsBlock = "- Pistas declarativas de routing (prioridad sobre heurísticas propias):\n";
+                foreach ($aiHints as $hint) {
+                    $aiHintsBlock .= '  - ' . $hint . "\n";
+                }
+            }
+
             $prompt = <<<PROMPT
 Tarea: elegir el mejor intent para el mensaje del usuario.
 
@@ -320,8 +238,8 @@ Reglas:
 - Usa s (intent_semantics) para razonar por objetivo, cómo se logra y restricciones. k son frases ancla.
 - Si dos intents son plausibles y falta una condición clave, marca needs_disambiguation y propone opciones.
 - En remediation[*].intent_id solo ids de c[*].id (nunca inventes ids).
-- Si el usuario pide modificar/editar agenda u horarios de un profesional (sin crear/alta), best_id = data-access.editar.
-
+- Nunca elijas un intent cuyo goal/how contradiga el mensaje; preferí intent_semantics sobre suposiciones.
+{$aiHintsBlock}
 Responde ÚNICAMENTE con JSON:
 {
   "best_id": "id o NONE",

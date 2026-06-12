@@ -2,6 +2,7 @@
 
 namespace common\components\Core\Service\Actions;
 
+use common\components\Assistant\Catalog\AssistantShortcutsCatalog;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Assistant\Catalog\IntentCatalogService;
 
@@ -79,91 +80,22 @@ final class CommonActionsService
     }
 
     /**
-     * Definición manual de categorías de atajos (flows).
-     *
-     * Solo se muestran los `intent_id` listados aquí aunque existan en el catálogo YAML y pasen RBAC.
+     * Categorías de atajos desde {@see schemas/assistant-shortcuts.yaml}.
      *
      * @return list<array{id: string, titulo: string, models: list<string>}>
      */
     private static function flowCategoriesDefinition(): array
     {
-        return [
-            [
-                'id' => 'atencion_solicitud',
-                'titulo' => 'Atención',
-                'models' => [
-                    'atencion.necesito-atencion',
-                ],
-            ],
-            [
-                'id' => 'profesional_agenda',
-                'titulo' => 'Profesional, agenda y condición laboral',
-                'models' => [
-                    'profesional-efector-servicio.crear-flow',
-                    'profesional-agenda.editar-mi-flow',
-                    'data-access.editar',
-                    'licencia.cargar-como-profesional-flow',
-                    'licencia.cargar-para-profesional-flow',
-                    'turnos.indicadores-agenda-flow',
-                ],
-            ],
-            [
-                'id' => 'turnos',
-                'titulo' => 'Turnos',
-                'models' => [
-                    'turnos.cancelar-como-paciente-flow',
-                    'turnos.modificar-como-paciente-flow',
-                ],
-            ],
-            [
-                'id' => 'laboratorio',
-                'titulo' => 'Laboratorio',
-                'models' => [
-                    'laboratorio.ver-resultados-como-paciente',
-                ],
-            ],
-            [
-                'id' => 'recetas',
-                'titulo' => 'Recetas',
-                'models' => [
-                    'receta.ver-recetas-como-paciente',
-                ],
-            ],
-            [
-                'id' => 'tratamiento',
-                'titulo' => 'Tratamiento',
-                'models' => [
-                    'tratamiento.recordatorios-como-paciente',
-                    'tratamiento.adherencia-resumen-staff',
-                ],
-            ],
-            [
-                'id' => 'atenciones',
-                'titulo' => 'Mis atenciones',
-                'models' => [
-                    'atencion.ver-ultima-como-paciente',
-                    'atencion.mis-atenciones-como-paciente',
-                ],
-            ],
-            [
-                'id' => 'urgencias',
-                'titulo' => 'Urgencias / guardia',
-                'models' => [
-                    'urgencias.ver-tablero-guardia',
-                    'urgencias.triage-paciente-guardia',
-                ],
-            ],
-            [
-                'id' => 'internacion',
-                'titulo' => 'Internación',
-                'models' => [
-                    'internacion.mapa-camas-flow',
-                    'internacion.ingreso-flow',
-                    'internacion.cambio-cama-flow',
-                    'internacion.alta-estructurada-flow',
-                ],
-            ],
-        ];
+        $out = [];
+        foreach (AssistantShortcutsCatalog::categories() as $cat) {
+            $out[] = [
+                'id' => $cat['id'],
+                'titulo' => $cat['titulo'],
+                'models' => $cat['intent_ids'],
+            ];
+        }
+
+        return $out;
     }
 
     /**

@@ -1,0 +1,49 @@
+---
+description: Routing del asistente — metadata declarativa, sin hardcode de intents en PHP/prompts
+globs: web/common/components/Assistant/**/*.php,web/common/components/Assistant/SubIntentEngine/schemas/**
+alwaysApply: false
+---
+
+# Asistente: routing sin hardcode
+
+## Principio
+
+No enumerar `intent_id`, regex de dominio ni `best_id = …` en orquestadores (`OperationalChannel`, `IntentClassifier`, `IntentIdAliasResolver`, hydrators) ni en prompts de IA.
+
+Los parches rápidos de routing (boost en PHP, fallback con intent fijo, alias en constante) fueron el origen de esta regla — **no repetir**: si falla la clasificación, extender `intent-classification-rules.yaml` (o metadata de catálogo), no otra excepción en código.
+
+## Dónde va cada cosa
+
+| Necesidad | Archivo metadata |
+|-----------|------------------|
+| Alias legacy → intent canónico | `SubIntentEngine/schemas/intent-aliases.yaml` |
+| Vocabulario NL, match rules, score boosts/penalties, fallbacks operativos, `ai_hint` | `SubIntentEngine/schemas/intent-classification-rules.yaml` |
+| Atajos visibles (curación producto) | `SubIntentEngine/schemas/assistant-shortcuts.yaml` |
+| Keywords métricas / edit surfaces / prefill sujeto | `SubIntentEngine/schemas/data-access-config/*.yaml` |
+| Flujos multi-paso | `SubIntentEngine/schemas/intents/*.yaml` |
+| Catálogo `data-access.*` (sin YAML flow) | `Catalog/DataAccessUiActionCatalog.php` + `DataAccessCatalogIntentSupport.php` |
+
+## Motores (solo interpretan metadata)
+
+- `IntentClassificationRulesService` — reglas YAML; **único** lugar de score adjustments declarativos.
+- `IntentAliasCatalog` — alias YAML.
+- `AssistantShortcutsCatalog` — atajos YAML.
+- `YamlIntentCatalogService::postOnlyFlowClosureRoutes()` — rutas POST de `flow_submit` (no listas fijas en PHP).
+
+## Prohibido
+
+- `if ($actionId === 'data-access.editar')` (o similar) en `IntentClassifier` / `OperationalChannel` para routing de producto.
+- Líneas en prompts IA del tipo `best_id = data-access.editar` o cualquier intent_id fijo.
+- Arrays PHP de alias, shortcuts o rutas POST de cierre de flow.
+- Llamadas desde hydrators de dominio a métodos del classifier; usar claves en `subject_resolver` (p. ej. `prefill_session_id_persona_when_rule` → rule id en YAML).
+
+## Al agregar routing NL
+
+1. Extender vocab/match_rules/score_adjustments en `intent-classification-rules.yaml`.
+2. Si hace falta pista para IA, añadir `ai_hint` en la rule (texto genérico, sin ids).
+3. Tests en `common/tests/unit/assistant/IntentClassificationRulesServiceTest.php`.
+
+## Excepciones
+
+- Umbrales técnicos (`RULES_MIN_SCORE`, timeouts).
+- `DataAccessCatalogIntentSupport::CATALOG_INTENT_IDS` — registry estable de intents genéricos (3 ids), no reglas de producto.

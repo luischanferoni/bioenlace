@@ -11,7 +11,7 @@
       "kind": "message",
       "id": "intro",
       "text_field": "preview_message",
-      "text": "Revise el impacto en turnos futuros antes de confirmar."
+      "text": "Revisá qué turnos pendientes quedarían alineados o en conflicto con la nueva grilla. Al confirmar, los turnos en conflicto pasan a «en resolución» y los pacientes reciben aviso para reubicar (mismo profesional) o cancelar."
     },
     {
       "kind": "fields",

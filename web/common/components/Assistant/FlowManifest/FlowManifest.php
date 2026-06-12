@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\FlowManifest;
 
+use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -18,6 +19,10 @@ final class FlowManifest
      */
     public static function buildActiveSliceForSubintent(string $intentId, string $activeSubintentId): ?array
     {
+        if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
+            return self::buildCatalogOnlySlice($intentId, $activeSubintentId);
+        }
+
         $root = self::loadRootForIntentId($intentId);
         if ($root === null) {
             return null;
@@ -69,6 +74,63 @@ final class FlowManifest
             'active_subintent_id' => $activeSubintentId,
             'active_step' => $activeStep,
             // `open_ui_hints` se puede derivar desde YAML; clientes usan `active_step.ui` y/o `open_ui` del payload principal.
+        ];
+    }
+
+    /**
+     * Manifiesto de un paso para intents DataAccess sin YAML (`data-access.info|listar|editar`).
+     *
+     * @return array<string, mixed>|null
+     */
+    private static function buildCatalogOnlySlice(string $intentId, string $activeSubintentId): ?array
+    {
+        $openUiDef = DataAccessCatalogIntentSupport::openUiDefForIntent($intentId);
+        if ($openUiDef === null) {
+            return null;
+        }
+
+        $subintentId = trim($activeSubintentId) !== '' ? trim($activeSubintentId) : 'open';
+        $label = DataAccessCatalogIntentSupport::displayLabelForIntent($intentId);
+        $text = $label !== '' ? $label : 'Abrir pantalla';
+
+        $actionId = strtolower(trim((string) ($openUiDef['action_id'] ?? '')));
+        if ($actionId === '') {
+            return null;
+        }
+
+        $stepCompact = [
+            'id' => 'open',
+            'assistant_text' => $text,
+            'requires' => [],
+            'provides' => [],
+            'next' => '',
+        ];
+
+        $activeStep = $stepCompact + [
+            'ui' => [
+                'default_tab' => 'default',
+                'tabs' => [
+                    [
+                        'id' => 'default',
+                        'label' => $text,
+                        'action_id' => $actionId,
+                        'route' => self::routeForActionId($actionId),
+                        'params' => self::normalizedParamsMap($openUiDef['params'] ?? null),
+                        'requires_client' => [],
+                    ],
+                ],
+            ],
+        ];
+
+        return [
+            'schema_version' => '1',
+            'intent_id' => $intentId,
+            'action_name' => $label,
+            'draft_keys' => [],
+            'entry_subintent_id' => 'open',
+            'steps' => [$stepCompact],
+            'active_subintent_id' => $subintentId,
+            'active_step' => $activeStep,
         ];
     }
 

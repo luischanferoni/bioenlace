@@ -56,6 +56,17 @@ final class SubIntentEngine
 
         $intent = self::loadIntentYaml($intentId);
         if ($intent === null) {
+            $catalogOnly = self::processCatalogOnlyIntent(
+                $intentId,
+                $draft,
+                $content,
+                $userId,
+                $hints
+            );
+            if ($catalogOnly !== null) {
+                return $catalogOnly;
+            }
+
             return ['success' => false, 'error' => 'Intent no soportado', 'intent_id' => $intentId];
         }
 
@@ -461,11 +472,56 @@ final class SubIntentEngine
         if (preg_match('#^data-access\.(info|listar)$#', $actionId, $m) === 1) {
             return '/api/v1/' . (string) $m[1];
         }
+        if ($actionId === 'data-access.editar') {
+            return '/api/v1/editar';
+        }
         if (preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) !== 1) {
             return '';
         }
 
         return '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @param list<array<string, mixed>> $hints
+     * @return array<string, mixed>|null
+     */
+    private static function processCatalogOnlyIntent(
+        string $intentId,
+        array $draft,
+        string $content,
+        int $userId,
+        array $hints
+    ): ?array {
+        if (!\common\components\Assistant\Catalog\DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
+            return null;
+        }
+
+        $openUiDef = \common\components\Assistant\Catalog\DataAccessCatalogIntentSupport::openUiDefForIntent($intentId);
+        if ($openUiDef === null) {
+            return null;
+        }
+
+        $openUiDef['__draft'] = $draft;
+        $label = \common\components\Assistant\Catalog\DataAccessCatalogIntentSupport::displayLabelForIntent($intentId);
+        $text = $label !== '' ? $label : 'Abrir pantalla';
+
+        return self::buildOpenUiResponse(
+            $intentId,
+            'open',
+            [
+                'id' => 'open',
+                'assistant_text' => $text,
+                'provides' => [],
+            ],
+            $text,
+            $userId,
+            $openUiDef,
+            $content,
+            null,
+            $hints
+        );
     }
 
     /**

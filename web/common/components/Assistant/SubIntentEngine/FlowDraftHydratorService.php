@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\SubIntentEngine;
 
+use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\Catalog\YamlIntentManifestLoader;
 
 /**
@@ -14,6 +15,12 @@ final class FlowDraftHydratorService
      */
     public static function hydrateFromIntentManifest(string $intentId, array &$body): void
     {
+        if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
+            DataAccessCatalogIntentSupport::applyDraftHydrator($intentId, $body);
+
+            return;
+        }
+
         $manifest = YamlIntentManifestLoader::load($intentId);
         if ($manifest === null) {
             return;

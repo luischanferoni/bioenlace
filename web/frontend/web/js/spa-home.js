@@ -1973,7 +1973,16 @@
 
     function buildEditSparseAdvanceUrl(baseUrl, editSparse, selectedId, item) {
         const url = new URL(resolveSpaFetchUrl(String(baseUrl || '')), window.location.origin);
-        const nextStep = editSparse.next_step != null ? String(editSparse.next_step).trim() : 'aspects';
+        const meta = item && item.meta && typeof item.meta === 'object' ? item.meta : null;
+        const advanceViaFieldMeta = editSparse.advance_via_field_meta === true
+            && meta
+            && meta.aspect_id != null
+            && String(meta.aspect_id).trim() !== '';
+
+        let nextStep = editSparse.next_step != null ? String(editSparse.next_step).trim() : 'aspects';
+        if (advanceViaFieldMeta) {
+            nextStep = 'form';
+        }
         if (nextStep !== '') {
             url.searchParams.set('step', nextStep);
         }
@@ -1986,10 +1995,14 @@
         const selParam = editSparse.selection_param != null
             ? String(editSparse.selection_param).trim()
             : 'id_persona';
-        if (selectedId) {
+        if (advanceViaFieldMeta) {
+            url.searchParams.set('aspect_ids', String(meta.aspect_id).trim());
+            if (meta.fields != null && String(meta.fields).trim() !== '') {
+                url.searchParams.set('fields', String(meta.fields).trim());
+            }
+        } else if (selectedId) {
             url.searchParams.set(pesParam, String(selectedId));
         }
-        const meta = item && item.meta && typeof item.meta === 'object' ? item.meta : null;
         if (meta) {
             if (meta[selParam] != null && String(meta[selParam]).trim() !== '') {
                 url.searchParams.set(selParam, String(meta[selParam]).trim());

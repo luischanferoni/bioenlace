@@ -6,7 +6,7 @@ groups:
   asignacion:
     attributes: [id_efector, id_servicio, id_persona]
 
-metrics:
+info_list:
   profesionales_conteo_efector:
     label: Conteo de profesionales por efector
     keywords:

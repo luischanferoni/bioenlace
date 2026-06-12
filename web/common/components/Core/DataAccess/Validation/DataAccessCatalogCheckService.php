@@ -77,6 +77,10 @@ final class DataAccessCatalogCheckService
             $errors = array_merge($errors, $this->checkModelClass($modelClass, $basename));
         }
 
+        if (isset($chunk['metrics']) && !isset($chunk['info_list'])) {
+            $errors[] = $basename . ': usar info_list en lugar de metrics (edit_surfaces es solo edición)';
+        }
+
         $groups = $chunk['groups'] ?? null;
         if (!is_array($groups)) {
             return $errors;

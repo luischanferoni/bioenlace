@@ -28,8 +28,15 @@ final class DataAccessEditDiscoveryService
     /**
      * @param list<array<string, mixed>> $extractions
      */
-    public function resolveSurfaceId(string $content, array $extractions, ?PermissionContext $ctx = null): ?string
-    {
+    /**
+     * @param array<string, mixed> $params
+     */
+    public function resolveSurfaceId(
+        string $content,
+        array $extractions,
+        ?PermissionContext $ctx = null,
+        array $params = []
+    ): ?string {
         $ctx = $ctx ?? PermissionContext::fromCurrentUser();
         $contentLower = mb_strtolower(trim($content), 'UTF-8');
         $bestId = null;
@@ -39,7 +46,7 @@ final class DataAccessEditDiscoveryService
             if (!is_string($surfaceId) || !is_array($def)) {
                 continue;
             }
-            if (!$this->authorization->userCanAccessEditSurface($ctx, $surfaceId)) {
+            if (!$this->authorization->userCanAccessEditSurface($ctx, $surfaceId, $params)) {
                 continue;
             }
             $score = $this->scoreSurface($surfaceId, $def, $contentLower, $extractions);
@@ -58,11 +65,15 @@ final class DataAccessEditDiscoveryService
      * @param list<array<string, mixed>> $extractions
      * @return list<string>
      */
+    /**
+     * @param array<string, mixed> $params
+     */
     public function resolveAspectIds(
         string $content,
         string $surfaceId,
         array $extractions,
-        ?PermissionContext $ctx = null
+        ?PermissionContext $ctx = null,
+        array $params = []
     ): array {
         $surfaceId = trim($surfaceId);
         if ($surfaceId === '') {
@@ -87,7 +98,7 @@ final class DataAccessEditDiscoveryService
             if (!is_string($aspectId) || !is_array($def)) {
                 continue;
             }
-            if (!$this->authorization->userCanAccessAspect($ctx, $surfaceId, $aspectId)) {
+            if (!$this->authorization->userCanAccessAspect($ctx, $surfaceId, $aspectId, $params)) {
                 continue;
             }
             $score = $this->scoreAspect($aspectId, $def, $contentLower, $extractions);

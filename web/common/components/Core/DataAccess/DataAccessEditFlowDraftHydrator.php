@@ -28,16 +28,6 @@ final class DataAccessEditFlowDraftHydrator
         $catalog = new AttributeGroupCatalog();
         $discovery = new DataAccessEditDiscoveryService();
 
-        if (trim((string) ($draft['surface_id'] ?? $draft['edit_surface_id'] ?? '')) === '') {
-            $surfaceId = $discovery->resolveSurfaceId($content, ChatPreprocessContext::extractions(), $ctx);
-            if ($surfaceId === null) {
-                $surfaceId = self::soleEditableSurfaceId($catalog, $auth, $ctx);
-            }
-            if ($surfaceId !== null) {
-                $draft['surface_id'] = $surfaceId;
-            }
-        }
-
         if (!isset($draft['id_efector']) || trim((string) $draft['id_efector']) === '') {
             $fromDraft = isset($draft['id_efector']) ? (int) $draft['id_efector'] : 0;
             $idEfector = OrganizationEfectorAccess::resolveIdEfector($fromDraft > 0 ? $fromDraft : null);
@@ -46,12 +36,38 @@ final class DataAccessEditFlowDraftHydrator
             }
         }
 
+        $scopeParams = self::scopeParamsFromDraft($draft);
+
+        if (trim((string) ($draft['surface_id'] ?? $draft['edit_surface_id'] ?? '')) === '') {
+            $surfaceId = $discovery->resolveSurfaceId(
+                $content,
+                ChatPreprocessContext::extractions(),
+                $ctx,
+                $scopeParams
+            );
+            if ($surfaceId === null) {
+                $surfaceId = self::surfaceIdFromClassificationRules($content, $auth, $ctx, $scopeParams);
+            }
+            if ($surfaceId === null) {
+                $surfaceId = self::soleEditableSurfaceId($catalog, $auth, $ctx, $scopeParams);
+            }
+            if ($surfaceId !== null) {
+                $draft['surface_id'] = $surfaceId;
+            }
+        }
+
         $surfaceId = trim((string) ($draft['surface_id'] ?? $draft['edit_surface_id'] ?? ''));
         self::applySubjectPrefillFromSurface($draft, $catalog->getEditSurface($surfaceId), $content);
 
         $aspectIds = [];
         if ($surfaceId !== '' && trim((string) ($draft['aspect_ids'] ?? '')) === '') {
-            $aspectIds = $discovery->resolveAspectIds($content, $surfaceId, ChatPreprocessContext::extractions(), $ctx);
+            $aspectIds = $discovery->resolveAspectIds(
+                $content,
+                $surfaceId,
+                ChatPreprocessContext::extractions(),
+                $ctx,
+                $scopeParams
+            );
             if ($aspectIds !== []) {
                 $draft['aspect_ids'] = implode(',', $aspectIds);
             }
@@ -71,17 +87,56 @@ final class DataAccessEditFlowDraftHydrator
         $body['draft'] = $draft;
     }
 
+    /**
+     * @param array<string, mixed> $draft
+     * @return array<string, mixed>
+     */
+    private static function scopeParamsFromDraft(array $draft): array
+    {
+        $params = [];
+        $idEfector = (int) ($draft['id_efector'] ?? 0);
+        if ($idEfector > 0) {
+            $params['id_efector'] = $idEfector;
+        }
+
+        return $params;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private static function surfaceIdFromClassificationRules(
+        string $content,
+        EditSurfaceAuthorizationService $auth,
+        PermissionContext $ctx,
+        array $params
+    ): ?string {
+        if (IntentClassificationRulesService::ruleMatches('staff_agenda_config_edit', $content)
+            || IntentClassificationRulesService::ruleMatches('own_agenda_config_edit', $content)) {
+            $candidate = 'agenda_profesional_en_efector';
+            if ($auth->userCanAccessEditSurface($ctx, $candidate, $params)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
     private static function soleEditableSurfaceId(
         AttributeGroupCatalog $catalog,
         EditSurfaceAuthorizationService $auth,
-        PermissionContext $ctx
+        PermissionContext $ctx,
+        array $params
     ): ?string {
         $ids = [];
         foreach ($catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
             if (!is_string($surfaceId) || !is_array($def)) {
                 continue;
             }
-            if ($auth->userCanAccessEditSurface($ctx, $surfaceId)) {
+            if ($auth->userCanAccessEditSurface($ctx, $surfaceId, $params)) {
                 $ids[] = $surfaceId;
             }
         }

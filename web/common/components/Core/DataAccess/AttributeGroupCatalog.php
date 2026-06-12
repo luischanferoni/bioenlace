@@ -448,13 +448,14 @@ final class AttributeGroupCatalog
       }
     }
 
-    if (isset($chunk['metrics']) && is_array($chunk['metrics'])) {
-      foreach ($chunk['metrics'] as $metricId => $def) {
+    $infoList = $chunk['info_list'] ?? $chunk['metrics'] ?? null;
+    if (is_array($infoList)) {
+      foreach ($infoList as $metricId => $def) {
         if (!is_string($metricId)) {
           continue;
         }
         if (isset($merged['metrics'][$metricId])) {
-          throw new \RuntimeException('Métrica duplicada ' . $metricId . ' en ' . $sourceFile);
+          throw new \RuntimeException('Consulta info/list duplicada ' . $metricId . ' en ' . $sourceFile);
         }
         $merged['metrics'][$metricId] = $def;
       }

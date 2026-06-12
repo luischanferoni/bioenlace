@@ -3,6 +3,7 @@
 namespace common\components\Core\DataAccess;
 
 use common\components\Core\DataAccess\Edit\EditMutationAuthorizationService;
+use common\components\Core\DataAccess\Edit\EditSparseFieldPicker;
 use common\components\Core\DataAccess\Edit\EditSparseAspectIds;
 use common\components\Core\DataAccess\Edit\EditSparseConfirmPresenter;
 use common\components\Core\DataAccess\Edit\EditSparseFieldBuilder;
@@ -77,6 +78,14 @@ final class DataAccessEditUiService
 
         if ($step === 'form') {
             return $this->renderForm($params, $ctx, $surfaceId);
+        }
+
+        if (($step === 'surfaces' || $step === '') && $surfaceId !== '') {
+            if ($this->surfaceNeedsSubjectPick($surfaceId, $params)) {
+                return $this->renderSubjectList($params, $ctx, $surfaceId);
+            }
+
+            return $this->renderAspectPicker($surfaceId, $params, $ctx);
         }
 
         if ($surfaceId !== '') {
@@ -190,27 +199,31 @@ final class DataAccessEditUiService
 
         $resolver = is_array($surface) ? ($surface['subject_resolver'] ?? []) : [];
         $metricId = is_array($resolver) ? trim((string) ($resolver['metric_id'] ?? '')) : '';
-        $needsSubject = trim((string) ($params['id_persona'] ?? '')) === ''
-            && trim((string) ($params['id_profesional_efector_servicio'] ?? '')) === '';
-
-        if ($needsSubject && $metricId !== '') {
+        if ($this->surfaceNeedsSubjectPick($surfaceId, $params) && $metricId !== '') {
             return $this->renderSubjectList($params, $ctx, $surfaceId);
         }
 
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
             'title' => 'Editar: ' . $label,
-            'message' => 'Elegí qué dato querés modificar.',
+            'message' => 'Elegí el atributo que querés modificar.',
             'step' => 'aspects',
             'surface_id' => $surfaceId,
             'aspect_options' => $aspects,
         ], null);
 
-        $listItems = [];
-        foreach ($aspects as $aspect) {
-            $listItems[] = [
-                'id' => (string) ($aspect['id'] ?? ''),
-                'name' => (string) ($aspect['label'] ?? ''),
-            ];
+        $fieldPicker = new EditSparseFieldPicker($this->catalog, $this->authorization);
+        $listItems = $fieldPicker->listItems($surfaceId, $ctx, $params);
+        if ($listItems === []) {
+            foreach ($aspects as $aspect) {
+                $listItems[] = [
+                    'id' => (string) ($aspect['id'] ?? ''),
+                    'name' => (string) ($aspect['label'] ?? ''),
+                    'meta' => [
+                        'aspect_id' => (string) ($aspect['id'] ?? ''),
+                        'fields' => '',
+                    ],
+                ];
+            }
         }
 
         $out = $this->appendBlocks($out, [[
@@ -240,6 +253,7 @@ final class DataAccessEditUiService
                 'surface_id' => $surfaceId,
                 'next_step' => 'form',
                 'pes_param' => 'aspect_ids',
+                'advance_via_field_meta' => true,
             ],
         ];
 
@@ -621,6 +635,27 @@ final class DataAccessEditUiService
         [$entity, $actionName] = $this->splitUiActionId($actionId);
 
         return '/api/v1/' . rawurlencode($entity) . '/' . rawurlencode($actionName);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function surfaceNeedsSubjectPick(string $surfaceId, array $params): bool
+    {
+        $surface = $this->catalog->getEditSurface($surfaceId);
+        $resolver = is_array($surface) ? ($surface['subject_resolver'] ?? []) : [];
+        $metricId = is_array($resolver) ? trim((string) ($resolver['metric_id'] ?? '')) : '';
+        if ($metricId === '') {
+            return false;
+        }
+        $pesParam = trim((string) ($resolver['pes_param'] ?? 'id_profesional_efector_servicio'))
+            ?: 'id_profesional_efector_servicio';
+
+        return trim((string) ($params[$pesParam] ?? $params['id_profesional_efector_servicio'] ?? '')) === '';
     }
 
     /**

@@ -121,7 +121,7 @@ class Servicio extends \yii\db\ActiveRecord
     }
 
     /**
-     * Servicios cuya agenda en site/pacientes (IMP) debe listar cirugías en lugar de internados.
+     * Servicios cuya agenda en site/index (IMP) debe listar cirugías en lugar de internados.
      * @see \Yii::$app->params['serviciosAgendaQuirurgicaIds']
      */
     public static function esServicioAgendaQuirurgica(int $idServicio): bool

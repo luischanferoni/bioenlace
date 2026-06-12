@@ -1,0 +1,42 @@
+# Manifiesto del panel de inicio (web site/index + apps).
+# El orquestador HomePanelService interpreta audience + encounter_class.
+panels:
+  staff:
+    EMER:
+      layout: clinical_board
+      title: Tablero de guardia
+      sections:
+        - id: emergency_board
+          provider: emergency_board
+          kind: emergency_board
+          poll_interval_seconds: 30
+        - id: emergency_indicators
+          provider: emergency_indicators
+          kind: emergency_indicators
+    AMB:
+      layout: clinical_list
+      title: Pacientes del día
+      sections:
+        - id: appointments_day
+          provider: appointments_day
+          kind: appointments_day
+    IMP:
+      layout: clinical_list
+      title: Internación
+      imp_surgical:
+        sections:
+          - id: surgeries_day
+            provider: surgeries_day
+            kind: surgeries_day
+      imp_floor:
+        sections:
+          - id: inpatients
+            provider: inpatients
+            kind: inpatients
+  fallback:
+    layout: cards
+    title: Inicio
+    sections:
+      - id: action_cards
+        provider: action_cards
+        kind: action_cards

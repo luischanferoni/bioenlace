@@ -193,7 +193,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 </div>
                 <div class="card-body">
                     <h4 class="mb-2">Internación</h4>
-                    <div class="row"><?= Html::a('Asignar Cama', ['/site/pacientes'], ['class' => 'ms-2']); ?></div>
+                    <div class="row"><?= Html::a('Asignar Cama', ['/site/index'], ['class' => 'ms-2']); ?></div>
                     <?php
                     if ($model->internaciones) {
                         echo '<div class="row">' . Html::a(

@@ -35,7 +35,7 @@ $urlHistoriaTpl = Url::to(['/paciente/historia']);
     <div id="qu-form" class="d-none">
         <p class="mb-2">
             <a id="qu-link-hc" class="btn btn-outline-primary btn-sm" href="#" target="_blank" rel="noopener">Historia clínica (consulta)</a>
-            <?= Html::a('Ir a Pacientes', ['/site/pacientes'], ['class' => 'btn btn-link btn-sm']) ?>
+            <?= Html::a('Ir a Pacientes', ['/site/index'], ['class' => 'btn btn-link btn-sm']) ?>
         </p>
 
         <div class="form-group">

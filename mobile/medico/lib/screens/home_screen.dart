@@ -9,7 +9,7 @@ import '../models/cirugia_agenda_item.dart';
 import '../auth/medico_post_login.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
-import '../services/pacientes_service.dart';
+import '../services/home_panel_api.dart';
 import 'emergency/emergency_guardia_actions.dart';
 import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
@@ -36,7 +36,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final PacientesService _pacientesService = PacientesService();
+  late final HomePanelApi _homePanelApi = HomePanelApi(
+    authToken: widget.authToken,
+    userId: widget.userId,
+  );
   late final EmergencyGuardiaApi _emergencyApi = EmergencyGuardiaApi(
     authToken: widget.authToken,
     userId: widget.userId,
@@ -56,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _pacientesService.userId = widget.userId;
+    _homePanelApi.userId = widget.userId;
     _emergencyApi.userId = widget.userId;
     _init();
   }
@@ -78,13 +81,13 @@ class _HomeScreenState extends State<HomeScreen> {
       // Tras el wizard, prefs tiene el context_token con encounter_class en el JWT.
       final token = prefs.getString('auth_token');
       if (token != null && token.isNotEmpty) {
-        _pacientesService.authToken = token;
+        _homePanelApi.authToken = token;
         _emergencyApi.authToken = token;
       } else if (widget.authToken != null && widget.authToken!.isNotEmpty) {
-        _pacientesService.authToken = widget.authToken;
+        _homePanelApi.authToken = widget.authToken;
         _emergencyApi.authToken = widget.authToken;
       } else {
-        _pacientesService.userId = widget.userId;
+        _homePanelApi.userId = widget.userId;
       }
     } catch (e) {
       setState(() {
@@ -102,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await recoverMedicoOperationalSession(
         userId: widget.userId,
         userName: widget.userName,
-        authToken: _pacientesService.authToken ?? widget.authToken,
+        authToken: _homePanelApi.authToken ?? widget.authToken,
       );
       return;
     }
@@ -121,60 +124,30 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
     try {
-      if (_encounterClass == 'EMER') {
-        final items = await _emergencyApi.getTablero();
-        if (!mounted) return;
-        setState(() {
-          _guardiaTablero = items;
-          _turnos = [];
-          _internados = [];
-          _cirugias = [];
-          _lastListKind = 'guardias';
-          _isLoading = false;
-          _errorMessage = '';
-        });
-        _startTableroPoll();
-        return;
-      }
-      _stopTableroPoll();
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
-      final res = await _pacientesService.getListado(fecha: fechaStr);
+      final panel = await _homePanelApi.getPanel(
+        fecha: fechaStr,
+        sections: silent && _encounterClass == 'EMER' ? 'emergency_board' : null,
+      );
       if (!mounted) return;
-      setState(() {
-        _turnos = [];
-        _internados = [];
-        _guardiaTablero = [];
-        _cirugias = [];
-        _lastListKind = res.kind;
-        if (res.kind == 'turnos') {
-          _turnos = res.data
-              .map((e) => Turno.fromJson(e as Map<String, dynamic>))
-              .toList();
-        } else if (res.kind == 'internados') {
-          _internados = res.data
-              .map((e) => InternadoItem.fromJson(e as Map<String, dynamic>))
-              .toList();
-        } else if (res.kind == 'cirugias') {
-          _cirugias = res.data
-              .map((e) => CirugiaAgendaItem.fromJson(e as Map<String, dynamic>))
-              .toList();
-        } else {
-          _errorMessage = 'Respuesta inválida del servidor (kind=${res.kind})';
-        }
-        _isLoading = false;
-      });
+      _applyHomePanel(panel);
+      if (_encounterClass == 'EMER') {
+        _startTableroPoll();
+      } else {
+        _stopTableroPoll();
+      }
     } catch (e) {
       if (!mounted) return;
       if (isMedicoEncounterSessionError(e)) {
         await recoverMedicoOperationalSession(
           userId: widget.userId,
           userName: widget.userName,
-          authToken: _pacientesService.authToken ?? widget.authToken,
+          authToken: _homePanelApi.authToken ?? widget.authToken,
         );
         return;
       }
       setState(() {
-        _errorMessage = 'Error al cargar pacientes: ${e.toString()}';
+        _errorMessage = 'Error al cargar panel: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -192,6 +165,59 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _stopTableroPoll() {
     // repoll encadenado; al cambiar encounter se corta por _encounterClass check
+  }
+
+  void _applyHomePanel(HomePanelResponse panel) {
+    setState(() {
+      _turnos = [];
+      _internados = [];
+      _guardiaTablero = [];
+      _cirugias = [];
+      _lastListKind = '';
+      _errorMessage = '';
+
+      final board = panel.sectionByKind('emergency_board');
+      if (board != null) {
+        final items = board.data['items'] as List<dynamic>? ?? [];
+        _guardiaTablero = items
+            .map((e) => EmergencyBoardItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        _lastListKind = 'guardias';
+      }
+
+      final appt = panel.sectionByKind('appointments_day');
+      if (appt != null) {
+        final items = appt.data['items'] as List<dynamic>? ?? [];
+        _turnos = items
+            .map((e) => Turno.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        _lastListKind = 'turnos';
+      }
+
+      final inpat = panel.sectionByKind('inpatients');
+      if (inpat != null) {
+        final items = inpat.data['items'] as List<dynamic>? ?? [];
+        _internados = items
+            .map((e) => InternadoItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        _lastListKind = 'internados';
+      }
+
+      final surg = panel.sectionByKind('surgeries_day');
+      if (surg != null) {
+        final items = surg.data['items'] as List<dynamic>? ?? [];
+        _cirugias = items
+            .map((e) => CirugiaAgendaItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        _lastListKind = 'cirugias';
+      }
+
+      if (_lastListKind.isEmpty && panel.layout == 'cards') {
+        _errorMessage = 'Sin acciones en el panel de inicio.';
+      }
+
+      _isLoading = false;
+    });
   }
 
   void _cambiarFecha(int dias) {

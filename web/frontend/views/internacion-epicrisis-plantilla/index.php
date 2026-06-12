@@ -8,7 +8,7 @@ use yii\helpers\Html;
 /** @var list<string> $placeholders */
 
 $this->title = 'Plantillas de epicrisis';
-$this->params['breadcrumbs'][] = ['label' => 'Internaciones', 'url' => ['/site/pacientes']];
+$this->params['breadcrumbs'][] = ['label' => 'Internaciones', 'url' => ['/site/index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 

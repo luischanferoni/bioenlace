@@ -192,15 +192,15 @@ final class ClinicalUiActionCatalog
                 ['verificar receta', 'código receta', 'farmacia']
             ),
             self::def(
-                'clinical.emergency-guardia.tablero',
-                'Tablero de guardia',
-                'Cola operativa de urgencias del efector en sesión (inicio web o móvil EMER).',
-                '/api/clinical/emergency-guardia/tablero',
-                ['tablero guardia', 'urgencias', 'guardia', 'cola emergencia', 'sala de espera'],
+                'clinical.home.panel',
+                'Panel de inicio',
+                'Inicio operativo según encounter (tablero EMER, agenda AMB, internación IMP).',
+                '/api/home/panel',
+                ['tablero guardia', 'urgencias', 'guardia', 'cola emergencia', 'sala de espera', 'inicio'],
                 false,
                 [
                     'kind' => 'native',
-                    'web' => ['path' => '/site/pacientes'],
+                    'web' => ['path' => '/site/index'],
                     'mobile' => ['screen_id' => 'home.emergency_board'],
                 ]
             ),

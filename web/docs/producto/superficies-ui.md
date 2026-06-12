@@ -35,7 +35,7 @@ flowchart TB
 
 ## Inicio (página de inicio del médico)
 
-- Equivalente al **home de la app médico**: muta según rol y `encounter_class` en sesión.
+- Equivalente al **home de la app médico**: muta según rol y `encounter_class` en sesión. Datos: **`GET /api/v1/home/panel`** (web `site/index`, móvil staff).
 - Ejemplos: tablero EMER, mapa de camas IMP, listado ambulatorio AMB.
 - **No** es lugar de captura clínica ni de formularios largos por pestaña.
 

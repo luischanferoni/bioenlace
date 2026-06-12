@@ -156,18 +156,18 @@ class SesionOperativaService extends Component
     private function getRedirectRouteForCurrentUser(): array
     {
         if (User::hasRole(['Medico'])) {
-            return ['/site/pacientes'];
+            return ['/site/index'];
         }
         if (User::hasRole(['Administrativo'])) {
-            return ['/site/pacientes'];
+            return ['/site/index'];
         }
         if (User::hasRole(['AdminEfector'])) {
-            return ['/site/pacientes'];
+            return ['/site/index'];
         }
         if (User::hasRole(['Enfermeria'])) {
             return ['/personas/buscar-persona'];
         }
-        return ['/site/pacientes'];
+        return ['/site/index'];
     }
 
     /**

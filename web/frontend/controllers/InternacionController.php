@@ -66,7 +66,7 @@ class InternacionController extends Controller
     public function actionIndex()
     {
         if (Yii::$app->user->getEncounterClass() === Encounter::ENCOUNTER_CLASS_IMP) {
-            return $this->redirect(['site/pacientes']);
+            return $this->redirect(['site/index']);
         }
 
         return $this->render('hub');

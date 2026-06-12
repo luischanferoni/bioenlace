@@ -202,7 +202,7 @@ if (Yii::$app->user->username) {
                         <div class="container-fluid">
                             <ul class="navbar-nav">
                                 <li class="nav-item">
-                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= (Yii::$app->controller->id === 'site' && Yii::$app->controller->action->id === 'pacientes') ? 'active' : '' ?>" href="<?= Url::to(['/site/pacientes']) ?>">
+                                    <a class="nav-link d-flex flex-column align-items-center justify-content-center <?= (Yii::$app->controller->id === 'site' && Yii::$app->controller->action->id === 'index') ? 'active' : '' ?>" href="<?= Url::to(['/site/index']) ?>">
                                         <i class="bi bi-people fs-2"></i> Pacientes
                                     </a>
                                 </li>

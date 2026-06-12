@@ -46,7 +46,7 @@ return [
         'slots_min_minutos_desde_ahora' => 15,
     ],
     /**
-     * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en /api/v1/pacientes.
+     * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en home/panel (sección surgeries_day).
      * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.
      */
     'serviciosAgendaQuirurgicaIds' => [],

@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Triage en guardia"
 description: "Registrar la prioridad de un paciente en guardia."
-rbac_route: "/api/clinical/emergency-guardia/tablero"
+rbac_route: "/api/home/panel"
 keywords:
   - triage
   - clasificar urgencia

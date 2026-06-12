@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
-/// Fila del tablero operativo de guardia (API v1 clinical/emergency-guardia/tablero).
+/// Fila del tablero operativo de guardia (sección emergency_board en GET /api/v1/home/panel).
 class EmergencyBoardItem {
   final int id;
   final int idPersona;
@@ -118,36 +118,6 @@ class EmergencyGuardiaApi {
       headers['Authorization'] = 'Bearer $authToken';
     }
     return headers;
-  }
-
-  Future<List<EmergencyBoardItem>> getTablero({int? idEfector}) async {
-    final query = <String, String>{};
-    if (idEfector != null) query['id_efector'] = idEfector.toString();
-    if (userId != null &&
-        (authToken == null ||
-            authToken!.isEmpty ||
-            authToken!.startsWith('simulated_'))) {
-      query['user_id'] = userId!;
-    }
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/tablero',
-    ).replace(queryParameters: query.isNotEmpty ? query : null);
-
-    final response = await http.get(uri, headers: _headers);
-    if (response.statusCode != 200) {
-      throw Exception('Error al cargar tablero (${response.statusCode})');
-    }
-    final decoded = json.decode(response.body);
-    if (decoded is! Map<String, dynamic> || decoded['success'] != true) {
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error tablero') : 'Error tablero',
-      );
-    }
-    final data = decoded['data'] as Map<String, dynamic>? ?? {};
-    final items = data['items'] as List<dynamic>? ?? [];
-    return items
-        .map((e) => EmergencyBoardItem.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 
   Future<Map<String, dynamic>> iniciarAtencion(int guardiaId) async {

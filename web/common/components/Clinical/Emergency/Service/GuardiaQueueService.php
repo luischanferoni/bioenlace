@@ -76,36 +76,6 @@ final class GuardiaQueueService
     }
 
     /**
-     * Listado compacto compatible con PacientesController (kind guardias).
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    public function listadoCompacto(int $idEfector): array
-    {
-        $result = $this->tablero($idEfector, ['solo_activos' => true]);
-        $out = [];
-        foreach ($result['items'] as $row) {
-            $paciente = $row['paciente'] ?? [];
-            $out[] = [
-                'id' => $row['id'],
-                'id_persona' => $row['id_persona'],
-                'nombre_completo' => $paciente['nombre_completo'] ?? 'Sin nombre',
-                'documento' => $paciente['documento'] ?? null,
-                'tipo_documento' => $paciente['tipo_documento'] ?? null,
-                'fecha' => $row['fecha'],
-                'hora' => $row['hora'],
-                'estado' => $row['estado'],
-                'circuito_estado' => $row['circuito_estado'],
-                'prioridad_triage' => $row['prioridad_triage'],
-                'minutos_espera' => $row['minutos_espera'],
-                'triage_level_label' => $row['triage']['level_label'] ?? null,
-            ];
-        }
-
-        return $out;
-    }
-
-    /**
      * @return array<int, array{id_efector: int, nombre: string}>
      */
     public function listarEfectoresDerivacion(): array

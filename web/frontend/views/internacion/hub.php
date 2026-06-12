@@ -15,7 +15,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <strong>inicio del médico</strong> con contexto de internación (IMP) en sesión.
         </p>
         <div class="d-flex flex-wrap gap-2 mt-3">
-            <?= Html::a('Ir al inicio (pacientes)', ['/site/pacientes'], ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Ir al inicio (pacientes)', ['/site/index'], ['class' => 'btn btn-primary']) ?>
             <?= Html::a('Ronda de pacientes', ['/internacion/ronda'], ['class' => 'btn btn-outline-primary']) ?>
             <?= Html::a('Plantillas de epicrisis', ['/internacion-epicrisis-plantilla/index'], ['class' => 'btn btn-outline-secondary']) ?>
         </div>

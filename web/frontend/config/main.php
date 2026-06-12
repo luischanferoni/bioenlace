@@ -14,8 +14,8 @@ $baseUrl = str_replace('/frontend/web', '', (new Request)->getBaseUrl());
 return [
     'id' => 'bioenlace-frontend',
     'language' => 'es',
-    'homeUrl' => ['/site/inicio'],
-    'defaultRoute' => 'site/inicio',
+    'homeUrl' => ['/site/index'],
+    'defaultRoute' => 'site/index',
     'basePath' => dirname(__DIR__),
     'bootstrap' => [
         'log',
@@ -90,7 +90,7 @@ return [
                 // Canónico: /user-management/auth/login (UserConfig::$loginUrl).
                 'site/login' => 'user-management/auth/login',
                 'login' => 'user-management/auth/login',
-                'site/index' => 'site/inicio',
+                'site/inicio' => 'site/sesion-operativa',
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
@@ -135,8 +135,6 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/legal-record-export/descargar' => '<version>/clinical/legal-record-export/descargar',
                 'POST api/<version:\w+>/clinical/emergency-guardia/ingresar' => '<version>/clinical/emergency-guardia/ingresar',
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/ingresar' => '<version>/clinical/emergency-guardia/ingresar',
-                'GET api/<version:\w+>/clinical/emergency-guardia/tablero' => '<version>/clinical/emergency-guardia/tablero',
-                'OPTIONS api/<version:\w+>/clinical/emergency-guardia/tablero' => '<version>/clinical/emergency-guardia/tablero',
                 'POST api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/registrar-triage' => '<version>/clinical/emergency-guardia/registrar-triage',
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/registrar-triage' => '<version>/clinical/emergency-guardia/registrar-triage',
                 'GET api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/ver' => '<version>/clinical/emergency-guardia/ver',
@@ -543,9 +541,9 @@ return [
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
                 'OPTIONS api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
 
-                // Pacientes (encounter resuelto en backend)
-                'GET api/<version:\w+>/pacientes' => '<version>/pacientes/listar',
-                'OPTIONS api/<version:\w+>/pacientes' => '<version>/pacientes/listar',
+                // Panel de inicio (web site/index + móvil staff)
+                'GET api/<version:\w+>/home/panel' => '<version>/home/panel',
+                'OPTIONS api/<version:\w+>/home/panel' => '<version>/home/panel',
 
                 // Quirófano — agenda (salas + cirugías)
                 'GET api/<version:\w+>/quirofano/salas' => '<version>/quirofano/listar-salas',

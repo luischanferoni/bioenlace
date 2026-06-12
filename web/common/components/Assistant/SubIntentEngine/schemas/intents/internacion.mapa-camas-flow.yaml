@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Mapa de camas"
 description: "Ver el estado de las camas del establecimiento."
-rbac_route: "/api/pacientes/listar"
+rbac_route: "/api/home/panel"
 keywords:
   - mapa de camas
   - camas libres

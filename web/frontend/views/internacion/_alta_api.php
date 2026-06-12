@@ -13,7 +13,7 @@ $responsable = (string) ($ctx['responsable_nombre'] ?? '');
 <div id="internacion-alta-api"
      class="card border-primary mb-3"
      data-internacion-id="<?= (int) $model->id ?>"
-     data-redirect-url="<?= Html::encode(Url::to(['site/pacientes'])) ?>">
+     data-redirect-url="<?= Html::encode(Url::to(['site/index'])) ?>">
     <div class="card-header bg-soft-primary">
         <strong>Alta hospitalaria (epicrisis + checklist)</strong>
     </div>

@@ -6,7 +6,7 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff (enfermería, admisión) | Web inicio (`site/pacientes` con EMER) | Tablero, triage modal, derivación, egreso, indicadores en cabecera |
+| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero vía `GET /api/v1/home/panel`, triage modal, derivación, egreso, indicadores |
 | Médico guardia | App médico (inicio EMER) | Tablero, triage, atender → captura clínica, menú (tomar caso, derivar, egreso, re-triage) |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
@@ -29,7 +29,7 @@ Base: `/api/v1/clinical/emergency-guardia`
 
 | Acción | Método | Notas |
 |--------|--------|-------|
-| Tablero | `GET …/tablero` | Cola del efector en sesión |
+| Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`) |
 | Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales |
 | Tomar caso | `POST …/{id}/asignar` | PES de sesión si no se envía body |
 | Atender | `POST …/{id}/iniciar-atencion` | Devuelve `captura_url` |

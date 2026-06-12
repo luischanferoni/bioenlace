@@ -37,7 +37,7 @@ class SiteController extends Controller
     }
 
     /**
-     * Alias legacy site/index y ruta raíz → flujo post-login (wizard o pacientes).
+     * Panel de inicio (SPA): datos vía GET /api/v1/home/panel.
      *
      * @no_intent_catalog
      */
@@ -47,58 +47,45 @@ class SiteController extends Controller
             return $this->redirect(Yii::$app->user->loginUrl);
         }
 
-        return $this->redirect(['site/inicio']);
+        if (!$this->sesionOperativaCompleta()) {
+            return $this->redirect(['site/sesion-operativa']);
+        }
+
+        return $this->renderPanelInicio();
     }
 
     /**
-     * Post-login: si falta efector, servicio o encounter class en sesión, muestra el asistente de selección
-     * (vistas despuesdelogin/*). El listado de efectores, encounter classes y `efectores_con_problemas` los
-     * obtiene el cliente con POST `/api/v1/sesion-operativa/establecer` (cuerpo vacío), no desde PHP.
-     * Si ya está completo, redirige al listado de pacientes.
-     * No es equivalente a actionPacientes: aquí se resuelve contexto de sesión, allí se lista la agenda del día.
+     * Wizard post-login: efector → encounter → servicio (POST sesion-operativa/establecer).
+     *
      * @no_intent_catalog
-    */
-    public function actionInicio()
+     */
+    public function actionSesionOperativa()
     {
         if (Yii::$app->user->isGuest) {
             return $this->redirect(Yii::$app->user->loginUrl);
         }
 
-        $idEfector = Yii::$app->user->getIdEfector();
-        $servicioActual = Yii::$app->user->getServicioActual();
-        $encounterClass = Yii::$app->user->getEncounterClass();
+        if ($this->sesionOperativaCompleta()) {
+            $fechaParam = Yii::$app->request->get('fecha');
+            $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
 
-        if (!$idEfector || !$servicioActual || !$encounterClass) {
-            $this->layout = 'main_sinmenuizquierda';
-
-            // La SPA web consume /api/v1 con Bearer JWT (igual que móvil). Si el usuario ya estaba logueado
-            // antes de que se genere el token en afterLogin, regenerarlo aquí para evitar 401 en el wizard.
-            $session = Yii::$app->session;
-            if (!$session->get('apiJwtToken') && !Yii::$app->user->isGuest) {
-                $identity = Yii::$app->user->identity;
-                if ($identity) {
-                    $persona = Persona::findOne(['id_user' => $identity->id]);
-                    if ($persona) {
-                        $payload = [
-                            'user_id' => $identity->id,
-                            'email' => $identity->email,
-                            'id_persona' => (int) $persona->id_persona,
-                            'iat' => time(),
-                            'exp' => time() + (24 * 60 * 60),
-                        ];
-                        $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
-                        $session->set('apiJwtToken', $token);
-                    }
-                }
-            }
-
-            return $this->render('despuesdelogin/inicio');
+            return $this->redirect(['site/index', 'fecha' => $fecha]);
         }
 
-        $fechaParam = Yii::$app->request->get('fecha');
-        $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
+        $this->layout = 'main_sinmenuizquierda';
+        $this->ensureApiJwtTokenEnSesion();
 
-        return $this->redirect(['site/pacientes', 'fecha' => $fecha]);
+        return $this->render('despuesdelogin/inicio');
+    }
+
+    /**
+     * Alias legacy.
+     *
+     * @no_intent_catalog
+     */
+    public function actionInicio()
+    {
+        return $this->actionSesionOperativa();
     }
 
     /**
@@ -111,10 +98,56 @@ class SiteController extends Controller
 
 
     /**
-     * Vista HTML del listado de pacientes (datos vía API /api/v1/pacientes/*).
+     * Alias legacy → panel de inicio.
+     *
      * @no_intent_catalog
-    */
+     */
     public function actionPacientes()
+    {
+        $fechaParam = Yii::$app->request->get('fecha');
+        if ($fechaParam) {
+            return $this->redirect(['site/index', 'fecha' => date('Y-m-d', strtotime($fechaParam))]);
+        }
+
+        return $this->redirect(['site/index']);
+    }
+
+    private function sesionOperativaCompleta(): bool
+    {
+        return (bool) Yii::$app->user->getIdEfector()
+            && (bool) Yii::$app->user->getServicioActual()
+            && (bool) Yii::$app->user->getEncounterClass();
+    }
+
+    private function ensureApiJwtTokenEnSesion(): void
+    {
+        $session = Yii::$app->session;
+        if ($session->get('apiJwtToken') || Yii::$app->user->isGuest) {
+            return;
+        }
+        $identity = Yii::$app->user->identity;
+        if (!$identity) {
+            return;
+        }
+        $persona = Persona::findOne(['id_user' => $identity->id]);
+        if (!$persona) {
+            return;
+        }
+        $payload = [
+            'user_id' => $identity->id,
+            'email' => $identity->email,
+            'id_persona' => (int) $persona->id_persona,
+            'iat' => time(),
+            'exp' => time() + (24 * 60 * 60),
+        ];
+        $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
+        $session->set('apiJwtToken', $token);
+    }
+
+    /**
+     * @return string
+     */
+    private function renderPanelInicio()
     {
         $fechaParam = Yii::$app->request->get('fecha');
         $fecha = $fechaParam ? date('Y-m-d', strtotime($fechaParam)) : date('Y-m-d');
@@ -192,7 +225,7 @@ class SiteController extends Controller
     public static function despuesDeLogin()
     {
         if (Yii::$app->user->isSuperadmin) {
-            Yii::$app->response->redirect(['site/pacientes'])->send();
+            Yii::$app->response->redirect(['site/index'])->send();
             return;
         }
 
@@ -208,7 +241,7 @@ class SiteController extends Controller
     */
     public function actionSessionEfectorRedireccionar()
     {
-        return $this->redirect(['site/inicio']);
+        return $this->redirect(['site/sesion-operativa']);
     }
 
     /**
@@ -374,7 +407,7 @@ class SiteController extends Controller
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
-        return ['site/inicio'];
+        return ['site/sesion-operativa'];
     }
 
     /* Código muerto (sesión operativa PES / wizard): reemplazado por flujos actuales. */
@@ -434,17 +467,17 @@ class SiteController extends Controller
     {
         User::hasRole(['Medico']);
         if (User::hasRole(['Medico'])) {
-            $url = ['/site/pacientes'];
+            $url = ['/site/index'];
         }
 
         if (User::hasRole(['Administrativo'])) {
-            $url = ['/site/pacientes'];
+            $url = ['/site/index'];
         } elseif (User::hasRole(['AdminEfector'])) {
-            $url = ['/site/pacientes'];
+            $url = ['/site/index'];
         } elseif (User::hasRole(['Enfermeria'])) {
             $url = ['/personas/buscar-persona'];
         } else {
-            $url = ['/site/pacientes'];
+            $url = ['/site/index'];
         }
 
         return $url;
@@ -498,7 +531,7 @@ class SiteController extends Controller
 
         // Si afterLogin no terminó la respuesta (p. ej. sin evento redirect), ir a inicio (wizard o pacientes).
         if (!Yii::$app->response->isSent) {
-            return $this->redirect(['site/inicio']);
+            return $this->redirect(['site/sesion-operativa']);
         }
     }
 

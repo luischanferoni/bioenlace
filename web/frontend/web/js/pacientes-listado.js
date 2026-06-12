@@ -1,5 +1,5 @@
 /**
- * Listado de pacientes (inicio web): turnos / internados / tablero guardia / cirugías.
+ * Panel de inicio web (site/index): GET /api/v1/home/panel — turnos / internados / tablero guardia / cirugías.
  * Datos vía API v1 según encounter en sesión.
  */
 (function () {
@@ -829,7 +829,7 @@
       }
     }
 
-    function renderGuardiaTablero(items) {
+    function renderGuardiaTablero(items, indicatorsData) {
       if (!items || !items.length) {
         showListadoEmpty(msgEmptyGuardias);
         return;
@@ -841,7 +841,11 @@
       var wrapRoot = wrapFrag.querySelector('[data-role="guardias-wrap"]');
       container.appendChild(wrapFrag);
       bindTableroRefresh(wrapRoot);
-      loadTableroResumen(wrapRoot);
+      if (indicatorsData) {
+        applyTableroResumenFromData(wrapRoot, indicatorsData);
+      } else {
+        loadTableroResumen(wrapRoot);
+      }
 
       items.forEach(function (g) {
         var itemFrag = importTemplate('tpl-paciente-guardia-row');
@@ -895,44 +899,68 @@
       });
     }
 
-    function renderByKind(kind, data) {
-      if (kind === 'turnos') {
-        renderTurnos(data);
-      } else if (kind === 'internados') {
-        renderInternados(data);
-      } else if (kind === 'guardias') {
-        renderGuardiaTablero(data);
-      } else if (kind === 'cirugias') {
-        renderCirugias(data);
-      } else if (Array.isArray(data) && data.length) {
-        renderTurnos(data);
-      } else {
-        showListadoEmpty('Sin resultados.');
+    function findPanelSection(panel, kind) {
+      var sections = panel.sections || [];
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].kind === kind) {
+          return sections[i];
+        }
       }
+      return null;
     }
 
-    async function loadPacientes() {
-      var api = window.BioenlaceNativePage;
-      if (!api) throw new Error('NativePage bridge no disponible');
-
-      var url = api.apiV1Url('pacientes');
-      var u = new URL(url);
-      if (fecha) u.searchParams.set('fecha', fecha);
-
-      var json = await api.fetchJson(u.toString(), {
-        method: 'GET',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-      });
-
-      var kind = json.kind || '';
-      var data = Array.isArray(json.data) ? json.data : [];
-      renderByKind(kind, data);
-
-      if (api.bindSpaNavLinks) api.bindSpaNavLinks(container);
+    function applyTableroResumenFromData(wrapEl, d) {
+      if (!wrapEl || !d) return;
+      var el = wrapEl.querySelector('[data-role="tablero-resumen"]');
+      if (!el) return;
+      var parts = [];
+      if (d.activos != null) parts.push(d.activos + ' activos');
+      if (d.sin_triage != null) parts.push(d.sin_triage + ' sin triage');
+      if (d.sla_incumplidos_tablero != null) {
+        parts.push(d.sla_incumplidos_tablero + ' SLA incumplido(s)');
+      }
+      var t = d.tiempos_hoy || {};
+      if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + t.minutos_a_medico + ' min');
+      el.textContent = parts.join(' · ');
+      el.classList.remove('d-none');
     }
 
-    async function loadGuardiaTablero(showSpinner) {
-      if (showSpinner !== false) {
+    function renderFromPanel(panel) {
+      var layout = panel.layout || '';
+      if (layout === 'clinical_board') {
+        var boardSec = findPanelSection(panel, 'emergency_board');
+        var items = boardSec && boardSec.data ? boardSec.data.items || [] : [];
+        var indicatorsSec = findPanelSection(panel, 'emergency_indicators');
+        renderGuardiaTablero(items, indicatorsSec ? indicatorsSec.data : null);
+        return;
+      }
+      if (layout === 'clinical_list') {
+        var appt = findPanelSection(panel, 'appointments_day');
+        if (appt) {
+          renderTurnos((appt.data && appt.data.items) || []);
+          return;
+        }
+        var inpat = findPanelSection(panel, 'inpatients');
+        if (inpat) {
+          renderInternados((inpat.data && inpat.data.items) || []);
+          return;
+        }
+        var surg = findPanelSection(panel, 'surgeries_day');
+        if (surg) {
+          renderCirugias((surg.data && surg.data.items) || []);
+          return;
+        }
+      }
+      if (layout === 'cards') {
+        showListadoEmpty('Sin acciones disponibles en el panel.');
+        return;
+      }
+      showListadoEmpty('Sin resultados.');
+    }
+
+    async function loadPanel(options) {
+      options = options || {};
+      if (options.showSpinner !== false) {
         errorEl.classList.add('d-none');
         setLoading(true);
       }
@@ -940,22 +968,49 @@
         var api = window.BioenlaceNativePage;
         if (!api) throw new Error('NativePage bridge no disponible');
 
-        var url = api.apiV1Url('clinical/emergency-guardia/tablero');
-        var json = await api.fetchJson(url, {
+        var url = api.apiV1Url('home/panel');
+        var u = new URL(url);
+        if (fecha) u.searchParams.set('fecha', fecha);
+        if (options.sections) u.searchParams.set('sections', options.sections);
+
+        var json = await api.fetchJson(u.toString(), {
           method: 'GET',
           headers: { 'X-Requested-With': 'XMLHttpRequest' },
         });
 
-        var payload = json.data || {};
-        var items = payload.items || [];
-        renderGuardiaTablero(items);
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo cargar el panel.');
+        }
+
+        var panel = json.data || {};
+        if (options.sections) {
+          var boardSec = findPanelSection(panel, 'emergency_board');
+          if (boardSec) {
+            var items = boardSec.data ? boardSec.data.items || [] : [];
+            renderGuardiaTablero(items);
+          }
+          var indSec = findPanelSection(panel, 'emergency_indicators');
+          if (indSec) {
+            var wrapRoot = container.querySelector('[data-role="guardias-wrap"]');
+            applyTableroResumenFromData(wrapRoot, indSec.data);
+          }
+        } else {
+          renderFromPanel(panel);
+        }
         setLoading(false);
 
         if (api.bindSpaNavLinks) api.bindSpaNavLinks(container);
       } catch (e) {
         setLoading(false);
-        showError(errorEl, e && e.message ? e.message : 'No se pudo cargar el tablero de guardia.');
+        showError(errorEl, e && e.message ? e.message : 'No se pudo cargar el panel.');
       }
+    }
+
+    async function loadGuardiaTablero(showSpinner) {
+      await loadPanel({
+        showSpinner: showSpinner,
+        sections: 'emergency_board,emergency_indicators',
+      });
     }
 
     function startTableroPoll() {
@@ -977,16 +1032,15 @@
       setLoading(true);
       try {
         if (esGuardia || encounter === 'EMER') {
-          await loadGuardiaTablero(true);
+          await loadPanel({ showSpinner: true });
           startTableroPoll();
         } else {
           stopTableroPoll();
-          await loadPacientes();
-          setLoading(false);
+          await loadPanel({ showSpinner: true });
         }
       } catch (e) {
         setLoading(false);
-        showError(errorEl, e && e.message ? e.message : 'No se pudo cargar el listado.');
+        showError(errorEl, e && e.message ? e.message : 'No se pudo cargar el panel.');
       }
     }
 

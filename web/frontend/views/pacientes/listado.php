@@ -57,13 +57,13 @@ $this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
         <?php endif; ?>
     </div>
     <div class="btn-group" role="group">
-        <a href="<?= Url::to(['site/pacientes', 'fecha' => $fechaAnterior]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Url::to(['site/index', 'fecha' => $fechaAnterior]) ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-chevron-left"></i> Fecha anterior
         </a>
-        <a href="<?= Url::to(['site/pacientes', 'fecha' => $hoy]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Url::to(['site/index', 'fecha' => $hoy]) ?>" class="btn btn-outline-secondary btn-sm">
             Fecha de hoy
         </a>
-        <a href="<?= Url::to(['site/pacientes', 'fecha' => $fechaSiguiente]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Url::to(['site/index', 'fecha' => $fechaSiguiente]) ?>" class="btn btn-outline-secondary btn-sm">
             Fecha siguiente <i class="bi bi-chevron-right"></i>
         </a>
     </div>
@@ -75,7 +75,7 @@ $this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
         'pisos_efector' => $mapaCtx['pisos_efector'] ?? [],
         'mapa' => $mapaCtx['mapa'] ?? null,
         'pacienteInternado' => !empty($mapaCtx['paciente_internado']),
-        'formAction' => Url::to(['site/pacientes', 'fecha' => $fecha]),
+        'formAction' => Url::to(['site/index', 'fecha' => $fecha]),
     ]) ?>
 <?php endif; ?>
 

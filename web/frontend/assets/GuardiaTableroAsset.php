@@ -5,7 +5,7 @@ namespace frontend\assets;
 use yii\web\AssetBundle;
 
 /**
- * Tablero de guardia en inicio (site/pacientes con encounter EMER).
+ * Tablero de guardia en inicio (site/index con encounter EMER).
  */
 class GuardiaTableroAsset extends AssetBundle
 {

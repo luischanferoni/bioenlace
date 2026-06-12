@@ -22,7 +22,6 @@ use yii\web\Response;
  *
  * POST /api/v1/clinical/emergency-guardia/ingresar
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/registrar-triage
- * GET  /api/v1/clinical/emergency-guardia/tablero
  * GET  /api/v1/clinical/emergency-guardia/indicadores-resumen
  * GET  /api/v1/clinical/emergency-guardia/listar-efectores-derivacion
  * GET  /api/v1/clinical/emergency-guardia/<guardiaId>/ver
@@ -94,26 +93,6 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $this->success($data, 'Triage registrado');
-    }
-
-    public function actionTablero(): array
-    {
-        try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) Yii::$app->request->get('id_efector', 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
-            $filters = [
-                'circuito_estado' => Yii::$app->request->get('circuito_estado'),
-                'sin_triage' => (bool) Yii::$app->request->get('sin_triage', false),
-                'incluir_finalizados' => (bool) Yii::$app->request->get('incluir_finalizados', false),
-            ];
-            $data = $this->queue->tablero($idEfector, $filters);
-        } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
-        }
-
-        return $this->success($data, 'Tablero de guardia');
     }
 
     public function actionVer(int $guardiaId): array

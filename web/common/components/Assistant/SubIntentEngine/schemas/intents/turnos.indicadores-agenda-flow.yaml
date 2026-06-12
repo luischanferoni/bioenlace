@@ -3,7 +3,7 @@ version: 1
 
 action_name: "Indicadores de agenda"
 description: "Estadísticas de tu agenda para ayudarte a mejorarla."
-rbac_route: "/api/pacientes/listar"
+rbac_route: "/api/home/panel"
 keywords:
   - indicadores agenda
   - no show

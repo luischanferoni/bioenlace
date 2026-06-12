@@ -23,7 +23,7 @@ $indexUrlJson = Json::encode(Url::to(['index', 'id_efector' => $idEfector]));
 
     <div class="alert alert-info">
         Acá cargás la <strong>agenda</strong> de la cirugía (sala, paciente, horarios, etc.), igual que un <strong>turno</strong>.
-        La <strong>consulta</strong> clínica del acto va en historia clínica (<?= Html::a('Pacientes', ['/site/pacientes']) ?>).
+        La <strong>consulta</strong> clínica del acto va en historia clínica (<?= Html::a('Pacientes', ['/site/index']) ?>).
     </div>
 
     <div id="qc-msg" class="alert d-none" role="alert"></div>
@@ -65,7 +65,7 @@ $indexUrlJson = Json::encode(Url::to(['index', 'id_efector' => $idEfector]));
     <div class="form-group">
         <button type="button" id="qc-guardar" class="btn btn-success">Guardar agenda</button>
         <?= Html::a('Volver', ['index', 'id_efector' => $idEfector], ['class' => 'btn btn-default']) ?>
-        <?= Html::a('Ir a Pacientes', ['/site/pacientes'], ['class' => 'btn btn-link']) ?>
+        <?= Html::a('Ir a Pacientes', ['/site/index'], ['class' => 'btn btn-link']) ?>
     </div>
 </div>
 
